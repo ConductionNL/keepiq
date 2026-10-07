@@ -444,7 +444,8 @@
         "evidence": "src/dialogs/SecretCreateDialog.vue:439 useSecretStore().createSecret -> src/store/modules/secret.js:348,385 POST /api/v1/secrets -> appinfo/routes.php:89 secret#create -> lib/Controller/SecretController.php",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog (secret-create modal)",
-        "note": "Create dialog collects name, type, url, login and key, and posts through the secret store to the secret CRUD endpoint. Login is one of the built-in system types."
+        "note": "Create dialog collects name, type, url, login and key, and posts through the secret store to the secret CRUD endpoint. Login is one of the built-in system types.",
+        "spec": "openspec/specs/secrets"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -476,7 +477,8 @@
         "evidence": "src/dialogs/SecretEditDialog.vue:492 useSecretStore().updateSecret -> src/store/modules/secret.js:400,449 PUT /api/v1/secrets/{id} -> appinfo/routes.php:97 secret#update",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> secret detail sidebar -> Edit (secret-edit modal)",
-        "note": "Edit dialog diffs the changed fields and updates through the same encrypted-at-rest path as create."
+        "note": "Edit dialog diffs the changed fields and updates through the same encrypted-at-rest path as create.",
+        "spec": "openspec/specs/secrets"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -508,7 +510,8 @@
         "evidence": "src/dialogs/SecretDeleteConfirmDialog.vue:140 useSecretStore().deleteSecret -> src/store/modules/secret.js:527 DELETE /api/v1/secrets/{id} -> appinfo/routes.php:98 secret#destroy",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> secret row -> Delete (secret-delete modal)",
-        "note": "Deletion is a hard, permanent delete with an explicit irreversible-warning copy in the dialog; there is no trash (see vault-04)."
+        "note": "Deletion is a hard, permanent delete with an explicit irreversible-warning copy in the dialog; there is no trash (see vault-04).",
+        "spec": "openspec/specs/secrets"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -571,7 +574,8 @@
         "evidence": "src/views/SecretList.vue:1618 cnOpenModal('folder-create') -> src/dialogs/FolderCreateDialog.vue:227 useFolderStore().createFolder -> src/store/modules/folder.js:100 POST /api/v1/folders -> appinfo/routes.php:81 folder#create",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> folder tree in app nav -> New folder",
-        "note": "Folders nest via parentId, giving subfolders in the same tree."
+        "note": "Folders nest via parentId, giving subfolders in the same tree.",
+        "spec": "openspec/specs/secrets"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -603,7 +607,8 @@
         "evidence": "src/views/SecretList.vue:1516 cnOpenModal('secret-move') -> src/dialogs/MoveDialog.vue:329 useSecretStore().updateSecret({folderId}) -> PUT /api/v1/secrets/{id} -> appinfo/routes.php:97 secret#update",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> secret row action -> Move (secret-move modal)",
-        "note": "MoveDialog also handles moving a whole folder's contents (updateFolder for subfolders), a superset of the single-secret move asked for here."
+        "note": "MoveDialog also handles moving a whole folder's contents (updateFolder for subfolders), a superset of the single-secret move asked for here.",
+        "spec": "openspec/specs/secrets-write-ui"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -635,7 +640,8 @@
         "evidence": "src/views/SecretList.vue:1471 onSearch debounces into secretStore.searchSecrets -> src/store/modules/secret.js search param -> GET /api/v1/secrets?search= -> appinfo/routes.php:88 secret#index -> lib/Service/SecretService.php:1034 search() -> fuzzyMatch() Levenshtein tolerance 1-2",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> inline search field",
-        "note": "Server-side two-stage fuzzy match: SQL substring pre-filter plus a paged Levenshtein scan, genuinely typo-tolerant, not just a substring filter."
+        "note": "Server-side two-stage fuzzy match: SQL substring pre-filter plus a paged Levenshtein scan, genuinely typo-tolerant, not just a substring filter.",
+        "change": "openspec/changes/archive/2026-07-18-bound-fuzzy-secret-search"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -667,7 +673,8 @@
         "evidence": "lib/Search/SecretSearchProvider.php implements OCP\\Search\\IProvider, queries plaintext name/url; registered at lib/AppInfo/PlatformIntegrationRegistrar.php:56 registerSearchProvider(SecretSearchProvider::class), called from lib/AppInfo/Application.php:165",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud unified search bar (server-wide)",
-        "note": "Only matches the plaintext name/url columns, so it works without the vault being unlocked; deep-links back into the app."
+        "note": "Only matches the plaintext name/url columns, so it works without the vault being unlocked; deep-links back into the app.",
+        "spec": "openspec/specs/secrets"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -794,7 +801,8 @@
         "evidence": "lib/Repair/SeedSecretTypes.php:66 seeds 'note' => 'Secure Note' (repair step appinfo/info.xml:199); src/dialogs/SecretCreateDialog.vue:279 valueLabel reads 'Note' for the note type; src/components/SecretDetailSidebar.vue:200 note icon and :1233 'Note' label",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Secure Note",
-        "note": "Secure Note is a seeded system type; the create dialog relabels the value field to Note and the detail sidebar shows it as a note. URL and login stay optional."
+        "note": "Secure Note is a seeded system type; the create dialog relabels the value field to Note and the detail sidebar shows it as a note. URL and login stay optional.",
+        "spec": "openspec/specs/secrets"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -826,7 +834,8 @@
         "evidence": "src/dialogs/SecretCreateDialog.vue:37-94 card fields (number, expiry, CVV, PIN, cardholder, Luhn hint) and identity fields (name, address, phone, email, BSN) -> :307 serializeCard into the encrypted key -> src/store/modules/secret.js:348 createSecret; src/dialogs/SecretEditDialog.vue:51,73 same sets on edit; src/components/SecretDetailSidebar.vue:253,421 per-field rows with masked number/CVV/PIN/BSN",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Payment card or Identity",
-        "note": "Card and identity types each get their own field set in create and edit, serialized into the encrypted key, and render as per-field rows with sensitive fields masked. The identity type holds personal details and a BSN, not passport or licence document fields."
+        "note": "Card and identity types each get their own field set in create and edit, serialized into the encrypted key, and render as per-field rows with sensitive fields masked. The identity type holds personal details and a BSN, not passport or licence document fields.",
+        "change": "openspec/changes/archive/2026-07-18-card-identity-items"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -897,7 +906,8 @@
             "issue": "#113",
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-passkey-item-type"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -962,7 +972,8 @@
         "evidence": "src/components/SecretDetailSidebar.vue:598 AttachmentPanel -> src/components/AttachmentPanel.vue:169 store.upload -> src/store/modules/attachment.js:193-224 AES-GCM file key, encrypted blob and metadata, RSA-wrapped key -> POST /api/v1/secrets/{secretId}/attachments (appinfo/routes.php:348) -> lib/Controller/AttachmentController.php:84; download :251 and delete :292 wired",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Attachments box",
-        "note": "Files are encrypted in the browser with a per-file key wrapped to the vault key, then uploaded; the owner can list, download (decrypted client side) and delete them."
+        "note": "Files are encrypted in the browser with a per-file key wrapped to the vault key, then uploaded; the owner can list, download (decrypted client side) and delete them.",
+        "change": "openspec/changes/archive/2026-07-18-encrypted-attachments"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -994,7 +1005,8 @@
         "evidence": "lib/Service/SecretService.php:892 versionService->snapshot on every user update; src/components/SecretDetailSidebar.vue:781 VersionHistoryPanel -> src/store/modules/secretVersion.js:42 GET /api/v1/secrets/{secretId}/versions, :68 view, :108 POST /api/v1/versions/{id}/restore (appinfo/routes.php:330-332) -> lib/Controller/SecretVersionController.php:139; src/components/VersionHistoryPanel.vue:155 restore after VersionRestoreDialog confirm",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Version history panel -> View / Restore",
-        "note": "Each update snapshots the prior value; the owner can view an earlier version decrypted in session and restore it after a confirm, with the current value kept as a new version."
+        "note": "Each update snapshots the prior value; the owner can view an earlier version decrypted in session and restore it after a confirm, with the current value kept as a new version.",
+        "change": "openspec/changes/archive/2026-07-18-secret-version-history"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1026,7 +1038,8 @@
         "evidence": "src/views/SecretList.vue:294-333 selection-actions strip: Move, Share, Add to team folder, Delete -> src/dialogs/BulkMoveDialog.vue:153, BulkShareDialog.vue:218, BulkDeleteDialog.vue:195 bulk.run -> src/store/modules/bulk.js:111; src/views/SecretList.vue:8-11 ExportDialog receives all decryptedSecrets, not the selection",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> row checkboxes -> selection strip",
-        "note": "Multi-select with shift-range works and the strip moves, shares, adds to a team folder or deletes the selection with per-item retry. Export is not a bulk action: the export dialog always takes the whole visible list."
+        "note": "Multi-select with shift-range works and the strip moves, shares, adds to a team folder or deletes the selection with per-item retry. Export is not a bulk action: the export dialog always takes the whole visible list.",
+        "change": "openspec/changes/archive/2026-07-18-bulk-actions"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1154,7 +1167,8 @@
         "evidence": "src/views/SecretList.vue:371 SecretListItem in the list slot; src/components/SecretListItem.vue:5-10 tabindex=0 with Enter and Space opening the row, :91-92 copy control stops propagation; src/views/SecretList.vue:362 native NcCheckboxRadioSwitch per row with aria-label; selection strip buttons :294-333",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets)",
-        "note": "Rows are Tab-reachable and open with Enter or Space, selection checkboxes and the copy control are independently focusable, and bulk actions are buttons. There are no arrow-key or shortcut bindings, so moving through a long list means tabbing through every control."
+        "note": "Rows are Tab-reachable and open with Enter or Space, selection checkboxes and the copy control are independently focusable, and bulk actions are buttons. There are no arrow-key or shortcut bindings, so moving through a long list means tabbing through every control.",
+        "change": "openspec/changes/archive/2026-07-22-keyboard-accessible-secret-rows"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1351,7 +1365,8 @@
         "evidence": "src/dialogs/VersionDetailsDialog.vue:4 read-only view of one decrypted historic version; opened from the version history list (openspec/specs/secret-version-history); git grep -i 'diff|compare' src/dialogs src/components: no diff view",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar > version history > Version details dialog",
-        "note": "One old version can be opened and read next to nothing else; there is no side-by-side diff."
+        "note": "One old version can be opened and read next to nothing else; there is no side-by-side diff.",
+        "change": "openspec/changes/archive/2026-07-18-secret-version-history"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1443,7 +1458,8 @@
         "evidence": "src/store/modules/secret.js:368-382 rsaEncrypt of key, login and additionalFields in the browser before POST /api/v1/secrets; src/crypto/rsa.js:200 RSA-OAEP-SHA256 via WebCrypto; src/store/modules/attachment.js:193-224 attachments AES-GCM encrypted client side",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialogs",
-        "note": "The secret value, login, additional fields and attachments are encrypted in the browser to the user's public key and the private key never leaves the browser unencrypted. The name, URL, type and folder stay plaintext on the server so lists and search work."
+        "note": "The secret value, login, additional fields and attachments are encrypted in the browser to the user's public key and the private key never leaves the browser unencrypted. The name, URL, type and folder stay plaintext on the server so lists and search work.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1475,7 +1491,8 @@
         "evidence": "src/views/LockScreen.vue:850 first-time setup -> src/store/modules/encryptionSuite.js:112-136 generates the key pair, encryptPrivateKey(masterPassword) and POSTs only publicKey + encryptedPrivateKey to /api/v1/suites (appinfo/routes.php:37); src/crypto/aes.js:15 PBKDF2-SHA256 600000 iterations with a random salt",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Lock page (/lock) -> first-time setup form (shown only when the server confirms no suite exists)",
-        "note": "On first use the lock screen asks for a master password with confirmation; the browser derives a key from it and sends only the wrapped private key, so the server never receives the password."
+        "note": "On first use the lock screen asks for a master password with confirmation; the browser derives a key from it and sends only the wrapped private key, so the server never receives the password.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1507,7 +1524,8 @@
         "evidence": "src/views/LockScreen.vue:182-185 PasswordStrengthMeter -> :560-570 setup submit gated on strengthValid; src/components/PasswordStrengthMeter.vue:43-46 isValid needs length and zxcvbn score floors taken from the admin policy (fetchPolicy, :19) or app fallback; src/components/MasterPasswordForm.vue:82 same gate on change",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Lock page (/lock) first-time setup; Personal settings -> Security -> change master password",
-        "note": "Setup and change are blocked until the password meets the administrator's minimum length and zxcvbn score. The check is client side only, which is inherent since the server never sees the password."
+        "note": "Setup and change are blocked until the password meets the administrator's minimum length and zxcvbn score. The check is client side only, which is inherent since the server never sees the password.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1539,7 +1557,8 @@
         "evidence": "src/App.vue:151 MasterPasswordForm in the user-settings Security section -> src/components/MasterPasswordForm.vue:112 store.changePassword -> src/store/modules/encryptionSuite.js:161-198 re-wraps the private key with key proof -> PUT /api/v1/suites/{id}/private-key (appinfo/routes.php:38) -> lib/Controller/EncryptionSuiteController.php:266 marks passkey envelopes stale",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "App navigation -> Personal settings -> Security -> Master password form",
-        "note": "Changing the master password only re-wraps the private key, so every secret stays readable; the server demands proof of the old key and flags enrolled passkeys for re-enrolment."
+        "note": "Changing the master password only re-wraps the private key, so every secret stays readable; the server demands proof of the old key and flags enrolled passkeys for re-enrolment.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1579,7 +1598,8 @@
             "issue": "#395",
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1685,7 +1705,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-20-passkey-vault-login"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1808,7 +1829,8 @@
         "evidence": "src/export/backup.js:14-17 passphrase-encrypted Argon2id backup that is suite-independent 'for a forgotten master password' -> src/store/modules/export.js:24 encryptBackup; src/import/backupParser.js:14 decryptBackup in the Import wizard; src/views/EmergencyAccessView.vue:11 trusted-contact escrow; grep -rni 'recovery code\\|recovery kit' src lib: no hits",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> Export dialog (encrypted backup); Import wizard (restore); Emergency access page (/emergency-access)",
-        "note": "There is no recovery code or kit that reopens the existing vault. A user who kept a passphrase-encrypted backup can restore their secrets into a new vault, but only after an administrator force-revokes the old key, and a trusted emergency contact can regain read access after a wait."
+        "note": "There is no recovery code or kit that reopens the existing vault. A user who kept a passphrase-encrypted backup can restore their secrets into a new vault, but only after an administrator force-revokes the old key, and a trusted emergency contact can regain read access after a wait.",
+        "change": "openspec/changes/archive/2026-06-14-secret-export-gdpr"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1870,7 +1892,8 @@
         "evidence": "appinfo/info.xml:197 repair step BootstrapCertificateAuthority creates the instance root and intermediate; lib/Service/EncryptionSuiteProvisioningService.php:192-200 signFor refuses unless ca_status is healthy and signs every suite public key; appinfo/routes.php:46-49,215-216 CA status, renew and re-issue; src/views/CertificateInventoryView.vue:116,176 vault certificates and CA shown",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Certificates page (/certificates) -> Vault encryption certificates / Certificate authority; admin settings -> CA health",
-        "note": "Each vault public key is signed by a private CA that keepiq bootstraps on the instance, and suite creation refuses while that CA is unhealthy. The CA is the instance's own, generated by keepiq; there is no path to plug in an existing external organisational CA."
+        "note": "Each vault public key is signed by a private CA that keepiq bootstraps on the instance, and suite creation refuses while that CA is unhealthy. The CA is the instance's own, generated by keepiq; there is no path to plug in an existing external organisational CA.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1910,7 +1933,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1941,7 +1965,8 @@
         "evidence": "src/migration/pipeline.js:134-155 verifiedReEncrypt decrypts each re-encrypted blob with the new private key and throws RoundTripMismatchError (:49) unless byte-identical; src/migration/driver.js:12 both worker and main-thread paths use it; lib/Service/MigrationWorkService.php:781 server accepts only browser-verified ciphertext; lib/Service/MigrationService.php:402 completion refuses while records remain",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Personal settings -> Security -> compromise recovery migration (and resume banner)",
-        "note": "During key migration every re-encrypted record is decrypted back with the new key and compared before it is committed, and the old suite stays active until nothing is left bound to it."
+        "note": "During key migration every re-encrypted record is decrypted back with the new key and compared before it is committed, and the old suite stays active until nothing is left bound to it.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1972,7 +1997,8 @@
         "evidence": "src/App.vue:277 revoke button -> :906 suiteStore.revokeSuite -> src/store/modules/encryptionSuite.js:1179-1199 POST /api/v1/suites/{id}/revoke (appinfo/routes.php:39) with master-password proof and ownership check (lib/Controller/EncryptionSuiteController.php:335); src/components/settings/AdminSuiteSection.vue:212 -> encryptionSuite.js:1286 POST /api/v1/suites/{id}/reinstate (routes.php:41, AuthorizedAdminSetting at controller :384)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Personal settings -> Security -> Revoke (user); Nextcloud admin settings -> Keepiq -> suite management -> Reinstate (admin)",
-        "note": "A user can revoke their own vault key after re-entering the master password, and an administrator can reinstate it by id. Revocation also hard-deletes the shares the user received and warns before destroying emergency access, so a reinstate does not bring those back."
+        "note": "A user can revoke their own vault key after re-entering the master password, and an administrator can reinstate it by id. Revocation also hard-deletes the shares the user received and warns before destroying emergency access, so a reinstate does not bring those back.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2004,7 +2030,8 @@
         "evidence": "src/components/settings/AdminSuiteSection.vue:42 markCompromised toggle, :180 forceRevokeSuite -> src/store/modules/encryptionSuite.js:1247-1262 POST /api/v1/suites/{id}/force-revoke (appinfo/routes.php:40) -> lib/Controller/EncryptionSuiteController.php:436 -> lib/Service/EncryptionSuiteService.php:199-207 dispatches the revoked event with compromised=true; lib/AppInfo/SuiteLifecycleEventRegistrar.php:109 registers SuiteCompromiseOnRevokeListener",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Encryption suite management -> Force-revoke",
-        "note": "An administrator can force-revoke any suite by id after re-confirming their own password and optionally flag it as compromised, which triggers a listener that flags its secrets for rotation and notifies owners."
+        "note": "An administrator can force-revoke any suite by id after re-confirming their own password and optionally flag it as compromised, which triggers a listener that flags its secrets for rotation and notifies owners.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2224,7 +2251,8 @@
         "evidence": "src/views/SecretList.vue:59 mounts BulkShareDialog, row checkbox selection (SecretList.vue:364) allows selecting a single secret -> src/dialogs/BulkShareDialog.vue:150 onRun/shareOne -> POST /apps/keepiq/api/v1/shares/register-batch (BulkShareDialog.vue:165) -> appinfo/routes.php:124 share#registerBatch -> lib/Controller/ShareController.php",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> select one or more rows -> Share bulk action -> BulkShareDialog",
-        "note": "The per-secret sidebar Share button opens SecretShareDialog, which only does link sharing and explicitly disables user-to-user sharing as 'coming soon'. Real user-to-user sharing is reached through the bulk-selection Share action instead, which works for exactly one selected secret too."
+        "note": "The per-secret sidebar Share button opens SecretShareDialog, which only does link sharing and explicitly disables user-to-user sharing as 'coming soon'. Real user-to-user sharing is reached through the bulk-selection Share action instead, which works for exactly one selected secret too.",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2297,7 +2325,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "spec": "openspec/specs/team-folder-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2329,7 +2358,8 @@
         "evidence": "lib/AppInfo/UserLifecycleEventRegistrar.php registers UserRemovedFromGroupListener on OCP UserRemovedEvent -> lib/Listener/UserRemovedFromGroupListener.php calls TeamFolderService::handleGroupMemberLeave, which auto-revokes the departing user's folder-derived shares (direct shares are left intact). This fires automatically with no UI action needed, on a team folder that is reachable via src/modals/TeamFolderDialog.vue (opened from SecretList.vue and KeepiqAppNav.vue).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic (server event listener) once a team folder with a group member exists",
-        "note": "The equivalent ad-hoc group-share auto-revocation (GroupShareService::handleMemberLeave, same listener) is also wired at the backend, but since sharing-02's group-share creation path is unreachable from the UI, that branch has nothing to act on in practice; the team-folder branch is what actually delivers this capability to a user."
+        "note": "The equivalent ad-hoc group-share auto-revocation (GroupShareService::handleMemberLeave, same listener) is also wired at the backend, but since sharing-02's group-share creation path is unreachable from the UI, that branch has nothing to act on in practice; the team-folder branch is what actually delivers this capability to a user.",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2361,7 +2391,8 @@
         "evidence": "src/dialogs/SecretEditDialog.vue (opened via SecretDetailSidebar.vue:1495 openEdit -> cnOpenModal('secret-edit')) submits through src/store/modules/secret.js update action; when a sensitive field changes (secret.js:459) it calls useShareStore().syncUpdate(...) (secret.js:471) -> PUT /apps/keepiq/api/v1/secrets/{id}/sync (share.js:551) -> appinfo/routes.php:129 share#sync.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret row -> sidebar -> Edit -> save",
-        "note": "Sync runs automatically as part of the normal edit flow; no separate user action is needed."
+        "note": "Sync runs automatically as part of the normal edit flow; no separate user action is needed.",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2392,7 +2423,8 @@
         "state": "built",
         "evidence": "src/components/SecretDetailSidebar.vue:675 mounts ShareList for the owner -> src/components/share/ShareList.vue:111 onRevoke -> store.revokeShare -> DELETE /api/v1/shares/{id} (appinfo/routes.php:130 share#destroy).",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section -> revoke"
+        "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section -> revoke",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2423,7 +2455,8 @@
         "state": "built",
         "evidence": "src/components/SecretDetailSidebar.vue:675 mounts ShareList (owner) which lists store.shares (fetched via GET /api/v1/secrets/{secretId}/shares, share.js:241 fetchShares). Recipients see the same list redacted to their own row per ShareList.vue's header comment.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section"
+        "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2454,7 +2487,8 @@
         "state": "built",
         "evidence": "src/modals/TeamFolderDialog.vue (opened from SecretList.vue and KeepiqAppNav.vue) -> onShareFolder -> store.shareFolder -> POST /api/v1/team-folders (teamFolder.js:67) -> appinfo/routes.php:362 teamFolder#create -> lib/Service/TeamFolderService.php:109 shareFolder, which fans every secret in the folder subtree out to the folder's members.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList -> folder actions -> Team folder sharing dialog -> Share this folder"
+        "reachedOn": "SecretList -> folder actions -> Team folder sharing dialog -> Share this folder",
+        "spec": "openspec/specs/team-folder-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2486,7 +2520,8 @@
         "evidence": "src/modals/TeamFolderDialog.vue:69 renders a grade select per member (data-testid team-folder-grade-*) -> onGradeChange (line 577) -> store.setMemberGrade -> PATCH /api/v1/team-folders/{id}/members/{memberId} (appinfo/routes.php:368 teamFolderMember#setMemberGrade).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Team folder sharing dialog -> member row -> grade select",
-        "note": "Grades are read/write, not a finer-grained set, but that matches the row's own wording."
+        "note": "Grades are read/write, not a finer-grained set, but that matches the row's own wording.",
+        "spec": "openspec/specs/folder-permission-grades"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2517,7 +2552,8 @@
         "state": "built",
         "evidence": "lib/Service/TeamFolderMembershipResolver.php:233 subtreeSecretRefs() calls folderMapper->getSubtreeIds() and fans out to secrets in every descendant folder, not just the shared folder itself. Used by shareFolder, reconcile and the approve-join fan-out payload, all reachable from src/modals/TeamFolderDialog.vue.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Team folder sharing dialog (same path as sharing-08)"
+        "reachedOn": "Team folder sharing dialog (same path as sharing-08)",
+        "spec": "openspec/specs/team-folder-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2590,7 +2626,8 @@
         "evidence": "lib/Listener/EncryptionSuiteRevokedListener.php is registered (via SuiteLifecycleEventRegistrar) on EncryptionSuiteRevokedEvent and calls DelegationService::makePermanent() to promote a departing owner's temporary SecretDelegation rows to permanent, transferring de-facto ownership to the delegate.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic (server event listener) -- but only over delegations that exist",
-        "note": "The promotion logic is real and wired to a real event, but since sharing-11 shows no delegation can ever be created via the UI today, there is nothing for it to promote in practice. Rated partial rather than no because the mechanism itself is correctly built and would fire the moment delegation creation is wired up."
+        "note": "The promotion logic is real and wired to a real event, but since sharing-11 shows no delegation can ever be created via the UI today, there is nothing for it to promote in practice. Rated partial rather than no because the mechanism itself is correctly built and would fire the moment delegation creation is wired up.",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2661,7 +2698,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-implement-link-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2692,7 +2730,8 @@
         "state": "built",
         "evidence": "src/modals/NewSendDialog.vue (mounted in src/views/SecretList.vue) collects maxViews, optional ttlHours and password, then calls useEphemeralSendStore().createSend (NewSendDialog.vue:175) -> POST /api/v1/sends (ephemeralSend.js:160) -> appinfo/routes.php:250 ephemeralSend#create. The recipient views it, no account needed, at src/views/EphemeralSendAccess.vue (manifest.json route /send/:token).",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList -> New send action -> NewSendDialog; recipient opens /send/:token unauthenticated"
+        "reachedOn": "SecretList -> New send action -> NewSendDialog; recipient opens /send/:token unauthenticated",
+        "change": "openspec/changes/archive/2026-07-18-ephemeral-send"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2724,7 +2763,8 @@
         "evidence": "src/modals/MySendsDialog.vue (mounted in src/views/SecretList.vue) lists store.sends (fetchSends, GET /api/v1/sends) and wires a revoke button (line 119, store.revoke(id) -> DELETE /api/v1/sends/{id}, appinfo/routes.php:252).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> My sends action -> MySendsDialog",
-        "note": "Link shares (sharing-14) are also listed and revocable in the same SecretShareDialog, so both link-shares and sends can be reviewed and revoked, just via two different dialogs."
+        "note": "Link shares (sharing-14) are also listed and revocable in the same SecretShareDialog, so both link-shares and sends can be reviewed and revoked, just via two different dialogs.",
+        "change": "openspec/changes/archive/2026-07-18-ephemeral-send"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2814,7 +2854,8 @@
         "state": "built",
         "evidence": "lib/Service/DirectShareRegistrar.php:99-105 registerDirectShares (the method behind the reachable register-batch path from sharing-01) fires notificationService->notify(subject: 'secret_shared', ...) once per new recipient after creating the shares.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "automatic, part of the sharing-01 flow"
+        "reachedOn": "automatic, part of the sharing-01 flow",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2845,7 +2886,8 @@
         "state": "built",
         "evidence": "src/views/EmergencyAccessView.vue (page route /emergency-access, menu item EmergencyAccessMenu) wires a designate form (line 41 @click=\"designate\") -> store.designate -> POST /api/v1/emergency-access/contacts (appinfo/routes.php:113), building the recovery envelope client-side with a configurable wait period.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Emergency access page -> Designate a contact"
+        "reachedOn": "Emergency access page -> Designate a contact",
+        "spec": "openspec/specs/emergency-access"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2876,7 +2918,8 @@
         "state": "built",
         "evidence": "src/views/EmergencyAccessView.vue:349 onDecline calls store.decline(id) -> POST /api/v1/emergency-access/contacts/{id}/decline (appinfo/routes.php:116), which per the grantor-decline-veto requirement can be called during the wait period.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Emergency access page -> incoming request -> Decline"
+        "reachedOn": "Emergency access page -> incoming request -> Decline",
+        "spec": "openspec/specs/emergency-access"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2907,7 +2950,8 @@
         "state": "built",
         "evidence": "lib/BackgroundJob/ApproveElapsedEmergencyRequests.php is registered in appinfo/info.xml:115, runs hourly, and transitions 'requested' relationships to 'approved' once the wait period elapses with no decline; the header also notes a grantee fetch lazily promotes an elapsed request as a safety net.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "automatic (background job + lazy promotion on grantee fetch)"
+        "reachedOn": "automatic (background job + lazy promotion on grantee fetch)",
+        "spec": "openspec/specs/emergency-access"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3032,7 +3076,8 @@
         "evidence": "appinfo/routes.php:140-142 shareRequest create/approve/deny -> src/components/share/ShareRequestForm.vue:128 POST /api/v1/share-requests, mounted in src/components/SecretDetailSidebar.vue:687; searched 'lease', 'ip allow', 'time window' in lib/Service/ShareRequestService.php: none (machine leases at routes.php:319 are for applications)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar, request access form",
-        "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or IP address and does not gate use of a privileged login."
+        "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or IP address and does not gate use of a privileged login.",
+        "spec": "openspec/specs/user-sharing"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -3092,7 +3137,8 @@
         "evidence": "src/views/SecretList.vue:992 (credential-request action) -> src/dialogs/SecretRequestCreateDialog.vue:520 -> src/store/modules/secretRequest.js:106 POST /api/v1/secret-requests -> lib/Controller/SecretRequestController.php:170 -> lib/Service/SecretRequestService.php:411 createForUserVault; recipient: src/views/SecretRequestFill.vue:299 -> secretRequest.js:325 POST /api/v1/public/secret-requests/{token}/fill -> lib/Controller/SecretRequestFillController.php:160 (#[PublicPage])",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (vault) -> 'Ask someone for a credential' action, or SecretDetail sidebar -> Requests -> 'Ask someone to fill this in'; recipient uses the anonymous /public/share/request/:token page",
-        "note": "Fresh requests create a placeholder secret server side; the fill link points at the anonymous public shell (src/utils/fillLink.js), so a recipient without an account can open it."
+        "note": "Fresh requests create a placeholder secret server side; the fill link points at the anonymous public shell (src/utils/fillLink.js), so a recipient without an account can open it.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3132,7 +3178,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3164,7 +3211,8 @@
         "evidence": "src/store/modules/secretRequest.js:325 submitFill encrypts with the requester suite certificate (public_certificate from lib/Controller/SecretRequestFillController.php:86) via rsaEncrypt; lib/Service/SecretRequestService.php:163 fill -> SecretRequestPolicy.php:192 requireOpenByToken refuses a fulfilled token (410) and flips status to fulfilled after persisting",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Anonymous fill page /public/share/request/:token",
-        "note": "Values are encrypted in the recipient's browser to the owner's suite and the token is single-use. The url field is stored plaintext by design and the dialog labels it so."
+        "note": "Values are encrypted in the recipient's browser to the owner's suite and the token is single-use. The url field is stored plaintext by design and the dialog labels it so.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3196,7 +3244,8 @@
         "evidence": "src/dialogs/SecretRequestCreateDialog.vue:166 (datetime-local expiry, prefilled) -> lib/Controller/SecretRequestController.php parseExpiry -> SecretRequestService.php:664 expire, run by lib/BackgroundJob/ExpireSecretRequestsJob.php:117 registered in appinfo/info.xml:114; SecretRequestPolicy.php:192 refuses expired tokens",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Request create dialog; expiry shown per row in the SecretDetail sidebar request list",
-        "note": "Expired requests are refused on the fill page and swept by a registered background job, which also removes an unfilled placeholder."
+        "note": "Expired requests are refused on the fill page and swept by a registered background job, which also removes an unfilled placeholder.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3228,7 +3277,8 @@
         "evidence": "lib/Service/SecretRequestService.php:192 -> lib/Service/SecretRequestOutbox.php:74 announceFulfilled -> lib/Service/NotificationService.php:55 (request_fulfilled, opt-out key notify_requests) -> lib/Notification/KeepiqNotifier.php:198, notifier registered at lib/AppInfo/PlatformIntegrationRegistrar.php:60",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud notification to the requester",
-        "note": "A Nextcloud notification goes to the requester when a request is filled; users can opt out through the notify_requests setting."
+        "note": "A Nextcloud notification goes to the requester when a request is filled; users can opt out through the notify_requests setting.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3259,7 +3309,8 @@
         "evidence": "src/components/SecretDetailSidebar.vue:727 ('Ask for new values' when the secret has a value) -> SecretRequestCreateDialog.vue isReRequest -> src/store/modules/secretRequest.js:147 createReRequest -> SecretRequestController.php:170 MODE_RE_REQUEST -> SecretRequestService.php:533 createReRequest",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetail sidebar -> Requests -> Ask for new values",
-        "note": "A re-request targets the existing secret and overwrites its values when filled; only the owner may create one and only one pending request per secret is allowed (409)."
+        "note": "A re-request targets the existing secret and overwrites its values when filled; only the owner may create one and only one pending request per secret is allowed (409).",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3291,7 +3342,8 @@
         "evidence": "src/components/secretRequest/SecretRequestList.vue:76 Revoke button -> src/store/modules/secretRequest.js:181 DELETE /api/v1/secret-requests/{id} -> lib/Controller/SecretRequestController.php:403 destroy -> lib/Service/SecretRequestService.php:607 decline (status declined, unfilled placeholder removed); application scope: SecretRequestList.vue onRevokeConfirmed -> secretRequest.js:253 DELETE /api/v1/applications/{id}/secret-requests/{requestId}",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetail sidebar -> Requests list -> Revoke; admins also on ApplicationDetail (/applications/:id)",
-        "note": "Revoking sets the request to declined and deletes an empty placeholder secret. The row disappears from the list instead of showing as revoked."
+        "note": "Revoking sets the request to declined and deletes an empty placeholder secret. The row disappears from the list instead of showing as revoked.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3323,7 +3375,8 @@
         "evidence": "src/views/SecretList.vue:647 pendingRequestsBySecret feeds the row requestState indicator (SecretList.vue:377) from src/store/modules/secretRequest.js:64 GET /api/v1/secret-requests -> lib/Controller/SecretRequestController.php:100 index; per secret: src/components/secretRequest/SecretRequestList.vue:13 'Outstanding requests' with status and expiry in src/components/SecretDetailSidebar.vue:737",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (row badge) and SecretDetail sidebar -> Requests list",
-        "note": "Waiting requests show as a badge on the secret row and in the per-secret list. There is no single page listing all open requests, although the list component's header comment mentions a 'My requests' view that does not exist in the manifest."
+        "note": "Waiting requests show as a badge on the secret row and in the per-secret list. There is no single page listing all open requests, although the list component's header comment mentions a 'My requests' view that does not exist in the manifest.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3354,7 +3407,8 @@
         "evidence": "machine: POST /api/v1/app/secret-requests (appinfo/routes.php:317) -> lib/Controller/ApplicationSecretRequestsController.php:124 create (JWT application principal) -> lib/Service/ApplicationSecretRequestService.php:111 createForApplicationVault; response carries token and the human fill link; GET /api/v1/app/secret-requests lists pending ones (ApplicationSecretRequestsController.php:89)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: POST /api/v1/app/secret-requests; admin oversight on ApplicationDetail (src/views/ApplicationDetail.vue:152)",
-        "note": "An authenticated application can create a request into its own vault and hand the returned link to a person; admins can see and revoke these requests on the application detail page."
+        "note": "An authenticated application can create a request into its own vault and hand the returned link to a person; admins can see and revoke these requests on the application detail page.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3385,7 +3439,8 @@
         "evidence": "src/dialogs/SecretRequestCreateDialog.vue:591 defaultSelection does not pre-tick a field that already holds a value, and :107 marks filled fields; isFieldFilled at SecretRequestCreateDialog.vue:559",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Request create dialog opened from the SecretDetail sidebar",
-        "note": "Filled fields are marked and left unticked on a fresh request, but the requester can still tick them. Additional members count as unfilled when the blob is not decrypted in that context."
+        "note": "Filled fields are marked and left unticked on a fresh request, but the requester can still tick them. Additional members count as unfilled when the blob is not decrypted in that context.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3416,7 +3471,8 @@
         "evidence": "src/components/secretRequest/SecretRequestList.vue:62 'Copy fill link' for pending, unexpired rows -> src/utils/fillLink.js fillLinkFor(row.token)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetail sidebar -> Requests list -> Copy fill link",
-        "note": "The requester can copy the fill link again from the request list at any time while the request is pending and not expired."
+        "note": "The requester can copy the fill link again from the request list at any time while the request is pending and not expired.",
+        "spec": "openspec/specs/secret-requests"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3447,7 +3503,8 @@
         "evidence": "src/dialogs/ApplicationRegisterDialog.vue:78 (CSR field) -> src/store/modules/application.js:120 register() -> POST /apps/keepiq/api/v1/applications -> appinfo/routes.php:273 application#create -> lib/Controller/ApplicationController.php",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "ApplicationRegister page (/applications) -> ApplicationRegisterDialog",
-        "note": "A developer registers an application from the Applications page, optionally with a CSR; an active suite is provisioned if the app auto-activates."
+        "note": "A developer registers an application from the Applications page, optionally with a CSR; an active suite is provisioned if the app auto-activates.",
+        "spec": "openspec/specs/application-mgmt"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3487,7 +3544,8 @@
             "issue": "#208",
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "spec": "openspec/specs/application-mgmt"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3518,7 +3576,8 @@
         "evidence": "lib/Service/ApplicationLifecycleService.php:343-399 dispatchAdminPendingNotification() calls NotificationService::notify() with subject app_pending when a new application registration is pending, fail-soft on error",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud bell notification, fired from ApplicationController#create via ApplicationLifecycleService",
-        "note": "Every vault admin gets a Nextcloud notification when a non-admin's application registration is pending; admins cannot opt out of this one."
+        "note": "Every vault admin gets a Nextcloud notification when a non-admin's application registration is pending; admins cannot opt out of this one.",
+        "spec": "openspec/specs/application-mgmt"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3549,7 +3608,8 @@
         "evidence": "src/dialogs/ApplicationRegisterDialog.vue:78-90 (CSR textarea + file upload, onCsrUpload) -> register() -> POST /apps/keepiq/api/v1/applications {csr} -> ApplicationController#create -> ApplicationLifecycleService::runPostRegistrationHooks -> suiteProvisioner->provision(csr)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "ApplicationRegister page -> ApplicationRegisterDialog CSR upload",
-        "note": "A PKCS#10 CSR can be pasted or uploaded when registering an application; the suite is provisioned from it on activation."
+        "note": "A PKCS#10 CSR can be pasted or uploaded when registering an application; the suite is provisioned from it on activation.",
+        "spec": "openspec/specs/application-mgmt"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3580,7 +3640,8 @@
         "evidence": "cli/internal/client/client.go:148-198 MachineToken() signs an RFC 7523 JWT assertion and POSTs it to the discovery-provided token endpoint -> POST /api/v1/token -> appinfo/routes.php:299 applicationToken#exchange -> lib/Controller/ApplicationTokenController.php:91 exchange()",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: POST /api/v1/token (RFC 7523 JWT-Bearer), used by cli ci mode (cli/ci.go:51)",
-        "note": "The keepiq CLI's CI mode signs an assertion with the application's private key and exchanges it for a bearer token; no password is ever stored or sent."
+        "note": "The keepiq CLI's CI mode signs an assertion with the application's private key and exchanges it for a bearer token; no password is ever stored or sent.",
+        "spec": "openspec/specs/secret-store-api"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3612,7 +3673,8 @@
         "evidence": "cli/internal/client/client.go:215-243 FetchByName() -> GET /apps/keepiq/api/v1/app/secrets/by-name/{name} Bearer <token> -> appinfo/routes.php:306 applicationSecrets#byName -> lib/Controller/ApplicationSecretsController.php Corrections round 8 (2026-09-28), keepiq#793: the by-name route answers, but the CLI cannot decrypt what it returns, because cli/internal/client/client.go:201-207 reads a top-level scheme and payload.value while lib/Service/MachineSecretEnvelopeService.php:145-148 sends encryption.scheme and ciphertext.key, so cli/ci.go:65-66 stops every fetch with unexpected envelope scheme \"\", at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name}, used by cli ci fetch/run (cli/ci.go:60-95)",
-        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key. Own rating yes to partial (corrections round 8, 2026-09-28): the server resolves and returns the secret by name, but the shipped CLI cannot decrypt the envelope it gets back, keepiq#793."
+        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key. Own rating yes to partial (corrections round 8, 2026-09-28): the server resolves and returns the secret by name, but the shipped CLI cannot decrypt the envelope it gets back, keepiq#793.",
+        "spec": "openspec/specs/secret-store-api"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3644,7 +3706,8 @@
         "evidence": "src/dialogs/WriteSecretForAppDialog.vue:1-60 encrypts fields client-side with the app's public certificate and POSTs to /apps/keepiq/api/v1/secrets with owner_type=application; opened from src/views/ApplicationDetail.vue:165",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Application detail page (/applications/:id) -> Write secret dialog",
-        "note": "A human writes a secret encrypted under an application's public certificate; the dialog states plainly that the writer cannot read it back, which is the ADR-003 write-without-read property."
+        "note": "A human writes a secret encrypted under an application's public certificate; the dialog states plainly that the writer cannot read it back, which is the ADR-003 write-without-read property.",
+        "spec": "openspec/specs/secret-store-api"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3675,7 +3738,8 @@
         "evidence": "cli/internal/client/client.go:218-233 sends If-None-Match with the last observed ETag and returns ErrNotModified on 304; server side lib/Controller/ApplicationSecretsController.php serves the by-name/by-id envelope with a strong ETag",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name} with If-None-Match, used by cli ci fetch (poll loop)",
-        "note": "A consumer that keeps polling the same name gets 304 until the ciphertext actually changes, so it can detect rotation cheaply."
+        "note": "A consumer that keeps polling the same name gets 304 until the ciphertext actually changes, so it can detect rotation cheaply.",
+        "spec": "openspec/specs/secret-store-api"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3714,7 +3778,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "spec": "openspec/specs/secret-store-api"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3745,7 +3810,8 @@
         "evidence": "lib/Service/MachineSecretResponseService.php:84-179 grants or reuses a MachineLease on every fetch and adds Doriath-Lease-Id / Doriath-Lease-Expires headers; cli/internal/client/client.go:226-227 captures them and cli/ci.go:84-86 prints the lease id + expiry Corrections round 8 (2026-09-28), keepiq#793: the CLI never prints the lease, because fetchDecrypt fails at cli/ci.go:65-66 before the lease line at cli/ci.go:84-86; the server still grants the lease before it serializes the envelope, lib/Service/MachineSecretResponseService.php:95 and :118, at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: lease headers on GET /api/v1/app/secrets*, observed by cli ci fetch",
-        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy. Corrections round 8 (2026-09-28): the lease line in the CLI is never printed because the CLI fetch fails first, keepiq#793; rating kept because the server grants the lease and returns its id and expiry headers on every machine fetch, whichever client makes it."
+        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy. Corrections round 8 (2026-09-28): the lease line in the CLI is never printed because the CLI fetch fails first, keepiq#793; rating kept because the server grants the lease and returns its id and expiry headers on every machine fetch, whichever client makes it.",
+        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3784,7 +3850,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3823,7 +3890,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3894,7 +3962,8 @@
         "evidence": "src/components/application/ApplicationSecretsPanel.vue:134 -> src/store/modules/application.js:317 listApplicationSecrets() -> GET /apps/keepiq/api/v1/secrets?ownerType=application&ownerId={id} -> SecretController#index; panel is mounted from src/views/ApplicationDetail.vue:123",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Application detail page -> Secrets panel",
-        "note": "An application's detail page lists the (ciphertext) secrets attributed to it by name, type and creation date."
+        "note": "An application's detail page lists the (ciphertext) secrets attributed to it by name, type and creation date.",
+        "spec": "openspec/specs/application-mgmt"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3926,7 +3995,8 @@
         "evidence": "cli/ci.go:97-126 cmdCIRun() fetches+decrypts each named secret and injects it into the child process environment only (runChild in cli/main.go:281-289); no plaintext is written to disk (comment at ci.go:124) Corrections round 8 (2026-09-28), keepiq#793: cmdCIRun calls fetchDecrypt at cli/ci.go:118, which refuses the server envelope at cli/ci.go:65-66 because the server puts the scheme under encryption.scheme (lib/Service/MachineSecretEnvelopeService.php:145), so runChild at cli/ci.go:125 is never reached, at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "keepiq CLI: `keepiq ci run <name> -- <cmd>`",
-        "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk. Own rating yes to no (corrections round 8, 2026-09-28): every ci fetch and ci run stops at the envelope scheme check before decryption, so no secret reaches the child process, keepiq#793."
+        "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk. Own rating yes to no (corrections round 8, 2026-09-28): every ci fetch and ci run stops at the envelope scheme check before decryption, so no secret reaches the child process, keepiq#793.",
+        "spec": "openspec/specs/keepiq-cli"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3958,7 +4028,8 @@
         "evidence": "cli/main.go: cmdList/cmdShow/cmdGet (lines 160-222) authenticate with a Nextcloud app-password, fetch the active suite, unwrap the private key with the master password, and decrypt fields client-side via dcrypto.DecryptField",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "keepiq CLI: `keepiq list|show|get|copy` (human mode)",
-        "note": "v1 of the CLI is deliberately read-only; every decryption happens in the CLI process itself so no key material reaches the server."
+        "note": "v1 of the CLI is deliberately read-only; every decryption happens in the CLI process itself so no key material reaches the server.",
+        "spec": "openspec/specs/keepiq-cli"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4173,7 +4244,8 @@
         "evidence": "The machine secret-store API (discovery, RFC 7523 token exchange, by-name fetch, write-back) is fully built server-side and documented for exactly this use in docs/integration-openconnector.md and openspec/specs/secret-store-api/spec.md; the design docs name OpenConnector (now integriq) as the intended consumer",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: documented for consumption by other Conduction apps (e.g. integriq) via /api/v1/app/*",
-        "note": "This checkout only contains keepiq's own code; whether integriq or another Conduction app actually stores its connection credentials in keepiq today cannot be settled from here, only that keepiq ships and documents a ready contract for it."
+        "note": "This checkout only contains keepiq's own code; whether integriq or another Conduction app actually stores its connection credentials in keepiq today cannot be settled from here, only that keepiq ships and documents a ready contract for it.",
+        "spec": "openspec/specs/secret-store-api"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4264,7 +4336,8 @@
         "evidence": "lib/Service/CertificateAuthorityService.php:92 bootstrap (4096-bit root, then intermediate; partial-state recovery at :111) called from lib/Repair/BootstrapCertificateAuthority.php:71, registered in appinfo/info.xml:197 and :216; suites are signed via CertificateAuthorityService.php:202 signPublicKey from lib/Service/EncryptionSuiteProvisioningService.php:200",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: install/upgrade repair step; admin sees it on Nextcloud admin settings -> Keepiq (CaHealthSection)",
-        "note": "The app runs its own root and intermediate CA and signs every user and application suite certificate with it. The partial-install recovery that #41 asked for is present in this tree. #444 (phpseclib 4) does not bite yet: composer.json pins phpseclib ^3.0."
+        "note": "The app runs its own root and intermediate CA and signs every user and application suite certificate with it. The partial-install recovery that #41 asked for is present in this tree. #444 (phpseclib 4) does not bite yet: composer.json pins phpseclib ^3.0.",
+        "spec": "openspec/specs/encryption-suites"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4349,7 +4422,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4380,7 +4454,8 @@
         "evidence": "src/views/CertificateInventoryView.vue:256 -> src/store/modules/certificate.js:33 GET /api/v1/certificates/inventory -> lib/Controller/CertificateController.php:95 -> lib/Service/CertificateLifecycleService.php:97 inventory (stored certificate-type secrets, suite certificates, and CA rows for admins); page Certificates route /certificates in src/manifest.json:490",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Certificates page (/certificates, CertificatesMenu)",
-        "note": "One page lists the user's own certificate-type secrets, their vault suite certificate (all suites for admins) and the root and intermediate for admins. Shared or application-owned certificate secrets are not included."
+        "note": "One page lists the user's own certificate-type secrets, their vault suite certificate (all suites for admins) and the root and intermediate for admins. Shared or application-owned certificate secrets are not included.",
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4419,7 +4494,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4450,7 +4526,8 @@
         "evidence": "src/views/CertificateInventoryView.vue:292 'Renew…' -> src/store/modules/certificate.js:86 POST /api/v1/certificates/{id}/renewal-checklist -> lib/Service/CertificateLifecycleService.php:228 (externally issued checklist); suite rows: CertificateInventoryView.vue:308 -> certificate.js:108 POST /api/v1/certificates/suites/{id}/reissue -> CertificateLifecycleService.php:282",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Certificates page -> Renew… on a stored certificate, Re-issue on a suite certificate",
-        "note": "Stored certificates get a fixed checklist for externally issued certificates; certificates Keepiq issued itself (suite certificates) can be re-issued with one click. There is no branch for a stored certificate that Keepiq's CA issued, because Keepiq does not issue those."
+        "note": "Stored certificates get a fixed checklist for externally issued certificates; certificates Keepiq issued itself (suite certificates) can be re-issued with one click. There is no branch for a stored certificate that Keepiq's CA issued, because Keepiq does not issue those.",
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4509,7 +4586,8 @@
         "evidence": "Certificate secret type (lib/Service/CertificateMetadataService.php:73 certificateTypeId) -> src/views/CertificateInventoryView.vue:272 'Parse certificate' -> src/store/modules/certificate.js:59 parseAndSubmit (browser X.509 parse, src/certificates/x509.js:202) -> PUT /api/v1/certificates/{id}/metadata -> lib/Controller/CertificateController.php:121; subject, issuer and expiry columns in CertificateInventoryView.vue",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret create dialog with the Certificate type, then Certificates page -> Parse certificate",
-        "note": "Subject, issuer and expiry appear after the user clicks Parse certificate once; parsing happens in the browser so the server never sees the certificate value. Until then the row shows 'not parsed yet'."
+        "note": "Subject, issuer and expiry appear after the user clicks Parse certificate once; parsing happens in the browser so the server never sees the certificate value. Until then the row shows 'not parsed yet'.",
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4587,7 +4665,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4633,7 +4712,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4673,7 +4753,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4712,7 +4793,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4758,7 +4840,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4790,7 +4873,8 @@
         "evidence": "src/store/modules/health.js:202 rsaDecrypt in browser -> health.js:266 Web Worker src/health/worker.js; state memory-only and reset on lock health.js:308; only the HIBP prefix is sent (src/health/hibp.js:79)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Password health page and SecretList strength pass",
-        "note": "Decryption and analysis run in the browser (worker when available), results are held in memory only and cleared on lock. The possibly-compromised flag is the one server-known input."
+        "note": "Decryption and analysis run in the browser (worker when available), results are held in memory only and cleared on lock. The possibly-compromised flag is the one server-known input.",
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4822,7 +4906,8 @@
         "evidence": "src/dialogs/SecretCreateDialog.vue:112 and SecretEditDialog.vue:115 open src/dialogs/KeyGeneratorModal.vue:216 POST /api/v1/generate-key -> lib/Controller/KeyGeneratorController -> lib/Service/KeyGeneratorService.php:179 generate (random_int CSPRNG, length, special characters, excluded characters, regex override, org policy clamp :110)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> New secret / Edit secret dialog -> Generate",
-        "note": "Length, special characters, excluded characters and an advanced regex pattern. The value is generated on the server and returned over the API, so the server sees a generated password before it is encrypted client-side."
+        "note": "Length, special characters, excluded characters and an advanced regex pattern. The value is generated on the server and returned over the API, so the server sees a generated password before it is encrypted client-side.",
+        "change": "openspec/changes/archive/2026-06-14-implement-key-generator"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4853,7 +4938,8 @@
         "state": "built",
         "evidence": "src/generator/generator.js generatePassphrase (EFF large word list src/generator/eff-large-wordlist.js, crypto.getRandomValues) <- src/dialogs/KeyGeneratorModal.vue Password/Passphrase switch; policy fit + generator_allow_passphrase (lib/Service/PasswordPolicyService.php). Tests: tests/vitest/generator.spec.js, tests/dialogs/KeyGeneratorModal.spec.js, tests/e2e/workflows/key-generator.spec.ts. Change: openspec/changes/client-side-key-generator (supersedes health-passphrase-generator).",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase"
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase",
+        "change": "openspec/changes/client-side-key-generator"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5123,7 +5209,8 @@
         "evidence": "src/components/RotationPanel.vue:236 onSave -> src/store/modules/rotation.js:154 PUT /api/v1/secrets/{id}/expiry -> lib/Controller/RotationController.php:89 -> lib/Service/SecretService.php:1379 setExpiry (owner-only, ciphertext and key_updated_at untouched)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret detail sidebar -> Rotation & expiry row (src/components/SecretDetailSidebar.vue:798)",
-        "note": "Owner picks a date or clears it; the value and its key timestamp are not changed."
+        "note": "Owner picks a date or clears it; the value and its key timestamp are not changed.",
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5169,7 +5256,8 @@
             "issue": "#746",
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5208,7 +5296,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5240,7 +5329,8 @@
         "evidence": "src/components/RotationPanel.vue:31 Mark rotated -> src/store/modules/rotation.js:188 POST /api/v1/rotation-flags/{id}/rotated -> lib/Controller/RotationController.php:314 -> lib/Service/RotationFlagService.php:181 markRotated (resolves only when key_updated_at advanced past the value frozen at flag time)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar -> Rotation & expiry (owner, when a flag is open; Flag for rotation raises one)",
-        "note": "If the value did not change since flagging, the server refuses and the panel tells the owner to update the value first."
+        "note": "If the value did not change since flagging, the server refuses and the panel tells the owner to update the value first.",
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5272,7 +5362,8 @@
         "evidence": "compromise: lib/Service/CompromiseContainmentService.php stampSealed() stamps possibly_compromised_at and flags suite_compromise (via lib/Listener/MarksCompromisedSecrets.php), called by EncryptionSuiteController::forceRevokeAsCompromise(); breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Automatic on a compromise revocation; Password health page button for breached passwords",
-        "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser."
+        "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser.",
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5312,7 +5403,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5420,7 +5512,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-org-password-policies"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5452,7 +5545,8 @@
         "evidence": "src/components/settings/PasswordPolicySection.vue:26 min score select -> POST /api/settings (AppHost standard route) -> lib/Controller/SettingsController.php:160 create -> update (bounds 12-20 and 3-4, lib/Service/SettingsService.php:83); read back by src/components/PasswordStrengthMeter.vue:165 on LockScreen setup (src/views/LockScreen.vue:182) and MasterPasswordForm",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Password Policy",
-        "note": "Admins set minimum length (12 to 20) and zxcvbn score (3 or 4); the setup and change forms block submit below the floor. Enforcement is client-side by design, since the server never sees the master password."
+        "note": "Admins set minimum length (12 to 20) and zxcvbn score (3 or 4); the setup and change forms block submit below the floor. Enforcement is client-side by design, since the server never sees the master password.",
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5492,7 +5586,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5556,7 +5651,8 @@
         "evidence": "src/components/settings/OfflineCacheSection.vue:85 PUT /api/settings/admin offline_cache_enabled -> lib/Service/AdminSettingsService.php:354; lib/Controller/OfflineController.php:82 returns 403 when off; src/store/modules/offline.js:124 purges the local snapshot on 403",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> offline cache section",
-        "note": "Switching it off refuses the offline manifest and clients purge any existing snapshot on their next sync."
+        "note": "Switching it off refuses the offline manifest and clients purge any existing snapshot on their next sync.",
+        "spec": "openspec/specs/offline-readonly-cache"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5588,7 +5684,8 @@
         "evidence": "src/components/settings/BreachCheckSection.vue:30 toggle -> PUT /api/settings/admin breach_check_enabled -> lib/Service/AdminSettingsService.php:350; gate read at lib/Controller/BreachProxyController.php:161 and initial state lib/Controller/DashboardController.php:108",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Breach checking",
-        "note": "Off by default. Turning it on shows the per-user opt-in on the Password health page; users still have to opt in."
+        "note": "Off by default. Turning it on shows the per-user opt-in on the Password health page; users still have to opt in.",
+        "change": "openspec/changes/archive/2026-06-14-password-health"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5620,7 +5717,8 @@
         "evidence": "src/components/settings/AttachmentLimitsSection.vue:46 versions kept and :57 age limit -> PUT /api/settings/admin -> lib/Service/AdminSettingsService.php:451,460; appinfo/info.xml:116 PruneSecretVersionsJob -> lib/BackgroundJob/PruneSecretVersionsJob.php:74,80",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Attachments & version history",
-        "note": "Count (default 20) and age in days (default 365, 0 unlimited), pruned nightly."
+        "note": "Count (default 20) and age in days (default 365, 0 unlimited), pruned nightly.",
+        "change": "openspec/changes/archive/2026-07-18-secret-version-history"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5844,7 +5942,8 @@
         "evidence": "src/manifest.d/80-connection-registry.json Integrations page /settings/integrations (integriq app_connection, admin, requires integriq); lib/Settings/connections.json declares hibp and siem; status reported by lib/Controller/BreachProxyController.php:227 and lib/Service/SiemService.php:218 via lib/Service/Connection/ConnectionReporter.php",
         "owner": "ConductionNL/integriq",
         "reachedOn": "App navigation -> Integrations (admin, only when integriq is installed)",
-        "note": "Keepiq declares two connections (breach check, SIEM) and reports their outcomes; integriq stores and renders the status table. Without integriq installed the menu entry is hidden."
+        "note": "Keepiq declares two connections (breach check, SIEM) and reports their outcomes; integriq stores and renders the status table. Without integriq installed the menu entry is hidden.",
+        "change": "openspec/changes/archive/2026-10-04-adopt-connection-registry"
       },
       "rowSource": "own",
       "provider": "integriq",
@@ -5875,7 +5974,8 @@
         "evidence": "src/components/settings/AttachmentLimitsSection.vue:28 max size and :37 quota -> PUT /api/settings/admin -> lib/Service/AdminSettingsService.php:478; enforced at lib/Service/AttachmentService.php:227 and :234",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Attachments & version history",
-        "note": "Per-attachment limit (default 25 MiB) and per-user quota (default 100 MiB), counted in stored ciphertext bytes."
+        "note": "Per-attachment limit (default 25 MiB) and per-user quota (default 100 MiB), counted in stored ciphertext bytes.",
+        "change": "openspec/changes/archive/2026-07-18-encrypted-attachments"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5907,7 +6007,8 @@
         "evidence": "src/views/settings/AdminRoot.vue:2 CnAdminSettingsShell appId=keepiq -> CnVersionInfoCard reads loadState(keepiq, version) provided by lib/Settings/AdminSettings.php:38 extends OpenRegister GenericAdminSettings",
         "owner": "ConductionNL/nextcloud-vue",
         "reachedOn": "Nextcloud admin settings -> Keepiq (version card at the top)",
-        "note": "The version card, up-to-date check and re-import button come from the shared admin shell and OpenRegister's AppHost settings class, so keepiq depends on OpenRegister being installed for this page."
+        "note": "The version card, up-to-date check and re-import button come from the shared admin shell and OpenRegister's AppHost settings class, so keepiq depends on OpenRegister being installed for this page.",
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
       },
       "rowSource": "own",
       "provider": "nextcloud-vue",
@@ -6291,7 +6392,8 @@
         "evidence": "lib/Service/SecretService.php:284,588,678,794 dispatch secret.created/updated/deleted/read AuditEvents -> lib/AppInfo/AuditStreamEventRegistrar.php:74 registers lib/Listener/AuditListener.php:78 -> lib/Service/AuditService.php:69 record(); lib/Service/AuditService.php:99 sanitiseMetadata rejects lib/Event/Audit/AuditEventTypes.php:173 FORBIDDEN_KEYS (value, password, ciphertext, payload...) and drops non-whitelisted keys",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic: every secret create/read/update/delete, share, link share, rotation, lease and export path records an entry",
-        "note": "About 23 services record audit events through one listener; metadata is whitelisted per event type and any secret-material key throws before insert. The listener is fail-soft, so a failed audit write is logged, not blocking."
+        "note": "About 23 services record audit events through one listener; metadata is whitelisted per event type and any secret-material key throws before insert. The listener is fail-soft, so a failed audit write is logged, not blocking.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6323,7 +6425,8 @@
         "evidence": "appinfo/routes.php:377-379 only GET audit routes; lib/Db/AuditEntryMapper.php:242 purgeOlderThan and :285 anonymizeActor are the only writes besides insert; grep for hash chain/prev_hash in lib: no hits",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "no update or delete verb exists in any API or UI",
-        "note": "Append-only at the application level: only retention purge and account-deletion anonymisation modify rows. There is no database-level protection or tamper evidence (no hash chain), so someone with database access can still alter entries undetected."
+        "note": "Append-only at the application level: only retention purge and account-deletion anonymisation modify rows. There is no database-level protection or tamper evidence (no hash chain), so someone with database access can still alter entries undetected.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6355,7 +6458,8 @@
         "evidence": "appinfo/info.xml:113 registers lib/BackgroundJob/PurgeAuditLogJob.php:79 (daily, floor 30 days) -> lib/Service/AuditService.php:243 purge -> lib/Db/AuditEntryMapper.php:242; retention set in src/components/settings/AdminAuditSection.vue:317 PUT /api/settings/admin -> lib/Service/AdminSettingsService.php:337",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > audit section (retention days input); purge runs as a registered background job",
-        "note": "Default 365 days, minimum 30 enforced both on save and in the job."
+        "note": "Default 365 days, minimum 30 enforced both on save and in the job.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6386,7 +6490,8 @@
         "evidence": "src/manifest.json:473 PersonalActivity page /my-activity -> src/views/PersonalActivityView.vue:102 -> src/store/modules/audit.js:85 GET /api/v1/audit/me -> lib/Controller/AuditController.php:140 mine -> AuditService::listForActor; also dashboard widget src/manifest.json:297",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "My activity page (/my-activity) and the Recent activity dashboard widget",
-        "note": "Shows entries where the user is the actor, i.e. what you did. What other people (share recipients, applications) did to your secrets shows only on the per-secret history, not in this feed."
+        "note": "Shows entries where the user is the actor, i.e. what you did. What other people (share recipients, applications) did to your secrets shows only on the per-secret history, not in this feed.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6417,7 +6522,8 @@
         "evidence": "src/components/SecretDetailSidebar.vue:755 SecretActivityTab (v-if isOwner) -> src/components/SecretActivityTab.vue:100 -> src/store/modules/audit.js:65 GET /api/v1/audit/secret/{id} -> lib/Controller/AuditController.php:98 secret (owner-scoped, 404 for non-owners)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar > Activity section (owner only)",
-        "note": "Only the owner sees it; share recipients get no history view."
+        "note": "Only the owner sees it; share recipients get no history view.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6449,7 +6555,8 @@
         "evidence": "lib/Settings/AdminSettings.php + src/settings.js:35 AdminRoot -> src/views/settings/Settings.vue:30 AdminAuditSection -> src/components/settings/AdminAuditSection.vue:250,338,364 -> src/store/modules/audit.js:122 GET /api/v1/audit -> lib/Controller/AuditController.php:180 index (AuthorizedAdminSetting)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > audit section (filters, paging, client-side CSV export)",
-        "note": "Filter by event type, actor, object and date range, with paging and a CSV export of the whole filter result."
+        "note": "Filter by event type, actor, object and date range, with paging and a CSV export of the whole filter result.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6489,7 +6596,8 @@
             "issue": "#728",
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-siem-audit-export"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6521,7 +6629,8 @@
         "evidence": "src/views/settings/Settings.vue:24 ComplianceSection -> src/components/settings/ComplianceSection.vue:201 POST /api/v1/compliance/reports -> lib/Controller/ComplianceReportController.php:98 generate -> lib/Service/ComplianceReportService.php:152; export in src/dialogs/ComplianceSnapshotDialog.vue:148 exportCsv and :193 exportPdf (browser print), beacon POST .../exported :216",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > Compliance section > Generate report > snapshot dialog (Export CSV / Export PDF (print))",
-        "note": "Metadata-only aggregates (secrets per user, share hygiene, rotation posture, ciphertext age). The PDF is the browser print dialog over the rendered snapshot, not a server-generated file."
+        "note": "Metadata-only aggregates (secrets per user, share hygiene, rotation posture, ciphertext age). The PDF is the browser print dialog over the rendered snapshot, not a server-generated file.",
+        "change": "openspec/changes/archive/2026-07-18-compliance-reporting"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6553,7 +6662,8 @@
         "evidence": "lib/Service/ComplianceReportService.php:152-165 generate stores the aggregate with generatedAt/generatedBy; lib/Db/ComplianceReportMapper.php has only findById/findAll; appinfo/routes.php:195-199 no update or delete route; the exported route only records an audit event (lib/Service/ComplianceReportService.php:211)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Compliance section report list; snapshots reopen as stored",
-        "note": "Immutable at the application level: no edit or delete path. No signature or hash, so the snapshot is not tamper-evident against database access."
+        "note": "Immutable at the application level: no edit or delete path. No signature or hash, so the snapshot is not tamper-evident against database access.",
+        "change": "openspec/changes/archive/2026-07-18-compliance-reporting"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6585,7 +6695,8 @@
         "evidence": "src/components/SecretDetailSidebar.vue:814 HoneyPanel -> src/components/HoneyPanel.vue:181 store.flag -> src/store/modules/honey.js:56 POST /api/v1/secrets/{id}/honey -> lib/Controller/HoneyController.php; lib/AppInfo/AuditStreamEventRegistrar.php:92 HoneyTripwireListener -> lib/Listener/HoneyTripwireListener.php:141,160,173 (UI read, machine retrieve, link access) -> lib/Service/HoneyTripwireService.php:91 raiseAlert, :173 notify owner and admins; admin alert list src/components/settings/HoneySection.vue:145",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar > Honey tripwire panel; alerts in the panel and in Nextcloud admin settings > Keepiq > Honey section",
-        "note": "You flag an existing secret as a decoy; any server-observed access (UI read, application retrieval, link share, share copy) raises an alert and a notification that bypasses notification preferences. Alerts can be acknowledged or snoozed."
+        "note": "You flag an existing secret as a decoy; any server-observed access (UI read, application retrieval, link share, share copy) raises an alert and a notification that bypasses notification preferences. Alerts can be acknowledged or snoozed.",
+        "change": "openspec/changes/archive/2026-07-20-honey-credentials"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6616,7 +6727,8 @@
         "evidence": "src/views/SecretList.vue:170 menu action openGdpr -> src/dialogs/GdprExportDialog.vue:155 -> src/store/modules/export.js:250 exportGdprPackage, GET /api/v1/gdpr/metadata -> lib/Controller/GdprController.php:93 -> lib/Service/GdprService.php:102 collectMetadata (shares given/received, delegations, link shares, requests, suites, attachments)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list page > actions menu > GDPR export dialog",
-        "note": "Server metadata is combined client-side with the decrypted vault into one package; the export is audited as vault.gdpr_exported."
+        "note": "Server metadata is combined client-side with the decrypted vault into one package; the export is audited as vault.gdpr_exported.",
+        "spec": "openspec/specs/gdpr-compliance"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6648,7 +6760,8 @@
         "evidence": "src/views/SecretList.vue:175 deletionOpen -> src/dialogs/AccountDeletionDialog.vue:208 -> src/store/modules/export.js:286 DELETE /api/v1/gdpr/account-data -> lib/Controller/GdprController.php:130 (confirmation phrase) -> lib/Service/AccountDeletionService.php:108 deleteAllFor; lib/Service/AccountShareCleanupService.php:84 transferDelegatedSecrets, :126 detachGrantedShares tombstones recipient copies, :162 removeReceivedShares; also on Nextcloud user deletion via lib/Listener/UserDeletedListener.php",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list page > actions menu > Delete account data dialog; automatically when an admin deletes the Nextcloud user",
-        "note": "Delegated secrets transfer to the delegate, recipients keep a tombstoned copy with sync severed, received shares and the user's own data are removed. Separately, a normal single-secret delete still leaves recipient copies live (#83), which is outside the account-deletion path."
+        "note": "Delegated secrets transfer to the delegate, recipients keep a tombstoned copy with sync severed, received shares and the user's own data are removed. Separately, a normal single-secret delete still leaves recipient copies live (#83), which is outside the account-deletion path.",
+        "spec": "openspec/specs/gdpr-compliance"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6679,7 +6792,8 @@
         "evidence": "lib/Service/AccountDeletionService.php:150 dispatches AccountDataDeletedEvent -> lib/AppInfo/AuditStreamEventRegistrar.php:96 AuditListener -> lib/Listener/AuditListener.php:120 anonymizeUser -> lib/Service/AuditService.php:270, lib/Db/AuditEntryMapper.php:285 anonymizeActor + metadata scrub of recipientId/delegatedTo",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic on in-app account data deletion and on Nextcloud user deletion",
-        "note": "Entries are kept with the actor replaced by a deleted-account marker. Object names (secret titles) on the entries are not scrubbed."
+        "note": "Entries are kept with the actor replaced by a deleted-account marker. Object names (secret titles) on the entries are not scrubbed.",
+        "spec": "openspec/specs/secret-audit-trail"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6741,7 +6855,8 @@
         "evidence": "lib/Service/HoneyTripwireService.php:173 honey_access notification; emergency_access_requested/accessed and secret_compromised notification subjects in lib/Service; lib/Service/SiemService.php:363 siem_dead_letter; grep for failed-unlock, mass-export or admin-change alert rules in lib: none",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud notifications for honey access, emergency access and breached secrets",
-        "note": "Real-time alerts exist for a fixed set of events (decoy touched, emergency access, compromised secret). There is no configurable risk rule engine for user or admin behaviour such as failed unlocks, bulk exports or policy changes; that would sit in a SIEM fed by the export."
+        "note": "Real-time alerts exist for a fixed set of events (decoy touched, emergency access, compromised secret). There is no configurable risk rule engine for user or admin behaviour such as failed unlocks, bulk exports or policy changes; that would sit in a SIEM fed by the export.",
+        "change": "openspec/changes/archive/2026-07-20-honey-credentials"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6801,7 +6916,8 @@
         "evidence": "src/views/SecretList.vue:1002 (Import toolbar item) -> src/dialogs/ImportWizardDialog.vue:492 onFilePicked (file.text() in browser) -> src/store/modules/import.js:106 parseFile via src/import/parsers/index.js:23 (csv, bitwarden, keepass-xml, nc-passwords, cxf, backup) -> src/store/modules/import.js:251 encryptRow (rsaEncrypt client-side) -> import.js:480 POST /api/v1/secrets/import-batch -> appinfo/routes.php:95 -> lib/Controller/ImportController.php:98 -> lib/Service/ImportService.php:101",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard",
-        "note": "Files are read and parsed in the browser and only ciphertext is posted in chunks of 50. Supported sources are generic CSV, Bitwarden JSON/CSV, KeePass XML, Nextcloud Passwords JSON, CXF and the own encrypted backup."
+        "note": "Files are read and parsed in the browser and only ciphertext is posted in chunks of 50. Supported sources are generic CSV, Bitwarden JSON/CSV, KeePass XML, Nextcloud Passwords JSON, CXF and the own encrypted backup.",
+        "change": "openspec/changes/archive/2026-06-14-secret-import"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6833,7 +6949,8 @@
         "evidence": "src/import/parsers/ncPasswords.js:103 parseNcPasswords (label/url/username/password, folder tree resolved) registered at src/import/parsers/index.js:26 -> ImportWizardDialog.vue format select -> src/store/modules/import.js:480 POST /api/v1/secrets/import-batch",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard (format 'Nextcloud Passwords (JSON backup)')",
-        "note": "File-based migration from the Passwords app's Predefined JSON backup, with folder hierarchy kept. There is no direct server-side migration by design (E2E); an encrypted Passwords backup is not handled."
+        "note": "File-based migration from the Passwords app's Predefined JSON backup, with folder hierarchy kept. There is no direct server-side migration by design (E2E); an encrypted Passwords backup is not handled.",
+        "change": "openspec/changes/archive/2026-06-14-secret-import"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6906,7 +7023,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-secret-import"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6946,7 +7064,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-secret-import"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6977,7 +7096,8 @@
         "evidence": "src/store/modules/import.js:119 rejected rows at parse, import.js:427-447 chunk and per-index server rejections folded in -> summary step src/dialogs/ImportWizardDialog.vue:224-278 (Rejected rows table with row/name/reason) -> ImportWizardDialog.vue:545 downloadRejected (client-side CSV, import.js:501)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> summary step",
-        "note": "The summary lists counts plus a table of rejected rows with the reason and offers a client-side CSV download of them. The report is transient and not stored."
+        "note": "The summary lists counts plus a table of rejected rows with the reason and offers a client-side CSV download of them. The report is transient and not stored.",
+        "change": "openspec/changes/archive/2026-06-14-secret-import"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7022,7 +7142,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-18-cxf-import-export"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7133,7 +7254,8 @@
         "evidence": "src/dialogs/ExportDialog.vue:44 Plaintext CSV mode -> warning acknowledgement checkbox -> master password field -> ExportDialog.vue:349 verifyMasterPassword (src/crypto/reauth.js:117, client-side decrypt of the private-key blob) -> :380 src/store/modules/export.js:122 exportCsv -> POST /api/v1/export/events before local download",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog (Plaintext CSV)",
-        "note": "The CSV path requires acknowledging an unencrypted-file warning and re-entering the master password, verified in the browser, before the local download; the export is reported as an event first."
+        "note": "The CSV path requires acknowledging an unencrypted-file warning and re-entering the master password, verified in the browser, before the local download; the export is reported as an event first.",
+        "change": "openspec/changes/archive/2026-06-14-secret-export-gdpr"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7205,7 +7327,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-06-14-secret-import"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7298,7 +7421,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "spec": "openspec/specs/browser-extension-autofill"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7477,7 +7601,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-20-mobile-pwa"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7516,7 +7641,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-07-20-mobile-pwa"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7548,7 +7674,8 @@
         "evidence": "src/App.vue:774 offlineStore.syncNow after online unlock -> src/store/modules/offline.js:106 GET /api/v1/offline/manifest (appinfo/routes.php:229) -> encryptSnapshot + IndexedDB writeSnapshot (src/offline/cache.js) ; offline: src/views/LockScreen.vue:715 unlockOffline -> offline.js:140 (no network) -> src/store/modules/secret.js:99 reads the offline vault ; read-only gates src/views/SecretList.vue:704 ; admin toggle src/views/settings/Settings.vue:27 OfflineCacheSection",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "LockScreen while offline -> SecretList (read-only, stale-data banner src/App.vue:76)",
-        "note": "Each online unlock writes an encrypted snapshot to IndexedDB; offline, the lock screen unlocks from it without a network call and the vault is shown read-only with a stale-data banner. Admins can switch caching off, which purges snapshots."
+        "note": "Each online unlock writes an encrypted snapshot to IndexedDB; offline, the lock screen unlocks from it without a network call and the vault is shown read-only with a stale-data banner. Admins can switch caching off, which purges snapshots.",
+        "spec": "openspec/specs/offline-readonly-cache"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7755,7 +7882,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/archive/2026-10-04-clients-extension-gaps"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7832,7 +7960,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "spec": "none"
       },
       "rowSource": "own",
       "provider": "thematiq",
@@ -7862,7 +7991,8 @@
         "evidence": "src/manifest.json:3 walkthrough (tour keepiq:getting-started, trigger first-visit, 7 steps) -> src/main.js:236 manifestForLockState (src/router/guards.js, withheld while locked) -> CnWalkthrough in @conduction/nextcloud-vue resolves nav-item refs via data-cn-route, emitted by src/components/KeepiqAppNav/KeepiqAppNav.vue:52 ; completion stored via GET/PUT /api/preferences/walkthrough_completed_version (src/router/guards.js:310, OpenRegister AppHost preferences controller)",
         "owner": "ConductionNL/nextcloud-vue",
         "reachedOn": "First unlocked visit to the app -> Getting started tour",
-        "note": "A seven-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored through the OpenRegister AppHost preferences endpoint."
+        "note": "A seven-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored through the OpenRegister AppHost preferences endpoint.",
+        "spec": "none"
       },
       "rowSource": "own",
       "provider": "nextcloud-vue",
@@ -7900,7 +8030,8 @@
             "issue": "#208",
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "spec": "openspec/specs/dashboard"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8060,7 +8191,8 @@
         "evidence": "l10n/ holds 74 files (37 languages, l10n/nl.json 1173 strings) loaded through Nextcloud's translation layer; the language is each user's Nextcloud personal setting",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Every keepiq page, in the language chosen under Nextcloud personal settings",
-        "note": "Keepiq ships its own translations and follows the per-user Nextcloud language."
+        "note": "Keepiq ships its own translations and follows the per-user Nextcloud language.",
+        "spec": "hydra/openspec/specs/i18n-infrastructure"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
