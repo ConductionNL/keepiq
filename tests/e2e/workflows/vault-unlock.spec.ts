@@ -206,6 +206,10 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 
 		expect(hashes.length).toBeGreaterThan(5)
 
+		// Every goto is a full page load: about 4.6 s a route in CI, so the 17
+		// routes outgrew the default budget at route 15. Scale it with the walk.
+		test.setTimeout(30_000 + hashes.length * 10_000)
+
 		for (const hash of hashes) {
 			// ADR-074 rule 4, and the note above: `networkidle` never settles on
 			// Nextcloud, and it was never what caught this bug — the `request`

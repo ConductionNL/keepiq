@@ -227,7 +227,7 @@ test.describe('Workflow: offboard a leaver from the member overview', () => {
 		).toBe(1)
 
 		await expect(offboarding.getByTestId('offboarding-summary')).toContainText(
-			'Removed the user from 1 team folders.',
+			'Removed the user from 1 team folder.',
 		)
 
 		// --- The leaver has no user row in the team folder any more ---
