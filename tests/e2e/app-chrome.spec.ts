@@ -143,7 +143,7 @@ test.describe('app chrome (ADR-114)', () => {
 		await dismissSetupWizard(page)
 	})
 
-	test('the footer reads Documentation, Reports, Features & roadmap, each with a glyph', async ({
+	test('the footer reads Documentation, Features & roadmap, each with a glyph', async ({
 		page,
 	}) => {
 		const footer = page.locator(
@@ -159,10 +159,9 @@ test.describe('app chrome (ADR-114)', () => {
 		// ORDER is the rule, not the numbers: ADR-114 fixes the sequence and
 		// openregister runs its footer at 1/2 while pipelinq runs 160/200/230.
 		const seen = texts.filter((t) => /Documentation|Reports|roadmap/i.test(t))
-		expect(seen.length).toBe(3)
+		expect(seen.length).toBe(2)
 		expect(seen[0]).toMatch(/Documentation/i)
-		expect(seen[1]).toMatch(/Reports/i)
-		expect(seen[2]).toMatch(/roadmap/i)
+		expect(seen[1]).toMatch(/roadmap/i)
 
 		// A glyph on every row. This is the assertion that would have caught
 		// the unregistered-icon defect in launchpad, humaniq and planninq.
@@ -187,6 +186,8 @@ test.describe('app chrome (ADR-114)', () => {
 			nav.locator('[data-testid="cn-nav-entry-PasswordHealthMenu"]'),
 		).toHaveCount(0)
 
+		// Reports sits in the Advanced foldout, so open it first.
+		await nav.locator('[data-testid="cn-nav-settings"]').click()
 		await nav
 			.locator('[data-testid="cn-nav-entry-ReportsMenu"] a')
 			.first()
