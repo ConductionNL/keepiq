@@ -3,7 +3,7 @@ name: Standalone (no other app)
 # Keepiq must install and work with no other Conduction app (ADR-006,
 # standalone-app-shell). This job pins that promise: one Nextcloud with Keepiq
 # ALONE (no OpenRegister, no integriq, no Hermiq), provisioned by the same
-# browser-extension/capture setup docs-media.yml uses, then
+# tests/server setup, then
 #
 # - a smoke check: the other apps are not enabled, the login page and
 #   Keepiq's health answer 200, metrics answers an admin;
@@ -22,7 +22,7 @@ on:
       - "src/**"
       - "appinfo/**"
       - "tests/e2e/**"
-      - "browser-extension/capture/**"
+      - "tests/server/**"
       - ".github/workflows/standalone.yml"
   push:
     branches: [development]
@@ -31,7 +31,7 @@ on:
       - "src/**"
       - "appinfo/**"
       - "tests/e2e/**"
-      - "browser-extension/capture/**"
+      - "tests/server/**"
       - ".github/workflows/standalone.yml"
   workflow_dispatch:
 
@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 45
     env:
       PROJECT: kq-standalone
-      KQ_MEDIA_PORT: "8188"
+      KQ_TEST_PORT: "8188"
       BASE: http://localhost:8188
     steps:
       - uses: actions/checkout@v4
@@ -68,10 +68,10 @@ jobs:
           npm run build
 
       - name: Start the instance
-        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
+        run: docker compose -p "$PROJECT" -f keepiq/tests/server/compose.yaml up -d
       # No OpenRegister directory: the setup copies in and enables Keepiq only.
       - name: Provision it with Keepiq alone
-        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq
+        run: bash keepiq/tests/server/setup.sh "$PROJECT" keepiq
 
       - name: Smoke check
         run: |

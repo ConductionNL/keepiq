@@ -3,9 +3,8 @@ name: Mobile e2e
 # End-to-end tests of the native apps (clients-mobile-apps), with
 # screenshots and video of the flows as artifacts.
 #
-# Android: the Nextcloud with Keepiq (alone, ADR-006) of
-# browser-extension/capture (the same setup docs-media.yml uses), behind the
-# https front of mobile/e2e/server.mjs, and an emulator that reaches it at
+# Android: the Nextcloud with Keepiq (alone, ADR-006) of tests/server, behind
+# the https front of mobile/e2e/server.mjs, and an emulator that reaches it at
 # https://10.0.2.2:8443. The e2e build type trusts that run's certificate;
 # debug and release builds never do.
 #
@@ -19,8 +18,7 @@ on:
     branches: [main, development, beta]
     paths:
       - "mobile/**"
-      - "browser-extension/capture/compose.yaml"
-      - "browser-extension/capture/setup.sh"
+      - "tests/server/**"
       - ".github/workflows/mobile-e2e.yml"
   workflow_dispatch:
 
@@ -71,9 +69,9 @@ jobs:
         run: |
           composer install --no-dev --prefer-dist --no-interaction --working-dir=keepiq
       - name: Start the test server
-        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
+        run: docker compose -p "$PROJECT" -f keepiq/tests/server/compose.yaml up -d
       - name: Provision it
-        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq
+        run: bash keepiq/tests/server/setup.sh "$PROJECT" keepiq
       # The demo vault the vault tests read: example.com names, all fake.
       - name: Seed the demo vault
         run: node keepiq/mobile/e2e/server.mjs seed --upstream http://localhost:8188
@@ -150,7 +148,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash keepiq/mobile/e2e/android-run.sh "$OUT" "$PROJECT" keepiq/browser-extension/capture/out/app-password
+          script: bash keepiq/mobile/e2e/android-run.sh "$OUT" "$PROJECT" keepiq/tests/server/out/app-password
       - name: Server logs
         if: failure()
         run: |
@@ -165,7 +163,7 @@ jobs:
           retention-days: 14
       - name: Stop the test server
         if: always()
-        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml down -v
+        run: docker compose -p "$PROJECT" -f keepiq/tests/server/compose.yaml down -v
 
   ios:
     runs-on: macos-latest
