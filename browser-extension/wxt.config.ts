@@ -1,4 +1,5 @@
 import type { Server } from 'node:http'
+import { resolve } from 'node:path'
 import { defineConfig } from 'wxt'
 import { defaultBrowserBinaries } from './scripts/default-browser'
 import { startTestSite, TEST_SITE_PORT } from './scripts/test-site'
@@ -23,7 +24,12 @@ export default defineConfig({
 		binaries: defaultBrowserBinaries(),
 		startUrls: [`http://localhost:${TEST_SITE_PORT}/`],
 		// A persistent profile keeps the paired account and settings across dev restarts.
-		chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
+		chromiumProfile: resolve('.wxt/chrome-data'),
+		keepProfileChanges: true,
+		// Open only the start URL, not the tabs of the last run; 5 is "New Tab page".
+		chromiumPref: { session: { restore_on_startup: 5 } },
+		// Stopping dev kills the browser, which it would otherwise report as a crash.
+		chromiumArgs: ['--hide-crash-restore-bubble'],
 	},
 	// No `manifestVersion` here on purpose: WXT's per-browser default (Chrome MV3,
 	// Firefox MV2) is what keeps `wxt -b firefox` working. See WXT-AND-BROWSERS.md § 2.
