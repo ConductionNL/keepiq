@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import type { AccountStatus, AccountSummary, PopupState } from '@/src/messages'
 import { Avatar } from '../components/Avatar'
-import { Button } from '../components/Button'
-import { LogOutConfirm, useLogOutConfirm } from '../components/LogOutConfirm'
+import { IconButton } from '../components/Button'
+import { Icon } from '../components/Icon'
+import { Confirm, LogOutConfirm, useLogOutConfirm } from '../components/LogOutConfirm'
 import type { Dispatch } from '../hooks/usePopupState'
 
 const STATUS_LABEL: Record<AccountStatus, string> = { unlocked: 'Unlocked', locked: 'Locked', logged_out: 'Logged out' }
@@ -14,19 +14,22 @@ function AccountRow({ account, dispatch, onSelect }: { account: AccountSummary; 
 	return (
 		<li className="accounts__row">
 			<button type="button" className="accounts__select" onClick={onSelect} aria-current={account.active ? 'true' : undefined}>
-				<Avatar name={account.displayName} dataUrl={account.avatarDataUrl} />
+				<span className={`accounts__avatar accounts__avatar--${account.status}`}>
+					<Avatar name={account.displayName} dataUrl={account.avatarDataUrl} size={36} />
+				</span>
 				<span className="accounts__text">
-					<span className="accounts__name">{account.displayName}{account.active && <span className="accounts__active"> (active)</span>}</span>
+					<span className="accounts__name">{account.displayName}{account.active && <span className="sr-only"> (active)</span>}</span>
 					<span className="accounts__host">{account.host}</span>
 					<span className={`status status--${account.status}`}>{STATUS_LABEL[account.status]}</span>
 				</span>
+				{account.active && <span className="accounts__check"><Icon name="check" /></span>}
 			</button>
 			<span className="accounts__actions">
 				{account.status === 'unlocked' && (
-					<Button variant="link" aria-label={`Lock ${which}`} onClick={() => void dispatch({ kind: 'vault.lock', accountId: account.id })}>Lock</Button>
+					<IconButton icon="lock" label={`Lock ${which}`} onClick={() => void dispatch({ kind: 'vault.lock', accountId: account.id })} />
 				)}
 				{!logOut.confirming && (
-					<Button variant="link" aria-label={`Log out of ${which}`} onClick={logOut.ask} autoFocus={logOut.triggerAutoFocus}>Log out</Button>
+					<IconButton icon="logOut" label={`Log out of ${which}`} onClick={logOut.ask} autoFocus={logOut.triggerAutoFocus} />
 				)}
 			</span>
 			{logOut.confirming && (
@@ -44,7 +47,7 @@ interface Props {
 }
 
 export function AccountSwitcher({ state, dispatch, onClose, onAddAccount }: Props) {
-	const [confirmingLogOutAll, setConfirmingLogOutAll] = useState(false)
+	const logOutAll = useLogOutConfirm()
 
 	async function select(accountId: string) {
 		const result = await dispatch({ kind: 'accounts.switch', accountId })
@@ -53,25 +56,45 @@ export function AccountSwitcher({ state, dispatch, onClose, onAddAccount }: Prop
 
 	return (
 		<div className="stack">
-			<ul className="accounts">
+			<ul className="card accounts">
 				{state.accounts.map((account) => (
 					<AccountRow key={account.id} account={account} dispatch={dispatch} onSelect={() => void select(account.id)} />
 				))}
 			</ul>
 
-			<Button variant="secondary" onClick={onAddAccount} disabled={!state.canAddAccount}>Add account</Button>
-			{!state.canAddAccount && <p className="hint">Maximum of 5 accounts reached</p>}
-			<Button variant="secondary" onClick={() => void dispatch({ kind: 'vault.lockAll' })}>Lock all</Button>
-			{confirmingLogOutAll
-				? (
-					<div className="confirm" role="group" aria-label="Log out of every account?">
-						<p className="hint">Log out of every account? You will need each app password again.</p>
-						<Button variant="danger" onClick={() => void dispatch({ kind: 'accounts.removeAll' }).then(onClose)}>Log out all</Button>
-						<Button variant="link" onClick={() => setConfirmingLogOutAll(false)}>Cancel</Button>
-					</div>
-				)
-				: <Button variant="secondary" onClick={() => setConfirmingLogOutAll(true)}>Log out all</Button>}
-			<Button variant="link" onClick={onClose}>Back</Button>
+			<section className="section" aria-labelledby="options-heading">
+				<h2 className="section__title" id="options-heading">Options</h2>
+				<ul className="card menu">
+					<li>
+						<button type="button" className="menu__item" onClick={onAddAccount} disabled={!state.canAddAccount} aria-describedby={state.canAddAccount ? undefined : 'limit-hint'}>
+							<Icon name="plus" />Add account
+						</button>
+					</li>
+					<li>
+						<button type="button" className="menu__item" onClick={() => void dispatch({ kind: 'vault.lockAll' })}>
+							<Icon name="lock" />Lock all
+						</button>
+					</li>
+					<li>
+						{logOutAll.confirming
+							? (
+								<Confirm
+									question="Log out of every account?"
+									detail="Every account is removed from this browser. You will need each app password again."
+									action="Log out all"
+									onConfirm={() => void dispatch({ kind: 'accounts.removeAll' }).then(onClose)}
+									onCancel={logOutAll.cancel}
+								/>
+							)
+							: (
+								<button type="button" className="menu__item menu__item--danger" onClick={logOutAll.ask} autoFocus={logOutAll.triggerAutoFocus}>
+									<Icon name="logOut" />Log out all
+								</button>
+							)}
+					</li>
+				</ul>
+				{!state.canAddAccount && <p className="hint" id="limit-hint">Maximum of 5 accounts reached</p>}
+			</section>
 		</div>
 	)
 }
