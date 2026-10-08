@@ -17,10 +17,10 @@ Multiple languages are the goal. This change lays the groundwork and ships the f
 
 - All user-facing text comes from a message catalog per language, built on the browser's own `_locales` through WXT's `@wxt-dev/i18n` module.
 - The language follows the browser's UI language, with English as the fallback. There is no picker in the extension, as in Bitwarden.
-- The manifest name, description and toolbar title are localised, so the extensions page and the stores show them in the user's language.
+- The manifest description is localised, so the extensions page and the stores show it in the user's language. The name "Keepiq" is a brand and stays.
 - The background sends codes, never display text: error messages, the key-changed notice and the blocked-item reason become codes the popup turns into text.
-- Dates, relative times and numbers are formatted in the browser's UI language.
-- English and Dutch catalogs with exactly the same keys, guarded by a test.
+- Dates, relative times and numbers are formatted in the catalog's language.
+- English and Dutch catalogs with exactly the same keys, guarded by a test, and a lint rule against hard-coded text in the popup.
 
 ## Capabilities
 
@@ -40,7 +40,7 @@ None. `openspec/specs/` is empty today. The Language line in ext-settings reads 
 
 ## Impact
 
-- New: `locales/en.yml`, `locales/nl.yml`, `locales/locales.test.ts`, `entrypoints/popup/rich.tsx`.
-- Edited: `wxt.config.ts` (module, `default_locale`, `__MSG_` manifest fields), `package.json`, `src/vault/sync.ts`, `src/vault/store.ts`, `src/background/router.ts`, `src/vault/unlock.ts`, `src/api/client.ts`, `src/messages.ts`, `entrypoints/popup/errors.ts`, `relative-time.ts`, `hooks/usePopupState.ts` and every popup view and component with text.
+- New: `locales/en.yml`, `locales/nl.yml`, `locales/locales.test.ts`, `entrypoints/popup/i18n.tsx`, `src/testing/i18n.ts`, `vitest.setup.ts`.
+- Edited: `wxt.config.ts` (module, `default_locale`, `__MSG_` description), `package.json`, `eslint.config.mjs`, `vitest.config.ts`, `src/vault/sync.ts`, `src/vault/store.ts`, `src/vault/types.ts`, `src/vault/payloads.ts`, `src/background/router.ts`, `src/vault/unlock.ts`, `src/api/client.ts`, `src/messages.ts`, `entrypoints/popup/errors.ts`, `relative-time.ts`, `main.tsx`, `hooks/usePopupState.ts`, `hooks/useMessage.ts` and every popup view and component with text.
 - New dependency: `@wxt-dev/i18n`.
 - No new permissions. `browser.i18n` needs none.

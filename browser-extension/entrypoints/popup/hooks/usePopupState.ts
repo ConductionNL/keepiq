@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { PopupState, PopupToBackground, Result } from '@/src/messages'
+import { errorText } from '../errors'
 import { sendMessage } from './useMessage'
 
 export type Dispatch = (message: PopupToBackground) => Promise<Result>
@@ -17,7 +18,7 @@ export function usePopupState(): { state: PopupState | null; error: string | nul
 
 	useEffect(() => {
 		void dispatch({ kind: 'vault.status' }).then((result) => {
-			if (!result.ok) setError(result.message)
+			if (!result.ok) setError(errorText(result.code, ''))
 		})
 	}, [dispatch])
 

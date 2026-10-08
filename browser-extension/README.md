@@ -55,10 +55,21 @@ entrypoints/     one file (or directory) per extension entrypoint
   popup/         toolbar popup
   offscreen/     Chrome offscreen document that clears the clipboard
 src/             shared modules, imported as `@/src/…`
+locales/         one message catalog per language
 public/          copied verbatim into the build (icons live here)
 scripts/         dev tooling, never bundled
 test-site/       mock login pages for manual testing, never bundled
 ```
+
+## Adding a language
+
+The extension follows the browser's language; [ARCHITECTURE.md](ARCHITECTURE.md#translations) has the rules.
+
+1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales).
+2. Translate every value and set `language` to the language's tag.
+3. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
+4. A language with "few" or "many" plural forms (Polish, Russian) needs a plural helper first.
+5. Run `npm test`; the parity test names missing keys and placeholders.
 
 ## Releasing
 

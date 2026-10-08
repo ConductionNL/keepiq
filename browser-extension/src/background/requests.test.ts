@@ -59,7 +59,7 @@ describe('vault.snapshot', () => {
 		if (reply.state !== 'unlocked') throw new Error(reply.state)
 		expect(reply.suggestionIds).toEqual(['a', 'c'])
 		expect(reply.items?.map((item) => [item.id, item.hasLogin, item.blocked])).toEqual([['a', true, false], ['b', false, false], ['c', false, true]])
-		expect(reply.items?.[2]).toMatchObject({ blockedReason: 'suite revoked' })
+		expect(reply.items?.[2]).toMatchObject({ blockedReason: 'suite_revoked' })
 		expect(reply.folders).toEqual([{ id: 'f1', name: 'Work', parentId: null }])
 		expect(reply.types[0]).toEqual({ id: 't-login', name: 'login', label: 'Login' })
 		expect(reply.webAppUrl).toBe('https://cloud.example.org/index.php/apps/keepiq/')

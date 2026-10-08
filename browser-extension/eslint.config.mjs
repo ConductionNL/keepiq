@@ -19,6 +19,17 @@ export default [
 		...reactHooks.configs.flat.recommended,
 	},
 	{
+		// User-facing text comes from locales/ (ext-i18n).
+		files: ['entrypoints/**/*.tsx'],
+		ignores: ['**/*.test.tsx'],
+		rules: {
+			'no-restricted-syntax': ['error',
+				{ selector: 'JSXText[value=/[A-Za-z]/]', message: 'Put user-facing text in locales/ and use i18n.t().' },
+				{ selector: 'JSXAttribute[name.name=/^(label|title|aria-label|placeholder|question|detail|action|text|alt)$/] > Literal[value=/[A-Za-z]/]', message: 'Put user-facing text in locales/ and use i18n.t().' },
+			],
+		},
+	},
+	{
 		// Build tooling runs in Node, not in the extension — without this every
 		// `process` / `console` reference is a `no-undef` error.
 		files: ['scripts/**/*.{js,mjs,ts}'],

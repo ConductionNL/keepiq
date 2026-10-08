@@ -1,4 +1,4 @@
-import type { ItemMeta } from '@/src/messages'
+import type { BlockReason, ItemMeta } from '@/src/messages'
 import type { StoredSecretRow, VaultSnapshot } from './types'
 
 export const vaultCacheKey = (accountId: string) => `vaultCache.${accountId}`
@@ -63,8 +63,11 @@ export function toItemMeta(row: StoredSecretRow): ItemMeta {
 		expiresAt: row.expiresAt,
 	}
 	if (row.blocked) {
-		meta.blockedReason = row.blockedReason
+		// A snapshot written by an older version holds English text here until the next sync.
+		if (row.blockedReason && BLOCK_REASONS.includes(row.blockedReason)) meta.blockedReason = row.blockedReason
 		meta.migrationError = row.migrationError ?? null
 	}
 	return meta
 }
+
+const BLOCK_REASONS: readonly string[] = ['suite_missing', 'suite_revoked', 'suite_compromised', 'migration_failed'] satisfies BlockReason[]

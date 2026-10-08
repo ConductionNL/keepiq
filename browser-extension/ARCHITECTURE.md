@@ -35,7 +35,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `requests.ts`: vault and popup requests.
   - `broadcast.ts`: background-to-popup notices.
 - `src/messages.ts`: every message type, in one place.
-- `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code, message }`.
+- `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
 - `src/clipboard.ts`: copy in the popup, clear from the background.
 - `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module.
 - `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2.
@@ -46,7 +46,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 
 | Direction | Kinds | Reply |
 | --- | --- | --- |
-| Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code, message }` |
+| Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
 | Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
@@ -104,9 +104,22 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 - **Log out** marks the account first, then purges. A sync or unlock that is still running sees the mark and undoes its own writes.
 - **Account-list changes** queue through `mutateAccounts`, so none of them works on a stale read.
 
+## Translations
+
+The specs are in `openspec/changes/ext-i18n/`.
+
+- **Catalogs:** `locales/<lang>.yml`, English the source, built into `_locales/` by `@wxt-dev/i18n`. Each names its own `language`.
+- **Language:** the browser's UI language picks the catalog, with English as the fallback. There is no picker.
+- **Use:** `i18n.t('group.key', { name })` from `#i18n`. Helpers for a link inside a sentence, field actions and formatting are in `entrypoints/popup/i18n.tsx`.
+- **Codes, not text:** the background sends error, notice and blocked-reason codes; `entrypoints/popup/errors.ts` words them. A blocked row stores its reason as a code too.
+- **Formatting:** dates, relative times, numbers and `<html lang>` use the catalog's `language`, not the browser's.
+- **Guards:** `locales/locales.test.ts` checks keys and placeholders across catalogs; lint fails on hard-coded text in popup components.
+- **Adding a language:** see the [README](README.md#adding-a-language).
+
 ## Testing
 
 - Every module and popup component has a `*.test.ts(x)` next to it, run by vitest on WXT's in-memory `browser`.
 - Popup tests use happy-dom and the helpers in `entrypoints/popup/testing.ts`.
+- Tests render in English from the real catalogs; `setLocale('nl')` from `src/testing/i18n.ts` switches one to Dutch.
 - `test-site/` holds mock pages for manual checks, one per fill and capture case.
 - The commands are in the [README](README.md#checks--builds). Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching `entrypoints/`.

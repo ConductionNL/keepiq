@@ -1,5 +1,6 @@
 import { importPublicKey, rsaEncrypt } from '@/src/crypto'
-import type { BlockedSecretRow, FolderRow, OpenSecretRow, SecretTypeRow } from '@/src/api/types'
+import type { FolderRow, OpenSecretRow, SecretTypeRow } from '@/src/api/types'
+import type { StoredBlockedRow } from '@/src/vault/types'
 import { envelope, suiteRow } from './vectors'
 
 let publicKey: Promise<CryptoKey> | undefined
@@ -21,12 +22,13 @@ export function secretRow(overrides: Partial<OpenSecretRow> = {}): OpenSecretRow
 	}
 }
 
-export function blockedRow(overrides: Partial<BlockedSecretRow> = {}): BlockedSecretRow {
+/** A blocked row as the snapshot stores it, on the revoked `suite-0`. */
+export function blockedRow(overrides: Partial<StoredBlockedRow> = {}): StoredBlockedRow {
 	const base: Partial<OpenSecretRow> = secretRow()
 	delete base.key
 	delete base.login
 	delete base.additionalFields
-	return { ...(base as Omit<OpenSecretRow, 'key' | 'login' | 'additionalFields' | 'blocked'>), id: 'b1', name: 'Blocked', blocked: true, blockedReason: 'suite revoked', ...overrides }
+	return { ...(base as Omit<OpenSecretRow, 'key' | 'login' | 'additionalFields' | 'blocked'>), id: 'b1', name: 'Blocked', encryptionSuiteId: 'suite-0', blocked: true, blockedReason: 'suite_revoked', ...overrides }
 }
 
 export function folderRow(overrides: Partial<FolderRow> = {}): FolderRow {

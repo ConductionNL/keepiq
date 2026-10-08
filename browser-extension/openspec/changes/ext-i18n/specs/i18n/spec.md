@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Text from the catalog
-The extension SHALL take every user-facing text from the message catalog of the active language: visible text, `aria-label`, `title`, `placeholder`, toasts, error messages and the manifest's name, description and toolbar title. Values from the vault or the server, such as item names, folder names and type labels, are shown as they are.
+The extension SHALL take every user-facing text from the message catalog of the active language: visible text, `aria-label`, `title`, `placeholder`, toasts, error messages and the manifest's description. The name "Keepiq" is a brand and stays as it is, also as the toolbar title. Values from the vault or the server, such as item names, folder names and type labels, are shown as they are.
 
 #### Scenario: Dutch browser
 - **GIVEN** the browser's UI language is Dutch
@@ -43,7 +43,7 @@ The background SHALL send codes to the popup, never display text: a failed actio
 - **THEN** it shows the catalog's text, not the server's message
 
 ### Requirement: Blocked reasons stored as codes
-The extension SHALL store the reason a row is blocked as a code (`suite_missing`, `suite_compromised` or `suite_revoked`), so a cached vault shows its reasons in the current language. A stored reason that is not a known code MUST show the generic blocked text.
+The extension SHALL store the reason a row is blocked as a code (`suite_missing`, `suite_revoked`, `suite_compromised`, or `migration_failed` for a fallback row carrying `migrationError`), never the server's text, so a cached vault shows its reasons in the current language. A stored reason that is not a known code MUST show the generic blocked text.
 
 #### Scenario: Language changed after sync
 - **GIVEN** a vault synced while the browser was in English, with a row on a compromised suite
@@ -55,10 +55,15 @@ The extension SHALL store the reason a row is blocked as a code (`suite_missing`
 - **WHEN** the item is opened
 - **THEN** the generic blocked text is shown
 
-### Requirement: Formatting in the browser's language
-The extension SHALL format dates, times, relative times and numbers in the browser's UI language, and MUST put counts in the catalog's plural forms.
+### Requirement: Formatting in the catalog's language
+The extension SHALL format dates, times, relative times and numbers in the language of the catalog in use, so they match the text around them, and MUST put counts in the catalog's plural forms. The popup's `<html lang>` names the same language.
 
 #### Scenario: Last synced
 - **GIVEN** the browser's UI language is Dutch and the vault is offline
 - **WHEN** the last sync was five minutes ago
 - **THEN** the banner shows the relative time in Dutch
+
+#### Scenario: Language without a catalog
+- **GIVEN** the browser's UI language is French
+- **WHEN** an item's dates render
+- **THEN** they are formatted for English, like the text around them

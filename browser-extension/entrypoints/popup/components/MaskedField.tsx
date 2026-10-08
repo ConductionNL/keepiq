@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useClipboard } from '../hooks/useClipboard'
+import { fieldAction } from '../i18n'
 import { IconButton } from './Button'
 
 interface Props {
@@ -16,9 +17,6 @@ interface Props {
 	copyable?: boolean
 }
 
-/** "Password" → "password", but "API key" and "BSN" keep their capitals. */
-const inSentence = (label: string) => label.replace(/^[A-Z][a-z]/, (start) => start.toLowerCase())
-
 export function MaskedField({ label, value, masked = false, maskedText = '••••••••', what, actions, copyable = true }: Props) {
 	const [revealed, setRevealed] = useState(false)
 	const copy = useClipboard()
@@ -29,9 +27,9 @@ export function MaskedField({ label, value, masked = false, maskedText = '••
 				<span className="field-row__label">{label}</span>
 				<span className={`field-row__value${masked && revealed ? ' field-row__value--mono' : ''}`}>{hidden ? maskedText : value}</span>
 			</div>
-			{masked && <IconButton icon={revealed ? 'eyeOff' : 'eye'} label={`${revealed ? 'Hide' : 'Show'} ${inSentence(label)}`} aria-pressed={revealed} onClick={() => setRevealed(!revealed)} />}
+			{masked && <IconButton icon={revealed ? 'eyeOff' : 'eye'} label={fieldAction(revealed ? 'field.hide' : 'field.show', label)} aria-pressed={revealed} onClick={() => setRevealed(!revealed)} />}
 			{actions}
-			{copyable && <IconButton icon="copy" label={`Copy ${inSentence(label)}`} onClick={() => void copy(value, what ?? label)} />}
+			{copyable && <IconButton icon="copy" label={fieldAction('field.copy', label)} onClick={() => void copy(value, what ?? label)} />}
 		</div>
 	)
 }

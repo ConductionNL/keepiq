@@ -17,15 +17,15 @@ export function text(payload: Record<string, unknown>, field: string): string {
 	return typeof value === 'string' ? value : typeof value === 'number' ? String(value) : ''
 }
 
-/** Same rules as the web app's `cardBrand`. */
-export function cardBrand(number: string): string {
+/** Same rules as the web app's `cardBrand`; `null` where it says "Card", so the popup words that. */
+export function cardBrand(number: string): string | null {
 	const digits = number.replace(/\D/g, '')
 	if (/^4/.test(digits)) return 'Visa'
 	if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard'
 	if (/^3[47]/.test(digits)) return 'American Express'
 	if (/^(6011|65|64[4-9])/.test(digits)) return 'Discover'
 	if (/^(50|56|57|58|63|67)/.test(digits)) return 'Maestro'
-	return 'Card'
+	return null
 }
 
 export function cardLast4(number: string): string {

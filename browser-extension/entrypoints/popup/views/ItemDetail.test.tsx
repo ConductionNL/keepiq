@@ -166,8 +166,8 @@ describe('passkey', () => {
 
 describe('blocked item', () => {
 	it('shows the reason and the web app, and never asks to decrypt', () => {
-		const { sent } = renderDetail(itemMeta({ blocked: true, hasLogin: false, blockedReason: 'suite revoked', migrationError: 'Key migration failed' }))
-		expect(screen.getByText(/suite revoked/)).toBeTruthy()
+		const { sent } = renderDetail(itemMeta({ blocked: true, hasLogin: false, blockedReason: 'suite_revoked', migrationError: 'Key migration failed' }))
+		expect(screen.getByText(/Its encryption key was revoked/)).toBeTruthy()
 		expect(screen.getByText(/Key migration failed/)).toBeTruthy()
 		expect(screen.getByRole('link', { name: 'Open the Keepiq web app' })).toBeTruthy()
 		expect(screen.queryByRole('heading', { name: 'Login credentials' })).toBeNull()

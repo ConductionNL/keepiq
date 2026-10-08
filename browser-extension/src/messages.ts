@@ -10,6 +10,9 @@ export type ContentToBackground =
 
 export type AccountStatus = 'unlocked' | 'locked' | 'logged_out'
 
+/** Here rather than in the account store, so the popup can name it without importing storage code. */
+export const MAX_ACCOUNTS = 5
+
 export interface AccountSummary {
 	id: string
 	serverUrl: string
@@ -27,8 +30,8 @@ export interface PopupState {
 	screen: PopupScreen
 	accounts: AccountSummary[]
 	active: AccountSummary | null
-	/** One-shot banner, e.g. "Session revoked, please log in again". */
-	notice: string | null
+	/** One-shot banner. */
+	notice: NoticeCode | null
 	canAddAccount: boolean
 	/** The tab to open on, so the first frame already shows it. */
 	lastTab: PopupTab
@@ -38,9 +41,14 @@ export type ErrorCode =
 	| 'insecure_url' | 'invalid_url' | 'permission_denied' | 'unreachable' | 'not_nextcloud'
 	| 'unauthorized' | 'keepiq_missing' | 'no_active_suite' | 'unlock_blocked' | 'duplicate'
 	| 'limit_reached' | 'invalid_master_password' | 'offline_no_cache' | 'session_revoked'
-	| 'write_locked' | 'server_error' | 'unknown'
+	| 'write_locked' | 'server_error' | 'not_responding' | 'unknown'
 
-export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; message: string }
+// Codes, never text: the popup words them in the browser's language (ext-i18n).
+export type NoticeCode = 'session_revoked' | 'key_changed'
+
+export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
+
+export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode }
 
 export type UnlockMethod = { type: 'masterPassword'; masterPassword: string }
 
@@ -77,7 +85,8 @@ export interface ItemMeta {
 	folderId: string | null
 	hasLogin: boolean
 	blocked: boolean
-	blockedReason?: string
+	/** Absent when the stored reason is not a known code. */
+	blockedReason?: BlockReason
 	migrationError?: string | null
 	createdAt: string
 	updatedAt: string

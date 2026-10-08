@@ -1,0 +1,198 @@
+# The source catalog. Every key here must exist in every other catalog; locales.test.ts checks it.
+# The BCP 47 tag of this catalog, for dates, numbers and `<html lang>`.
+language: en
+extensionDescription: Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.
+
+errors:
+  insecureUrl: Use https for this server
+  invalidUrl: Enter a valid server URL
+  permissionDenied: Keepiq needs permission to reach {host}
+  unreachable: Could not reach {host}
+  notNextcloud: "{host} does not look like a Nextcloud server"
+  serverError: "{host} is unavailable right now, try again later"
+  unauthorized: Wrong username or app password
+  keepiqMissing: Keepiq is not installed on {host}
+  noActiveSuite: Open the Keepiq web app once and set a master password, then try again
+  unlockBlocked: Your organisation requires two-factor login. Set up a second factor in Nextcloud Settings, Security, then try again
+  duplicate: This account is already added
+  limitReached: Maximum of {count} accounts reached
+  invalidMasterPassword: Invalid master password
+  offlineNoCache: You are offline and this vault has not been synced yet
+  sessionRevoked: Session revoked, please log in again
+  writeLocked: Your vault cannot be changed right now, try again later
+  notResponding: Keepiq is not responding. Reload the extension and reopen this popup.
+  unknown: Something went wrong
+
+notices:
+  keyChanged: Your vault key changed in Keepiq. Unlock with your current master password.
+
+common:
+  accountOnHost: "{name} on {host}"
+  loading: Loading…
+  back: Back
+  cancel: Cancel
+  logOut: Log out
+  appPassword: App password
+  addAccount: Add account
+  openWebApp: Open the Keepiq web app
+  later: Available in a later update
+  laterUpdate: This arrives in a later update.
+  justNow: just now
+
+titles:
+  accounts: Accounts
+  logInAgain: Log in again
+  unlock: Unlock
+  viewItem: View item
+
+tabs:
+  label: Main
+  vault: Vault
+  generator: Generator
+  send: Send
+  settings: Settings
+
+header:
+  popout: Pop out
+  accounts: Accounts, signed in as {name}
+
+unlock:
+  masterPassword: Master password
+  submit: Unlock
+
+logInAgain:
+  submit: Log in
+
+addAccount:
+  serverUrl: Server URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Username
+  hint: Create one under Nextcloud Settings, Security. Never enter your Nextcloud login password here.
+  hintWithLink: "Create one under Nextcloud Settings, Security: {link}. Never enter your Nextcloud login password here."
+  securityLink: open security settings
+
+accounts:
+  active: (active)
+  unlocked: Unlocked
+  locked: Locked
+  loggedOut: Logged out
+  lock: Lock {account}
+  logOut: Log out of {account}
+  lockAll: Lock all
+  logOutAll: Log out all
+  logOutAllQuestion: Log out of every account?
+  logOutAllDetail: Every account is removed from this browser. You will need each app password again.
+  logOutQuestion: Log out of {account}?
+  logOutDetail: The account is removed from this browser. You will need an app password to add it again.
+
+vault:
+  loadFailed: Could not load your vault
+  tryAgain: Try again
+  syncing: Syncing your vault
+  empty: No items in your vault
+  noMatch: No items match
+  searchCovers: Search covers names and websites.
+  clearFilters: Clear filters
+  items: Items
+  tooMany: Showing the first {count}, refine your search
+  offline: Offline. Last synced {time}
+  syncNow: Sync now
+  busy: Server busy, retrying later
+  allBlocked: All items are blocked.
+  suggestions: Autofill suggestions
+  noSuggestions: No items for {host}
+  openFailed: Could not open the website
+  popoutFailed: Could not open a new window
+
+filters:
+  search: Search
+  searchLabel: Search vault
+  clearSearch: Clear search
+  folder: Folder
+  allItems: All items
+  noFolder: No folder
+  type: Type
+  all: All
+  more: More
+  moreTypes: More types
+  login: Login
+  card: Card
+  identity: Identity
+  note: Note
+  totp: TOTP
+  passkey: Passkey
+
+item:
+  blocked: Blocked
+  launch: Launch {name}
+  copyMenu: Copy, {name}
+  moreMenu: More, {name}
+  copyUsername: Copy username
+  copyPassword: Copy password
+  copyCode: Copy verification code
+  view: View
+  edit: Edit
+  clone: Clone
+  move: Move to folder
+  delete: Delete
+
+clipboard:
+  copied: "{what} copied"
+  failed: Could not copy
+
+field:
+  show: Show {field}
+  hide: Hide {field}
+  copy: Copy {field}
+
+blocked:
+  generic: This item is blocked.
+  suiteMissing: Its encryption key no longer exists.
+  suiteRevoked: Its encryption key was revoked.
+  suiteCompromised: Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.
+  migrationFailed: It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.
+
+detail:
+  item: Item
+  decrypting: Decrypting…
+  decryptFailed: Could not decrypt this item
+  unreadable: Could not read this item
+  unreadablePasskey: Could not read this passkey
+  unreadableFields: Could not read additional fields
+  loginCredentials: Login credentials
+  username: Username
+  password: Password
+  authenticatorKey: Authenticator key
+  website: Website
+  additionalFields: Additional fields
+  notes: Notes
+  history: Item history
+  created: Created
+  updated: Updated
+  expires: Expires
+  cardDetails: Card details
+  number: Number
+  numberWithBrand: Number · {brand}
+  cardNumber: Card number
+  cardholder: Cardholder
+  expiry: Expiry
+  cvv: CVV
+  pin: PIN
+  identity: Identity
+  firstName: First name
+  lastName: Last name
+  address: Address
+  phone: Phone
+  email: Email
+  bsn: BSN
+  passkey: Passkey
+  relyingParty: Relying party
+  passkeyUser: User name
+  passkeyUnsupported: Signing in with this passkey is not yet supported in the extension
+
+totp:
+  code: Verification code
+  invalid: Invalid authenticator key
+  changesIn:
+    1: Changes in 1 second
+    n: Changes in $1 seconds

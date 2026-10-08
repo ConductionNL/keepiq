@@ -2,11 +2,24 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
+import { setLocale } from '@/src/testing/i18n'
 import { account, dispatchReturning } from '../testing'
 import { LogInAgain } from './LogInAgain'
 import { Unlock } from './Unlock'
 
 afterEach(cleanup)
+
+describe('Unlock in a Dutch browser', () => {
+	it('is in Dutch, notice and error included', async () => {
+		setLocale('nl')
+		render(<Unlock account={account()} notice="key_changed" dispatch={dispatchReturning({ ok: false, code: 'invalid_master_password' })} />)
+		expect(screen.getByRole('status').textContent).toBe('Je kluissleutel is gewijzigd in Keepiq. Ontgrendel met je huidige hoofdwachtwoord.')
+		expect(screen.getByRole('button', { name: 'Hoofdwachtwoord tonen' })).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Uitloggen' })).toBeTruthy()
+		await userEvent.setup().type(screen.getByLabelText('Hoofdwachtwoord'), 'nope{Enter}')
+		expect(screen.getByRole('alert').textContent).toBe('Ongeldig hoofdwachtwoord')
+	})
+})
 
 describe('Unlock', () => {
 	it('shows who, a focused masked field, Unlock and Log out, and no Lock', () => {
@@ -42,7 +55,7 @@ describe('Unlock', () => {
 	})
 
 	it('clears and refocuses the field on a wrong password', async () => {
-		render(<Unlock account={account()} dispatch={dispatchReturning({ ok: false, code: 'invalid_master_password', message: 'Invalid master password' })} />)
+		render(<Unlock account={account()} dispatch={dispatchReturning({ ok: false, code: 'invalid_master_password' })} />)
 		const user = userEvent.setup()
 		const field = screen.getByLabelText<HTMLInputElement>('Master password')
 		await user.type(field, 'wrong{Enter}')
@@ -78,7 +91,7 @@ describe('Unlock', () => {
 describe('LogInAgain', () => {
 	it('shows the revoked notice and re-authenticates with one app password field', async () => {
 		const dispatch = dispatchReturning()
-		render(<LogInAgain account={account({ status: 'logged_out' })} notice="Session revoked, please log in again" dispatch={dispatch} />)
+		render(<LogInAgain account={account({ status: 'logged_out' })} notice="session_revoked" dispatch={dispatch} />)
 		expect(screen.getByRole('status').textContent).toBe('Session revoked, please log in again')
 		expect(screen.queryByLabelText('Server URL')).toBeNull()
 		await userEvent.setup().type(screen.getByLabelText('App password'), 'new{Enter}')

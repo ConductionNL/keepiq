@@ -1,8 +1,6 @@
 import { toBase64 } from '@/src/crypto/base64'
 import type { NextcloudUser, SuiteRow } from './types'
 
-export const SESSION_REVOKED_MESSAGE = 'Session revoked, please log in again'
-
 export class ApiError extends Error {
 	constructor(readonly status: number, message: string) {
 		super(message)
@@ -10,7 +8,7 @@ export class ApiError extends Error {
 }
 export class SessionRevoked extends Error {
 	constructor() {
-		super(SESSION_REVOKED_MESSAGE)
+		super('Session revoked')
 	}
 }
 export class VaultWriteLocked extends ApiError {}

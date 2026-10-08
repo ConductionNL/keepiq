@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { i18n } from '#i18n'
 import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
 import type { ErrorCode } from '@/src/messages'
 import { Button } from '../components/Button'
@@ -6,6 +7,7 @@ import { ErrorBanner } from '../components/ErrorBanner'
 import { TextField } from '../components/TextField'
 import { errorText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
+import { rich, SLOT } from '../i18n'
 
 const DRAFT = 'addAccountDraft'
 type Draft = { serverUrl: string; username: string }
@@ -63,8 +65,8 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 		setSecurityUrl(normalized.ok ? `${normalized.serverUrl}/index.php/settings/user/security` : null)
 	}
 
-	function fail(code: ErrorCode, host: string, fallback: string) {
-		setError(errorText(code, host, fallback))
+	function fail(code: ErrorCode, host: string) {
+		setError(errorText(code, host))
 		const field = { serverUrl: serverUrlField, username: usernameField, appPassword: appPasswordField }[fieldFor(code)]
 		field.current?.focus()
 	}
@@ -73,13 +75,13 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 		event.preventDefault()
 		const normalized = normalizeServerUrl(serverUrl)
 		if (!normalized.ok) {
-			fail(normalized.code, '', '')
+			fail(normalized.code, '')
 			return
 		}
 		// Must be the first await: the browser only prompts inside the click's user gesture.
 		const granted = await browser.permissions.request({ origins: [`${normalized.origin}/*`] }).catch(() => false)
 		if (!granted) {
-			fail('permission_denied', normalized.host, '')
+			fail('permission_denied', normalized.host)
 			return
 		}
 		setBusy(true)
@@ -92,28 +94,26 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 			return
 		}
 		if (result.code === 'unauthorized') setAppPassword('')
-		fail(result.code, normalized.host, result.message)
+		fail(result.code, normalized.host)
 	}
 
 	return (
 		<form className="stack" onSubmit={submit} noValidate>
-			<TextField ref={serverUrlField} label="Server URL" value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder="cloud.example.org" autoFocus autoComplete="url" inputMode="url" />
-			<TextField ref={usernameField} label="Username" value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" />
+			<TextField ref={serverUrlField} label={i18n.t('addAccount.serverUrl')} value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder={i18n.t('addAccount.serverUrlPlaceholder')} autoFocus autoComplete="url" inputMode="url" />
+			<TextField ref={usernameField} label={i18n.t('addAccount.username')} value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" />
 			<TextField
 				ref={appPasswordField}
-				label="App password"
+				label={i18n.t('common.appPassword')}
 				type="password"
 				value={appPassword}
 				onChange={setAppPassword}
 				autoComplete="off"
-				hint={<>
-					Create one under Nextcloud Settings, Security
-					{securityUrl ? <>: <a href={securityUrl} target="_blank" rel="noreferrer">open security settings</a></> : null}.
-					Never enter your Nextcloud login password here.
-				</>}
+				hint={securityUrl
+					? rich(i18n.t('addAccount.hintWithLink', { link: SLOT }), <a href={securityUrl} target="_blank" rel="noreferrer">{i18n.t('addAccount.securityLink')}</a>)
+					: i18n.t('addAccount.hint')}
 			/>
 			<ErrorBanner>{error}</ErrorBanner>
-			<Button type="submit" busy={busy} disabled={!serverUrl.trim() || !username.trim() || !appPassword}>Add account</Button>
+			<Button type="submit" busy={busy} disabled={!serverUrl.trim() || !username.trim() || !appPassword}>{i18n.t('common.addAccount')}</Button>
 		</form>
 	)
 }

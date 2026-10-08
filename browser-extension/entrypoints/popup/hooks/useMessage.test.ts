@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NOT_RESPONDING, sendMessage } from './useMessage'
+import { sendMessage } from './useMessage'
 
-const notResponding = { ok: false, code: 'unknown', message: NOT_RESPONDING }
+const notResponding = { ok: false, code: 'not_responding' }
 
 beforeEach(() => {
 	vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -16,8 +16,8 @@ describe('sendMessage', () => {
 		const state = { screen: 'add_account', accounts: [], active: null, notice: null, canAddAccount: true }
 		reply({ ok: true, state })
 		expect(await sendMessage({ kind: 'vault.status' })).toEqual({ ok: true, state })
-		reply({ ok: false, code: 'invalid_master_password', message: 'Invalid master password' })
-		expect(await sendMessage({ kind: 'vault.status' })).toEqual({ ok: false, code: 'invalid_master_password', message: 'Invalid master password' })
+		reply({ ok: false, code: 'invalid_master_password' })
+		expect(await sendMessage({ kind: 'vault.status' })).toEqual({ ok: false, code: 'invalid_master_password' })
 	})
 
 	it('turns no answer into an error instead of throwing', async () => {
@@ -32,7 +32,7 @@ describe('sendMessage', () => {
 		expect(await sendMessage({ kind: 'vault.status' })).toEqual(notResponding)
 	})
 
-	it.each([null, 'ok', { ok: true }, { ok: true, state: {} }, { ok: false, code: 'x' }])('rejects the malformed reply %j', async (value) => {
+	it.each([null, 'ok', { ok: true }, { ok: true, state: {} }, { ok: false, code: 42 }])('rejects the malformed reply %j', async (value) => {
 		reply(value)
 		expect(await sendMessage({ kind: 'vault.status' })).toEqual(notResponding)
 	})

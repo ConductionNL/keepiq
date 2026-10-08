@@ -1,23 +1,44 @@
-import type { ErrorCode } from '@/src/messages'
+import { i18n } from '#i18n'
+import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode } from '@/src/messages'
 
 /** What the user reads for each error code; `host` names the server where it matters. */
-export function errorText(code: ErrorCode, host: string, fallback: string): string {
+export function errorText(code: ErrorCode, host: string): string {
 	switch (code) {
-		case 'insecure_url': return 'Use https for this server'
-		case 'invalid_url': return 'Enter a valid server URL'
-		case 'permission_denied': return `Keepiq needs permission to reach ${host}`
-		case 'unreachable': return `Could not reach ${host}`
-		case 'not_nextcloud': return `${host} does not look like a Nextcloud server`
-		case 'server_error': return `${host} is unavailable right now, try again later`
-		case 'unauthorized': return 'Wrong username or app password'
-		case 'keepiq_missing': return `Keepiq is not installed on ${host}`
-		case 'no_active_suite': return 'Open the Keepiq web app once and set a master password, then try again'
-		case 'unlock_blocked': return 'Your organisation requires two-factor login. Set up a second factor in Nextcloud Settings, Security, then try again'
-		case 'duplicate': return 'This account is already added'
-		case 'limit_reached': return 'Maximum of 5 accounts reached'
-		case 'invalid_master_password': return 'Invalid master password'
-		case 'offline_no_cache': return 'You are offline and this vault has not been synced yet'
-		case 'session_revoked': return 'Session revoked, please log in again'
-		default: return fallback
+		case 'insecure_url': return i18n.t('errors.insecureUrl')
+		case 'invalid_url': return i18n.t('errors.invalidUrl')
+		case 'permission_denied': return i18n.t('errors.permissionDenied', { host })
+		case 'unreachable': return i18n.t('errors.unreachable', { host })
+		case 'not_nextcloud': return i18n.t('errors.notNextcloud', { host })
+		case 'server_error': return i18n.t('errors.serverError', { host })
+		case 'unauthorized': return i18n.t('errors.unauthorized')
+		case 'keepiq_missing': return i18n.t('errors.keepiqMissing', { host })
+		case 'no_active_suite': return i18n.t('errors.noActiveSuite')
+		case 'unlock_blocked': return i18n.t('errors.unlockBlocked')
+		case 'duplicate': return i18n.t('errors.duplicate')
+		case 'limit_reached': return i18n.t('errors.limitReached', { count: MAX_ACCOUNTS })
+		case 'invalid_master_password': return i18n.t('errors.invalidMasterPassword')
+		case 'offline_no_cache': return i18n.t('errors.offlineNoCache')
+		case 'session_revoked': return i18n.t('errors.sessionRevoked')
+		case 'write_locked': return i18n.t('errors.writeLocked')
+		case 'not_responding': return i18n.t('errors.notResponding')
+		// A newer background can send a code this popup does not know yet.
+		case 'unknown':
+		default: return i18n.t('errors.unknown')
+	}
+}
+
+export function noticeText(notice: NoticeCode): string {
+	switch (notice) {
+		case 'session_revoked': return i18n.t('errors.sessionRevoked')
+		case 'key_changed': return i18n.t('notices.keyChanged')
+	}
+}
+
+export function blockedText(reason: BlockReason): string {
+	switch (reason) {
+		case 'suite_missing': return i18n.t('blocked.suiteMissing')
+		case 'suite_revoked': return i18n.t('blocked.suiteRevoked')
+		case 'suite_compromised': return i18n.t('blocked.suiteCompromised')
+		case 'migration_failed': return i18n.t('blocked.migrationFailed')
 	}
 }

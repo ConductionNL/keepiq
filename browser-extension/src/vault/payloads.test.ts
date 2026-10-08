@@ -21,7 +21,7 @@ describe('text', () => {
 describe('cards', () => {
 	it.each([
 		['4111 1111 1111 1111', 'Visa'], ['5500000000000004', 'Mastercard'], ['2221000000000009', 'Mastercard'],
-		['340000000000009', 'American Express'], ['6011000000000004', 'Discover'], ['6759000000000000', 'Maestro'], ['', 'Card'],
+		['340000000000009', 'American Express'], ['6011000000000004', 'Discover'], ['6759000000000000', 'Maestro'], ['', null],
 	])('%s is %s', (number, brand) => {
 		expect(cardBrand(number)).toBe(brand)
 	})
