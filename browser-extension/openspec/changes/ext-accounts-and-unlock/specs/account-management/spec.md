@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: First-run add account screen
-The popup SHALL show an "Add account" screen when no account is stored, with three fields: Server URL, Username and App password. Help text MUST tell the user to create a dedicated app password under Nextcloud Settings, Security, and never to enter the Nextcloud login password. Once a valid server URL is typed the help text MUST link to `<origin>/index.php/settings/user/security` on that server. Nothing is stored until verification succeeds.
+The popup SHALL show an "Add account" screen when no account is stored, with three fields: Server URL, Username and App password. Help text MUST tell the user to create a dedicated app password under Nextcloud Settings, Security, and never to enter the Nextcloud login password. Once a valid server URL is typed the help text MUST link to `<serverUrl>/index.php/settings/user/security` on that server. Nothing is stored until verification succeeds.
 
 #### Scenario: Fresh profile
 - **GIVEN** `storage.local` has no `accounts` entry
@@ -14,11 +14,15 @@ The popup SHALL show an "Add account" screen when no account is stored, with thr
 - **THEN** the help text links to `https://cloud.example.org/index.php/settings/user/security` and opens it in a new tab
 
 ### Requirement: Server URL normalisation
-The extension SHALL accept a bare host, a full origin, or any URL under `/index.php/apps/keepiq` as the Server URL, and MUST store only the origin (`scheme://host[:port]`). A bare host defaults to `https`. `http` MUST be rejected unless the host is `localhost`, `127.0.0.1`, or ends in `.test` or `.local`.
+The extension SHALL accept a bare host, a full origin, an install subpath, or any Nextcloud page URL as the Server URL, and MUST store the server URL: the origin (`scheme://host[:port]`) plus the subpath Nextcloud is installed under, without a trailing slash. The subpath ends where the first Nextcloud route (`/index.php`, `/remote.php`, `/ocs`, `/apps`, `/settings`, `/login`) begins. A bare host defaults to `https`. `http` MUST be rejected unless the host is `localhost`, `127.0.0.1`, or ends in `.test`.
 
 #### Scenario: Keepiq web app URL pasted
 - **WHEN** the user enters `https://cloud.example.org/index.php/apps/keepiq/vault`
-- **THEN** the account is verified and stored with origin `https://cloud.example.org`
+- **THEN** the account is verified and stored with server URL `https://cloud.example.org`
+
+#### Scenario: Nextcloud under a subpath
+- **WHEN** the user enters `https://example.org/nextcloud/index.php/apps/files`
+- **THEN** the account is stored with server URL `https://example.org/nextcloud` and every request goes under it
 
 #### Scenario: Plain http on a public host
 - **WHEN** the user enters `http://cloud.example.org`
@@ -26,14 +30,18 @@ The extension SHALL accept a bare host, a full origin, or any URL under `/index.
 
 #### Scenario: Plain http on a dev host
 - **WHEN** the user enters `http://stable35.test:8080`
-- **THEN** the origin `http://stable35.test:8080` is accepted
+- **THEN** the server URL `http://stable35.test:8080` is accepted
+
+#### Scenario: Plain http on a .local host
+- **WHEN** the user enters `http://nas.local`
+- **THEN** the screen shows "Use https for this server", because `.local` names are spoofable over mDNS
 
 ### Requirement: Host permission requested at add time
-The extension SHALL request `<origin>/*` as an optional host permission from the popup, inside the click handler of "Add account", before verifying the credentials. If the user declines, the extension MUST show "Keepiq needs permission to reach <host>" and MUST NOT store anything or send any request.
+The extension SHALL request `<origin>/*` (the server URL's origin, as host permissions ignore the path) as an optional host permission from the popup, inside the click handler of "Add account", before verifying the credentials. If the user declines, the extension MUST show "Keepiq needs permission to reach <host>" and MUST NOT store anything or send any request.
 
 #### Scenario: Permission granted
 - **WHEN** the user clicks "Add account" and accepts the browser's permission prompt
-- **THEN** verification starts against that origin
+- **THEN** verification starts against that server URL
 
 #### Scenario: Permission declined
 - **WHEN** the user rejects the permission prompt
@@ -67,14 +75,14 @@ The extension SHALL show a distinct message for each verification failure and MU
 - **THEN** "Could not reach <host>" is shown
 
 ### Requirement: Account record storage
-The extension SHALL store each account in `storage.local` under `accounts[<accountId>]` with `origin`, `uid`, `displayName`, `email`, `avatarDataUrl` and `appPassword`, plus `activeAccountId` and a per-account `settings.<accountId>` entry. The app password is cleared by logout, account removal and a 401 response (ADR-002). The record and settings are cleared by account removal only.
+The extension SHALL store each account in `storage.local` under `accounts[<accountId>]` with `serverUrl`, `uid`, `displayName`, `email`, `avatarDataUrl` and `appPassword`, plus `activeAccountId` and a per-account `settings.<accountId>` entry. The app password is cleared by logout, account removal and a 401 response (ADR-002). The record and settings are cleared by account removal only.
 
 #### Scenario: Account added
 - **WHEN** verification succeeds
 - **THEN** `accounts[<accountId>]` holds the six fields, `activeAccountId` is `<accountId>` and `settings.<accountId>` holds the default timeout settings
 
 ### Requirement: Account limit and duplicates
-The extension SHALL allow at most 5 accounts, as in Bitwarden, and MUST reject a second account with the same origin and uid.
+The extension SHALL allow at most 5 accounts, as in Bitwarden, and MUST reject a second account with the same server URL and uid.
 
 #### Scenario: Sixth account
 - **GIVEN** 5 accounts are stored
@@ -83,7 +91,7 @@ The extension SHALL allow at most 5 accounts, as in Bitwarden, and MUST reject a
 
 #### Scenario: Same user on the same server
 - **GIVEN** an account for `https://cloud.example.org` with uid `alice` exists
-- **WHEN** verification of a new account resolves to the same origin and uid
+- **WHEN** verification of a new account resolves to the same server URL and uid
 - **THEN** "This account is already added" is shown and no second record is created
 
 ### Requirement: Avatar fetched and cached
@@ -98,7 +106,7 @@ The extension SHALL fetch `GET /index.php/avatar/{uid}/64` with the account's cr
 - **THEN** the header shows the initials disc and `avatarDataUrl` is `null`
 
 ### Requirement: Account switcher panel
-Clicking the header avatar SHALL open a panel listing every stored account with avatar or initials, display name, server host and one status label: "Unlocked", "Locked" or "Logged out". The panel MUST offer per-account "Lock" (only when Unlocked) and "Log out", plus "Add account", "Lock all" and "Log out all". The active account MUST be marked.
+Clicking the header avatar SHALL open a panel listing every stored account with avatar or initials, display name, server host and one status label: "Unlocked", "Locked" or "Logged out". The panel MUST offer per-account "Lock" (only when Unlocked) and "Log out", plus "Add account", "Lock all" and "Log out all". The active account MUST be marked. Each per-account button MUST have an accessible name that names its account, such as "Log out of <display name> on <host>".
 
 #### Scenario: Two accounts, one unlocked
 - **GIVEN** account A is unlocked and active, account B is locked
@@ -119,15 +127,19 @@ The extension SHALL keep exactly one active account in `storage.local` `activeAc
 - **THEN** the popup shows the unlock screen for B, and A stays unlocked in the switcher
 
 ### Requirement: Log out removes the account
-"Log out" on an account SHALL purge its app password, private key, cached suite row, `vaultCache.<accountId>`, `settings.<accountId>` and its `accounts[<accountId>]` record (ADR-002). Logging out the active account MUST make the next remaining account active, or show the "Add account" screen when none is left. The browser host permission for the origin is kept.
+"Log out" on an account SHALL purge its app password, private key, cached suite row, `vaultCache.<accountId>`, `settings.<accountId>` and its `accounts[<accountId>]` record (ADR-002). Logging out the active account MUST make the next remaining account active, or show the "Add account" screen when none is left. The browser host permission for the origin is kept. Wherever it appears, "Log out" MUST first ask "Log out of <display name> on <host>?" and act only on confirmation; Cancel returns focus to the "Log out" button.
 
 #### Scenario: Log out the only account
-- **WHEN** the user clicks "Log out" on the only account
+- **WHEN** the user clicks "Log out" on the only account and confirms
 - **THEN** `storage.local` has no key for that account and the popup shows the "Add account" screen
+
+#### Scenario: Log out cancelled
+- **WHEN** the user clicks "Log out" and then "Cancel"
+- **THEN** nothing is removed and focus is back on "Log out"
 
 #### Scenario: Log out the active account among several
 - **GIVEN** A is active and B exists
-- **WHEN** the user logs out A
+- **WHEN** the user logs out A and confirms
 - **THEN** B is active and the popup renders B's current state
 
 ### Requirement: Lock all and Log out all

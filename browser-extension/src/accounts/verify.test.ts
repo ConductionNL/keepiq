@@ -40,9 +40,17 @@ describe('verifyCredentials', () => {
 		expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain('https://cloud.example.org/index.php/avatar/alice/64')
 	})
 
+	it('sends every request under a subpath install', async () => {
+		server({ identity, suites: json(200, [suiteRow]) })
+		await verifyCredentials('https://example.org/nextcloud', 'alice', 'pw')
+		for (const [url] of fetchMock.mock.calls) expect(String(url)).toMatch(/^https:\/\/example\.org\/nextcloud\/(index|ocs)/)
+	})
+
 	it.each([
 		['unreachable', { identity: new TypeError('fetch failed') }],
 		['not_nextcloud', { identity: new Response('<html/>', { status: 200 }) }],
+		['server_error', { identity: new Response('<html>Maintenance</html>', { status: 503 }) }],
+		['server_error', { identity, suites: json(500, { message: 'boom' }) }],
 		['unauthorized', { identity: json(401, { message: 'no' }) }],
 		['keepiq_missing', { identity, suites: new Response('<html/>', { status: 404 }) }],
 		['no_active_suite', { identity, suites: json(200, []) }],

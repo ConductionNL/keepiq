@@ -3,6 +3,7 @@ import type { AccountSummary } from '@/src/messages'
 import { Button } from '../components/Button'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { Identity } from '../components/Identity'
+import { LogOutConfirm, useLogOutConfirm } from '../components/LogOutConfirm'
 import { TextField } from '../components/TextField'
 import { errorText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
@@ -17,6 +18,7 @@ export function LogInAgain({ account, notice, dispatch }: Props) {
 	const [appPassword, setAppPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
+	const logOut = useLogOutConfirm()
 
 	async function submit(event: FormEvent) {
 		event.preventDefault()
@@ -37,7 +39,9 @@ export function LogInAgain({ account, notice, dispatch }: Props) {
 			<TextField label="App password" type="password" value={appPassword} onChange={setAppPassword} autoFocus autoComplete="off" />
 			<ErrorBanner>{error}</ErrorBanner>
 			<Button type="submit" busy={busy} disabled={!appPassword}>Log in</Button>
-			<Button variant="link" onClick={() => void dispatch({ kind: 'accounts.remove', accountId: account.id })}>Log out</Button>
+			{logOut.confirming
+				? <LogOutConfirm account={account} onConfirm={() => void dispatch({ kind: 'accounts.remove', accountId: account.id })} onCancel={logOut.cancel} />
+				: <Button variant="link" onClick={logOut.ask} autoFocus={logOut.triggerAutoFocus}>Log out</Button>}
 		</form>
 	)
 }

@@ -3,7 +3,7 @@ import {
 	ApiError, createClient, KeepiqNotInstalled, NotNextcloud, Offline, SessionRevoked, setUnauthorizedHandler, VaultWriteLocked,
 } from './client'
 
-const account = { id: 'a1', origin: 'https://cloud.example.org', uid: 'alice', loginName: 'alice@example.org', appPassword: 'secret' }
+const account = { id: 'a1', serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice@example.org', appPassword: 'secret' }
 const fetchMock = vi.fn<typeof fetch>()
 
 function reply(status: number, body?: unknown, headers: Record<string, string> = {}) {
@@ -48,6 +48,11 @@ describe('request shape', () => {
 	it('reports a server without the OCS envelope as not Nextcloud', async () => {
 		fetchMock.mockResolvedValue(reply(200, '<html></html>'))
 		await expect(createClient(account).fetchIdentity()).rejects.toBeInstanceOf(NotNextcloud)
+	})
+
+	it('reports maintenance mode as an ApiError, not as not Nextcloud', async () => {
+		fetchMock.mockResolvedValue(reply(503, '<html>Maintenance</html>'))
+		await expect(createClient(account).fetchIdentity()).rejects.toMatchObject({ status: 503 })
 	})
 })
 

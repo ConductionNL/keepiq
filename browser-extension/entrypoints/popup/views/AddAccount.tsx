@@ -1,38 +1,46 @@
-import { useState, type FormEvent } from 'react'
-import { normalizeOrigin } from '@/src/accounts/normalize-origin'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
+import type { ErrorCode } from '@/src/messages'
 import { Button } from '../components/Button'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { TextField } from '../components/TextField'
 import { errorText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
 
-/** Survives the popup closing during the permission prompt; the app password is never kept. */
-function useRememberedField(name: string): [string, (value: string) => void] {
-	const key = `addAccount.${name}`
-	const [value, setValue] = useState(() => {
-		try {
-			return sessionStorage.getItem(key) ?? ''
-		} catch {
-			return ''
-		}
-	})
-	return [value, (next) => {
-		setValue(next)
-		try {
-			sessionStorage.setItem(key, next)
-		} catch {
-			// Storage blocked; the form still works, it just won't be restored.
-		}
-	}]
+const DRAFT = 'addAccountDraft'
+type Draft = { serverUrl: string; username: string }
+type Field = 'serverUrl' | 'username' | 'appPassword'
+
+/**
+ * Survives the popup closing during the permission prompt: a reopened popup is a
+ * new page, so this lives in `storage.session`. The app password is never kept.
+ */
+function useDraft(): [Draft, (patch: Partial<Draft>) => void, () => void] {
+	const [draft, setDraft] = useState<Draft>({ serverUrl: '', username: '' })
+	const typed = useRef(false)
+	useEffect(() => {
+		browser.storage.session?.get(DRAFT).then((stored) => {
+			const saved = stored[DRAFT] as Draft | undefined
+			if (saved && !typed.current) setDraft(saved)
+		}).catch(() => {})
+	}, [])
+	function update(patch: Partial<Draft>) {
+		typed.current = true
+		const next = { ...draft, ...patch }
+		setDraft(next)
+		browser.storage.session?.set({ [DRAFT]: next }).catch(() => {})
+	}
+	function forget() {
+		browser.storage.session?.remove(DRAFT).catch(() => {})
+	}
+	return [draft, update, forget]
 }
 
-function forgetFields() {
-	try {
-		sessionStorage.removeItem('addAccount.serverUrl')
-		sessionStorage.removeItem('addAccount.username')
-	} catch {
-		// Nothing to forget.
-	}
+/** The field the user has to change after each failure. */
+function fieldFor(code: ErrorCode): Field {
+	if (code === 'unauthorized') return 'appPassword'
+	if (code === 'duplicate') return 'username'
+	return 'serverUrl'
 }
 
 interface Props {
@@ -43,49 +51,57 @@ interface Props {
 }
 
 export function AddAccount({ dispatch, onCancel, onAdded }: Props) {
-	const [serverUrl, setServerUrl] = useRememberedField('serverUrl')
-	const [username, setUsername] = useRememberedField('username')
+	const [{ serverUrl, username }, setDraft, forgetDraft] = useDraft()
 	const [appPassword, setAppPassword] = useState('')
+	const serverUrlField = useRef<HTMLInputElement>(null)
+	const usernameField = useRef<HTMLInputElement>(null)
+	const appPasswordField = useRef<HTMLInputElement>(null)
 	const [securityUrl, setSecurityUrl] = useState<string | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
 
 	function updateSecurityLink() {
-		const normalized = normalizeOrigin(serverUrl)
-		setSecurityUrl(normalized.ok ? `${normalized.origin}/index.php/settings/user/security` : null)
+		const normalized = normalizeServerUrl(serverUrl)
+		setSecurityUrl(normalized.ok ? `${normalized.serverUrl}/index.php/settings/user/security` : null)
+	}
+
+	function fail(code: ErrorCode, host: string, fallback: string) {
+		setError(errorText(code, host, fallback))
+		const field = { serverUrl: serverUrlField, username: usernameField, appPassword: appPasswordField }[fieldFor(code)]
+		field.current?.focus()
 	}
 
 	async function submit(event: FormEvent) {
 		event.preventDefault()
-		const normalized = normalizeOrigin(serverUrl)
+		const normalized = normalizeServerUrl(serverUrl)
 		if (!normalized.ok) {
-			setError(errorText(normalized.code, '', ''))
+			fail(normalized.code, '', '')
 			return
 		}
 		// Must be the first await: the browser only prompts inside the click's user gesture.
 		const granted = await browser.permissions.request({ origins: [`${normalized.origin}/*`] }).catch(() => false)
 		if (!granted) {
-			setError(errorText('permission_denied', normalized.host, ''))
+			fail('permission_denied', normalized.host, '')
 			return
 		}
 		setBusy(true)
 		setError(null)
-		const result = await dispatch({ kind: 'accounts.add', serverUrl: normalized.origin, username, appPassword })
+		const result = await dispatch({ kind: 'accounts.add', serverUrl: normalized.serverUrl, username, appPassword })
 		setBusy(false)
 		if (result.ok) {
-			forgetFields()
+			forgetDraft()
 			onAdded?.()
 			return
 		}
-		setError(errorText(result.code, normalized.host, result.message))
 		if (result.code === 'unauthorized') setAppPassword('')
+		fail(result.code, normalized.host, result.message)
 	}
 
 	return (
 		<form className="stack" onSubmit={submit} noValidate>
-			<TextField label="Server URL" value={serverUrl} onChange={setServerUrl} onBlur={updateSecurityLink} placeholder="cloud.example.org" autoFocus autoComplete="url" inputMode="url" />
-			<TextField label="Username" value={username} onChange={setUsername} autoComplete="username" />
-			<TextField label="App password" type="password" value={appPassword} onChange={setAppPassword} autoComplete="off" />
+			<TextField ref={serverUrlField} label="Server URL" value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder="cloud.example.org" autoFocus autoComplete="url" inputMode="url" />
+			<TextField ref={usernameField} label="Username" value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" />
+			<TextField ref={appPasswordField} label="App password" type="password" value={appPassword} onChange={setAppPassword} autoComplete="off" />
 			<p className="hint">
 				Create a dedicated app password under Nextcloud Settings, Security
 				{securityUrl ? <>: <a href={securityUrl} target="_blank" rel="noreferrer">open security settings</a></> : null}.

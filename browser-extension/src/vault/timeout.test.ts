@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { writeSettings, type AccountSettings } from '@/src/accounts/settings'
+import { effectiveSettings, TIMEOUT_POLICY, writeSettings, type AccountSettings } from '@/src/accounts/settings'
 import { addAccount, getAccount } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey, putKey } from './key-store'
-import { effectiveSettings, enforce, onIdleStateChanged, onPopupClosed, syncAlarm, TIMEOUT_ALARM, TIMEOUT_POLICY, touch } from './timeout'
+import { enforce, onIdleStateChanged, onPopupClosed, syncAlarm, TIMEOUT_ALARM, touch } from './timeout'
 
 const pkcs8 = toBase64(pemToPkcs8(envelope.privateKeyPem))
 const MINUTE = 60_000
 
 async function unlocked(settings: AccountSettings, uid = 'alice') {
 	const account = await addAccount({
-		origin: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
 	}, { ...suiteRow })
 	await writeSettings(account.id, settings)
 	await putKey(account.id, pkcs8)

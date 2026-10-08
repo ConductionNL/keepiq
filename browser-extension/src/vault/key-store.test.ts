@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
-import { writeSettings } from '@/src/accounts/settings'
+import { TIMEOUT_POLICY, writeSettings } from '@/src/accounts/settings'
 import { envelope } from '@/src/testing/vectors'
 import { clearKey, getKey, hasKey, neverLockKey, putKey, syncNeverLockKey } from './key-store'
 
@@ -69,6 +69,23 @@ describe('the Never timeout', () => {
 	it('ignores a leftover copy on disk under any other timeout', async () => {
 		await browser.storage.local.set({ [neverLockKey('a')]: pkcs8 })
 		expect(await hasKey('a')).toBe(false)
+	})
+
+	describe('under a policy maximum', () => {
+		afterEach(() => {
+			TIMEOUT_POLICY.maxMinutes = null
+		})
+
+		it('neither writes nor restores the copy on disk', async () => {
+			await writeSettings('a', { vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
+			TIMEOUT_POLICY.maxMinutes = 60
+			await putKey('a', pkcs8)
+			expect(await local(neverLockKey('a'))).toBeUndefined()
+
+			await browser.storage.local.set({ [neverLockKey('a')]: pkcs8 })
+			await browser.storage.session.clear()
+			expect(await hasKey('a')).toBe(false)
+		})
 	})
 })
 

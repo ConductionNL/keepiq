@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { account, dispatchReturning } from '../testing'
@@ -52,11 +52,27 @@ describe('Unlock', () => {
 		expect(document.activeElement).toBe(field)
 	})
 
-	it('Log out removes the account', async () => {
+	it('Log out asks first, then removes the account', async () => {
 		const dispatch = dispatchReturning()
 		render(<Unlock account={account()} dispatch={dispatch} />)
-		await userEvent.setup().click(screen.getByRole('button', { name: 'Log out' }))
-		expect(dispatch).toHaveBeenCalledWith({ kind: 'accounts.remove', accountId: 'a1' })
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'Log out' }))
+		expect(dispatch).not.toHaveBeenCalled()
+		const confirm = screen.getByRole('group', { name: 'Log out of Alice Doe on cloud.example.org?' })
+		await user.click(within(confirm).getByRole('button', { name: 'Log out' }))
+		expect(dispatch).toHaveBeenCalledExactlyOnceWith({ kind: 'accounts.remove', accountId: 'a1' })
+	})
+
+	it('Cancel keeps the account and returns focus to Log out', async () => {
+		const dispatch = dispatchReturning()
+		render(<Unlock account={account()} dispatch={dispatch} />)
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'Log out' }))
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }))
+		await user.click(screen.getByRole('button', { name: 'Cancel' }))
+		expect(screen.queryByRole('group')).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Log out' }))
+		expect(dispatch).not.toHaveBeenCalled()
 	})
 })
 

@@ -26,6 +26,24 @@ export async function readSettings(accountId: string): Promise<AccountSettings> 
 	}
 }
 
+/** Raw write; once an account may be unlocked, go through `updateSettings` in the store so the "Never" key follows. */
 export async function writeSettings(accountId: string, settings: AccountSettings): Promise<void> {
 	await browser.storage.local.set({ [settingsKey(accountId)]: settings })
+}
+
+/** The one place an admin policy will clamp the timeout (ADR-002). */
+export const TIMEOUT_POLICY: { maxMinutes: number | null; forcedAction: VaultTimeoutAction | null } = {
+	maxMinutes: null,
+	forcedAction: null,
+}
+
+/** The settings after the policy; everything that acts on a timeout reads these. */
+export async function effectiveSettings(accountId: string): Promise<AccountSettings> {
+	const settings = await readSettings(accountId)
+	const { maxMinutes, forcedAction } = TIMEOUT_POLICY
+	let { vaultTimeout } = settings
+	if (maxMinutes !== null && vaultTimeout !== 'immediately' && (typeof vaultTimeout !== 'number' || vaultTimeout > maxMinutes)) {
+		vaultTimeout = maxMinutes
+	}
+	return { vaultTimeout, vaultTimeoutAction: forcedAction ?? settings.vaultTimeoutAction }
 }

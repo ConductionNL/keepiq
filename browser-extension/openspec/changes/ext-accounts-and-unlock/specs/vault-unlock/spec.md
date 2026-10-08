@@ -13,7 +13,7 @@ When the active account is locked the popup SHALL show the unlock screen with th
 - **THEN** the field switches between masked and plain text without clearing its value
 
 ### Requirement: Unlock derives the key client-side
-Unlock SHALL derive the unlock key from the master password per ADR-003 (PBKDF2-SHA256, 600 000 iterations, salt from the envelope), decrypt the cached suite's `privateKey` envelope, import the result as a non-extractable RSA-OAEP private key and store the PKCS#8 bytes per ADR-002. The server MUST NOT be contacted when the suite row is cached.
+Unlock SHALL derive the unlock key from the master password per ADR-003 (PBKDF2-SHA256, 600 000 iterations, salt from the envelope), decrypt the cached suite's `privateKey` envelope, import the result as a non-extractable RSA-OAEP private key and store the PKCS#8 bytes per ADR-002. The server MUST NOT be contacted when the suite row is cached and opens with the master password.
 
 #### Scenario: Correct master password, suite cached
 - **GIVEN** `suite.<accountId>` is present in `storage.local`
@@ -21,11 +21,16 @@ Unlock SHALL derive the unlock key from the master password per ADR-003 (PBKDF2-
 - **THEN** no network request is made, `privateKeyPkcs8.<accountId>` and `unlockedAt.<accountId>` are written to `storage.session`, and the popup shows the unlocked view
 
 ### Requirement: Invalid master password
-When the AES-GCM decryption of the envelope fails the extension SHALL show "Invalid master password", clear the field and stay locked. The failure MUST NOT be counted, throttled or reported to the server.
+When the AES-GCM decryption of a cached envelope fails the extension SHALL fetch `GET /api/v1/suites` once, because the master password may have changed in the web app. When the active suite differs (per "Cached suite row lifetime") it is cached and the decryption retried with it. Otherwise, or when that fetch fails for any reason but a 401, the extension SHALL show "Invalid master password", clear the field and stay locked. The failure MUST NOT be counted or throttled.
 
 #### Scenario: Wrong password
 - **WHEN** the user submits a wrong master password
 - **THEN** "Invalid master password" is shown, the field is empty and focused, and `storage.session` has no key for the account
+
+#### Scenario: Master password changed in the web app
+- **GIVEN** the cached suite has `unlockKeyEpoch` 1 and the server's active suite has `unlockKeyEpoch` 2
+- **WHEN** the user submits the new master password
+- **THEN** the suites route is called once, the epoch 2 row is cached and the account unlocks
 
 ### Requirement: Unlock fetches the suite when nothing is cached
 When `suite.<accountId>` is absent the extension SHALL fetch `GET /api/v1/suites` first, cache the `active` row in `storage.local` under `suite.<accountId>`, and then derive and decrypt. When the fetch fails at the network level the extension MUST show "You are offline and this vault has not been synced yet" and stay locked.
@@ -109,7 +114,7 @@ When the timeout action is "Log out" the elapsed timeout SHALL purge the private
 - **THEN** the "Log in again" screen is shown and the account is listed as "Logged out" in the switcher
 
 ### Requirement: Never timeout
-Choosing "Never" SHALL show the warning "Your vault stays unlocked until you lock it, and the key is stored on disk" and requires confirmation. With "Never" the PKCS#8 bytes MAY be written to `storage.local` under `neverLockKey.<accountId>`; this is the only case key material touches `storage.local` (ADR-002). Manual lock, logout, account removal and changing the timeout to anything else MUST delete that key.
+Choosing "Never" SHALL show the warning "Your vault stays unlocked until you lock it, and the key is stored on disk" and requires confirmation. With "Never" the PKCS#8 bytes MAY be written to `storage.local` under `neverLockKey.<accountId>`; this is the only case key material touches `storage.local` (ADR-002). Manual lock, logout, account removal, changing the timeout to anything else, and a policy maximum that clamps "Never" MUST delete that key or keep it from being written or restored.
 
 #### Scenario: Never survives a restart
 - **GIVEN** the timeout is Never and the account is unlocked

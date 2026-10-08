@@ -1,0 +1,56 @@
+name: Browser extension
+
+# Tests, typechecks, lints and builds the WXT extension in browser-extension/
+# for Chromium MV3 and Firefox MV2. The crypto tests read the web app's vectors,
+# so a change to those runs this too.
+
+on:
+  push:
+    branches: [main, development]
+    paths: ["browser-extension/**", "tests/vectors/crypto/**", ".github/workflows/browser-extension.yml"]
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["browser-extension/**", "tests/vectors/crypto/**", ".github/workflows/browser-extension.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+    # Tests, two builds and a lint; minutes at most.
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: browser-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: browser-extension/package-lock.json
+      # No install scripts from dependencies; `wxt prepare` is the one postinstall we need.
+      - run: npm ci --ignore-scripts
+      - run: npx wxt prepare
+      - name: No chrome.* in executable code
+        run: |
+          if grep -rnE '(^|[^.[:alnum:]_])chrome\.' src entrypoints --include='*.ts' --include='*.tsx' | grep -vE '^\S+:[0-9]+:\s*(//|\*|/\*)'; then
+            echo "::error::Use browser.* instead of chrome.* (WXT-AND-BROWSERS.md § 1)"
+            exit 1
+          fi
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run build:firefox
+      - name: Lint the Firefox package
+        run: npx web-ext lint --source-dir .output/firefox-mv2 --warnings-as-errors=false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension
+          path: |
+            browser-extension/.output/chrome-mv3/
+            browser-extension/.output/firefox-mv2/
+          retention-days: 14

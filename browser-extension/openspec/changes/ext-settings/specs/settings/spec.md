@@ -232,7 +232,7 @@ The extension SHALL store in the global `storage.local` record the settings Them
 - **THEN** Language shows the browser UI language and "Follows your browser" and has no control
 
 ### Requirement: About panel
-The extension SHALL show the extension version from `browser.runtime.getManifest().version`, the active account's server origin, and the links Help, Report a bug, Privacy policy, Keepiq web app and Rate the extension. Because Keepiq registers no capabilities entry, no Keepiq app version is shown. Rate the extension points at the store for the running browser and is hidden while that store URL is a placeholder.
+The extension SHALL show the extension version from `browser.runtime.getManifest().version`, the active account's server URL, and the links Help, Report a bug, Privacy policy, Keepiq web app and Rate the extension. Because Keepiq registers no capabilities entry, no Keepiq app version is shown. Rate the extension points at the store for the running browser and is hidden while that store URL is a placeholder.
 
 #### Scenario: About renders
 - **GIVEN** the manifest version is `0.0.1` and the active server is `https://<host>`

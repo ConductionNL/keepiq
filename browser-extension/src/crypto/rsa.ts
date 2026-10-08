@@ -23,13 +23,20 @@ function byteAt(der: Uint8Array, offset: number): number {
 	return byte
 }
 
+/** A length that fits in the buffer, so a hostile certificate can't loop or read out of bounds. */
 function readDerLength(der: Uint8Array, offset: number): { length: number; contentStart: number } {
 	const first = byteAt(der, offset)
-	if ((first & 0x80) === 0) return { length: first, contentStart: offset + 1 }
-	const count = first & 0x7f
-	let length = 0
-	for (let i = 0; i < count; i++) length = (length << 8) | byteAt(der, offset + 1 + i)
-	return { length, contentStart: offset + 1 + count }
+	let length = first
+	let contentStart = offset + 1
+	if (first & 0x80) {
+		const count = first & 0x7f
+		if (count === 0 || count > 4) throw new Error('Malformed certificate: bad length')
+		length = 0
+		for (let i = 0; i < count; i++) length = length * 256 + byteAt(der, offset + 1 + i)
+		contentStart += count
+	}
+	if (contentStart + length > der.length) throw new Error('Malformed certificate: length past the end')
+	return { length, contentStart }
 }
 
 /** The SubjectPublicKeyInfo of an X.509 certificate: the TBS field after `subject`. */
@@ -74,7 +81,9 @@ export async function rsaEncrypt(plaintext: string, publicKey: CryptoKey): Promi
 
 export async function rsaDecrypt(ciphertext: string, privateKey: CryptoKey): Promise<string> {
 	const raw = fromBase64(ciphertext)
+	if (raw.length < 4) throw new Error('RSA ciphertext too short')
 	const count = new DataView(raw.buffer).getUint32(0, false)
+	if (count === 0 || raw.length !== 4 + count * RSA_BLOCK_SIZE) throw new Error('RSA ciphertext length does not match its block count')
 	const parts: Uint8Array[] = []
 	for (let i = 0; i < count; i++) {
 		const block = raw.slice(4 + i * RSA_BLOCK_SIZE, 4 + (i + 1) * RSA_BLOCK_SIZE)

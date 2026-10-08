@@ -19,12 +19,13 @@ function fromExtensionPage(sender: Browser.runtime.MessageSender): boolean {
 export default defineBackground(() => {
 	setUnauthorizedHandler((accountId) => markLoggedOut(accountId, true))
 
-	browser.runtime.onMessage.addListener((msg: unknown, sender: Browser.runtime.MessageSender) => {
+	browser.runtime.onMessage.addListener((msg: unknown, sender: Browser.runtime.MessageSender, sendResponse: (reply: unknown) => void) => {
 		const m = msg as ContentToBackground | PopupToBackground
 		// Fire-and-forget arms return undefined; ext-autofill handles `page_ready`.
 		if (m.kind === 'page_ready') return
 		if (!fromExtensionPage(sender)) return
-		return handlePopupMessage(m)
+		void handlePopupMessage(m).then(sendResponse)
+		return true
 	})
 
 	browser.alarms.onAlarm.addListener((alarm) => {

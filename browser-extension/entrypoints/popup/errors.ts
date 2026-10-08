@@ -8,6 +8,7 @@ export function errorText(code: ErrorCode, host: string, fallback: string): stri
 		case 'permission_denied': return `Keepiq needs permission to reach ${host}`
 		case 'unreachable': return `Could not reach ${host}`
 		case 'not_nextcloud': return `${host} does not look like a Nextcloud server`
+		case 'server_error': return `${host} is unavailable right now, try again later`
 		case 'unauthorized': return 'Wrong username or app password'
 		case 'keepiq_missing': return `Keepiq is not installed on ${host}`
 		case 'no_active_suite': return 'Open the Keepiq web app once and set a master password, then try again'

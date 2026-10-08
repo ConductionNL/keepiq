@@ -12,7 +12,7 @@ export type AccountStatus = 'unlocked' | 'locked' | 'logged_out'
 
 export interface AccountSummary {
 	id: string
-	origin: string
+	serverUrl: string
 	host: string
 	uid: string
 	displayName: string
@@ -36,7 +36,7 @@ export type ErrorCode =
 	| 'insecure_url' | 'invalid_url' | 'permission_denied' | 'unreachable' | 'not_nextcloud'
 	| 'unauthorized' | 'keepiq_missing' | 'no_active_suite' | 'unlock_blocked' | 'duplicate'
 	| 'limit_reached' | 'invalid_master_password' | 'offline_no_cache' | 'session_revoked'
-	| 'write_locked' | 'unknown'
+	| 'write_locked' | 'server_error' | 'unknown'
 
 export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; message: string }
 

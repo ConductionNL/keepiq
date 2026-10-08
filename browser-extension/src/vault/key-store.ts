@@ -6,7 +6,7 @@
  */
 import { importPrivateKey } from '@/src/crypto'
 import { fromBase64 } from '@/src/crypto/base64'
-import { readSettings } from '@/src/accounts/settings'
+import { effectiveSettings } from '@/src/accounts/settings'
 
 const sessionKey = (accountId: string) => `privateKeyPkcs8.${accountId}`
 export const unlockedAtKey = (accountId: string) => `unlockedAt.${accountId}`
@@ -48,7 +48,7 @@ export async function putKey(accountId: string, pkcs8Base64: string): Promise<vo
 async function getBytes(accountId: string): Promise<string | undefined> {
 	const bytes = await session.get(sessionKey(accountId))
 	if (bytes !== undefined) return bytes
-	if ((await readSettings(accountId)).vaultTimeout !== 'never') return undefined
+	if ((await effectiveSettings(accountId)).vaultTimeout !== 'never') return undefined
 	const stored = (await browser.storage.local.get(neverLockKey(accountId)))[neverLockKey(accountId)] as string | undefined
 	if (stored !== undefined) await session.set({ [sessionKey(accountId)]: stored, [unlockedAtKey(accountId)]: String(Date.now()) })
 	return stored
@@ -81,7 +81,7 @@ export async function clearKey(accountId: string): Promise<void> {
 /** Writes or deletes the on-disk copy to match the account's timeout. */
 export async function syncNeverLockKey(accountId: string): Promise<void> {
 	const bytes = await session.get(sessionKey(accountId))
-	if (bytes !== undefined && (await readSettings(accountId)).vaultTimeout === 'never') {
+	if (bytes !== undefined && (await effectiveSettings(accountId)).vaultTimeout === 'never') {
 		await browser.storage.local.set({ [neverLockKey(accountId)]: bytes })
 	} else {
 		await browser.storage.local.remove(neverLockKey(accountId))
