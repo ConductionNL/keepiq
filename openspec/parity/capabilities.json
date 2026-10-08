@@ -407,7 +407,10 @@
         "secrets-write-ui",
         "vault-custom-field-kinds-and-ssh-key",
         "vault-item-clone-preview-and-print",
-        "vault-website-addresses"
+        "vault-website-addresses",
+        "bulk-actions",
+        "user-settings",
+        "vault-defaults"
       ]
     },
     {
@@ -418,7 +421,10 @@
       "overlay": null,
       "specs": [
         "vault-custom-field-kinds-and-ssh-key",
-        "vault-login-totp-codes"
+        "vault-login-totp-codes",
+        "admin-secret-types",
+        "card-identity-items",
+        "passkey-item-type"
       ]
     },
     {
@@ -429,7 +435,8 @@
       "overlay": null,
       "specs": [
         "secrets",
-        "vault-duplicate-finder"
+        "vault-duplicate-finder",
+        "vault-list-organisation"
       ]
     },
     {
@@ -438,7 +445,10 @@
       "title_nl": "Versiegeschiedenis, prullenbak en archief",
       "area": "vault",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "secret-version-history",
+        "vault-trash-and-archive"
+      ]
     },
     {
       "slug": "encrypted-attachments",
@@ -447,7 +457,8 @@
       "area": "vault",
       "overlay": null,
       "specs": [
-        "vault-item-clone-preview-and-print"
+        "vault-item-clone-preview-and-print",
+        "encrypted-attachments"
       ]
     },
     {
@@ -458,7 +469,8 @@
       "overlay": null,
       "specs": [
         "crypto-vault-encryption-details",
-        "encryption-suites"
+        "encryption-suites",
+        "vault-key-proof"
       ]
     },
     {
@@ -468,7 +480,11 @@
       "area": "crypto",
       "overlay": null,
       "specs": [
-        "crypto-item-reprompt"
+        "crypto-item-reprompt",
+        "new-device-approval",
+        "organisation-account-recovery",
+        "passkey-vault-login",
+        "vault-session-lock"
       ]
     },
     {
@@ -479,7 +495,11 @@
       "overlay": null,
       "specs": [
         "team-folder-sharing",
-        "user-sharing"
+        "user-sharing",
+        "expiring-shares",
+        "federated-sharing",
+        "sharing-group",
+        "use-only-shares"
       ]
     },
     {
@@ -499,7 +519,10 @@
       "title_nl": "Openbare links en eenmalige verzendingen",
       "area": "sharing",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "ephemeral-send",
+        "link-sharing"
+      ]
     },
     {
       "slug": "emergency-access",
@@ -547,7 +570,9 @@
       "title_nl": "Leases en kortlevende inloggegevens voor machines",
       "area": "apps",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "machine-secret-leases"
+      ]
     },
     {
       "slug": "devops-integrations",
@@ -556,7 +581,12 @@
       "area": "apps",
       "overlay": null,
       "specs": [
-        "keepiq-cli"
+        "keepiq-cli",
+        "ci-integrations",
+        "client-libraries",
+        "kubernetes-integration",
+        "mcp-metadata-surface",
+        "terraform-provider"
       ]
     },
     {
@@ -566,7 +596,9 @@
       "area": "rotation",
       "overlay": null,
       "specs": [
-        "vault-website-addresses"
+        "vault-website-addresses",
+        "rotation-expiry-policies",
+        "secret-rotation-runner"
       ]
     },
     {
@@ -576,7 +608,8 @@
       "area": "pki",
       "overlay": null,
       "specs": [
-        "encryption-suites"
+        "encryption-suites",
+        "certificate-lifecycle"
       ]
     },
     {
@@ -586,7 +619,8 @@
       "area": "health",
       "overlay": null,
       "specs": [
-        "health-site-security-checks"
+        "health-site-security-checks",
+        "password-health"
       ]
     },
     {
@@ -595,7 +629,10 @@
       "title_nl": "Wachtwoord- en wachtzingenerator",
       "area": "health",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "key-generator",
+        "passphrase-generator"
+      ]
     },
     {
       "slug": "org-password-policies",
@@ -603,7 +640,10 @@
       "title_nl": "Kluisbeleid voor de hele organisatie",
       "area": "admin",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "org-password-policies",
+        "vault-policies"
+      ]
     },
     {
       "slug": "user-administration",
@@ -611,7 +651,12 @@
       "title_nl": "Gebruikers, rollen en provisioning beheren",
       "area": "admin",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "admin-api",
+        "admin-member-overview",
+        "admin-scoped-roles",
+        "team-folder-auto-confirm"
+      ]
     },
     {
       "slug": "admin-console",
@@ -619,7 +664,11 @@
       "title_nl": "Beheerinstellingen, koppelingen en back-ups",
       "area": "admin",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "admin-integrations",
+        "admin-settings",
+        "vault-backups"
+      ]
     },
     {
       "slug": "dashboard",
@@ -628,7 +677,8 @@
       "area": "vault",
       "overlay": null,
       "specs": [
-        "dashboard"
+        "dashboard",
+        "vault-recently-used"
       ]
     },
     {
@@ -647,7 +697,11 @@
       "title_nl": "Beveiligingsmeldingen, SIEM-export en lokwachtwoorden",
       "area": "audit",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "honey-credentials",
+        "siem-audit-export",
+        "siem-vendor-connectors"
+      ]
     },
     {
       "slug": "compliance-reporting",
@@ -656,7 +710,8 @@
       "area": "audit",
       "overlay": null,
       "specs": [
-        "gdpr-compliance"
+        "gdpr-compliance",
+        "compliance-reporting"
       ]
     },
     {
@@ -665,7 +720,10 @@
       "title_nl": "Importeren uit andere wachtwoordmanagers",
       "area": "portability",
       "overlay": null,
-      "specs": []
+      "specs": [
+        "portability-import-mapping",
+        "secret-import"
+      ]
     },
     {
       "slug": "secret-export",
@@ -675,7 +733,10 @@
       "overlay": null,
       "specs": [
         "portability-cxp-cross-provider-transfer",
-        "portability-export-choice-and-restore-fidelity"
+        "portability-export-choice-and-restore-fidelity",
+        "cxf-import-export",
+        "cxp-transfer",
+        "secret-export"
       ]
     },
     {
@@ -689,7 +750,29 @@
         "clients-extension-firefox-and-safari-builds",
         "extension-generator",
         "extension-send",
-        "extension-vault"
+        "extension-vault",
+        "clients-passkey-origin",
+        "clients-save-prompt",
+        "extension-account-switching",
+        "extension-autofill-extras",
+        "extension-baseline",
+        "extension-biometric-unlock",
+        "extension-clipboard",
+        "extension-fill-and-capture",
+        "extension-generator-policy",
+        "extension-list-and-settings",
+        "extension-lock",
+        "extension-pairing",
+        "extension-passkey-provider",
+        "extension-pin-unlock",
+        "extension-popup-shell",
+        "extension-save-prompt-details",
+        "extension-send-details",
+        "extension-small-items",
+        "extension-store-release",
+        "extension-totp-autofill",
+        "extension-unlock-and-accounts",
+        "extension-vault-sync"
       ]
     },
     {
@@ -699,7 +782,9 @@
       "area": "clients",
       "overlay": null,
       "specs": [
-        "clients-mobile-apps"
+        "clients-mobile-apps",
+        "cli-ssh-agent",
+        "mobile-pwa"
       ]
     },
     {
@@ -709,7 +794,8 @@
       "area": "clients",
       "overlay": null,
       "specs": [
-        "offline-readonly-cache"
+        "offline-readonly-cache",
+        "offline-edit-queue"
       ]
     },
     {
@@ -720,9 +806,17 @@
       "overlay": null,
       "specs": [
         "clients-vault-event-flow-triggers",
-        "getting-started-walkthrough"
+        "getting-started-walkthrough",
+        "app-shell"
       ]
     }
+  ],
+  "internalSpecs": [
+    "distribution",
+    "extension-release",
+    "integration-boundary",
+    "item-name-limit",
+    "menu-architecture"
   ],
   "providers": [
     {
@@ -9663,5 +9757,78 @@
       }
     }
   ],
-  "pending": []
+  "pending": [],
+  "specScreens": {
+    "admin-api": {
+      "board": null,
+      "reason": "An admin REST API for scripts and tools; it has no screen of its own."
+    },
+    "admin-integrations": {
+      "board": [
+        "KqIntegraties"
+      ]
+    },
+    "app-shell": {
+      "board": null,
+      "reason": "Runs underneath every screen (routes, health and metrics endpoints); no screen of its own."
+    },
+    "ci-integrations": {
+      "board": null,
+      "reason": "Runs inside a CI pipeline (GitHub Action, GitLab template, CLI image); no Keepiq screen."
+    },
+    "cli-ssh-agent": {
+      "board": null,
+      "reason": "A command line SSH agent on the user's machine; no Keepiq screen."
+    },
+    "client-libraries": {
+      "board": null,
+      "reason": "Go, Python and TypeScript libraries for the machine API; no screen."
+    },
+    "distribution": {
+      "board": null,
+      "reason": "Engineering: the licence in the app manifest; no screen."
+    },
+    "extension-baseline": {
+      "board": [
+        "KqExtensie"
+      ]
+    },
+    "extension-release": {
+      "board": null,
+      "reason": "Engineering: what the extension package carries (icons, notices); no screen."
+    },
+    "extension-store-release": {
+      "board": null,
+      "reason": "Publishing in the browser stores and rolling out by policy; no Keepiq screen."
+    },
+    "integration-boundary": {
+      "board": null,
+      "reason": "Engineering: an architecture rule that vault data never mirrors into other apps; no screen."
+    },
+    "item-name-limit": {
+      "board": null,
+      "reason": "Engineering: one name limit held by server, import and extension; no screen of its own."
+    },
+    "kubernetes-integration": {
+      "board": null,
+      "reason": "A Kubernetes operator that runs in the cluster; no Keepiq screen."
+    },
+    "mcp-metadata-surface": {
+      "board": null,
+      "reason": "Read-only tools for AI agents over the MCP endpoint; no screen."
+    },
+    "passphrase-generator": {
+      "board": [
+        "KqSleutelGenereren"
+      ]
+    },
+    "secret-rotation-runner": {
+      "board": null,
+      "reason": "A runner outside the server that rotates and syncs secrets; no screen."
+    },
+    "terraform-provider": {
+      "board": null,
+      "reason": "A Terraform provider used from infrastructure code; no Keepiq screen."
+    }
+  }
 }
