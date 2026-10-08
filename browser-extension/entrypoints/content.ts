@@ -1,13 +1,9 @@
 /**
- * Content script. Starter scaffold: announces itself to the background and
- * listens for the on/off flag.
- *
- * `matches` is wide open so the scaffold visibly runs — narrow it to the
- * origins this extension actually needs before shipping. A content script on
- * every page is a permission prompt users read, and a review flag on both stores.
+ * Content script. Announces itself to the background; ext-autofill adds the rest.
+ * It runs on every page, as in Bitwarden; CLAUDE.md says why that is safe.
  */
 
-import type { BackgroundToContent, ContentToBackground } from '@/src/messages'
+import type { ContentToBackground } from '@/src/messages'
 
 export default defineContentScript({
 	matches: ['*://*/*'],
@@ -37,14 +33,6 @@ export default defineContentScript({
 				contextInvalidated = true
 			}
 		}
-
-		browser.runtime.onMessage.addListener((msg: unknown) => {
-			const m = msg as BackgroundToContent
-			if (m.kind === 'enabled_changed') {
-				console.debug('[keepiq] enabled:', m.enabled)
-			}
-			// Return undefined — fire-and-forget, no reply expected.
-		})
 
 		send({ kind: 'page_ready', url: location.href })
 	},

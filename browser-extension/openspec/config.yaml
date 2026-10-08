@@ -27,7 +27,7 @@ context: |
 
   Repo conventions: browser.* never chrome.* (WXT-AND-BROWSERS.md), no global manifestVersion, version only in
     package.json, message payloads typed unknown at the boundary. Comments explain why, never what, and a file's
-    comment block is shorter than its code (CLAUDE.md). Typecheck and lint are the only automated checks today.
+    comment block is shorter than its code (CLAUDE.md). Vitest unit tests sit next to every module and popup component.
 
 rules:
   proposal:

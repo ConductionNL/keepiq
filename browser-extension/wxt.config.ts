@@ -2,14 +2,17 @@ import type { Server } from 'node:http'
 import { resolve } from 'node:path'
 import { defineConfig } from 'wxt'
 import { defaultBrowserBinaries } from './scripts/default-browser'
+import { clearServiceWorkers } from './scripts/dev-profile'
 import { startTestSite, TEST_SITE_PORT } from './scripts/test-site'
 
 let testSite: Server | undefined
+const chromiumProfile = resolve('.wxt/chrome-data')
 
 export default defineConfig({
 	hooks: {
 		// Started before the browser opens, so the dev profile can land on it.
 		'server:started': async (wxt) => {
+			clearServiceWorkers(chromiumProfile)
 			testSite = await startTestSite().catch((error) => {
 				wxt.logger.warn(`Test site not started: ${error.message}`)
 				return undefined
@@ -24,7 +27,7 @@ export default defineConfig({
 		binaries: defaultBrowserBinaries(),
 		startUrls: [`http://localhost:${TEST_SITE_PORT}/`],
 		// A persistent profile keeps the paired account and settings across dev restarts.
-		chromiumProfile: resolve('.wxt/chrome-data'),
+		chromiumProfile,
 		keepProfileChanges: true,
 		// Open only the start URL, not the tabs of the last run; 5 is "New Tab page".
 		chromiumPref: { session: { restore_on_startup: 5 } },
@@ -38,10 +41,13 @@ export default defineConfig({
 			enabled: 9,
 		},
 	},
-	manifest: ({ mode }) => {
+	modules: ['@wxt-dev/module-react'],
+	manifest: ({ mode, manifestVersion }) => {
 		// A separate name in dev means a dev build and a store build can sit side by
 		// side in the same browser profile without you guessing which is which.
 		const nameSuffix = mode === 'production' ? '' : ' (DEV)'
+		// Each Keepiq server is granted at add time, from the popup (ADR-003).
+		const serverOrigins = ['https://*/*', 'http://*/*']
 		return {
 			name: `Keepiq${nameSuffix}`,
 			description: 'Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.',
@@ -49,9 +55,12 @@ export default defineConfig({
 			// so there is only one place to bump.
 			permissions: [
 				'storage',
+				'alarms',
+				'idle',
 			],
-			// Add `host_permissions` when the extension needs to reach page origins
-			// beyond its content-script matches (fetch, cookies, tabs.executeScript).
+			...(manifestVersion === 3
+				? { optional_host_permissions: serverOrigins }
+				: { optional_permissions: serverOrigins }),
 			action: {
 				default_title: `Keepiq${nameSuffix}`,
 			},

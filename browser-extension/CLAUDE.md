@@ -15,6 +15,7 @@ npm install            # postinstall runs `wxt prepare`, which generates .wxt/
 npm run dev            # Chromium dev + HMR, starts the test site and opens a browser on it
 npm run dev:firefox    # Firefox dev (MV2) + HMR
 npm run test-site      # the test site alone, http://localhost:8100
+npm test               # vitest: unit and popup component tests
 npm run typecheck      # tsc --noEmit — does not build or catch MV drift
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
@@ -22,7 +23,8 @@ npm run build:firefox  # Firefox production → .output/firefox-mv2/
 npm run zip            # Store-submission zip (zip:firefox for the MV2 one)
 ```
 
-There is no test runner yet. `npm run typecheck` is the only automated check besides lint.
+Every module and popup component gets a `*.test.ts(x)` next to it. Tests run on WXT's
+in-memory `browser`; crypto tests use the web app's vectors in `../tests/vectors/crypto/`.
 
 `test-site/` holds one mock page per fill and capture case in the `ext-autofill`
 specs. When a change adds a case, add its page and link it from `test-site/index.html`.
