@@ -45,7 +45,6 @@ None. `openspec/specs/` is empty today.
 - **Import items** and **Export vault** open the Keepiq web app. There is no in-extension import or export; Keepiq's web app owns both.
 - **Show identities as suggestions** and **Show cards as suggestions** are not rendered until ext-autofill supports those item types. Bitwarden shows them by default.
 - **No "Show website icons" setting.** Bitwarden has one, on by default. ADR-002 rules out fetching icons from sites or icon services, so there is nothing to toggle; the setting returns when Keepiq stores a favicon on the secret.
-- **Language** is read-only and follows the browser UI language. Bitwarden offers a picker; WXT's i18n module is the intended route once translations exist.
 - **Five wrong PINs** return the unlock screen to master-password mode and discard the PIN-wrapped key. Bitwarden logs the account out instead. Keepiq's logout costs a new app password, which is disproportionate for a mistyped PIN.
 - **Keepiq server notifications** and **Default item type** are additions. They mirror Keepiq's own per-user preferences so the extension and the web app agree.
 - **Vault timeout default** is 15 minutes idle with a lock on every browser restart, and **Never** carries a warning (ADR-002). Bitwarden's extension default differs; ADR-002 explains why 15 minutes was chosen.
