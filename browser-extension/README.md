@@ -13,8 +13,11 @@ npm run dev            # Chromium dev + HMR, auto-launches a browser
 npm run dev:firefox    # Firefox dev (MV2) + HMR
 ```
 
-Non-standard browser install? Copy `web-ext.config.example.ts` to
-`web-ext.config.ts` (gitignored) and point it at your binary.
+Dev opens your system default browser on Linux and Windows when it fits the target
+(a Chromium browser for `dev`, a Firefox one for `dev:firefox`); otherwise WXT looks
+in the standard install locations. Flatpak and snap browsers can't be launched this
+way. To pick a binary yourself, copy `web-ext.config.example.ts` to
+`web-ext.config.ts` (gitignored).
 
 `npm run dev` also serves the test site on http://localhost:8100 and opens the
 browser on it: login forms for every fill and capture case (iframes, shadow DOM,

@@ -1,5 +1,6 @@
 import type { Server } from 'node:http'
 import { defineConfig } from 'wxt'
+import { defaultBrowserBinaries } from './scripts/default-browser'
 import { startTestSite, TEST_SITE_PORT } from './scripts/test-site'
 
 let testSite: Server | undefined
@@ -18,6 +19,8 @@ export default defineConfig({
 		},
 	},
 	webExt: {
+		// A local web-ext.config.ts still overrides this.
+		binaries: defaultBrowserBinaries(),
 		startUrls: [`http://localhost:${TEST_SITE_PORT}/`],
 		// A persistent profile keeps the paired account and settings across dev restarts.
 		chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
