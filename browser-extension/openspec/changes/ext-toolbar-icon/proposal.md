@@ -14,7 +14,7 @@ chain:
 
 ## Why
 
-The toolbar icon is the only part of the extension that is visible without opening it, and today it is static placeholder art. Bitwarden uses it to show at a glance whether you are logged in, whether the vault is locked, and how many logins it has for the page you are on. Keepiq should do the same.
+The toolbar icon is the only part of the extension that is visible without opening it, and today it never changes. Bitwarden uses it to show at a glance whether you are logged in, whether the vault is locked, and how many logins it has for the page you are on. Keepiq should do the same.
 
 ## What Changes
 
