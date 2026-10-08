@@ -53,6 +53,7 @@ entrypoints/     one file (or directory) per extension entrypoint
   background.ts  MV3 service worker / MV2 background page
   content.ts     injected into matching pages
   popup/         toolbar popup
+  offscreen/     Chrome offscreen document that clears the clipboard
 src/             shared modules, imported as `@/src/…`
 public/          copied verbatim into the build (icons live here)
 scripts/         dev tooling, never bundled
@@ -61,11 +62,13 @@ test-site/       mock login pages for manual testing, never bundled
 
 ## Releasing
 
-Bump `version` in `package.json` — WXT derives the manifest version from it — then
-publish a GitHub Release. The `Release` workflow builds and attaches both zips.
+Bump `version` in `package.json`; WXT derives the manifest version from it. There
+is no release workflow or store listing yet: `npm run zip` and `npm run zip:firefox`
+build the store zips by hand.
 
 ## Reading
 
-[WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) — the cross-browser rules: `browser.*`
-vs `chrome.*`, the MV3/MV2 split, message-passing gotchas. Read it before touching
-`entrypoints/`.
+- [ARCHITECTURE.md](ARCHITECTURE.md): entrypoints, modules, messages, storage keys and the main flows.
+- [SECURITY.md](SECURITY.md): how the extension protects the vault, and how to report a vulnerability.
+- [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md): the cross-browser rules (`browser.*` vs `chrome.*`, the MV3/MV2 split, message-passing gotchas). Read it before touching `entrypoints/`.
+- [Using the browser extension](../docs/browser-extension/using.md) and its [privacy policy](../docs/browser-extension/privacy.md): the user docs.
