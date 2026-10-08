@@ -54,7 +54,7 @@ beforeEach(() => {
 describe('screens', () => {
 	it('shows Add account on a fresh profile', async () => {
 		expect(await state({ kind: 'vault.status' })).toEqual({
-			screen: 'add_account', accounts: [], active: null, notice: null, canAddAccount: true,
+			screen: 'add_account', accounts: [], active: null, notice: null, canAddAccount: true, lastTab: 'vault',
 		})
 	})
 
@@ -161,5 +161,13 @@ describe('timeout', () => {
 		await browser.storage.local.set({ [`settings.${account.id}`]: { vaultTimeout: 1, vaultTimeoutAction: 'lock' } })
 		vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2 * 60_000)
 		expect((await state({ kind: 'vault.status' })).screen).toBe('unlock')
+	})
+
+	it('does not count a passive status refresh as interaction', async () => {
+		await state({ kind: 'vault.status' })
+		const before = await browser.storage.session.get('lastInteractionAt')
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		await state({ kind: 'vault.status', passive: true })
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
 	})
 })

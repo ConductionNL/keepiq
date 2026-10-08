@@ -22,11 +22,11 @@ Server facts come from ADR-003; the caching rules from ADR-002. Keepiq's own `of
 ## Decisions
 
 - **Sync schedule uses `browser.alarms`, not `setInterval`.** An MV3 service worker dies after about 30 seconds idle and takes timers with it; alarms survive and wake the worker on both MV3 and MV2. `SYNC_INTERVAL_MINUTES = 15` is exported from `src/vault/sync.ts` and used for the alarm period and the popup-open staleness test. Alternative: `setInterval` in the background, which silently stops on Chrome.
-- **Probe before pulling.** Scheduled and popup-open syncs first call `GET /api/v1/secrets?sort=updated_at&direction=desc&limit=1` and compare `updatedAt` of the first row and `total` with the last snapshot; unchanged means one request and no rewrite (ADR-002). Unlock, local writes and "Sync now" skip the probe. Alternative: always pull the manifest, which re-downloads the whole vault every 15 minutes for nothing.
-- **Manifest first, then paginated fallback.** `GET /api/v1/offline/manifest` (`OfflineController::manifest`) returns the whole vault in one round trip; 403 (admin disabled) and 404 (no active suite) switch to `GET /api/v1/secrets?limit=100&page=N` (`SecretController::index`) plus `GET /api/v1/folders`, `GET /api/v1/secret-types`, `GET /api/v1/suites`. Both paths produce the same `VaultSnapshot`. Alternative: always paginate, which costs several requests for nothing on the default configuration.
-- **One `storage.local` key per account holds the whole snapshot.** `storage.local.set({ ['vault:' + accountId]: snapshot })` is a single write, so it is atomic for readers and trivially cleared. Plaintext metadata is stored as the server returns it, per ADR-002 (the web app encrypts metadata at rest under a key the extension deliberately never persists). `unlimitedStorage` is requested because Firefox caps `storage.local` at 5 MB without it and a few thousand RSA blobs approach that. Alternative: per-row keys, which need a transaction the API does not offer.
+- **Probe before pulling.** Scheduled and popup-open syncs first call `GET /api/v1/secrets?sort=updated_at&direction=desc&limit=1` and `GET /api/v1/suites` together, and compare `updatedAt` of the first row, `total` and the active suite with the last snapshot; unchanged means two small requests and no rewrite (ADR-002). The suite list is what notices a two-factor block or a key rotation while the vault is unchanged. Unlock, local writes and "Sync now" skip the probe. Alternative: always pull the manifest, which re-downloads the whole vault every 15 minutes for nothing.
+- **Manifest first, then paginated fallback.** `GET /api/v1/offline/manifest` (`OfflineController::manifest`) returns vaults under 1000 secrets in one round trip; 403 (admin disabled), 404 (no active suite) and a full 1000 rows (the server's limit by design) switch to `GET /api/v1/secrets?limit=100&page=N` (`SecretController::index`) plus `GET /api/v1/folders`, `GET /api/v1/secret-types`, `GET /api/v1/suites`. While the cached `total` is 1000 or more the manifest is skipped. Ties in the server's sort can move rows between pages (keepiq#1234), so a short count gets a second pass in another order; the snapshot keeps the server's `total`. Both paths produce the same `VaultSnapshot`. Alternative: always paginate, which costs several requests for nothing on the default configuration.
+- **One `storage.local` key per account holds the whole snapshot.** `storage.local.set({ ['vaultCache.' + accountId]: snapshot })` is a single write, so it is atomic for readers and trivially cleared. Plaintext metadata is stored as the server returns it, per ADR-002 (the web app encrypts metadata at rest under a key the extension deliberately never persists). `unlimitedStorage` is requested because Firefox caps `storage.local` at 5 MB without it and a few thousand RSA blobs approach that. Alternative: per-row keys, which need a transaction the API does not offer.
 - **Decryption stays in the background.** `item.decrypt` takes a list of ids and the fields wanted and returns plaintext; the popup never sees ciphertext or the key. Batched ids keep list rendering to one message per visible page of rows. Alternative: send the key to the popup, which widens the exposure surface for no gain.
-- **Copy is done by the popup, clear by the background.** `navigator.clipboard.writeText` works in the popup under a user gesture on both browsers. The popup then sends `clipboard.copied`; the background reads `settings.clearClipboardMs` (absent until ext-settings, meaning never) and schedules a `clipboard-clear` alarm. Clearing needs a document: on Chrome MV3 an offscreen document (`entrypoints/offscreen/`, `offscreen` permission, reason `CLIPBOARD`), on Firefox MV2 the persistent background page with `clipboardWrite`. `src/clipboard.ts` hides the split behind `clearClipboard()`. Alternative: a popup-side timer, which dies when the popup closes, which is always.
+- **Copy is done by the popup, clear by the background.** `navigator.clipboard.writeText` works in the popup under a user gesture on both browsers. The popup then sends `clipboard.copied`; the background reads `settings.clearClipboardMs` (absent until ext-settings, meaning never) and schedules a `clipboard-clear` alarm. Clearing needs a document: on Chrome MV3 an offscreen document (`entrypoints/offscreen/`, `offscreen` permission, reason `CLIPBOARD`), on Firefox MV2 the persistent background page. Both write without a user gesture, so both need `clipboardWrite`. `src/clipboard.ts` hides the split behind `clearClipboard()`. Alternative: a popup-side timer, which dies when the popup closes, which is always.
 - **Base domain via `tldts`.** Bitwarden's default match is base domain using the public suffix list; a two-label heuristic breaks on `co.uk`. `tldts` bundles the list, runs offline and is about 40 KB. `src/vault/match.ts` exposes `baseDomain(url)` and `matchesBaseDomain(itemUrl, tabUrl)`; the other Bitwarden match modes belong to ext-autofill. Matching runs in the background so the popup receives ids only (ADR-002).
 - **TOTP is a TypeScript port of the web app's `src/totp/totp.js`.** Same acceptance rules (otpauth URI or bare base32, SHA1/6/30 defaults, HOTP rejected) so a seed that works in Keepiq works here. Computed in the popup with WebCrypto HMAC since the popup already holds the decrypted seed for display. Alternative: a third-party OTP library, which adds a dependency for 80 lines.
 - **Search is plaintext only.** `name` and `url` are the only searchable plaintext fields (ADR-003). Decrypting every row per keystroke is a no-go at RSA-4096 cost. Recorded as a deviation.
@@ -44,9 +44,11 @@ Added:
 
 - `src/vault/types.ts`: `SecretRow`, `BlockedRow`, `FolderRow`, `TypeRow`, `SuiteRow`, `VaultSnapshot`, `SyncStatus`, `ItemMeta` (the metadata projection sent to the popup).
 - `src/vault/store.ts`: `readSnapshot(accountId)`, `writeSnapshot(accountId, snapshot)`, `clearSnapshot(accountId)`, `toItemMeta(row)`.
-- `src/vault/sync.ts`: `SYNC_INTERVAL_MINUTES`, `sync(accountId)` with the in-flight promise, manifest and fallback fetchers, suite-change check, `scheduleSyncAlarm()`, `cancelSyncAlarm()`.
+- `src/vault/sync.ts`: `SYNC_INTERVAL_MINUTES`, `sync(accountId)` with the in-flight promise, probe, manifest and fallback fetchers. The sync alarm is kept by `syncAlarm()` in `src/vault/timeout.ts` with the timeout alarm.
 - `src/vault/match.ts`: `baseDomain(url)`, `matchesBaseDomain(itemUrl, tabUrl)`, `suggestionIds(rows, tabUrl)`.
 - `src/vault/icons.ts`: type name to icon id, mirroring the web app's mapping.
+- `src/vault/list.ts`: sorting, search and filter, folder tree flattening and path, launch URL.
+- `src/vault/payloads.ts`: JSON readers for composite `key` payloads and `additionalFields`, card brand and last four.
 - `src/totp/totp.ts`: `parseTotpSeed(value)`, `generateCode(params, now)`, `secondsRemaining(period, now)`.
 - `src/clipboard.ts`: `copyText(text)` for the popup, `clearClipboard()` for the background with the Chrome offscreen and Firefox page paths.
 - `entrypoints/offscreen/index.html`, `entrypoints/offscreen/main.ts`: Chrome-only clipboard-clear document (`include: ['chrome']`).
@@ -56,30 +58,30 @@ Added:
 - `entrypoints/popup/components/Toast.tsx`: transient confirmation and failure messages, used first by copy and later by fill.
 - `entrypoints/popup/views/ItemDetail.tsx`: per-type sections, metadata, disabled Edit and Delete.
 - `entrypoints/popup/views/Placeholder.tsx`: Generator, Send and Settings until their changes land.
-- `entrypoints/popup/components/TabBar.tsx`, `SearchField.tsx`, `FolderSelect.tsx`, `TypeFilterChips.tsx`, `ItemCard.tsx` (type icon, name, subtitle, Launch, Copy menu, More menu), `Menu.tsx`, `MaskedField.tsx` (masked value with reveal and copy, reused by detail, forms and send), `TotpCode.tsx` (code plus countdown), `Banner.tsx` (offline and stale), `EmptyState.tsx`.
-- `entrypoints/popup/hooks/useVaultSnapshot.ts` (`vault.snapshot` with the current tab URL, refetch on `vault.changed`), `useDecryptedFields.ts` (`item.decrypt` for `ids` and `fields` on mount, state dropped on unmount), `useCurrentTab.ts` (`tabs.query` or the popout `tabId` parameter), `useClipboard.ts` (`copyText` plus `clipboard.copied`).
+- `entrypoints/popup/components/TabBar.tsx`, `SearchField.tsx`, `FolderSelect.tsx`, `TypeFilterChips.tsx`, `ItemCard.tsx` (type icon, name, subtitle, Launch, Copy menu, More menu), `Menu.tsx`, `MaskedField.tsx` (masked value with reveal and copy, reused by detail, forms and send), `TotpCode.tsx` (code plus countdown), `EmptyState.tsx`; offline and stale banners reuse `Banner` from `ErrorBanner.tsx`.
+- `entrypoints/popup/hooks/useVaultSnapshot.ts` (`vault.snapshot` with the current tab URL, refetch on `vault.changed`), `useDecryptedFields.ts` (`item.decrypt` for `ids` and `fields` on mount, state dropped on unmount), `useCurrentTab.ts` (`tabs.query` or the popout `tabId` parameter), `useClipboard.ts` (`copyText` plus `clipboard.copied`), `useBackgroundMessage.ts` (`vault.changed` and `vault.locked`).
+- `entrypoints/popup/shell-context.ts`: `refreshState` and `toast` for everything under `Shell`.
 
 Edited:
 
 - `entrypoints/background.ts`: message arms for `vault.sync`, `vault.snapshot`, `item.decrypt`, `clipboard.copied`, `popup.popout`; alarm listener for `vault-sync` and `clipboard-clear`; hooks on unlock, lock and logout from ext-accounts-and-unlock.
-- `entrypoints/popup/App.tsx` (from ext-accounts-and-unlock): renders `Shell` once unlocked; the `Header` component gains the host subtitle and the pop-out button.
+- `entrypoints/popup/App.tsx` (from ext-accounts-and-unlock): renders `Shell` once unlocked; the `Header` component gains the pop-out button.
 - `entrypoints/popup/popup.css`: 380 px width, 600 px height, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width; component styles split into files next to their components as they grow.
 - `src/messages.ts`: the types below.
-- `wxt.config.ts`: `permissions` gain `alarms`, `tabs`, `unlimitedStorage`; `offscreen` added when `browser === 'chrome'`; `clipboardWrite` when `browser === 'firefox'`.
+- `wxt.config.ts`: `permissions` gain `alarms`, `tabs`, `unlimitedStorage`; `clipboardWrite`; `offscreen` on every browser but Firefox.
 - `package.json`: `tldts` dependency; `vitest` dev dependency if task 5.1 is taken.
 
 ## Message contract
 
-Additions to `src/messages.ts`. Kinds use `<area>.<verb>`; every listener still asserts from `unknown`.
+Additions to `src/messages.ts`. Kinds use `<area>.<verb>`; every listener still asserts from `unknown`. These requests have their own reply shapes, so they are a union apart from the account messages, which all reply with `Result`; `PopupReplies` maps each kind to its reply.
 
 ```ts
-export type PopupToBackground =
+export type PopupRequest =
 	| { kind: 'vault.sync' }
 	| { kind: 'vault.snapshot'; tabUrl?: string }
 	| { kind: 'item.decrypt'; ids: string[]; fields: Array<'login' | 'key' | 'additionalFields'> }
 	| { kind: 'clipboard.copied' }
 	| { kind: 'popup.popout'; tabId?: number }
-	| { kind: 'popup.lastTab.get' }
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
 
 export type PopupTab = 'vault' | 'generator' | 'send' | 'settings'
@@ -95,7 +97,7 @@ export interface ItemMeta {
 	id: string
 	name: string
 	url: string | null
-	typeId: string
+	typeId: string | null
 	folderId: string | null
 	hasLogin: boolean
 	blocked: boolean
@@ -111,11 +113,13 @@ export type VaultSnapshotReply =
 	| { state: 'locked' }
 	| {
 		state: 'unlocked'
-		items: ItemMeta[]
+		/** `null` until the account's first sync stores a snapshot. */
+		items: ItemMeta[] | null
 		folders: Array<{ id: string; name: string; parentId: string | null }>
 		types: Array<{ id: string; name: string; label: string }>
 		suggestionIds: string[]
 		sync: SyncStatus
+		webAppUrl: string
 	}
 
 export type DecryptReply =
@@ -127,7 +131,7 @@ export type BackgroundToPopup =
 	| { kind: 'vault.locked' }
 ```
 
-`vault.sync` replies with `SyncStatus` when the sync settles. `vault.changed` and `vault.locked` are broadcast with `browser.runtime.sendMessage` and ignored when no popup is open (the promise rejects, caught).
+`PopupState` gains `lastTab: PopupTab`, so the popup opens on the remembered tab from its first frame without a second round trip. `vault.sync` replies with `SyncStatus` when the sync settles. A suite change found by sync sets a flag on the account, so the unlock view says the vault key changed. `vault.changed` and `vault.locked` are broadcast with `browser.runtime.sendMessage` and ignored when no popup is open (the promise rejects, caught).
 
 ## Risks / Trade-offs
 
@@ -142,6 +146,8 @@ export type BackgroundToPopup =
 - [`tabs.query` in a popout returns the popout window] → `tabId` passed in the popout URL and used instead.
 
 ## Open Questions
+
+- When the admin turned off offline caching (manifest 403), the paginated fallback still writes the vault ciphertext to `storage.local`, against the admin's intent. Alternative: keep that snapshot in `storage.session` only, losing offline reads after a browser restart.
 
 - Sync interval value: 15 minutes proposed; confirm against the reviewer's Bitwarden reference.
 - Whether "Sync now" also belongs in the Vault tab header when not offline, or only in ext-settings.

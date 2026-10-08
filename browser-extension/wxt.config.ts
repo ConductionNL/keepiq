@@ -42,7 +42,7 @@ export default defineConfig({
 		},
 	},
 	modules: ['@wxt-dev/module-react'],
-	manifest: ({ mode, manifestVersion }) => {
+	manifest: ({ browser, mode, manifestVersion }) => {
 		// A separate name in dev means a dev build and a store build can sit side by
 		// side in the same browser profile without you guessing which is which.
 		const nameSuffix = mode === 'production' ? '' : ' (DEV)'
@@ -55,8 +55,15 @@ export default defineConfig({
 			// so there is only one place to bump.
 			permissions: [
 				'storage',
+				// Firefox caps storage.local at 5 MB, which a few thousand RSA blobs approach.
+				'unlimitedStorage',
 				'alarms',
 				'idle',
+				'tabs',
+				// Clearing the clipboard writes it without a user gesture, from an offscreen
+				// document on Chrome and from the background page on Firefox.
+				'clipboardWrite',
+				...(browser === 'firefox' ? [] : ['offscreen']),
 			],
 			...(manifestVersion === 3
 				? { optional_host_permissions: serverOrigins }

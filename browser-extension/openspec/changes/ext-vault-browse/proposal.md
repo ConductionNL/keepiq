@@ -18,12 +18,12 @@ After ext-accounts-and-unlock a user can sign in and unlock, but sees nothing. T
 ## What Changes
 
 - Vault sync: fetches the whole vault from `GET /api/v1/offline/manifest`, falling back to paginated listing when the manifest is unavailable, and stores it atomically in `storage.local` per account (ADR-002). Runs on unlock, on popup open when stale, on a 15 minute alarm while unlocked, after every local write and on "Sync now". Detects a changed encryption suite and purges the cache and key.
-- Popup shell: Bitwarden layout at 380 x 600 with a header (title, active-tab host, pop-out button, account avatar), a content area and a bottom tab bar with Vault, Generator, Send and Settings. Generator, Send and Settings render placeholders until their changes land. Light and dark theme tokens follow the system.
+- Popup shell: Bitwarden layout at 380 x 600 with a header (title, pop-out button, account avatar), a content area and a bottom tab bar with Vault, Generator, Send and Settings. Generator, Send and Settings render placeholders until their changes land. Light and dark theme tokens follow the system.
 - Vault list: search bar, folder dropdown and type filter chips over the cached snapshot, an "Autofill suggestions" section matched by base domain against the active tab, alphabetically sorted item cards with Launch, Copy and More actions, and empty, loading, offline and blocked states.
 - Item detail: header with name, type and folder path; per-type sections (login, TOTP with live code, websites, additional fields, notes, card, identity, passkey, generic, blocked) with masked values, reveal toggles and copy; created and updated metadata; disabled Edit and Delete buttons until ext-vault-edit.
 - Clipboard: copy happens in the popup with `navigator.clipboard.writeText`; the background schedules the clipboard-clear alarm when a clear delay is configured (the setting UI arrives in ext-settings).
 - Messages added to `src/messages.ts`: `vault.sync`, `vault.snapshot`, `item.decrypt`, `clipboard.copied`, `popup.popout`.
-- Manifest permissions added in `wxt.config.ts`: `alarms`, `tabs`, `unlimitedStorage`; `offscreen` on Chrome only; `clipboardWrite` on Firefox only.
+- Manifest permissions added in `wxt.config.ts`: `alarms`, `tabs`, `unlimitedStorage`; `clipboardWrite`; `offscreen` on Chrome only.
 
 ## Capabilities
 

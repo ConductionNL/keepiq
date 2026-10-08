@@ -11,6 +11,7 @@ import { effectiveSettings } from '@/src/accounts/settings'
 const sessionKey = (accountId: string) => `privateKeyPkcs8.${accountId}`
 export const unlockedAtKey = (accountId: string) => `unlockedAt.${accountId}`
 export const neverLockKey = (accountId: string) => `neverLockKey.${accountId}`
+export const LAST_TAB_KEY = 'popup:lastTab'
 
 const memory = new Map<string, string>()
 /** Imported once per worker generation; the bytes are the source of truth. */

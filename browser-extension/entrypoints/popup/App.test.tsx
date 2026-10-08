@@ -4,14 +4,12 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PopupState, Result } from '@/src/messages'
 import App from './App'
-import { account, popupState } from './testing'
+import { account, fakeBackground, popupState } from './testing'
 
 afterEach(cleanup)
 
 function background(state: PopupState) {
-	const sendMessage = vi.fn(async (): Promise<Result> => ({ ok: true, state }))
-	vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(sendMessage as never)
-	return sendMessage
+	return fakeBackground({ state })
 }
 
 const heading = () => screen.findByRole('heading', { level: 1 })
@@ -28,11 +26,11 @@ describe('App', () => {
 		[popupState({ screen: 'add_account', active: null }), 'Add account'],
 		[popupState({ screen: 'reauthenticate', active: account({ status: 'logged_out' }) }), 'Log in again'],
 		[popupState({ screen: 'unlock' }), 'Unlock'],
-		[popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }) }), 'Keepiq'],
+		[popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }) }), 'Vault'],
 	])('renders the screen the background picked: %#', async (state, title) => {
 		background(state)
 		render(<App />)
-		expect((await heading()).textContent).toBe(title)
+		expect(await screen.findByRole('heading', { level: 1, name: title })).toBeTruthy()
 	})
 
 	it('opens the switcher from the avatar and adds an account from it', async () => {
@@ -54,7 +52,9 @@ describe('App', () => {
 		let answer!: (result: Result) => void
 		vi.spyOn(browser.runtime, 'sendMessage').mockReturnValue(new Promise((resolve) => (answer = resolve)) as never)
 		render(<App />)
-		expect(screen.getByRole('status').textContent).toBe('Loading…')
+		expect(screen.queryByRole('status')).toBeNull()
+		expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+		expect((await screen.findByRole('status', {}, { timeout: 1000 })).textContent).toBe('Loading…')
 		answer({ ok: true, state: popupState() })
 		expect((await screen.findByRole('heading', { name: 'Unlock' }))).toBeTruthy()
 	})

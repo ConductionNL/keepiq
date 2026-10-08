@@ -1,11 +1,12 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { neverLockKey, putKey } from '@/src/vault/key-store'
+import { vaultCacheKey } from '@/src/vault/store'
 import { suiteRow } from '@/src/testing/vectors'
 import { readSettings, writeSettings } from './settings'
 import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId, listAccounts,
-	markLoggedOut, removeAccount, removeAllAccounts, setActive, suiteKey, updateSettings, vaultCacheKey,
+	markLoggedOut, removeAccount, removeAllAccounts, setActive, suiteKey, updateAccount, updateSettings,
 } from './store'
 
 const suite = { ...suiteRow }
@@ -96,6 +97,60 @@ describe('logging out', () => {
 		expect(await getActiveAccountId()).toBeNull()
 		expect(await browser.storage.local.get(null)).toEqual({})
 		expect(await browser.storage.session.get(null)).toEqual({})
+	})
+})
+
+describe('concurrent writes', () => {
+	it('loses neither a logout nor the save racing it', async () => {
+		const account = await addAccount(fields(), suite)
+		await Promise.all([updateAccount(account.id, { keyChanged: true }), markLoggedOut(account.id)])
+		expect(await getAccount(account.id)).toMatchObject({ appPassword: null, keyChanged: true })
+	})
+
+	it('does not bring a removed account back', async () => {
+		const account = await addAccount(fields(), suite)
+		await Promise.all([updateAccount(account.id, { displayName: 'Late' }), removeAccount(account.id)])
+		expect(await getAccount(account.id)).toBeUndefined()
+	})
+
+	it('keeps an account added during log out all whole', async () => {
+		await addAccount(fields('a'), suite)
+		const [, late] = await Promise.all([removeAllAccounts(), addAccount(fields('late'), suite)])
+		expect((await listAccounts()).map((a) => a.id)).toEqual([late.id])
+		expect(await getActiveAccountId()).toBe(late.id)
+	})
+
+	it('leaves nothing of an account added just before log out all', async () => {
+		const set = browser.storage.local.set.bind(browser.storage.local)
+		let removed: Promise<void> | undefined
+		vi.spyOn(browser.storage.local, 'set').mockImplementation(async (values) => {
+			// Log out all runs before the add writes its suite; queued behind the add, it waits instead.
+			if (!removed && Object.keys(values).some((key) => key.startsWith('suite.'))) {
+				removed = removeAllAccounts()
+				await Promise.race([removed, new Promise((resolve) => setTimeout(resolve, 20))])
+			}
+			return set(values)
+		})
+		await addAccount(fields('early'), suite)
+		await removed
+		expect(await browser.storage.local.get(null)).toEqual({})
+	})
+
+	it('makes the new account active though the pointer is read while it is being added', async () => {
+		await addAccount(fields('first'), suite)
+		const set = browser.storage.local.set.bind(browser.storage.local)
+		vi.spyOn(browser.storage.local, 'set').mockImplementation(async (values) => {
+			await set(values)
+			// Another popup or a lock reads the active account in the middle of the add.
+			if (Object.keys(values).some((key) => key.startsWith('suite.'))) await getActiveAccountId()
+		})
+		const added = await addAccount(fields('second'), suite)
+		expect(await getActiveAccountId()).toBe(added.id)
+	})
+
+	it('adds two accounts at once without dropping either', async () => {
+		await Promise.all([addAccount(fields('alice'), suite), addAccount(fields('bob'), suite)])
+		expect((await listAccounts()).map((a) => a.uid).sort()).toEqual(['alice', 'bob'])
 	})
 })
 

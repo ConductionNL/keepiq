@@ -5,10 +5,14 @@ import {
 	listAccounts, MAX_ACCOUNTS, removeAccount, removeAllAccounts, setActive, updateAccount,
 } from '@/src/accounts/store'
 import { verifyCredentials } from '@/src/accounts/verify'
+import { readLastTab } from '@/src/background/requests'
 import { Failure } from '@/src/failure'
 import type { AccountSummary, PopupScreen, PopupState, PopupToBackground, Result } from '@/src/messages'
 import { enforce, syncAlarm, touch } from '@/src/vault/timeout'
+import { sync } from '@/src/vault/sync'
 import { checkSuite, lock, lockAll, unlock } from '@/src/vault/unlock'
+
+export const KEY_CHANGED_MESSAGE = 'Your vault key changed in Keepiq. Unlock with your current master password.'
 
 export async function buildState(): Promise<PopupState> {
 	const activeId = await getActiveAccountId()
@@ -27,13 +31,17 @@ export async function buildState(): Promise<PopupState> {
 	}
 	const active = accounts.find((a) => a.active) ?? null
 	const screens: Record<AccountSummary['status'], PopupScreen> = { logged_out: 'reauthenticate', locked: 'unlock', unlocked: 'unlocked' }
-	const revoked = active ? (await getAccount(active.id))?.revoked : false
+	const record = active ? await getAccount(active.id) : undefined
+	let notice: string | null = null
+	if (active?.status === 'logged_out' && record?.revoked) notice = SESSION_REVOKED_MESSAGE
+	if (active?.status === 'locked' && record?.keyChanged) notice = KEY_CHANGED_MESSAGE
 	return {
 		screen: active ? screens[active.status] : 'add_account',
 		accounts,
 		active,
-		notice: active?.status === 'logged_out' && revoked ? SESSION_REVOKED_MESSAGE : null,
+		notice,
 		canAddAccount: accounts.length < MAX_ACCOUNTS,
+		lastTab: await readLastTab(),
 	}
 }
 
@@ -86,7 +94,10 @@ async function perform(message: PopupToBackground): Promise<void> {
 		case 'accounts.switch':
 			return setActive(message.accountId)
 		case 'vault.unlock':
-			return unlock(message.accountId, message.method)
+			await unlock(message.accountId, message.method)
+			// Not awaited: the vault shows the cached snapshot while this runs.
+			void sync(message.accountId, 'full')
+			return
 		case 'vault.lock':
 			return lock(message.accountId)
 		case 'vault.lockAll':
@@ -100,7 +111,7 @@ async function perform(message: PopupToBackground): Promise<void> {
 export async function handlePopupMessage(message: PopupToBackground): Promise<Result> {
 	try {
 		await enforce()
-		await touch()
+		if (!(message.kind === 'vault.status' && message.passive)) await touch()
 		await perform(message)
 		await syncAlarm()
 		return { ok: true, state: await buildState() }
