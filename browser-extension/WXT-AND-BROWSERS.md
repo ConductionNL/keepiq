@@ -12,19 +12,21 @@ under `entrypoints/` or `src/`.
 | Use the `browser.*` global for every extension API | Use `chrome.*` — it's callback-based on Firefox, so `await` yields `undefined` |
 | Let WXT pick the manifest version per browser (Chrome MV3, Firefox MV2) | Set a global `manifestVersion` in `wxt.config.ts` — it breaks Firefox dev |
 | Write manifest-version-agnostic code; shim APIs that differ (e.g. `action`) | Assume an MV3-only API exists — Firefox builds as MV2 |
-| Type message payloads as `unknown` and assert the shape at the boundary | Type a listener param as the concrete envelope — the polyfill types it `unknown` |
+| Type message payloads as `unknown` and assert the shape at the boundary | Type a listener param as the concrete envelope — it is untrusted input |
 | Build **both** targets before committing a browser-facing change | Trust `npm run typecheck` alone — it doesn't build or catch MV drift |
 
 ## 1. Always use `browser.*`, never `chrome.*`
 
-WXT auto-imports a `browser` global backed by
-[`webextension-polyfill`](https://github.com/mozilla/webextension-polyfill) (the
-default `extensionApi`). It is **promise-based on every browser**.
+WXT auto-imports a `browser` global. Since WXT 0.20 there is **no
+`webextension-polyfill`**: `browser` is Firefox's native `browser` and Chrome's
+native `chrome` (`@wxt-dev/browser`). Both return promises for API calls.
 
-The native `chrome.*` namespace on Firefox is **callback-based** and returns
+The `chrome.*` namespace on Firefox MV2 is **callback-based** and returns
 `undefined` from calls like `chrome.storage.local.get(...)`. So `await chrome.…`
-resolves to `undefined` and the next line throws. The polyfill does **not** patch
-the `chrome` global — calling `chrome.*` bypasses it entirely.
+resolves to `undefined` and the next line throws.
+
+Without a polyfill, behaviour the polyfill used to add is gone on Chrome. The
+one that bites is message replies, see § 3.
 
 ```ts
 // GOOD — promise-based on Chrome and Firefox
@@ -77,12 +79,11 @@ config change plus dropping the shims.
 
 ## 3. Message passing
 
-The polyfill types `onMessage` / port payloads as **`unknown`** (stricter than
-`@types/chrome`'s `any`). Accept `unknown` and assert the typed envelope inside —
-the payload genuinely is untrusted/untyped at the runtime boundary:
+Accept `onMessage` / port payloads as **`unknown`** and assert the typed
+envelope inside — the payload genuinely is untrusted/untyped at the runtime boundary:
 
 ```ts
-browser.runtime.onMessage.addListener((msg: unknown, sender: Runtime.MessageSender) => {
+browser.runtime.onMessage.addListener((msg: unknown, sender: Browser.runtime.MessageSender) => {
   const m = msg as ContentToBackground
   // …
 })
@@ -91,8 +92,10 @@ browser.runtime.onMessage.addListener((msg: unknown, sender: Runtime.MessageSend
 - **Fire-and-forget listeners must return `undefined`.** Returning a `Promise` or
   `true` tells the browser to hold the message channel open for a `sendResponse`
   we never call. Put the async work in a floating IIFE (`void (async () => {…})()`).
-- **Request/response listeners return the `Promise`** — that is what holds the
-  channel open for the reply. `entrypoints/background.ts` does both in one
+- **Request/response listeners call `sendResponse` and return `true`.** Native
+  Chrome only accepts a returned `Promise` as the reply in recent versions; older
+  ones answer the sender with `undefined`. `true` plus `sendResponse` works on
+  every Chrome and Firefox. `entrypoints/background.ts` does both in one
   listener; the split is the thing to copy.
 - `browser.runtime.sendMessage(...)` returns a promise — guard it with `.catch()`.
 - In content scripts, pre-check `browser.runtime?.id` before sending: the context

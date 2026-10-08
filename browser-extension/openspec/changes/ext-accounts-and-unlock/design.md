@@ -28,7 +28,7 @@ Constraints that shape the design: the background is the only place with host pe
 - **The suite row is cached by this change under `suite.<accountId>`, separate from `vaultCache.<accountId>`.** Unlock needs it offline and ext-vault-browse does not exist yet. Alternative: wait for the manifest cache, rejected because unlock would then need the network.
 - **Key store is a shim with two backends.** `src/vault/key-store.ts` writes PKCS#8 bytes to `browser.storage.session` when it exists and to a module-level `Map` otherwise (Firefox below 115, persistent MV2 page). It re-imports to a non-extractable `CryptoKey` on first use per worker generation and memoises it. Alternative: raise `strict_min_version` to 115, deferred to a later decision.
 - **Timeout engine uses one `browser.alarms` alarm plus a popup port.** A `vault-timeout` alarm with `periodInMinutes: 1` runs while any account is unlocked and compares `lastInteractionAt` against each account's timeout. The popup opens a `runtime.connect` port on load; `onDisconnect` implements "Immediately". `browser.idle.onStateChanged` with state `locked` implements "On system lock". `vault.status` runs the same check first so a sleeping worker cannot extend a session. Alternative: `setTimeout` in the worker, rejected because MV3 kills it.
-- **Timeout policy is one constant object** (`TIMEOUT_POLICY = { maxMinutes, forcedAction }` in `src/vault/timeout.ts`) so an admin clamp later touches one place (ADR-002).
+- **Timeout policy is one constant object** (`TIMEOUT_POLICY = { maxMinutes, forcedAction }` in `src/accounts/settings.ts`) so an admin clamp later touches one place (ADR-002). The timer and the "Never" key both read `effectiveSettings`, so a clamp also keeps the key off disk.
 - **"Never" writes the same PKCS#8 base64 to `storage.local` under `neverLockKey.<accountId>`** and the key store reads it back after a restart. Every lock path deletes it. Alternative: refuse "Never", rejected for Bitwarden parity.
 - **Errors cross the message boundary as a discriminated `code`, not as thrown errors.** Every request/response message resolves to `{ ok: true, state } | { ok: false, code, message }` so the popup can map codes to copy and `sendMessage` never rejects on a domain error.
 - **The popup is React with TypeScript through `@wxt-dev/module-react` (ADR-004).** `main.tsx` mounts `<App />`, which picks a view from `state.screen`; views compose components, and hooks are the only bridge to the background (`useMessage` wraps `browser.runtime.sendMessage` with the typed envelopes, `usePopupState` holds the background-owned `PopupState`). No component imports `src/api` or `src/crypto`, and the background and content scripts stay plain TypeScript. This change lands the dependencies once for the whole chain. Alternative: the template's vanilla view modules, rejected by ADR-004 because shared stateful components across seven changes need one component model.
@@ -37,7 +37,11 @@ Constraints that shape the design: the background is the only place with host pe
 - **The record keeps the typed `loginName` next to the `uid`.** Nextcloud ties an app password to the login name, which can be an email address, so Basic auth uses it; the uid from the identity response is for display, the avatar and the duplicate check.
 - **`unlock_blocked` error.** When the server's two-factor policy withholds the suite's `privateKey` (`unlockBlocked: 'two_factor_required'`), add and unlock fail with a message to set up a second factor, instead of a generic error.
 - **Popup message routing lives in `src/background/router.ts`.** `background.ts` only registers listeners, and only messages from extension pages reach the router, so a content script cannot drive accounts.
-- **The add form remembers Server URL and Username in the popup's `sessionStorage`, never the app password.**
+- **The add form remembers Server URL and Username in `storage.session`, never the app password.** A reopened popup is a new page with an empty `sessionStorage`.
+- **The account stores a server URL, not an origin.** Nextcloud may live under a subpath (`https://example.org/nextcloud`); the host permission is still requested for the bare origin.
+- **A wrong master password on a cached suite fetches the suites once.** That is how a password changed in the web app gets picked up. The old password keeps opening the old cached suite until a fetch sees the new epoch, which is the vault sync ext-vault-browse runs on every unlock.
+- **"Log out" asks for confirmation everywhere**, as in Bitwarden: it deletes the account, unlike "Lock" next to it.
+- **The background replies through `sendResponse` and returns `true`.** WXT 0.21 ships no polyfill, and native Chrome accepts a returned promise only in recent versions.
 
 ## Module layout
 
@@ -47,12 +51,12 @@ New:
 - `src/api/client.ts`: `createClient(account)`, `request()`, error classes `ApiError`, `SessionRevoked`, `VaultWriteLocked`, `Offline`, `KeepiqNotInstalled`, identity helpers `fetchIdentity`, `fetchAvatarDataUrl`, and an `onUnauthorized` hook the account store registers.
 - `src/crypto/base64.ts`, `src/crypto/envelope.ts` (decode and version check), `src/crypto/kdf.ts` (PBKDF2 to AES-GCM key), `src/crypto/rsa.ts` (PKCS#8 import, X.509 SPKI extraction, chunked RSA-OAEP decrypt and encrypt), `src/crypto/index.ts`.
 - `src/crypto/*.test.ts`: vitest round-trip and layout tests.
-- `src/accounts/normalize-origin.ts`: URL to origin, https rule with the dev-host allow list.
+- `src/accounts/normalize-server-url.ts`: URL to server URL (origin plus install subpath), https rule with the dev-host allow list.
 - `src/accounts/store.ts`: `storage.local` schema, add, reauthenticate, remove, removeAll, setActive, purge helpers, the 5-account limit and duplicate check.
 - `src/accounts/verify.ts`: identity then suites, error mapping, avatar fetch.
 - `src/vault/key-store.ts`: session or memory backend, re-import, `neverLockKey` handling.
 - `src/vault/unlock.ts`: `unlock(accountId, method)`, suite fetch when uncached, epoch check, `lock`, `lockAll`, `logoutForTimeout`.
-- `src/vault/timeout.ts`: settings defaults, `TIMEOUT_POLICY`, alarm, idle listener, popup port tracking.
+- `src/vault/timeout.ts`: alarm, idle listener, popup port tracking; the settings and `TIMEOUT_POLICY` live in `src/accounts/settings.ts`.
 - `entrypoints/popup/main.tsx`: mounts `<App />` and opens the `popup` interaction port.
 - `entrypoints/popup/App.tsx`: reads `usePopupState()` and renders the view for `state.screen` inside the `Header`.
 - `entrypoints/popup/hooks/useMessage.ts`: typed wrapper around `browser.runtime.sendMessage` for `PopupToBackground`, resolving to `Result`; the single `unknown` cast in the popup.
@@ -76,7 +80,7 @@ export type AccountStatus = 'unlocked' | 'locked' | 'logged_out'
 
 export interface AccountSummary {
 	id: string
-	origin: string
+	serverUrl: string
 	host: string
 	uid: string
 	displayName: string
@@ -99,7 +103,7 @@ export interface PopupState {
 export type ErrorCode =
 	| 'insecure_url' | 'invalid_url' | 'permission_denied' | 'unreachable' | 'not_nextcloud'
 	| 'unauthorized' | 'keepiq_missing' | 'no_active_suite' | 'duplicate' | 'limit_reached'
-	| 'invalid_master_password' | 'offline_no_cache' | 'session_revoked' | 'write_locked' | 'unknown'
+	| 'invalid_master_password' | 'offline_no_cache' | 'session_revoked' | 'write_locked' | 'server_error' | 'unknown'
 
 export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; message: string }
 
@@ -142,7 +146,8 @@ Storage keys in `storage.local`: `accounts` (record by id), `activeAccountId`, `
 
 ## Open Questions
 
-- Whether the `http` allow list (`localhost`, `127.0.0.1`, `*.test`, `*.local`) should be a build-time setting instead of a code constant.
+- Whether the `http` allow list (`localhost`, `127.0.0.1`, `*.test`) should be a build-time setting instead of a code constant. `*.local` was dropped: mDNS names are easy to spoof and the app password would cross the LAN in cleartext.
+- Whether Firefox's `idle` API reports `locked` on every platform; if it does not, "On system lock" silently never fires there.
 - Whether "On system lock" stays in the option list; Bitwarden offers it and `browser.idle` makes it cheap, but ADR-002's list omits it.
 - Whether a "Logged out" account should expire and be removed automatically after some time, as Bitwarden does not.
 - Whether to raise `strict_min_version` to 115 and drop the memory backend once Firefox usage data exists.

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { addAccount, getAccount, markLoggedOut, suiteKey } from '@/src/accounts/store'
+import { decodeEnvelope, encodeEnvelope } from '@/src/crypto/envelope'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { getKey, hasKey } from './key-store'
 import { checkSuite, lock, lockAll, logoutForTimeout, unlock } from './unlock'
@@ -10,8 +11,15 @@ const password = { type: 'masterPassword' as const, masterPassword: envelope.pas
 
 async function newAccount(uid = 'alice') {
 	return addAccount({
-		origin: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
 	}, { ...suiteRow })
+}
+
+/** The suite as cached before the master password changed: the current password no longer opens it. */
+function staleSuite() {
+	const decoded = decodeEnvelope(envelope.envelope)
+	decoded.ciphertextWithTag[decoded.ciphertextWithTag.length - 1]! ^= 1
+	return { ...suiteRow, privateKey: encodeEnvelope(decoded), unlockKeyEpoch: 0 }
 }
 
 beforeEach(() => {
@@ -34,6 +42,33 @@ describe('unlock', () => {
 		await expect(unlock(account.id, { type: 'masterPassword', masterPassword: envelope.wrongPassword }))
 			.rejects.toMatchObject({ code: 'invalid_master_password', message: 'Invalid master password' })
 		expect(await hasKey(account.id)).toBe(false)
+	})
+
+	describe('after the master password changed in the web app', () => {
+		it('fetches the new suite once and unlocks with the new password', async () => {
+			const account = await newAccount()
+			await browser.storage.local.set({ [suiteKey(account.id)]: staleSuite() })
+			fetchMock.mockResolvedValue(new Response(JSON.stringify([suiteRow])))
+			await unlock(account.id, password)
+			expect(fetchMock).toHaveBeenCalledOnce()
+			expect(await hasKey(account.id)).toBe(true)
+			expect((await browser.storage.local.get(suiteKey(account.id)))[suiteKey(account.id)]).toEqual(suiteRow)
+		})
+
+		it('stays invalid when the server has the same suite', async () => {
+			const account = await newAccount()
+			fetchMock.mockResolvedValue(new Response(JSON.stringify([suiteRow])))
+			await expect(unlock(account.id, { type: 'masterPassword', masterPassword: envelope.wrongPassword }))
+				.rejects.toMatchObject({ code: 'invalid_master_password' })
+			expect(fetchMock).toHaveBeenCalledOnce()
+		})
+
+		it('reports a wrong password, not offline, when the check cannot reach the server', async () => {
+			const account = await newAccount()
+			fetchMock.mockRejectedValue(new TypeError('offline'))
+			await expect(unlock(account.id, { type: 'masterPassword', masterPassword: envelope.wrongPassword }))
+				.rejects.toMatchObject({ code: 'invalid_master_password' })
+		})
 	})
 
 	it('fetches and caches the suite when nothing is cached', async () => {

@@ -8,7 +8,7 @@ All HTTP requests to a Nextcloud or Keepiq server SHALL go through `src/api/clie
 - **THEN** it sends a typed message to the background and the background performs the request
 
 ### Requirement: Request shape
-Every request SHALL use the account's origin plus `/index.php/apps/keepiq` as base URL for Keepiq routes, an `Authorization: Basic` header built from the account's uid and app password, `OCS-APIRequest: true`, `Accept: application/json`, `credentials: 'omit'`, and `Content-Type: application/json` with a JSON body on writes (ADR-003). Nextcloud identity routes (`/ocs/v2.php/cloud/user`, `/index.php/avatar/{uid}/{size}`) use the origin as base URL with the same headers.
+Every request SHALL use the account's server URL plus `/index.php/apps/keepiq` as base URL for Keepiq routes, an `Authorization: Basic` header built from the account's uid and app password, `OCS-APIRequest: true`, `Accept: application/json`, `credentials: 'omit'`, and `Content-Type: application/json` with a JSON body on writes (ADR-003). Nextcloud identity routes (`/ocs/v2.php/cloud/user`, `/index.php/avatar/{uid}/{size}`) use the server URL as base URL with the same headers.
 
 #### Scenario: Suites request
 - **WHEN** the client fetches the suites for `https://cloud.example.org`
@@ -16,7 +16,7 @@ Every request SHALL use the account's origin plus `/index.php/apps/keepiq` as ba
 
 #### Scenario: OCS identity request
 - **WHEN** the client fetches the identity
-- **THEN** it requests `<origin>/ocs/v2.php/cloud/user?format=json` and returns the unwrapped `ocs.data` object
+- **THEN** it requests `<serverUrl>/ocs/v2.php/cloud/user?format=json` and returns the unwrapped `ocs.data` object
 
 ### Requirement: 401 is revocation
 A 401 response SHALL purge the account's private key, cached suite row, `vaultCache.<accountId>` and app password, mark the account "Logged out" and reject the call with a `SessionRevoked` error whose message is "Session revoked, please log in again" (ADR-002). The identity and settings records stay.

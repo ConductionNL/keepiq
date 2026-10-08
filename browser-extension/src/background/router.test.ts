@@ -34,7 +34,7 @@ async function state(message: PopupToBackground): Promise<PopupState> {
 
 async function stored(uid = 'alice') {
 	return addAccount({
-		origin: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
 	}, { ...suiteRow })
 }
 

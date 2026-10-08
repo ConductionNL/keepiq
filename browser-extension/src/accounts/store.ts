@@ -1,13 +1,13 @@
 import type { AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
-import { clearKey, hasKey } from '@/src/vault/key-store'
-import { DEFAULT_SETTINGS, settingsKey, writeSettings } from './settings'
+import { clearKey, hasKey, syncNeverLockKey } from '@/src/vault/key-store'
+import { DEFAULT_SETTINGS, settingsKey, writeSettings, type AccountSettings } from './settings'
 
 export const MAX_ACCOUNTS = 5
 
 export interface AccountRecord {
 	id: string
-	origin: string
+	serverUrl: string
 	uid: string
 	loginName: string
 	displayName: string
@@ -50,7 +50,8 @@ export async function getActiveAccountId(): Promise<string | null> {
 	if (active && accounts[active]) return active
 	// Self-heal a dangling pointer so there is always exactly one active account.
 	const fallback = Object.keys(accounts)[0] ?? null
-	await browser.storage.local.set({ [ACTIVE]: fallback })
+	if (fallback) await browser.storage.local.set({ [ACTIVE]: fallback })
+	else if (active !== undefined) await browser.storage.local.remove(ACTIVE)
 	return fallback
 }
 
@@ -60,14 +61,14 @@ export async function setActive(accountId: string): Promise<void> {
 }
 
 /** Throws `AccountLimitReached` or `DuplicateAccount` before anything is written. */
-export async function assertCanAdd(origin: string, uid: string): Promise<void> {
+async function assertCanAdd(serverUrl: string, uid: string): Promise<void> {
 	const accounts = Object.values(await readAll())
-	if (accounts.some((a) => a.origin === origin && a.uid === uid)) throw new DuplicateAccount()
+	if (accounts.some((a) => a.serverUrl === serverUrl && a.uid === uid)) throw new DuplicateAccount()
 	if (accounts.length >= MAX_ACCOUNTS) throw new AccountLimitReached()
 }
 
 export async function addAccount(fields: Omit<AccountRecord, 'id'>, suite: CachedSuite): Promise<AccountRecord> {
-	await assertCanAdd(fields.origin, fields.uid)
+	await assertCanAdd(fields.serverUrl, fields.uid)
 	const record: AccountRecord = { id: crypto.randomUUID(), ...fields }
 	await writeAll({ ...(await readAll()), [record.id]: record })
 	await writeSettings(record.id, DEFAULT_SETTINGS)
@@ -80,6 +81,12 @@ export async function updateAccount(accountId: string, patch: Partial<Omit<Accou
 	if (!accounts[accountId]) return
 	accounts[accountId] = { ...accounts[accountId], ...patch }
 	await writeAll(accounts)
+}
+
+/** Changing settings moves the "Never" copy of the key on or off disk with them. */
+export async function updateSettings(accountId: string, settings: AccountSettings): Promise<void> {
+	await writeSettings(accountId, settings)
+	await syncNeverLockKey(accountId)
 }
 
 /** 401 or the timeout action "Log out": purge credentials and caches, keep identity and settings. */

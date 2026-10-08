@@ -19,14 +19,16 @@ function fakeEvent<T extends (...args: never[]) => unknown>() {
 const popupSender = { id: 'test-extension-id', url: 'chrome-extension://test-extension-id/popup.html' }
 const pageSender = { id: 'test-extension-id', url: 'https://evil.example/login', tab: { id: 7 } }
 
-/** What the browser does with the listener's return value: a promise is the reply. */
+/** What the browser does: `true` keeps the channel open for `sendResponse`, anything else means no reply. */
 async function deliver(message: unknown, sender: object): Promise<unknown> {
-	const [returned] = await fakeBrowser.runtime.onMessage.trigger(message, sender as never, () => {})
-	return returned
+	let reply: (value: unknown) => void = () => {}
+	const replied = new Promise((resolve) => (reply = resolve))
+	const returned = messageListener(message, sender, reply)
+	return returned === true ? replied : undefined
 }
 
 let onConnect: ReturnType<typeof fakeEvent<(port: unknown) => void>>
-let messageListener: (message: unknown, sender: object) => unknown
+let messageListener: (message: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
 
 beforeEach(() => {
 	fakeBrowser.reset()
@@ -40,16 +42,17 @@ beforeEach(() => {
 
 async function storedAccount() {
 	return addAccount({
-		origin: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
 	}, { ...suiteRow })
 }
 
 describe('background entrypoint', () => {
-	it('answers a popup message with a Result promise', async () => {
-		// The promise itself must be returned: `undefined` or `true` would leave the popup without a reply.
-		const returned = messageListener({ kind: 'vault.status' }, popupSender)
-		expect(returned).toBeInstanceOf(Promise)
-		expect(await returned).toEqual({ ok: true, state: { screen: 'add_account', accounts: [], active: null, notice: null, canAddAccount: true } })
+	it('answers a popup message through sendResponse', async () => {
+		// Native Chrome only accepts a returned promise in recent versions; `true` plus `sendResponse` works everywhere.
+		const sendResponse = vi.fn()
+		expect(messageListener({ kind: 'vault.status' }, popupSender, sendResponse)).toBe(true)
+		await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledOnce())
+		expect(sendResponse.mock.calls[0]![0]).toEqual({ ok: true, state: { screen: 'add_account', accounts: [], active: null, notice: null, canAddAccount: true } })
 	})
 
 	it('answers every popup message kind with a Result', async () => {

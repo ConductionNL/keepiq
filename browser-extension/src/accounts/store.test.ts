@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { putKey } from '@/src/vault/key-store'
+import { neverLockKey, putKey } from '@/src/vault/key-store'
 import { suiteRow } from '@/src/testing/vectors'
 import { readSettings, writeSettings } from './settings'
 import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId, listAccounts,
-	markLoggedOut, removeAccount, removeAllAccounts, setActive, suiteKey, vaultCacheKey,
+	markLoggedOut, removeAccount, removeAllAccounts, setActive, suiteKey, updateSettings, vaultCacheKey,
 } from './store'
 
 const suite = { ...suiteRow }
 
-function fields(uid = 'alice', origin = 'https://cloud.example.org') {
-	return { origin, uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw' }
+function fields(uid = 'alice', serverUrl = 'https://cloud.example.org') {
+	return { serverUrl, uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw' }
 }
 
 async function local(key: string) {
@@ -31,7 +31,7 @@ describe('adding', () => {
 		expect(await local(suiteKey(account.id))).toEqual(suite)
 	})
 
-	it('rejects the same uid on the same origin', async () => {
+	it('rejects the same uid on the same server', async () => {
 		await addAccount(fields(), suite)
 		await expect(addAccount(fields(), suite)).rejects.toBeInstanceOf(DuplicateAccount)
 		await expect(addAccount(fields('alice', 'https://other.example.org'), suite)).resolves.toBeDefined()
@@ -93,6 +93,7 @@ describe('logging out', () => {
 		const b = await addAccount(fields('b'), suite)
 		await putKey(b.id, 'AAAA')
 		await removeAllAccounts()
+		expect(await getActiveAccountId()).toBeNull()
 		expect(await browser.storage.local.get(null)).toEqual({})
 		expect(await browser.storage.session.get(null)).toEqual({})
 	})
@@ -102,6 +103,16 @@ describe('settings', () => {
 	it('reads invalid stored values as their default', async () => {
 		await browser.storage.local.set({ 'settings.x': { vaultTimeout: 'tomorrow', vaultTimeoutAction: 'explode' } })
 		expect(await readSettings('x')).toEqual({ vaultTimeout: 15, vaultTimeoutAction: 'lock' })
+	})
+
+	it('moves the key off disk when leaving Never', async () => {
+		const account = await addAccount(fields(), suite)
+		await updateSettings(account.id, { vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
+		await putKey(account.id, 'AAAA')
+		expect(await local(neverLockKey(account.id))).toBe('AAAA')
+		await updateSettings(account.id, { vaultTimeout: 5, vaultTimeoutAction: 'lock' })
+		expect(await local(neverLockKey(account.id))).toBeUndefined()
+		expect(await accountStatus(account)).toBe('unlocked')
 	})
 
 	it('keeps valid values', async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { decodeEnvelope, encodeEnvelope, IV_LENGTH, SALT_LENGTH } from './envelope'
 import { decryptPrivateKeyPem, deriveUnlockKey, InvalidMasterPassword } from './kdf'
-import { importPrivateKey, importPublicKey, pemToPkcs8, rsaDecrypt, rsaEncrypt } from './rsa'
+import { extractSpki, importPrivateKey, importPublicKey, pemToPkcs8, rsaDecrypt, rsaEncrypt } from './rsa'
 import { envelope, vectors } from '@/src/testing/vectors'
 
 // Written by the Keepiq web app, so passing them means byte compatibility.
@@ -56,4 +56,22 @@ describe('rsa fields', async () => {
 			}
 		})
 	}
+})
+
+describe('malformed input', () => {
+	it.each([
+		['more than 4 length bytes', [0x30, 0x85, 1, 0, 0, 0, 0]],
+		['an indefinite length', [0x30, 0x80, 0x30, 0x00]],
+		['a length past the end', [0x30, 0x82, 0xff, 0xff, 0x30, 0x00]],
+		['a field length past the end', [0x30, 0x06, 0x30, 0x04, 0x02, 0x7f, 0x00, 0x00]],
+	])('rejects a certificate with %s', (_, bytes) => {
+		expect(() => extractSpki(new Uint8Array(bytes))).toThrow(/Malformed/)
+	})
+
+	it('rejects RSA ciphertext whose block count does not match its length', async () => {
+		const privateKey = await importPrivateKey(pemToPkcs8(envelope.privateKeyPem))
+		const header = new Uint8Array([0xff, 0xff, 0xff, 0xff])
+		await expect(rsaDecrypt(btoa(String.fromCharCode(...header)), privateKey)).rejects.toThrow(/block count/)
+		await expect(rsaDecrypt('', privateKey)).rejects.toThrow(/too short/)
+	})
 })

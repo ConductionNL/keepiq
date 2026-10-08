@@ -1,14 +1,15 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { dispatchReturning } from '../testing'
 import { AddAccount } from './AddAccount'
 
 let permissionRequest: ReturnType<typeof vi.fn>
 
 beforeEach(() => {
-	sessionStorage.clear()
+	fakeBrowser.reset()
 	permissionRequest = vi.fn(async () => true)
 	vi.spyOn(browser.permissions, 'request').mockImplementation(permissionRequest as never)
 })
@@ -41,7 +42,16 @@ describe('AddAccount', () => {
 		expect(link.getAttribute('target')).toBe('_blank')
 	})
 
-	it('requests the host permission, then adds with the origin', async () => {
+	it('keeps the install subpath, and asks permission for the whole host', async () => {
+		const dispatch = dispatchReturning()
+		render(<AddAccount dispatch={dispatch} />)
+		const user = await fill('https://example.org/nextcloud/apps/keepiq')
+		await user.click(screen.getByRole('button', { name: 'Add account' }))
+		expect(permissionRequest).toHaveBeenCalledWith({ origins: ['https://example.org/*'] })
+		expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ serverUrl: 'https://example.org/nextcloud' }))
+	})
+
+	it('requests the host permission, then adds with the server URL', async () => {
 		const dispatch = dispatchReturning()
 		const onAdded = vi.fn()
 		render(<AddAccount dispatch={dispatch} onAdded={onAdded} />)
@@ -80,6 +90,14 @@ describe('AddAccount', () => {
 		expect(screen.getByRole('alert').textContent).toBe('Wrong username or app password')
 		expect(screen.getByLabelText<HTMLInputElement>('App password').value).toBe('')
 		expect(screen.getByLabelText<HTMLInputElement>('Username').value).toBe('alice')
+		expect(document.activeElement).toBe(screen.getByLabelText('App password'))
+	})
+
+	it('puts focus back on the server URL after a server error', async () => {
+		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'unreachable', message: '' })} />)
+		const user = await fill()
+		await user.click(screen.getByRole('button', { name: 'Add account' }))
+		expect(document.activeElement).toBe(screen.getByLabelText('Server URL'))
 	})
 
 	it('names the host in server errors', async () => {
@@ -94,7 +112,7 @@ describe('AddAccount', () => {
 		await fill()
 		cleanup()
 		render(<AddAccount dispatch={dispatchReturning()} />)
-		expect(screen.getByLabelText<HTMLInputElement>('Server URL').value).toBe('cloud.example.org')
+		await waitFor(() => expect(screen.getByLabelText<HTMLInputElement>('Server URL').value).toBe('cloud.example.org'))
 		expect(screen.getByLabelText<HTMLInputElement>('Username').value).toBe('alice')
 		expect(screen.getByLabelText<HTMLInputElement>('App password').value).toBe('')
 	})

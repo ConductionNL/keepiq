@@ -34,7 +34,7 @@
 - [ ] 5.6 Create `Notifications.tsx`: Ask to add, Ask to update, Excluded domains with Add current site via `activeTab`, free-text add, duplicate and empty rejection, remove; the Keepiq server notifications subsection driven by `useServerSettings` with revert-on-error behaviour
 - [ ] 5.7 Create `Vault.tsx`: Sync now with Last sync and the offline failure message, Folders entry opening the ext-vault-edit folder manager, Import and Export links to the web app, Default item type from cached types with the `login` fallback and note
 - [ ] 5.8 Create `Appearance.tsx` and extend `entrypoints/popup/popup.css`: theme tokens under `[data-theme]`, compact mode tokens, show animations class, quick copy actions toggle, read-only Language line
-- [ ] 5.9 Create `About.tsx`: version and server origin from `about.get`, Help, Report a bug, Privacy policy, Keepiq web app links, Rate the extension hidden while the store constant is `<store-url>`
+- [ ] 5.9 Create `About.tsx`: version and server URL from `about.get`, Help, Report a bug, Privacy policy, Keepiq web app links, Rate the extension hidden while the store constant is `<store-url>`
 
 ## 6. Verification
 

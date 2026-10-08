@@ -26,9 +26,21 @@ describe('AccountSwitcher', () => {
 		expect(within(row('Alice')).getByText('Unlocked')).toBeTruthy()
 		expect(within(row('Bob')).getByText('Locked')).toBeTruthy()
 		expect(within(row('Carol')).getByText('Logged out')).toBeTruthy()
-		expect(within(row('Alice')).queryByRole('button', { name: 'Lock' })).toBeTruthy()
-		expect(within(row('Bob')).queryByRole('button', { name: 'Lock' })).toBeNull()
-		for (const name of ['Alice', 'Bob', 'Carol']) expect(within(row(name)).getByRole('button', { name: 'Log out' })).toBeTruthy()
+		expect(within(row('Alice')).queryByRole('button', { name: 'Lock Alice on cloud.example.org' })).toBeTruthy()
+		expect(within(row('Bob')).queryByRole('button', { name: /^Lock/ })).toBeNull()
+		for (const name of ['Alice', 'Bob', 'Carol']) {
+			expect(within(row(name)).getByRole('button', { name: `Log out of ${name} on cloud.example.org` })).toBeTruthy()
+		}
+	})
+
+	it('asks before logging out of one account', async () => {
+		const { dispatch } = renderSwitcher()
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'Log out of Bob on cloud.example.org' }))
+		expect(dispatch).not.toHaveBeenCalled()
+		const confirm = within(row('Bob')).getByRole('group', { name: 'Log out of Bob on cloud.example.org?' })
+		await user.click(within(confirm).getByRole('button', { name: 'Log out' }))
+		expect(dispatch).toHaveBeenCalledExactlyOnceWith({ kind: 'accounts.remove', accountId: 'b' })
 	})
 
 	it('marks the active account', () => {

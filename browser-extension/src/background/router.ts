@@ -1,7 +1,7 @@
 import { SESSION_REVOKED_MESSAGE } from '@/src/api/client'
-import { normalizeOrigin } from '@/src/accounts/normalize-origin'
+import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
 import {
-	accountStatus, addAccount, AccountLimitReached, assertCanAdd, DuplicateAccount, getAccount, getActiveAccountId,
+	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId,
 	listAccounts, MAX_ACCOUNTS, removeAccount, removeAllAccounts, setActive, updateAccount,
 } from '@/src/accounts/store'
 import { verifyCredentials } from '@/src/accounts/verify'
@@ -16,8 +16,8 @@ export async function buildState(): Promise<PopupState> {
 	for (const account of await listAccounts()) {
 		accounts.push({
 			id: account.id,
-			origin: account.origin,
-			host: new URL(account.origin).host,
+			serverUrl: account.serverUrl,
+			host: new URL(account.serverUrl).host,
 			uid: account.uid,
 			displayName: account.displayName,
 			avatarDataUrl: account.avatarDataUrl,
@@ -38,16 +38,15 @@ export async function buildState(): Promise<PopupState> {
 }
 
 async function add(serverUrl: string, username: string, appPassword: string): Promise<void> {
-	const normalized = normalizeOrigin(serverUrl)
+	const normalized = normalizeServerUrl(serverUrl)
 	if (!normalized.ok) throw new Failure(normalized.code)
 	// The popup asks for the permission; nothing is sent to a server the user declined.
 	if (!(await browser.permissions.contains({ origins: [`${normalized.origin}/*`] }))) throw new Failure('permission_denied')
+	// Checked again by `addAccount`; this one saves the round trip.
 	if ((await listAccounts()).length >= MAX_ACCOUNTS) throw new Failure('limit_reached')
-	const verified = await verifyCredentials(normalized.origin, username.trim(), appPassword)
-	const { suite, ...identity } = verified
+	const { suite, ...identity } = await verifyCredentials(normalized.serverUrl, username.trim(), appPassword)
 	try {
-		await assertCanAdd(normalized.origin, identity.uid)
-		await addAccount({ origin: normalized.origin, ...identity, appPassword }, suite)
+		await addAccount({ serverUrl: normalized.serverUrl, ...identity, appPassword }, suite)
 	} catch (error) {
 		if (error instanceof DuplicateAccount) throw new Failure('duplicate')
 		if (error instanceof AccountLimitReached) throw new Failure('limit_reached')
@@ -58,7 +57,7 @@ async function add(serverUrl: string, username: string, appPassword: string): Pr
 async function reauthenticate(accountId: string, appPassword: string): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account) throw new Failure('unknown', 'Unknown account')
-	const verified = await verifyCredentials(account.origin, account.loginName, appPassword)
+	const verified = await verifyCredentials(account.serverUrl, account.loginName, appPassword)
 	if (verified.uid !== account.uid) throw new Failure('unauthorized')
 	await updateAccount(accountId, {
 		appPassword,

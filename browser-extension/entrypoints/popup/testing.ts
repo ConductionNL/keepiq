@@ -4,7 +4,7 @@ import type { AccountSummary, PopupState, Result } from '@/src/messages'
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
 	return {
 		id: 'a1',
-		origin: 'https://cloud.example.org',
+		serverUrl: 'https://cloud.example.org',
 		host: 'cloud.example.org',
 		uid: 'alice',
 		displayName: 'Alice Doe',

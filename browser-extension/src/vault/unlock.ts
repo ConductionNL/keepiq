@@ -11,11 +11,10 @@ async function cachedSuite(accountId: string): Promise<CachedSuite | undefined> 
 	return (await browser.storage.local.get(suiteKey(accountId)))[suiteKey(accountId)] as CachedSuite | undefined
 }
 
-async function fetchSuite(account: AccountRecord): Promise<CachedSuite> {
+async function fetchSuite(account: AccountRecord): Promise<{ suite: CachedSuite; changed: boolean }> {
 	try {
 		const suite = activeSuite(await createClient(account).listSuites())
-		await checkSuite(account.id, suite)
-		return suite
+		return { suite, changed: await checkSuite(account.id, suite) }
 	} catch (error) {
 		if (error instanceof Failure) throw error
 		if (error instanceof Offline) throw new Failure('offline_no_cache', 'You are offline and this vault has not been synced yet')
@@ -25,19 +24,33 @@ async function fetchSuite(account: AccountRecord): Promise<CachedSuite> {
 	}
 }
 
+async function decrypt(suite: CachedSuite, method: UnlockMethod): Promise<string> {
+	try {
+		return await decryptPrivateKeyPem(suite.privateKey, method.masterPassword)
+	} catch (error) {
+		if (error instanceof InvalidMasterPassword) throw new Failure('invalid_master_password', 'Invalid master password')
+		throw error
+	}
+}
+
 /** The one entry point for every unlock method; PIN unlock joins `UnlockMethod` later. */
 export async function unlock(accountId: string, method: UnlockMethod): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account) throw new Failure('unknown', 'Unknown account')
 	if (account.appPassword === null) throw new Failure('session_revoked', 'Log in again first')
 	// The suite is cached at add time, so this request only runs after a 401 or a suite change.
-	const suite = await cachedSuite(accountId) ?? await fetchSuite(account)
+	const cached = await cachedSuite(accountId)
 	let pem: string
 	try {
-		pem = await decryptPrivateKeyPem(suite.privateKey, method.masterPassword)
+		pem = await decrypt(cached ?? (await fetchSuite(account)).suite, method)
 	} catch (error) {
-		if (error instanceof InvalidMasterPassword) throw new Failure('invalid_master_password', 'Invalid master password')
-		throw error
+		if (!cached || !(error instanceof Failure) || error.code !== 'invalid_master_password') throw error
+		// The master password may have changed in the web app, leaving the cached suite stale.
+		const fresh = await fetchSuite(account).catch((failure: Failure) => {
+			throw failure.code === 'session_revoked' ? failure : error
+		})
+		if (!fresh.changed) throw error
+		pem = await decrypt(fresh.suite, method)
 	}
 	const pkcs8 = pemToPkcs8(pem)
 	// Imported once here so a corrupt key fails the unlock, not the first decrypt.

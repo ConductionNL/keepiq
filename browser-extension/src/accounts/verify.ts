@@ -1,4 +1,4 @@
-import { createClient, KeepiqNotInstalled, NotNextcloud, Offline, SessionRevoked } from '@/src/api/client'
+import { ApiError, createClient, KeepiqNotInstalled, NotNextcloud, Offline, SessionRevoked } from '@/src/api/client'
 import type { CachedSuite, SuiteRow } from '@/src/api/types'
 import { Failure } from '@/src/failure'
 
@@ -21,11 +21,11 @@ export function activeSuite(rows: SuiteRow[]): CachedSuite {
 }
 
 /** Identity first, so "not Nextcloud" and "wrong password" are told apart from Keepiq errors. */
-export async function verifyCredentials(origin: string, loginName: string, appPassword: string): Promise<Verified> {
-	const probe = createClient({ origin, uid: loginName, loginName, appPassword })
+export async function verifyCredentials(serverUrl: string, loginName: string, appPassword: string): Promise<Verified> {
+	const probe = createClient({ serverUrl, uid: loginName, loginName, appPassword })
 	try {
 		const identity = await probe.fetchIdentity()
-		const client = createClient({ origin, uid: identity.id, loginName, appPassword })
+		const client = createClient({ serverUrl, uid: identity.id, loginName, appPassword })
 		const suite = activeSuite(await client.listSuites())
 		return {
 			uid: identity.id,
@@ -41,6 +41,7 @@ export async function verifyCredentials(origin: string, loginName: string, appPa
 		if (error instanceof NotNextcloud) throw new Failure('not_nextcloud')
 		if (error instanceof SessionRevoked) throw new Failure('unauthorized')
 		if (error instanceof KeepiqNotInstalled) throw new Failure('keepiq_missing')
+		if (error instanceof ApiError && error.status >= 500) throw new Failure('server_error')
 		throw new Failure('unknown')
 	}
 }

@@ -24,7 +24,7 @@
 
 ## 4. Account store
 
-- [x] 4.1 Create `src/accounts/normalize-origin.ts`: accept bare host, origin or any `/index.php/apps/keepiq` URL, return the origin, default to `https`, allow `http` only for `localhost`, `127.0.0.1`, `*.test` and `*.local`; return `invalid_url` or `insecure_url` codes.
+- [x] 4.1 Create `src/accounts/normalize-server-url.ts`: accept bare host, origin, install subpath or any Nextcloud page URL, return the server URL (origin plus subpath), default to `https`, allow `http` only for `localhost`, `127.0.0.1` and `*.test`; return `invalid_url` or `insecure_url` codes.
 - [x] 4.2 Create `src/accounts/store.ts`: `storage.local` schema (`accounts`, `activeAccountId`, `settings.<id>` with defaults 15 minutes and `lock`), `add`, `reauthenticate`, `remove` (purges `accounts[id]`, `settings.<id>`, `suite.<id>`, `vaultCache.<id>`, `neverLockKey.<id>` and the key, then picks the next active account), `removeAll`, `setActive`, `markLoggedOut` (app password, key, suite row and vault cache only), the 5-account limit and the origin plus uid duplicate check; register `markLoggedOut` as the client's `onUnauthorized` hook.
   - Status is derived from `appPassword` and the key store, never stored.
 - [x] 4.3 Create `src/accounts/verify.ts`: identity then suites through the client, map failures to `unreachable`, `not_nextcloud`, `unauthorized`, `keepiq_missing`, `no_active_suite`; on success cache the active suite row under `suite.<id>`, fetch the avatar and return the record fields taken from the identity response.
@@ -32,11 +32,11 @@
 ## 5. Unlock and lock engine
 
 - [x] 5.1 Create `src/vault/key-store.ts`: `storage.session` backend when present, module `Map` backend otherwise; `put`, `get` (re-import bytes to a non-extractable `CryptoKey` once per worker generation), `clear`, `clearAll`; read `neverLockKey.<id>` from `storage.local` after a restart when the account's timeout is `never`, and delete it on every clear.
-- [x] 5.2 Create `src/vault/unlock.ts`: `unlock(accountId, method)` that fetches and caches the suite when `suite.<id>` is absent (`offline_no_cache` on network failure), decodes the envelope, derives, decrypts (`invalid_master_password` on GCM failure), imports and stores the key with `unlockedAt.<id>`; `lock`, `lockAll`, `logoutForTimeout`; `checkSuite(row)` that purges the cache and key when `id` or `unlockKeyEpoch` changed.
+- [x] 5.2 Create `src/vault/unlock.ts`: `unlock(accountId, method)` that fetches and caches the suite when `suite.<id>` is absent (`offline_no_cache` on network failure), decodes the envelope, derives, decrypts (on GCM failure fetch the suites once and retry when the suite changed, else `invalid_master_password`), imports and stores the key with `unlockedAt.<id>`; `lock`, `lockAll`, `logoutForTimeout`; `checkSuite(row)` that purges the cache and key when `id` or `unlockKeyEpoch` changed.
   - The master password string is not retained after `unlock` returns.
 - [x] 5.3 Create `src/vault/timeout.ts`: option and action types, `TIMEOUT_POLICY`, `touch()` writing `lastInteractionAt`, `enforce()` locking or logging out every account past its timeout, `vault-timeout` alarm with `periodInMinutes: 1` created while any account is unlocked and cleared otherwise, `browser.idle.onStateChanged` handling `locked` for the `onSystemLock` option, and popup port `onDisconnect` handling `immediately`.
 - [x] 5.4 Rewrite `entrypoints/background.ts`: remove the flag and badge code; route every `PopupToBackground` arm to the store, unlock and timeout modules and return `Result`; call `enforce()` before answering `vault.status`; register the alarm, idle and `runtime.onConnect` listeners at top level so an MV3 wake-up re-registers them.
-  - Request/response arms return the promise; nothing returns `true`.
+  - Request/response arms call `sendResponse` and return `true`; fire-and-forget arms return `undefined`.
 
 ## 6. Popup
 
@@ -48,5 +48,6 @@
 
 ## 7. Verification
 
-- [ ] 7.1 Run `grep -rn "chrome\." src/ entrypoints/` (only comments may match), `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`; load `.output/chrome-mv3/` and `.output/firefox-mv2/manifest.json` and walk through: add account against the dev backend, each verification error, unlock, wrong master password, manual lock, Immediately, 1 minute timeout with the popup closed, timeout action Log out, 401 after revoking the app password in Nextcloud, switch between two accounts, Log out all.
+- [ ] 7.1 Run `grep -rn "chrome\." src/ entrypoints/` (only comments may match), `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`; load `.output/chrome-mv3/` and `.output/firefox-mv2/manifest.json` and walk through: add account against the dev backend, each verification error, unlock, wrong master password, manual lock, Immediately, 1 minute timeout with the popup closed, timeout action Log out, 401 after revoking the app password in Nextcloud, switch between two accounts, Log out and Log out all, a Nextcloud under a subpath, a server in maintenance mode.
   - Confirm on Firefox that the account stays unlocked across a popup close and locks after a browser restart.
+  - Confirm on Firefox that the Add account form keeps its values when the permission prompt closes the popup, and whether `idle` reports `locked` for "On system lock".

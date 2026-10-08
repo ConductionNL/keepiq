@@ -21,7 +21,7 @@ export class Offline extends Error {}
 /** What the client needs of an account. No `id` means it is not stored yet (add verification). */
 export interface ClientAccount {
 	id?: string
-	origin: string
+	serverUrl: string
 	uid: string
 	/** What the user typed; Nextcloud ties an app password to it, and it may differ from the uid. */
 	loginName: string
@@ -38,7 +38,7 @@ export function setUnauthorizedHandler(handler: (accountId: string) => Promise<v
 export type Client = ReturnType<typeof createClient>
 
 export function createClient(account: ClientAccount) {
-	const keepiqBase = `${account.origin}/index.php/apps/keepiq`
+	const keepiqBase = `${account.serverUrl}/index.php/apps/keepiq`
 
 	async function send(url: string, init: { method?: string; body?: unknown; accept?: string } = {}): Promise<Response> {
 		if (account.appPassword === null) throw new SessionRevoked()
@@ -90,9 +90,11 @@ export function createClient(account: ClientAccount) {
 		},
 
 		async fetchIdentity(): Promise<NextcloudUser> {
-			const response = await send(`${account.origin}/ocs/v2.php/cloud/user?format=json`)
+			const response = await send(`${account.serverUrl}/ocs/v2.php/cloud/user?format=json`)
 			const json = await response.json().catch(() => undefined) as { ocs?: { data?: NextcloudUser } } | undefined
 			const data = json?.ocs?.data
+			// Maintenance mode and crashes are a server answering, not a missing Nextcloud.
+			if (response.status >= 500) throw new ApiError(response.status, response.statusText)
 			if (!response.ok || typeof data?.id !== 'string') throw new NotNextcloud()
 			return data
 		},
@@ -100,7 +102,7 @@ export function createClient(account: ClientAccount) {
 		/** `null` on any failure; callers fall back to initials. */
 		async fetchAvatarDataUrl(size = 64): Promise<string | null> {
 			try {
-				const response = await send(`${account.origin}/index.php/avatar/${encodeURIComponent(account.uid)}/${size}`, { accept: 'image/*' })
+				const response = await send(`${account.serverUrl}/index.php/avatar/${encodeURIComponent(account.uid)}/${size}`, { accept: 'image/*' })
 				if (!response.ok) return null
 				const type = response.headers.get('Content-Type')?.split(';')[0] || 'image/png'
 				return `data:${type};base64,${toBase64(new Uint8Array(await response.arrayBuffer()))}`
