@@ -1,0 +1,51 @@
+schema: spec-driven
+
+context: |
+  Project: Keepiq browser extension
+  Repo: keepiq-extension (this repo). The Keepiq Nextcloud app lives in a separate repo and is the backend.
+  Type: WebExtension built with WXT. One TypeScript source builds Chromium MV3 and Firefox MV2.
+  Description: Bitwarden-style browser extension for Keepiq, the encrypted secrets manager for Nextcloud.
+    Fill logins, passkeys and one-time codes, browse and edit the vault, generate credentials, send secrets.
+
+  Backend: the Keepiq app on a Nextcloud server. Dev backend is https://stable35.test/index.php/apps/keepiq/.
+    API facts (routes, auth, crypto formats) are recorded in openspec/architecture/adr-*.md. Do not invent endpoints.
+    The Keepiq app's own openspec/specs are the source of truth for server behaviour.
+    The browser-extension folder inside the Keepiq app repo is NOT a reference for this project. Ignore it.
+
+  Product rule: this extension is modelled on the Bitwarden browser extension. Where the requirement is
+    underspecified, do what Bitwarden does (ADR-001). Deviate only where Keepiq's API or crypto model forces it,
+    and record the deviation.
+
+  Crypto model (Keepiq, always E2E): each user has an EncryptionSuite with an RSA-4096 key pair. The private key
+    is AES-256 wrapped under a key derived from the master password. Secret fields key, login and
+    additional_fields are RSA ciphertext; name, url, type and folder are plaintext. The server never decrypts.
+    The extension decrypts client-side with WebCrypto, exactly like the Keepiq web app.
+
+  Popup UI: React with TypeScript through @wxt-dev/module-react (ADR-004). Components under entrypoints/popup/components/,
+    screens under entrypoints/popup/views/, hooks under entrypoints/popup/hooks/. The background owns state; components
+    talk to it only through the typed messages in src/messages.ts. Background and content scripts stay plain TypeScript.
+
+  Repo conventions: browser.* never chrome.* (WXT-AND-BROWSERS.md), no global manifestVersion, version only in
+    package.json, message payloads typed unknown at the boundary. Comments explain why, never what, and a file's
+    comment block is shorter than its code (CLAUDE.md). Typecheck and lint are the only automated checks today.
+
+rules:
+  proposal:
+    - Declare kind in frontmatter; every change in this repo is kind code unless it only touches wxt.config.ts
+    - Name the Bitwarden feature being mirrored and any deliberate deviation from it
+    - List the Keepiq API endpoints the change depends on, by method and path
+  specs:
+    - Every requirement heading is "### Requirement: <title>" per hydra ADR-038; one requirement per heading
+    - Scenarios use "#### Scenario:" with GIVEN, WHEN, THEN bullets
+    - State for every stored datum which storage it lives in (storage.session, storage.local, memory) and what clears it
+    - Never specify a path where the master password, the derived AES key or the RSA private key touch storage.local
+    - Content scripts never receive vault state beyond the single credential being filled
+  design:
+    - Any API the design relies on must exist in the Keepiq app; cite the controller or route
+    - Every extension API used must exist on both Chrome MV3 and Firefox MV2, or be shimmed
+    - Key material lives in storage.session or memory only; ciphertext may live in storage.local
+    - Runtime message kinds are dotted domain.action strings (accounts.list, item.decrypt), declared in src/messages.ts
+    - Popup code is React components and hooks (.tsx); no component imports src/api or src/crypto directly (ADR-004)
+  tasks:
+    - At most 20 top-level "- [ ]" lines; acceptance criteria are plain bullets
+    - Every browser-facing task ends with building both targets, not only typecheck
