@@ -20,12 +20,34 @@ interface Props {
 }
 
 export function LogOutConfirm({ account, onConfirm, onCancel }: Props) {
-	const question = `Log out of ${account.displayName} on ${account.host}?`
+	return (
+		<Confirm
+			question={`Log out of ${account.displayName} on ${account.host}?`}
+			detail="The account is removed from this browser. You will need an app password to add it again."
+			action="Log out"
+			onConfirm={onConfirm}
+			onCancel={onCancel}
+		/>
+	)
+}
+
+interface ConfirmProps {
+	question: string
+	detail: string
+	action: string
+	onConfirm: () => void
+	onCancel: () => void
+}
+
+export function Confirm({ question, detail, action, onConfirm, onCancel }: ConfirmProps) {
 	return (
 		<div className="confirm" role="group" aria-label={question}>
-			<p className="hint">{question} The account is removed from this browser and you will need an app password to add it again.</p>
-			<Button variant="danger" onClick={onConfirm}>Log out</Button>
-			<Button variant="link" onClick={onCancel} autoFocus>Cancel</Button>
+			<p className="confirm__question">{question}</p>
+			<p className="confirm__detail">{detail}</p>
+			<div className="confirm__actions">
+				<Button variant="secondary" onClick={onCancel} autoFocus>Cancel</Button>
+				<Button variant="danger" onClick={onConfirm}>{action}</Button>
+			</div>
 		</div>
 	)
 }

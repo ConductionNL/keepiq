@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { AccountSummary } from '@/src/messages'
 import { Button } from '../components/Button'
-import { ErrorBanner } from '../components/ErrorBanner'
+import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Identity } from '../components/Identity'
 import { LogOutConfirm, useLogOutConfirm } from '../components/LogOutConfirm'
 import { TextField } from '../components/TextField'
@@ -34,8 +34,8 @@ export function LogInAgain({ account, notice, dispatch }: Props) {
 
 	return (
 		<form className="stack" onSubmit={submit}>
-			{notice && <p className="banner banner--warning" role="status">{notice}</p>}
-			<Identity account={account} />
+			<Identity account={account}>{!notice && 'Logged out'}</Identity>
+			{notice && <Banner tone="warning" role="status">{notice}</Banner>}
 			<TextField label="App password" type="password" value={appPassword} onChange={setAppPassword} autoFocus autoComplete="off" />
 			<ErrorBanner>{error}</ErrorBanner>
 			<Button type="submit" busy={busy} disabled={!appPassword}>Log in</Button>

@@ -19,20 +19,23 @@ export default function App() {
 		return (
 			<main className="popup">
 				<Header title="Keepiq" active={null} />
-				{error ? <ErrorBanner>{error}</ErrorBanner> : <p className="hint" role="status">Loading…</p>}
+				<div className="popup__body">
+					{error ? <ErrorBanner>{error}</ErrorBanner> : <p className="loading" role="status"><span className="spinner" aria-hidden="true" />Loading…</p>}
+				</div>
 			</main>
 		)
 	}
 
 	const { active } = state
+	const close = () => setPanel(null)
 	let title: string
 	let body: ReactNode
 	if (panel === 'switcher') {
 		title = 'Accounts'
-		body = <AccountSwitcher state={state} dispatch={dispatch} onClose={() => setPanel(null)} onAddAccount={() => setPanel('add_account')} />
+		body = <AccountSwitcher state={state} dispatch={dispatch} onClose={close} onAddAccount={() => setPanel('add_account')} />
 	} else if (panel === 'add_account' || !active || state.screen === 'add_account') {
 		title = 'Add account'
-		body = <AddAccount dispatch={dispatch} onCancel={active ? () => setPanel(null) : undefined} onAdded={() => setPanel(null)} />
+		body = <AddAccount dispatch={dispatch} welcome={!active} onAdded={close} />
 	} else if (state.screen === 'reauthenticate') {
 		title = 'Log in again'
 		body = <LogInAgain key={active.id} account={active} notice={state.notice} dispatch={dispatch} />
@@ -46,8 +49,8 @@ export default function App() {
 
 	return (
 		<main className="popup">
-			<Header title={title} active={active} onAvatarClick={panel === 'switcher' ? undefined : () => setPanel('switcher')} />
-			{body}
+			<Header title={title} active={active} onAvatarClick={panel ? undefined : () => setPanel('switcher')} onBack={panel && active ? () => setPanel(panel === 'add_account' ? 'switcher' : null) : undefined} />
+			<div className="popup__body">{body}</div>
 		</main>
 	)
 }

@@ -44,7 +44,9 @@ describe('App', () => {
 		expect((await heading()).textContent).toBe('Accounts')
 		await user.click(screen.getByRole('button', { name: 'Add account' }))
 		expect((await heading()).textContent).toBe('Add account')
-		await user.click(screen.getByRole('button', { name: 'Cancel' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await heading()).textContent).toBe('Accounts')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
 		expect((await heading()).textContent).toBe('Unlock')
 	})
 

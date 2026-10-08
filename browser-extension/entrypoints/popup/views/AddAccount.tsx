@@ -3,6 +3,7 @@ import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
 import type { ErrorCode } from '@/src/messages'
 import { Button } from '../components/Button'
 import { ErrorBanner } from '../components/ErrorBanner'
+import { Logo } from '../components/Logo'
 import { TextField } from '../components/TextField'
 import { errorText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
@@ -45,12 +46,12 @@ function fieldFor(code: ErrorCode): Field {
 
 interface Props {
 	dispatch: Dispatch
-	/** Set when opened from the account switcher. */
-	onCancel?: () => void
+	/** No account yet, so the form introduces the extension. */
+	welcome?: boolean
 	onAdded?: () => void
 }
 
-export function AddAccount({ dispatch, onCancel, onAdded }: Props) {
+export function AddAccount({ dispatch, welcome = false, onAdded }: Props) {
 	const [{ serverUrl, username }, setDraft, forgetDraft] = useDraft()
 	const [appPassword, setAppPassword] = useState('')
 	const serverUrlField = useRef<HTMLInputElement>(null)
@@ -99,17 +100,30 @@ export function AddAccount({ dispatch, onCancel, onAdded }: Props) {
 
 	return (
 		<form className="stack" onSubmit={submit} noValidate>
+			{welcome && (
+				<div className="welcome">
+					<Logo size={48} />
+					<p className="welcome__title">Connect to Nextcloud</p>
+					<p className="welcome__text">Sign in with an app password to fill logins from your Keepiq vault.</p>
+				</div>
+			)}
 			<TextField ref={serverUrlField} label="Server URL" value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder="cloud.example.org" autoFocus autoComplete="url" inputMode="url" />
 			<TextField ref={usernameField} label="Username" value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" />
-			<TextField ref={appPasswordField} label="App password" type="password" value={appPassword} onChange={setAppPassword} autoComplete="off" />
-			<p className="hint">
-				Create a dedicated app password under Nextcloud Settings, Security
-				{securityUrl ? <>: <a href={securityUrl} target="_blank" rel="noreferrer">open security settings</a></> : null}.
-				Never enter your Nextcloud login password here.
-			</p>
+			<TextField
+				ref={appPasswordField}
+				label="App password"
+				type="password"
+				value={appPassword}
+				onChange={setAppPassword}
+				autoComplete="off"
+				hint={<>
+					Create one under Nextcloud Settings, Security
+					{securityUrl ? <>: <a href={securityUrl} target="_blank" rel="noreferrer">open security settings</a></> : null}.
+					Never enter your Nextcloud login password here.
+				</>}
+			/>
 			<ErrorBanner>{error}</ErrorBanner>
 			<Button type="submit" busy={busy} disabled={!serverUrl.trim() || !username.trim() || !appPassword}>Add account</Button>
-			{onCancel && <Button variant="link" onClick={onCancel}>Cancel</Button>}
 		</form>
 	)
 }
