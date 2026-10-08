@@ -62,7 +62,7 @@ New:
 - `entrypoints/popup/hooks/useMessage.ts`: typed wrapper around `browser.runtime.sendMessage` for `PopupToBackground`, resolving to `Result`; the single `unknown` cast in the popup.
 - `entrypoints/popup/hooks/usePopupState.ts`: fetches `vault.status` on mount, exposes `state`, `refresh()` and `dispatch(message)` that replaces the state with the returned one.
 - `entrypoints/popup/components/Header.tsx` (title, avatar slot opening the switcher), `Button.tsx`, `TextField.tsx` (label, error, show/hide toggle for `type="password"`), `ErrorBanner.tsx`, `Avatar.tsx` (data URL or initials disc).
-- `entrypoints/popup/views/AddAccount.tsx`, `LogInAgain.tsx`, `Unlock.tsx`, `AccountSwitcher.tsx`, `Unlocked.tsx` (placeholder with identity and Lock, replaced by ext-vault-browse).
+- `entrypoints/popup/views/AddAccount.tsx`, `LogInAgain.tsx`, `Unlock.tsx`, `AccountSwitcher.tsx`; the unlocked screen stays empty until ext-vault-browse.
 
 Edited:
 

@@ -15,7 +15,7 @@
 
 ## 2. Popup shell
 
-- [ ] 2.1 Rework `entrypoints/popup/popup.css`: 380 px width, 600 px max height with scrolling content, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width
+- [ ] 2.1 Rework `entrypoints/popup/popup.css`: 380 px width, 600 px height with scrolling content, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width
 - [ ] 2.2 Add `entrypoints/popup/views/Shell.tsx`, `views/Placeholder.tsx` and `components/TabBar.tsx`; mount `Shell` from `App.tsx` once unlocked; extend the `Header` component with the host subtitle and pop-out button; view stack, locked and logged-out gating, `popup.lastTab` round trip through `useMessage`
   - Tab bar hidden while locked or logged out; placeholders on Generator, Send, Settings
 - [ ] 2.3 Add pop out: `popup.popout` arm in the background using `browser.windows.create` with `?popout=1&tabId=`, popup closes itself, button hidden in popout; add `hooks/useCurrentTab.ts` reading `tabs.query` or the `tabId` parameter; add `tabs` permission

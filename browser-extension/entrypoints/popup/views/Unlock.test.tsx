@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { account, dispatchReturning } from '../testing'
 import { LogInAgain } from './LogInAgain'
 import { Unlock } from './Unlock'
-import { Unlocked } from './Unlocked'
 
 afterEach(cleanup)
 
@@ -84,14 +83,5 @@ describe('LogInAgain', () => {
 		expect(screen.queryByLabelText('Server URL')).toBeNull()
 		await userEvent.setup().type(screen.getByLabelText('App password'), 'new{Enter}')
 		expect(dispatch).toHaveBeenCalledWith({ kind: 'accounts.reauthenticate', accountId: 'a1', appPassword: 'new' })
-	})
-})
-
-describe('Unlocked', () => {
-	it('locks', async () => {
-		const dispatch = dispatchReturning()
-		render(<Unlocked account={account({ status: 'unlocked' })} dispatch={dispatch} />)
-		await userEvent.setup().click(screen.getByRole('button', { name: 'Lock' }))
-		expect(dispatch).toHaveBeenCalledWith({ kind: 'vault.lock', accountId: 'a1' })
 	})
 })

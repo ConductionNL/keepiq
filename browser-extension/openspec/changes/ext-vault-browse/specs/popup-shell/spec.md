@@ -49,12 +49,12 @@ While the vault is locked the popup SHALL show the unlock view from ext-accounts
 - **THEN** the popup replaces its content with the unlock view and drops every decrypted value from memory
 
 ### Requirement: Popup dimensions
-The popup SHALL be 380 px wide and SHALL grow with its content up to 600 px high, after which the content area scrolls while header and tab bar stay fixed, as in Bitwarden.
+The popup SHALL be 380 px wide and 600 px high, and the content area scrolls while header and tab bar stay fixed, as in Bitwarden.
 
 #### Scenario: Long vault list
 - **GIVEN** 300 items in the vault
 - **WHEN** the Vault tab renders
-- **THEN** the popup is 600 px high, the list scrolls, and header and tab bar remain visible
+- **THEN** the popup stays 600 px high, the list scrolls, and header and tab bar remain visible
 
 ### Requirement: Pop out to a standalone window
 The popup SHALL offer a pop-out button that opens the popup page in a standalone window via `browser.windows.create({ type: 'popup', width: 380, height: 630, url: '<popup url>?popout=1&tabId=<id>' })`, then closes itself. In the popped-out window the layout fills the window width and the pop-out button is hidden. The `tabId` parameter carries the tab that was active when the button was pressed so autofill suggestions keep matching that tab.

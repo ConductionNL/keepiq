@@ -66,10 +66,10 @@ The private key SHALL be held as PKCS#8 bytes (base64) in `storage.session` unde
 - **THEN** every account is "Locked" and `storage.session` is empty
 
 ### Requirement: Manual lock
-The unlocked view and the account switcher SHALL offer a "Lock" action that purges the private key from `storage.session` (or memory) and the derived key from memory, and shows the unlock screen. Lock MUST keep the app password, cached suite row, `vaultCache.<accountId>` and settings.
+The account switcher SHALL offer a "Lock" action that purges the private key from `storage.session` (or memory) and the derived key from memory, and shows the unlock screen. Lock MUST keep the app password, cached suite row, `vaultCache.<accountId>` and settings.
 
-#### Scenario: Lock from the unlocked view
-- **WHEN** the user clicks "Lock"
+#### Scenario: Lock from the switcher
+- **WHEN** the user clicks "Lock" on an unlocked account
 - **THEN** `privateKeyPkcs8.<accountId>` is removed, the unlock screen is shown and no server request is made
 
 ### Requirement: Timeout options and defaults

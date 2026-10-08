@@ -6,7 +6,6 @@ import { AccountSwitcher } from './views/AccountSwitcher'
 import { AddAccount } from './views/AddAccount'
 import { LogInAgain } from './views/LogInAgain'
 import { Unlock } from './views/Unlock'
-import { Unlocked } from './views/Unlocked'
 
 /** Panels the popup opens on top of the background's screen. */
 type Panel = 'switcher' | 'add_account' | null
@@ -35,7 +34,7 @@ export default function App() {
 		body = <AccountSwitcher state={state} dispatch={dispatch} onClose={close} onAddAccount={() => setPanel('add_account')} />
 	} else if (panel === 'add_account' || !active || state.screen === 'add_account') {
 		title = 'Add account'
-		body = <AddAccount dispatch={dispatch} welcome={!active} onAdded={close} />
+		body = <AddAccount dispatch={dispatch} onAdded={close} />
 	} else if (state.screen === 'reauthenticate') {
 		title = 'Log in again'
 		body = <LogInAgain key={active.id} account={active} notice={state.notice} dispatch={dispatch} />
@@ -43,8 +42,9 @@ export default function App() {
 		title = 'Unlock'
 		body = <Unlock key={active.id} account={active} dispatch={dispatch} />
 	} else {
+		// Empty until ext-vault-browse puts the vault here.
 		title = 'Keepiq'
-		body = <Unlocked account={active} dispatch={dispatch} />
+		body = null
 	}
 
 	return (

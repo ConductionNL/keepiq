@@ -44,7 +44,7 @@
   - No file under `entrypoints/popup/` imports `src/api` or `src/crypto`.
 - [x] 6.2 Create `components/Header.tsx` (title, avatar slot that opens the switcher), `Avatar.tsx` (data URL or initials disc), `Button.tsx` (busy state), `TextField.tsx` (label, error, show/hide toggle for passwords) and `ErrorBanner.tsx`.
 - [x] 6.3 Create `views/AddAccount.tsx` (three fields, security settings link, `browser.permissions.request` in the submit handler, `ErrorCode` to copy mapping, field values mirrored to `sessionStorage` for the retry) and `views/LogInAgain.tsx` (identity plus one App password field, "Session revoked" banner, "Log out" link calling `accounts.remove`).
-- [x] 6.4 Create `views/Unlock.tsx` (identity, `TextField` for the master password, busy Unlock, "Log out" link, "Invalid master password" and offline errors), `views/Unlocked.tsx` (identity and Lock; replaced by ext-vault-browse) and `views/AccountSwitcher.tsx` (rows with `Avatar`, display name, host, status label, active marker, per-account Lock and Log out, Lock all, Log out all with confirmation, Add account disabled at 5 with the limit hint); extend `popup.css` for these, keeping `color-scheme: light dark` and widening from 280 px to 320 px if the rows need it.
+- [x] 6.4 Create `views/Unlock.tsx` (identity, `TextField` for the master password, busy Unlock, "Log out" link, "Invalid master password" and offline errors) and `views/AccountSwitcher.tsx` (rows with `Avatar`, display name, host, status label, active marker, per-account Lock and Log out, Lock all, Log out all with confirmation, Add account disabled at 5 with the limit hint); extend `popup.css` for these, keeping `color-scheme: light dark` and widening from 280 px to 320 px if the rows need it.
 
 ## 7. Verification
 

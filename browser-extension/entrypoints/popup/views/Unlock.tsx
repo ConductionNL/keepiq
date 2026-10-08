@@ -31,7 +31,7 @@ export function Unlock({ account, dispatch }: { account: AccountSummary; dispatc
 
 	return (
 		<form className="stack" onSubmit={submit}>
-			<Identity account={account}>Your vault is locked</Identity>
+			<Identity account={account} />
 			<TextField ref={field} label="Master password" type="password" value={masterPassword} onChange={setMasterPassword} autoFocus autoComplete="current-password" />
 			<ErrorBanner>{error}</ErrorBanner>
 			<Button type="submit" busy={busy} disabled={!masterPassword}>Unlock</Button>
