@@ -12,6 +12,7 @@
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"postinstall": "wxt prepare",
+		"test-site": "node scripts/test-site.ts",
 		"typecheck": "tsc --noEmit",
 		"zip": "wxt zip",
 		"zip:firefox": "wxt zip -b firefox"

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Sign up</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Sign up</h1>
+		<p class="tests">A new account: the save bar should offer to add this login. The generator can fill the new password.</p>
+		<form method="post" action="/signup">
+			<label>Email address <input name="email" type="email" autocomplete="email"></label>
+			<label>Username <input name="username" type="text" autocomplete="username"></label>
+			<label>Password <input name="password" type="password" autocomplete="new-password"></label>
+			<label>Confirm password <input name="password_confirm" type="password" autocomplete="new-password"></label>
+			<button type="submit">Create account</button>
+		</form>
+	</main>
+</body>
+</html>

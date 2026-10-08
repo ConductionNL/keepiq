@@ -16,6 +16,12 @@ npm run dev:firefox    # Firefox dev (MV2) + HMR
 Non-standard browser install? Copy `web-ext.config.example.ts` to
 `web-ext.config.ts` (gitignored) and point it at your binary.
 
+`npm run dev` also serves the test site on http://localhost:8100 and opens the
+browser on it: login forms for every fill and capture case (iframes, shadow DOM,
+multi-step, sign-up, change password, …). Save a login in Keepiq with that URL to
+get suggestions. `npm run test-site` serves it alone; `TEST_SITE_PORT` moves it.
+The dev profile lives in `.wxt/chrome-data`, so a paired account survives restarts.
+
 ## Checks & builds
 
 ```sh
@@ -45,6 +51,8 @@ entrypoints/     one file (or directory) per extension entrypoint
   popup/         toolbar popup
 src/             shared modules, imported as `@/src/…`
 public/          copied verbatim into the build (icons live here)
+scripts/         dev tooling, never bundled
+test-site/       mock login pages for manual testing, never bundled
 ```
 
 ## Releasing
