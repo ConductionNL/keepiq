@@ -38,7 +38,7 @@ For items of type totp the detail SHALL parse the decrypted `key` as an `otpauth
 - **THEN** a 6 digit code and a countdown are shown, and the code changes when the countdown reaches zero
 
 #### Scenario: Invalid seed
-- **GIVEN** a totp item whose key decrypts to `not a seed`
+- **GIVEN** a totp item whose key decrypts to `not-a-seed`
 - **WHEN** the detail opens
 - **THEN** "Invalid authenticator key" is shown and no code is displayed or copyable
 

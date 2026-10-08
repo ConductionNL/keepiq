@@ -19,21 +19,26 @@ The extension SHALL run a full vault sync for the active account on unlock, on p
 - **WHEN** the vault locks
 - **THEN** the alarm is cleared and no sync runs until the next unlock
 
-### Requirement: Unchanged vault costs one cheap request
-Before fetching a snapshot, a scheduled or popup-open sync SHALL request `GET /api/v1/secrets?sort=updated_at&direction=desc&limit=1` and compare the first row's `updatedAt` and the envelope's `total` with the values recorded at the last successful sync. When both are equal and the folder and type lists were refreshed within `SYNC_INTERVAL_MINUTES`, the sync SHALL end there and refresh `syncedAt`. Syncs triggered by unlock, by a local write or by "Sync now" skip the check and fetch the snapshot directly (ADR-002).
+### Requirement: Unchanged vault downloads nothing
+Before fetching a snapshot, a scheduled or popup-open sync SHALL request `GET /api/v1/secrets?sort=updated_at&direction=desc&limit=1` and `GET /api/v1/suites`, and compare the first row's `updatedAt`, the envelope's `total` and the active suite's `id` and `unlockKeyEpoch` with the values recorded at the last successful sync. When the active suite comes without its `privateKey` the two-factor block applies. When all are equal and the folder and type lists were refreshed within `LISTS_MAX_AGE_MINUTES` (60, longer than the sync interval so the check can spare a download), the sync SHALL end there and refresh `syncedAt`. Syncs triggered by unlock, by a local write or by "Sync now" skip the check and fetch the snapshot directly (ADR-002).
 
 #### Scenario: Nothing changed on the server
 - **GIVEN** the cached `newestUpdatedAt` and `total` equal the values the probe returns
 - **WHEN** a scheduled sync runs
-- **THEN** exactly one request is made and the snapshot is left as it is
+- **THEN** only the probe and the suite list are requested and the snapshot is left as it is
 
 #### Scenario: A secret was deleted elsewhere
 - **GIVEN** the probe returns the same `updatedAt` but a smaller `total`
 - **WHEN** a scheduled sync runs
 - **THEN** the full snapshot is fetched and replaced
 
+#### Scenario: Key rotated while the vault is unchanged
+- **GIVEN** the probe matches the snapshot
+- **WHEN** the suite list returns the active suite with a higher `unlockKeyEpoch`
+- **THEN** the full snapshot is fetched and the suite change purges the key
+
 ### Requirement: Manifest first, paginated fallback
-The extension SHALL fetch the snapshot from `GET /api/v1/offline/manifest`. When that request returns 403 or 404 the extension SHALL instead fetch `GET /api/v1/secrets` with `limit=100`, incrementing `page` until `page * limit >= total`, together with `GET /api/v1/folders`, `GET /api/v1/secret-types` and `GET /api/v1/suites` (selecting the row with `status === 'active'`), and assemble the same snapshot shape. All routes and shapes are as in ADR-003.
+The extension SHALL fetch the snapshot from `GET /api/v1/offline/manifest`. The manifest stops at 1000 secrets by design (keepiq#1233). When that request returns 403 or 404, or its `secrets` reach 1000, the extension SHALL instead fetch `GET /api/v1/secrets` with `sort=created_at`, `direction=asc` and `limit=100`, incrementing `page` until `page * limit >= total`, and skips the manifest altogether while the cached `total` is 1000 or more. The server's sort has no unique tiebreaker (keepiq#1234), so rows that tie may move between pages: a row seen twice is kept once, and when fewer rows than `total` arrived the extension SHALL page once more with `sort=updated_at` and `direction=desc`. A complete second pass replaces the first; an incomplete one is merged with it, so a row deleted between the passes may then stay listed until the next full sync. The snapshot records the server's `total`, so a row still missing does not make every probe download again. The fallback also fetches `GET /api/v1/folders`, `GET /api/v1/secret-types` and `GET /api/v1/suites` (selecting the row with `status === 'active'`), and assemble the same snapshot shape. All routes and shapes are as in ADR-003.
 
 #### Scenario: Manifest available
 - **GIVEN** the server allows offline caching
@@ -79,8 +84,17 @@ The extension SHALL compare the synced active suite's `id` and `unlockKeyEpoch` 
 - **WHEN** a sync completes
 - **THEN** the key stays and the snapshot is replaced normally
 
+### Requirement: Two-factor block drops the device's copy
+When the manifest carries `unlockBlocked`, or the active suite arrives without its `privateKey` (from the manifest, the fallback or the probe's suite list), the extension SHALL discard the cached snapshot, the cached suite and the private key, and lock the account, as the web app drops its snapshot on this signal. The next unlock then asks the server and is refused with the two-factor message.
+
+#### Scenario: Policy turned on for the user
+- **GIVEN** an unlocked account with a cached snapshot
+- **WHEN** a sync returns a manifest with `suite: null` and `unlockBlocked`
+- **THEN** the snapshot, cached suite and key are gone and the popup shows the unlock view
+- **AND** unlocking fails with the two-factor message
+
 ### Requirement: Blocked rows are kept, marked and never decrypted
-The extension SHALL store rows with `blocked: true` in the snapshot together with their `blockedReason`, SHALL render them as blocked wherever items are listed, and MUST NOT attempt to decrypt, copy or fill from them.
+The extension SHALL store rows with `blocked: true` in the snapshot together with their `blockedReason`, SHALL render them as blocked wherever items are listed, and MUST NOT attempt to decrypt, copy or fill from them. Manifest rows always arrive unblocked, so the extension SHALL apply the server's rule itself: a row whose `encryptionSuiteId` names a suite that is `revoked` or `compromised`, or that is not among the user's suites, is stored in the blocked shape with the server's reason. The manifest leaves out `migrationError` (keepiq#1235), so a row on a `compromised` suite is given a reason true both for a row awaiting recovery and for one recovery could not save: "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered."
 
 #### Scenario: Revoked suite yields blocked rows
 - **GIVEN** the fallback list returns rows with `blocked: true` and no `key`

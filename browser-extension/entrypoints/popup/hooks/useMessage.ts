@@ -1,4 +1,4 @@
-import type { PopupToBackground, Result } from '@/src/messages'
+import type { PopupReplies, PopupRequest, PopupToBackground, Result } from '@/src/messages'
 
 export const NOT_RESPONDING = 'Keepiq is not responding. Reload the extension and reopen this popup.'
 
@@ -20,4 +20,16 @@ export async function sendMessage(message: PopupToBackground): Promise<Result> {
 		console.error('[keepiq] no reply to', message.kind, error)
 	}
 	return { ok: false, code: 'unknown', message: NOT_RESPONDING }
+}
+
+/** For requests with their own reply shape; `undefined` means the background did not answer. */
+export async function request<K extends PopupRequest['kind']>(message: Extract<PopupRequest, { kind: K }>): Promise<PopupReplies[K] | undefined> {
+	try {
+		const reply: unknown = await browser.runtime.sendMessage(message)
+		if (reply !== undefined) return reply as PopupReplies[K]
+		console.error('[keepiq] no reply to', message.kind)
+	} catch (error) {
+		console.error('[keepiq] no reply to', message.kind, error)
+	}
+	return undefined
 }

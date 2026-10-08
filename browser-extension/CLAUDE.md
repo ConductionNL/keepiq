@@ -77,3 +77,6 @@ empty. Each entry: the choice, the options, and what it blocks. -->
 
 - Whether the "Custom" vault timeout is capped (for example at 24 hours) or
   unbounded. Blocks the timeout options in `ext-settings` (ADR-002).
+- Whether the paginated fallback may persist the vault when the admin turned off
+  offline caching (the manifest answers 403). It does today, as `ext-vault-browse`
+  specifies; the alternative keeps it in `storage.session` for the browser session only.

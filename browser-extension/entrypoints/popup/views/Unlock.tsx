@@ -1,14 +1,14 @@
 import { useRef, useState, type FormEvent } from 'react'
 import type { AccountSummary } from '@/src/messages'
 import { Button } from '../components/Button'
-import { ErrorBanner } from '../components/ErrorBanner'
+import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Identity } from '../components/Identity'
 import { LogOutConfirm, useLogOutConfirm } from '../components/LogOutConfirm'
 import { TextField } from '../components/TextField'
 import { errorText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
 
-export function Unlock({ account, dispatch }: { account: AccountSummary; dispatch: Dispatch }) {
+export function Unlock({ account, notice = null, dispatch }: { account: AccountSummary; notice?: string | null; dispatch: Dispatch }) {
 	const [masterPassword, setMasterPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
@@ -32,6 +32,7 @@ export function Unlock({ account, dispatch }: { account: AccountSummary; dispatc
 	return (
 		<form className="stack" onSubmit={submit}>
 			<Identity account={account} />
+			{notice && <Banner tone="warning" role="status">{notice}</Banner>}
 			<TextField ref={field} label="Master password" type="password" value={masterPassword} onChange={setMasterPassword} autoFocus autoComplete="current-password" />
 			<ErrorBanner>{error}</ErrorBanner>
 			<Button type="submit" busy={busy} disabled={!masterPassword}>Unlock</Button>

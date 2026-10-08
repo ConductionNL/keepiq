@@ -1,6 +1,8 @@
 import type { AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
-import { clearKey, hasKey, syncNeverLockKey } from '@/src/vault/key-store'
+import { broadcast } from '@/src/background/broadcast'
+import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
+import { clearSnapshot } from '@/src/vault/store'
 import { DEFAULT_SETTINGS, settingsKey, writeSettings, type AccountSettings } from './settings'
 
 export const MAX_ACCOUNTS = 5
@@ -17,12 +19,13 @@ export interface AccountRecord {
 	appPassword: string | null
 	/** Set by a 401 so the re-login screen can say why. */
 	revoked?: boolean
+	/** Set when a sync found a new suite, so the unlock screen can say why. */
+	keyChanged?: boolean
 }
 
 const ACCOUNTS = 'accounts'
 const ACTIVE = 'activeAccountId'
 export const suiteKey = (accountId: string) => `suite.${accountId}`
-export const vaultCacheKey = (accountId: string) => `vaultCache.${accountId}`
 
 export class AccountLimitReached extends Error {}
 export class DuplicateAccount extends Error {}
@@ -31,8 +34,19 @@ async function readAll(): Promise<Record<string, AccountRecord>> {
 	return ((await browser.storage.local.get(ACCOUNTS))[ACCOUNTS] as Record<string, AccountRecord> | undefined) ?? {}
 }
 
-async function writeAll(accounts: Record<string, AccountRecord>): Promise<void> {
-	await browser.storage.local.set({ [ACCOUNTS]: accounts })
+/** Every change to the account list queues here, so no write works on a stale read (a sync must not undo a logout). */
+let queue: Promise<unknown> = Promise.resolve()
+
+function mutateAccounts<T>(change: (accounts: Record<string, AccountRecord>) => T | Promise<T>): Promise<T> {
+	const run = queue.then(async () => {
+		const accounts = await readAll()
+		const result = await change(accounts)
+		if (Object.keys(accounts).length) await browser.storage.local.set({ [ACCOUNTS]: accounts })
+		else await browser.storage.local.remove(ACCOUNTS)
+		return result
+	})
+	queue = run.catch(() => {})
+	return run
 }
 
 /** In insertion order, which is the order they were added. */
@@ -61,26 +75,31 @@ export async function setActive(accountId: string): Promise<void> {
 }
 
 /** Throws `AccountLimitReached` or `DuplicateAccount` before anything is written. */
-async function assertCanAdd(serverUrl: string, uid: string): Promise<void> {
-	const accounts = Object.values(await readAll())
-	if (accounts.some((a) => a.serverUrl === serverUrl && a.uid === uid)) throw new DuplicateAccount()
-	if (accounts.length >= MAX_ACCOUNTS) throw new AccountLimitReached()
+function assertCanAdd(accounts: Record<string, AccountRecord>, serverUrl: string, uid: string): void {
+	const all = Object.values(accounts)
+	if (all.some((a) => a.serverUrl === serverUrl && a.uid === uid)) throw new DuplicateAccount()
+	if (all.length >= MAX_ACCOUNTS) throw new AccountLimitReached()
 }
 
 export async function addAccount(fields: Omit<AccountRecord, 'id'>, suite: CachedSuite): Promise<AccountRecord> {
-	await assertCanAdd(fields.serverUrl, fields.uid)
-	const record: AccountRecord = { id: crypto.randomUUID(), ...fields }
-	await writeAll({ ...(await readAll()), [record.id]: record })
-	await writeSettings(record.id, DEFAULT_SETTINGS)
-	await browser.storage.local.set({ [suiteKey(record.id)]: suite, [ACTIVE]: record.id })
+	// Written inside the queued change, so a "log out all" queued after it purges all of it.
+	const record = await mutateAccounts(async (accounts) => {
+		assertCanAdd(accounts, fields.serverUrl, fields.uid)
+		const added: AccountRecord = { id: crypto.randomUUID(), ...fields }
+		await writeSettings(added.id, DEFAULT_SETTINGS)
+		await browser.storage.local.set({ [suiteKey(added.id)]: suite })
+		accounts[added.id] = added
+		return added
+	})
+	// Only once the list holds it, or getActiveAccountId() would heal the pointer away.
+	await browser.storage.local.set({ [ACTIVE]: record.id })
 	return record
 }
 
 export async function updateAccount(accountId: string, patch: Partial<Omit<AccountRecord, 'id'>>): Promise<void> {
-	const accounts = await readAll()
-	if (!accounts[accountId]) return
-	accounts[accountId] = { ...accounts[accountId], ...patch }
-	await writeAll(accounts)
+	await mutateAccounts((accounts) => {
+		if (accounts[accountId]) accounts[accountId] = { ...accounts[accountId], ...patch }
+	})
 }
 
 /** Changing settings moves the "Never" copy of the key on or off disk with them. */
@@ -89,26 +108,59 @@ export async function updateSettings(accountId: string, settings: AccountSetting
 	await syncNeverLockKey(accountId)
 }
 
-/** 401 or the timeout action "Log out": purge credentials and caches, keep identity and settings. */
+/**
+ * Call after a lock or logout has finished writing, so the popup re-reads a final state.
+ * Only the active account's lock resets the popup's remembered tab.
+ */
+export async function announceLock(wasActive: boolean): Promise<void> {
+	if (wasActive) await sessionValues.remove([LAST_TAB_KEY])
+	broadcast({ kind: 'vault.locked' })
+}
+
+async function isActive(accountId: string): Promise<boolean> {
+	return (await getActiveAccountId()) === accountId
+}
+
+/**
+ * 401 or the timeout action "Log out": purge credentials and caches, keep identity and settings.
+ * The account is marked first so a sync finishing meanwhile sees the logout (sync.ts).
+ */
 export async function markLoggedOut(accountId: string, revoked = false): Promise<void> {
-	await clearKey(accountId)
-	await browser.storage.local.remove([suiteKey(accountId), vaultCacheKey(accountId)])
 	await updateAccount(accountId, { appPassword: null, revoked })
+	await clearKey(accountId)
+	await clearSnapshot(accountId)
+	await browser.storage.local.remove(suiteKey(accountId))
+	await announceLock(await isActive(accountId))
+}
+
+async function purge(accountId: string): Promise<void> {
+	await clearKey(accountId)
+	await clearSnapshot(accountId)
+	await browser.storage.local.remove([suiteKey(accountId), settingsKey(accountId)])
 }
 
 /** Manual "Log out": the account is gone. The host permission is kept (another account may share it). */
 export async function removeAccount(accountId: string): Promise<void> {
-	await clearKey(accountId)
-	await browser.storage.local.remove([suiteKey(accountId), vaultCacheKey(accountId), settingsKey(accountId)])
-	const accounts = await readAll()
-	delete accounts[accountId]
-	await writeAll(accounts)
+	const wasActive = await isActive(accountId)
+	// Gone from the list first, like markLoggedOut, then purged.
+	await mutateAccounts((accounts) => {
+		delete accounts[accountId]
+	})
+	await purge(accountId)
 	await getActiveAccountId()
+	await announceLock(wasActive)
 }
 
+/** One queued change, so an account added meanwhile is either kept whole or removed whole. */
 export async function removeAllAccounts(): Promise<void> {
-	for (const account of await listAccounts()) await removeAccount(account.id)
-	await browser.storage.local.remove([ACCOUNTS, ACTIVE])
+	const removed = await mutateAccounts((accounts) => {
+		const ids = Object.keys(accounts)
+		for (const id of ids) delete accounts[id]
+		return ids
+	})
+	for (const id of removed) await purge(id)
+	await getActiveAccountId()
+	await announceLock(true)
 }
 
 export async function accountStatus(account: AccountRecord): Promise<AccountStatus> {

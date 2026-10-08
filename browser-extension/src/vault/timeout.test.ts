@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { effectiveSettings, TIMEOUT_POLICY, writeSettings, type AccountSettings } from '@/src/accounts/settings'
 import { addAccount, getAccount } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey, putKey } from './key-store'
-import { enforce, onIdleStateChanged, onPopupClosed, syncAlarm, TIMEOUT_ALARM, touch } from './timeout'
+import { enforce, expectPopout, onIdleStateChanged, onPopupClosed, onPopupOpened, syncAlarm, TIMEOUT_ALARM, touch } from './timeout'
 
 const pkcs8 = toBase64(pemToPkcs8(envelope.privateKeyPem))
 const MINUTE = 60_000
@@ -96,5 +96,57 @@ describe('policy', () => {
 		TIMEOUT_POLICY.maxMinutes = 60
 		TIMEOUT_POLICY.forcedAction = 'logout'
 		expect(await effectiveSettings('x')).toEqual({ vaultTimeout: 60, vaultTimeoutAction: 'logout' })
+	})
+})
+
+describe('Immediately with more than one popup', () => {
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	it('waits for the last popup to close', async () => {
+		const id = await unlocked({ vaultTimeout: 'immediately', vaultTimeoutAction: 'lock' })
+		onPopupOpened()
+		onPopupOpened()
+		await onPopupClosed()
+		expect(await hasKey(id)).toBe(true)
+		await onPopupClosed()
+		expect(await hasKey(id)).toBe(false)
+	})
+
+	it('lets a popped-out window take over from the toolbar popup', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout'] })
+		const id = await unlocked({ vaultTimeout: 'immediately', vaultTimeoutAction: 'lock' })
+		onPopupOpened()
+		expectPopout()
+		const closed = onPopupClosed()
+		onPopupOpened()
+		await vi.runAllTimersAsync()
+		await closed
+		expect(await hasKey(id)).toBe(true)
+		await onPopupClosed()
+		expect(await hasKey(id)).toBe(false)
+	})
+
+	it('still locks when the popped-out window never connects', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout'] })
+		const id = await unlocked({ vaultTimeout: 'immediately', vaultTimeoutAction: 'lock' })
+		onPopupOpened()
+		expectPopout()
+		const closed = onPopupClosed()
+		await vi.runAllTimersAsync()
+		await closed
+		expect(await hasKey(id)).toBe(false)
+	})
+
+	it('gives no grace to a close after the popout already took over', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout'] })
+		const id = await unlocked({ vaultTimeout: 'immediately', vaultTimeoutAction: 'lock' })
+		onPopupOpened()
+		expectPopout()
+		onPopupOpened()
+		await onPopupClosed()
+		await onPopupClosed()
+		expect(await hasKey(id)).toBe(false)
 	})
 })

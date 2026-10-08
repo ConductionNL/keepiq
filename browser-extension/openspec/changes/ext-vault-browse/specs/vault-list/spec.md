@@ -80,7 +80,7 @@ Each item card SHALL show a type icon (globe for login, card for card, id card f
 - **THEN** the subtitle reads "Note"
 
 ### Requirement: Launch action
-Each card SHALL offer a Launch action when the item has a non-empty `url`, opening it in a new tab with `browser.tabs.create`. A url without a scheme is opened as `https://<url>`. Launch is hidden when `url` is empty.
+Each card SHALL offer a Launch action when the item has a non-empty `url`, opening it in a new tab with `browser.tabs.create`, in the window of the tab the popup belongs to. A url without a scheme is opened as `https://<url>`. Launch is hidden when `url` is empty or uses a scheme other than `http:` or `https:`.
 
 #### Scenario: Launch a website
 - **GIVEN** an item with url `github.com`

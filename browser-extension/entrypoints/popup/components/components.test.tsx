@@ -1,10 +1,17 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ErrorCode } from '@/src/messages'
 import { errorText } from '../errors'
 import { Avatar, initials } from './Avatar'
 import { Button } from './Button'
+import { Header } from './Header'
+import { MaskedField } from './MaskedField'
+import { TabBar } from './TabBar'
+import { Toast } from './Toast'
+import { ShellContext } from '../shell-context'
+import { account, fakeClipboard } from '../testing'
 
 afterEach(cleanup)
 
@@ -47,5 +54,63 @@ describe('errorText', () => {
 		for (const code of codes) expect(errorText(code, 'h', 'fallback')).not.toBe('fallback')
 		expect(errorText('write_locked', 'h', 'Vault is migrating')).toBe('Vault is migrating')
 		expect(errorText('unreachable', 'cloud.example.org', '')).toBe('Could not reach cloud.example.org')
+	})
+})
+
+describe('Header', () => {
+	it('shows the pop-out button when asked', async () => {
+		const onPopout = vi.fn()
+		render(<Header title="Vault" active={account()} onAvatarClick={() => {}} onPopout={onPopout} />)
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Pop out' }))
+		expect(onPopout).toHaveBeenCalled()
+	})
+
+	it('leaves out the pop-out button when not given', () => {
+		render(<Header title="Vault" active={account()} />)
+		expect(screen.queryByRole('button', { name: 'Pop out' })).toBeNull()
+	})
+})
+
+describe('TabBar', () => {
+	it('marks the active tab and reports a choice', async () => {
+		const onSelect = vi.fn()
+		render(<TabBar active="send" onSelect={onSelect} />)
+		expect(screen.getByRole('button', { name: 'Send' }).getAttribute('aria-current')).toBe('page')
+		expect(screen.getByRole('button', { name: 'Vault' }).getAttribute('aria-current')).toBeNull()
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Generator' }))
+		expect(onSelect).toHaveBeenCalledWith('generator')
+	})
+})
+
+describe('Toast', () => {
+	it('keeps its live region mounted while empty', () => {
+		const { rerender } = render(<Toast message={null} />)
+		expect(screen.getByRole('status').textContent).toBe('')
+		rerender(<Toast message="Password copied" />)
+		expect(screen.getByRole('status').textContent).toBe('Password copied')
+	})
+})
+
+describe('MaskedField', () => {
+	it('keeps a masked value out of the DOM until revealed, and copies it', async () => {
+		const user = userEvent.setup()
+		const writeText = fakeClipboard()
+		const toast = vi.fn()
+		vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(null as never)
+		render(<ShellContext.Provider value={{ refreshState: () => {}, toast, launch: () => {} }}><MaskedField label="CVV" value="123" masked /></ShellContext.Provider>)
+		expect(screen.queryByText('123')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Show CVV' }))
+		expect(screen.getByText('123')).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Hide CVV' }).getAttribute('aria-pressed')).toBe('true')
+		await user.click(screen.getByRole('button', { name: 'Copy CVV' }))
+		expect(writeText).toHaveBeenCalledWith('123')
+		expect(toast).toHaveBeenCalledWith('CVV copied')
+	})
+
+	it('shows a plain value with only copy', () => {
+		render(<MaskedField label="Username" value="alice" />)
+		expect(screen.getByText('alice')).toBeTruthy()
+		expect(screen.queryByRole('button', { name: /^Show/ })).toBeNull()
+		expect(screen.getByRole('button', { name: 'Copy username' })).toBeTruthy()
 	})
 })

@@ -71,18 +71,18 @@ The popup SHALL offer a pop-out button that opens the popup page in a standalone
 - **WHEN** the header renders
 - **THEN** the pop-out button is not shown
 
-### Requirement: Active tab context in the header
-When the popup opens on a tab with an `http:` or `https:` URL, the header SHALL show that tab's host under the view title. When the tab has no such URL (new tab page, browser pages, file URLs) no host is shown and the autofill suggestions section is hidden.
+### Requirement: Active tab context
+The popup SHALL read the active tab's URL only to match autofill suggestions; the header does not show it, as in Bitwarden. When the tab has no `http:` or `https:` URL (new tab page, browser pages, file URLs) the autofill suggestions section is hidden.
 
 #### Scenario: Popup on a website
 - **GIVEN** the active tab is `https://app.example.com/login`
 - **WHEN** the popup opens on the Vault tab
-- **THEN** the header shows `app.example.com`
+- **THEN** the header shows only the view title, the pop-out button and the account avatar
 
 #### Scenario: Popup on a browser page
 - **GIVEN** the active tab is the browser's new tab page
 - **WHEN** the popup opens
-- **THEN** no host is shown in the header
+- **THEN** the autofill suggestions section is not shown
 
 ### Requirement: Theme tokens follow the system
 The popup SHALL define its colours as CSS custom properties on `:root` with light values, dark values under `@media (prefers-color-scheme: dark)`, and an override for `:root[data-theme="light"]` and `:root[data-theme="dark"]` so ext-settings can add a theme switch without touching component styles. No theme preference is stored by this change.
