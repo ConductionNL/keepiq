@@ -1376,8 +1376,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/templates/vault/cluster/secrets/backend/sign.hbs:6 Sign SSH Key page (router.js ssh sign route); builtin/logical/ssh signs keys and issues OTPs; ui/lib/core/addon/components/kv-object-editor.hbs:43 key pair only as untyped KV text Note: The SSH engine signs keys rather than storing a key pair as an item; a key pair can be kept as untyped KV text."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no SSH key form on any board; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqSshSleutel"
       }
     },
     {
@@ -1685,8 +1685,8 @@
         "passbolt": "searched 'clone', 'duplicate', 'copy as new' in passbolt_styleguide src/react-extension/components/Resource and src/react-quickaccess: only code comments about cloning entities (CreateResource.js:121), no user action; no API route Note: There is no duplicate or clone action on a resource."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: clone is not on KqGeheim; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1798,8 +1798,8 @@
         "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : Commander 'find-duplicates' matches on titles, logins, passwords or URLs and '--merge' consolidates them; the vault UI has no duplicate finder, so this is CLI only."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no duplicates section on KqWachtwoordgezondheid; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -1836,8 +1836,8 @@
         "keeper": "not checked: https://docs.keeper.io/enterprise-guide/secure-file-storage read; it describes storing and downloading files and does not state whether the vault previews them."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no attachment preview on KqGeheim; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1912,8 +1912,8 @@
         "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/one-record-with-multiple-url-domains : store multiple website domains in one record through additional URL fields; KeeperFill matches every one."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqGeheim shows one website address; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1984,8 +1984,11 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Actions/Password/PrintPasswordAction.js:27 print(); src/js/Actions/Password/PasswordActions.js:82 qrcode(); src/vue/Components/ContentList/Item/PasswordItem/PasswordItemActionMenu.vue:105,111 Note: proposed by the source reader as a capability no row covered."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no print or QR view; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": [
+          "KqInlogUitgebreid",
+          "KqInlogBeschermd"
+        ]
       }
     },
     {
@@ -2020,8 +2023,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php service/favicon/{domain}/{size} and service/preview/{domain}/{view}; src/vue/Components/Sidebar/PasswordSidebar/Preview.vue:2; src/lib/Provider/Favicon, src/lib/Provider/Preview Note: proposed by the source reader as a capability no row covered. The 2026.7.0 changelog entry is a fix to favicon requests, so it shows the feature is live, not new."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no site icons or previews; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -2521,8 +2524,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:4674 handleKeyStatus returns term, install_time, encryptions only (no algorithm); vault/barrier_aes_gcm.go:69 AES-GCM is fixed in code | docs: https://developer.hashicorp.com/vault/docs/internals/security Note: The algorithm (AES-256-GCM) is fixed and documented, but key-status reports only the key term and counts, and no UI page shows the barrier algorithm. Moved to partial because the product does not show it, only the docs do."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no encryption details view in KqInstellingen; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqVersleuteling"
       }
     },
     {
@@ -2781,8 +2784,11 @@
         "keeper": "not checked: no per-record master password re-prompt found in https://docs.keeper.io/user-guides/web-vault or https://docs.keeper.io/enterprise-guide/roles/enforcement-policies."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqBevestigMetHoofdwachtwoord confirms actions, not opening one item; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": [
+          "KqInlogUitgebreid",
+          "KqInlogBeschermd"
+        ]
       }
     },
     {
@@ -6100,8 +6106,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched '2fa', 'twofactor', '2factor' in src/js src/vue: only src/vue/Section/Authorize.vue:125 (vault login); no 2FA site directory Note: No check for websites that support 2FA. Moved from unknown on a documented search."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -6135,8 +6141,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordSecurityCheckService.php:28-32 statuses BREACHED, OUTDATED, DUPLICATE, GOOD only; searched 'http:' warnings in src/js src/vue src/lib: only favicon/preview fallbacks Note: No warning for http logins. Moved from unknown on a documented search."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -6236,8 +6242,8 @@
         "keeper": "not checked: https://docs.keeper.io/user-guides/breachwatch and the passkey docs read; no report of saved logins whose sites accept passkeys."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -6600,8 +6606,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordChangeUrlService.php:61 getPasswordChangeUrl() probes /.well-known/change-password at :121; src/appinfo/routes.php:106 POST /api/1.0/service/password-change; src/vue/Components/ContentList/Item/PasswordItem/PasswordItemActionMenu.vue:99 openChangePasswordPage() Note: proposed by the source reader as a capability no row covered."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no change-password link on KqGeheim; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -8631,8 +8637,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_raft.go:142 snapshot is the whole store; ui/lib/kv/addon/routes.js:8 no export route Note: The only export is a whole-cluster snapshot; nothing lets you choose what goes in."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqExporteren has no selection step; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqExportSelectie"
       }
     },
     {
@@ -9127,8 +9133,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No native mobile apps."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqTelefoon is the installed web app, not a native app; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqMobieleApp"
       }
     },
     {
