@@ -1,6 +1,27 @@
+import type { Server } from 'node:http'
 import { defineConfig } from 'wxt'
+import { startTestSite, TEST_SITE_PORT } from './scripts/test-site'
+
+let testSite: Server | undefined
 
 export default defineConfig({
+	hooks: {
+		// Started before the browser opens, so the dev profile can land on it.
+		'server:started': async (wxt) => {
+			testSite = await startTestSite().catch((error) => {
+				wxt.logger.warn(`Test site not started: ${error.message}`)
+				return undefined
+			})
+		},
+		'server:closed': () => {
+			testSite?.close()
+		},
+	},
+	webExt: {
+		startUrls: [`http://localhost:${TEST_SITE_PORT}/`],
+		// A persistent profile keeps the paired account and settings across dev restarts.
+		chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
+	},
 	// No `manifestVersion` here on purpose: WXT's per-browser default (Chrome MV3,
 	// Firefox MV2) is what keeps `wxt -b firefox` working. See WXT-AND-BROWSERS.md § 2.
 	imports: {

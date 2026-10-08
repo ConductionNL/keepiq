@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Signed in</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Signed in</h1>
+		<p class="tests" id="from">Reached after two redirects. The save or update bar should still be showing.</p>
+	</main>
+	<script>
+		const from = new URLSearchParams(location.search).get('from')
+		if (from) document.getElementById('from').textContent += ` Came from ${from}.`
+	</script>
+</body>
+</html>

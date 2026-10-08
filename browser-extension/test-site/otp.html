@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>One-time code</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>One-time code</h1>
+		<p class="tests">The second step after a password, with the field marked <code>one-time-code</code>. Any six digits are accepted.</p>
+		<form method="post" action="/otp">
+			<label>Authentication code <input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+			<button type="submit">Verify</button>
+		</form>
+	</main>
+</body>
+</html>
