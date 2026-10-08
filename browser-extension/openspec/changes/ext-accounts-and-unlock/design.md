@@ -33,7 +33,11 @@ Constraints that shape the design: the background is the only place with host pe
 - **Errors cross the message boundary as a discriminated `code`, not as thrown errors.** Every request/response message resolves to `{ ok: true, state } | { ok: false, code, message }` so the popup can map codes to copy and `sendMessage` never rejects on a domain error.
 - **The popup is React with TypeScript through `@wxt-dev/module-react` (ADR-004).** `main.tsx` mounts `<App />`, which picks a view from `state.screen`; views compose components, and hooks are the only bridge to the background (`useMessage` wraps `browser.runtime.sendMessage` with the typed envelopes, `usePopupState` holds the background-owned `PopupState`). No component imports `src/api` or `src/crypto`, and the background and content scripts stay plain TypeScript. This change lands the dependencies once for the whole chain. Alternative: the template's vanilla view modules, rejected by ADR-004 because shared stateful components across seven changes need one component model.
 - **Scaffold toggle removed.** `get_state`, `set_enabled`, `enabled_changed` and the badge counter go; `page_ready` stays for ext-autofill. Keeping dead UI in the real popup costs more than the scaffold is worth.
-- **Crypto tests use vitest, the one automated test in the repo.** Envelope layout, chunk framing and round trips are cheap to test and expensive to debug against a live server.
+- **Tests with vitest for every module and popup component.** Crypto tests decrypt the web app's own vectors (`tests/vectors/crypto/` in the app repo), so passing them proves byte compatibility; storage tests run on WXT's in-memory `browser`.
+- **The record keeps the typed `loginName` next to the `uid`.** Nextcloud ties an app password to the login name, which can be an email address, so Basic auth uses it; the uid from the identity response is for display, the avatar and the duplicate check.
+- **`unlock_blocked` error.** When the server's two-factor policy withholds the suite's `privateKey` (`unlockBlocked: 'two_factor_required'`), add and unlock fail with a message to set up a second factor, instead of a generic error.
+- **Popup message routing lives in `src/background/router.ts`.** `background.ts` only registers listeners, and only messages from extension pages reach the router, so a content script cannot drive accounts.
+- **The add form remembers Server URL and Username in the popup's `sessionStorage`, never the app password.**
 
 ## Module layout
 

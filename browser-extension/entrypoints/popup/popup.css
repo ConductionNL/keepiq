@@ -1,21 +1,22 @@
 /*
- * Popup styling. `color-scheme: light dark` is what makes the browser paint its
- * own chrome (scrollbars, form controls, the frame around the popup) to match —
- * without it a dark popup gets a white border on every browser.
- *
- * No webfonts: a popup that waits on a network request flashes unstyled.
+ * `color-scheme: light dark` makes the browser paint its own chrome (scrollbars,
+ * form controls, the popup frame) to match. No webfonts: a popup that waits on a
+ * network request flashes unstyled.
  */
 :root {
 	color-scheme: light dark;
 	--bg: #ffffff;
 	--fg: #1d1d1d;
 	--fg-muted: #5a5a5a;
-	--border: #e3e3e3;
-	--surface: #f7f7f7;
-	--accent: #2c6bf5;
+	--border: #d4d4d4;
+	--surface: #f4f5f7;
+	--accent: #21468b;
 	--accent-fg: #ffffff;
-	--dot-on: #2f9e44;
-	--dot-off: #b8b8b8;
+	--danger: #c62828;
+	--danger-bg: #fdecea;
+	--warning-bg: #fff4e5;
+	--warning-fg: #6b4400;
+	--ok: #2f9e44;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,9 +24,14 @@
 		--bg: #1f1f1f;
 		--fg: #ededed;
 		--fg-muted: #a0a0a0;
-		--border: #3a3a3a;
+		--border: #3f3f3f;
 		--surface: #2a2a2a;
-		--accent: #4d8bff;
+		--accent: #6f9be8;
+		--accent-fg: #0f1a30;
+		--danger: #ff8a80;
+		--danger-bg: #3b1d1b;
+		--warning-bg: #3a2e14;
+		--warning-fg: #f5d48a;
 	}
 }
 
@@ -41,58 +47,137 @@ body {
 }
 
 .popup {
-	/* A popup has no viewport of its own — the browser sizes the window to the
-	   content, so an explicit width is the only way to stop it collapsing. */
-	width: 280px;
+	/* A popup has no viewport of its own; without a width it collapses. */
+	width: 320px;
 	box-sizing: border-box;
 	padding: 14px 16px 16px;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 14px;
 }
 
-.popup__header {
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
+	min-height: 32px;
 }
 
-.popup__title {
+.header__title {
 	margin: 0;
-	font-size: 14px;
+	font-size: 15px;
 	font-weight: 600;
 }
 
-.popup__copy {
+.header__avatar {
+	padding: 0;
+	border: 0;
+	background: none;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.avatar--initials {
+	background: var(--accent);
+	color: var(--accent-fg);
+	font-weight: 600;
+}
+
+.identity {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.identity p {
+	margin: 0;
+}
+
+.identity__name {
+	font-weight: 600;
+}
+
+.identity__host,
+.hint {
 	margin: 0;
 	color: var(--fg-muted);
 }
 
-.pill {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 3px 8px;
-	border: 1px solid var(--border);
-	border-radius: 999px;
-	background: var(--surface);
-	color: var(--fg-muted);
-	font-size: 11px;
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.field__label {
 	font-weight: 500;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 }
 
-.pill__dot {
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: var(--dot-off);
+.field__row {
+	display: flex;
+	gap: 6px;
 }
 
-.pill--on .pill__dot {
-	background: var(--dot-on);
+.field__input {
+	flex: 1;
+	min-width: 0;
+	font: inherit;
+	padding: 7px 9px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--fg);
+}
+
+.field__input[aria-invalid='true'] {
+	border-color: var(--danger);
+}
+
+.field__toggle {
+	font: inherit;
+	padding: 0 10px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--surface);
+	color: var(--fg);
+	cursor: pointer;
+}
+
+.field__error {
+	margin: 0;
+	color: var(--danger);
+}
+
+.banner {
+	margin: 0;
+	padding: 8px 10px;
+	border-radius: 6px;
+}
+
+.banner--error {
+	background: var(--danger-bg);
+	color: var(--danger);
+}
+
+.banner--warning {
+	background: var(--warning-bg);
+	color: var(--warning-fg);
 }
 
 .btn {
@@ -109,14 +194,126 @@ body {
 .btn--primary {
 	background: var(--accent);
 	color: var(--accent-fg);
-	border-color: var(--accent);
 }
 
-.btn--primary:hover:not(:disabled) {
+.btn--secondary {
+	background: var(--surface);
+	border-color: var(--border);
+	color: var(--fg);
+}
+
+.btn--danger {
+	background: var(--danger);
+	color: #ffffff;
+}
+
+.btn--link {
+	background: none;
+	color: var(--accent);
+	padding: 4px;
+}
+
+.btn:hover:not(:disabled) {
 	filter: brightness(1.08);
 }
 
 .btn:disabled {
 	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn[aria-busy='true'] {
 	cursor: progress;
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.accounts {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.accounts__row {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+}
+
+.accounts__select {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px;
+	font: inherit;
+	text-align: left;
+	color: inherit;
+	background: none;
+	border: 0;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.accounts__select[aria-current='true'] {
+	background: var(--surface);
+}
+
+.accounts__text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.accounts__name {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.accounts__active,
+.accounts__host {
+	color: var(--fg-muted);
+	font-weight: 400;
+}
+
+.accounts__actions {
+	display: flex;
+	flex-direction: column;
+	padding-right: 4px;
+}
+
+.status {
+	font-size: 11px;
+}
+
+.status--unlocked {
+	color: var(--ok);
+}
+
+.status--locked {
+	color: var(--fg-muted);
+}
+
+.status--logged_out {
+	color: var(--danger);
+}
+
+.confirm {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px;
+	border: 1px solid var(--danger);
+	border-radius: 8px;
 }
