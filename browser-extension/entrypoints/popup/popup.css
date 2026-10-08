@@ -42,7 +42,7 @@
 		--accent-fg: #0c1730;
 		--accent-soft: #1d2840;
 		--logo: #3b67bd;
-		--danger: #ff8b7f;
+			--danger: #ff8b7f;
 		--danger-hover: #ffa69c;
 		--danger-fg: #2a0c09;
 		--danger-soft: #37201e;
@@ -125,6 +125,11 @@ a {
 	white-space: nowrap;
 }
 
+.logo {
+	flex: none;
+	color: var(--logo);
+}
+
 .header__avatar {
 	display: flex;
 	padding: 0;
@@ -139,13 +144,9 @@ a {
 	box-shadow: 0 0 0 3px var(--ring);
 }
 
-.logo {
-	flex: none;
-	color: var(--logo);
-}
-
 .popup__body {
 	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
 	padding: 20px 16px;
 }
@@ -171,10 +172,9 @@ a {
 	color: var(--fg-muted);
 }
 
-/* Identity and welcome blocks at the top of a screen. */
+/* Identity at the top of a screen. */
 
-.identity,
-.welcome {
+.identity {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -182,39 +182,12 @@ a {
 	padding: 8px 0 4px;
 }
 
-.identity .avatar {
-	box-shadow: 0 0 0 4px var(--surface), 0 0 0 5px var(--border);
-}
-
 .identity__name {
-	margin-top: 14px;
 	font-size: 16px;
 	font-weight: 600;
 }
 
 .identity__host {
-	color: var(--fg-muted);
-}
-
-.identity__note {
-	margin-top: 12px;
-	padding: 3px 10px;
-	border-radius: 999px;
-	background: var(--accent-soft);
-	color: var(--accent);
-	font-size: 12px;
-	font-weight: 500;
-}
-
-.welcome__title {
-	margin-top: 12px;
-	font-size: 17px;
-	font-weight: 600;
-}
-
-.welcome__text {
-	max-width: 280px;
-	margin-top: 4px;
 	color: var(--fg-muted);
 }
 
@@ -462,15 +435,6 @@ a {
 
 /* Lists */
 
-.section__title {
-	margin: 0 0 8px 4px;
-	font-size: 11.5px;
-	font-weight: 600;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: var(--fg-muted);
-}
-
 .card {
 	margin: 0;
 	padding: 0;
@@ -508,31 +472,6 @@ a {
 
 .accounts__select:hover {
 	background: var(--surface-hover);
-}
-
-.accounts__avatar {
-	position: relative;
-	display: flex;
-}
-
-.accounts__avatar::after {
-	content: '';
-	position: absolute;
-	right: -1px;
-	bottom: -1px;
-	width: 8px;
-	height: 8px;
-	border: 2px solid var(--surface);
-	border-radius: 50%;
-	background: var(--fg-muted);
-}
-
-.accounts__avatar--unlocked::after {
-	background: var(--ok);
-}
-
-.accounts__avatar--logged_out::after {
-	background: var(--danger);
 }
 
 .accounts__text {

@@ -63,7 +63,7 @@ Edited:
 
 - `entrypoints/background.ts`: message arms for `vault.sync`, `vault.snapshot`, `item.decrypt`, `clipboard.copied`, `popup.popout`; alarm listener for `vault-sync` and `clipboard-clear`; hooks on unlock, lock and logout from ext-accounts-and-unlock.
 - `entrypoints/popup/App.tsx` (from ext-accounts-and-unlock): renders `Shell` once unlocked; the `Header` component gains the host subtitle and the pop-out button.
-- `entrypoints/popup/popup.css`: 380 px width, 600 px max height, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width; component styles split into files next to their components as they grow.
+- `entrypoints/popup/popup.css`: 380 px width, 600 px height, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width; component styles split into files next to their components as they grow.
 - `src/messages.ts`: the types below.
 - `wxt.config.ts`: `permissions` gain `alarms`, `tabs`, `unlimitedStorage`; `offscreen` added when `browser === 'chrome'`; `clipboardWrite` when `browser === 'firefox'`.
 - `package.json`: `tldts` dependency; `vitest` dev dependency if task 5.1 is taken.

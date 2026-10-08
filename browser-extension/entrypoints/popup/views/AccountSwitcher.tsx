@@ -14,9 +14,7 @@ function AccountRow({ account, dispatch, onSelect }: { account: AccountSummary; 
 	return (
 		<li className="accounts__row">
 			<button type="button" className="accounts__select" onClick={onSelect} aria-current={account.active ? 'true' : undefined}>
-				<span className={`accounts__avatar accounts__avatar--${account.status}`}>
-					<Avatar name={account.displayName} dataUrl={account.avatarDataUrl} size={36} />
-				</span>
+				<Avatar name={account.displayName} dataUrl={account.avatarDataUrl} size={36} />
 				<span className="accounts__text">
 					<span className="accounts__name">{account.displayName}{account.active && <span className="sr-only"> (active)</span>}</span>
 					<span className="accounts__host">{account.host}</span>
@@ -62,8 +60,7 @@ export function AccountSwitcher({ state, dispatch, onClose, onAddAccount }: Prop
 				))}
 			</ul>
 
-			<section className="section" aria-labelledby="options-heading">
-				<h2 className="section__title" id="options-heading">Options</h2>
+			<div>
 				<ul className="card menu">
 					<li>
 						<button type="button" className="menu__item" onClick={onAddAccount} disabled={!state.canAddAccount} aria-describedby={state.canAddAccount ? undefined : 'limit-hint'}>
@@ -94,7 +91,7 @@ export function AccountSwitcher({ state, dispatch, onClose, onAddAccount }: Prop
 					</li>
 				</ul>
 				{!state.canAddAccount && <p className="hint" id="limit-hint">Maximum of 5 accounts reached</p>}
-			</section>
+			</div>
 		</div>
 	)
 }

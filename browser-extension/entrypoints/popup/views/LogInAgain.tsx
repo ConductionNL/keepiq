@@ -34,7 +34,7 @@ export function LogInAgain({ account, notice, dispatch }: Props) {
 
 	return (
 		<form className="stack" onSubmit={submit}>
-			<Identity account={account}>{!notice && 'Logged out'}</Identity>
+			<Identity account={account} />
 			{notice && <Banner tone="warning" role="status">{notice}</Banner>}
 			<TextField label="App password" type="password" value={appPassword} onChange={setAppPassword} autoFocus autoComplete="off" />
 			<ErrorBanner>{error}</ErrorBanner>
