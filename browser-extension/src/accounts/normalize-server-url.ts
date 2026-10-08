@@ -7,7 +7,7 @@ function allowsHttp(hostname: string): boolean {
 }
 
 /** Where a pasted Nextcloud page URL stops being the install path. */
-const NEXTCLOUD_ROUTE = /\/(index\.php|remote\.php|ocs|apps|settings|login)(\/|$)/
+const NEXTCLOUD_ROUTE = /\/(index\.php|remote\.php|ocs|apps|settings|login|core|s|f|call)(\/|$)/
 
 /**
  * A bare host, an origin or any Nextcloud page URL, reduced to the server URL:

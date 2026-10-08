@@ -63,6 +63,16 @@ describe('unlock', () => {
 			expect(fetchMock).toHaveBeenCalledOnce()
 		})
 
+		it.each([
+			['unlock_blocked', [{ ...suiteRow, privateKey: undefined, unlockBlocked: 'two_factor_required' }]],
+			['no_active_suite', []],
+		])('reports %s from the check instead of a wrong password', async (code, rows) => {
+			const account = await newAccount()
+			fetchMock.mockResolvedValue(new Response(JSON.stringify(rows)))
+			await expect(unlock(account.id, { type: 'masterPassword', masterPassword: envelope.wrongPassword }))
+				.rejects.toMatchObject({ code })
+		})
+
 		it('reports a wrong password, not offline, when the check cannot reach the server', async () => {
 			const account = await newAccount()
 			fetchMock.mockRejectedValue(new TypeError('offline'))
