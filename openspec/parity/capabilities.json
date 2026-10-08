@@ -461,7 +461,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/kv-create-edit-form.hbs:42 KvObjectEditor free key/value rows; ui/lib/kv/addon/components/kv-create-edit-form.js:108 api.secrets.kvV2Write(path, backend, payload) | docs: https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v2 Note: The KV create page stores any key/value set at a path, so a login can be kept as username/password/url keys, but there is no login item type and no personal vault (per-user paths need templated policies)."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqNieuwGeheim",
           "KqGeheim"
@@ -501,7 +501,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:20 secret.details.edit route (create new version); ui/lib/kv/addon/components/kv-create-edit-form.js:108 kvV2Write; vault/barrier_aes_gcm.go:846 AESGCMBarrier.Put encrypts every storage entry (encrypt at :1026) Note: Editing writes a new KV version through the UI or CLI, and every storage write goes through the AES-GCM barrier."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -538,7 +538,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/kv-delete-modal.js:23 modes delete, delete-metadata, destroy; ui/lib/kv/addon/components/page/secret/details.js:137 api.secrets.kvV2Delete Note: The KV details page offers delete, destroy and delete-all-metadata, gated by the caller's policy capabilities."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -573,7 +573,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/page/secret/details.hbs:75 Undelete button; ui/lib/kv/addon/components/page/secret/details.js:121 api.secrets.kvV2UndeleteVersions Note: Soft-deleted versions stay recoverable with Undelete until destroyed. There is no trash-bin list view; you undelete from the secret's own page."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqPrullenbak"
       }
     },
@@ -610,7 +610,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:13 list-directory route /list/*path_to_secret; ui/lib/kv/addon/components/page/list.hbs:103 folder icon for directory keys, :120 link to list-directory Note: Paths with slashes render as nested folders in the KV list page."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheimen",
           "KqKluisBewerken"
@@ -650,7 +650,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:8 KV routes are list, create, details, edit, patch, metadata, paths, configuration (no move); ui/lib/kv/addon/components/kv-create-edit-form.hbs:12 path is read-only when editing; searched 'rename', 'Move ' in ui/app ui/lib/kv ui/lib/core templates: no secret move Note: The path of an existing secret cannot be changed in the UI and the KV API has no move, so a move is copy, write and delete by hand."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqVerplaatsen"
       }
     },
@@ -687,7 +687,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/page/list.hbs:51 KvListFilter in the list toolbar; ui/lib/kv/addon/routes/list-directory.js:33 paginate(keys, {filter: pageFilter}); ui/lib/core/addon/utils/paginate-list.ts:42 filterValue.toLowerCase().includes(filter.toLowerCase()); searched 'fuzzy', 'levenshtein', 'typo' in ui/app ui/lib: only a comment in ui/app/services/pagination.js:65 Note: The KV list filters by case-insensitive substring of the key name, only within the current directory level. No typo tolerance and no search across the whole vault, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimen"
       }
     },
@@ -759,7 +759,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'favorite', 'favourite', 'bookmark', 'star' in ui/app/templates ui/app/components ui/lib/kv/addon ui/lib/core/addon/components: no match; ui/lib/kv/addon/routes.js:8 no favourites route Note: The source has no favourites or pinning of secrets, so the structural unknown settles to no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimen"
       }
     },
@@ -794,7 +794,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/kv-metadata-fields.hbs:8 custom_metadata editor; ui/lib/kv/addon/components/page/secret/metadata/details.hbs:67 lists custom metadata key/values; ui/lib/kv/addon/routes/list-directory.js:33 list filter works on key names only Note: Custom metadata can serve as labels on a secret, but nothing filters the list by it."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheimen",
           "KqBulkLabels"
@@ -834,7 +834,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 free key input per row, :36 MaskedInput for values when @isMasked; ui/lib/kv/addon/components/kv-create-edit-form.hbs:42 KvObjectEditor Note: A KV secret is any set of named fields chosen by the writer, and the values are masked in the form."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqNieuwGeheim",
           "KqGeheim"
@@ -874,7 +874,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:43 multi-line Textarea value; ui/lib/kv/addon/components/kv-create-edit-form.js:108 kvV2Write of arbitrary payload (JSON mode also available) Note: Any key/value or JSON payload can be stored, so a note is just a secret with a text field."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqNieuwGeheim"
       }
     },
@@ -911,7 +911,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped key/value rows only; searched 'card', 'identity document', 'passport' in ui/lib/kv/addon: no item templates Note: KV has no typed item templates, so cards and identity documents are only free key/value data."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqNieuwGeheimTypen",
           "KqGeheimVarianten"
@@ -950,7 +950,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no SSH key form on any board"
+        "reason": "not designed yet: no SSH key form on any board; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -994,7 +994,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'passkey', 'webauthn', 'fido' in all .go .hbs .ts files: no match Note: No passkey item type or WebAuthn handling exists in the source, so the unknown settles to no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVarianten"
       }
     },
@@ -1031,7 +1031,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/totp-edit.hbs:24 Totp::KeyCreate (seed or generated key), :22 KeyQrCode; ui/app/templates/vault/cluster/secrets/backend/credentials.hbs:14 GenerateCredentialsTotp; ui/app/components/generate-credentials-totp.hbs:14 shows current code with validity progress; builtin/logical/totp Note: The TOTP engine stores a seed and shows the current code in the UI, but as a separate engine, not attached to a login item."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVarianten"
       }
     },
@@ -1068,7 +1068,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/kv_put.go:49 'The data can also be consumed from a file on disk by prefixing with the \"@\" symbol'; command/base_helpers.go:136 kvbuilder parses key=@file; searched 'upload', 'attachment' in ui/lib/kv/addon ui/app/components: no KV file upload Note: The CLI can read a file's contents into a secret value, which the barrier encrypts, but there is no attachment concept and no upload in the web UI, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -1105,7 +1105,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:24 secret.metadata.versions and diff routes; ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff, :132 'Create new version from' an older version Note: Version history, diff between versions and restore via a new version from an old one are all in the UI; CLI has kv rollback."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -1142,7 +1142,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/page/list.hbs:94 each row is a LinkedBlock with a per-row Manage secret dropdown (:111), no checkbox; searched 'select all', 'bulk', 'Checkbox' in ui/lib/kv/addon and ui/app/components: no multi-select Note: The KV list acts on one secret at a time; there is no multi-select or bulk action."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheimen",
           "KqVerplaatsen",
@@ -1186,7 +1186,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:8 no preferences route; ui/app/router.js settings routes are seal and auth only; KV has no item types to default (kv-object-editor.hbs:25 untyped rows) Note: There are no item types and no per-user view preferences in the UI."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqInstellingen"
       }
     },
@@ -1223,7 +1223,7 @@
         "passbolt": "searched 'last_used', 'recently used', 'dashboard' in passbolt_api src/ plugins/ and passbolt_styleguide src/: no usage tracking; only a 'Recently modified' filter (passbolt/passbolt_styleguide@v5.16.0 src/react-quickaccess/components/FilterResourcesByRecentlyModifiedPage/FilterResourcesByRecentlyModifiedPage.js:193) sorted by modified date Note: Passbolt has no dashboard and no recently used list; the nearest is a recently modified filter in quickaccess and a modified sort in the workspace."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqDashboard"
       }
     },
@@ -1258,7 +1258,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: clone is not on KqGeheim"
+        "reason": "not designed yet: clone is not on KqGeheim; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -1294,7 +1294,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/linked-block.hbs:6 list row is a div role=link with a click handler only (no tabindex); ui/lib/kv/addon/components/page/list.hbs:111 HDS dropdown toggle per row (focusable) gives Details/Edit; ui/lib/kv/addon/components/kv-list-filter.js:55 Esc in filter goes up a directory; searched 'hotkey', 'ember-keyboard', 'shortcut' in ui: no match Note: The list can be driven by keyboard through each row's HDS dropdown and the filter input, but the row link itself is a click-only div and there are no shortcuts."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimen"
       }
     },
@@ -1331,7 +1331,7 @@
         "keeper": "https://docs.keeper.io/user-guides/web-vault : records can be sorted by most recently used, name or date modified in the web vault and browser extension; sorting by date added is not described."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimen"
       }
     },
@@ -1369,7 +1369,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no duplicates section on KqWachtwoordgezondheid"
+        "reason": "not designed yet: no duplicates section on KqWachtwoordgezondheid; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -1406,7 +1406,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no attachment preview on KqGeheim"
+        "reason": "not designed yet: no attachment preview on KqGeheim; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -1442,7 +1442,7 @@
         "keeper": "not checked: no archive state for records found in https://docs.keeper.io/user-guides/web-vault or the record docs; only delete and the Deleted Items folder are described."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqArchief"
       }
     },
@@ -1480,7 +1480,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: KqGeheim shows one website address"
+        "reason": "not designed yet: KqGeheim shows one website address; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -1514,7 +1514,7 @@
         "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : the Commander record-history command can 'see differences in between revision' (diff action); in the vault UI (https://docs.keeper.io/user-guides/web-vault) Record History opens one old version at a time and restores it, with no side-by-side view described."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -1550,7 +1550,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no print or QR view"
+        "reason": "not designed yet: no print or QR view; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -1585,7 +1585,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no site icons or previews"
+        "reason": "not designed yet: no site icons or previews; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -1658,7 +1658,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/credential/userpass/path_login.go:16 bcrypt compare of the password stored on the server; vault/barrier_aes_gcm.go:846 data keys live in the server barrier, not derived from a user secret Note: Userpass passwords are stored (bcrypt) and checked by the server; there is no client-held master key."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqKluisInstellen"
       }
     },
@@ -1695,7 +1695,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'password_policy', 'strength', 'min length' in builtin/credential/userpass/*.go: no match; builtin/credential/userpass/path_login.go:16 only bcrypt verification Note: Userpass accepts any password an admin or user sets; password policies only govern generated passwords, so no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqKluisInstellen",
           "KqBeheerBeleid"
@@ -1735,7 +1735,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/sidebar/user-menu.hbs:27 Reset password item; ui/app/components/page/userpass-reset-password.js:35 api.auth.userpassResetPassword Note: A userpass user can change their own login password from the user menu without data loss, because the password is a login credential and not a data key."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqInstellingen"
       }
     },
@@ -1780,7 +1780,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Manager/EncryptionManager.js:47-54 update() only re-wraps the keychain via setAccountChallenge; :28-48 install(encrypt) re-encrypts all objects only when first enabling CSE; searched 're-encrypt', 'reencrypt', 'rotate', 'rekey' in src/lib src/js src/vue: no match Note: There is no flow to re-key every secret to a new key after a compromise; a passphrase change keeps the same object keys. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqHerstelNaCompromittering"
       }
     },
@@ -1817,7 +1817,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/sidebar/user-menu.hbs:63 Log out; ui/app/services/auth.js:32 IDLE_TIMEOUT 3 min, :382 stops token renewal after idle so the session ends at token expiry; ui/app/components/token-expire-warning.js:12 expiry warning Note: The UI has a manual log out and stops renewing the token after three idle minutes, so an inactive session ends when the token TTL runs out. Moved to yes on the code, with the note that the idle window is the token TTL, not a separate setting."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqOntgrendelen",
           "KqInstellingen"
@@ -1857,7 +1857,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/token_create.go:90 -ttl flag; vault/token_store.go:3172 requested ttl capped by role and mount max; ui/app/components/auth has no TTL field on the login form Note: A user can mint a token with a shorter TTL via CLI or API, within admin-set maxima, but the UI login offers no session length choice."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqInstellingen"
       }
     },
@@ -1902,7 +1902,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/login_mfa.go:50 MFA method types totp, duo, okta, pingid only; searched 'passkey', 'webauthn', 'fido' in all .go .hbs .ts: no match Note: No passkey or WebAuthn login exists in the source, so no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqOntgrendelen",
           "KqInstellingen"
@@ -1940,7 +1940,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'webauthn', 'biometric', 'touchid', 'fingerprint' in .go .hbs .ts: no login path; vault/login_mfa.go:50 only totp, duo, okta, pingid Note: No biometric unlock; a push MFA on a phone (Duo, Okta) is the nearest thing and is a second factor, not an unlock."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -2006,7 +2006,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/credential/userpass/path_user_password.go:39 users/<name>/password; ui/app/router.js access.method.item edit route for userpass users Note: An admin can set a new password for any userpass user; data is server-encrypted so nothing is lost."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqBeheerMensen",
           "KqOntgrendelen",
@@ -2045,7 +2045,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'recovery code', 'backup code' in .go and .hbs: no match; recovery keys in vault/ are operator unseal keys, not per-user Note: There is no per-user recovery code or kit; a lost login is reset by an admin."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExporteren"
       }
     },
@@ -2082,7 +2082,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no encryption details view in KqInstellingen"
+        "reason": "not designed yet: no encryption details view in KqInstellingen; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -2118,7 +2118,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Encryption/Keychain/SseV2KeychainEncryption.php and src/lib/Encryption/Object/SseV1Encryption.php:31 derive keys from server secrets and user passphrase; searched 'certificate', 'x509', 'openssl_csr', 'CA' in src/lib: no certificate authority code Note: User keys are protected by server-held secrets or a passphrase-derived key, never by a certificate from an internal CA. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -2235,7 +2235,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'revoke', 'suspend', 'reinstate' in src/lib/Encryption src/lib/Services src/lib/Controller: only UserLoginAttemptHelper destroying login tokens Note: There is no per-user vault key revocation or reinstatement. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerMensen"
       }
     },
@@ -2272,7 +2272,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/templates/vault/cluster/access/leases/list.hbs:65 force revoke prefix gated on forceRevokePrefix capability, :77 revoke prefix Note: An operator can force-revoke leases and tokens immediately in the UI, but there is no 'compromised' flag on a per-user key."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerMensen"
       }
     },
@@ -2340,7 +2340,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: KqBevestigMetHoofdwachtwoord confirms actions, not opening one item"
+        "reason": "not designed yet: KqBevestigMetHoofdwachtwoord confirms actions, not opening one item; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -2469,7 +2469,7 @@
         "hashicorp-vault": "searched 'device approval', 'auth request' in vault/ ui/app: no device concept; control groups approve requests, not devices. Note: rated by the lane from the source."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqApparaatGoedkeuren",
           "KqKluisInstellen"
@@ -2509,7 +2509,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/policy-form.ts:170 save ACL policy (policies route in ui/app/router.js); ui/app/models/identity/entity.js entity policies attribute; vault/policy.go path capabilities Note: Access to another user's secret is granted by an admin writing a policy on the path and attaching it to that user's entity; the owner has no share action of their own."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -2546,7 +2546,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/group.js:15 fields name, type, policies, metadata (internal or external group); ui/app/router.js access.identity create/edit routes; vault/identity_store_util.go:3164 refreshExternalGroupMembershipsByEntityID Note: Identity groups, internal or mapped from LDAP/OIDC groups, carry policies that grant a path to every member."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -2591,7 +2591,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store_util.go:3164 external group membership refreshed at login, access immediate; ui/app/router.js control-groups routes (Enterprise feature, stubbed in CE) | docs: https://developer.hashicorp.com/vault/docs/enterprise/control-groups Note: New group members get access at once with no approval step; approval on access exists only as Enterprise control groups, which work per request rather than per new member."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTeammap"
       }
     },
@@ -2701,7 +2701,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/policy-form.ts:170 edit and save a policy; ui/app/models/identity/group.js:42 policies attribute editable on group or entity Note: Removing the path from a policy, or the policy from a group or entity, takes the access away on the next request."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -2737,7 +2737,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:3241 sys/capabilities-accessor and :3282 sys/capabilities answer per token and path; :3091 internal/ui/resultant-acl for the caller only; searched 'shared with', 'who has access' in ui templates: no match Note: You can check what a given token may do on a path, but there is no reverse view listing everyone who can read a secret."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -2773,7 +2773,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:448 a path ending in '*' becomes a prefix rule (IsPrefix :454) covering every secret below it, including later ones; ui/app/components/policy-form.ts:170 policy editor Note: A prefix policy on a team path, attached to a group, behaves as a team folder."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTeammap"
       }
     },
@@ -2810,7 +2810,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:25 capabilities deny, read, update, list (plus create, delete, patch, sudo) Note: Each policy path grants a chosen set of capabilities, so read-only or edit per group is standard."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTeammap"
       }
     },
@@ -2846,7 +2846,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:448 trailing '*' glob matches every deeper path; :444 '+' segment wildcard Note: Prefix globs make subfolders inherit the team path's access."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTeammap"
       }
     },
@@ -2924,7 +2924,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/EventListener/User/UserDeletedListener.php:44 on user deletion data is deleted; searched 'owner' transfer and 'revoke' in src/lib/Cron src/lib/Helper/User: only UserMoveCommand (manual) Note: Nothing transfers ownership automatically; when an owner goes, their shares go with them. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVarianten"
       }
     },
@@ -3000,7 +3000,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/tools/wrap.ts:19 sys/wrapping/wrap with a wrap TTL (:31); vault/logical_system_paths.go:4450 wrapping/wrap, :4480 wrapping/unwrap Note: A single-use wrapping token with a TTL can carry a secret, and the UI has a Wrap tool, but there is no password and no public web link page."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqLinkDelen",
           "KqGedeeldGeheim"
@@ -3039,7 +3039,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:4480 wrapping/unwrap accepts the wrapping token itself as auth; ui/app/components/tools/unwrap.ts:28 Unwrap tool (inside the logged-in UI) Note: Anyone holding the wrapping token can unwrap it once via API or CLI without an account; the UI unwrap tool needs a login, so there is no recipient page."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqNieuwBeveiligdBericht",
           "KqBeveiligdBericht"
@@ -3079,7 +3079,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/tools/lookup.ts wrapping lookup by token; vault/logical_system_paths.go:4513 wrapping/lookup; wrap response carries an accessor usable with token revoke-accessor; searched 'wrapping/list' in vault/: no list of issued wraps Note: You can look up or revoke a wrapping token you still hold (or its accessor), but there is no list of the wraps you created, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqNieuwBeveiligdBericht"
       }
     },
@@ -3115,7 +3115,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'federat', 'remote user', 'external share' in vault/ and ui/app: no cross-instance sharing; access is only via this cluster's auth methods and policies Note: An outside person needs an identity in this Vault (an auth method); there is no sharing with accounts on another instance."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqLinkDelen",
           "KqBinnengekomen",
@@ -3155,7 +3155,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:25 capability set per path; ui/app/components/policy-form.ts:170 admin writes a policy per role Note: Roles such as manager or viewer are modelled as policies an admin writes; there are no built-in named collection roles."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTeammap"
       }
     },
@@ -3227,8 +3227,11 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'emergency', 'grantee', 'trusted contact' in src/lib src/js src/vue: only src/lib/Services/LoggingService.php (log level) and src/lib/Fetcher/NightlyAppFetcher.php Note: No emergency access feature. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqNoodtoegang"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqNoodtoegang",
+          "KqBevestigMetHoofdwachtwoord"
+        ]
       }
     },
     {
@@ -3263,7 +3266,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'emergency', 'grantee' in src/lib src/js src/vue: no emergency access code Note: No emergency access, so nothing to decline. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqNoodtoegang"
       }
     },
@@ -3299,7 +3302,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'emergency', 'grantee', 'waiting period' in src/lib src/js src/vue: no emergency access code Note: No emergency access. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqNoodtoegang"
       }
     },
@@ -3364,7 +3367,7 @@
         "keeper": "https://docs.keeper.io/enterprise-guide/sharing/hiding-passwords : Privacy Screen stops a team or role from unmasking passwords on shared records, but the docs state masking is visual only and the password stays reachable through the API and browser inspection."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqDelen",
           "KqTeammap"
@@ -3405,7 +3408,7 @@
         "keeper": "https://docs.keeper.io/enterprise-guide/sharing/time-limited-access : share credentials with other Keeper users 'on a temporary basis, automatically revoking access at a specified time'."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqDelen",
           "KqGeheim"
@@ -3443,7 +3446,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js:127-129 control-groups, control-groups/configure, control-groups/:accessor (Enterprise control groups: a request waits for authorisers' approval); token_bound_cidrs (command/agent/approle_end_to_end_test.go:798) limits a token to IP ranges and max_lease_ttl bounds its time. Note: approval, time limit and IP limit all exist; control groups are Enterprise. Rated by the lane from the source."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheimVarianten",
           "KqDelen"
@@ -3513,7 +3516,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'secret request', 'request link' in ui templates: no match; ui/app/router.js has no request or fill-in route; unauthenticated paths are login, unwrap and health only Note: Vault has no inbound request link that an outsider fills in."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheimVragen",
           "KqGeheimInvullen"
@@ -3561,7 +3564,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: There is no request form, so no field choice."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVragen"
       }
     },
@@ -3598,7 +3601,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: No request flow exists; write-once is not modelled. KV check-and-set (cas_required) makes writes conditional but is not a request."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimInvullen"
       }
     },
@@ -3635,7 +3638,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: No request flow exists to expire."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVragen"
       }
     },
@@ -3708,7 +3711,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: No request flow exists."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVragen"
       }
     },
@@ -3745,7 +3748,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: No request flow exists to revoke."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -3781,7 +3784,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: No request flow exists, so there is no open-requests list."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -3817,7 +3820,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match; ui/app/routes/vault/cluster/access/control-groups.js:21 control groups (Enterprise) approve access to an existing secret, not supply a new value Note: Control groups let a human approve an application's access request, but nothing lets an application ask a person to provide a secret value."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqApplicatie"
       }
     },
@@ -3889,7 +3892,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no secret-request route; searched 'secret request', 'request link' in ui templates: no match Note: No request flow exists, so there are no fill-in links to recover."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -3926,8 +3929,11 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/credential/approle/path_role.go:126 role/<role_name> create, :280 secret-id management; ui/app/resources/auth/method.ts:60 approle among UI-managed auth methods Note: An admin registers an application as an AppRole role and issues role_id and secret_id."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqApplicatieRegistreren"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqApplicatieRegistreren",
+          "KqApplicaties"
+        ]
       }
     },
     {
@@ -3970,7 +3976,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Controller/Link/ConnectController.php:221 confirm() is called by the user who owns the account; searched 'approve' in src/lib/Controller src/lib/Settings: no admin approval queue Note: The user confirms their own client pairing; no administrator approves registrations. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerApplicaties"
       }
     },
@@ -4006,7 +4012,7 @@
         "passbolt": "passbolt/passbolt_api@v5.16.0 src/Notification/Email/Redactor: admin emails cover account recovery requests and user setup, none for application registration; searched 'application registration' in src/ plugins/: no match Note: No application registrations, so no waiting notification. Moved from unknown to no on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqDashboard"
       }
     },
@@ -4042,7 +4048,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'csr', 'certificate', 'x509', 'openssl' in src/lib: no certificate onboarding; src/lib/Controller/Link/ConnectController.php:260 apply() uses codes, not a CSR Note: Clients onboard with a pairing code and an app token, not a certificate signing request. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqApplicatieRegistreren"
       }
     },
@@ -4152,7 +4158,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:25 separate capabilities (create, update without read) Note: A policy with create/update and no read lets a client write a secret it cannot read back."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimSchrijven"
       }
     },
@@ -4268,7 +4274,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/expiration.go:1564 ExpirationManager.Register creates a lease with TTL for every dynamic secret and service token Note: Dynamic secrets and tokens get leases that the expiration manager revokes at TTL."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqApplicatie"
       }
     },
@@ -4312,7 +4318,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/controllers/vault/cluster/access/leases/show.js:41 renewLease; ui/app/templates/vault/cluster/access/leases/show.hbs:37 revokeLease Note: Leases can be renewed and revoked from the UI, CLI and API."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqApplicatie"
       }
     },
@@ -4357,7 +4363,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/forms/mount.ts:58 default_lease_ttl and :62 max_lease_ttl fields; vault/logical_system_paths.go:21 mounts/<path>/tune Note: Default and max lease TTL are set per mount in the UI and via tune, and per role in each engine."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerApplicaties"
       }
     },
@@ -4433,8 +4439,11 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Db/Registration.php is a client pairing, not an owner of secrets; src/lib/Db/Password.php owned by a userId only Note: Secrets belong to users, not applications, so there is no per-application view. Moved from unknown."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqApplicatie"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqApplicatie",
+          "KqApplicaties"
+        ]
       }
     },
     {
@@ -4876,8 +4885,11 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/logical/pki/path_root.go:36 root/generate, builtin/logical/pki/path_intermediate.go:19 intermediate/generate; ui/lib/pki/addon/components/page/pki-issuer-generate-root.hbs and pki-issuer-generate-intermediate.hbs Note: Root and intermediate CAs are generated in the PKI engine with UI pages for both."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqBeheerAlgemeen"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqBeheerAlgemeen",
+          "KqRootVernieuwen"
+        ]
       }
     },
     {
@@ -4965,7 +4977,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/pki_health_check.go vault pki health-check; command/healthcheck/pki_ca_validity_period.go:27 CA validity check; ui/lib/pki/addon/components/page/pki-overview.hbs:8 overview shows issuer and role counts only Note: CA health is a CLI report; the UI PKI overview shows counts and quick actions, not health."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -5001,7 +5013,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/pki/addon/routes.js:42 certificates list per PKI mount; certificates stored as KV values are not parsed or listed Note: Each PKI mount lists the certificates it issued; certificates kept as secrets elsewhere are not included."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqCertificaten"
       }
     },
@@ -5045,7 +5057,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/healthcheck/pki_ca_validity_period.go:27 ca_validity_period check warns about CA expiry on demand; searched 'notify', 'reminder' in builtin/logical/pki: no expiry notification Note: The CLI health check flags CAs nearing expiry when run, but nothing reminds anyone about leaf or CA expiry on its own, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqCertificaten"
       }
     },
@@ -5081,7 +5093,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/pki/addon/routes.js no renewal route; searched 'renew' in ui/lib/pki/addon/components: no guided renewal Note: There is no renewal guide; certificates are simply re-issued, manually or by ACME clients."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqCertificaatVernieuwen"
       }
     },
@@ -5146,7 +5158,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/utils/parse-pki-cert.js:60 notAfter parsed to not_valid_after for display; ui/lib/pki/addon/components/page/pki-issuer-import.hbs imports an external CA PEM; ui/lib/pki/addon/components/page/pki-certificate-details.hbs issued certs Note: Issued certificates and imported CA certificates show subject and expiry, but an external leaf certificate can only be stored as untyped KV text."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqCertificaten"
       }
     },
@@ -5229,7 +5241,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach', 'haveibeenpwned', 'password age', 'health report' in ui/app ui/lib (.hbs .ts .js) and vault/*.go builtin sdk/helper: no password health code Note: Vault never scores stored passwords."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqWachtwoordgezondheid"
       }
     },
@@ -5280,7 +5292,7 @@
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 searched 'reuse', 'reused', 'duplicate password' in src/react-extension src/shared: only an unrelated ShareDialog comment (src/react-extension/components/Share/ShareDialog.js:403); passbolt/passbolt_api@v5.16.0 same terms in src/ plugins/: no match Note: No reused password detection. Moved from unknown to no on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqWachtwoordgezondheid"
       }
     },
@@ -5324,7 +5336,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach', 'haveibeenpwned', 'password age', 'health report' in ui/app ui/lib (.hbs .ts .js) and vault/*.go builtin sdk/helper: no password health code; KV metadata shows created_time per version (ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs) but no age filter Note: Version timestamps are visible per secret, but nothing lists secrets older than a chosen age."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqWachtwoordgezondheid"
       }
     },
@@ -5369,7 +5381,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach', 'haveibeenpwned', 'password age', 'health report' in ui/app ui/lib (.hbs .ts .js) and vault/*.go builtin sdk/helper: no password health code Note: No breach checking exists."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqWachtwoordgezondheid"
       }
     },
@@ -5420,8 +5432,11 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach', 'haveibeenpwned', 'password age', 'health report' in ui/app ui/lib (.hbs .ts .js) and vault/*.go builtin sdk/helper: no password health code Note: No vault health report exists; the PKI health check is about certificates."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqWachtwoordgezondheid"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqWachtwoordgezondheid",
+          "KqRapporten"
+        ]
       }
     },
     {
@@ -5457,7 +5472,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach', 'haveibeenpwned' in ui/app ui/lib and vault/*.go builtin sdk/helper: no match Note: There are no password health checks at all, in the browser or on the server."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqWachtwoordgezondheid"
       }
     },
@@ -5494,7 +5509,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:4352 sys/policies/password/<name>/generate; helper/random/parser.go:73 policy Length, helper/random/registry.go:16 charset rules; ui/app/components/tools/random.hbs:7 UI tool generates random bytes only Note: Password policies define length and charset rules and generate passwords via API or CLI; the options live in the policy rather than per request, and the UI tool gives random bytes, not a password generator."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqSleutelGenereren"
       }
     },
@@ -5528,7 +5543,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 helper/random/registry.go:16 only rule type is 'charset'; helper/random/string_generator.go:21 character sets, no word list Note: Generation is character based only; there is no word list for passphrases."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqSleutelGenereren"
       }
     },
@@ -5619,7 +5634,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet"
+        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -5653,7 +5668,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet"
+        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -5751,7 +5766,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet"
+        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -5817,7 +5832,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/secret/metadata.js:39 metadata edit form with delete_version_after; ui/lib/kv/addon/helpers/is-deleted.js:10 deletion_time set from it Note: A per-secret delete_version_after makes versions expire, but expiry deletes the version rather than flagging it for change."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -5867,7 +5882,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/configure.js:20 mount-level delete_version_after; ui/lib/kv/addon/routes/secret/metadata.js:39 per-secret override Note: A mount default with per-secret override exists, but it deletes versions and the per-secret value can be longer as well as shorter."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -5912,7 +5927,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'reminder', 'notification' in ui/lib/kv/addon and ui/app/components: none for secrets; ui/lib/kv/addon/helpers/is-deleted.js:10 expiry only sets deletion_time Note: Nothing reminds anyone before or after a KV secret expires."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqDashboard"
       }
     },
@@ -5949,7 +5964,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff between versions with created_time; builtin/logical/database/path_roles.go:331 last_vault_rotation on static roles Note: A new KV version with its timestamp and the version diff show that a value changed, and database static roles record their last rotation, but there is no 'mark as rotated' action, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheim",
           "KqGeheimVarianten"
@@ -5989,7 +6004,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'breach', 'compromis', 'needs rotation' in ui/lib/kv/addon ui/app/components and builtin/logical: no flagging of KV secrets; vault/logical_system.go:4761 barrier rotate does not mark secrets Note: No mechanism flags stored secrets for rotation after a breach or key compromise."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheimVarianten",
           "KqWachtwoordgezondheid"
@@ -6036,7 +6051,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/dashboard/overview.hbs:23 SecretsEngines, :48 QuickActions, :50 ClientCount widgets only; no rotation-due widget Note: The dashboard shows no rotation status and there is no health report."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqDashboard",
           "KqWachtwoordgezondheid"
@@ -6113,7 +6128,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: no change-password link on KqGeheim"
+        "reason": "not designed yet: no change-password link on KqGeheim; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -6157,7 +6172,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:4390 sys/policies/password/<name> governs engine-generated passwords; ui/app/routes/vault/cluster/policies.js:8 UI manages only acl, egp, rgp policy types; KV writes are not checked against a password policy Note: Password policies govern passwords Vault generates, via API or CLI only; values typed into KV are never checked."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -6194,7 +6209,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'password_policy', 'strength', 'min length' in builtin/credential/userpass/*.go: no match Note: There is no master password, and userpass has no strength rule an admin could set."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -6238,7 +6253,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'pending', 'approve' in builtin/credential/approle: no match; ui/app/router.js has no application queue route Note: There is no application registration queue."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerApplicaties"
       }
     },
@@ -6275,7 +6290,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:15 entity fields name, disabled, policies, metadata (disable or delete in Access > Entities); vault/identity_store_util.go:3164 external groups dropped on next login Note: Disabling or deleting the user's entity, or removing them in the IdP, removes every group-granted path in one step."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerMensen"
       }
     },
@@ -6312,7 +6327,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/agent/config/config.go Agent/Proxy cache is configured per agent process; no organisation-wide client caching switch in vault/ or ui/app/router.js Note: There are no offline-capable user clients; the only caches are per Vault Agent or Proxy configuration, so there is no org-wide switch."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -6349,7 +6364,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'breach', 'pwned', 'haveibeenpwned' in ui/app ui/lib and vault/*.go: no match Note: No breach checking exists to switch on."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -6386,7 +6401,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/configure.js:20 max_versions and delete_version_after per mount; ui/lib/kv/addon/routes/secret/metadata.js:39 per secret Note: Version retention is set per mount and per secret in the UI."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -6488,7 +6503,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store.go:544 identity/mfa/login-enforcement/<name>; ui/app/components/mfa/mfa-login-enforcement-form.hbs:72 enforcement targets (auth methods, groups, entities) Note: MFA can be enforced per auth method, group or entity from the UI; there is no personal vault export to ban, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -6525,7 +6540,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'AuthorizedAdminSetting', 'IDelegatedSettings' in src/lib: no match; src/lib/Controller/Admin/SettingsController.php:21 admin-only controller Note: The admin page is not delegable to a sub-admin role. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -6560,7 +6575,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Command/SystemReportCommand.php:43 and src/lib/Helper/Survey/ServerReportHelper.php:296-297 report only aggregate SSE/CSE usage; no per-user vault list in src/lib/Settings/AdminSettings.php Note: Only aggregate encryption stats, no list of which users set up a vault. Moved from unknown."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerMensen"
       }
     },
@@ -6668,7 +6683,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 internalshared/configutil/listener.go:65 max_request_size is a listener-wide request cap; searched 'attachment', 'upload' in ui/lib/kv/addon: no attachments Note: There are no attachments to size or quota; only a server-wide request size limit in the config file."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -6704,7 +6719,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/components/app-footer.hbs:9 installed version in the footer linking to its changelog (:7), :11 edition; vault/logical_system_paths.go:1763 sys/version-history Note: The UI shows the running version and edition, and the API gives version history."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -6780,7 +6795,7 @@
         "keeper": "https://docs.keeper.io/enterprise-guide/creating-new-record-types : an admin with 'Manage Record Types in Vault' creates a record template with labelled and required fields and publishes it to roles."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqItemtypeBewerken",
           "KqBeheerAlgemeen"
@@ -6916,7 +6931,7 @@
         "keeper": "https://docs.keeper.io/enterprise-guide/account-transfer-policy : the enterprise can take over a leaver's vault, and https://docs.keeper.io/enterprise-guide/personal-vaults-for-enterprise-and-business-users separates a personal family vault; no enforcement found that forbids storing work logins in a personal vault."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -7011,7 +7026,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store_group_aliases.go:21 group-alias maps an external group (OIDC, LDAP) to a Vault group and its policies. Note: Vault encrypts server-side, so there is no key handover to confirm; a new member gets the policies of their mapped groups at first login. Rated by the lane from the source."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerBeleid"
       }
     },
@@ -7077,7 +7092,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Cron/BackupJob.php:47 backup/interval; src/lib/Helper/AppSettings/BackupSettingsHelper.php:35-37 interval, max files, auto-restore after update; src/lib/Command/BackupRestoreCommand.php:45 passwords:backup:restore Note: proposed by the source reader as a capability no row covered."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAlgemeen"
       }
     },
@@ -7114,7 +7129,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 audit/hashstructure.go:25 salt.GetIdentifiedHMAC hashes string values; audit/entry_formatter.go formats every request and response; vault/logical_system_paths.go:1872 sys/audit/<path> enable device Note: Every request and response goes to the audit devices with secret values HMAC'd by default."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAudit"
       }
     },
@@ -7223,8 +7238,11 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no activity or audit route for users; audit output goes only to external devices (vault/logical_system_paths.go:1872) Note: Users cannot see their own activity in Vault; the audit log lives outside it."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqMijnActiviteit"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqMijnActiviteit",
+          "KqRapporten"
+        ]
       }
     },
     {
@@ -7260,7 +7278,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 version list with created and deleted times and diff; access history only in external audit devices (vault/logical_system_paths.go:1872) Note: A secret's change history is in the UI; who read it is only in the external audit log."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheim"
       }
     },
@@ -7297,7 +7315,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no audit route; vault/logical_system_paths.go:1845 sys/audit only manages devices Note: Admins read the audit log in their own tools (file, syslog, SIEM); Vault has no audit browser."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAudit"
       }
     },
@@ -7342,7 +7360,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 audit/backend_syslog.go syslog device; audit/backend_socket.go TCP/UDP socket device Note: Syslog and socket devices stream audit events to a SIEM."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAudit"
       }
     },
@@ -7379,7 +7397,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'compliance report', 'pdf' in ui/app/components templates: no match; CSV exports exist only for client counts and the agent registry (ui/app/utils/constants/agent-registry.ts CSV_COLUMNS) Note: No compliance report export exists."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqBeheerAudit",
           "KqComplianceMomentopname"
@@ -7419,7 +7437,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'compliance report', 'snapshot' in ui/app/components for compliance: only raft and recovery storage snapshots (ui/app/router.js recovery.snapshots) Note: No compliance snapshots exist; storage snapshots are backups, not signed reports."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqComplianceMomentopname"
       }
     },
@@ -7455,7 +7473,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'decoy', 'honeypot', 'canary' in src/lib src/js src/vue: no match Note: No decoy credentials. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqGeheim",
           "KqBeheerAudit"
@@ -7495,7 +7513,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no personal data export route; searched 'gdpr', 'personal data' in ui/app and vault/*.go: no export Note: There is no self-service personal data export; an admin can read the entity record by API."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqMijnGegevens"
       }
     },
@@ -7531,7 +7549,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js access.identity entity delete by an admin; ui/app/models/identity/entity.js:15 entity fields; secrets live at paths with no owner so they survive the entity (vault/policy.go) Note: An admin can delete a user's entity and aliases and shared secrets stay put because they are not owned, but users cannot delete their own account, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqMijnGegevens"
       }
     },
@@ -7602,7 +7620,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 audit/backend_socket.go and audit/backend_syslog.go generic streams; no Splunk or Sentinel connector code in the tree | docs: https://developer.hashicorp.com/vault/tutorials/monitoring/monitor-telemetry-audit-splunk Note: code not public for the Splunk app; docs rating kept: generic syslog and socket streams, with a Splunk app for Enterprise documented separately."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAudit"
       }
     },
@@ -7638,7 +7656,7 @@
         "passbolt": "passbolt/passbolt_api@v5.16.0 src/Notification/Email/Redactor/User/UserAdminRoleRevokedEmailRedactor.php:43 AD/admin_role_revoked; src/Notification/Email/Redactor/User/UserDeleteAdminEmailRedactor.php:47 AD/user_deleted; src/Notification/Email/Redactor/Role/RoleUpdatedAdminEmailRedactor.php:43; plugins/PassboltEe/MfaPolicies/src/Notification/Email/MfaPoliciesSettingsUpdatedEmailRedactor.php:42 and other AD/settings_updated emails Note: Admins are emailed when sensitive admin events happen (role revoked, user deleted, security policies or SSO changed), but there is no risk scoring or alerting on user behaviour. Moved from unknown to partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqBeheerAudit"
       }
     },
@@ -7705,7 +7723,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'import', 'csv' in ui/lib/kv/addon and all .go .ts .hbs: no password manager importer Note: No importer for other password managers exists; bulk loading is scripting against the KV API."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -7742,7 +7760,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists, for Nextcloud Passwords or anything else."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -7779,7 +7797,7 @@
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/model/import/resources/resourcesCsvImportParser.js:112 row parser chosen automatically by header score; src/all/background_page/model/import/resources/csvRowParser/csvKdbxRowParser.js:24 fixed mapping; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Resource/ImportResources/ImportResources.js no mapping step Note: Column mapping is fixed per detected format; there is no preview or manual mapping. Moved from unknown to no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -7824,7 +7842,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists. KV paths are folders, so a scripted import can keep structure, but the product does nothing here."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -7868,7 +7886,7 @@
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 searched 'duplicate' in src/all/background_page/service/resource/import and src/all/background_page/model/import: only in parser tests about duplicate CSV columns Note: Imports never check for items that already exist. Moved from unknown to no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -7904,7 +7922,7 @@
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Resource/ImportResources/ImportResourcesResult.js:249 resource errors, :257 folder errors, :376 Error details with a copyable stack; passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/service/resource/import/ImportResourcesService.js:271 importFoldersErrors Note: After import a result dialog lists counts and each rejected resource or folder with its error. Moved from unknown to yes."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -7955,7 +7973,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'cxf', 'credential exchange' in src: no match; src/vue/Components/Import.vue:9-26 and src/vue/Components/Export.vue:7-11 list no CXF format Note: No Credential Exchange Format support. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqImporteren",
           "KqExporteren"
@@ -7994,7 +8012,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'cxp', 'credential exchange' in src: no match Note: No Credential Exchange Protocol support. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqCxpOverdracht"
       }
     },
@@ -8045,7 +8063,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_raft.go:142 sys/storage/raft/snapshot (save and restore), :158 snapshot-force; ui/app/components/raft-storage-overview.hbs:12 Download snapshot; ui/app/components/raft-storage-restore.hbs restore upload; ui/app/components/recovery/page/snapshots/snapshot-manage.hbs:6 Secrets recovery (Enterprise) Note: Integrated storage snapshots stay barrier-encrypted and can be downloaded and restored from the UI, even in CE; automated snapshots and single-secret recovery are Enterprise."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExporteren"
       }
     },
@@ -8082,8 +8100,11 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:8 no export route; searched 'csv' in ui/lib/kv/addon: no match; CSV exports only for client counts and agent registry Note: There is no plaintext export of secrets; a user can only script reads with the CLI or API."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
-        "board": "KqExporteren"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": [
+          "KqExporteren",
+          "KqBevestigMetHoofdwachtwoord"
+        ]
       }
     },
     {
@@ -8119,7 +8140,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: KqExporteren has no selection step"
+        "reason": "not designed yet: KqExporteren has no selection step; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -8163,7 +8184,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match Note: No KeePass import exists."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqImporteren"
       }
     },
@@ -8215,7 +8236,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/: no match Note: There is no browser extension."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8265,7 +8286,7 @@
         "nextcloud-passwords": "source silent: extension/mobile repo not read (passwords-webextension) Note: Frame filling is extension behaviour that this repo cannot show."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8302,7 +8323,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension, so no save-login prompt."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8348,7 +8369,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension, so no one-time code fill."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8385,7 +8406,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension and no passkey support (searched 'webauthn', 'passkey': no match)."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8422,7 +8443,7 @@
         "nextcloud-passwords": "source silent: extension/mobile repo not read; server side src/lib/Controller/Api/SessionApiController.php session lifetime also applies to extension sessions Note: Server sessions of any client expire, but whether the extension locks its own UI is not in this repo."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8466,7 +8487,7 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'manifest', 'webmanifest', 'serviceWorker' in src: no match Note: The web app ships no web manifest or service worker, so it cannot be installed as a PWA. Moved from unknown on a documented search."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTelefoon"
       }
     },
@@ -8511,7 +8532,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/index.html:14 viewport meta; ui/lib/core/addon/components/sidebar/frame.hbs:53 Hds::AppSideNav @isResponsive=true @isCollapsible=true; ui/lib/kv/addon/components/page/list.hbs:100 'level is-mobile' rows Note: The UI shell is responsive (collapsible side nav, viewport meta, mobile-aware list rows), but it is a desktop admin console with wide forms and tables, not designed for phone flows, so partial."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqTelefoon"
       }
     },
@@ -8548,7 +8569,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public has no service worker for offline data (the only one is ui/lib/service-worker-authenticated-download); command/agentproxyshared/cache is a machine-side proxy cache, not a user vault Note: The web UI needs a live server; there is no offline read-only mode for users."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqGeheimVarianten"
       }
     },
@@ -8614,7 +8635,7 @@
       },
       "screen": {
         "board": null,
-        "reason": "not designed yet: KqTelefoon is the installed web app, not a native app"
+        "reason": "not designed yet: KqTelefoon is the installed web app, not a native app; on the missing-boards list for the design session (decision 96)"
       }
     },
     {
@@ -8773,7 +8794,7 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'nextcloud' in all .go .hbs .ts .js files: no match Note: No Nextcloud integration and no browser extension."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -8896,8 +8917,8 @@
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/AuthenticationSetup/SetupAuthentication/SetupAuthentication.js step-by-step first-run setup (key, passphrase, recovery kit, security token); src/react-extension/components/Administration/HomePage/AdministrationHomePage.js:101 admin Getting Started card for metadata settings Note: First use is a guided setup wizard for the account, but there is no product walkthrough of the vault itself. Moved from unknown to partial."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no walkthrough board"
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
+        "board": "KqRondleiding"
       }
     },
     {
@@ -8941,7 +8962,7 @@
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/HomePage/AdministrationHomePage.js:90-130 cards linking to settings pages, no figures; searched 'dashboard' in src/react-extension/components: no vault statistics component Note: There is no dashboard with vault figures; the admin home is a list of settings. Moved from unknown to no."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqDashboard"
       }
     },
@@ -8978,7 +8999,7 @@
         "keeper": "not checked: https://docs.keeper.io/user-guides/vault-offline-access read; current docs list creating and editing records offline while older release notes (https://docs.keeper.io/release-notes/desktop/web-vault-+-desktop-app/older/vault-version-14.4.0) describe read-only offline access, so it is not settled."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqOfflineConflict"
       }
     },
@@ -9047,7 +9068,7 @@
         "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/personal-and-business-vaults : switch between business and personal accounts in the web vault, browser extension and mobile apps ('Switch Account', 'Add Account')."
       },
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -9139,7 +9160,7 @@
       "providerHow": "read-from-code",
       "source": "spec-round-2026-10-07",
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -9166,7 +9187,7 @@
       "providerHow": "read-from-code",
       "source": "spec-round-2026-10-07",
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     },
@@ -9193,7 +9214,7 @@
       "providerHow": "read-from-code",
       "source": "spec-round-2026-10-07",
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": [
           "KqExtensie",
           "KqExtensieBewerken"
@@ -9223,7 +9244,7 @@
       "providerHow": "read-from-code",
       "source": "spec-round-2026-10-07",
       "screen": {
-        "canvas": "5NkFW28vZUUij43xzxHg5a",
+        "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
         "board": "KqExtensie"
       }
     }
