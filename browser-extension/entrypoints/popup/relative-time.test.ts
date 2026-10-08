@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { setLocale } from '@/src/testing/i18n'
 import { relativeTime } from './relative-time'
 
 describe('relativeTime', () => {
@@ -10,6 +11,15 @@ describe('relativeTime', () => {
 		['2026-04-30T12:00:00Z', 'yesterday'],
 		['2026-04-28T12:00:00Z', '3 days ago'],
 	])('%s → %s', (iso, text) => {
+		expect(relativeTime(iso, now)).toBe(text)
+	})
+
+	it.each([
+		['2026-05-01T11:59:30Z', 'zojuist'],
+		['2026-05-01T11:55:00Z', '5 minuten geleden'],
+		['2026-04-30T12:00:00Z', 'gisteren'],
+	])('in Dutch, %s → %s', (iso, text) => {
+		setLocale('nl')
 		expect(relativeTime(iso, now)).toBe(text)
 	})
 })

@@ -34,6 +34,7 @@ When you are halfway through adding an account, the extension remembers the serv
 - **The address of your current tab,** to suggest the items for that site. It stays in the extension.
 - **The pages you visit:** the extension's page script runs on every site, so that filling in logins can work there. Today it only tells the extension a page has loaded. It never receives your vault, and when autofill arrives it gets one login, after you chose it.
 - **Whether your computer is locked,** for the **On system lock** lock option, which comes with the settings screen.
+- **Your browser's language,** to show the extension in it. It stays in the extension.
 
 ## Permissions
 

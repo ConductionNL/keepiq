@@ -101,7 +101,7 @@ export interface ItemMeta {
 	folderId: string | null
 	hasLogin: boolean
 	blocked: boolean
-	blockedReason?: string
+	blockedReason?: BlockReason
 	migrationError?: string | null
 	createdAt: string
 	updatedAt: string

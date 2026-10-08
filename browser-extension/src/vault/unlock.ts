@@ -18,8 +18,8 @@ async function fetchSuite(account: AccountRecord): Promise<{ suite: CachedSuite;
 		return { suite, changed: await checkSuite(account.id, suite) }
 	} catch (error) {
 		if (error instanceof Failure) throw error
-		if (error instanceof Offline) throw new Failure('offline_no_cache', 'You are offline and this vault has not been synced yet')
-		if (error instanceof SessionRevoked) throw new Failure('session_revoked', error.message)
+		if (error instanceof Offline) throw new Failure('offline_no_cache')
+		if (error instanceof SessionRevoked) throw new Failure('session_revoked')
 		if (error instanceof KeepiqNotInstalled) throw new Failure('keepiq_missing')
 		throw new Failure('unknown')
 	}
@@ -29,7 +29,7 @@ async function decrypt(suite: CachedSuite, method: UnlockMethod): Promise<string
 	try {
 		return await decryptPrivateKeyPem(suite.privateKey, method.masterPassword)
 	} catch (error) {
-		if (error instanceof InvalidMasterPassword) throw new Failure('invalid_master_password', 'Invalid master password')
+		if (error instanceof InvalidMasterPassword) throw new Failure('invalid_master_password')
 		throw error
 	}
 }
@@ -45,7 +45,7 @@ export function unlock(accountId: string, method: UnlockMethod): Promise<void> {
 async function attempt(accountId: string, method: UnlockMethod, retried: boolean): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account) throw new Failure('unknown', 'Unknown account')
-	if (account.appPassword === null) throw new Failure('session_revoked', 'Log in again first')
+	if (account.appPassword === null) throw new Failure('session_revoked')
 	// The suite is cached at add time; it is fetched only when missing or when it no longer opens.
 	const cached = await cachedSuite(accountId)
 	let suite = cached ?? (await fetchSuite(account)).suite
@@ -74,7 +74,7 @@ async function attempt(accountId: string, method: UnlockMethod, retried: boolean
 	if (typeof after?.appPassword !== 'string') {
 		await clearKey(accountId)
 		await browser.storage.local.remove(suiteKey(accountId))
-		throw new Failure('session_revoked', 'Log in again first')
+		throw new Failure('session_revoked')
 	}
 	// A sync stored a new suite while this unlock decrypted the old one, so this key opens nothing.
 	// A missing suite means the two-factor block dropped it; the retry asks the server, which refuses.

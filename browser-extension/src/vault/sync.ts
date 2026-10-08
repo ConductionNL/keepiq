@@ -1,10 +1,10 @@
 import { ApiError, createClient, Offline, SessionRevoked, VaultWriteLocked, type Client } from '@/src/api/client'
-import type { FolderRow, Page, SecretTypeRow, SuiteRow } from '@/src/api/types'
+import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow } from '@/src/api/types'
 import { getAccount, suiteKey } from '@/src/accounts/store'
 import { broadcast } from '@/src/background/broadcast'
-import type { SyncStatus } from '@/src/messages'
+import type { BlockReason, SyncStatus } from '@/src/messages'
 import { checkedAt, clearSnapshot, markChecked, readSnapshot, writeSnapshot } from './store'
-import type { StoredSecretRow, VaultSnapshot } from './types'
+import type { StoredBlockedRow, StoredSecretRow, VaultSnapshot } from './types'
 import { blockUnlock, checkSuite } from './unlock'
 
 export const SYNC_INTERVAL_MINUTES = 15
@@ -105,7 +105,7 @@ async function loggedIn(accountId: string): Promise<boolean> {
 
 /** Deletions change `total`, edits and creates change the newest `updatedAt` (ADR-002). */
 async function unchanged(client: Client, cached: VaultSnapshot): Promise<boolean> {
-	const probe = await client.keepiq<Page<StoredSecretRow>>('GET', '/api/v1/secrets?sort=updated_at&direction=desc&limit=1')
+	const probe = await client.keepiq<Page<FetchedRow>>('GET', '/api/v1/secrets?sort=updated_at&direction=desc&limit=1')
 	const listsFresh = Date.now() - Date.parse(cached.listsSyncedAt) < LISTS_MAX_AGE_MINUTES * 60_000
 	return listsFresh && probe.total === cached.total && (probe.items[0]?.updatedAt ?? null) === cached.newestUpdatedAt
 }
@@ -121,9 +121,12 @@ const MANIFEST_ROW_CAP = 1000
 /** Suite statuses whose rows the server withholds (`SecretService::BLOCKING_STATUSES`). */
 const BLOCKING_STATUSES = ['revoked', 'compromised']
 
+/** A row as the server sends it; only the fallback list sends the blocked shape and `migrationError`. */
+type FetchedRow = SecretRow & { migrationError?: string | null }
+
 interface Manifest {
 	suite: SuiteRow | null
-	secrets: StoredSecretRow[]
+	secrets: FetchedRow[]
 	folders: FolderRow[]
 	types: SecretTypeRow[]
 	unlockBlocked?: string | null
@@ -146,7 +149,7 @@ async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fet
 
 	let suites: Promise<SuiteRow[]> | undefined
 	const listSuites = () => (suites ??= client.listSuites())
-	let secrets: StoredSecretRow[]
+	let secrets: FetchedRow[]
 	let folders: FolderRow[]
 	let types: SecretTypeRow[]
 	let total: number
@@ -165,7 +168,9 @@ async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fet
 	const suite = manifest?.suite ?? activeRow(await listSuites())
 	if (typeof suite.privateKey !== 'string' || suite.unlockBlocked) return { unlockBlocked: true }
 	// The manifest never sends the blocked shape, so rows on another suite are checked here.
-	if (secrets.some((row) => !row.blocked && row.encryptionSuiteId !== suite.id)) secrets = withheld(secrets, await listSuites())
+	const stored = secrets.some((row) => row.blocked || row.encryptionSuiteId !== suite.id)
+		? withheld(secrets, await listSuites())
+		: secrets as OpenSecretRow[]
 
 	const now = new Date().toISOString()
 	return {
@@ -173,41 +178,42 @@ async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fet
 		suite: { ...suite, privateKey: suite.privateKey },
 		snapshot: {
 			suite: { id: suite.id, unlockKeyEpoch: suite.unlockKeyEpoch },
-			secrets,
+			secrets: stored,
 			folders,
 			types,
 			// Client time, so staleness never depends on the server's clock.
 			syncedAt: now,
 			listsSyncedAt: now,
-			newestUpdatedAt: newest(secrets),
+			newestUpdatedAt: newest(stored),
 			// The server's count, so a row lost to paging does not make every probe download again.
 			total,
 		},
 	}
 }
 
-/** The server's block rule (`SecretService::suiteBlockReason`), for rows that arrived unblocked. */
-function withheld(rows: StoredSecretRow[], suites: SuiteRow[]): StoredSecretRow[] {
+/** The server's block rule (`SecretService::suiteBlockReason`) as a reason code, for every row. */
+function withheld(rows: FetchedRow[], suites: SuiteRow[]): StoredSecretRow[] {
 	const statuses = new Map(suites.map((suite) => [suite.id, suite.status]))
 	return rows.map((row) => {
-		if (row.blocked) return row
 		const status = statuses.get(row.encryptionSuiteId)
-		let reason: string | null = null
-		if (status === undefined) reason = 'Encryption suite not found'
-		// The manifest leaves out `migrationError`, so a compromised row may also be one recovery could not save.
-		else if (status === 'compromised') reason = 'Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.'
-		else if (BLOCKING_STATUSES.includes(status)) reason = `Encryption suite is ${status}`
-		if (reason === null) return row
-		const meta: Partial<typeof row> = { ...row }
+		if (!row.blocked && status !== undefined && !BLOCKING_STATUSES.includes(status)) return row
+		let blockedReason: BlockReason | undefined
+		if (status === undefined) blockedReason = 'suite_missing'
+		// Only the fallback list sends `migrationError`; without it a compromised row may still be one recovery could not save.
+		else if (row.migrationError) blockedReason = 'migration_failed'
+		else if (status === 'compromised') blockedReason = 'suite_compromised'
+		else if (status === 'revoked') blockedReason = 'suite_revoked'
+		const meta: Partial<Omit<OpenSecretRow, 'blocked'> & Omit<BlockedSecretRow, 'blocked'>> = { ...row }
 		delete meta.key
 		delete meta.login
 		delete meta.additionalFields
-		return { ...(meta as Omit<typeof row, 'key' | 'login' | 'additionalFields' | 'blocked'>), blocked: true, blockedReason: reason }
+		delete meta.blockedReason
+		return { ...(meta as Omit<StoredBlockedRow, 'blocked' | 'blockedReason'>), blocked: true, blockedReason }
 	})
 }
 
 interface Paged {
-	secrets: StoredSecretRow[]
+	secrets: FetchedRow[]
 	total: number
 }
 
@@ -216,19 +222,19 @@ interface Paged {
  * pages. A row seen twice is kept once; a short count gets one more pass in another order.
  */
 async function fetchAllSecrets(client: Client): Promise<Paged> {
-	const first = new Map<string, StoredSecretRow>()
+	const first = new Map<string, FetchedRow>()
 	const firstTotal = await pageThrough(client, 'sort=created_at&direction=asc', first)
 	if (first.size >= firstTotal) return { secrets: [...first.values()], total: firstTotal }
-	const second = new Map<string, StoredSecretRow>()
+	const second = new Map<string, FetchedRow>()
 	const total = await pageThrough(client, 'sort=updated_at&direction=desc', second)
 	// A complete second pass is the whole vault: a row only the first saw was deleted in between.
 	const rows = second.size >= total ? second : new Map([...first, ...second])
 	return { secrets: [...rows.values()], total }
 }
 
-async function pageThrough(client: Client, order: string, rows: Map<string, StoredSecretRow>): Promise<number> {
+async function pageThrough(client: Client, order: string, rows: Map<string, FetchedRow>): Promise<number> {
 	for (let page = 1; ; page++) {
-		const result = await client.keepiq<Page<StoredSecretRow>>('GET', `/api/v1/secrets?${order}&limit=${PAGE_LIMIT}&page=${page}`)
+		const result = await client.keepiq<Page<FetchedRow>>('GET', `/api/v1/secrets?${order}&limit=${PAGE_LIMIT}&page=${page}`)
 		for (const row of result.items) rows.set(row.id, row)
 		if (page * PAGE_LIMIT >= result.total || result.items.length === 0) return result.total
 	}

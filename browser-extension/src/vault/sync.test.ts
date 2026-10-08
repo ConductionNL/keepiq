@@ -86,16 +86,17 @@ describe('full sync', () => {
 		expect(await readSnapshot(accountId)).toMatchObject({ secrets: many, folders: [folderRow()], types: typeRows, total: 150 })
 	})
 
-	it('keeps blocked rows from the fallback', async () => {
+	it('keeps blocked rows from the fallback, with a reason code instead of the server text', async () => {
+		const failed = blockedRow({ id: 'b2', migrationError: 'Key migration failed' })
 		server({
 			'/api/v1/offline/manifest': () => json({ message: 'No active suite' }, 404),
-			'/api/v1/secrets': () => json({ items: [blockedRow()], total: 1, page: 1, limit: 100 }),
+			'/api/v1/secrets': () => json({ items: [{ ...blockedRow(), blockedReason: 'Encryption suite is revoked' }, { ...failed, blockedReason: 'Could not be decrypted' }], total: 2, page: 1, limit: 100 }),
 			'/api/v1/folders': () => json([]),
 			'/api/v1/secret-types': () => json(typeRows),
-			'/api/v1/suites': () => json([suiteRow]),
+			'/api/v1/suites': () => json([suiteRow, { ...suiteRow, id: 'suite-0', status: 'revoked' }]),
 		})
 		await sync(accountId)
-		expect((await readSnapshot(accountId))?.secrets).toEqual([blockedRow()])
+		expect((await readSnapshot(accountId))?.secrets).toEqual([blockedRow(), { ...failed, blockedReason: 'migration_failed' }])
 	})
 
 	it('leaves the previous snapshot untouched when a fallback page fails', async () => {
@@ -354,19 +355,19 @@ describe('server quirks', () => {
 		await sync(accountId)
 		const stored = (await readSnapshot(accountId))!.secrets
 		expect(stored[0]).toMatchObject({ id: 's1', blocked: false })
-		expect(stored[1]).toMatchObject({ id: 'old', blocked: true, blockedReason: 'Encryption suite is revoked' })
+		expect(stored[1]).toMatchObject({ id: 'old', blocked: true, blockedReason: 'suite_revoked' })
 		expect(stored[1]).not.toHaveProperty('login')
 		expect(stored[1]).not.toHaveProperty('key')
-		expect(stored[2]).toMatchObject({ id: 'gone', blocked: true, blockedReason: 'Encryption suite not found' })
+		expect(stored[2]).toMatchObject({ id: 'gone', blocked: true, blockedReason: 'suite_missing' })
 	})
 
-	it('does not call a compromised row merely compromised, since recovery may have failed for it', async () => {
+	it('gives a row on a compromised suite the compromised reason', async () => {
 		server({
 			'/api/v1/offline/manifest': () => json({ ...manifest, secrets: [secretRow({ id: 'old', encryptionSuiteId: 'suite-0' })] }),
 			'/api/v1/suites': () => json([suiteRow, { ...suiteRow, id: 'suite-0', status: 'compromised' }]),
 		})
 		await sync(accountId)
-		expect((await readSnapshot(accountId))!.secrets[0]).toMatchObject({ blocked: true, blockedReason: expect.stringMatching(/compromised key.*whether it can be recovered/) })
+		expect((await readSnapshot(accountId))!.secrets[0]).toMatchObject({ blocked: true, blockedReason: 'suite_compromised' })
 	})
 
 	it('asks for the suites only when a row is on another suite', async () => {

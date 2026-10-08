@@ -136,7 +136,7 @@ describe('autofill suggestions', () => {
 	})
 
 	it('shows a blocked match with its badge and no copy', () => {
-		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false, blockedReason: 'suite revoked' })], suggestionIds: ['1'] }), { tab: githubTab })
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false, blockedReason: 'suite_revoked' })], suggestionIds: ['1'] }), { tab: githubTab })
 		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
 		expect(within(section).getByText('Blocked')).toBeTruthy()
 		expect((within(section).getByRole('button', { name: 'Copy, GitHub' }) as HTMLButtonElement).disabled).toBe(true)
@@ -244,8 +244,8 @@ describe('states', () => {
 	})
 
 	it('explains a vault where everything is blocked, above the blocked cards', () => {
-		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false, blockedReason: 'suite revoked' })] }))
-		expect(screen.getByText(/All items are blocked: suite revoked/)).toBeTruthy()
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false, blockedReason: 'suite_revoked' })] }))
+		expect(screen.getByText(/All items are blocked\. Its encryption key was revoked\./)).toBeTruthy()
 		expect(listed()).toEqual(['GitHub'])
 	})
 

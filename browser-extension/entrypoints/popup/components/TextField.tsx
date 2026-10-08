@@ -1,4 +1,5 @@
 import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode } from 'react'
+import { fieldAction } from '../i18n'
 import { IconButton } from './Button'
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
@@ -33,7 +34,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 				{isPassword && (
 					<IconButton
 						icon={revealed ? 'eyeOff' : 'eye'}
-						label={revealed ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+						label={fieldAction(revealed ? 'field.hide' : 'field.show', label)}
 						onClick={() => setRevealed((r) => !r)}
 						aria-pressed={revealed}
 					/>

@@ -28,7 +28,7 @@ async function send(message: PopupToBackground): Promise<Result> {
 
 async function state(message: PopupToBackground): Promise<PopupState> {
 	const result = await send(message)
-	if (!result.ok) throw new Error(`${result.code}: ${result.message}`)
+	if (!result.ok) throw new Error(result.code)
 	return result.state
 }
 
@@ -75,7 +75,7 @@ describe('screens', () => {
 		await markLoggedOut(account.id, true)
 		const s = await state({ kind: 'vault.status' })
 		expect(s.screen).toBe('reauthenticate')
-		expect(s.notice).toBe('Session revoked, please log in again')
+		expect(s.notice).toBe('session_revoked')
 	})
 })
 
@@ -144,13 +144,13 @@ describe('accounts', () => {
 
 	it('maps a wrong master password to its code', async () => {
 		const account = await stored()
-		expect(await send(unlockWith(account.id, 'nope'))).toEqual({ ok: false, code: 'invalid_master_password', message: 'Invalid master password' })
+		expect(await send(unlockWith(account.id, 'nope'))).toEqual({ ok: false, code: 'invalid_master_password' })
 	})
 })
 
 describe('unknown messages', () => {
 	it('fail instead of answering with the state', async () => {
-		expect(await send({ kind: 'get_state' } as never)).toEqual({ ok: false, code: 'unknown', message: 'Unknown message get_state' })
+		expect(await send({ kind: 'get_state' } as never)).toEqual({ ok: false, code: 'unknown' })
 	})
 })
 

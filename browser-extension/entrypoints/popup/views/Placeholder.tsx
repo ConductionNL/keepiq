@@ -1,3 +1,4 @@
+import { i18n } from '#i18n'
 import { EmptyState } from '../components/EmptyState'
 import type { IconName } from '../components/Icon'
 
@@ -5,7 +6,7 @@ import type { IconName } from '../components/Icon'
 export function Placeholder({ icon, title }: { icon: IconName; title: string }) {
 	return (
 		<EmptyState icon={icon} title={title}>
-			<p className="empty__text">This arrives in a later update.</p>
+			<p className="empty__text">{i18n.t('common.laterUpdate')}</p>
 		</EmptyState>
 	)
 }

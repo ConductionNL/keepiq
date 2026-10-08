@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { i18n } from '#i18n'
 import type { AccountSummary, PopupTab } from '@/src/messages'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { Header } from '../components/Header'
 import { Loading } from '../components/Loading'
-import { TabBar, TABS } from '../components/TabBar'
+import { TabBar, tabLabel, TABS } from '../components/TabBar'
 import { Toast } from '../components/Toast'
+import { errorText } from '../errors'
 import { isPopout, useCurrentTab } from '../hooks/useCurrentTab'
-import { NOT_RESPONDING, request } from '../hooks/useMessage'
+import { request } from '../hooks/useMessage'
 import { useVaultSnapshot } from '../hooks/useVaultSnapshot'
 import { ShellContext } from '../shell-context'
 import { ItemDetail } from './ItemDetail'
@@ -54,7 +56,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const context = useMemo(() => ({
 		refreshState,
 		toast: (text: string) => setToast({ text }),
-		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => setToast({ text: 'Could not open the website' })),
+		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => setToast({ text: i18n.t('vault.openFailed') })),
 	}), [refreshState, tab?.windowId])
 
 	const open = useCallback((id: string) => {
@@ -71,7 +73,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	async function popout() {
 		// `null` is the background's success reply; with no window opened, stay open.
 		if (await request({ kind: 'popup.popout', tabId: tab?.id }) === null) window.close()
-		else setToast({ text: 'Could not open a new window' })
+		else setToast({ text: i18n.t('vault.popoutFailed') })
 	}
 
 	const snapshot = reply?.state === 'unlocked' ? reply : undefined
@@ -80,7 +82,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	let content: ReactNode
 	if (current === 'vault') {
 		content = failed
-			? <ErrorBanner>{NOT_RESPONDING}</ErrorBanner>
+			? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner>
 			: snapshot && tab
 				? (
 					<>
@@ -94,11 +96,10 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 				)
 				: <Loading />
 	} else {
-		const meta = TABS.find((t) => t.id === current)!
-		content = <Placeholder icon={meta.icon} title={meta.label} />
+		content = <Placeholder icon={TABS.find((t) => t.id === current)!.icon} title={tabLabel(current)} />
 	}
 
-	const title = detail ? 'View item' : TABS.find((t) => t.id === current)!.label
+	const title = detail ? i18n.t('titles.viewItem') : tabLabel(current)
 
 	return (
 		<ShellContext.Provider value={context}>

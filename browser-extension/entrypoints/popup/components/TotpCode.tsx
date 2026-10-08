@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { i18n } from '#i18n'
 import { generateCode, parseTotpSeed, secondsRemaining, type TotpParams } from '@/src/totp/totp'
 import { useClipboard } from '../hooks/useClipboard'
 import { IconButton } from './Button'
@@ -38,16 +39,16 @@ export function TotpCode({ seed }: { seed: string }) {
 		}
 	}, [params])
 
-	if (!params) return <p className="field-row field-row__error">Invalid authenticator key</p>
+	if (!params) return <p className="field-row field-row__error">{i18n.t('totp.invalid')}</p>
 	const half = params.digits / 2
 	return (
 		<div className="field-row">
 			<div className="field-row__text">
-				<span className="field-row__label">Verification code</span>
+				<span className="field-row__label">{i18n.t('totp.code')}</span>
 				<span className="field-row__value totp">{code ? `${code.slice(0, half)} ${code.slice(half)}` : ' '}</span>
 			</div>
-			<span className="totp__countdown" style={{ '--progress': left / params.period } as React.CSSProperties} role="timer" aria-label={`Changes in ${left} seconds`}>{left}</span>
-			<IconButton icon="copy" label="Copy verification code" disabled={!code} onClick={() => code && void copy(code, 'Verification code')} />
+			<span className="totp__countdown" style={{ '--progress': left / params.period } as React.CSSProperties} role="timer" aria-label={i18n.t('totp.changesIn', left)}>{left}</span>
+			<IconButton icon="copy" label={i18n.t('item.copyCode')} disabled={!code} onClick={() => code && void copy(code, i18n.t('totp.code'))} />
 		</div>
 	)
 }

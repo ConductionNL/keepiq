@@ -1,4 +1,5 @@
 import { useCallback, useState, type ReactNode } from 'react'
+import { i18n } from '#i18n'
 import { ErrorBanner } from './components/ErrorBanner'
 import { Header } from './components/Header'
 import { Loading } from './components/Loading'
@@ -41,16 +42,16 @@ export default function App() {
 	let title: string
 	let body: ReactNode
 	if (panel === 'switcher') {
-		title = 'Accounts'
+		title = i18n.t('titles.accounts')
 		body = <AccountSwitcher state={state} dispatch={dispatch} onClose={close} onAddAccount={() => setPanel('add_account')} />
 	} else if (panel === 'add_account' || !active || state.screen === 'add_account') {
-		title = 'Add account'
+		title = i18n.t('common.addAccount')
 		body = <AddAccount dispatch={dispatch} onAdded={close} />
 	} else if (state.screen === 'reauthenticate') {
-		title = 'Log in again'
+		title = i18n.t('titles.logInAgain')
 		body = <LogInAgain key={active.id} account={active} notice={state.notice} dispatch={dispatch} />
 	} else if (state.screen === 'unlock') {
-		title = 'Unlock'
+		title = i18n.t('titles.unlock')
 		body = <Unlock key={active.id} account={active} notice={state.notice} dispatch={dispatch} />
 	} else {
 		return shell

@@ -5,7 +5,8 @@ import { WxtVitest } from 'wxt/testing/vitest-plugin'
 export default defineConfig({
 	plugins: [WxtVitest()],
 	test: {
-		include: ['src/**/*.test.ts', 'entrypoints/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
+		include: ['src/**/*.test.ts', 'entrypoints/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'locales/*.test.ts'],
+		setupFiles: ['./vitest.setup.ts'],
 		restoreMocks: true,
 	},
 })

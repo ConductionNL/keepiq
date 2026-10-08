@@ -70,6 +70,12 @@ describe('toItemMeta', () => {
 	})
 
 	it('carries the reason of a blocked row', () => {
-		expect(toItemMeta({ ...blockedRow(), migrationError: 'failed' })).toMatchObject({ blocked: true, hasLogin: false, blockedReason: 'suite revoked', migrationError: 'failed' })
+		expect(toItemMeta({ ...blockedRow(), migrationError: 'failed' })).toMatchObject({ blocked: true, hasLogin: false, blockedReason: 'suite_revoked', migrationError: 'failed' })
+	})
+
+	it('drops a reason that is not a code, as a snapshot from an older version holds', () => {
+		const meta = toItemMeta({ ...blockedRow(), blockedReason: 'Encryption suite is revoked' as never })
+		expect(meta.blocked).toBe(true)
+		expect(meta).not.toHaveProperty('blockedReason')
 	})
 })

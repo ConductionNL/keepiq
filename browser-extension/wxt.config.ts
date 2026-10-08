@@ -41,7 +41,7 @@ export default defineConfig({
 			enabled: 9,
 		},
 	},
-	modules: ['@wxt-dev/module-react'],
+	modules: ['@wxt-dev/module-react', '@wxt-dev/i18n/module'],
 	manifest: ({ browser, mode, manifestVersion }) => {
 		// A separate name in dev means a dev build and a store build can sit side by
 		// side in the same browser profile without you guessing which is which.
@@ -50,7 +50,9 @@ export default defineConfig({
 		const serverOrigins = ['https://*/*', 'http://*/*']
 		return {
 			name: `Keepiq${nameSuffix}`,
-			description: 'Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.',
+			description: '__MSG_extensionDescription__',
+			// The catalogs live in locales/; the browser picks one by its UI language.
+			default_locale: 'en',
 			// `version` is deliberately omitted — WXT derives it from package.json,
 			// so there is only one place to bump.
 			permissions: [

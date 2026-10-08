@@ -77,5 +77,5 @@ There is no remote wipe, so these checks stand in for it:
 
 ## Supply chain
 
-- Three runtime dependencies: React, React DOM and `tldts` (the public suffix list, bundled; it makes no requests).
+- Four runtime dependencies: React, React DOM, `tldts` (the public suffix list, bundled; it makes no requests) and `@wxt-dev/i18n` (a thin wrapper over `browser.i18n`).
 - CI runs the tests, typecheck, lint, both builds and `web-ext lint` on every change.

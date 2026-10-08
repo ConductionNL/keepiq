@@ -1,7 +1,10 @@
-import type { FolderRow, SecretRow, SecretTypeRow } from '@/src/api/types'
+import type { BlockedSecretRow, FolderRow, OpenSecretRow, SecretTypeRow } from '@/src/api/types'
+import type { BlockReason } from '@/src/messages'
 
-/** A blocked row as the fallback list returns it; the manifest never does. */
-export type StoredSecretRow = SecretRow & { migrationError?: string | null }
+/** The server's reason is English text, so a stored blocked row holds a code instead. */
+export type StoredBlockedRow = Omit<BlockedSecretRow, 'blockedReason'> & { blockedReason?: BlockReason; migrationError?: string | null }
+
+export type StoredSecretRow = OpenSecretRow | StoredBlockedRow
 
 /** Everything one account's vault needs offline, written in one `storage.local.set`. */
 export interface VaultSnapshot {

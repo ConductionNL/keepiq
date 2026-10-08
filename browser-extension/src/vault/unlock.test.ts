@@ -41,7 +41,7 @@ describe('unlock', () => {
 	it('rejects a wrong master password and stays locked', async () => {
 		const account = await newAccount()
 		await expect(unlock(account.id, { type: 'masterPassword', masterPassword: envelope.wrongPassword }))
-			.rejects.toMatchObject({ code: 'invalid_master_password', message: 'Invalid master password' })
+			.rejects.toMatchObject({ code: 'invalid_master_password' })
 		expect(await hasKey(account.id)).toBe(false)
 	})
 
@@ -95,10 +95,7 @@ describe('unlock', () => {
 		const account = await newAccount()
 		await browser.storage.local.remove(suiteKey(account.id))
 		fetchMock.mockRejectedValue(new TypeError('offline'))
-		await expect(unlock(account.id, password)).rejects.toMatchObject({
-			code: 'offline_no_cache',
-			message: 'You are offline and this vault has not been synced yet',
-		})
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'offline_no_cache' })
 	})
 
 	it('refuses a logged out account', async () => {

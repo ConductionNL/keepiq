@@ -1,6 +1,11 @@
 import { useState } from 'react'
+import { i18n } from '#i18n'
 import type { AccountSummary } from '@/src/messages'
 import { Button } from './Button'
+
+/** "Alice on cloud.example.org", for labels that must say which account. */
+export const accountName = (account: Pick<AccountSummary, 'displayName' | 'host'>) =>
+	i18n.t('common.accountOnHost', { name: account.displayName, host: account.host })
 
 /** "Log out" deletes the account, so it always asks first. Cancel hands focus back to the trigger. */
 export function useLogOutConfirm() {
@@ -22,9 +27,9 @@ interface Props {
 export function LogOutConfirm({ account, onConfirm, onCancel }: Props) {
 	return (
 		<Confirm
-			question={`Log out of ${account.displayName} on ${account.host}?`}
-			detail="The account is removed from this browser. You will need an app password to add it again."
-			action="Log out"
+			question={i18n.t('accounts.logOutQuestion', { account: accountName(account) })}
+			detail={i18n.t('accounts.logOutDetail')}
+			action={i18n.t('common.logOut')}
 			onConfirm={onConfirm}
 			onCancel={onCancel}
 		/>
@@ -45,7 +50,7 @@ export function Confirm({ question, detail, action, onConfirm, onCancel }: Confi
 			<p className="confirm__question">{question}</p>
 			<p className="confirm__detail">{detail}</p>
 			<div className="confirm__actions">
-				<Button variant="secondary" onClick={onCancel} autoFocus>Cancel</Button>
+				<Button variant="secondary" onClick={onCancel} autoFocus>{i18n.t('common.cancel')}</Button>
 				<Button variant="danger" onClick={onConfirm}>{action}</Button>
 			</div>
 		</div>

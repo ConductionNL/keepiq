@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ErrorCode } from '@/src/messages'
+import { setLocale } from '@/src/testing/i18n'
 import { errorText } from '../errors'
 import { Avatar, initials } from './Avatar'
 import { Button } from './Button'
@@ -46,14 +47,23 @@ describe('Button', () => {
 })
 
 describe('errorText', () => {
-	it('has copy for every code, falling back to the server message', () => {
+	it('has its own copy for every code, with a generic one for a code it does not know', () => {
 		const codes: ErrorCode[] = [
 			'insecure_url', 'invalid_url', 'permission_denied', 'unreachable', 'not_nextcloud', 'unauthorized', 'keepiq_missing',
 			'no_active_suite', 'unlock_blocked', 'duplicate', 'limit_reached', 'invalid_master_password', 'offline_no_cache', 'session_revoked',
+			'write_locked', 'server_error', 'not_responding',
 		]
-		for (const code of codes) expect(errorText(code, 'h', 'fallback')).not.toBe('fallback')
-		expect(errorText('write_locked', 'h', 'Vault is migrating')).toBe('Vault is migrating')
-		expect(errorText('unreachable', 'cloud.example.org', '')).toBe('Could not reach cloud.example.org')
+		const generic = errorText('unknown', 'h')
+		expect(generic).toBe('Something went wrong')
+		for (const code of codes) expect(errorText(code, 'h')).not.toBe(generic)
+		expect(errorText('future_code' as ErrorCode, 'h')).toBe(generic)
+		expect(errorText('unreachable', 'cloud.example.org')).toBe('Could not reach cloud.example.org')
+		expect(errorText('limit_reached', 'h')).toBe('Maximum of 5 accounts reached')
+	})
+
+	it('words a code in the browser language', () => {
+		setLocale('nl')
+		expect(errorText('unreachable', 'cloud.example.org')).toBe('Kan cloud.example.org niet bereiken')
 	})
 })
 

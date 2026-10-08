@@ -1,11 +1,11 @@
-import type { AccountStatus } from '@/src/messages'
+import { MAX_ACCOUNTS, type AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { clearSnapshot } from '@/src/vault/store'
 import { DEFAULT_SETTINGS, settingsKey, writeSettings, type AccountSettings } from './settings'
 
-export const MAX_ACCOUNTS = 5
+export { MAX_ACCOUNTS }
 
 export interface AccountRecord {
 	id: string

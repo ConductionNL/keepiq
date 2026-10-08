@@ -84,7 +84,7 @@ describe('AddAccount', () => {
 	})
 
 	it('clears only the app password after a 401', async () => {
-		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'unauthorized', message: '' })} />)
+		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'unauthorized' })} />)
 		const user = await fill()
 		await user.click(screen.getByRole('button', { name: 'Add account' }))
 		expect(screen.getByRole('alert').textContent).toBe('Wrong username or app password')
@@ -94,14 +94,14 @@ describe('AddAccount', () => {
 	})
 
 	it('puts focus back on the server URL after a server error', async () => {
-		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'unreachable', message: '' })} />)
+		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'unreachable' })} />)
 		const user = await fill()
 		await user.click(screen.getByRole('button', { name: 'Add account' }))
 		expect(document.activeElement).toBe(screen.getByLabelText('Server URL'))
 	})
 
 	it('names the host in server errors', async () => {
-		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'keepiq_missing', message: '' })} />)
+		render(<AddAccount dispatch={dispatchReturning({ ok: false, code: 'keepiq_missing' })} />)
 		const user = await fill()
 		await user.click(screen.getByRole('button', { name: 'Add account' }))
 		expect(screen.getByRole('alert').textContent).toBe('Keepiq is not installed on cloud.example.org')

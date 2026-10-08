@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { i18n } from '#i18n'
 import type { TypeMeta, VaultSnapshotReply } from '@/src/messages'
 import { filterItems, NO_FILTER, sortItems, type FolderFilter } from '@/src/vault/list'
 import { Button } from '../components/Button'
@@ -10,7 +11,9 @@ import { SearchField } from '../components/SearchField'
 import { Suggestions } from '../components/Suggestions'
 import { TypeFilterChips } from '../components/TypeFilterChips'
 import type { CurrentTab } from '../hooks/useCurrentTab'
+import { blockedText } from '../errors'
 import { loginKey, useLazyLogins } from '../hooks/useDecryptedFields'
+import { language } from '../i18n'
 import { relativeTime } from '../relative-time'
 
 /** No virtualisation yet; past this the list asks for a narrower search. */
@@ -54,35 +57,35 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 	}
 
 	const firstSync = items === null
-	const webApp = <a href={snapshot.webAppUrl} target="_blank" rel="noreferrer">Open the Keepiq web app</a>
+	const webApp = <a href={snapshot.webAppUrl} target="_blank" rel="noreferrer">{i18n.t('common.openWebApp')}</a>
 	const allBlocked = sorted.length > 0 && sorted.every((item) => item.blocked)
 
 	let body
 	if (firstSync && !sync.syncing && sync.lastError) {
 		body = (
-			<EmptyState icon="alert" title="Could not load your vault">
-				<Button variant="secondary" onClick={syncNow}>Try again</Button>
+			<EmptyState icon="alert" title={i18n.t('vault.loadFailed')}>
+				<Button variant="secondary" onClick={syncNow}>{i18n.t('vault.tryAgain')}</Button>
 			</EmptyState>
 		)
 	} else if (firstSync) {
-		body = <p className="loading" role="status"><span className="spinner" aria-hidden="true" />Syncing your vault</p>
+		body = <p className="loading" role="status"><span className="spinner" aria-hidden="true" />{i18n.t('vault.syncing')}</p>
 	} else if (sorted.length === 0) {
-		body = <EmptyState icon="vault" title="No items in your vault">{webApp}</EmptyState>
+		body = <EmptyState icon="vault" title={i18n.t('vault.empty')}>{webApp}</EmptyState>
 	} else if (shown.length === 0) {
 		body = (
-			<EmptyState icon="search" title="No items match">
-				{search.trim() && <p className="empty__text">Search covers names and websites.</p>}
-				<Button variant="secondary" onClick={clearFilters}>Clear filters</Button>
+			<EmptyState icon="search" title={i18n.t('vault.noMatch')}>
+				{search.trim() && <p className="empty__text">{i18n.t('vault.searchCovers')}</p>}
+				<Button variant="secondary" onClick={clearFilters}>{i18n.t('vault.clearFilters')}</Button>
 			</EmptyState>
 		)
 	} else {
 		body = (
 			<section className="section" aria-labelledby="items-title">
-				<h2 className="section__title" id="items-title">Items</h2>
+				<h2 className="section__title" id="items-title">{i18n.t('vault.items')}</h2>
 				<ul className="items">
 					{shown.slice(0, MAX_ROWS).map((item) => <ItemCard key={item.id} item={item} type={typesById.get(item.typeId)} login={logins[loginKey(item)]} onOpen={onOpen} />)}
 				</ul>
-				{shown.length > MAX_ROWS && <p className="hint">Showing the first {MAX_ROWS}, refine your search</p>}
+				{shown.length > MAX_ROWS && <p className="hint">{i18n.t('vault.tooMany', { count: MAX_ROWS.toLocaleString(language()) })}</p>}
 			</section>
 		)
 	}
@@ -90,11 +93,11 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 	return (
 		<div className="stack" ref={list}>
 			{!firstSync && sync.offline && sync.syncedAt && (
-				<Banner tone="warning" role="status" action={<Button variant="link" busy={sync.syncing} onClick={syncNow}>Sync now</Button>}>
-					Offline. Last synced {relativeTime(sync.syncedAt)}
+				<Banner tone="warning" role="status" action={<Button variant="link" busy={sync.syncing} onClick={syncNow}>{i18n.t('vault.syncNow')}</Button>}>
+					{i18n.t('vault.offline', { time: relativeTime(sync.syncedAt) })}
 				</Banner>
 			)}
-			{!firstSync && !sync.offline && sync.lastError === 'busy' && <Banner tone="warning" role="status">Server busy, retrying later</Banner>}
+			{!firstSync && !sync.offline && sync.lastError === 'busy' && <Banner tone="warning" role="status">{i18n.t('vault.busy')}</Banner>}
 			<div className="filters">
 				<SearchField value={search} onChange={setSearch} disabled={firstSync} />
 				<FolderSelect folders={folders} value={folder} onChange={setFolder} disabled={firstSync} />
@@ -102,7 +105,7 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 			</div>
 			{allBlocked && (
 				<Banner tone="error" role="status">
-					All items are blocked{sorted[0]?.blockedReason ? `: ${sorted[0].blockedReason}` : ''}. {webApp}
+					{i18n.t('vault.allBlocked')} {sorted[0]?.blockedReason && <>{blockedText(sorted[0].blockedReason)} </>}{webApp}
 				</Banner>
 			)}
 			{!firstSync && tab.host && <Suggestions host={tab.host} items={suggestions} types={typesById} logins={logins} onOpen={onOpen} />}

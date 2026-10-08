@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { i18n } from '#i18n'
 import { copyText } from '@/src/clipboard'
 import { useShell } from '../shell-context'
 import { request } from './useMessage'
@@ -10,10 +11,10 @@ export function useClipboard() {
 		try {
 			await copyText(text)
 		} catch {
-			toast('Could not copy')
+			toast(i18n.t('clipboard.failed'))
 			return
 		}
-		toast(`${what} copied`)
+		toast(i18n.t('clipboard.copied', { what }))
 		void request({ kind: 'clipboard.copied' })
 	}, [toast])
 }

@@ -1,4 +1,3 @@
-import { SESSION_REVOKED_MESSAGE } from '@/src/api/client'
 import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
 import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId,
@@ -7,12 +6,10 @@ import {
 import { verifyCredentials } from '@/src/accounts/verify'
 import { readLastTab } from '@/src/background/requests'
 import { Failure } from '@/src/failure'
-import type { AccountSummary, PopupScreen, PopupState, PopupToBackground, Result } from '@/src/messages'
+import type { AccountSummary, NoticeCode, PopupScreen, PopupState, PopupToBackground, Result } from '@/src/messages'
 import { enforce, syncAlarm, touch } from '@/src/vault/timeout'
 import { sync } from '@/src/vault/sync'
 import { checkSuite, lock, lockAll, unlock } from '@/src/vault/unlock'
-
-export const KEY_CHANGED_MESSAGE = 'Your vault key changed in Keepiq. Unlock with your current master password.'
 
 export async function buildState(): Promise<PopupState> {
 	const activeId = await getActiveAccountId()
@@ -32,9 +29,9 @@ export async function buildState(): Promise<PopupState> {
 	const active = accounts.find((a) => a.active) ?? null
 	const screens: Record<AccountSummary['status'], PopupScreen> = { logged_out: 'reauthenticate', locked: 'unlock', unlocked: 'unlocked' }
 	const record = active ? await getAccount(active.id) : undefined
-	let notice: string | null = null
-	if (active?.status === 'logged_out' && record?.revoked) notice = SESSION_REVOKED_MESSAGE
-	if (active?.status === 'locked' && record?.keyChanged) notice = KEY_CHANGED_MESSAGE
+	let notice: NoticeCode | null = null
+	if (active?.status === 'logged_out' && record?.revoked) notice = 'session_revoked'
+	if (active?.status === 'locked' && record?.keyChanged) notice = 'key_changed'
 	return {
 		screen: active ? screens[active.status] : 'add_account',
 		accounts,
@@ -116,8 +113,8 @@ export async function handlePopupMessage(message: PopupToBackground): Promise<Re
 		await syncAlarm()
 		return { ok: true, state: await buildState() }
 	} catch (error) {
-		if (error instanceof Failure) return { ok: false, code: error.code, message: error.message }
+		if (error instanceof Failure) return { ok: false, code: error.code }
 		console.error('[keepiq]', error)
-		return { ok: false, code: 'unknown', message: 'Something went wrong' }
+		return { ok: false, code: 'unknown' }
 	}
 }
