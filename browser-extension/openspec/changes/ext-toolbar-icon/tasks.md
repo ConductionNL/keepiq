@@ -1,6 +1,6 @@
 ## 1. Art and manifest
 
-- [ ] 1.1 Add `public/icon/toolbar/`, `toolbar-locked/` and `toolbar-logged-out/`, each with `16.png` and `32.png`, derived from the coloured placeholder: unchanged, with a lock in the bottom right, and greyscale
+- [ ] 1.1 Add `public/icon/toolbar/`, `toolbar-locked/` and `toolbar-logged-out/`, each with `16.png` and `32.png`, rendered from `img/app-store.svg` in the Keepiq app: unchanged, with a lock in the bottom right, and greyscale
   - All six files open at their stated pixel size
 - [ ] 1.2 Point `action.default_icon` in `wxt.config.ts` at `toolbar-logged-out`
   - `npm run build` and `npm run build:firefox` both succeed

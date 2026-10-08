@@ -35,7 +35,8 @@ place. Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching
 `entrypoints/` — it covers the `browser.*`-not-`chrome.*` rule, the MV3/MV2 split,
 and message-passing gotchas.
 
-`public/icon/*.png` ships as placeholder art. Replace it before any release.
+`public/icon/*.png` is rendered from the app icon `../img/app-store.svg`; re-render it when that changes:
+`for s in 16 32 48 96 128; do rsvg-convert -w $s -h $s ../img/app-store.svg -o public/icon/$s.png; done`
 
 ## Comments & docs
 

@@ -6,7 +6,7 @@ By the time this change lands, the earlier changes provide:
 - the global Appearance record and the URI match default (ext-settings);
 - `candidatesFor()` in `src/autofill/matcher.ts` and the `tabs` permission (ext-autofill).
 
-`src/browser-action.ts` already resolves `action` against `browserAction`. The only icon art today is the coloured placeholder set in `public/icon/`.
+`src/browser-action.ts` already resolves `action` against `browserAction`. The only icon art today is the coloured set in `public/icon/`, rendered from the Keepiq app icon `img/app-store.svg`.
 
 ## Goals / Non-Goals
 
@@ -58,4 +58,4 @@ By the time this change lands, the earlier changes provide:
 - [The badge reveals how many accounts the user has on the visible site to anyone who sees the screen] → This is Bitwarden's default. It is shown only while unlocked, and the setting turns it off.
 - [The MV3 worker is asleep when a tab navigates] → `tabs.onUpdated` wakes it because the listener is registered at top level. The count comes from `storage.local`, so the cold path is one read.
 - [A large vault makes each recompute a full match pass] → Recomputes are coalesced and limited to visible tabs. If profiling shows a cost, the snapshot can be indexed by base domain later without changing behaviour.
-- [Placeholder art] → The variants are derived from the placeholder set and are replaced with it before release, per CLAUDE.md.
+- [The app icon changes] → Every variant is rendered from `img/app-store.svg`, so re-rendering keeps them in step.
