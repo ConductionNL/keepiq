@@ -4,11 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What Keepiq is
 
-<!-- Replace this paragraph. One or two sentences on what the extension does and
-who it is for — everything below inherits its priorities from this. Then link the
-file that holds the full scope (a spec, a roadmap, an issue) and say plainly that
-it, not this file, is the source of truth for scope. -->
-
 Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.
 
 ## Stack & commands
@@ -54,23 +49,24 @@ Keep them short. These are rules, not preferences:
 
 ## Core constraints
 
-<!-- Delete this section or replace it wholesale. It is for the two or three
-properties that shape every architectural decision in THIS extension — the things
-a reviewer would otherwise "clean up" without realising what they cost. Write each
-as a constraint plus its consequence, not as a preference.
-
-Examples of the shape:
-- "Undetectability is the defining requirement" → no globals, no guessable custom
-  element names, shadow DOM, isolated world.
-- "Offline-first" → no feature may depend on a network round-trip completing.
-- "One user's data never crosses to another tab" → per-tab storage keys, no
-  extension-global session state. -->
+- **Key material never touches disk.** The master password is dropped after
+  derivation, the RSA private key lives only in `storage.session` (re-imported as a
+  non-extractable `CryptoKey` on every worker wake) or MV2 background memory.
+  Ciphertext and the app password may go in `storage.local`; nothing derived from
+  the master password may, except under the warned "Never" timeout. (ADR-002)
+- **Content scripts run in a hostile page.** They hold no vault state, never see the
+  key, and receive exactly one credential per fill after the user picked it. URL
+  matching and decryption stay in the background; `storage.session` keeps its
+  default access level. This is what makes matching `*://*/*` safe, which stays as
+  in Bitwarden (ADR-001). (ADR-002)
+- **No request reveals the vault to anyone but the user's own server.** No favicon
+  fetching, no icon services, no telemetry; API calls go from the background only,
+  with `credentials: 'omit'`. (ADR-002, ADR-003)
 
 ## Open decisions
 
 <!-- Surface these to the user rather than assuming. Delete the section once it's
 empty. Each entry: the choice, the options, and what it blocks. -->
 
-- Whether the content script's `matches` stays `*://*/*` (the template default) or
-  narrows to an allow-list. This affects the permission prompt users see and how
-  both stores review the extension.
+- Whether the "Custom" vault timeout is capped (for example at 24 hours) or
+  unbounded. Blocks the timeout options in `ext-settings` (ADR-002).
