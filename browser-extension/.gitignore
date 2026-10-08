@@ -1,1 +1,9 @@
-dist/
+node_modules
+.output
+.wxt
+stats.html
+*.zip
+
+# Per-machine browser binary overrides for `wxt dev` — copy
+# web-ext.config.example.ts to web-ext.config.ts and edit locally.
+web-ext.config.ts

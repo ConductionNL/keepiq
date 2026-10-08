@@ -1,0 +1,122 @@
+/*
+ * Popup styling. `color-scheme: light dark` is what makes the browser paint its
+ * own chrome (scrollbars, form controls, the frame around the popup) to match —
+ * without it a dark popup gets a white border on every browser.
+ *
+ * No webfonts: a popup that waits on a network request flashes unstyled.
+ */
+:root {
+	color-scheme: light dark;
+	--bg: #ffffff;
+	--fg: #1d1d1d;
+	--fg-muted: #5a5a5a;
+	--border: #e3e3e3;
+	--surface: #f7f7f7;
+	--accent: #2c6bf5;
+	--accent-fg: #ffffff;
+	--dot-on: #2f9e44;
+	--dot-off: #b8b8b8;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #1f1f1f;
+		--fg: #ededed;
+		--fg-muted: #a0a0a0;
+		--border: #3a3a3a;
+		--surface: #2a2a2a;
+		--accent: #4d8bff;
+	}
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.popup {
+	/* A popup has no viewport of its own — the browser sizes the window to the
+	   content, so an explicit width is the only way to stop it collapsing. */
+	width: 280px;
+	box-sizing: border-box;
+	padding: 14px 16px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.popup__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.popup__title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.popup__copy {
+	margin: 0;
+	color: var(--fg-muted);
+}
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 8px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--fg-muted);
+	font-size: 11px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.pill__dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--dot-off);
+}
+
+.pill--on .pill__dot {
+	background: var(--dot-on);
+}
+
+.btn {
+	appearance: none;
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	padding: 8px 12px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	transition: filter 0.12s ease;
+}
+
+.btn--primary {
+	background: var(--accent);
+	color: var(--accent-fg);
+	border-color: var(--accent);
+}
+
+.btn--primary:hover:not(:disabled) {
+	filter: brightness(1.08);
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: progress;
+}
