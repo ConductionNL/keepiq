@@ -21,7 +21,7 @@ Unlock SHALL derive the unlock key from the master password per ADR-003 (PBKDF2-
 - **THEN** no network request is made, `privateKeyPkcs8.<accountId>` and `unlockedAt.<accountId>` are written to `storage.session`, and the popup shows the unlocked view
 
 ### Requirement: Invalid master password
-When the AES-GCM decryption of a cached envelope fails the extension SHALL fetch `GET /api/v1/suites` once, because the master password may have changed in the web app. When the active suite differs (per "Cached suite row lifetime") it is cached and the decryption retried with it. Otherwise, or when that fetch fails for any reason but a 401, the extension SHALL show "Invalid master password", clear the field and stay locked. The failure MUST NOT be counted or throttled.
+When the AES-GCM decryption of a cached envelope fails the extension SHALL fetch `GET /api/v1/suites` once, because the master password may have changed in the web app. When the active suite differs (per "Cached suite row lifetime") it is cached and the decryption retried with it. When that fetch answers 401, withholds the key or has no active suite, the extension SHALL show that error instead. Otherwise, or when that fetch fails for any other reason, the extension SHALL show "Invalid master password", clear the field and stay locked. The failure MUST NOT be counted or throttled.
 
 #### Scenario: Wrong password
 - **WHEN** the user submits a wrong master password

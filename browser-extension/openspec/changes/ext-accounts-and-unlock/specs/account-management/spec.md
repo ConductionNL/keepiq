@@ -14,7 +14,7 @@ The popup SHALL show an "Add account" screen when no account is stored, with thr
 - **THEN** the help text links to `https://cloud.example.org/index.php/settings/user/security` and opens it in a new tab
 
 ### Requirement: Server URL normalisation
-The extension SHALL accept a bare host, a full origin, an install subpath, or any Nextcloud page URL as the Server URL, and MUST store the server URL: the origin (`scheme://host[:port]`) plus the subpath Nextcloud is installed under, without a trailing slash. The subpath ends where the first Nextcloud route (`/index.php`, `/remote.php`, `/ocs`, `/apps`, `/settings`, `/login`) begins. A bare host defaults to `https`. `http` MUST be rejected unless the host is `localhost`, `127.0.0.1`, or ends in `.test`.
+The extension SHALL accept a bare host, a full origin, an install subpath, or any Nextcloud page URL as the Server URL, and MUST store the server URL: the origin (`scheme://host[:port]`) plus the subpath Nextcloud is installed under, without a trailing slash. The subpath ends where the first Nextcloud route (`/index.php`, `/remote.php`, `/ocs`, `/apps`, `/settings`, `/login`, `/core`, `/s`, `/f`, `/call`) begins. A bare host defaults to `https`. `http` MUST be rejected unless the host is `localhost`, `127.0.0.1`, or ends in `.test`.
 
 #### Scenario: Keepiq web app URL pasted
 - **WHEN** the user enters `https://cloud.example.org/index.php/apps/keepiq/vault`

@@ -38,7 +38,7 @@ export async function unlock(accountId: string, method: UnlockMethod): Promise<v
 	const account = await getAccount(accountId)
 	if (!account) throw new Failure('unknown', 'Unknown account')
 	if (account.appPassword === null) throw new Failure('session_revoked', 'Log in again first')
-	// The suite is cached at add time, so this request only runs after a 401 or a suite change.
+	// The suite is cached at add time; it is fetched only when missing or when it no longer opens.
 	const cached = await cachedSuite(accountId)
 	let pem: string
 	try {
@@ -46,8 +46,9 @@ export async function unlock(accountId: string, method: UnlockMethod): Promise<v
 	} catch (error) {
 		if (!cached || !(error instanceof Failure) || error.code !== 'invalid_master_password') throw error
 		// The master password may have changed in the web app, leaving the cached suite stale.
+		// These name the real cause; any other failure leaves the wrong password as the likeliest one.
 		const fresh = await fetchSuite(account).catch((failure: Failure) => {
-			throw failure.code === 'session_revoked' ? failure : error
+			throw ['session_revoked', 'unlock_blocked', 'no_active_suite'].includes(failure.code) ? failure : error
 		})
 		if (!fresh.changed) throw error
 		pem = await decrypt(fresh.suite, method)
