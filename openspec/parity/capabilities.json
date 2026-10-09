@@ -395,6 +395,429 @@
       "name_nl": "Apps, extensies en toegangspunten"
     }
   ],
+  "features": [
+    {
+      "slug": "personal-vault",
+      "title": "Personal vault for logins and notes",
+      "title_nl": "Persoonlijke kluis voor logins en notities",
+      "area": "vault",
+      "overlay": null,
+      "specs": [
+        "secrets",
+        "secrets-write-ui",
+        "vault-custom-field-kinds-and-ssh-key",
+        "vault-item-clone-preview-and-print",
+        "vault-website-addresses",
+        "bulk-actions",
+        "user-settings",
+        "vault-defaults"
+      ]
+    },
+    {
+      "slug": "item-types",
+      "title": "Item types for cards, identities, keys and passkeys",
+      "title_nl": "Itemtypen voor kaarten, identiteiten, sleutels en passkeys",
+      "area": "vault",
+      "overlay": null,
+      "specs": [
+        "vault-custom-field-kinds-and-ssh-key",
+        "vault-login-totp-codes",
+        "admin-secret-types",
+        "card-identity-items",
+        "passkey-item-type"
+      ]
+    },
+    {
+      "slug": "find-and-organise",
+      "title": "Find, tag and organise vault items",
+      "title_nl": "Kluisitems vinden, labelen en ordenen",
+      "area": "vault",
+      "overlay": null,
+      "specs": [
+        "secrets",
+        "vault-duplicate-finder",
+        "vault-list-organisation"
+      ]
+    },
+    {
+      "slug": "secret-version-history",
+      "title": "Version history, trash and archive",
+      "title_nl": "Versiegeschiedenis, prullenbak en archief",
+      "area": "vault",
+      "overlay": null,
+      "specs": [
+        "secret-version-history",
+        "vault-trash-and-archive"
+      ]
+    },
+    {
+      "slug": "encrypted-attachments",
+      "title": "Encrypted file attachments",
+      "title_nl": "Versleutelde bijlagen",
+      "area": "vault",
+      "overlay": null,
+      "specs": [
+        "vault-item-clone-preview-and-print",
+        "encrypted-attachments"
+      ]
+    },
+    {
+      "slug": "zero-knowledge-encryption",
+      "title": "Zero-knowledge encryption in the browser",
+      "title_nl": "Zero-knowledge-versleuteling in de browser",
+      "area": "crypto",
+      "overlay": null,
+      "specs": [
+        "crypto-vault-encryption-details",
+        "encryption-suites",
+        "vault-key-proof"
+      ]
+    },
+    {
+      "slug": "sign-in-and-unlock",
+      "title": "Unlocking the vault, sessions and account recovery",
+      "title_nl": "Kluis ontgrendelen, sessies en accountherstel",
+      "area": "crypto",
+      "overlay": null,
+      "specs": [
+        "crypto-item-reprompt",
+        "new-device-approval",
+        "organisation-account-recovery",
+        "passkey-vault-login",
+        "vault-session-lock"
+      ]
+    },
+    {
+      "slug": "user-sharing",
+      "title": "Sharing items with colleagues and groups",
+      "title_nl": "Items delen met collega's en groepen",
+      "area": "sharing",
+      "overlay": null,
+      "specs": [
+        "team-folder-sharing",
+        "user-sharing",
+        "expiring-shares",
+        "federated-sharing",
+        "sharing-group",
+        "use-only-shares"
+      ]
+    },
+    {
+      "slug": "team-folder-sharing",
+      "title": "Team folders with inherited access",
+      "title_nl": "Teammappen met overgeërfde toegang",
+      "area": "sharing",
+      "overlay": null,
+      "specs": [
+        "folder-permission-grades",
+        "team-folder-sharing"
+      ]
+    },
+    {
+      "slug": "links-and-sends",
+      "title": "Public links and one-off sends",
+      "title_nl": "Openbare links en eenmalige verzendingen",
+      "area": "sharing",
+      "overlay": null,
+      "specs": [
+        "ephemeral-send",
+        "link-sharing"
+      ]
+    },
+    {
+      "slug": "emergency-access",
+      "title": "Emergency access",
+      "title_nl": "Noodtoegang",
+      "area": "sharing",
+      "overlay": null,
+      "specs": [
+        "emergency-access"
+      ]
+    },
+    {
+      "slug": "secret-requests",
+      "title": "Requesting a secret from someone else",
+      "title_nl": "Een geheim opvragen bij iemand anders",
+      "area": "requests",
+      "overlay": null,
+      "specs": [
+        "secret-requests"
+      ]
+    },
+    {
+      "slug": "application-registration",
+      "title": "Registering applications that need secrets",
+      "title_nl": "Applicaties registreren die geheimen nodig hebben",
+      "area": "apps",
+      "overlay": null,
+      "specs": [
+        "application-mgmt"
+      ]
+    },
+    {
+      "slug": "secret-store-api",
+      "title": "Secret store API for applications",
+      "title_nl": "Geheimen-API voor applicaties",
+      "area": "apps",
+      "overlay": null,
+      "specs": [
+        "secret-store-api"
+      ]
+    },
+    {
+      "slug": "machine-secret-leases",
+      "title": "Leases and short-lived credentials for machines",
+      "title_nl": "Leases en kortlevende inloggegevens voor machines",
+      "area": "apps",
+      "overlay": null,
+      "specs": [
+        "machine-secret-leases"
+      ]
+    },
+    {
+      "slug": "devops-integrations",
+      "title": "Command line, CI and infrastructure as code",
+      "title_nl": "Commandoregel, CI en infrastructuur als code",
+      "area": "apps",
+      "overlay": null,
+      "specs": [
+        "keepiq-cli",
+        "ci-integrations",
+        "client-libraries",
+        "kubernetes-integration",
+        "mcp-metadata-surface",
+        "terraform-provider"
+      ]
+    },
+    {
+      "slug": "rotation-expiry-policies",
+      "title": "Expiry and rotation of secrets",
+      "title_nl": "Verloop en rotatie van geheimen",
+      "area": "rotation",
+      "overlay": null,
+      "specs": [
+        "vault-website-addresses",
+        "rotation-expiry-policies",
+        "secret-rotation-runner"
+      ]
+    },
+    {
+      "slug": "certificate-lifecycle",
+      "title": "Private certificate authority and certificate inventory",
+      "title_nl": "Eigen certificaatautoriteit en certificatenoverzicht",
+      "area": "pki",
+      "overlay": null,
+      "specs": [
+        "encryption-suites",
+        "certificate-lifecycle"
+      ]
+    },
+    {
+      "slug": "password-health",
+      "title": "Password health and breach checks",
+      "title_nl": "Wachtwoordgezondheid en datalekcontroles",
+      "area": "health",
+      "overlay": null,
+      "specs": [
+        "health-site-security-checks",
+        "password-health"
+      ]
+    },
+    {
+      "slug": "password-generator",
+      "title": "Password and passphrase generator",
+      "title_nl": "Wachtwoord- en wachtzingenerator",
+      "area": "health",
+      "overlay": null,
+      "specs": [
+        "key-generator",
+        "passphrase-generator"
+      ]
+    },
+    {
+      "slug": "org-password-policies",
+      "title": "Organisation-wide vault policies",
+      "title_nl": "Kluisbeleid voor de hele organisatie",
+      "area": "admin",
+      "overlay": null,
+      "specs": [
+        "org-password-policies",
+        "vault-policies"
+      ]
+    },
+    {
+      "slug": "user-administration",
+      "title": "Managing users, roles and provisioning",
+      "title_nl": "Gebruikers, rollen en provisioning beheren",
+      "area": "admin",
+      "overlay": null,
+      "specs": [
+        "admin-api",
+        "admin-member-overview",
+        "admin-scoped-roles",
+        "team-folder-auto-confirm"
+      ]
+    },
+    {
+      "slug": "admin-console",
+      "title": "Admin settings, integrations and backups",
+      "title_nl": "Beheerinstellingen, koppelingen en back-ups",
+      "area": "admin",
+      "overlay": null,
+      "specs": [
+        "admin-integrations",
+        "admin-settings",
+        "vault-backups"
+      ]
+    },
+    {
+      "slug": "dashboard",
+      "title": "Vault dashboards and widgets",
+      "title_nl": "Kluisdashboards en widgets",
+      "area": "vault",
+      "overlay": null,
+      "specs": [
+        "dashboard",
+        "vault-recently-used"
+      ]
+    },
+    {
+      "slug": "secret-audit-trail",
+      "title": "Tamper-proof audit trail",
+      "title_nl": "Onwijzigbaar auditlogboek",
+      "area": "audit",
+      "overlay": null,
+      "specs": [
+        "secret-audit-trail"
+      ]
+    },
+    {
+      "slug": "security-monitoring",
+      "title": "Security alerts, SIEM export and decoy credentials",
+      "title_nl": "Beveiligingsmeldingen, SIEM-export en lokwachtwoorden",
+      "area": "audit",
+      "overlay": null,
+      "specs": [
+        "honey-credentials",
+        "siem-audit-export",
+        "siem-vendor-connectors"
+      ]
+    },
+    {
+      "slug": "compliance-reporting",
+      "title": "Compliance reports and GDPR requests",
+      "title_nl": "Compliancerapportages en AVG-verzoeken",
+      "area": "audit",
+      "overlay": null,
+      "specs": [
+        "gdpr-compliance",
+        "compliance-reporting"
+      ]
+    },
+    {
+      "slug": "secret-import",
+      "title": "Import from other password managers",
+      "title_nl": "Importeren uit andere wachtwoordmanagers",
+      "area": "portability",
+      "overlay": null,
+      "specs": [
+        "portability-import-mapping",
+        "secret-import"
+      ]
+    },
+    {
+      "slug": "secret-export",
+      "title": "Export, backup and transfer to another provider",
+      "title_nl": "Exporteren, back-up en overzetten naar een andere aanbieder",
+      "area": "portability",
+      "overlay": null,
+      "specs": [
+        "portability-cxp-cross-provider-transfer",
+        "portability-export-choice-and-restore-fidelity",
+        "cxf-import-export",
+        "cxp-transfer",
+        "secret-export"
+      ]
+    },
+    {
+      "slug": "browser-extension-autofill",
+      "title": "Browser extension with autofill",
+      "title_nl": "Browserextensie met automatisch invullen",
+      "area": "clients",
+      "overlay": null,
+      "specs": [
+        "browser-extension-autofill",
+        "clients-extension-firefox-and-safari-builds",
+        "extension-generator",
+        "extension-send",
+        "extension-vault",
+        "clients-passkey-origin",
+        "clients-save-prompt",
+        "extension-account-switching",
+        "extension-autofill-extras",
+        "extension-baseline",
+        "extension-biometric-unlock",
+        "extension-clipboard",
+        "extension-fill-and-capture",
+        "extension-generator-policy",
+        "extension-list-and-settings",
+        "extension-lock",
+        "extension-pairing",
+        "extension-passkey-provider",
+        "extension-pin-unlock",
+        "extension-popup-shell",
+        "extension-save-prompt-details",
+        "extension-send-details",
+        "extension-small-items",
+        "extension-store-release",
+        "extension-totp-autofill",
+        "extension-unlock-and-accounts",
+        "extension-vault-sync"
+      ]
+    },
+    {
+      "slug": "mobile-and-desktop-apps",
+      "title": "Mobile and desktop apps",
+      "title_nl": "Mobiele en desktopapps",
+      "area": "clients",
+      "overlay": null,
+      "specs": [
+        "clients-mobile-apps",
+        "cli-ssh-agent",
+        "mobile-pwa"
+      ]
+    },
+    {
+      "slug": "offline-access",
+      "title": "Offline access to the vault",
+      "title_nl": "Offline toegang tot de kluis",
+      "area": "clients",
+      "overlay": null,
+      "specs": [
+        "offline-readonly-cache",
+        "offline-edit-queue"
+      ]
+    },
+    {
+      "slug": "workplace-integration",
+      "title": "Fits the Nextcloud workplace: theming, language, onboarding and flows",
+      "title_nl": "Past in de Nextcloud-werkplek: huisstijl, taal, introductie en flows",
+      "area": "clients",
+      "overlay": null,
+      "specs": [
+        "clients-vault-event-flow-triggers",
+        "getting-started-walkthrough",
+        "app-shell"
+      ]
+    }
+  ],
+  "internalSpecs": [
+    "distribution",
+    "extension-release",
+    "integration-boundary",
+    "item-name-limit",
+    "menu-architecture"
+  ],
   "providers": [
     {
       "key": "keepiq",
@@ -450,7 +873,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:7 Login = 1; src/Api/Vault/Controllers/CiphersController.cs:328 POST ciphers; bitwarden/clients@web-v2026.9.0 libs/common/src/services/api.service.ts:400 POST /ciphers; libs/vault/src/cipher-form/components/login-details-section/login-details-section.component.ts login form (username, password, URIs in autofill-options.component.ts) Note: Login item type with username, password and URIs, created through the shared cipher form and POSTed to the cipher API.",
@@ -490,7 +913,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets-write-ui",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:393 PUT ciphers/{id}; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:288 encrypt() client side, :856 updateWithServer(); libs/common/src/services/api.service.ts:415 PUT /ciphers/{id} Note: Edits are encrypted client side before the PUT; the server stores only ciphertext.",
@@ -527,7 +950,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:1161 PUT ciphers/{id}/delete (soft), :1067 DELETE ciphers/{id} (permanent); bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:1603 softDeleteWithServer, :1394 deleteWithServer; apps/web/src/app/vault/individual-vault/vault.component.ts:1518 bulkDelete Note: Delete moves to trash, permanent delete from trash.",
@@ -564,6 +987,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "secret-version-history",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:1267 PUT ciphers/{id}/restore; src/Admin/Jobs/DeleteCiphersJob.cs:30 purge items deleted more than 30 days ago; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:1676 restoreWithServer; apps/web/src/app/vault/individual-vault/vault.component.ts:689 restore action Note: Trash with restore and a 30 day automatic purge job.",
         "onepassword": "https://support.1password.com/archive-delete-items/ : 'restore an item from Recently Deleted for 30 days after the item was deleted'",
@@ -599,7 +1023,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/FoldersController.cs:66 POST folders; bitwarden/clients@web-v2026.9.0 libs/vault/src/services/vault-filter.service.ts:397 ServiceUtils.nestedTraverse(... NestingDelimiter) builds folder tree from 'Parent/Child' names; apps/browser/src/vault/popup/services/vault-popup-list-filters.service.ts:562 same in extension Note: Folders nest by a '/' naming convention rendered as a tree; unlimited depth.",
@@ -639,7 +1063,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets-write-ui",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:1346 PUT ciphers/move; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:1346 moveManyWithServer(ids, folderId); apps/web/src/app/vault/individual-vault/vault.component.ts:1556 bulkMove Note: Folder picker in the item form plus bulk move to folder.",
@@ -676,8 +1100,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
-      "featureConfidence": "high",
+      "feature": "find-and-organise",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/search.service.ts:104 searchCiphersBasic splits the query into parts, each must be a substring of a target (no edit distance); :61 isLunrQuery only when query starts with '>'; libs/common/src/vault/services/lunr-search.service.ts:65 index.search() supports lunr '~' fuzzy syntax Note: Default search is substring, order-independent, not typo tolerant. Typo-tolerant matching only via the advanced '>' lunr syntax with explicit '~'.",
         "onepassword": "https://www.1password.community/discussions/1password/how-to-search-exact-string/155000 and https://support.1password.com/search-1password/ : partial and multiple terms supported; staff state typo correction is not supported",
@@ -713,8 +1137,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
-      "featureConfidence": "high",
+      "feature": "find-and-organise",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "searched 'nextcloud' (case-insensitive) in bitwarden/clients@web-v2026.9.0 and bitwarden/server@v2026.9.1 whole trees: no match Note: No Nextcloud integration of any kind, so no Nextcloud unified search provider. Moved from unknown to no on a documented search.",
         "onepassword": "not checked: no Nextcloud integration found in 1Password docs, a Nextcloud search provider would require one",
@@ -750,6 +1174,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "find-and-organise",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/models/view/cipher.view.ts:46 favorite flag; libs/vault/src/services/vault-filter.service.ts:130 'favorites' filter; libs/vault/src/models/filter-function.ts:17 filter on cipher.favorite Note: Favourite flag per item and a favourites filter in every client.",
         "onepassword": "https://support.1password.com/favorites-tags/ : 'select Add to Favorites... select Favorites in the sidebar'",
@@ -785,6 +1210,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "find-and-organise",
       "evidence": {
         "bitwarden": "searched '\\btags?\\b' in bitwarden/clients@web-v2026.9.0 libs/common/src/vault libs/vault/src apps/web/src/app/vault and bitwarden/server@v2026.9.1 src/Core/Vault: no tag property on ciphers Note: No item tags; organisation is by folders, favourites, collections and type.",
         "onepassword": "https://support.1password.com/favorites-tags/ : 'no limit the number of tags', 'choose a tag in the sidebar' to filter",
@@ -823,7 +1249,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/enums/field-type.enum.ts:4 Text, :5 Hidden, :6 Boolean, :7 Linked; libs/vault/src/cipher-form/components/custom-fields/custom-fields.component.ts:244 addField, :200 hidden field handling Note: Custom fields of type text, hidden, checkbox and linked in the shared cipher form.",
@@ -863,7 +1289,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:8 SecureNote = 2; bitwarden/clients@web-v2026.9.0 libs/vault/src/services/vault-filter.service.ts 'note' type filter; libs/vault/src/cipher-form/components/cipher-form.component.ts shared form Note: Secure note is a first-class item type.",
@@ -900,7 +1326,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "card-identity-items",
+      "feature": "item-types",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:9 Card, :10 Identity, :12 BankAccount, :13 DriversLicense, :14 Passport; bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/components/card-details-section/card-details-section.component.ts, identity/identity.component.ts, passport-section/passport-section.component.ts, drivers-license-section/drivers-license-section.component.ts Note: Card and identity types with typed fields; this release also adds bank account, driver's licence and passport types.",
@@ -940,6 +1366,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "item-types",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:11 SSHKey = 5; bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/components/sshkey-section/sshkey-section.component.ts:55 privateKey field (public key and fingerprint derived) Note: SSH key is its own item type with key pair and fingerprint.",
         "onepassword": "https://support.1password.com/item-categories/ : 'SSH Key: contain an option to generate new SSH keys or import existing'",
@@ -949,8 +1376,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/templates/vault/cluster/secrets/backend/sign.hbs:6 Sign SSH Key page (router.js ssh sign route); builtin/logical/ssh signs keys and issues OTPs; ui/lib/core/addon/components/kv-object-editor.hbs:43 key pair only as untyped KV text Note: The SSH engine signs keys rather than storing a key pair as an item; a key pair can be kept as untyped KV text."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no SSH key form on any board; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqSshSleutel"
       }
     },
     {
@@ -983,7 +1410,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "passkey-item-type",
+      "feature": "item-types",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/models/view/login.view.ts:24 fido2Credentials on the login; libs/common/src/platform/services/fido2/fido2-authenticator.service.ts:188 cipher.login.fido2Credentials = [fido2Credential] (one credential per login), :316 uses fido2Credentials[0] Note: Passkeys are stored inside a login item, one per login, not as a separate item type.",
@@ -1020,8 +1447,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets",
-      "featureConfidence": "high",
+      "feature": "item-types",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/totp.service.ts:13 totpCode/totpCodeFormatted; libs/vault/src/cipher-view/login-credentials/login-credentials-view.component.ts:41 totpCodeFormatted shown, :84 premium gate (met by an Enterprise organisation) Note: TOTP seed on a login shows the live code with countdown; gated on premium, which Enterprise members have.",
         "onepassword": "https://support.1password.com/one-time-passwords/ : 'Select Add More, then select One-Time Password' on a Login item",
@@ -1131,7 +1558,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "bulk-actions",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/vault/individual-vault/vault.component.ts:1556 bulkMove, :1518 bulkDelete, :1316 bulkAssignToCollections (share), :784 bulkArchive; bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:1366 PUT ciphers/share (bulk move to organisation) Note: Multi-select supports move, delete, archive and assign to collections (share). Export is whole vault or whole organisation, not the selection.",
@@ -1175,8 +1602,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "user-settings",
-      "featureConfidence": "high",
+      "feature": "personal-vault",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "searched 'defaultCipherType', 'default.?view', 'VaultViewMode', 'listView' in bitwarden/clients@web-v2026.9.0 apps/web/src/app/vault libs/vault/src; and 'defaultView', 'defaultItemType' keys in apps/{web,desktop}/src/locales/en/messages.json and apps/browser/src/_locales/en/messages.json: no match Note: No user setting for a default item type or default vault view. Moved from unknown on a documented search.",
         "onepassword": "not checked: no default item type setting found in 1Password support pages",
@@ -1248,6 +1675,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "personal-vault",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/vault/individual-vault/vault.component.ts:1375 cloneCipher; apps/browser/src/vault/popup/components/vault/item-more-options/item-more-options.component.ts:291 clone() Note: Clone action opens a prefilled form for a new item.",
         "onepassword": "https://support.1password.com/move-copy-items/ : 'right-click the item, select Duplicate'",
@@ -1257,8 +1685,8 @@
         "passbolt": "searched 'clone', 'duplicate', 'copy as new' in passbolt_styleguide src/react-extension/components/Resource and src/react-quickaccess: only code comments about cloning entities (CreateResource.js:121), no user action; no API route Note: There is no duplicate or clone action on a resource."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: clone is not on KqGeheim; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1283,7 +1711,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "secrets-write-ui",
+      "feature": "personal-vault",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/manifest.v3.json:115 commands (autofill_login :137, generate_password :149, lock_vault :155); libs/components/src/a11y/router-focus-manager.service.ts focus management; searched 'ArrowDown', 'keydown', 'focusNext' in libs/components/src/table apps/web/src/app/vault/components/vault-items: no list-level key navigation Note: Global shortcuts for autofill, generate and lock plus standard tab focus; no dedicated keyboard navigation model for the item list.",
@@ -1322,6 +1750,7 @@
       "originUrl": "https://community.bitwarden.com/t/sorting-options-by-date-of-modification-addition-last-use-etc/2484",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "find-and-organise",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/vault/src/components/vault-items-table/vault-items-table.component.html:125 sortable name column, :183 sortByVault, :204 sortBySharedFolders, :227 sortByFolders (no date column); apps/browser/src/vault/popup/services/vault-popup-items.service.ts:410 sortCiphersByLastUsedThenName; libs/common/src/vault/services/cipher.service.ts:1523 sortCiphersByLastUsedThenName; searched 'dateAdded', 'sortBy', 'lastUsed' in apps/*/locales en messages.json: no sort option strings Note: The web vault table sorts by name, vault and folder only, and the browser popup orders by last used then name with no user choice. No user-selectable sort by date added or date changed.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/list-directory.js:33 paginate(keys) keeps the LIST order (alphabetical keys); searched 'sort' in ui/lib/kv/addon/routes/list-directory.js and components/page/list.js: no sort control Note: The KV list shows keys in API order with no sort by date added, changed or used.",
@@ -1359,6 +1788,7 @@
       "originUrl": "https://community.bitwarden.com/t/duplicate-removal-tool-report-including-merge/648",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "find-and-organise",
       "evidence": {
         "bitwarden": "searched 'duplicate(cipher|item|login)', 'dedup', 'findDuplicates', 'mergeCipher' in bitwarden/clients@web-v2026.9.0 apps/ libs/ bitwarden_license/ and 'dedup', 'DuplicateCipher', 'MergeCipher' in bitwarden/server@v2026.9.1 src/ bitwarden_license/: only autofill DOM and phishing-list dedup helpers; en messages.json has only duplicateAttachmentNameError and duplicateDomainError Note: No duplicate item finder or merge tool in the clients or server; the reports cover weak, reused and exposed passwords, not duplicate items.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:86 duplicate-keys warning inside one secret only; searched 'merge', 'duplicate' in ui/lib/kv/addon: no item dedupe Note: Only duplicate field names inside one secret are flagged; there is no duplicate item finder or merge.",
@@ -1368,8 +1798,8 @@
         "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : Commander 'find-duplicates' matches on titles, logins, passwords or URLs and '--merge' consolidates them; the vault UI has no duplicate finder, so this is CLI only."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no duplicates section on KqWachtwoordgezondheid; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -1396,6 +1826,7 @@
       "originUrl": "https://community.bitwarden.com/t/view-attachments-without-downloading/52",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "encrypted-attachments",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/vault/src/components/download-attachment/download-attachment.component.ts:102 decrypts to blobData and hands it to the file download service; apps/web/src/app/core/web-file-download.service.ts:20 a.download = fileName (save); libs/common/src/platform/abstractions/file-download/file-download.builder.ts:22 downloadMethod 'open' only for pdf, not used by attachments; searched 'preview', 'viewAttachment' in en messages.json: no match Note: Attachments are decrypted and saved as a download. There is no in-app viewer; the builder's 'open' method for PDFs is not wired to attachments.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'upload', 'attachment', 'preview' in ui/lib/kv/addon and ui/app/components: no KV attachments Note: There are no attachments to preview.",
@@ -1405,8 +1836,8 @@
         "keeper": "not checked: https://docs.keeper.io/enterprise-guide/secure-file-storage read; it describes storing and downloading files and does not state whether the vault previews them."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no attachment preview on KqGeheim; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1433,6 +1864,7 @@
       "originUrl": "https://community.bitwarden.com/t/archive-items-exclude-from-search-autofill/7191",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "secret-version-history",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:1024 PUT ciphers/{id}/archive, :1041 PUT ciphers/archive, :1241 PUT ciphers/unarchive; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/default-cipher-archive.service.ts:66 PUT /ciphers/archive, :43 userCanArchive$ (premium from any source, includes org plans); libs/common/src/vault/services/cipher.service.ts:552 autofill candidates exclude isArchived; apps/browser/src/vault/popup/components/vault/item-more-options/item-more-options.component.ts:132 canArchive$; apps/browser/src/vault/popup/settings/archive.component.ts archive view; apps/browser/src/_locales/en/messages.json:693 'excluded from search results and autofill suggestions' Note: Archive and unarchive exist end to end; archived items drop out of search and autofill. Gated on premium, which an enterprise seat carries.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/kv-delete-modal.js:23 only delete, delete-metadata, destroy; searched 'archive' in ui/lib/kv/addon: no match Note: Soft delete hides a version but there is no archive state, and no autofill or global search to leave.",
@@ -1470,6 +1902,7 @@
       "originUrl": "https://community.passbolt.com/t/as-a-user-i-want-to-associate-multiple-uris-with-a-password/4388",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "personal-vault",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/components/autofill-options/autofill-options.component.ts:74 uris formArray, :131 cipher.login.uris mapped from the list; autofill-options.component.html:34 addUriMenu, :36 'addWebsiteOrApp'; bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:7 Login Note: A login carries a list of URIs, each with its own match detection, added from the cipher form.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped fields, no URL type Note: Secrets have no website field, so several URLs are only extra free-form keys.",
@@ -1479,8 +1912,8 @@
         "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/one-record-with-multiple-url-domains : store multiple website domains in one record through additional URL fields; KeeperFill matches every one."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqGeheim shows one website address; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1505,6 +1938,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "secret-version-history",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretVersionsController.cs:39 GET secrets/{secretId}/versions, :69 GET secret-versions/{id}, :153 PUT versions/restore (API only); bitwarden/clients@web-v2026.9.0 searched 'versions', 'secretVersion', 'diff', 'compare' in bitwarden_license/bit-web/src/app/secrets-manager: no caller or view; libs/vault/src/components/password-history-view/password-history-view.component.ts lists past passwords only Note: Secrets Manager keeps secret versions with list and restore routes, but no client calls them and nothing compares two versions. Vault items only show a list of previous passwords.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:24 secret.metadata.diff route; ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff Note: The KV UI compares two versions side by side.",
@@ -1542,6 +1976,7 @@
       "originUrl": "https://community.bitwarden.com/t/share-wifi-passwords-via-qr-codes-and-nfc/6472",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "personal-vault",
       "evidence": {
         "bitwarden": "searched 'qrcode', 'print(' in apps/web/src apps/browser/src libs/vault/src: only qrcode-parser for reading TOTP codes (apps/browser/src/vault/popup/components/vault/view/view.component.spec.ts:60). Rated by the lane from the source.",
         "hashicorp-vault": "searched 'qrcode', 'print(' in ui/app ui/lib: only the MFA enrolment QR code (ui/app/components/mfa/form/self-enroll.hbs). Rated by the lane from the source.",
@@ -1549,8 +1984,11 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Actions/Password/PrintPasswordAction.js:27 print(); src/js/Actions/Password/PasswordActions.js:82 qrcode(); src/vue/Components/ContentList/Item/PasswordItem/PasswordItemActionMenu.vue:105,111 Note: proposed by the source reader as a capability no row covered."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no print or QR view; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": [
+          "KqInlogUitgebreid",
+          "KqInlogBeschermd"
+        ]
       }
     },
     {
@@ -1577,6 +2015,7 @@
       "originUrl": "https://github.com/marius-wieschollek/passwords/blob/2026.7.0/CHANGELOG.md",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "personal-vault",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Icons/Controllers/IconsController.cs:55 GET {hostname}/icon.png; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/icon/build-cipher-icon.ts builds the item icon. Note: site icons yes, screenshot preview no. Rated by the lane from the source.",
         "hashicorp-vault": "searched 'favicon' in ui/app ui/lib: only the UI's own favicon (ui/app/index.html). Rated by the lane from the source.",
@@ -1584,8 +2023,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php service/favicon/{domain}/{size} and service/preview/{domain}/{view}; src/vue/Components/Sidebar/PasswordSidebar/Preview.vue:2; src/lib/Provider/Favicon, src/lib/Provider/Preview Note: proposed by the source reader as a capability no row covered. The 2026.7.0 changelog entry is a fix to favicon requests, so it shows the feature is live, not new."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no site icons or previews; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -1610,7 +2049,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:288 encrypt() before :792 createWithServer / :856 updateWithServer; bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:328 accepts EncString fields only Note: Everything is encrypted client side, including item names and URIs, which is stricter than the row (the row allows names and URLs in clear).",
@@ -1647,7 +2086,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AccountsController.cs:276 POST accounts/set-password receives a master password hash and encrypted user key, never the password; bitwarden/clients@web-v2026.9.0 libs/auth/src/angular/input-password/input-password.component.ts:187 set-password form Note: The client derives a key and a hash from the master password; only the hash (re-hashed server side) is stored.",
@@ -1684,7 +2123,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/platform/misc/utils.ts:72 minimumPasswordLength = 12; libs/auth/src/angular/input-password/input-password.component.ts:187 Validators.minLength, :179 passwordStrengthScore (zxcvbn) checked against org master password policy at :365 Note: Minimum 12 characters plus a zxcvbn strength score, and organisation master password policy on top.",
@@ -1724,7 +2163,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AccountsController.cs:237 POST accounts/password; bitwarden/clients@web-v2026.9.0 libs/auth/src/angular/input-password/input-password.component.ts change-password flow re-wrapping the user key Note: Changing the master password re-wraps the same user key, so data stays readable.",
@@ -1769,7 +2208,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/KeyManagement/Controllers/AccountsKeyManagementController.cs:119 POST accounts/key-management/rotate-user-account-keys; bitwarden/clients@web-v2026.9.0 libs/user-crypto-management/src/user-key-rotation.service.ts:144 rotateUserKeyMasterPasswordAndEncryptedData; apps/web/src/app/key-management/key-rotation/key-rotation.component.ts Note: Full user key rotation re-encrypts ciphers, folders, sends, org and emergency access grants in one request.",
@@ -1806,8 +2245,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
-      "featureConfidence": "high",
+      "feature": "sign-in-and-unlock",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/key-management/vault-timeout/services/vault-timeout.service.ts:59 checkVaultTimeout (periodic, :36); apps/web/src/locales/en/messages.json:2536 'lockNow'; apps/browser/src/manifest.v3.json:155 lock_vault command Note: Manual lock and automatic lock after the configured timeout.",
         "onepassword": "https://support.1password.com/unlock-auto-lock/ : 'Lock after system is idle for' minutes, also locks on sleep",
@@ -1846,8 +2285,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "user-settings",
-      "featureConfidence": "high",
+      "feature": "sign-in-and-unlock",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/key-management/vault-timeout/services/vault-timeout-settings.service.ts timeout value and action (lock or log out); apps/web/src/locales/en/messages.json:7534 'vaultTimeout'; bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout policy Note: User picks preset or custom timeout and lock or logout action; admins can cap it with a policy.",
         "onepassword": "https://support.1password.com/unlock-auto-lock/ : adjust Auto-Lock minutes; Business presets in https://support.1password.com/unlock-auto-lock-policy/",
@@ -1891,7 +2330,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "passkey-vault-login",
+      "feature": "sign-in-and-unlock",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/WebAuthnController.cs:102 POST webauthn (PRF passkey with encrypted user key); bitwarden/clients@web-v2026.9.0 libs/key-management-ui/src/lock/services/default-webauthn-prf-unlock.service.ts:88 unlockVaultWithPrf; libs/common/src/auth/services/webauthn-login/webauthn-login-prf-key.service.ts Note: PRF-capable passkeys can both log in and unlock (decrypt) the vault.",
@@ -1931,6 +2370,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/desktop/src/key-management/biometrics/main-biometrics.service.ts, native-v2/os-biometrics-linux.service.ts; apps/browser/src/key-management/biometrics/background-browser-biometrics.service.ts (extension unlock via desktop) Note: Biometric unlock on desktop (Windows Hello, Touch ID, Linux polkit) and in the extension through the desktop app; mobile apps are in separate repos.",
         "onepassword": "https://support.1password.com/windows-hello/ and https://support.1password.com/face-id/ : unlock with face, fingerprint, Touch ID",
@@ -1965,6 +2405,7 @@
       "rowSource": "competitor",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/TwoFactorController.cs:130 authenticator, :202 yubikey, :243 duo, :352 webauthn, :474 email; src/Core/AdminConsole/Enums/PolicyType.cs:5 TwoFactorAuthentication policy; bitwarden/clients@web-v2026.9.0 apps/web/src/app/auth/settings/two-factor/two-factor-setup.component.ts Note: Authenticator app, FIDO2 security key, YubiKey OTP, Duo and email second factors; policy can require it.",
         "onepassword": "https://support.1password.com/two-factor-authentication/ and https://support.1password.com/security-key/ : authenticator app or security key as second factor",
@@ -1997,6 +2438,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:558 PUT organizations/{orgId}/users/{id}/recover-account, :530 reset-password-enrollment; src/Core/AdminConsole/Enums/PolicyType.cs:17 ResetPassword policy; bitwarden/clients@web-v2026.9.0 libs/admin-console/src/common/organization-user/services/default-organization-user-api.service.ts:300; apps/web/src/app/admin-console/organizations/members/components/account-recovery/account-recovery-dialog.component.ts Note: Enterprise account recovery lets an admin set a new master password for an enrolled member.",
         "onepassword": "https://support.1password.com/recovery/ : administrators 'select Begin Recovery'; member gets new Secret Key and password",
@@ -2036,6 +2478,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/locales/en/messages.json:2757 'recoveryCodeTitle', :3891 'yourSingleUseRecoveryCode' only for two-step login; searched 'recoveryKit', 'emergencyKit' in apps/web/src/locales/en/messages.json: no match Note: The only recovery code bypasses two-step login, not a lost master password. Self-service recovery exists only indirectly (emergency access, org account recovery, trusted devices).",
         "onepassword": "https://support.1password.com/recovery-codes/ : recovery codes 'limited to individual and family accounts'; business accounts rely on administrator recovery",
@@ -2070,7 +2513,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Enums/KdfType.cs:6 Argon2id (and PBKDF2); src/Api/Auth/Controllers/AccountsController.cs:413 POST accounts/kdf; bitwarden/clients@web-v2026.9.0 apps/web/src/app/key-management/change-kdf/change-kdf.component.ts:33 defaultKdfConfig, :86 iterations control Note: In-app the user sees and changes the KDF algorithm and its iterations, memory and parallelism; the item cipher (AES-256, RSA-2048) is documented in the white paper, not shown in the app.",
@@ -2081,8 +2524,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:4674 handleKeyStatus returns term, install_time, encryptions only (no algorithm); vault/barrier_aes_gcm.go:69 AES-GCM is fixed in code | docs: https://developer.hashicorp.com/vault/docs/internals/security Note: The algorithm (AES-256-GCM) is fixed and documented, but key-status reports only the key term and counts, and no UI page shows the barrier algorithm. Moved to partial because the product does not show it, only the docs do."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no encryption details view in KqInstellingen; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqVersleuteling"
       }
     },
     {
@@ -2107,7 +2550,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "searched 'X509', 'certificate' in bitwarden/server@v2026.9.1 src/Core/KeyManagement src/Api/KeyManagement and 'certificate' in bitwarden/clients@web-v2026.9.0 libs/key-management libs/common/src/key-management: no match Note: User keys are wrapped by master password, device keys, PRF passkeys or Key Connector, never bound to a certificate from an organisation CA.",
@@ -2152,7 +2595,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AccountsController.cs:571 POST accounts/keys, :580 throws 'User has existing keypair' when a key pair already exists Note: Server refuses to mint a second account key pair; replacing keys only goes through the rotation endpoint.",
@@ -2188,7 +2631,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/KeyManagement/Controllers/AccountsKeyManagementController.cs:119 rotate-user-account-keys runs validators for ciphers, folders, sends, emergency access, org users, passkeys and devices; src/Api/KeyManagement/Validators/CipherRotationValidator.cs:39 'All existing ciphers must be included in the rotation'; bitwarden/clients@web-v2026.9.0 libs/user-crypto-management/src/user-key-rotation.service.ts:86 verifyTrust of org and emergency public keys Note: Rotation is atomic and the server checks completeness of the re-encrypted set before replacing it, but it cannot and does not verify decryptability of the new ciphertext.",
@@ -2224,7 +2667,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:669 PUT {id}/revoke, :731 PUT {id}/restore; bitwarden/clients@web-v2026.9.0 admin console members list revoke/restore actions Note: Admins revoke and later restore a member's access to organisation data; the user's own key is not revoked.",
@@ -2261,7 +2704,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
+      "feature": "zero-knowledge-encryption",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:669 revoke member immediately; searched 'compromis' in src/ bitwarden_license/: only PAM access connector (bitwarden_license/src/Services/Pam/AccessConnector/Api/Endpoints/AccessConnectorEndpoints.cs), no user-key compromise flag Note: Admins can revoke a member at once and recover the account, but there is no key-compromised state that forces key revocation.",
@@ -2297,6 +2740,7 @@
       "rowSource": "competitor",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Sso/Controllers/AccountController.cs:109 PreValidate / SSO login (OIDC and SAML 2.0); src/Core/AdminConsole/Enums/PolicyType.cs:9 RequireSso; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/require-sso.component.ts Note: Commercial SSO service with OIDC and SAML, require-SSO policy, and trusted devices or Key Connector for decryption.",
         "onepassword": "https://support.1password.com/sso/ : 1Password Business 'Unlock with SSO' via OIDC with Entra ID, Okta, Google and others",
@@ -2330,6 +2774,7 @@
       "originUrl": "https://community.bitwarden.com/t/require-master-password-re-prompt-for-some-items/41",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Entities/Cipher.cs:27 Reprompt; src/Core/Vault/Enums/CipherRepromptType.cs:3; bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/components/additional-options/additional-options-section.component.ts:50 reprompt toggle; libs/vault/src/services/password-reprompt.service.ts:42 passwordRepromptCheck(); apps/browser/src/autofill/services/autofill.service.ts:53 openVaultItemPasswordRepromptPopout before fill Note: Per-item master password re-prompt, set in the item form and enforced before view, copy and autofill.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:36 MaskedInput reveals on click with no re-auth; searched 'reprompt', 're-authenticate' in ui/app ui/lib: no match Note: Values are masked but revealed without asking for credentials again; Enterprise control groups gate access by approval, not by re-entering a password.",
@@ -2339,8 +2784,11 @@
         "keeper": "not checked: no per-record master password re-prompt found in https://docs.keeper.io/user-guides/web-vault or https://docs.keeper.io/enterprise-guide/roles/enforcement-policies."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqBevestigMetHoofdwachtwoord confirms actions, not opening one item; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": [
+          "KqInlogUitgebreid",
+          "KqInlogBeschermd"
+        ]
       }
     },
     {
@@ -2366,6 +2814,7 @@
       "originUrl": "https://community.bitwarden.com/t/session-management/1696",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Controllers/DevicesController.cs:77 GET devices, :276 POST devices/{id}/deactivate; bitwarden/clients@web-v2026.9.0 libs/angular/src/auth/device-management/device-management.component.ts:48 lastActivityDate, device-management-table.component.html:46 'currentSession', :59 firstLogin; device-management-item-group.component.html:68-76 per-device 'logOut' and 'removeDevice' menu is inside an HTML comment; libs/common/src/auth/services/devices-api.service.implementation.ts:119 deactivateDevice has no UI caller; apps/web/src/app/auth/settings/account/account.component.html:32 deauthorizeSessions (all devices at once) Note: Users see a device list with first login, recent activity and the current session, but ending a session on one chosen device is commented out in the UI; the only action is to deauthorize all sessions at once.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/token_store.go:232 auth/token/accessors list (sudo), :336 lookup-accessor, :394 revoke-accessor; ui/app/router.js has no session list page Note: An operator can list token accessors, inspect and revoke them by API or CLI, but users have no 'where am I signed in' page.",
@@ -2398,6 +2847,7 @@
       "originUrl": "https://github.com/passbolt/passbolt_api/releases/tag/v5.0.0",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "zero-knowledge-encryption",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/models/domain/cipher.ts:44 name?: EncString, :45 notes?: EncString; libs/common/src/vault/models/domain/login.ts:17 username?: EncString; libs/common/src/vault/models/domain/login-uri.ts:18 uri?: EncString; bitwarden/server@v2026.9.1 src/Core/Vault/Entities/Cipher.cs:20 Data (opaque encrypted JSON) Note: Item names, notes, usernames and URIs are all EncStrings encrypted client side; the server stores them inside an opaque Data blob. Item type, folder and collection ids, dates and attachment sizes stay readable to the server.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/barrier_aes_gcm.go:846 storage encrypted by the server-held barrier key; ui/lib/kv/addon/components/kv-create-edit-form.js:108 paths and values sent in plaintext over TLS Note: Everything is encrypted at rest, but by a key the server holds, so the server sees names, paths and values.",
@@ -2428,6 +2878,7 @@
       "rowSource": "competitor",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Identity/IdentityServer/RequestValidators/BaseRequestValidator.cs:579 FailedLoginCount incremented, :566 reset on success, :237 User_FailedLogIn event; src/Core/Platform/Mail/IMailService.cs failed login attempt mail; src/Identity/appsettings.json:83 IpRateLimit post:/connect/token 10 per 1m; searched 'Lockout', 'MaxFailed' in src/Identity src/Core/Auth: no account lockout Note: Failed sign-ins are counted, logged as events, mailed to the user and throttled per IP, but the account is never locked after a threshold.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2891 user_lockout_config LockoutThreshold on auth mount tune; ui/app/components/auth-config-form/options.ts:56 supportsUserLockoutConfig for approle, ldap, userpass, :67 saves user_lockout_config Note: Failed login lockout with threshold, duration and counter reset is configurable per auth method, in the UI and API.",
@@ -2462,6 +2913,7 @@
       "originUrl": "https://github.com/bitwarden/server/releases/tag/v2026.4.0",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "sign-in-and-unlock",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltEe/AccountRecovery/config/routes.php:52 POST /account-recovery/requests, :61 admin review, :68 responses; plugins/PassboltCe/Mobile/config/routes.php:27 transfer from a signed-in browser; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/UserSetting/TransferToMobile/TransferToMobile.js, src/react-extension/components/UserSetting/ExportAccountToDesktop Note: A new mobile or desktop device is set up from a browser where the user is signed in, and a lost browser can be restored through an account recovery request that an admin approves (Pro).",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Controller/Link/ConnectController.php:136 request() from the new client, :221 confirm() by the signed-in web session, :260 apply(codes); src/vue/Dialog/ConnectClient.vue with ConnectConfirm.vue; :242 new client notification Note: PassLink lets a new extension or app sign in by being approved from a browser where you are already signed in; no admin approval option.",
@@ -2799,7 +3251,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "folder-permission-grades",
+      "feature": "team-folder-sharing",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/admin-console/models/collections/collection-access-selection.view.ts:7 readOnly, :8 hidePasswords, :9 manage; apps/web/src/app/admin-console/organizations/shared/components/access-selector/access-selector.models.ts:108 'viewItemsHidePass' and View/Edit/Manage options Note: Per member or group: view, view without passwords, edit, edit without passwords, manage.",
@@ -2989,7 +3441,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "link-sharing",
+      "feature": "links-and-sends",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Tools/Entities/Send.cs:63 Password, :101 ExpirationDate, :109 DeletionDate; src/Api/Tools/Controllers/SendsController.cs:241 POST sends, :146 POST sends/access; bitwarden/clients@web-v2026.9.0 apps/web/src/app/tools/send/send-access/send-access-password.component.ts Note: Send creates a public link with optional password, expiry and deletion date.",
@@ -3028,7 +3480,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "ephemeral-send",
+      "feature": "links-and-sends",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Tools/Entities/Send.cs:78 MaxAccessCount, :109 DeletionDate; src/Api/Tools/Controllers/SendsController.cs:146 access increments count; bitwarden/clients@web-v2026.9.0 apps/web/src/app/tools/send/send-access/access.component.ts Note: Recipient needs no account; max access count of 1 plus deletion date makes it one-off.",
@@ -3068,7 +3520,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "ephemeral-send",
+      "feature": "links-and-sends",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Tools/Controllers/SendsController.cs:132 GET sends, :418 DELETE sends/{id}, :392 remove-password; bitwarden/clients@web-v2026.9.0 apps/browser/src/tools/popup/send-v2/add-edit/send-add-edit.component.ts Note: All sends are listed with edit, disable and delete.",
@@ -3106,6 +3558,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-sharing",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Tools/Entities/Send.cs:72 Emails (email-verified recipients), src/Api/Tools/Controllers/SendsController.cs:400 remove-auth; bitwarden/clients@web-v2026.9.0 apps/web/src/app/tools/send/send-access/send-access-email.component.ts Note: External recipients can be restricted by email verification on a Send, or invited into the organisation; no federated sharing with an account on another instance.",
         "onepassword": "https://support.1password.com/share-items/ : recipient can save the shared item into their own 1Password account; guest accounts in https://support.1password.com/custom-groups/",
@@ -3146,6 +3599,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "team-folder-sharing",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/admin-console/models/collections/collection-access-selection.view.ts:9 manage vs :7 readOnly; apps/web/src/app/admin-console/organizations/shared/components/access-selector/access-selector.models.ts:108 permission options; bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/CollectionsController.cs:190 PUT access Note: Manager (manage collection), editor and viewer roles per collection, plus organisation roles (owner, admin, custom).",
         "onepassword": "https://support.1password.com/create-share-vaults-teams/ : Allow Managing versus Allow Viewing per person or group",
@@ -3325,6 +3779,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-sharing",
       "evidence": {
         "bitwarden": "searched 'comment' in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault and '\"[a-zA-Z]*comment[a-zA-Z]*\"' keys in bitwarden/clients@web-v2026.9.0 apps/web/src/locales/en/messages.json: no match Note: No comments on items; only the notes field. Moved from unknown on a documented search.",
         "onepassword": "not checked: no item comments found",
@@ -3358,6 +3813,7 @@
       "originUrl": "https://canadabuys.canada.ca/en/tender-opportunities/25260005",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-sharing",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Models/Request/SelectionReadOnlyRequestModel.cs:11 HidePasswords on collection access; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/shared/components/access-selector/access-selector.models.ts:134 ViewExceptPass, :136 EditExceptPass; libs/vault/src/cipher-view/login-credentials/login-credentials-view.component.html:63 password shown only if cipher.viewPassword; apps/browser/src/autofill/browser/main-context-menu-handler.ts:362 copy password only if viewPassword, autofill entry still offered Note: The 'can view, except passwords' collection permission hides the password and its copy action while autofill still works. The password is still decrypted on the device, so this is a UI control, not a cryptographic one.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:27 read capability returns the value; searched 'autofill', 'fill only' in ui/app ui/lib: no match; builtin/logical/database/path_creds_create.go:34 per-user dynamic credentials are the alternative Note: A shared KV login is either readable or not; Vault avoids shared passwords with per-user dynamic credentials or SSH certificates instead, which is a different model.",
@@ -3399,6 +3855,7 @@
       "originUrl": "https://github.com/bitwarden/clients/pull/22921",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-sharing",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/Api/Endpoints/CipherLeaseEndpoints.cs:24 POST cipher lease, :18 pre-check; bitwarden_license/src/Services/Pam/Api/Endpoints/LeaseEndpoints.cs:17 active, :26 revoke, :34 extend; bitwarden_license/src/Services/Pam/Api/Endpoints/AccessRequestEndpoints.cs:30 decision; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/pam/access-rules/access-rule-edit/access-rule-edit.component.html:73 defaultLeaseDurationSeconds, :83 max duration; apps/web/src/app/pam/org-nav-slot/pam-org-nav-slot.component.ts:31 behind FeatureFlag.Pam; searched 'lease' in apps/browser libs/vault libs/pam: no end-user checkout UI Note: Enterprise PAM gives time-boxed leases on items in ruled collections with request, approve, extend and revoke on the server, and admins set lease durations in the web admin console. The member-side request and checkout UI is not in the public clients at this tag, and the whole feature sits behind a feature flag.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/token_create.go:90 -ttl on a token carrying chosen policies; vault/expiration.go:1564 token lease revoked at TTL; vault/policy.go no expiry on a policy grant Note: Handing a colleague a token with a policy and a TTL gives access that ends itself, but a grant on their own identity has no end date, so partial.",
@@ -3439,6 +3896,7 @@
       "originUrl": "https://github.com/bitwarden/clients/releases/tag/web-v2026.8.0",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-sharing",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 searched 'access request', 'ip range', 'time window' in src/ plugins/: no access-request flow for resources; the only request flow is account recovery Note: No just-in-time or approval-gated access to privileged logins.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'access request', 'ip', 'time window' in src/lib/Controller/Api/ShareApiController.php src/lib/Helper/Sharing: no match Note: No privileged access requests.",
@@ -3476,6 +3934,7 @@
       "originUrl": "https://community.bitwarden.com/t/add-granular-group-manager-role/82556",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "team-folder-sharing",
       "evidence": {
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/Sharing/RecipientSearchHelper.php:121-132 resolveGroup() reads live Nextcloud group membership; no group management in src/lib/Controller Note: The app has no groups of its own; Nextcloud group admins manage membership, and the app reads it when a group share is fanned out.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/admin-console/models/api/permissions.api.ts:13 manageGroups is an organisation-wide custom permission. Note: a member can be allowed to manage all groups, not only their own (the feature request 82556 asks for per-group managers). Rated by the lane from the source.",
@@ -3918,7 +4377,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 POST organizations/{organizationId}/service-accounts; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/dialog/service-account-dialog.component.ts Note: Machine accounts are created in Secrets Manager and get project access and access tokens.",
@@ -3966,7 +4425,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 creates the machine account directly (no pending state); searched 'pending', 'approve' in src/Api/SecretsManager bitwarden_license/bit-web/src/app/secrets-manager: no registration approval Note: Permitted members create machine accounts directly; there is no application registration queue to approve or reject. Moved from unknown on code.",
@@ -4002,7 +4461,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 no pending registrations exist to notify about; src/Core/MailTemplates/Handlebars has no machine account registration template Note: No registration step, so no admin notification. Moved from unknown on code.",
@@ -4038,7 +4497,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:244 POST {id}/access-tokens is the only credential issuance; searched 'X509', 'certificate', 'csr' in src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core/SecretsManager: no match Note: Machines are onboarded with an access token, not a CSR. Moved from unknown on code.",
@@ -4396,7 +4855,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:183 POST service-accounts/delete removes machine accounts only; secrets belong to projects (src/Api/SecretsManager/Controllers/ProjectsController.cs:157 separate delete) Note: Deleting a machine account leaves its secrets in their projects; there is no cascading delete.",
@@ -4428,7 +4887,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/AccessPoliciesController.cs:198 GET service-accounts/{id}/granted-policies, :215 PUT; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/projects/service-account-projects.component.ts Note: A machine account's Projects tab lists the projects (and thereby secrets) it can read or write.",
@@ -4468,7 +4927,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "keepiq-cli",
+      "feature": "devops-integrations",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:78 list and :286 get-by-ids used by bws; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:18 links bitwarden/sdk-sm (bws CLI) | docs: https://bitwarden.com/help/secrets-manager-cli/ Note: The bws binary (bws run injects env vars) lives in bitwarden/sdk-sm, not read here; the server API it calls is present. Docs rating kept.",
@@ -4505,7 +4964,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "keepiq-cli",
+      "feature": "devops-integrations",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/cli/src/commands/get.command.ts, list.command.ts (bw get/list item), apps/cli/src/commands/serve.command.ts (bw serve local REST) Note: The bw CLI reads and edits the user's own vault, and can serve it as a local API.",
@@ -4542,6 +5001,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "devops-integrations",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:94 Kubernetes Operator; bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:308 secrets/sync used by the operator | docs: https://bitwarden.com/help/secrets-manager-kubernetes-operator/ Note: sm-operator lives in its own repo; the integrations page offers it and the sync API serves it. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/k8s/integrations/ : Kubernetes Secrets Injector, Operator and Helm charts",
@@ -4577,6 +5037,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "devops-integrations",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:25 GitHub Actions, :32 GitLab CI/CD, :39 Ansible | docs: https://bitwarden.com/help/github-actions-integration/ Note: Ready-made CI integrations are listed in the product; their code lives in separate repos. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/ci-cd/github-actions/ : load secrets into GitHub Actions with secret references",
@@ -4610,6 +5071,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "machine-secret-leases",
       "evidence": {
         "bitwarden": "searched 'dynamic.?secret', 'DatabaseCredential', 'transit' in bitwarden/server@v2026.9.1 src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src: no match; src/Pam.Domain/Enums/PamTargetSystemKind.cs:10 Mssql is rotation of a stored credential, not on-demand minting Note: Secrets Manager stores static values; no on-demand short-lived database credentials. Moved from unknown on a documented search.",
         "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : automatic rotation is not in the initial release and a database password 'may still be long-lived in the database'",
@@ -4641,6 +5103,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "rotation-expiry-policies",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/AccessConnector/Rotation/Api/Endpoints/RotationConfigEndpoints.cs:23 POST rotation config, :47 {id}/rotate; src/Pam.Domain/Enums/PamTargetSystemKind.cs:9 Entra, :10 Mssql, :11 CustomScript; bitwarden_license/src/Services/Pam/Api/Endpoints/PamEndpointsExtensions.cs:53 gated on FeatureFlagKeys.PamAccessConnector (src/Core/Constants.cs:314 'pm-42354-rotation-daemon'); bitwarden/clients@web-v2026.9.0 no rotation UI (searched 'rotationConfig', 'targetSystem' in apps libs bitwarden_license: no match) Note: Server-side scheduled and on-demand rotation of vault credentials against Entra, MSSQL and custom scripts through a pull-based access connector exists behind a feature flag, with no admin UI in this client tag and the connector not in these repos. Moved from unknown: real but pre-release.",
         "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : no built-in rotation yet; SDKs can script rotation per https://blog.1password.com/1password-sdks-programmatic-item-management/",
@@ -4676,6 +5139,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "devops-integrations",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:45 C#, :51 C++, :57 Go, :63 Java, :70 JS WebAssembly, :76 php, :82 Python, :88 Ruby, :18 Rust (bitwarden/sdk-sm) | docs: https://bitwarden.com/help/secrets-manager-sdk/ Note: SDKs for nine languages from bitwarden/sdk-sm (not read here); listed in the product. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/sdks/ : SDKs for Go, JavaScript and Python",
@@ -4712,6 +5176,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "devops-integrations",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:101 Terraform Provider (registry.terraform.io/providers/bitwarden/bitwarden-secrets) Note: Terraform provider listed in product; its code is in a separate repo. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/terraform : reference, create or update items as Terraform resources",
@@ -4782,6 +5247,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "secret-store-api",
       "evidence": {
         "bitwarden": "searched 'transit', 'encrypt-as', 'EncryptionService' routes in bitwarden/server@v2026.9.1 src/Api/SecretsManager bitwarden_license/src: no encrypt/decrypt endpoint for arbitrary data Note: No encryption-as-a-service API; all encryption is client side on stored items. Moved from unknown on a documented search.",
         "onepassword": "not checked: no encryption-as-a-service API found",
@@ -4812,6 +5278,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "rotation-expiry-policies",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:94 Kubernetes Operator, :25 GitHub Actions and :32 GitLab CI/CD (pull at job time), :101 Terraform Provider; bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:308 secrets/sync used by the operator; searched 'AzureKeyVault', 'AwsSecrets', 'GithubSecret', 'SecretsManagerSync' in src/ bitwarden_license/: no match Note: Only the Kubernetes operator keeps an external store (Kubernetes Secrets) in sync; there is no push sync to AWS Secrets Manager, Azure Key Vault or GitHub secrets. CI integrations pull at run time instead.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/sync/addon/routes.js:10 destinations and sync routes; ui/lib/sync/addon/utils/constants.ts:12 aws-sm, azure-kv, gcp-sm, gh, vercel-project; ui/lib/sync/addon/components/secrets/page/overview.hbs:18 activation required; no sys/sync server code in the CE tree | docs: https://developer.hashicorp.com/vault/docs/sync Note: Secrets sync to AWS, Azure, GCP, GitHub and Vercel is in the UI; the server side is Enterprise only, which is the plan this column rates.",
@@ -4846,6 +5313,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "rotation-expiry-policies",
       "source": "spec-round-2026-10-07",
       "screen": {
         "board": null,
@@ -4874,8 +5342,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
-      "featureConfidence": "high",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate authority of any kind. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
@@ -4927,8 +5395,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "encryption-suites",
-      "featureConfidence": "high",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No CA, so no self-renewal. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
@@ -5117,6 +5585,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "certificate-lifecycle",
       "evidence": {
         "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate issuance. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
@@ -5190,7 +5659,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "application-mgmt",
+      "feature": "application-registration",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:244 POST access-tokens returns a one-time client secret, not a key pair; searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: Machines get an access token shown once, never a private key. Moved from unknown on code.",
@@ -5498,7 +5967,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "key-generator",
+      "feature": "password-generator",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/generator/core/src/metadata/password/random-password.ts length and character-class options; libs/tools/generator/core/src/engine/password-randomizer.ts; bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:7 PasswordGenerator policy Note: Random password generator with length, character sets, minimum numbers and specials, bounded by org policy.",
@@ -5534,6 +6003,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-generator",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/generator/core/src/metadata/password/eff-word-list.ts passphrase from the EFF word list Note: Passphrase generator with word count, separator, capitalisation and number options.",
         "onepassword": "https://support.1password.com/generate-website-password/ : Memorable Passwords from words, including Dutch",
@@ -5567,6 +6037,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-generator",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/generator/core/src/metadata/username/eff-word-list.ts random word username; libs/tools/generator/core/src/metadata/email/catchall.ts, plus-address.ts, forwarder.ts; libs/tools/generator/core/src/data/integrations.ts:8 AddyIo, :9 DuckDuckGo, :10 Fastmail, :12 ForwardEmail, :13 SimpleLogin Note: Username generator plus catch-all, plus-addressing and forwarded email aliases through six alias services.",
         "onepassword": "https://support.1password.com/fastmail/ : Masked Emails only with a Fastmail account; no general username generator documented",
@@ -5595,6 +6066,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Dirt/Controllers/HibpController.cs:45 GET hibp/breach (on demand proxy); bitwarden/clients@web-v2026.9.0 libs/common/src/services/audit.service.ts:76 breachedAccounts; apps/web/src/app/dirt/reports/pages/breach-report.component.ts; searched 'breach' in src/ bitwarden_license/src for jobs or mail templates: none Note: On-demand breach report by email address; no monitoring job or alert when a new breach appears.",
         "onepassword": "https://support.1password.com/insights/ : Business breach checks 'Track data breaches affecting your team members'; domain breach report in https://support.1password.com/breach-report/",
@@ -5625,6 +6097,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/inactive-two-factor-report.component.ts:98 loads the 2fa directory and flags logins on sites supporting TOTP without a TOTP seed; organizations/inactive-two-factor-report.component.ts Note: Inactive two-step login report for personal and organisation vaults.",
         "onepassword": "https://support.1password.com/watchtower/ : shows 'logins for websites that support two-factor authentication'",
@@ -5633,8 +6106,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched '2fa', 'twofactor', '2factor' in src/js src/vue: only src/vue/Section/Authorize.vue:125 (vault login); no 2FA site directory Note: No check for websites that support 2FA. Moved from unknown on a documented search."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -5658,6 +6131,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/unsecured-websites-report.component.ts:136 flags URIs starting with 'http://' Note: Unsecured websites report.",
         "onepassword": "https://support.1password.com/watchtower/ : 'Unsecured websites' catches HTTP sites",
@@ -5667,8 +6141,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordSecurityCheckService.php:28-32 statuses BREACHED, OUTDATED, DUPLICATE, GOOD only; searched 'http:' warnings in src/js src/vue src/lib: only favicon/preview fallbacks Note: No warning for http logins. Moved from unknown on a documented search."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -5691,6 +6165,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/risk-insights.component.ts, v2/activity-tab/activity-tab.component.ts, activity/trend-widget/trend-widget.component.ts (at-risk members, applications and passwords over time); bitwarden/server@v2026.9.1 src/Api/Dirt/Controllers/OrganizationReportsController.cs Note: Enterprise Access Intelligence summarises at-risk passwords, members and applications for the whole organisation with trends; it is counts and trends rather than a single numeric score.",
         "onepassword": "https://support.1password.com/insights/ : Business Insights track 'compromised, weak, or reused passwords... across your organization'",
@@ -5723,6 +6198,7 @@
       "originUrl": "https://github.com/bitwarden/clients/pull/22641",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/SecurityTaskController.cs:104 POST {orgId}/bulk-create, :65 PATCH tasks/{taskId}/complete, :90 metrics; src/Core/Vault/Commands/CreateManyTaskNotificationsCommand.cs notifies members; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/activity/application-review-dialog/assign-tasks-view.component.ts assign tasks; apps/browser/src/vault/popup/components/at-risk-callout/at-risk-password-callout.component.ts member callout; libs/vault/src/cipher-form/services/default-cipher-form.service.ts:158 task marked complete when the password changes; bitwarden_license/bit-web/src/app/dirt/access-intelligence/activity/activity-cards/password-change-metric.component.ts progress Note: Admins assign change-password security tasks from Access Intelligence, members are notified and see an at-risk callout, and completion is recorded when the password is actually changed and shown as a metric.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach' in ui/app ui/lib and vault/*.go: no password health code Note: No at-risk password detection exists, so no follow-up tracking.",
@@ -5756,6 +6232,7 @@
       "originUrl": "https://github.com/bitwarden/clients/pull/22766",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/reports.ts:24 PasskeyLogin; apps/web/src/app/dirt/reports/pages/reports-home.component.ts:41 FeatureFlag.PasskeyLoginReport, :73 report card; apps/web/src/app/dirt/reports/pages/passkey-report.service.ts:31 loadPasskeyDirectory via PasskeyDirectoryApiService, :74 skips logins that already have hasFido2Credentials; apps/web/src/app/dirt/reports/pages/organizations/org-passkey-report.component.ts organisation variant Note: A passkey report matches logins against a passkey directory and lists those whose site supports passkey login or MFA but that hold no passkey yet, in personal and organisation variants. It is behind the PasskeyLoginReport feature flag.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'passkey', 'webauthn' in all .go .hbs .ts: no match Note: No passkey awareness and no website logins.",
@@ -5765,8 +6242,8 @@
         "keeper": "not checked: https://docs.keeper.io/user-guides/breachwatch and the passkey docs read; no report of saved logins whose sites accept passkeys."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqGezondheidControles"
       }
     },
     {
@@ -5792,6 +6269,7 @@
       "originUrl": "https://github.com/bitwarden/clients/releases/tag/web-v2026.6.2",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "password-health",
       "evidence": {
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 searched 'critical', 'at risk' in src/react-extension/components: no application criticality or at-risk view; passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Reports/src/Service/ReportPool.php:63 no reports registered Note: No way to mark critical applications or see who holds their weak passwords.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordSecurityCheckService.php per-item status only; searched 'critical' in src/lib src/vue: no match Note: No critical application marking or holder report.",
@@ -6120,6 +6598,7 @@
       "originUrl": "https://community.bitwarden.com/t/implementing-the-change-password-url-spec/3367",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "rotation-expiry-policies",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Icons/Controllers/ChangePasswordUriController.cs:9 change-password-uri resolves a site's well-known address; bitwarden/clients@web-v2026.9.0 apps/browser/src/autofill/background/notification.background.ts:572 hasPasswordChangeUri offers the change page. Rated by the lane from the source.",
         "hashicorp-vault": "searched 'change-password' in ui/app ui/lib: no match; Vault stores no website logins. Rated by the lane from the source.",
@@ -6127,8 +6606,8 @@
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordChangeUrlService.php:61 getPasswordChangeUrl() probes /.well-known/change-password at :121; src/appinfo/routes.php:106 POST /api/1.0/service/password-change; src/vue/Components/ContentList/Item/PasswordItem/PasswordItemActionMenu.vue:99 openChangePasswordPage() Note: proposed by the source reader as a capability no row covered."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: no change-password link on KqGeheim; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqInlogUitgebreid"
       }
     },
     {
@@ -6198,7 +6677,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "admin-settings",
+      "feature": "org-password-policies",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:6 MasterPassword; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/master-password.component.ts:64 minComplexity, :65 minLength, :73 enforceOnLogin Note: Master password requirements policy with minimum score, length, character classes and enforce-on-login.",
@@ -6243,8 +6722,8 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "admin-settings",
-      "featureConfidence": "high",
+      "feature": "application-registration",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 machine accounts created directly; searched 'pending', 'approve' in src/Api/SecretsManager bitwarden_license/bit-web/src/app/secrets-manager: no application approval queue (device approvals exist for users only, bitwarden_license/bit-cli/src/admin-console/device-approval) Note: There is an approval queue for user device logins, not for applications. Moved from unknown on code.",
         "onepassword": "not checked: no approval queue for service accounts found",
@@ -6316,7 +6795,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "offline-readonly-cache",
+      "feature": "offline-access",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout, :23 RemoveUnlockWithPin; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/key-management/policies/session-timeout.component.ts (timeout with forced logout action) Note: A session timeout policy can force logout, which clears the local vault copy after the timeout, but there is no switch that disables the offline cache outright.",
@@ -6425,6 +6904,7 @@
       "rowSource": "competitor",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Scim/Controllers/v2/UsersController.cs, bitwarden_license/src/Scim/Controllers/v2/GroupsController.cs (SCIM 2.0 users and groups) Note: SCIM 2.0 service provisions and deprovisions users and groups.",
         "onepassword": "https://support.1password.com/scim/ : SCIM Bridge creates users and groups and suspends users",
@@ -6463,6 +6943,7 @@
       "rowSource": "competitor",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Public/Controllers/OrganizationController.cs:48 POST public/organization/import (members and groups) used by Directory Connector | docs: https://bitwarden.com/help/ldap-directory/ Note: The server import API is present; the Directory Connector client that reads AD or LDAP lives in bitwarden/directory-connector, not read here. Docs rating kept.",
         "onepassword": "https://support.1password.com/scim/ : group sync via SCIM from Entra ID, Okta, Google Workspace, JumpCloud; no direct AD or LDAP connector",
@@ -6494,6 +6975,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "org-password-policies",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:5 TwoFactorAuthentication, :19 DisablePersonalVaultExport; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/two-factor-authentication.component.ts; bitwarden_license/bit-web/src/app/admin-console/policies/policy-edit-definitions/disable-personal-vault-export.component.ts Note: Require two-step login and remove individual vault export are among 23 policies.",
         "onepassword": "https://support.1password.com/team-policies/ : 'Two-factor authentication' enforcement and further sign-in, sharing and file policies",
@@ -6531,6 +7013,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/OrganizationUserType.cs:5 Owner, :6 Admin, :7 User, :9 Custom; src/Core/AdminConsole/Models/Data/Permissions.cs:8 13 granular permission flags (event logs, import/export, reports, collections, groups, users, policies, SSO, SCIM, account recovery); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/components/member-dialog/member-dialog.component.ts Note: Custom role with 13 granular permissions besides owner and admin.",
         "onepassword": "https://support.1password.com/custom-groups/ : custom groups with chosen administrative permissions (Business)",
@@ -6566,6 +7049,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/OrganizationUserStatusType.cs:15 Invited, :19 Accepted, :24 Confirmed, :30 Staged; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/ members list with status filter Note: Members list shows who is invited, accepted (vault set up, awaiting confirm) and confirmed.",
         "onepassword": "https://support.1password.com/add-remove-team-members/ : People list shows invited, pending confirmation and active members",
@@ -6601,6 +7085,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Public/Controllers/MembersController.cs, GroupsController.cs, CollectionsController.cs, PoliciesController.cs, OrganizationController.cs:48 import; src/Api/Dirt/Public/Controllers/EventsController.cs Note: Public REST API (organisation API key) for members, groups, collections, policies, import and events.",
         "onepassword": "https://support.1password.com/scim/ : administration automated through SCIM and CLI user and group commands; no general admin REST API found",
@@ -6636,7 +7121,7 @@
       "rowSource": "own",
       "provider": "integriq",
       "providerHow": "read-from-code",
-      "feature": "apphost-adoption",
+      "feature": "admin-console",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Dirt/Controllers/OrganizationIntegrationController.cs:19 GET, :42 POST integrations; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/organization-integrations/integrations.component.ts, integration-card/integration-card.component.ts:141 isConnected Note: One Integrations page shows SSO, SCIM, event (SIEM) and device management integrations with a connected state for the event integrations; health beyond connected is not shown.",
@@ -6709,8 +7194,8 @@
       "rowSource": "own",
       "provider": "nextcloud-vue",
       "providerHow": "read-from-code",
-      "feature": "admin-settings",
-      "featureConfidence": "high",
+      "feature": "admin-console",
+      "featureConfidence": "medium",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Admin/Views/Home/Index.cshtml:13 installed vs latest web and core versions (web-installed, GetLatestVersion); bitwarden/clients@web-v2026.9.0 apps/browser/src/tools/popup/settings/about-dialog/about-dialog.component.html:14 serverVersion Note: The self-hosted System Administrator Portal home shows installed and latest versions; clients show the server version in About. Moved from unknown on code.",
         "onepassword": "not checked: 1Password is SaaS only, no installed version page applies",
@@ -6786,6 +7271,7 @@
       "originUrl": "https://community.passbolt.com/t/as-an-administrator-i-can-create-new-secret-types-and-define-their-associated-input-fields/19",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "item-types",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:3-15 fixed enum (Login, SecureNote, Card, Identity, SSHKey, BankAccount, DriversLicense, Passport); searched 'CustomCipherType', 'ItemTemplate', 'CipherTemplate' in src/ bitwarden_license/: no match Note: Item types are a fixed server enum shipped by Bitwarden. Users can add custom fields to a single item, but an administrator cannot define a new item type or its field set.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped key/value rows; ui/lib/kv/addon/routes.js:8 no item type admin route Note: KV is untyped; there are no admin-defined item types.",
@@ -6825,6 +7311,7 @@
       "originUrl": "https://community.passbolt.com/t/as-an-admin-i-can-suspend-and-reactivate-a-user/101",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:669 PUT {id}/revoke, :731 PUT {id}/restore; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/members.component.html:65 'revoked' filter, :187 restoreAccess, :197 revokeAccess Note: Admins revoke a member's organisation access and restore it later; the member and their assignments stay in place while revoked.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:18 disabled boolean on an entity (Access > Entities edit); vault/request_handling.go:574 requests from a disabled entity are refused Note: Setting an entity to disabled suspends all of that user's access and clearing it restores it, without deleting the entity.",
@@ -6857,6 +7344,7 @@
       "originUrl": "https://community.passbolt.com/t/as-an-admin-i-do-not-want-my-users-to-see-all-users-on-the-platform/1151",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "org-password-policies",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:211 GET mini-details [Authorize<MemberOrProviderRequirement>] returns every member to any member, :220 full list only with ManageUsers; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/members.component.html members page only in the admin console; searched 'hideMembers', 'memberVisibility', 'restrictMember' in apps/web/src/locales/en/messages.json: no setting Note: Ordinary members get no member list page, but there is no admin setting for it and the mini-details API still returns all members' names and emails to any member.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js access.identity routes; entity listing is the identity/entity/id path, which needs an ACL grant (vault/policy.go:30 list capability) Note: Only callers whose policy grants list on identity/entity can see the people list; ordinary users get no such grant by default.",
@@ -6889,6 +7377,7 @@
       "originUrl": "https://www.passbolt.com/roadmap",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "admin-console",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:29 OrganizationUserNotification ('Vault banner message'); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/organization-user-notification-policy.component.html:3 enableBanner, :7 createBannerMessage; policy-edit-register.ts:43 registered; apps/browser/src/vault/popup/components/vault/vault.component.ts:59 VaultOrganizationUserNotificationsComponent; apps/web/src/app/vault/individual-vault/vault-next.component.ts; apps/desktop/src/vault/app/vault-v3/vault.component.ts Note: The vault banner message policy lets an admin publish a banner every organisation member sees on their vault page in web, browser and desktop. It needs the single organisation policy first.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_custom_messages.go:67 sys/config/ui/custom-messages; ui/lib/config-ui/addon/routes.js:8 messages create/edit and login-settings; ui/lib/core/addon/components/sidebar/nav/tools.hbs:40 'Custom messages' nav Note: Admins create custom messages shown as banners or modals, before or after login, with start and end times.",
@@ -6922,6 +7411,7 @@
       "originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/295007",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "org-password-policies",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:10 OrganizationDataOwnership, :52 'Enforce organization data ownership'; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/organization-data-ownership.component.ts:21 policy editor; apps/web/src/locales/en/messages.json:8554 'Require all items to be owned by an organization, removing the option to store items at the account level' Note: The organisation data ownership policy removes the personal vault option so new items must be saved to the organisation.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go path policies only; no personal vault concept to forbid (ui/lib/kv/addon/routes.js:8) Note: Vault has only the organisation's store; there is no personal vault to restrict, and nothing enforces where people keep work logins elsewhere.",
@@ -6958,6 +7448,7 @@
       "originUrl": "https://github.com/bitwarden/server/releases/tag/v2025.12.2",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/SelfRegistration/config/routes.php:28 POST self-registration settings with an email domain safe list; passbolt/passbolt_styleguide@v5.16.0 src/locales/en-UK/common.json 'Email Domain Safe List', 'All the users with an email address ending with the domain in the safe list are allowed to register' Note: Admins list email domains whose users may self-register into the organisation's instance; there is no domain verification or claim over accounts elsewhere, which on a self-hosted server is moot.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'domain claim', 'verified domain' in src/lib: no match Note: No domain claiming; accounts come from Nextcloud.",
@@ -6988,6 +7479,7 @@
       "originUrl": "https://github.com/bitwarden/clients/releases/tag/web-v2025.12.1",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "org-password-policies",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/RememberMe/config/config.php:15 options 5 min to 1 hour offered to users, overridable via passbolt.plugins.rememberMe.options (plugins/PassboltCe/RememberMe/config/bootstrap.php:18); passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/AuthenticationPassphrase/InputPassphrase/InputPassphrase.js:210 Note: The server admin can change which passphrase remember durations users may pick, but only in the server config file, not in the admin UI.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/Settings/UserSettingsHelper.php session/lifetime is a user setting (default 600); src/lib/Helper/AppSettings/*.php no maximum Note: Users pick their session lifetime; admins cannot cap it.",
@@ -7019,6 +7511,7 @@
       "originUrl": "https://github.com/bitwarden/clients/releases/tag/web-v2026.3.1",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltEe/Scim and plugins/PassboltEe/DirectorySync create users automatically; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/User/ConfirmShareMissingMetadataKeys/ConfirmShareMissingMetadataKeys.js admin must share missing metadata keys; sharing-03 in this pack: group access needs a group manager to save the group so secrets are encrypted for the new member Note: Accounts are provisioned and activated without an admin, but access to shared secrets and metadata keys still needs someone who holds them to encrypt for the newcomer.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Controller/Api/ShareApiController.php:181 canShareWithUser() accepts any Nextcloud user; src/js/Actions/Share/CreateShareAction.js:90 #disableCse() moves shared items to server-side encryption, so no key handover is needed Note: There is no confirmation step: any Nextcloud user can receive shares at once, because shared items are server-side encrypted rather than wrapped to a member key.",
@@ -7053,6 +7546,7 @@
       "originUrl": "https://community.bitwarden.com/t/reporting-enhancement-user-activity-report/93955",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
+      "feature": "user-administration",
       "evidence": {
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'twofactor', 'lastLogin' in src/lib/Settings src/templates/admin: no user list; src/lib/Helper/User/UserTokenHelper.php:98 reads 2FA state only for the vault login Note: The app adds no user list; whatever Nextcloud's own user management shows is outside this app.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/members.component.html:399 two-step login badge per member; searched 'lastLogin', 'lastActivity' in apps/web/src/app/admin-console and bitwarden_license/bit-web/src/app: no match. Note: two-factor status yes, last sign-in no (the feature request 93955 asks for it). Rated by the lane from the source.",
@@ -7085,6 +7579,7 @@
       "originUrl": "https://community.bitwarden.com/t/adjusting-timezone-and-database-backup-schedule-in-bitwarden/59341",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "admin-console",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 util/MsSql/backup-db.sh:2-4 nightly database backup with BACKUP_INTERVAL and BACKUP_TIMEZONE. Note: scheduled server backups of all vaults exist on the self-hosted database container; restore is a manual database step, not a command. Rated by the lane from the source.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/operator_raft_snapshot.go and command/operator_raft_snapshot_restore.go save and restore a snapshot from the CLI; CHANGELOG.md:286 names automated snapshots as an Enterprise feature whose code is not public. Note: manual snapshot and restore are in the public code; the schedule is Enterprise. Rated by the lane from the source.",
@@ -7349,7 +7844,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "siem-audit-export",
+      "feature": "security-monitoring",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Dirt/Public/Controllers/EventsController.cs:56 GET public/events; src/Core/Dirt/Enums/IntegrationType.cs:8 Webhook, :9 Hec, :10 Datadog; src/Core/Dirt/Entities/OrganizationIntegrationConfiguration.cs:16 Filters; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/organization-integrations/integration-dialog/connect-dialog/connect-dialog-hec.component.ts Note: Events are pulled via the public API or pushed to a webhook, HEC or Datadog; no syslog output.",
@@ -7463,7 +7958,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "honey-credentials",
+      "feature": "security-monitoring",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "searched 'honey', 'decoy', 'canary' in bitwarden/server@v2026.9.1 src/ bitwarden_license/src: only a public suffix list entry Note: No decoy credential feature. Moved from unknown on a documented search.",
@@ -7502,7 +7997,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "gdpr-compliance",
+      "feature": "compliance-reporting",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/export-vault-core/src/services/individual-vault-export.service.ts:61 encrypted_json, :63 zip (with attachments), :222 csv; libs/tools/export-vault-ui/src/components/export.component.ts:36 user verification Note: Full personal vault export in JSON, CSV, encrypted JSON or ZIP with attachments.",
@@ -7539,7 +8034,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "gdpr-compliance",
+      "feature": "compliance-reporting",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AccountsController.cs:633 DELETE accounts with secret verification; src/Core/Services/Implementations/UserService.cs:260 refuses deletion while the user is sole owner of an organisation (SoleOwnerError), :270 sole provider owner Note: Personal data is deleted; organisation-owned (shared) items stay with the organisation, and deletion is blocked while the user is the sole owner. Moved from partial on code.",
@@ -7611,6 +8106,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "security-monitoring",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/organization-integrations/organization-integrations.resolver.ts:182 Microsoft Sentinel, :188 Rapid7, :195 Elastic, :201 Panther, :207 Sumo Logic, :228 Splunk (HEC, flag EventManagementForSplunk), :263 CrowdStrike and Datadog (flag); bitwarden/server@v2026.9.1 src/Core/Dirt/Enums/IntegrationType.cs:9 Hec, :10 Datadog Note: Integrations page with SIEM connectors; Splunk, Datadog and CrowdStrike push integrations are behind feature flags, the rest use the public events API.",
         "onepassword": "https://support.1password.com/events-reporting/ : Splunk, Microsoft Sentinel, Datadog, Elastic, CrowdStrike and more (Business)",
@@ -7647,6 +8143,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "security-monitoring",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Dirt/Controllers/SlackIntegrationController.cs:23, src/Api/Dirt/Controllers/TeamsIntegrationController.cs:27 OAuth setup; src/Core/Dirt/Entities/OrganizationIntegrationConfiguration.cs:11 EventType, :16 Filters; bitwarden/clients@web-v2026.9.0 searched 'slack', 'teams' in bitwarden_license/bit-web apps/web/src/app: no UI caller Note: Server can push filtered events to Slack, Teams or a webhook, but the web client has no screen for Slack or Teams in this tag; otherwise alerting runs through a SIEM.",
         "onepassword": "https://support.1password.com/events-reporting/ : 'set up custom alerts' in the SIEM; built-in Insights notifications are admin-sent, not real-time (https://support.1password.com/insights-notifications/)",
@@ -7683,6 +8180,7 @@
       "originUrl": "https://github.com/bitwarden/clients/releases/tag/web-v2025.11.1",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "secret-audit-trail",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Reports/src/Service/ReportPool.php:63 report framework with no reports registered; config/routes.php:182 permissions only per resource; passbolt/passbolt_styleguide@v5.16.0 no access report component Note: Access can be read per item or per folder in the share list, but there is no report of who can reach what across the organisation.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php:62 share list is per user; searched 'report', 'access report' in src/lib/Controller src/lib/Settings: no match Note: No access report; each user sees only their own shares.",
@@ -7962,7 +8460,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "cxf-import-export",
+      "feature": "secret-export",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "searched 'CredentialExchange', 'cxp', 'cxf' in bitwarden/clients@web-v2026.9.0 libs/ apps/: no match (only asset files) | docs: https://bitwarden.com/help/import-data/ Note: Web, browser, desktop and CLI have no CXF file import or export; Credential Exchange lives in the native mobile apps (separate repos) as device-to-device transfer. Docs rating kept.",
@@ -8002,7 +8500,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "cxp-transfer",
+      "feature": "secret-export",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "code not public in the cloned repos (bitwarden/clients@web-v2026.9.0 has no CXP code; the iOS and Android apps are separate repos); docs rating kept: https://bitwarden.com/help/import-data/ Note: CXP direct import and export is a mobile app feature on iOS 26+ and Android per docs.",
@@ -8139,8 +8637,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_raft.go:142 snapshot is the whole store; ui/lib/kv/addon/routes.js:8 no export route Note: The only export is a whole-cluster snapshot; nothing lets you choose what goes in."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqExporteren has no selection step; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqExportSelectie"
       }
     },
     {
@@ -8358,7 +8856,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "extension-totp-autofill",
+      "feature": "browser-extension-autofill",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/autofill/services/autofill.service.ts:104 TotpService injected, :427 autoCopyTotp$ copies the current code to the clipboard after filling Note: After filling a login with a TOTP seed, the current code is copied (or filled into a one-time-code field).",
@@ -8395,7 +8893,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "extension-passkey-provider",
+      "feature": "browser-extension-autofill",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/autofill/fido2/background/fido2.background.ts; libs/common/src/platform/services/fido2/fido2-authenticator.service.ts:188 creates passkey in a login Note: The extension intercepts WebAuthn to save and use passkeys.",
@@ -8477,7 +8975,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "mobile-pwa",
+      "feature": "mobile-and-desktop-apps",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/manifest.json has name, icons and colours but no start_url or display; searched 'serviceWorker', 'workbox' in apps/web/src apps/web/webpack*.js: no match Note: The web vault is not an installable PWA; native mobile apps fill that need. Moved from unknown on code.",
@@ -8521,7 +9019,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "mobile-pwa",
+      "feature": "mobile-and-desktop-apps",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/components (Tailwind responsive layout used by apps/web); native iOS and Android apps in separate repos | docs: https://bitwarden.com/download/ Note: Web vault is responsive and native mobile apps exist (their code is not in these repos).",
@@ -8558,7 +9056,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "feature": "offline-readonly-cache",
+      "feature": "offline-access",
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/key-management/vault-timeout/enums/vault-timeout-action.enum.ts:4 Lock keeps the encrypted vault locally (vs :5 LogOut); libs/common/src/key-management/master-password/abstractions/master-password-unlock.service.ts local unlock without the server Note: Locked clients keep an encrypted local copy and unlock offline; edits need the server, so offline use is read-only.",
@@ -8625,6 +9123,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "mobile-and-desktop-apps",
       "evidence": {
         "bitwarden": "code not public in the cloned repos (bitwarden/android and bitwarden/ios are separate); docs rating kept: https://bitwarden.com/download/ Note: Native mobile apps with system autofill per docs.",
         "onepassword": "https://support.1password.com/android-autofill/ and https://support.1password.com/ios-autofill/ : system autofill on Android and iOS",
@@ -8634,8 +9133,8 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No native mobile apps."
       },
       "screen": {
-        "board": null,
-        "reason": "not designed yet: KqTelefoon is the installed web app, not a native app; on the missing-boards list for the design session (decision 96)"
+        "canvas": "design-system",
+        "board": "KqMobieleApp"
       }
     },
     {
@@ -8659,6 +9158,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "mobile-and-desktop-apps",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/desktop (Electron app with desktop_native Rust core, apps/desktop/desktop_native/core/src/ssh_agent/mod.rs) Note: Desktop app for Windows, macOS and Linux.",
         "onepassword": "https://releases.1password.com/windows/stable/ : 1Password for Mac, Windows and Linux",
@@ -8698,6 +9198,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/package.json:7 build:chrome, plus build:firefox, build:edge, build:opera, build:safari; apps/browser/src/manifest.json, manifest.v3.json Note: One extension codebase built for Chrome, Firefox, Edge, Opera and Safari.",
         "onepassword": "https://releases.1password.com/b5x/stable/ : Chrome, Edge, Brave, Firefox and Safari extensions",
@@ -8734,6 +9235,7 @@
       "rowSource": "competitor",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "mobile-and-desktop-apps",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/desktop/desktop_native/core/src/ssh_agent/mod.rs, named_pipe_listener_stream.rs (Windows), peercred_unix_listener_stream.rs (Unix); bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:11 SSHKey Note: Desktop app runs an SSH agent serving SSH key items, with per-use approval.",
         "onepassword": "https://developer.1password.com/docs/ssh/agent/ : SSH Agent uses keys saved in 1Password, private key 'never even leaves the 1Password app'",
@@ -8820,6 +9322,7 @@
       "rowSource": "own",
       "provider": "openregister",
       "providerHow": "read-from-code",
+      "feature": "workplace-integration",
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Dirt/Enums/IntegrationType.cs:8 Webhook, :7 Slack, :11 Teams; src/Core/Dirt/Entities/OrganizationIntegrationConfiguration.cs:11 EventType, :13 Template, :16 Filters; searched 'workflow', 'flow builder' in bitwarden_license/bit-web/src/app/dirt: no builder Note: Events can trigger a templated webhook with filters, which an external automation tool can consume, but there is no built-in flow builder. Moved from unknown on code.",
         "onepassword": "not checked: no built-in flow builder found; automation goes through Events API or SIEM",
@@ -8872,6 +9375,7 @@
       "rowSource": "own",
       "provider": "thematiq",
       "providerHow": "read-from-code",
+      "feature": "workplace-integration",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/platform/enums/theme-type.enum.ts:14 Light, :15 Dark only; searched 'orgLogo', 'customBranding', 'brandLogo', 'organizationTheme' in apps/web/src libs: no match Note: Only light, dark and system themes; no organisation branding.",
         "onepassword": "not checked: no organisation branding option found",
@@ -8908,6 +9412,7 @@
       "rowSource": "own",
       "provider": "nextcloud-vue",
       "providerHow": "read-from-code",
+      "feature": "workplace-integration",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/vault/individual-vault/vault-onboarding/vault-onboarding.component.ts:57 showOnboarding checklist (import, install extension, create item); apps/browser/src/vault/popup/components/vault/intro-carousel/intro-carousel.component.ts with intro-carousel.guard.ts; apps/browser/src/vault/popup/services/browser-autofill-nudge.service.ts Note: First-run intro carousel in the extension, onboarding checklist in the web vault and contextual nudges. Moved from unknown on code.",
         "onepassword": "https://support.1password.com/team-policies/ : 'Guided setup' policy prompts new members to import from other password managers",
@@ -8990,6 +9495,7 @@
       "originUrl": "https://community.bitwarden.com/t/offline-editing-management-of-writeable-vault-items/107",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "offline-access",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:792 createWithServer, :856 updateWithServer (edits go straight to the API); searched 'offline' in apps/web, apps/browser, apps/desktop en messages.json and 'pendingChanges', 'offlineQueue', 'outbox' in libs/common/src/vault libs/vault/src: no match Note: Clients keep an encrypted local cache for offline reading, but every create and edit is a direct server call with no offline queue, so offline editing is not supported.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public has no manifest or offline service worker; ui/lib/kv/addon/components/kv-create-edit-form.js:108 writes go straight to the API Note: The UI requires a live server; no offline edits.",
@@ -9026,6 +9532,7 @@
       "originUrl": "https://community.bitwarden.com/t/desktop-app-auto-type-windows-macos-linux/158",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "mobile-and-desktop-apps",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/desktop/desktop_native/autotype/src/mvp/windows/type_input.rs Windows keystroke typing, windows/window_title.rs match on foreground window; apps/desktop/desktop_native/autotype/src/mvp/linux.rs:5 todo!('Bitwarden does not yet support Linux autotype'), macos.rs:16 same for macOS; apps/desktop/src/autofill/components/autotype-shortcut.component.ts:28 shortcut editor; apps/desktop/src/locales/en/messages.json:5965 'Enable autotype shortcut (Feature Preview)'; libs/common/src/enums/feature-flag.enum.ts:40 WindowsDesktopAutotype, :161 default FALSE Note: Desktop auto-type with a global shortcut exists on Windows only, as a feature preview behind a flag; Linux and macOS are todo stubs.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No desktop client and no auto-type.",
@@ -9059,6 +9566,7 @@
       "originUrl": "https://community.bitwarden.com/t/account-switching/716",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/auth/popup/account-switching/account-switcher.component.ts:40 switcher page; apps/browser/src/auth/popup/account-switching/services/account-switcher.service.ts:72 ACCOUNT_LIMIT, :93 add account entry; apps/browser/src/auth/popup/account-switching/account.component.html:22 account.server shown per account; apps/desktop/src/auth/components/account-switcher/account-switcher-v2.component.ts Note: Browser extension and desktop switch between several logged-in accounts, each on its own server, up to a fixed account limit.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/services/auth.js:46 tokens list kept per cluster, :101 currentTokenName per active cluster; ui/app/components/namespace-picker.ts namespace switching (Enterprise namespaces); CLI -address and VAULT_ADDR per call Note: The CLI targets any server per command and the UI keeps a token per cluster and switches namespaces, but there is no account switcher for several identities in one UI session, so partial.",
@@ -9095,6 +9603,7 @@
       "originUrl": "https://github.com/bitwarden/clients/releases/tag/browser-v2025.12.1",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "evidence": {
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 searched 'phishing', 'safebrowsing' in src/all: no blocklist check; passbolt/passbolt_styleguide@v5.16.0 src/locales/en-UK/common.json 'phishing' only in the security token explanation Note: The security token protects the passbolt dialogs themselves from spoofing, but the extension does not warn about known phishing sites.",
         "nextcloud-passwords": "source silent: extension repo not read Note: Phishing warnings would be extension behaviour.",
@@ -9126,6 +9635,7 @@
       "originUrl": "https://community.bitwarden.com/t/override-default-language-settings/157",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "workplace-integration",
       "evidence": {
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php:17 GET /l10n/{section}/{language}.json; src/lib/Controller/LanguageController.php falls back via l10nFactory->findLanguage(); src/js/Services/LocalisationService.js:11 getLanguage() from @nextcloud/l10n; scripts/compile-language-files.js:36 builds src/l10n at release Note: The UI follows each user's Nextcloud language, loading per-section translation files; the files are generated at build time, so the number of languages cannot be counted from the git tree.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/locales holds 66 locales, chosen in the account preferences. Note: rated by the lane from the source.",
@@ -9158,6 +9668,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "source": "spec-round-2026-10-07",
       "screen": {
         "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
@@ -9185,6 +9696,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "source": "spec-round-2026-10-07",
       "screen": {
         "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
@@ -9212,6 +9724,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "source": "spec-round-2026-10-07",
       "screen": {
         "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
@@ -9242,6 +9755,7 @@
       "rowSource": "own",
       "provider": "keepiq",
       "providerHow": "read-from-code",
+      "feature": "browser-extension-autofill",
       "source": "spec-round-2026-10-07",
       "screen": {
         "canvas": "QAAxpcsFKBCvDUGbQbwtCa",
@@ -9249,5 +9763,78 @@
       }
     }
   ],
-  "pending": []
+  "pending": [],
+  "specScreens": {
+    "admin-api": {
+      "board": null,
+      "reason": "An admin REST API for scripts and tools; it has no screen of its own."
+    },
+    "admin-integrations": {
+      "board": [
+        "KqIntegraties"
+      ]
+    },
+    "app-shell": {
+      "board": null,
+      "reason": "Runs underneath every screen (routes, health and metrics endpoints); no screen of its own."
+    },
+    "ci-integrations": {
+      "board": null,
+      "reason": "Runs inside a CI pipeline (GitHub Action, GitLab template, CLI image); no Keepiq screen."
+    },
+    "cli-ssh-agent": {
+      "board": null,
+      "reason": "A command line SSH agent on the user's machine; no Keepiq screen."
+    },
+    "client-libraries": {
+      "board": null,
+      "reason": "Go, Python and TypeScript libraries for the machine API; no screen."
+    },
+    "distribution": {
+      "board": null,
+      "reason": "Engineering: the licence in the app manifest; no screen."
+    },
+    "extension-baseline": {
+      "board": [
+        "KqExtensie"
+      ]
+    },
+    "extension-release": {
+      "board": null,
+      "reason": "Engineering: what the extension package carries (icons, notices); no screen."
+    },
+    "extension-store-release": {
+      "board": null,
+      "reason": "Publishing in the browser stores and rolling out by policy; no Keepiq screen."
+    },
+    "integration-boundary": {
+      "board": null,
+      "reason": "Engineering: an architecture rule that vault data never mirrors into other apps; no screen."
+    },
+    "item-name-limit": {
+      "board": null,
+      "reason": "Engineering: one name limit held by server, import and extension; no screen of its own."
+    },
+    "kubernetes-integration": {
+      "board": null,
+      "reason": "A Kubernetes operator that runs in the cluster; no Keepiq screen."
+    },
+    "mcp-metadata-surface": {
+      "board": null,
+      "reason": "Read-only tools for AI agents over the MCP endpoint; no screen."
+    },
+    "passphrase-generator": {
+      "board": [
+        "KqSleutelGenereren"
+      ]
+    },
+    "secret-rotation-runner": {
+      "board": null,
+      "reason": "A runner outside the server that rotates and syncs secrets; no screen."
+    },
+    "terraform-provider": {
+      "board": null,
+      "reason": "A Terraform provider used from infrastructure code; no Keepiq screen."
+    }
+  }
 }
