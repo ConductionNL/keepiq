@@ -732,6 +732,12 @@ a {
 	cursor: pointer;
 }
 
+/* The native option list doesn't inherit the select's transparent background. */
+.select__input option {
+	color: var(--fg);
+	background: var(--surface);
+}
+
 /* The chevron sits over the select's right edge and lets clicks through. */
 .select > .icon:last-child {
 	position: absolute;
