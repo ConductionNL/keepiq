@@ -1,5 +1,5 @@
 {
-	"comment": "Written by tests/vectors/generate-autofill-vectors.mjs from the browser extension. Do not edit.",
+	"comment": "Written from the old browser extension, which is gone; frozen. Do not edit.",
 	"hosts": [
 		{
 			"input": "",

@@ -1,0 +1,45 @@
+{
+	"name": "@conduction/keepiq-extension",
+	"version": "0.0.1",
+	"private": true,
+	"description": "Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.",
+	"type": "module",
+	"scripts": {
+		"build": "wxt build",
+		"build:firefox": "wxt build -b firefox",
+		"dev": "wxt",
+		"dev:firefox": "wxt -b firefox",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"postinstall": "wxt prepare",
+		"test-site": "node scripts/test-site.ts",
+		"typecheck": "tsc --noEmit",
+		"zip": "wxt zip",
+		"zip:firefox": "wxt zip -b firefox",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@testing-library/dom": "10.4.2",
+		"@testing-library/react": "16.3.3",
+		"@testing-library/user-event": "14.6.7",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"@wxt-dev/module-react": "1.2.2",
+		"eslint": "^10.8.1",
+		"eslint-plugin-react-hooks": "7.1.1",
+		"globals": "^17.11.0",
+		"happy-dom": "20.14.5",
+		"typescript": "^5.9.0",
+		"typescript-eslint": "^8.67.0",
+		"vitest": "5.0.3",
+		"web-ext": "10.7.0",
+		"wxt": "^0.21.4"
+	},
+	"dependencies": {
+		"@wxt-dev/i18n": "0.2.7",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"tldts": "7.4.15"
+	}
+}

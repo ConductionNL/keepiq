@@ -1,0 +1,197 @@
+# Terms and tone follow the mobile app: je, kluis, hoofdwachtwoord, app-wachtwoord, webapp.
+language: nl
+extensionDescription: Browserextensie voor Keepiq, de versleutelde wachtwoordkluis voor Nextcloud. Vul logins, passkeys en eenmalige codes in op elke site en bewaar nieuwe terwijl je bezig bent. Alles is versleuteld — je hoofdwachtwoord en je geheimen bereiken de server nooit.
+
+errors:
+  insecureUrl: Gebruik https voor deze server
+  invalidUrl: Voer een geldige server-URL in
+  permissionDenied: Keepiq heeft toestemming nodig om {host} te bereiken
+  unreachable: Kan {host} niet bereiken
+  notNextcloud: "{host} lijkt geen Nextcloud-server te zijn"
+  serverError: "{host} is nu niet beschikbaar, probeer het later opnieuw"
+  unauthorized: Verkeerde gebruikersnaam of app-wachtwoord
+  keepiqMissing: Keepiq is niet geïnstalleerd op {host}
+  noActiveSuite: Open de Keepiq-webapp één keer en stel een hoofdwachtwoord in, probeer het daarna opnieuw
+  unlockBlocked: Je organisatie vereist inloggen in twee stappen. Stel een tweede factor in onder Nextcloud Instellingen, Beveiliging en probeer het daarna opnieuw
+  duplicate: Dit account is al toegevoegd
+  limitReached: Je kunt maximaal {count} accounts toevoegen
+  invalidMasterPassword: Ongeldig hoofdwachtwoord
+  offlineNoCache: Je bent offline en deze kluis is nog niet gesynchroniseerd
+  sessionRevoked: Sessie ingetrokken, log opnieuw in
+  writeLocked: Je kluis kan nu niet worden gewijzigd, probeer het later opnieuw
+  notResponding: Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.
+  unknown: Er ging iets mis
+
+notices:
+  keyChanged: Je kluissleutel is gewijzigd in Keepiq. Ontgrendel met je huidige hoofdwachtwoord.
+
+common:
+  accountOnHost: "{name} op {host}"
+  loading: Laden…
+  back: Terug
+  cancel: Annuleren
+  logOut: Uitloggen
+  appPassword: App-wachtwoord
+  addAccount: Account toevoegen
+  openWebApp: Open de Keepiq-webapp
+  later: Beschikbaar in een latere update
+  laterUpdate: Dit komt in een latere update.
+  justNow: zojuist
+
+titles:
+  accounts: Accounts
+  logInAgain: Opnieuw inloggen
+  unlock: Ontgrendelen
+  viewItem: Item bekijken
+
+tabs:
+  label: Hoofdmenu
+  vault: Kluis
+  generator: Generator
+  send: Send
+  settings: Instellingen
+
+header:
+  popout: Openen in apart venster
+  accounts: Accounts, ingelogd als {name}
+
+unlock:
+  masterPassword: Hoofdwachtwoord
+  submit: Ontgrendelen
+
+logInAgain:
+  submit: Inloggen
+
+addAccount:
+  serverUrl: Server-URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Gebruikersnaam
+  hint: Maak er een aan onder Nextcloud Instellingen, Beveiliging. Voer hier nooit je Nextcloud-inlogwachtwoord in.
+  hintWithLink: "Maak er een aan onder Nextcloud Instellingen, Beveiliging: {link}. Voer hier nooit je Nextcloud-inlogwachtwoord in."
+  securityLink: beveiligingsinstellingen openen
+
+accounts:
+  active: (actief)
+  unlocked: Ontgrendeld
+  locked: Vergrendeld
+  loggedOut: Uitgelogd
+  lock: "{account} vergrendelen"
+  logOut: Uitloggen bij {account}
+  lockAll: Alles vergrendelen
+  logOutAll: Overal uitloggen
+  logOutAllQuestion: Uitloggen bij elk account?
+  logOutAllDetail: Elk account wordt uit deze browser verwijderd. Je hebt elk app-wachtwoord opnieuw nodig.
+  logOutQuestion: Uitloggen bij {account}?
+  logOutDetail: Het account wordt uit deze browser verwijderd. Je hebt een app-wachtwoord nodig om het opnieuw toe te voegen.
+
+vault:
+  loadFailed: Kan je kluis niet laden
+  tryAgain: Probeer opnieuw
+  syncing: Je kluis wordt gesynchroniseerd
+  empty: Geen items in je kluis
+  noMatch: Geen items gevonden
+  searchCovers: Zoeken doorzoekt namen en websites.
+  clearFilters: Filters wissen
+  items: Items
+  tooMany: De eerste {count} worden getoond, verfijn je zoekopdracht
+  offline: Offline. Laatst gesynchroniseerd {time}
+  syncNow: Nu synchroniseren
+  busy: Server is bezet, later wordt het opnieuw geprobeerd
+  allBlocked: Alle items zijn geblokkeerd.
+  suggestions: Suggesties voor automatisch invullen
+  noSuggestions: Geen items voor {host}
+  openFailed: Kan de website niet openen
+  popoutFailed: Kan geen nieuw venster openen
+
+filters:
+  search: Zoeken
+  searchLabel: Zoek in de kluis
+  clearSearch: Zoekopdracht wissen
+  folder: Map
+  allItems: Alle items
+  noFolder: Geen map
+  type: Type
+  all: Alle
+  more: Meer
+  moreTypes: Meer types
+  login: Login
+  card: Kaart
+  identity: Identiteit
+  note: Notitie
+  totp: TOTP
+  passkey: Passkey
+
+item:
+  blocked: Geblokkeerd
+  launch: "{name} openen"
+  copyMenu: Kopiëren, {name}
+  moreMenu: Meer, {name}
+  copyUsername: Gebruikersnaam kopiëren
+  copyPassword: Wachtwoord kopiëren
+  copyCode: Verificatiecode kopiëren
+  view: Bekijken
+  edit: Bewerken
+  clone: Klonen
+  move: Naar map verplaatsen
+  delete: Verwijderen
+
+clipboard:
+  copied: "{what} gekopieerd"
+  failed: Kopiëren mislukt
+
+field:
+  show: "{field} tonen"
+  hide: "{field} verbergen"
+  copy: "{field} kopiëren"
+
+blocked:
+  generic: Dit item is geblokkeerd.
+  suiteMissing: Zijn versleutelingssleutel bestaat niet meer.
+  suiteRevoked: Zijn versleutelingssleutel is ingetrokken.
+  suiteCompromised: Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.
+  migrationFailed: Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.
+
+detail:
+  item: Item
+  decrypting: Ontsleutelen…
+  decryptFailed: Kan dit item niet ontsleutelen
+  unreadable: Kan dit item niet lezen
+  unreadablePasskey: Kan deze passkey niet lezen
+  unreadableFields: Kan de extra velden niet lezen
+  loginCredentials: Inloggegevens
+  username: Gebruikersnaam
+  password: Wachtwoord
+  authenticatorKey: Verificatiesleutel
+  website: Website
+  additionalFields: Extra velden
+  notes: Notities
+  history: Itemgeschiedenis
+  created: Aangemaakt
+  updated: Bijgewerkt
+  expires: Verloopt
+  cardDetails: Kaartgegevens
+  number: Nummer
+  numberWithBrand: Nummer · {brand}
+  cardNumber: Kaartnummer
+  cardholder: Naam op de kaart
+  expiry: Vervaldatum
+  cvv: CVV
+  pin: Pincode
+  identity: Identiteit
+  firstName: Voornaam
+  lastName: Achternaam
+  address: Adres
+  phone: Telefoonnummer
+  email: E-mailadres
+  bsn: BSN
+  passkey: Passkey
+  relyingParty: Website of app
+  passkeyUser: Gebruikersnaam
+  passkeyUnsupported: Inloggen met deze passkey kan nog niet in de extensie
+
+totp:
+  code: Verificatiecode
+  invalid: Ongeldige verificatiesleutel
+  changesIn:
+    1: Wijzigt over 1 seconde
+    n: Wijzigt over $1 seconden

@@ -1,46 +1,59 @@
 # Browser extension privacy policy
 
-This page is the privacy policy for the Keepiq browser extension in the Chrome Web Store, Firefox Add-ons and Microsoft Edge Add-ons.
+This page is the privacy policy for the Keepiq browser extension on Chrome, other Chromium browsers and Firefox. It covers the builds from the Keepiq source and the coming store versions.
 
 ## What the extension does
 
-The Keepiq extension fills logins, one-time codes and passkeys from your Keepiq vault. Your vault lives on your organisation's own Nextcloud server. The extension talks only to that server, the one you connect it to.
+Keepiq opens your Keepiq vault in your browser. Your vault lives on your organisation's own Nextcloud server. The extension opens it with your master password, in the browser.
 
-## What leaves your device
+## Where the extension connects
 
-The extension opens your vault inside the extension, with your master password. Your master password never leaves the extension. The server receives:
+The extension talks to your own Nextcloud, and to nobody else. It sends your server:
 
 - your Nextcloud user name and app password, with every request, to sign in;
-- the address of the site you are on, when you open the extension there, so the server can find the logins for it;
-- encrypted secrets, when you save or update a login;
-- the name and web address of a secret, which Keepiq keeps unencrypted so it can match a site;
-- the first five characters of a password's SHA-1 hash, when your organisation checks new passwords against known breaches. The full password and its full hash stay on your device.
+- requests for your profile (name, email address and picture), your encrypted vault key and your encrypted vault.
 
-The extension sends nothing to Conduction or to anyone other than your own server.
+Your master password never leaves the browser. Neither do your decrypted secrets.
 
-## What the extension stores on your device
+The extension sends nothing to Conduction. It has no analytics, no crash reports and no advertising. It does not load website icons, so no site and no icon service learns which accounts you have. The Firefox version declares to Mozilla that it collects no data.
 
-In the browser's extension storage, per connected account: the server address, your Nextcloud user name, a Nextcloud app password, a label and the idle lock delay you picked. You revoke the app password in your Nextcloud security settings to cut the extension off.
+## What the extension stores in your browser
 
-Also per account, a copy of your vault as the server stores it, so the extension works while the server cannot be reached: encrypted secrets, and the unencrypted names, web addresses and folders. It is replaced at every sync and removed when you disconnect the account, or when its app password is revoked.
+Per account: the server address, your Nextcloud user name, display name, email address and profile picture, an app password, and your settings. These stay until you log out of the account. The app password also goes when the server stops accepting it.
 
-Once for the browser: how long a copied value stays on the clipboard, whether to offer to save and update logins and to suggest passwords, the type of a new item, the colour theme, and the sites you said never to save logins on.
+A copy of your vault as the server stores it, so you can open it offline. It holds your encrypted secrets and the names, web addresses and folders of your items, which Keepiq keeps unencrypted. The copy goes when you log out of the account, when your vault key changes in Keepiq, and when your organisation's two-factor policy stops this login from opening the vault.
 
-In the browser's session storage, for at most five minutes after a login fill: the tab, the site and which one-time code secret to use on the next step. It holds no code and no secret. Also, per open tab, which frames are on which site, so a fill reaches only the site you picked. And, when you set a PIN, your vault key encrypted with a key made from that PIN. It is gone when you close the browser, log out, disconnect, or enter a wrong PIN five times. The browser keeps session storage in memory only.
+While the vault is unlocked, the browser keeps your vault key in its session storage, which lives in memory and is cleared when the browser closes. The **Never** lock option, which comes with the settings screen, is the one exception: it stores the key on disk so the vault stays open after a restart, and it warns you about that before you pick it.
 
-A login you submit on a site waits in memory for at most five minutes, for you to save it. It is gone when you save or dismiss it, when its tab closes, or when the vault locks.
+Your master password and your decrypted secrets are never stored. Decrypted values stay in memory while you look at them and are gone when you close the item or the extension.
 
-Your master password, your decrypted secrets and your vault key are never stored. They stay in memory while the vault is unlocked and are gone when it locks.
+When you are halfway through adding an account, the extension remembers the server address and user name until the browser closes, so closing the popup does not lose them. It never remembers the app password you typed.
+
+## What the extension reads in your browser
+
+- **The address of your current tab,** to suggest the items for that site. It stays in the extension.
+- **The pages you visit:** the extension's page script runs on every site, so that filling in logins can work there. Today it only tells the extension a page has loaded. It never receives your vault, and when autofill arrives it gets one login, after you chose it.
+- **Whether your computer is locked,** for the **On system lock** lock option, which comes with the settings screen.
+- **Your browser's language,** to show the extension in it. It stays in the extension.
+
+## Permissions
+
+| Permission | Why |
+| --- | --- |
+| Access to your Nextcloud server | Asked when you add an account, for that server only. Keepiq needs it to reach your vault. |
+| Read and change data on all websites | The page script that fills in logins runs on every site. It holds no vault data. |
+| Storage, unlimited storage | Keeps your accounts, settings and the encrypted vault copy. Firefox otherwise limits it to 5 MB. |
+| Tabs | Reads the current tab's address for suggestions, and opens an item's website in a new tab. |
+| Alarms | Locks the vault on time and checks for changes every 15 minutes. |
+| Idle | Locks the vault when your computer locks, if you choose that. |
+| Clipboard write | Clears a copied password after a delay, which you set in the settings screen when it comes. Until then the clipboard is not cleared. |
+| Offscreen document (Chrome) | Chrome needs a hidden page to clear the clipboard. |
 
 ## What the extension does not do
 
-- It does not keep a history of the sites you visit. It sends the site you are on to your own server only when you open the extension there.
+- It does not keep a history of the sites you visit or fill in.
 - It does not collect analytics or crash reports.
 - It does not sell, share or transfer data to third parties.
-
-## Firefox data collection declaration
-
-Firefox asks extensions to declare what they send outside the browser. The extension declares `authenticationInfo` (your app password and your encrypted logins) and `browsingActivity` (the site you are on, to find its logins). Both go only to your own server.
 
 ## Contact
 
