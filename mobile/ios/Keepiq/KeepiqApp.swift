@@ -14,6 +14,8 @@ struct KeepiqApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(model)
+                // Keepiq's tint passes WCAG AA contrast; the system blue does not on white.
+                .tint(KeepiqPalette.accent)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.cameToForeground() }

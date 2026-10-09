@@ -89,3 +89,58 @@ fun ComposeTestRule.waitUntilGone(text: String, timeoutMillis: Long = 30_000) {
             .fetchSemanticsNodes().isEmpty()
     }
 }
+
+/**
+ * The emulator's network, for the offline test (task 3.4). The shell turns
+ * off Wi-Fi and mobile data, and airplane mode where `cmd connectivity`
+ * has it (Android 11 and later). The test then checks from the app's own
+ * process that the server is out of reach, so a network that stayed up
+ * fails the test instead of passing it.
+ */
+object Network {
+    fun cut() {
+        E2e.shell("cmd connectivity airplane-mode enable")
+        E2e.shell("svc wifi disable")
+        E2e.shell("svc data disable")
+    }
+
+    fun restore() {
+        E2e.shell("cmd connectivity airplane-mode disable")
+        E2e.shell("svc wifi enable")
+        E2e.shell("svc data enable")
+    }
+
+    /** Whether status.php answers, with short timeouts. */
+    fun reachable(): Boolean = try {
+        val connection = URL("${E2e.server}/status.php").openConnection() as HttpsURLConnection
+        connection.connectTimeout = 5_000
+        connection.readTimeout = 5_000
+        connection.useCaches = false
+        try {
+            connection.responseCode in 200..499
+        } finally {
+            connection.disconnect()
+        }
+    } catch (e: java.io.IOException) {
+        false
+    }
+
+    fun awaitUnreachable(timeoutMillis: Long = 60_000) = await(timeoutMillis, false)
+
+    fun awaitReachable(timeoutMillis: Long = 120_000) = await(timeoutMillis, true)
+
+    private fun await(timeoutMillis: Long, want: Boolean) {
+        val until = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < until) {
+            if (reachable() == want) return
+            Thread.sleep(1_000)
+        }
+        // executeShellCommand runs no shell, so no pipes: filter here.
+        val state = E2e.shell("dumpsys connectivity").lineSequence()
+            .filter { it.contains("NetworkAgentInfo") }.take(5).joinToString(" | ")
+        throw AssertionError(
+            if (want) "the server is still out of reach ${timeoutMillis / 1000} s after the network came back; networks: $state"
+            else "the server still answers ${timeoutMillis / 1000} s after the network was cut; networks: $state",
+        )
+    }
+}

@@ -66,13 +66,17 @@ struct GeneratorView: View {
                 if policy?.allowPassphrase == false { Text(L("gen_passphrase_off")).font(.footnote) }
                 HStack {
                     if let value = outcome.value {
-                        Text(value).font(.body.monospaced()).textSelection(.disabled).accessibilityIdentifier("generated")
+                        Text(value).font(.body.monospaced()).textSelection(.disabled).lineLimit(nil).fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("generated")
                     } else {
                         Text(generatorProblem(outcome.error)).foregroundStyle(.red)
                     }
                     Spacer()
-                    Button { round += 1 } label: { Image(systemName: "arrow.clockwise") }
-                        .frame(minWidth: 44, minHeight: 44)
+                    // The frame inside the label: a borderless button only takes taps on its label.
+                    Button { round += 1 } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
                         .accessibilityLabel(L("cd_regenerate"))
                     if let value = outcome.value {
                         if let onUse {
@@ -233,9 +237,11 @@ private struct SendRow: View {
             Text(created.map { L("send_row", kind, $0) } ?? kind)
             Text(detailText(expiry: expiry))
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(KeepiqPalette.secondaryText)
         }
         .frame(minHeight: 44)
+        // One element for the row, so its 44 pt is the hit area and not each line's.
+        .accessibilityElement(children: .combine)
     }
 
     private func expiryText(_ m: Int64) -> String {
@@ -331,10 +337,14 @@ struct NewSendView: View {
                             TextField(L("send_hours_label"), text: $hours).keyboardType(.numberPad)
                         }
                     }
-                    LabeledField(L("send_password_label")) {
-                        SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode).disabled(!passwordAvailable)
+                    // Without a password option there is no field to fill in, only the reason.
+                    if passwordAvailable {
+                        LabeledField(L("send_password_label")) {
+                            SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode)
+                        }
+                    } else {
+                        Text(L("send_password_unavailable")).font(.footnote)
                     }
-                    if !passwordAvailable { Text(L("send_password_unavailable")).font(.footnote) }
                 }
                 Section {
                     if let problem { Text(problem).foregroundStyle(.red) }
