@@ -768,6 +768,11 @@ a {
 	border-color: var(--accent);
 }
 
+.chip[aria-pressed='true']:hover:not(:disabled) {
+	background: var(--accent-hover);
+	border-color: var(--accent-hover);
+}
+
 .chip:disabled,
 .search__input:disabled,
 .select__input:disabled {
