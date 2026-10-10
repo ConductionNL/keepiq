@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Tells integriq when a connection certificate expires through the integration boundary; no keepiq screen

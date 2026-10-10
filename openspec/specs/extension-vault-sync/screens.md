@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Local vault copy and sync in the extension; no screen of its own

@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- KqDashboard https://identity.conduction.nl/screens/board?id=keepiq/KqDashboard
