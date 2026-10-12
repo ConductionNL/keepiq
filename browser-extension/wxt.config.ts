@@ -2,7 +2,7 @@ import type { Server } from 'node:http'
 import { resolve } from 'node:path'
 import { defineConfig } from 'wxt'
 import { defaultBrowserBinaries } from './scripts/default-browser'
-import { clearServiceWorkers } from './scripts/dev-profile'
+import { prepareDevProfile } from './scripts/dev-profile'
 import { startTestSite, TEST_SITE_PORT } from './scripts/test-site'
 
 let testSite: Server | undefined
@@ -12,7 +12,7 @@ export default defineConfig({
 	hooks: {
 		// Started before the browser opens, so the dev profile can land on it.
 		'server:started': async (wxt) => {
-			clearServiceWorkers(chromiumProfile)
+			prepareDevProfile(chromiumProfile)
 			testSite = await startTestSite().catch((error) => {
 				wxt.logger.warn(`Test site not started: ${error.message}`)
 				return undefined
