@@ -193,7 +193,7 @@ writeErrors:
   policy: Het beleid van je organisatie staat deze wijziging niet toe
   accountChanged: Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.
   keepClash: Er bestaat al een map {name} één niveau hoger. Kies daarvoor Items naar bovenliggende map of Verwijderen, of wijzig eerst een van de namen.
-  keepClashAfter: Een map die je wilde behouden heeft dezelfde naam als een map één niveau hoger, dus de map is niet verwijderd. De items erin kunnen al verplaatst of verwijderd zijn. Controleer de keuzes opnieuw.
+  keepClashAfter: Een map die je wilde behouden heeft dezelfde naam als een map één niveau hoger, dus er is niets verwijderd. Controleer de keuzes opnieuw.
   invalid: Keepiq heeft deze wijziging geweigerd
   stale: Dit item is ergens anders gewijzigd. Ga terug en bewerk het opnieuw om de nieuwste versie te zien.
   itemGone: Dit item bestaat niet meer

@@ -102,11 +102,11 @@ The extension SHALL, for a folder with subfolders, call `GET /api/v1/folders/{id
 #### Scenario: Kept subfolder's name is taken one level up
 - **GIVEN** "Work" holds the subfolder "Clients" and a root folder "Clients" exists
 - **WHEN** the resolution dialog for "Work" leaves "Clients" on Keep
-- **THEN** it MUST say "A folder named Clients already exists one level up…" and disable Delete, because the server finds the clash only after moving or purging the direct items
+- **THEN** it MUST say "A folder named Clients already exists one level up…" and disable Delete before anything is sent
 
 #### Scenario: Server finds the clash anyway
 - **GIVEN** the cache missed the clashing name and the server answers 409 to a resolution plan
-- **THEN** the dialog MUST say the folder was not deleted and its own items may already have moved or gone, start a sync, and offer Retry, which re-reads the children
+- **THEN** the dialog MUST say nothing was deleted, start a sync, and offer Retry, which re-reads the children
 
 ### Requirement: Folder picker
 The extension SHALL provide a folder picker used by the add-item form, the edit form and Move, listing "No folder" first and then the folder tree with indentation, the current folder marked, and a "New folder" entry at the end. Selection MUST return the `folderId` (or `null`) to the caller without a request.

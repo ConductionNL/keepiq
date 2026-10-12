@@ -194,7 +194,7 @@ writeErrors:
   policy: Your organisation's policy does not allow this change
   accountChanged: You switched to another account meanwhile, so nothing was saved. Switch back to save it.
   keepClash: A folder named {name} already exists one level up. Choose Move items to parent or Delete for it, or rename one of them first.
-  keepClashAfter: A folder you chose to keep has the same name as one a level up, so the folder was not deleted. Its own items may already have been moved or deleted. Check the choices again.
+  keepClashAfter: A folder you chose to keep has the same name as one a level up, so nothing was deleted. Check the choices again.
   invalid: Keepiq refused this change
   stale: This item was changed elsewhere. Go back and edit it again to see the latest version.
   itemGone: This item no longer exists

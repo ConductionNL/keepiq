@@ -245,7 +245,7 @@ describe('Folders', () => {
 		expect(sentOf(sent, 'folder.delete')).toEqual([])
 	})
 
-	it('says so, syncs and stops when the server finds the name clash anyway', async () => {
+	it('says nothing was deleted, syncs and stops when the server finds the name clash anyway', async () => {
 		const children = { directSecretCount: 1, subfolders: [{ id: 'c', name: 'Clients', secretCount: 0, subfolderCount: 0 }] }
 		const { sent, user } = await openFolders({
 			snapshot: snapshotReply({ folders: [work, clients] }),
@@ -253,7 +253,7 @@ describe('Folders', () => {
 		})
 		await choose(user, 'Work', 'Delete')
 		await user.click(await within(dialog()).findByRole('button', { name: 'Delete' }))
-		expect(await within(dialog()).findByText(/^A folder you chose to keep has the same name/)).toBeTruthy()
+		expect(await within(dialog()).findByText(/^A folder you chose to keep has the same name.*, so nothing was deleted\./)).toBeTruthy()
 		expect(sentOf(sent, 'folder.delete')).toHaveLength(1)
 		expect(sentOf(sent, 'folder.children')).toHaveLength(1)
 		await waitFor(() => expect(sentOf(sent, 'vault.sync')).toHaveLength(1))

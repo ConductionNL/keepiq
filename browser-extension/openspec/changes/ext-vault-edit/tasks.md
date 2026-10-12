@@ -44,6 +44,7 @@
 - [x] 4.13 Read Keepiq's 428 refusal like a 403, with its `error` as the code, in writes and in the manifest fallback.
 - [x] 4.14 Answer an overtaken snapshot read with the newer one, and leave "New folder" for the picker once the folder exists.
 - [x] 4.15 Sync when the fresh fetch for Edit or Clone is refused, and name the blocked reason when the sync marks the item blocked.
+- [x] 4.16 Read a 409 to a folder delete plan as nothing deleted, now that the server checks everything first (keepiq#1248).
 
 ## 5. Docs and checks
 

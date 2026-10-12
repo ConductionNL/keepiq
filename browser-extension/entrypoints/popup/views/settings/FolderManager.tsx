@@ -148,8 +148,7 @@ function DeleteFolderDialog({ folder, snapshot, onDeleted, onCancel }: { folder:
 		setBusy(false)
 		if (reply?.ok) return onDeleted()
 		if (reply?.error.code === 'conflict' && plan.mode === 'resolution') {
-			// A kept subfolder's name is taken one level up. The server checks that only after it moved or
-			// purged the direct items, so the vault may already have changed: sync, and say so.
+			// The cache missed a folder one level up with a kept subfolder's name. Nothing changed; syncing lets the check below name it.
 			syncNow()
 			return setFailure({ text: i18n.t('writeErrors.keepClashAfter'), retry: 'children' })
 		}
@@ -185,7 +184,7 @@ function DeleteFolderDialog({ folder, snapshot, onDeleted, onCancel }: { folder:
 		)
 	}
 	const { children, directSecrets, subfolders } = state
-	// Caught here because the server finds it only after moving or purging the direct items.
+	// Caught here, so the choice can change before anything is sent.
 	const taken = new Set(snapshot.folders.filter((f) => f.parentId === folder.parentId && f.id !== folder.id).map((f) => f.name.toLowerCase()))
 	const clashes = new Set(children.subfolders.filter((sub) => (subfolders[sub.id] ?? 'keep') === 'keep' && taken.has(sub.name.toLowerCase())).map((sub) => sub.id))
 	return (
