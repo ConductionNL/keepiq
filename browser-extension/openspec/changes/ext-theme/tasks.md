@@ -18,7 +18,7 @@
 - [x] 3.2 Create `hooks/useSettings.ts` over `settings.get` and `settings.set`, applying and mirroring the theme on a reply
 - [x] 3.3 Create `views/settings/SettingsIndex.tsx`, `Appearance.tsx` and `Settings.tsx`, and wire them into Shell with the title and back control
   - Unbuilt sections are `aria-disabled` with "Available in a later update"
-  - Switching tabs returns to the section list
+  - An open section covers the tab bar until back
 - [x] 3.4 Add the text to `locales/en.yml` and `locales/nl.yml`
 - [x] 3.5 Extend `fakeBackground` and add view tests: the section list, opening Appearance, changing the theme, a failed write, and the theme on the unlock screen
 

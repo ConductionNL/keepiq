@@ -104,9 +104,12 @@ describe('Shell', () => {
 		await user.click(await screen.findByRole('button', { name: 'TOTP' }))
 		await user.click(screen.getByRole('button', { name: /^Authy/ }))
 		expect((await title()).textContent).toBe('View item')
-		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeTruthy()
+		// The detail covers the tab bar and puts its own actions there.
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+		expect(screen.getByRole('button', { name: 'Edit' }).closest('.popup__footer')).toBeTruthy()
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		expect((await title()).textContent).toBe('Vault')
+		expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy()
 		expect(screen.getByRole('button', { name: 'TOTP' }).getAttribute('aria-pressed')).toBe('true')
 		expect(screen.queryByRole('button', { name: /^Bank/ })).toBeNull()
 	})

@@ -661,13 +661,37 @@ a {
 	outline-offset: -2px;
 }
 
-/* Toast, above the tab bar */
+/* A page's own actions, in place of the tab bar. A page without any shows no bar. */
+
+.popup__footer {
+	flex: none;
+	display: flex;
+	gap: 8px;
+	padding: 12px 16px;
+	background: var(--surface);
+	border-top: 1px solid var(--border);
+}
+
+.popup__footer:empty {
+	display: none;
+}
+
+.popup__footer .btn {
+	flex: 1;
+}
+
+/* Toast, above whichever bar is at the bottom */
+
+.popup__bottom {
+	position: relative;
+	flex: none;
+}
 
 .toast {
 	position: absolute;
 	left: 16px;
 	right: 16px;
-	bottom: 68px;
+	bottom: calc(100% + 16px);
 	display: flex;
 	justify-content: center;
 	pointer-events: none;
@@ -1166,15 +1190,6 @@ a {
 		radial-gradient(var(--surface) 58%, transparent 60%),
 		conic-gradient(var(--accent) calc(var(--progress) * 360deg), var(--border) 0);
 	border-radius: 50%;
-}
-
-.detail-actions {
-	display: flex;
-	gap: 8px;
-}
-
-.detail-actions .btn {
-	flex: 1;
 }
 
 .btn[aria-disabled='true'] {

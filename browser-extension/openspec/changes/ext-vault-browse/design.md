@@ -52,7 +52,7 @@ Added:
 - `src/totp/totp.ts`: `parseTotpSeed(value)`, `generateCode(params, now)`, `secondsRemaining(period, now)`.
 - `src/clipboard.ts`: `copyText(text)` for the popup, `clearClipboard()` for the background with the Chrome offscreen and Firefox page paths.
 - `entrypoints/offscreen/index.html`, `entrypoints/offscreen/main.ts`: Chrome-only clipboard-clear document (`include: ['chrome']`).
-- `entrypoints/popup/views/Shell.tsx`: tab bar, view stack (list to detail and back), locked and logged-out gating, popout detection, last-tab round trip.
+- `entrypoints/popup/views/Shell.tsx`: tab bar, view stack (list to detail and back), locked and logged-out gating, popout detection, last-tab round trip. An open page replaces the tab bar with a footer bar that the page fills through `components/PageFooter.tsx`, a portal, so its actions stay with the page's own logic.
 - `entrypoints/popup/views/VaultList.tsx`: search, folder and type filters, suggestions section, sorted list, empty and offline states.
 - `entrypoints/popup/components/Suggestions.tsx`: the "Autofill suggestions" block above the list, its own component because ext-autofill adds an `onFill` callback to it.
 - `entrypoints/popup/components/Toast.tsx`: transient confirmation and failure messages, used first by copy and later by fill.

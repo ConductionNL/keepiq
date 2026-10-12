@@ -1,13 +1,21 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DecryptedItem, FolderMeta, ItemMeta } from '@/src/messages'
 import { ShellContext } from '../shell-context'
 import { fakeBackground, itemMeta, sentKinds, types } from '../testing'
 import { ItemDetail } from './ItemDetail'
 
-afterEach(cleanup)
+// Shell's footer bar, where the detail portals Edit and Delete.
+let footer: HTMLElement
+beforeEach(() => {
+	footer = document.body.appendChild(document.createElement('div'))
+})
+afterEach(() => {
+	cleanup()
+	footer.remove()
+})
 
 const folders: FolderMeta[] = [{ id: 'w', name: 'Work', parentId: null }, { id: 'c', name: 'Clients', parentId: 'w' }]
 
@@ -16,7 +24,7 @@ function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 
 	const refreshState = vi.fn()
 	const launch = vi.fn()
 	const view = render(
-		<ShellContext.Provider value={{ refreshState, toast: vi.fn(), launch }}>
+		<ShellContext.Provider value={{ refreshState, toast: vi.fn(), launch, footer }}>
 			<ItemDetail item={item} type={types.find((t) => t.id === item.typeId)} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
 		</ShellContext.Provider>,
 	)
@@ -64,7 +72,7 @@ describe('login credentials', () => {
 		const decrypts = () => sentKinds(sent).filter((kind) => kind === 'item.decrypt').length
 		expect(decrypts()).toBe(1)
 		view.rerender(
-			<ShellContext.Provider value={{ refreshState: vi.fn(), toast: vi.fn(), launch: vi.fn() }}>
+			<ShellContext.Provider value={{ refreshState: vi.fn(), toast: vi.fn(), launch: vi.fn(), footer }}>
 				<ItemDetail item={itemMeta({ updatedAt: '2026-04-01T00:00:00Z' })} type={types[0]} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
 			</ShellContext.Provider>,
 		)
@@ -215,10 +223,10 @@ describe('metadata and actions', () => {
 		expect(within(history).getByText('Expires')).toBeTruthy()
 	})
 
-	it('has Edit and Delete disabled until a later update', () => {
+	it('has Edit and Delete in the footer, disabled until a later update', () => {
 		renderDetail(itemMeta())
 		for (const name of ['Edit', 'Delete']) {
-			const button = screen.getByRole('button', { name })
+			const button = within(footer).getByRole('button', { name })
 			expect(button.getAttribute('aria-disabled')).toBe('true')
 			expect(button.getAttribute('title')).toBe('Available in a later update')
 		}

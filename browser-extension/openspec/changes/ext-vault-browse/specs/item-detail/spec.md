@@ -113,12 +113,12 @@ The detail SHALL show "Created" and "Updated" from `createdAt` and `updatedAt` a
 - **THEN** both dates appear in the metadata section in the user's locale
 
 ### Requirement: Edit and Delete placeholders
-The detail SHALL show Edit and Delete buttons at the bottom, disabled with the tooltip "Available in a later update" until ext-vault-edit enables them. For blocked items they stay disabled after ext-vault-edit as well, and for use-only items Edit does, since the server refuses to change a use-only copy.
+The detail SHALL show Edit and Delete buttons in its page footer, fixed below the scrolling content, disabled with the tooltip "Available in a later update" until ext-vault-edit enables them. For blocked items they stay disabled after ext-vault-edit as well, and for use-only items Edit does, since the server refuses to change a use-only copy.
 
 #### Scenario: Buttons before ext-vault-edit
 - **GIVEN** ext-vault-edit is not implemented
 - **WHEN** the detail opens
-- **THEN** Edit and Delete are visible and disabled with the tooltip
+- **THEN** Edit and Delete are visible in the footer without scrolling, and disabled with the tooltip
 
 ### Requirement: Decrypted values are dropped on close
 The detail view MUST keep decrypted values, parsed payloads, TOTP state and reveal state in popup memory only, MUST clear them when the view closes, the popup closes or the vault locks, and MUST NOT persist them anywhere.

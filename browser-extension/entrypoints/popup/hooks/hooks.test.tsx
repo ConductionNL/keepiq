@@ -15,7 +15,7 @@ import { useVaultSnapshot } from './useVaultSnapshot'
 afterEach(cleanup)
 
 function shell(overrides: { refreshState?: () => void; toast?: (text: string) => void } = {}) {
-	const value = { refreshState: vi.fn(), toast: vi.fn(), launch: vi.fn(), ...overrides }
+	const value = { refreshState: vi.fn(), toast: vi.fn(), launch: vi.fn(), footer: null, ...overrides }
 	const wrapper = ({ children }: { children: ReactNode }) => <ShellContext.Provider value={value}>{children}</ShellContext.Provider>
 	return { value, wrapper }
 }

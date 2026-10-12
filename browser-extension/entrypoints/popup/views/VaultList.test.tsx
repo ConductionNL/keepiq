@@ -20,7 +20,7 @@ function renderList(snapshot: UnlockedSnapshot, options: { tab?: CurrentTab; dec
 	const onOpen = vi.fn()
 	const syncNow = vi.fn()
 	render(
-		<ShellContext.Provider value={{ refreshState: vi.fn(), toast, launch }}>
+		<ShellContext.Provider value={{ refreshState: vi.fn(), toast, launch, footer: null }}>
 			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} syncNow={syncNow} onOpen={onOpen} />
 		</ShellContext.Provider>,
 	)

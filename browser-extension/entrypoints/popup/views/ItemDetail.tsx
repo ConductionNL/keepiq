@@ -9,6 +9,7 @@ import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Icon } from '../components/Icon'
 import { Loading } from '../components/Loading'
 import { MaskedField } from '../components/MaskedField'
+import { PageFooter } from '../components/PageFooter'
 import { TotpCode } from '../components/TotpCode'
 import { blockedText } from '../errors'
 import { useDecryptedFields } from '../hooks/useDecryptedFields'
@@ -210,10 +211,10 @@ export function ItemDetail({ item, type, folders, webAppUrl }: Props) {
 					))}
 				</dl>
 			</section>
-			<div className="detail-actions">
+			<PageFooter>
 				<button type="button" className="btn btn--primary" aria-disabled="true" title={later}>{i18n.t('item.edit')}</button>
 				<button type="button" className="btn btn--danger" aria-disabled="true" title={later}>{i18n.t('item.delete')}</button>
-			</div>
+			</PageFooter>
 		</div>
 	)
 }

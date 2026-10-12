@@ -28,7 +28,7 @@ interface Props {
 	refreshState: () => void
 }
 
-/** The unlocked popup: tabs, and on Vault the list with an item detail stacked over it. */
+/** The unlocked popup: tabs, and pages such as an item's detail or a settings section opened over them. */
 export function Shell({ active, lastTab, hidden = false, onAccounts, refreshState }: Props) {
 	const tab = useCurrentTab()
 	// Read once: a later state refresh must not pull the user off the tab they picked.
@@ -37,6 +37,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const [section, setSection] = useState<SettingsSection | null>(null)
 	// A fresh object per call, so the same message twice restarts the timer.
 	const [toast, setToast] = useState<{ text: string } | null>(null)
+	const [footer, setFooter] = useState<HTMLElement | null>(null)
 	const body = useRef<HTMLDivElement>(null)
 	const listScroll = useRef(0)
 	const { reply, failed, syncNow } = useVaultSnapshot(tab?.url, tab !== undefined)
@@ -60,7 +61,8 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		refreshState,
 		toast: (text: string) => setToast({ text }),
 		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => setToast({ text: i18n.t('vault.openFailed') })),
-	}), [refreshState, tab?.windowId])
+		footer,
+	}), [refreshState, tab?.windowId, footer])
 
 	const open = useCallback((id: string) => {
 		listScroll.current = body.current?.scrollTop ?? 0
@@ -108,6 +110,8 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const inSection = current === 'settings' && section !== null
 	const title = detail ? i18n.t('titles.viewItem') : inSection ? sectionLabel(section) : tabLabel(current)
 	const back = detail ? () => setDetailId(null) : inSection ? () => setSection(null) : undefined
+	// A page opened from a tab covers the tab bar, as in Bitwarden, and gets the bar for its own actions.
+	const page = back !== undefined
 
 	return (
 		<ShellContext.Provider value={context}>
@@ -120,8 +124,10 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 					onPopout={isPopout ? undefined : () => void popout()}
 				/>
 				<div className="popup__body" ref={body}>{content}</div>
-				<Toast message={toast?.text ?? null} />
-				<TabBar active={current} onSelect={select} />
+				<div className="popup__bottom">
+					<Toast message={toast?.text ?? null} />
+					{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={current} onSelect={select} />}
+				</div>
 			</main>
 		</ShellContext.Provider>
 	)

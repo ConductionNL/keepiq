@@ -69,15 +69,15 @@ describe('Settings', () => {
 		expect(theme()).toBeUndefined()
 	})
 
-	it('returns to the list after leaving the tab', async () => {
+	it('covers the tab bar while a section is open, with no footer of its own', async () => {
 		fakeBackground()
 		const user = await openSettings()
 		await user.click(screen.getByRole('button', { name: 'Appearance' }))
-		const tabs = within(screen.getByRole('navigation', { name: 'Main' }))
-		await user.click(tabs.getByRole('button', { name: 'Vault' }))
-		await user.click(tabs.getByRole('button', { name: 'Settings' }))
-		expect((await title()).textContent).toBe('Settings')
-		expect(screen.queryByRole('combobox', { name: 'Theme' })).toBeNull()
+		await screen.findByRole('combobox', { name: 'Theme' })
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+		expect(document.querySelector('.popup__footer')!.childElementCount).toBe(0)
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy()
 	})
 })
 

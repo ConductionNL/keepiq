@@ -72,10 +72,10 @@ The extension SHALL show, in the Settings tab of the unlocked popup, the section
 - **WHEN** the section list renders
 - **THEN** Account security, Autofill, Notifications, Vault and About are disabled and explain "Available in a later update"
 
-#### Scenario: Leaving the tab
+#### Scenario: Section covers the tab bar
 - **GIVEN** the Appearance view is open
-- **WHEN** the user switches to the Vault tab and back
-- **THEN** the section list shows
+- **THEN** the tab bar is not shown
+- **AND** back returns to the section list with the tab bar
 
 #### Scenario: Background does not answer
 - **GIVEN** the background does not reply to `settings.set`

@@ -9,6 +9,7 @@ import { Avatar, initials } from './Avatar'
 import { Button } from './Button'
 import { Header } from './Header'
 import { MaskedField } from './MaskedField'
+import { PageFooter } from './PageFooter'
 import { Select } from './Select'
 import { TabBar } from './TabBar'
 import { Toast } from './Toast'
@@ -93,6 +94,18 @@ describe('TabBar', () => {
 	})
 })
 
+describe('PageFooter', () => {
+	it('renders into the shell footer, and nowhere without one', () => {
+		const footer = document.body.appendChild(document.createElement('div'))
+		const context = { refreshState: () => {}, toast: () => {}, launch: () => {} }
+		const { rerender } = render(<ShellContext.Provider value={{ ...context, footer: null }}><PageFooter><button type="button">Edit</button></PageFooter></ShellContext.Provider>)
+		expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+		rerender(<ShellContext.Provider value={{ ...context, footer }}><PageFooter><button type="button">Edit</button></PageFooter></ShellContext.Provider>)
+		expect(footer.contains(screen.getByRole('button', { name: 'Edit' }))).toBe(true)
+		footer.remove()
+	})
+})
+
 describe('Select', () => {
 	it('is named by its label and reports the chosen value', async () => {
 		const onChange = vi.fn()
@@ -120,7 +133,7 @@ describe('MaskedField', () => {
 		const writeText = fakeClipboard()
 		const toast = vi.fn()
 		vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(null as never)
-		render(<ShellContext.Provider value={{ refreshState: () => {}, toast, launch: () => {} }}><MaskedField label="CVV" value="123" masked /></ShellContext.Provider>)
+		render(<ShellContext.Provider value={{ refreshState: () => {}, toast, launch: () => {}, footer: null }}><MaskedField label="CVV" value="123" masked /></ShellContext.Provider>)
 		expect(screen.queryByText('123')).toBeNull()
 		await user.click(screen.getByRole('button', { name: 'Show CVV' }))
 		expect(screen.getByText('123')).toBeTruthy()

@@ -6,8 +6,10 @@ export interface ShellContextValue {
 	toast: (message: string) => void
 	/** Opens a launchable url in a new tab. */
 	launch: (url: string) => void
+	/** Where a page opened over a tab puts its actions; `null` while a tab shows. */
+	footer: HTMLElement | null
 }
 
-export const ShellContext = createContext<ShellContextValue>({ refreshState: () => {}, toast: () => {}, launch: () => {} })
+export const ShellContext = createContext<ShellContextValue>({ refreshState: () => {}, toast: () => {}, launch: () => {}, footer: null })
 
 export const useShell = () => useContext(ShellContext)
