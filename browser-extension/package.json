@@ -41,5 +41,8 @@
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
 		"tldts": "7.4.15"
+	},
+	"overrides": {
+		"shell-quote": "^1.11.0"
 	}
 }
