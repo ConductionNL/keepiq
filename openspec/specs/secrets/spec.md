@@ -344,7 +344,7 @@ The three subfolder actions have recursive semantics:
 - GIVEN a folder delete with a cascade parameter or a resolution plan
 - WHEN any part of it is refused, such as an unknown action or a kept subfolder whose name a folder one level up already has (409)
 - THEN the system MUST refuse before it moves or deletes any secret or folder
-- AND the writes of an accepted delete MUST commit in one transaction, so a failed write leaves the folder, its secrets and its subfolders as they were
+- AND the writes of an accepted delete MUST commit in one transaction, so a failed write leaves the folder, its secrets and its subfolders as they were, except attachment files already purged, which a rollback cannot restore
 
 #### Scenario: Keep a subfolder named like the deleted folder
 - GIVEN a folder "Work" with a subfolder also named "Work"
