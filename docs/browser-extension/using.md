@@ -106,6 +106,10 @@ The extension keeps an encrypted copy of your vault in the browser. Without a co
 
 The extension checks your server for changes every 15 minutes while the vault is unlocked, and when you open it after a while. When your master password or vault key changed in Keepiq, the extension locks and asks for your current master password.
 
+## Theme
+
+The extension follows your browser's light or dark setting, which on most browsers follows your computer's. To pick one yourself, open **Settings**, **Appearance** and choose **Light** or **Dark** under **Theme**; **System default** follows the browser again. The choice applies to every account and stays when you log out.
+
 ## Language
 
 The extension speaks your browser's language. It is available in English and Dutch; in any other language it uses English. To change it, change your browser's language. Item names, folder names and item types come from your vault and stay as they are.
@@ -120,5 +124,5 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
 - **Adding and editing** items in the extension.
 - **Generator and Send**, as in the web app.
-- **Settings:** the lock delay, a PIN, when the clipboard is cleared and the theme.
+- **More settings:** the lock delay, a PIN and when the clipboard is cleared.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

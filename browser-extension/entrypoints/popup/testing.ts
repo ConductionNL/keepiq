@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { AccountSummary, DecryptField, DecryptedItem, ItemMeta, PopupState, PopupTab, Result, TypeMeta, VaultSnapshotReply } from '@/src/messages'
+import type { AccountSummary, DecryptField, DecryptedItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, TypeMeta, VaultSnapshotReply } from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
 	return {
@@ -71,14 +71,18 @@ interface FakeBackground {
 	tabUrl?: string
 	/** Kinds the background fails on, which reaches the popup as no reply. */
 	unanswered?: string[]
+	settings?: GlobalSettings
 }
 
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
-	const reply = vi.fn(async (message: { kind: string; ids?: string[]; fields?: DecryptField[] }): Promise<unknown> => {
+	let settings: GlobalSettings = options.settings ?? { theme: 'system' }
+	const reply = vi.fn(async (message: { kind: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings> }): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
 		switch (message.kind) {
+			case 'settings.get': return settings
+			case 'settings.set': return (settings = { ...settings, ...message.patch })
 			case 'vault.snapshot': return options.snapshot ?? snapshotReply()
 			case 'vault.sync': return (options.snapshot as UnlockedSnapshot | undefined)?.sync ?? snapshotReply().sync
 			case 'item.decrypt': {

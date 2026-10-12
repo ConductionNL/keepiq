@@ -185,6 +185,28 @@ describe('last tab', () => {
 	})
 })
 
+describe('settings', () => {
+	it('reads and writes the theme while locked', async () => {
+		await lock(accountId)
+		expect(await send({ kind: 'settings.get' })).toEqual({ theme: 'system' })
+		expect(await send({ kind: 'settings.set', patch: { theme: 'dark' } })).toEqual({ theme: 'dark' })
+		expect(await send({ kind: 'settings.get' })).toEqual({ theme: 'dark' })
+	})
+
+	it('ignores an invalid theme', async () => {
+		await send({ kind: 'settings.set', patch: { theme: 'light' } })
+		expect(await send({ kind: 'settings.set', patch: { theme: 'blue' as never } })).toEqual({ theme: 'light' })
+	})
+
+	it('does not count a read as interaction', async () => {
+		await send({ kind: 'settings.set', patch: { theme: 'light' } })
+		const before = await browser.storage.session.get('lastInteractionAt')
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		await send({ kind: 'settings.get' })
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+	})
+})
+
 describe('clipboard.copied', () => {
 	it('schedules the clear with the default delay', async () => {
 		await send({ kind: 'clipboard.copied' })

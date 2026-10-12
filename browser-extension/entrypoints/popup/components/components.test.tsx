@@ -9,6 +9,7 @@ import { Avatar, initials } from './Avatar'
 import { Button } from './Button'
 import { Header } from './Header'
 import { MaskedField } from './MaskedField'
+import { Select } from './Select'
 import { TabBar } from './TabBar'
 import { Toast } from './Toast'
 import { ShellContext } from '../shell-context'
@@ -89,6 +90,18 @@ describe('TabBar', () => {
 		expect(screen.getByRole('button', { name: 'Vault' }).getAttribute('aria-current')).toBeNull()
 		await userEvent.setup().click(screen.getByRole('button', { name: 'Generator' }))
 		expect(onSelect).toHaveBeenCalledWith('generator')
+	})
+})
+
+describe('Select', () => {
+	it('is named by its label and reports the chosen value', async () => {
+		const onChange = vi.fn()
+		const options = [{ value: 'a', label: 'First' }, { value: 'b', label: 'Second' }]
+		render(<Select label="Pick" value="a" options={options} onChange={onChange} />)
+		const select = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Pick' })
+		expect(select.value).toBe('a')
+		await userEvent.setup().selectOptions(select, 'Second')
+		expect(onChange).toHaveBeenCalledWith('b')
 	})
 })
 

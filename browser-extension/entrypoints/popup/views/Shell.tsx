@@ -13,6 +13,8 @@ import { useVaultSnapshot } from '../hooks/useVaultSnapshot'
 import { ShellContext } from '../shell-context'
 import { ItemDetail } from './ItemDetail'
 import { Placeholder } from './Placeholder'
+import { Settings } from './settings/Settings'
+import { sectionLabel, type SettingsSection } from './settings/SettingsIndex'
 import { VaultList } from './VaultList'
 
 const TOAST_MS = 2500
@@ -32,6 +34,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	// Read once: a later state refresh must not pull the user off the tab they picked.
 	const [current, setCurrent] = useState(lastTab)
 	const [detailId, setDetailId] = useState<string | null>(null)
+	const [section, setSection] = useState<SettingsSection | null>(null)
 	// A fresh object per call, so the same message twice restarts the timer.
 	const [toast, setToast] = useState<{ text: string } | null>(null)
 	const body = useRef<HTMLDivElement>(null)
@@ -67,6 +70,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	function select(next: PopupTab) {
 		setCurrent(next)
 		setDetailId(null)
+		setSection(null)
 		void request({ kind: 'popup.lastTab.set', tab: next })
 	}
 
@@ -95,11 +99,15 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 					</>
 				)
 				: <Loading />
+	} else if (current === 'settings') {
+		content = <Settings section={section} onOpen={setSection} />
 	} else {
 		content = <Placeholder icon={TABS.find((t) => t.id === current)!.icon} title={tabLabel(current)} />
 	}
 
-	const title = detail ? i18n.t('titles.viewItem') : tabLabel(current)
+	const inSection = current === 'settings' && section !== null
+	const title = detail ? i18n.t('titles.viewItem') : inSection ? sectionLabel(section) : tabLabel(current)
+	const back = detail ? () => setDetailId(null) : inSection ? () => setSection(null) : undefined
 
 	return (
 		<ShellContext.Provider value={context}>
@@ -108,7 +116,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 					title={title}
 					active={active}
 					onAvatarClick={onAccounts}
-					onBack={detail ? () => setDetailId(null) : undefined}
+					onBack={back}
 					onPopout={isPopout ? undefined : () => void popout()}
 				/>
 				<div className="popup__body" ref={body}>{content}</div>

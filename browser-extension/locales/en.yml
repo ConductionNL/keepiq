@@ -197,3 +197,15 @@ totp:
   changesIn:
     1: Changes in 1 second
     n: Changes in $1 seconds
+
+settings:
+  accountSecurity: Account security
+  autofill: Autofill
+  notifications: Notifications
+  vault: Vault
+  appearance: Appearance
+  about: About
+  theme: Theme
+  themeSystem: System default
+  themeLight: Light
+  themeDark: Dark

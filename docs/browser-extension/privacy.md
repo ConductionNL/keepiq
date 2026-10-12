@@ -27,6 +27,8 @@ While the vault is unlocked, the browser keeps your vault key in its session sto
 
 Your master password and your decrypted secrets are never stored. Decrypted values stay in memory while you look at them and are gone when you close the item or the extension.
 
+Your theme choice, for every account. It stays when you log out.
+
 When you are halfway through adding an account, the extension remembers the server address and user name until the browser closes, so closing the popup does not lose them. It never remembers the app password you typed.
 
 ## What the extension reads in your browser
@@ -35,6 +37,7 @@ When you are halfway through adding an account, the extension remembers the serv
 - **The pages you visit:** the extension's page script runs on every site, so that filling in logins can work there. Today it only tells the extension a page has loaded. It never receives your vault, and when autofill arrives it gets one login, after you chose it.
 - **Whether your computer is locked,** for the **On system lock** lock option, which comes with the settings screen.
 - **Your browser's language,** to show the extension in it. It stays in the extension.
+- **Whether your browser is set to light or dark,** for the **System default** theme. It stays in the extension.
 
 ## Permissions
 

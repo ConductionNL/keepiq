@@ -2,6 +2,7 @@ import { accountStatus, getAccount, getActiveAccountId, type AccountRecord } fro
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
 import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply } from '@/src/messages'
+import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionValues } from '@/src/vault/key-store'
 import { suggestionIds } from '@/src/vault/match'
 import { readSnapshot, toItemMeta } from '@/src/vault/store'
@@ -130,11 +131,17 @@ async function perform(message: PopupRequest): Promise<PopupReplies[PopupRequest
 		case 'popup.lastTab.set':
 			if (TABS.includes(message.tab)) await sessionValues.set({ [LAST_TAB_KEY]: message.tab })
 			return null
+		case 'settings.get':
+			return readGlobalSettings()
+		case 'settings.set':
+			return updateGlobalSettings(message.patch)
 	}
 }
 
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
 function isInteraction(message: PopupRequest): boolean {
+	// Every popup reads it on open, which `vault.status` already counts.
+	if (message.kind === 'settings.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
 	if (message.kind === 'item.decrypt') return message.passive !== true
 	return true

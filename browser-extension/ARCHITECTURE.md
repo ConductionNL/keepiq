@@ -20,6 +20,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `settings.ts`: the per-account timeout settings and the policy clamp.
   - `verify.ts`: checks credentials before an account is stored.
   - `normalize-server-url.ts`: turns whatever was typed into a server URL.
+- `src/settings/global.ts`: settings that apply before an account is chosen, today the theme.
 - `src/vault/`:
   - `key-store.ts`: where the unlocked key lives ([ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md)).
   - `unlock.ts`: unlock, lock and the suite checks.
@@ -63,6 +64,8 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `accounts` | local | Account records, app passwords included |
 | `activeAccountId` | local | The active account; heals itself when it points nowhere |
 | `settings.<id>` | local | Vault timeout and action |
+| `settings.global` | local | The theme; survives logout |
+| `keepiq.theme` | popup `localStorage` | A mirror of the theme for the first frame, never read by the background |
 | `suite.<id>` | local | The active suite row, private key still wrapped |
 | `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts |
 | `vaultCheckedAt.<id>` | local | When the server was last checked |

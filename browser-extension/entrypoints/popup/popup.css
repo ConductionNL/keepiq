@@ -29,7 +29,7 @@
 	--shadow: 0 4px 16px rgb(16 24 40 / 0.14);
 }
 
-/* Dark follows the system unless ext-settings pins a theme with `data-theme`. */
+/* Dark follows the system unless the Theme setting pins one with `data-theme` (`theme.ts`). */
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
 		--bg: #14171c;
@@ -595,13 +595,18 @@ a {
 	color: var(--fg-muted);
 }
 
-.menu__item:hover:not(:disabled) {
+.menu__item:hover:not(:disabled, [aria-disabled='true']) {
 	background: var(--surface-hover);
 }
 
-.menu__item:disabled {
+.menu__item:is(:disabled, [aria-disabled='true']) {
 	opacity: 0.45;
 	cursor: not-allowed;
+}
+
+/* Pushes a trailing chevron to the row's edge. */
+.menu__label {
+	flex: 1;
 }
 
 .menu__item--danger,

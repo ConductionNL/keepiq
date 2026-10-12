@@ -5,6 +5,7 @@ import { Header } from './components/Header'
 import { Loading } from './components/Loading'
 import { useBackgroundMessage } from './hooks/useBackgroundMessage'
 import { usePopupState } from './hooks/usePopupState'
+import { useTheme } from './hooks/useTheme'
 import { AccountSwitcher } from './views/AccountSwitcher'
 import { AddAccount } from './views/AddAccount'
 import { LogInAgain } from './views/LogInAgain'
@@ -16,6 +17,7 @@ type Panel = 'switcher' | 'add_account' | null
 
 export default function App() {
 	const { state, error, dispatch } = usePopupState()
+	useTheme()
 	const [panel, setPanel] = useState<Panel>(null)
 	const refreshState = useCallback(() => void dispatch({ kind: 'vault.status', passive: true }), [dispatch])
 	// A lock from the timeout or another window swaps this popup to the unlock view.

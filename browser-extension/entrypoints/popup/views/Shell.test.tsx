@@ -28,11 +28,11 @@ describe('Shell', () => {
 		const sent = fakeBackground()
 		render(<App />)
 		await title()
-		await userEvent.setup().click(screen.getByRole('button', { name: 'Settings' }))
-		expect((await title()).textContent).toBe('Settings')
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Generator' }))
+		expect((await title()).textContent).toBe('Generator')
 		expect(screen.getByText('This arrives in a later update.')).toBeTruthy()
 		expect(screen.queryByRole('searchbox')).toBeNull()
-		expect(sent).toHaveBeenCalledWith({ kind: 'popup.lastTab.set', tab: 'settings' })
+		expect(sent).toHaveBeenCalledWith({ kind: 'popup.lastTab.set', tab: 'generator' })
 	})
 
 	it('reopens on the last tab from its first frame', async () => {

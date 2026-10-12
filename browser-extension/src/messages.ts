@@ -68,6 +68,14 @@ export type PopupToBackground =
 
 export type PopupTab = 'vault' | 'generator' | 'send' | 'settings'
 
+export const THEMES = ['system', 'light', 'dark'] as const
+export type Theme = typeof THEMES[number]
+
+/** Settings that apply before an account is chosen, so they are not per account. */
+export interface GlobalSettings {
+	theme: Theme
+}
+
 export interface SyncStatus {
 	syncing: boolean
 	/** Last time the server confirmed the snapshot, `null` before the first sync. */
@@ -142,6 +150,8 @@ export type PopupRequest =
 	| { kind: 'clipboard.copied' }
 	| { kind: 'popup.popout'; tabId?: number }
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
+	| { kind: 'settings.get' }
+	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
 
 export interface PopupReplies {
 	'vault.sync': SyncStatus
@@ -150,10 +160,13 @@ export interface PopupReplies {
 	'clipboard.copied': null
 	'popup.popout': null
 	'popup.lastTab.set': null
+	'settings.get': GlobalSettings
+	'settings.set': GlobalSettings
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
 	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
+	'settings.get', 'settings.set',
 ])
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */

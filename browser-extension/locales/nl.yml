@@ -196,3 +196,15 @@ totp:
   changesIn:
     1: Wijzigt over 1 seconde
     n: Wijzigt over $1 seconden
+
+settings:
+  accountSecurity: Accountbeveiliging
+  autofill: Automatisch invullen
+  notifications: Meldingen
+  vault: Kluis
+  appearance: Weergave
+  about: Over
+  theme: Thema
+  themeSystem: Systeemstandaard
+  themeLight: Licht
+  themeDark: Donker
