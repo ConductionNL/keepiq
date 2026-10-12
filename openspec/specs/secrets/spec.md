@@ -340,6 +340,17 @@ The three subfolder actions have recursive semantics:
 - AND if any direct subfolder is missing from the map, the system MUST return 400 Bad Request
 - AND each subfolder action applies recursively to that subfolder's entire subtree
 
+#### Scenario: Delete folder — all or nothing
+- GIVEN a folder delete with a cascade parameter or a resolution plan
+- WHEN any part of it is refused, such as an unknown action or a kept subfolder whose name a folder one level up already has (409)
+- THEN the system MUST refuse before it moves or deletes any secret or folder
+- AND the writes of an accepted delete MUST commit in one transaction, so a failed write leaves the folder, its secrets and its subfolders as they were
+
+#### Scenario: Keep a subfolder named like the deleted folder
+- GIVEN a folder "Work" with a subfolder also named "Work"
+- WHEN the user deletes the outer "Work" and keeps the subfolder
+- THEN the subfolder MUST move to the deleted folder's parent without a 409, because the only folder there with its name is the one being deleted
+
 #### Scenario: Delete folder with subfolders — no body provided
 - GIVEN a folder has subfolders
 - WHEN the user sends `DELETE /folders/{id}` with only `?cascade=delete` or `?cascade=move` (no body)
