@@ -2,7 +2,7 @@
 
 The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
 
-The extension is in development. You can browse and copy today; filling in logins, saving new ones, the generator and Send come in later updates (see [Coming next](#coming-next)).
+The extension is in development. You can browse, copy, add, edit and delete today; filling in logins, saving them as you sign up, the generator and Send come in later updates (see [Coming next](#coming-next)).
 
 ## Getting the extension
 
@@ -84,7 +84,7 @@ Each item has three actions:
 
 - **Launch** opens the item's website in a new tab.
 - **Copy** copies the user name, the password or the current one-time code. Copied values are cleared from the clipboard after 30 seconds.
-- **More** has **View**. Its other actions, Edit, Clone, Move to folder and Delete, are shown but come in a later update.
+- **More** has **View**, **Edit**, **Clone**, **Move to folder** and **Delete**.
 
 The extension shows a type icon for each item. It does not load website icons, so no site learns which accounts you have.
 
@@ -96,13 +96,41 @@ An authenticator item shows its current code and counts down to the next one.
 
 A **blocked** item cannot be opened. Its key was revoked or compromised. The item says why and links to the web app, where you can see what to do.
 
+### Adding an item
+
+**New** at the top of the vault, next to the pop-out button, opens a new item. It starts with the type you chose as your default in Keepiq, or **Login**, and with the address of the site in your current tab. Pick a type, give the item a name and fill in what you need: a login has a user name and password, a card and an identity have their own fields, and an authenticator takes the setup key or `otpauth://` link the site gave you. **Additional fields** holds anything else, such as a PIN, and **Notes** holds free text. **Save** opens the new item.
+
+Passkeys are not added here; they are made when you sign up on a website with one.
+
+### Editing an item
+
+**Edit** on an item, or in its **More** menu, opens it with the values from your server, not from the copy in your browser, so nothing someone else changed meanwhile is lost. Only what you changed is saved. When the item was changed elsewhere while you were editing, the extension says so and keeps what you typed; go back and edit it again.
+
+**Clone** opens a new item with the same values and " - Clone" after the name. **Move to folder** moves the item without opening it. Leaving a form with changes asks whether to discard them; closing the extension drops them.
+
+A passkey item only lets you change its name, folder and website.
+
+An item someone shared with you keeps the limits they set. One shared for signing in only shows its user name but never its password or fields, and can't be edited, cloned or moved. One shared from another organisation can only be moved, and one whose access ends on a date can't be cloned. A password you change on an item you shared doesn't reach the people you shared it with yet; change it in the Keepiq web app so they get it too.
+
+### Deleting an item
+
+**Delete** asks first, then moves the item to Keepiq's trash, which also stops sharing it. You can restore it from the trash in the Keepiq web app until your organisation's retention ends, 30 days unless an admin changed it; after that it is gone for good.
+
+### Folders
+
+Open **Settings**, **Vault**, **Folders** to add, rename and delete folders. Folders can hold folders; **Add folder** in a folder's menu makes one inside it. A folder name cannot contain `/`. You can also add a folder while choosing one for an item.
+
+Deleting a folder that holds items asks whether to delete them too or move them to the folder above. The count it shows includes archived items and items in the trash, which go the same way. A folder with folders inside asks, for each of them, whether to keep it (it moves up a level), move its items up, or delete it.
+
+Folder names are not encrypted in Keepiq, so pick names you don't mind your server seeing.
+
 ### Pop out
 
 The pop-out button at the top opens the extension in its own window, which stays open while you work in the browser. Suggestions keep following the tab you opened it from.
 
 ## Offline
 
-The extension keeps an encrypted copy of your vault in the browser. Without a connection you can still unlock, search, open and copy. The vault shows **Offline** and when it last synced; **Sync now** tries again.
+The extension keeps an encrypted copy of your vault in the browser. Without a connection you can still unlock, search, open and copy. The vault shows **Offline** and when it last synced; **Sync now** tries again. Adding, changing and deleting need the connection, so they wait until it is back.
 
 The extension checks your server for changes every 15 minutes while the vault is unlocked, and when you open it after a while. When your master password or vault key changed in Keepiq, the extension locks and asks for your current master password.
 
@@ -122,7 +150,6 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 - **Fill in logins** on websites, and save new logins as you sign up.
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
-- **Adding and editing** items in the extension.
 - **Generator and Send**, as in the web app.
 - **More settings:** the lock delay, a PIN and when the clipboard is cleared.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

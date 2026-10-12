@@ -1,7 +1,7 @@
-import { accountStatus, getAccount, getActiveAccountId, type AccountRecord } from '@/src/accounts/store'
+import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, type AccountRecord } from '@/src/accounts/store'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
-import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply } from '@/src/messages'
+import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionValues } from '@/src/vault/key-store'
 import { suggestionIds } from '@/src/vault/match'
@@ -9,6 +9,7 @@ import { readSnapshot, toItemMeta } from '@/src/vault/store'
 import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
 import { isStale, sync, syncStatus } from '@/src/vault/sync'
 import { cancelPopout, enforce, expectPopout, touch } from '@/src/vault/timeout'
+import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, renameFolder, updateItem } from '@/src/vault/write'
 
 const TABS: readonly PopupTab[] = ['vault', 'generator', 'send', 'settings']
 
@@ -47,6 +48,8 @@ async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<Va
 		suggestionIds: suggestionIds(items ?? [], tabUrl),
 		sync: await syncStatus(account.id),
 		webAppUrl: `${account.serverUrl}/index.php/apps/keepiq/`,
+		defaultSecretType: cached?.defaultSecretType ?? null,
+		folderNoticeDismissed: (await browser.storage.local.get(folderNoticeKey(account.id)))[folderNoticeKey(account.id)] === true,
 	}
 }
 
@@ -135,6 +138,37 @@ async function perform(message: PopupRequest): Promise<PopupReplies[PopupRequest
 			return readGlobalSettings()
 		case 'settings.set':
 			return updateGlobalSettings(message.patch)
+		default:
+			return performWrite(message)
+	}
+}
+
+/** A write without the account it was meant for is refused, so a stale window never writes elsewhere. */
+async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrite['kind']]> {
+	const accountId = message.accountId
+	if (typeof accountId !== 'string') return message.kind === 'folder.dismissNotice' ? null : { ok: false, error: { code: 'invalid' } }
+	switch (message.kind) {
+		case 'item.fetch':
+			return fetchItem(message.id, message.purpose === 'clone' ? 'clone' : 'edit', accountId)
+		case 'item.create':
+			return createItem(message.draft, accountId)
+		case 'item.update':
+			return updateItem(message.id, message.patch ?? {}, message.baseUpdatedAt, accountId)
+		case 'item.delete':
+			return deleteItem(message.id, accountId)
+		case 'folder.create':
+			return createFolder(message.name, message.parentId ?? null, accountId)
+		case 'folder.rename':
+			return renameFolder(message.id, message.name, accountId)
+		case 'folder.children':
+			return folderChildren(message.id, accountId)
+		case 'folder.delete':
+			return deleteFolder(message.id, message.plan ?? { mode: 'plain' }, accountId)
+		case 'folder.dismissNotice': {
+			const account = await activeUnlocked()
+			if (account?.id === accountId) await browser.storage.local.set({ [folderNoticeKey(account.id)]: true })
+			return null
+		}
 	}
 }
 

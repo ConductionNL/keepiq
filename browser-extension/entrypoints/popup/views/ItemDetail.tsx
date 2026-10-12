@@ -7,8 +7,10 @@ import { cardBrand, cardLast4, parseObject, text } from '@/src/vault/payloads'
 import { IconButton } from '../components/Button'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Icon } from '../components/Icon'
+import { itemActions } from '../components/ItemCard'
 import { Loading } from '../components/Loading'
 import { MaskedField } from '../components/MaskedField'
+import { Menu, type MenuItem } from '../components/Menu'
 import { PageFooter } from '../components/PageFooter'
 import { TotpCode } from '../components/TotpCode'
 import { blockedText } from '../errors'
@@ -175,12 +177,28 @@ function Decrypted({ item, type, passive }: { item: ItemMeta; type: TypeMeta | u
 	return item.useOnly ? <UseOnly item={item} values={decrypted.item} /> : <Values item={item} type={type} values={decrypted.item} />
 }
 
+/** `aria-disabled` keeps the button focusable, so its reason can be read. */
+function ActionButton({ action, variant }: { action: MenuItem; variant: 'primary' | 'danger' }) {
+	return (
+		<button
+			type="button"
+			className={`btn btn--${variant}`}
+			aria-disabled={action.disabledReason ? true : undefined}
+			title={action.disabledReason}
+			onClick={action.disabledReason ? undefined : action.onSelect}
+		>
+			{action.label}
+		</button>
+	)
+}
+
 export function ItemDetail({ item, type, folders, webAppUrl }: Props) {
 	// The version the user opened; a later one arrived by sync.
 	const [openedVersion] = useState(item.updatedAt)
 	const dates: Array<[string, string]> = [[i18n.t('detail.created'), item.createdAt], [i18n.t('detail.updated'), item.updatedAt]]
 	if (item.expiresAt) dates.push([i18n.t('detail.expires'), item.expiresAt])
-	const later = i18n.t('common.later')
+	const { items, offline } = useShell()
+	const actions = itemActions(item, type, offline, items)
 	return (
 		<div className="stack">
 			<header className="detail-head">
@@ -193,7 +211,7 @@ export function ItemDetail({ item, type, folders, webAppUrl }: Props) {
 			{item.blocked
 				? (
 					<Banner tone="error" role="status">
-						{item.blockedReason ? blockedText(item.blockedReason) : i18n.t('blocked.generic')}
+						{blockedText(item.blockedReason)}
 						{item.migrationError && <><br />{item.migrationError}</>}
 						<br /><a href={webAppUrl} target="_blank" rel="noreferrer">{i18n.t('common.openWebApp')}</a>
 					</Banner>
@@ -212,8 +230,9 @@ export function ItemDetail({ item, type, folders, webAppUrl }: Props) {
 				</dl>
 			</section>
 			<PageFooter>
-				<button type="button" className="btn btn--primary" aria-disabled="true" title={later}>{i18n.t('item.edit')}</button>
-				<button type="button" className="btn btn--danger" aria-disabled="true" title={later}>{i18n.t('item.delete')}</button>
+				<ActionButton action={actions.edit} variant="primary" />
+				<Menu label={i18n.t('item.moreMenu', { name: item.name })} icon="more" above items={[actions.clone, actions.move]} />
+				<ActionButton action={actions.remove} variant="danger" />
 			</PageFooter>
 		</div>
 	)

@@ -49,9 +49,17 @@ The extension SHALL rename a folder from the folder manager by sending `PUT /api
 The extension SHALL delete a folder with no items and no subfolders after the confirm dialog "Delete <name>? This cannot be undone." by sending `DELETE /api/v1/folders/{id}` without a cascade, then running sync.
 
 #### Scenario: Delete an empty folder
-- **GIVEN** the folder "Old" holds no items and no subfolders in the cache
+- **GIVEN** the server's children of the folder "Old" list no items and no subfolders
 - **WHEN** the user presses Delete and confirms
 - **THEN** `DELETE /api/v1/folders/{id}` MUST be sent without a query and "Old" MUST leave the tree
+
+### Requirement: Folder delete counts come from the server
+The extension SHALL call `GET /api/v1/folders/{id}/children` whenever the user deletes a folder, and choose the dialog and its counts from that reply, never from the cache. The server counts and deletes every item in the folder, archived and trashed ones and any added since the last sync included (`SecretMapper::countByFolder`), so every dialog that names a count MUST say "Archived and trashed items count too."
+
+#### Scenario: Cache behind the count
+- **GIVEN** the cache holds 1 item in "Old" and the server counts 3, two of them archived
+- **WHEN** the user presses Delete on "Old"
+- **THEN** the dialog MUST say "Delete Old and its 3 items, or move them to No folder?" and "Archived and trashed items count too."
 
 ### Requirement: Delete a non-empty leaf folder
 The extension SHALL, for a folder that holds items but no subfolders, ask "Delete <name> and its <n> items, or move them to <parent name or "No folder">?" with the choices "Delete items too" and "Move items to parent", mapping to `DELETE /api/v1/folders/{id}?cascade=delete` and `?cascade=move`. Bitwarden does not ask; Keepiq's delete protocol requires the choice.
@@ -84,7 +92,21 @@ The extension SHALL, for a folder with subfolders, call `GET /api/v1/folders/{id
 #### Scenario: Server rejects an incomplete plan
 - **GIVEN** a subfolder was created in the web app after the children call
 - **WHEN** the server answers 400
-- **THEN** the dialog MUST show the server's `message` and offer Retry, which re-fetches children
+- **THEN** the dialog MUST show "This folder changed. Check the choices again." and offer Retry, which re-fetches children
+
+#### Scenario: Item added after the children were read
+- **GIVEN** the server said "Old" was empty when the dialog opened, and an item landed in it since
+- **WHEN** the user confirms the plain delete and the server answers 409
+- **THEN** the extension MUST re-fetch children and open the dialog that matches them instead of failing
+
+#### Scenario: Kept subfolder's name is taken one level up
+- **GIVEN** "Work" holds the subfolder "Clients" and a root folder "Clients" exists
+- **WHEN** the resolution dialog for "Work" leaves "Clients" on Keep
+- **THEN** it MUST say "A folder named Clients already exists one level up…" and disable Delete, because the server finds the clash only after moving or purging the direct items
+
+#### Scenario: Server finds the clash anyway
+- **GIVEN** the cache missed the clashing name and the server answers 409 to a resolution plan
+- **THEN** the dialog MUST say the folder was not deleted and its own items may already have moved or gone, start a sync, and offer Retry, which re-reads the children
 
 ### Requirement: Folder picker
 The extension SHALL provide a folder picker used by the add-item form, the edit form and Move, listing "No folder" first and then the folder tree with indentation, the current folder marked, and a "New folder" entry at the end. Selection MUST return the `folderId` (or `null`) to the caller without a request.
@@ -100,7 +122,7 @@ The extension SHALL provide a folder picker used by the add-item form, the edit 
 - **THEN** it MUST list "No folder" and "New folder" only
 
 ### Requirement: Folder names are plaintext
-The extension SHALL send and cache folder names as plaintext, as ADR-003 defines the folder rows. The folder manager MUST show the notice "Folder names are not encrypted" once per install, dismissible, stored as a flag in `storage.local` that account removal clears.
+The extension SHALL send and cache folder names as plaintext, as ADR-003 defines the folder rows. The folder manager MUST show the notice "Folder names are not encrypted" until dismissed, stored per account as `folderNotice.<accountId>` in `storage.local`, which account removal clears.
 
 #### Scenario: First visit
 - **GIVEN** the notice was never dismissed
@@ -108,7 +130,7 @@ The extension SHALL send and cache folder names as plaintext, as ADR-003 defines
 - **THEN** the notice MUST be shown with a Dismiss button
 
 ### Requirement: Folder write errors and offline
-The extension SHALL map folder write failures as item writes do: 423 shows the write-lock message, 403 the suite-blocked message, 400 and 409 the server's `message`, a network failure "Could not reach the server" with Retry, and every dialog MUST keep the typed values. While the background reports the server unreachable, Add folder, Rename and Delete MUST be disabled with "You are offline. Changes need a connection to Keepiq."
+The extension SHALL map folder write failures as item writes do: 423 shows the write-lock message, a refusal (403 or 428) the policy or the general refusal message, 400 "Keepiq refused this change", a 409 on create or rename the duplicate-name message, a network failure "Could not reach the server" with Retry, and every dialog MUST keep the typed values. The server's own `message` is not shown (ext-i18n). While the background reports the server unreachable, Add folder, Rename and Delete MUST be disabled with "You are offline. Changes need a connection to Keepiq."
 
 #### Scenario: Write lock on rename
 - **GIVEN** the user confirmed a rename

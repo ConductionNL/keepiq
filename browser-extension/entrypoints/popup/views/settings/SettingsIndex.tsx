@@ -1,10 +1,13 @@
 import { i18n } from '#i18n'
 import { Icon, type IconName } from '../../components/Icon'
 
-export type SettingsSection = 'accountSecurity' | 'autofill' | 'notifications' | 'vault' | 'appearance' | 'about'
+export type SettingsSection = 'accountSecurity' | 'autofill' | 'notifications' | 'vault' | 'appearance' | 'about' | 'folders'
+
+/** Pages inside a section, which back returns to. */
+export const SECTION_PARENT: Partial<Record<SettingsSection, SettingsSection>> = { folders: 'vault' }
 
 /** Bitwarden's order (ADR-001); ext-settings fills in the rest. */
-const SECTIONS: { id: SettingsSection; icon: IconName }[] = [
+const SECTIONS: { id: Exclude<SettingsSection, 'folders'>; icon: IconName }[] = [
 	{ id: 'accountSecurity', icon: 'shield' },
 	{ id: 'autofill', icon: 'key' },
 	{ id: 'notifications', icon: 'bell' },
@@ -13,7 +16,7 @@ const SECTIONS: { id: SettingsSection; icon: IconName }[] = [
 	{ id: 'about', icon: 'info' },
 ]
 
-const BUILT: ReadonlySet<SettingsSection> = new Set(['appearance'])
+const BUILT: ReadonlySet<SettingsSection> = new Set(['vault', 'appearance'])
 
 export function sectionLabel(section: SettingsSection): string {
 	switch (section) {
@@ -23,6 +26,7 @@ export function sectionLabel(section: SettingsSection): string {
 		case 'vault': return i18n.t('settings.vault')
 		case 'appearance': return i18n.t('settings.appearance')
 		case 'about': return i18n.t('settings.about')
+		case 'folders': return i18n.t('settings.folders')
 	}
 }
 

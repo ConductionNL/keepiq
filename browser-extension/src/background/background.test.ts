@@ -119,6 +119,16 @@ describe('background entrypoint', () => {
 		expect(await deliver({ kind: 'item.decrypt', ids: ['x'], fields: ['key'] }, pageSender)).toBeUndefined()
 	})
 
+	it('ignores writes from a content script', async () => {
+		const account = await storedAccount()
+		await deliver({ kind: 'vault.unlock', accountId: account.id, method: { type: 'masterPassword', masterPassword: envelope.password } }, popupSender)
+		const draft = { typeId: 't', name: 'Planted', url: null, folderId: null, key: 'k', login: null, additionalFields: {} }
+		expect(await deliver({ kind: 'item.create', accountId: account.id, draft }, pageSender)).toBeUndefined()
+		expect(await deliver({ kind: 'folder.delete', accountId: account.id, id: 'f1', plan: { mode: 'cascade', cascade: 'delete' } }, pageSender)).toBeUndefined()
+		// The unlock's own sync only reads.
+		expect(fetchMock.mock.calls.filter(([, init]) => init?.method && init.method !== 'GET')).toEqual([])
+	})
+
 	it('creates the sync alarm on unlock and syncs the active account when it fires', async () => {
 		const account = await storedAccount()
 		await deliver({ kind: 'vault.unlock', accountId: account.id, method: { type: 'masterPassword', masterPassword: envelope.password } }, popupSender)

@@ -15,6 +15,7 @@ const PATHS = {
 	more: <><circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" /></>,
 	search: <><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>,
 	close: <path d="M18 6 6 18M6 6l12 12" />,
+	trash: <><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6" /></>,
 	chevronDown: <path d="m6 9 6 6 6-6" />,
 	chevronRight: <path d="m9 18 6-6-6-6" />,
 	bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>,

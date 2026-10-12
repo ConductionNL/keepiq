@@ -29,6 +29,8 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `match.ts`: base-domain matching for suggestions.
   - `list.ts`: sorting, filtering and the folder tree.
   - `payloads.ts`: parses card, identity and passkey payloads.
+  - `fields.ts`: the item form's model, limits and validation; pure, so the popup may use it.
+  - `write.ts`: item and folder writes, the only code that encrypts.
   - `url.ts`: the one rule for turning an item URL into a link.
   - `icons.ts`: type icons.
 - `src/background/`:
@@ -48,7 +50,8 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | Direction | Kinds | Reply |
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
-| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, writes | `item.fetch`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
 | Content → background | `page_ready` | None |
@@ -67,7 +70,8 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `settings.global` | local | The theme; survives logout |
 | `keepiq.theme` | popup `localStorage` | A mirror of the theme for the first frame, never read by the background |
 | `suite.<id>` | local | The active suite row, private key still wrapped |
-| `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts |
+| `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts, the default item type |
+| `folderNotice.<id>` | local | The folder manager's plaintext-names notice was dismissed |
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
@@ -91,11 +95,20 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 - **Triggers:** unlock, opening the popup with a missing or stale snapshot, the `vault-sync` alarm every 15 minutes, and "Sync now". One sync runs per account; a later trigger joins the one running.
 - **Probe:** the newest row and the total, plus the suite list. When nothing changed and the folder and type lists are under 60 minutes old, the sync only records the check time.
 - **Full:**
-  1. Fetch the manifest. On 403 or 404, at 1000 rows, or when the cached total is 1000 or more, page through the secret list instead.
+  1. Fetch the manifest, and the user settings beside it for the default item type. On a refusal (403 or 428) or 404, at 1000 rows, or when the cached total is 1000 or more, page through the secret list instead.
   2. Handle a two-factor block, then a suite change.
   3. Mark rows on blocked suites.
   4. Write the snapshot in one `set`.
 - **Logout during a sync:** checked after every write, and the writes are undone.
+
+### Writes
+
+- **The popup sends plaintext,** the background encrypts with the cached suite's certificate, once it proved that certificate matches the unlocked key and the server's active suite is still that one.
+- **Each write names its account,** and is refused when that is no longer the active one.
+- **Shared copies keep their limits** (use-only, read-only, expiring) in the popup and again in the background.
+- **Edit and Clone fetch the item fresh** from the server; Edit saves the changed fields with `baseUpdatedAt`, so a newer version is not overwritten.
+- **Every write records** whether the server answered, which drives the same offline flag as sync.
+- **A successful write runs a full sync** and replies after it, waiting for a sync that started earlier.
 
 ### Timeout
 

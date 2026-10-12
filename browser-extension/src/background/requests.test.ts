@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { addAccount, markLoggedOut } from '@/src/accounts/store'
+import { addAccount, folderNoticeKey, markLoggedOut, removeAccount } from '@/src/accounts/store'
 import { settingsKey, writeSettings } from '@/src/accounts/settings'
 import { CLIPBOARD_ALARM } from '@/src/clipboard'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
@@ -150,6 +150,11 @@ describe('item.decrypt', () => {
 		}
 	})
 
+	it('withholds a use-only authenticator\'s seed too', async () => {
+		await snapshot([secretRow({ id: 't', useOnly: true, typeId: 't-totp', key: await encrypt('JBSWY3DPEHPK3PXP') })])
+		expect(await send({ kind: 'item.decrypt', ids: ['t'], fields: ['key'] })).toEqual({ ok: false, error: 'use_only' })
+	})
+
 	it('leaves a use-only copy out of a batch that asks for its value', async () => {
 		await snapshot([secretRow({ id: 'u', useOnly: true, key: await encrypt('hunter2') }), secretRow({ id: 'a', key: await encrypt('pw') })])
 		const reply = await send({ kind: 'item.decrypt', ids: ['u', 'a'], fields: ['key'] })
@@ -204,6 +209,42 @@ describe('settings', () => {
 		await new Promise((resolve) => setTimeout(resolve, 5))
 		await send({ kind: 'settings.get' })
 		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+	})
+})
+
+describe('vault writes', () => {
+	it('answers with the snapshot\'s default type and the folder notice flag', async () => {
+		await writeSnapshot(accountId, {
+			suite: { id: suiteRow.id, unlockKeyEpoch: 1 }, secrets: [], folders: [], types: typeRows,
+			syncedAt: new Date().toISOString(), listsSyncedAt: new Date().toISOString(), newestUpdatedAt: null, total: 0, defaultSecretType: 'note',
+		})
+		expect(await send({ kind: 'vault.snapshot' })).toMatchObject({ defaultSecretType: 'note', folderNoticeDismissed: false })
+		expect(await send({ kind: 'folder.dismissNotice', accountId })).toBeNull()
+		expect(await send({ kind: 'vault.snapshot' })).toMatchObject({ folderNoticeDismissed: true })
+	})
+
+	it('forgets the dismissed notice with the account', async () => {
+		await send({ kind: 'folder.dismissNotice', accountId })
+		await removeAccount(accountId)
+		expect(await browser.storage.local.get(folderNoticeKey(accountId))).toEqual({})
+	})
+
+	it('routes a write to the server', async () => {
+		fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: 'Folder is not empty' }), { status: 409 }))
+		expect(await send({ kind: 'folder.delete', accountId, id: 'f1', plan: { mode: 'plain' } })).toEqual({ ok: false, error: { code: 'conflict' } })
+		expect(String(fetchMock.mock.calls[0]![0])).toBe('https://cloud.example.org/index.php/apps/keepiq/api/v1/folders/f1')
+	})
+
+	it('refuses a write meant for an account that is no longer active, without a request', async () => {
+		expect(await send({ kind: 'item.delete', accountId: 'another', id: 's1' })).toEqual({ ok: false, error: { code: 'account_changed' } })
+		expect(await send({ kind: 'folder.dismissNotice', accountId: 'another' })).toBeNull()
+		expect(fetchMock).not.toHaveBeenCalled()
+		expect(await browser.storage.local.get(folderNoticeKey(accountId))).toEqual({})
+	})
+
+	it('refuses a write that names no account', async () => {
+		expect(await send({ kind: 'item.delete', id: 's1' } as never)).toEqual({ ok: false, error: { code: 'invalid' } })
+		expect(fetchMock).not.toHaveBeenCalled()
 	})
 })
 

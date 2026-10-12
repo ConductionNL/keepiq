@@ -68,11 +68,13 @@ A cached vault on a machine the user no longer controls cannot be remotely wiped
 - The suite. If a sync returns an active suite whose `id` or `unlockKeyEpoch` differs from the cached one, the cached ciphertext is undecryptable. The extension purges the cache and the key and forces a fresh unlock and full sync.
 - `blocked: true` rows. A revoked suite yields metadata-only rows. The extension shows them as blocked and never fills from them.
 
+A compromised server could also keep the suite id and epoch and swap only the certificate, so new secrets would be encrypted to its own key. The extension can catch this where the web app cannot, because its code does not come from the server: before it encrypts with a certificate, it proves the certificate matches the unlocked private key, which only the master password opens, and refuses every write otherwise. Before each write it also asks for the active suite: the server stamps a write with that suite whatever key it was encrypted to, so a key changed on another device since the last sync locks instead of writing an item no one can open.
+
 The window between revocation and next contact is bounded by the sync interval. Sync runs on unlock, on popup open when the last sync is older than the interval, on a fixed interval while unlocked, and after every local write. The interval is a named constant, not an emergent property.
 
 ## Sync
 
-There is no cursor. An unchanged vault must still cost one cheap call: sync first asks `GET /api/v1/secrets?sort=updated_at&direction=desc&limit=1` and compares the newest `updatedAt` and `total` with the cached snapshot; only when either differs, or the folder and type lists are stale, does it fetch `GET /api/v1/offline/manifest` and replace the local snapshot atomically. Deletions change `total`, edits and creates change `updatedAt`. When the manifest returns 403 (admin disabled) or 404, sync falls back to paginated `GET /api/v1/secrets` plus folders and types. A full fetch is acceptable because rows are small and vaults are hundreds of items, not hundreds of thousands.
+There is no cursor. An unchanged vault must still cost one cheap call: sync first asks `GET /api/v1/secrets?sort=updated_at&direction=desc&limit=1` and compares the newest `updatedAt` and `total` with the cached snapshot; only when either differs, or the folder and type lists are stale, does it fetch `GET /api/v1/offline/manifest` and replace the local snapshot atomically. Deletions change `total`, edits and creates change `updatedAt`. When the manifest is refused (admin disabled, ADR-003) or returns 404, sync falls back to paginated `GET /api/v1/secrets` plus folders and types. A full fetch is acceptable because rows are small and vaults are hundreds of items, not hundreds of thousands.
 
 ## Decryption is lazy
 

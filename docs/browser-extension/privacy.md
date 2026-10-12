@@ -11,7 +11,8 @@ Keepiq opens your Keepiq vault in your browser. Your vault lives on your organis
 The extension talks to your own Nextcloud, and to nobody else. It sends your server:
 
 - your Nextcloud user name and app password, with every request, to sign in;
-- requests for your profile (name, email address and picture), your encrypted vault key and your encrypted vault.
+- requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault and your Keepiq preferences, of which it uses the default item type;
+- the items and folders you add, change or delete. An item's secrets, user name, notes and additional fields are encrypted in the browser first; its name, web address, type and folder go as you typed them, as Keepiq stores them. Folder names are not encrypted.
 
 Your master password never leaves the browser. Neither do your decrypted secrets.
 
@@ -28,6 +29,10 @@ While the vault is unlocked, the browser keeps your vault key in its session sto
 Your master password and your decrypted secrets are never stored. Decrypted values stay in memory while you look at them and are gone when you close the item or the extension.
 
 Your theme choice, for every account. It stays when you log out.
+
+Per account, your default item type from Keepiq, with the vault copy, and whether you dismissed the notice that folder names are not encrypted, until you remove the account.
+
+An item you are adding or editing stays in memory only, and is gone when you save, leave the form or close the extension.
 
 When you are halfway through adding an account, the extension remembers the server address and user name until the browser closes, so closing the popup does not lose them. It never remembers the app password you typed.
 

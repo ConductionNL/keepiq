@@ -3,7 +3,7 @@ import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
-import { everythingVisible, fakeBackground, itemMeta, popupState, sentKinds, snapshotReply } from '../testing'
+import { editableItem, everythingVisible, fakeBackground, itemMeta, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
 
 afterEach(cleanup)
 beforeEach(everythingVisible)
@@ -161,5 +161,185 @@ describe('Shell', () => {
 		render(<App />)
 		await userEvent.setup().click(await screen.findByRole('button', { name: 'Launch GitHub' }))
 		expect(create).toHaveBeenCalledWith({ url: 'https://github.com/', windowId: 3 })
+	})
+})
+
+describe('item writes', () => {
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+
+	it('adds an item over the tab bar and opens it once saved', async () => {
+		let items = [itemMeta()]
+		const sent = fakeBackground({
+			snapshot: () => snapshotReply({ items }),
+			replies: {
+				'item.create': () => {
+					items = [...items, itemMeta({ id: 'new', name: 'Bank', url: null })]
+					return { ok: true, value: { id: 'new' } }
+				},
+			},
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		expect((await title()).textContent).toBe('New item')
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+		// Opened on github.com/login, so the form starts with that page.
+		expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://github.com/login')
+		await user.type(screen.getByLabelText('Name'), 'Bank')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		expect((await screen.findByRole('heading', { name: 'Bank' })).textContent).toBe('Bank')
+		expect((await title()).textContent).toBe('View item')
+		expect(screen.getByRole('status').textContent).toBe('Item saved')
+		expect(sentKinds(sent)).toContain('item.create')
+	})
+
+	it('prefills only the origin and path of the tab, never its query or fragment', async () => {
+		fakeBackground({ tabUrl: 'https://user:pw@app.example.com/callback?token=abc#access_token=xyz' })
+		render(<App />)
+		await userEvent.setup().click(await screen.findByRole('button', { name: 'New' }))
+		expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://app.example.com/callback')
+	})
+
+	it('offers New item in the header on the Vault list only', async () => {
+		fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await screen.findByRole('button', { name: 'New' })
+		await user.click(screen.getByRole('button', { name: /^GitHub/ }))
+		await screen.findByText('Login credentials')
+		expect(screen.queryByRole('button', { name: 'New' })).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(screen.getByRole('button', { name: 'Settings' }))
+		expect(screen.queryByRole('button', { name: 'New' })).toBeNull()
+	})
+
+	it('asks before Back drops typed changes, and not when nothing changed', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByRole('dialog')).toBeNull()
+
+		await user.click(screen.getByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Name'), 'Draft')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		const dialog = screen.getByRole('dialog', { name: 'Unsaved changes' })
+		expect(dialog.textContent).toContain('You have unsaved changes. Discard them?')
+		await user.click(within(dialog).getByRole('button', { name: 'Keep editing' }))
+		expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('Draft')
+		await user.click(within(footer()).getByRole('button', { name: 'Cancel' }))
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Discard' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByLabelText('Name')).toBeNull()
+	})
+
+	it('edits from detail and returns to it', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } }, items: { i1: editableItem() } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		expect((await title()).textContent).toBe('Edit item')
+		await user.type(await screen.findByLabelText('Name'), ' work')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
+		expect(sentKinds(sent)).toContain('item.update')
+	})
+
+	it('deletes after the confirm dialog and returns to the list', async () => {
+		let items = [itemMeta()]
+		const sent = fakeBackground({
+			snapshot: () => snapshotReply({ items }),
+			replies: { 'item.delete': () => ((items = []), { ok: true, value: null }) },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Delete' }))
+		const dialog = screen.getByRole('dialog', { name: 'Delete item' })
+		expect(dialog.textContent).toContain('Move GitHub to the trash?')
+		await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+		expect(sentKinds(sent)).not.toContain('item.delete')
+		expect((await title()).textContent).toBe('View item')
+
+		await user.click(within(footer()).getByRole('button', { name: 'Delete' }))
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('Vault'))
+		expect(screen.getByRole('status').textContent).toBe('Item moved to the trash')
+		expect(sentOf(sent, 'item.delete')).toEqual([{ kind: 'item.delete', accountId: 'a1', id: 'i1' }])
+	})
+
+	it('keeps the item when the delete does not reach the server', async () => {
+		fakeBackground({ replies: { 'item.delete': { ok: false, error: { code: 'offline' } } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Delete' }))
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }))
+		expect((await within(screen.getByRole('dialog')).findByRole('alert')).textContent).toContain('Could not reach the server')
+		expect((await title()).textContent).toBe('View item')
+	})
+
+	it('moves into a folder with a folderId-only patch', async () => {
+		const sent = fakeBackground({ snapshot: snapshotReply({ folders: [{ id: 'w', name: 'Work', parentId: null }] }) })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
+		await user.click(within(screen.getByRole('dialog', { name: 'Move to folder' })).getByRole('button', { name: 'Work' }))
+		await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+		expect(sentOf(sent, 'item.update')).toEqual([{ kind: 'item.update', accountId: 'a1', id: 'i1', patch: { folderId: 'w' } }])
+		expect(screen.getByRole('status').textContent).toBe('Moved to Work')
+	})
+
+	it('names a folder made in the move picker in its toast', async () => {
+		let folders: { id: string; name: string; parentId: string | null }[] = []
+		fakeBackground({
+			snapshot: () => snapshotReply({ folders }),
+			replies: { 'folder.create': () => ((folders = [{ id: 'f-new', name: 'Banking', parentId: null }]), { ok: true, value: { id: 'f-new' } }) },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
+		await user.click(screen.getByRole('button', { name: 'New folder' }))
+		await user.type(screen.getByLabelText('Folder name'), 'Banking')
+		await user.click(within(screen.getByRole('dialog', { name: 'New folder' })).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(screen.getByRole('status').textContent).toBe('Moved to Banking'))
+	})
+
+	it('shows a failed move after New folder in the picker, so the folder is not created twice', async () => {
+		const sent = fakeBackground({ replies: { 'item.update': { ok: false, error: { code: 'server_error' } } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
+		await user.click(screen.getByRole('button', { name: 'New folder' }))
+		await user.type(screen.getByLabelText('Folder name'), 'Banking')
+		await user.click(within(screen.getByRole('dialog', { name: 'New folder' })).getByRole('button', { name: 'Save' }))
+		const picker = await screen.findByRole('dialog', { name: 'Move to folder' })
+		expect(await within(picker).findByRole('alert')).toBeTruthy()
+		expect(screen.queryByRole('dialog', { name: 'New folder' })).toBeNull()
+		expect(sentOf(sent, 'folder.create')).toHaveLength(1)
+	})
+
+	it('asks before the account switcher drops typed changes, and closes the form for it', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		const avatar = () => screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' })
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Name'), 'Draft')
+		await user.click(avatar())
+		await user.click(within(screen.getByRole('dialog', { name: 'Unsaved changes' })).getByRole('button', { name: 'Keep editing' }))
+		expect((await title()).textContent).toBe('New item')
+		await user.click(avatar())
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Discard' }))
+		expect((await title()).textContent).toBe('Accounts')
+		expect(screen.queryByLabelText('Name')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
 	})
 })

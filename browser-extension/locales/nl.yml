@@ -43,6 +43,8 @@ titles:
   logInAgain: Opnieuw inloggen
   unlock: Ontgrendelen
   viewItem: Item bekijken
+  newItem: Nieuw item
+  editItem: Item bewerken
 
 tabs:
   label: Hoofdmenu
@@ -54,6 +56,7 @@ tabs:
 header:
   popout: Openen in apart venster
   accounts: Accounts, ingelogd als {name}
+  new: Nieuw
 
 unlock:
   masterPassword: Hoofdwachtwoord
@@ -134,6 +137,111 @@ item:
   clone: Klonen
   move: Naar map verplaatsen
   delete: Verwijderen
+  cloneName: "{name} - Kloon"
+  passkeyNoClone: Passkeys kun je niet klonen
+  useOnly: Alleen met je gedeeld om in te loggen
+  readOnly: Gedeeld vanuit een andere organisatie, dus je kunt het alleen verplaatsen
+  expiringNoClone: Je toegang stopt op {date}, dus je kunt het niet klonen
+  saved: Item opgeslagen
+  deleted: Item naar de prullenbak verplaatst
+  moved: Verplaatst naar {folder}
+  deleteTitle: Item verwijderen
+  deleteConfirm: "{name} naar de prullenbak verplaatsen? Het wordt niet langer gedeeld. Je kunt het terugzetten vanuit de prullenbak in de Keepiq-webapp."
+  gone: Dit item bestaat niet meer
+
+form:
+  itemDetails: Itemgegevens
+  type: Type
+  name: Naam
+  folder: Map
+  chooseFolder: Kies een map, nu {folder}
+  website: Website-URL
+  autofillOptions: Opties voor automatisch invullen
+  additionalOptions: Extra opties
+  authenticator: Authenticator
+  note: Notitie
+  secret: Geheim
+  advanced: Geavanceerd
+  algorithm: Algoritme
+  digits: Cijfers
+  period: Periode in seconden
+  addField: Veld toevoegen
+  fieldName: Veldnaam
+  fieldValue: Waarde
+  removeField: "{name} verwijderen"
+  removeUnnamed: Veld verwijderen
+  save: Opslaan
+  passkeyReadOnly: De gegevens van een passkey kun je alleen in de Keepiq-webapp wijzigen
+  offline: Je bent offline. Voor wijzigingen is een verbinding met Keepiq nodig.
+  unsavedTitle: Niet-opgeslagen wijzigingen
+  unsaved: Je hebt wijzigingen die niet zijn opgeslagen. Wil je ze weggooien?
+  discard: Weggooien
+  keepEditing: Verder bewerken
+
+fieldErrors:
+  required: Naam is verplicht
+  tooLong: Maximaal {max} tekens
+  tooLongBytes: Te lang (maximaal {max} bytes)
+  reserved: Deze naam is gereserveerd
+  duplicate: Er bestaat al een veld met deze naam
+  invalidTotp: Geen geldige authenticatorsleutel
+  slash: Mapnamen mogen geen schuine streep bevatten
+
+writeErrors:
+  writeLocked: De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw
+  forbidden: Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.
+  policy: Het beleid van je organisatie staat deze wijziging niet toe
+  accountChanged: Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.
+  keepClash: Er bestaat al een map {name} één niveau hoger. Kies daarvoor Items naar bovenliggende map of Verwijderen, of wijzig eerst een van de namen.
+  keepClashAfter: Een map die je wilde behouden heeft dezelfde naam als een map één niveau hoger, dus de map is niet verwijderd. De items erin kunnen al verplaatst of verwijderd zijn. Controleer de keuzes opnieuw.
+  invalid: Keepiq heeft deze wijziging geweigerd
+  stale: Dit item is ergens anders gewijzigd. Ga terug en bewerk het opnieuw om de nieuwste versie te zien.
+  itemGone: Dit item bestaat niet meer
+  folderGone: Deze map bestaat niet meer
+  duplicateFolder: Hier bestaat al een map met deze naam
+  folderChanged: Deze map is gewijzigd. Controleer de keuzes opnieuw.
+  offline: Kan de server niet bereiken
+  serverError: Keepiq is nu niet beschikbaar, probeer het later opnieuw
+  unreadable: Dit item kan niet worden gelezen en dus hier niet worden bewerkt
+  restricted: Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren
+  keyMismatch: Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.
+
+folders:
+  add: Map toevoegen
+  newFolder: Nieuwe map
+  rename: Naam wijzigen
+  renameTitle: Mapnaam wijzigen
+  delete: Verwijderen
+  more: Meer, {name}
+  name: Mapnaam
+  empty: Nog geen mappen
+  notice: Mapnamen zijn niet versleuteld
+  dismiss: Sluiten
+  current: Huidige map
+  pickTitle: Map kiezen
+  moveTitle: Naar map verplaatsen
+  saved: Map opgeslagen
+  deleted: Map verwijderd
+  deleteTitle: Map verwijderen
+  deleteConfirm: "{name} verwijderen? Dit kan niet ongedaan worden gemaakt."
+  cascade:
+    1: "{name} en het item erin verwijderen, of het item verplaatsen naar {parent}?"
+    n: "{name} en de $1 items erin verwijderen, of de items verplaatsen naar {parent}?"
+  countsAll: Gearchiveerde items en items in de prullenbak tellen ook mee.
+  deleteItems: Items ook verwijderen
+  moveItems: Items naar bovenliggende map
+  items:
+    1: 1 item
+    n: $1 items
+  subfolders:
+    1: 1 submap
+    n: $1 submappen
+  directRow: Items in {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Verwijderen
+  actionMove: Items naar bovenliggende map
+  actionKeep: Behouden
+  directMove: Naar bovenliggende map
 
 clipboard:
   copied: "{what} gekopieerd"
@@ -204,6 +312,7 @@ settings:
   vault: Kluis
   appearance: Weergave
   about: Over
+  folders: Mappen
   theme: Thema
   themeSystem: Systeemstandaard
   themeLight: Licht

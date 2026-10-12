@@ -93,14 +93,18 @@ export interface ItemMeta {
 	folderId: string | null
 	hasLogin: boolean
 	blocked: boolean
-	/** Only its login decrypts; the rest is for filling, never for the popup. */
-	useOnly: boolean
 	/** Absent when the stored reason is not a known code. */
 	blockedReason?: BlockReason
 	migrationError?: string | null
 	createdAt: string
 	updatedAt: string
 	expiresAt: string | null
+	/** A shared copy that is only filled: of its values, only the login decrypts for the popup. */
+	useOnly: boolean
+	/** A copy from another organisation, which may only be moved. */
+	readOnly: boolean
+	/** When access to this shared copy ends. */
+	accessExpiresAt: string | null
 }
 
 export interface FolderMeta {
@@ -128,6 +132,9 @@ export type VaultSnapshotReply =
 		sync: SyncStatus
 		/** The account's Keepiq web app, for "open the web app" links. */
 		webAppUrl: string
+		/** The user's `default_secret_type` slug; `null` means `login`. */
+		defaultSecretType: string | null
+		folderNoticeDismissed: boolean
 	}
 
 export type DecryptField = 'login' | 'key' | 'additionalFields'
@@ -141,6 +148,60 @@ export type DecryptReply =
 	| { ok: true; items: Record<string, DecryptedItem> }
 	| { ok: false; error: 'locked' | 'blocked' | 'use_only' | 'decrypt_failed' }
 
+/** Plaintext draft. The background encrypts key, login and additionalFields; the popup never does. */
+export interface ItemDraft {
+	typeId: string
+	name: string
+	url: string | null
+	folderId: string | null
+	key: string
+	login: string | null
+	/** Name to value, `notes` included; `{}` when empty. */
+	additionalFields: Record<string, string>
+}
+
+/** The fields the user changed. `null` clears; `additionalFields` is always whole. */
+export type ItemPatch = Partial<ItemDraft>
+
+/** A fresh fetch, decrypted for the edit form. */
+export interface EditableItem extends ItemDraft {
+	id: string
+	updatedAt: string
+	/** A passkey's credential is never decrypted for editing, so `key` is empty. */
+	keyWithheld?: true
+}
+
+export interface FolderChildren {
+	directSecretCount: number
+	subfolders: Array<{ id: string; name: string; secretCount: number; subfolderCount: number }>
+}
+
+export type SubfolderAction = 'delete' | 'move' | 'keep'
+
+export type FolderDeletePlan =
+	| { mode: 'plain' }
+	| { mode: 'cascade'; cascade: 'delete' | 'move' }
+	| { mode: 'resolution'; directSecrets: 'delete' | 'move'; subfolders: Record<string, SubfolderAction> }
+
+/** `conflict` is a duplicate folder name, a folder that is not empty, or an item changed since `baseUpdatedAt`. */
+export type WriteErrorCode =
+	| 'locked' | 'session_revoked' | 'write_locked' | 'forbidden' | 'policy' | 'invalid' | 'conflict'
+	| 'not_found' | 'blocked' | 'unreadable' | 'offline' | 'server_error' | 'unknown'
+	/** A use-only, read-only or (for a clone) expiring shared copy. */
+	| 'restricted'
+	/** The suite's certificate does not match the unlocked key, so nothing is encrypted to it. */
+	| 'key_mismatch'
+	/** The write was meant for an account that is no longer the active one. */
+	| 'account_changed'
+
+export interface VaultWriteError {
+	code: WriteErrorCode
+	/** With `blocked`, when the row's reason is a known code. */
+	reason?: BlockReason
+}
+
+export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultWriteError }
+
 /** Popup → background requests with their own reply shapes, listed in `PopupReplies`. */
 export type PopupRequest =
 	| { kind: 'vault.sync' }
@@ -152,6 +213,25 @@ export type PopupRequest =
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
 	| { kind: 'settings.get' }
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
+	| VaultWrite
+
+/**
+ * Each names the account the popup showed, so a write never lands in another account's vault
+ * after a switch in another window.
+ */
+export type VaultWrite = { accountId: string } & (
+	/** `purpose`: a clone is refused for more restricted copies than an edit. */
+	| { kind: 'item.fetch'; id: string; purpose: 'edit' | 'clone' }
+	| { kind: 'item.create'; draft: ItemDraft }
+	/** `baseUpdatedAt`: the fetched version, so a save over a newer one is refused. */
+	| { kind: 'item.update'; id: string; patch: ItemPatch; baseUpdatedAt?: string }
+	| { kind: 'item.delete'; id: string }
+	| { kind: 'folder.create'; name: string; parentId: string | null }
+	| { kind: 'folder.rename'; id: string; name: string }
+	| { kind: 'folder.children'; id: string }
+	| { kind: 'folder.delete'; id: string; plan: FolderDeletePlan }
+	| { kind: 'folder.dismissNotice' }
+)
 
 export interface PopupReplies {
 	'vault.sync': SyncStatus
@@ -162,11 +242,21 @@ export interface PopupReplies {
 	'popup.lastTab.set': null
 	'settings.get': GlobalSettings
 	'settings.set': GlobalSettings
+	'item.fetch': WriteResult<EditableItem>
+	'item.create': WriteResult<{ id: string }>
+	'item.update': WriteResult<{ id: string }>
+	'item.delete': WriteResult<null>
+	'folder.create': WriteResult<{ id: string }>
+	'folder.rename': WriteResult<null>
+	'folder.children': WriteResult<FolderChildren>
+	'folder.delete': WriteResult<null>
+	'folder.dismissNotice': null
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
 	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
-	'settings.get', 'settings.set',
+	'settings.get', 'settings.set', 'item.fetch', 'item.create', 'item.update', 'item.delete',
+	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 ])
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */

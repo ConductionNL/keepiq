@@ -26,6 +26,8 @@ export interface AccountRecord {
 const ACCOUNTS = 'accounts'
 const ACTIVE = 'activeAccountId'
 export const suiteKey = (accountId: string) => `suite.${accountId}`
+/** Set once the folder manager's plaintext-names notice is dismissed. */
+export const folderNoticeKey = (accountId: string) => `folderNotice.${accountId}`
 
 export class AccountLimitReached extends Error {}
 export class DuplicateAccount extends Error {}
@@ -136,7 +138,7 @@ export async function markLoggedOut(accountId: string, revoked = false): Promise
 async function purge(accountId: string): Promise<void> {
 	await clearKey(accountId)
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove([suiteKey(accountId), settingsKey(accountId)])
+	await browser.storage.local.remove([suiteKey(accountId), settingsKey(accountId), folderNoticeKey(accountId)])
 }
 
 /** Manual "Log out": the account is gone. The host permission is kept (another account may share it). */

@@ -20,7 +20,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | --- | --- | --- |
 | Master password | Nowhere | — |
 | Private key | `storage.session` (memory, cleared on browser restart). Firefox below 115 uses background page memory instead. | Lock, timeout, logout, browser restart, extension reload |
-| Decrypted values | Popup memory while shown, never the value of a use-only copy | Closing the item or the popup |
+| Decrypted values, unsaved forms | Popup memory while shown, never the value of a use-only copy | Closing the item, the form or the popup |
 | Ciphertext, names, URLs, folders, types | `storage.local` | Logout, account removal, a key change on the server |
 | App password | `storage.local` | Logout, account removal, the server answering 401 |
 | Account list and settings | `storage.local` | Account removal |
@@ -60,6 +60,15 @@ There is no remote wipe, so these checks stand in for it:
 - Content scripts run on every page, as in Bitwarden. That is safe only because of the rule above ([ADR-001](openspec/architecture/adr-001-bitwarden-parity.md), ADR-002).
 - The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never. Of a use-only copy it gets only the login; the background refuses its value and additional fields.
 - No remote code is loaded, and the popup renders no HTML from vault data.
+
+## Saving
+
+- The popup sends what you typed to the background, which does all the encryption.
+- Before it encrypts, the extension checks that the server's active key is still the one it holds, and proves the server's certificate belongs to your unlocked key. Otherwise nothing is written.
+- A save goes to the account the popup showed, and is refused when another window switched accounts.
+- Edit fetches the item fresh, sends only what changed, and is refused when a newer version was saved elsewhere.
+- Shared copies keep their limits: a use-only copy is never shown, copied or changed, a read-only one can only be filed in a folder, and no restricted copy can be cloned.
+- Delete moves an item to Keepiq's trash and ends its shares. A folder delete is immediate, and "Delete items too" deletes them for good.
 
 ## Clipboard
 
