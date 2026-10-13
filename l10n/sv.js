@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Den här hemligheten delas med många partnerorganisationer, så sparandet väntar på uppslagsgränsen och fortsätter sedan. Håll den här dialogen öppen.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "För många uppslag hos partnerorganisationer. Inget sparades; försök igen om en minut.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Den här versionen kan inte återställas för den här hemligheten. Inget sparades.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation som den här hemligheten delas med kan inte nås ({partners}). Gör om ändringen online, där du kan spara utan dem.",
+        "The server refused this change ({reason}).": "Servern avvisade den här ändringen ({reason}).",
+        "Save without them": "Spara utan dem",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sparat. Mottagare i partnerorganisationer får ändringen nästa gång ägaren sparar den här hemligheten.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Den här hemligheten ändrades på annat håll efter att du öppnade den. Inget sparades; öppna den igen och gör om din ändring.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Originalet av den här delade hemligheten ändrades efter att du öppnade den. Inget sparades; öppna den igen och gör om din ändring.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Personerna som den här hemligheten delas med ändrades medan den sparades. Inget sparades; försök igen.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Inget sparades: en partnerorganisation som den här hemligheten delas med kan inte nås ({partners}). Försök igen senare, eller spara utan dem, vilket pausar deras delning.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Du får inte spara den här ändringen för alla som den här hemligheten delas med. Inget sparades.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Toto tajomstvo je zdieľané s mnohými partnerskými organizáciami, preto ukladanie čaká na limit dopytov a potom pokračuje. Nechajte toto okno otvorené.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Príliš veľa dopytov na partnerské organizácie. Nič sa neuložilo; skúste to znova o minútu.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Túto verziu nemožno obnoviť pre toto tajomstvo. Nič sa neuložilo.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerská organizácia, s ktorou je toto tajomstvo zdieľané, nie je dostupná ({partners}). Urobte zmenu znova online, kde ju môžete uložiť bez nej.",
+        "The server refused this change ({reason}).": "Server túto zmenu odmietol ({reason}).",
+        "Save without them": "Uložiť bez nich",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Uložené. Príjemcovia v partnerských organizáciách dostanú túto zmenu, keď vlastník nabudúce uloží toto tajomstvo.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Toto tajomstvo bolo po otvorení zmenené inde. Nič sa neuložilo; otvorte ho znova a zmenu urobte znova.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Originál tohto zdieľaného tajomstva bol po otvorení zmenený. Nič sa neuložilo; otvorte ho znova a zmenu urobte znova.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Ľudia, s ktorými je toto tajomstvo zdieľané, sa počas ukladania menili. Nič sa neuložilo; skúste to znova.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Nič sa neuložilo: partnerská organizácia, s ktorou je toto tajomstvo zdieľané, nie je dostupná ({partners}). Skúste to neskôr alebo uložte bez nej, čím sa jej zdieľanie pozastaví.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Nemáte oprávnenie uložiť túto zmenu pre všetkých, s ktorými je toto tajomstvo zdieľané. Nič sa neuložilo.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

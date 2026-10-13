@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ova tajna je podijeljena s mnogo partnerskih organizacija, pa čuvanje čeka na ograničenje upita i zatim se nastavlja. Ne zatvarajte ovaj prozor.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Previše upita partnerskim organizacijama. Ništa nije sačuvano; pokušajte ponovo za minutu.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Ova verzija se ne može vratiti za ovu tajnu. Ništa nije sačuvano.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerska organizacija s kojom se dijeli ova tajna nije dostupna ({partners}). Napravite promjenu ponovo dok ste na mreži, gdje je možete sačuvati bez njih.",
+        "The server refused this change ({reason}).": "Server je odbio ovu promjenu ({reason}).",
+        "Save without them": "Sačuvaj bez njih",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sačuvano. Primaoci u partnerskim organizacijama dobit će ovu promjenu kada vlasnik sljedeći put sačuva ovu tajnu.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ova tajna je promijenjena negdje drugdje nakon što ste je otvorili. Ništa nije sačuvano; otvorite je ponovo i ponovite promjenu.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Original ove dijeljene tajne je promijenjen nakon što ste je otvorili. Ništa nije sačuvano; otvorite je ponovo i ponovite promjenu.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Osobe s kojima se dijeli ova tajna mijenjale su se tokom spremanja. Ništa nije sačuvano; pokušajte ponovo.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Ništa nije sačuvano: partnerska organizacija s kojom se dijeli ova tajna nije dostupna ({partners}). Pokušajte kasnije ili sačuvajte bez njih, čime se njihovo dijeljenje pauzira.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Nemate dozvolu da sačuvate ovu promjenu za sve s kojima se dijeli ova tajna. Ništa nije sačuvano.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

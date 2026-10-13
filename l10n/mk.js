@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Оваа тајна е споделена со многу партнерски организации, па зачувувањето чека на ограничувањето на барањата и потоа продолжува. Не го затворајте овој прозорец.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Премногу барања до партнерските организации. Ништо не е зачувано; обидете се повторно за една минута.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Оваа верзија не може да се врати за оваа тајна. Ништо не е зачувано.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнерска организација со која е споделена оваа тајна не е достапна ({partners}). Направете ја промената повторно на интернет, каде што можете да зачувате без нив.",
+        "The server refused this change ({reason}).": "Серверот ја одби оваа промена ({reason}).",
+        "Save without them": "Зачувај без нив",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Зачувано. Примачите во партнерските организации ќе ја добијат оваа промена кога сопственикот следниот пат ќе ја зачува оваа тајна.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Оваа тајна беше променета на друго место откако ја отворивте. Ништо не е зачувано; отворете ја повторно и повторете ја промената.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Оригиналот на оваа споделена тајна беше променет откако ја отворивте. Ништо не е зачувано; отворете ја повторно и повторете ја промената.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Луѓето со кои е споделена оваа тајна се менуваа за време на зачувувањето. Ништо не е зачувано; обидете се повторно.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Ништо не е зачувано: партнерска организација со која е споделена оваа тајна не е достапна ({partners}). Обидете се подоцна или зачувајте без нив, со што нивното споделување се паузира.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Немате дозвола да ја зачувате оваа промена за сите со кои е споделена оваа тајна. Ништо не е зачувано.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

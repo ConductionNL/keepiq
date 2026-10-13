@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Denne hemmelighed er delt med mange partnerorganisationer, så gemningen venter på opslagsgrænsen og fortsætter derefter. Hold denne dialog åben.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "For mange opslag hos partnerorganisationer. Intet blev gemt; prøv igen om et minut.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Denne version kan ikke gendannes for denne hemmelighed. Intet blev gemt.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation, som denne hemmelighed er delt med, kan ikke nås ({partners}). Foretag ændringen igen online, hvor du kan gemme uden dem.",
+        "The server refused this change ({reason}).": "Serveren afviste denne ændring ({reason}).",
+        "Save without them": "Gem uden dem",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gemt. Modtagere hos partnerorganisationer får denne ændring, næste gang ejeren gemmer denne hemmelighed.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Denne hemmelighed blev ændret et andet sted, efter du åbnede den. Intet blev gemt; åbn den igen, og foretag din ændring igen.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Originalen af denne delte hemmelighed blev ændret, efter du åbnede den. Intet blev gemt; åbn den igen, og foretag din ændring igen.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "De personer, denne hemmelighed er delt med, ændrede sig under gemningen. Intet blev gemt; prøv igen.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Intet blev gemt: en partnerorganisation, som denne hemmelighed er delt med, kan ikke nås ({partners}). Prøv igen senere, eller gem uden dem, hvilket sætter deres deling på pause.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Du har ikke tilladelse til at gemme denne ændring for alle, som denne hemmelighed er delt med. Intet blev gemt.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

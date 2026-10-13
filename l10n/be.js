@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Гэты сакрэт абагулены з многімі партнёрскімі арганізацыямі, таму захаванне чакае ліміту запытаў і потым працягнецца. Не закрывайце гэта акно.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Занадта шмат запытаў да партнёрскіх арганізацый. Нічога не захавана; паспрабуйце яшчэ раз праз хвіліну.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Гэтую версію нельга аднавіць для гэтага сакрэту. Нічога не захавана.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнёрская арганізацыя, з якой абагулены гэты сакрэт, недаступная ({partners}). Зрабіце змену яшчэ раз онлайн, дзе можна захаваць без іх.",
+        "The server refused this change ({reason}).": "Сервер адхіліў гэтую змену ({reason}).",
+        "Save without them": "Захаваць без іх",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Захавана. Атрымальнікі ў партнёрскіх арганізацыях атрымаюць гэтую змену, калі ўладальнік наступным разам захавае гэты сакрэт.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Гэты сакрэт быў зменены ў іншым месцы пасля таго, як вы яго адкрылі. Нічога не захавана; адкрыйце яго зноў і паўтарыце змену.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Арыгінал гэтага агульнага сакрэту быў зменены пасля таго, як вы яго адкрылі. Нічога не захавана; адкрыйце яго зноў і паўтарыце змену.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Спіс людзей, з якімі абагулены гэты сакрэт, мяняўся падчас захавання. Нічога не захавана; паспрабуйце яшчэ раз.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Нічога не захавана: партнёрская арганізацыя, з якой абагулены гэты сакрэт, недаступная ({partners}). Паспрабуйце пазней або захавайце без іх, тады іх доступ будзе прыпынены.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Вам не дазволена захаваць гэтую змену для ўсіх, з кім абагулены гэты сакрэт. Нічога не захавана.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

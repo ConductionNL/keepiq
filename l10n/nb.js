@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Denne hemmeligheten er delt med mange partnerorganisasjoner, så lagringen venter på oppslagsgrensen og fortsetter deretter. Hold denne dialogen åpen.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "For mange oppslag hos partnerorganisasjoner. Ingenting ble lagret; prøv igjen om et minutt.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Denne versjonen kan ikke gjenopprettes for denne hemmeligheten. Ingenting ble lagret.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisasjon som denne hemmeligheten er delt med, kan ikke nås ({partners}). Gjør endringen på nytt på nett, der du kan lagre uten dem.",
+        "The server refused this change ({reason}).": "Serveren avviste denne endringen ({reason}).",
+        "Save without them": "Lagre uten dem",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Lagret. Mottakere i partnerorganisasjoner får denne endringen neste gang eieren lagrer denne hemmeligheten.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Denne hemmeligheten ble endret et annet sted etter at du åpnet den. Ingenting ble lagret; åpne den på nytt og gjør endringen din igjen.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Originalen av denne delte hemmeligheten ble endret etter at du åpnet den. Ingenting ble lagret; åpne den på nytt og gjør endringen din igjen.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Personene denne hemmeligheten er delt med, endret seg under lagringen. Ingenting ble lagret; prøv igjen.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Ingenting ble lagret: en partnerorganisasjon som denne hemmeligheten er delt med, kan ikke nås ({partners}). Prøv igjen senere, eller lagre uten dem, noe som setter delingen deres på pause.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Du har ikke tillatelse til å lagre denne endringen for alle som denne hemmeligheten er delt med. Ingenting ble lagret.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

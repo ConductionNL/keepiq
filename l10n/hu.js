@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ez a titok sok partnerszervezettel van megosztva, ezért a mentés kivárja a lekérdezési korlátot, majd folytatódik. Hagyja nyitva ezt az ablakot.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Túl sok lekérdezés a partnerszervezetek felé. Semmi sem lett mentve; próbálja újra egy perc múlva.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Ez a verzió nem állítható vissza ehhez a titokhoz. Semmi sem lett mentve.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Egy partnerszervezet, amellyel ez a titok meg van osztva, nem érhető el ({partners}). Végezze el újra a módosítást online, ahol nélkülük is mentheti.",
+        "The server refused this change ({reason}).": "A kiszolgáló elutasította ezt a módosítást ({reason}).",
+        "Save without them": "Mentés nélkülük",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Mentve. A partnerszervezeteknél lévő címzettek akkor kapják meg ezt a módosítást, amikor a tulajdonos legközelebb menti ezt a titkot.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ezt a titkot máshol módosították, miután megnyitotta. Semmi sem lett mentve; nyissa meg újra, és végezze el ismét a módosítást.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Ennek a megosztott titoknak az eredetijét módosították, miután megnyitotta. Semmi sem lett mentve; nyissa meg újra, és végezze el ismét a módosítást.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "A személyek, akikkel ez a titok meg van osztva, változtak mentés közben. Semmi sem lett mentve; próbálja újra.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Semmi sem lett mentve: egy partnerszervezet, amellyel ez a titok meg van osztva, nem érhető el ({partners}). Próbálja később, vagy mentsen nélkülük, ami szünetelteti a megosztásukat.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Nincs jogosultsága menteni ezt a módosítást mindenki számára, akivel ez a titok meg van osztva. Semmi sem lett mentve.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

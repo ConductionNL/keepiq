@@ -66,6 +66,8 @@ use Throwable;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)     The public surface is the
  *   secret lifecycle itself (user CRUD + application-vault seam + search);
  *   splitting it would scatter the own-vault scoping invariants.
+ * @SuppressWarnings(PHPMD.TooManyMethods)           loadForUpdate() is update()'s
+ *   own pre-check, public so a share-save refuses exactly what update() refuses.
  * @SuppressWarnings(PHPMD.ExcessiveParameterList)   Constructor DI list; the
  *   trailing optional dependencies keep pre-audit call sites compiling.
  * @SuppressWarnings(PHPMD.LongVariable)             $secretDelegationMapper
@@ -109,6 +111,14 @@ class SecretService {
 	 * @var int
 	 */
 	public const MAX_LIMIT = 100;
+
+	/**
+	 * The fields a client may change through update(); `mergedPending` and
+	 * `baseUpdatedAt` ride along but are not fields of the row.
+	 *
+	 * @var string[]
+	 */
+	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'];
 
 	/**
 	 * The suite statuses that block access to encrypted fields.
@@ -884,6 +894,7 @@ class SecretService {
 	 * @param string $id The secret ID
 	 * @param array<string,mixed> $data The fields to update
 	 * @param string $userId The requesting Nextcloud user ID
+	 * @param DateTime|null $savedAt The new version; a share-save passes the one it already locked in
 	 *
 	 * @return Secret
 	 *
@@ -900,15 +911,14 @@ class SecretService {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
 	 *   field, in the order the fields are applied; the vault policy check is one
 	 *   line. Splitting the field guards apart would scatter one update over
 	 *   several methods and the class is at its method limit.
 	 */
-	public function update(string $id, array $data, string $userId): Secret {
-		$this->assertNotWriteLocked(userId: $userId);
-
-		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: array_keys($data));
+	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null): Secret {
+		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
 
 		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
@@ -982,12 +992,12 @@ class SecretService {
 			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
 		}
 
-		$secret->setUpdatedAt(new DateTime());
+		$secret->setUpdatedAt($savedAt ?? new DateTime());
 		$this->mapper->update($secret);
 
 		// Recipients at partner organisations follow a new name or URL
 		// (sharing-federated-recipients 4.5). A new value reaches them through
-		// the browser's sync, which sends its own notification.
+		// the share-save, which notifies them itself.
 		if ($this->federatedShares !== null
 			&& array_intersect(['key', 'login', 'additionalFields'], array_keys($data)) === []
 			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
@@ -1445,6 +1455,28 @@ class SecretService {
 
 		return $secret;
 	}//end loadOwned()
+
+	/**
+	 * The user's own row, refused as update() refuses it: a write lock, a
+	 * missing or ended copy, another user's row, a use-only or read-only copy.
+	 *
+	 * @param string $id The secret ID
+	 * @param string[] $fields The fields the edit changes
+	 * @param string $userId The requesting Nextcloud user ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws WriteLockedException When a compromise-recovery migration is in progress
+	 * @throws NotFoundException When the secret does not exist or its access ended
+	 * @throws ForbiddenException When the row is not the user's or the copy may not be edited
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function loadForUpdate(string $id, array $fields, string $userId): Secret {
+		$this->assertNotWriteLocked(userId: $userId);
+
+		return $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: $fields);
+	}//end loadForUpdate()
 
 	/**
 	 * Assert the user has an active encryption suite, or block.

@@ -1,5 +1,17 @@
 {
     "translations": {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Bu sır birçok ortak kuruluşla paylaşılıyor, bu yüzden kaydetme sorgu sınırını bekliyor ve ardından devam ediyor. Bu pencereyi açık tutun.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Ortak kuruluşlara çok fazla sorgu yapıldı. Hiçbir şey kaydedilmedi; bir dakika sonra tekrar deneyin.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Bu sürüm bu gizliye geri yüklenemez. Hiçbir şey kaydedilmedi.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Bu gizlinin paylaşıldığı bir ortak kuruluşa ulaşılamıyor ({partners}). Değişikliği çevrimiçiyken yeniden yapın; orada onlar olmadan kaydedebilirsiniz.",
+        "The server refused this change ({reason}).": "Sunucu bu değişikliği reddetti ({reason}).",
+        "Save without them": "Onlar olmadan kaydet",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Kaydedildi. Ortak kuruluşlardaki alıcılar, sahip bu gizliyi bir sonraki kaydedişinde bu değişikliği alır.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Bu gizli, siz açtıktan sonra başka bir yerde değiştirildi. Hiçbir şey kaydedilmedi; yeniden açın ve değişikliğinizi tekrar yapın.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Bu paylaşılan gizlinin aslı, siz açtıktan sonra değiştirildi. Hiçbir şey kaydedilmedi; yeniden açın ve değişikliğinizi tekrar yapın.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Bu gizlinin paylaşıldığı kişiler kaydetme sırasında değişti. Hiçbir şey kaydedilmedi; lütfen tekrar deneyin.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Hiçbir şey kaydedilmedi: bu gizlinin paylaşıldığı bir ortak kuruluşa ulaşılamıyor ({partners}). Daha sonra tekrar deneyin veya onlar olmadan kaydedin; bu durumda paylaşımları duraklatılır.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Bu değişikliği bu gizlinin paylaşıldığı herkes için kaydetme izniniz yok. Hiçbir şey kaydedilmedi.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

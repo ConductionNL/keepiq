@@ -31,6 +31,7 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 
 /**
@@ -51,6 +52,7 @@ class AccountShareCleanupService {
 	 * @param ShareTargetMapper $shareMapper The share-target mapper
 	 * @param GroupShareMapper $groupShareMapper The group-share mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
+	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
 	 *
 	 * @return void
 	 *
@@ -61,6 +63,7 @@ class AccountShareCleanupService {
 		private ShareTargetMapper $shareMapper,
 		private GroupShareMapper $groupShareMapper,
 		private SecretDelegationMapper $delegationMapper,
+		private ShareSaveStageMapper $stageMapper,
 	) {
 	}//end __construct()
 
@@ -163,4 +166,18 @@ class AccountShareCleanupService {
 		$report->sharesRemoved = count($this->shareMapper->findByTargetUser(targetUserId: $userId));
 		$this->shareMapper->deleteByTargetUser(targetUserId: $userId);
 	}//end removeReceivedShares()
+
+	/**
+	 * Remove the user's staged share-save chunks: ciphertext they sent for a
+	 * save they never finished.
+	 *
+	 * @param string $userId The departing user
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 */
+	public function removeShareSaveStages(string $userId): void {
+		$this->stageMapper->deleteByUser(userId: $userId);
+	}//end removeShareSaveStages()
 }//end class

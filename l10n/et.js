@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "See saladus on jagatud paljude partnerorganisatsioonidega, seega salvestamine ootab päringupiirangu möödumist ja jätkub siis. Hoia see aken avatuna.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Liiga palju partnerorganisatsioonide päringuid. Midagi ei salvestatud; proovi minuti pärast uuesti.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Seda versiooni ei saa selle saladuse jaoks taastada. Midagi ei salvestatud.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerorganisatsioon, kellega see saladus on jagatud, ei ole kättesaadav ({partners}). Tee muudatus uuesti võrgus olles, kus saad salvestada ilma nendeta.",
+        "The server refused this change ({reason}).": "Server keeldus sellest muudatusest ({reason}).",
+        "Save without them": "Salvesta ilma nendeta",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Salvestatud. Partnerorganisatsioonide saajad saavad selle muudatuse, kui omanik selle saladuse järgmine kord salvestab.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Seda saladust muudeti mujal pärast selle avamist. Midagi ei salvestatud; ava see uuesti ja tee muudatus uuesti.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Selle jagatud saladuse originaali muudeti pärast selle avamist. Midagi ei salvestatud; ava see uuesti ja tee muudatus uuesti.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Inimesed, kellega see saladus on jagatud, muutusid salvestamise ajal. Midagi ei salvestatud; proovi uuesti.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Midagi ei salvestatud: partnerorganisatsioon, kellega see saladus on jagatud, ei ole kättesaadav ({partners}). Proovi hiljem uuesti või salvesta ilma nendeta, mis peatab nende jagamise.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Sul ei ole lubatud seda muudatust salvestada kõigile, kellega see saladus on jagatud. Midagi ei salvestatud.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

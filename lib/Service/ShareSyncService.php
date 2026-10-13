@@ -37,13 +37,14 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
-use Throwable;
 
 /**
  * Pushes an updated encrypted blob to every recipient of a secret.
  */
 class ShareSyncService {
+	use TTransactional;
 
 	/**
 	 * The share audit trail.
@@ -119,10 +120,15 @@ class ShareSyncService {
 		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
-		$updated = $this->applySyncUpdates(
-			source: $source,
-			updates: $updates,
-			allowedIds: $this->collectSyncTargets(source: $source)
+		$allowedIds = $this->collectSyncTargets(source: $source);
+		$updated = $this->atomic(
+			fn: fn (): int => $this->writeCopyBlobs(
+				source: $source,
+				updates: $updates,
+				allowedIds: $allowedIds,
+				savedAt: new DateTime()
+			),
+			db: $this->db
 		);
 
 		// A non-owner write is attributed to the writer (§3.3) —
@@ -211,8 +217,10 @@ class ShareSyncService {
 	 * @return bool True when the caller writes as a team-folder member rather than the owner.
 	 *
 	 * @throws InvalidArgumentException When the caller may not write the secret
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 */
-	private function resolveSyncWriter(Secret $source, string $userId): bool {
+	public function resolveSyncWriter(Secret $source, string $userId): bool {
 		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
 			return false;
 		}
@@ -269,63 +277,59 @@ class ShareSyncService {
 	}//end collectSyncTargets()
 
 	/**
-	 * Write every permitted recipient blob in a single transaction.
+	 * Write every permitted recipient blob. Opens no transaction: the caller
+	 * runs it inside its own, so it commits with the rest of the save.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
+	 * @param DateTime $savedAt The version every written row gets
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
-	 * @throws Throwable When the transaction fails; the write is rolled back first.
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
-	private function applySyncUpdates(Secret $source, array $updates, array $allowedIds): int {
+	public function writeCopyBlobs(Secret $source, array $updates, array $allowedIds, DateTime $savedAt): int {
 		$updated = 0;
-		$this->db->beginTransaction();
-		try {
-			foreach ($updates as $update) {
-				$recipientSecretId = (string)($update['secretId'] ?? '');
-				if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
-					continue;
-				}
+		foreach ($updates as $update) {
+			$recipientSecretId = (string)($update['secretId'] ?? '');
+			if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
+				continue;
+			}
 
-				try {
-					$copy = $this->secretMapper->findById($recipientSecretId);
-				} catch (DoesNotExistException) {
-					continue;
-				}
+			try {
+				$copy = $this->secretMapper->findById($recipientSecretId);
+			} catch (DoesNotExistException) {
+				continue;
+			}
 
-				$this->applyRecipientBlob(copy: $copy, update: $update);
+			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt);
 
-				// A key rewrite of the SOURCE row is a real rotation —
-				// advance keyUpdatedAt so rotation proofs stay honest
-				// (folder-permission-grades §2.3).
-				if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
-					$copy->setKeyUpdatedAt(new DateTime());
-				}
+			// A key rewrite of the SOURCE row is a real rotation —
+			// advance keyUpdatedAt so rotation proofs stay honest
+			// (folder-permission-grades §2.3).
+			if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
+				$copy->setKeyUpdatedAt(clone $savedAt);
+			}
 
-				$this->secretMapper->update($copy);
-				++$updated;
-			}//end foreach
-
-			$this->db->commit();
-		} catch (Throwable $exception) {
-			$this->db->rollBack();
-			throw $exception;
-		}//end try
+			$this->secretMapper->update($copy);
+			++$updated;
+		}//end foreach
 
 		return $updated;
-	}//end applySyncUpdates()
+	}//end writeCopyBlobs()
 
 	/**
 	 * Copy one re-encrypted blob onto a recipient's Secret row.
 	 *
 	 * @param Secret $copy The recipient copy to mutate
 	 * @param array<string,string|null> $update The blob row for this recipient
+	 * @param DateTime $savedAt The copy's new version
 	 *
 	 * @return void
 	 */
-	private function applyRecipientBlob(Secret $copy, array $update): void {
+	private function applyRecipientBlob(Secret $copy, array $update, DateTime $savedAt): void {
 		if (isset($update['key']) === true) {
 			$copy->setKey((string)$update['key']);
 		}
@@ -348,7 +352,7 @@ class ShareSyncService {
 			$copy->setAdditionalFields($additionalFields);
 		}
 
-		$copy->setUpdatedAt(new DateTime());
+		$copy->setUpdatedAt(clone $savedAt);
 
 		// If the copy was previously flagged as possibly compromised
 		// (e.g. EncryptionSuite migration mid-air), the freshly

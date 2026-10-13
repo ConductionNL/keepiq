@@ -1,6 +1,8 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Too many partner lookups. Nothing was saved; try again in a minute.",
         "Abort and keep my old key": "Abort and keep my old key",
         "Aborting…": "Aborting…",
         "Could not abort the rotation.": "Could not abort the rotation.",
@@ -1668,7 +1670,17 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Removed the user from %n team folder.","Removed the user from %n team folders."],
         "A restored copy came from a share that has ended. It stays read-only.": "A restored copy came from a share that has ended. It stays read-only.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.",
-        "Recipient at another organisation restored their copy": "Recipient at another organisation restored their copy"
+        "Recipient at another organisation restored their copy": "Recipient at another organisation restored their copy",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.",
+        "Save without them": "Save without them",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Saved. Recipients at partner organisations get this change when the owner next saves this secret.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.",
+        "The server refused this change ({reason}).": "The server refused this change ({reason}).",
+        "This version cannot be restored to this secret. Nothing was saved.": "This version cannot be restored to this secret. Nothing was saved."
     },
     "nplurals=2; plural=(n != 1);"
 )

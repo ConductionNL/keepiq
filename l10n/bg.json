@@ -1,5 +1,17 @@
 {
     "translations": {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Тази тайна е споделена с много партньорски организации, затова запазването изчаква лимита на заявките и след това продължава. Не затваряйте този прозорец.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Твърде много заявки към партньорски организации. Нищо не е запазено; опитайте отново след минута.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Тази версия не може да бъде възстановена за тази тайна. Нищо не е запазено.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партньорска организация, с която е споделена тази тайна, е недостъпна ({partners}). Направете промяната отново онлайн, където можете да запазите без тях.",
+        "The server refused this change ({reason}).": "Сървърът отказа тази промяна ({reason}).",
+        "Save without them": "Запазване без тях",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Запазено. Получателите в партньорски организации ще получат тази промяна, когато собственикът запази тази тайна следващия път.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Тази тайна е променена другаде, след като я отворихте. Нищо не е запазено; отворете я отново и повторете промяната си.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Оригиналът на тази споделена тайна е променен, след като я отворихте. Нищо не е запазено; отворете я отново и повторете промяната си.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Хората, с които е споделена тази тайна, се промениха по време на запазването. Нищо не е запазено; опитайте отново.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Нищо не е запазено: партньорска организация, с която е споделена тази тайна, е недостъпна ({partners}). Опитайте отново по-късно или запазете без тях, което временно спира споделянето им.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Нямате право да запазите тази промяна за всички, с които е споделена тази тайна. Нищо не е запазено.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

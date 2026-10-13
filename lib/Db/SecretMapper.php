@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Db;
 
 use DateTime;
+use DateTimeZone;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -119,6 +120,66 @@ class SecretMapper extends QBMapper {
 
 		return $this->findEntity(query: $qb);
 	}//end findById()
+
+	/**
+	 * Find secrets by their UUIDs, keyed by id; unknown ids are left out.
+	 *
+	 * @param string[] $ids The secret IDs
+	 *
+	 * @return array<string,Secret>
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	public function findByIds(array $ids): array {
+		$found = [];
+		foreach (array_chunk(array_values(array_unique($ids)), 1000) as $chunk) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('*')
+				->from($this->getTableName())
+				->where($qb->expr()->in('id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_STR_ARRAY)));
+
+			foreach ($this->findEntities(query: $qb) as $secret) {
+				$found[$secret->getId()] = $secret;
+			}
+		}
+
+		return $found;
+	}//end findByIds()
+
+	/**
+	 * Move a row from version `$base` to `$savedAt`, only if it is still at
+	 * `$base`. The UPDATE also holds the row lock until the transaction ends,
+	 * so a concurrent save of the same row waits and then finds it moved.
+	 * `$savedAt` must differ from `$base`: MySQL counts an unchanged row as 0.
+	 *
+	 * @param string   $id      The secret ID
+	 * @param DateTime $base    The version the caller's edit was made from
+	 * @param DateTime $savedAt The new version
+	 *
+	 * @return int The number of rows changed: 0 when the row moved on or is gone
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function advanceVersion(string $id, DateTime $base, DateTime $savedAt): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('updated_at', $qb->createNamedParameter($this->utcSeconds(moment: $savedAt)))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('updated_at', $qb->createNamedParameter($this->utcSeconds(moment: $base))));
+
+		return $qb->executeStatement();
+	}//end advanceVersion()
+
+	/**
+	 * A moment as the DATETIME column holds it: UTC, whole seconds.
+	 *
+	 * @param DateTime $moment The moment
+	 *
+	 * @return string
+	 */
+	private function utcSeconds(DateTime $moment): string {
+		return (clone $moment)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+	}//end utcSeconds()
 
 	/**
 	 * Resolve a sort column from the allow-list, defaulting to name.

@@ -53,14 +53,6 @@ class SecretUpdateController extends OCSController {
 	private const STATUS_LOCKED = 423;
 
 	/**
-	 * The fields a client may change; only those present in the request are
-	 * forwarded, so an absent field stays as it is.
-	 *
-	 * @var string[]
-	 */
-	private const FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'];
-
-	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object
@@ -137,7 +129,7 @@ class SecretUpdateController extends OCSController {
 	 */
 	private function requestedChanges(): array {
 		$data = [];
-		foreach (self::FIELDS as $field) {
+		foreach (SecretService::UPDATABLE_FIELDS as $field) {
 			$value = $this->request->getParam($field, '__unset__');
 			if ($value === null) {
 				$data[$field] = null;

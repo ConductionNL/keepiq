@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Dan is-sigriet huwa kondiviż ma' ħafna organizzazzjonijiet sħab, għalhekk is-salvataġġ qed jistenna l-limitu tat-tfittxijiet u mbagħad ikompli. Żomm din it-tieqa miftuħa.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Wisq tfittxijiet għand organizzazzjonijiet sħab. Ma ġie ssejvjat xejn; erġa' pprova wara minuta.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Din il-verżjoni ma tistax terġa' tiġi restawrata għal dan is-sigriet. Ma ġie ssejvjat xejn.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizzazzjoni sieħba li magħha huwa kondiviż dan is-sigriet ma tistax tintlaħaq ({partners}). Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
+        "The server refused this change ({reason}).": "Is-server irrifjuta din il-bidla ({reason}).",
+        "Save without them": "Issejvja mingħajrhom",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Issejvjat. Ir-riċevituri f'organizzazzjonijiet sħab jirċievu din il-bidla meta s-sid jerġa' jissejvja dan is-sigriet.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Dan is-sigriet inbidel x'imkien ieħor wara li ftaħtu. Ma ġie ssejvjat xejn; erġa' iftħu u agħmel il-bidla tiegħek mill-ġdid.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "L-oriġinal ta' dan is-sigriet kondiviż inbidel wara li ftaħtu. Ma ġie ssejvjat xejn; erġa' iftħu u agħmel il-bidla tiegħek mill-ġdid.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "In-nies li magħhom huwa kondiviż dan is-sigriet inbidlu waqt is-salvataġġ. Ma ġie ssejvjat xejn; erġa' pprova.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Ma ġie ssejvjat xejn: organizzazzjoni sieħba li magħha huwa kondiviż dan is-sigriet ma tistax tintlaħaq ({partners}). Erġa' pprova aktar tard, jew issejvja mingħajrhom, li jissospendi l-kondiviżjoni tagħhom.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "M'għandekx permess tissejvja din il-bidla għal kulħadd li miegħu huwa kondiviż dan is-sigriet. Ma ġie ssejvjat xejn.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

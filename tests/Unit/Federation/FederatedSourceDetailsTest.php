@@ -132,6 +132,8 @@ class FederatedSourceDetailsTest extends TestCase {
 			fn (string $id): array => ($id === 'src') ? $this->shares : []
 		);
 		$shareMapper->method('update')->willReturnArgument(0);
+		$shareMapper->method('updateIfActive')->willReturn(1);
+		$shareMapper->method('updateIfUnchanged')->willReturn(1);
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationNotification')->willReturnCallback(static fn () => new FakeCloudFederationNotification());

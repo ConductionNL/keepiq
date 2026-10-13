@@ -631,6 +631,75 @@ class ShareServiceTest extends TestCase {
 	}//end testSyncUpdateWritesEveryCopyAndClearsCompromise()
 
 	/**
+	 * The old sync route keeps its own transaction around the copy writes.
+	 *
+	 * @return void
+	 */
+	public function testSyncUpdateCommitsItsCopiesInOneTransaction(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('commit');
+		$this->db->expects($this->never())->method('rollBack');
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'alice'
+		);
+	}//end testSyncUpdateCommitsItsCopiesInOneTransaction()
+
+	/**
+	 * The copy writes a share-save runs inside its own transaction open none,
+	 * stamp every row with the save's version and rotate the source's key age.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$this->db->expects($this->never())->method('beginTransaction');
+		$sync = new ShareSyncService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			suiteMapper: $this->suiteMapper,
+			db: $this->db,
+			auth: $this->createMock(ShareAuthorizationService::class),
+		);
+		$at = new DateTime('2026-10-13T12:00:00+00:00');
+
+		$written = $sync->writeCopyBlobs(
+			source: $source,
+			updates: [
+				['secretId' => 'src-1', 'key' => 'enc-src'],
+				['secretId' => 'copy-1', 'key' => 'enc-1', 'login' => null],
+				['secretId' => 'stranger', 'key' => 'enc-x'],
+			],
+			allowedIds: ['src-1' => true, 'copy-1' => true],
+			savedAt: $at
+		);
+
+		$this->assertSame(2, $written);
+		$this->assertSame($at->getTimestamp(), $copy->getUpdatedAt()?->getTimestamp());
+		$this->assertNull($copy->getLogin());
+		$this->assertSame($at->getTimestamp(), $source->getUpdatedAt()?->getTimestamp());
+		$this->assertSame($at->getTimestamp(), $source->getKeyUpdatedAt()?->getTimestamp());
+		$this->assertNull($copy->getKeyUpdatedAt());
+	}//end testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion()
+
+	/**
 	 * A recipient's star and last-used time survive the owner's edit: the
 	 * sync writes only the value columns of the copy
 	 * (vault-favourites-tags-and-last-used, "A recipient's star survives the owner's edit").

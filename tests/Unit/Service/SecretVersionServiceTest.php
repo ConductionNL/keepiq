@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
@@ -26,6 +27,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -45,6 +47,8 @@ class SecretVersionServiceTest extends TestCase {
 
 	private EncryptionSuiteMapper&MockObject $suiteMapper;
 
+	private LoggerInterface&MockObject $logger;
+
 	/**
 	 * Build the service with fresh mocks.
 	 *
@@ -55,6 +59,7 @@ class SecretVersionServiceTest extends TestCase {
 		$this->mapper = $this->createMock(originalClassName: SecretVersionMapper::class);
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$this->suiteMapper = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
+		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		$this->service = new SecretVersionService(
 			mapper: $this->mapper,
@@ -64,7 +69,7 @@ class SecretVersionServiceTest extends TestCase {
 				secretMapper: $this->secretMapper,
 				suiteMapper: $this->suiteMapper,
 			),
-			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			logger: $this->logger,
 			eventDispatcher: null,
 		);
 	}//end setUp()
@@ -191,6 +196,8 @@ class SecretVersionServiceTest extends TestCase {
 			}
 		);
 
+		$this->logger->expects($this->once())->method('info');
+
 		$result = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
 		// The head's PRE-restore ciphertext was snapshotted first.
@@ -200,6 +207,79 @@ class SecretVersionServiceTest extends TestCase {
 		$this->assertSame('OLD_CIPHERTEXT', $updated->getKey());
 		$this->assertSame('Old wiki', $result->getName());
 	}//end testRestoreSnapshotsHeadThenSetsFields()
+
+	/**
+	 * A head at 10:00:05 with version v-1 of it to restore.
+	 *
+	 * @return Secret The head
+	 */
+	private function restorableHead(): Secret {
+		$version = new SecretVersion();
+		$version->setId('v-1');
+		$version->setSecretId('sec-1');
+		$version->setKey('OLD_CIPHERTEXT');
+		$version->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($version);
+
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$this->suiteMapper->method('findById')->willReturn($suite);
+
+		$head = $this->ownedSecret();
+		$head->setUpdatedAt(new DateTime('2026-10-01T10:00:05+00:00'));
+		$this->secretMapper->method('findById')->willReturn($head);
+
+		return $head;
+	}//end restorableHead()
+
+	/**
+	 * A restore chosen on an older head changes nothing.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOverAMovedHeadIsRefusedUntouched(): void {
+		$head = $this->restorableHead();
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T10:00:04+00:00');
+			$this->fail('A stale base must be refused');
+		} catch (StaleWriteException $stale) {
+			$this->assertSame($head, $stale->getCurrent());
+			$this->assertSame('HEAD_CIPHERTEXT', $head->getKey());
+		}
+	}//end testARestoreOverAMovedHeadIsRefusedUntouched()
+
+	/**
+	 * A restore on the current head goes ahead, whatever zone the base is in.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOnTheCurrentHeadGoesAhead(): void {
+		$this->restorableHead();
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->expects($this->once())->method('update');
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T12:00:05+02:00');
+
+		$this->assertSame('OLD_CIPHERTEXT', $restored->getKey());
+	}//end testARestoreOnTheCurrentHeadGoesAhead()
+
+	/**
+	 * A restore through a share-save is logged like one through restore().
+	 *
+	 * @return void
+	 */
+	public function testARecordedRestoreIsLogged(): void {
+		$version = new SecretVersion();
+		$version->setVersionNumber(4);
+		$this->logger->expects($this->once())->method('info')
+			->with($this->stringContains('sec-1 restored to version 4 by alice'));
+
+		$this->service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
+	}//end testARecordedRestoreIsLogged()
 
 	/**
 	 * deleteForSecret cascades to the mapper (idempotent by contract).

@@ -125,4 +125,111 @@ class FederatedShareMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findDueNotifications()
+
+	/**
+	 * Write a share's changed fields only while it is still active, so a
+	 * revoke or suspend that landed meanwhile is never overwritten.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 *
+	 * @return int The rows matched: 0 when the share is no longer active
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function updateIfActive(FederatedShare $share): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(FederatedShare::STATUS_ACTIVE)));
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfActive()
+
+	/**
+	 * Write the outcome of a delivery attempt only while the row still holds
+	 * the notification, status and version the attempt started from, so it
+	 * never clears or replaces a notification queued meanwhile.
+	 *
+	 * @param FederatedShare $share The share with the outcome set
+	 * @param string $pending The notification that was attempted
+	 * @param string $status The status the attempt started from
+	 * @param DateTime|null $updatedAt The version the attempt started from
+	 *
+	 * @return int The rows matched: 0 when something else was queued meanwhile
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function updateIfUnchanged(FederatedShare $share, string $pending, string $status, ?DateTime $updatedAt): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('pending_notification', $qb->createNamedParameter($pending)))
+			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)));
+		$version = $qb->expr()->isNull('updated_at');
+		if ($updatedAt !== null) {
+			$version = $qb->expr()->eq('updated_at', $qb->createNamedParameter($updatedAt, IQueryBuilder::PARAM_DATETIME_MUTABLE));
+		}
+
+		$qb->andWhere($version);
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfUnchanged()
+
+	/**
+	 * Delete a share only while the notification is still pending on it.
+	 *
+	 * @param FederatedShare $share The share
+	 * @param string $pending The notification that was delivered
+	 *
+	 * @return int The rows deleted
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 */
+	public function deleteIfPending(FederatedShare $share, string $pending): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
+			->andWhere($qb->expr()->eq('pending_notification', $qb->createNamedParameter($pending)));
+
+		return $qb->executeStatement();
+	}//end deleteIfPending()
+
+	/**
+	 * An UPDATE of the share's changed fields, for its row.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 *
+	 * @return IQueryBuilder
+	 */
+	private function changes(FederatedShare $share): IQueryBuilder {
+		$fields = $share->getUpdatedFields();
+		unset($fields['id']);
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName());
+		foreach (array_keys($fields) as $property) {
+			$getter = 'get'.ucfirst($property);
+			$qb->set(
+				$share->propertyToColumn($property),
+				$qb->createNamedParameter(
+					$share->$getter(),
+					$this->getParameterTypeForProperty(entity: $share, property: $property)
+				)
+			);
+		}
+
+		return $qb->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())));
+	}//end changes()
+
+	/**
+	 * Run a conditional update and forget the written changes, so a later
+	 * write of the same entity cannot send an older ciphertext again.
+	 *
+	 * @param IQueryBuilder $qb The update
+	 * @param FederatedShare $share The share it writes
+	 *
+	 * @return int The rows matched
+	 */
+	private function run(IQueryBuilder $qb, FederatedShare $share): int {
+		$rows = $qb->executeStatement();
+		$share->resetUpdatedFields();
+
+		return $rows;
+	}//end run()
 }//end class

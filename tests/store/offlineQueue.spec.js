@@ -1,13 +1,16 @@
 /**
  * Offline edits through the REAL secret and offline stores (keepiq#785): an
  * offline edit lands in the sealed queue and shows at once; the replay goes
- * through the online paths, encrypts for the recipients returned AT REPLAY,
- * and handles 409, 428 (a refusal), 423 and a failed recipient sync as the design says.
+ * through the online paths, encrypts for the recipients returned AT REPLAY in
+ * one share save, and handles 409, 428 (a refusal), 423 and a failed share
+ * save as the design says.
  * IndexedDB is replaced by a map that records exactly what would be stored.
  *
  * @spec openspec/specs/offline-edit-queue/spec.md
  */
 import axios from '@nextcloud/axios'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -16,6 +19,11 @@ import {
 	rsaDecrypt,
 	rsaEncrypt,
 } from '../../src/crypto/rsa.js'
+import {
+	httpError,
+	settleWithTimers,
+	shareSaveServer,
+} from '../fixtures/shareSaveServer.js'
 import {
 	RSA4096_PRIVATE_KEY_PKCS8_PEM,
 	RSA4096_PUBLIC_KEY_SPKI_PEM,
@@ -40,11 +48,27 @@ vi.mock('../../src/offline/cache.js', () => ({
 	purge: async () => {},
 }))
 
-const { useOfflineStore } = await import('../../src/store/modules/offline.js')
+const { failureText, useOfflineStore } = await import(
+	'../../src/store/modules/offline.js'
+)
 const { useSecretStore } = await import('../../src/store/modules/secret.js')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
+const { forgetVerifiedPartners } = await import(
+	'../../src/services/shareSave.js'
+)
 
 const BASE = '2026-10-01T10:00:00+00:00'
+
+const CHAIN = JSON.parse(
+	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
+)
+const BOB = 'bob@cloud.partner.example'
+const BOB_VERIFIED = {
+	cloudId: BOB,
+	certificate: CHAIN.bob,
+	chain: [CHAIN.intermediateA, CHAIN.rootA],
+	partnerRootFingerprint: CHAIN.rootAFingerprint,
+}
 
 let offline
 let secrets
@@ -82,6 +106,7 @@ function goOnline() {
 }
 
 beforeEach(() => {
+	forgetVerifiedPartners()
 	stored.clear()
 	snapshot = null
 	setActivePinia(createPinia())
@@ -137,45 +162,54 @@ describe('editing offline', () => {
 })
 
 describe('replay', () => {
-	it('updates through PUT with the base, then encrypts for the recipients returned at replay', async () => {
+	it('saves a value edit with every copy in one share save, encrypted for the recipients of replay time', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { key: 'new-router-password' })
 		goOnline()
-
-		const put = vi.spyOn(axios, 'put').mockImplementation(async (url) => {
-			if (url.endsWith('/sync')) return { data: { updated: 1 } }
-			return { data: { id: 's1', updatedAt: '2026-10-02T12:00:00+00:00' } }
-		})
-		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
-			if (url.endsWith('/s1/shares')) {
-				return {
-					data: [
-						{
-							secretId: 'copy-bob',
-							recipientCertificate:
-								RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM,
-						},
-					],
-				}
-			}
-			if (url.endsWith('/write-context'))
-				return { data: { effectiveGrade: 'owner', sourceSecretId: 's1' } }
-			return { data: [] }
+		const log = shareSaveServer({
+			id: 's1',
+			required: [
+				{ secretId: 'copy-bob', holder: 'recipient', targetUserId: 'bob' },
+			],
+			suites: { bob: RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM },
 		})
 
 		const result = await offline.replayQueue()
 
 		expect(result).toEqual({ synced: 1, stopped: false })
-		const ownerPut = put.mock.calls.find(([url]) => url.endsWith('/secrets/s1'))
-		expect(ownerPut[1].baseUpdatedAt).toBe(BASE)
-		const sync = put.mock.calls.find(([url]) => url.endsWith('/s1/sync'))
+		expect(log.plainPuts).toHaveLength(0)
+		const final = log.saves.at(-1)
+		expect(final.baseUpdatedAt).toBe(BASE)
+		expect(await rsaDecrypt(final.patch.key, session.cryptoKey)).toBe(
+			'new-router-password',
+		)
 		const bobKey = await importPrivateKey(
 			RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM,
 		)
-		expect(await rsaDecrypt(sync[1].updates[0].encryptedKey, bobKey)).toBe(
+		expect(await rsaDecrypt(final.copies[0].key, bobKey)).toBe(
 			'new-router-password',
 		)
 		expect(stored.size).toBe(0)
+	})
+
+	it('a stale share save keeps the entry as a conflict and writes nothing', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		goOnline()
+		const current = { id: 's1', updatedAt: '2026-10-02T09:00:00+00:00' }
+		shareSaveServer({
+			id: 's1',
+			onSave: () => {
+				throw httpError(409, { error: 'stale', current })
+			},
+		})
+
+		await offline.replayQueue()
+
+		expect(offline.conflictEntries).toHaveLength(1)
+		expect(offline.conflicts[offline.conflictEntries[0].entryId]).toEqual(
+			current,
+		)
 	})
 
 	it('a 409 keeps the entry for the user, and "keep mine" replays on the server version', async () => {
@@ -243,37 +277,233 @@ describe('replay', () => {
 		expect(stored.size).toBe(1)
 	})
 
-	it('a failed recipient sync retries only the sync step', async () => {
+	it('a failed share save writes nothing and keeps the whole entry queued', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { key: 'new' })
 		goOnline()
-		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
-			if (url.endsWith('/shares'))
-				return {
-					data: [
-						{
-							secretId: 'c',
-							recipientCertificate:
-								RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM,
-						},
-					],
+		const log = shareSaveServer({
+			id: 's1',
+			onSave: () => {
+				throw new Error('Network Error')
+			},
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result.stopped).toBe(true)
+		expect(log.plainPuts).toHaveLength(0)
+		expect([...stored.values()][0].status).toBe('queued')
+	})
+
+	it('an unreachable partner fails the entry with its reason, and the queue goes on', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		await secrets.createSecret({ name: 'B', key: 'v' })
+		goOnline()
+		const log = shareSaveServer({
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: 'bob@partner' }],
+			rows: { s1: { id: 's1', updatedAt: BASE } },
+			posts: { '/api/v1/secrets': { id: 'created' } },
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 1, stopped: false })
+		expect(log.saves).toHaveLength(1)
+		expect(offline.failedEntries.map((e) => e.secretId)).toEqual(['s1'])
+		expect(failureText(offline.failedEntries[0].failure)).toContain(
+			'bob@partner',
+		)
+	})
+
+	it('keeps the reason sealed with the entry, so it is still shown after a reload', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		goOnline()
+		shareSaveServer({
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: 'bob@partner' }],
+			rows: { s1: { id: 's1', updatedAt: BASE } },
+		})
+		await offline.replayQueue()
+
+		const atRest = JSON.stringify([...stored.values()])
+		expect(atRest).not.toContain('bob@partner')
+		expect(atRest).not.toContain('partner_unreachable')
+
+		setActivePinia(createPinia())
+		const reloaded = useOfflineStore()
+		useSessionStore().cryptoKey = session.cryptoKey
+		useSessionStore().suiteId = 'suite-1'
+		await reloaded.loadQueue()
+
+		const [failed] = reloaded.failedEntries
+		expect(failed.failure).toEqual({
+			code: 'partner_unreachable',
+			partners: ['bob@partner'],
+		})
+		expect(failureText(failed.failure)).toContain('bob@partner')
+	})
+
+	it('"Try again" replays a partner failure: it fails again cleanly while the partner is down, and saves once it answers', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		goOnline()
+		const partners = [{ shareId: 'fs-1', recipientCloudId: BOB }]
+		const rows = { s1: { id: 's1', updatedAt: BASE } }
+		const down = shareSaveServer({ id: 's1', partners, rows })
+		await offline.replayQueue()
+		const entryId = offline.failedEntries[0].entryId
+
+		await offline.retryEntry(entryId)
+
+		expect(down.saves).toHaveLength(2)
+		expect(down.plainPuts).toHaveLength(0)
+		expect(offline.failedEntries.map((e) => e.entryId)).toEqual([entryId])
+		expect(failureText(offline.failedEntries[0].failure)).toContain(BOB)
+		expect([...stored.values()][0].status).toBe('failed')
+
+		vi.restoreAllMocks()
+		const up = shareSaveServer({
+			id: 's1',
+			partners,
+			rows,
+			lookup: { [BOB]: BOB_VERIFIED },
+		})
+
+		await offline.retryEntry(entryId)
+
+		expect(up.saves.at(-1).federated.map((f) => f.shareId)).toEqual(['fs-1'])
+		expect(offline.entries).toHaveLength(0)
+		expect(stored.size).toBe(0)
+	})
+
+	it('a partner lookup limit that outlasts the wait fails the entry with its reason, and the queue goes on', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		await secrets.createSecret({ name: 'B', key: 'v' })
+		goOnline()
+		shareSaveServer({
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+			rows: { s1: { id: 's1', updatedAt: BASE } },
+			posts: { '/api/v1/secrets': { id: 'created' } },
+			lookup: {
+				[BOB]: { reject: httpError(429, { message: 'Too Many Requests' }) },
+			},
+		})
+		vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })
+		let result
+		try {
+			result = await settleWithTimers(offline.replayQueue())
+		} finally {
+			vi.useRealTimers()
+		}
+
+		expect(result).toEqual({ synced: 1, stopped: false })
+		const [failed] = offline.failedEntries
+		expect(failed.secretId).toBe('s1')
+		expect(failed.failure).toEqual({ code: 'partner_lookup_limit' })
+		expect(failureText(failed.failure)).toContain('try again in a minute')
+	})
+
+	it('a failed entry left at "sync" keeps that status, so "Try again" finishes it from the saved row', async () => {
+		await goOffline()
+		const kept = await secrets.updateSecret('s1', { key: 'queued-value' })
+		goOnline()
+		await offline.setStatus(offline.entries[0], 'sync')
+		const rowAt = '2026-10-02T12:00:00+00:00'
+		const options = {
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+			rows: { s1: { id: 's1', key: kept.key, updatedAt: rowAt } },
+			onSave: (body) => {
+				if (body.baseUpdatedAt !== rowAt) {
+					throw httpError(409, { error: 'stale', current: { id: 's1' } })
 				}
-			return { data: { effectiveGrade: 'owner', sourceSecretId: 's1' } }
+			},
+		}
+		shareSaveServer(options)
+		await offline.replayQueue()
+		const [failed] = offline.failedEntries
+		expect(failed.failure.resumeAs).toBe('sync')
+		expect(failureText(failed.failure)).toContain(BOB)
+
+		vi.restoreAllMocks()
+		const up = shareSaveServer({ ...options, lookup: { [BOB]: BOB_VERIFIED } })
+		await offline.retryEntry(failed.entryId)
+
+		expect(up.saves.at(-1).baseUpdatedAt).toBe(rowAt)
+		expect(up.saves.at(-1).federated.map((f) => f.shareId)).toEqual(['fs-1'])
+		expect(offline.conflicts).toEqual({})
+		expect(offline.entries).toHaveLength(0)
+	})
+
+	it('a share save the server refuses as malformed fails the entry with its reason', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		goOnline()
+		shareSaveServer({
+			id: 's1',
+			onSave: () => {
+				throw httpError(400, { error: 'invalid_key' })
+			},
 		})
-		const put = vi.spyOn(axios, 'put').mockImplementation(async (url) => {
-			if (url.endsWith('/sync')) throw new Error('Network Error')
-			return { data: { id: 's1' } }
+
+		const result = await offline.replayQueue()
+
+		expect(result.stopped).toBe(false)
+		const [failed] = offline.failedEntries
+		expect(failureText(failed.failure)).toContain('invalid_key')
+	})
+
+	it('an entry left at "sync" is saved with its copies while the row still holds it, without the merge count', async () => {
+		await goOffline()
+		const kept = await secrets.updateSecret('s1', {
+			key: 'queued-value',
+			additionalFields: { pin: '1' },
+			mergedPending: 2,
+		})
+		goOnline()
+		const entry = offline.entries[0]
+		expect(entry.body.mergedPending).toBe(2)
+		await offline.setStatus(entry, 'sync')
+		const rowAt = '2026-10-02T12:00:00+00:00'
+		const log = shareSaveServer({
+			id: 's1',
+			rows: {
+				s1: {
+					id: 's1',
+					key: kept.key,
+					additionalFields: kept.additionalFields,
+					updatedAt: rowAt,
+				},
+			},
 		})
 
 		await offline.replayQueue()
-		expect([...stored.values()][0].status).toBe('sync')
-		const ownerPuts = () =>
-			put.mock.calls.filter(([url]) => url.endsWith('/secrets/s1')).length
-		expect(ownerPuts()).toBe(1)
 
-		put.mockImplementation(async () => ({ data: { updated: 1 } }))
+		expect(log.saves).toHaveLength(1)
+		expect(log.saves[0].baseUpdatedAt).toBe(rowAt)
+		expect(log.saves[0].patch.key).toBe(kept.key)
+		expect('mergedPending' in log.saves[0].patch).toBe(false)
+		expect(stored.size).toBe(0)
+	})
+
+	it('an entry left at "sync" is dropped when the row moved on', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'queued-value' })
+		goOnline()
+		await offline.setStatus(offline.entries[0], 'sync')
+		const log = shareSaveServer({
+			id: 's1',
+			rows: { s1: { id: 's1', key: 'NEWER', updatedAt: BASE } },
+		})
+
 		await offline.replayQueue()
-		expect(ownerPuts()).toBe(1)
+
+		expect(log.saves).toHaveLength(0)
 		expect(stored.size).toBe(0)
 	})
 

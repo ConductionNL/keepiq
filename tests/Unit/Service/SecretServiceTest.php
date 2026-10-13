@@ -1000,4 +1000,49 @@ class SecretServiceTest extends TestCase {
 		$this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
 		$this->assertSame('No base', $stored->getName());
 	}//end testUpdateWithAMatchingOrAbsentBaseUpdates()
+
+	/**
+	 * A share-save gives the row the version it already locked in, not "now".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testUpdateTakesTheVersionAShareSaveLockedIn(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->mapper->method('findById')->willReturn($this->makeSecret());
+		$this->mapper->method('update')->willReturnArgument(0);
+		$savedAt = new \DateTime('2030-01-01T00:00:01+00:00');
+
+		$secret = $this->service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'], userId: 'alice', savedAt: $savedAt);
+
+		$this->assertSame($savedAt->getTimestamp(), $secret->getUpdatedAt()?->getTimestamp());
+	}//end testUpdateTakesTheVersionAShareSaveLockedIn()
+
+	/**
+	 * loadForUpdate refuses what update() refuses, before any write.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testLoadForUpdateRefusesWhatUpdateRefuses(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$useOnly = $this->makeSecret();
+		$useOnly->setUseOnly(true);
+		$foreign = $this->makeSecret();
+		$foreign->setOwnerId('mallory');
+		$this->mapper->method('findById')->willReturnOnConsecutiveCalls($this->makeSecret(), $useOnly, $foreign);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->assertSame('s-1', $this->service->loadForUpdate(id: 's-1', fields: ['key'], userId: 'alice')->getId());
+		foreach (['A use-only copy cannot be changed', 'Secret belongs to another user'] as $refusal) {
+			try {
+				$this->service->loadForUpdate(id: 's-1', fields: ['key'], userId: 'alice');
+				$this->fail('Refusal expected: '.$refusal);
+			} catch (ForbiddenException $e) {
+				$this->assertSame($refusal, $e->getMessage());
+			}
+		}
+	}//end testLoadForUpdateRefusesWhatUpdateRefuses()
 }//end class

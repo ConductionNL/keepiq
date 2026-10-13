@@ -4,7 +4,8 @@
 
   Shell-level state of the offline edit queue: how many changes wait to sync,
   the changes that need a choice after the server changed them meanwhile, the
-  changes the server refused (copy the value, or discard), and changes made
+  changes the server refused (copy the value, discard, or try again when a
+  partner could not be reached), and changes made
   under keys that were rotated on another device (reopen with the previous
   master password, or discard). Renders nothing when the queue is empty.
 
@@ -44,6 +45,18 @@
 			<ul class="keepiq-offline-sync__list" data-testid="offline-sync-failed">
 				<li v-for="entry in offline.failedEntries" :key="entry.entryId">
 					{{ entryName(entry) }}
+					<span
+						v-if="reason(entry)"
+						:data-testid="`offline-sync-reason-${entry.entryId}`">
+						{{ reason(entry) }}
+					</span>
+					<NcButton
+						v-if="['partner_unreachable', 'partner_lookup_limit'].includes(entry.failure?.code)"
+						variant="secondary"
+						:data-testid="`offline-sync-retry-${entry.entryId}`"
+						@click="offline.retryEntry(entry.entryId)">
+						{{ t('keepiq', 'Try again') }}
+					</NcButton>
 					<NcButton
 						variant="secondary"
 						:data-testid="`offline-sync-copy-${entry.entryId}`"
@@ -103,7 +116,7 @@
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { NcButton, NcPasswordField } from '@nextcloud/vue'
 import OfflineConflictDialog from '../dialogs/OfflineConflictDialog.vue'
-import { useOfflineStore } from '../store/modules/offline.js'
+import { failureText, useOfflineStore } from '../store/modules/offline.js'
 
 export default {
 	name: 'OfflineSyncPanel',
@@ -145,6 +158,17 @@ export default {
 		 */
 		entryName(entry) {
 			return entry.body?.name || t('keepiq', 'Secret')
+		},
+
+		/**
+		 * Why a change could not sync, in the user's language.
+		 *
+		 * @param {object} entry The failed entry.
+		 * @return {string|null}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
+		reason(entry) {
+			return failureText(entry.failure)
 		},
 
 		/**

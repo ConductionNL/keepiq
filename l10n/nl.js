@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Dit geheim is gedeeld met veel partnerorganisaties, dus het opslaan wacht op de opzoeklimiet en gaat daarna verder. Houd dit venster open.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Te veel opzoekingen bij partnerorganisaties. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Deze versie kan niet worden hersteld voor dit geheim. Er is niets opgeslagen.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Een partnerorganisatie waarmee dit geheim gedeeld is, is niet bereikbaar ({partners}). Voer de wijziging online opnieuw uit; daar kun je opslaan zonder hen.",
+        "The server refused this change ({reason}).": "De server heeft deze wijziging geweigerd ({reason}).",
+        "Save without them": "Opslaan zonder hen",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar dit geheim opnieuw opslaat.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Dit geheim is elders gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nogmaals uit.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Het origineel van dit gedeelde geheim is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nogmaals uit.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "De mensen met wie dit geheim gedeeld is, veranderden tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Er is niets opgeslagen: een partnerorganisatie waarmee dit geheim gedeeld is, is niet bereikbaar ({partners}). Probeer het later opnieuw, of sla op zonder hen; hun deling wordt dan gepauzeerd.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Je mag deze wijziging niet opslaan voor iedereen met wie dit geheim gedeeld is. Er is niets opgeslagen.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

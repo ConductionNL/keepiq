@@ -6,9 +6,8 @@
  *
  * Versions are ciphertext server-side; viewing decrypts a version's
  * blobs with the in-session CryptoKey exactly like a head read. Restore
- * calls the server (which snapshots the current head first), then drives
- * the existing sync-on-update fan-out so shared recipients receive the
- * restored value re-encrypted for them (ADR-003).
+ * decrypts the version and saves it as a share save, so the row and every
+ * shared recipient receive it in one transaction (ADR-003).
  *
  * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
  */
@@ -17,9 +16,15 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
+import {
+	encryptSparse,
+	notifyOwnerOnly,
+	plainOf,
+	saveShared,
+	shareSaveErrorText,
+} from '../../services/shareSave.js'
 import { useSecretStore } from './secret.js'
 import { useSessionStore } from './session.js'
-import { useShareStore } from './share.js'
 
 export const useSecretVersionStore = defineStore('secretVersion', {
 	state: () => ({
@@ -96,44 +101,60 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		},
 
 		/**
-		 * Restore a version, then propagate the restored value to shared
-		 * recipients via the existing sync-on-update fan-out.
+		 * Restore a version: its whole value is saved for the row and every
+		 * holder in one share save, which records the restore. It is based on
+		 * the head after any merge write-back, so that one is not mistaken for
+		 * a concurrent change.
 		 *
 		 * @param {string} versionId The version id.
 		 * @param {string} secretId The owning secret id.
 		 * @return {Promise<void>}
-		 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
-		 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
 		 */
 		async restore(versionId, secretId) {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/versions/${versionId}/restore`),
-				)
-				// Propagate to recipients: decrypt the restored head with the
-				// session key, then re-encrypt per recipient (share fan-out).
 				const secretStore = useSecretStore()
-				const plain = await secretStore.fetchSecret(secretId)
-				const shareStore = useShareStore()
-				await shareStore.syncUpdate(
+				const baseUpdatedAt = await secretStore.settledBase(
 					secretId,
-					{
-						key: plain.key ?? '',
-						login: plain.login ?? '',
-						additionalFields:
-							typeof plain.additionalFields === 'object'
-							&& plain.additionalFields !== null
-								? JSON.stringify(plain.additionalFields)
-								: (plain.additionalFields ?? ''),
-					},
-					response.data.updatedAt,
+					secretStore.baseOf(secretId),
 				)
+				const version = (
+					await axios.get(
+						generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
+					)
+				).data
+				const plain = await plainOf(version)
+				const plainDiff = { ...plain, key: plain.key ?? '' }
+				const result = await saveShared({
+					id: secretId,
+					plainDiff,
+					patch: {
+						name: version.name,
+						url: version.url ?? null,
+						...(await encryptSparse(
+							plainDiff,
+							useSessionStore().certificate,
+						)),
+					},
+					baseUpdatedAt,
+					// The version is the whole value; the server checks the base.
+					loadFull: async () => ({
+						...plainDiff,
+						updatedAt: baseUpdatedAt,
+					}),
+					restoredFrom: versionId,
+				})
+				await notifyOwnerOnly(result)
+				await secretStore.fetchSecret(secretId)
 				await this.fetchVersions(secretId)
 			} catch (e) {
 				this.error =
-					e?.response?.data?.message || e?.message || 'Restore failed'
+					shareSaveErrorText(e)
+					|| e?.response?.data?.message
+					|| e?.message
+					|| 'Restore failed'
 				throw e
 			} finally {
 				this.loading = false

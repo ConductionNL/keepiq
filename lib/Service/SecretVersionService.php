@@ -7,7 +7,8 @@
  * pre-update snapshots (ciphertext copied verbatim — never decrypted),
  * metadata listing, blob reads gated exactly like head reads, and restore
  * (snapshot the current head first, then set the head to the selected
- * version; the CLIENT then drives sync-on-update for recipients).
+ * version). restore() changes one row only; the web app restores through
+ * share-save and calls it only for a copy holder without a write grade.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -32,6 +33,7 @@ use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -42,6 +44,9 @@ use Ramsey\Uuid\Uuid;
  * Read authorization — ownership and the revoked-suite read gate — lives in
  * SecretVersionAccessGuard so the "may this caller read this version"
  * decision has exactly one home.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A restore joins the version,
+ *   the head, the read gate, the stale check and the audit in one step.
  */
 class SecretVersionService {
 	/**
@@ -53,6 +58,7 @@ class SecretVersionService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param OfflineEditGuard $editGuard Refuses a restore over a head that moved on
 	 *
 	 * @return void
 	 */
@@ -63,6 +69,7 @@ class SecretVersionService {
 		private LoggerInterface $logger,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 	) {
 	}//end __construct()
 
@@ -134,23 +141,26 @@ class SecretVersionService {
 	}//end getVersion()
 
 	/**
-	 * Restore a version: snapshot the current head first, then set the
-	 * head's fields to the version's stored ciphertext. The caller (the
-	 * browser) then drives the existing sync-on-update fan-out so shared
-	 * recipients receive the restored value re-encrypted for them.
+	 * Restore a version on the head row alone, after snapshotting the head.
+	 * Copies are not written here: a restore that must reach them is a
+	 * share-save with `restoredFrom`.
 	 *
 	 * @param string $versionId The version UUID
 	 * @param string $userId The caller (must own the secret)
+	 * @param string|null $baseUpdatedAt The head version the caller restores over; null skips the check
 	 *
 	 * @return Secret The updated head
 	 *
-	 * @throws \InvalidArgumentException On not found / not owned / suite blocked
+	 * @throws \InvalidArgumentException On not found / not owned / suite blocked / a malformed base
+	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`
 	 *
-	 * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function restore(string $versionId, string $userId): Secret {
+	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
 		$secret = $this->secretMapper->findById($version->getSecretId());
+		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
 
 		// Snapshot the current head so the restore itself is undoable.
 		$this->snapshot(preUpdate: $secret, actorType: 'user', actorId: $userId);
@@ -164,6 +174,25 @@ class SecretVersionService {
 		$secret->setUpdatedAt(new DateTime());
 		$this->secretMapper->update($secret);
 
+		$this->recordRestored(secret: $secret, version: $version, userId: $userId);
+
+		return $secret;
+	}//end restore()
+
+	/**
+	 * Audit and log that a secret was restored to a version. A share-save
+	 * calls it inside its transaction, so the audit row commits with the restore.
+	 *
+	 * @param Secret $secret The restored head
+	 * @param SecretVersion $version The version it was restored to
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function recordRestored(Secret $secret, SecretVersion $version, string $userId): void {
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
 				actorId: $userId,
@@ -174,15 +203,12 @@ class SecretVersionService {
 				metadata: ['versionNumber' => $version->getVersionNumber()],
 			)
 		);
-
 		$this->logger->info(
 			'Keepiq: secret ' . $secret->getId() . ' restored to version '
 			. $version->getVersionNumber() . ' by ' . $userId,
 			['app' => 'keepiq']
 		);
-
-		return $secret;
-	}//end restore()
+	}//end recordRestored()
 
 	/**
 	 * Delete every version of a secret (delete cascade; idempotent).

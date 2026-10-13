@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Dieses Geheimnis ist mit vielen Partnerorganisationen geteilt, daher wartet das Speichern auf das Abfragelimit und wird dann fortgesetzt. Lassen Sie diesen Dialog geöffnet.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Zu viele Abfragen bei Partnerorganisationen. Es wurde nichts gespeichert; versuchen Sie es in einer Minute erneut.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Diese Version kann für dieses Geheimnis nicht wiederhergestellt werden. Es wurde nichts gespeichert.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Eine Partnerorganisation, mit der dieses Geheimnis geteilt ist, ist nicht erreichbar ({partners}). Nehmen Sie die Änderung online erneut vor; dort können Sie ohne sie speichern.",
+        "The server refused this change ({reason}).": "Der Server hat diese Änderung abgelehnt ({reason}).",
+        "Save without them": "Ohne sie speichern",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gespeichert. Empfänger bei Partnerorganisationen erhalten diese Änderung, wenn der Eigentümer dieses Geheimnis das nächste Mal speichert.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Dieses Geheimnis wurde an anderer Stelle geändert, nachdem Sie es geöffnet haben. Es wurde nichts gespeichert; öffnen Sie es erneut und wiederholen Sie Ihre Änderung.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Das Original dieses geteilten Geheimnisses wurde geändert, nachdem Sie es geöffnet haben. Es wurde nichts gespeichert; öffnen Sie es erneut und wiederholen Sie Ihre Änderung.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Die Personen, mit denen dieses Geheimnis geteilt ist, haben sich während des Speicherns geändert. Es wurde nichts gespeichert; bitte versuchen Sie es erneut.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieses Geheimnis geteilt ist, ist nicht erreichbar ({partners}). Versuchen Sie es später erneut oder speichern Sie ohne sie; ihre Freigabe wird dann pausiert.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Sie dürfen diese Änderung nicht für alle speichern, mit denen dieses Geheimnis geteilt ist. Es wurde nichts gespeichert.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

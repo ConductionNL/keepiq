@@ -1,5 +1,17 @@
 {
     "translations": {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ten sekret jest udostępniony wielu organizacjom partnerskim, więc zapisywanie czeka na limit zapytań, a potem jest kontynuowane. Nie zamykaj tego okna.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Zbyt wiele zapytań do organizacji partnerskich. Nic nie zostało zapisane; spróbuj ponownie za minutę.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Tej wersji nie można przywrócić dla tego sekretu. Nic nie zostało zapisane.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizacja partnerska, której udostępniono ten sekret, jest nieosiągalna ({partners}). Wprowadź zmianę ponownie online, gdzie możesz zapisać bez niej.",
+        "The server refused this change ({reason}).": "Serwer odrzucił tę zmianę ({reason}).",
+        "Save without them": "Zapisz bez nich",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Zapisano. Odbiorcy w organizacjach partnerskich otrzymają tę zmianę, gdy właściciel następnym razem zapisze ten sekret.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ten sekret został zmieniony w innym miejscu po jego otwarciu. Nic nie zostało zapisane; otwórz go ponownie i powtórz zmianę.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Oryginał tego udostępnionego sekretu został zmieniony po jego otwarciu. Nic nie zostało zapisane; otwórz go ponownie i powtórz zmianę.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Osoby, którym udostępniono ten sekret, zmieniały się podczas zapisywania. Nic nie zostało zapisane; spróbuj ponownie.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Nic nie zostało zapisane: organizacja partnerska, której udostępniono ten sekret, jest nieosiągalna ({partners}). Spróbuj później lub zapisz bez niej, co wstrzyma jej udostępnianie.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Nie masz uprawnień do zapisania tej zmiany dla wszystkich, którym udostępniono ten sekret. Nic nie zostało zapisane.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

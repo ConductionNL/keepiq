@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Aquest secret es comparteix amb moltes organitzacions associades, així que el desament espera el límit de consultes i després continua. Mantén aquest diàleg obert.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Massa consultes a organitzacions associades. No s'ha desat res; torna-ho a provar d'aquí a un minut.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Aquesta versió no es pot restaurar en aquest secret. No s'ha desat res.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "No es pot contactar amb una organització associada amb qui es comparteix aquest secret ({partners}). Torna a fer el canvi en línia, on pots desar sense ells.",
+        "The server refused this change ({reason}).": "El servidor ha rebutjat aquest canvi ({reason}).",
+        "Save without them": "Desa sense ells",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Desat. Els destinataris d'organitzacions associades rebran aquest canvi quan el propietari torni a desar aquest secret.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Aquest secret s'ha modificat en un altre lloc després que l'obrissis. No s'ha desat res; torna'l a obrir i refés el canvi.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "L'original d'aquest secret compartit s'ha modificat després que l'obrissis. No s'ha desat res; torna'l a obrir i refés el canvi.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Les persones amb qui es comparteix aquest secret han canviat mentre es desava. No s'ha desat res; torna-ho a provar.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "No s'ha desat res: no es pot contactar amb una organització associada amb qui es comparteix aquest secret ({partners}). Torna-ho a provar més tard o desa sense ells, cosa que posa en pausa la seva compartició.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "No tens permís per desar aquest canvi per a tothom amb qui es comparteix aquest secret. No s'ha desat res.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

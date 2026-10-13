@@ -33,6 +33,7 @@ use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
@@ -76,6 +77,7 @@ class AccountDeletionServiceTest extends TestCase {
 			'dispatcher' => $this->createMock(IEventDispatcher::class),
 			'emergency' => $this->createMock(EmergencyContactMapper::class),
 			'passkey' => $this->createMock(PasskeyMapper::class),
+			'stage' => $this->createMock(ShareSaveStageMapper::class),
 		];
 
 		return new AccountDeletionService(
@@ -90,6 +92,7 @@ class AccountDeletionServiceTest extends TestCase {
 				shareMapper: $this->m['share'],
 				groupShareMapper: $this->m['group'],
 				delegationMapper: $this->m['delegation'],
+				stageMapper: $this->m['stage'],
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->m['suite'],
@@ -236,6 +239,8 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->m['share']->expects($this->once())
 			->method('deleteByTargetUser')
 			->with('alice');
+		// Staged share-save ciphertext goes too, on either deletion path.
+		$this->m['stage']->expects($this->once())->method('deleteByUser')->with('alice');
 
 		$this->m['link']->method('findByCreatedBy')->willReturn([]);
 		$this->m['suite']->method('findByOwner')->willReturn([]);

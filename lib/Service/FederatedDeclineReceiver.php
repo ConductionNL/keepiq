@@ -93,7 +93,7 @@ class FederatedDeclineReceiver {
 		$row->setPendingNotification(null);
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
-		$row->setUpdatedAt(new DateTime());
+		$row->stamp(now: new DateTime());
 		$this->shareMapper->update(entity: $row);
 		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, row: $row, actorId: null);
 
@@ -130,7 +130,7 @@ class FederatedDeclineReceiver {
 		$row->setPendingNotification(null);
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
-		$row->setUpdatedAt(new DateTime());
+		$row->stamp(now: new DateTime());
 		$this->shareMapper->update(entity: $row);
 		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_RESUMED, row: $row, actorId: null);
 

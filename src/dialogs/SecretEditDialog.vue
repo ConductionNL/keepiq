@@ -12,12 +12,27 @@
 		:name="t('keepiq', 'Edit secret')"
 		:open="open"
 		size="normal"
+		:noClose="saving"
 		@update:open="onUpdateOpen">
 		<NcLoadingIcon v-if="loading" :size="32" class="secret-form__loading" />
 
 		<div v-else class="secret-form">
-			<NcNoteCard v-if="error" type="error">
+			<NcNoteCard v-if="error" type="error" data-testid="secret-edit-error">
 				{{ error }}
+				<NcButton
+					v-if="unreachablePartners"
+					variant="secondary"
+					:disabled="saving"
+					data-testid="save-without-unreachable"
+					@click="saveWithoutUnreachable">
+					{{ t('keepiq', 'Save without them') }}
+				</NcButton>
+			</NcNoteCard>
+			<NcNoteCard
+				v-if="saving && waitingForPartners"
+				type="info"
+				data-testid="secret-edit-waiting">
+				{{ t('keepiq', 'This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.') }}
 			</NcNoteCard>
 
 			<NcTextField
@@ -149,7 +164,12 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
+			<!-- A save closed mid-flight would still commit, or fail unseen. -->
+			<NcButton
+				variant="tertiary"
+				:disabled="saving"
+				data-testid="secret-edit-cancel"
+				@click="onUpdateOpen(false)">
 				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
@@ -188,6 +208,7 @@ import {
 	serializeIdentity,
 } from '../cardIdentity/cardIdentity.js'
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { shareSaveErrorText } from '../services/shareSave.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
@@ -244,7 +265,9 @@ export default {
 			open: true,
 			loading: true,
 			saving: false,
+			waitingForPartners: false,
 			error: '',
+			unreachablePartners: false,
 			original: null,
 			name: '',
 			typeId: null,
@@ -506,13 +529,28 @@ export default {
 		},
 
 		/**
+		 * Save again after the user chose to pause the partner shares that
+		 * could not be reached.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+		 */
+		async saveWithoutUnreachable() {
+			await this.submit({ withoutUnreachable: true })
+		},
+
+		/**
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
+		 * @param {object} [options] Options.
+		 * @param {boolean} [options.withoutUnreachable] Pause unreachable partner shares.
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
 		 */
-		async submit() {
+		async submit(options = {}) {
 			if (!this.canSubmit) {
 				return
 			}
@@ -522,7 +560,9 @@ export default {
 				return
 			}
 			this.saving = true
+			this.waitingForPartners = false
 			this.error = ''
+			this.unreachablePartners = false
 			try {
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
@@ -591,6 +631,13 @@ export default {
 					updated = await useSecretStore().updateSecret(
 						this.secretId,
 						diff,
+						{
+							baseUpdatedAt: o.updatedAt,
+							withoutUnreachable: options?.withoutUnreachable === true,
+							onWait: () => {
+								this.waitingForPartners = true
+							},
+						},
 					)
 				}
 				// Tags are the holder's own, stored apart from the value
@@ -604,8 +651,10 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
+				this.unreachablePartners = e?.code === 'partner_unreachable'
 				this.error =
-					e?.response?.data?.message
+					shareSaveErrorText(e)
+					|| e?.response?.data?.message
 					|| e?.message
 					|| t('keepiq', 'Failed to save secret')
 			} finally {

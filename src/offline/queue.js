@@ -10,12 +10,13 @@
  * An entry at rest:
  *   { entryId, op: 'create'|'update'|'delete', secretId, baseUpdatedAt,
  *     queuedAt, suiteId, status: 'queued'|'sync'|'conflict'|'failed',
- *     sealed }
+ *     sealed, sealedFailure }
  * `sealed` is the hybrid envelope (RSA-OAEP + AES-256-GCM, the one
  * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login` and
  * `additionalFields` ciphertext an online save sends, plus the index fields
  * `name`, `url`, `typeId` and `folderId`. Recipient ciphertext is never
- * queued; it is made at replay time.
+ * queued; it is made at replay time. `sealedFailure` is the same envelope of
+ * a failed entry's reason, which can name partners, and null otherwise.
  *
  * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
  */
@@ -35,6 +36,7 @@ export const PLAIN_FIELDS = Object.freeze([
 	'suiteId',
 	'status',
 	'sealed',
+	'sealedFailure',
 ])
 
 /**
@@ -47,9 +49,10 @@ function uuid() {
 /**
  * Seal an opened entry for storage.
  *
- * @param {object} entry The opened entry, with `body`.
+ * @param {object} entry The opened entry, with `body` and, when failed, `failure`.
  * @param {string} certificatePem The owner's own certificate.
  * @return {Promise<object>} The entry as stored.
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export async function sealEntry(entry, certificatePem) {
 	return {
@@ -64,6 +67,12 @@ export async function sealEntry(entry, certificatePem) {
 			JSON.stringify(entry.body || {}),
 			certificatePem,
 		),
+		sealedFailure: entry.failure
+			? await buildRecoveryEnvelope(
+					JSON.stringify(entry.failure),
+					certificatePem,
+				)
+			: null,
 	}
 }
 
@@ -72,13 +81,21 @@ export async function sealEntry(entry, certificatePem) {
  *
  * @param {object} stored The stored entry.
  * @param {CryptoKey} privateKey The owner's private key.
- * @return {Promise<object>} The entry with its `body`.
+ * @return {Promise<object>} The entry with its `body`, and `failure` when it has one.
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export async function openEntry(stored, privateKey) {
-	const { sealed, ...plain } = stored
+	const { sealed, sealedFailure, ...plain } = stored
 	return {
 		...plain,
 		body: JSON.parse(await openRecoveryEnvelope(sealed, privateKey)),
+		...(sealedFailure
+			? {
+					failure: JSON.parse(
+						await openRecoveryEnvelope(sealedFailure, privateKey),
+					),
+				}
+			: {}),
 	}
 }
 

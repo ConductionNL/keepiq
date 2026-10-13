@@ -1,5 +1,17 @@
 {
     "translations": {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Este segredo está partilhado com muitas organizações parceiras, por isso a gravação aguarda o limite de consultas e depois continua. Mantenha esta janela aberta.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Demasiadas consultas a organizações parceiras. Nada foi guardado; tente novamente dentro de um minuto.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Esta versão não pode ser restaurada para este segredo. Nada foi guardado.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Uma organização parceira com quem este segredo é partilhado está inacessível ({partners}). Faça a alteração novamente online, onde pode guardar sem eles.",
+        "The server refused this change ({reason}).": "O servidor recusou esta alteração ({reason}).",
+        "Save without them": "Guardar sem eles",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Guardado. Os destinatários em organizações parceiras recebem esta alteração quando o proprietário voltar a guardar este segredo.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Este segredo foi alterado noutro local depois de o abrir. Nada foi guardado; abra-o novamente e repita a sua alteração.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "O original deste segredo partilhado foi alterado depois de o abrir. Nada foi guardado; abra-o novamente e repita a sua alteração.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "As pessoas com quem este segredo é partilhado mudaram durante a gravação. Nada foi guardado; tente novamente.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Nada foi guardado: uma organização parceira com quem este segredo é partilhado está inacessível ({partners}). Tente mais tarde ou guarde sem eles, o que coloca a partilha deles em pausa.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Não tem permissão para guardar esta alteração para todos com quem este segredo é partilhado. Nada foi guardado.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",

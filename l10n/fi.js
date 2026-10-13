@@ -1,6 +1,18 @@
 OC.L10N.register(
     "keepiq",
     {
+        "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Tämä salaisuus on jaettu monen kumppaniorganisaation kanssa, joten tallennus odottaa hakurajaa ja jatkuu sitten. Pidä tämä ikkuna auki.",
+        "Too many partner lookups. Nothing was saved; try again in a minute.": "Liian monta hakua kumppaniorganisaatioilta. Mitään ei tallennettu; yritä uudelleen minuutin kuluttua.",
+        "This version cannot be restored to this secret. Nothing was saved.": "Tätä versiota ei voi palauttaa tähän salaisuuteen. Mitään ei tallennettu.",
+        "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Kumppaniorganisaatiota, jonka kanssa tämä salaisuus on jaettu, ei tavoiteta ({partners}). Tee muutos uudelleen verkossa, jossa voit tallentaa ilman heitä.",
+        "The server refused this change ({reason}).": "Palvelin hylkäsi tämän muutoksen ({reason}).",
+        "Save without them": "Tallenna ilman heitä",
+        "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Tallennettu. Kumppaniorganisaatioiden vastaanottajat saavat tämän muutoksen, kun omistaja seuraavan kerran tallentaa tämän salaisuuden.",
+        "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Tätä salaisuutta muutettiin muualla sen jälkeen, kun avasit sen. Mitään ei tallennettu; avaa se uudelleen ja tee muutoksesi uudelleen.",
+        "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Tämän jaetun salaisuuden alkuperäistä muutettiin sen jälkeen, kun avasit sen. Mitään ei tallennettu; avaa se uudelleen ja tee muutoksesi uudelleen.",
+        "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Henkilöt, joiden kanssa tämä salaisuus on jaettu, muuttuivat tallennuksen aikana. Mitään ei tallennettu; yritä uudelleen.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.": "Mitään ei tallennettu: kumppaniorganisaatiota, jonka kanssa tämä salaisuus on jaettu, ei tavoiteta ({partners}). Yritä myöhemmin uudelleen tai tallenna ilman heitä, jolloin heidän jakonsa keskeytetään.",
+        "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Sinulla ei ole oikeutta tallentaa tätä muutosta kaikille, joiden kanssa tämä salaisuus on jaettu. Mitään ei tallennettu.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",
