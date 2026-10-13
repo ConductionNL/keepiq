@@ -8,7 +8,7 @@ kind: code
 
 When someone changes the value, login or additional fields of a shared secret, every copy has to be encrypted again for its holder, and only the browser can do that. Until now it took separate requests: `PUT /api/v1/secrets/{id}` for the editor's row, `PUT /api/v1/secrets/{sourceSecretId}/sync` for the local copies and `PUT /api/v1/federated-shares/{id}` once per partner share. Those requests are not one transaction, so a copy could lag behind its source without anyone being told, and a partner update had no version check at all. In the web app the fan-out was also broken outright (#1253): it found no recipient certificate, sent field names the server ignores, cleared fields nobody changed and swallowed every error.
 
-Issue: #1254. Fixes the sync part of #1253.
+Issue: #1254. Fixes all four bugs of #1253.
 
 ## What Changes
 
