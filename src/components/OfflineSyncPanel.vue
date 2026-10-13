@@ -51,7 +51,11 @@
 						{{ reason(entry) }}
 					</span>
 					<NcButton
-						v-if="['partner_unreachable', 'partner_lookup_limit'].includes(entry.failure?.code)"
+						v-if="
+							['partner_unreachable', 'partner_lookup_limit'].includes(
+								entry.failure?.code,
+							)
+						"
 						variant="secondary"
 						:data-testid="`offline-sync-retry-${entry.entryId}`"
 						@click="offline.retryEntry(entry.entryId)">

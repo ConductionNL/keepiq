@@ -435,7 +435,11 @@ describe('saveShared on the owner path', () => {
 				],
 				lookup: {
 					'bob@partner': {
-						reject: httpError(429, { message: 'Too Many Requests' }, headers),
+						reject: httpError(
+							429,
+							{ message: 'Too Many Requests' },
+							headers,
+						),
 					},
 				},
 			})
@@ -567,7 +571,10 @@ describe('saveShared on the copy-editor path', () => {
 			id: 'copy-me',
 			context: { ...context, effectiveGrade: 'read' },
 			posts: {
-				'/api/v1/versions/v1/restore': { id: 'copy-me', updatedAt: SAVED_AT },
+				'/api/v1/versions/v1/restore': {
+					id: 'copy-me',
+					updatedAt: SAVED_AT,
+				},
 			},
 		})
 		const whole = { key: 'k', login: null, additionalFields: null }

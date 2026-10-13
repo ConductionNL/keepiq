@@ -64,7 +64,10 @@ const external: string[] = []
  * @param page The page.
  * @return The calls so far and a reset.
  */
-function watchApi(page: Page): { calls: () => Promise<ApiCall[]>; reset: () => void } {
+function watchApi(page: Page): {
+	calls: () => Promise<ApiCall[]>
+	reset: () => void
+} {
 	let pending: Array<Promise<ApiCall>> = []
 	page.on('response', (response) => {
 		const url = new URL(response.url())
@@ -190,7 +193,9 @@ async function lockAndUnlock(session: Session): Promise<void> {
  * @param session The session.
  */
 async function ensureUnlocked(session: Session): Promise<void> {
-	if (await withStore<boolean>(session.page, 'session', 'async (s) => s.isLocked')) {
+	if (
+		await withStore<boolean>(session.page, 'session', 'async (s) => s.isLocked')
+	) {
 		await lockAndUnlock(session)
 	}
 }
@@ -267,7 +272,9 @@ async function share(
 		// The detail view puts the share store in use.
 		await openDetail(owner.page, sourceId)
 	}
-	const items = await withStore<Array<{ status: string; targetUserId: string; recipientSecretId: string }>>(
+	const items = await withStore<
+		Array<{ status: string; targetUserId: string; recipientSecretId: string }>
+	>(
 		owner.page,
 		'share',
 		`async (store, data) => {
@@ -339,7 +346,11 @@ async function openDetail(page: Page, id: string): Promise<void> {
  * @param id The holder's row.
  * @param value The expected value.
  */
-async function expectShows(session: Session, id: string, value: Value): Promise<void> {
+async function expectShows(
+	session: Session,
+	id: string,
+	value: Value,
+): Promise<void> {
 	await ensureUnlocked(session)
 	expect(await readValue(session, id)).toEqual(value)
 	const { page } = session
@@ -401,7 +412,11 @@ async function savePassword(page: Page, password: string): Promise<void> {
  * @param id The row.
  * @param password The new password.
  */
-async function editPassword(page: Page, id: string, password: string): Promise<void> {
+async function editPassword(
+	page: Page,
+	id: string,
+	password: string,
+): Promise<void> {
 	await openEdit(page, id)
 	await savePassword(page, password)
 	await expect(page.locator('.secret-form')).toHaveCount(0, { timeout: 60_000 })
@@ -456,7 +471,9 @@ test.describe('atomic share-save, end to end', () => {
 	let bob: Session
 	let carol: Session
 	let dave: Session
-	const users = ['alice', 'bob', 'carol', 'dave'].map((p) => newVaultUser(`ss${p}`))
+	const users = ['alice', 'bob', 'carol', 'dave'].map((p) =>
+		newVaultUser(`ss${p}`),
+	)
 
 	test.beforeAll(async ({ browser }) => {
 		test.setTimeout(300_000)
@@ -487,8 +504,13 @@ test.describe('atomic share-save, end to end', () => {
 		await openEdit(alice.page, sourceId)
 		watch.reset()
 		await savePassword(alice.page, 'Changed-pass-one-2!')
-		await expect(alice.page.locator('.secret-form')).toHaveCount(0, { timeout: 60_000 })
-		expectShareSaveOnly(await watch.calls(), sourceId, [[409, 'incomplete'], [200]])
+		await expect(alice.page.locator('.secret-form')).toHaveCount(0, {
+			timeout: 60_000,
+		})
+		expectShareSaveOnly(await watch.calls(), sourceId, [
+			[409, 'incomplete'],
+			[200],
+		])
 
 		const changed = { ...value, key: 'Changed-pass-one-2!' }
 		await expectShows(bob, copies[bob.user.uid], changed)
@@ -520,10 +542,14 @@ test.describe('atomic share-save, end to end', () => {
 				{ teamFolderId: teamFolder.id, uid: member.user.uid },
 			)
 		}
-		const members = await api(alice.page, 'GET', `/team-folders/${teamFolder.id}/members`)
-		const bobMember = (members.body as Array<{ id: string; memberId: string }>).find(
-			(m) => m.memberId === bob.user.uid,
+		const members = await api(
+			alice.page,
+			'GET',
+			`/team-folders/${teamFolder.id}/members`,
 		)
+		const bobMember = (
+			members.body as Array<{ id: string; memberId: string }>
+		).find((m) => m.memberId === bob.user.uid)
 		await withStore(
 			alice.page,
 			'teamFolder',
@@ -537,8 +563,13 @@ test.describe('atomic share-save, end to end', () => {
 		await openEdit(bob.page, bobCopy)
 		watch.reset()
 		await savePassword(bob.page, 'Bob-wrote-this-2!')
-		await expect(bob.page.locator('.secret-form')).toHaveCount(0, { timeout: 60_000 })
-		expectShareSaveOnly(await watch.calls(), bobCopy, [[409, 'incomplete'], [200]])
+		await expect(bob.page.locator('.secret-form')).toHaveCount(0, {
+			timeout: 60_000,
+		})
+		expectShareSaveOnly(await watch.calls(), bobCopy, [
+			[409, 'incomplete'],
+			[200],
+		])
 
 		const changed = { ...value, key: 'Bob-wrote-this-2!' }
 		await expectShows(alice, sourceId, changed)
@@ -553,13 +584,17 @@ test.describe('atomic share-save, end to end', () => {
 
 		const second = await alice.context.newPage()
 		try {
-			await second.goto('/index.php/apps/keepiq/lock', { waitUntil: 'domcontentloaded' })
+			await second.goto('/index.php/apps/keepiq/lock', {
+				waitUntil: 'domcontentloaded',
+			})
 			await lockAndUnlock({ ...alice, page: second })
 			await openEdit(alice.page, sourceId)
 			await openEdit(second, sourceId)
 
 			await savePassword(alice.page, 'First-tab-wins-3!')
-			await expect(alice.page.locator('.secret-form')).toHaveCount(0, { timeout: 60_000 })
+			await expect(alice.page.locator('.secret-form')).toHaveCount(0, {
+				timeout: 60_000,
+			})
 			const afterFirst = await row(alice.page, sourceId)
 
 			const watch = watchApi(second)
@@ -570,7 +605,9 @@ test.describe('atomic share-save, end to end', () => {
 			)
 			await expect(second.locator('.secret-form')).toBeVisible()
 			expectShareSaveOnly(await watch.calls(), sourceId, [[409, 'stale']])
-			expect((await row(alice.page, sourceId)).updatedAt).toBe(afterFirst.updatedAt)
+			expect((await row(alice.page, sourceId)).updatedAt).toBe(
+				afterFirst.updatedAt,
+			)
 		} finally {
 			await second.close()
 		}
@@ -582,10 +619,18 @@ test.describe('atomic share-save, end to end', () => {
 
 	test('a refusal of the owner row inside the transaction rolls the copies back', async () => {
 		const value = original('four')
-		const sourceId = await createSecret(alice, `Rollback ${alice.user.uid}`, value)
+		const sourceId = await createSecret(
+			alice,
+			`Rollback ${alice.user.uid}`,
+			value,
+		)
 		const copies = await share(alice, sourceId, [bob])
 		const before = await row(alice.page, sourceId)
-		const versionsBefore = await api(alice.page, 'GET', `/secrets/${sourceId}/versions`)
+		const versionsBefore = await api(
+			alice.page,
+			'GET',
+			`/secrets/${sourceId}/versions`,
+		)
 
 		const certificate = await withStore<string>(
 			alice.page,
@@ -601,25 +646,52 @@ test.describe('atomic share-save, end to end', () => {
 			)
 		const body = {
 			baseUpdatedAt: before.updatedAt,
-			patch: { name: '   ', key: await encrypt('Never-saved-4!', certificate) },
+			patch: {
+				name: '   ',
+				key: await encrypt('Never-saved-4!', certificate),
+			},
 			copies: [] as Array<{ secretId: string; key: string }>,
 		}
-		const first = await api(alice.page, 'PUT', `/secrets/${sourceId}/share-save`, body)
+		const first = await api(
+			alice.page,
+			'PUT',
+			`/secrets/${sourceId}/share-save`,
+			body,
+		)
 		expect(first.status, JSON.stringify(first.body)).toBe(409)
 		expect(first.body.error).toBe('incomplete')
-		const required = first.body.copies.required as Array<{ secretId: string; targetUserId: string }>
+		const required = first.body.copies.required as Array<{
+			secretId: string
+			targetUserId: string
+		}>
 		expect(required.map((r) => r.secretId)).toEqual([copies[bob.user.uid]])
-		const certificates = await api(alice.page, 'POST', '/shares/recipient-certificates', {
-			userIds: required.map((r) => r.targetUserId),
-		})
+		const certificates = await api(
+			alice.page,
+			'POST',
+			'/shares/recipient-certificates',
+			{
+				userIds: required.map((r) => r.targetUserId),
+			},
+		)
 		for (const holder of required) {
-			const cert = (certificates.body.recipients as Array<{ userId: string; certificate: string }>).find(
-				(r) => r.userId === holder.targetUserId,
-			)!.certificate
-			body.copies.push({ secretId: holder.secretId, key: await encrypt('Never-saved-4!', cert) })
+			const cert = (
+				certificates.body.recipients as Array<{
+					userId: string
+					certificate: string
+				}>
+			).find((r) => r.userId === holder.targetUserId)!.certificate
+			body.copies.push({
+				secretId: holder.secretId,
+				key: await encrypt('Never-saved-4!', cert),
+			})
 		}
 
-		const refused = await api(alice.page, 'PUT', `/secrets/${sourceId}/share-save`, body)
+		const refused = await api(
+			alice.page,
+			'PUT',
+			`/secrets/${sourceId}/share-save`,
+			body,
+		)
 		test.info().annotations.push({
 			type: 'refusal',
 			description: `${refused.status} ${JSON.stringify(refused.body)}`,
@@ -632,20 +704,37 @@ test.describe('atomic share-save, end to end', () => {
 		expect(after.updatedAt).toBe(before.updatedAt)
 		expect(after.key).toBe(before.key)
 		expect(after.name).toBe(before.name)
-		const versionsAfter = await api(alice.page, 'GET', `/secrets/${sourceId}/versions`)
+		const versionsAfter = await api(
+			alice.page,
+			'GET',
+			`/secrets/${sourceId}/versions`,
+		)
 		expect(versionsAfter.body).toEqual(versionsBefore.body)
 		await expectShows(bob, copies[bob.user.uid], value)
 	})
 
 	test('a version restore reaches the recipient', async () => {
 		const value = original('five')
-		const sourceId = await createSecret(alice, `Restore ${alice.user.uid}`, value)
+		const sourceId = await createSecret(
+			alice,
+			`Restore ${alice.user.uid}`,
+			value,
+		)
 		const copies = await share(alice, sourceId, [bob])
 		await editPassword(alice.page, sourceId, 'Replaced-pass-5!')
-		await expectShows(bob, copies[bob.user.uid], { ...value, key: 'Replaced-pass-5!' })
+		await expectShows(bob, copies[bob.user.uid], {
+			...value,
+			key: 'Replaced-pass-5!',
+		})
 
-		const versions = await api(alice.page, 'GET', `/secrets/${sourceId}/versions`)
-		const list = (versions.body.items ?? versions.body) as Array<{ versionNumber: number }>
+		const versions = await api(
+			alice.page,
+			'GET',
+			`/secrets/${sourceId}/versions`,
+		)
+		const list = (versions.body.items ?? versions.body) as Array<{
+			versionNumber: number
+		}>
 		expect(list, JSON.stringify(versions.body)).toHaveLength(1)
 		const number = list[0].versionNumber
 
@@ -659,7 +748,9 @@ test.describe('atomic share-save, end to end', () => {
 			.evaluate((el: HTMLElement) => el.click())
 		watch.reset()
 		const saved = alice.page.waitForResponse(
-			(r) => r.url().endsWith(`/secrets/${sourceId}/share-save`) && r.status() !== 409,
+			(r) =>
+				r.url().endsWith(`/secrets/${sourceId}/share-save`)
+				&& r.status() !== 409,
 			{ timeout: 60_000 },
 		)
 		await alice.page
@@ -684,20 +775,25 @@ test.describe('atomic share-save, end to end', () => {
 		// Dave is shared with after the server named the copies it needs, so the
 		// client's second request misses him and has to go round once more.
 		let shared = false
-		await alice.page.route(`**/secrets/${sourceId}/share-save`, async (route) => {
-			const response = await route.fetch()
-			if (!shared) {
-				shared = true
-				Object.assign(copies, await share(alice, sourceId, [dave], true))
-			}
-			await route.fulfill({ response })
-		})
+		await alice.page.route(
+			`**/secrets/${sourceId}/share-save`,
+			async (route) => {
+				const response = await route.fetch()
+				if (!shared) {
+					shared = true
+					Object.assign(copies, await share(alice, sourceId, [dave], true))
+				}
+				await route.fulfill({ response })
+			},
+		)
 		const watch = watchApi(alice.page)
 		try {
 			await openEdit(alice.page, sourceId)
 			watch.reset()
 			await savePassword(alice.page, 'Reached-dave-too-6!')
-			await expect(alice.page.locator('.secret-form')).toHaveCount(0, { timeout: 60_000 })
+			await expect(alice.page.locator('.secret-form')).toHaveCount(0, {
+				timeout: 60_000,
+			})
 		} finally {
 			await alice.page.unroute(`**/secrets/${sourceId}/share-save`)
 		}
@@ -713,7 +809,9 @@ test.describe('atomic share-save, end to end', () => {
 		await expectShows(bob, copies[bob.user.uid], changed)
 	})
 
-	test('a save for more than 100 copies is staged and commits once', async ({ browser }) => {
+	test('a save for more than 100 copies is staged and commits once', async ({
+		browser,
+	}) => {
 		// Setting up 99 more vaults in the browser takes about ten minutes.
 		test.skip(!process.env.KEEPIQ_E2E_STAGING, 'set KEEPIQ_E2E_STAGING=1 to run')
 		test.setTimeout(2_400_000)
@@ -729,15 +827,26 @@ test.describe('atomic share-save, end to end', () => {
 					}),
 				)
 			}
-			console.log(`${extra.length} extra vaults in ${Math.round((Date.now() - started) / 1000)}s`)
+			console.log(
+				`${extra.length} extra vaults in ${Math.round((Date.now() - started) / 1000)}s`,
+			)
 
 			await ensureUnlocked(alice)
 			const value = original('eight')
-			const sourceId = await createSecret(alice, `Staged ${alice.user.uid}`, value)
+			const sourceId = await createSecret(
+				alice,
+				`Staged ${alice.user.uid}`,
+				value,
+			)
 			const copies = await share(alice, sourceId, [bob, dave])
-			const certificates = await api(alice.page, 'POST', '/shares/recipient-certificates', {
-				userIds: extra.map((u) => u.uid),
-			})
+			const certificates = await api(
+				alice.page,
+				'POST',
+				'/shares/recipient-certificates',
+				{
+					userIds: extra.map((u) => u.uid),
+				},
+			)
 			expect(certificates.status).toBe(200)
 			const rows = await withStore<number>(
 				alice.page,
@@ -773,8 +882,14 @@ test.describe('atomic share-save, end to end', () => {
 			await openEdit(alice.page, sourceId)
 			watch.reset()
 			await savePassword(alice.page, 'Staged-for-all-8!')
-			await expect(alice.page.locator('.secret-form')).toHaveCount(0, { timeout: 120_000 })
-			expectShareSaveOnly(await watch.calls(), sourceId, [[409, 'incomplete'], [202], [200]])
+			await expect(alice.page.locator('.secret-form')).toHaveCount(0, {
+				timeout: 120_000,
+			})
+			expectShareSaveOnly(await watch.calls(), sourceId, [
+				[409, 'incomplete'],
+				[202],
+				[200],
+			])
 
 			const changed = { ...value, key: 'Staged-for-all-8!' }
 			await expectShows(bob, copies[bob.user.uid], changed)
@@ -786,51 +901,92 @@ test.describe('atomic share-save, end to end', () => {
 
 	test('an offline edit is replayed through the share-save', async () => {
 		test.setTimeout(240_000)
-		const settings = await admin.get('/index.php/apps/keepiq/api/settings/admin/general')
+		const settings = await admin.get(
+			'/index.php/apps/keepiq/api/settings/admin/general',
+		)
 		expect(settings.status()).toBe(200)
 		const wasEnabled = (await settings.json())?.offline_edits_enabled === true
 		const set = async (enabled: boolean) => {
-			const response = await admin.put('/index.php/apps/keepiq/api/settings/admin/general', {
-				data: { offline_edits_enabled: enabled },
-			})
+			const response = await admin.put(
+				'/index.php/apps/keepiq/api/settings/admin/general',
+				{
+					data: { offline_edits_enabled: enabled },
+				},
+			)
 			expect(response.status(), await response.text()).toBe(200)
 		}
 
 		const value = original('seven')
-		const sourceId = await createSecret(alice, `Offline ${alice.user.uid}`, value)
+		const sourceId = await createSecret(
+			alice,
+			`Offline ${alice.user.uid}`,
+			value,
+		)
 		const copies = await share(alice, sourceId, [bob])
 		await set(true)
 		try {
 			// An online unlock writes the snapshot the offline unlock opens.
 			await lockAndUnlock(alice)
 			await expect
-				.poll(() => withStore<string | null>(alice.page, 'offline', 'async (s) => s.syncedAt'), {
-					timeout: 30_000,
-				})
+				.poll(
+					() =>
+						withStore<string | null>(
+							alice.page,
+							'offline',
+							'async (s) => s.syncedAt',
+						),
+					{
+						timeout: 30_000,
+					},
+				)
 				.not.toBeNull()
 
 			await alice.context.setOffline(true)
 			await lockAndUnlock(alice)
 			expect(
-				await withStore<boolean>(alice.page, 'offline', 'async (s) => s.servedFromCache && s.editsEnabled'),
+				await withStore<boolean>(
+					alice.page,
+					'offline',
+					'async (s) => s.servedFromCache && s.editsEnabled',
+				),
 			).toBe(true)
 			await editPassword(alice.page, sourceId, 'Saved-offline-7!')
-			expect(await withStore<number>(alice.page, 'offline', 'async (s) => s.pendingCount')).toBe(1)
+			expect(
+				await withStore<number>(
+					alice.page,
+					'offline',
+					'async (s) => s.pendingCount',
+				),
+			).toBe(1)
 
 			await alice.context.setOffline(false)
 			const watch = watchApi(alice.page)
 			await lockAndUnlock(alice)
 			await expect
-				.poll(() => withStore<number>(alice.page, 'offline', 'async (s) => s.pendingCount'), {
-					timeout: 60_000,
-				})
+				.poll(
+					() =>
+						withStore<number>(
+							alice.page,
+							'offline',
+							'async (s) => s.pendingCount',
+						),
+					{
+						timeout: 60_000,
+					},
+				)
 				.toBe(0)
-			expectShareSaveOnly(await watch.calls(), sourceId, [[409, 'incomplete'], [200]])
+			expectShareSaveOnly(await watch.calls(), sourceId, [
+				[409, 'incomplete'],
+				[200],
+			])
 		} finally {
 			await alice.context.setOffline(false)
 			await set(wasEnabled)
 		}
 
-		await expectShows(bob, copies[bob.user.uid], { ...value, key: 'Saved-offline-7!' })
+		await expectShows(bob, copies[bob.user.uid], {
+			...value,
+			key: 'Saved-offline-7!',
+		})
 	})
 })

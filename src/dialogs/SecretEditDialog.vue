@@ -32,7 +32,12 @@
 				v-if="saving && waitingForPartners"
 				type="info"
 				data-testid="secret-edit-waiting">
-				{{ t('keepiq', 'This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.') }}
+				{{
+					t(
+						'keepiq',
+						'This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.',
+					)
+				}}
 			</NcNoteCard>
 
 			<NcTextField

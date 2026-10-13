@@ -48,14 +48,11 @@ vi.mock('../../src/offline/cache.js', () => ({
 	purge: async () => {},
 }))
 
-const { failureText, useOfflineStore } = await import(
-	'../../src/store/modules/offline.js'
-)
+const { failureText, useOfflineStore } =
+	await import('../../src/store/modules/offline.js')
 const { useSecretStore } = await import('../../src/store/modules/secret.js')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
-const { forgetVerifiedPartners } = await import(
-	'../../src/services/shareSave.js'
-)
+const { forgetVerifiedPartners } = await import('../../src/services/shareSave.js')
 
 const BASE = '2026-10-01T10:00:00+00:00'
 

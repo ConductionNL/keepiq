@@ -213,6 +213,6 @@ class ShareSaveRequestTest extends TestCase {
 			$body['copies'][] = ['secretId' => 'c-'.$i, 'key' => 'K', 'login' => null];
 		}
 
-		$this->assertSame(ShareSaveRequest::MAX_ENTRIES, new ShareSaveRequest($body)->entries->copyCount());
+		$this->assertSame(ShareSaveRequest::MAX_ENTRIES, (new ShareSaveRequest($body))->entries->copyCount());
 	}
 }

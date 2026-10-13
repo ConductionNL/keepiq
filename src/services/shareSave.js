@@ -124,6 +124,7 @@ export class ShareSaveError extends Error {
 	 * @param {string} code The reason.
 	 * @param {Array<{shareId: string, recipientCloudId: string, reason: string}>} [partners] Unreachable partner shares.
 	 * @param {{cause?: Error}} [options] The error this one stands for.
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
 	 */
 	constructor(code, partners = [], options = undefined) {
 		super(code, options)
@@ -283,7 +284,9 @@ export async function saveShared({
 						baseUpdatedAt,
 					})
 				: await axios.post(
-						generateUrl(`/apps/keepiq/api/v1/versions/${restoredFrom}/restore`),
+						generateUrl(
+							`/apps/keepiq/api/v1/versions/${restoredFrom}/restore`,
+						),
 						{ baseUpdatedAt },
 					)
 		return { secret: response.data }
@@ -329,7 +332,9 @@ export async function saveShared({
 			}
 			const wait = retryAfterMs(limited.response)
 			if (waited + wait > PARTNER_LIMIT_WAIT_CAP_MS) {
-				throw new ShareSaveError('partner_lookup_limit', [], { cause: limited })
+				throw new ShareSaveError('partner_lookup_limit', [], {
+					cause: limited,
+				})
 			}
 			onWait?.(wait)
 			await new Promise((resolve) => setTimeout(resolve, wait))
@@ -540,7 +545,10 @@ export async function saveShared({
 				const answer = e?.response?.data
 				const restart =
 					status === 404 && answer?.error === 'stage_unknown' && stage.id
-				if (!(status === 409 && answer?.error === 'incomplete') && !restart) {
+				if (
+					!(status === 409 && answer?.error === 'incomplete')
+					&& !restart
+				) {
 					e.fromShareSave = true
 					throw e
 				}
