@@ -506,8 +506,9 @@ export default {
 		 * so the share save refuses it as `stale_source` when the source moved
 		 * on while the dialog was open. Offline it is the one the cached vault
 		 * row carries. Null for an own secret, and when it is not known: the
-		 * save then takes the source version of its own moment. Read after any
-		 * merge write-back of the secret, which moves the source too.
+		 * save then takes the source version of its own moment. A merge
+		 * write-back of the secret that saved moved the source, so its version
+		 * is taken instead; one that failed leaves the version read on open.
 		 *
 		 * @return {Promise<string|null>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
@@ -521,17 +522,16 @@ export default {
 				)
 				return cached?.sourceUpdatedAt ?? null
 			}
-			await useSecretStore().writeBackSettled(this.secretId)
-			try {
-				const context = await useShareStore().fetchWriteContext(
-					this.secretId,
-				)
-				return context.sourceSecretId !== this.secretId
-					? (context.sourceUpdatedAt ?? null)
-					: null
-			} catch {
+			const [context, writeBack] = await Promise.all([
+				useShareStore()
+					.fetchWriteContext(this.secretId)
+					.catch(() => null),
+				useSecretStore().writeBackSettled(this.secretId),
+			])
+			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
+			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
 		},
 
 		/**
@@ -678,13 +678,10 @@ export default {
 					const onWait = () => {
 						this.waitingForPartners = true
 					}
-					// A merge write-back of this secret moves the copy, and
-					// through a copy the source: wait for it, then read the
-					// source version again. `o` is the store's open copy, which
-					// the write-back moved, so its version is read only now too.
-					if (await store.writeBackSettled(this.secretId, onWait)) {
-						this.sourceBase = this.sourceVersion()
-					}
+					// Waited for here so its partner wait shows. `o` is the
+					// store's open copy, which only a write-back that saved
+					// moved, so its version is read only now.
+					await store.writeBackSettled(this.secretId, onWait)
 					const sourceBaseUpdatedAt = await this.sourceBase
 					updated = await store.updateSecret(this.secretId, diff, {
 						baseUpdatedAt: o.updatedAt,

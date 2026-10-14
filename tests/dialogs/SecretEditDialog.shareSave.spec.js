@@ -113,7 +113,7 @@ const OPEN_WITH_PENDING = {
  * @param {object} options The copy.
  * @param {string} options.grade The caller's grade on the source.
  * @param {Promise|null} [options.hold] Holds the write-back's request until it resolves.
- * @return {Promise<{wrapper: object, log: object, writeBack: () => Promise<void>}>}
+ * @return {Promise<{wrapper: object, log: object, server: {copy: string, source: string}, writeBack: () => Promise<void>}>}
  */
 async function mountCopyWithWriteBack({ grade, hold = null }) {
 	const server = { copy: BASE, source: OPENED_SOURCE }
@@ -161,7 +161,7 @@ async function mountCopyWithWriteBack({ grade, hold = null }) {
 			return store.currentSecret
 		},
 	})
-	return { wrapper, log, writeBack: () => writeBack }
+	return { wrapper, log, server, writeBack: () => writeBack }
 }
 
 describe('SecretEditDialog — share save', () => {
@@ -343,6 +343,36 @@ describe('SecretEditDialog — share save', () => {
 			false,
 		)
 		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('refuses a copy held behind a merge write-back that a source change made fail, keeping the versions it opened on', async () => {
+		let release
+		const hold = new Promise((resolve) => (release = resolve))
+		const { wrapper, log, server, writeBack } = await mountCopyWithWriteBack({
+			grade: 'write',
+			hold,
+		})
+
+		const saving = wrapper.vm.submit()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		// The owner saves the source while the write-back is held, so the
+		// write-back is refused as `stale_source`.
+		server.source = '2026-10-01T09:30:00+00:00'
+		release()
+		await writeBack()
+		await saving
+		await wrapper.vm.$nextTick()
+
+		expect(
+			log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+		).toEqual([
+			[BASE, OPENED_SOURCE],
+			[BASE, OPENED_SOURCE],
+		])
+		expect(wrapper.find('[data-testid="secret-edit-error"]').text()).toContain(
+			'The original of this shared secret was changed after you opened it',
+		)
+		expect(wrapper.emitted('saved')).toBeFalsy()
 	})
 
 	it('saves the own copy without a write grade held behind a merge write-back, not refused as stale against it', async () => {

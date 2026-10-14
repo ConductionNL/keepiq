@@ -49,11 +49,12 @@ const WHOLE_VAULT = {
 
 /**
  * Merge write-backs in flight, by secret id: `{ done, waiting, waiters }`,
- * removed when it settles. `done` resolves when it settled, saved or not.
- * `waiting` is its last wait on the partner lookup limit, and `waiters` are
- * the saves held behind it that want to hear of one.
+ * removed when it settles. `done` resolves to the source version it wrote
+ * (`sourceUpdatedAt`, null when it saved only the own copy), or to null when
+ * it failed. `waiting` is its last wait on the partner lookup limit, and
+ * `waiters` are the saves held behind it that want to hear of one.
  *
- * @type {Map<string, {done: Promise<void>, waiting: number|null, waiters: Set<(ms: number) => void>}>}
+ * @type {Map<string, {done: Promise<{sourceUpdatedAt: string|null}|null>, waiting: number|null, waiters: Set<(ms: number) => void>}>}
  */
 const writeBacks = new Map()
 
@@ -488,6 +489,7 @@ export const useSecretStore = defineStore('secret', {
 				return
 			}
 			const inFlight = { done: null, waiting: null, waiters: new Set() }
+			let sourceUpdatedAt = null
 			const done = this.updateSecret(
 				id,
 				{
@@ -504,13 +506,17 @@ export const useSecretStore = defineStore('secret', {
 							waiter(ms)
 						}
 					},
+					onSourceSaved: (version) => {
+						sourceUpdatedAt = version
+					},
 				},
 			)
 				.then(() => {
 					current.mergedPending = 0
+					return { sourceUpdatedAt }
 				})
 				// Stays pending; merged again on the next open.
-				.catch(() => {})
+				.catch(() => null)
 			inFlight.done = done
 			writeBacks.set(id, inFlight)
 			await done
@@ -520,19 +526,19 @@ export const useSecretStore = defineStore('secret', {
 		},
 
 		/**
-		 * Wait for a merge write-back of `id` in flight. It moves the secret,
-		 * and through a copy the source, so a save reads the versions it is
-		 * made from only after this.
+		 * Wait for a merge write-back of `id` in flight. One that saved moved
+		 * the secret, and through a copy the source, to versions an edit made
+		 * before it may take; one that failed moved nothing.
 		 *
 		 * @param {string} id The secret ID.
 		 * @param {((ms: number) => void)|null} [onWait] Told when the write-back waits on the partner lookup limit, also of a wait already begun.
-		 * @return {Promise<boolean>} Whether one was in flight.
+		 * @return {Promise<{sourceUpdatedAt: string|null}|null>} The source version the write-back wrote, null when it saved only the own copy; null when none was in flight or it failed.
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async writeBackSettled(id, onWait = null) {
 			const inFlight = writeBacks.get(id)
 			if (!inFlight) {
-				return false
+				return null
 			}
 			if (onWait) {
 				if (inFlight.waiting !== null) {
@@ -541,11 +547,10 @@ export const useSecretStore = defineStore('secret', {
 				inFlight.waiters.add(onWait)
 			}
 			try {
-				await inFlight.done
+				return await inFlight.done
 			} finally {
 				inFlight.waiters.delete(onWait)
 			}
-			return true
 		},
 
 		/**
@@ -702,6 +707,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {Array<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached.
 		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
 		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit, its own or that of a merge write-back it is held behind.
+		 * @param {(sourceUpdatedAt: string|null) => void} [options.onSourceSaved] Called after a share save with the source version it wrote, null when it saved only the own copy.
 		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
@@ -709,8 +715,8 @@ export const useSecretStore = defineStore('secret', {
 		 */
 		async updateSecret(id, data, options = {}) {
 			// Never alongside a merge write-back of the same secret. A caller
-			// that sends the versions it read reads them after it
-			// (writeBackSettled), or the write-back makes them stale.
+			// that sends the versions it read takes the ones a write-back that
+			// saved wrote (writeBackSettled), or the write-back makes them stale.
 			if (!options.writeBack) {
 				await this.writeBackSettled(id, options.onWait ?? null)
 			}
@@ -804,6 +810,7 @@ export const useSecretStore = defineStore('secret', {
 					withoutUnreachable: options.withoutUnreachable ?? [],
 					onWait: options.onWait ?? null,
 				})
+				options.onSourceSaved?.(result.sourceUpdatedAt ?? null)
 				await notifyOwnerOnly(result)
 				saved = result.secret
 			} else {

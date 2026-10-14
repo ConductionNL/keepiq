@@ -874,13 +874,15 @@ describe('updateSecret', () => {
 		)
 		await new Promise((resolve) => setTimeout(resolve, 0))
 		expect(log.saves).toHaveLength(0)
+		const settled = store.writeBackSettled('s1')
 		release()
 		await saving
 
+		expect(await settled).toEqual({ sourceUpdatedAt: SAVED_AT })
 		expect(log.saves.map((s) => s.baseUpdatedAt)).toEqual([BASE, SAVED_AT])
 		expect(log.saves[0].patch.mergedPending).toBe(1)
 		expect(log.saves[1].patch.mergedPending).toBeUndefined()
-		expect(await store.writeBackSettled('s1')).toBe(false)
+		expect(await store.writeBackSettled('s1')).toBeNull()
 	})
 
 	it('bases a restore made during the write-back on the write-back, so it is not refused as stale', async () => {
