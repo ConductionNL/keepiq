@@ -563,10 +563,10 @@ class ShareSaveVersionLockTest extends TestCase {
 	}
 
 	/**
-	 * Alice suspends the share while Bob's decline is checked: the decline
-	 * still counts, read again from the suspended row.
+	 * Alice suspends the share while Bob's decline is checked: read again,
+	 * the row is suspended, and only Alice ends a suspension.
 	 */
-	public function testADeclineReadBeforeASuspendStillDeclinesTheShare(): void {
+	public function testADeclineReadBeforeASuspendLeavesTheShareSuspended(): void {
 		$mapper = new FederatedShareMapper(db: $this->db);
 		[$receiver, $row] = $this->receiverRacedBy(
 			mapper: $mapper,
@@ -579,7 +579,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
 
 		$stored = $mapper->findById($row->getId());
-		$this->assertSame(FederatedShare::STATUS_DECLINED, $stored->getStatus());
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $stored->getStatus());
 		$this->assertNull($stored->getPendingNotification());
 	}
 
