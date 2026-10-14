@@ -82,11 +82,30 @@ class FederatedDeclineReceiver {
 	 */
 	public function handle(string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
+		$this->decline(row: $row, again: true);
 
+		return [];
+	}//end handle()
+
+	/**
+	 * Mark the share declined, unless a revocation is on its way or it is
+	 * declined already. When the row changed after it was read (the owner
+	 * suspended, revoked or saved while the signature was checked), it is
+	 * read once more and decided again.
+	 *
+	 * @param FederatedShare $row The share as it was read
+	 * @param bool $again Whether a changed row may be read once more
+	 *
+	 * @return void
+	 */
+	private function decline(FederatedShare $row, bool $again): void {
 		// A revocation on its way finishes as a revocation; a second decline
 		// changes nothing.
-		if ($row->getStatus() === FederatedShare::STATUS_REVOKED || $row->getStatus() === FederatedShare::STATUS_DECLINED) {
-			return [];
+		if ($row->getStatus() === FederatedShare::STATUS_REVOKED
+			|| $row->getStatus() === FederatedShare::STATUS_DECLINED
+			|| $row->getPendingNotification() === FederatedNotificationDelivery::SHARE_UNSHARED
+		) {
+			return;
 		}
 
 		$read = $row->getStatus();
@@ -95,17 +114,16 @@ class FederatedDeclineReceiver {
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
 		$row->stamp(now: new DateTime());
-		// The owner may have revoked while the signature was checked, or a
-		// revocation whose retries gave up is still pending: then the
-		// revocation finishes, answered as above.
-		if ($this->write(row: $row, read: $read) === false) {
-			return [];
+		if ($this->write(row: $row, read: $read) === true) {
+			$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, row: $row, actorId: null);
+			return;
 		}
 
-		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, row: $row, actorId: null);
-
-		return [];
-	}//end handle()
+		$current = $this->reread(row: $row);
+		if ($again === true && $current !== null) {
+			$this->decline(row: $current, again: false);
+		}
+	}//end decline()
 
 	/**
 	 * Apply a `SHARE_ACCEPTED` from the recipient's instance: a declined
@@ -124,12 +142,30 @@ class FederatedDeclineReceiver {
 	 */
 	public function resume(string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
+		$this->accept(row: $row, again: true);
 
-		if ($row->getStatus() === FederatedShare::STATUS_ACTIVE) {
-			return [];
+		return [];
+	}//end resume()
+
+	/**
+	 * Make a declined share live again. When the row changed after it was
+	 * read, it is read once more and decided again: a concurrent accept that
+	 * already made it live is answered as live; a revoke, or a row that is
+	 * gone, ends it.
+	 *
+	 * @param FederatedShare|null $row The share as it was read, or null when it is gone
+	 * @param bool $again Whether a changed row may be read once more
+	 *
+	 * @return void
+	 *
+	 * @throws ShareNotFound For a share that ended
+	 */
+	private function accept(?FederatedShare $row, bool $again): void {
+		if ($row !== null && $row->getStatus() === FederatedShare::STATUS_ACTIVE) {
+			return;
 		}
 
-		if ($row->getStatus() !== FederatedShare::STATUS_DECLINED || $this->sentAgain(row: $row) === true) {
+		if ($row === null || $row->getStatus() !== FederatedShare::STATUS_DECLINED || $this->sentAgain(row: $row) === true) {
 			throw new ShareNotFound();
 		}
 
@@ -138,16 +174,32 @@ class FederatedDeclineReceiver {
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
 		$row->stamp(now: new DateTime());
-		// The owner may have revoked while the signature was checked: then
-		// the share stays ended, answered as above.
-		if ($this->write(row: $row, read: FederatedShare::STATUS_DECLINED) === false) {
+		if ($this->write(row: $row, read: FederatedShare::STATUS_DECLINED) === true) {
+			$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_RESUMED, row: $row, actorId: null);
+			return;
+		}
+
+		if ($again === false) {
 			throw new ShareNotFound();
 		}
 
-		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_RESUMED, row: $row, actorId: null);
+		$this->accept(row: $this->reread(row: $row), again: false);
+	}//end accept()
 
-		return [];
-	}//end resume()
+	/**
+	 * The share as the database holds it now, or null when it is gone.
+	 *
+	 * @param FederatedShare $row The share as it was read
+	 *
+	 * @return FederatedShare|null
+	 */
+	private function reread(FederatedShare $row): ?FederatedShare {
+		try {
+			return $this->shareMapper->findById(id: $row->getId());
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end reread()
 
 	/**
 	 * Store the recipient's change only while the share still has the status

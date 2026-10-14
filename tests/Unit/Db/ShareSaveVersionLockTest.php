@@ -445,6 +445,24 @@ class ShareSaveVersionLockTest extends TestCase {
 	 * @return array{0:FederatedDeclineReceiver,1:FederatedShare}
 	 */
 	private function receiverRacedByARevoke(FederatedShareMapper $mapper, string $status): array {
+		return $this->receiverRacedBy(
+			mapper: $mapper,
+			status: $status,
+			meanwhile: static function (FederatedShareService $service, FederatedShare $row): void {
+				$service->revoke(shareId: $row->getId(), userId: 'share-save-test');
+			}
+		);
+	}
+
+	/**
+	 * Alice's owner side receiving Bob's decline or accept, with `$meanwhile`
+	 * running while the request's signature is checked. Notifications fail.
+	 *
+	 * @param \Closure(FederatedShareService,FederatedShare):void $meanwhile What Alice does meanwhile
+	 *
+	 * @return array{0:FederatedDeclineReceiver,1:FederatedShare}
+	 */
+	private function receiverRacedBy(FederatedShareMapper $mapper, string $status, \Closure $meanwhile): array {
 		$row = $mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
 		$row->setSharedSecretHash(hash('sha256', 'the-shared-secret'));
 		$mapper->update($row);
@@ -458,8 +476,8 @@ class ShareSaveVersionLockTest extends TestCase {
 		$signed->method('getOrigin')->willReturn('partner.example');
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
-			function () use ($service, $row, $signed): IIncomingSignedRequest {
-				$service->revoke(shareId: $row->getId(), userId: 'share-save-test');
+			function () use ($service, $row, $signed, $meanwhile): IIncomingSignedRequest {
+				$meanwhile($service, $row);
 				return $signed;
 			}
 		);
@@ -508,6 +526,27 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
 
 		$this->assertStillRevoked(mapper: $mapper, row: $row);
+	}
+
+	/**
+	 * Alice suspends the share while Bob's decline is checked: the decline
+	 * still counts, read again from the suspended row.
+	 */
+	public function testADeclineReadBeforeASuspendStillDeclinesTheShare(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedBy(
+			mapper: $mapper,
+			status: FederatedShare::STATUS_ACTIVE,
+			meanwhile: static function (FederatedShareService $service, FederatedShare $row): void {
+				$service->suspend(shareId: $row->getId(), userId: 'share-save-test', reason: 'untrusted_root');
+			}
+		);
+
+		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
+
+		$stored = $mapper->findById($row->getId());
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $stored->getStatus());
+		$this->assertNull($stored->getPendingNotification());
 	}
 
 	public function testARecipientsChangeIsWrittenOnlyWhileNoUnshareIsPending(): void {

@@ -554,6 +554,38 @@ class FederatedCopyDeclineTest extends TestCase {
 	}
 
 	/**
+	 * @return array<string,array{0:string,1:string|null}>
+	 */
+	public static function ownerChangesWhileTheDeclineIsChecked(): array {
+		return [
+			'the owner suspends' => [FederatedShare::STATUS_SUSPENDED, null],
+			'the retry job gives an update up' => [FederatedShare::STATUS_FAILED, 'SHARE_UPDATED'],
+		];
+	}
+
+	/**
+	 * The status changed for another reason than a revoke while the
+	 * signature of Bob's decline was checked: the decline still counts.
+	 *
+	 * @dataProvider ownerChangesWhileTheDeclineIsChecked
+	 */
+	public function testADeclineStillCountsWhenTheShareChangedMeanwhile(string $status, ?string $pending): void {
+		$this->signer = 'cloud.partner.example';
+		$this->meanwhile = function () use ($status, $pending): void {
+			$this->outbound->setStatus($status);
+			$this->outbound->setPendingNotification($pending);
+		};
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $this->outbound->getStatus());
+		$this->assertNull($this->outbound->getPendingNotification());
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+	}
+
+	/**
 	 * A revocation whose retries gave up leaves the share failed with the
 	 * unshare still pending: a decline keeps that unshare too.
 	 */

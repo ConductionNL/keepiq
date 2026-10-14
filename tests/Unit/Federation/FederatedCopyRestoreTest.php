@@ -487,6 +487,22 @@ class FederatedCopyRestoreTest extends TestCase {
 		$this->assertSame([], $this->audit);
 	}
 
+	/**
+	 * Two accepts for the same share cross: the one that loses the race
+	 * finds the share live and is answered as for a live share.
+	 */
+	public function testAnAcceptThatLosesToAnotherAcceptFindsTheShareLive(): void {
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_ACTIVE);
+		};
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_ACCEPTED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_ACTIVE, $this->outbound->getStatus());
+		$this->assertSame([], $this->audit);
+	}
+
 	public function testAShareTheOwnerAlreadyRemovedStaysEnded(): void {
 		$this->outbound = null;
 
