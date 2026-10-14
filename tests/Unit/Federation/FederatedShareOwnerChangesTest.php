@@ -77,6 +77,9 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	/** Whether the recipient's instance takes notifications. */
 	private bool $reachable = true;
 
+	/** Runs once, while the next notification is being sent. */
+	private ?\Closure $onSend = null;
+
 	/** @var AuditEvent[] */
 	private array $audit = [];
 
@@ -131,12 +134,16 @@ class FederatedShareOwnerChangesTest extends TestCase {
 			}
 		);
 		$mapper->method('findByPartner')->willReturnCallback(fn (): array => array_values($this->rows));
+		// The rows as the select read them, not the live ones.
 		$mapper->method('findDueNotifications')->willReturnCallback(
-			fn (DateTime $now): array => array_values(array_filter(
-				$this->rows,
-				static fn (FederatedShare $r): bool => $r->getPendingNotification() !== null
-					&& $r->getNextNotifyAt() !== null && $r->getNextNotifyAt() <= $now
-			))
+			fn (DateTime $now): array => array_map(
+				static fn (FederatedShare $r): FederatedShare => clone $r,
+				array_values(array_filter(
+					$this->rows,
+					static fn (FederatedShare $r): bool => $r->getPendingNotification() !== null
+						&& $r->getNextNotifyAt() !== null && $r->getNextNotifyAt() <= $now
+				))
+			)
 		);
 
 		$source = new Secret();
@@ -153,6 +160,11 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$ocm = $this->createMock(ICloudFederationProviderManager::class);
 		$ocm->method('sendCloudNotification')->willReturnCallback(
 			function (string $remote, FakeCloudFederationNotification $notification): IResponse {
+				$onSend = $this->onSend;
+				$this->onSend = null;
+				if ($onSend !== null) {
+					$onSend();
+				}
 				$this->sent[] = $notification;
 				$this->sentTo[] = $remote;
 				$response = $this->createMock(IResponse::class);
@@ -435,6 +447,34 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->assertSame(1, $this->service->suspendForPartner(partnerId: 'p-cloud.partner.example'));
 
 		$this->assertNothingIsAnnouncedToTheSuspendedShare();
+	}
+
+	/**
+	 * The retry job read two queued updates, and Alice suspends the second
+	 * share while the first is sent: the second is not announced.
+	 */
+	public function testARetryBatchSkipsAShareSuspendedAfterItWasRead(): void {
+		$second = clone $this->rows['fs-1'];
+		$second->setId('fs-2');
+		$this->rows['fs-2'] = $second;
+		$this->store($second);
+		foreach (['fs-1', 'fs-2'] as $id) {
+			$this->service->writeCiphertext(
+				row: $this->rows[$id],
+				certFingerprint: self::FINGERPRINT,
+				ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
+				savedAt: new DateTime('2026-10-13T12:00:00Z'),
+			);
+		}
+
+		$this->onSend = function (): void {
+			$this->assertSame(Http::STATUS_OK, $this->controller()->suspend('fs-2', 'untrusted_root')->getStatus());
+		};
+
+		$this->assertSame(1, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:01:00Z')));
+		$this->assertCount(1, $this->sent);
+		$this->assertSame('fs-1', $this->sent[0]->getMessage()['providerId']);
+		$this->assertSame(['status' => FederatedShare::STATUS_SUSPENDED, 'pending' => null], $this->stored['fs-2']);
 	}
 
 	/**

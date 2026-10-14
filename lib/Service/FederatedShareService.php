@@ -394,8 +394,8 @@ class FederatedShareService {
 			$reason = 'unverified';
 		}
 		$row->setStatus(FederatedShare::STATUS_SUSPENDED);
-		// Nothing is served any more: drop a queued update. A retry that is
-		// sending it already can still deliver it once.
+		// Nothing is served any more: drop a queued update. Only a send that
+		// is under way already can still deliver it once.
 		$row->setPendingNotification(null);
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);

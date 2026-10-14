@@ -30,6 +30,7 @@ use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * OCM notifications with retries.
@@ -131,14 +132,48 @@ class FederatedNotificationDelivery {
 	 */
 	public function retryDue(DateTime $now, int $limit = 50): int {
 		$delivered = 0;
-		foreach ($this->shareMapper->findDueNotifications(now: $now, limit: $limit, ending: self::SHARE_UNSHARED) as $row) {
-			if ($this->attempt(row: $row, now: $now) === true) {
+		foreach ($this->shareMapper->findDueNotifications(now: $now, limit: $limit, ending: self::SHARE_UNSHARED) as $read) {
+			$row = $this->stillDue(row: $read, now: $now);
+			if ($row !== null && $this->attempt(row: $row, now: $now) === true) {
 				$delivered++;
 			}
 		}
 
 		return $delivered;
 	}//end retryDue()
+
+	/**
+	 * The share as the database holds it now, or null when its notification
+	 * is no longer due: the earlier sends of a batch take time, and a revoke,
+	 * suspend or save may land before this one's turn.
+	 *
+	 * @param FederatedShare $row The share as the batch read it
+	 * @param DateTime $now The current time
+	 *
+	 * @return FederatedShare|null
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+	 */
+	private function stillDue(FederatedShare $row, DateTime $now): ?FederatedShare {
+		try {
+			$current = $this->shareMapper->findById(id: $row->getId());
+		} catch (DoesNotExistException) {
+			return null;
+		}
+
+		$pending = $current->getPendingNotification();
+		$due = $current->getNextNotifyAt();
+		if ($pending === null || $due === null || $due > $now) {
+			return null;
+		}
+
+		// Only its end is announced to a share that is no longer active.
+		if ($pending !== self::SHARE_UNSHARED && $current->getStatus() !== FederatedShare::STATUS_ACTIVE) {
+			return null;
+		}
+
+		return $current;
+	}//end stillDue()
 
 	/**
 	 * One attempt at the row's pending notification.
