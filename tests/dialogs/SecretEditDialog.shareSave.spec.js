@@ -15,6 +15,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretEditDialog from '../../src/dialogs/SecretEditDialog.vue'
 import { ShareSaveError } from '../../src/services/shareSave.js'
+import { useOfflineStore } from '../../src/store/modules/offline.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
@@ -209,6 +210,23 @@ describe('SecretEditDialog — share save', () => {
 		await wrapper.vm.submit()
 
 		expect(update.mock.calls[0][2].sourceBaseUpdatedAt).toBe(opened)
+	})
+
+	it('offline, saves a copy from the source version its cached row carries', async () => {
+		const offline = useOfflineStore()
+		offline.servedFromCache = true
+		offline.vault = {
+			secrets: [{ id: 's1', updatedAt: BASE, sourceUpdatedAt: OPENED_SOURCE }],
+		}
+		const wrapper = await mountEdited()
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+
+		await wrapper.vm.submit()
+
+		expect(update.mock.calls[0][2].sourceBaseUpdatedAt).toBe(OPENED_SOURCE)
+		expect(useShareStore().fetchWriteContext).not.toHaveBeenCalled()
 	})
 
 	it('says so while the save waits on the partner lookup limit', async () => {

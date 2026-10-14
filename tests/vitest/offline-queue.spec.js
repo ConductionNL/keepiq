@@ -85,7 +85,7 @@ describe('coalescing', () => {
 		expect(result.body).toEqual({ name: 'C', key: 'k2' })
 	})
 
-	it('keeps the source version of the first update in a chain, null included', () => {
+	it('keeps the first source version recorded in an update chain', () => {
 		const withSource = (entry, source) => ({
 			...entry,
 			sourceBaseUpdatedAt: source,
@@ -97,11 +97,15 @@ describe('coalescing', () => {
 		expect(coalesce(coalesce(recorded, second), third).sourceBaseUpdatedAt).toBe(
 			'source-1',
 		)
-		// The first change recorded none: the replay takes the source of
-		// its own moment, not a later edit's.
+		// The first change recorded none: a later one's is kept, rather
+		// than leaving the replay to the source of its own moment.
 		const unrecorded = withSource(upd({ name: 'A' }, 'base-1', '1'), null)
 		expect(
 			coalesce(coalesce(unrecorded, second), third).sourceBaseUpdatedAt,
+		).toBe('source-2')
+		expect(
+			coalesce(unrecorded, withSource(upd({ key: 'k2' }, 'base-2', '2'), null))
+				.sourceBaseUpdatedAt,
 		).toBeNull()
 	})
 

@@ -504,17 +504,22 @@ export default {
 		/**
 		 * The source version this edit starts from when the secret is a copy,
 		 * so the share save refuses it as `stale_source` when the source moved
-		 * on while the dialog was open. Null for an own secret, and when it
-		 * cannot be read (offline): the save then takes the source version of
-		 * its own moment. Read after any merge write-back of the secret, which
-		 * moves the source too.
+		 * on while the dialog was open. Offline it is the one the cached vault
+		 * row carries. Null for an own secret, and when it is not known: the
+		 * save then takes the source version of its own moment. Read after any
+		 * merge write-back of the secret, which moves the source too.
 		 *
 		 * @return {Promise<string|null>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async sourceVersion() {
-			if (useOfflineStore().servedFromCache) {
-				return null
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find(
+					(secret) => secret.id === this.secretId,
+				)
+				return cached?.sourceUpdatedAt ?? null
 			}
 			await useSecretStore().writeBackSettled(this.secretId)
 			try {

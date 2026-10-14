@@ -13,8 +13,9 @@
  *     status: 'queued'|'sync'|'conflict'|'failed', sealed, sealedFailure }
  * `sourceBaseUpdatedAt` is, for an edit through a copy, the source version
  * the edit was made from, and null when it was not known (or the entry is
- * older than it). Like `baseUpdatedAt`, a coalesced entry keeps the first
- * change's, null included: that one's edit is the oldest in it.
+ * older than it). A coalesced entry keeps the first one recorded, so a change
+ * that recorded none does not leave the replay to the source version of its
+ * own moment.
  * `sealed` is the hybrid envelope (RSA-OAEP + AES-256-GCM, the one
  * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login` and
  * `additionalFields` ciphertext an online save sends, plus the index fields
@@ -130,7 +131,13 @@ export function coalesce(existing, incoming) {
 			body: {},
 		}
 	}
-	return { ...existing, body: merged, status: 'queued' }
+	return {
+		...existing,
+		sourceBaseUpdatedAt:
+			existing.sourceBaseUpdatedAt ?? incoming.sourceBaseUpdatedAt ?? null,
+		body: merged,
+		status: 'queued',
+	}
 }
 
 /**
