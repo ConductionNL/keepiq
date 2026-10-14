@@ -162,7 +162,7 @@ class ShareAuditTrail {
 	 * @param string $secretId The source secret ID
 	 * @param string $secretName The source secret's name
 	 * @param string $changedFields How the writer wrote: `team-write sync` or `delegate sync`
-	 * @param list<string> $skippedCopies The ids of the copies the sync left out
+	 * @param list<string> $skippedUserIds The holders of the copies the sync left out
 	 *
 	 * @return void
 	 *
@@ -173,11 +173,11 @@ class ShareAuditTrail {
 		string $secretId,
 		string $secretName,
 		string $changedFields = 'team-write sync',
-		array $skippedCopies = [],
+		array $skippedUserIds = [],
 	): void {
 		$metadata = ['changedFields' => $changedFields];
-		if ($skippedCopies !== []) {
-			$metadata['skippedCopies'] = $skippedCopies;
+		if ($skippedUserIds !== []) {
+			$metadata['skippedUserIds'] = $skippedUserIds;
 		}
 
 		$this->dispatch(

@@ -126,7 +126,7 @@ class AuditServiceTest extends TestCase {
 	}//end testRecordDropsUnknownMetadataKeys()
 
 	/**
-	 * A copy editor's sync keeps the copies it left out, and a share-save
+	 * A copy editor's sync keeps the holders it left out, and a share-save
 	 * restore keeps its mark as the client's claim, through the whitelist.
 	 *
 	 * @return void
@@ -149,7 +149,7 @@ class AuditServiceTest extends TestCase {
 			secretId: 'src',
 			secretName: 'Router',
 			changedFields: 'delegate sync',
-			skippedCopies: ['c-carol'],
+			skippedUserIds: ['carol'],
 		);
 		$this->service->record(AuditEvent::forUser(
 			actorId: 'alice',
@@ -161,7 +161,7 @@ class AuditServiceTest extends TestCase {
 		));
 
 		$this->assertSame(
-			[['changedFields' => 'delegate sync', 'skippedCopies' => ['c-carol']], ['versionNumber' => 3, 'via' => 'share-save']],
+			[['changedFields' => 'delegate sync', 'skippedUserIds' => ['carol']], ['versionNumber' => 3, 'via' => 'share-save']],
 			$captured
 		);
 	}//end testRecordKeepsTheShareSaveAuditMetadata()
@@ -262,6 +262,36 @@ class AuditServiceTest extends TestCase {
 		$this->assertSame('user', $rewritten['recipientType']);
 		$this->assertStringNotContainsString('bob', (string)json_encode($rewritten));
 	}//end testAnonymizeUserScrubsActorAndMetadata()
+
+	/**
+	 * anonymizeUser() scrubs the user out of a list of user ids and leaves
+	 * the others in it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
+	 */
+	public function testAnonymizeUserScrubsTheUserOutOfAList(): void {
+		$referencing = new AuditEntry();
+		$referencing->setId(8);
+		$referencing->setEventType(AuditEventTypes::SECRET_UPDATED);
+		$referencing->setMetadata((string)json_encode(['changedFields' => 'team-write sync', 'skippedUserIds' => ['carol', 'bob']]));
+		$this->mapper->method('findMetadataReferencing')->with('bob')->willReturn([$referencing]);
+
+		$rewritten = null;
+		$this->mapper->expects($this->once())
+			->method('rewriteMetadata')
+			->willReturnCallback(
+				function (int $id, ?string $json) use (&$rewritten): void {
+					$rewritten = json_decode((string)$json, true);
+				}
+			);
+
+		$this->service->anonymizeUser('bob');
+
+		$this->assertSame(['carol', 'deleted-account'], $rewritten['skippedUserIds']);
+		$this->assertSame('team-write sync', $rewritten['changedFields']);
+	}//end testAnonymizeUserScrubsTheUserOutOfAList()
 
 	/**
 	 * adminQuery() returns entries + total + clamps page/limit.

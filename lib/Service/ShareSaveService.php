@@ -311,7 +311,7 @@ class ShareSaveService {
 			$this->history->recordRestore(secret: $secret, version: $version, userId: $userId);
 		}
 
-		$this->history->recordTeamWrite(path: $path, userId: $userId, skipped: array_column($entries->skipped, 'secretId'));
+		$this->history->recordTeamWrite(path: $path, userId: $userId, skipped: $entries->skipped, copies: $required['copies']);
 		if ($request->stageId !== null) {
 			$this->stages->drop(stageId: $request->stageId);
 		}

@@ -271,7 +271,7 @@ final class AuditEventTypes {
 	 */
 	public const WHITELIST = [
 		self::SECRET_CREATED => ['typeId', 'folderId'],
-		self::SECRET_UPDATED => ['changedFields', 'skippedCopies'],
+		self::SECRET_UPDATED => ['changedFields', 'skippedUserIds'],
 		self::SECRET_READ => [],
 		self::SECRET_DELETED => [],
 		self::SECRET_TRASHED => [],
@@ -418,7 +418,8 @@ final class AuditEventTypes {
 
 	/**
 	 * The whitelisted metadata keys whose VALUES reference a user id and must
-	 * be scrubbed on account-deletion anonymization (design D6).
+	 * be scrubbed on account-deletion anonymization (design D6). A value is
+	 * one user id or a list of them.
 	 *
 	 * @var string[]
 	 */
@@ -430,6 +431,7 @@ final class AuditEventTypes {
 		'memberId',
 		'leavingUserId',
 		'successorUserId',
+		'skippedUserIds',
 	];
 
 	/**

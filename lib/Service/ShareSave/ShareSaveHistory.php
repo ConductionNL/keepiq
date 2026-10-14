@@ -113,18 +113,21 @@ class ShareSaveHistory {
 
 	/**
 	 * Attribute a copy-editor's save to the writer on the source, whether
-	 * they write on a team-folder grade or as a delegate, naming the copies
-	 * left out for want of a vault key. The owner path has the row's own audit.
+	 * they write on a team-folder grade or as a delegate, naming the holders
+	 * of the copies left out for want of a vault key: the owner for the source
+	 * itself. The owner path has the row's own audit.
 	 *
 	 * @param ShareSavePath $path The path, as assertStillWriter() returned it
 	 * @param string $userId The caller
-	 * @param list<string> $skipped The ids of the copies left out
+	 * @param list<array{secretId:string,reason:string}> $skipped The copies left out
+	 * @param array<string,array{secretId:string,holder:string,targetUserId:?string}> $copies The required copies, by id
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
-	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = []): void {
+	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = [], array $copies = []): void {
 		if ($path->isCopyEditor() === false) {
 			return;
 		}
@@ -134,12 +137,27 @@ class ShareSaveHistory {
 			$changedFields = 'team-write sync';
 		}
 
+		$holders = [];
+		foreach ($skipped as $skip) {
+			$copy = $copies[$skip['secretId']] ?? null;
+			if ($copy === null) {
+				continue;
+			}
+
+			$holder = (string)$copy['targetUserId'];
+			if ($copy['holder'] === 'owner') {
+				$holder = $path->source->getOwnerId();
+			}
+
+			$holders[] = $holder;
+		}
+
 		$this->auditTrail->recordTeamWriteSync(
 			userId: $userId,
 			secretId: $path->source->getId(),
 			secretName: $path->source->getName(),
 			changedFields: $changedFields,
-			skippedCopies: $skipped,
+			skippedUserIds: array_values(array_unique($holders)),
 		);
 	}//end recordTeamWrite()
 }//end class

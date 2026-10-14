@@ -682,19 +682,39 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame('commit', end($this->log));
 	}
 
-	public function testACopyEditorsAuditNamesTheCopiesLeftOut(): void {
+	public function testACopyEditorsAuditNamesTheHoldersLeftOut(): void {
 		$this->bobWritesOnAGrade();
 		$this->suites->method('countActiveByOwner')->willReturnCallback(
 			static fn (string $ownerType, string $ownerId): int => ($ownerId === 'carol') ? 0 : 1
 		);
 		$this->audit->expects($this->once())->method('recordTeamWriteSync')
-			->with('bob', 'src', 'Router', 'team-write sync', ['c-carol']);
+			->with('bob', 'src', 'Router', 'team-write sync', ['carol']);
 
 		$result = $this->service()->save(
 			id: 'c-bob',
 			request: $this->bobRequest([
 				'copies' => [['secretId' => 'src', 'key' => 'K-ALICE']],
 				'skipped' => [['secretId' => 'c-carol', 'reason' => 'no_vault_key']],
+			]),
+			userId: 'bob'
+		);
+
+		$this->assertSame(['written' => 1, 'skipped' => 1], $result['copies']);
+	}
+
+	public function testACopyEditorsAuditNamesTheOwnerWhenTheSourceIsLeftOut(): void {
+		$this->bobWritesOnAGrade();
+		$this->suites->method('countActiveByOwner')->willReturnCallback(
+			static fn (string $ownerType, string $ownerId): int => ($ownerId === 'alice') ? 0 : 1
+		);
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('bob', 'src', 'Router', 'team-write sync', ['alice']);
+
+		$result = $this->service()->save(
+			id: 'c-bob',
+			request: $this->bobRequest([
+				'copies' => [['secretId' => 'c-carol', 'key' => 'K-CAROL']],
+				'skipped' => [['secretId' => 'src', 'reason' => 'no_vault_key']],
 			]),
 			userId: 'bob'
 		);
