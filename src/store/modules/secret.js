@@ -394,6 +394,7 @@ export const useSecretStore = defineStore('secret', {
 				}
 
 				try {
+					const runningAtSend = writeBacks.get(id) ?? null
 					const response = await axios.get(
 						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
 					)
@@ -401,7 +402,7 @@ export const useSecretStore = defineStore('secret', {
 					this.currentSecret = await this.decryptSecret(secret)
 					// Not awaited: the write-back is a share save, which must not
 					// hold up opening the secret.
-					this.persistMergedPending(id).catch(() => {})
+					this.persistMergedPending(id, runningAtSend).catch(() => {})
 					return this.currentSecret
 				} catch (e) {
 					if (this.isNetworkError(e) && offline.vault) {
@@ -482,19 +483,24 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * An open while a write-back of the secret runs waits for that one
 		 * instead of starting a second, which would be refused once the
-		 * first saved and hide the versions the first wrote.
+		 * first saved and hide the versions the first wrote. So does an open
+		 * whose read went out while it ran and was read on its base, also
+		 * when that write-back settled before the read was handled.
 		 *
 		 * @param {string} id The secret ID.
+		 * @param {object|null} [runningAtSend] The write-back in flight when the open's read went out.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
-		async persistMergedPending(id) {
+		async persistMergedPending(id, runningAtSend = null) {
 			const current = this.currentSecret
 			if (!current || current.id !== id || !(current.mergedPending > 0)) {
 				return
 			}
-			const running = writeBacks.get(id)
+			const running =
+				writeBacks.get(id)
+				?? (runningAtSend?.base === current.updatedAt ? runningAtSend : null)
 			if (running) {
 				const readAt = current.updatedAt
 				const saved = await running.done

@@ -73,6 +73,72 @@ async function open(entry, pem) {
 	return out
 }
 
+/**
+ * A server holding `s1` with request-filled members pending. A save from a
+ * version it no longer holds is refused as stale; a save moves the row to
+ * SAVED_AT and drops the members it merged. The merge write-back is held
+ * until released, before the server saves it or, with `saveBeforeHold`,
+ * after it did and before its answer reaches the client.
+ *
+ * @param {Array<string>} fills The pending members, as JSON, oldest first.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.saveBeforeHold] Save the write-back first and hold only its answer.
+ * @return {Promise<{rows: object, log: object, fill: (json: string) => Promise<string>, arrived: Promise<void>, release: () => void}>}
+ */
+async function serverWithPending(fills, { saveBeforeHold = false } = {}) {
+	const { importPublicKey, rsaEncrypt } = await import('../../src/crypto/rsa.js')
+	const own = await importPublicKey(OWNER_CERT)
+	const fill = (json) => rsaEncrypt(json, own)
+	const rows = {
+		s1: {
+			id: 's1',
+			key: await fill('pw'),
+			pendingAdditionalFields: await Promise.all(fills.map(fill)),
+			updatedAt: BASE,
+		},
+	}
+	const log = shareSaveServer({
+		id: 's1',
+		rows,
+		onSave: (body) => {
+			if (body.baseUpdatedAt !== rows.s1.updatedAt) {
+				throw httpError(409, { error: 'stale', current: { id: 's1' } })
+			}
+			rows.s1 = {
+				...rows.s1,
+				updatedAt: SAVED_AT,
+				pendingAdditionalFields: rows.s1.pendingAdditionalFields.slice(
+					body.patch.mergedPending ?? 0,
+				),
+			}
+		},
+	})
+	const serve = axios.put.getMockImplementation()
+	let arrive
+	const arrived = new Promise((resolve) => (arrive = resolve))
+	let release
+	const held = new Promise((resolve) => (release = resolve))
+	axios.put.mockImplementation(async (url, body) => {
+		if (!body.patch?.mergedPending) {
+			return serve(url, body)
+		}
+		const answer = saveBeforeHold ? await serve(url, body) : null
+		arrive()
+		await held
+		return answer ?? serve(url, body)
+	})
+	return { rows, log, fill, arrived, release }
+}
+
+/**
+ * Let every promise continuation that is ready run.
+ *
+ * @return {Promise<void>}
+ */
+function flush() {
+	return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
 beforeEach(async () => {
 	setActivePinia(createPinia())
 	vi.restoreAllMocks()
@@ -935,6 +1001,37 @@ describe('updateSecret', () => {
 
 		expect(log.saves[1].baseUpdatedAt).toBe(SAVED_AT)
 		expect(log.saves[1].patch.mergedPending).toBe(1)
+	})
+
+	it('opened again on a read answered before the write-back saved but handled after it settled, takes that write-back instead of starting a second', async () => {
+		const server = await serverWithPending(['{"pin":"1234"}'])
+		const store = useSecretStore()
+		await store.fetchSecret('s1')
+		await server.arrived
+		// The reopen's read is answered now, on the version the write-back
+		// saves from, and handled only once that write-back settled.
+		const serveGet = axios.get.getMockImplementation()
+		let deliver
+		const delivered = new Promise((resolve) => (deliver = resolve))
+		axios.get.mockImplementationOnce(async (url) => {
+			const answer = await serveGet(url)
+			await delivered
+			return answer
+		})
+
+		const reopening = store.fetchSecret('s1')
+		server.release()
+		await store.writeBackSettled('s1')
+		await flush()
+		deliver()
+		const reopened = await reopening
+		await flush()
+		await store.writeBackSettled('s1')
+		await flush()
+
+		expect(server.log.saves).toHaveLength(1)
+		expect(reopened.mergedPending).toBe(0)
+		expect(reopened.updatedAt).toBe(SAVED_AT)
 	})
 
 	it('bases a restore made during the write-back on the write-back, so it is not refused as stale', async () => {
