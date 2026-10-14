@@ -692,6 +692,50 @@ describe('saveShared on the copy-editor path', () => {
 		expect(restores).toEqual([{ baseUpdatedAt: BASE }])
 		expect(store.error).toContain('changed elsewhere')
 	})
+
+	it("shows the restore route's own 409, which carries no error code, as a stale restore", async () => {
+		shareSaveServer({
+			id: 'copy-me',
+			context: { ...context, effectiveGrade: 'read' },
+			rows: { v1: { id: 'v1', name: 'Router', key: null, login: null } },
+			posts: {
+				// As SecretVersionController answers a StaleWriteException.
+				'/api/v1/versions/v1/restore': () => {
+					throw httpError(409, {
+						message: 'Secret changed',
+						current: { id: 'copy-me', updatedAt: SAVED_AT },
+					})
+				},
+			},
+		})
+		useSecretStore().currentSecret = { id: 'copy-me', updatedAt: BASE }
+		const store = useSecretVersionStore()
+
+		await expect(store.restore('v1', 'copy-me')).rejects.toBeTruthy()
+
+		expect(store.error).toContain('changed elsewhere')
+	})
+
+	it('never sends a restore without a base', async () => {
+		const restores = []
+		shareSaveServer({
+			id: 'copy-me',
+			context: { ...context, effectiveGrade: 'read' },
+			rows: { v1: { id: 'v1', name: 'Router', key: null, login: null } },
+			posts: {
+				'/api/v1/versions/v1/restore': (body) => {
+					restores.push(body)
+					return { id: 'copy-me', updatedAt: SAVED_AT }
+				},
+			},
+		})
+		const store = useSecretVersionStore()
+
+		await expect(store.restore('v1', 'copy-me')).rejects.toThrow(
+			'No base version',
+		)
+		expect(restores).toEqual([])
+	})
 })
 
 describe('updateSecret', () => {
