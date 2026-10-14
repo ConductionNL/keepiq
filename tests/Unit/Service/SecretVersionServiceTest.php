@@ -495,6 +495,39 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARecordedRestoreIsLoggedOnlyByLogRestored()
 
 	/**
+	 * A restore through the share-save is audited as the client's claim of
+	 * the version; the restore route's own event carries no such mark.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function testAShareSaveRestoreIsAuditedAsTheClientsClaim(): void {
+		$version = new SecretVersion();
+		$version->setVersionNumber(4);
+		$metadata = [];
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function (\OCA\Keepiq\Event\Audit\AuditEvent $event) use (&$metadata): void {
+				$metadata[] = $event->getMetadata();
+			}
+		);
+		$service = new SecretVersionService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			accessGuard: $this->createMock(SecretVersionAccessGuard::class),
+			logger: $this->logger,
+			db: $this->createMock(IDBConnection::class),
+			eventDispatcher: $dispatcher,
+		);
+
+		$service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice', via: 'share-save');
+		$service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
+
+		$this->assertSame([['versionNumber' => 4, 'via' => 'share-save'], ['versionNumber' => 4]], $metadata);
+	}//end testAShareSaveRestoreIsAuditedAsTheClientsClaim()
+
+	/**
 	 * deleteForSecret cascades to the mapper (idempotent by contract).
 	 *
 	 * @return void

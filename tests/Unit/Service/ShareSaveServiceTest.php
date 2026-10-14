@@ -908,7 +908,9 @@ class ShareSaveServiceTest extends TestCase {
 		$this->delivery->method('deliver')->willReturn(true);
 		$this->versionHistory->method('getVersion')->with('v-1', 'alice')->willReturn($this->version());
 		$this->versionHistory->expects($this->once())->method('recordRestored')->willReturnCallback(
-			function (Secret $secret, SecretVersion $version, string $userId): void {
+			function (Secret $secret, SecretVersion $version, string $userId, ?string $via = null): void {
+				// The client re-encrypted the value: the version is its claim.
+				$this->assertSame('share-save', $via);
 				$this->log[] = 'restored v'.$version->getVersionNumber();
 			}
 		);

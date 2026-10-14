@@ -73,7 +73,7 @@ A call MUST carry at most 100 entries in `copies` plus `skipped` and at most 100
 - THEN the server MUST refuse it and change nothing
 
 ### Requirement: A restore reaches every copy in the same transaction
-A share-save MAY carry `restoredFrom`, the id of a version of `{id}`, on a one-call save or the final call only. The patch and every copy MUST then carry the whole value (`key`, `login` and `additionalFields`), decrypted from that version and encrypted again in the browser. The server MUST refuse a version of another row, or one the caller may not restore, with 400 `version_refused`, and MUST record the restore audit event in the same transaction as the save, after snapshotting the head as on every update.
+A share-save MAY carry `restoredFrom`, the id of a version of `{id}`, on a one-call save or the final call only. The patch and every copy MUST then carry the whole value (`key`, `login` and `additionalFields`), decrypted from that version and encrypted again in the browser. The server MUST refuse a version of another row, or one the caller may not restore, with 400 `version_refused`, and MUST record the restore audit event in the same transaction as the save, after snapshotting the head as on every update. The server can't compare the re-encrypted value with the version, so the version that event records on this path is the one the client says it restored from (`restoredFrom`), not a server-checked value, and the event MUST be marked as coming from the share-save (`via: share-save`).
 
 #### Scenario: A restore that fails leaves everything as it was
 - GIVEN a secret shared with a recipient and a prior version `V`

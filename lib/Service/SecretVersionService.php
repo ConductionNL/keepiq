@@ -249,13 +249,19 @@ class SecretVersionService {
 	 * @param Secret $secret The restored head
 	 * @param SecretVersion $version The version it was restored to
 	 * @param string $userId The caller
+	 * @param string|null $via The path that wrote the value, when it is not this service
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
-	public function recordRestored(Secret $secret, SecretVersion $version, string $userId): void {
+	public function recordRestored(Secret $secret, SecretVersion $version, string $userId, ?string $via = null): void {
+		$metadata = ['versionNumber' => $version->getVersionNumber()];
+		if ($via !== null) {
+			$metadata['via'] = $via;
+		}
+
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
 				actorId: $userId,
@@ -263,7 +269,7 @@ class SecretVersionService {
 				objectType: 'secret',
 				objectId: $secret->getId(),
 				objectName: $secret->getName(),
-				metadata: ['versionNumber' => $version->getVersionNumber()],
+				metadata: $metadata,
 			)
 		);
 	}//end recordRestored()

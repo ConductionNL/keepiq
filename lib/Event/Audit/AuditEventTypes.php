@@ -329,7 +329,8 @@ final class AuditEventTypes {
 		self::EMERGENCY_ACCESS_REVOKED => ['grantorUserId', 'granteeUserId'],
 		self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
 		self::EMERGENCY_ACCESS_CARRIED => ['grantorUserId', 'granteeUserId', 'fromSuiteId', 'toSuiteId'],
-		self::SECRET_VERSION_RESTORED => ['versionNumber'],
+		// `via: share-save` marks a version number the client asserted.
+		self::SECRET_VERSION_RESTORED => ['versionNumber', 'via'],
 		// Rotation & expiry — ids/reasons only (§5.2).
 		self::SECRET_EXPIRY_SET => ['expiresAt'],
 		self::SECRET_ROTATION_FLAGGED => ['reason'],
