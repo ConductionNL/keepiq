@@ -99,7 +99,7 @@ function retryAfterMs(response) {
 
 /**
  * Whether a lookup failed at the partner rather than on this server: only
- * then may the user choose to pause the share and save without it.
+ * then may the user choose to suspend the share and save without it.
  *
  * @param {object} error The lookup's axios error.
  * @return {boolean}
@@ -454,7 +454,7 @@ export async function saveShared({
 				} else if (partnerUnreachable(e)) {
 					unreachable.push({ ...share, reason })
 				} else {
-					// This server failed, not the partner: pausing would be wrong.
+					// This server failed, not the partner: suspending would be wrong.
 					throw e
 				}
 				continue
@@ -678,7 +678,7 @@ export function shareSaveErrorText(error) {
 	if (code === 'partner_unreachable') {
 		return t(
 			'keepiq',
-			'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.',
+			'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
 			{
 				partners: error.partners
 					.map((share) => share.recipientCloudId)

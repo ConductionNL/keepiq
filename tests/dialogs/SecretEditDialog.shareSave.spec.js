@@ -307,8 +307,11 @@ describe('SecretEditDialog — share save', () => {
 
 		await wrapper.vm.submit()
 		await wrapper.vm.$nextTick()
-		expect(wrapper.find('[data-testid="secret-edit-error"]').text()).toContain(
-			'bob@partner.example, carol@partner.example',
+		const error = wrapper.find('[data-testid="secret-edit-error"]').text()
+		expect(error).toContain('bob@partner.example, carol@partner.example')
+		// Told before confirming: nothing resumes a suspended share.
+		expect(error).toContain(
+			'stops sharing this secret with them until you share it with them again',
 		)
 
 		await wrapper
