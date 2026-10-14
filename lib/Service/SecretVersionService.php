@@ -181,6 +181,9 @@ class SecretVersionService {
 			db: $this->db
 		);
 
+		// Logged only once the restore has committed.
+		$this->logRestored(secret: $restored, version: $version, userId: $userId);
+
 		return $restored;
 	}//end restore()
 
@@ -225,8 +228,9 @@ class SecretVersionService {
 	}//end restoreHead()
 
 	/**
-	 * Audit and log that a secret was restored to a version. A share-save
-	 * calls it inside its transaction, so the audit row commits with the restore.
+	 * Audit that a secret was restored to a version. Called inside the
+	 * restore's or the share-save's transaction, so the audit row commits
+	 * (or rolls back) with the restore.
 	 *
 	 * @param Secret $secret The restored head
 	 * @param SecretVersion $version The version it was restored to
@@ -248,12 +252,28 @@ class SecretVersionService {
 				metadata: ['versionNumber' => $version->getVersionNumber()],
 			)
 		);
+	}//end recordRestored()
+
+	/**
+	 * Log that a secret was restored to a version. The log is not rolled
+	 * back, so it is called only after the restore's transaction committed.
+	 *
+	 * @param Secret $secret The restored head
+	 * @param SecretVersion $version The version it was restored to
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function logRestored(Secret $secret, SecretVersion $version, string $userId): void {
 		$this->logger->info(
 			'Keepiq: secret ' . $secret->getId() . ' restored to version '
 			. $version->getVersionNumber() . ' by ' . $userId,
 			['app' => 'keepiq']
 		);
-	}//end recordRestored()
+	}//end logRestored()
 
 	/**
 	 * Delete every version of a secret (delete cascade; idempotent).

@@ -880,14 +880,45 @@ class ShareSaveServiceTest extends TestCase {
 				$this->log[] = 'restored v'.$version->getVersionNumber();
 			}
 		);
+		$this->versionHistory->expects($this->once())->method('logRestored')->willReturnCallback(
+			function (Secret $secret, SecretVersion $version, string $userId): void {
+				$this->log[] = 'logged v'.$version->getVersionNumber();
+			}
+		);
 
 		$this->service()->save(id: 'src', request: $this->restoreRequest(), userId: 'alice');
 
 		$this->assertSame(
-			['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'partner fs-1', 'row src', 'restored v3', 'commit'],
+			['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'partner fs-1', 'row src', 'restored v3', 'commit', 'logged v3'],
 			$this->log
 		);
 		$this->assertSame('Old router', $this->rowSaves[0]['data']['name']);
+	}
+
+	public function testARestoreThatFailsAfterItsAuditIsNotLogged(): void {
+		$this->bobWritesOnAGrade();
+		$this->versionHistory->method('getVersion')->willReturn($this->version(secretId: 'c-bob'));
+		$this->versionHistory->expects($this->once())->method('recordRestored')->willReturnCallback(
+			function (): void {
+				$this->log[] = 'restored';
+			}
+		);
+		$this->audit->method('recordTeamWriteSync')->willThrowException(new RuntimeException('audit insert failed'));
+		$this->versionHistory->expects($this->never())->method('logRestored');
+
+		$refusal = $this->refusal(
+			fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest([
+				'restoredFrom' => 'v-1',
+				'patch' => ['key' => 'K-OLD', 'login' => null, 'additionalFields' => null],
+				'copies' => [
+					['secretId' => 'src', 'key' => 'K-ALICE', 'login' => null, 'additionalFields' => null],
+					['secretId' => 'c-carol', 'key' => 'K-CAROL', 'login' => null, 'additionalFields' => null],
+				],
+			]), userId: 'bob')
+		);
+
+		$this->assertSame('audit insert failed', $refusal->getMessage());
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'row c-bob', 'restored', 'rollback'], $this->log);
 	}
 
 	public function testARestoreOfAVersionOfAnotherRowOrARefusedOneIsRefused(): void {

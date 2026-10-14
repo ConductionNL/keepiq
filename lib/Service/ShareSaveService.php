@@ -170,6 +170,10 @@ class ShareSaveService {
 			)
 		);
 
+		if ($version !== null) {
+			$this->history->logRestore(secret: $written['secret'], version: $version, userId: $userId);
+		}
+
 		$notified = $this->notify(rows: $written['federatedRows']);
 
 		return [

@@ -207,9 +207,14 @@ class SecretVersionServiceTest extends TestCase {
 			}
 		);
 
-		$this->logger->expects($this->once())->method('info');
+		$this->logger->expects($this->once())->method('info')->willReturnCallback(function (): void {
+			$this->transaction[] = 'log';
+		});
 
 		$result = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		// The log line is written only after the restore committed.
+		$this->assertSame(['begin', 'commit', 'log'], $this->transaction);
 
 		// The head's PRE-restore ciphertext was snapshotted first.
 		$this->assertCount(1, $snapshots);
@@ -311,18 +316,41 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOverAHeadThatMovesAfterTheCheckIsRefusedUntouched()
 
 	/**
-	 * A restore through a share-save is logged like one through restore().
+	 * A restore that fails after the audit is rolled back and not logged.
 	 *
 	 * @return void
 	 */
-	public function testARecordedRestoreIsLogged(): void {
+	public function testARestoreThatRollsBackIsNotLogged(): void {
+		$this->restorableHead();
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('update')->willThrowException(new \RuntimeException('deadlock'));
+		$this->logger->expects($this->never())->method('info');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice');
+			$this->fail('The failed write must reach the caller');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('deadlock', $e->getMessage());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreThatRollsBackIsNotLogged()
+
+	/**
+	 * Recording a restore audits it without logging; a share-save logs it
+	 * through logRestored() after its commit, like restore() does.
+	 *
+	 * @return void
+	 */
+	public function testARecordedRestoreIsLoggedOnlyByLogRestored(): void {
 		$version = new SecretVersion();
 		$version->setVersionNumber(4);
 		$this->logger->expects($this->once())->method('info')
 			->with($this->stringContains('sec-1 restored to version 4 by alice'));
 
 		$this->service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
-	}//end testARecordedRestoreIsLogged()
+		$this->service->logRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
+	}//end testARecordedRestoreIsLoggedOnlyByLogRestored()
 
 	/**
 	 * deleteForSecret cascades to the mapper (idempotent by contract).
