@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Taka við leyndarmálum frá öðrum fyrirtækjum",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Fólk í samstarfsfyrirtækjum getur þá fundið aðganginn þinn og deilt leyndarmálum með þér. Þú samþykkir hvert þeirra fyrir sig.",
         "Shared": "Deilt",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Í bið: skilríki viðtakanda eða samstarfið breyttist. Afturkallaðu deilinguna eða deildu aftur.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Stöðvað: ekki náðist í stofnun viðtakanda, eða skilríki viðtakanda eða samstarfið breyttist. Afturkallaðu deilinguna eða deildu aftur.",
         "Their organisation did not get the last change. Revoke it or share again.": "Fyrirtæki viðtakanda fékk ekki síðustu breytingu. Afturkallaðu deilinguna eða deildu aftur.",
         "Being withdrawn": "Verið að afturkalla",
         "Shared with another organisation": "Deilt með öðru fyrirtæki",

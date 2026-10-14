@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Vastaanota salaisuuksia muista organisaatioista",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Kumppaniorganisaatioiden henkilöt voivat silloin löytää tilisi ja jakaa salaisuuksia kanssasi. Hyväksyt jokaisen itse.",
         "Shared": "Jaettu",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Keskeytetty: heidän varmenteensa tai kumppanuus muuttui. Peruuta jako tai jaa uudelleen.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Pysäytetty: heidän organisaatiotaan ei tavoitettu, tai heidän varmenteensa tai kumppanuus muuttui. Peruuta jako tai jaa uudelleen.",
         "Their organisation did not get the last change. Revoke it or share again.": "Heidän organisaationsa ei saanut viimeisintä muutosta. Peruuta jako tai jaa uudelleen.",
         "Being withdrawn": "Peruutetaan",
         "Shared with another organisation": "Jaettu toiselle organisaatiolle",

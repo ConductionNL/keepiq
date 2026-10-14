@@ -1754,7 +1754,7 @@
         "Receive secrets from other organisations": "Gauti paslaptis iš kitų organizacijų",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tada partnerių organizacijų žmonės galės rasti jūsų paskyrą ir bendrinti su jumis paslaptis. Kiekvieną jų priimate patys.",
         "Shared": "Bendrinama",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pristabdyta: pasikeitė jų sertifikatas arba partnerystė. Galite atšaukti bendrinimą arba bendrinti iš naujo.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Sustabdyta: jų organizacija nebuvo pasiekiama arba pasikeitė jų sertifikatas ar partnerystė. Galite atšaukti bendrinimą arba bendrinti iš naujo.",
         "Their organisation did not get the last change. Revoke it or share again.": "Jų organizacija negavo paskutinio pakeitimo. Galite atšaukti bendrinimą arba bendrinti iš naujo.",
         "Being withdrawn": "Atšaukiama",
         "Shared with another organisation": "Bendrinta su kita organizacija",

@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Modtag hemmeligheder fra andre organisationer",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisationer kan så finde din konto og dele hemmeligheder med dig. Du accepterer hver enkelt selv.",
         "Shared": "Delt",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Sat på pause: modtagerens certifikat eller partnerskabet er ændret. Tilbagekald den, eller del igen.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Stoppet: modtagerens organisation kunne ikke nås, eller modtagerens certifikat eller partnerskabet er ændret. Tilbagekald den, eller del igen.",
         "Their organisation did not get the last change. Revoke it or share again.": "Modtagerens organisation fik ikke den seneste ændring. Tilbagekald den, eller del igen.",
         "Being withdrawn": "Trækkes tilbage",
         "Shared with another organisation": "Delt med en anden organisation",

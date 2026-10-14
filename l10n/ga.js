@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Faigh rúin ó eagraíochtaí eile",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Is féidir le daoine in eagraíochtaí comhpháirtíochta do chuntas a aimsiú ansin agus rúin a chomhroinnt leat. Glacann tú féin le gach ceann acu.",
         "Shared": "Comhroinnte",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Ar sos: d’athraigh a ndeimhniú nó an chomhpháirtíocht. Cúlghair é nó comhroinn arís.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Stoptha: níorbh fhéidir teagmháil a dhéanamh lena n-eagraíocht, nó d’athraigh a ndeimhniú nó an chomhpháirtíocht. Cúlghair é nó comhroinn arís.",
         "Their organisation did not get the last change. Revoke it or share again.": "Ní bhfuair a n-eagraíocht an t-athrú is déanaí. Cúlghair é nó comhroinn arís.",
         "Being withdrawn": "Á tharraingt siar",
         "Shared with another organisation": "Comhroinnte le heagraíocht eile",

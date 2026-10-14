@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Rep secrets d’altres organitzacions",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Aleshores, les persones de les organitzacions sòcies podran trobar el vostre compte i compartir secrets amb vós. Cadascun l’accepteu vós mateix.",
         "Shared": "Compartit",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "En pausa: ha canviat el seu certificat o l’associació. Revoqueu-lo o torneu-lo a compartir.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Aturat: no s’ha pogut contactar amb la seva organització, o ha canviat el seu certificat o l’associació. Revoqueu-lo o torneu-lo a compartir.",
         "Their organisation did not get the last change. Revoke it or share again.": "La seva organització no ha rebut l’últim canvi. Revoqueu-lo o torneu-lo a compartir.",
         "Being withdrawn": "S’està retirant",
         "Shared with another organisation": "Compartit amb una altra organització",

@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Titkok fogadása más szervezetektől",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "A partnerszervezetek munkatársai ekkor megtalálhatják a fiókját, és titkokat oszthatnak meg Önnel. Mindegyiket Ön fogadja el.",
         "Shared": "Megosztva",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Szüneteltetve: megváltozott a címzett tanúsítványa vagy a partnerség. Vonja vissza, vagy ossza meg újra.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Leállítva: a címzett szervezete nem volt elérhető, vagy megváltozott a címzett tanúsítványa vagy a partnerség. Vonja vissza, vagy ossza meg újra.",
         "Their organisation did not get the last change. Revoke it or share again.": "A címzett szervezete nem kapta meg az utolsó módosítást. Vonja vissza, vagy ossza meg újra.",
         "Being withdrawn": "Visszavonás folyamatban",
         "Shared with another organisation": "Megosztva egy másik szervezettel",

@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Receber segredos de outras organizações",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "As pessoas de organizações parceiras podem então encontrar a sua conta e partilhar segredos consigo. Aceita cada um pessoalmente.",
         "Shared": "Partilhado",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Em pausa: o certificado do destinatário ou a parceria mudou. Revogue a partilha ou partilhe novamente.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Interrompido: não foi possível contactar a organização do destinatário, ou o certificado do destinatário ou a parceria mudou. Revogue a partilha ou partilhe novamente.",
         "Their organisation did not get the last change. Revoke it or share again.": "A organização do destinatário não recebeu a última alteração. Revogue a partilha ou partilhe novamente.",
         "Being withdrawn": "A ser retirado",
         "Shared with another organisation": "Partilhado com outra organização",

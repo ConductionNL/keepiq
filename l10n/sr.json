@@ -1754,7 +1754,7 @@
         "Receive secrets from other organisations": "Примање тајни из других организација",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Особе у партнерским организацијама тада могу да пронађу ваш рачун и деле тајне са вама. Сваку од њих прихватате сами.",
         "Shared": "Подељено",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Паузирано: променио се њихов сертификат или партнерство. Опозовите или поделите поново.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Заустављено: њихова организација није била доступна или се променио њихов сертификат или партнерство. Опозовите или поделите поново.",
         "Their organisation did not get the last change. Revoke it or share again.": "Њихова организација није добила последњу промену. Опозовите или поделите поново.",
         "Being withdrawn": "Повлачи се",
         "Shared with another organisation": "Подељено са другом организацијом",

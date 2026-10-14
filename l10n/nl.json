@@ -1735,7 +1735,7 @@
         "Receive secrets from other organisations": "Geheimen van andere organisaties ontvangen",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Mensen in partnerorganisaties kunnen dan uw account vinden en geheimen met u delen. U accepteert elk geheim zelf.",
         "Shared": "Gedeeld",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Gepauzeerd: hun certificaat of het partnerschap is gewijzigd. Trek het delen in of deel opnieuw.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Gestopt: hun organisatie was niet bereikbaar, of hun certificaat of het partnerschap is gewijzigd. Trek het delen in of deel opnieuw.",
         "Their organisation did not get the last change. Revoke it or share again.": "Hun organisatie heeft de laatste wijziging niet ontvangen. Trek het delen in of deel opnieuw.",
         "Being withdrawn": "Wordt ingetrokken",
         "Shared with another organisation": "Gedeeld met een andere organisatie",

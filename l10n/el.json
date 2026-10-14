@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Λήψη μυστικών από άλλους οργανισμούς",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Τα άτομα σε συνεργαζόμενους οργανισμούς μπορούν τότε να βρουν τον λογαριασμό σας και να κοινοποιούν μυστικά σε εσάς. Αποδέχεστε κάθε ένα μόνοι σας.",
         "Shared": "Κοινοποιήθηκε",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Σε παύση: άλλαξε το πιστοποιητικό του παραλήπτη ή η συνεργασία. Κάντε ανάκληση ή κοινοποιήστε ξανά.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Διακόπηκε: ο οργανισμός του παραλήπτη δεν ήταν προσβάσιμος ή άλλαξε το πιστοποιητικό του παραλήπτη ή η συνεργασία. Κάντε ανάκληση ή κοινοποιήστε ξανά.",
         "Their organisation did not get the last change. Revoke it or share again.": "Ο οργανισμός του παραλήπτη δεν έλαβε την τελευταία αλλαγή. Κάντε ανάκληση ή κοινοποιήστε ξανά.",
         "Being withdrawn": "Ανακαλείται",
         "Shared with another organisation": "Κοινοποιήθηκε σε άλλον οργανισμό",

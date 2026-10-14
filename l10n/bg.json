@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Получаване на тайни от други организации",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогава хората от партньорски организации могат да намерят профила ви и да споделят тайни с вас. Всяка от тях приемате сами.",
         "Shared": "Споделено",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Спряно: сертификатът им или партньорството се промени. Отнемете споделянето или споделете отново.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Спряно: организацията им беше недостъпна или сертификатът им или партньорството се промени. Отнемете споделянето или споделете отново.",
         "Their organisation did not get the last change. Revoke it or share again.": "Организацията им не получи последната промяна. Отнемете споделянето или споделете отново.",
         "Being withdrawn": "Отнема се",
         "Shared with another organisation": "Споделено с друга организация",

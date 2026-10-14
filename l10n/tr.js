@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Diğer kuruluşlardan gizli al",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ortak kuruluşlardaki kişiler böylece hesabınızı bulabilir ve sizinle gizli paylaşabilir. Her birini kendiniz kabul edersiniz.",
         "Shared": "Paylaşıldı",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Duraklatıldı: alıcının sertifikası veya ortaklık değişti. İptal edin veya yeniden paylaşın.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Durduruldu: alıcının kuruluşuna ulaşılamadı veya alıcının sertifikası ya da ortaklık değişti. İptal edin veya yeniden paylaşın.",
         "Their organisation did not get the last change. Revoke it or share again.": "Alıcının kuruluşu son değişikliği almadı. İptal edin veya yeniden paylaşın.",
         "Being withdrawn": "Geri çekiliyor",
         "Shared with another organisation": "Başka bir kuruluşla paylaşıldı",

@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Primanje tajni iz drugih organizacija",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osobe u partnerskim organizacijama tada mogu pronaći vaš račun i dijeliti tajne s vama. Svaku od njih prihvatate sami.",
         "Shared": "Podijeljeno",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pauzirano: promijenio se njihov certifikat ili partnerstvo. Opozovite ili podijelite ponovo.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Zaustavljeno: njihova organizacija nije bila dostupna ili se promijenio njihov certifikat ili partnerstvo. Opozovite ili podijelite ponovo.",
         "Their organisation did not get the last change. Revoke it or share again.": "Njihova organizacija nije dobila posljednju promjenu. Opozovite ili podijelite ponovo.",
         "Being withdrawn": "Povlači se",
         "Shared with another organisation": "Podijeljeno s drugom organizacijom",

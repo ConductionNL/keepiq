@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Атрымліваць сакрэты з іншых арганізацый",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тады людзі з партнёрскіх арганізацый змогуць знайсці ваш уліковы запіс і даваць вам доступ да сакрэтаў. Кожны з іх вы прымаеце самі.",
         "Shared": "Доступ дадзены",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Прыпынена: змяніўся іх сертыфікат або партнёрства. Доступ можна адклікаць або даць зноў.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Спынена: іх арганізацыя была недаступная, або змяніўся іх сертыфікат ці партнёрства. Доступ можна адклікаць або даць зноў.",
         "Their organisation did not get the last change. Revoke it or share again.": "Іх арганізацыя не атрымала апошнюю змену. Доступ можна адклікаць або даць зноў.",
         "Being withdrawn": "Адклікаецца",
         "Shared with another organisation": "Супольны доступ дадзены іншай арганізацыі",

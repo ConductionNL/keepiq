@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Odbieraj sekrety z innych organizacji",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osoby z organizacji partnerskich mogą wtedy znaleźć Twoje konto i udostępniać Ci sekrety. Każdy z nich akceptujesz samodzielnie.",
         "Shared": "Udostępniono",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Wstrzymano: zmienił się ich certyfikat lub partnerstwo. Odwołaj udostępnienie albo udostępnij ponownie.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Zatrzymano: ich organizacja była nieosiągalna albo zmienił się ich certyfikat lub partnerstwo. Odwołaj udostępnienie albo udostępnij ponownie.",
         "Their organisation did not get the last change. Revoke it or share again.": "Ich organizacja nie otrzymała ostatniej zmiany. Odwołaj udostępnienie albo udostępnij ponownie.",
         "Being withdrawn": "Trwa wycofywanie",
         "Shared with another organisation": "Udostępniono innej organizacji",

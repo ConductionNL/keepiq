@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Prijímať tajomstvá z iných organizácií",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ľudia v partnerských organizáciách potom môžu nájsť váš účet a zdieľať s vami tajomstvá. Každé z nich prijímate sami.",
         "Shared": "Zdieľané",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pozastavené: zmenil sa ich certifikát alebo partnerstvo. Zdieľanie môžete odvolať alebo zdieľať znova.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Zastavené: ich organizácia nebola dostupná alebo sa zmenil ich certifikát či partnerstvo. Zdieľanie môžete odvolať alebo zdieľať znova.",
         "Their organisation did not get the last change. Revoke it or share again.": "Ich organizácia nedostala poslednú zmenu. Zdieľanie môžete odvolať alebo zdieľať znova.",
         "Being withdrawn": "Odvoláva sa",
         "Shared with another organisation": "Zdieľané s inou organizáciou",

@@ -1650,7 +1650,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Receive secrets from other organisations",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.",
         "Shared": "Shared",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Paused: their certificate or the partnership changed. Revoke it or share again.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.",
         "Their organisation did not get the last change. Revoke it or share again.": "Their organisation did not get the last change. Revoke it or share again.",
         "Being withdrawn": "Being withdrawn",
         "Shared with another organisation": "Shared with another organisation",

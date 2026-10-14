@@ -1730,7 +1730,7 @@
         "Receive secrets from other organisations": "Võta vastu saladusi teistest organisatsioonidest",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Partnerorganisatsioonide inimesed saavad siis teie konto leida ja teiega saladusi jagada. Iga saladuse võtate vastu ise.",
         "Shared": "Jagatud",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Peatatud: nende sertifikaat või partnerlus muutus. Tühistage jagamine või jagage uuesti.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Peatatud: nende organisatsioon polnud kättesaadav või muutus nende sertifikaat või partnerlus. Tühistage jagamine või jagage uuesti.",
         "Their organisation did not get the last change. Revoke it or share again.": "Nende organisatsioon ei saanud viimast muudatust. Tühistage jagamine või jagage uuesti.",
         "Being withdrawn": "Tühistatakse",
         "Shared with another organisation": "Jagatud teise organisatsiooniga",

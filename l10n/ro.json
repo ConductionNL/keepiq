@@ -1754,7 +1754,7 @@
         "Receive secrets from other organisations": "Primiți secrete de la alte organizații",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persoanele din organizațiile partenere vă pot găsi apoi contul și pot partaja secrete cu dvs. Acceptați fiecare secret personal.",
         "Shared": "Partajat",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Întrerupt: certificatul destinatarului sau parteneriatul s-a schimbat. Revocați partajarea sau partajați din nou.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Oprit: organizația destinatarului nu a putut fi contactată sau certificatul destinatarului ori parteneriatul s-a schimbat. Revocați partajarea sau partajați din nou.",
         "Their organisation did not get the last change. Revoke it or share again.": "Organizația destinatarului nu a primit ultima modificare. Revocați partajarea sau partajați din nou.",
         "Being withdrawn": "Se retrage",
         "Shared with another organisation": "Partajat cu o altă organizație",

@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Irċievi sigrieti minn organizzazzjonijiet oħra",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Nies f’organizzazzjonijiet sħab imbagħad jistgħu jsibu l-kont tiegħek u jaqsmu sigrieti miegħek. Inti taċċetta kull wieħed minnhom.",
         "Shared": "Maqsum",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Fuq pawża: iċ-ċertifikat tagħhom jew is-sħubija nbidlu. Irrevoka jew erġa’ aqsam.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Imwaqqaf: l-organizzazzjoni tagħhom ma setgħetx tintlaħaq, jew iċ-ċertifikat tagħhom jew is-sħubija nbidlu. Irrevoka jew erġa’ aqsam.",
         "Their organisation did not get the last change. Revoke it or share again.": "L-organizzazzjoni tagħhom ma rċevietx l-aħħar bidla. Irrevoka jew erġa’ aqsam.",
         "Being withdrawn": "Qed jiġi rtirat",
         "Shared with another organisation": "Maqsum ma’ organizzazzjoni oħra",

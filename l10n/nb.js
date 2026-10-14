@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Motta hemmeligheter fra andre organisasjoner",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisasjoner kan da finne kontoen din og dele hemmeligheter med deg. Du godtar hver enkelt selv.",
         "Shared": "Delt",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Satt på pause: mottakerens sertifikat eller partnerskapet er endret. Tilbakekall den, eller del på nytt.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Stoppet: mottakerens organisasjon kunne ikke nås, eller mottakerens sertifikat eller partnerskapet er endret. Tilbakekall den, eller del på nytt.",
         "Their organisation did not get the last change. Revoke it or share again.": "Mottakerens organisasjon fikk ikke den siste endringen. Tilbakekall den, eller del på nytt.",
         "Being withdrawn": "Trekkes tilbake",
         "Shared with another organisation": "Delt med en annen organisasjon",

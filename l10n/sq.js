@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Merr sekrete nga organizata të tjera",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personat në organizatat partnere mund ta gjejnë atëherë llogarinë tuaj dhe të ndajnë sekrete me ju. Secilin prej tyre e pranoni vetë.",
         "Shared": "E ndarë",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Në pauzë: certifikata e tyre ose partneriteti ndryshoi. Revokojeni ose ndajeni përsëri.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Ndalur: organizata e tyre nuk mund të arrihej, ose certifikata e tyre ose partneriteti ndryshoi. Revokojeni ose ndajeni përsëri.",
         "Their organisation did not get the last change. Revoke it or share again.": "Organizata e tyre nuk e mori ndryshimin e fundit. Revokojeni ose ndajeni përsëri.",
         "Being withdrawn": "Po tërhiqet",
         "Shared with another organisation": "U nda me një organizatë tjetër",

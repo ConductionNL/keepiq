@@ -1659,7 +1659,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Saņemt noslēpumus no citām organizācijām",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tad partneru organizāciju cilvēki var atrast jūsu kontu un kopīgot ar jums noslēpumus. Katru no tiem jūs pieņemat paši.",
         "Shared": "Kopīgots",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Apturēts: mainījās viņu sertifikāts vai partnerība. Varat atsaukt kopīgošanu vai kopīgot vēlreiz.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Pārtraukts: viņu organizācija nebija sasniedzama, vai mainījās viņu sertifikāts vai partnerība. Varat atsaukt kopīgošanu vai kopīgot vēlreiz.",
         "Their organisation did not get the last change. Revoke it or share again.": "Viņu organizācija nesaņēma pēdējās izmaiņas. Varat atsaukt kopīgošanu vai kopīgot vēlreiz.",
         "Being withdrawn": "Tiek atsaukts",
         "Shared with another organisation": "Kopīgots ar citu organizāciju",

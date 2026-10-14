@@ -1635,7 +1635,7 @@ OC.L10N.register(
         "Receive secrets from other organisations": "Retschaiver secrets dad autras organisaziuns",
         "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persunas en organisaziuns partenarias pon lura chattar Voss conto e cundivider secrets cun Vus. Vus acceptais mintgin sez.",
         "Shared": "Cundividì",
-        "Paused: their certificate or the partnership changed. Revoke it or share again.": "En pausa: lur certificat u la partenadad è sa midà. Revocai la cundivisiun u cundividai danovamain.",
+        "Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.": "Interrut: lur organisaziun n’era betg cuntanschibla, u lur certificat u la partenadad è sa midà. Revocai la cundivisiun u cundividai danovamain.",
         "Their organisation did not get the last change. Revoke it or share again.": "Lur organisaziun n’ha betg retschavì l’ultima midada. Revocai la cundivisiun u cundividai danovamain.",
         "Being withdrawn": "Vegn retratg",
         "Shared with another organisation": "Cundividì cun ina autra organisaziun",
