@@ -108,6 +108,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
 		);
 	}//end setUp()
@@ -366,6 +367,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 			versionService: $versionService,
 		);
 	}//end serviceWithVersions()
@@ -730,6 +732,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
 			secretRequestService: null,
 			shareService: null,
 			groupShareMapper: $groupShareMapper,

@@ -269,6 +269,7 @@ class SecretTrashServiceTest extends TestCase {
 			migrationService: $this->createMock(\OCA\Keepiq\Service\MigrationService::class),
 			linkShareService: $this->linkShares,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 		);
 
 		return new SecretTrashService(

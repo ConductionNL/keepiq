@@ -70,6 +70,7 @@ class SecretServiceMachineWriteTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 		);
 
 		$this->typeService->method('resolveTypeForSecret')->willReturn('api_key');
@@ -308,6 +309,7 @@ class SecretServiceMachineWriteTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 			auditService: $auditService,
 			versionService: $versionService,
 		);

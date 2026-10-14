@@ -141,6 +141,7 @@ class SecretService {
 	 * @param MigrationService $migrationService The migration (write-lock) service
 	 * @param LinkShareService $linkShareService The link share service (cascade delete)
 	 * @param LoggerInterface $logger The logger interface
+	 * @param IDBConnection $db The transaction an update's version lock runs in
 	 * @param SecretRequestService|null $secretRequestService The secret-request service
 	 * @param ShareService|null $shareService The share service
 	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper
@@ -158,7 +159,6 @@ class SecretService {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
-	 * @param IDBConnection|null $db The transaction of an update made from a base
 	 *
 	 * @return void
 	 */
@@ -169,6 +169,7 @@ class SecretService {
 		private MigrationService $migrationService,
 		private LinkShareService $linkShareService,
 		private LoggerInterface $logger,
+		private IDBConnection $db,
 		private ?SecretRequestService $secretRequestService = null,
 		private ?ShareService $shareService = null,
 		private ?GroupShareMapper $groupShareMapper = null,
@@ -184,7 +185,6 @@ class SecretService {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
-		private ?IDBConnection $db = null,
 	) {
 	}//end __construct()
 
@@ -1071,7 +1071,7 @@ class SecretService {
 			$this->mapper->update($secret);
 		};
 
-		if ($base === null || $this->db === null) {
+		if ($base === null) {
 			$write();
 			return;
 		}

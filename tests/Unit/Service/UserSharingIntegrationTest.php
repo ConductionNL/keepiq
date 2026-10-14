@@ -265,6 +265,7 @@ class UserSharingIntegrationTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
 			secretRequestService: null,
 			shareService: $shareService,
 			groupShareMapper: $groupShareMapper,
