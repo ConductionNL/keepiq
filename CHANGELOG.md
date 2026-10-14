@@ -14,6 +14,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Editing a shared secret in the web app updates the recipients' copies again. The copies were never updated, a write-grade member who changed only the password cleared the login and additional fields on the source, and a failed update showed as saved. A failed save now shows an error and changes nothing. (sharing-atomic-share-save, #1253)
+- A save through `PUT /api/v1/secrets/{id}` with a base version, a sync through `PUT /api/v1/secrets/{id}/sync` and a version restore could overwrite a change that landed between their version check and their write. They now check and write in one step, and answer 409 when the secret moved on; a restore does this with or without a base. (sharing-atomic-share-save)
+- A delegate or write-grade member who saves a shared secret through their copy is now recorded in the audit log on the owner's secret too, with the copies that were left out. A restore made through a share-save is recorded as the version the client restored from. (sharing-atomic-share-save)
 - Revoking a partner share while an update to that partner was still being sent could leave the partner's copy in place: the slower update replaced the pending unshare, so the unshare was never sent. An update now never replaces a pending unshare. (sharing-atomic-share-save)
 - `keepiq ssh-agent` works as a systemd user service. Under systemd the agent moved to the background and left the unit, which systemd then stopped, so the agent never kept running. The new `--foreground` option keeps it in place, and the unit in `cli/README.md` now uses it.
 
