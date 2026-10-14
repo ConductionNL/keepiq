@@ -519,13 +519,43 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertStillRevoked(mapper: $mapper, row: $row);
 	}
 
-	public function testADeclineReadBeforeARevokeLeavesTheShareRevoked(): void {
+	/**
+	 * The decline read the share before the revoke: it never makes the
+	 * share declined, and as it shows the copy is gone it finishes the
+	 * revocation, as a delivered unshare would.
+	 */
+	public function testADeclineReadBeforeARevokeFinishesTheRevocation(): void {
 		$mapper = new FederatedShareMapper(db: $this->db);
 		[$receiver, $row] = $this->receiverRacedByARevoke(mapper: $mapper, status: FederatedShare::STATUS_ACTIVE);
 
 		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
 
-		$this->assertStillRevoked(mapper: $mapper, row: $row);
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($row->getId());
+	}
+
+	/**
+	 * A revocation whose retries gave up is never retried; a decline, which
+	 * shows the copy is gone, finishes it.
+	 */
+	public function testADeclineFinishesARevocationThatGaveUp(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedBy(
+			mapper: $mapper,
+			status: FederatedShare::STATUS_ACTIVE,
+			meanwhile: static function (): void {
+			}
+		);
+		$gaveUp = $mapper->findById($row->getId());
+		$gaveUp->setStatus(FederatedShare::STATUS_FAILED);
+		$gaveUp->setPendingNotification(FederatedNotificationDelivery::SHARE_UNSHARED);
+		$gaveUp->setNotifyAttempts(FederatedNotificationDelivery::MAX_ATTEMPTS);
+		$mapper->update($gaveUp);
+
+		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
+
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($row->getId());
 	}
 
 	/**

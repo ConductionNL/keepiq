@@ -79,7 +79,8 @@ class FederatedCopyDeclineTest extends TestCase {
 
 	private Secret $copy;
 
-	private FederatedShare $outbound;
+	/** What Alice's database holds of her share, or null once it is deleted */
+	private ?FederatedShare $outbound;
 
 	/** @var FakeCloudFederationNotification[] */
 	private array $sent = [];
@@ -302,7 +303,17 @@ class FederatedCopyDeclineTest extends TestCase {
 	private function alicesProvider(): KeepiqSecretFederationProvider {
 		$shares = $this->createMock(FederatedShareMapper::class);
 		$shares->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => ($id === self::SHARE_ID) ? clone $this->outbound : throw new DoesNotExistException('none')
+			fn (string $id): FederatedShare => ($this->outbound !== null && $id === self::SHARE_ID) ? clone $this->outbound : throw new DoesNotExistException('none')
+		);
+		$shares->method('deleteIfPending')->willReturnCallback(
+			function (FederatedShare $row, string $pending): int {
+				if ($this->outbound === null || $this->outbound->getPendingNotification() !== $pending) {
+					return 0;
+				}
+
+				$this->outbound = null;
+				return 1;
+			}
 		);
 		// $this->outbound is what the database holds; a read gets a copy.
 		$shares->method('update')->willReturnCallback(
@@ -520,21 +531,27 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->assertSame('', $provider->getFederationIdFromSharedSecret(self::SHARED_SECRET, ['providerId' => 'other']));
 	}
 
-	public function testARevocationOnItsWayStaysARevocation(): void {
+	/**
+	 * A decline for a share whose revocation is still on its way shows the
+	 * copy is gone, which is what the unshare was for: the revocation
+	 * finishes as a delivered unshare does, and the row goes.
+	 */
+	public function testADeclineFinishesARevocationOnItsWay(): void {
 		$this->outbound->setStatus(FederatedShare::STATUS_REVOKED);
 		$this->outbound->setPendingNotification('SHARE_UNSHARED');
 		$this->signer = 'cloud.partner.example';
 
-		$this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 
-		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
-		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertSame([], $result);
+		$this->assertNull($this->outbound);
+		$this->assertSame([], $this->audit);
 	}
 
 	/**
 	 * Alice revokes while the signature of Bob's decline is checked (a
 	 * partner can stall that check), and the revoke's own unshare fails.
-	 * The decline must not replace the revocation and its pending unshare.
+	 * The decline must not replace the revocation: it finishes it.
 	 */
 	public function testADeclineNeverUndoesARevokeThatLandedMeanwhile(): void {
 		$this->signer = 'cloud.partner.example';
@@ -547,9 +564,7 @@ class FederatedCopyDeclineTest extends TestCase {
 		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 
 		$this->assertSame([], $result);
-		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
-		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
-		$this->assertSame(1, $this->outbound->getNotifyAttempts());
+		$this->assertNull($this->outbound);
 		$this->assertSame([], $this->audit);
 	}
 
@@ -587,9 +602,9 @@ class FederatedCopyDeclineTest extends TestCase {
 
 	/**
 	 * A revocation whose retries gave up leaves the share failed with the
-	 * unshare still pending: a decline keeps that unshare too.
+	 * unshare still pending and never retried: a decline finishes it.
 	 */
-	public function testADeclineKeepsTheUnshareOfARevocationThatGaveUp(): void {
+	public function testADeclineFinishesARevocationThatGaveUp(): void {
 		$this->outbound->setStatus(FederatedShare::STATUS_FAILED);
 		$this->outbound->setPendingNotification('SHARE_UNSHARED');
 		$this->signer = 'cloud.partner.example';
@@ -597,8 +612,7 @@ class FederatedCopyDeclineTest extends TestCase {
 		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 
 		$this->assertSame([], $result);
-		$this->assertSame(FederatedShare::STATUS_FAILED, $this->outbound->getStatus());
-		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertNull($this->outbound);
 		$this->assertSame([], $this->audit);
 	}
 

@@ -9,7 +9,9 @@
  * SHA-256 is what this side keeps, and the verified signer of the request is
  * the recipient's own partner. Then the share is marked declined, nothing
  * more is served or sent for it, and a change still waiting for its retry is
- * dropped. Every refusal is the same "share not found".
+ * dropped. A share whose revocation still waits for its unshare is removed
+ * instead, as a delivered unshare would. Every refusal is the same "share
+ * not found".
  *
  * It also takes the recipient's `SHARE_ACCEPTED` for a declined share: the
  * recipient restored the copy from their trash (decision of 4 Oct 2026).
@@ -88,8 +90,9 @@ class FederatedDeclineReceiver {
 	}//end handle()
 
 	/**
-	 * Mark the share declined, unless a revocation is on its way or it is
-	 * declined already. When the row changed after it was read (the owner
+	 * Mark the share declined. A revocation still waiting for its unshare is
+	 * finished instead: the decline shows the copy is gone, which is what the
+	 * unshare was for. A share declined already stays as it is. When the row changed after it was read (the owner
 	 * suspended, revoked or saved while the signature was checked), it is
 	 * read once more and decided again.
 	 *
@@ -99,12 +102,15 @@ class FederatedDeclineReceiver {
 	 * @return void
 	 */
 	private function decline(FederatedShare $row, bool $again): void {
-		// A revocation on its way finishes as a revocation; a second decline
-		// changes nothing.
-		if ($row->getStatus() === FederatedShare::STATUS_REVOKED
-			|| $row->getStatus() === FederatedShare::STATUS_DECLINED
-			|| $row->getPendingNotification() === FederatedNotificationDelivery::SHARE_UNSHARED
-		) {
+		// A revocation on its way, also one whose retries gave up, finishes
+		// as a delivered unshare does: the row goes.
+		if ($row->getPendingNotification() === FederatedNotificationDelivery::SHARE_UNSHARED) {
+			$this->shareMapper->deleteIfPending(share: $row, pending: FederatedNotificationDelivery::SHARE_UNSHARED);
+			return;
+		}
+
+		// A second decline changes nothing.
+		if ($row->getStatus() === FederatedShare::STATUS_REVOKED || $row->getStatus() === FederatedShare::STATUS_DECLINED) {
 			return;
 		}
 
