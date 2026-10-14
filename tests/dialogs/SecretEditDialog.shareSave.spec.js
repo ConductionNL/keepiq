@@ -318,7 +318,7 @@ describe('SecretEditDialog — share save', () => {
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 
-	it('saves a copy held behind a merge write-back on the versions read again after it', async () => {
+	it('saves a copy held behind a merge write-back on the versions that write-back saved, not read again', async () => {
 		let release
 		const hold = new Promise((resolve) => (release = resolve))
 		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
@@ -339,6 +339,8 @@ describe('SecretEditDialog — share save', () => {
 			[BASE, OPENED_SOURCE],
 			[SAVED_AT, SAVED_AT],
 		])
+		// The dialog's one read on open, and one per share save.
+		expect(useShareStore().fetchWriteContext).toHaveBeenCalledTimes(3)
 		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
 			false,
 		)
