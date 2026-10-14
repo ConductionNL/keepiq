@@ -1124,6 +1124,69 @@ class SecretServiceTest extends TestCase {
 	}//end testUpdateTakesTheVersionAShareSaveLockedIn()
 
 	/**
+	 * Setting an expiry moves the row off the version it read to one after
+	 * it, even when the stored version sits ahead of now, so the version
+	 * never goes back.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryMovesTheRowPastItsStoredVersion(): void {
+		$stored = $this->makeSecret();
+		$version = (new \DateTime('+1 hour'))->getTimestamp();
+		$stored->setUpdatedAt(new \DateTime('@'.$version));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with(
+				's-1',
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version),
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version + 1)
+			)
+			->willReturn(1);
+		$expiry = new \DateTime('2027-01-01T00:00:00+00:00');
+
+		$secret = $this->service->setExpiry(id: 's-1', expiresAt: $expiry, userId: 'alice');
+
+		$this->assertSame($version + 1, $secret->getUpdatedAt()?->getTimestamp());
+		$this->assertSame($expiry, $secret->getExpiresAt());
+	}//end testSetExpiryMovesTheRowPastItsStoredVersion()
+
+	/**
+	 * A save that lands between the expiry's read and its write keeps its
+	 * value, and the expiry is set once more on the row as it is now.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryOverARowThatMovesIsSetOnTheCurrentRow(): void {
+		$read = $this->makeSecret();
+		$read->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$moved = $this->makeSecret();
+		$moved->setKey('SAVED-MEANWHILE');
+		$moved->setUpdatedAt(new \DateTime('2026-10-02T10:00:01+00:00'));
+		$this->mapper->method('findById')->willReturnOnConsecutiveCalls($read, $moved);
+		$bases = [];
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnCallback(
+			static function (string $id, \DateTime $base) use (&$bases): int {
+				$bases[] = $base->getTimestamp();
+				return (count($bases) === 1) ? 0 : 1;
+			}
+		);
+		$this->mapper->expects($this->once())->method('update')->with($this->identicalTo($moved))->willReturnArgument(0);
+		$expiry = new \DateTime('2027-01-01T00:00:00+00:00');
+
+		$secret = $this->service->setExpiry(id: 's-1', expiresAt: $expiry, userId: 'alice');
+
+		$this->assertSame($moved, $secret);
+		$this->assertSame('SAVED-MEANWHILE', $secret->getKey());
+		$this->assertSame($expiry, $secret->getExpiresAt());
+		$this->assertSame([$read->getUpdatedAt()?->getTimestamp(), (new \DateTime('2026-10-02T10:00:01+00:00'))->getTimestamp()], $bases);
+	}//end testSetExpiryOverARowThatMovesIsSetOnTheCurrentRow()
+
+	/**
 	 * loadForUpdate refuses what update() refuses, before any write.
 	 *
 	 * @return void

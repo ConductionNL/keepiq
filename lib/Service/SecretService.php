@@ -1632,6 +1632,11 @@ class SecretService {
 	 * Set or clear a secret's per-secret expiry (rotation-expiry-policies
 	 * §2.3) — owner-only; NEVER touches ciphertext or `key_updated_at`.
 	 *
+	 * The row is moved off the version it was read at, as an update is, so
+	 * its new version always follows the stored one. The expiry is not part
+	 * of the value, so a save that lands between the read and the write is
+	 * kept and the expiry is set once more on the row as it is now.
+	 *
 	 * @param string $id The secret UUID
 	 * @param DateTime|null $expiresAt The expiry instant (null = clear)
 	 * @param string $userId The caller (must own the secret)
@@ -1640,15 +1645,25 @@ class SecretService {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws StaleWriteException When the row moved on twice during the write
 	 *
 	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	public function setExpiry(string $id, ?DateTime $expiresAt, string $userId): Secret {
-		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$write = function (Secret $secret) use ($expiresAt, $userId): Secret {
+			$preUpdate = clone $secret;
+			$secret->setExpiresAt($expiresAt);
+			$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $preUpdate->getUpdatedAt(), savedAt: null);
 
-		$secret->setExpiresAt($expiresAt);
-		$secret->setUpdatedAt(new DateTime());
-		$this->mapper->update($secret);
+			return $secret;
+		};
+
+		try {
+			$secret = $write($this->loadOwned(id: $id, userId: $userId));
+		} catch (StaleWriteException $e) {
+			$secret = $write($e->getCurrent());
+		}
 
 		$this->dispatchAudit(
 			event: $this->auditEvents->forUser(
