@@ -80,7 +80,8 @@ class ReownTransferredPartnerShares implements IRepairStep {
 		try {
 			$moved = 0;
 			foreach ($this->leftBehind() as $sourceSecretId => $ownerId) {
-				$moved += $this->shares->reassignOwner(sourceSecretId: $sourceSecretId, ownerId: $ownerId);
+				// PHP turns a numeric string key into an int.
+				$moved += $this->shares->reassignOwner(sourceSecretId: (string)$sourceSecretId, ownerId: $ownerId);
 			}
 		} catch (Throwable $e) {
 			$this->logger->warning('ReownTransferredPartnerShares failed: '.$e->getMessage(), ['exception' => $e]);
