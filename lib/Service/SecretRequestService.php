@@ -299,9 +299,11 @@ class SecretRequestService {
 	 * blob that would overwrite the owner's own (keepiq#750).
 	 *
 	 * The user's update is refused when the owner's row moves between its read
-	 * and its write. The filled values do not depend on that row, so the update
-	 * is made once more on the row as it is now, which keeps the owner's change
-	 * as a version. A second refusal leaves the request pending.
+	 * and its write. The update is then made once more on the row as it is
+	 * now, which keeps the owner's change as a version, with the hold-back
+	 * decided again on that row: the owner may have saved extra fields
+	 * meanwhile. A second refusal leaves the request pending, but a blob held
+	 * back by then is already in the secret's pending list.
 	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
@@ -331,12 +333,17 @@ class SecretRequestService {
 			return;
 		}
 
-		$write = fn () => $secretService->update(id: $secret->getId(), data: $data, userId: $secret->getOwnerId());
+		$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
 		try {
-			$write();
-		} catch (StaleWriteException) {
+			$write($data);
+		} catch (StaleWriteException $e) {
+			$data = $this->holdBackAdditionalFields(secret: $e->getCurrent(), data: $data);
+			if ($data === []) {
+				return;
+			}
+
 			try {
-				$write();
+				$write($data);
 			} catch (StaleWriteException) {
 				throw new InvalidArgumentException(
 					message: 'The secret changed while the request was filled; please submit again',

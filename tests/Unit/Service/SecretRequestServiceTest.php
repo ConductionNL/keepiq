@@ -808,8 +808,8 @@ class SecretRequestServiceTest extends TestCase {
 
 	/**
 	 * An owner's save that lands between the fill's read and its write
-	 * refuses the write. The filled values don't depend on the row, so the
-	 * fill writes them once more on the row as it is now.
+	 * refuses the write, and the fill writes once more on the row as it is
+	 * now.
 	 *
 	 * @return void
 	 *
@@ -845,6 +845,52 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
 	}//end testFillWritesAgainOverASaveThatLandsDuringIt()
+
+	/**
+	 * Keepiq#750 on the second write: when the save that landed during the
+	 * fill gave the owner an extra-field blob, the filled blob is held back
+	 * on that row instead of overwriting it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key', 'api-interface-id']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$read = new Secret();
+		$read->setId('sec-1');
+		$read->setOwnerType('user');
+		$read->setOwnerId('requester');
+		$current = clone $read;
+		$current->setAdditionalFields('SAVED_MEANWHILE');
+		$this->secretMapper->method('findById')->willReturn($read);
+		$this->secretMapper->expects($this->once())->method('update')->with($this->identicalTo($current))->willReturnArgument(0);
+
+		$writes = [];
+		$this->secretService->expects($this->exactly(2))->method('update')->willReturnCallback(
+			static function (string $id, array $data) use (&$writes, $current): Secret {
+				$writes[] = $data;
+				if (count($writes) === 1) {
+					throw new StaleWriteException(current: $current);
+				}
+
+				return $current;
+			}
+		);
+
+		$this->makeFillService()->fill(
+			token: 'tok-good',
+			encryptedFields: ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'],
+		);
+
+		$this->assertSame([['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'], ['key' => 'CIPHER_KEY']], $writes);
+		$this->assertSame('SAVED_MEANWHILE', $current->getAdditionalFields());
+		$this->assertSame(['CIPHER_BLOB'], $current->pendingAdditionalFieldList());
+	}//end testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt()
 
 	/**
 	 * A row that moves again during the second write refuses the fill with
