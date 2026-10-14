@@ -17,7 +17,9 @@ import { ShareSaveError } from '../../src/services/shareSave.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
-import { httpError } from '../fixtures/shareSaveServer.js'
+import { useShareStore } from '../../src/store/modules/share.js'
+import { httpError, SAVED_AT, shareSaveServer } from '../fixtures/shareSaveServer.js'
+import { RSA4096_PUBLIC_KEY_SPKI_PEM } from '../vitest/fixtures/rsa-fixtures.js'
 
 const BASE = '2026-10-01T10:00:00+00:00'
 
@@ -50,18 +52,27 @@ const stubs = {
  *
  * @param {object} [options] Mount options.
  * @param {object} [options.stubs] Component stubs to use instead of the defaults.
+ * @param {object} [options.context] The write-context the dialog reads on open.
+ * @param {() => Promise<object>} [options.fetchSecret] Opens the secret, instead of a fixed answer.
  * @return {Promise<object>} The wrapper.
  */
 async function mountEdited(options = {}) {
-	useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
-		id: 's1',
-		name: 'Router',
-		typeId: 'login',
-		key: 'old-value',
-		url: null,
-		login: '',
-		updatedAt: BASE,
-	})
+	useShareStore().fetchWriteContext = vi
+		.fn()
+		.mockResolvedValue(
+			options.context ?? { sourceSecretId: 's1', sourceUpdatedAt: BASE },
+		)
+	useSecretStore().fetchSecret =
+		options.fetchSecret
+		?? vi.fn().mockResolvedValue({
+			id: 's1',
+			name: 'Router',
+			typeId: 'login',
+			key: 'old-value',
+			url: null,
+			login: '',
+			updatedAt: BASE,
+		})
 	const wrapper = mount(SecretEditDialog, {
 		propsData: { secretId: 's1' },
 		global: { stubs: options.stubs ?? stubs },
@@ -95,10 +106,30 @@ describe('SecretEditDialog — share save', () => {
 
 		expect(update.mock.calls[0][2]).toEqual({
 			baseUpdatedAt: BASE,
+			sourceBaseUpdatedAt: null,
 			withoutUnreachable: false,
 			onWait: expect.any(Function),
 		})
 		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('saves a copy from the source version it opened on, not the one at save time', async () => {
+		const opened = '2026-09-30T08:00:00+00:00'
+		const wrapper = await mountEdited({
+			context: { sourceSecretId: 'src', sourceUpdatedAt: opened },
+		})
+		// The owner changed the source while the dialog was open.
+		useShareStore().fetchWriteContext.mockResolvedValue({
+			sourceSecretId: 'src',
+			sourceUpdatedAt: '2026-10-01T09:00:00+00:00',
+		})
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+
+		await wrapper.vm.submit()
+
+		expect(update.mock.calls[0][2].sourceBaseUpdatedAt).toBe(opened)
 	})
 
 	it('says so while the save waits on the partner lookup limit', async () => {
@@ -121,6 +152,104 @@ describe('SecretEditDialog — share save', () => {
 		await saving
 		await wrapper.vm.$nextTick()
 		expect(waiting().exists()).toBe(false)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('says so while the save is held behind a merge write-back that waits on the partner lookup limit', async () => {
+		const wrapper = await mountEdited()
+		useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
+		const log = shareSaveServer({ id: 's1' })
+		const store = useSecretStore()
+		const realUpdate = store.updateSecret
+		let releaseWriteBack
+		vi.spyOn(store, 'updateSecret').mockImplementation((id, data, options) => {
+			if (!options?.writeBack) {
+				return realUpdate.call(store, id, data, options)
+			}
+			// The write-back met a 429 on a partner lookup and waits.
+			options.onWait(60000)
+			return new Promise((resolve) => (releaseWriteBack = resolve))
+		})
+		store.currentSecret = {
+			id: 's1',
+			updatedAt: BASE,
+			additionalFields: {},
+			mergedPending: 1,
+		}
+		const writeBack = store.persistMergedPending('s1')
+		const waiting = () => wrapper.find('[data-testid="secret-edit-waiting"]')
+
+		const saving = wrapper.vm.submit()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		await wrapper.vm.$nextTick()
+		expect(log.saves).toHaveLength(0)
+		expect(waiting().text()).toContain('waiting for the lookup limit')
+
+		releaseWriteBack({ id: 's1', updatedAt: SAVED_AT })
+		await writeBack
+		await saving
+		await wrapper.vm.$nextTick()
+		expect(log.saves.map((s) => s.baseUpdatedAt)).toEqual([SAVED_AT])
+		expect(waiting().exists()).toBe(false)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('saves a copy past a merge write-back that finished before the save, from the versions it moved to', async () => {
+		const opened = '2026-09-30T08:00:00+00:00'
+		const context = {
+			sourceSecretId: 'src',
+			effectiveGrade: 'write',
+			ownerCertificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
+			sourceUpdatedAt: opened,
+		}
+		useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
+		const log = shareSaveServer({
+			id: 's1',
+			context,
+			onSave: (body, n) => {
+				// The write-back moved the source to SAVED_AT.
+				if (n > 1 && body.sourceBaseUpdatedAt !== SAVED_AT) {
+					throw httpError(409, { error: 'stale_source' })
+				}
+			},
+		})
+		const store = useSecretStore()
+		let writeBack
+		const wrapper = await mountEdited({
+			context,
+			// Like the store: the open secret is the store's, and opening it
+			// starts the merge write-back without waiting for it.
+			fetchSecret: async () => {
+				store.currentSecret = {
+					id: 's1',
+					name: 'Router',
+					typeId: 'login',
+					key: 'old-value',
+					url: null,
+					login: '',
+					additionalFields: {},
+					mergedPending: 1,
+					updatedAt: BASE,
+				}
+				writeBack = store.persistMergedPending('s1')
+				return store.currentSecret
+			},
+		})
+		await writeBack
+		expect(wrapper.vm.original.updatedAt).toBe(SAVED_AT)
+
+		await wrapper.vm.submit()
+		await wrapper.vm.$nextTick()
+
+		expect(
+			log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+		).toEqual([
+			[BASE, opened],
+			[SAVED_AT, SAVED_AT],
+		])
+		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
+			false,
+		)
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 

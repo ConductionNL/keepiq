@@ -214,8 +214,10 @@ import {
 } from '../cardIdentity/cardIdentity.js'
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useShareStore } from '../store/modules/share.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
@@ -274,6 +276,7 @@ export default {
 			error: '',
 			unreachablePartners: false,
 			original: null,
+			sourceBase: null,
 			name: '',
 			typeId: null,
 			value: '',
@@ -444,9 +447,13 @@ export default {
 		async load() {
 			this.loading = true
 			this.error = ''
+			this.sourceBase = null
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				this.original = secret
+				// Read after the secret, so it is never older than the copy the
+				// form shows; not awaited here, the save waits for it.
+				this.sourceBase = this.sourceVersion()
 				this.name = secret.name || ''
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
@@ -490,6 +497,32 @@ export default {
 					|| t('keepiq', 'Failed to load secret')
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * The source version this edit starts from when the secret is a copy,
+		 * so the share save refuses it as `stale_source` when the source moved
+		 * on while the dialog was open. Null for an own secret, and when it
+		 * cannot be read (offline): the save then takes the source version of
+		 * its own moment.
+		 *
+		 * @return {Promise<string|null>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		async sourceVersion() {
+			if (useOfflineStore().servedFromCache) {
+				return null
+			}
+			try {
+				const context = await useShareStore().fetchWriteContext(
+					this.secretId,
+				)
+				return context.sourceSecretId !== this.secretId
+					? (context.sourceUpdatedAt ?? null)
+					: null
+			} catch {
+				return null
 			}
 		},
 
@@ -633,11 +666,15 @@ export default {
 
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
+					// Both versions are read only now, after the wait, so a
+					// write-back settling meanwhile is seen in both.
+					const sourceBaseUpdatedAt = await this.sourceBase
 					updated = await useSecretStore().updateSecret(
 						this.secretId,
 						diff,
 						{
 							baseUpdatedAt: o.updatedAt,
+							sourceBaseUpdatedAt,
 							withoutUnreachable: options?.withoutUnreachable === true,
 							onWait: () => {
 								this.waitingForPartners = true

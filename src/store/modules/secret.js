@@ -48,10 +48,16 @@ const WHOLE_VAULT = {
 }
 
 /**
- * Merge write-backs in flight, by secret id: `{ base, done }`, where `done`
- * resolves to the saved `updatedAt`, or null when the write-back failed.
+ * The last merge write-back by secret id, in flight or settled: `{ base,
+ * done, settled, waiting, waiters }`. `done` resolves to what it saved:
+ * `updatedAt`, and through a copy the source version it sent
+ * (`sentSourceBase`) and the one it wrote (`sourceUpdatedAt`); or null when
+ * it failed. A settled one is kept until the next write-back of the secret
+ * or the next save of it, so an edit begun before it can still be matched.
+ * `waiting` is its last wait on the partner lookup limit, and `waiters` are
+ * the saves held behind it that want to hear of one.
  *
- * @type {Map<string, {base: string, done: Promise<string|null>}>}
+ * @type {Map<string, {base: string, done: Promise<{updatedAt: string, sentSourceBase: string|null, sourceUpdatedAt: string|null}|null>, settled: boolean, waiting: number|null, waiters: Set<(ms: number) => void>}>}
  */
 const writeBacks = new Map()
 
@@ -486,26 +492,54 @@ export const useSecretStore = defineStore('secret', {
 				return
 			}
 			const base = current.updatedAt
+			let sent = null
+			const inFlight = {
+				base,
+				done: null,
+				settled: false,
+				waiting: null,
+				waiters: new Set(),
+			}
 			const done = this.updateSecret(
 				id,
 				{
 					additionalFields: current.additionalFields,
 					mergedPending: current.mergedPending,
 				},
-				{ baseUpdatedAt: base, writeBack: true },
+				{
+					baseUpdatedAt: base,
+					writeBack: true,
+					// Nobody sees this save; an edit held behind it shows its wait.
+					onWait: (ms) => {
+						inFlight.waiting = ms
+						for (const waiter of inFlight.waiters) {
+							waiter(ms)
+						}
+					},
+					onShareSaved: (result) => {
+						sent = result
+					},
+				},
 			)
 				.then((saved) => {
 					current.mergedPending = 0
-					return saved?.updatedAt ?? null
+					return saved?.updatedAt
+						? {
+								updatedAt: saved.updatedAt,
+								sentSourceBase:
+									sent?.sentSourceBaseUpdatedAt ?? null,
+								sourceUpdatedAt: sent?.sourceUpdatedAt ?? null,
+							}
+						: null
 				})
 				// Stays pending; merged again on the next open.
 				.catch(() => null)
-			const inFlight = { base, done }
+				.finally(() => {
+					inFlight.settled = true
+				})
+			inFlight.done = done
 			writeBacks.set(id, inFlight)
 			await done
-			if (writeBacks.get(id) === inFlight) {
-				writeBacks.delete(id)
-			}
 		},
 
 		/**
@@ -658,18 +692,29 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object} data The fields to change.
 		 * @param {object} [options] Options.
 		 * @param {string} [options.baseUpdatedAt] The version the edit was made from.
+		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
 		 * @param {boolean} [options.withoutUnreachable] Pause partner shares that cannot be reached.
 		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
-		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit.
+		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit, its own or that of a merge write-back it is held behind.
+		 * @param {(result: object) => void} [options.onShareSaved] Called with the share save's answer.
 		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async updateSecret(id, data, options = {}) {
-			const given = options.writeBack
-				? options.baseUpdatedAt
-				: await this.settledBase(id, options.baseUpdatedAt)
+			const settled = options.writeBack
+				? {
+						base: options.baseUpdatedAt,
+						sourceBase: options.sourceBaseUpdatedAt ?? null,
+					}
+				: await this.settledBases(
+						id,
+						options.baseUpdatedAt,
+						options.sourceBaseUpdatedAt ?? null,
+						options.onWait ?? null,
+					)
+			const given = settled.base
 			const session = useSessionStore()
 			const payload = {}
 			const plainDiff = {}
@@ -741,29 +786,39 @@ export const useSecretStore = defineStore('secret', {
 					op: 'update',
 					secretId: id,
 					baseUpdatedAt: given ?? cached?.updatedAt ?? null,
+					sourceBaseUpdatedAt: settled.sourceBase,
 					body: payload,
 				})
 				return { ...(cached || { id }), ...payload, pendingSync: true }
 			}
 
 			let saved
-			if (valueChanged) {
-				const result = await saveShared({
-					id,
-					plainDiff,
-					patch: payload,
-					baseUpdatedAt: this.baseOf(id, given),
-					withoutUnreachable: options.withoutUnreachable === true,
-					onWait: options.onWait ?? null,
-				})
-				await notifyOwnerOnly(result)
-				saved = result.secret
-			} else {
-				const response = await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-					given ? { ...payload, baseUpdatedAt: given } : payload,
-				)
-				saved = response.data
+			try {
+				if (valueChanged) {
+					const result = await saveShared({
+						id,
+						plainDiff,
+						patch: payload,
+						baseUpdatedAt: this.baseOf(id, given),
+						sourceBaseUpdatedAt: settled.sourceBase,
+						withoutUnreachable: options.withoutUnreachable === true,
+						onWait: options.onWait ?? null,
+					})
+					options.onShareSaved?.(result)
+					await notifyOwnerOnly(result)
+					saved = result.secret
+				} else {
+					const response = await axios.put(
+						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
+						given ? { ...payload, baseUpdatedAt: given } : payload,
+					)
+					saved = response.data
+				}
+			} catch (e) {
+				if (!options.writeBack) {
+					this.forgetWriteBackOnRefusal(id, e)
+				}
+				throw e
 			}
 
 			// Keep the open copy's version current, so its next edit is not
@@ -771,7 +826,43 @@ export const useSecretStore = defineStore('secret', {
 			if (this.currentSecret?.id === id && saved?.updatedAt) {
 				this.currentSecret.updatedAt = saved.updatedAt
 			}
+			if (!options.writeBack) {
+				this.dropSettledWriteBack(id)
+			}
 			return saved
+		},
+
+		/**
+		 * Forget the settled merge write-back of `id` after a save of it: the
+		 * save is newer, so no edit is made from before the write-back any
+		 * more. One still in flight is kept.
+		 *
+		 * @param {string} id The secret ID.
+		 * @return {void}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		dropSettledWriteBack(id) {
+			if (writeBacks.get(id)?.settled) {
+				writeBacks.delete(id)
+			}
+		},
+
+		/**
+		 * Forget the settled merge write-back of `id` when the server refused a
+		 * save of it as changed meanwhile (409): that edit is over and is
+		 * redone from a fresh open, so the write-back must not move a later
+		 * edit or restore made from the old version past it. Any other
+		 * failure keeps it, for a retry of the same edit.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {Error|object} error The save's error.
+		 * @return {void}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		forgetWriteBackOnRefusal(id, error) {
+			if (error?.response?.status === 409) {
+				this.dropSettledWriteBack(id)
+			}
 		},
 
 		/**
@@ -786,16 +877,68 @@ export const useSecretStore = defineStore('secret', {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
 		 */
 		async settledBase(id, given) {
+			return (await this.settledBases(id, given, null)).base
+		},
+
+		/**
+		 * The bases to save from once the last merge write-back of `id` has
+		 * settled, the source version included: through a copy, the
+		 * write-back moved the source too, so an edit made before it would
+		 * otherwise be refused as `stale_source` against the write-back itself.
+		 *
+		 * The write-back turned the versions (`base`, `sentSourceBase`) into
+		 * (`updatedAt`, `sourceUpdatedAt`) and nothing else. An edit moves to
+		 * the latter only when each of its versions is one of those two: the
+		 * copy's, and the source's (or it recorded no source version). Any
+		 * other version means something else changed, and the edit keeps its
+		 * own, so the server answers `stale` or `stale_source`.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {string|undefined} given The base the edit was made from.
+		 * @param {string|null} givenSource The source version the edit was made from, if recorded.
+		 * @param {((ms: number) => void)|null} [onWait] Told when the write-back waits on the partner lookup limit, also of a wait already begun.
+		 * @return {Promise<{base: string|undefined, sourceBase: string|null}>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		async settledBases(id, given, givenSource, onWait = null) {
+			const unchanged = { base: given, sourceBase: givenSource }
 			const inFlight = writeBacks.get(id)
 			if (!inFlight) {
-				return given
+				return unchanged
 			}
-			const savedAt = await inFlight.done
-			return savedAt
-				&& given !== undefined
-				&& Date.parse(given) === Date.parse(inFlight.base)
-				? savedAt
-				: given
+			let saved
+			if (onWait && !inFlight.settled) {
+				if (inFlight.waiting !== null) {
+					onWait(inFlight.waiting)
+				}
+				inFlight.waiters.add(onWait)
+			}
+			try {
+				saved = await inFlight.done
+			} finally {
+				inFlight.waiters.delete(onWait)
+			}
+			const oneOf = (version, ...versions) =>
+				versions.some((v) => v && Date.parse(v) === Date.parse(version))
+			if (
+				!saved
+				|| given === undefined
+				|| !oneOf(given, inFlight.base, saved.updatedAt)
+				|| (givenSource
+					&& !oneOf(
+						givenSource,
+						saved.sentSourceBase,
+						saved.sourceUpdatedAt,
+					))
+			) {
+				return unchanged
+			}
+			return {
+				base: saved.updatedAt,
+				sourceBase: givenSource
+					? (saved.sourceUpdatedAt ?? givenSource)
+					: givenSource,
+			}
 		},
 
 		/**

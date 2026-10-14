@@ -246,11 +246,14 @@ function idsOf(list, key) {
  * @param {object} options.plainDiff Changed value fields in plain, `null` for cleared.
  * @param {object} options.patch The own-row patch, value fields encrypted for the caller.
  * @param {string} options.baseUpdatedAt The `{id}` version the edit was made from.
+ * @param {string|null} [options.sourceBaseUpdatedAt] The source version the edit was made from, on the copy-editor path; without one, the source version when this save starts.
  * @param {() => Promise<object>} [options.loadFull] Resolves `{key, login, additionalFields, updatedAt}` of `{id}` in plain.
  * @param {boolean} [options.withoutUnreachable] Suspend partner shares that cannot be reached instead of stopping.
  * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry all three value fields.
  * @param {(ms: number) => void} [options.onWait] Called when the save starts waiting on the partner lookup limit.
- * @return {Promise<object>} The 200 body; `secret` is the saved row.
+ * @return {Promise<object>} The 200 body; `secret` is the saved row, and
+ *   `sentSourceBaseUpdatedAt` the source version this save sent (null on the
+ *   owner path).
  * @throws {ShareSaveError|Error} Nothing was written. An error the share-save
  *   request itself answered carries `fromShareSave`.
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
@@ -265,6 +268,7 @@ export async function saveShared({
 	plainDiff,
 	patch,
 	baseUpdatedAt,
+	sourceBaseUpdatedAt = null,
 	loadFull = null,
 	withoutUnreachable = false,
 	restoredFrom = null,
@@ -274,6 +278,9 @@ export async function saveShared({
 	onVaultLock(forgetVerifiedPartners)
 	let context = await useShareStore().fetchWriteContext(id)
 	const copyPath = context.sourceSecretId !== id
+	// The source version the edit was made from; only an edit that recorded
+	// none (a queue entry from before it was recorded) takes this moment's.
+	const sourceBase = sourceBaseUpdatedAt ?? context.sourceUpdatedAt ?? ''
 	if (copyPath && !COPY_WRITER_GRADES.includes(context.effectiveGrade)) {
 		// A plain update would not record the restore; the version's own
 		// restore does, and touches only this copy.
@@ -356,7 +363,7 @@ export async function saveShared({
 
 	const envelope = () => ({
 		baseUpdatedAt,
-		...(copyPath ? { sourceBaseUpdatedAt: context.sourceUpdatedAt ?? '' } : {}),
+		...(copyPath ? { sourceBaseUpdatedAt: sourceBase } : {}),
 	})
 
 	const send = async () => {
@@ -570,7 +577,10 @@ export async function saveShared({
 		for (const shareId of verifiedNow.keys()) {
 			verifiedPartners.delete(shareId)
 		}
-		return result
+		return {
+			...result,
+			sentSourceBaseUpdatedAt: copyPath ? sourceBase : null,
+		}
 	} catch (e) {
 		if (epoch === lockEpoch) {
 			for (const [shareId, kept] of verifiedNow) {
