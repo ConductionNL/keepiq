@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Compartido con otra organización",
         "Change sent to another organisation": "Cambio enviado a otra organización",
         "Share with another organisation revoked": "Acceso compartido con otra organización revocado",
-        "Share with another organisation paused": "Acceso compartido con otra organización en pausa",
+        "Sharing with another organisation stopped": "Acceso compartido con otra organización detenido",
         "Another organisation did not get a change": "Otra organización no recibió un cambio",
         "Secret received from another organisation": "Secreto recibido de otra organización",
         "Secret from another organisation accepted": "Secreto de otra organización aceptado",

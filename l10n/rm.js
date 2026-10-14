@@ -1641,7 +1641,7 @@ OC.L10N.register(
         "Shared with another organisation": "Cundividì cun ina autra organisaziun",
         "Change sent to another organisation": "Midada tramessa ad ina autra organisaziun",
         "Share with another organisation revoked": "Cundivisiun cun ina autra organisaziun revocada",
-        "Share with another organisation paused": "Cundivisiun cun ina autra organisaziun en pausa",
+        "Sharing with another organisation stopped": "Cundivisiun cun ina autra organisaziun interrutta",
         "Another organisation did not get a change": "Ina autra organisaziun n’ha betg retschavì ina midada",
         "Secret received from another organisation": "Secret retschavì dad ina autra organisaziun",
         "Secret from another organisation accepted": "Secret d’ina autra organisaziun acceptà",

@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Deilt með öðru fyrirtæki",
         "Change sent to another organisation": "Breyting send til annars fyrirtækis",
         "Share with another organisation revoked": "Sameign með öðru fyrirtæki afturkölluð",
-        "Share with another organisation paused": "Sameign með öðru fyrirtæki sett í bið",
+        "Sharing with another organisation stopped": "Sameign með öðru fyrirtæki stöðvuð",
         "Another organisation did not get a change": "Annað fyrirtæki fékk ekki breytingu",
         "Secret received from another organisation": "Leyndarmál móttekið frá öðru fyrirtæki",
         "Secret from another organisation accepted": "Leyndarmál frá öðru fyrirtæki samþykkt",

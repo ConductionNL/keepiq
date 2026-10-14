@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Partajat cu o altă organizație",
         "Change sent to another organisation": "Modificare trimisă unei alte organizații",
         "Share with another organisation revoked": "Partajare cu o altă organizație revocată",
-        "Share with another organisation paused": "Partajare cu o altă organizație întreruptă",
+        "Sharing with another organisation stopped": "Partajare cu o altă organizație oprită",
         "Another organisation did not get a change": "O altă organizație nu a primit o modificare",
         "Secret received from another organisation": "Secret primit de la o altă organizație",
         "Secret from another organisation accepted": "Secret de la o altă organizație acceptat",

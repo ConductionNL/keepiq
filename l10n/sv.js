@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Delad med en annan organisation",
         "Change sent to another organisation": "Ändring skickad till en annan organisation",
         "Share with another organisation revoked": "Delning med en annan organisation återkallad",
-        "Share with another organisation paused": "Delning med en annan organisation pausad",
+        "Sharing with another organisation stopped": "Delning med en annan organisation stoppad",
         "Another organisation did not get a change": "En annan organisation fick inte en ändring",
         "Secret received from another organisation": "Hemlighet mottagen från en annan organisation",
         "Secret from another organisation accepted": "Hemlighet från en annan organisation godkänd",

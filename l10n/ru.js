@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Общий доступ предоставлен другой организации",
         "Change sent to another organisation": "Изменение отправлено другой организации",
         "Share with another organisation revoked": "Общий доступ для другой организации отозван",
-        "Share with another organisation paused": "Общий доступ для другой организации приостановлен",
+        "Sharing with another organisation stopped": "Общий доступ для другой организации остановлен",
         "Another organisation did not get a change": "Другая организация не получила изменение",
         "Secret received from another organisation": "Получен секрет из другой организации",
         "Secret from another organisation accepted": "Секрет из другой организации принят",

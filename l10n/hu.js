@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Megosztva egy másik szervezettel",
         "Change sent to another organisation": "Módosítás elküldve egy másik szervezetnek",
         "Share with another organisation revoked": "Megosztás egy másik szervezettel visszavonva",
-        "Share with another organisation paused": "Megosztás egy másik szervezettel szüneteltetve",
+        "Sharing with another organisation stopped": "Megosztás egy másik szervezettel leállítva",
         "Another organisation did not get a change": "Egy másik szervezet nem kapott meg egy módosítást",
         "Secret received from another organisation": "Titok érkezett egy másik szervezettől",
         "Secret from another organisation accepted": "Egy másik szervezettől kapott titok elfogadva",

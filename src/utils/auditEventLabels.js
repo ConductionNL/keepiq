@@ -41,7 +41,7 @@ export function auditEventLabel(eventType) {
 		),
 		'federated_share.suspended': t(
 			'keepiq',
-			'Share with another organisation paused',
+			'Sharing with another organisation stopped',
 		),
 		'federated_share.failed': t(
 			'keepiq',

@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Maqsum ma’ organizzazzjoni oħra",
         "Change sent to another organisation": "Bidla mibgħuta lil organizzazzjoni oħra",
         "Share with another organisation revoked": "Qsim ma’ organizzazzjoni oħra irrevokat",
-        "Share with another organisation paused": "Qsim ma’ organizzazzjoni oħra fuq pawża",
+        "Sharing with another organisation stopped": "Qsim ma’ organizzazzjoni oħra mwaqqaf",
         "Another organisation did not get a change": "Organizzazzjoni oħra ma rċevietx bidla",
         "Secret received from another organisation": "Sigriet riċevut minn organizzazzjoni oħra",
         "Secret from another organisation accepted": "Sigriet minn organizzazzjoni oħra aċċettat",

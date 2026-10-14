@@ -1665,7 +1665,7 @@ OC.L10N.register(
         "Shared with another organisation": "Κοινοποιήθηκε σε άλλον οργανισμό",
         "Change sent to another organisation": "Η αλλαγή στάλθηκε σε άλλον οργανισμό",
         "Share with another organisation revoked": "Η κοινοποίηση σε άλλον οργανισμό ανακλήθηκε",
-        "Share with another organisation paused": "Η κοινοποίηση σε άλλον οργανισμό τέθηκε σε παύση",
+        "Sharing with another organisation stopped": "Η κοινοποίηση σε άλλον οργανισμό διακόπηκε",
         "Another organisation did not get a change": "Άλλος οργανισμός δεν έλαβε μια αλλαγή",
         "Secret received from another organisation": "Ελήφθη μυστικό από άλλον οργανισμό",
         "Secret from another organisation accepted": "Το μυστικό από άλλον οργανισμό έγινε αποδεκτό",
