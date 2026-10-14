@@ -9,6 +9,7 @@
  * @spec openspec/specs/offline-edit-queue/spec.md
  */
 import axios from '@nextcloud/axios'
+import { mount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
@@ -53,6 +54,11 @@ const { failureText, useOfflineStore } =
 const { useSecretStore } = await import('../../src/store/modules/secret.js')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
 const { forgetVerifiedPartners } = await import('../../src/services/shareSave.js')
+const { encryptSnapshot } = await import('../../src/offline/snapshot.js')
+const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+const { useShareStore } = await import('../../src/store/modules/share.js')
+const { default: SecretEditDialog } =
+	await import('../../src/dialogs/SecretEditDialog.vue')
 
 const BASE = '2026-10-01T10:00:00+00:00'
 
@@ -100,6 +106,12 @@ async function goOffline() {
 function goOnline() {
 	offline.servedFromCache = false
 	offline.online = true
+}
+
+/** How many write-contexts were read since the fake server was wired. */
+function writeContextReads() {
+	return axios.get.mock.calls.filter(([url]) => url.endsWith('/write-context'))
+		.length
 }
 
 beforeEach(() => {
@@ -207,6 +219,12 @@ describe('replay', () => {
 		expect(offline.conflicts[offline.conflictEntries[0].entryId]).toEqual(
 			current,
 		)
+		// An own secret's 409 names no source version, and none is read.
+		expect(writeContextReads()).toBe(1)
+		expect([...stored.values()][0]).toMatchObject({
+			conflictUpdatedAt: current.updatedAt,
+			conflictSourceUpdatedAt: null,
+		})
 	})
 
 	it('a 409 keeps the entry for the user, and "keep mine" replays on the server version', async () => {
@@ -335,6 +353,242 @@ describe('replay', () => {
 				context.sourceUpdatedAt,
 			])
 			expect(offline.conflictEntries).toHaveLength(0)
+			expect(stored.size).toBe(0)
+		})
+
+		it.each([
+			['before a reload', false],
+			['after a reload', true],
+		])(
+			'"keep mine" on a stale copy replays on the copy and source versions that 409 named, %s',
+			async (when, reload) => {
+				await goOffline()
+				await secrets.updateSecret(
+					's1',
+					{ key: 'new' },
+					{ sourceBaseUpdatedAt: EDIT_SOURCE },
+				)
+				goOnline()
+				// The owner's share-save moved the source and the copy alike.
+				const server = {
+					copy: context.sourceUpdatedAt,
+					source: context.sourceUpdatedAt,
+				}
+				const log = shareSaveServer({
+					id: 's1',
+					context: {
+						...context,
+						get sourceUpdatedAt() {
+							return server.source
+						},
+					},
+					onSave: (body) => {
+						if (body.baseUpdatedAt !== server.copy) {
+							throw httpError(409, {
+								error: 'stale',
+								current: { id: 's1', updatedAt: server.copy },
+								sourceUpdatedAt: server.source,
+							})
+						}
+						if (body.sourceBaseUpdatedAt !== server.source) {
+							throw httpError(409, {
+								error: 'stale_source',
+								sourceUpdatedAt: server.source,
+							})
+						}
+					},
+				})
+				await offline.replayQueue()
+				expect(offline.conflictEntries).toHaveLength(1)
+				// Only the share save's own read: the 409 named the source.
+				expect(writeContextReads()).toBe(1)
+				expect([...stored.values()][0]).toMatchObject({
+					baseUpdatedAt: BASE,
+					sourceBaseUpdatedAt: EDIT_SOURCE,
+					conflictUpdatedAt: server.copy,
+					conflictSourceUpdatedAt: server.source,
+				})
+
+				if (reload) {
+					setActivePinia(createPinia())
+					await goOffline()
+					goOnline()
+					await offline.loadQueue()
+					expect(offline.conflicts).toEqual({})
+				}
+				await offline.resolveConflict(
+					offline.conflictEntries[0].entryId,
+					'mine',
+				)
+
+				expect(
+					log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+				).toEqual([
+					[BASE, EDIT_SOURCE],
+					[server.copy, server.source],
+				])
+				expect(offline.conflictEntries).toHaveLength(0)
+				expect(stored.size).toBe(0)
+			},
+		)
+
+		it('"keep mine" on a stale copy keeps the source version that 409 named, so a source that moved right after it is refused again, not saved over', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			goOnline()
+			const named = context.sourceUpdatedAt
+			const server = { copy: named, source: named }
+			const log = shareSaveServer({
+				id: 's1',
+				context: {
+					...context,
+					get sourceUpdatedAt() {
+						return server.source
+					},
+				},
+				onSave: (body) => {
+					if (body.baseUpdatedAt !== server.copy) {
+						const refusal = httpError(409, {
+							error: 'stale',
+							current: { id: 's1', updatedAt: server.copy },
+							sourceUpdatedAt: server.source,
+						})
+						// The owner saves again as soon as this 409 is answered.
+						server.source = '2026-10-02T11:00:00+00:00'
+						throw refusal
+					}
+					if (body.sourceBaseUpdatedAt !== server.source) {
+						throw httpError(409, {
+							error: 'stale_source',
+							sourceUpdatedAt: server.source,
+						})
+					}
+				},
+			})
+			await offline.replayQueue()
+			expect([...stored.values()][0].conflictSourceUpdatedAt).toBe(named)
+
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(named)
+			expect(offline.conflictEntries).toHaveLength(1)
+			expect(stored.size).toBe(1)
+		})
+
+		it('"keep mine" on a stale copy saved without a write grade replays its plain update on the row version that 409 returned', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context: { ...context, effectiveGrade: 'read' },
+			})
+			const current = { id: 's1', updatedAt: '2026-10-02T09:00:00+00:00' }
+			// The plain update names no source version: it sends none either.
+			axios.put.mockRejectedValueOnce(
+				httpError(409, { message: 'This secret changed', current }),
+			)
+			await offline.replayQueue()
+			expect(writeContextReads()).toBe(1)
+			expect([...stored.values()][0]).toMatchObject({
+				conflictUpdatedAt: current.updatedAt,
+				conflictSourceUpdatedAt: null,
+			})
+
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+
+			expect(log.plainPuts.at(-1)[1].baseUpdatedAt).toBe(current.updatedAt)
+			expect(log.saves).toHaveLength(0)
+			expect(stored.size).toBe(0)
+		})
+
+		it('an edit in the dialog of a copy opened from the cached snapshot replays on the source version the manifest carried', async () => {
+			const pub = await importPublicKey(RSA4096_PUBLIC_KEY_SPKI_PEM)
+			const aesKey = await crypto.subtle.generateKey(
+				{ name: 'AES-GCM', length: 256 },
+				false,
+				['encrypt', 'decrypt'],
+			)
+			snapshot = await encryptSnapshot(aesKey, {
+				suite: {
+					id: 'suite-1',
+					certificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
+					privateKey: 'ENVELOPE',
+				},
+				secrets: [
+					{
+						id: 's1',
+						name: 'Pump station router',
+						typeId: 'login',
+						key: await rsaEncrypt('old', pub),
+						updatedAt: BASE,
+						sourceUpdatedAt: EDIT_SOURCE,
+					},
+				],
+				folders: [],
+				offlineEditsEnabled: true,
+				syncedAt: BASE,
+			})
+			session = useSessionStore()
+			// The master-password unlock itself is covered elsewhere.
+			session.unlockFromBlob = vi.fn(async ({ certificate, suiteId }) => {
+				session.aesKey = aesKey
+				session.cryptoKey = await importPrivateKey(
+					RSA4096_PRIVATE_KEY_PKCS8_PEM,
+				)
+				session.certificate = certificate
+				session.suiteId = suiteId
+			})
+			offline = useOfflineStore()
+			offline.online = false
+			await offline.unlockOffline('master password')
+			const typeStore = useSecretTypeStore()
+			typeStore.types = [{ id: 'login', name: 'login', label: 'Login' }]
+			typeStore.fetchTypes = vi.fn().mockResolvedValue()
+			const writeContext = vi.spyOn(useShareStore(), 'fetchWriteContext')
+
+			const wrapper = mount(SecretEditDialog, {
+				propsData: { secretId: 's1' },
+				global: {
+					stubs: {
+						NcDialog: { template: '<div><slot /></div>' },
+						NcButton: true,
+						NcTextField: true,
+						NcPasswordField: true,
+						NcNoteCard: true,
+						NcLoadingIcon: true,
+						Dice5: true,
+						KeyGeneratorModal: true,
+					},
+				},
+			})
+			await vi.waitFor(() => expect(wrapper.vm.original?.key).toBe('old'))
+			expect(await wrapper.vm.sourceVersion()).toBe(EDIT_SOURCE)
+			wrapper.vm.value = 'Xk9#mQ2$vL7@pR4!zT6&'
+			await wrapper.vm.submit()
+
+			expect(writeContext).not.toHaveBeenCalled()
+			expect([...stored.values()]).toHaveLength(1)
+			expect([...stored.values()][0].sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
+
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context: { ...context, sourceUpdatedAt: EDIT_SOURCE },
+			})
+			await offline.replayQueue()
+
+			expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([
+				EDIT_SOURCE,
+			])
 			expect(stored.size).toBe(0)
 		})
 

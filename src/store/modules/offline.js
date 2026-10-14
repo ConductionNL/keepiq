@@ -76,6 +76,23 @@ function replayKind(e) {
 }
 
 /**
+ * The source version keeping a change after a 409 replays on: the one a
+ * share save of a copy names with its `stale` or `stale_source` answer. Null
+ * for an own secret, a copy saved without a write grade (its plain update
+ * names no source version) and any other 409; the replay then keeps the
+ * source version the edit was made from.
+ *
+ * @param {object} [answer] The 409's body.
+ * @return {string|null}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+ */
+function conflictSource(answer) {
+	return answer?.error === 'stale' || answer?.error === 'stale_source'
+		? (answer.sourceUpdatedAt ?? null)
+		: null
+}
+
+/**
  * Why a replayed entry failed, as a code with its details, so it is stored
  * with the entry and translated only when shown.
  *
@@ -159,7 +176,7 @@ export const useOfflineStore = defineStore('offline', {
 		entries: [],
 		/** @type {Array<object>} Stored entries sealed under another suite, waiting for the previous password. */
 		foreignEntries: [],
-		/** @type {Object<string, object>} entryId → the server row a 409 returned, or `{sourceUpdatedAt}` for a stale source (memory only). */
+		/** @type {Object<string, object|null>} entryId → the server row a 409 returned, shown in the conflict dialog (memory only). */
 		conflicts: {},
 		/** @type {boolean} Whether a replay is running. */
 		replaying: false,
@@ -543,22 +560,18 @@ export const useOfflineStore = defineStore('offline', {
 				const kind = replayKind(e)
 				if (kind === 'conflict') {
 					const answer = e.response?.data
-					const staleSource =
-						answer?.error === 'stale_source'
-							? (answer.sourceUpdatedAt ?? null)
-							: null
 					this.conflicts = {
 						...this.conflicts,
-						[entry.entryId]:
-							answer?.current
-							?? (answer?.error === 'stale_source'
-								? { sourceUpdatedAt: staleSource }
-								: null),
+						[entry.entryId]: answer?.current ?? null,
 					}
-					// Stored too, so keeping the change after a reload still
-					// replays on the source version this 409 named.
+					// Stored with the entry, so keeping the change replays on
+					// this 409's versions, also after a reload.
 					await this.setStatus(
-						{ ...entry, conflictSourceUpdatedAt: staleSource },
+						{
+							...entry,
+							conflictUpdatedAt: answer?.current?.updatedAt ?? null,
+							conflictSourceUpdatedAt: conflictSource(answer),
+						},
 						'conflict',
 					)
 					return 'conflict'
@@ -677,6 +690,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {'mine'|'server'} choice The user's choice.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async resolveConflict(entryId, choice) {
 			const entry = this.entries.find((e) => e.entryId === entryId)
@@ -685,21 +699,19 @@ export const useOfflineStore = defineStore('offline', {
 				await this.drop(entry)
 				return
 			}
-			const current = this.conflicts[entryId]
-			// A stale source carries no row: the entry's own base still holds.
-			// Keeping mine overrides the source version the 409 named, so a
-			// source that moves again before the replay is refused again;
-			// without one, the replay takes the source as it is then. After a
-			// reload the 409 is gone, and the version it named is the one the
-			// entry stored with the conflict.
+			// Read from the entry, not the 409 held in memory, so a reload
+			// changes nothing. Keeping mine overrides only the versions the 409
+			// left: a row or source that moves again before the replay is
+			// refused again. A version the 409 gave none of keeps the entry's.
 			const updated = {
 				...entry,
-				baseUpdatedAt: current?.updatedAt ?? entry.baseUpdatedAt ?? null,
-				sourceBaseUpdatedAt: current
-					? (current.sourceUpdatedAt ?? null)
-					: (entry.conflictSourceUpdatedAt
-						?? entry.sourceBaseUpdatedAt
-						?? null),
+				baseUpdatedAt:
+					entry.conflictUpdatedAt ?? entry.baseUpdatedAt ?? null,
+				sourceBaseUpdatedAt:
+					entry.conflictSourceUpdatedAt
+					?? entry.sourceBaseUpdatedAt
+					?? null,
+				conflictUpdatedAt: null,
 				conflictSourceUpdatedAt: null,
 				status: 'queued',
 			}
