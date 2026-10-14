@@ -238,6 +238,63 @@ describe('replay', () => {
 		expect(stored.size).toBe(0)
 	})
 
+	describe('a change made through a copy', () => {
+		const EDIT_SOURCE = '2026-09-30T07:00:00+00:00'
+		const context = {
+			sourceSecretId: 'src',
+			effectiveGrade: 'write',
+			ownerCertificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
+			sourceUpdatedAt: '2026-10-02T09:00:00+00:00',
+		}
+
+		it('keeps the source version it was made from and replays with it, so a source that moved meanwhile is a conflict', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			expect([...stored.values()][0].sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context,
+				onSave: (body) => {
+					if (body.sourceBaseUpdatedAt !== context.sourceUpdatedAt) {
+						throw httpError(409, { error: 'stale_source' })
+					}
+				},
+			})
+
+			await offline.replayQueue()
+
+			expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([
+				EDIT_SOURCE,
+			])
+			expect(offline.conflictEntries).toHaveLength(1)
+
+			// Keeping mine takes the source as it is at the next replay.
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(
+				context.sourceUpdatedAt,
+			)
+			expect(stored.size).toBe(0)
+		})
+
+		it('replays an entry that recorded no source version with the source version of replay time', async () => {
+			await goOffline()
+			await secrets.updateSecret('s1', { key: 'new' })
+			expect([...stored.values()][0].sourceBaseUpdatedAt).toBeNull()
+			goOnline()
+			const log = shareSaveServer({ id: 's1', context })
+
+			await offline.replayQueue()
+
+			expect(log.saves[0].sourceBaseUpdatedAt).toBe(context.sourceUpdatedAt)
+			expect(stored.size).toBe(0)
+		})
+	})
+
 	it('"keep the server version" drops the entry without writing', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { name: 'Offline name' })

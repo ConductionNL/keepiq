@@ -49,9 +49,10 @@ const WHOLE_VAULT = {
 
 /**
  * Merge write-backs in flight, by secret id: `{ base, done }`, where `done`
- * resolves to the saved `updatedAt`, or null when the write-back failed.
+ * resolves to the saved `updatedAt` and, through a copy, the source's
+ * `sourceUpdatedAt`, or null when the write-back failed.
  *
- * @type {Map<string, {base: string, done: Promise<string|null>}>}
+ * @type {Map<string, {base: string, done: Promise<{updatedAt: string, sourceUpdatedAt: string|null}|null>}>}
  */
 const writeBacks = new Map()
 
@@ -486,17 +487,29 @@ export const useSecretStore = defineStore('secret', {
 				return
 			}
 			const base = current.updatedAt
+			let sourceSavedAt = null
 			const done = this.updateSecret(
 				id,
 				{
 					additionalFields: current.additionalFields,
 					mergedPending: current.mergedPending,
 				},
-				{ baseUpdatedAt: base, writeBack: true },
+				{
+					baseUpdatedAt: base,
+					writeBack: true,
+					onShareSaved: (result) => {
+						sourceSavedAt = result?.sourceUpdatedAt ?? null
+					},
+				},
 			)
 				.then((saved) => {
 					current.mergedPending = 0
-					return saved?.updatedAt ?? null
+					return saved?.updatedAt
+						? {
+								updatedAt: saved.updatedAt,
+								sourceUpdatedAt: sourceSavedAt,
+							}
+						: null
 				})
 				// Stays pending; merged again on the next open.
 				.catch(() => null)
@@ -658,18 +671,28 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object} data The fields to change.
 		 * @param {object} [options] Options.
 		 * @param {string} [options.baseUpdatedAt] The version the edit was made from.
+		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
 		 * @param {boolean} [options.withoutUnreachable] Pause partner shares that cannot be reached.
 		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
 		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit.
+		 * @param {(result: object) => void} [options.onShareSaved] Called with the share save's answer.
 		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async updateSecret(id, data, options = {}) {
-			const given = options.writeBack
-				? options.baseUpdatedAt
-				: await this.settledBase(id, options.baseUpdatedAt)
+			const settled = options.writeBack
+				? {
+						base: options.baseUpdatedAt,
+						sourceBase: options.sourceBaseUpdatedAt ?? null,
+					}
+				: await this.settledBases(
+						id,
+						options.baseUpdatedAt,
+						options.sourceBaseUpdatedAt ?? null,
+					)
+			const given = settled.base
 			const session = useSessionStore()
 			const payload = {}
 			const plainDiff = {}
@@ -741,6 +764,7 @@ export const useSecretStore = defineStore('secret', {
 					op: 'update',
 					secretId: id,
 					baseUpdatedAt: given ?? cached?.updatedAt ?? null,
+					sourceBaseUpdatedAt: settled.sourceBase,
 					body: payload,
 				})
 				return { ...(cached || { id }), ...payload, pendingSync: true }
@@ -753,9 +777,11 @@ export const useSecretStore = defineStore('secret', {
 					plainDiff,
 					patch: payload,
 					baseUpdatedAt: this.baseOf(id, given),
+					sourceBaseUpdatedAt: settled.sourceBase,
 					withoutUnreachable: options.withoutUnreachable === true,
 					onWait: options.onWait ?? null,
 				})
+				options.onShareSaved?.(result)
 				await notifyOwnerOnly(result)
 				saved = result.secret
 			} else {
@@ -786,16 +812,44 @@ export const useSecretStore = defineStore('secret', {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
 		 */
 		async settledBase(id, given) {
+			return (await this.settledBases(id, given, null)).base
+		},
+
+		/**
+		 * The bases to save from once a merge write-back of `id` in flight has
+		 * settled, the source version included: through a copy, the
+		 * write-back moved the source too, so an edit made before it would
+		 * otherwise be refused as `stale_source` against the write-back itself.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {string|undefined} given The base the edit was made from.
+		 * @param {string|null} givenSource The source version the edit was made from, if recorded.
+		 * @return {Promise<{base: string|undefined, sourceBase: string|null}>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		async settledBases(id, given, givenSource) {
+			const unchanged = { base: given, sourceBase: givenSource }
 			const inFlight = writeBacks.get(id)
 			if (!inFlight) {
-				return given
+				return unchanged
 			}
-			const savedAt = await inFlight.done
-			return savedAt
-				&& given !== undefined
-				&& Date.parse(given) === Date.parse(inFlight.base)
-				? savedAt
-				: given
+			const saved = await inFlight.done
+			if (
+				!saved
+				|| given === undefined
+				|| Date.parse(given) !== Date.parse(inFlight.base)
+			) {
+				return unchanged
+			}
+			// Never back: a source version recorded after the write-back
+			// already includes it.
+			const sourceBase =
+				givenSource
+				&& saved.sourceUpdatedAt
+				&& Date.parse(saved.sourceUpdatedAt) > Date.parse(givenSource)
+					? saved.sourceUpdatedAt
+					: givenSource
+			return { base: saved.updatedAt, sourceBase }
 		},
 
 		/**

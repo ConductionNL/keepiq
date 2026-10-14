@@ -85,6 +85,21 @@ describe('coalescing', () => {
 		expect(result.body).toEqual({ name: 'C', key: 'k2' })
 	})
 
+	it('keeps the earliest source version a chain of updates was made from', () => {
+		const first = upd({ name: 'A' }, 'base-1', '1')
+		const second = {
+			...upd({ key: 'k2' }, 'base-2', '2'),
+			sourceBaseUpdatedAt: 'source-2',
+		}
+		const third = {
+			...upd({ key: 'k3' }, 'base-3', '3'),
+			sourceBaseUpdatedAt: 'source-3',
+		}
+		expect(coalesce(coalesce(first, second), third).sourceBaseUpdatedAt).toBe(
+			'source-2',
+		)
+	})
+
 	it('keeps a create followed by updates as one create', () => {
 		const create = {
 			entryId: 'c',

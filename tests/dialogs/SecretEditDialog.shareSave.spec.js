@@ -17,6 +17,7 @@ import { ShareSaveError } from '../../src/services/shareSave.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
+import { useShareStore } from '../../src/store/modules/share.js'
 import { httpError } from '../fixtures/shareSaveServer.js'
 
 const BASE = '2026-10-01T10:00:00+00:00'
@@ -50,9 +51,15 @@ const stubs = {
  *
  * @param {object} [options] Mount options.
  * @param {object} [options.stubs] Component stubs to use instead of the defaults.
+ * @param {object} [options.context] The write-context the dialog reads on open.
  * @return {Promise<object>} The wrapper.
  */
 async function mountEdited(options = {}) {
+	useShareStore().fetchWriteContext = vi
+		.fn()
+		.mockResolvedValue(
+			options.context ?? { sourceSecretId: 's1', sourceUpdatedAt: BASE },
+		)
 	useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
 		id: 's1',
 		name: 'Router',
@@ -95,10 +102,30 @@ describe('SecretEditDialog — share save', () => {
 
 		expect(update.mock.calls[0][2]).toEqual({
 			baseUpdatedAt: BASE,
+			sourceBaseUpdatedAt: null,
 			withoutUnreachable: false,
 			onWait: expect.any(Function),
 		})
 		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('saves a copy from the source version it opened on, not the one at save time', async () => {
+		const opened = '2026-09-30T08:00:00+00:00'
+		const wrapper = await mountEdited({
+			context: { sourceSecretId: 'src', sourceUpdatedAt: opened },
+		})
+		// The owner changed the source while the dialog was open.
+		useShareStore().fetchWriteContext.mockResolvedValue({
+			sourceSecretId: 'src',
+			sourceUpdatedAt: '2026-10-01T09:00:00+00:00',
+		})
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+
+		await wrapper.vm.submit()
+
+		expect(update.mock.calls[0][2].sourceBaseUpdatedAt).toBe(opened)
 	})
 
 	it('says so while the save waits on the partner lookup limit', async () => {

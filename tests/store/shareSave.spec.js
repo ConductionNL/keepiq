@@ -494,6 +494,8 @@ describe('saveShared on the copy-editor path', () => {
 		ownerCertificate: OWNER_CERT,
 		sourceUpdatedAt: '2026-09-30T08:00:00+00:00',
 	}
+	/** The source version the edit was made from, before the write-context's. */
+	const EDIT_SOURCE = '2026-09-30T07:00:00+00:00'
 
 	it('sends a password-only edit without login or fields, so nothing unchanged is cleared (#1253 bug 3)', async () => {
 		const log = shareSaveServer({
@@ -511,10 +513,11 @@ describe('saveShared on the copy-editor path', () => {
 			plainDiff: { key: 'only-the-password' },
 			patch: { key: 'MINE' },
 			baseUpdatedAt: BASE,
+			sourceBaseUpdatedAt: EDIT_SOURCE,
 		})
 
 		const final = log.saves.at(-1)
-		expect(final.sourceBaseUpdatedAt).toBe(context.sourceUpdatedAt)
+		expect(final.sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
 		expect('federated' in final).toBe(false)
 		expect('suspend' in final).toBe(false)
 		for (const copy of final.copies) {
@@ -528,6 +531,90 @@ describe('saveShared on the copy-editor path', () => {
 		expect(await open(bob, RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM)).toEqual({
 			key: 'only-the-password',
 		})
+	})
+
+	it('sends the source version the edit was made from, so a source that moved since is refused as stale_source', async () => {
+		const log = shareSaveServer({
+			id: 'copy-me',
+			context,
+			onSave: (body) => {
+				if (body.sourceBaseUpdatedAt !== context.sourceUpdatedAt) {
+					throw httpError(409, {
+						error: 'stale_source',
+						sourceUpdatedAt: context.sourceUpdatedAt,
+					})
+				}
+			},
+		})
+
+		const error = await useSecretStore()
+			.updateSecret(
+				'copy-me',
+				{ key: 'x' },
+				{ baseUpdatedAt: BASE, sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			.catch((e) => e)
+
+		expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([EDIT_SOURCE])
+		expect(error.response.data.error).toBe('stale_source')
+		expect(shareSaveErrorText(error)).toContain('original')
+	})
+
+	it('takes the source version of this moment only when the edit recorded none', async () => {
+		const log = shareSaveServer({ id: 'copy-me', context })
+
+		await saveShared({
+			id: 'copy-me',
+			plainDiff: { key: 'x' },
+			patch: { key: 'X' },
+			baseUpdatedAt: BASE,
+		})
+
+		expect(log.saves[0].sourceBaseUpdatedAt).toBe(context.sourceUpdatedAt)
+	})
+
+	it('moves the source version on past a merge write-back through the copy, so the edit is not refused against it', async () => {
+		const { importPublicKey, rsaEncrypt } =
+			await import('../../src/crypto/rsa.js')
+		const own = await importPublicKey(OWNER_CERT)
+		const row = {
+			id: 'copy-me',
+			key: await rsaEncrypt('pw', own),
+			pendingAdditionalFields: [await rsaEncrypt('{"pin":"1234"}', own)],
+			updatedAt: BASE,
+		}
+		const log = shareSaveServer({
+			id: 'copy-me',
+			context,
+			rows: { 'copy-me': row },
+			onSave: (body, n) => {
+				if (n > 1 && body.sourceBaseUpdatedAt !== SAVED_AT) {
+					throw httpError(409, { error: 'stale_source' })
+				}
+			},
+		})
+		const serve = axios.put.getMockImplementation()
+		let release
+		const held = new Promise((resolve) => (release = resolve))
+		axios.put.mockImplementation(async (url, body) => {
+			if (body.patch?.mergedPending) await held
+			return serve(url, body)
+		})
+		const store = useSecretStore()
+		await store.fetchSecret('copy-me')
+
+		const saving = store.updateSecret(
+			'copy-me',
+			{ key: 'new' },
+			{ baseUpdatedAt: BASE, sourceBaseUpdatedAt: context.sourceUpdatedAt },
+		)
+		release()
+		await saving
+
+		expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([
+			context.sourceUpdatedAt,
+			SAVED_AT,
+		])
 	})
 
 	it('sends a cleared login as null to every copy', async () => {

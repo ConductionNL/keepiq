@@ -9,8 +9,11 @@
  *
  * An entry at rest:
  *   { entryId, op: 'create'|'update'|'delete', secretId, baseUpdatedAt,
- *     queuedAt, suiteId, status: 'queued'|'sync'|'conflict'|'failed',
- *     sealed, sealedFailure }
+ *     sourceBaseUpdatedAt, queuedAt, suiteId,
+ *     status: 'queued'|'sync'|'conflict'|'failed', sealed, sealedFailure }
+ * `sourceBaseUpdatedAt` is, for an edit through a copy, the source version
+ * the edit was made from, and null when it was not known (or the entry is
+ * older than it).
  * `sealed` is the hybrid envelope (RSA-OAEP + AES-256-GCM, the one
  * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login` and
  * `additionalFields` ciphertext an online save sends, plus the index fields
@@ -32,6 +35,7 @@ export const PLAIN_FIELDS = Object.freeze([
 	'op',
 	'secretId',
 	'baseUpdatedAt',
+	'sourceBaseUpdatedAt',
 	'queuedAt',
 	'suiteId',
 	'status',
@@ -60,6 +64,7 @@ export async function sealEntry(entry, certificatePem) {
 		op: entry.op,
 		secretId: entry.secretId,
 		baseUpdatedAt: entry.baseUpdatedAt ?? null,
+		sourceBaseUpdatedAt: entry.sourceBaseUpdatedAt ?? null,
 		queuedAt: entry.queuedAt || new Date().toISOString(),
 		suiteId: entry.suiteId,
 		status: entry.status || 'queued',
@@ -114,7 +119,7 @@ export function coalesce(existing, incoming) {
 		if (incoming.op === 'delete') return null
 		return { ...existing, body: merged, status: 'queued' }
 	}
-	// existing update: keep the earliest base, the latest values.
+	// existing update: keep the earliest bases, the latest values.
 	if (incoming.op === 'delete') {
 		return {
 			...incoming,
@@ -124,7 +129,13 @@ export function coalesce(existing, incoming) {
 			body: {},
 		}
 	}
-	return { ...existing, body: merged, status: 'queued' }
+	return {
+		...existing,
+		sourceBaseUpdatedAt:
+			existing.sourceBaseUpdatedAt ?? incoming.sourceBaseUpdatedAt ?? null,
+		body: merged,
+		status: 'queued',
+	}
 }
 
 /**

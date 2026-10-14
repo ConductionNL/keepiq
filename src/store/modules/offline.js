@@ -371,7 +371,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * holds what an online save would send: own-certificate ciphertext and
 		 * the index fields. It is sealed before it is stored.
 		 *
-		 * @param {object} change { op, secretId, body, baseUpdatedAt }
+		 * @param {object} change { op, secretId, body, baseUpdatedAt, sourceBaseUpdatedAt }
 		 * @return {Promise<object>} The kept entry, or null when it cancelled out.
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
@@ -392,6 +392,7 @@ export const useOfflineStore = defineStore('offline', {
 				op: change.op,
 				secretId: change.secretId,
 				baseUpdatedAt: change.baseUpdatedAt ?? null,
+				sourceBaseUpdatedAt: change.sourceBaseUpdatedAt ?? null,
 				suiteId: session.suiteId,
 				status: 'queued',
 				body: change.body || {},
@@ -515,7 +516,12 @@ export const useOfflineStore = defineStore('offline', {
 				) {
 					// Every copy and partner share is encrypted for the holders
 					// of this moment (D2), in the same transaction as the row.
-					await this.shareSave(entry, entry.baseUpdatedAt)
+					await this.shareSave(
+						entry,
+						entry.baseUpdatedAt,
+						entry.body,
+						entry.sourceBaseUpdatedAt ?? null,
+					)
 				} else if (entry.op === 'update') {
 					await axios.put(generateUrl(`${base}/${entry.secretId}`), {
 						...entry.body,
@@ -554,15 +560,22 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {object} entry The opened entry.
 		 * @param {string|null} baseUpdatedAt The version the change was made from.
 		 * @param {object} [patch] The own-row patch; the queued body by default.
+		 * @param {string|null} [sourceBaseUpdatedAt] Through a copy, the source version the change was made from; null takes the source version of replay time.
 		 * @return {Promise<object>} The share-save answer.
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
-		async shareSave(entry, baseUpdatedAt, patch = entry.body) {
+		async shareSave(
+			entry,
+			baseUpdatedAt,
+			patch = entry.body,
+			sourceBaseUpdatedAt = null,
+		) {
 			const result = await saveShared({
 				id: entry.secretId,
 				plainDiff: await this.plaintextOf(patch),
 				patch,
 				baseUpdatedAt,
+				sourceBaseUpdatedAt,
 			})
 			await notifyOwnerOnly(result)
 			return result
@@ -655,9 +668,12 @@ export const useOfflineStore = defineStore('offline', {
 			}
 			const current = this.conflicts[entryId]
 			// A stale source carries no row: the entry's own base still holds.
+			// Keeping mine also overrides the source version it was made
+			// from, so the replay takes the source as it is then.
 			const updated = {
 				...entry,
 				baseUpdatedAt: current?.updatedAt ?? entry.baseUpdatedAt ?? null,
+				sourceBaseUpdatedAt: null,
 				status: 'queued',
 			}
 			const session = useSessionStore()

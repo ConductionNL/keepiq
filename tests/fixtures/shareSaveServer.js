@@ -245,6 +245,7 @@ export function shareSaveServer({
 		return {
 			data: {
 				secret: { id, updatedAt: SAVED_AT },
+				sourceUpdatedAt: SAVED_AT,
 				copies: {
 					written: all('copies').length,
 					skipped: all('skipped').length,

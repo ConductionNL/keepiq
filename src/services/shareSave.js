@@ -246,6 +246,7 @@ function idsOf(list, key) {
  * @param {object} options.plainDiff Changed value fields in plain, `null` for cleared.
  * @param {object} options.patch The own-row patch, value fields encrypted for the caller.
  * @param {string} options.baseUpdatedAt The `{id}` version the edit was made from.
+ * @param {string|null} [options.sourceBaseUpdatedAt] The source version the edit was made from, on the copy-editor path; without one, the source version when this save starts.
  * @param {() => Promise<object>} [options.loadFull] Resolves `{key, login, additionalFields, updatedAt}` of `{id}` in plain.
  * @param {boolean} [options.withoutUnreachable] Suspend partner shares that cannot be reached instead of stopping.
  * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry all three value fields.
@@ -265,6 +266,7 @@ export async function saveShared({
 	plainDiff,
 	patch,
 	baseUpdatedAt,
+	sourceBaseUpdatedAt = null,
 	loadFull = null,
 	withoutUnreachable = false,
 	restoredFrom = null,
@@ -274,6 +276,9 @@ export async function saveShared({
 	onVaultLock(forgetVerifiedPartners)
 	let context = await useShareStore().fetchWriteContext(id)
 	const copyPath = context.sourceSecretId !== id
+	// The source version the edit was made from; only an edit that recorded
+	// none (a queue entry from before it was recorded) takes this moment's.
+	const sourceBase = sourceBaseUpdatedAt ?? context.sourceUpdatedAt ?? ''
 	if (copyPath && !COPY_WRITER_GRADES.includes(context.effectiveGrade)) {
 		// A plain update would not record the restore; the version's own
 		// restore does, and touches only this copy.
@@ -356,7 +361,7 @@ export async function saveShared({
 
 	const envelope = () => ({
 		baseUpdatedAt,
-		...(copyPath ? { sourceBaseUpdatedAt: context.sourceUpdatedAt ?? '' } : {}),
+		...(copyPath ? { sourceBaseUpdatedAt: sourceBase } : {}),
 	})
 
 	const send = async () => {
