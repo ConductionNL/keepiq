@@ -505,10 +505,13 @@ export default {
 		 * The source version this edit starts from when the secret is a copy,
 		 * so the share save refuses it as `stale_source` when the source moved
 		 * on while the dialog was open. Offline it is the one the cached vault
-		 * row carries. Null for an own secret, and when it is not known: the
-		 * save then takes the source version of its own moment. A merge
-		 * write-back of the secret that saved moved the source, so its version
-		 * is taken instead; one that failed leaves the version read on open.
+		 * row carries. Null when it is not known: the save then takes the
+		 * source version of its own moment. A merge write-back of the secret
+		 * that saved moved the source, so its version is taken instead; one
+		 * that failed leaves the version read on open. Null for an own secret
+		 * whose write-context was read; when that read fails, an own secret's
+		 * write-back that saved gives its version, which the owner's save
+		 * does not send.
 		 *
 		 * @return {Promise<string|null>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
