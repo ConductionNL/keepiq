@@ -271,7 +271,7 @@ final class AuditEventTypes {
 	 */
 	public const WHITELIST = [
 		self::SECRET_CREATED => ['typeId', 'folderId'],
-		self::SECRET_UPDATED => ['changedFields'],
+		self::SECRET_UPDATED => ['changedFields', 'skippedCopies'],
 		self::SECRET_READ => [],
 		self::SECRET_DELETED => [],
 		self::SECRET_TRASHED => [],

@@ -112,23 +112,34 @@ class ShareSaveHistory {
 	}//end logRestore()
 
 	/**
-	 * Attribute a copy-editor's save to the writer when they write on a
-	 * team-folder grade rather than as owner or delegate.
+	 * Attribute a copy-editor's save to the writer on the source, whether
+	 * they write on a team-folder grade or as a delegate, naming the copies
+	 * left out for want of a vault key. The owner path has the row's own audit.
 	 *
-	 * @param ShareSavePath $path The path
+	 * @param ShareSavePath $path The path, as assertStillWriter() returned it
 	 * @param string $userId The caller
+	 * @param list<string> $skipped The ids of the copies left out
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 	 */
-	public function recordTeamWrite(ShareSavePath $path, string $userId): void {
-		if ($path->isCopyEditor() === true && $path->teamWriter === true) {
-			$this->auditTrail->recordTeamWriteSync(
-				userId: $userId,
-				secretId: $path->source->getId(),
-				secretName: $path->source->getName(),
-			);
+	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = []): void {
+		if ($path->isCopyEditor() === false) {
+			return;
 		}
+
+		$changedFields = 'delegate sync';
+		if ($path->teamWriter === true) {
+			$changedFields = 'team-write sync';
+		}
+
+		$this->auditTrail->recordTeamWriteSync(
+			userId: $userId,
+			secretId: $path->source->getId(),
+			secretName: $path->source->getName(),
+			changedFields: $changedFields,
+			skippedCopies: $skipped,
+		);
 	}//end recordTeamWrite()
 }//end class

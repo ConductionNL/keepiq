@@ -281,7 +281,7 @@ class ShareSaveService {
 		?SecretVersion $version,
 	): array {
 		$this->lockVersions(path: $path, request: $request, savedAt: $savedAt);
-		$this->scope->assertStillWriter(path: $path, userId: $userId);
+		$path = $this->scope->assertStillWriter(path: $path, userId: $userId);
 		$required = $this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
 
 		$copies = $this->sync->writeCopyBlobs(
@@ -311,7 +311,7 @@ class ShareSaveService {
 			$this->history->recordRestore(secret: $secret, version: $version, userId: $userId);
 		}
 
-		$this->history->recordTeamWrite(path: $path, userId: $userId);
+		$this->history->recordTeamWrite(path: $path, userId: $userId, skipped: array_column($entries->skipped, 'secretId'));
 		if ($request->stageId !== null) {
 			$this->stages->drop(stageId: $request->stageId);
 		}

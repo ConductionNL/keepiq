@@ -126,6 +126,47 @@ class AuditServiceTest extends TestCase {
 	}//end testRecordDropsUnknownMetadataKeys()
 
 	/**
+	 * A copy editor's sync keeps the copies it left out, and a share-save
+	 * restore keeps its mark as the client's claim, through the whitelist.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testRecordKeepsTheShareSaveAuditMetadata(): void {
+		$captured = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			function (AuditEntry $entry) use (&$captured): AuditEntry {
+				$captured[] = $entry->getMetadataArray();
+				return $entry;
+			}
+		);
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(fn (AuditEvent $event) => $this->service->record($event));
+
+		(new \OCA\Keepiq\Service\ShareAuditTrail(eventDispatcher: $dispatcher))->recordTeamWriteSync(
+			userId: 'bob',
+			secretId: 'src',
+			secretName: 'Router',
+			changedFields: 'delegate sync',
+			skippedCopies: ['c-carol'],
+		);
+		$this->service->record(AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SECRET_VERSION_RESTORED,
+			objectType: 'secret',
+			objectId: 'src',
+			objectName: 'Router',
+			metadata: ['versionNumber' => 3, 'via' => 'share-save'],
+		));
+
+		$this->assertSame(
+			[['changedFields' => 'delegate sync', 'skippedCopies' => ['c-carol']], ['versionNumber' => 3, 'via' => 'share-save']],
+			$captured
+		);
+	}//end testRecordKeepsTheShareSaveAuditMetadata()
+
+	/**
 	 * record() rejects every forbidden secret-material key with an exception.
 	 *
 	 * @return void
