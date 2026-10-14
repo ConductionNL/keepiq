@@ -9,6 +9,7 @@
  * @spec openspec/specs/offline-edit-queue/spec.md
  */
 import axios from '@nextcloud/axios'
+import { mount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
@@ -53,6 +54,11 @@ const { failureText, useOfflineStore } =
 const { useSecretStore } = await import('../../src/store/modules/secret.js')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
 const { forgetVerifiedPartners } = await import('../../src/services/shareSave.js')
+const { encryptSnapshot } = await import('../../src/offline/snapshot.js')
+const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+const { useShareStore } = await import('../../src/store/modules/share.js')
+const { default: SecretEditDialog } =
+	await import('../../src/dialogs/SecretEditDialog.vue')
 
 const BASE = '2026-10-01T10:00:00+00:00'
 
@@ -335,6 +341,88 @@ describe('replay', () => {
 				context.sourceUpdatedAt,
 			])
 			expect(offline.conflictEntries).toHaveLength(0)
+			expect(stored.size).toBe(0)
+		})
+
+		it('an edit in the dialog of a copy opened from the cached snapshot replays on the source version the manifest carried', async () => {
+			const pub = await importPublicKey(RSA4096_PUBLIC_KEY_SPKI_PEM)
+			const aesKey = await crypto.subtle.generateKey(
+				{ name: 'AES-GCM', length: 256 },
+				false,
+				['encrypt', 'decrypt'],
+			)
+			snapshot = await encryptSnapshot(aesKey, {
+				suite: {
+					id: 'suite-1',
+					certificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
+					privateKey: 'ENVELOPE',
+				},
+				secrets: [
+					{
+						id: 's1',
+						name: 'Pump station router',
+						typeId: 'login',
+						key: await rsaEncrypt('old', pub),
+						updatedAt: BASE,
+						sourceUpdatedAt: EDIT_SOURCE,
+					},
+				],
+				folders: [],
+				offlineEditsEnabled: true,
+				syncedAt: BASE,
+			})
+			session = useSessionStore()
+			// The master-password unlock itself is covered elsewhere.
+			session.unlockFromBlob = vi.fn(async ({ certificate, suiteId }) => {
+				session.aesKey = aesKey
+				session.cryptoKey = await importPrivateKey(
+					RSA4096_PRIVATE_KEY_PKCS8_PEM,
+				)
+				session.certificate = certificate
+				session.suiteId = suiteId
+			})
+			offline = useOfflineStore()
+			offline.online = false
+			await offline.unlockOffline('master password')
+			const typeStore = useSecretTypeStore()
+			typeStore.types = [{ id: 'login', name: 'login', label: 'Login' }]
+			typeStore.fetchTypes = vi.fn().mockResolvedValue()
+			const writeContext = vi.spyOn(useShareStore(), 'fetchWriteContext')
+
+			const wrapper = mount(SecretEditDialog, {
+				propsData: { secretId: 's1' },
+				global: {
+					stubs: {
+						NcDialog: { template: '<div><slot /></div>' },
+						NcButton: true,
+						NcTextField: true,
+						NcPasswordField: true,
+						NcNoteCard: true,
+						NcLoadingIcon: true,
+						Dice5: true,
+						KeyGeneratorModal: true,
+					},
+				},
+			})
+			await vi.waitFor(() => expect(wrapper.vm.original?.key).toBe('old'))
+			expect(await wrapper.vm.sourceVersion()).toBe(EDIT_SOURCE)
+			wrapper.vm.value = 'Xk9#mQ2$vL7@pR4!zT6&'
+			await wrapper.vm.submit()
+
+			expect(writeContext).not.toHaveBeenCalled()
+			expect([...stored.values()]).toHaveLength(1)
+			expect([...stored.values()][0].sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
+
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context: { ...context, sourceUpdatedAt: EDIT_SOURCE },
+			})
+			await offline.replayQueue()
+
+			expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([
+				EDIT_SOURCE,
+			])
 			expect(stored.size).toBe(0)
 		})
 

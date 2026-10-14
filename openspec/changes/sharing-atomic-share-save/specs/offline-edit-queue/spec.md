@@ -2,7 +2,7 @@
 
 ### Requirement: Offline changes go into a sealed local queue
 
-When the administrator setting `offline_edits_enabled` is true and the vault is served from the offline cache, the web app MUST let the user create, edit, move and delete secrets, and MUST store each change as a queue entry in IndexedDB. Each entry's values and index fields (`name`, `url`, `typeId`, `folderId`) MUST be sealed to the owner's own certificate; only the entry id, the operation, the secret id, `baseUpdatedAt`, `sourceBaseUpdatedAt`, `conflictSourceUpdatedAt` (the source version a replay's 409 `stale_source` named), the queue time and the suite id MAY be stored in plain. The offline manifest MUST carry `sourceUpdatedAt`, the source's version, on every copy row (null for an own secret and when the source is gone), and an edit of a copy made offline MUST record it as the entry's `sourceBaseUpdatedAt` (null when the cached row carries none); changes to one secret that are combined into one entry MUST keep the first one recorded. The vault view MUST show queued changes marked as not synced.
+When the administrator setting `offline_edits_enabled` is true and the vault is served from the offline cache, the web app MUST let the user create, edit, move and delete secrets, and MUST store each change as a queue entry in IndexedDB. Each entry's values and index fields (`name`, `url`, `typeId`, `folderId`) MUST be sealed to the owner's own certificate; only the entry id, the operation, the secret id, `baseUpdatedAt`, `sourceBaseUpdatedAt`, `conflictSourceUpdatedAt` (the source version a replay's 409 `stale_source` named), the queue time and the suite id MAY be stored in plain. The offline manifest MUST carry `sourceUpdatedAt`, the source's version, on every copy row (null for an own secret and when the source is gone), the offline snapshot MUST keep it on each cached row in plain, as it keeps `updatedAt`, and an edit of a copy made offline MUST record it as the entry's `sourceBaseUpdatedAt` (null when the cached row carries none); changes to one secret that are combined into one entry MUST keep the first one recorded. The vault view MUST show queued changes marked as not synced.
 
 #### Scenario: A field worker rotates a password with no signal
 
@@ -19,9 +19,9 @@ When the administrator setting `offline_edits_enabled` is true and the vault is 
 
 #### Scenario: An offline edit of a copy records the source version it was made from
 
-- **GIVEN** a team-folder member reading offline a copy whose cached row carries the source's `sourceUpdatedAt`
+- **GIVEN** a team-folder member reading offline, from the snapshot of their last online unlock, a copy whose manifest row carried the source's `sourceUpdatedAt`
 - **WHEN** they change its password and later its login, both before reconnecting
-- **THEN** the queue MUST hold one entry whose `sourceBaseUpdatedAt` is that cached `sourceUpdatedAt`, the version the first change was made from
+- **THEN** the queue MUST hold one entry whose `sourceBaseUpdatedAt` is that `sourceUpdatedAt`, the version the first change was made from
 
 ### Requirement: Failed entries are kept, never dropped silently
 
