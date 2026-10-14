@@ -251,7 +251,9 @@ function idsOf(list, key) {
  * @param {boolean} [options.withoutUnreachable] Suspend partner shares that cannot be reached instead of stopping.
  * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry all three value fields.
  * @param {(ms: number) => void} [options.onWait] Called when the save starts waiting on the partner lookup limit.
- * @return {Promise<object>} The 200 body; `secret` is the saved row.
+ * @return {Promise<object>} The 200 body; `secret` is the saved row, and
+ *   `sentSourceBaseUpdatedAt` the source version this save sent (null on the
+ *   owner path).
  * @throws {ShareSaveError|Error} Nothing was written. An error the share-save
  *   request itself answered carries `fromShareSave`.
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
@@ -575,7 +577,10 @@ export async function saveShared({
 		for (const shareId of verifiedNow.keys()) {
 			verifiedPartners.delete(shareId)
 		}
-		return result
+		return {
+			...result,
+			sentSourceBaseUpdatedAt: copyPath ? sourceBase : null,
+		}
 	} catch (e) {
 		if (epoch === lockEpoch) {
 			for (const [shareId, kept] of verifiedNow) {

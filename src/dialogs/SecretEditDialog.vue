@@ -447,11 +447,13 @@ export default {
 		async load() {
 			this.loading = true
 			this.error = ''
-			// Read beside the secret, not before it is shown; the save waits for it.
-			this.sourceBase = this.sourceVersion()
+			this.sourceBase = null
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				this.original = secret
+				// Read after the secret, so it is never older than the copy the
+				// form shows; not awaited here, the save waits for it.
+				this.sourceBase = this.sourceVersion()
 				this.name = secret.name || ''
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
@@ -664,12 +666,15 @@ export default {
 
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
+					// Both versions are read only now, after the wait, so a
+					// write-back settling meanwhile is seen in both.
+					const sourceBaseUpdatedAt = await this.sourceBase
 					updated = await useSecretStore().updateSecret(
 						this.secretId,
 						diff,
 						{
 							baseUpdatedAt: o.updatedAt,
-							sourceBaseUpdatedAt: await this.sourceBase,
+							sourceBaseUpdatedAt,
 							withoutUnreachable: options?.withoutUnreachable === true,
 							onWait: () => {
 								this.waitingForPartners = true

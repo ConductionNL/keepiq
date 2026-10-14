@@ -641,6 +641,102 @@ describe('saveShared on the copy-editor path', () => {
 		])
 	})
 
+	describe('an edit made before a merge write-back through the copy', () => {
+		/**
+		 * Open the copy with a pending member, so the write-back runs.
+		 *
+		 * @param {(body: object, n: number) => void} onSave The server's check.
+		 * @param {Promise|null} [hold] Holds the write-back's request until it settles.
+		 * @return {Promise<{store: object, log: object}>}
+		 */
+		async function openWithWriteBack(onSave, hold = null) {
+			const { importPublicKey, rsaEncrypt } =
+				await import('../../src/crypto/rsa.js')
+			const own = await importPublicKey(OWNER_CERT)
+			const row = {
+				id: 'copy-me',
+				key: await rsaEncrypt('pw', own),
+				pendingAdditionalFields: [await rsaEncrypt('{"pin":"1234"}', own)],
+				updatedAt: BASE,
+			}
+			const log = shareSaveServer({
+				id: 'copy-me',
+				context,
+				rows: { 'copy-me': row },
+				onSave,
+			})
+			if (hold) {
+				const serve = axios.put.getMockImplementation()
+				axios.put.mockImplementation(async (url, body) => {
+					if (body.patch?.mergedPending) await hold
+					return serve(url, body)
+				})
+			}
+			const store = useSecretStore()
+			await store.fetchSecret('copy-me')
+			return { store, log }
+		}
+
+		it('moves on past a write-back that already finished, from the version the store moved the open copy to', async () => {
+			const { store, log } = await openWithWriteBack((body, n) => {
+				if (n > 1 && body.sourceBaseUpdatedAt !== SAVED_AT) {
+					throw httpError(409, { error: 'stale_source' })
+				}
+			})
+			await vi.waitFor(() => expect(log.saves).toHaveLength(1))
+			await vi.waitFor(() =>
+				expect(store.currentSecret.updatedAt).toBe(SAVED_AT),
+			)
+
+			// As the dialog does: the open copy's version (moved by the
+			// write-back) and the source version read when it opened.
+			await store.updateSecret(
+				'copy-me',
+				{ key: 'new' },
+				{
+					baseUpdatedAt: store.currentSecret.updatedAt,
+					sourceBaseUpdatedAt: context.sourceUpdatedAt,
+				},
+			)
+
+			expect(
+				log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+			).toEqual([
+				[BASE, context.sourceUpdatedAt],
+				[SAVED_AT, SAVED_AT],
+			])
+		})
+
+		it('keeps its own versions when the write-back started from another source version, so the server refuses it', async () => {
+			let release
+			const held = new Promise((resolve) => (release = resolve))
+			const { store, log } = await openWithWriteBack((body, n) => {
+				if (n > 1 && body.sourceBaseUpdatedAt !== SAVED_AT) {
+					throw httpError(409, { error: 'stale_source' })
+				}
+			}, held)
+
+			// The edit read the source before an owner change that the
+			// write-back then started from.
+			const saving = store
+				.updateSecret(
+					'copy-me',
+					{ key: 'new' },
+					{ baseUpdatedAt: BASE, sourceBaseUpdatedAt: EDIT_SOURCE },
+				)
+				.catch((e) => e)
+			release()
+			const error = await saving
+
+			expect(log.saves[0].sourceBaseUpdatedAt).toBe(context.sourceUpdatedAt)
+			expect(log.saves[1]).toMatchObject({
+				baseUpdatedAt: BASE,
+				sourceBaseUpdatedAt: EDIT_SOURCE,
+			})
+			expect(error.response.data.error).toBe('stale_source')
+		})
+	})
+
 	it('sends a cleared login as null to every copy', async () => {
 		const log = shareSaveServer({
 			id: 'copy-me',

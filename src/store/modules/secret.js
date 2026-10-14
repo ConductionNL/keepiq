@@ -48,13 +48,16 @@ const WHOLE_VAULT = {
 }
 
 /**
- * Merge write-backs in flight, by secret id: `{ base, done, waiting, waiters }`,
- * where `done` resolves to the saved `updatedAt` and, through a copy, the
- * source's `sourceUpdatedAt`, or null when the write-back failed. `waiting`
- * is the last wait on the partner lookup limit, and `waiters` are the saves
- * held behind it that want to hear of one.
+ * The last merge write-back by secret id, in flight or settled: `{ base,
+ * done, settled, waiting, waiters }`. `done` resolves to what it saved:
+ * `updatedAt`, and through a copy the source version it sent
+ * (`sentSourceBase`) and the one it wrote (`sourceUpdatedAt`); or null when
+ * it failed. A settled one is kept until the next write-back of the secret
+ * or the next save of it, so an edit begun before it can still be matched.
+ * `waiting` is its last wait on the partner lookup limit, and `waiters` are
+ * the saves held behind it that want to hear of one.
  *
- * @type {Map<string, {base: string, done: Promise<{updatedAt: string, sourceUpdatedAt: string|null}|null>, waiting: number|null, waiters: Set<(ms: number) => void>}>}
+ * @type {Map<string, {base: string, done: Promise<{updatedAt: string, sentSourceBase: string|null, sourceUpdatedAt: string|null}|null>, settled: boolean, waiting: number|null, waiters: Set<(ms: number) => void>}>}
  */
 const writeBacks = new Map()
 
@@ -489,8 +492,14 @@ export const useSecretStore = defineStore('secret', {
 				return
 			}
 			const base = current.updatedAt
-			let sourceSavedAt = null
-			const inFlight = { base, done: null, waiting: null, waiters: new Set() }
+			let sent = null
+			const inFlight = {
+				base,
+				done: null,
+				settled: false,
+				waiting: null,
+				waiters: new Set(),
+			}
 			const done = this.updateSecret(
 				id,
 				{
@@ -508,7 +517,7 @@ export const useSecretStore = defineStore('secret', {
 						}
 					},
 					onShareSaved: (result) => {
-						sourceSavedAt = result?.sourceUpdatedAt ?? null
+						sent = result
 					},
 				},
 			)
@@ -517,18 +526,20 @@ export const useSecretStore = defineStore('secret', {
 					return saved?.updatedAt
 						? {
 								updatedAt: saved.updatedAt,
-								sourceUpdatedAt: sourceSavedAt,
+								sentSourceBase:
+									sent?.sentSourceBaseUpdatedAt ?? null,
+								sourceUpdatedAt: sent?.sourceUpdatedAt ?? null,
 							}
 						: null
 				})
 				// Stays pending; merged again on the next open.
 				.catch(() => null)
+				.finally(() => {
+					inFlight.settled = true
+				})
 			inFlight.done = done
 			writeBacks.set(id, inFlight)
 			await done
-			if (writeBacks.get(id) === inFlight) {
-				writeBacks.delete(id)
-			}
 		},
 
 		/**
@@ -808,7 +819,25 @@ export const useSecretStore = defineStore('secret', {
 			if (this.currentSecret?.id === id && saved?.updatedAt) {
 				this.currentSecret.updatedAt = saved.updatedAt
 			}
+			if (!options.writeBack) {
+				this.dropSettledWriteBack(id)
+			}
 			return saved
+		},
+
+		/**
+		 * Forget the settled merge write-back of `id` after a save of it: the
+		 * save is newer, so no edit is made from before the write-back any
+		 * more. One still in flight is kept.
+		 *
+		 * @param {string} id The secret ID.
+		 * @return {void}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		dropSettledWriteBack(id) {
+			if (writeBacks.get(id)?.settled) {
+				writeBacks.delete(id)
+			}
 		},
 
 		/**
@@ -827,10 +856,17 @@ export const useSecretStore = defineStore('secret', {
 		},
 
 		/**
-		 * The bases to save from once a merge write-back of `id` in flight has
+		 * The bases to save from once the last merge write-back of `id` has
 		 * settled, the source version included: through a copy, the
 		 * write-back moved the source too, so an edit made before it would
 		 * otherwise be refused as `stale_source` against the write-back itself.
+		 *
+		 * The write-back turned the versions (`base`, `sentSourceBase`) into
+		 * (`updatedAt`, `sourceUpdatedAt`) and nothing else. An edit moves to
+		 * the latter only when each of its versions is one of those two: the
+		 * copy's, and the source's (or it recorded no source version). Any
+		 * other version means something else changed, and the edit keeps its
+		 * own, so the server answers `stale` or `stale_source`.
 		 *
 		 * @param {string} id The secret ID.
 		 * @param {string|undefined} given The base the edit was made from.
@@ -846,7 +882,7 @@ export const useSecretStore = defineStore('secret', {
 				return unchanged
 			}
 			let saved
-			if (onWait) {
+			if (onWait && !inFlight.settled) {
 				if (inFlight.waiting !== null) {
 					onWait(inFlight.waiting)
 				}
@@ -857,22 +893,27 @@ export const useSecretStore = defineStore('secret', {
 			} finally {
 				inFlight.waiters.delete(onWait)
 			}
+			const oneOf = (version, ...versions) =>
+				versions.some((v) => v && Date.parse(v) === Date.parse(version))
 			if (
 				!saved
 				|| given === undefined
-				|| Date.parse(given) !== Date.parse(inFlight.base)
+				|| !oneOf(given, inFlight.base, saved.updatedAt)
+				|| (givenSource
+					&& !oneOf(
+						givenSource,
+						saved.sentSourceBase,
+						saved.sourceUpdatedAt,
+					))
 			) {
 				return unchanged
 			}
-			// Never back: a source version recorded after the write-back
-			// already includes it.
-			const sourceBase =
-				givenSource
-				&& saved.sourceUpdatedAt
-				&& Date.parse(saved.sourceUpdatedAt) > Date.parse(givenSource)
-					? saved.sourceUpdatedAt
-					: givenSource
-			return { base: saved.updatedAt, sourceBase }
+			return {
+				base: saved.updatedAt,
+				sourceBase: givenSource
+					? (saved.sourceUpdatedAt ?? givenSource)
+					: givenSource,
+			}
 		},
 
 		/**

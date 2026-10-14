@@ -146,6 +146,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 					}),
 					restoredFrom: versionId,
 				})
+				secretStore.dropSettledWriteBack(secretId)
 				await notifyOwnerOnly(result)
 				await secretStore.fetchSecret(secretId)
 				await this.fetchVersions(secretId)
