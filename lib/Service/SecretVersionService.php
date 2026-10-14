@@ -151,9 +151,10 @@ class SecretVersionService {
 	/**
 	 * Restore a version on the head row alone, after snapshotting the head.
 	 * Copies are not written here: a restore that must reach them is a
-	 * share-save with `restoredFrom`. With a base, the head is moved off it
-	 * by a compare-and-set inside the transaction, as a share-save does, so a
-	 * save that commits after the check is refused here rather than overwritten.
+	 * share-save with `restoredFrom`. The head is moved off the version just
+	 * read (the base, when one is given) by a compare-and-set inside the
+	 * transaction, as a share-save does, so a save that commits after the
+	 * read is refused here rather than overwritten unsnapshotted.
 	 *
 	 * @param string $versionId The version UUID
 	 * @param string $userId The caller (must own the secret)
@@ -162,7 +163,7 @@ class SecretVersionService {
 	 * @return Secret The updated head
 	 *
 	 * @throws \InvalidArgumentException On not found / not owned / suite blocked / a malformed base
-	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`
+	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
@@ -172,14 +173,8 @@ class SecretVersionService {
 		$secret = $this->reload(id: $version->getSecretId());
 		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
 
-		// The check passed, so the stored version is the base the caller named.
-		$base = null;
-		if ($baseUpdatedAt !== null && $baseUpdatedAt !== '') {
-			$base = $secret->getUpdatedAt();
-		}
-
 		$restored = $this->atomic(
-			fn: fn (): Secret => $this->restoreHead(secret: $secret, version: $version, userId: $userId, base: $base),
+			fn: fn (): Secret => $this->restoreHead(secret: $secret, version: $version, userId: $userId),
 			db: $this->db
 		);
 
@@ -190,29 +185,26 @@ class SecretVersionService {
 	}//end restore()
 
 	/**
-	 * The restore's transaction body: move the head off its base, snapshot
-	 * it, write the version onto it and audit the restore.
+	 * The restore's transaction body: move the head off the version read,
+	 * snapshot it, write the version onto it and audit the restore.
 	 *
 	 * @param Secret $secret The head as read before the transaction
 	 * @param SecretVersion $version The version to restore
 	 * @param string $userId The caller
-	 * @param DateTime|null $base The head version the caller restores over; null skips the check
 	 *
 	 * @return Secret The updated head
 	 *
-	 * @throws StaleWriteException When the head moved on from `$base` after it was read
-	 * @throws \InvalidArgumentException When the head was deleted after it was read
+	 * @throws StaleWriteException When the head moved on after it was read
+	 * @throws InvalidArgumentException When the head was deleted after it was read
 	 */
-	private function restoreHead(Secret $secret, SecretVersion $version, string $userId, ?DateTime $base): Secret {
-		// Always after the stored version, with or without a base: the column
-		// and the stale check count whole seconds, so a restore must never
-		// keep the version an edit made before it was based on.
-		$stored = $secret->getUpdatedAt()?->getTimestamp() ?? 0;
-		$savedAt = new DateTime('@'.max(time(), $stored + 1));
-		if ($base !== null) {
-			if ($this->secretMapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
-				throw new StaleWriteException(current: $this->reload(id: $secret->getId()));
-			}
+	private function restoreHead(Secret $secret, SecretVersion $version, string $userId): Secret {
+		// Always after the stored version: the column and the stale check
+		// count whole seconds, so a restore must never keep the version an
+		// edit made before it was based on.
+		$stored = $secret->getUpdatedAt();
+		$savedAt = new DateTime('@'.max(time(), ($stored?->getTimestamp() ?? 0) + 1));
+		if ($stored !== null && $this->secretMapper->advanceVersion(id: $secret->getId(), base: $stored, savedAt: $savedAt) === 0) {
+			throw new StaleWriteException(current: $this->reload(id: $secret->getId()));
 		}
 
 		// Snapshot the current head so the restore itself is undoable.
