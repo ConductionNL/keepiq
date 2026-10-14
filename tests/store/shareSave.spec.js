@@ -1034,6 +1034,60 @@ describe('updateSecret', () => {
 		expect(reopened.updatedAt).toBe(SAVED_AT)
 	})
 
+	it('opened again during a write-back that is refused, keeps the count and version it read', async () => {
+		const server = await serverWithPending(['{"pin":"1234"}'])
+		const store = useSecretStore()
+		await store.fetchSecret('s1')
+		await server.arrived
+		server.rows.s1 = {
+			...server.rows.s1,
+			pendingAdditionalFields: [
+				...server.rows.s1.pendingAdditionalFields,
+				await server.fill('{"puk":"5678"}'),
+			],
+		}
+		const reopened = await store.fetchSecret('s1')
+		expect(reopened.mergedPending).toBe(2)
+
+		// Saved elsewhere meanwhile, so the write-back is refused as stale.
+		server.rows.s1 = {
+			...server.rows.s1,
+			updatedAt: '2026-10-01T10:00:03+00:00',
+		}
+		server.release()
+		await store.writeBackSettled('s1')
+		await flush()
+
+		expect(server.log.saves).toHaveLength(1)
+		expect(reopened.mergedPending).toBe(2)
+		expect(reopened.updatedAt).toBe(BASE)
+	})
+
+	it('opened again on a read after the write-back saved, keeps the count it read once that write-back settles', async () => {
+		const server = await serverWithPending(['{"pin":"1234"}'], {
+			saveBeforeHold: true,
+		})
+		const store = useSecretStore()
+		await store.fetchSecret('s1')
+		await server.arrived
+		// A fill after the save, on the version the save wrote.
+		server.rows.s1 = {
+			...server.rows.s1,
+			pendingAdditionalFields: [await server.fill('{"puk":"5678"}')],
+		}
+		const reopened = await store.fetchSecret('s1')
+		expect(reopened.mergedPending).toBe(1)
+		expect(reopened.updatedAt).toBe(SAVED_AT)
+
+		server.release()
+		await store.writeBackSettled('s1')
+		await flush()
+
+		expect(server.log.saves).toHaveLength(1)
+		expect(reopened.mergedPending).toBe(1)
+		expect(reopened.updatedAt).toBe(SAVED_AT)
+	})
+
 	it('bases a restore made during the write-back on the write-back, so it is not refused as stale', async () => {
 		const { importPublicKey, rsaEncrypt } =
 			await import('../../src/crypto/rsa.js')
