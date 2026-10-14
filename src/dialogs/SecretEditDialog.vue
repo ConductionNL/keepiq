@@ -506,7 +506,8 @@ export default {
 		 * so the share save refuses it as `stale_source` when the source moved
 		 * on while the dialog was open. Null for an own secret, and when it
 		 * cannot be read (offline): the save then takes the source version of
-		 * its own moment.
+		 * its own moment. Read after any merge write-back of the secret, which
+		 * moves the source too.
 		 *
 		 * @return {Promise<string|null>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
@@ -515,6 +516,7 @@ export default {
 			if (useOfflineStore().servedFromCache) {
 				return null
 			}
+			await useSecretStore().writeBackSettled(this.secretId)
 			try {
 				const context = await useShareStore().fetchWriteContext(
 					this.secretId,
@@ -667,21 +669,24 @@ export default {
 
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
-					// Both versions are read only now, after the wait, so a
-					// write-back settling meanwhile is seen in both.
+					const store = useSecretStore()
+					const onWait = () => {
+						this.waitingForPartners = true
+					}
+					// A merge write-back of this secret moves the copy, and
+					// through a copy the source: wait for it, then read the
+					// source version again. `o` is the store's open copy, which
+					// the write-back moved, so its version is read only now too.
+					if (await store.writeBackSettled(this.secretId, onWait)) {
+						this.sourceBase = this.sourceVersion()
+					}
 					const sourceBaseUpdatedAt = await this.sourceBase
-					updated = await useSecretStore().updateSecret(
-						this.secretId,
-						diff,
-						{
-							baseUpdatedAt: o.updatedAt,
-							sourceBaseUpdatedAt,
-							withoutUnreachable: options?.withoutUnreachable ?? [],
-							onWait: () => {
-								this.waitingForPartners = true
-							},
-						},
-					)
+					updated = await store.updateSecret(this.secretId, diff, {
+						baseUpdatedAt: o.updatedAt,
+						sourceBaseUpdatedAt,
+						withoutUnreachable: options?.withoutUnreachable ?? [],
+						onWait,
+					})
 				}
 				// Tags are the holder's own, stored apart from the value
 				// (vault-favourites-tags-and-last-used).

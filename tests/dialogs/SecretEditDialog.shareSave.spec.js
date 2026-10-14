@@ -9,6 +9,7 @@
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
  */
 
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -22,6 +23,8 @@ import { httpError, SAVED_AT, shareSaveServer } from '../fixtures/shareSaveServe
 import { RSA4096_PUBLIC_KEY_SPKI_PEM } from '../vitest/fixtures/rsa-fixtures.js'
 
 const BASE = '2026-10-01T10:00:00+00:00'
+/** The source version a copy opens on, before any write-back moves it. */
+const OPENED_SOURCE = '2026-09-30T08:00:00+00:00'
 
 const stubs = {
 	NcDialog: {
@@ -53,15 +56,19 @@ const stubs = {
  * @param {object} [options] Mount options.
  * @param {object} [options.stubs] Component stubs to use instead of the defaults.
  * @param {object} [options.context] The write-context the dialog reads on open.
+ * @param {() => Promise<object>} [options.writeContext] Answers each write-context read, instead of a fixed context.
  * @param {() => Promise<object>} [options.fetchSecret] Opens the secret, instead of a fixed answer.
  * @return {Promise<object>} The wrapper.
  */
 async function mountEdited(options = {}) {
-	useShareStore().fetchWriteContext = vi
-		.fn()
-		.mockResolvedValue(
-			options.context ?? { sourceSecretId: 's1', sourceUpdatedAt: BASE },
-		)
+	useShareStore().fetchWriteContext = options.writeContext
+		? vi.fn(options.writeContext)
+		: vi.fn().mockResolvedValue(
+				options.context ?? {
+					sourceSecretId: 's1',
+					sourceUpdatedAt: BASE,
+				},
+			)
 	useSecretStore().fetchSecret =
 		options.fetchSecret
 		?? vi.fn().mockResolvedValue({
@@ -82,6 +89,78 @@ async function mountEdited(options = {}) {
 	await wrapper.vm.$nextTick()
 	wrapper.vm.value = 'Xk9#mQ2$vL7@pR4!zT6&'
 	return wrapper
+}
+
+/** The open secret as the store holds it, with a request-filled member to write back. */
+const OPEN_WITH_PENDING = {
+	id: 's1',
+	name: 'Router',
+	typeId: 'login',
+	key: 'old-value',
+	url: null,
+	login: '',
+	additionalFields: {},
+	mergedPending: 1,
+	updatedAt: BASE,
+}
+
+/**
+ * Mount the dialog over a copy whose open starts the merge write-back, like
+ * the store's fetchSecret, against a server that refuses a stale copy or
+ * source version, through the share save and the plain update alike.
+ *
+ * @param {object} options The copy.
+ * @param {string} options.grade The caller's grade on the source.
+ * @param {Promise|null} [options.hold] Holds the write-back's request until it resolves.
+ * @return {Promise<{wrapper: object, log: object, writeBack: () => Promise<void>}>}
+ */
+async function mountCopyWithWriteBack({ grade, hold = null }) {
+	const server = { copy: BASE, source: OPENED_SOURCE }
+	const context = {
+		sourceSecretId: 'src',
+		effectiveGrade: grade,
+		ownerCertificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
+	}
+	useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
+	const stale = () => httpError(409, { error: 'stale', current: { id: 's1' } })
+	const log = shareSaveServer({
+		id: 's1',
+		context,
+		onSave: (body) => {
+			if (body.baseUpdatedAt !== server.copy) {
+				throw stale()
+			}
+			if (body.sourceBaseUpdatedAt !== server.source) {
+				throw httpError(409, { error: 'stale_source' })
+			}
+			server.copy = SAVED_AT
+			server.source = SAVED_AT
+		},
+	})
+	const serve = axios.put.getMockImplementation()
+	axios.put.mockImplementation(async (url, body) => {
+		if (hold && (body.patch ?? body).mergedPending) {
+			await hold
+		}
+		if (!url.endsWith('/share-save')) {
+			if (body.baseUpdatedAt !== server.copy) {
+				throw stale()
+			}
+			server.copy = SAVED_AT
+		}
+		return serve(url, body)
+	})
+	const store = useSecretStore()
+	let writeBack
+	const wrapper = await mountEdited({
+		writeContext: async () => ({ ...context, sourceUpdatedAt: server.source }),
+		fetchSecret: async () => {
+			store.currentSecret = { ...OPEN_WITH_PENDING }
+			writeBack = store.persistMergedPending('s1')
+			return store.currentSecret
+		},
+	})
+	return { wrapper, log, writeBack: () => writeBack }
 }
 
 describe('SecretEditDialog — share save', () => {
@@ -156,27 +235,32 @@ describe('SecretEditDialog — share save', () => {
 	})
 
 	it('says so while the save is held behind a merge write-back that waits on the partner lookup limit', async () => {
-		const wrapper = await mountEdited()
 		useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
 		const log = shareSaveServer({ id: 's1' })
 		const store = useSecretStore()
 		const realUpdate = store.updateSecret
 		let releaseWriteBack
+		const released = new Promise((resolve) => (releaseWriteBack = resolve))
 		vi.spyOn(store, 'updateSecret').mockImplementation((id, data, options) => {
 			if (!options?.writeBack) {
 				return realUpdate.call(store, id, data, options)
 			}
-			// The write-back met a 429 on a partner lookup and waits.
+			// The write-back met a 429 on a partner lookup and waits; once
+			// released it saves, and the open secret moves on as it does.
 			options.onWait(60000)
-			return new Promise((resolve) => (releaseWriteBack = resolve))
+			return released.then(() => {
+				store.currentSecret.updatedAt = SAVED_AT
+				return { id: 's1', updatedAt: SAVED_AT }
+			})
 		})
-		store.currentSecret = {
-			id: 's1',
-			updatedAt: BASE,
-			additionalFields: {},
-			mergedPending: 1,
-		}
-		const writeBack = store.persistMergedPending('s1')
+		let writeBack
+		const wrapper = await mountEdited({
+			fetchSecret: async () => {
+				store.currentSecret = { ...OPEN_WITH_PENDING }
+				writeBack = store.persistMergedPending('s1')
+				return store.currentSecret
+			},
+		})
 		const waiting = () => wrapper.find('[data-testid="secret-edit-waiting"]')
 
 		const saving = wrapper.vm.submit()
@@ -185,7 +269,7 @@ describe('SecretEditDialog — share save', () => {
 		expect(log.saves).toHaveLength(0)
 		expect(waiting().text()).toContain('waiting for the lookup limit')
 
-		releaseWriteBack({ id: 's1', updatedAt: SAVED_AT })
+		releaseWriteBack()
 		await writeBack
 		await saving
 		await wrapper.vm.$nextTick()
@@ -195,47 +279,10 @@ describe('SecretEditDialog — share save', () => {
 	})
 
 	it('saves a copy past a merge write-back that finished before the save, from the versions it moved to', async () => {
-		const opened = '2026-09-30T08:00:00+00:00'
-		const context = {
-			sourceSecretId: 'src',
-			effectiveGrade: 'write',
-			ownerCertificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
-			sourceUpdatedAt: opened,
-		}
-		useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
-		const log = shareSaveServer({
-			id: 's1',
-			context,
-			onSave: (body, n) => {
-				// The write-back moved the source to SAVED_AT.
-				if (n > 1 && body.sourceBaseUpdatedAt !== SAVED_AT) {
-					throw httpError(409, { error: 'stale_source' })
-				}
-			},
+		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
+			grade: 'write',
 		})
-		const store = useSecretStore()
-		let writeBack
-		const wrapper = await mountEdited({
-			context,
-			// Like the store: the open secret is the store's, and opening it
-			// starts the merge write-back without waiting for it.
-			fetchSecret: async () => {
-				store.currentSecret = {
-					id: 's1',
-					name: 'Router',
-					typeId: 'login',
-					key: 'old-value',
-					url: null,
-					login: '',
-					additionalFields: {},
-					mergedPending: 1,
-					updatedAt: BASE,
-				}
-				writeBack = store.persistMergedPending('s1')
-				return store.currentSecret
-			},
-		})
-		await writeBack
+		await writeBack()
 		expect(wrapper.vm.original.updatedAt).toBe(SAVED_AT)
 
 		await wrapper.vm.submit()
@@ -244,8 +291,62 @@ describe('SecretEditDialog — share save', () => {
 		expect(
 			log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
 		).toEqual([
-			[BASE, opened],
+			[BASE, OPENED_SOURCE],
 			[SAVED_AT, SAVED_AT],
+		])
+		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('saves a copy held behind a merge write-back on the versions read again after it', async () => {
+		let release
+		const hold = new Promise((resolve) => (release = resolve))
+		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
+			grade: 'write',
+			hold,
+		})
+
+		const saving = wrapper.vm.submit()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		release()
+		await writeBack()
+		await saving
+		await wrapper.vm.$nextTick()
+
+		expect(
+			log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+		).toEqual([
+			[BASE, OPENED_SOURCE],
+			[SAVED_AT, SAVED_AT],
+		])
+		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('saves the own copy without a write grade held behind a merge write-back, not refused as stale against it', async () => {
+		let release
+		const hold = new Promise((resolve) => (release = resolve))
+		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
+			grade: 'read',
+			hold,
+		})
+
+		const saving = wrapper.vm.submit()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		release()
+		await writeBack()
+		await saving
+		await wrapper.vm.$nextTick()
+
+		// Both go through the plain update, which moves only the copy.
+		expect(log.saves).toHaveLength(0)
+		expect(log.plainPuts.map(([, body]) => body.baseUpdatedAt)).toEqual([
+			BASE,
+			SAVED_AT,
 		])
 		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
 			false,

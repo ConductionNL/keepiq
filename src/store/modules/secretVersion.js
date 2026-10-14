@@ -116,10 +116,8 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			this.error = null
 			try {
 				const secretStore = useSecretStore()
-				const baseUpdatedAt = await secretStore.settledBase(
-					secretId,
-					secretStore.baseOf(secretId),
-				)
+				await secretStore.writeBackSettled(secretId)
+				const baseUpdatedAt = secretStore.baseOf(secretId)
 				const version = (
 					await axios.get(
 						generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
@@ -146,12 +144,10 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 					}),
 					restoredFrom: versionId,
 				})
-				secretStore.dropSettledWriteBack(secretId)
 				await notifyOwnerOnly(result)
 				await secretStore.fetchSecret(secretId)
 				await this.fetchVersions(secretId)
 			} catch (e) {
-				useSecretStore().forgetWriteBackOnRefusal(secretId, e)
 				this.error =
 					shareSaveErrorText(e)
 					|| e?.response?.data?.message
