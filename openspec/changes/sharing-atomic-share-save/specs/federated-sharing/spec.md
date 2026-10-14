@@ -27,12 +27,12 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice's secret passes to Dave, through Alice's delegation when her account is deleted or through team offboarding
-- **THEN** Bob's share MUST be Dave's, so Dave's share-save writes it and Dave can revoke or suspend it
+- **THEN** Bob's share MUST be Dave's, so Dave can revoke or suspend it, and a share-save of the secret itself writes it
 - **AND** Bob's server MUST keep pulling the share
 
 ### Requirement: Remote copies are read-only
 
-Read-only covers the value and the sharing, not where the recipient files the copy. The system MUST refuse, for its owner, any change of a read-only secret's value, login, additional fields, name, URL or type, a sync, onward sharing and link-share creation. The system MUST allow a change of only its folder. When the recipient declines a pending share, or moves an accepted copy to the trash or deletes it for good, the receiving server MUST mark the inbound share declined and send OCM `SHARE_DECLINED` to the owner's instance. The owner's share MUST then show as declined, and the sending server MUST NOT serve it or send further notifications for it. Two cases differ: a suspended share MUST stay suspended, and a share whose revocation is still waiting to reach the recipient, or was given up, MUST be removed, because the decline completes that revocation. When the recipient restores a copy whose share they declined by deleting it, the receiving server MUST send OCM `SHARE_ACCEPTED` to the owner's instance. When the owner's instance takes it, the inbound share MUST be accepted again, the owner's share MUST be live again, and the copy MUST pull the current value. When the owner revoked the share, suspended it, removed it, or shared the secret with the recipient again in the meantime, the copy MUST stay read-only with its last value, the restore MUST say that the share has ended, and the system MUST NOT give the recipient any access the owner did not grant.
+Read-only covers the value and the sharing, not where the recipient files the copy. The system MUST refuse, for its owner, any change of a read-only secret's value, login, additional fields, name, URL or type, a sync, onward sharing and link-share creation. The system MUST allow a change of only its folder. When the recipient declines a pending share, or moves an accepted copy to the trash or deletes it for good, the receiving server MUST mark the inbound share declined and send OCM `SHARE_DECLINED` to the owner's instance. The owner's share MUST then show as declined, and the sending server MUST NOT serve it or send further notifications for it. Two cases differ: a suspended share MUST stay suspended, and a share whose revocation is still waiting to reach the recipient, or was given up, MUST be removed, because the decline completes that revocation. When the recipient restores a copy whose share they declined by deleting it, the receiving server MUST send OCM `SHARE_ACCEPTED` to the owner's instance. When the owner's instance takes it, the inbound share MUST be accepted again, the owner's share MUST be live again, the copy MUST pull the value the share last received, and the owner's next save MUST reach it. When the owner revoked the share, suspended it, removed it, or shared the secret with the recipient again in the meantime, the copy MUST stay read-only with its last value, the restore MUST say that the share has ended, and the system MUST NOT give the recipient any access the owner did not grant.
 
 #### Scenario: Bob cannot edit or pass it on
 
@@ -72,7 +72,7 @@ Read-only covers the value and the sharing, not where the recipient files the co
 - **WHEN** Bob restores the copy from the trash
 - **THEN** Bob's server MUST send `SHARE_ACCEPTED` to Alice's instance and mark the share accepted again
 - **AND** Alice's share MUST leave "declined" and her later changes MUST reach Bob
-- **AND** Bob's copy MUST show Alice's current value
+- **AND** Bob's copy MUST show the value the share last received, and Alice's next save MUST reach it
 
 #### Scenario: The owner revoked the share meanwhile
 
