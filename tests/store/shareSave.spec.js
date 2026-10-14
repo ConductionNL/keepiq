@@ -1109,6 +1109,48 @@ describe('updateSecret', () => {
 		expect(reopened.updatedAt).toBe(SAVED_AT)
 	})
 
+	it('opened again on a read sent during a write-back that saved but handled after it settled, starts its own write-back for a fill that came after', async () => {
+		const server = await serverWithPending(['{"pin":"1234"}'], {
+			saveBeforeHold: true,
+		})
+		const store = useSecretStore()
+		await store.fetchSecret('s1')
+		await server.arrived
+		// A fill after the save, on the version the save wrote.
+		server.rows.s1 = {
+			...server.rows.s1,
+			pendingAdditionalFields: [await server.fill('{"puk":"5678"}')],
+		}
+		// The reopen's read is answered now and handled only once the
+		// write-back settled.
+		const serveGet = axios.get.getMockImplementation()
+		let deliver
+		const delivered = new Promise((resolve) => (deliver = resolve))
+		axios.get.mockImplementationOnce(async (url) => {
+			const answer = await serveGet(url)
+			await delivered
+			return answer
+		})
+
+		const reopening = store.fetchSecret('s1')
+		server.release()
+		await store.writeBackSettled('s1')
+		await flush()
+		deliver()
+		const reopened = await reopening
+		await flush()
+		await store.writeBackSettled('s1')
+		await flush()
+
+		expect(
+			server.log.saves.map((s) => [s.baseUpdatedAt, s.patch.mergedPending]),
+		).toEqual([
+			[BASE, 1],
+			[SAVED_AT, 1],
+		])
+		expect(reopened.mergedPending).toBe(0)
+	})
+
 	it('bases a restore made during the write-back on the write-back, so it is not refused as stale', async () => {
 		const { importPublicKey, rsaEncrypt } =
 			await import('../../src/crypto/rsa.js')
