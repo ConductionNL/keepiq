@@ -5,9 +5,9 @@
  *
  * A partner share whose owner is not its secret's owner is left over from an
  * ownership transfer (account deletion with a delegate, or team offboarding)
- * that did not move it. The new owner's share-save skips it, nobody can revoke
- * or suspend it, and the partner is not served. This step hands every such
- * share to its secret's owner, as SecretOwnerTransferService does.
+ * that did not move it. Only the previous owner could still revoke or suspend
+ * it, and the partner is not served. This step hands every such share to its
+ * secret's owner, as SecretOwnerTransferService does.
  *
  * @category Repair
  * @package  OCA\Keepiq\Repair

@@ -393,8 +393,8 @@ class FederatedShareOwnerChangesTest extends TestCase {
 
 	/**
 	 * A share whose owner is not its secret's owner was left behind by an
-	 * ownership transfer: nobody can save, revoke or suspend it, so its
-	 * value is not served.
+	 * ownership transfer: only the previous owner could still revoke or
+	 * suspend it, so its value is not served.
 	 */
 	public function testAShareLeftBehindByAnOwnerChangeIsNotServed(): void {
 		$pulled = $this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]);

@@ -467,7 +467,7 @@ class ShareSaveVersionLockTest extends TestCase {
 			$this->markTestSkipped(message: 'Federation needs the OCM APIs of Nextcloud 33 or later.');
 		}
 
-		$row =$mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
+		$row = $mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
 		$row->setSharedSecretHash(hash('sha256', 'the-shared-secret'));
 		$mapper->update($row);
 
