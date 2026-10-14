@@ -48,13 +48,15 @@ const WHOLE_VAULT = {
 }
 
 /**
- * Merge write-backs in flight, by secret id: `{ done, waiting, waiters }`,
- * removed when it settles. `done` resolves to the source version it wrote
- * (`sourceUpdatedAt`, null when it saved only the own copy), or to null when
- * it failed. `waiting` is its last wait on the partner lookup limit, and
- * `waiters` are the saves held behind it that want to hear of one.
+ * Merge write-backs in flight, by secret id: `{ done, waiting, waiters, base,
+ * count, updatedAt }`, removed when it settles. `done` resolves to the source
+ * version it wrote (`sourceUpdatedAt`, null when it saved only the own copy),
+ * or to null when it failed. `waiting` is its last wait on the partner lookup
+ * limit, and `waiters` are the saves held behind it that want to hear of one.
+ * `base` and `count` are the version it saves from and the pending blobs it
+ * drops; `updatedAt` is the version it saved, once it did.
  *
- * @type {Map<string, {done: Promise<{sourceUpdatedAt: string|null}|null>, waiting: number|null, waiters: Set<(ms: number) => void>}>}
+ * @type {Map<string, {done: Promise<{sourceUpdatedAt: string|null}|null>, waiting: number|null, waiters: Set<(ms: number) => void>, base: string, count: number, updatedAt: string|null}>}
  */
 const writeBacks = new Map()
 
@@ -478,6 +480,10 @@ export const useSecretStore = defineStore('secret', {
 		 * pending list. Best effort: a failure leaves them pending, and the
 		 * next open merges them again.
 		 *
+		 * An open while a write-back of the secret runs waits for that one
+		 * instead of starting a second, which would be refused once the
+		 * first saved and hide the versions the first wrote.
+		 *
 		 * @param {string} id The secret ID.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
@@ -488,7 +494,26 @@ export const useSecretStore = defineStore('secret', {
 			if (!current || current.id !== id || !(current.mergedPending > 0)) {
 				return
 			}
-			const inFlight = { done: null, waiting: null, waiters: new Set() }
+			const running = writeBacks.get(id)
+			if (running) {
+				const readAt = current.updatedAt
+				const saved = await running.done
+				// Read on the version it saved from, this copy also merged the
+				// blobs it dropped; fills that came after stay to drop.
+				if (saved && readAt === running.base) {
+					current.mergedPending -= running.count
+					current.updatedAt = running.updatedAt ?? current.updatedAt
+				}
+				return
+			}
+			const inFlight = {
+				done: null,
+				waiting: null,
+				waiters: new Set(),
+				base: current.updatedAt,
+				count: current.mergedPending,
+				updatedAt: null,
+			}
 			let sourceUpdatedAt = null
 			const done = this.updateSecret(
 				id,
@@ -511,7 +536,8 @@ export const useSecretStore = defineStore('secret', {
 					},
 				},
 			)
-				.then(() => {
+				.then((saved) => {
+					inFlight.updatedAt = saved?.updatedAt ?? null
 					current.mergedPending = 0
 					return { sourceUpdatedAt }
 				})
@@ -520,9 +546,7 @@ export const useSecretStore = defineStore('secret', {
 			inFlight.done = done
 			writeBacks.set(id, inFlight)
 			await done
-			if (writeBacks.get(id) === inFlight) {
-				writeBacks.delete(id)
-			}
+			writeBacks.delete(id)
 		},
 
 		/**

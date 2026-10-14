@@ -885,6 +885,58 @@ describe('updateSecret', () => {
 		expect(await store.writeBackSettled('s1')).toBeNull()
 	})
 
+	it('opened again during the write-back, waits for it instead of starting a second, and drops only a fill that came in between on its next save', async () => {
+		const { importPublicKey, rsaEncrypt } =
+			await import('../../src/crypto/rsa.js')
+		const own = await importPublicKey(OWNER_CERT)
+		const first = await rsaEncrypt('{"pin":"1234"}', own)
+		const rows = {
+			s1: {
+				id: 's1',
+				key: await rsaEncrypt('pw', own),
+				additionalFields: await rsaEncrypt('{"note":"x"}', own),
+				pendingAdditionalFields: [first],
+				updatedAt: BASE,
+			},
+		}
+		const log = shareSaveServer({ id: 's1', rows })
+		const serve = axios.put.getMockImplementation()
+		let release
+		const held = new Promise((resolve) => (release = resolve))
+		axios.put.mockImplementation(async (url, body) => {
+			if (body.patch?.mergedPending) await held
+			return serve(url, body)
+		})
+		const store = useSecretStore()
+		await store.fetchSecret('s1')
+		// A fill keeps the version it lands on.
+		rows.s1 = {
+			...rows.s1,
+			pendingAdditionalFields: [
+				first,
+				await rsaEncrypt('{"puk":"5678"}', own),
+			],
+		}
+
+		const reopened = await store.fetchSecret('s1')
+		expect(reopened.mergedPending).toBe(2)
+		release()
+		await store.writeBackSettled('s1')
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		expect(log.saves).toHaveLength(1)
+		expect(log.saves[0].patch.mergedPending).toBe(1)
+		expect(reopened.mergedPending).toBe(1)
+		expect(reopened.updatedAt).toBe(SAVED_AT)
+
+		await store.updateSecret('s1', {
+			additionalFields: reopened.additionalFields,
+		})
+
+		expect(log.saves[1].baseUpdatedAt).toBe(SAVED_AT)
+		expect(log.saves[1].patch.mergedPending).toBe(1)
+	})
+
 	it('bases a restore made during the write-back on the write-back, so it is not refused as stale', async () => {
 		const { importPublicKey, rsaEncrypt } =
 			await import('../../src/crypto/rsa.js')

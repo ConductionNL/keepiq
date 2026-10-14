@@ -113,9 +113,14 @@ const OPEN_WITH_PENDING = {
  * @param {object} options The copy.
  * @param {string} options.grade The caller's grade on the source.
  * @param {Promise|null} [options.hold] Holds the write-back's request until it resolves.
- * @return {Promise<{wrapper: object, log: object, server: {copy: string, source: string}, writeBack: () => Promise<void>}>}
+ * @param {boolean} [options.openedElsewhere] The sidebar opened the copy before the dialog, starting its own write-back.
+ * @return {Promise<{wrapper: object, log: object, server: {copy: string, source: string}, writeBack: () => Promise<void>, elsewhere: () => Promise<void>|null}>}
  */
-async function mountCopyWithWriteBack({ grade, hold = null }) {
+async function mountCopyWithWriteBack({
+	grade,
+	hold = null,
+	openedElsewhere = false,
+}) {
 	const server = { copy: BASE, source: OPENED_SOURCE }
 	const context = {
 		sourceSecretId: 'src',
@@ -152,6 +157,11 @@ async function mountCopyWithWriteBack({ grade, hold = null }) {
 		return serve(url, body)
 	})
 	const store = useSecretStore()
+	let elsewhere = null
+	if (openedElsewhere) {
+		store.currentSecret = { ...OPEN_WITH_PENDING }
+		elsewhere = store.persistMergedPending('s1')
+	}
 	let writeBack
 	const wrapper = await mountEdited({
 		writeContext: async () => ({ ...context, sourceUpdatedAt: server.source }),
@@ -161,7 +171,13 @@ async function mountCopyWithWriteBack({ grade, hold = null }) {
 			return store.currentSecret
 		},
 	})
-	return { wrapper, log, server, writeBack: () => writeBack }
+	return {
+		wrapper,
+		log,
+		server,
+		writeBack: () => writeBack,
+		elsewhere: () => elsewhere,
+	}
 }
 
 describe('SecretEditDialog — share save', () => {
@@ -341,6 +357,34 @@ describe('SecretEditDialog — share save', () => {
 		])
 		// The dialog's one read on open, and one per share save.
 		expect(useShareStore().fetchWriteContext).toHaveBeenCalledTimes(3)
+		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it("saves a copy opened while the sidebar's merge write-back runs on the versions that write-back saved, without starting a second", async () => {
+		let release
+		const hold = new Promise((resolve) => (release = resolve))
+		const { wrapper, log, writeBack, elsewhere } = await mountCopyWithWriteBack({
+			grade: 'write',
+			hold,
+			openedElsewhere: true,
+		})
+
+		release()
+		await elsewhere()
+		await writeBack()
+		await wrapper.vm.submit()
+		await wrapper.vm.$nextTick()
+
+		expect(
+			log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+		).toEqual([
+			[BASE, OPENED_SOURCE],
+			[SAVED_AT, SAVED_AT],
+		])
+		expect(wrapper.vm.original.mergedPending).toBe(0)
 		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
 			false,
 		)
