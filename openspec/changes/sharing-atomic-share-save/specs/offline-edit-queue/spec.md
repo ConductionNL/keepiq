@@ -17,6 +17,12 @@ When the administrator setting `offline_edits_enabled` is true and the vault is 
 - **WHEN** a vault owner reading offline tries to edit a secret
 - **THEN** the action MUST be prevented with an explanation that Keepiq is read-only offline
 
+#### Scenario: An offline edit of a copy records the source version it was made from
+
+- **GIVEN** a team-folder member reading offline a copy whose cached row carries the source's `sourceUpdatedAt`
+- **WHEN** they change its password and later its login, both before reconnecting
+- **THEN** the queue MUST hold one entry whose `sourceBaseUpdatedAt` is that cached `sourceUpdatedAt`, the version the first change was made from
+
 ### Requirement: Failed entries are kept, never dropped silently
 
 A replay answered with 403 or 404, a share-save refused with 400, or a share-save stopped by an unreachable partner or by the partner lookup limit MUST move the entry to a failed list where the user can copy their values (decrypted in the browser) or discard the entry, with the reason shown next to it, also after a reload. An entry stopped by an unreachable partner or the lookup limit MUST also offer to try again. A 423 or a network error MUST keep the entry queued. A failed entry MUST NOT stop the replay of the entries after it.
@@ -44,13 +50,20 @@ A replay answered with 403 or 404, a share-save refused with 400, or a share-sav
 
 ### Requirement: Replay saves value changes through the share-save
 
-A queued update that changes a value, login or additional fields MUST be replayed as one share-save with the `baseUpdatedAt` stored in the entry (and, on a copy, the source version stored with it, or the source version of replay time when none was stored), encrypted for the copies and partner shares the server names at replay time. A 409 `stale` or `stale_source` MUST become a conflict the user resolves; keeping their change after a `stale_source` MUST replay it on the source version that 409 named. An entry left from before this change whose owner row saved but whose recipient sync did not MUST be saved again through share-save when the row still holds the entry's ciphertext, without its `mergedPending` count, and MUST be dropped when the row changed since.
+A queued update that changes a value, login or additional fields MUST be replayed as one share-save with the `baseUpdatedAt` stored in the entry (and, on a copy, the source version stored with it, or the source version of replay time when none was stored), encrypted for the copies and partner shares the server names at replay time. A 409 `stale` or `stale_source` MUST become a conflict the user resolves; keeping their change after a `stale_source` MUST replay it on the source version that 409 named, or, after a reload that lost the 409, on the one stored in the entry. An entry left from before this change whose owner row saved but whose recipient sync did not MUST be saved again through share-save when the row still holds the entry's ciphertext, without its `mergedPending` count, and MUST be dropped when the row changed since.
 
 #### Scenario: A shared secret edited offline reaches every copy
 
 - **GIVEN** an owner who changed the password of a shared secret offline
 - **WHEN** the owner reconnects and unlocks
 - **THEN** the replay MUST save the owner's row and every copy in one share-save, or save nothing
+
+#### Scenario: Keeping mine after the source moved
+
+- **GIVEN** a queued edit of a copy whose replay was refused with 409 `stale_source`
+- **WHEN** the user keeps their change
+- **THEN** the replay MUST send the source version that 409 named
+- **AND** after a reload, when that 409 is no longer known, the replay MUST send the source version stored in the entry
 
 #### Scenario: A pending sync from before the change is finished
 
