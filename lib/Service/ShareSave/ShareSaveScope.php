@@ -109,21 +109,32 @@ class ShareSaveScope {
 	/**
 	 * Check the copy-editor's right to write every copy again, inside the
 	 * transaction after the locks, so a grade lowered after resolve() refuses
-	 * the save and rolls it back. The owner path has nothing to check.
+	 * the save and rolls it back. The source is read again first: moving it to
+	 * another folder does not change its version, so the lock does not see it.
+	 * The owner path has nothing to check.
 	 *
 	 * @param ShareSavePath $path The path resolve() returned
 	 * @param string $userId The caller
 	 *
 	 * @return void
 	 *
+	 * @throws NotFoundException When the source was deleted meanwhile
 	 * @throws ShareSaveRefusal `not_allowed` for a copy holder who lost the right to write every copy
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function assertStillWriter(ShareSavePath $path, string $userId): void {
-		if ($path->isCopyEditor() === true) {
-			$this->writerOn(source: $path->source, userId: $userId);
+		if ($path->isCopyEditor() === false) {
+			return;
 		}
+
+		try {
+			$source = $this->secrets->findById($path->source->getId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		$this->writerOn(source: $source, userId: $userId);
 	}//end assertStillWriter()
 
 	/**

@@ -640,6 +640,25 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
 	}
 
+	public function testASourceMovedOutOfItsTeamFolderBeforeTheLockRefusesTheSave(): void {
+		$this->rows['src']->setFolderId('team');
+		$this->auth->method('isOwnerOrDelegate')->willReturn(false);
+		$this->auth->method('resolveGrade')->willReturnCallback(
+			function (Secret $secret): string {
+				$grade = ($secret->getFolderId() === 'team') ? 'write' : 'read';
+				// The source leaves the team folder right after resolve() read it.
+				$this->rows['src']->setFolderId('private');
+				return $grade;
+			}
+		);
+		$this->auth->method('assertOwnerOrDelegate')->willThrowException(new InvalidArgumentException('no'));
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
 	public function testAStaleSourceIsRefusedWithItsVersion(): void {
 		$this->bobWritesOnAGrade();
 		$this->rows['src']->setUpdatedAt(new DateTime('2026-10-01T10:00:09+00:00'));
