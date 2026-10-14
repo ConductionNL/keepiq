@@ -114,7 +114,7 @@ const OPEN_WITH_PENDING = {
  * @param {string} options.grade The caller's grade on the source.
  * @param {Promise|null} [options.hold] Holds the write-back's request until it resolves.
  * @param {boolean} [options.openedElsewhere] The sidebar opened the copy before the dialog, starting its own write-back.
- * @return {Promise<{wrapper: object, log: object, server: {copy: string, source: string}, writeBack: () => Promise<void>, elsewhere: () => Promise<void>|null}>}
+ * @return {Promise<{wrapper: object, log: object, server: {copy: string, source: string}, writeBack: () => Promise<void>, elsewhere: () => Promise<void>|null, arrived: Promise<void>}>} `arrived` resolves once the held write-back's request reached the server.
  */
 async function mountCopyWithWriteBack({
 	grade,
@@ -144,8 +144,11 @@ async function mountCopyWithWriteBack({
 		},
 	})
 	const serve = axios.put.getMockImplementation()
+	let arrive
+	const arrived = new Promise((resolve) => (arrive = resolve))
 	axios.put.mockImplementation(async (url, body) => {
 		if (hold && (body.patch ?? body).mergedPending) {
+			arrive()
 			await hold
 		}
 		if (!url.endsWith('/share-save')) {
@@ -177,6 +180,7 @@ async function mountCopyWithWriteBack({
 		server,
 		writeBack: () => writeBack,
 		elsewhere: () => elsewhere,
+		arrived,
 	}
 }
 
@@ -337,13 +341,13 @@ describe('SecretEditDialog — share save', () => {
 	it('saves a copy held behind a merge write-back on the versions that write-back saved, not read again', async () => {
 		let release
 		const hold = new Promise((resolve) => (release = resolve))
-		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
+		const { wrapper, log, writeBack, arrived } = await mountCopyWithWriteBack({
 			grade: 'write',
 			hold,
 		})
 
 		const saving = wrapper.vm.submit()
-		await new Promise((resolve) => setTimeout(resolve, 0))
+		await arrived
 		release()
 		await writeBack()
 		await saving
@@ -394,13 +398,14 @@ describe('SecretEditDialog — share save', () => {
 	it('refuses a copy held behind a merge write-back that a source change made fail, keeping the versions it opened on', async () => {
 		let release
 		const hold = new Promise((resolve) => (release = resolve))
-		const { wrapper, log, server, writeBack } = await mountCopyWithWriteBack({
-			grade: 'write',
-			hold,
-		})
+		const { wrapper, log, server, writeBack, arrived } =
+			await mountCopyWithWriteBack({
+				grade: 'write',
+				hold,
+			})
 
 		const saving = wrapper.vm.submit()
-		await new Promise((resolve) => setTimeout(resolve, 0))
+		await arrived
 		// The owner changes the source, leaving the copy as it is, while the
 		// write-back is held, so the write-back is refused as `stale_source`.
 		server.source = '2026-10-01T09:30:00+00:00'
@@ -424,13 +429,13 @@ describe('SecretEditDialog — share save', () => {
 	it('saves the own copy without a write grade held behind a merge write-back, not refused as stale against it', async () => {
 		let release
 		const hold = new Promise((resolve) => (release = resolve))
-		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
+		const { wrapper, log, writeBack, arrived } = await mountCopyWithWriteBack({
 			grade: 'read',
 			hold,
 		})
 
 		const saving = wrapper.vm.submit()
-		await new Promise((resolve) => setTimeout(resolve, 0))
+		await arrived
 		release()
 		await writeBack()
 		await saving
