@@ -545,6 +545,8 @@ export const useSecretStore = defineStore('secret', {
 				.then((saved) => {
 					inFlight.updatedAt = saved?.updatedAt ?? null
 					current.mergedPending = 0
+					// Also when another open replaced it as the open secret.
+					current.updatedAt = saved?.updatedAt ?? current.updatedAt
 					return { sourceUpdatedAt }
 				})
 				// Stays pending; merged again on the next open.

@@ -681,8 +681,8 @@ export default {
 					const onWait = () => {
 						this.waitingForPartners = true
 					}
-					// Waited for here so its partner wait shows. `o` is the
-					// store's open copy, which only a write-back that saved
+					// Waited for here so its partner wait shows. `o` is the copy
+					// the dialog opened, which only a write-back of it that saved
 					// moved, so its version and merged count are read only now.
 					await store.writeBackSettled(this.secretId, onWait)
 					const sourceBaseUpdatedAt = await this.sourceBase

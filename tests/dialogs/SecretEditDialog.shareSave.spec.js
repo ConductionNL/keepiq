@@ -392,6 +392,37 @@ describe('SecretEditDialog — share save', () => {
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 
+	it.each([
+		['another secret', { id: 's2', name: 'Mail', updatedAt: BASE }],
+		['the secret again', { ...OPEN_WITH_PENDING }],
+	])(
+		'saves a copy past a merge write-back that saved while %s was opened, on the versions that write-back saved',
+		async (_, opened) => {
+			let release
+			const hold = new Promise((resolve) => (release = resolve))
+			const { wrapper, log, writeBack, arrived } =
+				await mountCopyWithWriteBack({ grade: 'write', hold })
+
+			await arrived
+			useSecretStore().currentSecret = opened
+			release()
+			await writeBack()
+			await wrapper.vm.submit()
+			await wrapper.vm.$nextTick()
+
+			expect(
+				log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+			).toEqual([
+				[BASE, OPENED_SOURCE],
+				[SAVED_AT, SAVED_AT],
+			])
+			expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
+				false,
+			)
+			expect(wrapper.emitted('saved')).toBeTruthy()
+		},
+	)
+
 	it("saves a copy opened while the sidebar's merge write-back runs on the versions that write-back saved, without starting a second", async () => {
 		let release
 		const hold = new Promise((resolve) => (release = resolve))
