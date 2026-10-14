@@ -11,7 +11,7 @@ The system MUST let a user list versions newest-first (metadata only), view a ve
 ## ADDED Requirements
 
 ### Requirement: A restore is one share-save of the version
-The web app MUST restore a version by decrypting it in the browser and sending it as one share-save with `restoredFrom` and the version's whole value, based on the head's `updatedAt`. A refused or failed share-save MUST leave the head, every copy and the version history unchanged and MUST show an error. A copy holder without a write grade restores only their own copy, through the version restore route, which records the restore too. That route MUST accept an optional `baseUpdatedAt` and, when it differs from the row's `updatedAt`, change nothing and answer 409 as a stale update does.
+The web app MUST restore a version by decrypting it in the browser and sending it as one share-save with `restoredFrom` and the version's whole value, based on the head's `updatedAt`. A refused or failed share-save MUST leave the head, every copy and the version history unchanged and MUST show an error. A copy holder without a write grade restores only their own copy, through the version restore route, which records the restore too. That route MUST accept an optional `baseUpdatedAt` and, when it differs from the row's `updatedAt`, change nothing and answer 409 as a stale update does. With or without a base, a save that changes the row between the route's read and its write MUST make the route change nothing and answer 409 too.
 
 #### Scenario: A failed restore changes nothing
 - GIVEN a shared secret whose head changed in another browser after this one opened it

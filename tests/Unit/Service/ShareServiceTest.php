@@ -614,6 +614,11 @@ class ShareServiceTest extends TestCase {
 		$row2->setSecretId('copy-2');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row1, $row2]);
 
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with('src-1', $this->callback(
+				static fn (DateTime $base): bool => $base->getTimestamp() === (new DateTime('2026-01-01T00:00:00+00:00'))->getTimestamp()
+			))
+			->willReturn(1);
 		$this->secretMapper->expects($this->exactly(2))->method('update');
 
 		$written = $this->service->syncUpdate(
@@ -724,6 +729,7 @@ class ShareServiceTest extends TestCase {
 		$row->setSourceSecretId('src-1');
 		$row->setSecretId('copy-1');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
 		$written = [];
 		$this->secretMapper->method('update')->willReturnCallback(
@@ -766,6 +772,98 @@ class ShareServiceTest extends TestCase {
 			userId: 'alice'
 		);
 	}//end testSyncUpdateRejectsStaleExpectedTimestamp()
+
+	/**
+	 * The sync that names the source version it was prepared on and the one
+	 * that doesn't.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function expectedVersionOrNone(): array {
+		return [
+			'with an expected version'    => ['2026-01-01T00:00:00+00:00'],
+			'without an expected version' => [''],
+		];
+	}//end expectedVersionOrNone()
+
+	/**
+	 * A save that commits after the sync's read but before its write moves
+	 * the source: the compare-and-set finds it gone, and the sync is refused
+	 * and rolled back instead of overwriting the save's copies, whether or
+	 * not the client named the version.
+	 *
+	 * @param string $expectedUpdatedAt The client's expected source version, or ''
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('expectedVersionOrNone')]
+	public function testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused(string $expectedUpdatedAt): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$this->secretMapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('has changed');
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: $expectedUpdatedAt,
+			userId: 'alice'
+		);
+	}//end testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused()
+
+	/**
+	 * A sync moves the source and stamps its copies past the stored version,
+	 * even when that version sits ahead of now, so a save in the same second
+	 * still gets a new version.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testSyncUpdateMovesTheSourcePastItsStoredVersion(): void {
+		$stored = (new DateTime('+1 hour'))->getTimestamp();
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('@'.$stored));
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with(
+				'src-1',
+				$this->callback(static fn (DateTime $base): bool => $base->getTimestamp() === $stored),
+				$this->callback(static fn (DateTime $savedAt): bool => $savedAt->getTimestamp() === $stored + 1)
+			)
+			->willReturn(1);
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: $source->getUpdatedAt()->format(DateTime::ATOM),
+			userId: 'alice'
+		);
+
+		$this->assertSame($stored + 1, $copy->getUpdatedAt()?->getTimestamp());
+	}//end testSyncUpdateMovesTheSourcePastItsStoredVersion()
 
 	/**
 	 * Test createBatchShares creates each row inside one transaction.

@@ -22,7 +22,12 @@ When the owner, or a recipient allowed to write the source, updates the value, l
 ## ADDED Requirements
 
 ### Requirement: A shared secret and every copy save in one transaction
-`PUT /api/v1/secrets/{id}/share-save` MUST take the caller's sparse patch with a required `baseUpdatedAt`, the ciphertext for every local copy (`copies`), the whole value for every active partner share (`federated`), and the copies and partner shares left out on purpose (`skipped`, `suspend`). `{id}` MUST be the caller's own row: the source on the owner path, or the caller's copy on the copy-editor path, where `sourceBaseUpdatedAt` is also required. The server MUST write the caller's row, every copy and every partner share in one database transaction, or write nothing. It MUST answer 409 `stale` when `{id}` changed since `baseUpdatedAt`, and 409 `stale_source` when the source changed on the copy-editor path. A refusal of the caller's own row, such as a vault policy, MUST roll back the copies too.
+`PUT /api/v1/secrets/{id}/share-save` MUST take the caller's sparse patch with a required `baseUpdatedAt`, the ciphertext for every local copy (`copies`), the whole value for every active partner share (`federated`), and the copies and partner shares left out on purpose (`skipped`, `suspend`). `{id}` MUST be the caller's own row: the source on the owner path, or the caller's copy on the copy-editor path, where `sourceBaseUpdatedAt` is also required. The server MUST write the caller's row, every copy and every partner share in one database transaction, or write nothing. It MUST answer 409 `stale` when `{id}` changed since `baseUpdatedAt`, and 409 `stale_source` when the source changed on the copy-editor path. A refusal of the caller's own row, such as a vault policy, MUST roll back the copies too. A save on the copy-editor path MUST also be recorded in the audit trail on the source, with the caller as actor and the user ids of the holders whose copies were skipped (the owner's when the source itself was skipped).
+
+#### Scenario: A copy editor's save is audited on the source
+- GIVEN a secret owned by Alice and shared with Bob, who holds a write grade, and with Carol, who has no vault key
+- WHEN Bob saves a new password through his copy and skips Carol's copy
+- THEN the audit trail of Alice's secret MUST record the update with Bob as actor and Carol's user id as skipped
 
 #### Scenario: Everything is written or nothing is
 - GIVEN a secret shared with two users and one partner
@@ -73,7 +78,7 @@ A call MUST carry at most 100 entries in `copies` plus `skipped` and at most 100
 - THEN the server MUST refuse it and change nothing
 
 ### Requirement: A restore reaches every copy in the same transaction
-A share-save MAY carry `restoredFrom`, the id of a version of `{id}`, on a one-call save or the final call only. The patch and every copy MUST then carry the whole value (`key`, `login` and `additionalFields`), decrypted from that version and encrypted again in the browser. The server MUST refuse a version of another row, or one the caller may not restore, with 400 `version_refused`, and MUST record the restore audit event in the same transaction as the save, after snapshotting the head as on every update.
+A share-save MAY carry `restoredFrom`, the id of a version of `{id}`, on a one-call save or the final call only. The patch and every copy MUST then carry the whole value (`key`, `login` and `additionalFields`), decrypted from that version and encrypted again in the browser. The server MUST refuse a version of another row, or one the caller may not restore, with 400 `version_refused`, and MUST record the restore audit event in the same transaction as the save, after snapshotting the head as on every update. The server can't compare the re-encrypted value with the version, so the version that event records on this path is the one the client says it restored from (`restoredFrom`), not a server-checked value, and the event MUST be marked as coming from the share-save (`via: share-save`).
 
 #### Scenario: A restore that fails leaves everything as it was
 - GIVEN a secret shared with a recipient and a prior version `V`

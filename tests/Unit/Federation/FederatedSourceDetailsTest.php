@@ -125,6 +125,7 @@ class FederatedSourceDetailsTest extends TestCase {
 	private function put(array $params) {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($this->source);
+		$secrets->method('advanceVersion')->willReturn(1);
 		$secrets->method('update')->willReturnArgument(0);
 
 		$shareMapper = $this->createMock(FederatedShareMapper::class);
@@ -184,6 +185,7 @@ class FederatedSourceDetailsTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 			federatedShares: $federated,
 		);
 

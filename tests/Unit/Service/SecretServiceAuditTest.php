@@ -91,6 +91,7 @@ class SecretServiceAuditTest extends TestCase {
 			migrationService: $migrationService,
 			linkShareService: $linkShareService,
 			logger: $logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
 			secretRequestService: null,
 			shareService: null,
 			groupShareMapper: null,

@@ -420,12 +420,41 @@ class SecretVersionServiceTest extends TestCase {
 		$stored = (new DateTime('+1 hour'))->getTimestamp();
 		$head->setUpdatedAt(new DateTime('@'.$stored));
 		$this->mapper->method('insert')->willReturnArgument(0);
-		$this->secretMapper->expects($this->never())->method('advanceVersion');
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with(
+				'sec-1',
+				$this->callback(static fn (DateTime $base): bool => $base->getTimestamp() === $stored),
+				$this->callback(static fn (DateTime $savedAt): bool => $savedAt->getTimestamp() === $stored + 1)
+			)
+			->willReturn(1);
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
 		$this->assertSame($stored + 1, $restored->getUpdatedAt()->getTimestamp());
 	}//end testARestoreWithoutABaseMovesTheHeadPastItsStoredVersion()
+
+	/**
+	 * Without a base, a save that commits between the restore's read and its
+	 * write is refused too: the restore would overwrite it without a snapshot.
+	 *
+	 * @return void
+	 */
+	public function testARestoreWithoutABaseOverAHeadThatMovesAfterItsReadIsRefused(): void {
+		$head = $this->restorableHead();
+		$this->secretMapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice');
+			$this->fail('A head that moved after the read must be refused');
+		} catch (StaleWriteException $stale) {
+			$this->assertSame('sec-1', $stale->getCurrent()->getId());
+			$this->assertSame('HEAD_CIPHERTEXT', $head->getKey());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreWithoutABaseOverAHeadThatMovesAfterItsReadIsRefused()
 
 	/**
 	 * A restore that fails after the audit is rolled back and not logged.
@@ -435,6 +464,7 @@ class SecretVersionServiceTest extends TestCase {
 	public function testARestoreThatRollsBackIsNotLogged(): void {
 		$this->restorableHead();
 		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
 		$this->secretMapper->method('update')->willThrowException(new \RuntimeException('deadlock'));
 		$this->logger->expects($this->never())->method('info');
 
@@ -463,6 +493,39 @@ class SecretVersionServiceTest extends TestCase {
 		$this->service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
 		$this->service->logRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
 	}//end testARecordedRestoreIsLoggedOnlyByLogRestored()
+
+	/**
+	 * A restore through the share-save is audited as the client's claim of
+	 * the version; the restore route's own event carries no such mark.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function testAShareSaveRestoreIsAuditedAsTheClientsClaim(): void {
+		$version = new SecretVersion();
+		$version->setVersionNumber(4);
+		$metadata = [];
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function (\OCA\Keepiq\Event\Audit\AuditEvent $event) use (&$metadata): void {
+				$metadata[] = $event->getMetadata();
+			}
+		);
+		$service = new SecretVersionService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			accessGuard: $this->createMock(SecretVersionAccessGuard::class),
+			logger: $this->logger,
+			db: $this->createMock(IDBConnection::class),
+			eventDispatcher: $dispatcher,
+		);
+
+		$service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice', via: 'share-save');
+		$service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
+
+		$this->assertSame([['versionNumber' => 4, 'via' => 'share-save'], ['versionNumber' => 4]], $metadata);
+	}//end testAShareSaveRestoreIsAuditedAsTheClientsClaim()
 
 	/**
 	 * deleteForSecret cascades to the mapper (idempotent by contract).

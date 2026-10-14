@@ -145,6 +145,7 @@ class SecretServiceCrossAppAuditTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 			secretRequestService: $this->createMock(SecretRequestService::class),
 			shareService: $this->createMock(ShareService::class),
 			groupShareMapper: $this->createMock(GroupShareMapper::class),

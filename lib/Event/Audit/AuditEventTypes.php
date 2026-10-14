@@ -271,7 +271,7 @@ final class AuditEventTypes {
 	 */
 	public const WHITELIST = [
 		self::SECRET_CREATED => ['typeId', 'folderId'],
-		self::SECRET_UPDATED => ['changedFields'],
+		self::SECRET_UPDATED => ['changedFields', 'skippedUserIds'],
 		self::SECRET_READ => [],
 		self::SECRET_DELETED => [],
 		self::SECRET_TRASHED => [],
@@ -329,7 +329,8 @@ final class AuditEventTypes {
 		self::EMERGENCY_ACCESS_REVOKED => ['grantorUserId', 'granteeUserId'],
 		self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
 		self::EMERGENCY_ACCESS_CARRIED => ['grantorUserId', 'granteeUserId', 'fromSuiteId', 'toSuiteId'],
-		self::SECRET_VERSION_RESTORED => ['versionNumber'],
+		// `via: share-save` marks a version number the client asserted.
+		self::SECRET_VERSION_RESTORED => ['versionNumber', 'via'],
 		// Rotation & expiry — ids/reasons only (§5.2).
 		self::SECRET_EXPIRY_SET => ['expiresAt'],
 		self::SECRET_ROTATION_FLAGGED => ['reason'],
@@ -417,7 +418,8 @@ final class AuditEventTypes {
 
 	/**
 	 * The whitelisted metadata keys whose VALUES reference a user id and must
-	 * be scrubbed on account-deletion anonymization (design D6).
+	 * be scrubbed on account-deletion anonymization (design D6). A value is
+	 * one user id or a list of them.
 	 *
 	 * @var string[]
 	 */
@@ -429,6 +431,7 @@ final class AuditEventTypes {
 		'memberId',
 		'leavingUserId',
 		'successorUserId',
+		'skippedUserIds',
 	];
 
 	/**

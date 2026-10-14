@@ -24,7 +24,8 @@ use RuntimeException;
 
 /**
  * Thrown when a write names the version it was based on (`baseUpdatedAt`) and
- * the secret changed since. Nothing was written; the caller answers 409 with
+ * the secret changed since, or when the secret changed between the write's
+ * read and its write. Nothing was written; the caller answers 409 with
  * the current row so the client can let the user choose (offline-edit-queue).
  *
  * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently

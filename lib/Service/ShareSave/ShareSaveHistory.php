@@ -79,7 +79,9 @@ class ShareSaveHistory {
 
 	/**
 	 * Audit the restore; called inside the save's transaction. The log line
-	 * is written by logRestore() once the save has committed.
+	 * is written by logRestore() once the save has committed. The value was
+	 * encrypted again in the browser, so the server cannot check it is the
+	 * version's: the event is marked as the client's claim.
 	 *
 	 * @param Secret $secret The saved row
 	 * @param SecretVersion $version The version it was restored to
@@ -90,7 +92,7 @@ class ShareSaveHistory {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function recordRestore(Secret $secret, SecretVersion $version, string $userId): void {
-		$this->versions->recordRestored(secret: $secret, version: $version, userId: $userId);
+		$this->versions->recordRestored(secret: $secret, version: $version, userId: $userId, via: 'share-save');
 	}//end recordRestore()
 
 	/**
@@ -110,23 +112,52 @@ class ShareSaveHistory {
 	}//end logRestore()
 
 	/**
-	 * Attribute a copy-editor's save to the writer when they write on a
-	 * team-folder grade rather than as owner or delegate.
+	 * Attribute a copy-editor's save to the writer on the source, whether
+	 * they write on a team-folder grade or as a delegate, naming the holders
+	 * of the copies left out for want of a vault key: the owner for the source
+	 * itself. The owner path has the row's own audit.
 	 *
-	 * @param ShareSavePath $path The path
+	 * @param ShareSavePath $path The path, as assertStillWriter() returned it
 	 * @param string $userId The caller
+	 * @param list<array{secretId:string,reason:string}> $skipped The copies left out
+	 * @param array<string,array{secretId:string,holder:string,targetUserId:?string}> $copies The required copies, by id
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
-	public function recordTeamWrite(ShareSavePath $path, string $userId): void {
-		if ($path->isCopyEditor() === true && $path->teamWriter === true) {
-			$this->auditTrail->recordTeamWriteSync(
-				userId: $userId,
-				secretId: $path->source->getId(),
-				secretName: $path->source->getName(),
-			);
+	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = [], array $copies = []): void {
+		if ($path->isCopyEditor() === false) {
+			return;
 		}
+
+		$changedFields = 'delegate sync';
+		if ($path->teamWriter === true) {
+			$changedFields = 'team-write sync';
+		}
+
+		$holders = [];
+		foreach ($skipped as $skip) {
+			$copy = $copies[$skip['secretId']] ?? null;
+			if ($copy === null) {
+				continue;
+			}
+
+			$holder = (string)$copy['targetUserId'];
+			if ($copy['holder'] === 'owner') {
+				$holder = $path->source->getOwnerId();
+			}
+
+			$holders[] = $holder;
+		}
+
+		$this->auditTrail->recordTeamWriteSync(
+			userId: $userId,
+			secretId: $path->source->getId(),
+			secretName: $path->source->getName(),
+			changedFields: $changedFields,
+			skippedUserIds: array_values(array_unique($holders)),
+		);
 	}//end recordTeamWrite()
 }//end class

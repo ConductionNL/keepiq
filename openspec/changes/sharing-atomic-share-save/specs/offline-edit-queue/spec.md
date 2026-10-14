@@ -23,6 +23,30 @@ A replay answered with 403 or 404, a share-save refused with 400, or a share-sav
 - **THEN** the first entry MUST move to the failed list with the reason that the partner can't be reached
 - **AND** the second entry MUST be replayed
 
+### Requirement: Concurrent server changes are never overwritten silently
+
+`PUT /api/v1/secrets/{id}` and `DELETE /api/v1/secrets/{id}` MUST accept an optional `baseUpdatedAt`; when it is present and differs from the stored `updatedAt`, the server MUST change nothing and answer `409 Conflict` with the current row. A `PUT` without `baseUpdatedAt` is not compared with a client base, but a change that lands between the server's read of the secret and its write MUST NOT be overwritten: the server MUST apply the update once more to the secret as it is now, which keeps that change as a version, and when the secret changes again during that second attempt, change nothing and answer `409 Conflict` with the current row. On a 409 the web app MUST stop that entry and let the user keep their offline version or the server version.
+
+#### Scenario: The secret changed online meanwhile
+
+- **GIVEN** a vault owner who edited a secret offline, and the same secret changed from another browser after the snapshot was taken
+- **WHEN** the owner reconnects and the replay sends the update with the snapshot's `baseUpdatedAt`
+- **THEN** the server MUST answer 409 and leave the secret unchanged
+- **AND** the web app MUST show both versions and apply the owner's choice
+
+#### Scenario: Clients without the precondition are unaffected
+
+- **GIVEN** an online client that sends `PUT /api/v1/secrets/{id}` without `baseUpdatedAt`
+- **WHEN** the request is processed and no other save changes the secret while it is processed
+- **THEN** the server MUST update the secret as it did before this change
+
+#### Scenario: A save that lands during an update without a base is kept
+
+- **GIVEN** an owner's share-save of a shared secret that is still writing its copies
+- **WHEN** the browser extension sends `PUT /api/v1/secrets/{id}` for that secret without `baseUpdatedAt`, read before the share-save committed
+- **THEN** the server MUST keep the share-save's value as a version and apply the update to the secret as the share-save left it
+- **AND** when the secret changes again during that second attempt, the server MUST answer 409 with the current row and leave the secret unchanged
+
 ## ADDED Requirements
 
 ### Requirement: Replay saves value changes through the share-save

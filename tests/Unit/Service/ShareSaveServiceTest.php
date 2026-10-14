@@ -659,16 +659,82 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
 	}
 
-	public function testADelegationRevokedBeforeTheLockRefusesTheSaveEvenWithAWriteGrade(): void {
-		// A delegate at resolve(), a write-grade member under the lock: the
-		// save would otherwise be audited as a delegate's write.
+	public function testADelegationRevokedBeforeTheLockSavesAsTheWriteGradeMember(): void {
+		// A delegate at resolve(), a write-grade member under the lock: Bob
+		// still writes, and is audited as he writes now.
 		$this->auth->method('isOwnerOrDelegate')->willReturnOnConsecutiveCalls(true, false);
 		$this->auth->method('resolveGrade')->willReturn('write');
-		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')->with('bob', 'src', 'Router', 'team-write sync');
+
+		$this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
+
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'row c-bob', 'commit'], $this->log);
+	}
+
+	public function testADelegateWritingThroughTheirCopyIsAuditedOnTheSource(): void {
+		$this->auth->method('isOwnerOrDelegate')->willReturnCallback(
+			static fn (Secret $secret, string $userId): bool => $userId === 'bob'
+		);
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')->with('bob', 'src', 'Router', 'delegate sync');
+
+		$this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
+
+		$this->assertSame('commit', end($this->log));
+	}
+
+	public function testACopyEditorsAuditNamesTheHoldersLeftOut(): void {
+		$this->bobWritesOnAGrade();
+		$this->suites->method('countActiveByOwner')->willReturnCallback(
+			static fn (string $ownerType, string $ownerId): int => ($ownerId === 'carol') ? 0 : 1
+		);
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('bob', 'src', 'Router', 'team-write sync', ['carol']);
+
+		$result = $this->service()->save(
+			id: 'c-bob',
+			request: $this->bobRequest([
+				'copies' => [['secretId' => 'src', 'key' => 'K-ALICE']],
+				'skipped' => [['secretId' => 'c-carol', 'reason' => 'no_vault_key']],
+			]),
+			userId: 'bob'
+		);
+
+		$this->assertSame(['written' => 1, 'skipped' => 1], $result['copies']);
+	}
+
+	public function testACopyEditorsAuditNamesTheOwnerWhenTheSourceIsLeftOut(): void {
+		$this->bobWritesOnAGrade();
+		$this->suites->method('countActiveByOwner')->willReturnCallback(
+			static fn (string $ownerType, string $ownerId): int => ($ownerId === 'alice') ? 0 : 1
+		);
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('bob', 'src', 'Router', 'team-write sync', ['alice']);
+
+		$result = $this->service()->save(
+			id: 'c-bob',
+			request: $this->bobRequest([
+				'copies' => [['secretId' => 'c-carol', 'key' => 'K-CAROL']],
+				'skipped' => [['secretId' => 'src', 'reason' => 'no_vault_key']],
+			]),
+			userId: 'bob'
+		);
+
+		$this->assertSame(['written' => 1, 'skipped' => 1], $result['copies']);
+	}
+
+	public function testASourceMadeUseOnlyBeforeTheLockRefusesTheSave(): void {
+		$this->auth->method('isOwnerOrDelegate')->willReturnCallback(
+			function (): bool {
+				// The source becomes a use-only copy right after resolve() read it.
+				$this->rows['src']->setUseOnly(true);
+				return false;
+			}
+		);
+		$this->auth->method('resolveGrade')->willReturn('write');
 
 		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
 
-		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertInstanceOf(ForbiddenException::class, $refusal);
 		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
 	}
 
@@ -908,7 +974,9 @@ class ShareSaveServiceTest extends TestCase {
 		$this->delivery->method('deliver')->willReturn(true);
 		$this->versionHistory->method('getVersion')->with('v-1', 'alice')->willReturn($this->version());
 		$this->versionHistory->expects($this->once())->method('recordRestored')->willReturnCallback(
-			function (Secret $secret, SecretVersion $version, string $userId): void {
+			function (Secret $secret, SecretVersion $version, string $userId, ?string $via = null): void {
+				// The client re-encrypted the value: the version is its claim.
+				$this->assertSame('share-save', $via);
 				$this->log[] = 'restored v'.$version->getVersionNumber();
 			}
 		);
