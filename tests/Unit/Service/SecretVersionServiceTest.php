@@ -363,6 +363,25 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOverAHeadDeletedAfterTheCheckIsRefusedAsNotFound()
 
 	/**
+	 * A restore without a base still moves the head past its stored version,
+	 * even within the same second, so an edit made on the pre-restore
+	 * version cannot pass the stale check afterwards.
+	 *
+	 * @return void
+	 */
+	public function testARestoreWithoutABaseMovesTheHeadPastItsStoredVersion(): void {
+		$head = $this->restorableHead();
+		$stored = (new DateTime('+1 hour'))->getTimestamp();
+		$head->setUpdatedAt(new DateTime('@'.$stored));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame($stored + 1, $restored->getUpdatedAt()->getTimestamp());
+	}//end testARestoreWithoutABaseMovesTheHeadPastItsStoredVersion()
+
+	/**
 	 * A restore that fails after the audit is rolled back and not logged.
 	 *
 	 * @return void

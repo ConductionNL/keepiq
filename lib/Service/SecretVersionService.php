@@ -203,10 +203,12 @@ class SecretVersionService {
 	 * @throws \InvalidArgumentException When the head was deleted after it was read
 	 */
 	private function restoreHead(Secret $secret, SecretVersion $version, string $userId, ?DateTime $base): Secret {
-		$savedAt = new DateTime();
+		// Always after the stored version, with or without a base: the column
+		// and the stale check count whole seconds, so a restore must never
+		// keep the version an edit made before it was based on.
+		$stored = $secret->getUpdatedAt()?->getTimestamp() ?? 0;
+		$savedAt = new DateTime('@'.max(time(), $stored + 1));
 		if ($base !== null) {
-			// Always after the base: the column and the stale check count whole seconds.
-			$savedAt = new DateTime('@'.max(time(), $base->getTimestamp() + 1));
 			if ($this->secretMapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
 				throw new StaleWriteException(current: $this->reload(id: $secret->getId()));
 			}
