@@ -98,10 +98,7 @@ class ShareSaveController extends OCSController {
 		} catch (ShareSaveRefusal $e) {
 			return new JSONResponse(data: $e->getBody(), statusCode: $e->getStatus());
 		} catch (StaleWriteException $e) {
-			return new JSONResponse(
-				data: ['error' => 'stale', 'message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
-				statusCode: Http::STATUS_CONFLICT
-			);
+			return new JSONResponse(data: $this->staleBody(refusal: $e), statusCode: Http::STATUS_CONFLICT);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(
 				data: ['error' => 'not_found', 'message' => $e->getMessage()],
@@ -163,4 +160,24 @@ class ShareSaveController extends OCSController {
 
 		return ['error' => $code, 'message' => $refusal->getMessage(), 'code' => $code];
 	}//end forbiddenBody()
+
+	/**
+	 * The body of a `stale` 409: the caller's row as it is now and, on the
+	 * copy-editor path, the source's version.
+	 *
+	 * @param StaleWriteException $refusal The refusal
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	private function staleBody(StaleWriteException $refusal): array {
+		$body = ['error' => 'stale', 'message' => $refusal->getMessage(), 'current' => $refusal->getCurrent()->jsonSerialize()];
+		$sourceUpdatedAt = $refusal->getSourceUpdatedAt();
+		if ($sourceUpdatedAt !== null) {
+			$body['sourceUpdatedAt'] = $sourceUpdatedAt->format(DATE_ATOM);
+		}
+
+		return $body;
+	}//end staleBody()
 }//end class

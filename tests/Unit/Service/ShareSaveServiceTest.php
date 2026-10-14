@@ -426,6 +426,7 @@ class ShareSaveServiceTest extends TestCase {
 
 		$this->assertInstanceOf(StaleWriteException::class, $refusal);
 		$this->assertSame('src', $refusal->getCurrent()->getId());
+		$this->assertNull($refusal->getSourceUpdatedAt(), 'the owner path has no separate source version');
 		$this->assertSame([], $this->log);
 	}
 
@@ -435,7 +436,40 @@ class ShareSaveServiceTest extends TestCase {
 		$refusal = $this->refusal(fn () => $this->service()->save(id: 'src', request: $this->ownerRequest(), userId: 'alice'));
 
 		$this->assertInstanceOf(StaleWriteException::class, $refusal);
+		$this->assertNull($refusal->getSourceUpdatedAt());
 		$this->assertSame(['begin', 'lock src', 'rollback'], $this->log);
+	}
+
+	/**
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testAStaleCopyNamesTheSourceVersionItFound(): void {
+		$this->bobWritesOnAGrade();
+		$this->rows['c-bob']->setUpdatedAt(new DateTime('2026-10-01T10:00:07+00:00'));
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertInstanceOf(StaleWriteException::class, $refusal);
+		$this->assertSame('c-bob', $refusal->getCurrent()->getId());
+		$this->assertSame(self::BASE, $refusal->getSourceUpdatedAt()?->format(DATE_ATOM));
+		$this->assertSame([], $this->log);
+	}
+
+	/**
+	 * The source was locked and moved before the copy refused, but that move
+	 * rolls back, so the version named is the one the source keeps.
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testACopyThatMovesOnBeforeTheLockNamesTheSourceVersionItKeeps(): void {
+		$this->bobWritesOnAGrade();
+		$this->versions['c-bob']++;
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertInstanceOf(StaleWriteException::class, $refusal);
+		$this->assertSame(self::BASE, $refusal->getSourceUpdatedAt()?->format(DATE_ATOM));
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
 	}
 
 	public function testTheVersionIsAfterTheBaseEvenWithinTheSameSecond(): void {
