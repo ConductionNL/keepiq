@@ -125,7 +125,7 @@ class ShareSaveHistory {
 	 * @return void
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = [], array $copies = []): void {
 		if ($path->isCopyEditor() === false) {
