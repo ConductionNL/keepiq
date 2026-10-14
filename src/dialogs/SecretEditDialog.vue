@@ -20,7 +20,7 @@
 			<NcNoteCard v-if="error" type="error" data-testid="secret-edit-error">
 				{{ error }}
 				<NcButton
-					v-if="unreachablePartners"
+					v-if="unreachablePartners.length > 0"
 					variant="secondary"
 					:disabled="saving"
 					data-testid="save-without-unreachable"
@@ -274,7 +274,8 @@ export default {
 			saving: false,
 			waitingForPartners: false,
 			error: '',
-			unreachablePartners: false,
+			// The unreachable partner shares (ids) the last error named.
+			unreachablePartners: [],
 			original: null,
 			sourceBase: null,
 			name: '',
@@ -567,21 +568,21 @@ export default {
 		},
 
 		/**
-		 * Save again after the user chose to pause the partner shares that
-		 * could not be reached.
+		 * Save again after the user chose to stop sharing with the partners
+		 * the error named: only those shares are suspended.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
 		 */
 		async saveWithoutUnreachable() {
-			await this.submit({ withoutUnreachable: true })
+			await this.submit({ withoutUnreachable: this.unreachablePartners })
 		},
 
 		/**
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
 		 * @param {object} [options] Options.
-		 * @param {boolean} [options.withoutUnreachable] Pause unreachable partner shares.
+		 * @param {Array<string>} [options.withoutUnreachable] The unreachable partner shares (ids) the user agreed to suspend.
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
@@ -600,7 +601,7 @@ export default {
 			this.saving = true
 			this.waitingForPartners = false
 			this.error = ''
-			this.unreachablePartners = false
+			this.unreachablePartners = []
 			try {
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
@@ -675,7 +676,7 @@ export default {
 						{
 							baseUpdatedAt: o.updatedAt,
 							sourceBaseUpdatedAt,
-							withoutUnreachable: options?.withoutUnreachable === true,
+							withoutUnreachable: options?.withoutUnreachable ?? [],
 							onWait: () => {
 								this.waitingForPartners = true
 							},
@@ -693,7 +694,10 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.unreachablePartners = e?.code === 'partner_unreachable'
+				this.unreachablePartners =
+					e?.code === 'partner_unreachable'
+						? e.partners.map((share) => share.shareId)
+						: []
 				this.error =
 					shareSaveErrorText(e)
 					|| e?.response?.data?.message

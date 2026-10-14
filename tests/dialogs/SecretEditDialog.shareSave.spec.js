@@ -107,7 +107,7 @@ describe('SecretEditDialog — share save', () => {
 		expect(update.mock.calls[0][2]).toEqual({
 			baseUpdatedAt: BASE,
 			sourceBaseUpdatedAt: null,
-			withoutUnreachable: false,
+			withoutUnreachable: [],
 			onWait: expect.any(Function),
 		})
 		expect(wrapper.emitted('saved')).toBeTruthy()
@@ -293,13 +293,14 @@ describe('SecretEditDialog — share save', () => {
 		)
 	})
 
-	it('offers to save without an unreachable partner, and then pauses it', async () => {
+	it('offers to save without the unreachable partners, and then suspends only the ones it named', async () => {
 		const wrapper = await mountEdited()
 		const update = vi
 			.spyOn(useSecretStore(), 'updateSecret')
 			.mockRejectedValueOnce(
 				new ShareSaveError('partner_unreachable', [
 					{ shareId: 'fs-1', recipientCloudId: 'bob@partner.example' },
+					{ shareId: 'fs-2', recipientCloudId: 'carol@partner.example' },
 				]),
 			)
 			.mockResolvedValueOnce({ id: 's1' })
@@ -307,7 +308,7 @@ describe('SecretEditDialog — share save', () => {
 		await wrapper.vm.submit()
 		await wrapper.vm.$nextTick()
 		expect(wrapper.find('[data-testid="secret-edit-error"]').text()).toContain(
-			'bob@partner.example',
+			'bob@partner.example, carol@partner.example',
 		)
 
 		await wrapper
@@ -315,7 +316,7 @@ describe('SecretEditDialog — share save', () => {
 			.trigger('click')
 		await new Promise((resolve) => setTimeout(resolve, 0))
 
-		expect(update.mock.calls[1][2].withoutUnreachable).toBe(true)
+		expect(update.mock.calls[1][2].withoutUnreachable).toEqual(['fs-1', 'fs-2'])
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 

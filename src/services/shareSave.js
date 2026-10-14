@@ -248,7 +248,7 @@ function idsOf(list, key) {
  * @param {string} options.baseUpdatedAt The `{id}` version the edit was made from.
  * @param {string|null} [options.sourceBaseUpdatedAt] The source version the edit was made from, on the copy-editor path; without one, the source version when this save starts.
  * @param {() => Promise<object>} [options.loadFull] Resolves `{key, login, additionalFields, updatedAt}` of `{id}` in plain.
- * @param {boolean} [options.withoutUnreachable] Suspend partner shares that cannot be reached instead of stopping.
+ * @param {Iterable<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached; any other unreachable one stops the save.
  * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry all three value fields.
  * @param {(ms: number) => void} [options.onWait] Called when the save starts waiting on the partner lookup limit.
  * @return {Promise<object>} The 200 body; `secret` is the saved row, and
@@ -270,7 +270,7 @@ export async function saveShared({
 	baseUpdatedAt,
 	sourceBaseUpdatedAt = null,
 	loadFull = null,
-	withoutUnreachable = false,
+	withoutUnreachable = [],
 	restoredFrom = null,
 	onWait = null,
 }) {
@@ -466,7 +466,10 @@ export async function saveShared({
 				...(await encryptWhole(partnerValue, recipient.certificate)),
 			})
 		}
-		if (unreachable.length > 0 && !withoutUnreachable) {
+		// Only the shares the user was shown and agreed to are suspended; one
+		// that fails only now stops the save again, naming all of them.
+		const agreed = new Set(withoutUnreachable)
+		if (unreachable.some((share) => !agreed.has(share.shareId))) {
 			throw new ShareSaveError('partner_unreachable', unreachable)
 		}
 		for (const share of unreachable) {

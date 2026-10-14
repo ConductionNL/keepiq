@@ -474,7 +474,7 @@ describe('saveShared on the owner path', () => {
 					plainDiff: { key: 'k' },
 					patch: { key: 'K' },
 					baseUpdatedAt: BASE,
-					withoutUnreachable: true,
+					withoutUnreachable: ['fs-1', 'fs-2'],
 					onWait: (ms) => waits.push(ms),
 				}),
 			)

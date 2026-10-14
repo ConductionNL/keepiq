@@ -693,7 +693,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object} [options] Options.
 		 * @param {string} [options.baseUpdatedAt] The version the edit was made from.
 		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
-		 * @param {boolean} [options.withoutUnreachable] Pause partner shares that cannot be reached.
+		 * @param {Array<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached.
 		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
 		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit, its own or that of a merge write-back it is held behind.
 		 * @param {(result: object) => void} [options.onShareSaved] Called with the share save's answer.
@@ -801,7 +801,7 @@ export const useSecretStore = defineStore('secret', {
 						patch: payload,
 						baseUpdatedAt: this.baseOf(id, given),
 						sourceBaseUpdatedAt: settled.sourceBase,
-						withoutUnreachable: options.withoutUnreachable === true,
+						withoutUnreachable: options.withoutUnreachable ?? [],
 						onWait: options.onWait ?? null,
 					})
 					options.onShareSaved?.(result)

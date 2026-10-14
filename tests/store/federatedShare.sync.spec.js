@@ -139,10 +139,10 @@ describe('a value change reaches federated recipients', () => {
 		expect(log.saves).toHaveLength(1)
 	})
 
-	it('pauses an unreachable partner share when the user saves without it', async () => {
+	it('suspends an unreachable partner share when the user saves without it', async () => {
 		const { log, result } = await save(
 			{ reject: httpError(502, { message: 'partner_unreachable' }) },
-			{ withoutUnreachable: true },
+			{ withoutUnreachable: ['fs-1'] },
 		)
 
 		expect(result.federated.suspended).toBe(1)
@@ -230,6 +230,15 @@ describe('a follow-up save after a failed one', () => {
 	]
 
 	/**
+	 * The partner shares a failed save named, which "Save without them"
+	 * agrees to suspend.
+	 *
+	 * @param {ShareSaveError} failed The partner_unreachable error.
+	 * @return {Array<string>}
+	 */
+	const shown = (failed) => failed.partners.map((share) => share.shareId)
+
+	/**
 	 * Fail a save on an unreachable Carol, run `between`, then save without
 	 * her.
 	 *
@@ -247,7 +256,7 @@ describe('a follow-up save after a failed one', () => {
 		expect(failed.code).toBe('partner_unreachable')
 		const first = [...log.partnerLookups]
 		between()
-		await saveShared({ ...SAVE, withoutUnreachable: true })
+		await saveShared({ ...SAVE, withoutUnreachable: shown(failed) })
 		return {
 			first,
 			second: log.partnerLookups.slice(first.length),
@@ -297,7 +306,7 @@ describe('a follow-up save after a failed one', () => {
 			lookup: { [BOB]: VALID },
 		})
 
-		await saveShared({ ...SAVE, withoutUnreachable: true })
+		await saveShared({ ...SAVE, withoutUnreachable: ['fs-2'] })
 
 		expect(log.partnerLookups).toEqual([BOB, CAROL])
 	})
@@ -313,7 +322,7 @@ describe('a follow-up save after a failed one', () => {
 		expect(failed.code).toBe('partner_unreachable')
 		const first = log.partnerLookups.length
 
-		await saveShared({ ...SAVE, withoutUnreachable: true })
+		await saveShared({ ...SAVE, withoutUnreachable: shown(failed) })
 
 		expect(log.partnerLookups.slice(first)).toEqual([BOB, CAROL])
 	})
@@ -332,7 +341,7 @@ describe('a follow-up save after a failed one', () => {
 			},
 		})
 
-		await saveShared({ ...SAVE, withoutUnreachable: true })
+		await saveShared({ ...SAVE, withoutUnreachable: shown(failed) })
 
 		expect(log.partnerLookups).toEqual([DAVE, CAROL])
 		expect(log.saves.at(-1).federated).toEqual([])
@@ -350,6 +359,41 @@ describe('a follow-up save after a failed one', () => {
 			)
 
 			expect(second).toEqual([BOB, CAROL])
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('suspends only the partners the user was shown, and asks again for one that fails only now', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		try {
+			const lookup = { [BOB]: VALID }
+			const log = shareSaveServer({ id: 'src', partners: TWO, lookup })
+			const failed = await saveShared(SAVE).catch((e) => e)
+			expect(shown(failed)).toEqual(['fs-2'])
+			// Bob's kept certificate expires, and Bob is down by now.
+			vi.advanceTimersByTime(VERIFIED_PARTNER_TTL_MS)
+			delete lookup[BOB]
+
+			const again = await saveShared({
+				...SAVE,
+				withoutUnreachable: shown(failed),
+			}).catch((e) => e)
+
+			expect(again).toBeInstanceOf(ShareSaveError)
+			expect(again.code).toBe('partner_unreachable')
+			expect(again.partners.map((share) => share.recipientCloudId)).toEqual([
+				BOB,
+				CAROL,
+			])
+			expect(log.saves.flatMap((s) => s.suspend)).toEqual([])
+
+			// Agreeing to what the second error named suspends both.
+			await saveShared({ ...SAVE, withoutUnreachable: shown(again) })
+			expect(log.saves.at(-1).suspend).toEqual([
+				{ shareId: 'fs-1', reason: 'partner_unreachable' },
+				{ shareId: 'fs-2', reason: 'partner_unreachable' },
+			])
 		} finally {
 			vi.useRealTimers()
 		}
