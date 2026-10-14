@@ -615,7 +615,8 @@ class FederatedCopyDeclineTest extends TestCase {
 
 	/**
 	 * Only the owner ends a suspension. A decline that made the share
-	 * declined would let Bob's later accept make it live again.
+	 * declined would let Bob's later accept make it live again. The trail
+	 * still tells Alice that Bob's copy is gone.
 	 *
 	 * @dataProvider suspensions
 	 */
@@ -635,7 +636,14 @@ class FederatedCopyDeclineTest extends TestCase {
 
 		$this->assertSame([], $result);
 		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->outbound->getStatus());
-		$this->assertSame([], $this->audit);
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+		$this->assertNull($this->audit[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'kept' => 'suspended'],
+			$this->audit[0]->getMetadata()
+		);
+		$this->assertIdentifiersOnly();
 
 		$this->meanwhile = null;
 		$this->expectException(ShareNotFound::class);

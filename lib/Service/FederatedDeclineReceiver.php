@@ -12,7 +12,8 @@
  * dropped. A share whose revocation still waits for its unshare is removed
  * instead, as a delivered unshare would. A suspended share stays suspended:
  * only the owner ends a suspension, so a decline cannot open it to a later
- * accept. Every refusal is the same "share not found".
+ * accept; the audit trail records the decline. Every refusal is the same
+ * "share not found".
  *
  * It also takes the recipient's `SHARE_ACCEPTED` for a declined share: the
  * recipient restored the copy from their trash (decision of 4 Oct 2026).
@@ -94,10 +95,10 @@ class FederatedDeclineReceiver {
 	/**
 	 * Mark the share declined. A revocation still waiting for its unshare is
 	 * finished instead: the decline shows the copy is gone, which is what the
-	 * unshare was for. A share declined or suspended already stays as it is.
-	 * When the row changed after it was read (the owner suspended, revoked or
-	 * saved while the signature was checked), it is read once more and
-	 * decided again.
+	 * unshare was for. A share declined or suspended already stays as it is,
+	 * and a suspended one records the decline. When the row changed after it
+	 * was read (the owner suspended, revoked or saved while the signature was
+	 * checked), it is read once more and decided again.
 	 *
 	 * @param FederatedShare $row The share as it was read
 	 * @param bool $again Whether a changed row may be read once more
@@ -116,10 +117,21 @@ class FederatedDeclineReceiver {
 			return;
 		}
 
-		// A second decline changes nothing, and neither does one on a share
-		// the owner suspended: a declined share can be accepted back to live.
-		$unchanged = [FederatedShare::STATUS_REVOKED, FederatedShare::STATUS_DECLINED, FederatedShare::STATUS_SUSPENDED];
-		if (in_array($row->getStatus(), $unchanged, true) === true) {
+		// Only the owner ends a suspension, as a declined share can be
+		// accepted back to live. The trail still tells the owner the copy is
+		// gone.
+		if ($row->getStatus() === FederatedShare::STATUS_SUSPENDED) {
+			$this->audit->recordOutbound(
+				eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED,
+				row: $row,
+				actorId: null,
+				extra: ['kept' => FederatedShare::STATUS_SUSPENDED]
+			);
+			return;
+		}
+
+		// A second decline changes nothing.
+		if ($row->getStatus() === FederatedShare::STATUS_REVOKED || $row->getStatus() === FederatedShare::STATUS_DECLINED) {
 			return;
 		}
 

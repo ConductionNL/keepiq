@@ -411,7 +411,7 @@ final class AuditEventTypes {
 		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_UPDATED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'kept'],
 		self::FEDERATED_SHARE_RECIPIENT_RESUMED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
 	];
 

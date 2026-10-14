@@ -124,6 +124,7 @@ When the partner certificate lookup for an active partner share answers that the
 - **GIVEN** Alice's share with Bob is suspended
 - **WHEN** Bob's server sends `SHARE_DECLINED` for it, and later `SHARE_ACCEPTED`
 - **THEN** Alice's share MUST stay suspended, and Bob's server MUST NOT be able to pull it
+- **AND** Alice's audit trail MUST record Bob's decline, marked as keeping the share suspended
 
 #### Scenario: A local error never pauses a partner
 
