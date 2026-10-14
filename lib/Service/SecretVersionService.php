@@ -34,6 +34,7 @@ use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
@@ -199,6 +200,7 @@ class SecretVersionService {
 	 * @return Secret The updated head
 	 *
 	 * @throws StaleWriteException When the head moved on from `$base` after it was read
+	 * @throws \InvalidArgumentException When the head was deleted after it was read
 	 */
 	private function restoreHead(Secret $secret, SecretVersion $version, string $userId, ?DateTime $base): Secret {
 		$savedAt = new DateTime();
@@ -206,7 +208,7 @@ class SecretVersionService {
 			// Always after the base: the column and the stale check count whole seconds.
 			$savedAt = new DateTime('@'.max(time(), $base->getTimestamp() + 1));
 			if ($this->secretMapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
-				throw new StaleWriteException(current: $this->secretMapper->findById($secret->getId()));
+				throw new StaleWriteException(current: $this->reload(id: $secret->getId()));
 			}
 		}
 
@@ -226,6 +228,23 @@ class SecretVersionService {
 
 		return $secret;
 	}//end restoreHead()
+
+	/**
+	 * The head read again inside the restore's transaction.
+	 *
+	 * @param string $id The secret ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws \InvalidArgumentException When it was deleted meanwhile, as the route answers a missing version
+	 */
+	private function reload(string $id): Secret {
+		try {
+			return $this->secretMapper->findById($id);
+		} catch (DoesNotExistException) {
+			throw new \InvalidArgumentException('Secret not found');
+		}
+	}//end reload()
 
 	/**
 	 * Audit that a secret was restored to a version. Called inside the

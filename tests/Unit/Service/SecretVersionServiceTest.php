@@ -316,6 +316,53 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOverAHeadThatMovesAfterTheCheckIsRefusedUntouched()
 
 	/**
+	 * A head deleted after the base check is refused like a missing version
+	 * (400 on the route), not as an unhandled error.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOverAHeadDeletedAfterTheCheckIsRefusedAsNotFound(): void {
+		$version = new SecretVersion();
+		$version->setId('v-1');
+		$version->setSecretId('sec-1');
+		$version->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($version);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$this->suiteMapper->method('findById')->willReturn($suite);
+
+		$head = $this->ownedSecret();
+		$head->setUpdatedAt(new DateTime('2026-10-01T10:00:05+00:00'));
+		$deleted = false;
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function () use (&$deleted, $head): Secret {
+				if ($deleted === true) {
+					throw new DoesNotExistException('gone');
+				}
+
+				return $head;
+			}
+		);
+		$this->secretMapper->method('advanceVersion')->willReturnCallback(
+			static function () use (&$deleted): int {
+				$deleted = true;
+				return 0;
+			}
+		);
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T10:00:05+00:00');
+			$this->fail('A deleted head must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Secret not found', $e->getMessage());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreOverAHeadDeletedAfterTheCheckIsRefusedAsNotFound()
+
+	/**
 	 * A restore that fails after the audit is rolled back and not logged.
 	 *
 	 * @return void
