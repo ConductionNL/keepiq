@@ -463,7 +463,11 @@ class ShareSaveVersionLockTest extends TestCase {
 	 * @return array{0:FederatedDeclineReceiver,1:FederatedShare}
 	 */
 	private function receiverRacedBy(FederatedShareMapper $mapper, string $status, \Closure $meanwhile): array {
-		$row = $mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
+		if (interface_exists(IIncomingSignedRequest::class) === false) {
+			$this->markTestSkipped(message: 'Federation needs the OCM APIs of Nextcloud 33 or later.');
+		}
+
+		$row =$mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
 		$row->setSharedSecretHash(hash('sha256', 'the-shared-secret'));
 		$mapper->update($row);
 
