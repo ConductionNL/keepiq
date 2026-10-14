@@ -223,9 +223,9 @@ describe('the sync panel', () => {
 		expect(
 			wrapper.find('[data-testid="offline-sync-reason-e1"]').text(),
 		).toContain('bob@partner')
-		expect(
-			wrapper.find('[data-testid="offline-sync-reason-e2"]').text(),
-		).toContain('invalid_key')
+		const refused = wrapper.find('[data-testid="offline-sync-reason-e2"]').text()
+		expect(refused).toBe('Failed to save secret')
+		expect(refused).not.toContain('invalid_key')
 		expect(wrapper.find('[data-testid="offline-sync-retry-e2"]').exists()).toBe(
 			false,
 		)

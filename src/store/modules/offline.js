@@ -121,9 +121,14 @@ export function failureText(failure) {
 		case 'partner_lookup_limit':
 			return shareSaveErrorText(new ShareSaveError('partner_lookup_limit'))
 		case 'refused':
-			return t('keepiq', 'The server refused this change ({reason}).', {
-				reason: failure.reason,
-			})
+			// The server's code stays stored with the entry; the list shows
+			// words, never the code.
+			return (
+				shareSaveErrorText({
+					fromShareSave: true,
+					response: { status: 400, data: { error: failure.reason } },
+				}) ?? t('keepiq', 'Failed to save secret')
+			)
 		case 'not_allowed':
 			return shareSaveErrorText({
 				fromShareSave: true,

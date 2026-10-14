@@ -625,3 +625,15 @@ describe('replay', () => {
 		)
 	})
 })
+
+describe('the text of a refused change', () => {
+	it("shows the share save's own words for a code it knows, and never a code", () => {
+		expect(
+			failureText({ code: 'refused', reason: 'version_refused' }),
+		).toContain('cannot be restored')
+		for (const reason of ['invalid_key', 'too_many_entries', '']) {
+			const text = failureText({ code: 'refused', reason })
+			expect(text).toBe('Failed to save secret')
+		}
+	})
+})
