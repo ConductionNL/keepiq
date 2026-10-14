@@ -126,7 +126,7 @@ When the partner certificate lookup for an active partner share answers that the
 - **THEN** Alice's share MUST stay suspended, and Bob's server MUST NOT be able to pull it
 - **AND** Alice's audit trail MUST record Bob's decline, marked as keeping the share suspended
 
-#### Scenario: A local error never pauses a partner
+#### Scenario: A local error never suspends a partner
 
 - **GIVEN** a secret shared with Bob on a partner instance
 - **WHEN** Alice's own server answers the certificate lookup with an error
