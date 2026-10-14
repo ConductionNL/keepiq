@@ -168,7 +168,7 @@ class SecretVersionService {
 	 */
 	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
-		$secret = $this->secretMapper->findById($version->getSecretId());
+		$secret = $this->reload(id: $version->getSecretId());
 		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
 
 		// The check passed, so the stored version is the base the caller named.
@@ -232,7 +232,7 @@ class SecretVersionService {
 	}//end restoreHead()
 
 	/**
-	 * The head read again inside the restore's transaction.
+	 * The head, read for the base check and again inside the restore's transaction.
 	 *
 	 * @param string $id The secret ID
 	 *

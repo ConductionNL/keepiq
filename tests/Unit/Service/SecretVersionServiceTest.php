@@ -363,6 +363,52 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOverAHeadDeletedAfterTheCheckIsRefusedAsNotFound()
 
 	/**
+	 * A head deleted between the version check and the restore's own read
+	 * is refused like a missing version, not as an unhandled error.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAHeadDeletedBeforeItsReadIsRefusedAsNotFound(): void {
+		$version = new SecretVersion();
+		$version->setId('v-1');
+		$version->setSecretId('sec-1');
+		$version->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($version);
+
+		$deleted = false;
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		// The suite gate is getVersion()'s last read; the secret goes right after it.
+		$this->suiteMapper->method('findById')->willReturnCallback(
+			static function () use (&$deleted, $suite): EncryptionSuite {
+				$deleted = true;
+				return $suite;
+			}
+		);
+		$head = $this->ownedSecret();
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function () use (&$deleted, $head): Secret {
+				if ($deleted === true) {
+					throw new DoesNotExistException('gone');
+				}
+
+				return $head;
+			}
+		);
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice');
+			$this->fail('A deleted head must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Secret not found', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->transaction);
+	}//end testARestoreOfAHeadDeletedBeforeItsReadIsRefusedAsNotFound()
+
+	/**
 	 * A restore without a base still moves the head past its stored version,
 	 * even within the same second, so an edit made on the pre-restore
 	 * version cannot pass the stale check afterwards.
