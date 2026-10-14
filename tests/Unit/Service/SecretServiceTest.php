@@ -989,6 +989,15 @@ class SecretServiceTest extends TestCase {
 		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
 		$this->mapper->method('findById')->willReturn($stored);
 		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+		$base = (new \DateTime('2026-10-02T10:00:00+00:00'))->getTimestamp();
+		// Only the update with a base takes the version lock.
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with(
+				's-1',
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $base),
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() > $base)
+			)
+			->willReturn(1);
 
 		$this->service->update(
 			id: 's-1',
@@ -1002,6 +1011,76 @@ class SecretServiceTest extends TestCase {
 	}//end testUpdateWithAMatchingOrAbsentBaseUpdates()
 
 	/**
+	 * A save that commits after the base check but before the update's write
+	 * moves the row: the compare-and-set finds it gone, and the update is
+	 * refused and rolled back instead of overwriting the save.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testUpdateOverARowThatMovesAfterTheCheckIsRefused(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setName('Router');
+		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->mapper->expects($this->never())->method('update');
+		$versions = $this->createMock(SecretVersionService::class);
+		$versions->expects($this->never())->method('snapshot');
+		$transaction = [];
+		$db = $this->createMock(\OCP\IDBConnection::class);
+		$db->method('beginTransaction')->willReturnCallback(static function () use (&$transaction): void {
+			$transaction[] = 'begin';
+		});
+		$db->method('rollBack')->willReturnCallback(static function () use (&$transaction): void {
+			$transaction[] = 'rollback';
+		});
+		$service = new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			versionService: $versions,
+			db: $db,
+		);
+
+		try {
+			$service->update(id: 's-1', data: ['name' => 'Offline name', 'baseUpdatedAt' => '2026-10-02T10:00:00+00:00'], userId: 'alice');
+			$this->fail('A row that moved after the check must be refused');
+		} catch (\OCA\Keepiq\Exception\StaleWriteException $e) {
+			$this->assertSame('s-1', $e->getCurrent()->getId());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $transaction);
+	}//end testUpdateOverARowThatMovesAfterTheCheckIsRefused()
+
+	/**
+	 * An update without a base still moves the row past its stored version,
+	 * even within the same second, so an edit made on that version cannot
+	 * pass the stale check afterwards.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testUpdateWithoutABaseMovesTheRowPastItsStoredVersion(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$version = (new \DateTime('+1 hour'))->getTimestamp();
+		$stored->setUpdatedAt(new \DateTime('@'.$version));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = $this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
+
+		$this->assertSame($version + 1, $secret->getUpdatedAt()?->getTimestamp());
+	}//end testUpdateWithoutABaseMovesTheRowPastItsStoredVersion()
+
+	/**
 	 * A share-save gives the row the version it already locked in, not "now".
 	 *
 	 * @return void
@@ -1012,6 +1091,7 @@ class SecretServiceTest extends TestCase {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
 		$this->mapper->method('findById')->willReturn($this->makeSecret());
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->never())->method('advanceVersion');
 		$savedAt = new \DateTime('2030-01-01T00:00:01+00:00');
 
 		$secret = $this->service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'], userId: 'alice', savedAt: $savedAt);

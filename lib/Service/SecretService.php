@@ -42,11 +42,14 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Db\TTransactional;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
@@ -75,6 +78,8 @@ use Throwable;
  *   sharing-graph cascade.
  */
 class SecretService {
+	use TTransactional;
+
 	/**
 	 * The default page size.
 	 *
@@ -153,6 +158,7 @@ class SecretService {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
+	 * @param IDBConnection|null $db The transaction of an update made from a base
 	 *
 	 * @return void
 	 */
@@ -178,6 +184,7 @@ class SecretService {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
+		private ?IDBConnection $db = null,
 	) {
 	}//end __construct()
 
@@ -902,7 +909,7 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
-	 * @throws \OCA\Keepiq\Exception\StaleWriteException When `baseUpdatedAt` names an older version
+	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on before the write
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.
@@ -919,6 +926,13 @@ class SecretService {
 	 */
 	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null): Secret {
 		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
+
+		// Once the check passes, a named base is the stored version. A
+		// share-save locked its own version already.
+		$base = null;
+		if ($savedAt === null && ($data['baseUpdatedAt'] ?? '') !== '') {
+			$base = $secret->getUpdatedAt();
+		}
 
 		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
@@ -988,12 +1002,7 @@ class SecretService {
 			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
-		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
-			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
-		}
-
-		$secret->setUpdatedAt($savedAt ?? new DateTime());
-		$this->mapper->update($secret);
+		$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $base, savedAt: $savedAt);
 
 		// Recipients at partner organisations follow a new name or URL
 		// (sharing-federated-recipients 4.5). A new value reaches them through
@@ -1024,6 +1033,51 @@ class SecretService {
 
 		return $secret;
 	}//end update()
+
+	/**
+	 * Snapshot the head and write the updated row. Without a version from a
+	 * share-save the row gets now, but always after its stored version, since
+	 * the column and the stale check count whole seconds. With a base the row
+	 * is moved off it by a compare-and-set in the same transaction, as a
+	 * share-save does, so a save that commits after the check refuses this
+	 * update instead of being overwritten by it.
+	 *
+	 * @param Secret $secret The row with the update applied
+	 * @param Secret $preUpdate The row as loaded
+	 * @param string $userId The requesting Nextcloud user ID
+	 * @param DateTime|null $base The version the update was made from; null skips the lock
+	 * @param DateTime|null $savedAt The version a share-save locked in
+	 *
+	 * @return void
+	 *
+	 * @throws StaleWriteException When the row moved on from `$base` after it was read
+	 * @throws NotFoundException When the row was deleted after it was read
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	private function store(Secret $secret, Secret $preUpdate, string $userId, ?DateTime $base, ?DateTime $savedAt): void {
+		$savedAt ??= new DateTime('@'.max(time(), ($preUpdate->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
+		$write = function () use ($secret, $preUpdate, $userId, $base, $savedAt): void {
+			if ($base !== null && $this->mapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
+				throw new StaleWriteException(current: $this->loadOwned(id: $secret->getId(), userId: $userId));
+			}
+
+			if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
+				$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
+			}
+
+			$secret->setUpdatedAt($savedAt);
+			$this->mapper->update($secret);
+		};
+
+		if ($base === null || $this->db === null) {
+			$write();
+			return;
+		}
+
+		$this->atomic(fn: $write, db: $this->db);
+	}//end store()
 
 	/**
 	 * Delete a secret owned by the user, cascading to its link shares.
