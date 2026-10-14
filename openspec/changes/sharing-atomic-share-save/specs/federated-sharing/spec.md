@@ -27,7 +27,7 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice's secret passes to Dave, through Alice's delegation when her account is deleted or through team offboarding
-- **THEN** Bob's share MUST be Dave's, so Dave can revoke or suspend it, and a share-save of the secret itself writes it
+- **THEN** Bob's share MUST be Dave's, so Dave can revoke or suspend it; an owner share-save of the secret writes it, a save through Dave's own copy does not
 - **AND** Bob's server MUST keep pulling the share
 
 ### Requirement: Remote copies are read-only
