@@ -62,11 +62,8 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	private const NEW_KEY = 'NEW-CIPHER-KEY-FOR-BOB';
 	private const FINGERPRINT = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
-	/** @var array<string,FederatedShare> */
+	/** @var array<string,FederatedShare> What the database holds: the mapper reads and writes copies */
 	private array $rows = [];
-
-	/** @var array<string,array{status:string,pending:?string}> What the database holds of each row */
-	private array $stored = [];
 
 	/** @var FakeCloudFederationNotification[] Notifications sent, with the remote they went to */
 	private array $sent = [];
@@ -77,12 +74,18 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	/** Whether the recipient's instance takes notifications. */
 	private bool $reachable = true;
 
+	/** Runs once, while the next notification is being sent. */
+	private ?\Closure $onSend = null;
+
 	/** @var AuditEvent[] */
 	private array $audit = [];
 
 	private FederatedShareService $service;
 
 	private FederatedNotificationDelivery $delivery;
+
+	/** The secret the share is of. */
+	private Secret $source;
 
 	protected function setUp(): void {
 		$row = new FederatedShare();
@@ -98,13 +101,11 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$row->setStatus(FederatedShare::STATUS_ACTIVE);
 		$row->setNotifyAttempts(0);
 		$row->setUpdatedAt(new DateTime('2026-10-01T00:00:00Z'));
-		$this->rows['fs-1'] = $row;
-
-		$mapper = $this->createMock(FederatedShareMapper::class);
-		$mapper->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => $this->rows[$id] ?? throw new DoesNotExistException('none')
-		);
 		$this->store($row);
+
+		// The conditions are those of FederatedShareMapper's SQL.
+		$mapper = $this->createMock(FederatedShareMapper::class);
+		$mapper->method('findById')->willReturnCallback(fn (string $id): FederatedShare => $this->read($id));
 		$mapper->method('update')->willReturnCallback(
 			function (FederatedShare $row): FederatedShare {
 				$this->store($row);
@@ -112,14 +113,25 @@ class FederatedShareOwnerChangesTest extends TestCase {
 			}
 		);
 		$mapper->method('updateIfActive')->willReturnCallback(
-			fn (FederatedShare $row): int => ($this->stored[$row->getId()]['status'] === FederatedShare::STATUS_ACTIVE) ? $this->store($row) : 0
+			fn (FederatedShare $row): int => (($this->rows[$row->getId()] ?? null)?->getStatus() === FederatedShare::STATUS_ACTIVE) ? $this->store($row) : 0
 		);
 		$mapper->method('updateIfUnchanged')->willReturnCallback(
-			fn (FederatedShare $row, string $pending, string $status): int => ($this->stored[$row->getId()] === ['status' => $status, 'pending' => $pending]) ? $this->store($row) : 0
+			function (FederatedShare $row, string $pending, string $status, ?DateTime $updatedAt): int {
+				$stored = $this->rows[$row->getId()] ?? null;
+				if ($stored === null
+					|| $stored->getPendingNotification() !== $pending
+					|| $stored->getStatus() !== $status
+					|| $stored->getUpdatedAt()?->getTimestamp() !== $updatedAt?->getTimestamp()
+				) {
+					return 0;
+				}
+
+				return $this->store($row);
+			}
 		);
 		$mapper->method('deleteIfPending')->willReturnCallback(
 			function (FederatedShare $row, string $pending): int {
-				if ($this->stored[$row->getId()]['pending'] !== $pending) {
+				if (($this->rows[$row->getId()] ?? null)?->getPendingNotification() !== $pending) {
 					return 0;
 				}
 
@@ -127,13 +139,21 @@ class FederatedShareOwnerChangesTest extends TestCase {
 				return 1;
 			}
 		);
-		$mapper->method('findByPartner')->willReturnCallback(fn (): array => array_values($this->rows));
+		$mapper->method('findByPartner')->willReturnCallback(
+			fn (): array => array_map(fn (string $id): FederatedShare => $this->read($id), array_keys($this->rows))
+		);
 		$mapper->method('findDueNotifications')->willReturnCallback(
-			fn (DateTime $now): array => array_values(array_filter(
-				$this->rows,
-				static fn (FederatedShare $r): bool => $r->getPendingNotification() !== null
-					&& $r->getNextNotifyAt() !== null && $r->getNextNotifyAt() <= $now
-			))
+			function (DateTime $now, int $limit, string $ending): array {
+				$due = array_filter(
+					$this->rows,
+					static fn (FederatedShare $r): bool => $r->getPendingNotification() !== null
+						&& $r->getNextNotifyAt() !== null && $r->getNextNotifyAt() <= $now
+						&& ($r->getStatus() === FederatedShare::STATUS_ACTIVE || $r->getPendingNotification() === $ending)
+				);
+				uasort($due, static fn (FederatedShare $a, FederatedShare $b): int => $a->getNextNotifyAt() <=> $b->getNextNotifyAt());
+
+				return array_map(fn (string $id): FederatedShare => $this->read($id), array_slice(array_keys($due), 0, $limit));
+			}
 		);
 
 		$source = new Secret();
@@ -143,12 +163,18 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$source->setOwnerId('alice');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);
+		$this->source = $source;
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationNotification')->willReturnCallback(static fn () => new FakeCloudFederationNotification());
 		$ocm = $this->createMock(ICloudFederationProviderManager::class);
 		$ocm->method('sendCloudNotification')->willReturnCallback(
 			function (string $remote, FakeCloudFederationNotification $notification): IResponse {
+				$onSend = $this->onSend;
+				$this->onSend = null;
+				if ($onSend !== null) {
+					$onSend();
+				}
 				$this->sent[] = $notification;
 				$this->sentTo[] = $remote;
 				$response = $this->createMock(IResponse::class);
@@ -186,10 +212,31 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Write the row to the database; later changes to `$row` stay unsaved.
+	 */
 	private function store(FederatedShare $row): int {
-		$this->stored[$row->getId()] = ['status' => $row->getStatus(), 'pending' => $row->getPendingNotification()];
+		$this->rows[$row->getId()] = clone $row;
 
 		return 1;
+	}
+
+	/**
+	 * The row as a select returns it: a copy of what the database holds.
+	 */
+	private function read(string $id): FederatedShare {
+		if (isset($this->rows[$id]) === false) {
+			throw new DoesNotExistException('none');
+		}
+
+		return clone $this->rows[$id];
+	}
+
+	/**
+	 * @return array{status:string,pending:?string}
+	 */
+	private function stored(string $id): array {
+		return ['status' => $this->rows[$id]->getStatus(), 'pending' => $this->rows[$id]->getPendingNotification()];
 	}
 
 	private function controller(string $uid = 'alice'): FederatedShareController {
@@ -269,7 +316,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$at = new DateTime('2026-10-13T12:00:00Z');
 
 		$row = $this->service->writeCiphertext(
-			row: $this->rows['fs-1'],
+			row: $this->read('fs-1'),
 			certFingerprint: strtoupper(self::FINGERPRINT),
 			ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
 			savedAt: $at,
@@ -295,12 +342,12 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	}
 
 	public function testAShareSaveWriteNeverOverwritesARevoke(): void {
+		$row = $this->read('fs-1');
 		$this->rows['fs-1']->setStatus(FederatedShare::STATUS_REVOKED);
-		$this->store($this->rows['fs-1']);
 
 		$this->expectException(\OCA\Keepiq\Exception\NotFoundException::class);
 		$this->service->writeCiphertext(
-			row: $this->rows['fs-1'],
+			row: $row,
 			certFingerprint: self::FINGERPRINT,
 			ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
 			savedAt: new DateTime(),
@@ -311,7 +358,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->expectException(\InvalidArgumentException::class);
 
 		$this->service->writeCiphertext(
-			row: $this->rows['fs-1'],
+			row: $this->read('fs-1'),
 			certFingerprint: 'nope',
 			ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
 			savedAt: new DateTime(),
@@ -338,10 +385,9 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->reachable = false;
 		$this->controller()->destroy('fs-1');
 
-		$row = $this->rows['fs-1'];
-		$this->assertSame(FederatedShare::STATUS_REVOKED, $row->getStatus());
-		$this->assertSame('SHARE_UNSHARED', $row->getPendingNotification());
-		$this->assertSame(1, $row->getNotifyAttempts());
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->rows['fs-1']->getStatus());
+		$this->assertSame('SHARE_UNSHARED', $this->rows['fs-1']->getPendingNotification());
+		$this->assertSame(1, $this->rows['fs-1']->getNotifyAttempts());
 
 		// Nothing is served while the revocation is on its way.
 		$this->assertNull($this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]));
@@ -349,18 +395,18 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		// The waits double: 1, 2, 4, 8 minutes after each failure.
 		$waits = [];
 		for ($i = 0; $i < 4; $i++) {
-			$due = clone $row->getNextNotifyAt();
+			$due = clone $this->rows['fs-1']->getNextNotifyAt();
 			$this->assertSame(0, $this->delivery->retryDue((clone $due)->modify('-1 second')));
 			$waits[] = $due->getTimestamp();
 			$this->assertSame(0, $this->delivery->retryDue($due));
 		}
 		$this->assertSame([120, 240, 480], [$waits[1] - $waits[0], $waits[2] - $waits[1], $waits[3] - $waits[2]]);
-		$this->assertSame(5, $row->getNotifyAttempts());
+		$this->assertSame(5, $this->rows['fs-1']->getNotifyAttempts());
 
 		// The sixth failure gives up; the owner sees the share failed.
-		$this->delivery->retryDue(clone $row->getNextNotifyAt());
-		$this->assertSame(FederatedShare::STATUS_FAILED, $row->getStatus());
-		$this->assertNull($row->getNextNotifyAt());
+		$this->delivery->retryDue(clone $this->rows['fs-1']->getNextNotifyAt());
+		$this->assertSame(FederatedShare::STATUS_FAILED, $this->rows['fs-1']->getStatus());
+		$this->assertNull($this->rows['fs-1']->getNextNotifyAt());
 		$this->assertSame(6, count($this->sent));
 		$last = end($this->audit);
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_FAILED, $last->getEventType());
@@ -387,13 +433,27 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller('mallory')->suspend('fs-2', 'x')->getStatus());
 	}
 
+	/**
+	 * A share whose owner is not its secret's owner was left behind by an
+	 * ownership transfer: only the previous owner could still revoke or
+	 * suspend it, so its value is not served.
+	 */
+	public function testAShareLeftBehindByAnOwnerChangeIsNotServed(): void {
+		$pulled = $this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]);
+		$this->assertSame('OLD-CIPHER-KEY-FOR-BOB', $pulled['key'] ?? null);
+
+		$this->source->setOwnerId('dave');
+
+		$this->assertNull($this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]));
+	}
+
 	public function testASuspendNeverOverwritesARevoke(): void {
 		$this->reachable = false;
 		$this->controller()->destroy('fs-1');
 		$audited = count($this->audit);
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller()->suspend('fs-1', 'untrusted_root')->getStatus());
-		$this->assertSame(['status' => FederatedShare::STATUS_REVOKED, 'pending' => 'SHARE_UNSHARED'], $this->stored['fs-1']);
+		$this->assertSame(['status' => FederatedShare::STATUS_REVOKED, 'pending' => 'SHARE_UNSHARED'], $this->stored('fs-1'));
 		$this->assertCount($audited, $this->audit);
 	}
 
@@ -420,20 +480,83 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	}
 
 	/**
+	 * The retry job read two queued updates, and Alice suspends the second
+	 * share while the first is sent: the second is not announced.
+	 */
+	public function testARetryBatchSkipsAShareSuspendedAfterItWasRead(): void {
+		$this->queueTwoUpdates();
+
+		$this->onSend = function (): void {
+			$this->assertSame(Http::STATUS_OK, $this->controller()->suspend('fs-2', 'untrusted_root')->getStatus());
+		};
+
+		$this->assertSame(1, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:01:00Z')));
+		$this->assertCount(1, $this->sent);
+		$this->assertSame('fs-1', $this->sent[0]->getMessage()['providerId']);
+		$this->assertSame(['status' => FederatedShare::STATUS_SUSPENDED, 'pending' => null], $this->stored('fs-2'));
+	}
+
+	/**
+	 * The retry job read two queued updates, and Alice saves the second
+	 * share again while the first is sent: that save's notification has a
+	 * new lease, so the batch leaves it to the save's own send.
+	 */
+	public function testARetryBatchSkipsAShareSavedAgainAfterItWasRead(): void {
+		$this->queueTwoUpdates();
+
+		$this->onSend = function (): void {
+			$this->service->writeCiphertext(
+				row: $this->read('fs-2'),
+				certFingerprint: self::FINGERPRINT,
+				ciphertext: ['key' => 'NEWER-CIPHER-KEY', 'login' => null, 'additionalFields' => null],
+				savedAt: new DateTime('2026-10-13T12:01:00Z'),
+			);
+		};
+
+		$this->assertSame(1, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:01:00Z')));
+		$this->assertCount(1, $this->sent);
+		$this->assertSame('fs-1', $this->sent[0]->getMessage()['providerId']);
+		$this->assertSame(['status' => FederatedShare::STATUS_ACTIVE, 'pending' => 'SHARE_UPDATED'], $this->stored('fs-2'));
+		$this->assertSame(0, $this->rows['fs-2']->getNotifyAttempts());
+
+		// Only once that lease is over is it the retry job's.
+		$this->assertSame(0, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:01:59Z')));
+		$this->assertSame(1, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:02:00Z')));
+		$this->assertSame('fs-2', $this->sent[1]->getMessage()['providerId']);
+	}
+
+	/**
+	 * Two share-saves' writes, fs-1 and fs-2, whose sends never happened.
+	 */
+	private function queueTwoUpdates(): void {
+		$second = $this->read('fs-1');
+		$second->setId('fs-2');
+		$this->store($second);
+		foreach (['fs-1', 'fs-2'] as $id) {
+			$this->service->writeCiphertext(
+				row: $this->read($id),
+				certFingerprint: self::FINGERPRINT,
+				ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
+				savedAt: new DateTime('2026-10-13T12:00:00Z'),
+			);
+		}
+	}
+
+	/**
 	 * A share-save's write whose send after the commit never happened.
 	 */
 	private function queueAnUpdate(): void {
 		$this->service->writeCiphertext(
-			row: $this->rows['fs-1'],
+			row: $this->read('fs-1'),
 			certFingerprint: self::FINGERPRINT,
 			ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
 			savedAt: new DateTime('2026-10-13T12:00:00Z'),
 		);
-		$this->assertSame(['status' => FederatedShare::STATUS_ACTIVE, 'pending' => 'SHARE_UPDATED'], $this->stored['fs-1']);
+		$this->assertSame(['status' => FederatedShare::STATUS_ACTIVE, 'pending' => 'SHARE_UPDATED'], $this->stored('fs-1'));
 	}
 
 	private function assertNothingIsAnnouncedToTheSuspendedShare(): void {
-		$this->assertSame(['status' => FederatedShare::STATUS_SUSPENDED, 'pending' => null], $this->stored['fs-1']);
+		$this->assertSame(['status' => FederatedShare::STATUS_SUSPENDED, 'pending' => null], $this->stored('fs-1'));
 		$row = $this->rows['fs-1'];
 		$this->assertSame(0, $row->getNotifyAttempts());
 		$this->assertNull($row->getNextNotifyAt());
@@ -442,7 +565,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->assertSame(0, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:02:00Z')));
 		$this->assertSame(0, $this->delivery->retryDue(now: new DateTime('2026-10-14T12:00:00Z')));
 		$this->assertSame([], $this->sent);
-		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->stored['fs-1']['status']);
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->rows['fs-1']->getStatus());
 	}
 
 	public function testRemovingThePartnerSuspendsItsShares(): void {

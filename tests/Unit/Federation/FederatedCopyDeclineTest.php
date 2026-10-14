@@ -584,26 +584,14 @@ class FederatedCopyDeclineTest extends TestCase {
 	}
 
 	/**
-	 * @return array<string,array{0:string,1:string|null}>
+	 * The retry job gave an update up while the signature of Bob's decline
+	 * was checked: the decline still counts.
 	 */
-	public static function ownerChangesWhileTheDeclineIsChecked(): array {
-		return [
-			'the owner suspends' => [FederatedShare::STATUS_SUSPENDED, null],
-			'the retry job gives an update up' => [FederatedShare::STATUS_FAILED, 'SHARE_UPDATED'],
-		];
-	}
-
-	/**
-	 * The status changed for another reason than a revoke while the
-	 * signature of Bob's decline was checked: the decline still counts.
-	 *
-	 * @dataProvider ownerChangesWhileTheDeclineIsChecked
-	 */
-	public function testADeclineStillCountsWhenTheShareChangedMeanwhile(string $status, ?string $pending): void {
+	public function testADeclineStillCountsWhenARetryGaveUpMeanwhile(): void {
 		$this->signer = 'cloud.partner.example';
-		$this->meanwhile = function () use ($status, $pending): void {
-			$this->outbound->setStatus($status);
-			$this->outbound->setPendingNotification($pending);
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_FAILED);
+			$this->outbound->setPendingNotification('SHARE_UPDATED');
 		};
 
 		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
@@ -613,6 +601,53 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->assertNull($this->outbound->getPendingNotification());
 		$this->assertCount(1, $this->audit);
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+	}
+
+	/**
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function suspensions(): array {
+		return [
+			'suspended before the decline' => [false],
+			'the owner suspends while the decline is checked' => [true],
+		];
+	}
+
+	/**
+	 * Only the owner ends a suspension. A decline that made the share
+	 * declined would let Bob's later accept make it live again. The trail
+	 * still tells Alice that Bob's copy is gone.
+	 *
+	 * @dataProvider suspensions
+	 */
+	public function testADeclineLeavesASuspendedShareSuspended(bool $meanwhile): void {
+		$this->signer = 'cloud.partner.example';
+		$suspend = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_SUSPENDED);
+		};
+		if ($meanwhile === true) {
+			$this->meanwhile = $suspend;
+		} else {
+			$suspend();
+		}
+
+		$provider = $this->alicesProvider();
+		$result = $provider->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->outbound->getStatus());
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+		$this->assertNull($this->audit[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'kept' => 'suspended'],
+			$this->audit[0]->getMetadata()
+		);
+		$this->assertIdentifiersOnly();
+
+		$this->meanwhile = null;
+		$this->expectException(ShareNotFound::class);
+		$provider->notificationReceived('SHARE_ACCEPTED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 	}
 
 	/**

@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.9-unstable.20261013120000</version>
+    <version>0.3.9-unstable.20261014120000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -194,6 +194,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Keepiq\Repair\InitializeSettings</step>
             <step>OCA\Keepiq\Repair\SeedSecretTypes</step>
+            <!--
+                Hands partner shares an ownership transfer left with the
+                previous owner to their secret's owner. Not under <install>:
+                a fresh install has no partner shares.
+            -->
+            <step>OCA\Keepiq\Repair\ReownTransferredPartnerShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentData</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecrets</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentApplications</step>
