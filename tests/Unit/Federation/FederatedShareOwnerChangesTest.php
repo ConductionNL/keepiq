@@ -497,6 +497,35 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	}
 
 	/**
+	 * The retry job read two queued updates, and Alice saves the second
+	 * share again while the first is sent: that save's notification has a
+	 * new lease, so the batch leaves it to the save's own send.
+	 */
+	public function testARetryBatchSkipsAShareSavedAgainAfterItWasRead(): void {
+		$this->queueTwoUpdates();
+
+		$this->onSend = function (): void {
+			$this->service->writeCiphertext(
+				row: $this->read('fs-2'),
+				certFingerprint: self::FINGERPRINT,
+				ciphertext: ['key' => 'NEWER-CIPHER-KEY', 'login' => null, 'additionalFields' => null],
+				savedAt: new DateTime('2026-10-13T12:01:00Z'),
+			);
+		};
+
+		$this->assertSame(1, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:01:00Z')));
+		$this->assertCount(1, $this->sent);
+		$this->assertSame('fs-1', $this->sent[0]->getMessage()['providerId']);
+		$this->assertSame(['status' => FederatedShare::STATUS_ACTIVE, 'pending' => 'SHARE_UPDATED'], $this->stored('fs-2'));
+		$this->assertSame(0, $this->rows['fs-2']->getNotifyAttempts());
+
+		// Only once that lease is over is it the retry job's.
+		$this->assertSame(0, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:01:59Z')));
+		$this->assertSame(1, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:02:00Z')));
+		$this->assertSame('fs-2', $this->sent[1]->getMessage()['providerId']);
+	}
+
+	/**
 	 * Two share-saves' writes, fs-1 and fs-2, whose sends never happened.
 	 */
 	private function queueTwoUpdates(): void {
