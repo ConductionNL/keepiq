@@ -131,7 +131,7 @@ class FederatedNotificationDelivery {
 	 */
 	public function retryDue(DateTime $now, int $limit = 50): int {
 		$delivered = 0;
-		foreach ($this->shareMapper->findDueNotifications(now: $now, limit: $limit) as $row) {
+		foreach ($this->shareMapper->findDueNotifications(now: $now, limit: $limit, ending: self::SHARE_UNSHARED) as $row) {
 			if ($this->attempt(row: $row, now: $now) === true) {
 				$delivered++;
 			}

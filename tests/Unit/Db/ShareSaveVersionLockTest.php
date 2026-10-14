@@ -100,7 +100,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertSame(0, $mapper->advanceVersion(id: 'no-such-row', base: $savedAt, savedAt: new DateTime('+1 day')));
 	}
 
-	private function insertPartnerShare(string $status, ?string $pending, int $attempts = 0, string $sourceSecretId = 'src'): FederatedShare {
+	private function insertPartnerShare(string $status, ?string $pending, int $attempts = 0, string $sourceSecretId = 'src', ?DateTime $nextNotifyAt = null): FederatedShare {
 		$share = new FederatedShare();
 		$share->setId(Uuid::uuid4()->toString());
 		$share->setSourceSecretId($sourceSecretId);
@@ -112,6 +112,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		$share->setStatus($status);
 		$share->setPendingNotification($pending);
 		$share->setNotifyAttempts($attempts);
+		$share->setNextNotifyAt($nextNotifyAt);
 		$share->setCreatedAt(new DateTime(self::BASE));
 		$share->setUpdatedAt(new DateTime(self::BASE));
 
@@ -277,7 +278,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		);
 		$due = fn (DateTime $now): bool => in_array(
 			$saved->getId(),
-			array_map(static fn (FederatedShare $due): string => $due->getId(), $mapper->findDueNotifications(now: $now, limit: 10000)),
+			array_map(static fn (FederatedShare $due): string => $due->getId(), $mapper->findDueNotifications(now: $now, limit: 10000, ending: FederatedNotificationDelivery::SHARE_UNSHARED)),
 			true
 		);
 		$this->assertFalse($due($savedAt));
@@ -372,6 +373,63 @@ class ShareSaveVersionLockTest extends TestCase {
 		$active->setKey('NEW');
 		$this->assertSame(1, $mapper->updateIfActive(share: $active));
 		$this->assertSame('NEW', $mapper->findById($share->getId())->getKey());
+	}
+
+	/**
+	 * A suspend drops the update a share-save queued, in the database too.
+	 */
+	public function testASuspendClearsTheQueuedUpdate(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$row = $this->committedShareSave(mapper: $mapper, attempts: 2);
+		$delivery = new FederatedNotificationDelivery($mapper, $this->createMock(FederatedShareMessenger::class), $this->createMock(FederatedShareAuditTrail::class));
+
+		$this->shareService(mapper: $mapper, delivery: $delivery)->suspend(shareId: $row->getId(), userId: 'share-save-test', reason: 'partner_removed');
+
+		$stored = $mapper->findById($row->getId());
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $stored->getStatus());
+		$this->assertNull($stored->getPendingNotification());
+		$this->assertSame(0, $stored->getNotifyAttempts());
+		$this->assertNull($stored->getNextNotifyAt());
+	}
+
+	/**
+	 * The retry job announces nothing to a share that is no longer active,
+	 * but still delivers the unshare of a revoked one.
+	 */
+	public function testTheRetryJobSkipsAnInactiveShareButDeliversARevokesUnshare(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$due = new DateTime('2026-10-01T10:05:00+00:00');
+		$active = $this->insertPartnerShare(status: FederatedShare::STATUS_ACTIVE, pending: 'SHARE_UPDATED', nextNotifyAt: $due);
+		$suspended = $this->insertPartnerShare(status: FederatedShare::STATUS_SUSPENDED, pending: 'SHARE_UPDATED', nextNotifyAt: $due);
+		$declined = $this->insertPartnerShare(status: FederatedShare::STATUS_DECLINED, pending: 'SHARE_UPDATED', nextNotifyAt: $due);
+		$revoked = $this->insertPartnerShare(status: FederatedShare::STATUS_REVOKED, pending: 'SHARE_UNSHARED', nextNotifyAt: $due);
+
+		$found = array_map(
+			static fn (FederatedShare $row): string => $row->getId(),
+			$mapper->findDueNotifications(now: $due, limit: 10000, ending: FederatedNotificationDelivery::SHARE_UNSHARED)
+		);
+		$this->assertContains($active->getId(), $found);
+		$this->assertContains($revoked->getId(), $found);
+		$this->assertNotContains($suspended->getId(), $found);
+		$this->assertNotContains($declined->getId(), $found);
+
+		$messenger = $this->createMock(FederatedShareMessenger::class);
+		$sent = [];
+		$messenger->method('notify')->willReturnCallback(
+			function (FederatedShare $notified, string $type) use (&$sent): bool {
+				$sent[$notified->getId()] = $type;
+				return true;
+			}
+		);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery->retryDue(now: $due, limit: 10000);
+
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $sent[$revoked->getId()] ?? null);
+		$this->assertArrayNotHasKey($suspended->getId(), $sent);
+		$this->assertArrayNotHasKey($declined->getId(), $sent);
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $mapper->findById($suspended->getId())->getStatus());
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($revoked->getId());
 	}
 
 	public function testFindByIdsLeavesUnknownIdsOut(): void {

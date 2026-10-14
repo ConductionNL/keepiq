@@ -105,21 +105,30 @@ class FederatedShareMapper extends QBMapper {
 	}//end findByPartner()
 
 	/**
-	 * Shares with a notification due for another delivery attempt.
+	 * Shares with a notification due for another delivery attempt. A share
+	 * that is no longer active is announced nothing but its end: a suspended,
+	 * declined or failed one is left out unless `$ending` is pending on it.
 	 *
-	 * @param DateTime $now   The current time
-	 * @param int      $limit The most rows to return
+	 * @param DateTime $now    The current time
+	 * @param int      $limit  The most rows to return
+	 * @param string   $ending The notification that ends a share (SHARE_UNSHARED)
 	 *
 	 * @return FederatedShare[]
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
-	public function findDueNotifications(DateTime $now, int $limit): array {
+	public function findDueNotifications(DateTime $now, int $limit, string $ending): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
 			->where($qb->expr()->isNotNull('pending_notification'))
 			->andWhere($qb->expr()->lte('next_notify_at', $qb->createNamedParameter($now, IQueryBuilder::PARAM_DATETIME_MUTABLE)))
+			->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('status', $qb->createNamedParameter(FederatedShare::STATUS_ACTIVE)),
+					$qb->expr()->eq('pending_notification', $qb->createNamedParameter($ending))
+				)
+			)
 			->orderBy('next_notify_at', 'ASC')
 			->setMaxResults($limit);
 
