@@ -893,6 +893,39 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt()
 
 	/**
+	 * A fill of only an extra-field blob that is held back on the second
+	 * write leaves nothing to write, so no empty update makes a new version.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillSkipsTheSecondWriteWhenOnlyAHeldBackBlobIsLeft(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['api-interface-id']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$read = new Secret();
+		$read->setId('sec-1');
+		$read->setOwnerType('user');
+		$read->setOwnerId('requester');
+		$current = clone $read;
+		$current->setAdditionalFields('SAVED_MEANWHILE');
+		$this->secretMapper->method('findById')->willReturn($read);
+		$this->secretMapper->expects($this->once())->method('update')->with($this->identicalTo($current))->willReturnArgument(0);
+
+		$this->secretService->expects($this->once())->method('update')
+			->with('sec-1', ['additionalFields' => 'CIPHER_BLOB'], 'requester')
+			->willThrowException(new StaleWriteException(current: $current));
+
+		$result = $this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['additionalFields' => 'CIPHER_BLOB']);
+
+		$this->assertSame(['CIPHER_BLOB'], $current->pendingAdditionalFieldList());
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testFillSkipsTheSecondWriteWhenOnlyAHeldBackBlobIsLeft()
+
+	/**
 	 * A row that moves again during the second write refuses the fill with
 	 * 409 and leaves the request pending, so the filler can submit again.
 	 *
