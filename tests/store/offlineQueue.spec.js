@@ -509,7 +509,10 @@ describe('replay', () => {
 
 		expect(result.stopped).toBe(false)
 		const [failed] = offline.failedEntries
-		expect(failureText(failed.failure)).toContain('invalid_key')
+		// The code stays stored with the entry; the list shows words.
+		expect(failed.failure).toEqual({ code: 'refused', reason: 'invalid_key' })
+		expect(failureText(failed.failure)).toBe('Failed to save secret')
+		expect(failureText(failed.failure)).not.toContain('invalid_key')
 	})
 
 	it('an entry left at "sync" is saved with its copies while the row still holds it, without the merge count', async () => {
