@@ -111,7 +111,9 @@ class ShareSaveScope {
 	 * transaction after the locks, so a grade lowered after resolve() refuses
 	 * the save and rolls it back. The source is read again first: moving it to
 	 * another folder does not change its version, so the lock does not see it.
-	 * The owner path has nothing to check.
+	 * The caller must also still write the same way (owner or delegate, or
+	 * team-folder grade) as resolve() found, so the save is audited as what
+	 * it is. The owner path has nothing to check.
 	 *
 	 * @param ShareSavePath $path The path resolve() returned
 	 * @param string $userId The caller
@@ -134,7 +136,13 @@ class ShareSaveScope {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		$this->writerOn(source: $source, userId: $userId);
+		if ($this->writerOn(source: $source, userId: $userId) !== $path->teamWriter) {
+			throw new ShareSaveRefusal(
+				error: 'not_allowed',
+				message: 'Your access to this secret changed while saving; reload and try again',
+				status: Http::STATUS_FORBIDDEN
+			);
+		}
 	}//end assertStillWriter()
 
 	/**
