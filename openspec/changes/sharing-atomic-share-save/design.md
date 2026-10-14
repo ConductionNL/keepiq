@@ -43,6 +43,6 @@ The server receives ciphertext only, encrypted in the browser for each holder's 
 ## Risks / Trade-offs
 
 - A share created while a share-save runs encrypts the value its creator decrypted, which can be the older one. The next save's completeness check names that copy; closing the gap needs share creation to send the source version it encrypted from (follow-up).
-- An unreachable partner blocks the save until the user chooses to save without them, which suspends that partner share.
+- An unreachable partner blocks the save until the user chooses to save without them, which suspends that partner share. Nothing resumes a suspended share: it stays suspended until the owner revokes it or shares again, and the partner keeps its last value without being told. Resuming it is a follow-up.
 - The partner certificate lookup allows 60 calls per minute per user and a save needs one per active partner share. The browser waits out the limit for at most five minutes, so one save handles about 360 partner shares. Only the edit dialog shows the wait; an offline replay, a version restore and the write-back of request-filled fields wait without showing it. A batch lookup for the owner's own partner shares would remove the wait (follow-up).
 - Until the browser extension moves, its old routes still write copies and partner shares without this version check.

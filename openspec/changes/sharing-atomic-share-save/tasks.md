@@ -19,6 +19,7 @@
 - [ ] 3.1 Let share creation send the source version it encrypted from, so a share created during a share-save can't keep an older value (#1255).
 - [ ] 3.2 Add a batch partner certificate lookup for the owner's own partner shares, so a save no longer waits out the per-call rate limit (#1256).
 - [ ] 3.3 Move the browser extension to share-save, then remove `/sync` and the federated share update route.
+- [ ] 3.4 Let the owner resume a suspended partner share, so saving without an unreachable partner no longer ends the share for good (#1262).
 
 ## Acceptance criteria
 
