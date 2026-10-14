@@ -316,6 +316,31 @@ describe('SecretEditDialog — share save', () => {
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 
+	it('saves the merged count of the secret it edited, not of the one the store opened since', async () => {
+		useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
+		const log = shareSaveServer({ id: 's1' })
+		const store = useSecretStore()
+		const wrapper = await mountEdited({
+			fetchSecret: async () => ({
+				...OPEN_WITH_PENDING,
+				additionalFields: { pin: '1234' },
+			}),
+		})
+		// Opened again meanwhile, with a fill the dialog's blob does not hold.
+		store.currentSecret = {
+			...OPEN_WITH_PENDING,
+			additionalFields: { pin: '1234', puk: '5678' },
+			mergedPending: 2,
+		}
+		wrapper.vm.additionalFields = [{ name: 'pin', value: '4321' }]
+
+		await wrapper.vm.submit()
+
+		expect(log.saves).toHaveLength(1)
+		expect(log.saves[0].patch.mergedPending).toBe(1)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
 	it('saves a copy past a merge write-back that finished before the save, from the versions it moved to', async () => {
 		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
 			grade: 'write',

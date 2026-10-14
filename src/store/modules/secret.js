@@ -730,7 +730,7 @@ export const useSecretStore = defineStore('secret', {
 		 * and partner share in the same transaction or nothing at all.
 		 *
 		 * @param {string} id The secret ID.
-		 * @param {object} data The fields to change.
+		 * @param {object} data The fields to change, with `mergedPending`: the request-filled pending blobs the edited `additionalFields` merged.
 		 * @param {object} [options] Options.
 		 * @param {string} [options.baseUpdatedAt] The version the edit was made from.
 		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
@@ -800,17 +800,10 @@ export const useSecretStore = defineStore('secret', {
 					payload,
 					await encryptSparse(plainDiff, session.certificate),
 				)
-				if (data.additionalFields !== undefined) {
-					// The blob now holds the request-filled pending members this
-					// client merged on open: let the server drop them (keepiq#750).
-					const merged =
-						data.mergedPending
-						?? (this.currentSecret?.id === id
-							? this.currentSecret.mergedPending
-							: 0)
-					if (merged > 0) {
-						payload.mergedPending = merged
-					}
+				// The blob holds the request-filled pending members the caller's
+				// copy merged on open: let the server drop them (keepiq#750).
+				if (data.additionalFields !== undefined && data.mergedPending > 0) {
+					payload.mergedPending = data.mergedPending
 				}
 			}
 

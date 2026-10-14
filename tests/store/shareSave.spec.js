@@ -997,10 +997,31 @@ describe('updateSecret', () => {
 
 		await store.updateSecret('s1', {
 			additionalFields: reopened.additionalFields,
+			mergedPending: reopened.mergedPending,
 		})
 
 		expect(log.saves[1].baseUpdatedAt).toBe(SAVED_AT)
 		expect(log.saves[1].patch.mergedPending).toBe(1)
+	})
+
+	it("takes the merged count from the caller, never from the open secret's", async () => {
+		const log = shareSaveServer({ id: 's1' })
+		const store = useSecretStore()
+		store.currentSecret = { id: 's1', mergedPending: 2, updatedAt: BASE }
+
+		await store.updateSecret(
+			's1',
+			{ additionalFields: { pin: '1234' }, mergedPending: 1 },
+			{ baseUpdatedAt: BASE },
+		)
+		await store.updateSecret(
+			's1',
+			{ additionalFields: { pin: '4321' } },
+			{ baseUpdatedAt: SAVED_AT },
+		)
+
+		expect(log.saves[0].patch.mergedPending).toBe(1)
+		expect('mergedPending' in log.saves[1].patch).toBe(false)
 	})
 
 	it('opened again on a read answered before the write-back saved but handled after it settled, takes that write-back instead of starting a second', async () => {

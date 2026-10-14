@@ -683,9 +683,12 @@ export default {
 					}
 					// Waited for here so its partner wait shows. `o` is the
 					// store's open copy, which only a write-back that saved
-					// moved, so its version is read only now.
+					// moved, so its version and merged count are read only now.
 					await store.writeBackSettled(this.secretId, onWait)
 					const sourceBaseUpdatedAt = await this.sourceBase
+					if (diff.additionalFields !== undefined && o.mergedPending > 0) {
+						diff.mergedPending = o.mergedPending
+					}
 					updated = await store.updateSecret(this.secretId, diff, {
 						baseUpdatedAt: o.updatedAt,
 						sourceBaseUpdatedAt,
