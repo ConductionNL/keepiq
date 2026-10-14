@@ -401,8 +401,8 @@ describe('SecretEditDialog — share save', () => {
 
 		const saving = wrapper.vm.submit()
 		await new Promise((resolve) => setTimeout(resolve, 0))
-		// The owner saves the source while the write-back is held, so the
-		// write-back is refused as `stale_source`.
+		// The owner changes the source, leaving the copy as it is, while the
+		// write-back is held, so the write-back is refused as `stale_source`.
 		server.source = '2026-10-01T09:30:00+00:00'
 		release()
 		await writeBack()

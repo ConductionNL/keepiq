@@ -9,7 +9,7 @@ The edit dialog MUST send the `updatedAt` of the version it opened on as `baseUp
 - THEN the dialog MUST stay open with a message that the secret changed meanwhile, and nothing MUST be saved
 
 #### Scenario: The owner's change makes a write-back fail
-- GIVEN a copy open in the edit dialog whose merge write-back is still running, and the owner saves the source before it lands
+- GIVEN a copy open in the edit dialog whose merge write-back is still running, and the owner changes the source through a route that leaves the copy as it is (a plain update or the old restore) before it lands
 - WHEN the write-back is refused and the user saves a new password
 - THEN the dialog MUST send the source version it opened on, stay open with a message that the original changed, and nothing MUST be saved
 
