@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Wisq tfittxijiet għand organizzazzjonijiet sħab. Ma ġie ssejvjat xejn; erġa' pprova wara minuta.",
         "This version cannot be restored to this secret. Nothing was saved.": "Din il-verżjoni ma tistax terġa' tiġi restawrata għal dan is-sigriet. Ma ġie ssejvjat xejn.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizzazzjoni sieħba li magħha huwa kondiviż dan is-sigriet ma tistax tintlaħaq ({partners}). Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
-        "The server refused this change ({reason}).": "Is-server irrifjuta din il-bidla ({reason}).",
         "Save without them": "Issejvja mingħajrhom",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Issejvjat. Ir-riċevituri f'organizzazzjonijiet sħab jirċievu din il-bidla meta s-sid jerġa' jissejvja dan is-sigriet.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Dan is-sigriet inbidel x'imkien ieħor wara li ftaħtu. Ma ġie ssejvjat xejn; erġa' iftħu u agħmel il-bidla tiegħek mill-ġdid.",

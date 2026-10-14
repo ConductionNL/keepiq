@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Túl sok lekérdezés a partnerszervezetek felé. Semmi sem lett mentve; próbálja újra egy perc múlva.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ez a verzió nem állítható vissza ehhez a titokhoz. Semmi sem lett mentve.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Egy partnerszervezet, amellyel ez a titok meg van osztva, nem érhető el ({partners}). Végezze el újra a módosítást online, ahol nélkülük is mentheti.",
-        "The server refused this change ({reason}).": "A kiszolgáló elutasította ezt a módosítást ({reason}).",
         "Save without them": "Mentés nélkülük",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Mentve. A partnerszervezeteknél lévő címzettek akkor kapják meg ezt a módosítást, amikor a tulajdonos legközelebb menti ezt a titkot.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ezt a titkot máshol módosították, miután megnyitotta. Semmi sem lett mentve; nyissa meg újra, és végezze el ismét a módosítást.",

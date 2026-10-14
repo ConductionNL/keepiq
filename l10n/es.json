@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Demasiadas consultas a organizaciones asociadas. No se ha guardado nada; inténtalo de nuevo en un minuto.",
         "This version cannot be restored to this secret. Nothing was saved.": "Esta versión no se puede restaurar en este secreto. No se ha guardado nada.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "No se puede contactar con una organización asociada con la que se comparte este secreto ({partners}). Vuelve a hacer el cambio en línea, donde puedes guardar sin ellos.",
-        "The server refused this change ({reason}).": "El servidor ha rechazado este cambio ({reason}).",
         "Save without them": "Guardar sin ellos",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Guardado. Los destinatarios de organizaciones asociadas recibirán este cambio cuando el propietario vuelva a guardar este secreto.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Este secreto se modificó en otro lugar después de que lo abrieras. No se ha guardado nada; vuelve a abrirlo y repite tu cambio.",

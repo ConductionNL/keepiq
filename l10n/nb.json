@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "For mange oppslag hos partnerorganisasjoner. Ingenting ble lagret; prøv igjen om et minutt.",
         "This version cannot be restored to this secret. Nothing was saved.": "Denne versjonen kan ikke gjenopprettes for denne hemmeligheten. Ingenting ble lagret.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisasjon som denne hemmeligheten er delt med, kan ikke nås ({partners}). Gjør endringen på nytt på nett, der du kan lagre uten dem.",
-        "The server refused this change ({reason}).": "Serveren avviste denne endringen ({reason}).",
         "Save without them": "Lagre uten dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Lagret. Mottakere i partnerorganisasjoner får denne endringen neste gang eieren lagrer denne hemmeligheten.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Denne hemmeligheten ble endret et annet sted etter at du åpnet den. Ingenting ble lagret; åpne den på nytt og gjør endringen din igjen.",

@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Ze vill Ufroe bei Partnerorganisatiounen. Et gouf näischt gespäichert; probéiert an enger Minutt nach eng Kéier.",
         "This version cannot be restored to this secret. Nothing was saved.": "Dës Versioun kann net fir dëst Geheimnis restauréiert ginn. Et gouf näischt gespäichert.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Eng Partnerorganisatioun, mat där dëst Geheimnis gedeelt ass, ass net erreechbar ({partners}). Maacht d'Ännerung online nach eng Kéier; do kënnt Dir ouni si späicheren.",
-        "The server refused this change ({reason}).": "De Server huet dës Ännerung refuséiert ({reason}).",
         "Save without them": "Ouni si späicheren",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gespäichert. Empfänger bei Partnerorganisatiounen kréien dës Ännerung, wann de Besëtzer dëst Geheimnis déi nächst Kéier späichert.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Dëst Geheimnis gouf soss anzwousch geännert, nodeems Dir et opgemaach hutt. Et gouf näischt gespäichert; maacht et nach eng Kéier op a maacht Är Ännerung nach eng Kéier.",

@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Πάρα πολλές αναζητήσεις σε συνεργαζόμενους οργανισμούς. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά σε ένα λεπτό.",
         "This version cannot be restored to this secret. Nothing was saved.": "Αυτή η έκδοση δεν μπορεί να επαναφερθεί σε αυτό το μυστικό. Δεν αποθηκεύτηκε τίποτα.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Ένας συνεργαζόμενος οργανισμός με τον οποίο είναι κοινόχρηστο αυτό το μυστικό δεν είναι προσβάσιμος ({partners}). Κάντε ξανά την αλλαγή ενώ είστε συνδεδεμένοι, όπου μπορείτε να αποθηκεύσετε χωρίς αυτούς.",
-        "The server refused this change ({reason}).": "Ο διακομιστής απέρριψε αυτή την αλλαγή ({reason}).",
         "Save without them": "Αποθήκευση χωρίς αυτούς",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Αποθηκεύτηκε. Οι παραλήπτες σε συνεργαζόμενους οργανισμούς θα λάβουν αυτή την αλλαγή όταν ο κάτοχος αποθηκεύσει ξανά αυτό το μυστικό.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Αυτό το μυστικό άλλαξε αλλού αφού το ανοίξατε. Δεν αποθηκεύτηκε τίποτα· ανοίξτε το ξανά και επαναλάβετε την αλλαγή σας.",

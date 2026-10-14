@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Preveč poizvedb pri partnerskih organizacijah. Nič ni bilo shranjeno; poskusite znova čez minuto.",
         "This version cannot be restored to this secret. Nothing was saved.": "Te različice ni mogoče obnoviti za to skrivnost. Nič ni bilo shranjeno.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerska organizacija, s katero je deljena ta skrivnost, ni dosegljiva ({partners}). Spremembo ponovite na spletu, kjer lahko shranite brez njih.",
-        "The server refused this change ({reason}).": "Strežnik je zavrnil to spremembo ({reason}).",
         "Save without them": "Shrani brez njih",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Shranjeno. Prejemniki v partnerskih organizacijah bodo to spremembo prejeli, ko bo lastnik naslednjič shranil to skrivnost.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ta skrivnost je bila spremenjena drugje, potem ko ste jo odprli. Nič ni bilo shranjeno; znova jo odprite in ponovite spremembo.",

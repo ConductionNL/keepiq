@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Ortak kuruluşlara çok fazla sorgu yapıldı. Hiçbir şey kaydedilmedi; bir dakika sonra tekrar deneyin.",
         "This version cannot be restored to this secret. Nothing was saved.": "Bu sürüm bu gizliye geri yüklenemez. Hiçbir şey kaydedilmedi.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Bu gizlinin paylaşıldığı bir ortak kuruluşa ulaşılamıyor ({partners}). Değişikliği çevrimiçiyken yeniden yapın; orada onlar olmadan kaydedebilirsiniz.",
-        "The server refused this change ({reason}).": "Sunucu bu değişikliği reddetti ({reason}).",
         "Save without them": "Onlar olmadan kaydet",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Kaydedildi. Ortak kuruluşlardaki alıcılar, sahip bu gizliyi bir sonraki kaydedişinde bu değişikliği alır.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Bu gizli, siz açtıktan sonra başka bir yerde değiştirildi. Hiçbir şey kaydedilmedi; yeniden açın ve değişikliğinizi tekrar yapın.",

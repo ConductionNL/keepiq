@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Слишком много запросов к партнёрским организациям. Ничего не сохранено; попробуйте ещё раз через минуту.",
         "This version cannot be restored to this secret. Nothing was saved.": "Эту версию нельзя восстановить для этого секрета. Ничего не сохранено.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнёрская организация, с которой поделён этот секрет, недоступна ({partners}). Повторите изменение в сети, где можно сохранить без неё.",
-        "The server refused this change ({reason}).": "Сервер отклонил это изменение ({reason}).",
         "Save without them": "Сохранить без них",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Сохранено. Получатели в партнёрских организациях получат это изменение, когда владелец в следующий раз сохранит этот секрет.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Этот секрет был изменён в другом месте после того, как вы его открыли. Ничего не сохранено; откройте его снова и повторите изменение.",

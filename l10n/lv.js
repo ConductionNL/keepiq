@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Pārāk daudz vaicājumu partneru organizācijām. Nekas netika saglabāts; mēģiniet vēlreiz pēc minūtes.",
         "This version cannot be restored to this secret. Nothing was saved.": "Šo versiju nevar atjaunot šim noslēpumam. Nekas netika saglabāts.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partneru organizācija, ar kuru šis noslēpums ir koplietots, nav sasniedzama ({partners}). Veiciet izmaiņas vēlreiz tiešsaistē, kur varat saglabāt bez viņiem.",
-        "The server refused this change ({reason}).": "Serveris noraidīja šīs izmaiņas ({reason}).",
         "Save without them": "Saglabāt bez viņiem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Saglabāts. Saņēmēji partneru organizācijās saņems šīs izmaiņas, kad īpašnieks nākamreiz saglabās šo noslēpumu.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Šis noslēpums tika mainīts citur pēc tam, kad to atvērāt. Nekas netika saglabāts; atveriet to vēlreiz un atkārtojiet izmaiņas.",

@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Твърде много заявки към партньорски организации. Нищо не е запазено; опитайте отново след минута.",
         "This version cannot be restored to this secret. Nothing was saved.": "Тази версия не може да бъде възстановена за тази тайна. Нищо не е запазено.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партньорска организация, с която е споделена тази тайна, е недостъпна ({partners}). Направете промяната отново онлайн, където можете да запазите без тях.",
-        "The server refused this change ({reason}).": "Сървърът отказа тази промяна ({reason}).",
         "Save without them": "Запазване без тях",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Запазено. Получателите в партньорски организации ще получат тази промяна, когато собственикът запази тази тайна следващия път.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Тази тайна е променена другаде, след като я отворихте. Нищо не е запазено; отворете я отново и повторете промяната си.",

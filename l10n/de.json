@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Zu viele Abfragen bei Partnerorganisationen. Es wurde nichts gespeichert; versuchen Sie es in einer Minute erneut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Diese Version kann für dieses Geheimnis nicht wiederhergestellt werden. Es wurde nichts gespeichert.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Eine Partnerorganisation, mit der dieses Geheimnis geteilt ist, ist nicht erreichbar ({partners}). Nehmen Sie die Änderung online erneut vor; dort können Sie ohne sie speichern.",
-        "The server refused this change ({reason}).": "Der Server hat diese Änderung abgelehnt ({reason}).",
         "Save without them": "Ohne sie speichern",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gespeichert. Empfänger bei Partnerorganisationen erhalten diese Änderung, wenn der Eigentümer dieses Geheimnis das nächste Mal speichert.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Dieses Geheimnis wurde an anderer Stelle geändert, nachdem Sie es geöffnet haben. Es wurde nichts gespeichert; öffnen Sie es erneut und wiederholen Sie Ihre Änderung.",

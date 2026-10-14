@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Zbyt wiele zapytań do organizacji partnerskich. Nic nie zostało zapisane; spróbuj ponownie za minutę.",
         "This version cannot be restored to this secret. Nothing was saved.": "Tej wersji nie można przywrócić dla tego sekretu. Nic nie zostało zapisane.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizacja partnerska, której udostępniono ten sekret, jest nieosiągalna ({partners}). Wprowadź zmianę ponownie online, gdzie możesz zapisać bez niej.",
-        "The server refused this change ({reason}).": "Serwer odrzucił tę zmianę ({reason}).",
         "Save without them": "Zapisz bez nich",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Zapisano. Odbiorcy w organizacjach partnerskich otrzymają tę zmianę, gdy właściciel następnym razem zapisze ten sekret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ten sekret został zmieniony w innym miejscu po jego otwarciu. Nic nie zostało zapisane; otwórz go ponownie i powtórz zmianę.",

@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "För många uppslag hos partnerorganisationer. Inget sparades; försök igen om en minut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Den här versionen kan inte återställas för den här hemligheten. Inget sparades.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation som den här hemligheten delas med kan inte nås ({partners}). Gör om ändringen online, där du kan spara utan dem.",
-        "The server refused this change ({reason}).": "Servern avvisade den här ändringen ({reason}).",
         "Save without them": "Spara utan dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sparat. Mottagare i partnerorganisationer får ändringen nästa gång ägaren sparar den här hemligheten.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Den här hemligheten ändrades på annat håll efter att du öppnade den. Inget sparades; öppna den igen och gör om din ändring.",

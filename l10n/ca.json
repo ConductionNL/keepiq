@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Massa consultes a organitzacions associades. No s'ha desat res; torna-ho a provar d'aquí a un minut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Aquesta versió no es pot restaurar en aquest secret. No s'ha desat res.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "No es pot contactar amb una organització associada amb qui es comparteix aquest secret ({partners}). Torna a fer el canvi en línia, on pots desar sense ells.",
-        "The server refused this change ({reason}).": "El servidor ha rebutjat aquest canvi ({reason}).",
         "Save without them": "Desa sense ells",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Desat. Els destinataris d'organitzacions associades rebran aquest canvi quan el propietari torni a desar aquest secret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Aquest secret s'ha modificat en un altre lloc després que l'obrissis. No s'ha desat res; torna'l a obrir i refés el canvi.",

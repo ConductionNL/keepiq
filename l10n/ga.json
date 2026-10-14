@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "An iomarca cuardach ar eagraíochtaí comhpháirtíochta. Níor sábháladh aon rud; bain triail eile as i gceann nóiméid.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ní féidir an leagan seo a athchóiriú don rún seo. Níor sábháladh aon rud.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Ní féidir teagmháil a dhéanamh le heagraíocht chomhpháirtíochta a bhfuil an rún seo roinnte léi ({partners}). Déan an t-athrú arís ar líne, áit ar féidir leat sábháil gan iad.",
-        "The server refused this change ({reason}).": "Dhiúltaigh an freastalaí don athrú seo ({reason}).",
         "Save without them": "Sábháil gan iad",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sábháilte. Gheobhaidh faighteoirí in eagraíochtaí comhpháirtíochta an t-athrú seo nuair a shábhálfaidh an t-úinéir an rún seo an chéad uair eile.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Athraíodh an rún seo in áit eile tar éis duit é a oscailt. Níor sábháladh aon rud; oscail arís é agus déan d'athrú arís.",

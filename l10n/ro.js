@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Prea multe interogări către organizațiile partenere. Nu s-a salvat nimic; încercați din nou peste un minut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Această versiune nu poate fi restaurată pentru acest secret. Nu s-a salvat nimic.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "O organizație parteneră cu care este partajat acest secret nu poate fi contactată ({partners}). Refaceți modificarea online, unde puteți salva fără ei.",
-        "The server refused this change ({reason}).": "Serverul a refuzat această modificare ({reason}).",
         "Save without them": "Salvați fără ei",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Salvat. Destinatarii din organizațiile partenere vor primi această modificare când proprietarul va salva din nou acest secret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Acest secret a fost modificat în altă parte după ce l-ați deschis. Nu s-a salvat nimic; deschideți-l din nou și refaceți modificarea.",

@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Per daug užklausų partnerių organizacijoms. Niekas neišsaugota; bandykite dar kartą po minutės.",
         "This version cannot be restored to this secret. Nothing was saved.": "Šios versijos negalima atkurti šiai paslapčiai. Niekas neišsaugota.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerių organizacija, su kuria bendrinama ši paslaptis, nepasiekiama ({partners}). Pakartokite pakeitimą prisijungę, kur galite išsaugoti be jų.",
-        "The server refused this change ({reason}).": "Serveris atmetė šį pakeitimą ({reason}).",
         "Save without them": "Išsaugoti be jų",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Išsaugota. Gavėjai partnerių organizacijose gaus šį pakeitimą, kai savininkas kitą kartą išsaugos šią paslaptį.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ši paslaptis buvo pakeista kitur po to, kai ją atidarėte. Niekas neišsaugota; atidarykite ją iš naujo ir pakartokite pakeitimą.",

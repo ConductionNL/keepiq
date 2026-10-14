@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Liiga palju partnerorganisatsioonide päringuid. Midagi ei salvestatud; proovi minuti pärast uuesti.",
         "This version cannot be restored to this secret. Nothing was saved.": "Seda versiooni ei saa selle saladuse jaoks taastada. Midagi ei salvestatud.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerorganisatsioon, kellega see saladus on jagatud, ei ole kättesaadav ({partners}). Tee muudatus uuesti võrgus olles, kus saad salvestada ilma nendeta.",
-        "The server refused this change ({reason}).": "Server keeldus sellest muudatusest ({reason}).",
         "Save without them": "Salvesta ilma nendeta",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Salvestatud. Partnerorganisatsioonide saajad saavad selle muudatuse, kui omanik selle saladuse järgmine kord salvestab.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Seda saladust muudeti mujal pärast selle avamist. Midagi ei salvestatud; ava see uuesti ja tee muudatus uuesti.",

@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Shumë kërkime te organizatat partnere. Asgjë nuk u ruajt; provoni përsëri pas një minute.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ky version nuk mund të rikthehet për këtë sekret. Asgjë nuk u ruajt.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Një organizatë partnere me të cilën ndahet ky sekret nuk mund të arrihet ({partners}). Bëjeni sërish ndryshimin në linjë, ku mund ta ruani pa ata.",
-        "The server refused this change ({reason}).": "Serveri e refuzoi këtë ndryshim ({reason}).",
         "Save without them": "Ruaje pa ata",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "U ruajt. Marrësit në organizatat partnere do ta marrin këtë ndryshim kur pronari ta ruajë herën tjetër këtë sekret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ky sekret u ndryshua diku tjetër pasi e hapët. Asgjë nuk u ruajt; hapeni përsëri dhe bëjeni sërish ndryshimin.",

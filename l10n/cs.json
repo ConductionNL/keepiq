@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Příliš mnoho dotazů na partnerské organizace. Nic nebylo uloženo; zkuste to znovu za minutu.",
         "This version cannot be restored to this secret. Nothing was saved.": "Tuto verzi nelze u tohoto tajemství obnovit. Nic nebylo uloženo.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerská organizace, se kterou je toto tajemství sdíleno, není dostupná ({partners}). Proveďte změnu znovu online, kde ji můžete uložit bez ní.",
-        "The server refused this change ({reason}).": "Server tuto změnu odmítl ({reason}).",
         "Save without them": "Uložit bez nich",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Uloženo. Příjemci v partnerských organizacích dostanou tuto změnu, až vlastník příště uloží toto tajemství.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Toto tajemství bylo po otevření změněno jinde. Nic nebylo uloženo; otevřete ho znovu a změnu proveďte znovu.",

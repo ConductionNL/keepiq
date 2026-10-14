@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Занадта шмат запытаў да партнёрскіх арганізацый. Нічога не захавана; паспрабуйце яшчэ раз праз хвіліну.",
         "This version cannot be restored to this secret. Nothing was saved.": "Гэтую версію нельга аднавіць для гэтага сакрэту. Нічога не захавана.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнёрская арганізацыя, з якой абагулены гэты сакрэт, недаступная ({partners}). Зрабіце змену яшчэ раз онлайн, дзе можна захаваць без іх.",
-        "The server refused this change ({reason}).": "Сервер адхіліў гэтую змену ({reason}).",
         "Save without them": "Захаваць без іх",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Захавана. Атрымальнікі ў партнёрскіх арганізацыях атрымаюць гэтую змену, калі ўладальнік наступным разам захавае гэты сакрэт.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Гэты сакрэт быў зменены ў іншым месцы пасля таго, як вы яго адкрылі. Нічога не захавана; адкрыйце яго зноў і паўтарыце змену.",

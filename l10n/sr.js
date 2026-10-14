@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Превише упита партнерским организацијама. Ништа није сачувано; покушајте поново за минут.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ова верзија не може да се врати за ову тајну. Ништа није сачувано.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнерска организација са којом се дели ова тајна није доступна ({partners}). Поновите измену на мрежи, где можете да сачувате без њих.",
-        "The server refused this change ({reason}).": "Сервер је одбио ову измену ({reason}).",
         "Save without them": "Сачувај без њих",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Сачувано. Примаоци у партнерским организацијама добиће ову измену када власник следећи пут сачува ову тајну.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ова тајна је измењена на другом месту након што сте је отворили. Ништа није сачувано; отворите је поново и поновите измену.",

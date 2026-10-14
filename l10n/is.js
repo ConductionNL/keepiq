@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Of margar uppflettingar hjá samstarfsaðilum. Ekkert var vistað; reyndu aftur eftir eina mínútu.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ekki er hægt að endurheimta þessa útgáfu fyrir þetta leyndarmál. Ekkert var vistað.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Ekki næst í samstarfsfyrirtæki sem þetta leyndarmál er samnýtt með ({partners}). Gerðu breytinguna aftur á netinu, þar sem þú getur vistað án þeirra.",
-        "The server refused this change ({reason}).": "Þjónninn hafnaði þessari breytingu ({reason}).",
         "Save without them": "Vista án þeirra",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Vistað. Viðtakendur hjá samstarfsfyrirtækjum fá þessa breytingu þegar eigandinn vistar þetta leyndarmál næst.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Þessu leyndarmáli var breytt annars staðar eftir að þú opnaðir það. Ekkert var vistað; opnaðu það aftur og gerðu breytinguna aftur.",

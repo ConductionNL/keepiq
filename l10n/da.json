@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "For mange opslag hos partnerorganisationer. Intet blev gemt; prøv igen om et minut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Denne version kan ikke gendannes for denne hemmelighed. Intet blev gemt.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation, som denne hemmelighed er delt med, kan ikke nås ({partners}). Foretag ændringen igen online, hvor du kan gemme uden dem.",
-        "The server refused this change ({reason}).": "Serveren afviste denne ændring ({reason}).",
         "Save without them": "Gem uden dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gemt. Modtagere hos partnerorganisationer får denne ændring, næste gang ejeren gemmer denne hemmelighed.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Denne hemmelighed blev ændret et andet sted, efter du åbnede den. Intet blev gemt; åbn den igen, og foretag din ændring igen.",

@@ -5,7 +5,6 @@ OC.L10N.register(
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Príliš veľa dopytov na partnerské organizácie. Nič sa neuložilo; skúste to znova o minútu.",
         "This version cannot be restored to this secret. Nothing was saved.": "Túto verziu nemožno obnoviť pre toto tajomstvo. Nič sa neuložilo.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerská organizácia, s ktorou je toto tajomstvo zdieľané, nie je dostupná ({partners}). Urobte zmenu znova online, kde ju môžete uložiť bez nej.",
-        "The server refused this change ({reason}).": "Server túto zmenu odmietol ({reason}).",
         "Save without them": "Uložiť bez nich",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Uložené. Príjemcovia v partnerských organizáciách dostanú túto zmenu, keď vlastník nabudúce uloží toto tajomstvo.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Toto tajomstvo bolo po otvorení zmenené inde. Nič sa neuložilo; otvorte ho znova a zmenu urobte znova.",

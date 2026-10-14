@@ -4,7 +4,6 @@
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Memia bleras dumondas tar organisaziuns partenarias. Nagut n'è vegnì memorisà; emprova anc ina giada en ina minuta.",
         "This version cannot be restored to this secret. Nothing was saved.": "Questa versiun na po betg vegnir restaurada per quest secret. Nagut n'è vegnì memorisà.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Ina organisaziun partenaria cun la quala quest secret è partì n'è betg cuntanschibla ({partners}). Fa la midada danovamain online, nua che ti pos memorisar senza els.",
-        "The server refused this change ({reason}).": "Il server ha refusà questa midada ({reason}).",
         "Save without them": "Memorisar senza els",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Memorisà. Destinaturs en organisaziuns partenarias survegnan questa midada, cura che il proprietari memorisescha la proxima giada quest secret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Quest secret è vegnì midà in auter lieu suenter che ti al has avert. Nagut n'è vegnì memorisà; al avra danovamain e fa danovamain tia midada.",
