@@ -9,13 +9,16 @@
  *
  * An entry at rest:
  *   { entryId, op: 'create'|'update'|'delete', secretId, baseUpdatedAt,
- *     sourceBaseUpdatedAt, queuedAt, suiteId,
+ *     sourceBaseUpdatedAt, conflictSourceUpdatedAt, queuedAt, suiteId,
  *     status: 'queued'|'sync'|'conflict'|'failed', sealed, sealedFailure }
  * `sourceBaseUpdatedAt` is, for an edit through a copy, the source version
  * the edit was made from, and null when it was not known (or the entry is
  * older than it). A coalesced entry keeps the first one recorded, so a change
  * that recorded none does not leave the replay to the source version of its
  * own moment.
+ * `conflictSourceUpdatedAt` is the source version a replay's 409
+ * `stale_source` named, kept so keeping the change after a reload replays on
+ * it; null for any other conflict and until one.
  * `sealed` is the hybrid envelope (RSA-OAEP + AES-256-GCM, the one
  * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login` and
  * `additionalFields` ciphertext an online save sends, plus the index fields
@@ -38,6 +41,7 @@ export const PLAIN_FIELDS = Object.freeze([
 	'secretId',
 	'baseUpdatedAt',
 	'sourceBaseUpdatedAt',
+	'conflictSourceUpdatedAt',
 	'queuedAt',
 	'suiteId',
 	'status',
@@ -67,6 +71,7 @@ export async function sealEntry(entry, certificatePem) {
 		secretId: entry.secretId,
 		baseUpdatedAt: entry.baseUpdatedAt ?? null,
 		sourceBaseUpdatedAt: entry.sourceBaseUpdatedAt ?? null,
+		conflictSourceUpdatedAt: entry.conflictSourceUpdatedAt ?? null,
 		queuedAt: entry.queuedAt || new Date().toISOString(),
 		suiteId: entry.suiteId,
 		status: entry.status || 'queued',

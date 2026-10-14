@@ -295,7 +295,7 @@ describe('replay', () => {
 			expect(stored.size).toBe(0)
 		})
 
-		it('after a reload, "keep mine" on a stale source replays with the source version the entry recorded', async () => {
+		it('after a reload, "keep mine" on a stale source replays with the source version that 409 named, and saves', async () => {
 			await goOffline()
 			await secrets.updateSecret(
 				's1',
@@ -317,13 +317,25 @@ describe('replay', () => {
 			})
 			await offline.replayQueue()
 			expect(offline.conflictEntries).toHaveLength(1)
-			// What the 409 named is kept in memory only.
-			offline.conflicts = {}
+			expect([...stored.values()][0]).toMatchObject({
+				sourceBaseUpdatedAt: EDIT_SOURCE,
+				conflictSourceUpdatedAt: context.sourceUpdatedAt,
+			})
 
+			// A reload: the 409 itself is gone, the stored entry is read again.
+			setActivePinia(createPinia())
+			await goOffline()
+			goOnline()
+			await offline.loadQueue()
+			expect(offline.conflicts).toEqual({})
 			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
 
-			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
-			expect(offline.conflictEntries).toHaveLength(1)
+			expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([
+				EDIT_SOURCE,
+				context.sourceUpdatedAt,
+			])
+			expect(offline.conflictEntries).toHaveLength(0)
+			expect(stored.size).toBe(0)
 		})
 
 		it('replays an entry that recorded no source version with the source version of replay time', async () => {

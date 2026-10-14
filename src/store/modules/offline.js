@@ -543,15 +543,24 @@ export const useOfflineStore = defineStore('offline', {
 				const kind = replayKind(e)
 				if (kind === 'conflict') {
 					const answer = e.response?.data
+					const staleSource =
+						answer?.error === 'stale_source'
+							? (answer.sourceUpdatedAt ?? null)
+							: null
 					this.conflicts = {
 						...this.conflicts,
 						[entry.entryId]:
 							answer?.current
 							?? (answer?.error === 'stale_source'
-								? { sourceUpdatedAt: answer.sourceUpdatedAt ?? null }
+								? { sourceUpdatedAt: staleSource }
 								: null),
 					}
-					await this.setStatus(entry, 'conflict')
+					// Stored too, so keeping the change after a reload still
+					// replays on the source version this 409 named.
+					await this.setStatus(
+						{ ...entry, conflictSourceUpdatedAt: staleSource },
+						'conflict',
+					)
 					return 'conflict'
 				}
 				if (kind === 'failed') {
@@ -681,13 +690,17 @@ export const useOfflineStore = defineStore('offline', {
 			// Keeping mine overrides the source version the 409 named, so a
 			// source that moves again before the replay is refused again;
 			// without one, the replay takes the source as it is then. After a
-			// reload the 409 is gone, and the entry keeps its own.
+			// reload the 409 is gone, and the version it named is the one the
+			// entry stored with the conflict.
 			const updated = {
 				...entry,
 				baseUpdatedAt: current?.updatedAt ?? entry.baseUpdatedAt ?? null,
 				sourceBaseUpdatedAt: current
 					? (current.sourceUpdatedAt ?? null)
-					: (entry.sourceBaseUpdatedAt ?? null),
+					: (entry.conflictSourceUpdatedAt
+						?? entry.sourceBaseUpdatedAt
+						?? null),
+				conflictSourceUpdatedAt: null,
 				status: 'queued',
 			}
 			const session = useSessionStore()
