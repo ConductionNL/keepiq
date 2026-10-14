@@ -680,11 +680,14 @@ export const useOfflineStore = defineStore('offline', {
 			// A stale source carries no row: the entry's own base still holds.
 			// Keeping mine overrides the source version the 409 named, so a
 			// source that moves again before the replay is refused again;
-			// without one, the replay takes the source as it is then.
+			// without one, the replay takes the source as it is then. After a
+			// reload the 409 is gone, and the entry keeps its own.
 			const updated = {
 				...entry,
 				baseUpdatedAt: current?.updatedAt ?? entry.baseUpdatedAt ?? null,
-				sourceBaseUpdatedAt: current?.sourceUpdatedAt ?? null,
+				sourceBaseUpdatedAt: current
+					? (current.sourceUpdatedAt ?? null)
+					: (entry.sourceBaseUpdatedAt ?? null),
 				status: 'queued',
 			}
 			const session = useSessionStore()

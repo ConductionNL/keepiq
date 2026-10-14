@@ -295,6 +295,37 @@ describe('replay', () => {
 			expect(stored.size).toBe(0)
 		})
 
+		it('after a reload, "keep mine" on a stale source replays with the source version the entry recorded', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context,
+				onSave: (body) => {
+					if (body.sourceBaseUpdatedAt !== context.sourceUpdatedAt) {
+						throw httpError(409, {
+							error: 'stale_source',
+							sourceUpdatedAt: context.sourceUpdatedAt,
+						})
+					}
+				},
+			})
+			await offline.replayQueue()
+			expect(offline.conflictEntries).toHaveLength(1)
+			// What the 409 named is kept in memory only.
+			offline.conflicts = {}
+
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
+			expect(offline.conflictEntries).toHaveLength(1)
+		})
+
 		it('replays an entry that recorded no source version with the source version of replay time', async () => {
 			await goOffline()
 			await secrets.updateSecret('s1', { key: 'new' })
