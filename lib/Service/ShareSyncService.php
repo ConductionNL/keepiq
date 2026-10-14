@@ -121,11 +121,9 @@ class ShareSyncService {
 		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
-		// The check passed, so the stored version is the base the caller named.
-		$base = null;
-		if ($expectedUpdatedAt !== '') {
-			$base = $source->getUpdatedAt();
-		}
+		// The source is locked against the version just read, which is the
+		// one the caller named when it named one.
+		$base = $source->getUpdatedAt();
 
 		// After the stored version even within the same second, as a share-save stamps.
 		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
@@ -265,17 +263,17 @@ class ShareSyncService {
 	}//end assertSyncSourceUnchanged()
 
 	/**
-	 * Move the source off the version checked above, inside the sync's
-	 * transaction, as a share-save does: a save that commits after the check
+	 * Move the source off the version it was read at, inside the sync's
+	 * transaction, as a share-save does: a save that commits after the read
 	 * refuses the sync here instead of having its copies overwritten.
 	 *
 	 * @param Secret $source The source secret being synced
-	 * @param DateTime|null $base The version the sync was prepared on; null skips the lock
+	 * @param DateTime|null $base The version the source was read at; null (no version stored) skips the lock
 	 * @param DateTime $savedAt The version every written row gets
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When the source moved on since the check
+	 * @throws InvalidArgumentException When the source moved on since the read
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */

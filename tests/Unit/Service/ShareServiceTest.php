@@ -774,15 +774,32 @@ class ShareServiceTest extends TestCase {
 	}//end testSyncUpdateRejectsStaleExpectedTimestamp()
 
 	/**
-	 * A save that commits after the sync's check but before its write moves
+	 * The sync that names the source version it was prepared on and the one
+	 * that doesn't.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function expectedVersionOrNone(): array {
+		return [
+			'with an expected version'    => ['2026-01-01T00:00:00+00:00'],
+			'without an expected version' => [''],
+		];
+	}//end expectedVersionOrNone()
+
+	/**
+	 * A save that commits after the sync's read but before its write moves
 	 * the source: the compare-and-set finds it gone, and the sync is refused
-	 * and rolled back instead of overwriting the save's copies.
+	 * and rolled back instead of overwriting the save's copies, whether or
+	 * not the client named the version.
+	 *
+	 * @param string $expectedUpdatedAt The client's expected source version, or ''
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
-	public function testSyncUpdateOverASourceThatMovesAfterTheCheckIsRefused(): void {
+	#[\PHPUnit\Framework\Attributes\DataProvider('expectedVersionOrNone')]
+	public function testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused(string $expectedUpdatedAt): void {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
 		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
 		$copy = new Secret();
@@ -804,10 +821,10 @@ class ShareServiceTest extends TestCase {
 		$this->service->syncUpdate(
 			secretId: 'src-1',
 			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
-			expectedUpdatedAt: '2026-01-01T00:00:00+00:00',
+			expectedUpdatedAt: $expectedUpdatedAt,
 			userId: 'alice'
 		);
-	}//end testSyncUpdateOverASourceThatMovesAfterTheCheckIsRefused()
+	}//end testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused()
 
 	/**
 	 * Test createBatchShares creates each row inside one transaction.
