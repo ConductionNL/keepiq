@@ -16,7 +16,7 @@ Issue: #1254. Fixes all four bugs of #1253.
 - **Completeness check.** The server answers 409 `incomplete` with the required lists when the request does not name exactly the copies and partner shares it must, so the browser encrypts for the missing ones and sends again.
 - **Staged save above 100 entries.** A list longer than 100 is sent in chunks of at most 100, matching the batching of the certificate lookup, and the final call commits everything at once.
 - **Partner instances are notified after the commit.** The pending notification is stored on the partner share row inside the transaction, so the retry job delivers it after a crash.
-- **Partner shares follow their secret.** When a secret passes to a new owner, its partner shares pass with it, so the new owner's share-save names them and the new owner can revoke or suspend them.
+- **Partner shares follow their secret.** When a secret passes to a new owner, its partner shares pass with it, so the new owner can revoke or suspend them and the partner keeps pulling them.
 - **The web app saves every value change of a shared secret through the new route**, including offline replay and version restore, and shows a failed save as a translated error. It no longer calls `/sync` or `PUT /federated-shares/{id}`.
 - **The old routes stay** until the browser extension has moved too.
 

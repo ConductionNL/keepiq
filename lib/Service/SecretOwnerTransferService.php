@@ -5,8 +5,8 @@
  *
  * Hands one secret to a new owner, as the account-deletion and team
  * offboarding transfers do. Its partner shares go with it in the same
- * transaction, so the new owner's share-save writes them and the new owner
- * can revoke or suspend them.
+ * transaction, so the new owner can revoke or suspend them and the partner
+ * keeps pulling them.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
