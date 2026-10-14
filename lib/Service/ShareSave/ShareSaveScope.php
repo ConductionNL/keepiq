@@ -103,8 +103,43 @@ class ShareSaveScope {
 			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
 		}
 
+		return new ShareSavePath(row: $row, source: $source, teamWriter: $this->writerOn(source: $source, userId: $userId));
+	}//end resolve()
+
+	/**
+	 * Check the copy-editor's right to write every copy again, inside the
+	 * transaction after the locks, so a grade lowered after resolve() refuses
+	 * the save and rolls it back. The owner path has nothing to check.
+	 *
+	 * @param ShareSavePath $path The path resolve() returned
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @throws ShareSaveRefusal `not_allowed` for a copy holder who lost the right to write every copy
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function assertStillWriter(ShareSavePath $path, string $userId): void {
+		if ($path->isCopyEditor() === true) {
+			$this->writerOn(source: $path->source, userId: $userId);
+		}
+	}//end assertStillWriter()
+
+	/**
+	 * Whether the caller writes the source on a team-folder grade rather than
+	 * as owner or delegate, refusing a caller who may not write it at all.
+	 *
+	 * @param Secret $source The source
+	 * @param string $userId The caller
+	 *
+	 * @return bool
+	 *
+	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy
+	 */
+	private function writerOn(Secret $source, string $userId): bool {
 		try {
-			$teamWriter = $this->sync->resolveSyncWriter(source: $source, userId: $userId);
+			return $this->sync->resolveSyncWriter(source: $source, userId: $userId);
 		} catch (InvalidArgumentException) {
 			throw new ShareSaveRefusal(
 				error: 'not_allowed',
@@ -112,9 +147,7 @@ class ShareSaveScope {
 				status: Http::STATUS_FORBIDDEN
 			);
 		}
-
-		return new ShareSavePath(row: $row, source: $source, teamWriter: $teamWriter);
-	}//end resolve()
+	}//end writerOn()
 
 	/**
 	 * Refuse lists that are not exactly the rows to write: every live copy

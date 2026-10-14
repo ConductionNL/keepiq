@@ -628,6 +628,18 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(403, $refusal->getStatus());
 	}
 
+	public function testAGradeLoweredBeforeTheLockRefusesTheSaveAndRollsBack(): void {
+		$this->auth->method('isOwnerOrDelegate')->willReturn(false);
+		$this->auth->method('resolveGrade')->willReturnOnConsecutiveCalls('write', 'read');
+		$this->auth->method('assertOwnerOrDelegate')->willThrowException(new InvalidArgumentException('no'));
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
 	public function testAStaleSourceIsRefusedWithItsVersion(): void {
 		$this->bobWritesOnAGrade();
 		$this->rows['src']->setUpdatedAt(new DateTime('2026-10-01T10:00:09+00:00'));
