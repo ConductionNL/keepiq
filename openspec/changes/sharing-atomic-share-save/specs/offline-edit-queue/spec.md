@@ -2,7 +2,7 @@
 
 ### Requirement: Offline changes go into a sealed local queue
 
-When the administrator setting `offline_edits_enabled` is true and the vault is served from the offline cache, the web app MUST let the user create, edit, move and delete secrets, and MUST store each change as a queue entry in IndexedDB. Each entry's values and index fields (`name`, `url`, `typeId`, `folderId`) MUST be sealed to the owner's own certificate; only the entry id, the operation, the secret id, `baseUpdatedAt`, `sourceBaseUpdatedAt`, `conflictSourceUpdatedAt` (the source version a replay's 409 `stale_source` named), the queue time and the suite id MAY be stored in plain. The offline manifest MUST carry `sourceUpdatedAt`, the source's version, on every copy row (null for an own secret and when the source is gone), the offline snapshot MUST keep it on each cached row in plain, as it keeps `updatedAt`, and an edit of a copy made offline MUST record it as the entry's `sourceBaseUpdatedAt` (null when the cached row carries none); changes to one secret that are combined into one entry MUST keep the first one recorded. The vault view MUST show queued changes marked as not synced.
+When the administrator setting `offline_edits_enabled` is true and the vault is served from the offline cache, the web app MUST let the user create, edit, move and delete secrets, and MUST store each change as a queue entry in IndexedDB. Each entry's values and index fields (`name`, `url`, `typeId`, `folderId`) MUST be sealed to the owner's own certificate; only the entry id, the operation, the secret id, `baseUpdatedAt`, `sourceBaseUpdatedAt`, `conflictUpdatedAt` and `conflictSourceUpdatedAt` (the versions a replay's 409 left the conflict on), the queue time and the suite id MAY be stored in plain. The offline manifest MUST carry `sourceUpdatedAt`, the source's version, on every copy row (null for an own secret and when the source is gone), the offline snapshot MUST keep it on each cached row in plain, as it keeps `updatedAt`, and an edit of a copy made offline MUST record it as the entry's `sourceBaseUpdatedAt` (null when the cached row carries none); changes to one secret that are combined into one entry MUST keep the first one recorded. The vault view MUST show queued changes marked as not synced.
 
 #### Scenario: A field worker rotates a password with no signal
 
@@ -74,7 +74,7 @@ A replay answered with 403 or 404, a share-save refused with 400, or a share-sav
 
 ### Requirement: Replay saves value changes through the share-save
 
-A queued update that changes a value, login or additional fields MUST be replayed as one share-save with the `baseUpdatedAt` stored in the entry (and, on a copy, the source version stored with it, or the source version of replay time when none was stored), encrypted for the copies and partner shares the server names at replay time. A 409 `stale` or `stale_source` MUST become a conflict the user resolves; keeping their change after a `stale_source` MUST replay it on the source version that 409 named, also after a reload, so the entry MUST store that version with the conflict as `conflictSourceUpdatedAt`, apart from the `sourceBaseUpdatedAt` the edit was made from. An entry left from before this change whose owner row saved but whose recipient sync did not MUST be saved again through share-save when the row still holds the entry's ciphertext, without its `mergedPending` count, and MUST be dropped when the row changed since.
+A queued update that changes a value, login or additional fields MUST be replayed as one share-save with the `baseUpdatedAt` stored in the entry (and, on a copy, the source version stored with it, or the source version of replay time when none was stored), encrypted for the copies and partner shares the server names at replay time. A 409 `stale` or `stale_source` MUST become a conflict the user resolves. Keeping their change MUST replay it on the versions of that conflict, the same before and after a reload: after a `stale`, on the row version the 409 returned and, on a copy, the source version read right after the 409; after a `stale_source`, on the source version that 409 named. The entry MUST store them with the conflict as `conflictUpdatedAt` and `conflictSourceUpdatedAt`, apart from the `baseUpdatedAt` and `sourceBaseUpdatedAt` the edit was made from, and a version the conflict gave none of MUST stay the one the edit was made from. An entry left from before this change whose owner row saved but whose recipient sync did not MUST be saved again through share-save when the row still holds the entry's ciphertext, without its `mergedPending` count, and MUST be dropped when the row changed since.
 
 #### Scenario: A shared secret edited offline reaches every copy
 
@@ -88,6 +88,12 @@ A queued update that changes a value, login or additional fields MUST be replaye
 - **WHEN** the user keeps their change
 - **THEN** the replay MUST send the source version that 409 named, and save when the source has not moved again
 - **AND** after a reload, the replay MUST send the same version, stored with the conflict, not the source version the edit was made from
+
+#### Scenario: Keeping mine after the copy moved
+
+- **GIVEN** a queued edit of a copy whose replay was refused with 409 `stale`, because the owner saved the secret meanwhile
+- **WHEN** the user keeps their change, before or after a reload
+- **THEN** the replay MUST send the copy version that 409 returned and the source version read right after it, and save when neither has moved again
 
 #### Scenario: A pending sync from before the change is finished
 

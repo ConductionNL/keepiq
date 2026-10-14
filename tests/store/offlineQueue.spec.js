@@ -344,6 +344,125 @@ describe('replay', () => {
 			expect(stored.size).toBe(0)
 		})
 
+		it.each([
+			['before a reload', false],
+			['after a reload', true],
+		])(
+			'"keep mine" on a stale copy replays on the copy version that 409 returned and the source version of that moment, %s',
+			async (when, reload) => {
+				await goOffline()
+				await secrets.updateSecret(
+					's1',
+					{ key: 'new' },
+					{ sourceBaseUpdatedAt: EDIT_SOURCE },
+				)
+				goOnline()
+				// The owner's share-save moved the source and the copy alike.
+				const server = {
+					copy: context.sourceUpdatedAt,
+					source: context.sourceUpdatedAt,
+				}
+				const log = shareSaveServer({
+					id: 's1',
+					context: {
+						...context,
+						get sourceUpdatedAt() {
+							return server.source
+						},
+					},
+					onSave: (body) => {
+						if (body.baseUpdatedAt !== server.copy) {
+							throw httpError(409, {
+								error: 'stale',
+								current: { id: 's1', updatedAt: server.copy },
+							})
+						}
+						if (body.sourceBaseUpdatedAt !== server.source) {
+							throw httpError(409, {
+								error: 'stale_source',
+								sourceUpdatedAt: server.source,
+							})
+						}
+					},
+				})
+				await offline.replayQueue()
+				expect(offline.conflictEntries).toHaveLength(1)
+				expect([...stored.values()][0]).toMatchObject({
+					baseUpdatedAt: BASE,
+					sourceBaseUpdatedAt: EDIT_SOURCE,
+					conflictUpdatedAt: server.copy,
+					conflictSourceUpdatedAt: server.source,
+				})
+
+				if (reload) {
+					setActivePinia(createPinia())
+					await goOffline()
+					goOnline()
+					await offline.loadQueue()
+					expect(offline.conflicts).toEqual({})
+				}
+				await offline.resolveConflict(
+					offline.conflictEntries[0].entryId,
+					'mine',
+				)
+
+				expect(
+					log.saves.map((s) => [s.baseUpdatedAt, s.sourceBaseUpdatedAt]),
+				).toEqual([
+					[BASE, EDIT_SOURCE],
+					[server.copy, server.source],
+				])
+				expect(offline.conflictEntries).toHaveLength(0)
+				expect(stored.size).toBe(0)
+			},
+		)
+
+		it('"keep mine" on a stale copy is refused again when the source moves after that 409, not saved over it', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			goOnline()
+			const server = {
+				copy: context.sourceUpdatedAt,
+				source: context.sourceUpdatedAt,
+			}
+			const log = shareSaveServer({
+				id: 's1',
+				context: {
+					...context,
+					get sourceUpdatedAt() {
+						return server.source
+					},
+				},
+				onSave: (body) => {
+					if (body.baseUpdatedAt !== server.copy) {
+						throw httpError(409, {
+							error: 'stale',
+							current: { id: 's1', updatedAt: server.copy },
+						})
+					}
+					if (body.sourceBaseUpdatedAt !== server.source) {
+						throw httpError(409, {
+							error: 'stale_source',
+							sourceUpdatedAt: server.source,
+						})
+					}
+				},
+			})
+			await offline.replayQueue()
+			const seen = server.source
+			server.source = '2026-10-02T11:00:00+00:00'
+
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(seen)
+			expect(offline.conflictEntries).toHaveLength(1)
+			expect(stored.size).toBe(1)
+		})
+
 		it('an edit in the dialog of a copy opened from the cached snapshot replays on the source version the manifest carried', async () => {
 			const pub = await importPublicKey(RSA4096_PUBLIC_KEY_SPKI_PEM)
 			const aesKey = await crypto.subtle.generateKey(
