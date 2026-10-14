@@ -251,7 +251,7 @@ export default {
 				active: t('keepiq', 'Shared'),
 				suspended: t(
 					'keepiq',
-					'Paused: their certificate or the partnership changed. Revoke it or share again.',
+					'Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.',
 				),
 
 				failed: t(

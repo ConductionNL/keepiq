@@ -256,12 +256,21 @@ describe('replay', () => {
 			)
 			expect([...stored.values()][0].sourceBaseUpdatedAt).toBe(EDIT_SOURCE)
 			goOnline()
+			const server = { source: context.sourceUpdatedAt }
 			const log = shareSaveServer({
 				id: 's1',
-				context,
+				context: {
+					...context,
+					get sourceUpdatedAt() {
+						return server.source
+					},
+				},
 				onSave: (body) => {
-					if (body.sourceBaseUpdatedAt !== context.sourceUpdatedAt) {
-						throw httpError(409, { error: 'stale_source' })
+					if (body.sourceBaseUpdatedAt !== server.source) {
+						throw httpError(409, {
+							error: 'stale_source',
+							sourceUpdatedAt: server.source,
+						})
 					}
 				},
 			})
@@ -273,11 +282,59 @@ describe('replay', () => {
 			])
 			expect(offline.conflictEntries).toHaveLength(1)
 
-			// Keeping mine takes the source as it is at the next replay.
+			// Keeping mine overrides the source version the conflict named,
+			// not one the owner saved after it.
+			const named = server.source
+			server.source = '2026-10-02T11:00:00+00:00'
 			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
-			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(
-				context.sourceUpdatedAt,
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(named)
+			expect(offline.conflictEntries).toHaveLength(1)
+
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(server.source)
+			expect(stored.size).toBe(0)
+		})
+
+		it('after a reload, "keep mine" on a stale source replays with the source version that 409 named, and saves', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
 			)
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context,
+				onSave: (body) => {
+					if (body.sourceBaseUpdatedAt !== context.sourceUpdatedAt) {
+						throw httpError(409, {
+							error: 'stale_source',
+							sourceUpdatedAt: context.sourceUpdatedAt,
+						})
+					}
+				},
+			})
+			await offline.replayQueue()
+			expect(offline.conflictEntries).toHaveLength(1)
+			expect([...stored.values()][0]).toMatchObject({
+				sourceBaseUpdatedAt: EDIT_SOURCE,
+				conflictSourceUpdatedAt: context.sourceUpdatedAt,
+			})
+
+			// A reload: the 409 itself is gone, the stored entry is read again.
+			setActivePinia(createPinia())
+			await goOffline()
+			goOnline()
+			await offline.loadQueue()
+			expect(offline.conflicts).toEqual({})
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+
+			expect(log.saves.map((s) => s.sourceBaseUpdatedAt)).toEqual([
+				EDIT_SOURCE,
+				context.sourceUpdatedAt,
+			])
+			expect(offline.conflictEntries).toHaveLength(0)
 			expect(stored.size).toBe(0)
 		})
 

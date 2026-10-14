@@ -73,7 +73,7 @@ let lockEpoch = 0
  * Forget every kept partner certificate; runs on every vault lock.
  *
  * @return {void}
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+ * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function forgetVerifiedPartners() {
 	verifiedPartners.clear()
@@ -99,7 +99,7 @@ function retryAfterMs(response) {
 
 /**
  * Whether a lookup failed at the partner rather than on this server: only
- * then may the user choose to pause the share and save without it.
+ * then may the user choose to suspend the share and save without it.
  *
  * @param {object} error The lookup's axios error.
  * @return {boolean}
@@ -248,19 +248,17 @@ function idsOf(list, key) {
  * @param {string} options.baseUpdatedAt The `{id}` version the edit was made from.
  * @param {string|null} [options.sourceBaseUpdatedAt] The source version the edit was made from, on the copy-editor path; without one, the source version when this save starts.
  * @param {() => Promise<object>} [options.loadFull] Resolves `{key, login, additionalFields, updatedAt}` of `{id}` in plain.
- * @param {boolean} [options.withoutUnreachable] Suspend partner shares that cannot be reached instead of stopping.
+ * @param {Iterable<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached; any other unreachable one stops the save.
  * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry all three value fields.
  * @param {(ms: number) => void} [options.onWait] Called when the save starts waiting on the partner lookup limit.
- * @return {Promise<object>} The 200 body; `secret` is the saved row, and
- *   `sentSourceBaseUpdatedAt` the source version this save sent (null on the
- *   owner path).
+ * @return {Promise<object>} The 200 body; `secret` is the saved row.
  * @throws {ShareSaveError|Error} Nothing was written. An error the share-save
  *   request itself answered carries `fromShareSave`.
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+ * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
  */
 export async function saveShared({
@@ -270,7 +268,7 @@ export async function saveShared({
 	baseUpdatedAt,
 	sourceBaseUpdatedAt = null,
 	loadFull = null,
-	withoutUnreachable = false,
+	withoutUnreachable = [],
 	restoredFrom = null,
 	onWait = null,
 }) {
@@ -454,7 +452,7 @@ export async function saveShared({
 				} else if (partnerUnreachable(e)) {
 					unreachable.push({ ...share, reason })
 				} else {
-					// This server failed, not the partner: pausing would be wrong.
+					// This server failed, not the partner: suspending would be wrong.
 					throw e
 				}
 				continue
@@ -466,7 +464,12 @@ export async function saveShared({
 				...(await encryptWhole(partnerValue, recipient.certificate)),
 			})
 		}
-		if (unreachable.length > 0 && !withoutUnreachable) {
+		// Only the shares the user was shown and agreed to are suspended; one
+		// that fails only now stops the save again, naming each share this
+		// round could not reach (a round after `incomplete` looks up only the
+		// shares the server newly named).
+		const agreed = new Set(withoutUnreachable)
+		if (unreachable.some((share) => !agreed.has(share.shareId))) {
 			throw new ShareSaveError('partner_unreachable', unreachable)
 		}
 		for (const share of unreachable) {
@@ -577,10 +580,7 @@ export async function saveShared({
 		for (const shareId of verifiedNow.keys()) {
 			verifiedPartners.delete(shareId)
 		}
-		return {
-			...result,
-			sentSourceBaseUpdatedAt: copyPath ? sourceBase : null,
-		}
+		return result
 	} catch (e) {
 		if (epoch === lockEpoch) {
 			for (const [shareId, kept] of verifiedNow) {
@@ -637,7 +637,7 @@ export async function notifyOwnerOnly(result) {
  * @param {Error|object} error The thrown error.
  * @return {string|null}
  * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+ * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function shareSaveErrorText(error) {
 	const data = error?.response?.data
@@ -675,7 +675,7 @@ export function shareSaveErrorText(error) {
 	if (code === 'partner_unreachable') {
 		return t(
 			'keepiq',
-			'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which pauses their share.',
+			'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
 			{
 				partners: error.partners
 					.map((share) => share.recipientCloudId)

@@ -20,7 +20,7 @@
 			<NcNoteCard v-if="error" type="error" data-testid="secret-edit-error">
 				{{ error }}
 				<NcButton
-					v-if="unreachablePartners"
+					v-if="unreachablePartners.length > 0"
 					variant="secondary"
 					:disabled="saving"
 					data-testid="save-without-unreachable"
@@ -274,7 +274,8 @@ export default {
 			saving: false,
 			waitingForPartners: false,
 			error: '',
-			unreachablePartners: false,
+			// The unreachable partner shares (ids) the last error named.
+			unreachablePartners: [],
 			original: null,
 			sourceBase: null,
 			name: '',
@@ -503,27 +504,37 @@ export default {
 		/**
 		 * The source version this edit starts from when the secret is a copy,
 		 * so the share save refuses it as `stale_source` when the source moved
-		 * on while the dialog was open. Null for an own secret, and when it
-		 * cannot be read (offline): the save then takes the source version of
-		 * its own moment.
+		 * on while the dialog was open. Offline it is the one the cached vault
+		 * row carries. Null when it is not known: the save then takes the
+		 * source version of its own moment. A merge write-back of the secret
+		 * that saved moved the source, so its version is taken instead; one
+		 * that failed leaves the version read on open. Null for an own secret
+		 * whose write-context was read; when that read fails, an own secret's
+		 * write-back that saved gives its version, which the owner's save
+		 * does not send.
 		 *
 		 * @return {Promise<string|null>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async sourceVersion() {
-			if (useOfflineStore().servedFromCache) {
-				return null
-			}
-			try {
-				const context = await useShareStore().fetchWriteContext(
-					this.secretId,
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find(
+					(secret) => secret.id === this.secretId,
 				)
-				return context.sourceSecretId !== this.secretId
-					? (context.sourceUpdatedAt ?? null)
-					: null
-			} catch {
+				return cached?.sourceUpdatedAt ?? null
+			}
+			const [context, writeBack] = await Promise.all([
+				useShareStore()
+					.fetchWriteContext(this.secretId)
+					.catch(() => null),
+				useSecretStore().writeBackSettled(this.secretId),
+			])
+			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
+			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
 		},
 
 		/**
@@ -567,26 +578,26 @@ export default {
 		},
 
 		/**
-		 * Save again after the user chose to pause the partner shares that
-		 * could not be reached.
+		 * Save again after the user chose to stop sharing with the partners
+		 * the error named: only those shares are suspended.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
 		async saveWithoutUnreachable() {
-			await this.submit({ withoutUnreachable: true })
+			await this.submit({ withoutUnreachable: this.unreachablePartners })
 		},
 
 		/**
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
 		 * @param {object} [options] Options.
-		 * @param {boolean} [options.withoutUnreachable] Pause unreachable partner shares.
+		 * @param {Array<string>} [options.withoutUnreachable] The unreachable partner shares (ids) the user agreed to suspend.
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
 		async submit(options = {}) {
 			if (!this.canSubmit) {
@@ -600,7 +611,7 @@ export default {
 			this.saving = true
 			this.waitingForPartners = false
 			this.error = ''
-			this.unreachablePartners = false
+			this.unreachablePartners = []
 			try {
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
@@ -666,21 +677,24 @@ export default {
 
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
-					// Both versions are read only now, after the wait, so a
-					// write-back settling meanwhile is seen in both.
+					const store = useSecretStore()
+					const onWait = () => {
+						this.waitingForPartners = true
+					}
+					// Waited for here so its partner wait shows. `o` is the copy
+					// the dialog opened, which only a write-back of it that saved
+					// moved, so its version and merged count are read only now.
+					await store.writeBackSettled(this.secretId, onWait)
 					const sourceBaseUpdatedAt = await this.sourceBase
-					updated = await useSecretStore().updateSecret(
-						this.secretId,
-						diff,
-						{
-							baseUpdatedAt: o.updatedAt,
-							sourceBaseUpdatedAt,
-							withoutUnreachable: options?.withoutUnreachable === true,
-							onWait: () => {
-								this.waitingForPartners = true
-							},
-						},
-					)
+					if (diff.additionalFields !== undefined && o.mergedPending > 0) {
+						diff.mergedPending = o.mergedPending
+					}
+					updated = await store.updateSecret(this.secretId, diff, {
+						baseUpdatedAt: o.updatedAt,
+						sourceBaseUpdatedAt,
+						withoutUnreachable: options?.withoutUnreachable ?? [],
+						onWait,
+					})
 				}
 				// Tags are the holder's own, stored apart from the value
 				// (vault-favourites-tags-and-last-used).
@@ -693,7 +707,10 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.unreachablePartners = e?.code === 'partner_unreachable'
+				this.unreachablePartners =
+					e?.code === 'partner_unreachable'
+						? e.partners.map((share) => share.shareId)
+						: []
 				this.error =
 					shareSaveErrorText(e)
 					|| e?.response?.data?.message

@@ -159,7 +159,7 @@ export const useOfflineStore = defineStore('offline', {
 		entries: [],
 		/** @type {Array<object>} Stored entries sealed under another suite, waiting for the previous password. */
 		foreignEntries: [],
-		/** @type {Object<string, object>} entryId → the server row a 409 returned (memory only). */
+		/** @type {Object<string, object>} entryId → the server row a 409 returned, or `{sourceUpdatedAt}` for a stale source (memory only). */
 		conflicts: {},
 		/** @type {boolean} Whether a replay is running. */
 		replaying: false,
@@ -542,11 +542,25 @@ export const useOfflineStore = defineStore('offline', {
 			} catch (e) {
 				const kind = replayKind(e)
 				if (kind === 'conflict') {
+					const answer = e.response?.data
+					const staleSource =
+						answer?.error === 'stale_source'
+							? (answer.sourceUpdatedAt ?? null)
+							: null
 					this.conflicts = {
 						...this.conflicts,
-						[entry.entryId]: e.response?.data?.current ?? null,
+						[entry.entryId]:
+							answer?.current
+							?? (answer?.error === 'stale_source'
+								? { sourceUpdatedAt: staleSource }
+								: null),
 					}
-					await this.setStatus(entry, 'conflict')
+					// Stored too, so keeping the change after a reload still
+					// replays on the source version this 409 named.
+					await this.setStatus(
+						{ ...entry, conflictSourceUpdatedAt: staleSource },
+						'conflict',
+					)
 					return 'conflict'
 				}
 				if (kind === 'failed') {
@@ -673,12 +687,20 @@ export const useOfflineStore = defineStore('offline', {
 			}
 			const current = this.conflicts[entryId]
 			// A stale source carries no row: the entry's own base still holds.
-			// Keeping mine also overrides the source version it was made
-			// from, so the replay takes the source as it is then.
+			// Keeping mine overrides the source version the 409 named, so a
+			// source that moves again before the replay is refused again;
+			// without one, the replay takes the source as it is then. After a
+			// reload the 409 is gone, and the version it named is the one the
+			// entry stored with the conflict.
 			const updated = {
 				...entry,
 				baseUpdatedAt: current?.updatedAt ?? entry.baseUpdatedAt ?? null,
-				sourceBaseUpdatedAt: null,
+				sourceBaseUpdatedAt: current
+					? (current.sourceUpdatedAt ?? null)
+					: (entry.conflictSourceUpdatedAt
+						?? entry.sourceBaseUpdatedAt
+						?? null),
+				conflictSourceUpdatedAt: null,
 				status: 'queued',
 			}
 			const session = useSessionStore()
