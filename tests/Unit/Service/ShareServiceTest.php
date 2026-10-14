@@ -34,6 +34,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
@@ -133,12 +134,14 @@ class ShareServiceTest extends TestCase {
 	 *
 	 * @param LoggerInterface|null $logger The logger
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (grade resolution)
+	 * @param ShareAuditTrail|null $auditTrail The sync's audit trail
 	 *
 	 * @return ShareService
 	 */
 	private function wireService(
 		?LoggerInterface $logger = null,
 		?TeamFolderService $teamFolderService = null,
+		?ShareAuditTrail $auditTrail = null,
 	): ShareService {
 		$logger ??= $this->createMock(originalClassName: LoggerInterface::class);
 
@@ -172,6 +175,7 @@ class ShareServiceTest extends TestCase {
 				suiteMapper: $this->suiteMapper,
 				db: $this->db,
 				auth: $auth,
+				auditTrail: $auditTrail,
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->mapper,
@@ -1063,15 +1067,125 @@ class ShareServiceTest extends TestCase {
 	 * resolves the given grade (folder-permission-grades §5.2).
 	 *
 	 * @param string|null $grade The resolved grade
+	 * @param ShareAuditTrail|null $auditTrail The sync's audit trail
 	 *
 	 * @return ShareService
 	 */
-	private function gradedService(?string $grade): ShareService {
+	private function gradedService(?string $grade, ?ShareAuditTrail $auditTrail = null): ShareService {
 		$teamFolderService = $this->createMock(originalClassName: TeamFolderService::class);
 		$teamFolderService->method('resolveGrade')->willReturn($grade);
 
-		return $this->wireService(teamFolderService: $teamFolderService);
+		return $this->wireService(teamFolderService: $teamFolderService, auditTrail: $auditTrail);
 	}//end gradedService()
+
+	/**
+	 * Stub a source owned by alice with one copy, a sync of it, and a
+	 * transaction that logs where it opens and commits.
+	 *
+	 * @param list<string> $log The log the transaction writes to
+	 *
+	 * @return void
+	 */
+	private function stubLoggedSync(array &$log): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+		$this->db->method('beginTransaction')->willReturnCallback(
+			static function () use (&$log): void {
+				$log[] = 'begin';
+			}
+		);
+		$this->db->method('commit')->willReturnCallback(
+			static function () use (&$log): void {
+				$log[] = 'commit';
+			}
+		);
+	}//end stubLoggedSync()
+
+	/**
+	 * A delegate's sync writes the owner's copies, so it is attributed to the
+	 * delegate on the source, in the sync's transaction, as their share-save is.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testADelegatesSyncIsAuditedOnTheSourceInItsTransaction(): void {
+		$log = [];
+		$this->stubLoggedSync(log: $log);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->with('src-1', 'carol')
+			->willReturn(new SecretDelegation());
+		$audit = $this->createMock(originalClassName: ShareAuditTrail::class);
+		$audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('carol', 'src-1', 'demo-secret', 'delegate sync')
+			->willReturnCallback(
+				static function () use (&$log): void {
+					$log[] = 'audit';
+				}
+			);
+
+		$this->gradedService(grade: null, auditTrail: $audit)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'carol'
+		);
+
+		$this->assertSame(['begin', 'audit', 'commit'], $log);
+	}//end testADelegatesSyncIsAuditedOnTheSourceInItsTransaction()
+
+	/**
+	 * The owner's sync has no attribution entry: the row's own audit covers it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testTheOwnersSyncIsNotAttributed(): void {
+		$log = [];
+		$this->stubLoggedSync(log: $log);
+		$audit = $this->createMock(originalClassName: ShareAuditTrail::class);
+		$audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$written = $this->gradedService(grade: null, auditTrail: $audit)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'alice'
+		);
+
+		$this->assertSame(1, $written);
+	}//end testTheOwnersSyncIsNotAttributed()
+
+	/**
+	 * A write-grade member's sync is attributed to them as a team write.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testATeamWritersSyncIsAuditedAsATeamWrite(): void {
+		$log = [];
+		$this->stubLoggedSync(log: $log);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->willThrowException(new DoesNotExistException('none'));
+		$audit = $this->createMock(originalClassName: ShareAuditTrail::class);
+		$audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('bob', 'src-1', 'demo-secret', 'team-write sync');
+
+		$this->gradedService(grade: 'write', auditTrail: $audit)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'bob'
+		);
+	}//end testATeamWritersSyncIsAuditedAsATeamWrite()
 
 	/**
 	 * folder-permission-grades §5.2: a write-grade non-owner syncs, and

@@ -87,7 +87,8 @@ class ShareSyncService {
 	 * applies an optimistic-locking check via the source Secret's
 	 * `updatedAt`, moves that version and writes every recipient copy in a
 	 * single transaction, and clears `possiblyCompromisedAt` from any copy
-	 * where it was set.
+	 * where it was set. A sync by anyone but the owner is audited on the
+	 * source in that transaction.
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
@@ -102,6 +103,7 @@ class ShareSyncService {
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 	 */
 	public function syncUpdate(
 		string $secretId,
@@ -128,26 +130,53 @@ class ShareSyncService {
 		// After the stored version even within the same second, as a share-save stamps.
 		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
 		$allowedIds = $this->collectSyncTargets(source: $source);
-		$updated = $this->atomic(
-			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt): int {
+		return $this->atomic(
+			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $isWriter, $userId): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
-				return $this->writeCopyBlobs(source: $source, updates: $updates, allowedIds: $allowedIds, savedAt: $savedAt);
+				$updated = $this->writeCopyBlobs(source: $source, updates: $updates, allowedIds: $allowedIds, savedAt: $savedAt);
+				if ($updated > 0) {
+					$this->recordNonOwnerSync(source: $source, userId: $userId, isWriter: $isWriter);
+				}
+
+				return $updated;
 			},
 			db: $this->db
 		);
+	}//end syncUpdate()
 
-		// A non-owner write is attributed to the writer (§3.3) —
-		// identifiers only, never key material.
-		if ($isWriter === true && $updated > 0) {
-			$this->auditTrail->recordTeamWriteSync(
-				userId: $userId,
-				secretId: $source->getId(),
-				secretName: $source->getName(),
-			);
+	/**
+	 * Attribute a sync by anyone but the owner to the writer on the source
+	 * (§3.3), as a share-save through a copy is: a team writer as
+	 * `team-write sync`, a delegate as `delegate sync`. Identifiers only,
+	 * never key material.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param string $userId The requesting user
+	 * @param bool $isWriter Whether the caller writes on a team-folder grade
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$isWriter` is what resolveSyncWriter() found
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	private function recordNonOwnerSync(Secret $source, string $userId, bool $isWriter): void {
+		$changedFields = 'team-write sync';
+		if ($isWriter === false) {
+			if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
+				return;
+			}
+
+			$changedFields = 'delegate sync';
 		}
 
-		return $updated;
-	}//end syncUpdate()
+		$this->auditTrail->recordTeamWriteSync(
+			userId: $userId,
+			secretId: $source->getId(),
+			secretName: $source->getName(),
+			changedFields: $changedFields,
+		);
+	}//end recordNonOwnerSync()
 
 	/**
 	 * The write context of a secret for the current user
