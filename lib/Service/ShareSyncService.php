@@ -85,8 +85,9 @@ class ShareSyncService {
 	 * new value re-encrypted under each recipient's public key). The
 	 * server validates the caller is the owner or an active delegate,
 	 * applies an optimistic-locking check via the source Secret's
-	 * `updatedAt`, writes every recipient copy in a single transaction,
-	 * and clears `possiblyCompromisedAt` from any copy where it was set.
+	 * `updatedAt`, moves that version and writes every recipient copy in a
+	 * single transaction, and clears `possiblyCompromisedAt` from any copy
+	 * where it was set.
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
@@ -120,14 +121,20 @@ class ShareSyncService {
 		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
+		// The check passed, so the stored version is the base the caller named.
+		$base = null;
+		if ($expectedUpdatedAt !== '') {
+			$base = $source->getUpdatedAt();
+		}
+
+		// After the stored version even within the same second, as a share-save stamps.
+		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
 		$allowedIds = $this->collectSyncTargets(source: $source);
 		$updated = $this->atomic(
-			fn: fn (): int => $this->writeCopyBlobs(
-				source: $source,
-				updates: $updates,
-				allowedIds: $allowedIds,
-				savedAt: new DateTime()
-			),
+			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt): int {
+				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
+				return $this->writeCopyBlobs(source: $source, updates: $updates, allowedIds: $allowedIds, savedAt: $savedAt);
+			},
 			db: $this->db
 		);
 
@@ -256,6 +263,33 @@ class ShareSyncService {
 			);
 		}
 	}//end assertSyncSourceUnchanged()
+
+	/**
+	 * Move the source off the version checked above, inside the sync's
+	 * transaction, as a share-save does: a save that commits after the check
+	 * refuses the sync here instead of having its copies overwritten.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param DateTime|null $base The version the sync was prepared on; null skips the lock
+	 * @param DateTime $savedAt The version every written row gets
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the source moved on since the check
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	private function lockSource(Secret $source, ?DateTime $base, DateTime $savedAt): void {
+		if ($base === null) {
+			return;
+		}
+
+		if ($this->secretMapper->advanceVersion(id: $source->getId(), base: $base, savedAt: $savedAt) === 0) {
+			throw new InvalidArgumentException(
+				message: 'Source secret has changed since the sync was prepared'
+			);
+		}
+	}//end lockSource()
 
 	/**
 	 * Membership guard: a sync may only touch the source row itself and its

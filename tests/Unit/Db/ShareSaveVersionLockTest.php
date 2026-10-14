@@ -105,6 +105,59 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertSame(0, $mapper->advanceVersion(id: 'no-such-row', base: $savedAt, savedAt: new DateTime('+1 day')));
 	}
 
+	/**
+	 * The extension's sync checked the source, then an owner's share-save
+	 * moved it before the sync's write: the sync changes no copy.
+	 */
+	public function testASyncOverASourceThatMovedAfterItsCheckChangesNoCopy(): void {
+		$mapper = new SecretMapper(db: $this->db);
+		$source = $this->insertSecret();
+		$copy = $this->insertSecret();
+		$targets = new \OCA\Keepiq\Db\ShareTargetMapper(db: $this->db);
+		$target = new \OCA\Keepiq\Db\ShareTarget();
+		$target->setId(Uuid::uuid4()->toString());
+		$target->setSourceSecretId($source->getId());
+		$target->setTargetUserId('share-save-bob');
+		$target->setSecretId($copy->getId());
+		$target->setCreatedBy('share-save-test');
+		$target->setCreatedAt(new DateTime(self::BASE));
+		$targets->insert($target);
+
+		$auth = $this->createMock(\OCA\Keepiq\Service\ShareAuthorizationService::class);
+		$auth->method('loadSecret')->willReturnCallback(static fn (string $id): Secret => $mapper->findById($id));
+		$auth->method('isOwnerOrDelegate')->willReturnCallback(
+			function () use ($mapper, $source): bool {
+				// The share-save commits right after the sync read the source.
+				$this->assertSame(1, $mapper->advanceVersion(id: $source->getId(), base: new DateTime(self::BASE), savedAt: new DateTime('2026-10-01T10:00:01+00:00')));
+				return true;
+			}
+		);
+		$sync = new \OCA\Keepiq\Service\ShareSyncService(
+			mapper: $targets,
+			secretMapper: $mapper,
+			suiteMapper: new \OCA\Keepiq\Db\EncryptionSuiteMapper(db: $this->db),
+			db: $this->db,
+			auth: $auth,
+		);
+		$expected = $mapper->findById($source->getId())->getUpdatedAt()?->format(DateTime::ATOM);
+
+		try {
+			$sync->syncUpdate(
+				secretId: $source->getId(),
+				updates: [['secretId' => $copy->getId(), 'key' => 'SYNC']],
+				expectedUpdatedAt: (string)$expected,
+				userId: 'share-save-test'
+			);
+			$this->fail('the sync wrote over the moved source');
+		} catch (\InvalidArgumentException $e) {
+			$this->assertStringContainsString('has changed', $e->getMessage());
+		}
+
+		$stored = $mapper->findById($copy->getId());
+		$this->assertSame('CIPHERTEXT', $stored->getKey());
+		$this->assertSame((new DateTime(self::BASE))->getTimestamp(), $stored->getUpdatedAt()?->getTimestamp());
+	}
+
 	private function insertPartnerShare(string $status, ?string $pending, int $attempts = 0, string $sourceSecretId = 'src', ?DateTime $nextNotifyAt = null): FederatedShare {
 		$share = new FederatedShare();
 		$share->setId(Uuid::uuid4()->toString());
