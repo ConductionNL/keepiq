@@ -158,7 +158,7 @@ class SecretVersionService {
 	 *
 	 * @param string $versionId The version UUID
 	 * @param string $userId The caller (must own the secret)
-	 * @param string|null $baseUpdatedAt The head version the caller restores over; null skips the check
+	 * @param string|null $baseUpdatedAt The head version the caller restores over; null skips the comparison with it, not the lock
 	 *
 	 * @return Secret The updated head
 	 *

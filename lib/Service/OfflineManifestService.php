@@ -90,7 +90,7 @@ class OfflineManifestService {
 	 *
 	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	public function buildForUser(string $userId): array {
 		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
@@ -139,13 +139,14 @@ class OfflineManifestService {
 	 * The version of each of the user's copies' sources, keyed by copy id and
 	 * written as a row's own `updatedAt`, so an offline edit of a copy can
 	 * name the source version it was made from. Only the timestamp leaves
-	 * this method; a source that can't be read gives null.
+	 * this method; it is null only when the source row is gone or carries
+	 * no version.
 	 *
 	 * @param string $userId The user holding the copies
 	 *
 	 * @return array<string,string|null>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	private function sourceVersions(string $userId): array {
 		$sourceOf = [];
