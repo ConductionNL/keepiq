@@ -97,6 +97,9 @@ class FederatedCopyRestoreTest extends TestCase {
 
 	private int $pulls = 0;
 
+	/** @var \Closure|null Runs once while the signature of the next request Alice receives is checked */
+	private ?\Closure $meanwhile = null;
+
 	/** @var string|null The verified signer of the request Alice receives */
 	private ?string $signer = 'cloud.partner.example';
 
@@ -286,6 +289,11 @@ class FederatedCopyRestoreTest extends TestCase {
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
 			function () {
+				if ($this->meanwhile !== null) {
+					$meanwhile = $this->meanwhile;
+					$this->meanwhile = null;
+					$meanwhile();
+				}
 				if ($this->signer === null) {
 					return null;
 				}
@@ -304,7 +312,7 @@ class FederatedCopyRestoreTest extends TestCase {
 	private function alicesProvider(): KeepiqSecretFederationProvider {
 		$shares = $this->createMock(FederatedShareMapper::class);
 		$shares->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => ($this->outbound !== null && $id === self::SHARE_ID) ? $this->outbound : throw new DoesNotExistException('none')
+			fn (string $id): FederatedShare => ($this->outbound !== null && $id === self::SHARE_ID) ? clone $this->outbound : throw new DoesNotExistException('none')
 		);
 		$shares->method('findBySourceSecret')->willReturnCallback(
 			fn (string $sourceId): array => array_values(array_filter(
@@ -312,7 +320,26 @@ class FederatedCopyRestoreTest extends TestCase {
 				static fn (FederatedShare $row): bool => $row->getSourceSecretId() === $sourceId
 			))
 		);
-		$shares->method('update')->willReturnArgument(0);
+		// $this->outbound is what the database holds; a read gets a copy.
+		$shares->method('update')->willReturnCallback(
+			function (FederatedShare $row): FederatedShare {
+				$this->outbound = clone $row;
+				return $row;
+			}
+		);
+		$shares->method('updateIfStatus')->willReturnCallback(
+			function (FederatedShare $row, string $status, string $ending): int {
+				if ($this->outbound === null
+					|| $this->outbound->getStatus() !== $status
+					|| $this->outbound->getPendingNotification() === $ending
+				) {
+					return 0;
+				}
+
+				$this->outbound = clone $row;
+				return 1;
+			}
+		);
 
 		$changes = $this->createMock(FederatedRemoteChangeService::class);
 		$changes->method('senderOf')->willReturn('');
@@ -433,6 +460,31 @@ class FederatedCopyRestoreTest extends TestCase {
 		$this->assertSame(FederatedInbound::STATUS_REVOKED, $this->inbound->getStatus());
 		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
 		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+	}
+
+	/**
+	 * Alice revokes while the signature of Bob's accept is checked (a
+	 * partner can stall that check), and the revoke's own unshare fails.
+	 * The accept must not make the share live again.
+	 */
+	public function testARevokeThatLandedWhileTheAcceptWasCheckedStaysEnded(): void {
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_REVOKED);
+			$this->outbound->setPendingNotification('SHARE_UNSHARED');
+			$this->outbound->setNotifyAttempts(1);
+		};
+
+		try {
+			$this->alicesProvider()->notificationReceived('SHARE_ACCEPTED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+			$this->fail('the accept was applied');
+		} catch (ShareNotFound) {
+			// The answer for a share that ended.
+		}
+
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
+		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertSame(1, $this->outbound->getNotifyAttempts());
+		$this->assertSame([], $this->audit);
 	}
 
 	public function testAShareTheOwnerAlreadyRemovedStaysEnded(): void {

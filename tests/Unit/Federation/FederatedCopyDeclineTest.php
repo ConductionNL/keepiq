@@ -92,6 +92,9 @@ class FederatedCopyDeclineTest extends TestCase {
 
 	private int $pulls = 0;
 
+	/** @var \Closure|null Runs once while the signature of the next request Alice receives is checked */
+	private ?\Closure $meanwhile = null;
+
 	/** @var string|null The verified signer of the incoming request */
 	private ?string $signer = 'cloud.city.example';
 
@@ -228,6 +231,11 @@ class FederatedCopyDeclineTest extends TestCase {
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
 			function () {
+				if ($this->meanwhile !== null) {
+					$meanwhile = $this->meanwhile;
+					$this->meanwhile = null;
+					$meanwhile();
+				}
 				if ($this->signer === null) {
 					return null;
 				}
@@ -294,9 +302,28 @@ class FederatedCopyDeclineTest extends TestCase {
 	private function alicesProvider(): KeepiqSecretFederationProvider {
 		$shares = $this->createMock(FederatedShareMapper::class);
 		$shares->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => ($id === self::SHARE_ID) ? $this->outbound : throw new DoesNotExistException('none')
+			fn (string $id): FederatedShare => ($id === self::SHARE_ID) ? clone $this->outbound : throw new DoesNotExistException('none')
 		);
-		$shares->method('update')->willReturnArgument(0);
+		// $this->outbound is what the database holds; a read gets a copy.
+		$shares->method('update')->willReturnCallback(
+			function (FederatedShare $row): FederatedShare {
+				$this->outbound = clone $row;
+				return $row;
+			}
+		);
+		$shares->method('updateIfStatus')->willReturnCallback(
+			function (FederatedShare $row, string $status, string $ending): int {
+				if ($this->outbound === null
+					|| $this->outbound->getStatus() !== $status
+					|| $this->outbound->getPendingNotification() === $ending
+				) {
+					return 0;
+				}
+
+				$this->outbound = clone $row;
+				return 1;
+			}
+		);
 
 		$changes = $this->createMock(FederatedRemoteChangeService::class);
 		$changes->method('senderOf')->willReturn('');
@@ -502,6 +529,45 @@ class FederatedCopyDeclineTest extends TestCase {
 
 		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
 		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+	}
+
+	/**
+	 * Alice revokes while the signature of Bob's decline is checked (a
+	 * partner can stall that check), and the revoke's own unshare fails.
+	 * The decline must not replace the revocation and its pending unshare.
+	 */
+	public function testADeclineNeverUndoesARevokeThatLandedMeanwhile(): void {
+		$this->signer = 'cloud.partner.example';
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_REVOKED);
+			$this->outbound->setPendingNotification('SHARE_UNSHARED');
+			$this->outbound->setNotifyAttempts(1);
+		};
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
+		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertSame(1, $this->outbound->getNotifyAttempts());
+		$this->assertSame([], $this->audit);
+	}
+
+	/**
+	 * A revocation whose retries gave up leaves the share failed with the
+	 * unshare still pending: a decline keeps that unshare too.
+	 */
+	public function testADeclineKeepsTheUnshareOfARevocationThatGaveUp(): void {
+		$this->outbound->setStatus(FederatedShare::STATUS_FAILED);
+		$this->outbound->setPendingNotification('SHARE_UNSHARED');
+		$this->signer = 'cloud.partner.example';
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_FAILED, $this->outbound->getStatus());
+		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertSame([], $this->audit);
 	}
 
 	/**

@@ -23,10 +23,12 @@ namespace OCA\Keepiq\Tests\Unit\Db;
 use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
+use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStage;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
+use OCA\Keepiq\Service\FederatedDeclineReceiver;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
@@ -35,7 +37,10 @@ use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
+use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ISecureRandom;
+use OCP\Security\Signature\IIncomingSignedRequest;
+use OCP\Share\Exceptions\ShareNotFound;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
@@ -430,6 +435,104 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $mapper->findById($suspended->getId())->getStatus());
 		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
 		$mapper->findById($revoked->getId());
+	}
+
+	/**
+	 * Alice's owner side receiving Bob's decline or accept, with her revoke
+	 * landing while the request's signature is checked and the revoke's own
+	 * unshare failing.
+	 *
+	 * @return array{0:FederatedDeclineReceiver,1:FederatedShare}
+	 */
+	private function receiverRacedByARevoke(FederatedShareMapper $mapper, string $status): array {
+		$row = $mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
+		$row->setSharedSecretHash(hash('sha256', 'the-shared-secret'));
+		$mapper->update($row);
+
+		$messenger = $this->createMock(FederatedShareMessenger::class);
+		$messenger->method('notify')->willReturn(false);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$service = $this->shareService(mapper: $mapper, delivery: $delivery);
+
+		$signed = $this->createMock(IIncomingSignedRequest::class);
+		$signed->method('getOrigin')->willReturn('partner.example');
+		$ocm = $this->createMock(IOCMDiscoveryService::class);
+		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
+			function () use ($service, $row, $signed): IIncomingSignedRequest {
+				$service->revoke(shareId: $row->getId(), userId: 'share-save-test');
+				return $signed;
+			}
+		);
+		$partner = new FederationPartner();
+		$partner->setId('p-1');
+		$partners = $this->createMock(FederationPartnerService::class);
+		$partners->method('outboundPartnerForRemote')->willReturn($partner);
+
+		return [
+			new FederatedDeclineReceiver(
+				shareMapper: $mapper,
+				partners: $partners,
+				ocmDiscovery: $ocm,
+				audit: $this->createMock(FederatedShareAuditTrail::class),
+			),
+			$row,
+		];
+	}
+
+	private function assertStillRevoked(FederatedShareMapper $mapper, FederatedShare $row): void {
+		$stored = $mapper->findById($row->getId());
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $stored->getStatus());
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $stored->getPendingNotification());
+		$this->assertSame(1, $stored->getNotifyAttempts());
+		$this->assertNotNull($stored->getNextNotifyAt());
+	}
+
+	public function testAnAcceptReadBeforeARevokeLeavesTheShareRevoked(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedByARevoke(mapper: $mapper, status: FederatedShare::STATUS_DECLINED);
+
+		try {
+			$receiver->resume(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']);
+			$this->fail('the accept was applied');
+		} catch (ShareNotFound) {
+			// The answer for a share that ended.
+		}
+
+		$this->assertStillRevoked(mapper: $mapper, row: $row);
+	}
+
+	public function testADeclineReadBeforeARevokeLeavesTheShareRevoked(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedByARevoke(mapper: $mapper, status: FederatedShare::STATUS_ACTIVE);
+
+		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
+
+		$this->assertStillRevoked(mapper: $mapper, row: $row);
+	}
+
+	public function testARecipientsChangeIsWrittenOnlyWhileNoUnshareIsPending(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$gaveUp = $mapper->findById($this->insertPartnerShare(status: FederatedShare::STATUS_FAILED, pending: 'SHARE_UNSHARED', attempts: 6)->getId());
+		$gaveUp->setStatus(FederatedShare::STATUS_DECLINED);
+		$gaveUp->setPendingNotification(null);
+		$this->assertSame(0, $mapper->updateIfStatus(share: $gaveUp, status: FederatedShare::STATUS_FAILED, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
+		$this->assertSame('SHARE_UNSHARED', $mapper->findById($gaveUp->getId())->getPendingNotification());
+
+		$failedId = $this->insertPartnerShare(status: FederatedShare::STATUS_FAILED, pending: 'SHARE_UPDATED', attempts: 6)->getId();
+		$readActive = $mapper->findById($failedId);
+		$readActive->setStatus(FederatedShare::STATUS_DECLINED);
+		$this->assertSame(0, $mapper->updateIfStatus(share: $readActive, status: FederatedShare::STATUS_ACTIVE, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
+		$failed = $mapper->findById($failedId);
+		$failed->setStatus(FederatedShare::STATUS_DECLINED);
+		$failed->setPendingNotification(null);
+		$this->assertSame(1, $mapper->updateIfStatus(share: $failed, status: FederatedShare::STATUS_FAILED, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
+		$stored = $mapper->findById($failed->getId());
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $stored->getStatus());
+		$this->assertNull($stored->getPendingNotification());
+
+		$active = $mapper->findById($this->insertPartnerShare(status: FederatedShare::STATUS_ACTIVE, pending: null)->getId());
+		$active->setStatus(FederatedShare::STATUS_DECLINED);
+		$this->assertSame(1, $mapper->updateIfStatus(share: $active, status: FederatedShare::STATUS_ACTIVE, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
 	}
 
 	public function testFindByIdsLeavesUnknownIdsOut(): void {

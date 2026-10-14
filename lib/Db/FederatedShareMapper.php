@@ -153,6 +153,32 @@ class FederatedShareMapper extends QBMapper {
 	}//end updateIfActive()
 
 	/**
+	 * Write a share's changed fields only while it still has the status it
+	 * was read with and `$ending` is not pending on it, so a revoke that
+	 * landed meanwhile, and its pending unshare, are never overwritten.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 * @param string $status The status it was read with
+	 * @param string $ending The notification that ends a share (SHARE_UNSHARED)
+	 *
+	 * @return int The rows matched: 0 when the share changed meanwhile
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+	 */
+	public function updateIfStatus(FederatedShare $share, string $status, string $ending): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)))
+			->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->isNull('pending_notification'),
+					$qb->expr()->neq('pending_notification', $qb->createNamedParameter($ending))
+				)
+			);
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfStatus()
+
+	/**
 	 * Write the outcome of a delivery attempt only while the row still holds
 	 * the notification, status and version the attempt started from, so it
 	 * never clears or replaces a notification queued meanwhile.

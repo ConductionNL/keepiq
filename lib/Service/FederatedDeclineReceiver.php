@@ -89,12 +89,19 @@ class FederatedDeclineReceiver {
 			return [];
 		}
 
+		$read = $row->getStatus();
 		$row->setStatus(FederatedShare::STATUS_DECLINED);
 		$row->setPendingNotification(null);
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
 		$row->stamp(now: new DateTime());
-		$this->shareMapper->update(entity: $row);
+		// The owner may have revoked while the signature was checked, or a
+		// revocation whose retries gave up is still pending: then the
+		// revocation finishes, answered as above.
+		if ($this->write(row: $row, read: $read) === false) {
+			return [];
+		}
+
 		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, row: $row, actorId: null);
 
 		return [];
@@ -131,11 +138,33 @@ class FederatedDeclineReceiver {
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
 		$row->stamp(now: new DateTime());
-		$this->shareMapper->update(entity: $row);
+		// The owner may have revoked while the signature was checked: then
+		// the share stays ended, answered as above.
+		if ($this->write(row: $row, read: FederatedShare::STATUS_DECLINED) === false) {
+			throw new ShareNotFound();
+		}
+
 		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_RESUMED, row: $row, actorId: null);
 
 		return [];
 	}//end resume()
+
+	/**
+	 * Store the recipient's change only while the share still has the status
+	 * it was read with and no revocation is pending on it.
+	 *
+	 * @param FederatedShare $row The share with the change set
+	 * @param string $read The status it was read with
+	 *
+	 * @return bool Whether it was stored
+	 */
+	private function write(FederatedShare $row, string $read): bool {
+		return $this->shareMapper->updateIfStatus(
+			share: $row,
+			status: $read,
+			ending: FederatedNotificationDelivery::SHARE_UNSHARED
+		) > 0;
+	}//end write()
 
 	/**
 	 * Whether the owner shared the same secret with the same recipient again
