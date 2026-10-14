@@ -143,6 +143,24 @@ class ShareSaveControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CONFLICT, $status);
 		$this->assertSame('stale', $body['error']);
 		$this->assertSame('src', $body['current']['id']);
+		$this->assertArrayNotHasKey('sourceUpdatedAt', $body);
+	}
+
+	/**
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testAStaleCopyIs409WithTheSourceVersion(): void {
+		$current = new Secret();
+		$current->setId('c-bob');
+
+		[$status, $body] = $this->answerTo(
+			new StaleWriteException(current: $current, sourceUpdatedAt: new \DateTime('2026-10-01T10:00:00+00:00'))
+		);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $status);
+		$this->assertSame('stale', $body['error']);
+		$this->assertSame('c-bob', $body['current']['id']);
+		$this->assertSame('2026-10-01T10:00:00+00:00', $body['sourceUpdatedAt']);
 	}
 
 	public function testAnIncompleteSaveIs409WithTheLists(): void {

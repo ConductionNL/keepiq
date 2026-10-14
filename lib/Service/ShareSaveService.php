@@ -244,7 +244,7 @@ class ShareSaveService {
 			request: $request,
 			step: function () use ($path, $request): void {
 				if ($this->movedOn(row: $path->row, base: $request->baseUpdatedAt) === true) {
-					throw new StaleWriteException(current: $path->row);
+					throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $path->source->getUpdatedAt());
 				}
 
 				if ($path->isCopyEditor() === true
@@ -392,9 +392,31 @@ class ShareSaveService {
 
 		$rowId = $path->row->getId();
 		if ($this->secretMapper->advanceVersion(id: $rowId, base: $request->baseUpdatedAt, savedAt: $savedAt) === 0) {
-			throw new StaleWriteException(current: $this->reload(id: $rowId));
+			// The source stays at its base: moving it is rolled back with this refusal.
+			throw $this->staleRow(path: $path, current: $this->reload(id: $rowId), sourceVersion: $sourceBase);
 		}
 	}//end lockVersions()
+
+	/**
+	 * The `stale` refusal of the caller's row. On the copy-editor path it
+	 * names the source's version too, so the client can keep it with the
+	 * conflict without reading it again.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param Secret $current The caller's row as it is now
+	 * @param DateTime|null $sourceVersion The source's version as this save found it
+	 *
+	 * @return StaleWriteException
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	private function staleRow(ShareSavePath $path, Secret $current, ?DateTime $sourceVersion): StaleWriteException {
+		if ($path->isCopyEditor() === false) {
+			return new StaleWriteException(current: $current);
+		}
+
+		return new StaleWriteException(current: $current, sourceUpdatedAt: $sourceVersion);
+	}//end staleRow()
 
 	/**
 	 * Whether a row is no longer at the version an edit was made from.
