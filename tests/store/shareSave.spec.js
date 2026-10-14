@@ -166,12 +166,27 @@ describe('saveShared on the owner path', () => {
 		expect(JSON.stringify(log.saves)).not.toContain('encrypted')
 	})
 
-	it('looks certificates up 100 users at a time and stages more than 100 copies', async () => {
+	it('looks certificates up 100 users at a time and stages more than 100 copies, each for its own holder', async () => {
 		const users = Array.from({ length: 230 }, (_, i) => `user-${i}`)
+		const { generateKeyPair } = await import('../../src/crypto/rsa.js')
+		const others = await generateKeyPair()
+		// Two holders on either side of the 100 boundary have their own key.
+		const suites = Object.fromEntries(users.map((u) => [u, others.publicKeyPem]))
+		suites['user-0'] = OWNER_CERT
+		suites['user-150'] = BOB_CERT
 		const log = shareSaveServer({
 			id: 's1',
 			required: users.map((u) => recipient(`copy-${u}`, u)),
-			suites: Object.fromEntries(users.map((u) => [u, BOB_CERT])),
+			suites,
+		})
+		// The lookup answers in another order than it was asked.
+		const serve = axios.post.getMockImplementation()
+		axios.post.mockImplementation(async (url, body) => {
+			const answer = await serve(url, body)
+			if (url.endsWith('/shares/recipient-certificates')) {
+				answer.data.recipients.reverse()
+			}
+			return answer
 		})
 
 		await saveShared({
@@ -191,6 +206,15 @@ describe('saveShared on the owner path', () => {
 		expect(staged.map((s) => s.copies.length)).toEqual([100, 100, 30])
 		expect('patch' in staged[0]).toBe(false)
 		expect(staged[2].patch).toEqual({ key: 'K' })
+		const copy = (u) =>
+			staged.flatMap((st) => st.copies).find((c) => c.secretId === `copy-${u}`)
+		expect(await open(copy('user-0'), RSA4096_PRIVATE_KEY_PKCS8_PEM)).toEqual({
+			key: 'k',
+		})
+		expect(
+			await open(copy('user-150'), RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM),
+		).toEqual({ key: 'k' })
+		expect(await rsaDecrypt(copy('user-99').key, others.privateKey)).toBe('k')
 	}, 60000)
 
 	describe('a staged save that has to go round again', () => {
