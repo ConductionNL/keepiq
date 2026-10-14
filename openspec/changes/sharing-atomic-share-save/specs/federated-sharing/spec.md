@@ -2,7 +2,7 @@
 
 ### Requirement: Owner updates reach the remote copy and revocation removes it
 
-When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate and send it in the owner's share-save, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, or whose recipient certificate no longer verifies, MUST be suspended and shown to the owner.
+When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate and send it in the owner's share-save, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, or whose recipient certificate no longer verifies, MUST be suspended and shown to the owner. When the secret passes to a new owner, its federated shares MUST pass with it in the same transaction, and the sending server MUST NOT serve a federated share whose owner is not the secret's owner.
 
 #### Scenario: A password change reaches Bob
 
@@ -22,6 +22,13 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice revokes it
 - **THEN** Bob's server MUST delete the copy from Bob's vault
+
+#### Scenario: Bob's share follows the secret to a new owner
+
+- **GIVEN** a federated share accepted by Bob
+- **WHEN** Alice's secret passes to Dave, through Alice's delegation when her account is deleted or through team offboarding
+- **THEN** Bob's share MUST be Dave's, so Dave's share-save writes it and Dave can revoke or suspend it
+- **AND** Bob's server MUST keep pulling the share
 
 ## ADDED Requirements
 

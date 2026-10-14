@@ -489,6 +489,7 @@ class FederatedShareService {
 	 * @return array<string,mixed>|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function answerPull(?string $signer, string $shareId, array $payload): ?array {
 		$sharedSecret = $payload['sharedSecret'] ?? null;
@@ -507,7 +508,7 @@ class FederatedShareService {
 		// receive from here, and the share must be live.
 		$partner = $this->partners->outboundPartnerForRemote(remote: $signer);
 		if ($partner === null || $partner->getId() !== $row->getPartnerId()
-			|| $row->getStatus() !== FederatedShare::STATUS_ACTIVE
+			|| $this->isLive(row: $row, source: $source) === false
 			|| hash_equals($row->getSharedSecretHash(), hash('sha256', $sharedSecret)) === false
 		) {
 			return null;
@@ -527,6 +528,19 @@ class FederatedShareService {
 			'updatedAt' => $row->getUpdatedAt()?->format(DATE_ATOM),
 		];
 	}//end answerPull()
+
+	/**
+	 * Whether a share is active and belongs to its secret's owner: one that
+	 * an ownership transfer left with the previous owner is not served.
+	 *
+	 * @param FederatedShare $row The share
+	 * @param Secret $source The secret it is of
+	 *
+	 * @return bool
+	 */
+	private function isLive(FederatedShare $row, Secret $source): bool {
+		return $row->getStatus() === FederatedShare::STATUS_ACTIVE && $row->getOwnerId() === $source->getOwnerId();
+	}//end isLive()
 
 	/**
 	 * The user's own secret, or not found.

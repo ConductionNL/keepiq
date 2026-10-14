@@ -84,6 +84,9 @@ class FederatedShareOwnerChangesTest extends TestCase {
 
 	private FederatedNotificationDelivery $delivery;
 
+	/** The secret the share is of. */
+	private Secret $source;
+
 	protected function setUp(): void {
 		$row = new FederatedShare();
 		$row->setId('fs-1');
@@ -143,6 +146,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$source->setOwnerId('alice');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);
+		$this->source = $source;
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationNotification')->willReturnCallback(static fn () => new FakeCloudFederationNotification());
@@ -385,6 +389,20 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->assertNull($this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]));
 		$this->assertSame(['federatedShareId' => 'fs-1', 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'reason' => 'untrusted_root'], $this->audit[0]->getMetadata());
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller('mallory')->suspend('fs-2', 'x')->getStatus());
+	}
+
+	/**
+	 * A share whose owner is not its secret's owner was left behind by an
+	 * ownership transfer: nobody can save, revoke or suspend it, so its
+	 * value is not served.
+	 */
+	public function testAShareLeftBehindByAnOwnerChangeIsNotServed(): void {
+		$pulled = $this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]);
+		$this->assertSame('OLD-CIPHER-KEY-FOR-BOB', $pulled['key'] ?? null);
+
+		$this->source->setOwnerId('dave');
+
+		$this->assertNull($this->service->answerPull('cloud.partner.example', 'fs-1', ['sharedSecret' => self::SHARED_SECRET]));
 	}
 
 	public function testASuspendNeverOverwritesARevoke(): void {

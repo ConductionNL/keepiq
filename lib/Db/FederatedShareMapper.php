@@ -105,6 +105,27 @@ class FederatedShareMapper extends QBMapper {
 	}//end findByPartner()
 
 	/**
+	 * Hand every share of one source secret to the secret's new owner. The
+	 * share's version stays as it is: its ciphertext did not change.
+	 *
+	 * @param string $sourceSecretId The secret that changed owner
+	 * @param string $ownerId        The new owner
+	 *
+	 * @return int The rows handed over
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 */
+	public function reassignOwner(string $sourceSecretId, string $ownerId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('owner_id', $qb->createNamedParameter($ownerId))
+			->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)))
+			->andWhere($qb->expr()->neq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end reassignOwner()
+
+	/**
 	 * Shares with a notification due for another delivery attempt. A share
 	 * that is no longer active is announced nothing but its end: a suspended,
 	 * declined or failed one is left out unless `$ending` is pending on it.

@@ -7,6 +7,7 @@
 - [x] 1.3 Write partner shares only while active, queue `SHARE_UPDATED` in the row and deliver it after the commit. Verify: `ShareSaveServiceTest` notify cases, the partner-share cases in `ShareSaveVersionLockTest` and the queued-update cases in `FederatedShareOwnerChangesTest`.
 - [x] 1.4 Accept `restoredFrom` and record the restore in the same transaction. Verify: the restore cases in `ShareSaveServiceTest`.
 - [x] 1.5 Keep `/sync`, `PUT /api/v1/federated-shares/{id}` and `PUT /api/v1/secrets/{id}` working. Verify: `ShareServiceTest`, `FederatedShareOwnerChangesTest`, `SecretServiceTest`.
+- [x] 1.6 Hand a secret's partner shares to its new owner in the same transaction as the secret, repair the ones a transfer left behind, and serve none whose owner isn't the secret's owner. Verify: `SecretOwnerTransferServiceTest`, `PartnerShareOwnerTransferTest`, the transfer cases in `AccountDeletionServiceTest` and `TeamFolderServiceTest`, and `FederatedShareOwnerChangesTest`.
 
 ## 2. Web app
 
