@@ -103,9 +103,13 @@ class FederatedDeclineReceiver {
 	 */
 	private function decline(FederatedShare $row, bool $again): void {
 		// A revocation on its way, also one whose retries gave up, finishes
-		// as a delivered unshare does: the row goes.
+		// as a delivered unshare does: the row goes. Unlike that delivery it
+		// is the partner's doing, so the trail says why the row went.
 		if ($row->getPendingNotification() === FederatedNotificationDelivery::SHARE_UNSHARED) {
-			$this->shareMapper->deleteIfPending(share: $row, pending: FederatedNotificationDelivery::SHARE_UNSHARED);
+			if ($this->shareMapper->deleteIfPending(share: $row, pending: FederatedNotificationDelivery::SHARE_UNSHARED) > 0) {
+				$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, row: $row, actorId: null);
+			}
+
 			return;
 		}
 

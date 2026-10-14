@@ -532,6 +532,21 @@ class FederatedCopyDeclineTest extends TestCase {
 	}
 
 	/**
+	 * The trail says why a revoked share went: the recipient's decline, with
+	 * identifiers only and no local actor.
+	 */
+	private function assertTheDeclineEndedTheRevocation(): void {
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+		$this->assertNull($this->audit[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example'],
+			$this->audit[0]->getMetadata()
+		);
+		$this->assertIdentifiersOnly();
+	}
+
+	/**
 	 * A decline for a share whose revocation is still on its way shows the
 	 * copy is gone, which is what the unshare was for: the revocation
 	 * finishes as a delivered unshare does, and the row goes.
@@ -545,7 +560,7 @@ class FederatedCopyDeclineTest extends TestCase {
 
 		$this->assertSame([], $result);
 		$this->assertNull($this->outbound);
-		$this->assertSame([], $this->audit);
+		$this->assertTheDeclineEndedTheRevocation();
 	}
 
 	/**
@@ -565,7 +580,7 @@ class FederatedCopyDeclineTest extends TestCase {
 
 		$this->assertSame([], $result);
 		$this->assertNull($this->outbound);
-		$this->assertSame([], $this->audit);
+		$this->assertTheDeclineEndedTheRevocation();
 	}
 
 	/**
@@ -613,7 +628,7 @@ class FederatedCopyDeclineTest extends TestCase {
 
 		$this->assertSame([], $result);
 		$this->assertNull($this->outbound);
-		$this->assertSame([], $this->audit);
+		$this->assertTheDeclineEndedTheRevocation();
 	}
 
 	/**
