@@ -735,6 +735,51 @@ describe('saveShared on the copy-editor path', () => {
 			})
 			expect(error.response.data.error).toBe('stale_source')
 		})
+
+		it('forgets the write-back once an edit was refused, so a restore from before it is not moved past it', async () => {
+			const restores = []
+			const { store, log } = await openWithWriteBack((body, n) => {
+				if (n > 1) {
+					throw httpError(409, { error: 'stale_source' })
+				}
+			})
+			await vi.waitFor(() =>
+				expect(store.currentSecret.updatedAt).toBe(SAVED_AT),
+			)
+			const refused = await store
+				.updateSecret(
+					'copy-me',
+					{ key: 'new' },
+					{ baseUpdatedAt: BASE, sourceBaseUpdatedAt: EDIT_SOURCE },
+				)
+				.catch((e) => e)
+			expect(refused.response.status).toBe(409)
+
+			// A restore of the own copy from the version before the write-back.
+			const { useShareStore } =
+				await import('../../src/store/modules/share.js')
+			useShareStore().fetchWriteContext = vi
+				.fn()
+				.mockResolvedValue({ ...context, effectiveGrade: 'read' })
+			const serveGet = axios.get.getMockImplementation()
+			axios.get.mockImplementation(async (url) =>
+				url.endsWith('/versions/v1')
+					? { data: { id: 'v1', name: 'Router', key: null, login: null } }
+					: serveGet(url),
+			)
+			axios.post.mockImplementation(async (url, body) => {
+				restores.push(body)
+				throw httpError(409, { error: 'stale', current: { id: 'copy-me' } })
+			})
+			store.currentSecret.updatedAt = BASE
+
+			await expect(
+				useSecretVersionStore().restore('v1', 'copy-me'),
+			).rejects.toBeTruthy()
+
+			expect(log.saves).toHaveLength(2)
+			expect(restores).toEqual([{ baseUpdatedAt: BASE }])
+		})
 	})
 
 	it('sends a cleared login as null to every copy', async () => {

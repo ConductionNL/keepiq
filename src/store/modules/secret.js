@@ -793,25 +793,32 @@ export const useSecretStore = defineStore('secret', {
 			}
 
 			let saved
-			if (valueChanged) {
-				const result = await saveShared({
-					id,
-					plainDiff,
-					patch: payload,
-					baseUpdatedAt: this.baseOf(id, given),
-					sourceBaseUpdatedAt: settled.sourceBase,
-					withoutUnreachable: options.withoutUnreachable === true,
-					onWait: options.onWait ?? null,
-				})
-				options.onShareSaved?.(result)
-				await notifyOwnerOnly(result)
-				saved = result.secret
-			} else {
-				const response = await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-					given ? { ...payload, baseUpdatedAt: given } : payload,
-				)
-				saved = response.data
+			try {
+				if (valueChanged) {
+					const result = await saveShared({
+						id,
+						plainDiff,
+						patch: payload,
+						baseUpdatedAt: this.baseOf(id, given),
+						sourceBaseUpdatedAt: settled.sourceBase,
+						withoutUnreachable: options.withoutUnreachable === true,
+						onWait: options.onWait ?? null,
+					})
+					options.onShareSaved?.(result)
+					await notifyOwnerOnly(result)
+					saved = result.secret
+				} else {
+					const response = await axios.put(
+						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
+						given ? { ...payload, baseUpdatedAt: given } : payload,
+					)
+					saved = response.data
+				}
+			} catch (e) {
+				if (!options.writeBack) {
+					this.forgetWriteBackOnRefusal(id, e)
+				}
+				throw e
 			}
 
 			// Keep the open copy's version current, so its next edit is not
@@ -837,6 +844,24 @@ export const useSecretStore = defineStore('secret', {
 		dropSettledWriteBack(id) {
 			if (writeBacks.get(id)?.settled) {
 				writeBacks.delete(id)
+			}
+		},
+
+		/**
+		 * Forget the settled merge write-back of `id` when the server refused a
+		 * save of it as changed meanwhile (409): that edit is over and is
+		 * redone from a fresh open, so the write-back must not move a later
+		 * edit or restore made from the old version past it. Any other
+		 * failure keeps it, for a retry of the same edit.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {Error|object} error The save's error.
+		 * @return {void}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		forgetWriteBackOnRefusal(id, error) {
+			if (error?.response?.status === 409) {
+				this.dropSettledWriteBack(id)
 			}
 		},
 

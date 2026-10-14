@@ -151,6 +151,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				await secretStore.fetchSecret(secretId)
 				await this.fetchVersions(secretId)
 			} catch (e) {
+				useSecretStore().forgetWriteBackOnRefusal(secretId, e)
 				this.error =
 					shareSaveErrorText(e)
 					|| e?.response?.data?.message
