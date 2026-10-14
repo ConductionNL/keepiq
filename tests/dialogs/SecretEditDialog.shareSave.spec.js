@@ -18,7 +18,8 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import { useShareStore } from '../../src/store/modules/share.js'
-import { httpError } from '../fixtures/shareSaveServer.js'
+import { httpError, SAVED_AT, shareSaveServer } from '../fixtures/shareSaveServer.js'
+import { RSA4096_PUBLIC_KEY_SPKI_PEM } from '../vitest/fixtures/rsa-fixtures.js'
 
 const BASE = '2026-10-01T10:00:00+00:00'
 
@@ -147,6 +148,45 @@ describe('SecretEditDialog — share save', () => {
 		finish({ id: 's1' })
 		await saving
 		await wrapper.vm.$nextTick()
+		expect(waiting().exists()).toBe(false)
+		expect(wrapper.emitted('saved')).toBeTruthy()
+	})
+
+	it('says so while the save is held behind a merge write-back that waits on the partner lookup limit', async () => {
+		const wrapper = await mountEdited()
+		useSessionStore().certificate = RSA4096_PUBLIC_KEY_SPKI_PEM
+		const log = shareSaveServer({ id: 's1' })
+		const store = useSecretStore()
+		const realUpdate = store.updateSecret
+		let releaseWriteBack
+		vi.spyOn(store, 'updateSecret').mockImplementation((id, data, options) => {
+			if (!options?.writeBack) {
+				return realUpdate.call(store, id, data, options)
+			}
+			// The write-back met a 429 on a partner lookup and waits.
+			options.onWait(60000)
+			return new Promise((resolve) => (releaseWriteBack = resolve))
+		})
+		store.currentSecret = {
+			id: 's1',
+			updatedAt: BASE,
+			additionalFields: {},
+			mergedPending: 1,
+		}
+		const writeBack = store.persistMergedPending('s1')
+		const waiting = () => wrapper.find('[data-testid="secret-edit-waiting"]')
+
+		const saving = wrapper.vm.submit()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		await wrapper.vm.$nextTick()
+		expect(log.saves).toHaveLength(0)
+		expect(waiting().text()).toContain('waiting for the lookup limit')
+
+		releaseWriteBack({ id: 's1', updatedAt: SAVED_AT })
+		await writeBack
+		await saving
+		await wrapper.vm.$nextTick()
+		expect(log.saves.map((s) => s.baseUpdatedAt)).toEqual([SAVED_AT])
 		expect(waiting().exists()).toBe(false)
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})

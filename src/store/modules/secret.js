@@ -48,11 +48,13 @@ const WHOLE_VAULT = {
 }
 
 /**
- * Merge write-backs in flight, by secret id: `{ base, done }`, where `done`
- * resolves to the saved `updatedAt` and, through a copy, the source's
- * `sourceUpdatedAt`, or null when the write-back failed.
+ * Merge write-backs in flight, by secret id: `{ base, done, waiting, waiters }`,
+ * where `done` resolves to the saved `updatedAt` and, through a copy, the
+ * source's `sourceUpdatedAt`, or null when the write-back failed. `waiting`
+ * is the last wait on the partner lookup limit, and `waiters` are the saves
+ * held behind it that want to hear of one.
  *
- * @type {Map<string, {base: string, done: Promise<{updatedAt: string, sourceUpdatedAt: string|null}|null>}>}
+ * @type {Map<string, {base: string, done: Promise<{updatedAt: string, sourceUpdatedAt: string|null}|null>, waiting: number|null, waiters: Set<(ms: number) => void>}>}
  */
 const writeBacks = new Map()
 
@@ -488,6 +490,7 @@ export const useSecretStore = defineStore('secret', {
 			}
 			const base = current.updatedAt
 			let sourceSavedAt = null
+			const inFlight = { base, done: null, waiting: null, waiters: new Set() }
 			const done = this.updateSecret(
 				id,
 				{
@@ -497,6 +500,13 @@ export const useSecretStore = defineStore('secret', {
 				{
 					baseUpdatedAt: base,
 					writeBack: true,
+					// Nobody sees this save; an edit held behind it shows its wait.
+					onWait: (ms) => {
+						inFlight.waiting = ms
+						for (const waiter of inFlight.waiters) {
+							waiter(ms)
+						}
+					},
 					onShareSaved: (result) => {
 						sourceSavedAt = result?.sourceUpdatedAt ?? null
 					},
@@ -513,7 +523,7 @@ export const useSecretStore = defineStore('secret', {
 				})
 				// Stays pending; merged again on the next open.
 				.catch(() => null)
-			const inFlight = { base, done }
+			inFlight.done = done
 			writeBacks.set(id, inFlight)
 			await done
 			if (writeBacks.get(id) === inFlight) {
@@ -674,7 +684,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
 		 * @param {boolean} [options.withoutUnreachable] Pause partner shares that cannot be reached.
 		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
-		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit.
+		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit, its own or that of a merge write-back it is held behind.
 		 * @param {(result: object) => void} [options.onShareSaved] Called with the share save's answer.
 		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
@@ -691,6 +701,7 @@ export const useSecretStore = defineStore('secret', {
 						id,
 						options.baseUpdatedAt,
 						options.sourceBaseUpdatedAt ?? null,
+						options.onWait ?? null,
 					)
 			const given = settled.base
 			const session = useSessionStore()
@@ -824,16 +835,28 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} id The secret ID.
 		 * @param {string|undefined} given The base the edit was made from.
 		 * @param {string|null} givenSource The source version the edit was made from, if recorded.
+		 * @param {((ms: number) => void)|null} [onWait] Told when the write-back waits on the partner lookup limit, also of a wait already begun.
 		 * @return {Promise<{base: string|undefined, sourceBase: string|null}>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
-		async settledBases(id, given, givenSource) {
+		async settledBases(id, given, givenSource, onWait = null) {
 			const unchanged = { base: given, sourceBase: givenSource }
 			const inFlight = writeBacks.get(id)
 			if (!inFlight) {
 				return unchanged
 			}
-			const saved = await inFlight.done
+			let saved
+			if (onWait) {
+				if (inFlight.waiting !== null) {
+					onWait(inFlight.waiting)
+				}
+				inFlight.waiters.add(onWait)
+			}
+			try {
+				saved = await inFlight.done
+			} finally {
+				inFlight.waiters.delete(onWait)
+			}
 			if (
 				!saved
 				|| given === undefined
