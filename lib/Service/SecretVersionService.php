@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
@@ -244,7 +245,7 @@ class SecretVersionService {
 		try {
 			return $this->secretMapper->findById($id);
 		} catch (DoesNotExistException) {
-			throw new \InvalidArgumentException('Secret not found');
+			throw new InvalidArgumentException('Secret not found');
 		}
 	}//end reload()
 
