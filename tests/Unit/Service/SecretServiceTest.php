@@ -992,15 +992,13 @@ class SecretServiceTest extends TestCase {
 		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
 		$this->mapper->method('findById')->willReturn($stored);
 		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
-		$base = (new \DateTime('2026-10-02T10:00:00+00:00'))->getTimestamp();
-		// Only the update with a base takes the version lock.
-		$this->mapper->expects($this->once())->method('advanceVersion')
-			->with(
-				's-1',
-				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $base),
-				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() > $base)
-			)
-			->willReturn(1);
+		$locks = [];
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnCallback(
+			static function (string $id, \DateTime $base, \DateTime $savedAt) use (&$locks): int {
+				$locks[] = [$base->getTimestamp(), $savedAt->getTimestamp()];
+				return 1;
+			}
+		);
 
 		$this->service->update(
 			id: 's-1',
@@ -1011,18 +1009,38 @@ class SecretServiceTest extends TestCase {
 
 		$this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
 		$this->assertSame('No base', $stored->getName());
+
+		// Each update is locked against the version it read.
+		$this->assertSame((new \DateTime('2026-10-02T10:00:00+00:00'))->getTimestamp(), $locks[0][0]);
+		$this->assertSame($locks[0][1], $locks[1][0]);
 	}//end testUpdateWithAMatchingOrAbsentBaseUpdates()
 
 	/**
-	 * A save that commits after the base check but before the update's write
-	 * moves the row: the compare-and-set finds it gone, and the update is
-	 * refused and rolled back instead of overwriting the save.
+	 * The update with a base and the one without it.
+	 *
+	 * @return array<string,array{0:array<string,string>}>
+	 */
+	public static function baseOrNone(): array {
+		return [
+			'with a base'    => [['baseUpdatedAt' => '2026-10-02T10:00:00+00:00']],
+			'without a base' => [[]],
+		];
+	}//end baseOrNone()
+
+	/**
+	 * A save that commits after the update's read but before its write moves
+	 * the row: the compare-and-set finds it gone, and the update is refused
+	 * and rolled back instead of overwriting the save, whether or not the
+	 * client named a base.
+	 *
+	 * @param array<string,string> $base The client's base, if any
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function testUpdateOverARowThatMovesAfterTheCheckIsRefused(): void {
+	#[\PHPUnit\Framework\Attributes\DataProvider('baseOrNone')]
+	public function testUpdateOverARowThatMovesAfterItsReadIsRefused(array $base): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
 		$stored = $this->makeSecret();
 		$stored->setName('Router');
@@ -1052,14 +1070,14 @@ class SecretServiceTest extends TestCase {
 		);
 
 		try {
-			$service->update(id: 's-1', data: ['name' => 'Offline name', 'baseUpdatedAt' => '2026-10-02T10:00:00+00:00'], userId: 'alice');
-			$this->fail('A row that moved after the check must be refused');
+			$service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'] + $base, userId: 'alice');
+			$this->fail('A row that moved after the read must be refused');
 		} catch (\OCA\Keepiq\Exception\StaleWriteException $e) {
 			$this->assertSame('s-1', $e->getCurrent()->getId());
 		}
 
 		$this->assertSame(['begin', 'rollback'], $transaction);
-	}//end testUpdateOverARowThatMovesAfterTheCheckIsRefused()
+	}//end testUpdateOverARowThatMovesAfterItsReadIsRefused()
 
 	/**
 	 * An update without a base still moves the row past its stored version,
@@ -1077,6 +1095,9 @@ class SecretServiceTest extends TestCase {
 		$stored->setUpdatedAt(new \DateTime('@'.$version));
 		$this->mapper->method('findById')->willReturn($stored);
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with('s-1', $this->anything(), $this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version + 1))
+			->willReturn(1);
 
 		$secret = $this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
 

@@ -909,7 +909,7 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
-	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on before the write
+	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.
@@ -927,10 +927,11 @@ class SecretService {
 	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null): Secret {
 		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
 
-		// Once the check passes, a named base is the stored version. A
+		// The write is locked against the version just read, whether or not
+		// the client named one; the check below compares a named one. A
 		// share-save locked its own version already.
 		$base = null;
-		if ($savedAt === null && ($data['baseUpdatedAt'] ?? '') !== '') {
+		if ($savedAt === null) {
 			$base = $secret->getUpdatedAt();
 		}
 
@@ -1037,15 +1038,15 @@ class SecretService {
 	/**
 	 * Snapshot the head and write the updated row. Without a version from a
 	 * share-save the row gets now, but always after its stored version, since
-	 * the column and the stale check count whole seconds. With a base the row
-	 * is moved off it by a compare-and-set in the same transaction, as a
-	 * share-save does, so a save that commits after the check refuses this
+	 * the column and the stale check count whole seconds. The row is moved off
+	 * the version it was read at by a compare-and-set in the same transaction,
+	 * as a share-save does, so a save that commits after the read refuses this
 	 * update instead of being overwritten by it.
 	 *
 	 * @param Secret $secret The row with the update applied
 	 * @param Secret $preUpdate The row as loaded
 	 * @param string $userId The requesting Nextcloud user ID
-	 * @param DateTime|null $base The version the update was made from; null skips the lock
+	 * @param DateTime|null $base The version the update was read at; null skips the lock, which a share-save holds already
 	 * @param DateTime|null $savedAt The version a share-save locked in
 	 *
 	 * @return void

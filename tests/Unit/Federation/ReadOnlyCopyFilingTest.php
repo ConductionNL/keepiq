@@ -71,6 +71,7 @@ class ReadOnlyCopyFilingTest extends TestCase {
 	private function put(array $params) {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($this->copy);
+		$secrets->method('advanceVersion')->willReturn(1);
 		$secrets->method('update')->willReturnCallback(
 			function (Secret $secret): Secret {
 				$this->writes++;
