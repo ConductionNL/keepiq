@@ -44,7 +44,6 @@ import {
 } from '../../services/shareSave.js'
 import { isRefusal, REFUSAL_STATUS } from '../../utils/refusal.js'
 import { onVaultLock, useSessionStore } from './session.js'
-import { useShareStore } from './share.js'
 
 /** The fields whose change fans out to recipients. */
 const SENSITIVE = ['key', 'login', 'additionalFields']
@@ -74,6 +73,23 @@ function replayKind(e) {
 		return 'failed'
 	}
 	return classifyReplayError(e)
+}
+
+/**
+ * The source version keeping a change after a 409 replays on: the one a
+ * share save of a copy names with its `stale` or `stale_source` answer. Null
+ * for an own secret, a copy saved without a write grade (its plain update
+ * names no source version) and any other 409; the replay then keeps the
+ * source version the edit was made from.
+ *
+ * @param {object} [answer] The 409's body.
+ * @return {string|null}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+ */
+function conflictSource(answer) {
+	return answer?.error === 'stale' || answer?.error === 'stale_source'
+		? (answer.sourceUpdatedAt ?? null)
+		: null
 }
 
 /**
@@ -554,10 +570,7 @@ export const useOfflineStore = defineStore('offline', {
 						{
 							...entry,
 							conflictUpdatedAt: answer?.current?.updatedAt ?? null,
-							conflictSourceUpdatedAt: await this.conflictSource(
-								entry,
-								answer,
-							),
+							conflictSourceUpdatedAt: conflictSource(answer),
 						},
 						'conflict',
 					)
@@ -571,37 +584,6 @@ export const useOfflineStore = defineStore('offline', {
 			}
 			await this.drop(entry)
 			return 'done'
-		},
-
-		/**
-		 * The source version keeping a change after a 409 replays on: the one
-		 * a `stale_source` named or, after a `stale` share save of a copy, the
-		 * source's version read right after it. Null for an own secret, any
-		 * other 409, or when it cannot be read; the replay then keeps the
-		 * source version the edit was made from.
-		 *
-		 * @param {object} entry The opened entry.
-		 * @param {object} [answer] The 409's body.
-		 * @return {Promise<string|null>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
-		 */
-		async conflictSource(entry, answer) {
-			if (answer?.error === 'stale_source') {
-				return answer.sourceUpdatedAt ?? null
-			}
-			if (answer?.error !== 'stale') {
-				return null
-			}
-			try {
-				const context = await useShareStore().fetchWriteContext(
-					entry.secretId,
-				)
-				return context.sourceSecretId === entry.secretId
-					? null
-					: (context.sourceUpdatedAt ?? null)
-			} catch {
-				return null
-			}
 		},
 
 		/**

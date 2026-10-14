@@ -108,6 +108,12 @@ function goOnline() {
 	offline.online = true
 }
 
+/** How many write-contexts were read since the fake server was wired. */
+function writeContextReads() {
+	return axios.get.mock.calls.filter(([url]) => url.endsWith('/write-context'))
+		.length
+}
+
 beforeEach(() => {
 	forgetVerifiedPartners()
 	stored.clear()
@@ -213,6 +219,12 @@ describe('replay', () => {
 		expect(offline.conflicts[offline.conflictEntries[0].entryId]).toEqual(
 			current,
 		)
+		// An own secret's 409 names no source version, and none is read.
+		expect(writeContextReads()).toBe(1)
+		expect([...stored.values()][0]).toMatchObject({
+			conflictUpdatedAt: current.updatedAt,
+			conflictSourceUpdatedAt: null,
+		})
 	})
 
 	it('a 409 keeps the entry for the user, and "keep mine" replays on the server version', async () => {
@@ -348,7 +360,7 @@ describe('replay', () => {
 			['before a reload', false],
 			['after a reload', true],
 		])(
-			'"keep mine" on a stale copy replays on the copy version that 409 returned and the source version of that moment, %s',
+			'"keep mine" on a stale copy replays on the copy and source versions that 409 named, %s',
 			async (when, reload) => {
 				await goOffline()
 				await secrets.updateSecret(
@@ -375,6 +387,7 @@ describe('replay', () => {
 							throw httpError(409, {
 								error: 'stale',
 								current: { id: 's1', updatedAt: server.copy },
+								sourceUpdatedAt: server.source,
 							})
 						}
 						if (body.sourceBaseUpdatedAt !== server.source) {
@@ -387,6 +400,8 @@ describe('replay', () => {
 				})
 				await offline.replayQueue()
 				expect(offline.conflictEntries).toHaveLength(1)
+				// Only the share save's own read: the 409 named the source.
+				expect(writeContextReads()).toBe(1)
 				expect([...stored.values()][0]).toMatchObject({
 					baseUpdatedAt: BASE,
 					sourceBaseUpdatedAt: EDIT_SOURCE,
@@ -417,7 +432,7 @@ describe('replay', () => {
 			},
 		)
 
-		it('"keep mine" on a stale copy is refused again when the source moves after that 409, not saved over it', async () => {
+		it('"keep mine" on a stale copy keeps the source version that 409 named, so a source that moved right after it is refused again, not saved over', async () => {
 			await goOffline()
 			await secrets.updateSecret(
 				's1',
@@ -425,10 +440,8 @@ describe('replay', () => {
 				{ sourceBaseUpdatedAt: EDIT_SOURCE },
 			)
 			goOnline()
-			const server = {
-				copy: context.sourceUpdatedAt,
-				source: context.sourceUpdatedAt,
-			}
+			const named = context.sourceUpdatedAt
+			const server = { copy: named, source: named }
 			const log = shareSaveServer({
 				id: 's1',
 				context: {
@@ -439,10 +452,14 @@ describe('replay', () => {
 				},
 				onSave: (body) => {
 					if (body.baseUpdatedAt !== server.copy) {
-						throw httpError(409, {
+						const refusal = httpError(409, {
 							error: 'stale',
 							current: { id: 's1', updatedAt: server.copy },
+							sourceUpdatedAt: server.source,
 						})
+						// The owner saves again as soon as this 409 is answered.
+						server.source = '2026-10-02T11:00:00+00:00'
+						throw refusal
 					}
 					if (body.sourceBaseUpdatedAt !== server.source) {
 						throw httpError(409, {
@@ -453,14 +470,44 @@ describe('replay', () => {
 				},
 			})
 			await offline.replayQueue()
-			const seen = server.source
-			server.source = '2026-10-02T11:00:00+00:00'
+			expect([...stored.values()][0].conflictSourceUpdatedAt).toBe(named)
 
 			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
 
-			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(seen)
+			expect(log.saves.at(-1).sourceBaseUpdatedAt).toBe(named)
 			expect(offline.conflictEntries).toHaveLength(1)
 			expect(stored.size).toBe(1)
+		})
+
+		it('"keep mine" on a stale copy saved without a write grade replays its plain update on the row version that 409 returned', async () => {
+			await goOffline()
+			await secrets.updateSecret(
+				's1',
+				{ key: 'new' },
+				{ sourceBaseUpdatedAt: EDIT_SOURCE },
+			)
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				context: { ...context, effectiveGrade: 'read' },
+			})
+			const current = { id: 's1', updatedAt: '2026-10-02T09:00:00+00:00' }
+			// The plain update names no source version: it sends none either.
+			axios.put.mockRejectedValueOnce(
+				httpError(409, { message: 'This secret changed', current }),
+			)
+			await offline.replayQueue()
+			expect(writeContextReads()).toBe(1)
+			expect([...stored.values()][0]).toMatchObject({
+				conflictUpdatedAt: current.updatedAt,
+				conflictSourceUpdatedAt: null,
+			})
+
+			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+
+			expect(log.plainPuts.at(-1)[1].baseUpdatedAt).toBe(current.updatedAt)
+			expect(log.saves).toHaveLength(0)
+			expect(stored.size).toBe(0)
 		})
 
 		it('an edit in the dialog of a copy opened from the cached snapshot replays on the source version the manifest carried', async () => {

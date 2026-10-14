@@ -19,9 +19,9 @@
  * own moment.
  * `conflictUpdatedAt` and `conflictSourceUpdatedAt` are the versions keeping
  * the change after a replay's 409 replays on, also after a reload: the row
- * version a `stale` 409 returned, and the source version a `stale_source` 409
- * named or, after a `stale` 409 of a copy, the one read right after it. Each
- * is null until a conflict and when the 409 gave none.
+ * version a `stale` 409 returned, and the source version a share save of a
+ * copy named with its `stale` or `stale_source` 409. Each is null until a
+ * conflict and when the 409 gave none.
  * `sealed` is the hybrid envelope (RSA-OAEP + AES-256-GCM, the one
  * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login` and
  * `additionalFields` ciphertext an online save sends, plus the index fields

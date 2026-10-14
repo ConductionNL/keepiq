@@ -74,7 +74,7 @@ A replay answered with 403 or 404, a share-save refused with 400, or a share-sav
 
 ### Requirement: Replay saves value changes through the share-save
 
-A queued update that changes a value, login or additional fields MUST be replayed as one share-save with the `baseUpdatedAt` stored in the entry (and, on a copy, the source version stored with it, or the source version of replay time when none was stored), encrypted for the copies and partner shares the server names at replay time. A 409 `stale` or `stale_source` MUST become a conflict the user resolves. Keeping their change MUST replay it on the versions of that conflict, the same before and after a reload: after a `stale`, on the row version the 409 returned and, on a copy, the source version read right after the 409; after a `stale_source`, on the source version that 409 named. The entry MUST store them with the conflict as `conflictUpdatedAt` and `conflictSourceUpdatedAt`, apart from the `baseUpdatedAt` and `sourceBaseUpdatedAt` the edit was made from, and a version the conflict gave none of MUST stay the one the edit was made from. An entry left from before this change whose owner row saved but whose recipient sync did not MUST be saved again through share-save when the row still holds the entry's ciphertext, without its `mergedPending` count, and MUST be dropped when the row changed since.
+A queued update that changes a value, login or additional fields MUST be replayed as one share-save with the `baseUpdatedAt` stored in the entry (and, on a copy, the source version stored with it, or the source version of replay time when none was stored), encrypted for the copies and partner shares the server names at replay time. A 409 `stale` or `stale_source` MUST become a conflict the user resolves. Keeping their change MUST replay it on the versions of that conflict, the same before and after a reload: the row version a `stale` 409 returned and, on a copy, the source version the 409 named as `sourceUpdatedAt`, which a share-save of a copy carries with both `stale` and `stale_source`, so no read follows the 409. The entry MUST store them with the conflict as `conflictUpdatedAt` and `conflictSourceUpdatedAt`, apart from the `baseUpdatedAt` and `sourceBaseUpdatedAt` the edit was made from, and a version the conflict gave none of MUST stay the one the edit was made from. An entry left from before this change whose owner row saved but whose recipient sync did not MUST be saved again through share-save when the row still holds the entry's ciphertext, without its `mergedPending` count, and MUST be dropped when the row changed since.
 
 #### Scenario: A shared secret edited offline reaches every copy
 
@@ -93,7 +93,7 @@ A queued update that changes a value, login or additional fields MUST be replaye
 
 - **GIVEN** a queued edit of a copy whose replay was refused with 409 `stale`, because the owner saved the secret meanwhile
 - **WHEN** the user keeps their change, before or after a reload
-- **THEN** the replay MUST send the copy version that 409 returned and the source version read right after it, and save when neither has moved again
+- **THEN** the replay MUST send the copy version and the source version that 409 named, and save when neither has moved again
 
 #### Scenario: A pending sync from before the change is finished
 
