@@ -73,7 +73,7 @@ let lockEpoch = 0
  * Forget every kept partner certificate; runs on every vault lock.
  *
  * @return {void}
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+ * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function forgetVerifiedPartners() {
 	verifiedPartners.clear()
@@ -258,7 +258,7 @@ function idsOf(list, key) {
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+ * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
  */
 export async function saveShared({
@@ -465,7 +465,9 @@ export async function saveShared({
 			})
 		}
 		// Only the shares the user was shown and agreed to are suspended; one
-		// that fails only now stops the save again, naming all of them.
+		// that fails only now stops the save again, naming each share this
+		// round could not reach (a round after `incomplete` looks up only the
+		// shares the server newly named).
 		const agreed = new Set(withoutUnreachable)
 		if (unreachable.some((share) => !agreed.has(share.shareId))) {
 			throw new ShareSaveError('partner_unreachable', unreachable)
@@ -635,7 +637,7 @@ export async function notifyOwnerOnly(result) {
  * @param {Error|object} error The thrown error.
  * @return {string|null}
  * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-pauses-it
+ * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function shareSaveErrorText(error) {
 	const data = error?.response?.data
