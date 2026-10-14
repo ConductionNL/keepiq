@@ -107,7 +107,7 @@ A partner share's ciphertext MUST change in the same transaction as the owner's 
 - **THEN** Bob's share MUST keep its old ciphertext
 - **AND** Carol MUST be told that partners receive the change with Alice's next save
 
-### Requirement: An unreachable partner stops the save unless the user pauses it
+### Requirement: An unreachable partner stops the save unless the user saves without them
 
 When the partner certificate lookup for an active partner share answers that the partner can't be reached, the web app MUST save nothing and MUST tell the owner which partners it couldn't reach, offering to save without them. Saving without them MUST suspend those partner shares in the same share-save; a suspended share stays suspended until the owner revokes it or shares again, and the web app MUST say so before the owner confirms. A decline or accept from the recipient's server MUST NOT change a suspended share. A local server error or a lost connection MUST abort the save with an ordinary error and MUST NOT offer to suspend anything. When the lookup is rate-limited, the web app MUST wait as long as the server asks, keep what it already encrypted and continue, and MUST abort with its own error after five minutes of waiting in total. Certificates verified during a failed save MAY be reused for up to five minutes by the save that follows it, and MUST be forgotten when the vault locks.
 
