@@ -31,6 +31,7 @@ use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -49,6 +50,9 @@ class SecretVersionServiceTest extends TestCase {
 
 	private LoggerInterface&MockObject $logger;
 
+	/** @var array<int,string> The transaction calls, in order */
+	private array $transaction = [];
+
 	/**
 	 * Build the service with fresh mocks.
 	 *
@@ -60,6 +64,12 @@ class SecretVersionServiceTest extends TestCase {
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$this->suiteMapper = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
 		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$db = $this->createMock(originalClassName: IDBConnection::class);
+		foreach (['beginTransaction' => 'begin', 'commit' => 'commit', 'rollBack' => 'rollback'] as $method => $entry) {
+			$db->method($method)->willReturnCallback(function () use ($entry): void {
+				$this->transaction[] = $entry;
+			});
+		}
 
 		$this->service = new SecretVersionService(
 			mapper: $this->mapper,
@@ -70,6 +80,7 @@ class SecretVersionServiceTest extends TestCase {
 				suiteMapper: $this->suiteMapper,
 			),
 			logger: $this->logger,
+			db: $db,
 			eventDispatcher: null,
 		);
 	}//end setUp()
@@ -196,9 +207,14 @@ class SecretVersionServiceTest extends TestCase {
 			}
 		);
 
-		$this->logger->expects($this->once())->method('info');
+		$this->logger->expects($this->once())->method('info')->willReturnCallback(function (): void {
+			$this->transaction[] = 'log';
+		});
 
 		$result = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		// The log line is written only after the restore committed.
+		$this->assertSame(['begin', 'commit', 'log'], $this->transaction);
 
 		// The head's PRE-restore ciphertext was snapshotted first.
 		$this->assertCount(1, $snapshots);
@@ -260,26 +276,193 @@ class SecretVersionServiceTest extends TestCase {
 	public function testARestoreOnTheCurrentHeadGoesAhead(): void {
 		$this->restorableHead();
 		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with('sec-1', $this->callback(
+				static fn (DateTime $base): bool => $base->getTimestamp() === (new DateTime('2026-10-01T10:00:05+00:00'))->getTimestamp()
+			))
+			->willReturn(1);
 		$this->secretMapper->expects($this->once())->method('update');
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T12:00:05+02:00');
 
 		$this->assertSame('OLD_CIPHERTEXT', $restored->getKey());
+		$this->assertGreaterThan((new DateTime('2026-10-01T10:00:05+00:00'))->getTimestamp(), $restored->getUpdatedAt()->getTimestamp());
+		$this->assertSame(['begin', 'commit'], $this->transaction);
 	}//end testARestoreOnTheCurrentHeadGoesAhead()
 
 	/**
-	 * A restore through a share-save is logged like one through restore().
+	 * A save that commits after the base check but before the restore's
+	 * write moves the head: the compare-and-set finds it gone, and the
+	 * restore is refused and rolled back instead of overwriting the save.
 	 *
 	 * @return void
 	 */
-	public function testARecordedRestoreIsLogged(): void {
+	public function testARestoreOverAHeadThatMovesAfterTheCheckIsRefusedUntouched(): void {
+		$head = $this->restorableHead();
+		$this->secretMapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->logger->expects($this->never())->method('info');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T10:00:05+00:00');
+			$this->fail('A head that moved after the check must be refused');
+		} catch (StaleWriteException $stale) {
+			$this->assertSame('sec-1', $stale->getCurrent()->getId());
+			$this->assertSame('HEAD_CIPHERTEXT', $head->getKey());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreOverAHeadThatMovesAfterTheCheckIsRefusedUntouched()
+
+	/**
+	 * A head deleted after the base check is refused like a missing version
+	 * (400 on the route), not as an unhandled error.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOverAHeadDeletedAfterTheCheckIsRefusedAsNotFound(): void {
+		$version = new SecretVersion();
+		$version->setId('v-1');
+		$version->setSecretId('sec-1');
+		$version->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($version);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$this->suiteMapper->method('findById')->willReturn($suite);
+
+		$head = $this->ownedSecret();
+		$head->setUpdatedAt(new DateTime('2026-10-01T10:00:05+00:00'));
+		$deleted = false;
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function () use (&$deleted, $head): Secret {
+				if ($deleted === true) {
+					throw new DoesNotExistException('gone');
+				}
+
+				return $head;
+			}
+		);
+		$this->secretMapper->method('advanceVersion')->willReturnCallback(
+			static function () use (&$deleted): int {
+				$deleted = true;
+				return 0;
+			}
+		);
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T10:00:05+00:00');
+			$this->fail('A deleted head must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Secret not found', $e->getMessage());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreOverAHeadDeletedAfterTheCheckIsRefusedAsNotFound()
+
+	/**
+	 * A head deleted between the version check and the restore's own read
+	 * is refused like a missing version, not as an unhandled error.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAHeadDeletedBeforeItsReadIsRefusedAsNotFound(): void {
+		$version = new SecretVersion();
+		$version->setId('v-1');
+		$version->setSecretId('sec-1');
+		$version->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($version);
+
+		$deleted = false;
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		// The suite gate is getVersion()'s last read; the secret goes right after it.
+		$this->suiteMapper->method('findById')->willReturnCallback(
+			static function () use (&$deleted, $suite): EncryptionSuite {
+				$deleted = true;
+				return $suite;
+			}
+		);
+		$head = $this->ownedSecret();
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function () use (&$deleted, $head): Secret {
+				if ($deleted === true) {
+					throw new DoesNotExistException('gone');
+				}
+
+				return $head;
+			}
+		);
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice');
+			$this->fail('A deleted head must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Secret not found', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->transaction);
+	}//end testARestoreOfAHeadDeletedBeforeItsReadIsRefusedAsNotFound()
+
+	/**
+	 * A restore without a base still moves the head past its stored version,
+	 * even within the same second, so an edit made on the pre-restore
+	 * version cannot pass the stale check afterwards.
+	 *
+	 * @return void
+	 */
+	public function testARestoreWithoutABaseMovesTheHeadPastItsStoredVersion(): void {
+		$head = $this->restorableHead();
+		$stored = (new DateTime('+1 hour'))->getTimestamp();
+		$head->setUpdatedAt(new DateTime('@'.$stored));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame($stored + 1, $restored->getUpdatedAt()->getTimestamp());
+	}//end testARestoreWithoutABaseMovesTheHeadPastItsStoredVersion()
+
+	/**
+	 * A restore that fails after the audit is rolled back and not logged.
+	 *
+	 * @return void
+	 */
+	public function testARestoreThatRollsBackIsNotLogged(): void {
+		$this->restorableHead();
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('update')->willThrowException(new \RuntimeException('deadlock'));
+		$this->logger->expects($this->never())->method('info');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice');
+			$this->fail('The failed write must reach the caller');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('deadlock', $e->getMessage());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreThatRollsBackIsNotLogged()
+
+	/**
+	 * Recording a restore audits it without logging; a share-save logs it
+	 * through logRestored() after its commit, like restore() does.
+	 *
+	 * @return void
+	 */
+	public function testARecordedRestoreIsLoggedOnlyByLogRestored(): void {
 		$version = new SecretVersion();
 		$version->setVersionNumber(4);
 		$this->logger->expects($this->once())->method('info')
 			->with($this->stringContains('sec-1 restored to version 4 by alice'));
 
 		$this->service->recordRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
-	}//end testARecordedRestoreIsLogged()
+		$this->service->logRestored(secret: $this->ownedSecret(), version: $version, userId: 'alice');
+	}//end testARecordedRestoreIsLoggedOnlyByLogRestored()
 
 	/**
 	 * deleteForSecret cascades to the mapper (idempotent by contract).

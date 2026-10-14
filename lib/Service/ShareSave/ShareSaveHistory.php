@@ -78,7 +78,8 @@ class ShareSaveHistory {
 	}//end versionToRestore()
 
 	/**
-	 * Audit the restore; called inside the save's transaction.
+	 * Audit the restore; called inside the save's transaction. The log line
+	 * is written by logRestore() once the save has committed.
 	 *
 	 * @param Secret $secret The saved row
 	 * @param SecretVersion $version The version it was restored to
@@ -91,6 +92,22 @@ class ShareSaveHistory {
 	public function recordRestore(Secret $secret, SecretVersion $version, string $userId): void {
 		$this->versions->recordRestored(secret: $secret, version: $version, userId: $userId);
 	}//end recordRestore()
+
+	/**
+	 * Log the restore; called after the save's transaction committed, so a
+	 * save that rolls back leaves no log line saying it was restored.
+	 *
+	 * @param Secret $secret The saved row
+	 * @param SecretVersion $version The version it was restored to
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function logRestore(Secret $secret, SecretVersion $version, string $userId): void {
+		$this->versions->logRestored(secret: $secret, version: $version, userId: $userId);
+	}//end logRestore()
 
 	/**
 	 * Attribute a copy-editor's save to the writer when they write on a

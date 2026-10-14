@@ -628,6 +628,50 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(403, $refusal->getStatus());
 	}
 
+	public function testAGradeLoweredBeforeTheLockRefusesTheSaveAndRollsBack(): void {
+		$this->auth->method('isOwnerOrDelegate')->willReturn(false);
+		$this->auth->method('resolveGrade')->willReturnOnConsecutiveCalls('write', 'read');
+		$this->auth->method('assertOwnerOrDelegate')->willThrowException(new InvalidArgumentException('no'));
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
+	public function testASourceMovedOutOfItsTeamFolderBeforeTheLockRefusesTheSave(): void {
+		$this->rows['src']->setFolderId('team');
+		$this->auth->method('isOwnerOrDelegate')->willReturn(false);
+		$this->auth->method('resolveGrade')->willReturnCallback(
+			function (Secret $secret): string {
+				$grade = ($secret->getFolderId() === 'team') ? 'write' : 'read';
+				// The source leaves the team folder right after resolve() read it.
+				$this->rows['src']->setFolderId('private');
+				return $grade;
+			}
+		);
+		$this->auth->method('assertOwnerOrDelegate')->willThrowException(new InvalidArgumentException('no'));
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
+	public function testADelegationRevokedBeforeTheLockRefusesTheSaveEvenWithAWriteGrade(): void {
+		// A delegate at resolve(), a write-grade member under the lock: the
+		// save would otherwise be audited as a delegate's write.
+		$this->auth->method('isOwnerOrDelegate')->willReturnOnConsecutiveCalls(true, false);
+		$this->auth->method('resolveGrade')->willReturn('write');
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
 	public function testAStaleSourceIsRefusedWithItsVersion(): void {
 		$this->bobWritesOnAGrade();
 		$this->rows['src']->setUpdatedAt(new DateTime('2026-10-01T10:00:09+00:00'));
@@ -868,14 +912,45 @@ class ShareSaveServiceTest extends TestCase {
 				$this->log[] = 'restored v'.$version->getVersionNumber();
 			}
 		);
+		$this->versionHistory->expects($this->once())->method('logRestored')->willReturnCallback(
+			function (Secret $secret, SecretVersion $version, string $userId): void {
+				$this->log[] = 'logged v'.$version->getVersionNumber();
+			}
+		);
 
 		$this->service()->save(id: 'src', request: $this->restoreRequest(), userId: 'alice');
 
 		$this->assertSame(
-			['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'partner fs-1', 'row src', 'restored v3', 'commit'],
+			['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'partner fs-1', 'row src', 'restored v3', 'commit', 'logged v3'],
 			$this->log
 		);
 		$this->assertSame('Old router', $this->rowSaves[0]['data']['name']);
+	}
+
+	public function testARestoreThatFailsAfterItsAuditIsNotLogged(): void {
+		$this->bobWritesOnAGrade();
+		$this->versionHistory->method('getVersion')->willReturn($this->version(secretId: 'c-bob'));
+		$this->versionHistory->expects($this->once())->method('recordRestored')->willReturnCallback(
+			function (): void {
+				$this->log[] = 'restored';
+			}
+		);
+		$this->audit->method('recordTeamWriteSync')->willThrowException(new RuntimeException('audit insert failed'));
+		$this->versionHistory->expects($this->never())->method('logRestored');
+
+		$refusal = $this->refusal(
+			fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest([
+				'restoredFrom' => 'v-1',
+				'patch' => ['key' => 'K-OLD', 'login' => null, 'additionalFields' => null],
+				'copies' => [
+					['secretId' => 'src', 'key' => 'K-ALICE', 'login' => null, 'additionalFields' => null],
+					['secretId' => 'c-carol', 'key' => 'K-CAROL', 'login' => null, 'additionalFields' => null],
+				],
+			]), userId: 'bob')
+		);
+
+		$this->assertSame('audit insert failed', $refusal->getMessage());
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'row c-bob', 'restored', 'rollback'], $this->log);
 	}
 
 	public function testARestoreOfAVersionOfAnotherRowOrARefusedOneIsRefused(): void {

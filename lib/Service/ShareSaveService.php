@@ -170,6 +170,10 @@ class ShareSaveService {
 			)
 		);
 
+		if ($version !== null) {
+			$this->history->logRestore(secret: $written['secret'], version: $version, userId: $userId);
+		}
+
 		$notified = $this->notify(rows: $written['federatedRows']);
 
 		return [
@@ -255,8 +259,9 @@ class ShareSaveService {
 	}//end open()
 
 	/**
-	 * The transaction body: lock both versions, check the lists again under
-	 * the lock, write every copy, every partner share and the row itself.
+	 * The transaction body: lock both versions, check the write grade and the
+	 * lists again under the lock, write every copy, every partner share and
+	 * the row itself.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveRequest $request The request
@@ -276,6 +281,7 @@ class ShareSaveService {
 		?SecretVersion $version,
 	): array {
 		$this->lockVersions(path: $path, request: $request, savedAt: $savedAt);
+		$this->scope->assertStillWriter(path: $path, userId: $userId);
 		$required = $this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
 
 		$copies = $this->sync->writeCopyBlobs(
