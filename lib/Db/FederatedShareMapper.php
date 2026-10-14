@@ -105,21 +105,30 @@ class FederatedShareMapper extends QBMapper {
 	}//end findByPartner()
 
 	/**
-	 * Shares with a notification due for another delivery attempt.
+	 * Shares with a notification due for another delivery attempt. A share
+	 * that is no longer active is announced nothing but its end: a suspended,
+	 * declined or failed one is left out unless `$ending` is pending on it.
 	 *
-	 * @param DateTime $now   The current time
-	 * @param int      $limit The most rows to return
+	 * @param DateTime $now    The current time
+	 * @param int      $limit  The most rows to return
+	 * @param string   $ending The notification that ends a share (SHARE_UNSHARED)
 	 *
 	 * @return FederatedShare[]
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
-	public function findDueNotifications(DateTime $now, int $limit): array {
+	public function findDueNotifications(DateTime $now, int $limit, string $ending): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
 			->where($qb->expr()->isNotNull('pending_notification'))
 			->andWhere($qb->expr()->lte('next_notify_at', $qb->createNamedParameter($now, IQueryBuilder::PARAM_DATETIME_MUTABLE)))
+			->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('status', $qb->createNamedParameter(FederatedShare::STATUS_ACTIVE)),
+					$qb->expr()->eq('pending_notification', $qb->createNamedParameter($ending))
+				)
+			)
 			->orderBy('next_notify_at', 'ASC')
 			->setMaxResults($limit);
 
@@ -142,6 +151,32 @@ class FederatedShareMapper extends QBMapper {
 
 		return $this->run(qb: $qb, share: $share);
 	}//end updateIfActive()
+
+	/**
+	 * Write a share's changed fields only while it still has the status it
+	 * was read with and `$ending` is not pending on it, so a revoke that
+	 * landed meanwhile, and its pending unshare, are never overwritten.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 * @param string $status The status it was read with
+	 * @param string $ending The notification that ends a share (SHARE_UNSHARED)
+	 *
+	 * @return int The rows matched: 0 when the share changed meanwhile
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+	 */
+	public function updateIfStatus(FederatedShare $share, string $status, string $ending): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)))
+			->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->isNull('pending_notification'),
+					$qb->expr()->neq('pending_notification', $qb->createNamedParameter($ending))
+				)
+			);
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfStatus()
 
 	/**
 	 * Write the outcome of a delivery attempt only while the row still holds

@@ -23,10 +23,12 @@ namespace OCA\Keepiq\Tests\Unit\Db;
 use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
+use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStage;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
+use OCA\Keepiq\Service\FederatedDeclineReceiver;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
@@ -35,7 +37,10 @@ use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
+use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ISecureRandom;
+use OCP\Security\Signature\IIncomingSignedRequest;
+use OCP\Share\Exceptions\ShareNotFound;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
@@ -100,7 +105,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		$this->assertSame(0, $mapper->advanceVersion(id: 'no-such-row', base: $savedAt, savedAt: new DateTime('+1 day')));
 	}
 
-	private function insertPartnerShare(string $status, ?string $pending, int $attempts = 0, string $sourceSecretId = 'src'): FederatedShare {
+	private function insertPartnerShare(string $status, ?string $pending, int $attempts = 0, string $sourceSecretId = 'src', ?DateTime $nextNotifyAt = null): FederatedShare {
 		$share = new FederatedShare();
 		$share->setId(Uuid::uuid4()->toString());
 		$share->setSourceSecretId($sourceSecretId);
@@ -112,6 +117,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		$share->setStatus($status);
 		$share->setPendingNotification($pending);
 		$share->setNotifyAttempts($attempts);
+		$share->setNextNotifyAt($nextNotifyAt);
 		$share->setCreatedAt(new DateTime(self::BASE));
 		$share->setUpdatedAt(new DateTime(self::BASE));
 
@@ -277,7 +283,7 @@ class ShareSaveVersionLockTest extends TestCase {
 		);
 		$due = fn (DateTime $now): bool => in_array(
 			$saved->getId(),
-			array_map(static fn (FederatedShare $due): string => $due->getId(), $mapper->findDueNotifications(now: $now, limit: 10000)),
+			array_map(static fn (FederatedShare $due): string => $due->getId(), $mapper->findDueNotifications(now: $now, limit: 10000, ending: FederatedNotificationDelivery::SHARE_UNSHARED)),
 			true
 		);
 		$this->assertFalse($due($savedAt));
@@ -372,6 +378,230 @@ class ShareSaveVersionLockTest extends TestCase {
 		$active->setKey('NEW');
 		$this->assertSame(1, $mapper->updateIfActive(share: $active));
 		$this->assertSame('NEW', $mapper->findById($share->getId())->getKey());
+	}
+
+	/**
+	 * A suspend drops the update a share-save queued, in the database too.
+	 */
+	public function testASuspendClearsTheQueuedUpdate(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$row = $this->committedShareSave(mapper: $mapper, attempts: 2);
+		$delivery = new FederatedNotificationDelivery($mapper, $this->createMock(FederatedShareMessenger::class), $this->createMock(FederatedShareAuditTrail::class));
+
+		$this->shareService(mapper: $mapper, delivery: $delivery)->suspend(shareId: $row->getId(), userId: 'share-save-test', reason: 'partner_removed');
+
+		$stored = $mapper->findById($row->getId());
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $stored->getStatus());
+		$this->assertNull($stored->getPendingNotification());
+		$this->assertSame(0, $stored->getNotifyAttempts());
+		$this->assertNull($stored->getNextNotifyAt());
+	}
+
+	/**
+	 * The retry job announces nothing to a share that is no longer active,
+	 * but still delivers the unshare of a revoked one.
+	 */
+	public function testTheRetryJobSkipsAnInactiveShareButDeliversARevokesUnshare(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$due = new DateTime('2026-10-01T10:05:00+00:00');
+		$active = $this->insertPartnerShare(status: FederatedShare::STATUS_ACTIVE, pending: 'SHARE_UPDATED', nextNotifyAt: $due);
+		$suspended = $this->insertPartnerShare(status: FederatedShare::STATUS_SUSPENDED, pending: 'SHARE_UPDATED', nextNotifyAt: $due);
+		$declined = $this->insertPartnerShare(status: FederatedShare::STATUS_DECLINED, pending: 'SHARE_UPDATED', nextNotifyAt: $due);
+		$revoked = $this->insertPartnerShare(status: FederatedShare::STATUS_REVOKED, pending: 'SHARE_UNSHARED', nextNotifyAt: $due);
+
+		$found = array_map(
+			static fn (FederatedShare $row): string => $row->getId(),
+			$mapper->findDueNotifications(now: $due, limit: 10000, ending: FederatedNotificationDelivery::SHARE_UNSHARED)
+		);
+		$this->assertContains($active->getId(), $found);
+		$this->assertContains($revoked->getId(), $found);
+		$this->assertNotContains($suspended->getId(), $found);
+		$this->assertNotContains($declined->getId(), $found);
+
+		$messenger = $this->createMock(FederatedShareMessenger::class);
+		$sent = [];
+		$messenger->method('notify')->willReturnCallback(
+			function (FederatedShare $notified, string $type) use (&$sent): bool {
+				$sent[$notified->getId()] = $type;
+				return true;
+			}
+		);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery->retryDue(now: $due, limit: 10000);
+
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $sent[$revoked->getId()] ?? null);
+		$this->assertArrayNotHasKey($suspended->getId(), $sent);
+		$this->assertArrayNotHasKey($declined->getId(), $sent);
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $mapper->findById($suspended->getId())->getStatus());
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($revoked->getId());
+	}
+
+	/**
+	 * Alice's owner side receiving Bob's decline or accept, with her revoke
+	 * landing while the request's signature is checked and the revoke's own
+	 * unshare failing.
+	 *
+	 * @return array{0:FederatedDeclineReceiver,1:FederatedShare}
+	 */
+	private function receiverRacedByARevoke(FederatedShareMapper $mapper, string $status): array {
+		return $this->receiverRacedBy(
+			mapper: $mapper,
+			status: $status,
+			meanwhile: static function (FederatedShareService $service, FederatedShare $row): void {
+				$service->revoke(shareId: $row->getId(), userId: 'share-save-test');
+			}
+		);
+	}
+
+	/**
+	 * Alice's owner side receiving Bob's decline or accept, with `$meanwhile`
+	 * running while the request's signature is checked. Notifications fail.
+	 *
+	 * @param \Closure(FederatedShareService,FederatedShare):void $meanwhile What Alice does meanwhile
+	 *
+	 * @return array{0:FederatedDeclineReceiver,1:FederatedShare}
+	 */
+	private function receiverRacedBy(FederatedShareMapper $mapper, string $status, \Closure $meanwhile): array {
+		$row = $mapper->findById($this->insertPartnerShare(status: $status, pending: null)->getId());
+		$row->setSharedSecretHash(hash('sha256', 'the-shared-secret'));
+		$mapper->update($row);
+
+		$messenger = $this->createMock(FederatedShareMessenger::class);
+		$messenger->method('notify')->willReturn(false);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$service = $this->shareService(mapper: $mapper, delivery: $delivery);
+
+		$signed = $this->createMock(IIncomingSignedRequest::class);
+		$signed->method('getOrigin')->willReturn('partner.example');
+		$ocm = $this->createMock(IOCMDiscoveryService::class);
+		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
+			function () use ($service, $row, $signed, $meanwhile): IIncomingSignedRequest {
+				$meanwhile($service, $row);
+				return $signed;
+			}
+		);
+		$partner = new FederationPartner();
+		$partner->setId('p-1');
+		$partners = $this->createMock(FederationPartnerService::class);
+		$partners->method('outboundPartnerForRemote')->willReturn($partner);
+
+		return [
+			new FederatedDeclineReceiver(
+				shareMapper: $mapper,
+				partners: $partners,
+				ocmDiscovery: $ocm,
+				audit: $this->createMock(FederatedShareAuditTrail::class),
+			),
+			$row,
+		];
+	}
+
+	private function assertStillRevoked(FederatedShareMapper $mapper, FederatedShare $row): void {
+		$stored = $mapper->findById($row->getId());
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $stored->getStatus());
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $stored->getPendingNotification());
+		$this->assertSame(1, $stored->getNotifyAttempts());
+		$this->assertNotNull($stored->getNextNotifyAt());
+	}
+
+	public function testAnAcceptReadBeforeARevokeLeavesTheShareRevoked(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedByARevoke(mapper: $mapper, status: FederatedShare::STATUS_DECLINED);
+
+		try {
+			$receiver->resume(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']);
+			$this->fail('the accept was applied');
+		} catch (ShareNotFound) {
+			// The answer for a share that ended.
+		}
+
+		$this->assertStillRevoked(mapper: $mapper, row: $row);
+	}
+
+	/**
+	 * The decline read the share before the revoke: it never makes the
+	 * share declined, and as it shows the copy is gone it finishes the
+	 * revocation, as a delivered unshare would.
+	 */
+	public function testADeclineReadBeforeARevokeFinishesTheRevocation(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedByARevoke(mapper: $mapper, status: FederatedShare::STATUS_ACTIVE);
+
+		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
+
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($row->getId());
+	}
+
+	/**
+	 * A revocation whose retries gave up is never retried; a decline, which
+	 * shows the copy is gone, finishes it.
+	 */
+	public function testADeclineFinishesARevocationThatGaveUp(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedBy(
+			mapper: $mapper,
+			status: FederatedShare::STATUS_ACTIVE,
+			meanwhile: static function (): void {
+			}
+		);
+		$gaveUp = $mapper->findById($row->getId());
+		$gaveUp->setStatus(FederatedShare::STATUS_FAILED);
+		$gaveUp->setPendingNotification(FederatedNotificationDelivery::SHARE_UNSHARED);
+		$gaveUp->setNotifyAttempts(FederatedNotificationDelivery::MAX_ATTEMPTS);
+		$mapper->update($gaveUp);
+
+		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
+
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($row->getId());
+	}
+
+	/**
+	 * Alice suspends the share while Bob's decline is checked: the decline
+	 * still counts, read again from the suspended row.
+	 */
+	public function testADeclineReadBeforeASuspendStillDeclinesTheShare(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		[$receiver, $row] = $this->receiverRacedBy(
+			mapper: $mapper,
+			status: FederatedShare::STATUS_ACTIVE,
+			meanwhile: static function (FederatedShareService $service, FederatedShare $row): void {
+				$service->suspend(shareId: $row->getId(), userId: 'share-save-test', reason: 'untrusted_root');
+			}
+		);
+
+		$this->assertSame([], $receiver->handle(providerId: $row->getId(), notification: ['sharedSecret' => 'the-shared-secret']));
+
+		$stored = $mapper->findById($row->getId());
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $stored->getStatus());
+		$this->assertNull($stored->getPendingNotification());
+	}
+
+	public function testARecipientsChangeIsWrittenOnlyWhileNoUnshareIsPending(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$gaveUp = $mapper->findById($this->insertPartnerShare(status: FederatedShare::STATUS_FAILED, pending: 'SHARE_UNSHARED', attempts: 6)->getId());
+		$gaveUp->setStatus(FederatedShare::STATUS_DECLINED);
+		$gaveUp->setPendingNotification(null);
+		$this->assertSame(0, $mapper->updateIfStatus(share: $gaveUp, status: FederatedShare::STATUS_FAILED, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
+		$this->assertSame('SHARE_UNSHARED', $mapper->findById($gaveUp->getId())->getPendingNotification());
+
+		$failedId = $this->insertPartnerShare(status: FederatedShare::STATUS_FAILED, pending: 'SHARE_UPDATED', attempts: 6)->getId();
+		$readActive = $mapper->findById($failedId);
+		$readActive->setStatus(FederatedShare::STATUS_DECLINED);
+		$this->assertSame(0, $mapper->updateIfStatus(share: $readActive, status: FederatedShare::STATUS_ACTIVE, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
+		$failed = $mapper->findById($failedId);
+		$failed->setStatus(FederatedShare::STATUS_DECLINED);
+		$failed->setPendingNotification(null);
+		$this->assertSame(1, $mapper->updateIfStatus(share: $failed, status: FederatedShare::STATUS_FAILED, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
+		$stored = $mapper->findById($failed->getId());
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $stored->getStatus());
+		$this->assertNull($stored->getPendingNotification());
+
+		$active = $mapper->findById($this->insertPartnerShare(status: FederatedShare::STATUS_ACTIVE, pending: null)->getId());
+		$active->setStatus(FederatedShare::STATUS_DECLINED);
+		$this->assertSame(1, $mapper->updateIfStatus(share: $active, status: FederatedShare::STATUS_ACTIVE, ending: FederatedNotificationDelivery::SHARE_UNSHARED));
 	}
 
 	public function testFindByIdsLeavesUnknownIdsOut(): void {

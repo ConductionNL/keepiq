@@ -397,6 +397,54 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->assertCount($audited, $this->audit);
 	}
 
+	/**
+	 * A share-save queued an update for a partner that is down, and the
+	 * owner then suspends the share (or saves without them): the queued
+	 * update goes with it, so the retry job neither contacts the partner
+	 * nor turns "suspended" into "failed".
+	 */
+	public function testASuspendDropsAQueuedUpdate(): void {
+		$this->queueAnUpdate();
+
+		$this->assertSame(Http::STATUS_OK, $this->controller()->suspend('fs-1', 'untrusted_root')->getStatus());
+
+		$this->assertNothingIsAnnouncedToTheSuspendedShare();
+	}
+
+	public function testRemovingThePartnerDropsAQueuedUpdate(): void {
+		$this->queueAnUpdate();
+
+		$this->assertSame(1, $this->service->suspendForPartner(partnerId: 'p-cloud.partner.example'));
+
+		$this->assertNothingIsAnnouncedToTheSuspendedShare();
+	}
+
+	/**
+	 * A share-save's write whose send after the commit never happened.
+	 */
+	private function queueAnUpdate(): void {
+		$this->service->writeCiphertext(
+			row: $this->rows['fs-1'],
+			certFingerprint: self::FINGERPRINT,
+			ciphertext: ['key' => self::NEW_KEY, 'login' => null, 'additionalFields' => null],
+			savedAt: new DateTime('2026-10-13T12:00:00Z'),
+		);
+		$this->assertSame(['status' => FederatedShare::STATUS_ACTIVE, 'pending' => 'SHARE_UPDATED'], $this->stored['fs-1']);
+	}
+
+	private function assertNothingIsAnnouncedToTheSuspendedShare(): void {
+		$this->assertSame(['status' => FederatedShare::STATUS_SUSPENDED, 'pending' => null], $this->stored['fs-1']);
+		$row = $this->rows['fs-1'];
+		$this->assertSame(0, $row->getNotifyAttempts());
+		$this->assertNull($row->getNextNotifyAt());
+
+		// Past the lease and every backoff the update would have had.
+		$this->assertSame(0, $this->delivery->retryDue(now: new DateTime('2026-10-13T12:02:00Z')));
+		$this->assertSame(0, $this->delivery->retryDue(now: new DateTime('2026-10-14T12:00:00Z')));
+		$this->assertSame([], $this->sent);
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->stored['fs-1']['status']);
+	}
+
 	public function testRemovingThePartnerSuspendsItsShares(): void {
 		$partners = $this->createMock(FederationPartnerService::class);
 		$partners->expects($this->once())->method('remove')->with('p-cloud.partner.example');

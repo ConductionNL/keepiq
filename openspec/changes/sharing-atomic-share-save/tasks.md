@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add `PUT /api/v1/secrets/{id}/share-save` with its request parser, owner and copy-editor paths, completeness check and compare-and-set transaction. Verify: `ShareSaveServiceTest`, `ShareSaveRequestTest`, `ShareSaveControllerTest`, `ShareSaveVersionLockTest`.
 - [x] 1.2 Add the staged save: `keepiq_share_save_stages` with migration, chunk limits, a 30-minute expiry job, removal on account deletion, and no backup. Verify: the staging cases in `ShareSaveServiceTest` and `ArchiveTest`.
-- [x] 1.3 Write partner shares only while active, queue `SHARE_UPDATED` in the row and deliver it after the commit. Verify: `ShareSaveServiceTest` notify cases and the `FederatedShareMapper` database test.
+- [x] 1.3 Write partner shares only while active, queue `SHARE_UPDATED` in the row and deliver it after the commit. Verify: `ShareSaveServiceTest` notify cases, the partner-share cases in `ShareSaveVersionLockTest` and the queued-update cases in `FederatedShareOwnerChangesTest`.
 - [x] 1.4 Accept `restoredFrom` and record the restore in the same transaction. Verify: the restore cases in `ShareSaveServiceTest`.
 - [x] 1.5 Keep `/sync`, `PUT /api/v1/federated-shares/{id}` and `PUT /api/v1/secrets/{id}` working. Verify: `ShareServiceTest`, `FederatedShareOwnerChangesTest`, `SecretServiceTest`.
 

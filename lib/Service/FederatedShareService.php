@@ -394,6 +394,10 @@ class FederatedShareService {
 			$reason = 'unverified';
 		}
 		$row->setStatus(FederatedShare::STATUS_SUSPENDED);
+		// Nothing is served any more, so nothing is announced: drop a queued update.
+		$row->setPendingNotification(null);
+		$row->setNotifyAttempts(0);
+		$row->setNextNotifyAt(null);
 		$row->stamp(now: new DateTime());
 		// A revoke that landed meanwhile keeps its status and pending unshare.
 		if ($this->shareMapper->updateIfActive(share: $row) === 0) {
