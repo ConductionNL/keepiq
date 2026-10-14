@@ -31,6 +31,7 @@ use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -49,6 +50,9 @@ class SecretVersionServiceTest extends TestCase {
 
 	private LoggerInterface&MockObject $logger;
 
+	/** @var array<int,string> The transaction calls, in order */
+	private array $transaction = [];
+
 	/**
 	 * Build the service with fresh mocks.
 	 *
@@ -60,6 +64,12 @@ class SecretVersionServiceTest extends TestCase {
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$this->suiteMapper = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
 		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$db = $this->createMock(originalClassName: IDBConnection::class);
+		foreach (['beginTransaction' => 'begin', 'commit' => 'commit', 'rollBack' => 'rollback'] as $method => $entry) {
+			$db->method($method)->willReturnCallback(function () use ($entry): void {
+				$this->transaction[] = $entry;
+			});
+		}
 
 		$this->service = new SecretVersionService(
 			mapper: $this->mapper,
@@ -70,6 +80,7 @@ class SecretVersionServiceTest extends TestCase {
 				suiteMapper: $this->suiteMapper,
 			),
 			logger: $this->logger,
+			db: $db,
 			eventDispatcher: null,
 		);
 	}//end setUp()
@@ -260,12 +271,44 @@ class SecretVersionServiceTest extends TestCase {
 	public function testARestoreOnTheCurrentHeadGoesAhead(): void {
 		$this->restorableHead();
 		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with('sec-1', $this->callback(
+				static fn (DateTime $base): bool => $base->getTimestamp() === (new DateTime('2026-10-01T10:00:05+00:00'))->getTimestamp()
+			))
+			->willReturn(1);
 		$this->secretMapper->expects($this->once())->method('update');
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T12:00:05+02:00');
 
 		$this->assertSame('OLD_CIPHERTEXT', $restored->getKey());
+		$this->assertGreaterThan((new DateTime('2026-10-01T10:00:05+00:00'))->getTimestamp(), $restored->getUpdatedAt()->getTimestamp());
+		$this->assertSame(['begin', 'commit'], $this->transaction);
 	}//end testARestoreOnTheCurrentHeadGoesAhead()
+
+	/**
+	 * A save that commits after the base check but before the restore's
+	 * write moves the head: the compare-and-set finds it gone, and the
+	 * restore is refused and rolled back instead of overwriting the save.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOverAHeadThatMovesAfterTheCheckIsRefusedUntouched(): void {
+		$head = $this->restorableHead();
+		$this->secretMapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->logger->expects($this->never())->method('info');
+
+		try {
+			$this->service->restore(versionId: 'v-1', userId: 'alice', baseUpdatedAt: '2026-10-01T10:00:05+00:00');
+			$this->fail('A head that moved after the check must be refused');
+		} catch (StaleWriteException $stale) {
+			$this->assertSame('sec-1', $stale->getCurrent()->getId());
+			$this->assertSame('HEAD_CIPHERTEXT', $head->getKey());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $this->transaction);
+	}//end testARestoreOverAHeadThatMovesAfterTheCheckIsRefusedUntouched()
 
 	/**
 	 * A restore through a share-save is logged like one through restore().
