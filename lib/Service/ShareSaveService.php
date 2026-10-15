@@ -407,7 +407,7 @@ class ShareSaveService {
 	 * The `stale` refusal of the caller's row. On the copy-editor path it
 	 * names a source version too, so the client can keep it with the
 	 * conflict without reading it again: the source's current version only
-	 * when the copy was written with it, otherwise the edit's source base.
+	 * when it equals the copy's version, otherwise the edit's source base.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param Secret $current The caller's row as it is now

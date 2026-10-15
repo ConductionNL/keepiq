@@ -54,8 +54,8 @@ class StaleWriteException extends RuntimeException {
 	}//end getCurrent()
 
 	/**
-	 * The source version a copy-editor's conflict stands on: the source as the
-	 * copy was written with it, or else the edit's own source base, so the
+	 * The source version a copy-editor's conflict stands on: the source's current
+	 * version when it equals the copy's, or else the edit's own source base, so the
 	 * client can keep it with the conflict; null on every other write.
 	 *
 	 * @return DateTime|null
