@@ -10,7 +10,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import { certificateFingerprint, chainsTo } from '../../certificates/x509.js'
+import { verifiedCertificate } from '../../certificates/x509.js'
 import {
 	buildEnrolmentEnvelope,
 	createRecoveryKey,
@@ -126,11 +126,15 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * instance CA, and its fingerprint must be the one the server shows.
 		 *
 		 * @param {object} key { certificate, fingerprint, caChain }.
-		 * @return {Promise<string>} The fingerprint to show the user.
+		 * @return {Promise<{fingerprint: string, spki: Uint8Array}>} The
+		 *   fingerprint to show the user and the key to enrol to.
 		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async verifyKey(key) {
-			if (!key || !(await chainsTo(key.certificate, key.caChain ?? []))) {
+			const verified = key
+				? await verifiedCertificate(key.certificate, key.caChain ?? [])
+				: null
+			if (verified === null || verified.fingerprint !== key.fingerprint) {
 				throw new Error(
 					t(
 						'keepiq',
@@ -138,16 +142,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 					),
 				)
 			}
-			const fingerprint = await certificateFingerprint(key.certificate)
-			if (fingerprint !== key.fingerprint) {
-				throw new Error(
-					t(
-						'keepiq',
-						'The recovery certificate is not issued by this Keepiq. Do not enrol and tell your administrator.',
-					),
-				)
-			}
-			return fingerprint
+			return verified
 		},
 
 		/**
@@ -160,16 +155,13 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 */
 		async enrol(masterPassword) {
 			const status = this.status ?? (await this.fetchStatus())
-			await this.verifyKey(status.key)
+			const { spki } = await this.verifyKey(status.key)
 			const session = useSessionStore()
 			const pem = await decryptPrivateKey(
 				session.encryptedPrivateKey,
 				masterPassword,
 			)
-			const envelope = await buildEnrolmentEnvelope(
-				pem,
-				status.key.certificate,
-			)
+			const envelope = await buildEnrolmentEnvelope(pem, spki)
 			const response = await axios.put(generateUrl(`${API}/enrolment`), {
 				recoveryKeyId: status.key.id,
 				envelope,

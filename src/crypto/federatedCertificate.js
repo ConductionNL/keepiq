@@ -16,9 +16,13 @@
  *   typed, and every certificate must be valid now.
  *
  * Only the structure needed for those checks is parsed; no ASN.1 library.
+ * Each certificate must be exactly one PEM block, and the caller encrypts to
+ * the public key returned here, never to the certificate text again.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
+
+import { decodePem } from './pem.js'
 
 const OID_COMMON_NAME = '2.5.4.3'
 const OID_BASIC_CONSTRAINTS = '2.5.29.19'
@@ -51,19 +55,15 @@ export class FederatedCertificateError extends Error {
 }
 
 /**
- * @param {string} pem A PEM certificate.
+ * @param {string} pem Exactly one PEM certificate, nothing else.
  * @return {Uint8Array} Its DER bytes.
  */
 function pemToDer(pem) {
-	const match =
-		/-----BEGIN CERTIFICATE-----([\s\S]+?)-----END CERTIFICATE-----/.exec(
-			typeof pem === 'string' ? pem : '',
-		)
-	if (!match) {
+	try {
+		return decodePem(pem, ['CERTIFICATE']).der
+	} catch {
 		throw new FederatedCertificateError('malformed')
 	}
-	const raw = atob(match[1].replace(/[^A-Za-z0-9+/=]/g, ''))
-	return Uint8Array.from(raw, (char) => char.charCodeAt(0))
 }
 
 /**
@@ -71,11 +71,12 @@ function pemToDer(pem) {
  *
  * @param {Uint8Array} bytes The buffer.
  * @param {number} offset Where the element starts.
+ * @param {number} [limit] Where its parent ends.
  * @return {{tag: number, offset: number, start: number, end: number}}
  *   `offset` is the header start, `start` to `end` the value.
  */
-function tlv(bytes, offset) {
-	if (offset + 2 > bytes.length) {
+function tlv(bytes, offset, limit = bytes.length) {
+	if (offset + 2 > limit) {
 		throw new FederatedCertificateError('malformed')
 	}
 	const tag = bytes[offset]
@@ -91,7 +92,7 @@ function tlv(bytes, offset) {
 			length = length * 256 + bytes[cursor++]
 		}
 	}
-	if (cursor + length > bytes.length) {
+	if (cursor + length > limit) {
 		throw new FederatedCertificateError('malformed')
 	}
 	return { tag, offset, start: cursor, end: cursor + length }
@@ -105,7 +106,7 @@ function tlv(bytes, offset) {
 function children(bytes, parent) {
 	const out = []
 	for (let cursor = parent.start; cursor < parent.end;) {
-		const child = tlv(bytes, cursor)
+		const child = tlv(bytes, cursor, parent.end)
 		out.push(child)
 		cursor = child.end
 	}
@@ -304,8 +305,8 @@ function caConstraints(bytes, block) {
 function parse(pem) {
 	const der = pemToDer(pem)
 	const certificate = tlv(der, 0)
-	const [tbs, algorithm, signature] = children(der, certificate)
-	if (!tbs || !algorithm || !signature || signature.tag !== 0x03) {
+	const [tbs, algorithm, signature, extra] = children(der, certificate)
+	if (!tbs || !algorithm || !signature || extra || signature.tag !== 0x03) {
 		throw new FederatedCertificateError('malformed')
 	}
 	const fields = exactChildren(der, tbs)
@@ -500,7 +501,8 @@ export function canonicalCloudId(cloudId) {
 /**
  * Verify a federated recipient's certificate against the pinned partner
  * root. Resolves with the certificate's fingerprint, for the owner to
- * compare with the recipient; rejects with a FederatedCertificateError.
+ * compare with the recipient, and its public key, the only key to encrypt
+ * for; rejects with a FederatedCertificateError.
  *
  * @param {object} input What the owner's server returned.
  * @param {string} input.certificate The recipient certificate (PEM).
@@ -508,7 +510,8 @@ export function canonicalCloudId(cloudId) {
  * @param {string} input.partnerRootFingerprint The pinned root, lowercase hex SHA-256.
  * @param {string} input.cloudId The cloud id the owner entered.
  * @param {number} [input.now] The time to check validity at (ms), default now.
- * @return {Promise<{fingerprint: string}>} The recipient certificate's SHA-256, colon separated.
+ * @return {Promise<{fingerprint: string, spki: Uint8Array}>} The recipient
+ *   certificate's SHA-256, colon separated, and its SubjectPublicKeyInfo (DER).
  * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 export async function verifyFederatedCertificate({
@@ -549,5 +552,8 @@ export async function verifyFederatedCertificate({
 		throw new FederatedCertificateError('not_valid_now')
 	}
 	const hex = await sha256Hex(leaf.der)
-	return { fingerprint: hex.match(/.{2}/g).join(':').toUpperCase() }
+	return {
+		fingerprint: hex.match(/.{2}/g).join(':').toUpperCase(),
+		spki: leaf.spki.slice(),
+	}
 }
