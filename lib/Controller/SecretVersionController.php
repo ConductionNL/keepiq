@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -124,26 +125,34 @@ class SecretVersionController extends OCSController {
 	}//end show()
 
 	/**
-	 * Restore a version onto the head. The client then drives the
-	 * existing sync-on-update fan-out for shared recipients.
+	 * Restore a version onto this one row. The web app restores through
+	 * share-save (`restoredFrom`) and uses this route only for a copy holder
+	 * without a write grade, whose restore changes their own copy alone.
 	 *
 	 * @param string $id The version UUID
+	 * @param string|null $baseUpdatedAt The head version the restore was chosen on
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	#[NoAdminRequired]
-	public function restore(string $id): JSONResponse {
+	public function restore(string $id, ?string $baseUpdatedAt = null): JSONResponse {
 		$userId = $this->sessionUserId();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$secret = $this->versionService->restore(versionId: $id, userId: $userId);
+			$secret = $this->versionService->restore(versionId: $id, userId: $userId, baseUpdatedAt: $baseUpdatedAt);
+		} catch (StaleWriteException $exception) {
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage(), 'current' => $exception->getCurrent()->jsonSerialize()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],

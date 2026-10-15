@@ -99,6 +99,7 @@ class SecretPendingFieldsTest extends TestCase {
 			$migration,
 			$this->createMock(LinkShareService::class),
 			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IDBConnection::class),
 			null,
 			null,
 			null,

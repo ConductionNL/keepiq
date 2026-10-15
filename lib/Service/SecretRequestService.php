@@ -32,6 +32,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
@@ -42,13 +43,15 @@ use Throwable;
 /**
  * Business logic for the SecretRequest lifecycle.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 14 against a threshold of 13,
- * and one of the fourteen cannot be removed: SecretService takes a nullable
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 18 against a threshold of 13,
+ * and one of the eighteen cannot be removed: SecretService takes a nullable
  * SecretRequestService and this class reaches SecretService through the
  * container, which is how the cycle between them is broken. Injecting
  * SecretService directly to drop ContainerInterface would trade one coupling
- * for a construction-time circular dependency. The remainder are two mappers,
- * two Db entities, two lookup exceptions and the value types (DateTime, Uuid) —
+ * for a construction-time circular dependency. The remainder are the mappers,
+ * the Db entities, the request lifecycle's collaborators, the lookup
+ * exceptions, the stale-write exception a fill retries on and the value types
+ * (DateTime, Uuid) —
  * none of them indirection worth adding a class to hide.
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
@@ -295,12 +298,22 @@ class SecretRequestService {
 	 * application's, or the user's after holding back a filled extra-field
 	 * blob that would overwrite the owner's own (keepiq#750).
 	 *
+	 * The user's update is refused when the owner's row moves between its read
+	 * and its write. The update is then made once more on the row as it is
+	 * now, which keeps the owner's change as a version, with the hold-back
+	 * decided again on that row: the owner may have saved extra fields
+	 * meanwhile. A second refusal leaves the request pending, but a blob held
+	 * back by then is already in the secret's pending list.
+	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
 	 *
 	 * @return void
 	 *
+	 * @throws InvalidArgumentException With code 409 when the row moved twice during the fill
+	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	private function writeFilledValues(Secret $secret, array $data): void {
 		$secretService = $this->container->get(SecretService::class);
@@ -320,11 +333,24 @@ class SecretRequestService {
 			return;
 		}
 
-		$secretService->update(
-			id: $secret->getId(),
-			data: $data,
-			userId: $secret->getOwnerId()
-		);
+		$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
+		try {
+			$write($data);
+		} catch (StaleWriteException $e) {
+			$data = $this->holdBackAdditionalFields(secret: $e->getCurrent(), data: $data);
+			if ($data === []) {
+				return;
+			}
+
+			try {
+				$write($data);
+			} catch (StaleWriteException) {
+				throw new InvalidArgumentException(
+					message: 'The secret changed while the request was filled; please submit again',
+					code: 409
+				);
+			}
+		}
 	}//end writeFilledValues()
 
 	/**

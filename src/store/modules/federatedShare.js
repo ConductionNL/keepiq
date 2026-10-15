@@ -5,10 +5,7 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import {
-	FederatedCertificateError,
-	verifyFederatedCertificate,
-} from '../../crypto/federatedCertificate.js'
+import { verifyFederatedCertificate } from '../../crypto/federatedCertificate.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 import { importSpkiPublicKey } from '../../crypto/rsa.js'
 import { useShareStore } from './share.js'
@@ -157,67 +154,6 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				generateUrl(`/apps/keepiq/api/v1/federated-shares/${id}`),
 			)
 			this.shares = this.shares.filter((share) => share.id !== id)
-		},
-
-		/**
-		 * After the owner changed a secret: encrypt the whole new value again for
-		 * every live federated recipient, each with a certificate fetched and
-		 * verified now, and send it. A recipient whose certificate no longer
-		 * verifies, or whom the partner no longer knows, is suspended instead.
-		 *
-		 * @param {string} secretId The owner's secret.
-		 * @return {Promise<{updated: number, suspended: number}>}
-		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
-		 */
-		async syncUpdate(secretId) {
-			const live = (await this.listFor(secretId)).filter(
-				(share) => share.status === 'active',
-			)
-			const result = { updated: 0, suspended: 0 }
-			if (live.length === 0) {
-				return result
-			}
-			const { useSecretStore } = await import('./secret.js')
-			const secret = await useSecretStore().fetchSecret(secretId)
-			for (const share of live) {
-				let recipient
-				try {
-					recipient = await this.lookup(share.recipientCloudId)
-				} catch (e) {
-					const reason =
-						e instanceof FederatedCertificateError
-							? e.reason
-							: e?.response?.data?.message
-					// `bad_chain` from the server is the same refusal the browser makes.
-					if (
-						e instanceof FederatedCertificateError
-						|| reason === 'bad_chain'
-						|| reason === 'unknown_recipient'
-						|| reason === 'not_a_partner'
-					) {
-						await axios.post(
-							generateUrl(
-								`/apps/keepiq/api/v1/federated-shares/${share.id}/suspend`,
-							),
-							{ reason },
-						)
-						result.suspended++
-					}
-					continue
-				}
-				const encrypted = await encryptForVerified(secret, recipient)
-				await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/federated-shares/${share.id}`),
-					{
-						certFingerprint: fingerprintHex(recipient.fingerprint),
-						key: encrypted.key ?? '',
-						login: encrypted.login ?? null,
-						additionalFields: encrypted.additionalFields ?? null,
-					},
-				)
-				result.updated++
-			}
-			return result
 		},
 
 		/**

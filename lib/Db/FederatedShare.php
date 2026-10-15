@@ -265,6 +265,22 @@ class FederatedShare extends Entity implements JsonSerializable {
 	}//end __construct()
 
 	/**
+	 * Give the share a new version: `$now`, but always after the stored one.
+	 * The column counts whole seconds and a delivery's outcome write is
+	 * guarded by this version, so two writes in one second must not share it.
+	 *
+	 * @param DateTime $now The moment of the write
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function stamp(DateTime $now): void {
+		$version = max($now->getTimestamp(), ($this->updatedAt?->getTimestamp() ?? 0) + 1);
+		$this->setUpdatedAt(new DateTime('@'.$version));
+	}//end stamp()
+
+	/**
 	 * Serialize for the owner's API: identifiers and state only, never the
 	 * ciphertext or the shared secret hash.
 	 *

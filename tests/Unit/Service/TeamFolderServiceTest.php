@@ -27,6 +27,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
@@ -41,6 +42,7 @@ use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\TeamFolderAuditor;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
@@ -81,6 +83,8 @@ class TeamFolderServiceTest extends TestCase {
 
 	private SecretMapper&MockObject $secretMapper;
 
+	private FederatedShareMapper&MockObject $federatedShareMapper;
+
 	private ShareTargetMapper&MockObject $shareTargetMapper;
 
 	private BulkGrantShareTargetMapper&MockObject $bulkGrantMapper;
@@ -115,6 +119,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->memberMapper = $this->createMock(originalClassName: TeamFolderMemberMapper::class);
 		$this->folderMapper = $this->createMock(originalClassName: FolderMapper::class);
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+		$this->federatedShareMapper = $this->createMock(originalClassName: FederatedShareMapper::class);
 		$this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
 		$this->bulkGrantMapper = $this->createMock(
 			originalClassName: BulkGrantShareTargetMapper::class
@@ -167,7 +172,11 @@ class TeamFolderServiceTest extends TestCase {
 					memberships: $memberships,
 					shareTargetMapper: $this->shareTargetMapper,
 					delegationMapper: $this->delegationMapper,
-					secretMapper: $this->secretMapper,
+					ownerTransfer: new SecretOwnerTransferService(
+						db: $this->createMock(originalClassName: IDBConnection::class),
+						secretMapper: $this->secretMapper,
+						federatedShares: $this->federatedShareMapper,
+					),
 				),
 				areas: $this->areaAuthorizer(groupManager: $this->groupManager),
 				logger: $this->createMock(originalClassName: LoggerInterface::class),
@@ -649,6 +658,13 @@ class TeamFolderServiceTest extends TestCase {
 				$reassigned[] = [$secretId, $newOwnerId];
 			}
 		);
+		$partnerSharesReassigned = [];
+		$this->federatedShareMapper->method('reassignOwner')->willReturnCallback(
+			static function (string $sourceSecretId, string $ownerId) use (&$partnerSharesReassigned): int {
+				$partnerSharesReassigned[] = [$sourceSecretId, $ownerId];
+				return 1;
+			}
+		);
 
 		// Dave is a direct member of two team folders (#747).
 		$memberA = new TeamFolderMember();
@@ -680,6 +696,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertTrue($insertedDelegations[0]->getIsPermanent());
 		$this->assertSame('bob', $insertedDelegations[0]->getDelegatedTo());
 		$this->assertSame([['sec-a', 'bob']], $reassigned);
+		$this->assertSame([['sec-a', 'bob']], $partnerSharesReassigned);
 	}//end testOffboardRevokesAndTransfers()
 
 	/**

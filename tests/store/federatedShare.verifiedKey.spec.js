@@ -16,8 +16,10 @@ import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { rsaDecrypt } from '../../src/crypto/rsa.js'
+import { forgetVerifiedPartners, saveShared } from '../../src/services/shareSave.js'
 import { useFederatedShareStore } from '../../src/store/modules/federatedShare.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
+import { shareSaveServer } from '../fixtures/shareSaveServer.js'
 import {
 	otherKeyText,
 	recordEncryptionKeys,
@@ -29,6 +31,17 @@ const F = JSON.parse(
 const BOB = 'bob@cloud.partner.example'
 const PASSWORD = 'correct horse battery staple'
 const SECRET = { key: PASSWORD, login: 'alice', additionalFields: null }
+const PARTNERS = [{ shareId: 'fs-1', recipientCloudId: BOB }]
+const BASE = '2026-10-01T10:00:00+00:00'
+
+/** A password change of `src` that a partner share must receive. */
+const SAVE = {
+	id: 'src',
+	plainDiff: { key: PASSWORD },
+	patch: { key: 'OWN' },
+	baseUpdatedAt: BASE,
+	loadFull: async () => ({ ...SECRET, key: 'old', updatedAt: BASE }),
+}
 
 const BOB_SPKI = new Uint8Array(
 	createPublicKey(F.bob).export({ type: 'spki', format: 'der' }),
@@ -98,6 +111,7 @@ describe('federated share encryption key', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
+		forgetVerifiedPartners()
 	})
 
 	it('shares nothing when the certificate text is more than one PEM block', async () => {
@@ -122,18 +136,24 @@ describe('federated share encryption key', () => {
 
 	it('suspends instead of re-encrypting when the certificate text is more than one PEM block', async () => {
 		const other = await otherKeyText()
-		const { sent, suspends } = server(answer(`${other.text}\n${F.bob}`), [
-			{ id: 'fs-1', recipientCloudId: BOB, status: 'active' },
-		])
+		const log = shareSaveServer({
+			id: 'src',
+			partners: PARTNERS,
+			lookup: { [BOB]: answer(`${other.text}\n${F.bob}`) },
+		})
 
-		const result = await useFederatedShareStore().syncUpdate('src')
+		const result = await saveShared(SAVE)
 
-		for (const body of sent) {
-			expect(await opensWith(body.key, other.privateKey)).toBe(false)
+		for (const body of log.saves) {
+			for (const entry of body.federated) {
+				expect(await opensWith(entry.key, other.privateKey)).toBe(false)
+			}
 		}
-		expect(sent).toHaveLength(0)
-		expect(result).toEqual({ updated: 0, suspended: 1 })
-		expect(suspends).toEqual([{ reason: 'malformed' }])
+		expect(log.saves.at(-1).federated).toEqual([])
+		expect(result.federated.suspended).toBe(1)
+		expect(log.saves.at(-1).suspend).toEqual([
+			{ shareId: 'fs-1', reason: 'malformed' },
+		])
 	})
 
 	it('encrypts to the key of the verified certificate, not to a certificate text', async () => {
@@ -158,14 +178,17 @@ describe('federated share encryption key', () => {
 	})
 
 	it('re-encrypts an update to the key of the certificate verified now', async () => {
-		server(answer(F.bob), [
-			{ id: 'fs-1', recipientCloudId: BOB, status: 'active' },
-		])
+		shareSaveServer({
+			id: 'src',
+			partners: PARTNERS,
+			lookup: { [BOB]: answer(F.bob) },
+		})
 		const keys = recordEncryptionKeys()
 
-		const result = await useFederatedShareStore().syncUpdate('src')
+		const result = await saveShared(SAVE)
 
-		expect(result).toEqual({ updated: 1, suspended: 0 })
+		expect(result.federated.written).toBe(1)
+		expect(result.federated.suspended).toBe(0)
 		expect(keys.length).toBeGreaterThan(0)
 		for (const key of keys) {
 			expect(key).toEqual(BOB_SPKI)

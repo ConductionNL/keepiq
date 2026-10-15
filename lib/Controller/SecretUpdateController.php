@@ -7,7 +7,8 @@
  * are passed through as ciphertext; the server never decrypts them (ADR-003).
  * An offline edit names the version it was made from (`baseUpdatedAt`); when
  * the secret changed since, nothing is written and the answer is 409 with
- * the current row (offline-edit-queue).
+ * the current row (offline-edit-queue). An update without a base tries once
+ * more when a save lands while it is processed.
  *
  * @category Controller
  * @package  OCA\Keepiq\Controller
@@ -27,6 +28,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
@@ -51,14 +53,6 @@ class SecretUpdateController extends OCSController {
 	 * @var int
 	 */
 	private const STATUS_LOCKED = 423;
-
-	/**
-	 * The fields a client may change; only those present in the request are
-	 * forwarded, so an absent field stays as it is.
-	 *
-	 * @var string[]
-	 */
-	private const FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'];
 
 	/**
 	 * Constructor.
@@ -101,7 +95,7 @@ class SecretUpdateController extends OCSController {
 		}
 
 		try {
-			$secret = $this->secretService->update($id, $this->requestedChanges(), $user->getUID());
+			$secret = $this->updateOnCurrent(id: $id, changes: $this->requestedChanges(), userId: $user->getUID());
 		} catch (StaleWriteException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
@@ -127,6 +121,35 @@ class SecretUpdateController extends OCSController {
 	}//end update()
 
 	/**
+	 * Run the update. One with a base is refused at once when the secret
+	 * moved on. One without a base is refused only by a save that lands
+	 * between the server's read and its write; it runs once more on the row
+	 * as it is now, which keeps that save as a version, and a second
+	 * refusal stands.
+	 *
+	 * @param string $id The secret ID
+	 * @param array<string,mixed> $changes The changes the request carries
+	 * @param string $userId The requesting Nextcloud user ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws StaleWriteException When the secret moved on from the base, or twice during the update
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	private function updateOnCurrent(string $id, array $changes, string $userId): Secret {
+		try {
+			return $this->secretService->update($id, $changes, $userId);
+		} catch (StaleWriteException $e) {
+			if (array_key_exists('baseUpdatedAt', $changes) === true) {
+				throw $e;
+			}
+
+			return $this->secretService->update($id, $changes, $userId);
+		}
+	}//end updateOnCurrent()
+
+	/**
 	 * The changes the request carries: each updatable field that is present
 	 * (an explicit null clears it), and the merge count and base version when
 	 * given.
@@ -137,7 +160,7 @@ class SecretUpdateController extends OCSController {
 	 */
 	private function requestedChanges(): array {
 		$data = [];
-		foreach (self::FIELDS as $field) {
+		foreach (SecretService::UPDATABLE_FIELDS as $field) {
 			$value = $this->request->getParam($field, '__unset__');
 			if ($value === null) {
 				$data[$field] = null;

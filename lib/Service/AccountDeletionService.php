@@ -122,6 +122,7 @@ class AccountDeletionService {
 		);
 		$this->shareCleanup->detachGrantedShares(ownedSecrets: $ownedSecrets, report: $report);
 		$this->shareCleanup->removeReceivedShares(userId: $userId, report: $report);
+		$this->shareCleanup->removeShareSaveStages(userId: $userId);
 
 		// Link shares + secret requests via the existing per-user cascade methods.
 		// deleteByUserId returns void, so count first for the report.
