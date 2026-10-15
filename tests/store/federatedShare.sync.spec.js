@@ -133,6 +133,18 @@ describe('federated sync on update', () => {
 		expect(suspends[0][1]).toEqual({ reason: 'unknown_recipient' })
 	})
 
+	it('suspends a share whose chain the server already refused', async () => {
+		const { puts, suspends } = server(
+			[{ id: 'fs-1', recipientCloudId: BOB, status: 'active' }],
+			{ reject: { response: { data: { message: 'bad_chain' } } } },
+		)
+
+		await useFederatedShareStore().syncUpdate('src')
+
+		expect(puts).toHaveLength(0)
+		expect(suspends[0][1]).toEqual({ reason: 'bad_chain' })
+	})
+
 	it('leaves a share alone while the partner cannot be reached', async () => {
 		const { puts, suspends } = server(
 			[{ id: 'fs-1', recipientCloudId: BOB, status: 'active' }],

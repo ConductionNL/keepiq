@@ -298,6 +298,12 @@ export default {
 					'The other organisation did not answer. Try again later.',
 				),
 
+				// The owner's server refused the partner's chain before the browser saw it.
+				bad_chain: t(
+					'keepiq',
+					'The certificate could not be verified. Nothing was shared.',
+				),
+
 				delivery_failed: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
