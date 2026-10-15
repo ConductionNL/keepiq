@@ -321,7 +321,23 @@ export const useShareStore = defineStore('share', {
 			if (publicCertificate == null || publicCertificate === '') {
 				throw new Error('Recipient has no active encryption suite')
 			}
-			const publicKey = await importPublicKey(publicCertificate)
+			return this.encryptWithKey(
+				snapshot,
+				await importPublicKey(publicCertificate),
+			)
+		},
+
+		/**
+		 * Encrypt a plaintext snapshot with an imported public key, such as the
+		 * key of a federated recipient's verified certificate.
+		 *
+		 * @param {object}    snapshot  Plaintext field map.
+		 * @param {CryptoKey} publicKey The recipient's RSA-OAEP public key.
+		 * @return {Promise<Record<string,string>>}
+		 *
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+		 */
+		async encryptWithKey(snapshot, publicKey) {
 			const out = {}
 			for (const [field, value] of Object.entries(snapshot)) {
 				if (value == null || value === '') {
@@ -400,88 +416,6 @@ export const useShareStore = defineStore('share', {
 				generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/write-context`),
 			)
 			return response.data
-		},
-
-		/**
-		 * Write-grade member fan-out (folder-permission-grades §4.2):
-		 * when the edited row is a recipient copy and the caller holds a
-		 * `write` grade, re-encrypt the plaintext for the SOURCE row
-		 * (owner certificate) and every recipient, then PUT the sync.
-		 * No-op for owners/read grades.
-		 *
-		 * @param {string} editedSecretId The edited (copy) secret id.
-		 * @param {object} plaintext New plaintext field map.
-		 * @return {Promise<{updated: number}>}
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-		 */
-		async syncAsTeamWriter(editedSecretId, plaintext) {
-			const context = await this.fetchWriteContext(editedSecretId)
-			if (
-				!['write', 'manage'].includes(context.effectiveGrade)
-				|| context.sourceSecretId === editedSecretId
-			) {
-				return { updated: 0 }
-			}
-
-			// Recipient rows of the SOURCE (write grade grants the list).
-			const response = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/shares`,
-				),
-			)
-			const shares = response.data || []
-
-			const updates = []
-			// The owner's SOURCE row itself, re-encrypted under the
-			// owner's certificate.
-			if (context.ownerCertificate) {
-				const ownerBlob = await this.encryptForRecipient(
-					plaintext,
-					context.ownerCertificate,
-				)
-				updates.push({
-					secretId: context.sourceSecretId,
-					key: ownerBlob.key ?? null,
-					login: ownerBlob.login ?? null,
-					additionalFields: ownerBlob.additionalFields ?? null,
-				})
-			}
-			for (const share of shares) {
-				const certificate = share.recipientCertificate || share.certificate
-				if (
-					certificate == null
-					|| certificate === ''
-					|| share.secretId === editedSecretId
-				) {
-					// The writer's own copy was already updated by the
-					// regular edit; suite-less recipients are skipped.
-					continue
-				}
-
-				const blob = await this.encryptForRecipient(plaintext, certificate)
-				updates.push({
-					secretId: share.secretId,
-					key: blob.key ?? null,
-					login: blob.login ?? null,
-					additionalFields: blob.additionalFields ?? null,
-				})
-			}
-
-			if (updates.length === 0) {
-				return { updated: 0 }
-			}
-
-			const syncResponse = await axios.put(
-				generateUrl(
-					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/sync`,
-				),
-				{
-					expectedUpdatedAt: context.sourceUpdatedAt ?? '',
-					updates,
-				},
-			)
-			return syncResponse.data
 		},
 
 		/**
@@ -576,97 +510,6 @@ export const useShareStore = defineStore('share', {
 				created.push(row)
 			}
 			return created
-		},
-
-		/**
-		 * Sync an updated plaintext to every recipient. Implements
-		 * tasks §11.5 (browser-side encryption loop) + §11.6 (called by
-		 * useSecretStore.updateSecret after a successful owner update if
-		 * the secret has active shares).
-		 *
-		 * Flow:
-		 *  1. Hydrate the current share list for the secret (if not yet
-		 *     loaded).
-		 *  2. For each recipient, fetch their active EncryptionSuite
-		 *     certificate and RSA-encrypt the new plaintext for them.
-		 *  3. PUT the batch to `/api/v1/secrets/{id}/sync` along with the
-		 *     `expectedUpdatedAt` for optimistic-lock validation.
-		 *
-		 * The server side (ShareService::syncUpdate) does the atomic
-		 * write inside a transaction, clears the `possiblyCompromisedAt`
-		 * flag if previously set, and rejects stale locks with HTTP 409
-		 * so the caller can re-encrypt.
-		 *
-		 * @param {string}              secretId          The source secret ID.
-		 * @param {object}              plaintext         New plaintext field map
-		 *   ({ key, login, additionalFields } — only fields that should be
-		 *   re-encrypted for recipients).
-		 * @param {string}              expectedUpdatedAt The owner's last-seen updatedAt (ISO).
-		 * @return {Promise<{updated: number}>}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
-		 */
-		async syncUpdate(secretId, plaintext, expectedUpdatedAt) {
-			this.loading = true
-			this.error = null
-			try {
-				if (this.shares.length === 0) {
-					await this.fetchShares(secretId)
-				}
-
-				if (this.shares.length === 0) {
-					// No recipients — nothing to sync. The UI uses this
-					// as a fast-path skip in useSecretStore.updateSecret.
-					return { updated: 0 }
-				}
-
-				// Build the per-recipient encrypted blob batch. The
-				// recipient's PEM certificate is returned by the share
-				// row (the server hydrates it from the active
-				// EncryptionSuite of the recipient).
-				const updates = []
-				for (const share of this.shares) {
-					const certificate =
-						share.recipientCertificate || share.certificate
-					if (certificate == null || certificate === '') {
-						// Skip recipients whose suite was revoked while the
-						// owner edited; the server-side cascade has already
-						// cleaned them up but the UI list may be stale.
-						continue
-					}
-
-					const blob = await this.encryptForRecipient(
-						plaintext,
-						certificate,
-					)
-					updates.push({
-						secretId: share.secretId,
-						encryptedKey: blob.key ?? null,
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
-					})
-				}
-
-				if (updates.length === 0) {
-					return { updated: 0 }
-				}
-
-				const response = await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/sync`),
-					{
-						expectedUpdatedAt,
-						updates,
-					},
-				)
-				return response.data ?? { updated: updates.length }
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message
-					|| e?.message
-					|| 'Failed to sync update'
-				throw e
-			} finally {
-				this.loading = false
-			}
 		},
 
 		/**

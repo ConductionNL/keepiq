@@ -31,6 +31,7 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 
 /**
@@ -51,6 +52,8 @@ class AccountShareCleanupService {
 	 * @param ShareTargetMapper $shareMapper The share-target mapper
 	 * @param GroupShareMapper $groupShareMapper The group-share mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
+	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
+	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner shares over
 	 *
 	 * @return void
 	 *
@@ -61,6 +64,8 @@ class AccountShareCleanupService {
 		private ShareTargetMapper $shareMapper,
 		private GroupShareMapper $groupShareMapper,
 		private SecretDelegationMapper $delegationMapper,
+		private ShareSaveStageMapper $stageMapper,
+		private SecretOwnerTransferService $ownerTransfer,
 	) {
 	}//end __construct()
 
@@ -69,9 +74,10 @@ class AccountShareCleanupService {
 	 *
 	 * Each delegation is made permanent (per the user-sharing spec's
 	 * is_permanent semantics for a deleted owner) and the secret's owner is
-	 * reassigned to the delegate, so the delegate's access continues
-	 * uninterrupted. Transferred secrets are excluded from the later own-secret
-	 * hard delete because the owner_id no longer matches the departing user.
+	 * reassigned to the delegate, partner shares included, so the delegate's
+	 * access continues uninterrupted. Transferred secrets are excluded from the
+	 * later own-secret hard delete because the owner_id no longer matches the
+	 * departing user.
 	 *
 	 * @param string $userId The departing user
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
@@ -94,7 +100,7 @@ class AccountShareCleanupService {
 				continue;
 			}
 
-			$this->secretMapper->reassignOwner(
+			$this->ownerTransfer->transfer(
 				secretId: $secretId,
 				newOwnerId: $delegation->getDelegatedTo(),
 			);
@@ -163,4 +169,18 @@ class AccountShareCleanupService {
 		$report->sharesRemoved = count($this->shareMapper->findByTargetUser(targetUserId: $userId));
 		$this->shareMapper->deleteByTargetUser(targetUserId: $userId);
 	}//end removeReceivedShares()
+
+	/**
+	 * Remove the user's staged share-save chunks: ciphertext they sent for a
+	 * save they never finished.
+	 *
+	 * @param string $userId The departing user
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 */
+	public function removeShareSaveStages(string $userId): void {
+		$this->stageMapper->deleteByUser(userId: $userId);
+	}//end removeShareSaveStages()
 }//end class

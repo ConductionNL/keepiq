@@ -108,6 +108,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
 		);
 	}//end setUp()
@@ -366,6 +367,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 			versionService: $versionService,
 		);
 	}//end serviceWithVersions()
@@ -730,6 +732,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
 			secretRequestService: null,
 			shareService: null,
 			groupShareMapper: $groupShareMapper,
@@ -989,6 +992,13 @@ class SecretServiceTest extends TestCase {
 		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
 		$this->mapper->method('findById')->willReturn($stored);
 		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+		$locks = [];
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnCallback(
+			static function (string $id, \DateTime $base, \DateTime $savedAt) use (&$locks): int {
+				$locks[] = [$base->getTimestamp(), $savedAt->getTimestamp()];
+				return 1;
+			}
+		);
 
 		$this->service->update(
 			id: 's-1',
@@ -999,5 +1009,207 @@ class SecretServiceTest extends TestCase {
 
 		$this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
 		$this->assertSame('No base', $stored->getName());
+
+		// Each update is locked against the version it read.
+		$this->assertSame((new \DateTime('2026-10-02T10:00:00+00:00'))->getTimestamp(), $locks[0][0]);
+		$this->assertSame($locks[0][1], $locks[1][0]);
 	}//end testUpdateWithAMatchingOrAbsentBaseUpdates()
+
+	/**
+	 * The update with a base and the one without it.
+	 *
+	 * @return array<string,array{0:array<string,string>}>
+	 */
+	public static function baseOrNone(): array {
+		return [
+			'with a base'    => [['baseUpdatedAt' => '2026-10-02T10:00:00+00:00']],
+			'without a base' => [[]],
+		];
+	}//end baseOrNone()
+
+	/**
+	 * A save that commits after the update's read but before its write moves
+	 * the row: the compare-and-set finds it gone, and the update is refused
+	 * and rolled back instead of overwriting the save, whether or not the
+	 * client named a base.
+	 *
+	 * @param array<string,string> $base The client's base, if any
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('baseOrNone')]
+	public function testUpdateOverARowThatMovesAfterItsReadIsRefused(array $base): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setName('Router');
+		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->mapper->expects($this->never())->method('update');
+		$versions = $this->createMock(SecretVersionService::class);
+		$versions->expects($this->never())->method('snapshot');
+		$transaction = [];
+		$db = $this->createMock(\OCP\IDBConnection::class);
+		$db->method('beginTransaction')->willReturnCallback(static function () use (&$transaction): void {
+			$transaction[] = 'begin';
+		});
+		$db->method('rollBack')->willReturnCallback(static function () use (&$transaction): void {
+			$transaction[] = 'rollback';
+		});
+		$service = new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			versionService: $versions,
+			db: $db,
+		);
+
+		try {
+			$service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'] + $base, userId: 'alice');
+			$this->fail('A row that moved after the read must be refused');
+		} catch (\OCA\Keepiq\Exception\StaleWriteException $e) {
+			$this->assertSame('s-1', $e->getCurrent()->getId());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $transaction);
+	}//end testUpdateOverARowThatMovesAfterItsReadIsRefused()
+
+	/**
+	 * An update without a base still moves the row past its stored version,
+	 * even within the same second, so an edit made on that version cannot
+	 * pass the stale check afterwards.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testUpdateWithoutABaseMovesTheRowPastItsStoredVersion(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$version = (new \DateTime('+1 hour'))->getTimestamp();
+		$stored->setUpdatedAt(new \DateTime('@'.$version));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with('s-1', $this->anything(), $this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version + 1))
+			->willReturn(1);
+
+		$secret = $this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
+
+		$this->assertSame($version + 1, $secret->getUpdatedAt()?->getTimestamp());
+	}//end testUpdateWithoutABaseMovesTheRowPastItsStoredVersion()
+
+	/**
+	 * A share-save gives the row the version it already locked in, not "now".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testUpdateTakesTheVersionAShareSaveLockedIn(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->mapper->method('findById')->willReturn($this->makeSecret());
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->never())->method('advanceVersion');
+		$savedAt = new \DateTime('2030-01-01T00:00:01+00:00');
+
+		$secret = $this->service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'], userId: 'alice', savedAt: $savedAt);
+
+		$this->assertSame($savedAt->getTimestamp(), $secret->getUpdatedAt()?->getTimestamp());
+	}//end testUpdateTakesTheVersionAShareSaveLockedIn()
+
+	/**
+	 * Setting an expiry moves the row off the version it read to one after
+	 * it, even when the stored version sits ahead of now, so the version
+	 * never goes back.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryMovesTheRowPastItsStoredVersion(): void {
+		$stored = $this->makeSecret();
+		$version = (new \DateTime('+1 hour'))->getTimestamp();
+		$stored->setUpdatedAt(new \DateTime('@'.$version));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with(
+				's-1',
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version),
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version + 1)
+			)
+			->willReturn(1);
+		$expiry = new \DateTime('2027-01-01T00:00:00+00:00');
+
+		$secret = $this->service->setExpiry(id: 's-1', expiresAt: $expiry, userId: 'alice');
+
+		$this->assertSame($version + 1, $secret->getUpdatedAt()?->getTimestamp());
+		$this->assertSame($expiry, $secret->getExpiresAt());
+	}//end testSetExpiryMovesTheRowPastItsStoredVersion()
+
+	/**
+	 * A save that lands between the expiry's read and its write keeps its
+	 * value, and the expiry is set once more on the row as it is now.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryOverARowThatMovesIsSetOnTheCurrentRow(): void {
+		$read = $this->makeSecret();
+		$read->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$moved = $this->makeSecret();
+		$moved->setKey('SAVED-MEANWHILE');
+		$moved->setUpdatedAt(new \DateTime('2026-10-02T10:00:01+00:00'));
+		$this->mapper->method('findById')->willReturnOnConsecutiveCalls($read, $moved);
+		$bases = [];
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnCallback(
+			static function (string $id, \DateTime $base) use (&$bases): int {
+				$bases[] = $base->getTimestamp();
+				return (count($bases) === 1) ? 0 : 1;
+			}
+		);
+		$this->mapper->expects($this->once())->method('update')->with($this->identicalTo($moved))->willReturnArgument(0);
+		$expiry = new \DateTime('2027-01-01T00:00:00+00:00');
+
+		$secret = $this->service->setExpiry(id: 's-1', expiresAt: $expiry, userId: 'alice');
+
+		$this->assertSame($moved, $secret);
+		$this->assertSame('SAVED-MEANWHILE', $secret->getKey());
+		$this->assertSame($expiry, $secret->getExpiresAt());
+		$this->assertSame([$read->getUpdatedAt()?->getTimestamp(), (new \DateTime('2026-10-02T10:00:01+00:00'))->getTimestamp()], $bases);
+	}//end testSetExpiryOverARowThatMovesIsSetOnTheCurrentRow()
+
+	/**
+	 * loadForUpdate refuses what update() refuses, before any write.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testLoadForUpdateRefusesWhatUpdateRefuses(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$useOnly = $this->makeSecret();
+		$useOnly->setUseOnly(true);
+		$foreign = $this->makeSecret();
+		$foreign->setOwnerId('mallory');
+		$this->mapper->method('findById')->willReturnOnConsecutiveCalls($this->makeSecret(), $useOnly, $foreign);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->assertSame('s-1', $this->service->loadForUpdate(id: 's-1', fields: ['key'], userId: 'alice')->getId());
+		foreach (['A use-only copy cannot be changed', 'Secret belongs to another user'] as $refusal) {
+			try {
+				$this->service->loadForUpdate(id: 's-1', fields: ['key'], userId: 'alice');
+				$this->fail('Refusal expected: '.$refusal);
+			} catch (ForbiddenException $e) {
+				$this->assertSame($refusal, $e->getMessage());
+			}
+		}
+	}//end testLoadForUpdateRefusesWhatUpdateRefuses()
 }//end class

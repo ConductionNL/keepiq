@@ -38,6 +38,7 @@ use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\OCM\IOCMDiscoveryService;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -45,6 +46,9 @@ use Throwable;
  * Federated certificate lookup, answering and asking.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Both sides of the lookup in
+ *   one place: partners, the local CA, users, suites, OCM and the log.
  */
 class FederatedCertificateService {
 	/**
@@ -62,6 +66,14 @@ class FederatedCertificateService {
 	public const RECEIVE_PREFERENCE = 'federation_receive';
 
 	/**
+	 * A partner's chain: its intermediate, then its root, as
+	 * FederationRootService::localChain() serves it.
+	 *
+	 * @var int
+	 */
+	private const CHAIN_LENGTH = 2;
+
+	/**
 	 * Constructor for FederatedCertificateService.
 	 *
 	 * @param FederationPartnerService $partners The partner allowlist
@@ -71,6 +83,7 @@ class FederatedCertificateService {
 	 * @param IUserManager $userManager Local users
 	 * @param IConfig $config User preferences
 	 * @param IOCMDiscoveryService $ocmDiscovery Signed OCM requests to partners
+	 * @param LoggerInterface $logger Warnings about a partner's answer
 	 *
 	 * @return void
 	 *
@@ -84,6 +97,7 @@ class FederatedCertificateService {
 		private IUserManager $userManager,
 		private IConfig $config,
 		private IOCMDiscoveryService $ocmDiscovery,
+		private LoggerInterface $logger,
 	) {
 	}//end __construct()
 
@@ -157,7 +171,7 @@ class FederatedCertificateService {
 	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string}
 	 *
 	 * @throws InvalidArgumentException `not_a_partner` or `unknown_recipient`
-	 * @throws RuntimeException `federation_unavailable` or `partner_unreachable`
+	 * @throws RuntimeException `federation_unavailable`, `partner_unreachable` or `bad_chain`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
@@ -197,7 +211,7 @@ class FederatedCertificateService {
 			$body = null;
 		}
 
-		$answer = $this->parseAnswer(status: $status, body: $body);
+		$answer = $this->parseAnswer(status: $status, body: $body, partner: $partner->getBaseUrl());
 
 		return [
 			'cloudId' => $resolved->getId(),
@@ -212,29 +226,59 @@ class FederatedCertificateService {
 	 *
 	 * @param int $status The HTTP status
 	 * @param mixed $body The decoded body
+	 * @param string $partner The partner's base URL, for the log
 	 *
 	 * @return array{certificate:string,chain:array<int,string>}
 	 *
 	 * @throws InvalidArgumentException `unknown_recipient` on the partner's 404
-	 * @throws RuntimeException `partner_unreachable` on anything else that is not a valid answer
+	 * @throws RuntimeException `bad_chain` on a chain other than an intermediate and a root,
+	 *   `partner_unreachable` on anything else that is not a valid answer
 	 */
-	private function parseAnswer(int $status, mixed $body): array {
+	private function parseAnswer(int $status, mixed $body, string $partner): array {
 		if ($status === 404) {
 			throw new InvalidArgumentException('unknown_recipient');
 		}
 
-		if ($status !== 200 || is_array($body) === false
-			|| is_string($body['certificate'] ?? null) === false
-			|| is_array($body['chain'] ?? null) === false
-		) {
+		if ($status !== 200 || is_array($body) === false || is_string($body['certificate'] ?? null) === false) {
 			throw new RuntimeException('partner_unreachable');
+		}
+
+		$chain = $this->chainOf(chain: $body['chain'] ?? null);
+		if ($chain === null) {
+			$this->logger->warning(
+				'Keepiq: partner ' . $partner . ' answered a certificate lookup with a chain other than its intermediate and root',
+				['app' => Application::APP_ID]
+			);
+			throw new RuntimeException('bad_chain');
 		}
 
 		return [
 			'certificate' => $body['certificate'],
-			'chain' => array_values(array_filter($body['chain'], 'is_string')),
+			'chain' => $chain,
 		];
 	}//end parseAnswer()
+
+	/**
+	 * A partner's chain when it is exactly an intermediate and a root, as PEM
+	 * strings, or null. Keepiq serves no other.
+	 *
+	 * @param mixed $chain The `chain` of the answer
+	 *
+	 * @return list<string>|null
+	 */
+	private function chainOf(mixed $chain): ?array {
+		if (is_array($chain) === false || array_is_list($chain) === false || count($chain) !== self::CHAIN_LENGTH) {
+			return null;
+		}
+
+		foreach ($chain as $pem) {
+			if (is_string($pem) === false) {
+				return null;
+			}
+		}
+
+		return $chain;
+	}//end chainOf()
 
 	/**
 	 * The local user a cloud id names, or null when it names no user of this

@@ -31,7 +31,6 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
-use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -48,7 +47,7 @@ class TeamSecretTransferService {
 	 * @param TeamFolderMembershipResolver $memberships The membership resolver (subtree walk)
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
-	 * @param SecretMapper $secretMapper The secret mapper
+	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner shares over
 	 *
 	 * @return void
 	 *
@@ -59,7 +58,7 @@ class TeamSecretTransferService {
 		private TeamFolderMembershipResolver $memberships,
 		private ShareTargetMapper $shareTargetMapper,
 		private SecretDelegationMapper $delegationMapper,
-		private SecretMapper $secretMapper,
+		private SecretOwnerTransferService $ownerTransfer,
 	) {
 	}//end __construct()
 
@@ -104,7 +103,7 @@ class TeamSecretTransferService {
 				$delegation->setIsPermanent(true);
 				$this->delegationMapper->insert($delegation);
 
-				$this->secretMapper->reassignOwner(
+				$this->ownerTransfer->transfer(
 					secretId: $secretRef['id'],
 					newOwnerId: $successorUserId
 				);

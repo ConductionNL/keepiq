@@ -53,6 +53,25 @@ export async function buildRecoveryEnvelope(privateKeyPem, granteeCertificatePem
 	if (!privateKeyPem || !granteeCertificatePem) {
 		throw new Error('A private key and a grantee certificate are required')
 	}
+	return buildRecoveryEnvelopeForKey(
+		privateKeyPem,
+		await importPublicKey(granteeCertificatePem),
+	)
+}
+
+/**
+ * The same envelope for a public key already imported, such as the key of a
+ * certificate that was just verified.
+ *
+ * @param {string}    privateKeyPem    The grantor's PKCS8 private-key PEM.
+ * @param {CryptoKey} granteePublicKey The grantee's RSA-OAEP public key.
+ * @return {Promise<string>} The serialized envelope (JSON string).
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ */
+export async function buildRecoveryEnvelopeForKey(privateKeyPem, granteePublicKey) {
+	if (!privateKeyPem || !granteePublicKey) {
+		throw new Error('A private key and a grantee key are required')
+	}
 
 	// Fresh random symmetric key + IV for this envelope.
 	const aesKey = await crypto.subtle.generateKey(
@@ -68,9 +87,8 @@ export async function buildRecoveryEnvelope(privateKeyPem, granteeCertificatePem
 		new TextEncoder().encode(privateKeyPem),
 	)
 
-	// RSA-wrap the raw AES key to the grantee's public certificate.
+	// RSA-wrap the raw AES key to the grantee's public key.
 	const rawAes = new Uint8Array(await crypto.subtle.exportKey('raw', aesKey))
-	const granteePublicKey = await importPublicKey(granteeCertificatePem)
 	const encKey = await rsaEncrypt(toBase64(rawAes), granteePublicKey)
 
 	return JSON.stringify({

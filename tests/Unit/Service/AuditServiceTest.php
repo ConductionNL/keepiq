@@ -126,6 +126,47 @@ class AuditServiceTest extends TestCase {
 	}//end testRecordDropsUnknownMetadataKeys()
 
 	/**
+	 * A copy editor's sync keeps the holders it left out, and a share-save
+	 * restore keeps its mark as the client's claim, through the whitelist.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testRecordKeepsTheShareSaveAuditMetadata(): void {
+		$captured = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			function (AuditEntry $entry) use (&$captured): AuditEntry {
+				$captured[] = $entry->getMetadataArray();
+				return $entry;
+			}
+		);
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(fn (AuditEvent $event) => $this->service->record($event));
+
+		(new \OCA\Keepiq\Service\ShareAuditTrail(eventDispatcher: $dispatcher))->recordTeamWriteSync(
+			userId: 'bob',
+			secretId: 'src',
+			secretName: 'Router',
+			changedFields: 'delegate sync',
+			skippedUserIds: ['carol'],
+		);
+		$this->service->record(AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SECRET_VERSION_RESTORED,
+			objectType: 'secret',
+			objectId: 'src',
+			objectName: 'Router',
+			metadata: ['versionNumber' => 3, 'via' => 'share-save'],
+		));
+
+		$this->assertSame(
+			[['changedFields' => 'delegate sync', 'skippedUserIds' => ['carol']], ['versionNumber' => 3, 'via' => 'share-save']],
+			$captured
+		);
+	}//end testRecordKeepsTheShareSaveAuditMetadata()
+
+	/**
 	 * record() rejects every forbidden secret-material key with an exception.
 	 *
 	 * @return void
@@ -221,6 +262,36 @@ class AuditServiceTest extends TestCase {
 		$this->assertSame('user', $rewritten['recipientType']);
 		$this->assertStringNotContainsString('bob', (string)json_encode($rewritten));
 	}//end testAnonymizeUserScrubsActorAndMetadata()
+
+	/**
+	 * anonymizeUser() scrubs the user out of a list of user ids and leaves
+	 * the others in it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
+	 */
+	public function testAnonymizeUserScrubsTheUserOutOfAList(): void {
+		$referencing = new AuditEntry();
+		$referencing->setId(8);
+		$referencing->setEventType(AuditEventTypes::SECRET_UPDATED);
+		$referencing->setMetadata((string)json_encode(['changedFields' => 'team-write sync', 'skippedUserIds' => ['carol', 'bob']]));
+		$this->mapper->method('findMetadataReferencing')->with('bob')->willReturn([$referencing]);
+
+		$rewritten = null;
+		$this->mapper->expects($this->once())
+			->method('rewriteMetadata')
+			->willReturnCallback(
+				function (int $id, ?string $json) use (&$rewritten): void {
+					$rewritten = json_decode((string)$json, true);
+				}
+			);
+
+		$this->service->anonymizeUser('bob');
+
+		$this->assertSame(['carol', 'deleted-account'], $rewritten['skippedUserIds']);
+		$this->assertSame('team-write sync', $rewritten['changedFields']);
+	}//end testAnonymizeUserScrubsTheUserOutOfAList()
 
 	/**
 	 * adminQuery() returns entries + total + clamps page/limit.

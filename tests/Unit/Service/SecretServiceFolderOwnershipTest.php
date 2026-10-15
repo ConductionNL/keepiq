@@ -110,6 +110,7 @@ class SecretServiceFolderOwnershipTest extends TestCase {
 			$migrationService,
 			$this->createMock(LinkShareService::class),
 			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IDBConnection::class),
 			null,
 			null,
 			null,

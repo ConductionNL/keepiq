@@ -3,6 +3,12 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
+import {
+	encryptSparse,
+	notifyOwnerOnly,
+	saveShared,
+	VALUE_FIELDS,
+} from '../../services/shareSave.js'
 import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { useOfflineStore } from './offline.js'
 import { useSecretTypeStore } from './secretType.js'
@@ -40,6 +46,20 @@ const WHOLE_VAULT = {
 	favourite: false,
 	tag: null,
 }
+
+/**
+ * Merge write-backs in flight, by secret id: `{ done, waiting, waiters, base,
+ * count, updatedAt }`, removed when it settles. `done` resolves to the source
+ * version it wrote (`sourceUpdatedAt`, null when it saved only the own copy),
+ * or to null when it failed. `waiting` is its last wait on the partner lookup
+ * limit, and `waiters` are the saves held behind it that want to hear of one.
+ * `base` and `count` are the version it saves from and the pending blobs it
+ * drops; `updatedAt` is the version it saved, once it did.
+ *
+ * @type {Map<string, {done: Promise<{sourceUpdatedAt: string|null}|null>, waiting: number|null, waiters: Set<(ms: number) => void>, base: string, count: number, updatedAt: string|null}>}
+ */
+const writeBacks = new Map()
+
 /**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
@@ -374,12 +394,15 @@ export const useSecretStore = defineStore('secret', {
 				}
 
 				try {
+					const runningAtSend = writeBacks.get(id) ?? null
 					const response = await axios.get(
 						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
 					)
 					const secret = response.data
 					this.currentSecret = await this.decryptSecret(secret)
-					await this.persistMergedPending(id)
+					// Not awaited: the write-back is a share save, which must not
+					// hold up opening the secret.
+					this.persistMergedPending(id, runningAtSend).catch(() => {})
 					return this.currentSecret
 				} catch (e) {
 					if (this.isNetworkError(e) && offline.vault) {
@@ -458,23 +481,107 @@ export const useSecretStore = defineStore('secret', {
 		 * pending list. Best effort: a failure leaves them pending, and the
 		 * next open merges them again.
 		 *
+		 * An open while a write-back of the secret runs waits for that one
+		 * instead of starting a second, which would be refused once the
+		 * first saved and hide the versions the first wrote. So does an open
+		 * whose read went out while it ran and was read on its base, also
+		 * when that write-back settled before the read was handled.
+		 *
 		 * @param {string} id The secret ID.
+		 * @param {object|null} [runningAtSend] The write-back in flight when the open's read went out.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
-		async persistMergedPending(id) {
+		async persistMergedPending(id, runningAtSend = null) {
 			const current = this.currentSecret
 			if (!current || current.id !== id || !(current.mergedPending > 0)) {
 				return
 			}
-			try {
-				await this.updateSecret(id, {
+			const running =
+				writeBacks.get(id)
+				?? (runningAtSend?.base === current.updatedAt ? runningAtSend : null)
+			if (running) {
+				const readAt = current.updatedAt
+				const saved = await running.done
+				// Read on the version it saved from, this copy also merged the
+				// blobs it dropped; fills that came after stay to drop.
+				if (saved && readAt === running.base) {
+					current.mergedPending -= running.count
+					current.updatedAt = running.updatedAt ?? current.updatedAt
+				}
+				return
+			}
+			const inFlight = {
+				done: null,
+				waiting: null,
+				waiters: new Set(),
+				base: current.updatedAt,
+				count: current.mergedPending,
+				updatedAt: null,
+			}
+			let sourceUpdatedAt = null
+			const done = this.updateSecret(
+				id,
+				{
 					additionalFields: current.additionalFields,
 					mergedPending: current.mergedPending,
+				},
+				{
+					baseUpdatedAt: current.updatedAt,
+					writeBack: true,
+					// Nobody sees this save; an edit held behind it shows its wait.
+					onWait: (ms) => {
+						inFlight.waiting = ms
+						for (const waiter of inFlight.waiters) {
+							waiter(ms)
+						}
+					},
+					onSourceSaved: (version) => {
+						sourceUpdatedAt = version
+					},
+				},
+			)
+				.then((saved) => {
+					inFlight.updatedAt = saved?.updatedAt ?? null
+					current.mergedPending = 0
+					// Also when another open replaced it as the open secret.
+					current.updatedAt = saved?.updatedAt ?? current.updatedAt
+					return { sourceUpdatedAt }
 				})
-				current.mergedPending = 0
-			} catch {
 				// Stays pending; merged again on the next open.
+				.catch(() => null)
+			inFlight.done = done
+			writeBacks.set(id, inFlight)
+			await done
+			writeBacks.delete(id)
+		},
+
+		/**
+		 * Wait for a merge write-back of `id` in flight. One that saved moved
+		 * the secret, and through a copy the source, to versions an edit made
+		 * before it may take; one that failed moved nothing.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {((ms: number) => void)|null} [onWait] Told when the write-back waits on the partner lookup limit, also of a wait already begun.
+		 * @return {Promise<{sourceUpdatedAt: string|null}|null>} The source version the write-back wrote, null when it saved only the own copy; null when none was in flight or it failed.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		async writeBackSettled(id, onWait = null) {
+			const inFlight = writeBacks.get(id)
+			if (!inFlight) {
+				return null
+			}
+			if (onWait) {
+				if (inFlight.waiting !== null) {
+					onWait(inFlight.waiting)
+				}
+				inFlight.waiters.add(onWait)
+			}
+			try {
+				return await inFlight.done
+			} finally {
+				inFlight.waiters.delete(onWait)
 			}
 		},
 
@@ -620,17 +727,36 @@ export const useSecretStore = defineStore('secret', {
 		},
 
 		/**
-		 * Update a secret. Sensitive fields are re-encrypted before submission.
+		 * Update a secret. Sensitive fields are re-encrypted before submission;
+		 * a value change goes through the share save, which writes every copy
+		 * and partner share in the same transaction or nothing at all.
 		 *
 		 * @param {string} id The secret ID.
-		 * @param {object} data The fields to change.
-		 * @return {Promise<object>} The updated secret (server response).
+		 * @param {object} data The fields to change, with `mergedPending`: the request-filled pending blobs the edited `additionalFields` merged.
+		 * @param {object} [options] Options.
+		 * @param {string} [options.baseUpdatedAt] The version the edit was made from.
+		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
+		 * @param {Array<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached.
+		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
+		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit, its own or that of a merge write-back it is held behind.
+		 * @param {(sourceUpdatedAt: string|null) => void} [options.onSourceSaved] Called after a share save with the source version it wrote, null when it saved only the own copy.
+		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
-		async updateSecret(id, data) {
+		async updateSecret(id, data, options = {}) {
+			// Never alongside a merge write-back of the same secret. A caller
+			// that sends the versions it read takes the ones a write-back that
+			// saved wrote (writeBackSettled), or the write-back makes them stale.
+			if (!options.writeBack) {
+				await this.writeBackSettled(id, options.onWait ?? null)
+			}
+			const given = options.baseUpdatedAt
+			const sourceBase = options.sourceBaseUpdatedAt ?? null
 			const session = useSessionStore()
 			const payload = {}
+			const plainDiff = {}
 
 			for (const field of ['name', 'url', 'typeId', 'folderId']) {
 				if (data[field] !== undefined) {
@@ -651,136 +777,105 @@ export const useSecretStore = defineStore('secret', {
 				}
 			}
 
-			if (
-				data.key !== undefined
-				|| data.login !== undefined
-				|| data.additionalFields !== undefined
-			) {
+			const valueChanged = VALUE_FIELDS.some((f) => data[f] !== undefined)
+			if (valueChanged) {
 				if (!session.certificate) {
 					throw new Error('Vault is locked')
 				}
-				const publicKey = await importPublicKey(session.certificate)
 				if (data.key !== undefined) {
-					payload.key = await rsaEncrypt(String(data.key), publicKey)
+					plainDiff.key = String(data.key)
 				}
 				if (data.login !== undefined) {
-					payload.login = data.login
-						? await rsaEncrypt(String(data.login), publicKey)
-						: null
+					plainDiff.login = data.login ? String(data.login) : null
 				}
 				if (data.additionalFields !== undefined) {
-					const json =
-						typeof data.additionalFields === 'string'
-							? data.additionalFields
-							: JSON.stringify(data.additionalFields)
-					payload.additionalFields = await rsaEncrypt(json, publicKey)
-					// The blob now holds the request-filled pending members this
-					// client merged on open: let the server drop them (keepiq#750).
-					const merged =
-						data.mergedPending
-						?? (this.currentSecret?.id === id
-							? this.currentSecret.mergedPending
-							: 0)
-					if (merged > 0) {
-						payload.mergedPending = merged
-					}
+					plainDiff.additionalFields =
+						data.additionalFields === null
+							? null
+							: typeof data.additionalFields === 'string'
+								? data.additionalFields
+								: JSON.stringify(data.additionalFields)
+				}
+				// The own row and every copy carry the same fields with the same
+				// null-ness, so both come from one plain map.
+				Object.assign(
+					payload,
+					await encryptSparse(plainDiff, session.certificate),
+				)
+				// The blob holds the request-filled pending members the caller's
+				// copy merged on open: let the server drop them (keepiq#750).
+				if (data.additionalFields !== undefined && data.mergedPending > 0) {
+					payload.mergedPending = data.mergedPending
 				}
 			}
 
-			// Offline: queue the change on the cached version; the recipient
-			// fan-out runs at replay time, never from here (offline-edit-queue).
+			// Offline: queue the change on the cached version; the share save
+			// runs at replay time, never from here (offline-edit-queue).
 			const offline = useOfflineStore()
 			if (offline.servedFromCache) {
 				const cached = offline.vault?.secrets?.find((x) => x.id === id)
 				await offline.enqueue({
 					op: 'update',
 					secretId: id,
-					baseUpdatedAt: cached?.updatedAt ?? null,
+					baseUpdatedAt: given ?? cached?.updatedAt ?? null,
+					sourceBaseUpdatedAt: sourceBase,
 					body: payload,
 				})
 				return { ...(cached || { id }), ...payload, pendingSync: true }
 			}
 
-			const response = await axios.put(
-				generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-				payload,
-			)
-
-			// §11.6 — Sync-on-update: if the owner just changed any
-			// sensitive blob (key/login/additionalFields) AND the secret
-			// has active shares, re-encrypt the plaintext for every
-			// recipient via useShareStore.syncUpdate. The plaintext is
-			// the *just-submitted* value (not the freshly returned
-			// ciphertext); the share store imports each recipient's
-			// public certificate and runs the RSA encryption loop.
-			const sensitiveChanged =
-				data.key !== undefined
-				|| data.login !== undefined
-				|| data.additionalFields !== undefined
-			if (sensitiveChanged === true) {
-				try {
-					// Lazy import to avoid a circular dep between the
-					// secret and share stores at module load time.
-					const { useShareStore } = await import('./share.js')
-					const shareStore = useShareStore()
-					await shareStore.syncUpdate(
-						id,
-						{
-							key: data.key,
-							login: data.login,
-							additionalFields:
-								data.additionalFields !== undefined
-									? typeof data.additionalFields === 'string'
-										? data.additionalFields
-										: JSON.stringify(data.additionalFields)
-									: undefined,
-						},
-						response.data?.updatedAt
-							?? response.data?.updated_at
-							?? null,
-					)
-				} catch (e) {
-					// Sync failure should not roll back the owner's
-					// update — the owner's copy is already persisted.
-					// Surface the error to the share store's `error`
-					// field so the sharing sidebar can render a banner.
-					// The session encryption flow itself is unaffected.
-				}
-
-				// Recipients at partner organisations
-				// (sharing-federated-recipients 4.1): the whole value is
-				// encrypted again for a freshly verified certificate. Like
-				// the local sync, a failure never rolls the update back.
-				try {
-					const { useFederatedShareStore } =
-						await import('./federatedShare.js')
-					await useFederatedShareStore().syncUpdate(id)
-				} catch {
-					// The share row shows its state to the owner.
-				}
-
-				// Write-grade team member path (folder-permission-grades
-				// §4.2): when the edited row is a recipient COPY and the
-				// user holds a write grade on an ancestor team folder,
-				// fan the plaintext out to the SOURCE + every recipient.
-				try {
-					const { useShareStore } = await import('./share.js')
-					await useShareStore().syncAsTeamWriter(id, {
-						key: data.key,
-						login: data.login,
-						additionalFields:
-							data.additionalFields !== undefined
-								? typeof data.additionalFields === 'string'
-									? data.additionalFields
-									: JSON.stringify(data.additionalFields)
-								: undefined,
-					})
-				} catch (e) {
-					// Same fail-soft contract as the owner sync above.
-				}
+			let saved
+			if (valueChanged) {
+				const result = await saveShared({
+					id,
+					plainDiff,
+					patch: payload,
+					baseUpdatedAt: this.baseOf(id, given),
+					sourceBaseUpdatedAt: sourceBase,
+					withoutUnreachable: options.withoutUnreachable ?? [],
+					onWait: options.onWait ?? null,
+				})
+				options.onSourceSaved?.(result.sourceUpdatedAt ?? null)
+				await notifyOwnerOnly(result)
+				saved = result.secret
+			} else {
+				const response = await axios.put(
+					generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
+					given ? { ...payload, baseUpdatedAt: given } : payload,
+				)
+				saved = response.data
 			}
 
-			return response.data
+			// Keep the open copy's version current, so its next edit is not
+			// refused as stale.
+			if (this.currentSecret?.id === id && saved?.updatedAt) {
+				this.currentSecret.updatedAt = saved.updatedAt
+			}
+			return saved
+		},
+
+		/**
+		 * The version an edit of `id` was made from: the caller's, else the
+		 * open secret's, else the listed row's.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {string|undefined} given The caller's base.
+		 * @return {string}
+		 * @throws {Error} When no version is known: fetching the current one
+		 *   now would switch the stale check off.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		baseOf(id, given) {
+			const known =
+				given
+				?? (this.currentSecret?.id === id
+					? this.currentSecret.updatedAt
+					: undefined)
+				?? this.secrets.find((s) => s.id === id)?.updatedAt
+			if (!known) {
+				throw new Error(`No base version known for secret ${id}`)
+			}
+			return known
 		},
 
 		/**

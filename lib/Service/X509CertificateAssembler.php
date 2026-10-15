@@ -176,8 +176,10 @@ class X509CertificateAssembler {
 
 	/**
 	 * Sign a certificate with the intermediate: copy the intermediate's
-	 * subject DN and key identifier into the issuer fields, then sign with
-	 * PKCS#1 v1.5 (sha256WithRSAEncryption), for issuance and renewal alike.
+	 * subject DN and key identifier into the issuer fields, mark it no CA
+	 * (every certificate signed here is a user's or an application's), then
+	 * sign with PKCS#1 v1.5 (sha256WithRSAEncryption), for issuance and
+	 * renewal alike.
 	 *
 	 * @param X509 $certificate The certificate to sign, signed in place
 	 * @param string $intermediateCertPem The signing intermediate certificate (PEM)
@@ -193,6 +195,7 @@ class X509CertificateAssembler {
 		PrivateKey $issuerPrivate,
 	): void {
 		$certificate->copySigningX509Attributes($this->keyLoader->loadCertificate($intermediateCertPem));
+		$certificate->setExtension('id-ce-basicConstraints', ['cA' => false], true);
 		$issuerPrivate->withPadding(RSA::SIGNATURE_PKCS1)->withHash('sha256')->sign($certificate);
 	}//end signWithIntermediate()
 }//end class

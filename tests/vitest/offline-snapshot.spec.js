@@ -76,6 +76,31 @@ describe('offline snapshot', () => {
 		expect(vault.syncedAt).toBe('2026-07-20T04:00:00+00:00')
 	})
 
+	it("keeps a row's version and its source's version, in plain, for offline edits", async () => {
+		const key = await makeKey()
+		const manifest = {
+			...MANIFEST,
+			secrets: [
+				{
+					...MANIFEST.secrets[0],
+					updatedAt: '2026-10-01T10:00:00+00:00',
+					sourceUpdatedAt: '2026-09-30T08:00:00+00:00',
+				},
+				{ ...MANIFEST.secrets[0], id: 'own-1' },
+			],
+		}
+		const snapshot = await encryptSnapshot(key, manifest)
+		expect(snapshot.secrets[0].sourceUpdatedAt).toBe('2026-09-30T08:00:00+00:00')
+
+		const vault = await decryptSnapshot(key, snapshot)
+
+		expect(vault.secrets[0]).toMatchObject({
+			updatedAt: '2026-10-01T10:00:00+00:00',
+			sourceUpdatedAt: '2026-09-30T08:00:00+00:00',
+		})
+		expect(vault.secrets[1].sourceUpdatedAt).toBeNull()
+	})
+
 	it('does not open the metadata with the wrong key', async () => {
 		const key = await makeKey()
 		const other = await makeKey()

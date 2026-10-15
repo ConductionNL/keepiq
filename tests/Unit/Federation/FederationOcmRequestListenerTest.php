@@ -45,6 +45,7 @@ use OCP\IUserManager;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
 use OCP\OCM\IOCMDiscoveryService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 require_once __DIR__ . '/FederationFixtures.php';
 
@@ -97,6 +98,7 @@ class FederationOcmRequestListenerTest extends TestCase {
 			$users,
 			$config,
 			$this->createMock(IOCMDiscoveryService::class),
+			$this->createMock(LoggerInterface::class),
 		);
 
 		return new FederationOcmRequestListener($service, $this->createMock(FederatedShareService::class));

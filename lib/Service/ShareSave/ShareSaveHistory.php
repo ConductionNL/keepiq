@@ -1,0 +1,163 @@
+<?php
+
+/**
+ * Keepiq ShareSaveHistory
+ *
+ * @category Service
+ * @package  OCA\Keepiq\Service\ShareSave
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Keepiq\Service\ShareSave;
+
+use InvalidArgumentException;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareAuditTrail;
+use OCP\AppFramework\Http;
+
+/**
+ * The version history and audit a share-save adds to the row save: the
+ * version a restore comes from, the restore audit and the team-write audit.
+ *
+ * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+ */
+class ShareSaveHistory {
+	/**
+	 * Constructor.
+	 *
+	 * @param SecretVersionService $versions The version history
+	 * @param ShareAuditTrail $auditTrail The team-write audit
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only.
+	 */
+	public function __construct(
+		private SecretVersionService $versions,
+		private ShareAuditTrail $auditTrail,
+	) {
+	}//end __construct()
+
+	/**
+	 * The version a restore comes from, refused as `POST /versions/{id}/restore`
+	 * refuses it (400), and also when it is a version of another row.
+	 *
+	 * @param string $versionId The version
+	 * @param Secret $row The row being saved, `{id}`
+	 * @param string $userId The caller
+	 *
+	 * @return SecretVersion
+	 *
+	 * @throws ShareSaveRefusal `version_refused`
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function versionToRestore(string $versionId, Secret $row, string $userId): SecretVersion {
+		try {
+			$version = $this->versions->getVersion(versionId: $versionId, userId: $userId);
+		} catch (InvalidArgumentException $e) {
+			throw new ShareSaveRefusal(error: 'version_refused', message: $e->getMessage(), status: Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($version->getSecretId() !== $row->getId()) {
+			throw new ShareSaveRefusal(error: 'version_refused', message: 'Version not found', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		return $version;
+	}//end versionToRestore()
+
+	/**
+	 * Audit the restore; called inside the save's transaction. The log line
+	 * is written by logRestore() once the save has committed. The value was
+	 * encrypted again in the browser, so the server cannot check it is the
+	 * version's: the event is marked as the client's claim.
+	 *
+	 * @param Secret $secret The saved row
+	 * @param SecretVersion $version The version it was restored to
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function recordRestore(Secret $secret, SecretVersion $version, string $userId): void {
+		$this->versions->recordRestored(secret: $secret, version: $version, userId: $userId, via: 'share-save');
+	}//end recordRestore()
+
+	/**
+	 * Log the restore; called after the save's transaction committed, so a
+	 * save that rolls back leaves no log line saying it was restored.
+	 *
+	 * @param Secret $secret The saved row
+	 * @param SecretVersion $version The version it was restored to
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function logRestore(Secret $secret, SecretVersion $version, string $userId): void {
+		$this->versions->logRestored(secret: $secret, version: $version, userId: $userId);
+	}//end logRestore()
+
+	/**
+	 * Attribute a copy-editor's save to the writer on the source, whether
+	 * they write on a team-folder grade or as a delegate, naming the holders
+	 * of the copies left out for want of a vault key: the owner for the source
+	 * itself. The owner path has the row's own audit.
+	 *
+	 * @param ShareSavePath $path The path, as assertStillWriter() returned it
+	 * @param string $userId The caller
+	 * @param list<array{secretId:string,reason:string}> $skipped The copies left out
+	 * @param array<string,array{secretId:string,holder:string,targetUserId:?string}> $copies The required copies, by id
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = [], array $copies = []): void {
+		if ($path->isCopyEditor() === false) {
+			return;
+		}
+
+		$changedFields = 'delegate sync';
+		if ($path->teamWriter === true) {
+			$changedFields = 'team-write sync';
+		}
+
+		$holders = [];
+		foreach ($skipped as $skip) {
+			$copy = $copies[$skip['secretId']] ?? null;
+			if ($copy === null) {
+				continue;
+			}
+
+			$holder = (string)$copy['targetUserId'];
+			if ($copy['holder'] === 'owner') {
+				$holder = $path->source->getOwnerId();
+			}
+
+			$holders[] = $holder;
+		}
+
+		$this->auditTrail->recordTeamWriteSync(
+			userId: $userId,
+			secretId: $path->source->getId(),
+			secretName: $path->source->getName(),
+			changedFields: $changedFields,
+			skippedUserIds: array_values(array_unique($holders)),
+		);
+	}//end recordTeamWrite()
+}//end class
