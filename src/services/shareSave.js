@@ -20,6 +20,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { FederatedCertificateError } from '../crypto/federatedCertificate.js'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../crypto/index.js'
+import { importSpkiPublicKey } from '../crypto/rsa.js'
 import {
 	fingerprintHex,
 	useFederatedShareStore,
@@ -43,8 +44,11 @@ export const MAX_INCOMPLETE_ROUNDS = 3
 /** Grades that let a copy holder save for every holder (TeamFolderMember::WRITE_GRADES plus owner). */
 const COPY_WRITER_GRADES = ['owner', 'write', 'manage']
 
-/** Partner lookup refusals that mean the share is gone for good, so it is suspended. */
-const PARTNER_GONE = ['unknown_recipient', 'not_a_partner']
+/**
+ * Partner lookup refusals that mean the share is gone for good, so it is
+ * suspended; `bad_chain` from the server is the refusal the browser makes.
+ */
+const PARTNER_GONE = ['bad_chain', 'unknown_recipient', 'not_a_partner']
 
 /**
  * How long one save waits in total on the partner lookup limit (60 per
@@ -306,7 +310,7 @@ export async function saveShared({
 	 * lookup that waits out the lookup limit up to the cap.
 	 *
 	 * @param {{shareId: string, recipientCloudId: string}} share The partner share.
-	 * @return {Promise<{certificate: string, fingerprint: string}>}
+	 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>}
 	 */
 	const partnerCertificate = async (share) => {
 		const kept = verifiedPartners.get(share.shareId)
@@ -461,7 +465,7 @@ export async function saveShared({
 			federated.set(share.shareId, {
 				shareId: share.shareId,
 				certFingerprint: fingerprintHex(recipient.fingerprint),
-				...(await encryptWhole(partnerValue, recipient.certificate)),
+				...(await encryptWhole(partnerValue, recipient.spki)),
 			})
 		}
 		// Only the shares the user was shown and agreed to are suspended; one
@@ -592,14 +596,15 @@ export async function saveShared({
 }
 
 /**
- * Encrypt a partner share's whole value; the key is always sent.
+ * Encrypt a partner share's whole value to the key of the certificate that
+ * was verified, never to the lookup answer's text; the key is always sent.
  *
  * @param {object} value `{ key, login, additionalFields }` in plain.
- * @param {string} certificate The verified partner certificate.
+ * @param {Uint8Array} spki The verified certificate's SubjectPublicKeyInfo.
  * @return {Promise<object>}
  */
-async function encryptWhole(value, certificate) {
-	const publicKey = await importPublicKey(certificate)
+async function encryptWhole(value, spki) {
+	const publicKey = await importSpkiPublicKey(spki)
 	const out = { key: await rsaEncrypt(String(value.key ?? ''), publicKey) }
 	for (const field of ['login', 'additionalFields']) {
 		out[field] = value[field]

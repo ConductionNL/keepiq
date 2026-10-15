@@ -125,6 +125,17 @@ describe('a value change reaches federated recipients', () => {
 		])
 	})
 
+	it('suspends a share whose chain the server already refused', async () => {
+		const { log } = await save({
+			reject: httpError(502, { message: 'bad_chain' }),
+		})
+
+		expect(log.saves.at(-1).federated).toEqual([])
+		expect(log.saves.at(-1).suspend).toEqual([
+			{ shareId: 'fs-1', reason: 'bad_chain' },
+		])
+	})
+
 	it('saves nothing while the partner cannot be reached', async () => {
 		const { log, result } = await save({
 			reject: httpError(502, { message: 'partner_unreachable' }),
