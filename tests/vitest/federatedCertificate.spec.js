@@ -247,14 +247,6 @@ function derOf(pem) {
 
 /**
  * @param {Uint8Array} der DER bytes.
- * @return {string} A PEM certificate.
- */
-function pemOf(der) {
-	return `-----BEGIN CERTIFICATE-----\n${btoa(String.fromCharCode(...der))}\n-----END CERTIFICATE-----`
-}
-
-/**
- * @param {Uint8Array} der DER bytes.
  * @param {number} offset Where an element starts.
  * @return {{start: number, end: number}} Its value.
  */
