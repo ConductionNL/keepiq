@@ -441,9 +441,12 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
+	 * Only the copy moved; the source is still at the edit's base, which the
+	 * refusal names.
+	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
-	public function testAStaleCopyNamesTheSourceVersionItFound(): void {
+	public function testAStaleCopyWhoseSourceStayedNamesTheSourceBase(): void {
 		$this->bobWritesOnAGrade();
 		$this->rows['c-bob']->setUpdatedAt(new DateTime('2026-10-01T10:00:07+00:00'));
 
