@@ -16,10 +16,7 @@ import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { rsaDecrypt } from '../../src/crypto/rsa.js'
-import {
-	forgetVerifiedPartners,
-	saveShared,
-} from '../../src/services/shareSave.js'
+import { forgetVerifiedPartners, saveShared } from '../../src/services/shareSave.js'
 import { useFederatedShareStore } from '../../src/store/modules/federatedShare.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { shareSaveServer } from '../fixtures/shareSaveServer.js'
