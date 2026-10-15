@@ -174,8 +174,10 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 						e instanceof FederatedCertificateError
 							? e.reason
 							: e?.response?.data?.message
+					// `bad_chain` from the server is the same refusal the browser makes.
 					if (
 						e instanceof FederatedCertificateError
+						|| reason === 'bad_chain'
 						|| reason === 'unknown_recipient'
 						|| reason === 'not_a_partner'
 					) {
