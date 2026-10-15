@@ -36,7 +36,7 @@ class StaleWriteException extends RuntimeException {
 	 * Constructor.
 	 *
 	 * @param Secret $current The secret as it is now
-	 * @param DateTime|null $sourceUpdatedAt The source's version, when the secret is a copy saved through a share-save
+	 * @param DateTime|null $sourceUpdatedAt The source version the conflict stands on, when the secret is a copy saved through a share-save
 	 *
 	 * @return void
 	 */
@@ -54,8 +54,9 @@ class StaleWriteException extends RuntimeException {
 	}//end getCurrent()
 
 	/**
-	 * The source's version a copy-editor's share-save found, so the client can
-	 * keep it with the conflict; null on every other write.
+	 * The source version a copy-editor's conflict stands on: the source's current
+	 * version when it equals the copy's, or else the edit's own source base, so the
+	 * client can keep it with the conflict; null on every other write.
 	 *
 	 * @return DateTime|null
 	 *

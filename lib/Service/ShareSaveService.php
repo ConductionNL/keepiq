@@ -244,7 +244,13 @@ class ShareSaveService {
 			request: $request,
 			step: function () use ($path, $request): void {
 				if ($this->movedOn(row: $path->row, base: $request->baseUpdatedAt) === true) {
-					throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $path->source->getUpdatedAt());
+					// Name the source only as this copy was written with it: a source that moved alone was not in the conflict.
+					$sourceVersion = $request->sourceBaseUpdatedAt;
+					if ($this->movedOn(row: $path->source, base: $path->row->getUpdatedAt()) === false) {
+						$sourceVersion = $path->source->getUpdatedAt();
+					}
+
+					throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $sourceVersion);
 				}
 
 				if ($path->isCopyEditor() === true
@@ -399,12 +405,13 @@ class ShareSaveService {
 
 	/**
 	 * The `stale` refusal of the caller's row. On the copy-editor path it
-	 * names the source's version too, so the client can keep it with the
-	 * conflict without reading it again.
+	 * names a source version too, so the client can keep it with the
+	 * conflict without reading it again: the source's current version only
+	 * when it equals the copy's version, otherwise the edit's source base.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param Secret $current The caller's row as it is now
-	 * @param DateTime|null $sourceVersion The source's version as this save found it
+	 * @param DateTime|null $sourceVersion The source version the conflict stands on
 	 *
 	 * @return StaleWriteException
 	 *

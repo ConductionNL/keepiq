@@ -94,6 +94,7 @@ A queued update that changes a value, login or additional fields MUST be replaye
 - **GIVEN** a queued edit of a copy whose replay was refused with 409 `stale`, because the owner saved the secret meanwhile
 - **WHEN** the user keeps their change, before or after a reload
 - **THEN** the replay MUST send the copy version and the source version that 409 named, and save when neither has moved again
+- **AND** when the copy was written after its source, such as by a plain update of the copy, the 409 names the source version the edit was made from, so keeping the change MAY first be refused with 409 `stale_source` and cost the user one more choice before it saves
 
 #### Scenario: A pending sync from before the change is finished
 
