@@ -49,6 +49,30 @@ class CertificateAuthorityService {
 	private const INTERMEDIATE_LIFETIME_DAYS = 1095;
 
 	/**
+	 * The openssl_csr_sign() options for the root: a CA, whatever the host
+	 * openssl.cnf says.
+	 *
+	 * @var array<string,string>
+	 */
+	private const ROOT_SIGN_OPTIONS = [
+		'digest_alg' => 'sha256',
+		'config' => CertificateIssuanceService::OPENSSL_CONFIG,
+		'x509_extensions' => 'keepiq_root',
+	];
+
+	/**
+	 * The openssl_csr_sign() options for an intermediate: a CA that signs
+	 * only user and application certificates (pathlen 0).
+	 *
+	 * @var array<string,string>
+	 */
+	private const INTERMEDIATE_SIGN_OPTIONS = [
+		'digest_alg' => 'sha256',
+		'config' => CertificateIssuanceService::OPENSSL_CONFIG,
+		'x509_extensions' => 'keepiq_intermediate',
+	];
+
+	/**
 	 * Constructor for CertificateAuthorityService.
 	 *
 	 * @param CACertificateMapper $caCertificateMapper The CA certificate mapper
@@ -145,7 +169,7 @@ class CertificateAuthorityService {
 			ca_certificate: null,
 			private_key: $rootKey,
 			days: self::ROOT_LIFETIME_DAYS,
-			options: ['digest_alg' => 'sha256'],
+			options: self::ROOT_SIGN_OPTIONS,
 			serial: random_int(1, PHP_INT_MAX)
 		);
 
@@ -330,7 +354,7 @@ class CertificateAuthorityService {
 			ca_certificate: null,
 			private_key: $rootKey,
 			days: self::ROOT_LIFETIME_DAYS,
-			options: ['digest_alg' => 'sha256'],
+			options: self::ROOT_SIGN_OPTIONS,
 			serial: random_int(1, PHP_INT_MAX)
 		);
 
@@ -452,7 +476,7 @@ class CertificateAuthorityService {
 			ca_certificate: $rootCert,
 			private_key: $rootKey,
 			days: self::INTERMEDIATE_LIFETIME_DAYS,
-			options: ['digest_alg' => 'sha256'],
+			options: self::INTERMEDIATE_SIGN_OPTIONS,
 			serial: random_int(1, PHP_INT_MAX)
 		);
 

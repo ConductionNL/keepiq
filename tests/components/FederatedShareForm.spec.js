@@ -203,6 +203,17 @@ describe('FederatedShareForm', () => {
 			wrapper.find('[data-testid="federated-share-error"]').text(),
 		).toContain('not one of your partners')
 	})
+
+	it('says the certificate could not be verified when the server refused the chain', async () => {
+		const { wrapper, fetchSecret } = await mountWith({
+			reject: { response: { data: { message: 'bad_chain' } } },
+		})
+
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('could not be verified')
+		expect(fetchSecret).not.toHaveBeenCalled()
+	})
 })
 
 describe('SecretShareDialog and another organisation', () => {
