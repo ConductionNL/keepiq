@@ -22,7 +22,7 @@ When the owner, or a recipient allowed to write the source, updates the value, l
 ## ADDED Requirements
 
 ### Requirement: A shared secret and every copy save in one transaction
-`PUT /api/v1/secrets/{id}/share-save` MUST take the caller's sparse patch with a required `baseUpdatedAt`, the ciphertext for every local copy (`copies`), the whole value for every active partner share (`federated`), and the copies and partner shares left out on purpose (`skipped`, `suspend`). `{id}` MUST be the caller's own row: the source on the owner path, or the caller's copy on the copy-editor path, where `sourceBaseUpdatedAt` is also required. The server MUST write the caller's row, every copy and every partner share in one database transaction, or write nothing. It MUST answer 409 `stale` with the current row as `current` when `{id}` changed since `baseUpdatedAt`, and 409 `stale_source` when the source changed on the copy-editor path. On the copy-editor path both answers MUST carry the source's version as `sourceUpdatedAt`. A refusal of the caller's own row, such as a vault policy, MUST roll back the copies too. A save on the copy-editor path MUST also be recorded in the audit trail on the source, with the caller as actor and the user ids of the holders whose copies were skipped (the owner's when the source itself was skipped).
+`PUT /api/v1/secrets/{id}/share-save` MUST take the caller's sparse patch with a required `baseUpdatedAt`, the ciphertext for every local copy (`copies`), the whole value for every active partner share (`federated`), and the copies and partner shares left out on purpose (`skipped`, `suspend`). `{id}` MUST be the caller's own row: the source on the owner path, or the caller's copy on the copy-editor path, where `sourceBaseUpdatedAt` is also required. The server MUST write the caller's row, every copy and every partner share in one database transaction, or write nothing. It MUST answer 409 `stale` with the current row as `current` when `{id}` changed since `baseUpdatedAt`, and 409 `stale_source` when the source changed on the copy-editor path. On the copy-editor path both answers MUST carry a source version as `sourceUpdatedAt`: `stale_source` the source's current version; `stale` the source's current version only when the copy was written with it (the source has not moved past the copy's `updatedAt`), and otherwise the edit's own `sourceBaseUpdatedAt`, so a `stale` answer never names a source change the conflict does not show. A refusal of the caller's own row, such as a vault policy, MUST roll back the copies too. A save on the copy-editor path MUST also be recorded in the audit trail on the source, with the caller as actor and the user ids of the holders whose copies were skipped (the owner's when the source itself was skipped).
 
 #### Scenario: A copy editor's save is audited on the source
 - GIVEN a secret owned by Alice and shared with Bob, who holds a write grade, and with Carol, who has no vault key
@@ -38,6 +38,11 @@ When the owner, or a recipient allowed to write the source, updates the value, l
 - GIVEN a shared secret that another browser saved after this editor opened it
 - WHEN this editor sends a share-save with the older `baseUpdatedAt`
 - THEN the server MUST answer 409 `stale` with the current row and change nothing
+
+#### Scenario: A stale copy does not name a source that moved alone
+- GIVEN a copy editor's edit of a copy, and a copy and a source that both moved since, the source later than the copy
+- WHEN the copy editor sends a share-save with the older `baseUpdatedAt` and `sourceBaseUpdatedAt`
+- THEN the server MUST answer 409 `stale` with the copy as `current` and the edit's own `sourceBaseUpdatedAt` as `sourceUpdatedAt`, and change nothing
 
 #### Scenario: A copy holder without a write grade is refused
 - GIVEN a recipient whose copy is shared with a read grade

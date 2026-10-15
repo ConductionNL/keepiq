@@ -163,7 +163,7 @@ class ShareSaveController extends OCSController {
 
 	/**
 	 * The body of a `stale` 409: the caller's row as it is now and, on the
-	 * copy-editor path, the source's version.
+	 * copy-editor path, the source version the conflict stands on.
 	 *
 	 * @param StaleWriteException $refusal The refusal
 	 *

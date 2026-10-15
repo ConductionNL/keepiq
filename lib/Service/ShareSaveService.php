@@ -405,12 +405,13 @@ class ShareSaveService {
 
 	/**
 	 * The `stale` refusal of the caller's row. On the copy-editor path it
-	 * names the source's version too, so the client can keep it with the
-	 * conflict without reading it again.
+	 * names a source version too, so the client can keep it with the
+	 * conflict without reading it again: the source's current version only
+	 * when the copy was written with it, otherwise the edit's source base.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param Secret $current The caller's row as it is now
-	 * @param DateTime|null $sourceVersion The source's version as this save found it
+	 * @param DateTime|null $sourceVersion The source version the conflict stands on
 	 *
 	 * @return StaleWriteException
 	 *
