@@ -20,4 +20,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Security
 
+- Sharing with someone at another organisation and enrolling in account recovery now encrypt to the public key of the certificate the browser verified. The browser accepts a certificate or key only as exactly one PEM block with nothing but whitespace around it and nothing after its encoded value, and refuses anything else. (federated-sharing, organisation-account-recovery)
 - Keepiq records its decision not to take part in OpenRegister integration leaves: secret material and vault structure stay inside the vault's own access rules. A test now fails when a register schema declares `linkedTypes` or `mailObjectTemplate`, so the boundary cannot be crossed by accident. (leaf-integrations)

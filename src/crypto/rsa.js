@@ -1,9 +1,14 @@
 /**
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
  * RSA-OAEP-SHA256 encryption/decryption using WebCrypto.
  *
  * Handles chunking for payloads > 446 bytes (RSA-4096 OAEP-SHA256 limit).
  * Format: [4-byte chunk count (big-endian)][512-byte encrypted blocks...]
  */
+
+import { decodePem } from './pem.js'
 
 const RSA_KEY_BITS = 4096
 const RSA_BLOCK_SIZE = 512
@@ -49,18 +54,11 @@ export async function generateKeyPair() {
  * @return {Promise<CryptoKey>} Non-extractable RSA-OAEP private key
  */
 export async function importPrivateKey(pem) {
-	const pemBody = pem
-		.replace(/-----BEGIN PRIVATE KEY-----/, '')
-		.replace(/-----END PRIVATE KEY-----/, '')
-		.replace(/-----BEGIN RSA PRIVATE KEY-----/, '')
-		.replace(/-----END RSA PRIVATE KEY-----/, '')
-		.replace(/\s/g, '')
-
-	const binary = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
+	const { der } = decodePem(pem, ['PRIVATE KEY', 'RSA PRIVATE KEY'])
 
 	return crypto.subtle.importKey(
 		'pkcs8',
-		binary,
+		der,
 		{ name: 'RSA-OAEP', hash: 'SHA-256' },
 		false, // extractable = false — security critical
 		['decrypt'],
@@ -161,26 +159,28 @@ function extractSpkiFromCertificate(certDer) {
  * Accepts either a `SubjectPublicKeyInfo` (`-----BEGIN PUBLIC KEY-----`) or a
  * full X.509 certificate (`-----BEGIN CERTIFICATE-----`). For a certificate the
  * embedded SubjectPublicKeyInfo is extracted before importKey('spki', …), which
- * rejects a raw certificate DER with DataError.
+ * rejects a raw certificate DER with DataError. The PEM must be exactly one
+ * block (see pem.js).
  *
  * @param {string} pem PEM-encoded SPKI public key or X.509 certificate
  * @return {Promise<CryptoKey>}
  */
 export async function importPublicKey(pem) {
-	const isCertificate = /-----BEGIN CERTIFICATE-----/.test(pem)
+	const { label, der } = decodePem(pem, ['PUBLIC KEY', 'CERTIFICATE'])
 
-	const pemBody = pem
-		.replace(/-----BEGIN PUBLIC KEY-----/, '')
-		.replace(/-----END PUBLIC KEY-----/, '')
-		.replace(/-----BEGIN CERTIFICATE-----/, '')
-		.replace(/-----END CERTIFICATE-----/, '')
-		.replace(/\s/g, '')
+	return importSpkiPublicKey(
+		label === 'CERTIFICATE' ? extractSpkiFromCertificate(der) : der,
+	)
+}
 
-	let spki = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
-	if (isCertificate === true) {
-		spki = extractSpkiFromCertificate(spki)
-	}
-
+/**
+ * Import SubjectPublicKeyInfo bytes for encryption, such as the key of a
+ * certificate that was just verified.
+ *
+ * @param {Uint8Array} spki DER SubjectPublicKeyInfo
+ * @return {Promise<CryptoKey>}
+ */
+export async function importSpkiPublicKey(spki) {
 	return crypto.subtle.importKey(
 		'spki',
 		spki,

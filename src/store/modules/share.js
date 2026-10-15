@@ -321,7 +321,23 @@ export const useShareStore = defineStore('share', {
 			if (publicCertificate == null || publicCertificate === '') {
 				throw new Error('Recipient has no active encryption suite')
 			}
-			const publicKey = await importPublicKey(publicCertificate)
+			return this.encryptWithKey(
+				snapshot,
+				await importPublicKey(publicCertificate),
+			)
+		},
+
+		/**
+		 * Encrypt a plaintext snapshot with an imported public key, such as the
+		 * key of a federated recipient's verified certificate.
+		 *
+		 * @param {object}    snapshot  Plaintext field map.
+		 * @param {CryptoKey} publicKey The recipient's RSA-OAEP public key.
+		 * @return {Promise<Record<string,string>>}
+		 *
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+		 */
+		async encryptWithKey(snapshot, publicKey) {
 			const out = {}
 			for (const [field, value] of Object.entries(snapshot)) {
 				if (value == null || value === '') {
