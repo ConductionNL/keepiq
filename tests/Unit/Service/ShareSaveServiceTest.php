@@ -456,6 +456,43 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
+	 * The source moved alone past the edit's base, so the conflict never
+	 * showed that change: the refusal names the edit's own source base.
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testAStaleCopyDoesNotNameASourceVersionThatMovedAlone(): void {
+		$this->bobWritesOnAGrade();
+		$this->rows['c-bob']->setUpdatedAt(new DateTime('2026-10-01T10:00:07+00:00'));
+		$this->rows['src']->setUpdatedAt(new DateTime('2026-10-01T10:00:09+00:00'));
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertInstanceOf(StaleWriteException::class, $refusal);
+		$this->assertSame('c-bob', $refusal->getCurrent()->getId());
+		$this->assertSame(self::BASE, $refusal->getSourceUpdatedAt()?->format(DATE_ATOM));
+		$this->assertSame([], $this->log);
+	}
+
+	/**
+	 * A save stamps the source and the copy with one version, so the copy
+	 * shown in the conflict carries the source's current version.
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testAStaleCopyNamesTheSourceVersionItWasWrittenWith(): void {
+		$this->bobWritesOnAGrade();
+		$this->rows['c-bob']->setUpdatedAt(new DateTime('2026-10-01T10:00:07+00:00'));
+		$this->rows['src']->setUpdatedAt(new DateTime('2026-10-01T10:00:07+00:00'));
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertInstanceOf(StaleWriteException::class, $refusal);
+		$this->assertSame('2026-10-01T10:00:07+00:00', $refusal->getSourceUpdatedAt()?->format(DATE_ATOM));
+		$this->assertSame([], $this->log);
+	}
+
+	/**
 	 * The source was locked and moved before the copy refused, but that move
 	 * rolls back, so the version named is the one the source keeps.
 	 *

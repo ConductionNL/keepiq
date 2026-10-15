@@ -244,7 +244,13 @@ class ShareSaveService {
 			request: $request,
 			step: function () use ($path, $request): void {
 				if ($this->movedOn(row: $path->row, base: $request->baseUpdatedAt) === true) {
-					throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $path->source->getUpdatedAt());
+					// Name the source only as this copy was written with it: a source that moved alone was not in the conflict.
+					$sourceVersion = $request->sourceBaseUpdatedAt;
+					if ($this->movedOn(row: $path->source, base: $path->row->getUpdatedAt()) === false) {
+						$sourceVersion = $path->source->getUpdatedAt();
+					}
+
+					throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $sourceVersion);
 				}
 
 				if ($path->isCopyEditor() === true
