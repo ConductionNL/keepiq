@@ -132,7 +132,7 @@ The extension SHALL copy the decrypted username or password, or a freshly genera
 - **GIVEN** a matching item and the clear delay set to 30 seconds
 - **WHEN** the user picks Copy password
 - **THEN** the clipboard holds the password
-- **AND** 30 seconds later the clipboard is cleared if it still holds that value
+- **AND** 30 seconds later the clipboard is overwritten
 
 #### Scenario: Generate password and copy
 - **GIVEN** an unlocked vault

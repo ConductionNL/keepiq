@@ -28,7 +28,7 @@
 
 - [ ] 4.1 Write `src/menus.ts`: build the "Keepiq" menu on `editable` contexts (Autofill submenu capped at 10 plus "Open Keepiq", "No matching logins", Copy username, Copy password, Generate password and copy, "Unlock vault" when locked); rebuild on install, tab activation, active tab URL change, lock change and sync; honour the show-context-menu setting
 - [ ] 4.2 Handle `commands.onCommand` for `autofill_login`: fill the last used or single candidate, else open the popup; add `openPopupOrPopout()` to `src/browser-action.ts` with the `windows.create` fallback
-- [ ] 4.3 Add `entrypoints/offscreen/` (plain TypeScript, no React) and `writeFromBackground()` in `src/clipboard.ts`: offscreen document on Chrome guarded by `browser.offscreen`, direct `navigator.clipboard` on Firefox, clear via `browser.alarms` after the settings delay only if the clipboard still holds the value
+- [ ] 4.3 Add `entrypoints/offscreen/` (plain TypeScript, no React) and `writeFromBackground()` in `src/clipboard.ts`: offscreen document on Chrome guarded by `browser.offscreen`, direct `navigator.clipboard` on Firefox, clear via `browser.alarms` after the settings delay
 
 ## 5. Login capture
 

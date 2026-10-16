@@ -1740,7 +1740,7 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "Name, date added and date changed were built before; sorting by date last used added: oc_keepiq_secrets.last_used_at is set when the holder opens the value (lib/Service/SecretService.php) or the extension fills it (POST /api/v1/extension/used/{id}, SecretOrganisationController::used, 404 for a row the caller does not hold); SecretList filter menu > Sort by Last used.",
+        "evidence": "Name, date added and date changed were built before; sorting by date last used added: oc_keepiq_secrets.last_used_at is set when the holder opens the value (lib/Service/SecretService.php); SecretList filter menu > Sort by Last used.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets), Filter and sort menu",
         "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",

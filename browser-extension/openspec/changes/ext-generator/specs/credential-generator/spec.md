@@ -117,7 +117,7 @@ The output box SHALL show the current value in a monospace font with digits and 
 - **GIVEN** the clipboard-clear setting is 30 seconds
 - **WHEN** the user clicks Copy
 - **THEN** the value is on the clipboard
-- **AND** the clipboard is cleared 30 seconds later if it still holds that value
+- **AND** the clipboard is overwritten 30 seconds later
 
 #### Scenario: Copy without a clear setting
 - **GIVEN** the clipboard-clear setting is Never

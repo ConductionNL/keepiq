@@ -74,6 +74,7 @@ There is no remote wipe, so these checks stand in for it:
 - **Names, URLs and folders** are stored in plain text on disk, as the server returns them. They reveal which sites you have accounts on, though not the secrets.
 - **While the vault is unlocked,** anyone at the machine can use it, up to the timeout.
 - **Revocation takes effect on the next contact with the server:** at most the 15-minute sync interval, or sooner when the popup opens.
+- **A share that becomes use-only** shows as use-only after the next full sync: within an hour and a quarter, or at once after unlock or Sync now. The server doesn't change the copy's `updatedAt`, so the quick probe misses it.
 - **Offline caching turned off by an admin:** the extension still caches the vault on disk. Whether it should keep it in session storage instead is still open.
 
 ## Supply chain

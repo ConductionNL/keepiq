@@ -97,7 +97,7 @@ For a row with `blocked: true` the detail SHALL show the header, the `blockedRea
 - **THEN** the reason and the web app link are shown and `item.decrypt` is never sent
 
 ### Requirement: Use-only item detail
-For a row with `useOnly: true` (`openspec/specs/use-only-shares` in the Keepiq repo) the detail SHALL request only `login` through `item.decrypt` and show the header, a "Login credentials" section with the Username (value, copy) when present and the note "Its owner lets you sign in with this, but not view or copy it.", the Websites section and the Metadata section. It MUST NOT show or copy the `key` or the additional fields, so it has no password row, no TOTP code, no card, identity, passkey or notes sections and no additional fields.
+For a row with `useOnly: true` (`openspec/specs/use-only-shares` in the Keepiq repo) the detail SHALL request only `login` through `item.decrypt` and show the header, a "Login credentials" section with the Username (value, copy) when present and the note "Its owner doesn't let you view or copy this.", the Websites section and the Metadata section. It MUST NOT show or copy the `key` or the additional fields, so it has no password row, no TOTP code, no card, identity, passkey or notes sections and no additional fields.
 
 #### Scenario: Open a use-only login
 - **GIVEN** a use-only login item with a username
@@ -113,7 +113,7 @@ The detail SHALL show "Created" and "Updated" from `createdAt` and `updatedAt` a
 - **THEN** both dates appear in the metadata section in the user's locale
 
 ### Requirement: Edit and Delete placeholders
-The detail SHALL show Edit and Delete buttons at the bottom, disabled with the tooltip "Available in a later update" until ext-vault-edit enables them. For blocked items they stay disabled after ext-vault-edit as well.
+The detail SHALL show Edit and Delete buttons at the bottom, disabled with the tooltip "Available in a later update" until ext-vault-edit enables them. For blocked items they stay disabled after ext-vault-edit as well, and for use-only items Edit does, since the server refuses to change a use-only copy.
 
 #### Scenario: Buttons before ext-vault-edit
 - **GIVEN** ext-vault-edit is not implemented

@@ -83,14 +83,14 @@ The **Vault** tab lists your items alphabetically. Above the list you can narrow
 Each item has three actions:
 
 - **Launch** opens the item's website in a new tab.
-- **Copy** copies the user name, the password or the current one-time code.
+- **Copy** copies the user name, the password or the current one-time code. Copied values are cleared from the clipboard after 30 seconds.
 - **More** has **View**. Its other actions, Edit, Clone, Move to folder and Delete, are shown but come in a later update.
 
 The extension shows a type icon for each item. It does not load website icons, so no site learns which accounts you have.
 
 ### Opening an item
 
-Click an item to see its details. Passwords and other secret fields are hidden; the eye button shows them and the copy button copies them. The back arrow takes you to the list as you left it.
+Click an item to see its details. Passwords and other secret fields are hidden; the eye button shows them and the copy button copies them. An item shared with you as use-only shows only its user name and website. The back arrow takes you to the list as you left it.
 
 An authenticator item shows its current code and counts down to the next one.
 
@@ -120,5 +120,5 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
 - **Adding and editing** items in the extension.
 - **Generator and Send**, as in the web app.
-- **Settings:** the lock delay, a PIN, clearing the clipboard and the theme.
+- **Settings:** the lock delay, a PIN, when the clipboard is cleared and the theme.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

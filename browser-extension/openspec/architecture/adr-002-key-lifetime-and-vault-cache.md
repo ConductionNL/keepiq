@@ -90,7 +90,7 @@ The intended future path is a favicon stored on the secret itself in Keepiq, as 
 
 ## Clipboard
 
-Fill is preferred over copy. Copy auto-clears the clipboard after a configurable delay, default 30 seconds (Bitwarden defaults to off), offered with the same options (10 seconds to 5 minutes, or never). Keepiq's users include non-technical staff, who are better served by a clear they didn't have to turn on.
+Fill is preferred over copy. Copy auto-clears the clipboard after a configurable delay, default 30 seconds (Bitwarden defaults to off), offered with the same options (10 seconds to 5 minutes, or never). Keepiq's users include non-technical staff, who are better served by a clear they didn't have to turn on. The clear overwrites the clipboard without checking what it holds, since checking needs the `clipboardRead` permission and its install warning.
 
 ## Consequences
 

@@ -107,7 +107,7 @@ type ClipboardWrite = { kind: 'clipboard.write'; text: string }
 - [`action.openPopup` unavailable] → Popout window fallback.
 - [`tldts` bundle size] → Import from `tldts` core only; still smaller than a stale hand-rolled list going wrong.
 - [Page scripts spoofing `fill.*` or `capture.*` messages] → Background checks `sender.tab`, `sender.frameId`, `sender.url` origin on every arm; bar messages must come from the extension origin.
-- [Clipboard clear races with the user's own copy] → Clear only if the clipboard still holds the copied value (Bitwarden behaviour).
+- [Clipboard clear races with the user's own copy] → Clear unconditionally; checking first needs `clipboardRead` (SECURITY.md § Clipboard).
 - [Insecure confirm dialog can be spoofed by the page] → Only affects whether the user is asked; the page cannot obtain the credential without the affirmative reply reaching the background, and the popup path asks in extension UI.
 
 ## Open Questions

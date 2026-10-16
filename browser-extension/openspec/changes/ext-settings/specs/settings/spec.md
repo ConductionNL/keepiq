@@ -159,7 +159,7 @@ The extension SHALL offer the clipboard clear delay options Never, 10 seconds, 2
 #### Scenario: Delay applied
 - **GIVEN** the delay is 20 seconds
 - **WHEN** the user copies a password from a vault item
-- **THEN** the clipboard is cleared 20 seconds later if it still holds that value
+- **THEN** the clipboard is overwritten 20 seconds later
 
 ### Requirement: Notification prompts and excluded domains
 The extension SHALL store per account in `storage.local` the toggles Ask to add login (default on) and Ask to update existing login (default on) and an Excluded domains list (default empty). The Excluded domains view offers Add current site, which adds the active tab's host, a free-text field that accepts a hostname, and a remove control per entry. Duplicate and empty entries are rejected.
