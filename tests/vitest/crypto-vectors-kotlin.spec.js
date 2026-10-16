@@ -148,9 +148,7 @@ describe('passkeys between the phone and the browser extension (task 5.3)', () =
 			origin: r.origin,
 			crossOrigin: false,
 		})
-		const { authData } = await readAttestation(
-			fromBase64(r.attestationObject),
-		)
+		const { authData } = await readAttestation(fromBase64(r.attestationObject))
 		expect(authData[32]).toBe(0x45)
 		expect(Array.from(authData.slice(37, 53))).toEqual(new Array(16).fill(0))
 		expect(Array.from(authData.slice(55, 71))).toEqual(
