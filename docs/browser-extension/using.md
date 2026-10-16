@@ -110,7 +110,16 @@ Passkeys are not added here; they are made when you sign up on a website with on
 
 A passkey item only lets you change its name, folder and website.
 
-An item someone shared with you keeps the limits they set. One shared for signing in only shows its user name but never its password or fields, and can't be edited, cloned or moved. One shared from another organisation can only be moved, and one whose access ends on a date can't be cloned. A password you change on an item you shared doesn't reach the people you shared it with yet; change it in the Keepiq web app so they get it too.
+An item someone shared with you keeps the limits they set. One shared for signing in only shows its user name but never its password or fields, and can't be edited, cloned or moved. One shared from another organisation can only be moved, and one whose access ends on a date can't be cloned.
+
+When you change the password, user name or fields of an item you own and shared, the extension saves it for everyone it is shared with in one go, directly, through a group or team folder, or at a partner organisation, before it says **Item saved**. Either everyone gets the change or nothing is saved: when a save fails, the form stays open with your change and the reason, and you save again. A new name, website or folder stays your own.
+
+- **Team editor or delegate:** when you edit an item through a team folder where you may write, or as the owner's delegate, the owner's item and the copies in your own organisation are updated too. Recipients at a partner organisation get it with the owner's next save, and the item says so.
+- **Partner organisation can't be reached:** nothing is saved, and the form names the recipients there. **Save without them** saves anyway and pauses sharing with them until the item is shared with them again, and the item says so.
+- **Partner certificate can't be verified, or their organisation no longer accepts the share:** sharing with them is paused, the save goes through, and the item says so; the Keepiq web app shows the share.
+- **Your server can't share with partner organisations:** an item shared with one can't be saved in the extension; ask your administrator.
+- **Part of the item the form doesn't show:** for an item shared with a partner organisation, such as a card with a detail the form has no field for, the extension can't confirm they would get the item exactly as you saw it, so nothing is saved; make the change in the Keepiq web app.
+- **Shared with you without the right to change it for everyone:** your change stays in your own copy, and the item says so.
 
 ### Deleting an item
 

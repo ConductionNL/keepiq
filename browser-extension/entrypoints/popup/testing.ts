@@ -101,6 +101,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 				return item ? { ok: true, value: item } : { ok: false, error: { code: 'not_found' } }
 			}
 			case 'item.create': return { ok: true, value: { id: 'new' } }
+			// A save that reached everyone carries no `shareSave`.
 			case 'item.update': return { ok: true, value: { id: message.id } }
 			case 'item.delete':
 			case 'folder.rename':
@@ -126,9 +127,11 @@ export function fakeBackground(options: FakeBackground = {}) {
 	return reply
 }
 
+/** Its `typeName` is what `types` calls its type, unless given. */
 export function editableItem(overrides: Partial<EditableItem> = {}): EditableItem {
+	const typeId = overrides.typeId ?? 't-login'
 	return {
-		id: 'i1', typeId: 't-login', name: 'GitHub', url: 'https://github.com', folderId: null, key: 'hunter2', login: 'alice',
+		id: 'i1', typeId, typeName: types.find((type) => type.id === typeId)?.name, name: 'GitHub', url: 'https://github.com', folderId: null, key: 'hunter2', login: 'alice',
 		additionalFields: {}, updatedAt: '2026-03-02T10:00:00Z', ...overrides,
 	}
 }

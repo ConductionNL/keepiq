@@ -36,8 +36,8 @@ export function noticeText(notice: NoticeCode): string {
 	}
 }
 
-/** What was being written, since a 400 or 409 means something different for each. */
-export type WriteContext = 'item' | 'edit' | 'folderName' | 'folderDelete'
+/** What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from. */
+export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete'
 
 /** `undefined` is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
@@ -51,6 +51,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'invalid': return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 		case 'conflict':
 			if (context === 'edit') return i18n.t('writeErrors.stale')
+			if (context === 'open') return i18n.t('writeErrors.unmatched')
 			if (context === 'folderName') return i18n.t('writeErrors.duplicateFolder')
 			return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 		case 'not_found': return folder ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
@@ -61,11 +62,21 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'offline': return i18n.t('writeErrors.offline')
 		case 'server_error': return i18n.t('writeErrors.serverError')
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
+		case 'stale_source': return i18n.t('writeErrors.staleSource')
+		case 'incomplete': return i18n.t('writeErrors.incomplete')
+		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
+		case 'unverified': return i18n.t('writeErrors.unverified')
+		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
+		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
+		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
 		case 'locked':
 		case 'unknown':
 		default: return i18n.t('errors.unknown')
 	}
 }
+
+/** Partner recipients named in a sentence of the catalog's language. */
+export const cloudIdList = (cloudIds: string[]) => new Intl.ListFormat(language(), { type: 'conjunction' }).format(cloudIds)
 
 export function fieldErrorText(error: FieldError): string {
 	switch (error.code) {

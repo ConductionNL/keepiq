@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
-import type { AccountSummary, ItemMeta, PopupTab } from '@/src/messages'
+import type { AccountSummary, ItemMeta, PopupTab, ShareSaveNote } from '@/src/messages'
 import { folderPath } from '@/src/vault/list'
 import { webUrl } from '@/src/vault/url'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -49,6 +49,8 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const [form, setForm] = useState<FormPage | null>(null)
 	const [section, setSection] = useState<SettingsSection | null>(null)
 	const [dialog, setDialog] = useState<ShellDialog | null>(null)
+	// In memory only, so it is gone once the popup closes (share-sync).
+	const [shareSave, setShareSave] = useState<{ id: string; note: ShareSaveNote } | null>(null)
 	// A fresh object per call, so the same message twice restarts the timer.
 	const [toast, setToast] = useState<{ text: string } | null>(null)
 	const [footer, setFooter] = useState<HTMLElement | null>(null)
@@ -121,6 +123,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const open = useCallback((id: string) => {
 		leaveList()
 		setDetailId(id)
+		setShareSave((current) => (current?.id === id ? current : null))
 	}, [leaveList])
 
 	function select(next: PopupTab) {
@@ -145,10 +148,11 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		else setToast({ text: i18n.t('vault.popoutFailed') })
 	}
 
-	/** The write's reply came after its sync, so one re-read shows the result. */
-	async function saved(id: string) {
+	/** The write's reply came after its sync, so one re-read shows the result. A note opens the item's detail, which shows it. */
+	async function saved(id: string, note?: ShareSaveNote) {
 		await reload()
-		setDetailId(form?.mode === 'edit' ? detailId : id)
+		setDetailId(form?.mode === 'edit' && !note ? detailId : id)
+		setShareSave(note ? { id, note } : null)
 		setForm(null)
 		setToast({ text: i18n.t('item.saved') })
 	}
@@ -177,7 +181,16 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 						</div>
 						{form && <ItemForm key={`${form.mode}:${form.id ?? ''}`} mode={form.mode} id={form.id} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />}
 						{/* Unmounted under a panel, so no decrypted value waits in the hidden DOM; it decrypts again on return. */}
-						{detail && !form && !hidden && <ItemDetail key={detail.id} item={detail} type={snapshot.types.find((t) => t.id === detail.typeId)} folders={snapshot.folders} webAppUrl={snapshot.webAppUrl} />}
+						{detail && !form && !hidden && (
+							<ItemDetail
+								key={detail.id}
+								item={detail}
+								type={snapshot.types.find((t) => t.id === detail.typeId)}
+								folders={snapshot.folders}
+								webAppUrl={snapshot.webAppUrl}
+								shareSave={shareSave?.id === detail.id ? shareSave.note : undefined}
+							/>
+						)}
 					</>
 				)
 				: <Loading />

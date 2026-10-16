@@ -1,0 +1,48 @@
+## 1. Messages and the partner verifier
+
+- [x] 1.1 Add `ShareSaveNote`, `withoutUnreachable` on `item.update`, `partners` on `WriteFailure` and the codes `stale_source`, `incomplete`, `bad_certificate`, `unverified`, `partner_unreachable`, `partner_lookup_limit` and `federation_unavailable` from design.md to `src/messages.ts`, and change the `item.update` reply to `WriteResult<{ id: string; shareSave?: ShareSaveNote }>`; answer it in `entrypoints/popup/testing.ts`.
+- [x] 1.2 Port `src/crypto/federatedCertificate.js` of the Keepiq app to `src/crypto/federated-certificate.ts` (`verifyFederatedCertificate`, `canonicalCloudId`, `FederatedCertificateError`), export it from `src/crypto/index.ts`, with its test against `../tests/fixtures/federation-chain.json`, read through a helper beside `vectors` in `src/testing/vectors.ts`.
+  - Accepts the pinned chain and returns the leaf's SHA-256 as lowercase hex and its SPKI, which the save encrypts to through `importSpki`.
+  - Allows 5 minutes of clock skew before `notBefore`, refuses a self-issued intermediate and a second common name, and runs every case of the web app's fixture.
+  - Refuses text outside the one PEM block and bytes after the DER, here and in `importPublicKey`.
+  - Requires `cA=TRUE`, `keyCertSign` when `keyUsage` is present, and the `pathLenConstraint` above the leaf, a chain of exactly the intermediate and the root, no unknown critical or repeated extension, and every certificate's validity, against `src/testing/ca-constraints-chain.json`.
+  - Refuses another root (`untrusted_root`), a broken link (`bad_chain`), another name (`name_mismatch`), a time outside validity (`not_valid_now`) and garbage (`malformed`), with the same cases as `tests/vitest/federatedCertificate.spec.js`.
+  - Bounds-checks every DER length, like `extractSpki` in `src/crypto/rsa.ts`.
+
+## 2. Background save
+
+- [x] 2.1 Create `src/vault/share-save.ts` with `shareSave`, a port of the web app's `saveShared` (`src/services/shareSave.js`), with its test.
+  - Reads `write-context` and takes the owner path, the copy-editor path (`owner`, `write` or `manage` on a copy) or a plain `PUT` of the editor's copy, replying `own_copy`.
+  - Sends the patch with `baseUpdatedAt` and empty lists first; on 409 `incomplete` fills what is required, drops what is not, and sends again, failing with `incomplete` after the third answer.
+- [x] 2.2 Local copies: certificates from `POST /api/v1/shares/recipient-certificates` in batches of at most 100 distinct ids, `ownerCertificate` for the owner holder, one copy entry per holder with exactly the patch's value fields.
+  - `login` cleared sends `null`; an unchanged field is absent from the entry.
+  - A recipient answered `shareable: false`, or an owner without `ownerCertificate`, goes under `skipped` with `no_vault_key`; a refused skip reads that certificate again once.
+  - A certificate that does not import fails with `bad_certificate`.
+  - Each ciphertext opens with the test vectors' private key (`envelope` in `src/testing/vectors.ts`) standing in for the recipient.
+- [x] 2.3 Copy-editor path: `sourceBaseUpdatedAt` from the form's record, or from `write-context` without one; entries for the source and every other copy the answer requires; no partner shares; `ownerOnly` from the reply.
+- [x] 2.4 Partner shares, owner path: per required share `POST /api/v1/federation/recipient-certificate` with its `recipientCloudId`, verify against that cloud id, encrypt the whole value to the verified leaf, and list it under `federated` with `certFingerprint`.
+  - The whole value is the typed fields plus the other fields decrypted from the form's `editOpened` record; a field it does not hold in full, a missing record, or one whose `updatedAt` isn't the save's `baseUpdatedAt` fails with `unverified` before any lookup.
+  - A verifier refusal, `unknown_recipient`, `not_a_partner` or the server's 502 `bad_chain` (read from `ApiError.message`) goes under `suspend` with that reason.
+  - 502 `partner_unreachable` fails with `partner_unreachable` and the shares not reached, unless `withoutUnreachable` names them, which puts them under `suspend`.
+  - 429 fails with `partner_lookup_limit`, 409 `federation_unavailable` with `federation_unavailable`; any other failure, also a 200 not in the server's shape, fails with its write code and suspends nothing.
+  - Verified certificates are kept in background memory for 5 minutes per account, share id and cloud id, and forgotten on lock, logout and account switch.
+- [x] 2.5 Staging: above 100 entries per list, full chunks with `stage: {final: false}` and the final call with the patch and `stage: {id, final: true}`; dropping a staged entry starts a new stage, and `stage_unknown` restarts it as a round.
+- [x] 2.6 In `fetchItem` for edit, read `write-context` and keep its `sourceUpdatedAt` and the row's `updatedAt` beside the opened ciphertext in the form's `editOpened` record.
+- [x] 2.7 In `updateItem`, send a body with `key`, `login` or `additionalFields` through `shareSave` and any other through `PUT /api/v1/secrets/{id}`; drop the form's record after a success; reply `{ id, shareSave }` when there is a note and `{ id }` otherwise, with tests for a rename, a move, a passkey edit, an unshared item and each failure code. Pass `withoutUnreachable` from `item.update` in `src/background/requests.ts`, dropping one that isn't a list of strings.
+
+## 3. Popup
+
+- [x] 3.1 Add the share-save texts to `locales/en.yml` and `locales/nl.yml` and the new codes to `writeErrorText` in `entrypoints/popup/errors.ts`.
+  - `stale_source` "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.", `incomplete` "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.", `bad_certificate` "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.", `unverified` "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.", `partner_unreachable` "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.", `partner_lookup_limit` "Too many partner lookups. Nothing was saved; try again in a minute.", `federation_unavailable` "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.", `saveWithout` "Save without them".
+  - Notes: `ownCopy` "Only your copy changed. The owner and the others it is shared with keep the old value.", `ownerOnly` "Saved. Recipients at partner organisations get this change when the owner next saves it.", `suspended` "Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.", `paused` "Sharing with {cloudIds} is paused until you share this item with them again."
+  - Cloud ids are joined with `Intl.ListFormat` in the catalog's language.
+- [x] 3.2 In `ItemForm`, show Save without them beside a `partner_unreachable` failure, which sends `item.update` again with the same draft and, as `withoutUnreachable`, those share ids plus every one agreed to earlier for the same password, username and fields; Try again after a failure resends that while the values are unchanged; with its tests.
+- [x] 3.3 Create `components/ShareSaveNote.tsx` for the note on the item's detail, with its test in English and Dutch; pass `shareSave` from `ItemForm` through `onSaved`, hold it in Shell for that item only, and show it on `ItemDetail`, with tests that a save that reached everyone shows only "Item saved". No import of `src/api` or `src/crypto` (ADR-004).
+
+## 4. Docs and checks
+
+- [x] 4.1 Update ADR-003 (rows for the four sharing routes and their answers from design.md), ADR-002 and `SECURITY.md` (the save trusts the server's recipient list; partner certificates are verified against the owner server's pin; partners get only what the form showed), and `ARCHITECTURE.md` (modules, the writes row of the messages table, the Writes flow).
+- [x] 4.2 Replace the shared-edit text in `../docs/browser-extension/using.md` with what the extension now does, including the notes and Save without them.
+- [x] 4.3 Update ext-autofill's `capture.update`: it saves through `updateItem`, and an item with partner shares fails with `unverified`, which the prompt words as "change it in the edit form or the Keepiq web app".
+- [x] 4.4 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`; no `chrome.*` in executable code, no decrypted value or certificate written to storage or sent to the popup.
+- [ ] 4.5 Walk every scenario of both specs against the dev backend in Chrome and Firefox: a direct, a group and a team-folder recipient opening the new value in the Keepiq web app, a `write`-grade editor, a `read`-grade viewer, a recipient added mid-save, and a partner recipient when a partner instance is set up.

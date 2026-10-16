@@ -2,8 +2,8 @@ import { toBase64 } from '@/src/crypto/base64'
 import type { NextcloudUser, SuiteRow } from './types'
 
 export class ApiError extends Error {
-	/** `code`: the body's machine-readable reason, e.g. a vault policy's, when the server sends one. */
-	constructor(readonly status: number, message: string, readonly code?: string) {
+	/** `code`: the body's machine-readable reason, e.g. a vault policy's, when the server sends one. `body`: the parsed answer, as a share-save's `incomplete` lists. */
+	constructor(readonly status: number, message: string, readonly code?: string, readonly body?: unknown) {
 		super(message)
 	}
 
@@ -84,7 +84,7 @@ export function createClient(account: ClientAccount) {
 		// A 428 names its reason as `error`, a 403 as `code`; `forbidden` names none.
 		const { error, code } = (json ?? {}) as { error?: unknown; code?: unknown }
 		const reason = [error, code].find((value): value is string => typeof value === 'string' && value !== 'forbidden')
-		throw new ApiError(response.status, message, reason)
+		throw new ApiError(response.status, message, reason, json)
 	}
 
 	return {

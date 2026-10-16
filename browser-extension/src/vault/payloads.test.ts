@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { typeIcon } from './icons'
-import { cardBrand, cardLast4, parseObject, text } from './payloads'
+import { cardBrand, cardLast4, parseObject, parsePayload, text } from './payloads'
 
 describe('parseObject', () => {
 	it('accepts only JSON objects', () => {
 		expect(parseObject('{"a":"b"}')).toEqual({ a: 'b' })
 		for (const raw of [undefined, '', '[1]', '"x"', '1', 'null', '{']) expect(parseObject(raw)).toBeNull()
+	})
+})
+
+describe('parsePayload', () => {
+	it('reads members only from a key that starts a JSON object', () => {
+		expect(parsePayload('{"number":"4111"}')).toEqual({ number: '4111' })
+		for (const key of ['', ' {"number":"4111"}', '[1]', '{broken', 'legacy text']) expect(parsePayload(key)).toBeNull()
 	})
 })
 

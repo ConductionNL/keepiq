@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { decodeEnvelope, encodeEnvelope, IV_LENGTH, SALT_LENGTH } from './envelope'
 import { decryptPrivateKeyPem, deriveUnlockKey, InvalidMasterPassword } from './kdf'
-import { extractSpki, importPrivateKey, importPublicKey, pemToPkcs8, rsaDecrypt, rsaEncrypt } from './rsa'
-import { envelope, vectors } from '@/src/testing/vectors'
+import { fromBase64, toBase64 } from './base64'
+import { extractSpki, importPrivateKey, importPublicKey, importSpki, pemToPkcs8, rsaDecrypt, rsaEncrypt } from './rsa'
+import { envelope, federationChain, vectors } from '@/src/testing/vectors'
 
 // Written by the Keepiq web app, so passing them means byte compatibility.
 const fields = vectors('fields')
@@ -56,6 +57,53 @@ describe('rsa fields', async () => {
 			}
 		})
 	}
+
+	it('imports a SubjectPublicKeyInfo as an encrypt-only key', async () => {
+		const publicKey = await importSpki(extractSpki(derOf(envelope.certificatePem)))
+		expect(publicKey.usages).toEqual(['encrypt'])
+		expect(publicKey.extractable).toBe(false)
+		expect(await rsaDecrypt(await rsaEncrypt('x', publicKey), privateKey)).toBe('x')
+	})
+
+	it('rejects a SubjectPublicKeyInfo that is no SEQUENCE rather than throwing', async () => {
+		let pending: Promise<CryptoKey> | undefined
+		expect(() => (pending = importSpki(new Uint8Array([0x04, 0x00])))).not.toThrow()
+		await expect(pending).rejects.toThrow(/Malformed/)
+	})
+})
+
+const derOf = (pem: string) => fromBase64(pem.replace(/-----[A-Z ]+-----|\s/g, ''))
+const wrap = (label: string, der: Uint8Array) => `-----BEGIN ${label}-----\n${toBase64(der)}\n-----END ${label}-----`
+
+describe('PEM', () => {
+	const cert: string = envelope.certificatePem
+	const spki: string = envelope.publicKeyPem
+	// Another certificate, so a parser that takes the wrong one is caught.
+	const other = federationChain().mallory
+
+	it.each([
+		['text before the block', `${toBase64(derOf(other))}\n${cert}`],
+		['text after the block', `${cert}\n${toBase64(derOf(other))}`],
+		['two blocks', `${cert}\n${other}`],
+		['DER after the certificate', wrap('CERTIFICATE', new Uint8Array([...derOf(cert), ...derOf(other)]))],
+		['DER after the public key', wrap('PUBLIC KEY', new Uint8Array([...derOf(spki), 0x30, 0x00]))],
+		['mismatched labels', cert.replace('END CERTIFICATE', 'END PUBLIC KEY')],
+		['another label', wrap('PRIVATE KEY', derOf(cert))],
+		['characters outside base64', cert.replace('\n', '\n!')],
+	])('refuses a public key with %s by rejecting', async (_, pem) => {
+		await expect(importPublicKey(pem)).rejects.toThrow(/Malformed/)
+	})
+
+	it('refuses a private key with text around it or DER after it', () => {
+		const pem: string = envelope.privateKeyPem
+		expect(() => pemToPkcs8(`${pem}\n${pem}`)).toThrow(/Malformed/)
+		expect(() => pemToPkcs8(wrap('PRIVATE KEY', new Uint8Array([...derOf(pem), 0x30, 0x00])))).toThrow(/Malformed/)
+	})
+
+	it('allows whitespace around the block', async () => {
+		await expect(importPublicKey(`\r\n  ${cert.replace(/\n/g, '\r\n')}\n\n`)).resolves.toBeDefined()
+		expect(pemToPkcs8(`${envelope.privateKeyPem}\n`)).toEqual(pemToPkcs8(envelope.privateKeyPem))
+	})
 })
 
 describe('malformed input', () => {

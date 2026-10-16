@@ -36,7 +36,7 @@
 - [ ] 5.2 Write `src/autofill/capture-queue.ts` in the background: verify sender, drop when locked or excluded or the ask settings are off, compare against decrypted `login` and `key` of matching items to pick add, update or nothing, hold the entry in memory keyed by tab id with a five minute expiry, drop on tab close and lock, show on `tabs.onUpdated` complete within the same base domain, hide on leaving it
 - [ ] 5.3 Add `entrypoints/notification/` (bar UI as a vanilla DOM bundle, no React, per ADR-004) and `src/autofill/notification-host.ts` (iframe in a closed shadow root, fixed at the top of the page): the bar loads its state with `capture.state`, renders add and update modes, folder dropdown, Save, Update, Never for this site, close, and the saved and error states
   - Bar never receives the password; `capture.*` decisions are accepted only from the extension origin sender
-- [ ] 5.4 Implement `capture.save` (encrypt, `POST /api/v1/secrets` with host name, origin url, `login` type, folder, then sync), `capture.update` (`GET` then `PUT /api/v1/secrets/{id}` with only `key`, 404 falls back to add), and `capture.dismiss` with `never` appending the base domain to excluded domains
+- [ ] 5.4 Implement `capture.save` (encrypt, `POST /api/v1/secrets` with host name, origin url, `login` type, folder, then sync), `capture.update` (through `updateItem` in `src/vault/write.ts`, so a patch of only `key` reaches every copy through share-save as `ext-share-sync` specifies, and an item with partner shares fails with `unverified`; 404 falls back to add), and `capture.dismiss` with `never` appending the base domain to excluded domains
 
 ## 6. Verify
 

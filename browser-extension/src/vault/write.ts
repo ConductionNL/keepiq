@@ -1,19 +1,17 @@
 /** Item and folder writes for the active account. All encryption happens here, never in the popup (ADR-004). */
-import { ApiError, createClient, Offline, SessionRevoked, VaultWriteLocked, type Client } from '@/src/api/client'
+import { ApiError, createClient, type Client } from '@/src/api/client'
 import type { CachedSuite, FolderRow, OpenSecretRow, SecretRow } from '@/src/api/types'
 import { getAccount, getActiveAccountId, suiteKey, type AccountRecord } from '@/src/accounts/store'
 import { importPublicKey, rsaDecrypt, rsaEncrypt, toBase64 } from '@/src/crypto'
-import type { EditableItem, FolderChildren, FolderDeletePlan, ItemDraft, ItemPatch, VaultWriteError, WriteResult } from '@/src/messages'
-import { getKey } from './key-store'
+import type { EditableItem, FolderChildren, FolderDeletePlan, ItemDraft, ItemPatch, ShareSaveNote, WriteResult } from '@/src/messages'
+import { fieldTexts, shownInFull } from './fields'
+import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
+import { readWriteContext, shareSave, VALUE_FIELDS, type Opened, type Values } from './share-save'
 import { readSnapshot } from './store'
 import { recordOutcome, syncAfterWrite } from './sync'
-
-class WriteFailure extends Error {
-	constructor(readonly error: VaultWriteError) {
-		super(error.code)
-	}
-}
+import type { StoredSecretRow } from './types'
+import { WriteFailure, writeError } from './write-error'
 
 interface Context {
 	account: AccountRecord
@@ -75,23 +73,6 @@ async function matchingKey(certificate: string, privateKey: CryptoKey): Promise<
 	return key
 }
 
-function writeError(error: unknown): VaultWriteError {
-	if (error instanceof WriteFailure) return error.error
-	if (error instanceof SessionRevoked) return { code: 'session_revoked' }
-	if (error instanceof VaultWriteLocked) return { code: 'write_locked' }
-	if (error instanceof Offline) return { code: 'offline' }
-	if (error instanceof ApiError) {
-		if (error.status === 400) return { code: 'invalid' }
-		// A blocked suite, a folder someone else owns and a read-only copy are all a bare refusal; only a policy names itself.
-		if (error.refused) return { code: error.code ? 'policy' : 'forbidden' }
-		if (error.status === 404) return { code: 'not_found' }
-		if (error.status === 409) return { code: 'conflict' }
-		if (error.status >= 500) return { code: 'server_error' }
-	}
-	console.error('[keepiq] write failed', error)
-	return { code: 'unknown' }
-}
-
 /** Runs one request, records whether the server answered, and replies once the sync holds the change. */
 async function run<T>(write: (context: Context) => Promise<T>, then: 'sync' | 'reply', accountId: string | undefined): Promise<WriteResult<T>> {
 	let ctx: Context
@@ -115,12 +96,97 @@ async function run<T>(write: (context: Context) => Promise<T>, then: 'sync' | 'r
 const secretPath = (id: string) => `/api/v1/secrets/${encodeURIComponent(id)}`
 const folderPath = (id: string) => `/api/v1/folders/${encodeURIComponent(id)}`
 
-async function typeNameOf(accountId: string, typeId: string | null): Promise<string | undefined> {
-	return (await readSnapshot(accountId))?.types.find((type) => type.id === typeId)?.name
+/** From one snapshot read, since a sync may rename types in between. */
+async function typeNamesOf(accountId: string, typeIds: Array<string | null>): Promise<Array<string | undefined>> {
+	const types = (await readSnapshot(accountId))?.types
+	return typeIds.map((typeId) => types?.find((type) => type.id === typeId)?.name)
 }
+
+const typeNameOf = async (accountId: string, typeId: string | null) => (await typeNamesOf(accountId, [typeId]))[0]
 
 function isRestricted(row: Pick<SecretRow, 'useOnly' | 'readOnly' | 'accessExpiresAt'>, purpose: 'edit' | 'clone'): boolean {
 	return row.useOnly === true || row.readOnly === true || (purpose === 'clone' && !!row.accessExpiresAt)
+}
+
+const cachedRow = async (accountId: string, id: string) => (await readSnapshot(accountId))?.secrets.find((secret) => secret.id === id)
+
+const holds = (cached: StoredSecretRow | undefined, row: OpenSecretRow): cached is OpenSecretRow =>
+	!!cached && !cached.blocked && VALUE_FIELDS.every((field) => (row[field] || null) === (cached[field] || null))
+
+/**
+ * Every item is encrypted to the same key, so a fetched ciphertext the cache does not hold for this item may be another's, and the form would save it back and share it as typed (ADR-002).
+ * One sync lets a row written since the last one through.
+ */
+async function cachedMatch(accountId: string, id: string, row: OpenSecretRow): Promise<OpenSecretRow> {
+	let cached = await cachedRow(accountId, id)
+	if (holds(cached, row)) return cached
+	// A sync never throws, so an outage would otherwise read as a swapped ciphertext.
+	const { lastError } = await syncAfterWrite(accountId)
+	if (lastError) throw new WriteFailure({ code: lastError === 'network' ? 'offline' : lastError === 'busy' ? 'write_locked' : 'server_error' })
+	cached = await cachedRow(accountId, id)
+	if (holds(cached, row)) return cached
+	if (!cached) throw new WriteFailure({ code: 'not_found' })
+	if (cached.blocked) throw new WriteFailure({ code: 'blocked', reason: cached.blockedReason })
+	console.error('[keepiq] the server answered', id, 'with ciphertext the vault does not hold for it; not opening it')
+	throw new WriteFailure({ code: 'conflict' })
+}
+
+/**
+ * What each edit form opened, by its `recordId`, for its save to send partners exactly that (`share-save.ts`).
+ * Not the cache, since a sync in between may put another item's ciphertext in the row (ADR-002). In session storage, since the MV3 worker stops while a form is open.
+ */
+type FormRecord = Opened & { id: string; recordId: string }
+
+/** A form closed without saving leaves its entry behind, and a ciphertext may be large. */
+const RECORD_LIMIT = 10
+
+/** The list is read, changed and written back, so two forms opening at once must not interleave. */
+let records: Promise<unknown> = Promise.resolve()
+function queued<T>(task: () => Promise<T>): Promise<T> {
+	const next = records.then(task)
+	records = next.catch(() => undefined)
+	return next
+}
+
+async function readRecords(key: string): Promise<FormRecord[]> {
+	try {
+		const list: unknown = JSON.parse(await sessionValues.get(key) ?? '[]')
+		return Array.isArray(list) ? list as FormRecord[] : []
+	} catch {
+		return []
+	}
+}
+
+/** Sets the record of one edit form, or drops it for `undefined`. */
+function swapRecord(accountId: string, id: string, recordId: string, value: Opened | undefined): Promise<void> {
+	return queued(async () => {
+		const key = editOpenedKey(accountId)
+		const list = await readRecords(key)
+		const others = list.filter((entry) => entry.id !== id || entry.recordId !== recordId)
+		if (!value && others.length === list.length) return
+		await sessionValues.set({ [key]: JSON.stringify((value ? [...others, { ...value, id, recordId }] : others).slice(-RECORD_LIMIT)) })
+		// A lock that cleared the list while this ran must not find it back.
+		if (!(await hasKey(accountId))) await sessionValues.remove([key])
+	})
+}
+
+async function findRecord(accountId: string, id: string, recordId: string): Promise<Opened | undefined> {
+	const entry = (await readRecords(editOpenedKey(accountId))).find((candidate) => candidate.id === id && candidate.recordId === recordId)
+	if (typeof entry?.shown !== 'object' || entry.shown === null || typeof entry.updatedAt !== 'string') return undefined
+	return { shown: entry.shown, updatedAt: entry.updatedAt, sourceUpdatedAt: typeof entry.sourceUpdatedAt === 'string' ? entry.sourceUpdatedAt : null }
+}
+
+/** Session storage may refuse a write, as when full; the form then opens or saves without its record. */
+function unrecorded(error: unknown): undefined {
+	console.error('[keepiq] could not update what an edit form opened; going without', error)
+	return undefined
+}
+
+/** Only what the form shows in full under the type it opens with and the cached one; an empty field hides nothing. */
+async function recordOpened(accountId: string, id: string, recordId: string, row: OpenSecretRow, typeNames: Array<string | undefined>, plain: Values, sourceUpdatedAt: string | null): Promise<void> {
+	const shown = VALUE_FIELDS.filter((field) => !row[field] || (plain[field] !== undefined && typeNames.every((name) => shownInFull(field, plain[field]!, name))))
+	// Refused, the form opens without it, and a save of it that needs the record for partners fails with `unverified`.
+	await swapRecord(accountId, id, recordId, { shown: Object.fromEntries(shown.map((field) => [field, row[field] || null])), updatedAt: row.updatedAt, sourceUpdatedAt }).catch(unrecorded)
 }
 
 /** Fresh from the server, not the cache: a stale `additionalFields` saved back would drop members (ADR-002). */
@@ -135,7 +201,7 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 			// A row on a blocked suite is refused, not sent blocked; the sync marks it, with its reason as a code.
 			if (error instanceof ApiError && error.refused) {
 				await syncAfterWrite(account.id)
-				const cached = (await readSnapshot(account.id))?.secrets.find((secret) => secret.id === id)
+				const cached = await cachedRow(account.id, id)
 				if (cached?.blocked) throw new WriteFailure({ code: 'blocked', reason: cached.blockedReason })
 			}
 			throw error
@@ -143,27 +209,41 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 		// A use-only value is never shown, a read-only copy never changed, and a clone of any
 		// restricted copy would be a permanent, unrestricted one (Keepiq `use-only-shares`, `expiring-shares`).
 		if (isRestricted(row, purpose)) throw new WriteFailure({ code: 'restricted' })
-		const passkey = await typeNameOf(account.id, row.typeId) === 'passkey'
+		const cached = await cachedMatch(account.id, id, row)
+		// The source version this edit is made from, which a save through a copy must name.
+		const sourceUpdatedAt = purpose === 'edit' ? (await readWriteContext(client, id)).sourceUpdatedAt : null
+		const typeNames = await typeNamesOf(account.id, [row.typeId, cached.typeId])
+		// Either side naming a passkey withholds it, so a swapped type id does not open the credential.
+		const passkey = typeNames.includes('passkey')
+		let item: EditableItem
+		let fields: string | null
 		try {
-			const additional = row.additionalFields ? parseObject(await rsaDecrypt(row.additionalFields, privateKey)) : {}
+			fields = row.additionalFields ? await rsaDecrypt(row.additionalFields, privateKey) : null
+			const additional = fields === null ? {} : parseObject(fields)
 			if (!additional) throw new Error('additionalFields is not an object')
-			const item: EditableItem = {
-				id: row.id,
+			item = {
+				// The id checked against the cache, since the form saves to this one.
+				id,
 				typeId: row.typeId ?? '',
+				// So the form never offers the withheld key for editing.
+				typeName: passkey ? 'passkey' : typeNames[0],
 				name: row.name,
 				url: row.url,
 				folderId: row.folderId,
 				key: passkey ? '' : await rsaDecrypt(row.key, privateKey),
 				login: row.login ? await rsaDecrypt(row.login, privateKey) : null,
-				additionalFields: Object.fromEntries(Object.entries(additional).map(([name, value]) => [name, typeof value === 'string' ? value : JSON.stringify(value)])),
+				additionalFields: fieldTexts(additional),
 				updatedAt: row.updatedAt,
 			}
-			if (passkey) item.keyWithheld = true
-			return item
 		} catch (error) {
 			console.error('[keepiq] could not open', id, 'for editing', error)
 			throw new WriteFailure({ code: 'unreadable' })
 		}
+		if (purpose === 'edit') {
+			item.recordId = crypto.randomUUID()
+			await recordOpened(account.id, id, item.recordId, row, typeNames, { key: passkey ? undefined : item.key, login: item.login, additionalFields: fields }, sourceUpdatedAt)
+		}
+		return item
 	}, 'reply', accountId)
 }
 
@@ -191,11 +271,14 @@ export function createItem(draft: ItemDraft, accountId?: string): Promise<WriteR
 	}, 'sync', accountId)
 }
 
-/** A sparse `PUT`: only what the patch holds is encrypted and sent. */
-export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string, accountId?: string): Promise<WriteResult<{ id: string }>> {
+/**
+ * A sparse save: only what the patch holds is encrypted and sent. A changed password, username or field goes through share-save, which writes every copy in the same request or nothing (`share-save.ts`);
+ * anything else is a plain `PUT`.
+ */
+export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string, accountId?: string, recordId?: string, withoutUnreachable: readonly string[] = []): Promise<WriteResult<{ id: string; shareSave?: ShareSaveNote }>> {
 	return run(async (ctx) => {
-		const { account, client } = ctx
-		const cached = (await readSnapshot(account.id))?.secrets.find((secret) => secret.id === id)
+		const { account, client, privateKey } = ctx
+		const cached = await cachedRow(account.id, id)
 		// Its limits and type decide what may be written, so an item the cache does not hold is not.
 		if (!cached) throw new WriteFailure({ code: 'not_found' })
 		// What the server enforces too, refused here so no ciphertext is made for it.
@@ -209,16 +292,31 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		if (patch.typeId) body.typeId = patch.typeId
 		if (patch.url !== undefined) body.url = patch.url || null
 		if (patch.folderId !== undefined) body.folderId = patch.folderId || null
-		let key: Promise<CryptoKey> | undefined
-		const encrypt = async (value: string) => rsaEncrypt(value, await (key ??= publicKey(ctx)))
+		// Kept as typed for the copies, which get it encrypted to each holder.
+		const plain: Values = {}
 		// A passkey's credential is only ever written by a passkey ceremony.
 		const passkey = await typeNameOf(account.id, cached.typeId) === 'passkey'
-		if (typeof patch.key === 'string' && !passkey) body.key = await encrypt(patch.key)
-		if (patch.login !== undefined) body.login = patch.login ? await encrypt(patch.login) : null
-		if (patch.additionalFields) body.additionalFields = await encrypt(JSON.stringify(patch.additionalFields))
-		if (baseUpdatedAt) body.baseUpdatedAt = baseUpdatedAt
-		await client.keepiq('PUT', secretPath(id), body)
-		return { id }
+		if (typeof patch.key === 'string' && !passkey) plain.key = patch.key
+		if (patch.login !== undefined) plain.login = patch.login || null
+		if (patch.additionalFields) plain.additionalFields = JSON.stringify(patch.additionalFields)
+		const valueChange = VALUE_FIELDS.some((field) => plain[field] !== undefined)
+		// share-save refuses a save without the version it was made from.
+		if (valueChange && !baseUpdatedAt) throw new WriteFailure({ code: 'invalid' })
+		let key: Promise<CryptoKey> | undefined
+		for (const field of VALUE_FIELDS) {
+			const value = plain[field]
+			if (value !== undefined) body[field] = value === null ? null : await rsaEncrypt(value, await (key ??= publicKey(ctx)))
+		}
+		let note: ShareSaveNote | undefined
+		if (valueChange) {
+			const opened = recordId ? await findRecord(account.id, id, recordId) : undefined
+			note = await shareSave(client, privateKey, { accountId: account.id, id, patch: body, plain, baseUpdatedAt: baseUpdatedAt!, opened, withoutUnreachable: new Set(withoutUnreachable) })
+		} else {
+			await client.keepiq('PUT', secretPath(id), baseUpdatedAt ? { ...body, baseUpdatedAt } : body)
+		}
+		// Its form closes; a failed save keeps it, so saving again still sends what the form showed.
+		if (recordId) await swapRecord(account.id, id, recordId, undefined).catch(unrecorded)
+		return note ? { id, shareSave: note } : { id }
 	}, 'sync', accountId)
 }
 

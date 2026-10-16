@@ -14,7 +14,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 ## Modules
 
 - `src/api/`: the Keepiq client, the only code that calls `fetch`. Basic auth on the app password, `credentials: 'omit'`, a 401 that logs the account out ([ADR-003](openspec/architecture/adr-003-keepiq-api-contract.md)).
-- `src/crypto/`: PBKDF2 key derivation, AES-GCM envelope and RSA-OAEP, byte compatible with the web app (tested against `../tests/vectors/crypto/`).
+- `src/crypto/`: PBKDF2 key derivation, AES-GCM envelope and RSA-OAEP, byte compatible with the web app (tested against `../tests/vectors/crypto/`). `federated-certificate.ts` verifies a partner recipient's certificate chain, ported from the web app.
 - `src/accounts/`:
   - `store.ts`: the account list, behind one write queue.
   - `settings.ts`: the per-account timeout settings and the policy clamp.
@@ -30,7 +30,10 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `list.ts`: sorting, filtering and the folder tree.
   - `payloads.ts`: parses card, identity and passkey payloads.
   - `fields.ts`: the item form's model, limits and validation; pure, so the popup may use it.
-  - `write.ts`: item and folder writes, the only code that encrypts.
+  - `write.ts`: item and folder writes, the only code that encrypts to the user's own key.
+  - `share-save.ts`: saves a value change with every other copy of a shared item in one share-save.
+  - `verified-partners.ts`: partner certificates a failed save verified, kept in memory for 5 minutes.
+  - `write-error.ts`: maps a failed write to the code the popup words.
   - `url.ts`: the one rule for turning an item URL into a link.
   - `icons.ts`: type icons.
 - `src/background/`:
@@ -51,7 +54,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
 | Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
-| Popup → background, writes | `item.fetch`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write |
+| Popup → background, writes | `item.fetch`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch` and `folder.children` reply without one |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
 | Content → background | `page_ready` | None |
@@ -78,6 +81,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `unlockedAt.<id>`, `lastInteractionAt` | session | Timeout bookkeeping |
 | `popup:lastTab` | session | The popup tab to reopen |
 | `addAccountDraft` | session | Server URL and username while adding an account |
+| `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
 
@@ -106,7 +110,9 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 - **The popup sends plaintext,** the background encrypts with the cached suite's certificate, once it proved that certificate matches the unlocked key and the server's active suite is still that one.
 - **Each write names its account,** and is refused when that is no longer the active one.
 - **Shared copies keep their limits** (use-only, read-only, expiring) in the popup and again in the background.
-- **Edit and Clone fetch the item fresh** from the server; Edit saves the changed fields with `baseUpdatedAt`, so a newer version is not overwritten.
+- **Edit and Clone fetch the item fresh** from the server and open it only when its ciphertext matches the vault cache, after one sync on a mismatch (ADR-002); Edit saves the changed fields with `baseUpdatedAt`, so a newer version is not overwritten, and with its fetch's `recordId`, so the save vouches only for what its own form showed.
+- **A changed `key`, `login` or `additionalFields` saves through share-save**, the editor's row and every other copy in one transaction: `write-context` picks the owner path (local copies and partner shares), the copy-editor path (the source and the other copies) or a plain `PUT` of the editor's copy only. The first call carries empty lists; a 409 `incomplete` names what to encrypt for, at most three rounds. Partners get the typed fields plus what the form's `editOpened` record showed, never a fresh row. Any other edit is a plain `PUT`.
+- **A refused save writes nothing** and keeps the form open; when the reply to the final call is lost, the server wrote everything or nothing. Nothing about a save outlives the request but verified partner certificates, kept in background memory for 5 minutes and forgotten on lock, logout and account switch, and the server's version check orders concurrent saves. The `item.update` reply carries `shareSave` when the item's detail has a note to show.
 - **Every write records** whether the server answered, which drives the same offline flag as sync.
 - **A successful write runs a full sync** and replies after it, waiting for a sync that started earlier.
 

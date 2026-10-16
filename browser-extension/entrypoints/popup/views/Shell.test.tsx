@@ -343,3 +343,101 @@ describe('item writes', () => {
 		expect((await title()).textContent).toBe('Vault')
 	})
 })
+
+describe('the share-save note after a save', () => {
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+	const toast = () => document.querySelector('.toast')?.textContent
+	const notes = () => [...document.querySelectorAll('.banner--warning')].map((banner) => banner.textContent)
+	const OWN_COPY = 'Only your copy changed. The owner and the others it is shared with keep the old value.'
+
+	/** Answers each save of i1 with the next of `shareSaves`; `undefined` is a save that reached everyone. */
+	function background(...shareSaves: unknown[]) {
+		const options = {
+			snapshot: snapshotReply({ items: [itemMeta(), itemMeta({ id: 'i2', name: 'GitLab', url: 'https://gitlab.com' })] }),
+			decrypted: { i1: { login: 'alice', key: 'pw' }, i2: { login: 'alice', key: 'pw' } },
+			items: { i1: editableItem() },
+			replies: {
+				'item.update': () => {
+					const shareSave = shareSaves.shift()
+					return { ok: true, value: shareSave === undefined ? { id: 'i1' } : { id: 'i1', shareSave } }
+				},
+			},
+		}
+		const sent = fakeBackground(options)
+		return { sent, reopen: () => fakeBackground(options) }
+	}
+
+	async function editUsername(user: ReturnType<typeof userEvent.setup>) {
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await user.type(await screen.findByLabelText('Username'), '2')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
+	}
+
+	it('shows only "Item saved" when everyone got the change', async () => {
+		background(undefined)
+		render(<App />)
+		await editUsername(userEvent.setup())
+		expect(toast()).toBe('Item saved')
+		expect(notes()).toEqual([])
+	})
+
+	it.each([
+		['only the editor\'s copy changed', { scope: 'own_copy' }, OWN_COPY],
+		['partners stay with the owner', { scope: 'copy', ownerOnly: true }, 'Saved. Recipients at partner organisations get this change when the owner next saves it.'],
+		['partners were suspended', { scope: 'source', suspended: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.Open the Keepiq web app'],
+		['partners were saved without', { scope: 'source', paused: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused until you share this item with them again.'],
+	])('notes on the item\'s detail that %s, beside "Item saved"', async (_, shareSave, text) => {
+		background(shareSave)
+		render(<App />)
+		await editUsername(userEvent.setup())
+		expect(toast()).toBe('Item saved')
+		expect(notes()).toEqual([text])
+	})
+
+	it('keeps the note for that item, and drops it once another item\'s detail opens', async () => {
+		background({ scope: 'own_copy' })
+		render(<App />)
+		const user = userEvent.setup()
+		await editUsername(user)
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		expect(notes()).toEqual([OWN_COPY])
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(await screen.findByRole('button', { name: /^GitLab/ }))
+		expect(notes()).toEqual([])
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		expect(notes()).toEqual([])
+	})
+
+	it('shows no note in a reopened popup, and asks the background for none', async () => {
+		const { reopen } = background({ scope: 'own_copy' })
+		render(<App />)
+		const user = userEvent.setup()
+		await editUsername(user)
+		expect(notes()).toHaveLength(1)
+		cleanup()
+		const sent = reopen()
+		render(<App />)
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		expect((await title()).textContent).toBe('View item')
+		expect(notes()).toEqual([])
+		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'popup.lastTab.set'].includes(kind))).toEqual([])
+	})
+
+	it('drops the note once a later save of the item reaches everyone', async () => {
+		const { sent } = background({ scope: 'own_copy' }, undefined)
+		render(<App />)
+		const user = userEvent.setup()
+		await editUsername(user)
+		expect(notes()).toHaveLength(1)
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await user.type(await screen.findByLabelText('Username'), '3')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(sentOf(sent, 'item.update')).toHaveLength(2))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
+		expect(notes()).toEqual([])
+	})
+})

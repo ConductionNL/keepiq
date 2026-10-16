@@ -43,7 +43,7 @@ For items of type totp the detail SHALL parse the decrypted `key` as an `otpauth
 - **THEN** "Invalid authenticator key" is shown and no code is displayed or copyable
 
 ### Requirement: Websites section
-When the item has a `url` the detail SHALL show a "Website" entry with launch and copy actions using the same launch rules as the list card. Bitwarden's multiple URIs collapse to Keepiq's single `url`.
+When the item has a `url` the detail SHALL show a "Website" entry with launch and copy actions using the same launch rules as the list card. A totp, card, identity or note item with a `login` SHALL show its Username (value, copy) there too, under the title "Autofill options", as the edit form does; a passkey never shows it. Bitwarden's multiple URIs collapse to Keepiq's single `url`.
 
 #### Scenario: Launch from detail
 - **GIVEN** an item with url `https://example.com`
@@ -67,7 +67,7 @@ The detail SHALL show a "Notes" section with multi-line, unmasked text when the 
 - **THEN** the Notes section shows the text with line breaks preserved and no Login credentials section is shown
 
 ### Requirement: Card and identity sections
-For type card the detail SHALL parse the decrypted `key` as `{number, expiry, cvv, pin, cardholder}` and render Cardholder and Expiry in plain text, Number, CVV and PIN masked with reveal and copy, and show the brand and last four digits derived in memory from the number. For type identity it SHALL parse `{firstName, lastName, address, phone, email, bsn}` and render all fields in plain text except BSN, which is masked with reveal and copy. A payload that does not parse shows "Could not read this item" and no fields.
+For type card the detail SHALL parse the decrypted `key` as `{number, expiry, cvv, pin, cardholder}` and render Cardholder and Expiry in plain text, Number, CVV and PIN masked with reveal and copy, and show the brand and last four digits derived in memory from the number. For type identity it SHALL parse `{firstName, lastName, address, phone, email, bsn}` and render all fields in plain text except BSN, which is masked with reveal and copy. A `key` that does not start with `{` or does not parse as a JSON object is shown as one secret, masked with reveal and copy, as the edit form shows it.
 
 #### Scenario: Card detail
 - **GIVEN** a card item with a Visa number ending 1111

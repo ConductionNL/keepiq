@@ -143,6 +143,9 @@ async function perform(message: PopupRequest): Promise<PopupReplies[PopupRequest
 	}
 }
 
+const isString = (value: unknown): value is string => typeof value === 'string'
+const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString)
+
 /** A write without the account it was meant for is refused, so a stale window never writes elsewhere. */
 async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrite['kind']]> {
 	const accountId = message.accountId
@@ -153,7 +156,8 @@ async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrit
 		case 'item.create':
 			return createItem(message.draft, accountId)
 		case 'item.update':
-			return updateItem(message.id, message.patch ?? {}, message.baseUpdatedAt, accountId)
+			return updateItem(message.id, message.patch ?? {}, message.baseUpdatedAt, accountId, isString(message.recordId) ? message.recordId : undefined,
+				isStrings(message.withoutUnreachable) ? message.withoutUnreachable : undefined)
 		case 'item.delete':
 			return deleteItem(message.id, accountId)
 		case 'folder.create':

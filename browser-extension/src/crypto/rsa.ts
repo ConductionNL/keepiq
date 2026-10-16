@@ -4,12 +4,15 @@ const RSA_BLOCK_SIZE = 512
 const RSA_CHUNK_SIZE = 446
 const RSA_OAEP = { name: 'RSA-OAEP', hash: 'SHA-256' }
 
-function pemBody(pem: string): Uint8Array<ArrayBuffer> {
-	return fromBase64(pem.replace(/-----(BEGIN|END) [A-Z ]+-----/g, '').replace(/\s/g, ''))
+/** Exactly one block and nothing around it, so no second key rides along with the one a caller checked. */
+export function decodePem(pem: string): { label: string; der: Uint8Array<ArrayBuffer> } {
+	const match = /^\s*-----BEGIN ([A-Z ]+)-----([A-Za-z0-9+/=\s]+)-----END \1-----\s*$/.exec(pem)
+	if (!match) throw new Error('Malformed PEM: expected exactly one block')
+	return { label: match[1]!, der: fromBase64(match[2]!.replace(/\s/g, '')) }
 }
 
 export function pemToPkcs8(pem: string): Uint8Array<ArrayBuffer> {
-	return pemBody(pem)
+	return single(decodePem(pem).der)
 }
 
 export function importPrivateKey(pkcs8: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
@@ -39,10 +42,19 @@ function readDerLength(der: Uint8Array, offset: number): { length: number; conte
 	return { length, contentStart }
 }
 
+const SEQUENCE = 0x30
+
+/** One SEQUENCE and nothing after it: trailing bytes would be a second, unchecked value. */
+function single(der: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> {
+	if (der[0] !== SEQUENCE) throw new Error('Malformed DER: not a SEQUENCE')
+	const { length, contentStart } = readDerLength(der, 1)
+	if (contentStart + length !== der.length) throw new Error('Malformed DER: bytes after the end')
+	return der
+}
+
 /** The SubjectPublicKeyInfo of an X.509 certificate: the TBS field after `subject`. */
 export function extractSpki(certDer: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> {
-	const SEQUENCE = 0x30
-	if (certDer[0] !== SEQUENCE) throw new Error('Not a DER SEQUENCE (certificate expected)')
+	single(certDer)
 	const outer = readDerLength(certDer, 1)
 	if (certDer[outer.contentStart] !== SEQUENCE) throw new Error('Malformed certificate: tbsCertificate not a SEQUENCE')
 	const tbs = readDerLength(certDer, outer.contentStart + 1)
@@ -50,6 +62,7 @@ export function extractSpki(certDer: Uint8Array<ArrayBuffer>): Uint8Array<ArrayB
 	const fields: { tag: number; start: number; end: number }[] = []
 	for (let pos = tbs.contentStart; pos < tbsEnd;) {
 		const { length, contentStart } = readDerLength(certDer, pos + 1)
+		if (contentStart + length > tbsEnd) throw new Error('Malformed certificate: field past the tbsCertificate')
 		fields.push({ tag: byteAt(certDer, pos), start: pos, end: contentStart + length })
 		pos = contentStart + length
 	}
@@ -59,11 +72,17 @@ export function extractSpki(certDer: Uint8Array<ArrayBuffer>): Uint8Array<ArrayB
 	return certDer.slice(spki.start, spki.end)
 }
 
-/** Accepts an X.509 certificate PEM (the suite's `certificate`) or an SPKI PEM. */
-export function importPublicKey(pem: string): Promise<CryptoKey> {
-	const der = pemBody(pem)
-	const spki = pem.includes('BEGIN CERTIFICATE') ? extractSpki(der) : der
-	return crypto.subtle.importKey('spki', spki, RSA_OAEP, false, ['encrypt'])
+/** Async, so a key that isn't one DER SEQUENCE rejects like any other that doesn't import. */
+export async function importSpki(spki: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+	return crypto.subtle.importKey('spki', single(spki), RSA_OAEP, false, ['encrypt'])
+}
+
+/** Accepts an X.509 certificate PEM (the suite's `certificate`) or an SPKI PEM; async, so a malformed one rejects too. */
+export async function importPublicKey(pem: string): Promise<CryptoKey> {
+	const { label, der } = decodePem(pem)
+	if (label === 'CERTIFICATE') return importSpki(extractSpki(der))
+	if (label === 'PUBLIC KEY') return importSpki(der)
+	throw new Error('Malformed PEM: expected a certificate or a public key')
 }
 
 /** `[uint32 BE chunk count][512-byte block] * count`, base64; 446-byte UTF-8 chunks (ADR-003). */

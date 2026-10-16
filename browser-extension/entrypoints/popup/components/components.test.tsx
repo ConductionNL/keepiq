@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -14,9 +14,11 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { FolderTree } from './FolderTree'
 import { Header } from './Header'
 import { TextArea } from './TextArea'
+import { TextField } from './TextField'
 import { TypeSelect } from './TypeSelect'
 import { MaskedField } from './MaskedField'
 import { PageFooter } from './PageFooter'
+import { SearchField } from './SearchField'
 import { Select } from './Select'
 import { TabBar } from './TabBar'
 import { Toast } from './Toast'
@@ -163,6 +165,17 @@ describe('MaskedField', () => {
 		expect(toast).toHaveBeenCalledWith('CVV copied')
 	})
 
+	it.each([['CR', 'line1\rline2'], ['CRLF', 'line1\r\nline2']])('shows a %s value on its own lines, and copies it as stored', async (_, value) => {
+		const user = userEvent.setup()
+		const writeText = fakeClipboard()
+		vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(null as never)
+		render(<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast: vi.fn() }}><MaskedField label="Key" value={value} masked /></ShellContext.Provider>)
+		await user.click(screen.getByRole('button', { name: 'Show key' }))
+		expect(document.querySelector('.field-row__value')!.textContent).toBe('line1\nline2')
+		await user.click(screen.getByRole('button', { name: 'Copy key' }))
+		expect(writeText).toHaveBeenCalledWith(value)
+	})
+
 	it('shows a plain value with only copy', () => {
 		render(<MaskedField label="Username" value="alice" />)
 		expect(screen.getByText('alice')).toBeTruthy()
@@ -228,6 +241,34 @@ describe('AdditionalFieldsEditor', () => {
 		expect(screen.queryByLabelText('Field name')).toBeNull()
 	})
 
+	it.each([
+		['LF', 'v1\nv2', 'v1\nv2!'],
+		['CRLF', 'v1\r\nv2', 'v1\r\nv2!'],
+		['CR', 'v1\rv2', 'v1\rv2!'],
+	])('keeps the %s lines of a value through an edit, masked until shown', async (_, value, sent) => {
+		const onChange = vi.fn()
+		const field = customField('recovery', value)
+		render(<AdditionalFieldsEditor fields={[field]} errors={{}} onChange={onChange} />)
+		expect(document.body.textContent).not.toContain('v1')
+		expect(screen.getByRole('group', { name: 'recovery' })).toBeTruthy()
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Show recovery' }))
+		const area = screen.getByLabelText('recovery') as HTMLTextAreaElement
+		expect([area.tagName, area.value]).toEqual(['TEXTAREA', value])
+		// happy-dom hands a text area's value back unchanged, where a browser gives LF.
+		fireEvent.change(area, { target: { value: 'v1\nv2!' } })
+		expect(onChange).toHaveBeenCalledWith([{ ...field, value: sent }])
+	})
+
+	it('keeps a value in its text area, and the focus there, once its last line break is deleted', async () => {
+		render(<Editor initial={[customField('recovery', 'v1\nv2')]} />)
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Show recovery' }))
+		const area = screen.getByLabelText('recovery')
+		area.focus()
+		fireEvent.change(area, { target: { value: 'v1v2' } })
+		expect(screen.getByLabelText('recovery')).toBe(area)
+		expect(document.activeElement).toBe(area)
+	})
+
 	it('shows the errors it is given on their row', () => {
 		const field = customField('Login', 'x')
 		render(<AdditionalFieldsEditor fields={[field]} errors={{ [`field.${field.id}.name`]: { code: 'reserved' } }} onChange={() => {}} />)
@@ -283,6 +324,62 @@ describe('TextArea', () => {
 		await userEvent.setup().type(area, 'a')
 		expect(onChange).toHaveBeenCalledWith('a')
 	})
+
+	it('when concealed, keeps the value out of the page until shown, and the toggle focused', async () => {
+		const user = userEvent.setup()
+		render(<TextArea label="Password" value={'line1\nline2'} onChange={vi.fn()} concealed />)
+		expect(screen.queryByRole('textbox')).toBeNull()
+		expect(document.body.textContent).not.toContain('line1')
+		await user.click(screen.getByRole('button', { name: 'Show password' }))
+		expect((screen.getByRole('textbox', { name: 'Password' }) as HTMLTextAreaElement).value).toBe('line1\nline2')
+		const hide = screen.getByRole('button', { name: 'Hide password' })
+		expect([hide.getAttribute('aria-pressed'), document.activeElement]).toEqual(['true', hide])
+		await user.click(hide)
+		expect(screen.queryByRole('textbox')).toBeNull()
+	})
+
+	it('when concealed, names the dots by its label and ties its error to them', () => {
+		render(<TextArea label="Password" value={'line1\nline2'} onChange={vi.fn()} error="Too long (max 65536 bytes)" concealed />)
+		const dots = screen.getByLabelText('Password')
+		expect(screen.getByRole('group', { name: 'Password' })).toBe(dots)
+		expect(dots.textContent).toBe('••••••••')
+		expect(document.getElementById(dots.getAttribute('aria-describedby')!)!.textContent).toBe('Too long (max 65536 bytes)')
+		// Pointing at no control until shown, a `for` would leave the label naming nothing.
+		expect(document.querySelector('label')!.hasAttribute('for')).toBe(false)
+	})
+
+	it('is never spell-checked, and autocorrected only when not concealed', async () => {
+		const attributes = (area: HTMLElement) => ['spellcheck', 'autocapitalize', 'autocorrect'].map((name) => area.getAttribute(name))
+		render(<><TextArea label="Notes" value="" onChange={vi.fn()} /><TextArea label="Key" value="k" onChange={vi.fn()} concealed /></>)
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Show key' }))
+		expect(attributes(screen.getByRole('textbox', { name: 'Notes' }))).toEqual(['false', null, null])
+		expect(attributes(screen.getByRole('textbox', { name: 'Key' }))).toEqual(['false', 'off', 'off'])
+	})
+})
+
+describe('TextField', () => {
+	it('never spell-checks or autocorrects a password field, also once revealed', async () => {
+		render(<TextField label="Password" type="password" value="hunter2" onChange={vi.fn()} />)
+		const input = screen.getByLabelText('Password') as HTMLInputElement
+		const attributes = () => [input.type, input.getAttribute('spellcheck'), input.getAttribute('autocapitalize'), input.getAttribute('autocorrect')]
+		expect(attributes()).toEqual(['password', 'false', 'off', 'off'])
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Show password' }))
+		expect(attributes()).toEqual(['text', 'false', 'off', 'off'])
+	})
+
+	it('never spell-checks any other field, and autocorrects only one not kept verbatim', () => {
+		render(<><TextField label="Name" value="" onChange={vi.fn()} /><TextField label="Username" value="" onChange={vi.fn()} verbatim /></>)
+		const attributes = (label: string) => ['spellcheck', 'autocapitalize', 'autocorrect'].map((name) => screen.getByLabelText(label).getAttribute(name))
+		expect(attributes('Name')).toEqual(['false', null, null])
+		expect(attributes('Username')).toEqual(['false', 'off', 'off'])
+	})
+})
+
+describe('SearchField', () => {
+	it('is never spell-checked', () => {
+		render(<SearchField value="github" onChange={vi.fn()} />)
+		expect(screen.getByRole('searchbox').getAttribute('spellcheck')).toBe('false')
+	})
 })
 
 describe('writeErrorText', () => {
@@ -302,5 +399,34 @@ describe('writeErrorText', () => {
 	it('names a policy refusal, and keeps any other refusal neutral', () => {
 		expect(writeErrorText({ code: 'policy' })).toBe("Your organisation's policy does not allow this change")
 		expect(writeErrorText({ code: 'forbidden' })).toBe('Keepiq does not allow this change. The Keepiq web app shows why.')
+	})
+
+	it.each([
+		['stale_source', 'The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.'],
+		['incomplete', 'The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.'],
+		['bad_certificate', 'Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.'],
+		['unverified', "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app."],
+		['partner_lookup_limit', 'Too many partner lookups. Nothing was saved; try again in a minute.'],
+		['federation_unavailable', "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator."],
+	] as const)('words a failed share-save: %s', (code, text) => {
+		expect(writeErrorText({ code }, 'edit')).toBe(text)
+	})
+
+	it.each([
+		['incomplete', 'Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.'],
+		['partner_lookup_limit', 'Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.'],
+		['federation_unavailable', 'Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.'],
+	] as const)('words a failed share-save in Dutch: %s', (code, text) => {
+		setLocale('nl')
+		expect(writeErrorText({ code }, 'edit')).toBe(text)
+	})
+
+	it.each([
+		['en', "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@cloud.partner.example and carol@cloud.partner.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."],
+		['nl', 'Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@cloud.partner.example en carol@cloud.partner.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.'],
+	] as const)('names the unreachable partners in a list of the catalog\'s language: %s', (locale, text) => {
+		setLocale(locale)
+		const partners = [{ shareId: 'fs-bob', cloudId: 'bob@cloud.partner.example' }, { shareId: 'fs-carol', cloudId: 'carol@cloud.partner.example' }]
+		expect(writeErrorText({ code: 'partner_unreachable', partners }, 'edit')).toBe(text)
 	})
 })

@@ -3,6 +3,7 @@ import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { clearSnapshot } from '@/src/vault/store'
+import { forgetVerifiedPartners } from '@/src/vault/verified-partners'
 import { DEFAULT_SETTINGS, settingsKey, writeSettings, type AccountSettings } from './settings'
 
 export { MAX_ACCOUNTS }
@@ -73,6 +74,7 @@ export async function getActiveAccountId(): Promise<string | null> {
 
 export async function setActive(accountId: string): Promise<void> {
 	if (!(await getAccount(accountId))) throw new Error(`Unknown account ${accountId}`)
+	if ((await getActiveAccountId()) !== accountId) forgetVerifiedPartners()
 	await browser.storage.local.set({ [ACTIVE]: accountId })
 }
 
@@ -94,6 +96,7 @@ export async function addAccount(fields: Omit<AccountRecord, 'id'>, suite: Cache
 		return added
 	})
 	// Only once the list holds it, or getActiveAccountId() would heal the pointer away.
+	forgetVerifiedPartners()
 	await browser.storage.local.set({ [ACTIVE]: record.id })
 	return record
 }

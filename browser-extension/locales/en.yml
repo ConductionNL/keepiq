@@ -205,7 +205,22 @@ writeErrors:
   serverError: Keepiq is unavailable right now, try again later
   unreadable: Could not read this item, so it cannot be edited here
   restricted: This item was shared with you with limits, so it cannot be changed or copied here
+  unmatched: Keepiq sent a version of this item that your vault does not hold, so it was not opened.
   keyMismatch: Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.
+  staleSource: The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.
+  incomplete: The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.
+  badCertificate: Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.
+  unverified: This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.
+  partnerUnreachable: "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+  partnerLookupLimit: Too many partner lookups. Nothing was saved; try again in a minute.
+  federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
+
+shareSave:
+  saveWithout: Save without them
+  ownCopy: Only your copy changed. The owner and the others it is shared with keep the old value.
+  ownerOnly: Saved. Recipients at partner organisations get this change when the owner next saves it.
+  suspended: Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.
+  paused: Sharing with {cloudIds} is paused until you share this item with them again.
 
 folders:
   add: Add folder
@@ -264,7 +279,6 @@ detail:
   item: Item
   decrypting: Decrypting…
   decryptFailed: Could not decrypt this item
-  unreadable: Could not read this item
   unreadablePasskey: Could not read this passkey
   unreadableFields: Could not read additional fields
   loginCredentials: Login credentials

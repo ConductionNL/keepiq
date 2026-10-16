@@ -7,7 +7,7 @@ import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import type { PopupReplies, PopupRequest } from '@/src/messages'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { hasKey, putKey } from '@/src/vault/key-store'
+import { editOpenedKey, hasKey, putKey, sessionValues } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
@@ -245,6 +245,52 @@ describe('vault writes', () => {
 	it('refuses a write that names no account', async () => {
 		expect(await send({ kind: 'item.delete', id: 's1' } as never)).toEqual({ ok: false, error: { code: 'invalid' } })
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	describe('item.update', () => {
+		const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
+		const bob = { shareId: 'fs-bob', recipientCloudId: 'bob@cloud.partner.example' }
+		/** Item `s1`, shared with a partner when `partner`, whose instance does not answer. */
+		async function serve(partner: boolean) {
+			const row = secretRow({ key: await encrypt('pw') })
+			await snapshot([row])
+			fetchMock.mockImplementation(async (input, init) => {
+				const path = new URL(String(input)).pathname.replace('/index.php/apps/keepiq', '')
+				const body = init?.body ? JSON.parse(String(init.body)) as { federated: unknown[]; suspend: unknown[] } : undefined
+				if (path === '/api/v1/secrets/s1') return json(row)
+				if (path === '/api/v1/secrets/s1/write-context') return json({ sourceSecretId: 's1', effectiveGrade: 'owner', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: row.updatedAt })
+				if (path === '/api/v1/secrets/s1/share-save') {
+					return partner && body!.federated.length + body!.suspend.length === 0
+						? json({ error: 'incomplete', copies: { required: [] }, federated: { required: [bob] } }, 409)
+						: json({ secret: row, federated: { ownerOnly: false } })
+				}
+				if (path === '/api/v1/federation/recipient-certificate') return json({ message: 'partner_unreachable' }, 502)
+				if (path === '/api/v1/suites') return json([suiteRow])
+				if (path === '/api/v1/offline/manifest') return json({ suite: suiteRow, secrets: [row], folders: [folderRow()], types: typeRows, syncedAt: '' })
+				return json({ message: 'Unavailable' }, 503)
+			})
+			vi.spyOn(console, 'error').mockImplementation(() => {})
+			const opened = await send({ kind: 'item.fetch', accountId, id: 's1', purpose: 'edit' })
+			return { row, record: opened.ok ? opened.value.recordId : undefined }
+		}
+
+		it.each([
+			['its edit fetch\'s record, which it uses up', (record: string | undefined) => record, 0],
+			['a record that is not a string as none, and still saves', () => 5, 1],
+		])('passes a save %s', async (_, named, left) => {
+			const { row, record } = await serve(false)
+			expect(await send({ kind: 'item.update', accountId, id: 's1', patch: { key: 'new' }, baseUpdatedAt: row.updatedAt, recordId: named(record) } as never)).toMatchObject({ ok: true })
+			expect(JSON.parse(await sessionValues.get(editOpenedKey(accountId)) ?? '[]')).toHaveLength(left)
+		})
+
+		it.each([
+			['a list of share ids', ['fs-bob'], { ok: true }],
+			['one share id that is not in a list', 'fs-bob', { ok: false, error: { code: 'partner_unreachable', partners: [{ shareId: 'fs-bob', cloudId: bob.recipientCloudId }] } }],
+			['a list holding other than share ids', ['fs-bob', 5], { ok: false, error: { code: 'partner_unreachable' } }],
+		])('passes the partners to save without as %s, dropping anything else', async (_, withoutUnreachable, reply) => {
+			const { row, record } = await serve(true)
+			expect(await send({ kind: 'item.update', accountId, id: 's1', patch: { key: 'new' }, baseUpdatedAt: row.updatedAt, recordId: record, withoutUnreachable } as never)).toMatchObject(reply)
+		})
 	})
 })
 

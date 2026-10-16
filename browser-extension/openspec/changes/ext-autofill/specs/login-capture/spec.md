@@ -86,13 +86,19 @@ When exactly one matching item holds the captured username and its decrypted `ke
 - **THEN** no update bar is shown
 
 ### Requirement: Update writes only the key
-The extension SHALL, on "Update", re-fetch the item with `GET /api/v1/secrets/{id}`, encrypt the captured password and `PUT /api/v1/secrets/{id}` with only `key` in the body, then sync. Other fields are left untouched.
+The extension SHALL, on "Update", save through `updateItem`: re-fetch the item with `GET /api/v1/secrets/{id}`, encrypt the captured password, and save a patch of only `key` with `baseUpdatedAt` through share-save, which reaches every other copy as `ext-share-sync` specifies, then sync. Other fields are left untouched. With no edit form behind the save, an item with partner shares fails with `unverified` and nothing is saved.
 
 #### Scenario: Successful update
 - **GIVEN** an update bar
 - **WHEN** the user clicks Update
-- **THEN** the request body contains only `key`
+- **THEN** the share-save patch contains only `key`, beside `baseUpdatedAt`
 - **AND** the bar reads "Password updated" and closes after three seconds
+
+#### Scenario: Item shared with a partner organisation
+- **GIVEN** an update bar for an item with an active partner share
+- **WHEN** the user clicks Update
+- **THEN** nothing is saved
+- **AND** the bar reads "This item is shared with partner organisations. Change its password in the extension's edit form or the Keepiq web app."
 
 #### Scenario: Item deleted meanwhile
 - **GIVEN** the re-fetch returns 404

@@ -1,17 +1,18 @@
 import { useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
-import { USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta, type ItemMeta, type TypeMeta } from '@/src/messages'
+import { USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta, type ItemMeta, type ShareSaveNote as Note, type TypeMeta } from '@/src/messages'
 import { typeIcon } from '@/src/vault/icons'
 import { folderPath, launchUrl } from '@/src/vault/list'
-import { cardBrand, cardLast4, parseObject, text } from '@/src/vault/payloads'
+import { cardBrand, cardLast4, parseObject, parsePayload, text } from '@/src/vault/payloads'
 import { IconButton } from '../components/Button'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Icon } from '../components/Icon'
 import { itemActions } from '../components/ItemCard'
 import { Loading } from '../components/Loading'
-import { MaskedField } from '../components/MaskedField'
+import { asLines, MaskedField } from '../components/MaskedField'
 import { Menu, type MenuItem } from '../components/Menu'
 import { PageFooter } from '../components/PageFooter'
+import { ShareSaveNote } from '../components/ShareSaveNote'
 import { TotpCode } from '../components/TotpCode'
 import { blockedText } from '../errors'
 import { useDecryptedFields } from '../hooks/useDecryptedFields'
@@ -23,6 +24,8 @@ interface Props {
 	type: TypeMeta | undefined
 	folders: FolderMeta[]
 	webAppUrl: string
+	/** What the last save of this item left to others; held by Shell. */
+	shareSave?: Note
 }
 
 /** Types with their own section instead of Login credentials. */
@@ -98,17 +101,20 @@ function Passkey({ payload }: { payload: Record<string, unknown> }) {
 	)
 }
 
-function Website({ item }: { item: ItemMeta }) {
+function Website({ item, username }: { item: ItemMeta; username?: string | null }) {
 	const launch = launchUrl(item.url)
 	const shell = useShell()
-	if (!item.url) return null
+	if (!item.url && !username) return null
 	return (
-		<Section title={i18n.t('detail.website')}>
-			<MaskedField
-				label={i18n.t('detail.website')}
-				value={item.url}
-				actions={launch && <IconButton icon="external" label={i18n.t('item.launch', { name: item.name })} onClick={() => shell.launch(launch)} />}
-			/>
+		<Section title={username ? i18n.t('form.autofillOptions') : i18n.t('detail.website')}>
+			{username && <MaskedField label={i18n.t('detail.username')} value={username} />}
+			{item.url && (
+				<MaskedField
+					label={i18n.t('detail.website')}
+					value={item.url}
+					actions={launch && <IconButton icon="external" label={i18n.t('item.launch', { name: item.name })} onClick={() => shell.launch(launch)} />}
+				/>
+			)}
 		</Section>
 	)
 }
@@ -138,7 +144,12 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 	}
 	const notes = [...(name === 'note' && key ? [key] : []), ...(extra ?? []).filter(([field]) => field.toLowerCase() === 'notes').map(([, value]) => value)]
 	const fields = (extra ?? []).filter(([field]) => field.toLowerCase() !== 'notes')
-	const payload = ['card', 'identity', 'passkey'].includes(name) ? parseObject(key) : null
+	// As the edit form reads them, so both show a key that is not members as one secret.
+	const members = name === 'card' || name === 'identity' ? parsePayload(key) : null
+	const passkey = name === 'passkey' ? parseObject(key) : null
+	// Outside Login credentials, the username goes with the website, as in the edit form's Autofill options.
+	const username = OWN_SECTION.has(name) && name !== 'passkey' && values.login ? values.login : null
+	const plainKey = (title: string) => (key ? <Section title={title}><MaskedField label={secretLabel(type)} value={key} masked /></Section> : null)
 
 	return (
 		<>
@@ -149,10 +160,10 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 				</Section>
 			)}
 			{name === 'totp' && <Section title={i18n.t('detail.authenticatorKey')}><TotpCode seed={key} /></Section>}
-			{name === 'card' && (payload ? <Card payload={payload} /> : <Unreadable title={i18n.t('detail.cardDetails')} message={i18n.t('detail.unreadable')} />)}
-			{name === 'identity' && (payload ? <Identity payload={payload} /> : <Unreadable title={i18n.t('detail.identity')} message={i18n.t('detail.unreadable')} />)}
-			{name === 'passkey' && (payload ? <Passkey payload={payload} /> : <Unreadable title={i18n.t('detail.passkey')} message={i18n.t('detail.unreadablePasskey')} />)}
-			<Website item={item} />
+			{name === 'card' && (members ? <Card payload={members} /> : plainKey(i18n.t('detail.cardDetails')))}
+			{name === 'identity' && (members ? <Identity payload={members} /> : plainKey(i18n.t('detail.identity')))}
+			{name === 'passkey' && (passkey ? <Passkey payload={passkey} /> : <Unreadable title={i18n.t('detail.passkey')} message={i18n.t('detail.unreadablePasskey')} />)}
+			<Website item={item} username={username} />
 			{extra === null
 				? <Unreadable title={i18n.t('detail.additionalFields')} message={i18n.t('detail.unreadableFields')} />
 				: fields.length > 0 && (
@@ -162,7 +173,7 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 				)}
 			{notes.length > 0 && (
 				<Section title={i18n.t('detail.notes')}>
-					{notes.map((note, i) => <p key={i} className="field-row notes">{note}</p>)}
+					{notes.map((note, i) => <p key={i} className="field-row notes">{asLines(note)}</p>)}
 				</Section>
 			)}
 		</>
@@ -192,7 +203,7 @@ function ActionButton({ action, variant }: { action: MenuItem; variant: 'primary
 	)
 }
 
-export function ItemDetail({ item, type, folders, webAppUrl }: Props) {
+export function ItemDetail({ item, type, folders, webAppUrl, shareSave }: Props) {
 	// The version the user opened; a later one arrived by sync.
 	const [openedVersion] = useState(item.updatedAt)
 	const dates: Array<[string, string]> = [[i18n.t('detail.created'), item.createdAt], [i18n.t('detail.updated'), item.updatedAt]]
@@ -208,6 +219,7 @@ export function ItemDetail({ item, type, folders, webAppUrl }: Props) {
 					<p className="detail-head__meta">{type?.label ?? i18n.t('detail.item')} · {folderPath(folders, item.folderId) ?? i18n.t('filters.noFolder')}</p>
 				</div>
 			</header>
+			{shareSave && <ShareSaveNote note={shareSave} webAppUrl={webAppUrl} />}
 			{item.blocked
 				? (
 					<Banner tone="error" role="status">

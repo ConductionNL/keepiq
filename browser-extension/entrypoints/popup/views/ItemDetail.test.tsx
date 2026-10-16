@@ -2,9 +2,9 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DecryptedItem, FolderMeta, ItemMeta } from '@/src/messages'
+import type { DecryptedItem, FolderMeta, ItemMeta, ShareSaveNote } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { fakeBackground, itemMeta, sentKinds, types } from '../testing'
+import { fakeBackground, fakeClipboard, itemMeta, sentKinds, types } from '../testing'
 import { ItemDetail } from './ItemDetail'
 
 // Shell's footer bar, where the detail portals Edit and Delete.
@@ -44,6 +44,27 @@ describe('header', () => {
 	it('says No folder', () => {
 		renderDetail(itemMeta())
 		expect(screen.getByText('Login · No folder')).toBeTruthy()
+	})
+})
+
+describe('share-save note', () => {
+	const renderWith = (shareSave?: ShareSaveNote) => {
+		fakeBackground()
+		render(
+			<ShellContext.Provider value={{ ...DEFAULT_SHELL, footer }}>
+				<ItemDetail item={itemMeta()} type={types[0]} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" shareSave={shareSave} />
+			</ShellContext.Provider>,
+		)
+	}
+
+	it('shows the note under the header', () => {
+		renderWith({ scope: 'own_copy' })
+		expect(document.querySelector('.banner--warning')?.textContent).toBe('Only your copy changed. The owner and the others it is shared with keep the old value.')
+	})
+
+	it('shows none without one', () => {
+		renderWith()
+		expect(document.querySelector('.banner--warning')).toBeNull()
 	})
 })
 
@@ -109,6 +130,12 @@ describe('additional fields and notes', () => {
 		expect(within(section('Notes')).getByText(/line one/).textContent).toBe('line one\nline two')
 	})
 
+	it.each([['CR', 'a\rb\rc'], ['CRLF', 'a\r\nb\r\nc']])('shows %s notes and a note\'s text on their own lines', async (_, text) => {
+		renderDetail(itemMeta({ typeId: 't-note', hasLogin: false, url: null }), { key: text, additionalFields: JSON.stringify({ Notes: text }) })
+		await screen.findByRole('heading', { name: 'Notes' })
+		expect([...section('Notes').querySelectorAll('.notes')].map((note) => note.textContent)).toEqual(['a\nb\nc', 'a\nb\nc'])
+	})
+
 	it('says when the fields do not parse', async () => {
 		renderDetail(itemMeta(), { key: 'pw', additionalFields: '[1,2]' })
 		expect(await screen.findByText('Could not read additional fields')).toBeTruthy()
@@ -150,9 +177,65 @@ describe('card and identity', () => {
 		expect(within(identity).getByRole('button', { name: 'Show BSN' })).toBeTruthy()
 	})
 
-	it('says when the payload does not parse', async () => {
-		renderDetail(itemMeta({ typeId: 't-card', hasLogin: false, url: null }), { key: 'garbage' })
-		expect(await screen.findByText('Could not read this item')).toBeTruthy()
+	it.each([
+		['card', 'multi-line text', 'Card details', 'card', 'legacy\ncard text'],
+		['card', 'JSON after a space', 'Card details', 'card', ' {"number":"4111"}'],
+		['identity', 'a JSON array', 'Identity', 'identity', '["Alice"]'],
+	])('shows a key of type %s that is %s, which holds no members, as one masked secret, as the edit form does', async (name, _, title, label, key) => {
+		// After userEvent's own clipboard, which it would replace this with.
+		const user = userEvent.setup()
+		const copied = fakeClipboard()
+		renderDetail(itemMeta({ typeId: `t-${name}`, hasLogin: false, url: null }), { key })
+		const shown = await screen.findByRole('heading', { name: title }).then((h) => h.closest('section')!)
+		expect(shown.textContent).not.toContain(key)
+		await user.click(within(shown).getByRole('button', { name: `Show ${label}` }))
+		expect(within(shown).getByText(key, { normalizer: (value) => value }).className).toContain('field-row__value--mono')
+		await user.click(within(shown).getByRole('button', { name: `Copy ${label}` }))
+		expect(copied).toHaveBeenCalledWith(key)
+		expect(screen.queryByText('Could not read this item')).toBeNull()
+	})
+
+	it('shows nothing of a use-only card, not even a key that holds no members', async () => {
+		const { view } = renderDetail(itemMeta({ typeId: 't-card', useOnly: true, url: null }), { login: 'bob' })
+		expect(await screen.findByText('bob')).toBeTruthy()
+		expect(screen.queryByRole('heading', { name: 'Card details' })).toBeNull()
+		expect(view.container.querySelectorAll('button[aria-label^="Show"]')).toHaveLength(0)
+	})
+
+	it.each([
+		['card', 'text', 'Card details', 'legacy card text'],
+		['card', 'members', 'Card details', '{"number":"4111111111111111"}'],
+		['identity', 'text', 'Identity', 'legacy identity text'],
+	])('never shows the key of a use-only %s, holding %s, should one arrive', async (name, _, title, key) => {
+		const { view } = renderDetail(itemMeta({ typeId: `t-${name}`, useOnly: true, url: null }), { login: 'bob', key })
+		expect(await screen.findByText('bob')).toBeTruthy()
+		expect(screen.queryByRole('heading', { name: title })).toBeNull()
+		expect(view.container.querySelectorAll('button[aria-label^="Show"]')).toHaveLength(0)
+		expect(view.container.textContent).not.toMatch(/legacy|4111/)
+	})
+})
+
+describe('username', () => {
+	it.each([['totp'], ['card'], ['identity'], ['note']])('shows the username of a %s item with its website, as the edit form does', async (name) => {
+		const keys: Record<string, string> = { totp: 'JBSWY3DPEHPK3PXP', card: '{"number":"4111"}', identity: '{"firstName":"Alice"}', note: 'Wifi' }
+		renderDetail(itemMeta({ typeId: `t-${name}` }), { login: 'alice@example.com', key: keys[name] })
+		const autofill = await screen.findByRole('heading', { name: 'Autofill options' }).then((h) => h.closest('section')!)
+		expect(within(autofill).getByText('Username')).toBeTruthy()
+		expect(within(autofill).getByText('alice@example.com')).toBeTruthy()
+		expect(within(autofill).getByText('https://github.com')).toBeTruthy()
+		expect(screen.queryByRole('heading', { name: 'Login credentials' })).toBeNull()
+	})
+
+	it('keeps the Website title without one', async () => {
+		renderDetail(itemMeta({ typeId: 't-card', hasLogin: false }), { key: '{"number":"4111"}' })
+		expect(await screen.findByRole('heading', { name: 'Website' })).toBeTruthy()
+		expect(screen.queryByText('Username')).toBeNull()
+	})
+
+	it('never shows one for a passkey', async () => {
+		renderDetail(itemMeta({ typeId: 't-passkey', url: null }), { login: 'alice@example.com', key: JSON.stringify({ rpId: 'example.com', userName: 'pk-user' }) })
+		expect(await screen.findByText('example.com')).toBeTruthy()
+		expect(screen.queryByText('alice@example.com')).toBeNull()
 	})
 })
 

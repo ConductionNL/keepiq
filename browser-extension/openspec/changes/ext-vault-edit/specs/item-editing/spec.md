@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Add item form
-The extension SHALL offer a primary "New" button with a plus icon in the header of the Vault tab's list, left of the pop-out button as in Bitwarden, that opens an add-item form with a Type select, a required Name and the fields of the chosen type, as in Bitwarden's "Add item". The Type select MUST list the cached `secret-types` rows except `passkey`, which only a passkey ceremony creates, and default to the user's `default_secret_type` when cached, else `login`. For the `login` type the form MUST show Username, Password (masked, with a reveal button; ext-generator adds the generate button), Website URL, Folder (default "No folder"), Additional fields and Notes. The draft lives in popup memory only and is cleared when the popup closes.
+The extension SHALL offer a primary "New" button with a plus icon in the header of the Vault tab's list, left of the pop-out button as in Bitwarden, that opens an add-item form with a Type select, a required Name and the fields of the chosen type, as in Bitwarden's "Add item". The Type select MUST list the cached `secret-types` rows except `passkey`, which only a passkey ceremony creates, and default to the user's `default_secret_type` when cached, else `login`. For the `login` type the form MUST show Username, Password (masked, with a reveal button; ext-generator adds the generate button), Website URL, Folder (default "No folder"), Additional fields and Notes. A multi-line secret, such as an `ssh_key`, a `certificate` or a password holding a line break, MUST stay masked until the user presses Show, and stay multi-line once it holds a line break, also after the type changes; an edit MUST keep its CRLF or CR line breaks when it used one style throughout. Every other type except `passkey` MUST show Username when the edited item has a login, as the Keepiq web app does, and keep it while the form is open; cleared, it is saved as `null`. The draft lives in popup memory only and is cleared when the popup closes.
 
 #### Scenario: Opening the form from a tab
 - **GIVEN** the vault is unlocked and the user opened the popup on a tab whose URL is `https://example.com/login`
@@ -26,7 +26,7 @@ The extension SHALL offer a primary "New" button with a plus icon in the header 
 - **AND** no request MUST be sent
 
 ### Requirement: Additional fields editor
-The extension SHALL let the user add, edit and remove repeatable name and value rows under Additional fields, with a masking toggle per row. A row name that equals `key`, `login` or `url` case-insensitively MUST be refused with the reason "This name is reserved", a blank name MUST be refused, and a duplicate name MUST be refused. The masking toggle is view state only and is not stored, because the Keepiq blob has no field type.
+The extension SHALL let the user add, edit and remove repeatable name and value rows under Additional fields, with a masking toggle per row. A value holding a line break MUST be a masked multi-line field that keeps its CRLF or CR style when it used one style throughout. A row name that equals `key`, `login` or `url` case-insensitively MUST be refused with the reason "This name is reserved", a blank name MUST be refused, and a duplicate name MUST be refused. The masking toggle is view state only and is not stored, because the Keepiq blob has no field type.
 
 #### Scenario: Reserved name is refused
 - **GIVEN** the user adds an additional field
@@ -44,7 +44,7 @@ The extension SHALL let the user add, edit and remove repeatable name and value 
 - **THEN** the value MUST be shown in plain text until the toggle is pressed again or the form closes
 
 ### Requirement: Notes storage convention
-The extension SHALL store the Notes field of a non-`note` item under the `notes` member of `additionalFields`, and MUST store the text of a `note` item in `key`. Notes MUST never be sent as plaintext.
+The extension SHALL store the Notes field of a non-`note` item under the `notes` member of `additionalFields`, and MUST store the text of a `note` item in `key`. A `note` item that came with a `notes` member MUST show it as Notes and save it back under that member. Notes MUST never be sent as plaintext.
 
 #### Scenario: Notes on a login item
 - **GIVEN** the user fills Notes on a `login` item and adds no additional field
@@ -55,10 +55,10 @@ The extension SHALL store the Notes field of a non-`note` item under the `notes`
 #### Scenario: Note item
 - **GIVEN** the user chose the `note` type and typed a note
 - **WHEN** they save
-- **THEN** the note text MUST be encrypted into `key` and `login` MUST be omitted
+- **THEN** the note text MUST be encrypted into `key` and `login` MUST be omitted, since a new note shows no Username
 
 ### Requirement: Composite types
-The extension SHALL edit `totp` items as a Secret field holding an `otpauth://totp/...` URI or a bare base32 secret in `key`, with optional advanced fields (algorithm, digits, period) that are written back into the URI. `card` items MUST store `{number, expiry, cvv, pin, cardholder}` and `identity` items MUST store `{firstName, lastName, address, phone, email, bsn}` as JSON in `key`, serialized exactly as the Keepiq web app does, so the web app renders them. `passkey` items MUST be editable only in Name, Folder and Website URL; the form MUST never read, show or send the credential JSON in `key`.
+The extension SHALL edit `totp` items as a Secret field holding an `otpauth://totp/...` URI or a bare base32 secret in `key`, with optional advanced fields (algorithm, digits, period) that are written back into the URI. `card` items MUST store `{number, expiry, cvv, pin, cardholder}` and `identity` items MUST store `{firstName, lastName, address, phone, email, bsn}` as JSON in `key`, serialized exactly as the Keepiq web app does, so the web app renders them. A card or identity whose `key` is not a JSON object MUST be shown as one secret field, multi-line when it holds a line break (CR or LF), and saved as typed, so nothing it holds is lost, and one with missing members MUST keep its `key` until a member is typed. `passkey` items MUST be editable only in Name, Folder and Website URL; the form MUST never read, show or send the credential JSON in `key`.
 
 #### Scenario: TOTP with a bare secret
 - **GIVEN** the user chose `totp` and typed `JBSWY3DPEHPK3PXP` as the Secret
@@ -76,7 +76,7 @@ The extension SHALL edit `totp` items as a Secret field holding an `otpauth://to
 - **THEN** `key` MUST decrypt to a JSON object with exactly the five card members, `cvv` and `pin` as empty strings
 
 #### Scenario: Passkey stays read-only
-- **GIVEN** the user opens Edit on a `passkey` item
+- **GIVEN** the user opens Edit on a `passkey` item, by the fresh row's type or by the cached one
 - **WHEN** the form renders
 - **THEN** it MUST show Name, Folder and Website URL as editable and a notice "Passkey credentials can only be changed in the Keepiq web app"
 - **AND** saving MUST send a sparse `PUT` without `key`
@@ -96,7 +96,7 @@ The extension SHALL save a new item by sending the draft to the background, whic
 - **THEN** the body MUST omit `login`, MUST set `url` to `null` and MUST encrypt `{}` as `additionalFields`
 
 ### Requirement: Edit re-fetches before showing the form and saves sparsely
-The extension SHALL, when the user presses Edit, call `GET /api/v1/secrets/{id}` and decrypt the response in the background instead of using the cached row, so a stale cache cannot overwrite a newer server value. The decrypted item lives in popup memory only and is cleared when the form closes. Save MUST send `PUT /api/v1/secrets/{id}` with only the fields the user changed plus `baseUpdatedAt`, the fresh fetch's `updatedAt`; a changed `key` or `login` MUST be re-encrypted, a cleared `login`, `url` or `folderId` MUST be sent as `null`, and any change to notes or additional fields MUST re-send the whole `additionalFields` object built from the fresh fetch, since the server stores it as one blob. Type cannot be changed on edit, as in Bitwarden.
+The extension SHALL, when the user presses Edit, call `GET /api/v1/secrets/{id}` and decrypt the response in the background instead of using the cached row, so a stale cache cannot overwrite a newer server value. The decrypted item lives in popup memory only and is cleared when the form closes. Save MUST send `PUT /api/v1/secrets/{id}` with only the fields the user changed plus `baseUpdatedAt`, the fresh fetch's `updatedAt`; a changed `key` or `login` MUST be re-encrypted, a cleared `login`, `url` or `folderId` MUST be sent as `null`, and any change to notes or additional fields MUST re-send the whole `additionalFields` object built from the fresh fetch, since the server stores it as one blob. Type cannot be changed on edit, as in Bitwarden, and the form renders under the type name the fetch checked the item against, not the popup's cached one.
 
 #### Scenario: Rename only
 - **GIVEN** the user opened Edit and changed only Name
@@ -143,7 +143,7 @@ The extension SHALL delete an item only after the user confirms an in-popup dial
 - **THEN** no request MUST be sent and the detail view MUST stay open
 
 ### Requirement: Clone
-The extension SHALL offer Clone on item detail, which MUST fresh-fetch and decrypt the item and open the add-item form prefilled with every field and the Name suffixed with " - Clone", as in Bitwarden. Saving MUST create a new item and leave the original untouched.
+The extension SHALL offer Clone on item detail, which MUST fresh-fetch and decrypt the item and open the add-item form prefilled with every field and the Name suffixed with " - Clone", as in Bitwarden. Until the user picks another type, the form MUST render under the type name the fetch returned, as Edit does. Saving MUST create a new item and leave the original untouched.
 
 #### Scenario: Clone a login
 - **GIVEN** the detail view of "GitHub" is open

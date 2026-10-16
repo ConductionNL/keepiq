@@ -167,8 +167,13 @@ export type ItemPatch = Partial<ItemDraft>
 export interface EditableItem extends ItemDraft {
 	id: string
 	updatedAt: string
-	/** A passkey's credential is never decrypted for editing, so `key` is empty. */
-	keyWithheld?: true
+	/**
+	 * The type name the fetch vouched for the fields under; the edit form renders by it, not the popup's snapshot. Absent for a type the vault does not know.
+	 * `passkey` when either the server or the cache says so, and `key` is then empty: a passkey's credential is never decrypted for editing.
+	 */
+	typeName?: string
+	/** An edit fetch's record of what its form showed, for that form's save to name; absent for a clone. */
+	recordId?: string
 }
 
 export interface FolderChildren {
@@ -183,7 +188,7 @@ export type FolderDeletePlan =
 	| { mode: 'cascade'; cascade: 'delete' | 'move' }
 	| { mode: 'resolution'; directSecrets: 'delete' | 'move'; subfolders: Record<string, SubfolderAction> }
 
-/** `conflict` is a duplicate folder name, a folder that is not empty, or an item changed since `baseUpdatedAt`. */
+/** `conflict` is a duplicate folder name, a folder that is not empty, an item changed since `baseUpdatedAt`, or a fetched item whose ciphertext the cache does not hold. */
 export type WriteErrorCode =
 	| 'locked' | 'session_revoked' | 'write_locked' | 'forbidden' | 'policy' | 'invalid' | 'conflict'
 	| 'not_found' | 'blocked' | 'unreadable' | 'offline' | 'server_error' | 'unknown'
@@ -193,14 +198,42 @@ export type WriteErrorCode =
 	| 'key_mismatch'
 	/** The write was meant for an account that is no longer the active one. */
 	| 'account_changed'
+	/** A shared item's source was written after its copy's edit form opened. */
+	| 'stale_source'
+	/** The share list kept changing over three share-save answers. */
+	| 'incomplete'
+	/** A recipient's certificate did not import. */
+	| 'bad_certificate'
+	/** Partner shares get the whole value, and the edit form did not show every field of it in full. */
+	| 'unverified'
+	/** `partners` names the partner shares whose instance did not answer. */
+	| 'partner_unreachable'
+	/** The partner lookup's limit of 60 per minute. */
+	| 'partner_lookup_limit'
+	/** The server runs a Nextcloud without the OCM endpoint event partner sharing needs (below 33). */
+	| 'federation_unavailable'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
 	/** With `blocked`, when the row's reason is a known code. */
 	reason?: BlockReason
+	/** With `partner_unreachable`. */
+	partners?: Array<{ shareId: string; cloudId: string }>
 }
 
 export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultWriteError }
+
+/** Shown on the item's detail after a save; absent when the save reached everyone. */
+export interface ShareSaveNote {
+	/** `source`: the editor owns the item; `copy`: a team editor or delegate; `own_copy`: only the editor's copy changed. */
+	scope: 'source' | 'copy' | 'own_copy'
+	/** Copy-editor path: partner shares exist that only the owner's next save reaches. */
+	ownerOnly?: true
+	/** Partner shares this save suspended on a verdict about the recipient, by cloud id. */
+	suspended?: string[]
+	/** Partner shares the user suspended through Save without them, by cloud id. */
+	paused?: string[]
+}
 
 /** Popup → background requests with their own reply shapes, listed in `PopupReplies`. */
 export type PopupRequest =
@@ -223,8 +256,11 @@ export type VaultWrite = { accountId: string } & (
 	/** `purpose`: a clone is refused for more restricted copies than an edit. */
 	| { kind: 'item.fetch'; id: string; purpose: 'edit' | 'clone' }
 	| { kind: 'item.create'; draft: ItemDraft }
-	/** `baseUpdatedAt`: the fetched version, so a save over a newer one is refused. */
-	| { kind: 'item.update'; id: string; patch: ItemPatch; baseUpdatedAt?: string }
+	/**
+	 * `baseUpdatedAt`: the fetched version, so a save over a newer one is refused. `recordId`: the fetch's, without which a save that needs it for partners fails with `unverified`.
+	 * `withoutUnreachable`: partner share ids the user chose to suspend after a `partner_unreachable` failure.
+	 */
+	| { kind: 'item.update'; id: string; patch: ItemPatch; baseUpdatedAt?: string; recordId?: string; withoutUnreachable?: string[] }
 	| { kind: 'item.delete'; id: string }
 	| { kind: 'folder.create'; name: string; parentId: string | null }
 	| { kind: 'folder.rename'; id: string; name: string }
@@ -244,7 +280,7 @@ export interface PopupReplies {
 	'settings.set': GlobalSettings
 	'item.fetch': WriteResult<EditableItem>
 	'item.create': WriteResult<{ id: string }>
-	'item.update': WriteResult<{ id: string }>
+	'item.update': WriteResult<{ id: string; shareSave?: ShareSaveNote }>
 	'item.delete': WriteResult<null>
 	'folder.create': WriteResult<{ id: string }>
 	'folder.rename': WriteResult<null>

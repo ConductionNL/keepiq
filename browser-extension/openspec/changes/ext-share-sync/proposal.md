@@ -10,54 +10,54 @@ chain:
 
 ## Why
 
-ext-vault-edit saves an item with a sparse `PUT /api/v1/secrets/{id}`, which changes only the editor's own row. In Keepiq every recipient of a shared item holds a separate copy, encrypted to their own key, and the web app re-encrypts each changed value for every recipient after the `PUT` (`src/store/modules/secret.js` `updateSecret`). Without that, a password changed in the extension stays old for everyone it is shared with, and nobody is told. Found in the ext-vault-edit review (must-fix 3); kept as its own change because it is a feature of its own.
+ext-vault-edit saves an item with a sparse `PUT /api/v1/secrets/{id}`, which changes only the editor's own row. In Keepiq every recipient of a shared item holds a separate copy, encrypted to their own key, so the editing client must encrypt each changed value again for every copy. Without that, a password changed in the extension stays old for everyone it is shared with, and nobody is told. Found in the ext-vault-edit review (must-fix 3); kept as its own change because it is a feature of its own.
+
+Keepiq now saves a shared secret and every copy of it in one transaction, through `PUT /api/v1/secrets/{id}/share-save` ([keepiq#1254](https://github.com/ConductionNL/keepiq/issues/1254), [keepiq#1258](https://github.com/ConductionNL/keepiq/pull/1258)). A save either reaches everyone or writes nothing, so the extension needs no Try again, no records that outlive the request and no per-item save queue. The web app saves through the same route (`src/services/shareSave.js`), which the extension ports.
 
 ## What Changes
 
-- After an edit that changes `key`, `login` or `additionalFields`, the background re-encrypts the new plaintext for every recipient, the way the web app does, before it replies.
-- Three paths, as in the web app:
-  - Owner with direct recipients: `GET /api/v1/secrets/{id}/shares` gives each recipient's copy id and certificate; `PUT /api/v1/secrets/{id}/sync` with `expectedUpdatedAt` and one `{secretId, encryptedKey, encryptedLogin, encryptedAdditionalFields}` per copy (`share.js` `syncUpdate`).
-  - Owner with recipients at partner organisations: per active federated share, fetch and verify the recipient's certificate, then `PUT /api/v1/federated-shares/{id}` with `certFingerprint`; suspend a share whose certificate no longer verifies (`federatedShare.js` `syncUpdate`, `verifyFederatedCertificate`).
-  - Team member with a `write` or `manage` grade editing their copy: `GET /api/v1/secrets/{id}/write-context` gives the source and the owner's certificate; re-encrypt for the source and every other recipient, then `PUT /api/v1/secrets/{sourceId}/sync` (`share.js` `syncAsTeamWriter`).
-- A failed fan-out keeps the editor's own update, as in the web app, but the popup says which recipients did not get the change instead of failing silently.
-- Plaintext fields (name, URL, folder) are not fanned out; the web app does not either.
+- An edit that changes `key`, `login` or `additionalFields` saves through `PUT /api/v1/secrets/{id}/share-save`; a rename, URL change or move stays on `PUT /api/v1/secrets/{id}`.
+- `GET /api/v1/secrets/{id}/write-context` picks the path:
+  - The editor owns the item: the save carries every local copy and every active partner share.
+  - The editor holds a copy with an `owner`, `write` or `manage` grade: the save goes through their copy and carries the source and every other copy. Partner shares stay with the owner's next save, and the popup says so.
+  - Any other copy: a plain `PUT` of the editor's copy only, and the popup says so.
+- The first request carries empty lists, so an unshared item saves at once. The server answers 409 `incomplete` with the copies and partner shares it requires; the background then reads their certificates, encrypts the change for each holder and sends again.
+- Partner certificates are verified in the background against the pinned partner root, ported from the web app. A certificate that fails, or a partner that no longer knows the recipient, suspends that share in the same save.
+- A partner that can't be reached stops the save; the form names it and offers Save without them, which suspends that share.
+- A failed save writes nothing: the form stays open with the reason, and the user saves again.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `share-sync`: an edit of a shared item reaches every recipient copy.
+- `share-sync`: an edit of a shared item reaches every recipient copy in the same request.
 
 ### Modified Capabilities
 
-- `item-editing` (ext-vault-edit): Save reports the fan-out result.
+- `item-editing` (ext-vault-edit): Save of a value change goes through share-save and reports the note to show.
 
 ## Deviations from Bitwarden
 
 Mirrored feature: an edit of an item in a Bitwarden organisation collection, which every member sees at once.
 
-- Per-recipient copies. Bitwarden encrypts a shared item once under the organisation key; Keepiq has no shared key and stores one copy per recipient, so the editor's client re-encrypts for each (forced).
-- Recipient certificates come from the server. The extension can check the editor's own certificate against the unlocked private key (ext-vault-edit), but not another user's; it trusts local recipients' certificates as the web app does, and verifies federated ones as the web app does (open question).
+- Per-recipient copies. Bitwarden encrypts a shared item once under the organisation key; Keepiq has no shared key and stores one copy per recipient, so the editor's client encrypts for each (forced).
+- Recipient certificates come from the server. The extension proves only the user's own certificate (ext-vault-edit); it trusts local recipients' certificates as the web app does and as Bitwarden trusts organisation membership, and verifies partner-organisation certificates against the pinned partner root, as the web app does (forced).
+- An unreachable partner organisation stops the save until the user saves without them. Bitwarden has no partner organisations; the web app does the same (forced, Keepiq `federated-sharing`).
+- A recipient without a write grade edits only their own copy, as the server allows no more (forced, Keepiq `folder-permission-grades`).
 
 ## Keepiq API used
 
-- `GET /api/v1/secrets/{id}/shares`
-- `PUT /api/v1/secrets/{id}/sync`
 - `GET /api/v1/secrets/{id}/write-context`
-- `GET /api/v1/secrets/{id}/federated-shares`
+- `PUT /api/v1/secrets/{id}/share-save`
+- `POST /api/v1/shares/recipient-certificates`
 - `POST /api/v1/federation/recipient-certificate`
-- `PUT /api/v1/federated-shares/{id}`
-- `POST /api/v1/federated-shares/{id}/suspend`
+- `PUT /api/v1/secrets/{id}` (a copy without a write grade, and every save without a value change)
 
-Server rules: `ShareSyncService::syncUpdate` refuses a stale `expectedUpdatedAt` with 409, a read-only source, and a use-only copy (Keepiq specs `user-sharing`, `folder-permission-grades`, `federated-sharing`, `use-only-shares`).
-
-## Open questions
-
-- Should a group share or a team-folder membership need its own path, or are their copies all listed by `GET …/shares`?
-- How should the extension verify a federated recipient's certificate, given `verifyFederatedCertificate` in the web app?
-- What does the popup show when some recipients were updated and others failed, and can the user retry only those?
+Server rules: Keepiq `user-sharing`, `federated-sharing` and `folder-permission-grades` as changed by `openspec/changes/sharing-atomic-share-save`.
 
 ## Impact
 
-- New: `src/vault/share-sync.ts`, with its test.
-- Edited: `src/vault/write.ts` (`updateItem` runs the fan-out), `src/messages.ts` (the fan-out result in the `item.update` reply), the item form's save result, ADR-003 (the sharing routes).
+- New: `src/vault/share-save.ts`, `src/vault/verified-partners.ts`, `src/vault/write-error.ts`, `src/crypto/federated-certificate.ts` and the popup component `ShareSaveNote`, each with its test.
+- Edited: `src/api/client.ts` (`ApiError.body`), `src/vault/write.ts` (`fetchItem` records what the form opened, `updateItem` saves through share-save), `src/messages.ts` (the `item.update` request and reply), `src/background/requests.ts`, Shell, item form and item detail, both locales, ADR-002 and ADR-003, `SECURITY.md`, `ARCHITECTURE.md`, and `../docs/browser-extension/using.md`.
+- ext-autofill's `capture.update` saves through `updateItem`. With no edit form behind it, an item with partner shares can't be saved there, and the prompt says to change it in the extension's edit form or the web app.
+- Keepiq: once the extension has moved, `PUT /api/v1/secrets/{id}/sync` and `PUT /api/v1/federated-shares/{id}` can go (keepiq#1258).

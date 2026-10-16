@@ -204,7 +204,22 @@ writeErrors:
   serverError: Keepiq is nu niet beschikbaar, probeer het later opnieuw
   unreadable: Dit item kan niet worden gelezen en dus hier niet worden bewerkt
   restricted: Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren
+  unmatched: Keepiq stuurde een versie van dit item die je kluis niet heeft, dus het is niet geopend.
   keyMismatch: Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.
+  staleSource: Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.
+  incomplete: Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.
+  badCertificate: Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.
+  unverified: Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.
+  partnerUnreachable: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar ({cloudIds}). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+  partnerLookupLimit: Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.
+  federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
+
+shareSave:
+  saveWithout: Opslaan zonder hen
+  ownCopy: Alleen jouw kopie is gewijzigd. De eigenaar en de anderen met wie het gedeeld is, houden de oude waarde.
+  ownerOnly: Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar het item weer opslaat.
+  suspended: Delen met {cloudIds} is gepauzeerd, omdat hun certificaat niet kon worden geverifieerd of hun organisatie de deling niet meer accepteert. De Keepiq-webapp toont de deling.
+  paused: Delen met {cloudIds} is gepauzeerd tot je dit item opnieuw met hen deelt.
 
 folders:
   add: Map toevoegen
@@ -263,7 +278,6 @@ detail:
   item: Item
   decrypting: Ontsleutelen…
   decryptFailed: Kan dit item niet ontsleutelen
-  unreadable: Kan dit item niet lezen
   unreadablePasskey: Kan deze passkey niet lezen
   unreadableFields: Kan de extra velden niet lezen
   loginCredentials: Inloggegevens

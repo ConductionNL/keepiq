@@ -2,11 +2,14 @@ import { useMemo, useState } from 'react'
 import type { ItemDraft, ItemPatch, TypeMeta } from '@/src/messages'
 import { diffDraft, isLiveError, toDraft, validate, type FormErrors, type FormValues } from '@/src/vault/fields'
 
-/** The form's values in popup memory only, compared with what it opened with. */
-export function useItemDraft(initial: FormValues, types: TypeMeta[]) {
+/**
+ * The form's values in popup memory only, compared with what it opened with.
+ * `fetched`: the type an edit or clone opened with and the name it renders by, whatever the snapshot calls that type since.
+ */
+export function useItemDraft(initial: FormValues, types: TypeMeta[], fetched?: { id: string; name: string | undefined }) {
 	const [values, setValues] = useState(initial)
 	const [attempted, setAttempted] = useState(false)
-	const typeName = (typeId: string) => types.find((type) => type.id === typeId)?.name
+	const typeName = (typeId: string) => (fetched && typeId === fetched.id ? fetched.name : types.find((type) => type.id === typeId)?.name)
 	const currentType = typeName(values.typeId)
 
 	const errors = useMemo(() => validate(values, currentType), [values, currentType])

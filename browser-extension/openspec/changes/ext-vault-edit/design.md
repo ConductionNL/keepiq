@@ -89,8 +89,10 @@ export type ItemPatch = Partial<ItemDraft>
 export interface EditableItem extends ItemDraft {
 	id: string
 	updatedAt: string
-	/** Present only for passkey, where key is not decrypted. */
-	keyWithheld?: true
+	/** The type the fetch checked the item under, absent for a type the vault does not know; `passkey`, with `key` empty, when the server or the cache says so. */
+	typeName?: string
+	/** Edit only: names this form's record of what it opened (ext-share-sync). */
+	recordId?: string
 }
 
 export interface FolderChildren {

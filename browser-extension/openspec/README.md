@@ -22,7 +22,7 @@ Changes build on each other in this order. Each proposal lists its predecessors 
 7. `ext-settings`: the rest of the Settings tab
 8. `ext-autofill`: fill from popup, context menu, shortcut, save and update prompts
 9. `ext-toolbar-icon`: logged out, locked and unlocked icon, badge counter of matching logins
-10. `ext-share-sync`: an edit of a shared item reaches every recipient's copy; a proposal so far, from the ext-vault-edit review
+10. `ext-share-sync`: an edit of a shared item reaches every recipient's copy, from the ext-vault-edit review
 
 Later slices not yet specced: inline autofill menu, passkey provider, TOTP autofill, card and identity fill, password history, import and export. Website icons wait on a Keepiq change that stores a favicon on the secret (ADR-002).
 

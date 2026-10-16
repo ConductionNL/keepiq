@@ -1134,6 +1134,7 @@ a {
 .field-row__value {
 	margin: 0;
 	font-size: 14px;
+	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
 
@@ -1238,6 +1239,24 @@ a {
 .field__input--mono {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 12.5px;
+}
+
+.field__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+/* Keeps the row as tall as a bare label. */
+.field__head .icon-btn {
+	margin: -8px -4px -8px 0;
+}
+
+.field__masked {
+	display: flex;
+	align-items: center;
+	color: var(--fg-muted);
 }
 
 .picker-field {
