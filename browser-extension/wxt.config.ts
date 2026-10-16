@@ -75,7 +75,7 @@ export default defineConfig({
 			},
 			browser_specific_settings: {
 				gecko: {
-					id: 'keepiq@sudothijn',
+					id: 'keepiq@conduction.nl',
 					// 109 is the first Firefox with the MV3 APIs backported to MV2;
 					// raise it if you adopt something newer (e.g. storage.session needs 115).
 					strict_min_version: '109.0',
