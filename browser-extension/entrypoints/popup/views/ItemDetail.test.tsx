@@ -181,7 +181,7 @@ describe('use-only copy', () => {
 		const credentials = await screen.findByRole('heading', { name: 'Login credentials' }).then((h) => h.closest('section')!)
 		expect(sent).toHaveBeenCalledWith({ kind: 'item.decrypt', ids: ['i1'], fields: ['login'], passive: false })
 		expect(within(credentials).getByText('bob')).toBeTruthy()
-		expect(within(credentials).getByText('Its owner lets you sign in with this, but not view or copy it.')).toBeTruthy()
+		expect(within(credentials).getByText("Its owner doesn't let you view or copy this.")).toBeTruthy()
 		expect(within(credentials).queryByText('Password')).toBeNull()
 		expect(screen.queryAllByRole('button', { name: /^Show / })).toEqual([])
 		expect(screen.queryAllByRole('button', { name: /^Copy / }).map((b) => b.getAttribute('aria-label'))).toEqual(['Copy username', 'Copy website'])
@@ -192,7 +192,7 @@ describe('use-only copy', () => {
 	it('shows no code or payload, whatever its type', async () => {
 		for (const typeId of ['t-totp', 't-card', 't-note']) {
 			renderDetail(itemMeta({ typeId, hasLogin: false, useOnly: true }), { key: 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ' })
-			expect(await screen.findByText('Its owner lets you sign in with this, but not view or copy it.')).toBeTruthy()
+			expect(await screen.findByText("Its owner doesn't let you view or copy this.")).toBeTruthy()
 			expect(document.querySelector('.totp')).toBeNull()
 			expect(document.body.innerHTML).not.toContain('GEZDGNBVGY3TQOJQ')
 			cleanup()
@@ -201,7 +201,7 @@ describe('use-only copy', () => {
 
 	it('says so when the background refuses a copy that became use-only', async () => {
 		renderDetail(itemMeta(), undefined, 'use_only')
-		expect((await screen.findByRole('alert')).textContent).toBe('Its owner lets you sign in with this, but not view or copy it.')
+		expect((await screen.findByRole('alert')).textContent).toBe("Its owner doesn't let you view or copy this.")
 	})
 })
 

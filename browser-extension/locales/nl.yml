@@ -188,7 +188,7 @@ detail:
   relyingParty: Website of app
   passkeyUser: Gebruikersnaam
   passkeyUnsupported: Inloggen met deze passkey kan nog niet in de extensie
-  useOnly: De eigenaar laat je hiermee inloggen, maar niet bekijken of kopiëren.
+  useOnly: De eigenaar laat je dit niet bekijken of kopiëren.
 
 totp:
   code: Verificatiecode

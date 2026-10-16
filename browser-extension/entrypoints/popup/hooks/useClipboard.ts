@@ -4,7 +4,7 @@ import { copyText } from '@/src/clipboard'
 import { useShell } from '../shell-context'
 import { request } from './useMessage'
 
-/** Copies and toasts "<what> copied"; the background then schedules the clear when one is configured. */
+/** Copies and toasts "<what> copied"; the background then schedules the clear, unless the delay is Never. */
 export function useClipboard() {
 	const { toast } = useShell()
 	return useCallback(async (text: string, what: string): Promise<void> => {

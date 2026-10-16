@@ -123,7 +123,7 @@ function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
 	)
 }
 
-const ALL_FIELDS: readonly DecryptField[] =['login', 'key', 'additionalFields']
+const ALL_FIELDS: readonly DecryptField[] = ['login', 'key', 'additionalFields']
 
 function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undefined; values: DecryptedItem }) {
 	const name = type?.name ?? ''

@@ -29,8 +29,8 @@ interface SecretBase {
 	possiblyCompromisedAt: string | null
 	tombstonedAt: string | null
 	tombstoneReason: string | null
-	/** A share the holder may sign in with but never view or copy. */
-	useOnly: boolean
+	/** A share the holder may sign in with but never view or copy. Absent from servers before 0.3.7. */
+	useOnly?: boolean
 }
 
 export interface OpenSecretRow extends SecretBase {

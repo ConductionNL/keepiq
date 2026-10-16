@@ -189,7 +189,7 @@ detail:
   relyingParty: Relying party
   passkeyUser: User name
   passkeyUnsupported: Signing in with this passkey is not yet supported in the extension
-  useOnly: Its owner lets you sign in with this, but not view or copy it.
+  useOnly: Its owner doesn't let you view or copy this.
 
 totp:
   code: Verification code
