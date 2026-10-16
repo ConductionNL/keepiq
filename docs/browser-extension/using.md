@@ -110,7 +110,7 @@ Passkeys are not added here; they are made when you sign up on a website with on
 
 A passkey item only lets you change its name, folder and website.
 
-An item someone shared with you keeps the limits they set. One shared for signing in only shows its user name but never its password or fields, and can't be edited, cloned or moved. One shared from another organisation can only be moved, and one whose access ends on a date can't be cloned.
+An item someone shared with you keeps the limits they set. One shared for signing in only shows its user name but never its password or fields, and can't be edited, cloned or moved. One shared from another organisation can only be moved, one shared to view only can't be edited, and one whose access ends on a date can't be cloned.
 
 When you change the password, user name or fields of an item you own and shared, the extension saves it for everyone it is shared with in one go, directly, through a group or team folder, or at a partner organisation, before it says **Item saved**. Either everyone gets the change or nothing is saved: when a save fails, the form stays open with your change and the reason, and you save again. A new name, website or folder stays your own.
 
@@ -119,7 +119,7 @@ When you change the password, user name or fields of an item you own and shared,
 - **Partner certificate can't be verified, or their organisation no longer accepts the share:** sharing with them is paused, the save goes through, and the item says so; the Keepiq web app shows the share.
 - **Your server can't share with partner organisations:** an item shared with one can't be saved in the extension; ask your administrator.
 - **Part of the item the form doesn't show:** for an item shared with a partner organisation, such as a card with a detail the form has no field for, the extension can't confirm they would get the item exactly as you saw it, so nothing is saved; make the change in the Keepiq web app.
-- **Shared with you without the right to change it for everyone:** your change stays in your own copy, and the item says so.
+- **Shared with you to view only:** Edit is unavailable on the item, with the reason; from the list's More menu it opens and says why. You can still clone the item or move it to one of your folders. That holds for a direct share, a group share and a team folder where you're a Viewer.
 
 ### Deleting an item
 

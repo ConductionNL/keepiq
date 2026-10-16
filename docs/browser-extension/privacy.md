@@ -13,6 +13,8 @@ The extension talks to your own Nextcloud, and to nobody else. It sends your ser
 - your Nextcloud user name and app password, with every request, to sign in;
 - requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault and your Keepiq preferences, of which it uses the default item type;
 - the items and folders you add, change or delete. An item's secrets, user name, notes and additional fields are encrypted in the browser first; its name, web address, type and folder go as you typed them, as Keepiq stores them. Folder names are not encrypted.
+- when you open an item, a check whether you may edit it, which names the item;
+- when you change a shared item's secrets, user name or fields, a lookup of the encryption certificates of everyone it is shared with (by user id, or by cloud id at a partner organisation), and the change encrypted for each of them.
 
 Your master password never leaves the browser. Neither do your decrypted secrets.
 

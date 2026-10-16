@@ -5,7 +5,7 @@ import { decodePem, extractSpki } from '@/src/crypto/rsa'
 import { encrypt, secretRow } from '@/src/testing/vault'
 import { envelope, federationChain } from '@/src/testing/vectors'
 import { clearKey } from './key-store'
-import { shareSave, VALUE_FIELDS, type Opened, type ShareSaveInput, type Values } from './share-save'
+import { isViewOnly, readWriteContext, shareSave, VALUE_FIELDS, type Opened, type ShareSaveInput, type Values } from './share-save'
 import { forgetVerifiedPartners, VERIFIED_PARTNER_TTL_MS } from './verified-partners'
 import { writeError } from './write-error'
 
@@ -159,11 +159,12 @@ async function openedX(overrides: Partial<Opened> = {}): Promise<Opened> {
 	}
 }
 
-/** A password change to `new`, unless `plain` says otherwise; the patch's own ciphertext is the server's business. */
-function save(overrides: Partial<ShareSaveInput> = {}) {
+/** A password change to `new`, unless `plain` says otherwise, after the caller's `write-context` read; the patch's own ciphertext is the server's business. */
+async function save(overrides: Partial<ShareSaveInput> = {}) {
 	const plain: Values = overrides.plain ?? { key: 'new' }
 	const patch = Object.fromEntries(Object.entries(plain).map(([field, value]) => [field, value === null ? null : `own:${field}`]))
-	return shareSave(client, privateKey, { accountId: 'a1', id: 's1', patch, plain, baseUpdatedAt: BASE, opened: undefined, withoutUnreachable: new Set(), ...overrides })
+	const context = await readWriteContext(client, 's1')
+	return shareSave(client, privateKey, { accountId: 'a1', id: 's1', patch, plain, baseUpdatedAt: BASE, context, opened: undefined, withoutUnreachable: new Set(), ...overrides })
 }
 
 /** What the popup would be told. */
@@ -394,7 +395,7 @@ describe('the copy-editor path', () => {
 
 	it('says when partner shares stay with the owner\'s next save, and looks no partner up', async () => {
 		world.ownerOnly = true
-		expect(await save()).toEqual({ scope: 'copy', ownerOnly: true })
+		expect(await save()).toEqual({ ownerOnly: true })
 		expect(sent()).not.toContain('POST /api/v1/federation/recipient-certificate')
 	})
 
@@ -415,11 +416,25 @@ describe('the copy-editor path', () => {
 		expect(await failure(save())).toEqual({ code: 'stale_source' })
 	})
 
-	it.each(['read', 'none'])('saves only the editor\'s copy with a plain PUT on a %s grade', async (grade) => {
+	it.each(['read', 'none'])('refuses a view-only copy on a %s grade with view_only, sending nothing', async (grade) => {
 		world.effectiveGrade = grade
-		expect(await save()).toEqual({ scope: 'own_copy' })
-		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'PUT /api/v1/secrets/s1'])
-		expect(bodiesOf('PUT /api/v1/secrets/s1')).toEqual([{ key: 'own:key', baseUpdatedAt: BASE }])
+		expect(await failure(save())).toEqual({ code: 'view_only' })
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+})
+
+describe('isViewOnly', () => {
+	const context = (sourceSecretId: string, effectiveGrade: string) => ({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: null })
+
+	it.each([
+		['a copy on a read grade', true, 'src', 'read'],
+		['a copy without a grade', true, 'src', 'none'],
+		['a copy on a write grade', false, 'src', 'write'],
+		['a copy on a manage grade', false, 'src', 'manage'],
+		['a delegate\'s copy on the owner grade', false, 'src', 'owner'],
+		['the source, whatever its grade', false, 's1', 'none'],
+	])('calls %s view-only: %s', (_, viewOnly, sourceSecretId, grade) => {
+		expect(isViewOnly('s1', context(sourceSecretId, grade))).toBe(viewOnly)
 	})
 })
 
@@ -482,7 +497,7 @@ describe('partner shares', () => {
 		['a partner that served this server the wrong chain', () => json({ message: 'bad_chain' }, 502), 'bad_chain'],
 	])('suspends Bob\'s share for %s, sends him nothing, and names him on the note', async (_, answer, reason) => {
 		world.lookups[BOB.recipientCloudId] = answer
-		expect(await save({ opened: await openedX() })).toEqual({ scope: 'source', suspended: [BOB.recipientCloudId] })
+		expect(await save({ opened: await openedX() })).toEqual({suspended: [BOB.recipientCloudId] })
 		expect(lastFinal().federated).toEqual([])
 		expect(lastFinal().suspend).toEqual([{ shareId: BOB.shareId, reason }])
 	})
@@ -501,7 +516,7 @@ describe('partner shares', () => {
 
 	it('suspends an unreachable partner the user saves without, and names it on the note as paused', async () => {
 		world.lookups[BOB.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
-		expect(await save({ opened: await openedX(), withoutUnreachable: new Set([BOB.shareId]) })).toEqual({ scope: 'source', paused: [BOB.recipientCloudId] })
+		expect(await save({ opened: await openedX(), withoutUnreachable: new Set([BOB.shareId]) })).toEqual({paused: [BOB.recipientCloudId] })
 		expect(lastFinal().suspend).toEqual([{ shareId: BOB.shareId, reason: 'partner_unreachable' }])
 	})
 
@@ -509,7 +524,7 @@ describe('partner shares', () => {
 		world.shares = [BOB, CAROL]
 		world.lookups[BOB.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
 		world.lookups[CAROL.recipientCloudId] = () => json({ message: 'unknown_recipient' }, 404)
-		expect(await save({ opened: await openedX(), withoutUnreachable: new Set([BOB.shareId]) })).toEqual({ scope: 'source', suspended: [CAROL.recipientCloudId], paused: [BOB.recipientCloudId] })
+		expect(await save({ opened: await openedX(), withoutUnreachable: new Set([BOB.shareId]) })).toEqual({suspended: [CAROL.recipientCloudId], paused: [BOB.recipientCloudId] })
 	})
 
 	it('stops again for a partner that fails only on Save without them, naming every partner it could not reach', async () => {
@@ -623,7 +638,7 @@ describe('verified partner certificates', () => {
 
 	it('uses Bob\'s for Save without them, and looks him up again after the save that used it went through', async () => {
 		await failOnCarol()
-		expect(await saveWithoutCarol()).toEqual({ scope: 'source', paused: [carol] })
+		expect(await saveWithoutCarol()).toEqual({paused: [carol] })
 		expect(lookups()).toEqual([bob, carol, carol])
 		expect(lastFinal().federated!.map((entry) => entry.shareId)).toEqual([BOB.shareId])
 		await saveWithoutCarol()
@@ -646,7 +661,7 @@ describe('verified partner certificates', () => {
 		await failOnCarol()
 		const moved = { ...BOB, recipientCloudId: 'bob@cloud.elsewhere.example' }
 		world.shares = [moved, CAROL]
-		expect(await saveWithoutCarol()).toEqual({ scope: 'source', suspended: [moved.recipientCloudId], paused: [carol] })
+		expect(await saveWithoutCarol()).toEqual({suspended: [moved.recipientCloudId], paused: [carol] })
 		expect(lookups()).toEqual([bob, carol, moved.recipientCloudId, carol])
 	})
 

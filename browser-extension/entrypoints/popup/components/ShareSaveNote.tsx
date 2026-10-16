@@ -7,7 +7,6 @@ import { Banner } from './ErrorBanner'
 export function ShareSaveNote({ note, webAppUrl }: { note: Note; webAppUrl: string }) {
 	return (
 		<>
-			{note.scope === 'own_copy' && <Banner tone="warning" role="status">{i18n.t('shareSave.ownCopy')}</Banner>}
 			{note.ownerOnly && <Banner tone="warning" role="status">{i18n.t('shareSave.ownerOnly')}</Banner>}
 			{note.suspended && note.suspended.length > 0 && (
 				<Banner tone="warning" role="status">

@@ -194,6 +194,8 @@ export type WriteErrorCode =
 	| 'not_found' | 'blocked' | 'unreadable' | 'offline' | 'server_error' | 'unknown'
 	/** A use-only, read-only or (for a clone) expiring shared copy. */
 	| 'restricted'
+	/** A shared copy whose grade lets its holder view it, not edit it. */
+	| 'view_only'
 	/** The suite's certificate does not match the unlocked key, so nothing is encrypted to it. */
 	| 'key_mismatch'
 	/** The write was meant for an account that is no longer the active one. */
@@ -225,8 +227,6 @@ export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultW
 
 /** Shown on the item's detail after a save; absent when the save reached everyone. */
 export interface ShareSaveNote {
-	/** `source`: the editor owns the item; `copy`: a team editor or delegate; `own_copy`: only the editor's copy changed. */
-	scope: 'source' | 'copy' | 'own_copy'
 	/** Copy-editor path: partner shares exist that only the owner's next save reaches. */
 	ownerOnly?: true
 	/** Partner shares this save suspended on a verdict about the recipient, by cloud id. */
@@ -262,6 +262,8 @@ export type VaultWrite = { accountId: string } & (
 	 */
 	| { kind: 'item.update'; id: string; patch: ItemPatch; baseUpdatedAt?: string; recordId?: string; withoutUnreachable?: string[] }
 	| { kind: 'item.delete'; id: string }
+	/** Whether the server's grade lets the user edit the item; a view-only copy is `false`. */
+	| { kind: 'item.editable'; id: string }
 	| { kind: 'folder.create'; name: string; parentId: string | null }
 	| { kind: 'folder.rename'; id: string; name: string }
 	| { kind: 'folder.children'; id: string }
@@ -282,6 +284,7 @@ export interface PopupReplies {
 	'item.create': WriteResult<{ id: string }>
 	'item.update': WriteResult<{ id: string; shareSave?: ShareSaveNote }>
 	'item.delete': WriteResult<null>
+	'item.editable': WriteResult<{ editable: boolean }>
 	'folder.create': WriteResult<{ id: string }>
 	'folder.rename': WriteResult<null>
 	'folder.children': WriteResult<FolderChildren>
@@ -291,7 +294,7 @@ export interface PopupReplies {
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
 	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
-	'settings.get', 'settings.set', 'item.fetch', 'item.create', 'item.update', 'item.delete',
+	'settings.get', 'settings.set', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 ])
 

@@ -7,7 +7,7 @@ import type { EditableItem, FolderChildren, FolderDeletePlan, ItemDraft, ItemPat
 import { fieldTexts, shownInFull } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
-import { readWriteContext, shareSave, VALUE_FIELDS, type Opened, type Values } from './share-save'
+import { isViewOnly, readWriteContext, shareSave, VALUE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
 import { readSnapshot } from './store'
 import { recordOutcome, syncAfterWrite } from './sync'
 import type { StoredSecretRow } from './types'
@@ -210,8 +210,13 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 		// restricted copy would be a permanent, unrestricted one (Keepiq `use-only-shares`, `expiring-shares`).
 		if (isRestricted(row, purpose)) throw new WriteFailure({ code: 'restricted' })
 		const cached = await cachedMatch(account.id, id, row)
-		// The source version this edit is made from, which a save through a copy must name.
-		const sourceUpdatedAt = purpose === 'edit' ? (await readWriteContext(client, id)).sourceUpdatedAt : null
+		let sourceUpdatedAt: string | null = null
+		if (purpose === 'edit') {
+			const writeContext = await readWriteContext(client, id)
+			if (isViewOnly(id, writeContext)) throw new WriteFailure({ code: 'view_only' })
+			// The source version this edit is made from, which a save through a copy must name.
+			sourceUpdatedAt = writeContext.sourceUpdatedAt
+		}
 		const typeNames = await typeNamesOf(account.id, [row.typeId, cached.typeId])
 		// Either side naming a passkey withholds it, so a swapped type id does not open the credential.
 		const passkey = typeNames.includes('passkey')
@@ -283,7 +288,8 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		if (!cached) throw new WriteFailure({ code: 'not_found' })
 		// What the server enforces too, refused here so no ciphertext is made for it.
 		if (cached.useOnly) throw new WriteFailure({ code: 'restricted' })
-		if (cached.readOnly && Object.keys(patch).some((field) => field !== 'folderId')) throw new WriteFailure({ code: 'restricted' })
+		const moveOnly = Object.keys(patch).every((field) => field === 'folderId')
+		if (cached.readOnly && !moveOnly) throw new WriteFailure({ code: 'restricted' })
 		const body: Record<string, unknown> = {}
 		if (patch.name !== undefined) {
 			if (typeof patch.name !== 'string' || !patch.name.trim()) throw new WriteFailure({ code: 'invalid' })
@@ -302,6 +308,12 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		const valueChange = VALUE_FIELDS.some((field) => plain[field] !== undefined)
 		// share-save refuses a save without the version it was made from.
 		if (valueChange && !baseUpdatedAt) throw new WriteFailure({ code: 'invalid' })
+		// The grade may have been lowered since the form opened; a move files the holder's own copy, so it needs none.
+		let writeContext: WriteContext | undefined
+		if (!moveOnly) {
+			writeContext = await readWriteContext(client, id)
+			if (isViewOnly(id, writeContext)) throw new WriteFailure({ code: 'view_only' })
+		}
 		let key: Promise<CryptoKey> | undefined
 		for (const field of VALUE_FIELDS) {
 			const value = plain[field]
@@ -310,7 +322,7 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		let note: ShareSaveNote | undefined
 		if (valueChange) {
 			const opened = recordId ? await findRecord(account.id, id, recordId) : undefined
-			note = await shareSave(client, privateKey, { accountId: account.id, id, patch: body, plain, baseUpdatedAt: baseUpdatedAt!, opened, withoutUnreachable: new Set(withoutUnreachable) })
+			note = await shareSave(client, privateKey, { accountId: account.id, id, patch: body, plain, baseUpdatedAt: baseUpdatedAt!, context: writeContext!, opened, withoutUnreachable: new Set(withoutUnreachable) })
 		} else {
 			await client.keepiq('PUT', secretPath(id), baseUpdatedAt ? { ...body, baseUpdatedAt } : body)
 		}
@@ -318,6 +330,11 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		if (recordId) await swapRecord(account.id, id, recordId, undefined).catch(unrecorded)
 		return note ? { id, shareSave: note } : { id }
 	}, 'sync', accountId)
+}
+
+/** For the item's detail to show Edit as unavailable up front; `fetchItem` and `updateItem` check again. */
+export function itemEditable(id: string, accountId?: string): Promise<WriteResult<{ editable: boolean }>> {
+	return run(async ({ client }) => ({ editable: !isViewOnly(id, await readWriteContext(client, id)) }), 'reply', accountId)
 }
 
 /** Moves the item to Keepiq's trash, which also revokes its shares; restoring is the web app's. */

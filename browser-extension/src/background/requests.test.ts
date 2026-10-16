@@ -247,6 +247,12 @@ describe('vault writes', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 
+	it('answers item.editable from the item\'s write-context', async () => {
+		fetchMock.mockResolvedValue(new Response(JSON.stringify({ sourceSecretId: 'src', effectiveGrade: 'read', ownerCertificate: null, sourceUpdatedAt: null })))
+		expect(await send({ kind: 'item.editable', accountId, id: 's1' })).toEqual({ ok: true, value: { editable: false } })
+		expect(String(fetchMock.mock.calls[0]![0])).toBe('https://cloud.example.org/index.php/apps/keepiq/api/v1/secrets/s1/write-context')
+	})
+
 	describe('item.update', () => {
 		const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 		const bob = { shareId: 'fs-bob', recipientCloudId: 'bob@cloud.partner.example' }

@@ -15,10 +15,8 @@ const shown = (note: Note) => {
 
 describe('ShareSaveNote', () => {
 	it.each([
-		['en', { scope: 'own_copy' }, ['Only your copy changed. The owner and the others it is shared with keep the old value.']],
-		['nl', { scope: 'own_copy' }, ['Alleen jouw kopie is gewijzigd. De eigenaar en de anderen met wie het gedeeld is, houden de oude waarde.']],
-		['en', { scope: 'copy', ownerOnly: true }, ['Saved. Recipients at partner organisations get this change when the owner next saves it.']],
-		['nl', { scope: 'copy', ownerOnly: true }, ['Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar het item weer opslaat.']],
+		['en', { ownerOnly: true }, ['Saved. Recipients at partner organisations get this change when the owner next saves it.']],
+		['nl', { ownerOnly: true }, ['Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar het item weer opslaat.']],
 	] as const)('in %s, says %j', (locale, note, texts) => {
 		setLocale(locale)
 		expect(shown(note)).toEqual(texts)
@@ -29,7 +27,7 @@ describe('ShareSaveNote', () => {
 		['nl', 'Delen met bob@cloud.partner.example en carol@cloud.partner.example is gepauzeerd, omdat hun certificaat niet kon worden geverifieerd of hun organisatie de deling niet meer accepteert. De Keepiq-webapp toont de deling.', 'Open de Keepiq-webapp'],
 	] as const)('in %s, names the suspended partners in a list of that language, with a link to the web app', (locale, text, link) => {
 		setLocale(locale)
-		expect(shown({ scope: 'source', suspended: ['bob@cloud.partner.example', 'carol@cloud.partner.example'] })).toEqual([text + link])
+		expect(shown({suspended: ['bob@cloud.partner.example', 'carol@cloud.partner.example'] })).toEqual([text + link])
 		expect(screen.getByRole('link', { name: link }).getAttribute('href')).toBe(WEB_APP)
 	})
 
@@ -38,18 +36,18 @@ describe('ShareSaveNote', () => {
 		['nl', 'Delen met bob@cloud.partner.example en carol@cloud.partner.example is gepauzeerd tot je dit item opnieuw met hen deelt.'],
 	] as const)('in %s, names the partners saved without on a line of their own', (locale, text) => {
 		setLocale(locale)
-		expect(shown({ scope: 'source', paused: ['bob@cloud.partner.example', 'carol@cloud.partner.example'] })).toEqual([text])
+		expect(shown({paused: ['bob@cloud.partner.example', 'carol@cloud.partner.example'] })).toEqual([text])
 	})
 
 	it('shows a suspended and a paused partner on two lines', () => {
 		setLocale('en')
-		expect(shown({ scope: 'source', suspended: ['bob@cloud.partner.example'], paused: ['carol@cloud.partner.example'] })).toEqual([
+		expect(shown({suspended: ['bob@cloud.partner.example'], paused: ['carol@cloud.partner.example'] })).toEqual([
 			expect.stringContaining('Sharing with bob@cloud.partner.example is paused, because'),
 			'Sharing with carol@cloud.partner.example is paused until you share this item with them again.',
 		])
 	})
 
 	it('shows nothing for a source save that suspended no one', () => {
-		expect(shown({ scope: 'source', suspended: [], paused: [] })).toEqual([])
+		expect(shown({suspended: [], paused: [] })).toEqual([])
 	})
 })

@@ -69,7 +69,7 @@ There is no remote wipe, so these checks stand in for it:
 - Before it encrypts, the extension checks that the server's active key is still the one it holds, and proves the server's certificate belongs to your unlocked key. Otherwise nothing is written.
 - A save goes to the account the popup showed, and is refused when another window switched accounts.
 - Edit fetches the item fresh, sends only what changed, and is refused when a newer version was saved elsewhere. Edit and Clone only open what your vault already holds for that item, and a save gives partners the fields you didn't touch only as the form showed them in full, under the type the fetch checked. A swap while the form is open changes nothing partners get; a swap before the form opens is not caught (see Known limits, and [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#sharing)).
-- Shared copies keep their limits: a use-only copy is never shown, copied or changed, a read-only one can only be filed in a folder, and no restricted copy can be cloned.
+- Shared copies keep their limits: a use-only copy is never shown, copied or changed, a read-only one can only be filed in a folder, one shared to view only can't be changed but can be cloned or filed, and a use-only, read-only or expiring copy can't be cloned.
 - Delete moves an item to Keepiq's trash and ends its shares. A folder delete is immediate, and "Delete items too" deletes them for good.
 
 ## Shared items

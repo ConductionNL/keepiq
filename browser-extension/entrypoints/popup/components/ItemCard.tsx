@@ -15,18 +15,19 @@ import { Menu, type MenuItem } from './Menu'
 /** Types whose `key` is a structured payload or a seed, not something to paste as a password. */
 const NO_PASSWORD = new Set(['totp', 'card', 'identity', 'passkey'])
 
-/** Edit, Clone, Move and Delete with the reason each is unavailable, for the More menu and item detail alike. */
-export function itemActions(item: ItemMeta, type: TypeMeta | undefined, offline: boolean, actions: ItemActions) {
+/** Edit, Clone, Move and Delete with the reason each is unavailable, for the More menu and item detail alike. `viewOnly`: the detail's `item.editable` answer, which the list does not ask. */
+export function itemActions(item: ItemMeta, type: TypeMeta | undefined, offline: boolean, actions: ItemActions, viewOnly = false) {
 	const offlineReason = offline ? i18n.t('form.offline') : undefined
 	const blockedReason = item.blocked ? i18n.t('blocked.generic') : undefined
 	const passkeyReason = type?.name === 'passkey' ? i18n.t('item.passkeyNoClone') : undefined
 	// The share's limits, which the background enforces too (Keepiq `use-only-shares`, `expiring-shares`).
 	const useOnly = item.useOnly ? i18n.t('item.useOnly') : undefined
 	const readOnly = item.readOnly ? i18n.t('item.readOnly') : undefined
+	const viewOnlyReason = viewOnly ? i18n.t('item.viewOnly') : undefined
 	const expiring = item.accessExpiresAt ? i18n.t('item.expiringNoClone', { date: new Date(item.accessExpiresAt).toLocaleDateString(language()) }) : undefined
 	return {
 		// Edit reads the item first and refuses there when offline, so it is not refused for that up front.
-		edit: { label: i18n.t('item.edit'), onSelect: () => actions.edit(item.id), disabledReason: blockedReason ?? useOnly ?? readOnly },
+		edit: { label: i18n.t('item.edit'), onSelect: () => actions.edit(item.id), disabledReason: blockedReason ?? useOnly ?? readOnly ?? viewOnlyReason },
 		clone: { label: i18n.t('item.clone'), onSelect: () => actions.clone(item.id), disabledReason: passkeyReason ?? blockedReason ?? useOnly ?? readOnly ?? expiring ?? offlineReason },
 		move: { label: i18n.t('item.move'), onSelect: () => actions.move(item), disabledReason: useOnly ?? offlineReason },
 		remove: { label: i18n.t('item.delete'), onSelect: () => actions.remove(item), disabledReason: offlineReason },

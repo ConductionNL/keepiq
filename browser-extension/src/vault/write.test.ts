@@ -12,7 +12,7 @@ import { readSnapshot, writeSnapshot } from './store'
 import { sync, syncStatus } from './sync'
 import type { VaultSnapshot } from './types'
 import { lock } from './unlock'
-import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, renameFolder, updateItem } from './write'
+import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, itemEditable, renameFolder, updateItem } from './write'
 
 vi.mock('@/src/crypto', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/crypto')>()
@@ -147,7 +147,7 @@ describe('createItem', () => {
 		expect((await readSnapshot(accountId))?.secrets.map((row) => row.id)).toEqual(['s1', 'new'])
 	})
 
-	it('refuses a certificate that does not match the unlocked key, without a request', async () => {
+	it('refuses a certificate that does not match the unlocked key, without a write', async () => {
 		const { publicKey } = await crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['encrypt', 'decrypt'])
 		const spki = toBase64(new Uint8Array(await crypto.subtle.exportKey('spki', publicKey)))
 		// What a sync stores when the server swapped the certificate but kept the suite id and epoch.
@@ -156,7 +156,8 @@ describe('createItem', () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {})
 		expect(await createItem(draft())).toEqual({ ok: false, error: { code: 'key_mismatch' } })
 		expect(await updateItem('s1', { key: 'new' }, secretRow().updatedAt)).toEqual({ ok: false, error: { code: 'key_mismatch' } })
-		expect(writes()).toEqual([])
+		// updateItem reads the grade before it encrypts.
+		expect(writes()).toEqual(['GET /api/v1/secrets/s1/write-context'])
 	})
 
 	it('locks instead of encrypting to a key the server replaced since the last sync', async () => {
@@ -246,6 +247,32 @@ describe('fetchItem', () => {
 		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'server_error' } })
 		expect(await recordIds()).toEqual([])
 		expect(vi.mocked(rsaDecrypt)).not.toHaveBeenCalled()
+	})
+
+	it.each([
+		['a team-folder read grade', 'read'],
+		['a direct share without a grade', null],
+	])('refuses to edit a copy on %s with view_only before decrypting, keeping nothing, and still clones it', async (_, effectiveGrade) => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		server({
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }),
+		}, [row])
+		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'view_only' } })
+		expect(vi.mocked(rsaDecrypt)).not.toHaveBeenCalled()
+		expect(await recordIds()).toEqual([])
+		expect(await fetchItem('s1', 'clone')).toMatchObject({ ok: true, value: { key: 'pw' } })
+	})
+
+	it.each(['write', 'manage', 'owner'])('opens a copy on the %s grade for editing', async (effectiveGrade) => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		server({
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }),
+		}, [row])
+		expect(await fetchItem('s1')).toMatchObject({ ok: true, value: { key: 'pw', recordId: expect.any(String) } })
 	})
 
 	it.each([
@@ -512,11 +539,17 @@ describe('updateItem through share-save', () => {
 
 	it.each([
 		['a rename', { name: 'Home wifi' }],
-		['a move', { folderId: 'f1' }],
 		['a URL change', { url: 'https://example.org' }],
-	])('saves %s with a plain PUT and no share-save', async (_, patch) => {
+	])('saves %s with write-context and a plain PUT, and no share-save', async (_, patch) => {
 		server({ ...shared({ copies: [BOB_COPY] }), 'PUT /api/v1/secrets/s1': () => json(secretRow()) })
 		expect(await updateItem('s1', patch, BASE)).toEqual({ ok: true, value: { id: 's1' } })
+		expect(sent().filter(isShareSaveLine)).toEqual(['GET /api/v1/secrets/s1/write-context'])
+		expect(sent()).toContain('PUT /api/v1/secrets/s1')
+	})
+
+	it('saves a move with a plain PUT alone, reading no grade', async () => {
+		server({ ...shared({ copies: [BOB_COPY] }), 'PUT /api/v1/secrets/s1': () => json(secretRow()) })
+		expect(await updateItem('s1', { folderId: 'f1' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
 		expect(sent().filter(isShareSaveLine)).toEqual([])
 	})
 
@@ -524,19 +557,64 @@ describe('updateItem through share-save', () => {
 		await snapshot([secretRow({ typeId: 't-passkey' })])
 		server({ ...shared({ copies: [BOB_COPY] }), 'PUT /api/v1/secrets/s1': () => json(secretRow()) })
 		expect(await updateItem('s1', { name: 'Renamed', key: '{}' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
-		expect(sent().filter(isShareSaveLine)).toEqual([])
+		expect(sent().filter(isShareSaveLine)).toEqual(['GET /api/v1/secrets/s1/write-context'])
 	})
 
-	it.each([
-		['the copy-editor path names partners only the owner reaches', { sourceSecretId: 'src', effectiveGrade: 'write' }, { ownerOnly: true }, { scope: 'copy', ownerOnly: true }],
-		['a read grade saves only the editor\'s copy', { sourceSecretId: 'src', effectiveGrade: 'read' }, {}, { scope: 'own_copy' }],
-	])('replies with the note when %s', async (_, context, sharing, note) => {
+	it('replies with the note when the copy-editor path names partners only the owner reaches', async () => {
 		server({
-			...shared(sharing),
-			'GET /api/v1/secrets/s1/write-context': () => json({ ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT, ...context }),
-			'PUT /api/v1/secrets/s1': () => json(secretRow()),
+			...shared({ ownerOnly: true }),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'write', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }),
 		})
-		expect(await updateItem('s1', { key: 'new' }, BASE)).toEqual({ ok: true, value: { id: 's1', shareSave: note } })
+		expect(await updateItem('s1', { key: 'new' }, BASE)).toEqual({ ok: true, value: { id: 's1', shareSave: { ownerOnly: true } } })
+	})
+
+	it('saves a group member\'s change on the write grade for Alice\'s source and every other member\'s copy, reading write-context once', async () => {
+		const sourceAndMembers = [{ secretId: 'src', holder: 'owner', targetUserId: null }, { secretId: 'c-carol', holder: 'recipient', targetUserId: 'carol' }, { secretId: 'c-dan', holder: 'recipient', targetUserId: 'dan' }]
+		server({
+			...shared({ copies: sourceAndMembers }),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'write', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }),
+		})
+		expect(await updateItem('s1', { key: 'new' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
+		const body = lastBodyOf(SHARE_SAVE)
+		expect(body.sourceBaseUpdatedAt).toBe(SOURCE_AT)
+		expect((body.copies as Array<{ secretId: string }>).map((copy) => copy.secretId)).toEqual(['src', 'c-carol', 'c-dan'])
+		expect(body).not.toHaveProperty('federated')
+		expect(sent().filter((line) => line.endsWith('/write-context'))).toHaveLength(1)
+	})
+
+	describe('a view-only copy', () => {
+		const VIEW_ONLY = { sourceSecretId: 'src', effectiveGrade: 'read', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }
+
+		it.each([
+			['a new password', { key: 'new' }],
+			['a rename', { name: 'Mine now' }],
+			['a username and a folder', { login: 'carol', folderId: 'f1' }],
+		])('refuses %s with view_only, sending nothing but write-context', async (_, patch) => {
+			server({ 'GET /api/v1/secrets/s1/write-context': () => json(VIEW_ONLY), 'PUT /api/v1/secrets/s1': () => json(secretRow()) })
+			expect(await updateItem('s1', patch, BASE)).toEqual({ ok: false, error: { code: 'view_only' } })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+		})
+
+		it('refuses a save from a form that opened before the grade was lowered, keeping its record', async () => {
+			const row = secretRow({ key: await encrypt('pw') })
+			await snapshot([row])
+			let grade = 'write'
+			server({ 'GET /api/v1/secrets/s1': () => json(row), 'GET /api/v1/secrets/s1/write-context': () => json({ ...VIEW_ONLY, effectiveGrade: grade }) }, [row])
+			const form = recordOf(await fetchItem('s1'))
+			expect(form).toEqual(expect.any(String))
+			grade = 'read'
+			fetchMock.mockClear()
+			expect(await updateItem('s1', { key: 'new' }, row.updatedAt, undefined, form)).toEqual({ ok: false, error: { code: 'view_only' } })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+			expect(await recordIds()).toEqual(['s1'])
+		})
+
+		it('files it with a PUT of only its folder', async () => {
+			server({ 'GET /api/v1/secrets/s1/write-context': () => json(VIEW_ONLY), 'PUT /api/v1/secrets/s1': () => json(secretRow()) })
+			expect(await updateItem('s1', { folderId: 'f-network' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
+			expect(bodyOf('PUT /api/v1/secrets/s1')).toEqual({ folderId: 'f-network', baseUpdatedAt: BASE })
+			expect(sent()).not.toContain('GET /api/v1/secrets/s1/write-context')
+		})
 	})
 
 	it('saves through a copy with the source version its edit fetch read, not the one at save time', async () => {
@@ -563,7 +641,7 @@ describe('updateItem through share-save', () => {
 			'POST /api/v1/federation/recipient-certificate': () => json({ message: 'unknown_recipient' }, 404),
 		}, [x])
 		const form = recordOf(await fetchItem('s1'))
-		expect(await updateItem('s1', { key: 'new' }, x.updatedAt, undefined, form)).toEqual({ ok: true, value: { id: 's1', shareSave: { scope: 'source', suspended: [BOB.recipientCloudId] } } })
+		expect(await updateItem('s1', { key: 'new' }, x.updatedAt, undefined, form)).toEqual({ ok: true, value: { id: 's1', shareSave: {suspended: [BOB.recipientCloudId] } } })
 		expect(lastBodyOf(SHARE_SAVE).copies).toHaveLength(1)
 	})
 
@@ -603,14 +681,14 @@ describe('updateItem through share-save', () => {
 
 		it('saves without an unreachable partner the user named, suspending its share', async () => {
 			const unreachable = { 'POST /api/v1/federation/recipient-certificate': () => json({ message: 'partner_unreachable' }, 502) }
-			expect(await saveFrom(unreachable, [BOB.shareId])).toEqual({ ok: true, value: { id: 's1', shareSave: { scope: 'source', paused: [BOB.recipientCloudId] } } })
+			expect(await saveFrom(unreachable, [BOB.shareId])).toEqual({ ok: true, value: { id: 's1', shareSave: {paused: [BOB.recipientCloudId] } } })
 			expect(lastBodyOf(SHARE_SAVE).suspend).toEqual([{ shareId: BOB.shareId, reason: 'partner_unreachable' }])
 			expect(await recordIds()).toEqual([])
 		})
 
 		it('suspends a partner on the server\'s own 502 bad_chain, without going offline', async () => {
 			const badChain = { 'POST /api/v1/federation/recipient-certificate': () => json({ message: 'bad_chain' }, 502) }
-			expect(await saveFrom(badChain)).toEqual({ ok: true, value: { id: 's1', shareSave: { scope: 'source', suspended: [BOB.recipientCloudId] } } })
+			expect(await saveFrom(badChain)).toEqual({ ok: true, value: { id: 's1', shareSave: {suspended: [BOB.recipientCloudId] } } })
 			expect(lastBodyOf(SHARE_SAVE).suspend).toEqual([{ shareId: BOB.shareId, reason: 'bad_chain' }])
 			expect(await syncStatus(accountId)).toMatchObject({ offline: false })
 		})
@@ -810,6 +888,36 @@ describe('updateItem through share-save', () => {
 		expect(await updateItem('s1', { key: 'new' }, BASE, 'another')).toEqual({ ok: false, error: { code: 'account_changed' } })
 		await lock(accountId)
 		expect(await updateItem('s1', { key: 'new' }, BASE, accountId)).toEqual({ ok: false, error: { code: 'locked' } })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('itemEditable', () => {
+	const grade = (sourceSecretId: string, effectiveGrade: string | null) => server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }) })
+
+	it.each([
+		['a copy on a team-folder read grade', 'src', 'read', false],
+		['a copy shared directly without a grade', 'src', null, false],
+		['a copy on the write grade', 'src', 'write', true],
+		['a copy on the manage grade', 'src', 'manage', true],
+		['a delegate\'s copy on the owner grade', 'src', 'owner', true],
+		['the source', 's1', 'owner', true],
+	])('answers %s from write-context alone, without a sync', async (_, sourceSecretId, effectiveGrade, editable) => {
+		grade(sourceSecretId, effectiveGrade)
+		expect(await itemEditable('s1')).toEqual({ ok: true, value: { editable } })
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+
+	it('fails as a write does when write-context does not read', async () => {
+		server({ 'GET /api/v1/secrets/s1/write-context': () => json({ message: 'Unavailable' }, 503) })
+		expect(await itemEditable('s1')).toEqual({ ok: false, error: { code: 'server_error' } })
+	})
+
+	it('refuses for another account or a locked vault before any request', async () => {
+		grade('src', 'read')
+		expect(await itemEditable('s1', 'another')).toEqual({ ok: false, error: { code: 'account_changed' } })
+		await lock(accountId)
+		expect(await itemEditable('s1', accountId)).toEqual({ ok: false, error: { code: 'locked' } })
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 })

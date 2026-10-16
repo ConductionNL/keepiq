@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: A value change saves every copy in one request
-The extension SHALL save an edit whose body carries `key`, `login` or `additionalFields` through `PUT /api/v1/secrets/{id}/share-save`, and MUST save any other edit through `PUT /api/v1/secrets/{id}` as ext-vault-edit specifies. It MUST read `GET /api/v1/secrets/{id}/write-context` first and take exactly one path from it: the owner path when `sourceSecretId` is the edited id, the copy-editor path when it is not and `effectiveGrade` is `owner`, `write` or `manage`, and otherwise a plain `PUT /api/v1/secrets/{id}` of the editor's copy only. The first share-save MUST carry the patch, `baseUpdatedAt` and empty lists; on 409 `incomplete` the background MUST encrypt for what the answer requires, drop what it no longer requires and send again, and MUST fail the save with `incomplete` after three rounds, where each `incomplete` answer and each `stage_unknown` restart counts as one. Nothing about a save MUST outlive its request, beyond the form's record of what it opened, which a successful save drops, and verified partner certificates, kept in background memory for up to 5 minutes.
+The extension SHALL save an edit whose body carries `key`, `login` or `additionalFields` through `PUT /api/v1/secrets/{id}/share-save`, and MUST save any other edit through `PUT /api/v1/secrets/{id}` as ext-vault-edit specifies. It MUST read `GET /api/v1/secrets/{id}/write-context` first and take exactly one path from it: the owner path when `sourceSecretId` is the edited id, the copy-editor path when it is not and `effectiveGrade` is `owner`, `write` or `manage`, and otherwise none, since that copy is view-only. The first share-save MUST carry the patch, `baseUpdatedAt` and empty lists; on 409 `incomplete` the background MUST encrypt for what the answer requires, drop what it no longer requires and send again, and MUST fail the save with `incomplete` after three rounds, where each `incomplete` answer and each `stage_unknown` restart counts as one. Nothing about a save MUST outlive its request, beyond the form's record of what it opened, which a successful save drops, and verified partner certificates, kept in background memory for up to 5 minutes.
 
 #### Scenario: Password change of an owned, shared item
 - **GIVEN** Alice owns "Wifi" and shared it with Bob
@@ -12,7 +12,7 @@ The extension SHALL save an edit whose body carries `key`, `login` or `additiona
 #### Scenario: Rename only
 - **GIVEN** Alice owns "Wifi" and shared it with Bob
 - **WHEN** she renames it and saves
-- **THEN** only `PUT /api/v1/secrets/{id}` MUST be sent, and no `write-context` or share-save
+- **THEN** `write-context` and `PUT /api/v1/secrets/{id}` MUST be sent, and no share-save
 
 #### Scenario: Item that is not shared
 - **GIVEN** Alice owns "Bank", which is shared with nobody
@@ -59,7 +59,12 @@ On the owner path the extension SHALL fill every copy the `incomplete` answer re
 - **AND** the copies MUST go in two chunks of 100 with `stage.final` `false` and a final call with the last 30 and the patch
 
 ### Requirement: A team editor's change reaches the owner and every other copy
-On the copy-editor path the extension SHALL send the share-save for the editor's own copy with `sourceBaseUpdatedAt` set to the `sourceUpdatedAt` the form's edit fetch read, or, without that record, the `sourceUpdatedAt` of its own `write-context` read. It MUST encrypt the patch's value fields to `ownerCertificate` for the source and to each recipient certificate for every other copy the answer requires, and MUST NOT send partner shares. When the reply says `ownerOnly`, the item's detail MUST say that partner organisations get the change with the owner's next save. A copy whose `effectiveGrade` is `read` or `none` MUST be saved with `PUT /api/v1/secrets/{id}` alone, and the item's detail MUST say that only the editor's copy changed.
+On the copy-editor path the extension SHALL send the share-save for the editor's own copy with `sourceBaseUpdatedAt` set to the `sourceUpdatedAt` the form's edit fetch read, or, without that record, the `sourceUpdatedAt` of its own `write-context` read. It MUST encrypt the patch's value fields to `ownerCertificate` for the source and to each recipient certificate for every other copy the answer requires, and MUST NOT send partner shares. When the reply says `ownerOnly`, the item's detail MUST say that partner organisations get the change with the owner's next save.
+
+#### Scenario: Group member once the server treats them as a writer
+- **GIVEN** Alice shared "Router" with the group Staff, and the server answers Bob's `write-context` with `write` (keepiq#1285)
+- **WHEN** Bob changes the password of his copy
+- **THEN** the save MUST take the copy-editor path, as for a team-folder editor, and reach Alice's source and every other member's copy
 
 #### Scenario: Editor in a team folder
 - **GIVEN** Bob holds a `write` grade on the team folder that holds Alice's "Router" and its copies for Bob and Carol
@@ -76,11 +81,23 @@ On the copy-editor path the extension SHALL send the share-save for the editor's
 - **WHEN** Carol saves a new password and the reply says `ownerOnly`
 - **THEN** no partner certificate MUST be looked up, and the item's detail MUST say "Saved. Recipients at partner organisations get this change when the owner next saves it."
 
-#### Scenario: Viewer edits their copy
+### Requirement: A copy without write permission is view-only
+The extension SHALL treat a copy whose `write-context` names another `sourceSecretId` and an `effectiveGrade` other than `owner`, `write` or `manage` as view-only. When an item's detail opens, unless Edit is already unavailable because the item is blocked, use-only or read-only, the popup MUST ask the background with `item.editable`, which reads `write-context` and answers whether the item may be edited; a view-only copy MUST show Edit as unavailable on its detail with "Shared with you to view only. Ask its owner for edit rights to change it.", while Clone and Move stay available. The list row's More menu doesn't ask, so its Edit opens the form, whose edit fetch the background refuses with that text. Until the answer arrives, or when the read fails, Edit stays available. In the background, `item.fetch` for edit MUST refuse a view-only copy with `view_only` before anything is decrypted, and `item.update` MUST refuse any patch on it other than a move to a folder with `view_only`, before anything is written. The extension MUST NOT save anything but a folder move to a view-only copy.
+
+#### Scenario: Viewer opens their copy
 - **GIVEN** Carol holds a `read` grade, or a direct share without a grade, on "Router"
-- **WHEN** she changes the password of her copy
-- **THEN** only `PUT /api/v1/secrets/{id}` MUST be sent
-- **AND** the item's detail MUST show "Only your copy changed. The owner and the others it is shared with keep the old value."
+- **WHEN** she opens it
+- **THEN** Edit MUST be unavailable with "Shared with you to view only. Ask its owner for edit rights to change it.", and Clone and Move MUST be available
+
+#### Scenario: A save of a view-only copy from an older form
+- **GIVEN** Carol's edit form for "Router" opened before her grade was lowered to `read`
+- **WHEN** she saves a new password
+- **THEN** nothing MUST be sent but `write-context`, and the form MUST show the view-only text
+
+#### Scenario: Viewer files their copy
+- **GIVEN** Carol holds a view-only copy of "Router"
+- **WHEN** she moves it to her folder "Network"
+- **THEN** the move MUST be saved with `PUT /api/v1/secrets/{id}` carrying only `folderId`
 
 ### Requirement: Partner-organisation recipients get the whole value the form showed
 On the owner path the extension SHALL, for each partner share the `incomplete` answer requires, look up the recipient's certificate with `POST /api/v1/federation/recipient-certificate` and `cloudId` set to the required share's `recipientCloudId`, verify it in the background, encrypt the whole `key`, `login` and `additionalFields` to it, and list it under `federated` with `certFingerprint`, the lowercase hex SHA-256 of the verified certificate. The whole value MUST be the typed fields plus each other field decrypted from the ciphertext the saving form's own edit fetch opened in full, found by the form's `recordId`; the extension MUST NOT decrypt a fresh row or a reply to build it. When the form did not open every value field in full, its record is gone, or the record is of another version than the save's `baseUpdatedAt`, the save MUST fail with `unverified` before any partner lookup. The edit fetch MUST refuse a row whose ciphertext the vault cache does not hold before or after a vault sync, so the form never opens another item's values.
@@ -195,7 +212,7 @@ A save the server refuses, or that fails before the final share-save is answered
 - **THEN** the form MUST stay open with the offline message, and saving again MUST send the whole save again
 
 ### Requirement: Item detail shows what the save left to others
-The extension SHALL, after a save whose reply carries `shareSave`, close the form and open the item's detail with the "Item saved" toast as before, plus one note: "Only your copy changed. The owner and the others it is shared with keep the old value." for `own_copy`, "Saved. Recipients at partner organisations get this change when the owner next saves it." for `ownerOnly`, the suspended partners' warning, naming their cloud ids, for `suspended`, and "Sharing with <cloud ids> is paused until you share this item with them again." for `paused`, the shares the user suspended through Save without them. The note MUST be held in popup memory for that item only and MUST be gone when the popup closes or another item's detail opens. A save that reached everyone carries no `shareSave` and shows nothing beyond the toast.
+The extension SHALL, after a save whose reply carries `shareSave`, close the form and open the item's detail with the "Item saved" toast as before, plus its notes: "Saved. Recipients at partner organisations get this change when the owner next saves it." for `ownerOnly`, the suspended partners' warning, naming their cloud ids, for `suspended`, and "Sharing with <cloud ids> is paused until you share this item with them again." for `paused`, the shares the user suspended through Save without them. The note MUST be held in popup memory for that item only and MUST be gone when the popup closes or another item's detail opens. A save that reached everyone carries no `shareSave` and shows nothing beyond the toast.
 
 #### Scenario: Fully reached
 - **GIVEN** Alice shared "Wifi" with Bob and Carol
@@ -203,7 +220,7 @@ The extension SHALL, after a save whose reply carries `shareSave`, close the for
 - **THEN** the detail MUST show only the "Item saved" toast
 
 #### Scenario: Popup closed
-- **GIVEN** the detail shows the own-copy note
+- **GIVEN** the detail shows the note that partners get the change with the owner's next save
 - **WHEN** Carol closes and reopens the popup and opens the item
 - **THEN** no note MUST be shown
 

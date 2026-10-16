@@ -53,3 +53,29 @@ An edit that changes `key`, `login` or `additionalFields` SHALL save the editor'
 - **GIVEN** Alice shared "Wifi" with Bob
 - **WHEN** she renames it to "Home wifi"
 - **THEN** the reply MUST carry no `shareSave` and Bob's copy keeps its own name
+
+### Requirement: Shared copies keep their limits
+The extension SHALL keep the limits Keepiq puts on a recipient's copy (Keepiq `use-only-shares`, `expiring-shares`, `federated-sharing`, `folder-permission-grades`), in the popup and again in the background:
+- A use-only copy (`useOnly`) MUST NOT be edited, cloned or moved, and its value and additional fields MUST NOT be shown, copied or sent to the popup; only its login name may be (ext-vault-browse `item-detail`).
+- A read-only copy from another organisation (`readOnly`) MUST NOT be edited or cloned; it may be moved.
+- A copy without write permission, one whose `write-context` grade isn't `owner`, `write` or `manage`, MUST NOT be edited; it may be cloned and moved (`share-sync`).
+- An expiring copy (`accessExpiresAt`) MUST NOT be cloned, since the clone would outlive the end date.
+Each unavailable action shows why.
+
+#### Scenario: Use-only copy in detail
+- **GIVEN** Bob holds a use-only copy of "Supplier portal"
+- **WHEN** he opens it
+- **THEN** the detail MUST show the login name and the note "Its owner doesn't let you view or copy this.", with no password row, reveal or copy
+- **AND** Edit, Clone and Move MUST be unavailable with "Shared with you for signing in only"
+
+#### Scenario: Clone of an expiring copy
+- **GIVEN** Bob's access to a copy ends on 1 December
+- **WHEN** he opens the More menu
+- **THEN** Clone MUST be unavailable with "Your access ends <date>, so it cannot be cloned"
+- **AND** an `item.fetch` for a clone of it MUST be refused by the background
+
+#### Scenario: View-only copy in detail
+- **GIVEN** Bob holds a copy of "Router" shared with him directly, without a grade
+- **WHEN** he opens it
+- **THEN** Edit MUST be unavailable with "Shared with you to view only. Ask its owner for edit rights to change it."
+- **AND** an `item.fetch` for an edit of it MUST be refused by the background

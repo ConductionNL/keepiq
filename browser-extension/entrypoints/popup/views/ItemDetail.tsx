@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
 import { USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta, type ItemMeta, type ShareSaveNote as Note, type TypeMeta } from '@/src/messages'
 import { typeIcon } from '@/src/vault/icons'
@@ -16,6 +16,7 @@ import { ShareSaveNote } from '../components/ShareSaveNote'
 import { TotpCode } from '../components/TotpCode'
 import { blockedText } from '../errors'
 import { useDecryptedFields } from '../hooks/useDecryptedFields'
+import { request } from '../hooks/useMessage'
 import { language } from '../i18n'
 import { useShell } from '../shell-context'
 
@@ -208,8 +209,21 @@ export function ItemDetail({ item, type, folders, webAppUrl, shareSave }: Props)
 	const [openedVersion] = useState(item.updatedAt)
 	const dates: Array<[string, string]> = [[i18n.t('detail.created'), item.createdAt], [i18n.t('detail.updated'), item.updatedAt]]
 	if (item.expiresAt) dates.push([i18n.t('detail.expires'), item.expiresAt])
-	const { items, offline } = useShell()
-	const actions = itemActions(item, type, offline, items)
+	const { accountId, items, offline } = useShell()
+	const [viewOnly, setViewOnly] = useState(false)
+	// Until it answers, or when it fails, Edit stays: the edit fetch and the save check again.
+	useEffect(() => {
+		// Edit is unavailable for these already, so the answer would change nothing.
+		if (item.blocked || item.useOnly || item.readOnly) return
+		let live = true
+		void request({ kind: 'item.editable', accountId, id: item.id }).then((reply) => {
+			if (live && reply?.ok) setViewOnly(!reply.value.editable)
+		})
+		return () => {
+			live = false
+		}
+	}, [accountId, item.id, item.blocked, item.useOnly, item.readOnly])
+	const actions = itemActions(item, type, offline, items, viewOnly)
 	return (
 		<div className="stack">
 			<header className="detail-head">

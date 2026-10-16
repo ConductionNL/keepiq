@@ -141,6 +141,7 @@ item:
   passkeyNoClone: Passkeys kun je niet klonen
   useOnly: Alleen met je gedeeld om in te loggen
   readOnly: Gedeeld vanuit een andere organisatie, dus je kunt het alleen verplaatsen
+  viewOnly: Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.
   expiringNoClone: Je toegang stopt op {date}, dus je kunt het niet klonen
   saved: Item opgeslagen
   deleted: Item naar de prullenbak verplaatst
@@ -216,7 +217,6 @@ writeErrors:
 
 shareSave:
   saveWithout: Opslaan zonder hen
-  ownCopy: Alleen jouw kopie is gewijzigd. De eigenaar en de anderen met wie het gedeeld is, houden de oude waarde.
   ownerOnly: Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar het item weer opslaat.
   suspended: Delen met {cloudIds} is gepauzeerd, omdat hun certificaat niet kon worden geverifieerd of hun organisatie de deling niet meer accepteert. De Keepiq-webapp toont de deling.
   paused: Delen met {cloudIds} is gepauzeerd tot je dit item opnieuw met hen deelt.

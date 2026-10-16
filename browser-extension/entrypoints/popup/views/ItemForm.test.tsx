@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EditableItem, FolderMeta } from '@/src/messages'
 import { CARD_FIELDS, IDENTITY_FIELDS, shownInFull } from '@/src/vault/fields'
+import { setLocale } from '@/src/testing/i18n'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { editableItem, fakeBackground, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
 import { ItemForm, type FormMode } from './ItemForm'
@@ -235,7 +236,7 @@ describe('editing', () => {
 	})
 
 	it("hands the save's note to the shell", async () => {
-		const shareSave = { scope: 'own_copy' }
+		const shareSave = { ownerOnly: true }
 		const { onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem() }, replies: { 'item.update': { ok: true, value: { id: 'i1', shareSave } } } })
 		await user.type(await screen.findByLabelText('Username'), '2')
 		await user.click(save())
@@ -375,6 +376,27 @@ describe('editing', () => {
 		const alert = await screen.findByRole('alert')
 		expect(alert.textContent).toBe("Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.")
 		expect(within(alert).queryByRole('button')).toBeNull()
+	})
+
+	it.each([
+		['en', 'Shared with you to view only. Ask its owner for edit rights to change it.'],
+		['nl', 'Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.'],
+	] as const)('in %s, says a copy became view-only since the form opened, keeping the values and offering no Try again', async (locale, text) => {
+		setLocale(locale)
+		const { onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem() }, replies: { 'item.update': { ok: false, error: { code: 'view_only' } } } })
+		await user.type(await screen.findByLabelText(locale === 'en' ? 'Username' : 'Gebruikersnaam'), '2')
+		await user.click(within(footer).getByRole('button', { name: locale === 'en' ? 'Save' : 'Opslaan' }))
+		const alert = await screen.findByRole('alert')
+		expect(alert.textContent).toBe(text)
+		expect(within(alert).queryByRole('button')).toBeNull()
+		expect(field(locale === 'en' ? 'Username' : 'Gebruikersnaam').value).toBe('alice2')
+		expect(onSaved).not.toHaveBeenCalled()
+	})
+
+	it('says why a view-only copy does not open for editing', async () => {
+		renderForm({ mode: 'edit', id: 'i1', replies: { 'item.fetch': { ok: false, error: { code: 'view_only' } } } })
+		expect((await screen.findByRole('alert')).textContent).toBe('Shared with you to view only. Ask its owner for edit rights to change it.')
+		expect(screen.queryByLabelText('Name')).toBeNull()
 	})
 
 	it('clears an emptied username with null', async () => {

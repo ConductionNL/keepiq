@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DecryptedItem, FolderMeta, ItemMeta, ShareSaveNote } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { fakeBackground, fakeClipboard, itemMeta, sentKinds, types } from '../testing'
+import { setLocale } from '@/src/testing/i18n'
+import { fakeBackground, fakeClipboard, itemMeta, sentKinds, sentOf, types } from '../testing'
 import { ItemDetail } from './ItemDetail'
 
 // Shell's footer bar, where the detail portals Edit and Delete.
@@ -19,8 +20,8 @@ afterEach(() => {
 
 const folders: FolderMeta[] = [{ id: 'w', name: 'Work', parentId: null }, { id: 'c', name: 'Clients', parentId: 'w' }]
 
-function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 'locked' | 'use_only', offline = false) {
-	const sent = fakeBackground({ decrypted: decrypted && { [item.id]: decrypted }, decryptError })
+function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 'locked' | 'use_only', offline = false, editable?: unknown) {
+	const sent = fakeBackground({ decrypted: decrypted && { [item.id]: decrypted }, decryptError, replies: editable === undefined ? undefined : { 'item.editable': editable } })
 	const refreshState = vi.fn()
 	const launch = vi.fn()
 	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn() }
@@ -58,8 +59,8 @@ describe('share-save note', () => {
 	}
 
 	it('shows the note under the header', () => {
-		renderWith({ scope: 'own_copy' })
-		expect(document.querySelector('.banner--warning')?.textContent).toBe('Only your copy changed. The owner and the others it is shared with keep the old value.')
+		renderWith({ ownerOnly: true })
+		expect(document.querySelector('.banner--warning')?.textContent).toBe('Saved. Recipients at partner organisations get this change when the owner next saves it.')
 	})
 
 	it('shows none without one', () => {
@@ -366,6 +367,46 @@ describe('metadata and actions', () => {
 		expect(within(footer).getByRole('button', { name: 'Edit' }).getAttribute('aria-disabled')).toBeNull()
 		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
 		expect(screen.getByRole('menuitem', { name: 'Clone' }).title).toMatch(/^Your access ends .*2026, so it cannot be cloned$/)
+	})
+
+	it.each([
+		['en', 'Shared with you to view only. Ask its owner for edit rights to change it.'],
+		['nl', 'Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.'],
+	] as const)('in %s, offers no edit of a view-only copy and says why, while Clone and Move stay', async (locale, reason) => {
+		setLocale(locale)
+		const { sent, items } = renderDetail(itemMeta(), undefined, undefined, false, { ok: true, value: { editable: false } })
+		const edit = within(footer).getByRole('button', { name: locale === 'en' ? 'Edit' : 'Bewerken' })
+		await vi.waitFor(() => expect(edit.getAttribute('aria-disabled')).toBe('true'))
+		expect(sentOf(sent, 'item.editable')).toEqual([{ kind: 'item.editable', accountId: 'a1', id: 'i1' }])
+		expect(edit.title).toBe(reason)
+		const user = userEvent.setup()
+		await user.click(edit)
+		expect(items.edit).not.toHaveBeenCalled()
+		await user.click(within(footer).getByRole('button', { name: locale === 'en' ? 'More, GitHub' : 'Meer, GitHub' }))
+		for (const menuitem of screen.getAllByRole('menuitem')) expect(menuitem.getAttribute('aria-disabled')).toBeNull()
+	})
+
+	it.each([
+		['before the answer arrives', () => new Promise(() => {})],
+		['when the request fails', { ok: false, error: { code: 'server_error' } }],
+		['when the background does not answer', () => undefined],
+	])('keeps Edit available %s', async (_, editable) => {
+		const { sent, items } = renderDetail(itemMeta(), undefined, undefined, false, editable)
+		await vi.waitFor(() => expect(sentKinds(sent)).toContain('item.editable'))
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		const edit = within(footer).getByRole('button', { name: 'Edit' })
+		expect(edit.getAttribute('aria-disabled')).toBeNull()
+		await userEvent.setup().click(edit)
+		expect(items.edit).toHaveBeenCalledWith('i1')
+	})
+
+	it.each([
+		['a use-only', { useOnly: true }],
+		['a read-only', { readOnly: true }],
+	])('does not ask whether %s copy is editable', async (_, restriction) => {
+		const { sent } = renderDetail(itemMeta(restriction), { login: 'bob' }, undefined, false, { ok: true, value: { editable: false } })
+		await vi.waitFor(() => expect(sentKinds(sent)).toContain('item.decrypt'))
+		expect(sentKinds(sent)).not.toContain('item.editable')
 	})
 
 	it('cannot clone a passkey', async () => {

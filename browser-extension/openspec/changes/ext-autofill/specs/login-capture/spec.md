@@ -86,7 +86,7 @@ When exactly one matching item holds the captured username and its decrypted `ke
 - **THEN** no update bar is shown
 
 ### Requirement: Update writes only the key
-The extension SHALL, on "Update", save through `updateItem`: re-fetch the item with `GET /api/v1/secrets/{id}`, encrypt the captured password, and save a patch of only `key` with `baseUpdatedAt` through share-save, which reaches every other copy as `ext-share-sync` specifies, then sync. Other fields are left untouched. With no edit form behind the save, an item with partner shares fails with `unverified` and nothing is saved.
+The extension SHALL, on "Update", save through `updateItem`: re-fetch the item with `GET /api/v1/secrets/{id}`, encrypt the captured password, and save a patch of only `key` with `baseUpdatedAt` through share-save, which reaches every other copy as `ext-share-sync` specifies, then sync. Other fields are left untouched. With no edit form behind the save, an item with partner shares fails with `unverified` and nothing is saved, and a view-only copy fails with `view_only`, which the bar words as the item being shared with the user to view only.
 
 #### Scenario: Successful update
 - **GIVEN** an update bar

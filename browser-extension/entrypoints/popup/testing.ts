@@ -103,6 +103,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 			case 'item.create': return { ok: true, value: { id: 'new' } }
 			// A save that reached everyone carries no `shareSave`.
 			case 'item.update': return { ok: true, value: { id: message.id } }
+			case 'item.editable': return { ok: true, value: { editable: true } }
 			case 'item.delete':
 			case 'folder.rename':
 			case 'folder.delete': return { ok: true, value: null }

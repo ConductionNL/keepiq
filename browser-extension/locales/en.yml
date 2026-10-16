@@ -142,6 +142,7 @@ item:
   passkeyNoClone: Passkeys cannot be cloned
   useOnly: Shared with you for signing in only
   readOnly: Shared from another organisation, so it can only be moved
+  viewOnly: Shared with you to view only. Ask its owner for edit rights to change it.
   expiringNoClone: Your access ends {date}, so it cannot be cloned
   saved: Item saved
   deleted: Item moved to the trash
@@ -217,7 +218,6 @@ writeErrors:
 
 shareSave:
   saveWithout: Save without them
-  ownCopy: Only your copy changed. The owner and the others it is shared with keep the old value.
   ownerOnly: Saved. Recipients at partner organisations get this change when the owner next saves it.
   suspended: Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.
   paused: Sharing with {cloudIds} is paused until you share this item with them again.

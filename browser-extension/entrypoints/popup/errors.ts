@@ -58,6 +58,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'blocked': return blockedText(error.reason)
 		case 'unreadable': return i18n.t('writeErrors.unreadable')
 		case 'restricted': return i18n.t('writeErrors.restricted')
+		case 'view_only': return i18n.t('item.viewOnly')
 		case 'key_mismatch': return i18n.t('writeErrors.keyMismatch')
 		case 'offline': return i18n.t('writeErrors.offline')
 		case 'server_error': return i18n.t('writeErrors.serverError')

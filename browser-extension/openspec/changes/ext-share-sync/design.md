@@ -17,8 +17,12 @@ ext-vault-edit saves the editor's own row only. Each recipient of a Keepiq item 
 ## Decisions
 
 - **Only a value change goes through share-save.** A save whose body carries `key`, `login` or `additionalFields` takes share-save; any other save stays on `PUT /api/v1/secrets/{id}`, since share-save refuses a patch without one (`no_value_change`). A passkey's `key` is never in the body, so a passkey edit of its name, URL or folder never takes it. The patch is the same sparse body ext-vault-edit sends, without `baseUpdatedAt`, which moves to the envelope.
-- **One `write-context` read picks the path.** `GET /api/v1/secrets/{id}/write-context` answers `{sourceSecretId, effectiveGrade, ownerCertificate, sourceUpdatedAt}`. `sourceSecretId === id` is the owner path; otherwise `effectiveGrade` `owner`, `write` or `manage` is the copy-editor path, and anything else saves the editor's copy with a plain `PUT` and replies `own_copy`. The row alone can't tell a copy from a source, since a copy is owned by its holder. Delegates take the copy-editor path, as the server allows.
+- **One `write-context` read picks the path.** `GET /api/v1/secrets/{id}/write-context` answers `{sourceSecretId, effectiveGrade, ownerCertificate, sourceUpdatedAt}`. `sourceSecretId === id` is the owner path; otherwise `effectiveGrade` `owner`, `write` or `manage` is the copy-editor path, and anything else is a view-only copy (below). The row alone can't tell a copy from a source, since a copy is owned by its holder. Delegates take the copy-editor path, as the server allows.
 - **The copy-editor path sends the source version the edit was made from.** `fetchItem` for edit reads `write-context` too and keeps its `sourceUpdatedAt` in the form's record, so the save's `sourceBaseUpdatedAt` refuses a source written since the form opened (409 `stale_source`), as the web app does. A save whose record is gone takes the `sourceUpdatedAt` of its own `write-context` read. An edit fetch whose `write-context` read fails fails as a whole, like a failed row fetch.
+- **A copy without write permission is view-only.** Keepiq's server lets such a holder change their own copy alone, which leaves it out of step with the owner's and everyone else's; the extension doesn't offer that, as Bitwarden's "Can view" (chosen; the web app is keepiq#1287).
+  - When an item's detail opens, unless Edit is already unavailable (blocked, use-only or read-only), the popup asks `item.editable`; the background reads `write-context` and answers `editable: false` only for a copy (`sourceSecretId !== id`) whose `effectiveGrade` isn't `owner`, `write` or `manage`. The detail then shows Edit as unavailable with "Shared with you to view only. Ask its owner for edit rights to change it.", as for the other limits; Clone and Move stay. The list doesn't ask per row, so a list row's Edit opens the form and the edit fetch refuses it. Like `item.fetch`, the request counts as activity for the vault timeout.
+  - Until it answers, or when the read fails, Edit stays available, since the background checks again: `fetchItem` for edit refuses such a copy with `view_only` before decrypting, and `updateItem` refuses any patch but a folder move on it, reading `write-context` first for a patch with anything besides `folderId`.
+  - The grade comes from the server alone, so group members become editors once the server treats them as writers (keepiq#1285), and a per-share permission (keepiq#1286) lands here unchanged.
 - **A value change needs its base.** share-save refuses a body without `baseUpdatedAt` (400 `base_required`), so `updateItem` refuses a value change without one as `invalid` before any request; ext-autofill's `capture.update` passes the re-fetched row's.
 - **Empty lists first, then what the server requires.** As `saveShared`: the first call carries the patch and no entries. A 409 `incomplete` names the required copies (`{secretId, holder, targetUserId}`) and, on the owner path, partner shares (`{shareId, recipientCloudId}`); the background fills what is missing, drops what is no longer required and sends again, at most 3 rounds, then fails with `incomplete`.
 - **Local copies take the sparse patch.** Each copy carries exactly the value fields the patch carries, with the same null-ness, encrypted to its holder's certificate (`copy_fields_mismatch` otherwise). The owner holder uses `ownerCertificate`; recipients' certificates come from `POST /api/v1/shares/recipient-certificates`, at most 100 distinct ids per call. A recipient answered `shareable: false`, or an owner with no `ownerCertificate`, goes under `skipped` with `no_vault_key`. When the server refuses that skip (`skipRefused`), the background reads that certificate again once. A certificate that doesn't import fails the save with `bad_certificate`, since leaving the copy out would be refused anyway; so does a verified partner leaf whose key doesn't import.
@@ -33,15 +37,15 @@ ext-vault-edit saves the editor's own row only. Each recipient of a Keepiq item 
 - **Saves above 100 entries are staged.** At most 100 entries in `copies` plus `skipped` and 100 in `federated` plus `suspend` per call; above that the background sends full chunks with `stage: {final: false}`, keeps the `stageId` from the 202 (a 202 without one fails as `unknown`), and the final call carries the patch and `stage: {id, final: true}`. Dropping an entry already staged starts a new stage; a 404 `stage_unknown` restarts it, counted as a round.
 - **Failures map through `writeError`.** A 409 `stale` is `conflict`, as for any save; `stale_source` is its own code, worded as "the original changed". `incomplete`, `bad_certificate`, `unverified`, `partner_unreachable`, `partner_lookup_limit` and `federation_unavailable` are new codes. The share-save's own `not_allowed`/`forbidden` refusals are `forbidden`, a policy refusal keeps `policy`; `OcsRefusalMiddleware` turns them into 428, which the API client reads like a 403. The `incomplete` lists come only in the 409 body, so `ApiError` carries the parsed `body`. `writeError` and `WriteFailure` live in `src/vault/write-error.ts`, so `share-save.ts` and `write.ts` share them without an import cycle.
 - **No automatic retry, nothing kept.** A failed save leaves the form open with the draft; the user saves again. Nothing about a save outlives its request but the verified partner certificates above: no Try again records, no kept result, no per-item queue, since the server's version check orders concurrent saves. The form's `editOpened` record is dropped once its save succeeds.
-- **Popup UX: a note on the item's detail. Default, may be overruled.** A save that reached everyone closes the form with "Item saved" as before. Three outcomes add a note on the item's detail, held in popup memory for that item until the popup closes: `own_copy` ("Only your copy changed…"), `ownerOnly` on the copy-editor path ("Recipients at partner organisations get this change when the owner next saves it."), partner shares the save suspended on a verdict about the recipient, by cloud id, and, as their own line, the shares the user suspended through Save without them (`paused`), the only lasting sign of that pause in the extension.
+- **Popup UX: a note on the item's detail. Default, may be overruled.** A save that reached everyone closes the form with "Item saved" as before. These outcomes add a note on the item's detail, held in popup memory for that item until the popup closes: `ownerOnly` on the copy-editor path ("Recipients at partner organisations get this change when the owner next saves it."), partner shares the save suspended on a verdict about the recipient, by cloud id, and, as their own line, the shares the user suspended through Save without them (`paused`), the only lasting sign of that pause in the extension.
 - **Local recipients' certificates are trusted as the web app trusts them.** Only the user's own certificate can be proven (ADR-002); a recipient's can't. A compromised server can therefore list a recipient the user never chose and receive the next value of an edited item. This is the web app's and Bitwarden's organisation-membership trust; ADR-002 and `SECURITY.md` record the risk.
 
 ## Data flow
 
-1. Popup: Edit sends `item.fetch` with `purpose: 'edit'`; `fetchItem` fetches the row, checks it against the vault cache, reads `write-context`, decrypts, and keeps the ciphertext it showed in full, the row's `updatedAt` and `sourceUpdatedAt` under a new `recordId`.
+1. Popup: the item's detail asks `item.editable`, and shows Edit as unavailable for a view-only copy. Edit sends `item.fetch` with `purpose: 'edit'`; `fetchItem` fetches the row, checks it against the vault cache, reads `write-context`, refuses a view-only copy, decrypts, and keeps the ciphertext it showed in full, the row's `updatedAt` and `sourceUpdatedAt` under a new `recordId`.
 2. Popup: Save sends `item.update` with the patch, `baseUpdatedAt`, `recordId` and, after Save without them, `withoutUnreachable`.
-3. Background `updateItem`: refuse restricted copies, encrypt the patch to the user's own key. Without a value field: `PUT /api/v1/secrets/{id}` as in ext-vault-edit. With one: `shareSave(...)`.
-   1. `GET /api/v1/secrets/{id}/write-context`; a copy without a write grade: `PUT /api/v1/secrets/{id}`, reply `own_copy`.
+3. Background `updateItem`: refuse restricted copies, encrypt the patch to the user's own key. A folder move alone: `PUT /api/v1/secrets/{id}`. Any other patch reads `write-context` first and refuses a view-only copy with `view_only`. Without a value field: `PUT /api/v1/secrets/{id}` as in ext-vault-edit. With one: `shareSave(...)`.
+   1. The path from that `write-context` read.
    2. `PUT …/share-save` with `baseUpdatedAt`, `sourceBaseUpdatedAt` on the copy-editor path, the patch and empty lists.
    3. On 409 `incomplete`: certificates per 100 ids, encrypt the sparse patch per copy; on the owner path build the whole value from the record, then per partner share look up, verify, encrypt, or list it under `suspend`; send again (staged above 100).
 4. `syncAfterWrite`, drop the form's record, reply `{ ok: true, value: { id, shareSave } }`.
@@ -53,12 +57,12 @@ ext-vault-edit saves the editor's own row only. Each recipient of a Keepiq item 
 - `src/vault/share-save.ts` (new): `shareSave`, the rounds, the certificate batching, the copy and partner entries and the staging; takes a client, a key and the form's record, so it has no account logic.
 - `src/crypto/federated-certificate.ts` (new): `verifyFederatedCertificate`, which resolves with `{ fingerprint, spki }`: the lowercase hex fingerprint Keepiq takes, and the verified leaf's key, which `importSpki` imports; `canonicalCloudId`, `FederatedCertificateError`; exported from `src/crypto/index.ts`.
 - `src/vault/write-error.ts` (new): `WriteFailure` and `writeError`, moved out of `write.ts`.
-- `src/vault/write.ts` (edit): `fetchItem` keeps the form's record; `updateItem` sends value changes through `shareSave` and drops the record after a success.
+- `src/vault/write.ts` (edit): `fetchItem` keeps the form's record and refuses a view-only copy; `updateItem` refuses one too, sends value changes through `shareSave` and drops the record after a success; `itemEditable` answers `item.editable`.
 - `src/messages.ts` (edit): `ShareSaveNote`, `withoutUnreachable` on `item.update`, the `item.update` reply, `partners` on `WriteFailure`, the new codes, and `recordId` on `EditableItem`.
-- `src/background/requests.ts` (edit): `item.update` passes `withoutUnreachable` on, dropping one that isn't a list of strings.
+- `src/background/requests.ts` (edit): `item.update` passes `withoutUnreachable` on, dropping one that isn't a list of strings; the `item.editable` arm.
 - `src/api/client.ts` (edit): `ApiError` carries the parsed error `body`.
 - `entrypoints/popup/components/ShareSaveNote.tsx` (new): the note on the item's detail.
-- `entrypoints/popup/views/ItemForm.tsx`, `Shell.tsx`, `ItemDetail.tsx` (edit): Save without them, `onSaved(id, shareSave)`, Shell's state, the note on detail.
+- `entrypoints/popup/views/ItemForm.tsx`, `Shell.tsx`, `ItemDetail.tsx` (edit): Save without them, `onSaved(id, shareSave)`, Shell's state, the note on detail, and Edit unavailable on a view-only copy.
 - `entrypoints/popup/errors.ts` (edit): the new codes in `writeErrorText`.
 
 ## Message contract
@@ -66,8 +70,6 @@ ext-vault-edit saves the editor's own row only. Each recipient of a Keepiq item 
 ```ts
 /** Shown on the item's detail after a save; absent when the save reached everyone. */
 export interface ShareSaveNote {
-	/** `source`: the editor owns the item; `copy`: a team editor or delegate; `own_copy`: only the editor's copy changed. */
-	scope: 'source' | 'copy' | 'own_copy'
 	/** Copy-editor path: partner shares exist that only the owner's next save reaches. */
 	ownerOnly?: true
 	/** Partner shares this save suspended on a verdict about the recipient, by cloud id. */
@@ -79,10 +81,14 @@ export interface ShareSaveNote {
 // WriteFailure gains, for `partner_unreachable`:
 partners?: Array<{ shareId: string; cloudId: string }>
 
+// WriteErrorCode gains `view_only`.
+
 // VaultWrite changes:
 | { kind: 'item.update'; id: string; patch: ItemPatch; baseUpdatedAt?: string; recordId?: string; withoutUnreachable?: string[] }
+| { kind: 'item.editable'; id: string }
 // PopupReplies changes:
 'item.update': WriteResult<{ id: string; shareSave?: ShareSaveNote }>
+'item.editable': WriteResult<{ editable: boolean }>
 ```
 
 ## Keepiq routes

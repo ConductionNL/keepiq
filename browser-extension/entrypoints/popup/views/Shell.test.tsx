@@ -348,7 +348,8 @@ describe('the share-save note after a save', () => {
 	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
 	const toast = () => document.querySelector('.toast')?.textContent
 	const notes = () => [...document.querySelectorAll('.banner--warning')].map((banner) => banner.textContent)
-	const OWN_COPY = 'Only your copy changed. The owner and the others it is shared with keep the old value.'
+	const OWNER_ONLY_NOTE = { ownerOnly: true }
+	const OWNER_ONLY = 'Saved. Recipients at partner organisations get this change when the owner next saves it.'
 
 	/** Answers each save of i1 with the next of `shareSaves`; `undefined` is a save that reached everyone. */
 	function background(...shareSaves: unknown[]) {
@@ -384,10 +385,9 @@ describe('the share-save note after a save', () => {
 	})
 
 	it.each([
-		['only the editor\'s copy changed', { scope: 'own_copy' }, OWN_COPY],
-		['partners stay with the owner', { scope: 'copy', ownerOnly: true }, 'Saved. Recipients at partner organisations get this change when the owner next saves it.'],
-		['partners were suspended', { scope: 'source', suspended: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.Open the Keepiq web app'],
-		['partners were saved without', { scope: 'source', paused: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused until you share this item with them again.'],
+		['partners stay with the owner', OWNER_ONLY_NOTE, OWNER_ONLY],
+		['partners were suspended', {suspended: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.Open the Keepiq web app'],
+		['partners were saved without', {paused: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused until you share this item with them again.'],
 	])('notes on the item\'s detail that %s, beside "Item saved"', async (_, shareSave, text) => {
 		background(shareSave)
 		render(<App />)
@@ -397,13 +397,13 @@ describe('the share-save note after a save', () => {
 	})
 
 	it('keeps the note for that item, and drops it once another item\'s detail opens', async () => {
-		background({ scope: 'own_copy' })
+		background(OWNER_ONLY_NOTE)
 		render(<App />)
 		const user = userEvent.setup()
 		await editUsername(user)
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
-		expect(notes()).toEqual([OWN_COPY])
+		expect(notes()).toEqual([OWNER_ONLY])
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		await user.click(await screen.findByRole('button', { name: /^GitLab/ }))
 		expect(notes()).toEqual([])
@@ -413,7 +413,7 @@ describe('the share-save note after a save', () => {
 	})
 
 	it('shows no note in a reopened popup, and asks the background for none', async () => {
-		const { reopen } = background({ scope: 'own_copy' })
+		const { reopen } = background(OWNER_ONLY_NOTE)
 		render(<App />)
 		const user = userEvent.setup()
 		await editUsername(user)
@@ -424,11 +424,11 @@ describe('the share-save note after a save', () => {
 		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
 		expect((await title()).textContent).toBe('View item')
 		expect(notes()).toEqual([])
-		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'popup.lastTab.set'].includes(kind))).toEqual([])
+		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.editable', 'popup.lastTab.set'].includes(kind))).toEqual([])
 	})
 
 	it('drops the note once a later save of the item reaches everyone', async () => {
-		const { sent } = background({ scope: 'own_copy' }, undefined)
+		const { sent } = background(OWNER_ONLY_NOTE, undefined)
 		render(<App />)
 		const user = userEvent.setup()
 		await editUsername(user)

@@ -9,7 +9,7 @@ import { readSnapshot, toItemMeta } from '@/src/vault/store'
 import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
 import { isStale, sync, syncStatus } from '@/src/vault/sync'
 import { cancelPopout, enforce, expectPopout, touch } from '@/src/vault/timeout'
-import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, renameFolder, updateItem } from '@/src/vault/write'
+import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, itemEditable, renameFolder, updateItem } from '@/src/vault/write'
 
 const TABS: readonly PopupTab[] = ['vault', 'generator', 'send', 'settings']
 
@@ -160,6 +160,8 @@ async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrit
 				isStrings(message.withoutUnreachable) ? message.withoutUnreachable : undefined)
 		case 'item.delete':
 			return deleteItem(message.id, accountId)
+		case 'item.editable':
+			return itemEditable(message.id, accountId)
 		case 'folder.create':
 			return createFolder(message.name, message.parentId ?? null, accountId)
 		case 'folder.rename':

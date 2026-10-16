@@ -48,6 +48,9 @@ export async function readWriteContext(client: Client, id: string): Promise<Writ
 	}
 }
 
+/** A copy without a write grade, which the server would let its holder change alone, out of step with everyone else's (share-sync). */
+export const isViewOnly = (id: string, context: WriteContext) => context.sourceSecretId !== id && !COPY_EDITOR_GRADES.has(context.effectiveGrade)
+
 export interface ShareSaveInput {
 	accountId: string
 	id: string
@@ -56,6 +59,8 @@ export interface ShareSaveInput {
 	/** The patch's value fields as typed, `null` where cleared. */
 	plain: Values
 	baseUpdatedAt: string
+	/** The caller's `write-context` read, which picks the path. */
+	context: WriteContext
 	/** The saving form's record; absent when it is gone or the save had no form. */
 	opened: Opened | undefined
 	withoutUnreachable: ReadonlySet<string>
@@ -149,13 +154,9 @@ export async function shareSave(client: Client, privateKey: CryptoKey, input: Sh
 	}
 }
 
-async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, baseUpdatedAt, opened, withoutUnreachable }: ShareSaveInput, partners: ReturnType<typeof verifiedPartners>): Promise<ShareSaveNote | undefined> {
-	const context = await readWriteContext(client, id)
+async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, baseUpdatedAt, context, opened, withoutUnreachable }: ShareSaveInput, partners: ReturnType<typeof verifiedPartners>): Promise<ShareSaveNote | undefined> {
+	if (isViewOnly(id, context)) throw new WriteFailure({ code: 'view_only' })
 	const copyPath = context.sourceSecretId !== id
-	if (copyPath && !COPY_EDITOR_GRADES.has(context.effectiveGrade)) {
-		await client.keepiq('PUT', secretPath(id), { ...patch, baseUpdatedAt })
-		return { scope: 'own_copy' }
-	}
 	const sourceBaseUpdatedAt = opened?.sourceUpdatedAt ?? context.sourceUpdatedAt
 	let ownerCertificate = context.ownerCertificate
 
@@ -311,11 +312,11 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 			else await fill(error.body)
 		}
 	}
-	if (copyPath) return (answer as { federated?: { ownerOnly?: unknown } } | null)?.federated?.ownerOnly === true ? { scope: 'copy', ownerOnly: true } : undefined
+	if (copyPath) return (answer as { federated?: { ownerOnly?: unknown } } | null)?.federated?.ownerOnly === true ? { ownerOnly: true } : undefined
 	// Those the user left out through Save without them get their own line, worded for a pause, not a verdict on the recipient.
 	const named = (paused: boolean) => [...suspend.values()].filter((entry) => (entry.reason === 'partner_unreachable') === paused).map((entry) => cloudIds.get(entry.shareId)!)
 	const suspended = named(false)
 	const paused = named(true)
 	if (suspended.length === 0 && paused.length === 0) return undefined
-	return { scope: 'source', ...(suspended.length > 0 && { suspended }), ...(paused.length > 0 && { paused }) }
+	return { ...(suspended.length > 0 && { suspended }), ...(paused.length > 0 && { paused }) }
 }
