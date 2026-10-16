@@ -5,13 +5,17 @@
  * Verifies a federated recipient's certificate in the owner's browser
  * before anything is encrypted for it (sharing-federated-recipients D3,
  * task 2.3). The owner's server fetched the certificate and its CA chain
- * from the partner; neither server is trusted for this check:
+ * from the partner. The partner and the network are not trusted for this
+ * check; the owner's server is, as it supplies the pinned root and serves
+ * this code:
  *
  * - the chain is the partner's intermediate, then its root, and the root
- *   must be the one whose SHA-256 fingerprint the administrator pinned,
+ *   must be the one whose SHA-256 fingerprint the administrator pinned; a
+ *   self-issued certificate in the intermediate's place is refused,
  * - every certificate must be signed by the next one (issuer name and
  *   signature, PKCS#1 v1.5 or RSASSA-PSS with SHA-256), and each one above
- *   the recipient's must be a CA allowed to sign certificates,
+ *   the recipient's must be a CA allowed to sign certificates, while the
+ *   recipient's own must not be marked CA,
  * - the recipient certificate's common name must be the cloud id the owner
  *   typed, and every certificate must be valid now.
  *
@@ -29,7 +33,14 @@ const OID_BASIC_CONSTRAINTS = '2.5.29.19'
 const OID_KEY_USAGE = '2.5.29.15'
 const OID_SHA256_RSA = '1.2.840.113549.1.1.11'
 const OID_RSA_PSS = '1.2.840.113549.1.1.10'
+const OID_MGF1 = '1.2.840.113549.1.1.8'
 const OID_SHA256 = '2.16.840.1.101.3.4.2.1'
+const UTF8_STRING = 0x0c
+/** PrintableString, TeletexString and IA5String. */
+const ASCII_STRINGS = new Set([0x13, 0x14, 0x16])
+
+/** Strict, and a leading byte order mark is kept as text, so it names no one. */
+const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
 /** A partner's chain: its intermediate, then its root. */
 const CHAIN_LENGTH = 2
@@ -84,7 +95,7 @@ function tlv(bytes, offset, limit = bytes.length) {
 	let length = bytes[cursor++]
 	if (length & 0x80) {
 		const count = length & 0x7f
-		if (count === 0 || count > 4) {
+		if (count === 0 || count > 4 || cursor + count > limit) {
 			throw new FederatedCertificateError('malformed')
 		}
 		length = 0
@@ -104,6 +115,9 @@ function tlv(bytes, offset, limit = bytes.length) {
  * @return {Array<object>} Its children.
  */
 function children(bytes, parent) {
+	if (!parent) {
+		throw new FederatedCertificateError('malformed')
+	}
 	const out = []
 	for (let cursor = parent.start; cursor < parent.end;) {
 		const child = tlv(bytes, cursor, parent.end)
@@ -115,10 +129,13 @@ function children(bytes, parent) {
 
 /**
  * @param {Uint8Array} bytes The buffer.
- * @param {{start: number, end: number}} element An OID element.
+ * @param {{tag: number, start: number, end: number}|undefined} element An OID element.
  * @return {string} Dotted OID.
  */
 function oid(bytes, element) {
+	if (element?.tag !== 0x06) {
+		throw new FederatedCertificateError('malformed')
+	}
 	const parts = []
 	let value = 0
 	for (let i = element.start; i < element.end; i++) {
@@ -185,12 +202,12 @@ function exactChildren(bytes, parent) {
 /**
  * @param {Uint8Array} bytes The buffer.
  * @param {{start: number, end: number}} parent A constructed element.
- * @param {number} tag The tag its one child must have.
+ * @param {number} [tag] The tag its one child must have, if any.
  * @return {object} That child.
  */
 function onlyChild(bytes, parent, tag) {
 	const [child, extra] = exactChildren(bytes, parent)
-	if (child?.tag !== tag || extra) {
+	if (!child || extra || (tag !== undefined && child.tag !== tag)) {
 		throw new FederatedCertificateError('malformed')
 	}
 	return child
@@ -210,10 +227,11 @@ function derBoolean(bytes, element) {
 
 /**
  * @param {Uint8Array} bytes The buffer.
- * @param {{tag: number, start: number, end: number}} element A pathLenConstraint INTEGER.
+ * @param {{tag: number, start: number, end: number}} element A small
+ *   non-negative INTEGER, such as a pathLenConstraint or a PSS salt length.
  * @return {number}
  */
-function derPathLen(bytes, element) {
+function derUint(bytes, element) {
 	const length = element.end - element.start
 	if (
 		element.tag !== 0x02
@@ -234,11 +252,12 @@ function derPathLen(bytes, element) {
  * Whether a certificate may sign certificates, from its extensions (RFC 5280
  * 4.2): each at most once and none critical that is not read here; a
  * basicConstraints with cA set (4.2.1.9) and, when there is a keyUsage,
- * keyCertSign in it (4.2.1.3). An extension that does not decode is refused.
+ * keyCertSign in it (4.2.1.3), and whether cA is set at all. An extension
+ * that does not decode is refused.
  *
  * @param {Uint8Array} bytes The buffer.
  * @param {object|undefined} block The TBS `[3]` extensions element, if any.
- * @return {{ca: boolean, pathLen: number|null}}
+ * @return {{ca: boolean, markedCa: boolean, pathLen: number|null}}
  */
 function caConstraints(bytes, block) {
 	let ca = false
@@ -271,7 +290,7 @@ function caConstraints(bytes, block) {
 				ca = derBoolean(bytes, fields[next++])
 			}
 			if (fields[next]?.tag === 0x02) {
-				pathLen = derPathLen(bytes, fields[next++])
+				pathLen = derUint(bytes, fields[next++])
 			}
 			if (next !== fields.length) {
 				throw new FederatedCertificateError('malformed')
@@ -292,7 +311,7 @@ function caConstraints(bytes, block) {
 			throw new FederatedCertificateError('malformed')
 		}
 	}
-	return { ca: ca && keyCertSign, pathLen: ca ? pathLen : null }
+	return { ca: ca && keyCertSign, markedCa: ca, pathLen: ca ? pathLen : null }
 }
 
 /**
@@ -300,19 +319,32 @@ function caConstraints(bytes, block) {
  *
  * @param {string} pem A PEM certificate.
  * @return {object} der, tbs, signature algorithm, signature, issuer and
- *   subject (DER), validity, SPKI, common name and CA constraints.
+ *   subject (DER), validity, SPKI and CA constraints.
  */
 function parse(pem) {
 	const der = pemToDer(pem)
 	const certificate = tlv(der, 0)
 	const [tbs, algorithm, signature, extra] = children(der, certificate)
-	if (!tbs || !algorithm || !signature || extra || signature.tag !== 0x03) {
+	// A BIT STRING value starts with its unused-bits count, which a
+	// signature never has.
+	if (
+		tbs?.tag !== 0x30
+		|| algorithm?.tag !== 0x30
+		|| signature?.tag !== 0x03
+		|| extra
+		|| der[signature.start] !== 0
+	) {
 		throw new FederatedCertificateError('malformed')
 	}
 	const fields = exactChildren(der, tbs)
 	const shift = fields[0]?.tag === 0xa0 ? 1 : 0
-	const [, , issuer, validity, subject, spki, ...optional] = fields.slice(shift)
-	if (!issuer || !validity || !subject || !spki) {
+	const [, signed, issuer, validity, subject, spki, ...optional] =
+		fields.slice(shift)
+	if (!signed || !issuer || !validity || !subject || spki?.tag !== 0x30) {
+		throw new FederatedCertificateError('malformed')
+	}
+	// RFC 5280 4.1.1.2: the signature is checked with the algorithm it covers.
+	if (!equalBytes(whole(der, signed), whole(der, algorithm))) {
 		throw new FederatedCertificateError('malformed')
 	}
 	// The unique ids and the extensions, each at most once and in order, so
@@ -326,33 +358,16 @@ function parse(pem) {
 		throw new FederatedCertificateError('malformed')
 	}
 	const [notBefore, notAfter] = children(der, validity)
-	let commonName = null
-	for (const rdn of children(der, subject)) {
-		for (const attribute of children(der, rdn)) {
-			const [type, value] = children(der, attribute)
-			if (type && value && oid(der, type) === OID_COMMON_NAME) {
-				commonName = new TextDecoder().decode(
-					der.subarray(value.start, value.end),
-				)
-			}
-		}
-	}
-	const algorithmParts = children(der, algorithm)
 	return {
 		der,
 		tbs: whole(der, tbs),
-		algorithmOid: oid(der, algorithmParts[0]),
-		algorithmParams: algorithmParts[1]
-			? { bytes: der, element: algorithmParts[1] }
-			: null,
-		// A BIT STRING value starts with its unused-bits count, always 0 here.
+		algorithm: algorithmOf(der, algorithm),
 		signature: der.subarray(signature.start + 1, signature.end),
 		issuer: whole(der, issuer),
 		subject: whole(der, subject),
 		notBefore: time(der, notBefore),
 		notAfter: time(der, notAfter),
 		spki: whole(der, spki),
-		commonName,
 		...caConstraints(
 			der,
 			optional.find((field) => field.tag === 0xa3),
@@ -362,46 +377,104 @@ function parse(pem) {
 
 /**
  * The WebCrypto verify parameters for a signature algorithm, or null for
- * one Keepiq does not use.
+ * one Keepiq does not use: only SHA-256, and for PSS only with
+ * MGF1-SHA-256, since the PSS default is SHA-1. Parameters that do not
+ * decode are malformed.
  *
- * @param {object} cert A parsed certificate.
+ * @param {Uint8Array} bytes The buffer.
+ * @param {{start: number, end: number}} algorithm An AlgorithmIdentifier.
  * @return {{import: object, verify: object}|null}
  */
-function algorithmOf(cert) {
-	if (cert.algorithmOid === OID_SHA256_RSA) {
-		const params = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
-		return { import: params, verify: params }
+function algorithmOf(bytes, algorithm) {
+	const [id, params, extra] = exactChildren(bytes, algorithm)
+	if (extra) {
+		throw new FederatedCertificateError('malformed')
 	}
-	if (cert.algorithmOid !== OID_RSA_PSS || !cert.algorithmParams) {
+	const name = oid(bytes, id)
+	if (name === OID_SHA256_RSA) {
+		const pkcs1 = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
+		return { import: pkcs1, verify: pkcs1 }
+	}
+	if (name !== OID_RSA_PSS || !params) {
 		return null
 	}
-	// RSASSA-PSS-params: [0] hash, [1] mask generation, [2] salt length.
-	// Only SHA-256 with MGF1-SHA-256 is accepted; the default (SHA-1) is not.
-	const { bytes, element } = cert.algorithmParams
+	const algorithmId = (element) =>
+		oid(bytes, exactChildren(bytes, sequence(element))[0])
 	let hash = null
-	let mgfHash = null
+	let mask = null
+	let maskHash = null
 	let saltLength = 20
-	for (const field of children(bytes, element)) {
-		const inner = children(bytes, field)[0]
+	// RSASSA-PSS-params: [0] hash, [1] mask generation, [2] salt length,
+	// [3] trailer field, each at most once and in order.
+	let previous = 0
+	for (const field of exactChildren(bytes, sequence(params))) {
+		if (field.tag <= previous) {
+			throw new FederatedCertificateError('malformed')
+		}
+		previous = field.tag
+		const inner = onlyChild(bytes, field)
 		if (field.tag === 0xa0) {
-			hash = oid(bytes, children(bytes, inner)[0])
+			hash = algorithmId(inner)
 		} else if (field.tag === 0xa1) {
-			const mgfParams = children(bytes, inner)[1]
-			mgfHash = mgfParams ? oid(bytes, children(bytes, mgfParams)[0]) : null
+			const [maskId, maskParams] = exactChildren(bytes, sequence(inner))
+			mask = oid(bytes, maskId)
+			maskHash = maskParams ? algorithmId(maskParams) : null
 		} else if (field.tag === 0xa2) {
-			saltLength = 0
-			for (let i = inner.start; i < inner.end; i++) {
-				saltLength = saltLength * 256 + bytes[i]
-			}
+			saltLength = derUint(bytes, inner)
+		} else if (field.tag !== 0xa3 || derUint(bytes, inner) !== 1) {
+			throw new FederatedCertificateError('malformed')
 		}
 	}
-	if (hash !== OID_SHA256 || mgfHash !== OID_SHA256) {
+	if (hash !== OID_SHA256 || mask !== OID_MGF1 || maskHash !== OID_SHA256) {
 		return null
 	}
 	return {
 		import: { name: 'RSA-PSS', hash: 'SHA-256' },
 		verify: { name: 'RSA-PSS', saltLength },
 	}
+}
+
+/**
+ * @param {{tag: number}|undefined} element Any element.
+ * @return {object} The element, which must be a SEQUENCE.
+ */
+function sequence(element) {
+	if (element?.tag !== 0x30) {
+		throw new FederatedCertificateError('malformed')
+	}
+	return element
+}
+
+/**
+ * The leaf's one common name, which must be text this decodes exactly: a
+ * second one could name someone else to a reader that takes the other.
+ * TeletexString and IA5String are read as OpenSSL's `string_mask` may write
+ * a cloud id, only as printable ASCII, since other bytes read differently
+ * per decoder. A CA's common name is never read; its name bytes and the pin
+ * identify it.
+ *
+ * @param {Uint8Array} subject The subject Name (DER).
+ * @return {string|null}
+ */
+function commonNameOf(subject) {
+	let commonName = null
+	for (const rdn of children(subject, tlv(subject, 0))) {
+		for (const attribute of children(subject, rdn)) {
+			const [type, value] = children(subject, attribute)
+			if (!type || !value || oid(subject, type) !== OID_COMMON_NAME) {
+				continue
+			}
+			const text = subject.subarray(value.start, value.end)
+			const ascii =
+				ASCII_STRINGS.has(value.tag)
+				&& text.every((byte) => byte >= 0x20 && byte <= 0x7e)
+			if (commonName !== null || (value.tag !== UTF8_STRING && !ascii)) {
+				throw new FederatedCertificateError('malformed')
+			}
+			commonName = utf8.decode(text)
+		}
+	}
+	return commonName
 }
 
 /**
@@ -412,23 +485,19 @@ function algorithmOf(cert) {
  * @return {Promise<boolean>}
  */
 async function signedBy(cert, issuer) {
-	if (!equalBytes(cert.issuer, issuer.subject)) {
-		return false
-	}
-	const algorithm = algorithmOf(cert)
-	if (!algorithm) {
+	if (!cert.algorithm || !equalBytes(cert.issuer, issuer.subject)) {
 		return false
 	}
 	try {
 		const key = await crypto.subtle.importKey(
 			'spki',
 			issuer.spki,
-			algorithm.import,
+			cert.algorithm.import,
 			false,
 			['verify'],
 		)
 		return await crypto.subtle.verify(
-			algorithm.verify,
+			cert.algorithm.verify,
 			key,
 			cert.signature,
 			cert.tbs,
@@ -478,7 +547,7 @@ async function sha256Hex(der) {
  * cloud id on an http instance with the scheme (`bob@http://host`), which
  * is the common name of their certificate, while the owner types `bob@host`.
  * The scheme and a trailing slash are dropped and the host lowercased; the
- * user part stays as it is.
+ * user part and the path stay as they are.
  *
  * @param {string} cloudId A cloud id.
  * @return {string} The canonical form, or '' without `user@remote`.
@@ -494,8 +563,10 @@ export function canonicalCloudId(cloudId) {
 		.slice(at + 1)
 		.replace(/^https?:\/\//i, '')
 		.replace(/\/+$/, '')
-		.toLowerCase()
-	return remote === '' ? '' : `${text.slice(0, at)}@${remote}`
+	const host = remote.split('/', 1)[0]
+	return remote === ''
+		? ''
+		: `${text.slice(0, at)}@${host.toLowerCase()}${remote.slice(host.length)}`
 }
 
 /**
@@ -528,11 +599,25 @@ export async function verifyFederatedCertificate({
 	if (chain.length !== CHAIN_LENGTH) {
 		throw new FederatedCertificateError('bad_chain')
 	}
-	const certs = [certificate, ...chain].map(parse)
+	let certs
+	let commonName
+	try {
+		certs = [certificate, ...chain].map(parse)
+		commonName = commonNameOf(certs[0].subject)
+	} catch (e) {
+		throw e instanceof FederatedCertificateError
+			? e
+			: new FederatedCertificateError('malformed')
+	}
 	const root = certs[certs.length - 1]
 	const pinned = String(partnerRootFingerprint || '').toLowerCase()
 	if (pinned === '' || (await sha256Hex(root.der)) !== pinned) {
 		throw new FederatedCertificateError('untrusted_root')
+	}
+	// The first link must be the partner's intermediate, not its root again,
+	// and the recipient's certificate no CA.
+	if (equalBytes(certs[1].issuer, certs[1].subject) || certs[0].markedCa) {
+		throw new FederatedCertificateError('bad_chain')
 	}
 	for (let i = 0; i < certs.length - 1; i++) {
 		if (!mayIssue(certs, i + 1) || !(await signedBy(certs[i], certs[i + 1]))) {
@@ -540,9 +625,12 @@ export async function verifyFederatedCertificate({
 		}
 	}
 	const leaf = certs[0]
+	const expected = canonicalCloudId(cloudId)
+	// Two names without `user@remote` both canonicalise to ''.
 	if (
-		leaf.commonName === null
-		|| canonicalCloudId(leaf.commonName) !== canonicalCloudId(cloudId)
+		expected === ''
+		|| commonName === null
+		|| canonicalCloudId(commonName) !== expected
 	) {
 		throw new FederatedCertificateError('name_mismatch')
 	}

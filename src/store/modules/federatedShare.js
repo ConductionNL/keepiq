@@ -5,7 +5,10 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import { verifyFederatedCertificate } from '../../crypto/federatedCertificate.js'
+import {
+	canonicalCloudId,
+	verifyFederatedCertificate,
+} from '../../crypto/federatedCertificate.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 import { importSpkiPublicKey } from '../../crypto/rsa.js'
 import { useShareStore } from './share.js'
@@ -17,6 +20,37 @@ import { useShareStore } from './share.js'
  * @type {string[]}
  */
 const ENCRYPTED_FIELDS = ['key', 'login', 'additionalFields']
+
+/**
+ * A lookup answer for another account than the one asked for, so its
+ * certificate is not one for the recipient.
+ */
+export class CloudIdMismatchError extends Error {
+	/**
+	 * @param {string} cloudId The cloud id that was asked for.
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 */
+	constructor(cloudId) {
+		super('cloud_id_mismatch')
+		this.name = 'CloudIdMismatchError'
+		this.reason = 'cloud_id_mismatch'
+		this.cloudId = cloudId
+	}
+}
+
+/**
+ * A cloud id as the server echoes it after resolving it: `\` read as `/`,
+ * cut at `/index.php` and without a trailing `/`, as Nextcloud's
+ * CloudIdManager::stripShareLinkFragments() does.
+ *
+ * @param {string} cloudId A trimmed cloud id.
+ * @return {string}
+ */
+function resolvedForm(cloudId) {
+	const id = cloudId.replaceAll('\\', '/')
+	const fileName = id.indexOf('/index.php')
+	return (fileName > 0 ? id.slice(0, fileName) : id).replace(/\/+$/, '')
+}
 
 /**
  * The colon-separated, uppercase fingerprint the verifier shows, as the
@@ -102,20 +136,26 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 
 		/**
 		 * Fetch and verify a federated recipient's certificate. Rejects with a
-		 * FederatedCertificateError when it does not chain to the pinned
-		 * partner root or names someone else, or with the server's refusal.
-		 * The certificate text is not returned: only the verified key is.
+		 * CloudIdMismatchError when the answer is for another cloud id, a
+		 * FederatedCertificateError when the certificate does not chain to the
+		 * pinned partner root or names someone else, or with the server's
+		 * refusal. The certificate text is not returned: only the verified key is.
 		 *
 		 * @param {string} cloudId What the owner typed.
-		 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>}
+		 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>} `cloudId` as the server resolved it.
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-verified-remote-certificate
 		 */
 		async lookup(cloudId) {
+			const requested = cloudId.trim()
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/federation/recipient-certificate'),
-				{ cloudId: cloudId.trim() },
+				{ cloudId: requested },
 			)
 			const answer = response.data
+			const expected = canonicalCloudId(resolvedForm(requested))
+			if (expected === '' || canonicalCloudId(answer?.cloudId) !== expected) {
+				throw new CloudIdMismatchError(requested)
+			}
 			const { fingerprint, spki } = await verifyFederatedCertificate({
 				certificate: answer.certificate,
 				chain: answer.chain,

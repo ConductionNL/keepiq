@@ -30,6 +30,23 @@ export function httpError(status, data, headers = {}) {
 }
 
 /**
+ * The cloud id the partner lookup echoes for the one it was sent: Nextcloud's
+ * CloudIdManager::stripShareLinkFragments() of it, so host case and scheme
+ * stay as sent.
+ *
+ * @param {string} cloudId The cloud id in the lookup request.
+ * @return {string}
+ */
+export function echoedCloudId(cloudId) {
+	let id = cloudId.replaceAll('\\', '/')
+	const fileName = id.indexOf('/index.php')
+	if (fileName > 0) {
+		id = id.slice(0, fileName)
+	}
+	return id.replace(/\/+$/, '')
+}
+
+/**
  * Settle a promise under `vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })`,
  * moving the clock only while the code waits on a timer, so real crypto in
  * between never sees time pass.
@@ -148,7 +165,7 @@ export function shareSaveServer({
 					?? httpError(502, { message: 'partner_unreachable' })
 				)
 			}
-			return { data: answer }
+			return { data: { cloudId: echoedCloudId(body.cloudId), ...answer } }
 		}
 		const other = Object.keys(posts).find((suffix) => url.endsWith(suffix))
 		if (other) {
