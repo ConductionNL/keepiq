@@ -172,11 +172,6 @@ describe('verifyFederatedCertificate', () => {
 		expect(await reasonOf(verify({ cloudId: 'not a cloud id' }))).toBe('name_mismatch')
 	})
 
-	it('refuses a common name and a cloud id that are both no cloud id', async () => {
-		// The sub-CA chains to the pinned root, and its common name has no `@`, like 'garbage'.
-		expect(await reasonOf(verifyMallory({ certificate: C.subIntermediate, cloudId: 'garbage' }))).toBe('name_mismatch')
-	})
-
 	it('matches the common name without the scheme an http instance writes', async () => {
 		await expect(verify({ cloudId: 'bob@http://cloud.partner.example' })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
 		expect(await reasonOf(verify({ cloudId: 'BOB@cloud.partner.example' }))).toBe('name_mismatch')
@@ -222,8 +217,12 @@ describe("verifyFederatedCertificate on the web app's chain constraints", () => 
 		await expect(verify({ chain: [F.intermediateAPathLen0, F.rootA] })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
 	})
 
-	it('accepts a recipient certificate marked CA', async () => {
-		await expect(verify({ certificate: F.leafMarkedCa, cloudId: MALLORY })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
+	it('refuses a recipient certificate marked CA, though it chains and names the recipient', async () => {
+		// OpenSSL agrees the intermediate signed it, so only the cA flag can refuse it.
+		const [leaf, intermediate] = [F.leafMarkedCa, F.intermediateA].map((pem) => new X509Certificate(pem))
+		expect(leaf!.checkIssued(intermediate!)).toBe(true)
+		expect(leaf!.verify(intermediate!.publicKey)).toBe(true)
+		expect(await reasonOf(verify({ certificate: F.leafMarkedCa, cloudId: MALLORY }))).toBe('bad_chain')
 	})
 
 	it('refuses a leaf signed with another leaf', async () => {
@@ -467,6 +466,12 @@ describe('verifyFederatedCertificate on chains built here', () => {
 		expect(await reasonOf(verifyBuilt({ intermediate: { extensions: [basicConstraints(der(0x01, [0x00]))] } }))).toBe('bad_chain')
 	})
 
+	it('refuses a leaf marked CA even when its keyUsage lacks keyCertSign', async () => {
+		// digitalSignature only.
+		const keyUsage = extension(OID.keyUsage, der(0x03, [0x07, 0x80]), true)
+		expect(await reasonOf(verifyBuilt({ leaf: { extensions: [CA, keyUsage] } }))).toBe('bad_chain')
+	})
+
 	it('refuses a keyUsage that claims more than 7 unused bits', async () => {
 		expect(await reasonOf(verifyBuilt({ intermediate: { extensions: [CA, extension(OID.keyUsage, der(0x03, [0x08, 0x04, 0x00]), true)] } }))).toBe('malformed')
 	})
@@ -498,6 +503,10 @@ describe('verifyFederatedCertificate on chains built here', () => {
 		const intermediate = name(utf8('Built Intermediate CA'), bmp('Built Intermediate CA'))
 		await expect(verifyBuilt({ root: { issuer: root, subject: root }, intermediate: { issuer: root, subject: intermediate }, leaf: { issuer: intermediate } }))
 			.resolves.toMatchObject({ fingerprint: FINGERPRINT })
+	})
+
+	it('refuses a common name and a cloud id that are both no cloud id', async () => {
+		expect(await reasonOf(verifyBuilt({ leaf: { subject: name(utf8('no cloud id')) } }, 'garbage'))).toBe('name_mismatch')
 	})
 
 	it('keeps a byte order mark in the common name, so it names no one', async () => {

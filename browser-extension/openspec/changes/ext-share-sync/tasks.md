@@ -6,6 +6,7 @@
   - Allows 5 minutes of clock skew before `notBefore`, refuses a self-issued intermediate and a second common name, and runs every case of the web app's fixture.
   - Refuses text outside the one PEM block and bytes after the DER, here and in `importPublicKey`.
   - Requires `cA=TRUE`, `keyCertSign` when `keyUsage` is present, and the `pathLenConstraint` above the leaf, a chain of exactly the intermediate and the root, no unknown critical or repeated extension, and every certificate's validity, against `src/testing/ca-constraints-chain.json`.
+  - Refuses a leaf with `cA=TRUE` (`bad_chain`, keepiq#1257), against the fixture's `leafMarkedCa` and built chains.
   - Refuses another root (`untrusted_root`), a broken link (`bad_chain`), another name (`name_mismatch`), a time outside validity (`not_valid_now`) and garbage (`malformed`), with the same cases as `tests/vitest/federatedCertificate.spec.js`.
   - Bounds-checks every DER length, like `extractSpki` in `src/crypto/rsa.ts`.
 

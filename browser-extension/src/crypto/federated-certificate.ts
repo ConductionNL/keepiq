@@ -46,6 +46,8 @@ interface Parsed {
 	notBefore: number
 	notAfter: number
 	spki: Uint8Array<ArrayBuffer>
+	/** basicConstraints sets cA, whatever the key usage says. */
+	ca: boolean
 	/** A CA whose key usage, if it has one, includes keyCertSign. */
 	mayIssue: boolean
 	pathLen: number | null
@@ -146,7 +148,7 @@ function time(bytes: Uint8Array, element: Element | undefined): number {
 }
 
 /** RFC 5280 § 4.2: each extension at most once, and none critical that this doesn't read. § 4.2.1.3 and § 4.2.1.9: without basicConstraints a certificate is no CA. */
-function issuing(bytes: Uint8Array, extensions: Element | undefined): Pick<Parsed, 'mayIssue' | 'pathLen'> {
+function issuing(bytes: Uint8Array, extensions: Element | undefined): Pick<Parsed, 'ca' | 'mayIssue' | 'pathLen'> {
 	let ca = false
 	let keyCertSign = true
 	let pathLen: number | null = null
@@ -178,7 +180,7 @@ function issuing(bytes: Uint8Array, extensions: Element | undefined): Pick<Parse
 			keyCertSign = (first & mask & 0x04) !== 0
 		}
 	}
-	return { mayIssue: ca && keyCertSign, pathLen: ca ? pathLen : null }
+	return { ca, mayIssue: ca && keyCertSign, pathLen: ca ? pathLen : null }
 }
 
 /** Only SHA-256, and for PSS only with MGF1-SHA-256: the PSS default is SHA-1. Parameters that don't decode are malformed. */
@@ -323,8 +325,8 @@ export async function verifyFederatedCertificate({ certificate, chain, partnerRo
 	}
 	const pinned = typeof partnerRootFingerprint === 'string' ? partnerRootFingerprint.toLowerCase() : ''
 	if (pinned === '' || await sha256Hex(certs[certs.length - 1]!.der) !== pinned) throw new FederatedCertificateError('untrusted_root')
-	// The first link must be the partner's intermediate, not its root again.
-	if (equalBytes(certs[1]!.issuer, certs[1]!.subject)) throw new FederatedCertificateError('bad_chain')
+	// The first link must be the partner's intermediate, not its root again. A CA-marked leaf is refused even where older Keepiq versions issued one (keepiq#1257).
+	if (equalBytes(certs[1]!.issuer, certs[1]!.subject) || certs[0]!.ca) throw new FederatedCertificateError('bad_chain')
 	for (let i = 1; i < certs.length; i++) {
 		const issuer = certs[i]!
 		// pathLen counts the CAs below this one, not the leaf.

@@ -124,7 +124,7 @@ On the owner path the extension SHALL, for each partner share the `incomplete` a
 - **AND** a save MUST send the partner share the whole value as shown
 
 ### Requirement: Partner certificates are verified before anything is encrypted to them
-The extension SHALL accept a partner recipient's certificate only when each certificate is exactly one PEM block with nothing outside it and no bytes after its DER, no critical extension it does not understand and no extension twice, its chain is exactly the intermediate and the root, as a partner serves it, with an intermediate that is not self-issued, the leaf has exactly one common name, as a UTF8String, or a PrintableString, TeletexString or IA5String of printable ASCII, the SHA-256 of the chain's last certificate equals `partnerRootFingerprint`, each certificate's issuer equals the next one's subject and its signature verifies with the next one's key (RSASSA-PKCS1-v1_5 with SHA-256, or RSASSA-PSS with SHA-256 and MGF1-SHA-256), every certificate above the leaf carries basicConstraints with `cA=TRUE`, `keyCertSign` when it has `keyUsage`, and a `pathLenConstraint` the chain keeps, the leaf's common name names the share's `recipientCloudId` after scheme, trailing slash and host case are normalised, and the current time lies within the validity of every certificate, allowing 5 minutes of clock skew before `notBefore`, as the web app does. It MUST refuse with one of `malformed`, `untrusted_root`, `bad_chain`, `name_mismatch` or `not_valid_now`, the Keepiq web app's verifier's reasons, MUST run in the background with WebCrypto only, and MUST encrypt to the public key of the leaf it verified.
+The extension SHALL accept a partner recipient's certificate only when each certificate is exactly one PEM block with nothing outside it and no bytes after its DER, no critical extension it does not understand and no extension twice, its chain is exactly the intermediate and the root, as a partner serves it, with an intermediate that is not self-issued, the leaf has exactly one common name, as a UTF8String, or a PrintableString, TeletexString or IA5String of printable ASCII, the SHA-256 of the chain's last certificate equals `partnerRootFingerprint`, each certificate's issuer equals the next one's subject and its signature verifies with the next one's key (RSASSA-PKCS1-v1_5 with SHA-256, or RSASSA-PSS with SHA-256 and MGF1-SHA-256), every certificate above the leaf carries basicConstraints with `cA=TRUE`, `keyCertSign` when it has `keyUsage`, and a `pathLenConstraint` the chain keeps, the leaf does not set `cA=TRUE`, the leaf's common name names the share's `recipientCloudId` after scheme, trailing slash and host case are normalised, and the current time lies within the validity of every certificate, allowing 5 minutes of clock skew before `notBefore`, as the web app does. It MUST refuse with one of `malformed`, `untrusted_root`, `bad_chain`, `name_mismatch` or `not_valid_now`, the Keepiq web app's verifier's reasons, MUST run in the background with WebCrypto only, and MUST encrypt to the public key of the leaf it verified.
 
 #### Scenario: Verified certificate
 - **GIVEN** the Keepiq test chain for `bob@cloud.partner.example` and its pinned root
@@ -145,6 +145,11 @@ The extension SHALL accept a partner recipient's certificate only when each cert
 - **GIVEN** a leaf naming Bob signed with Mallory's own leaf key, followed by Mallory's leaf and the pinned chain
 - **WHEN** it is verified for Bob's share
 - **THEN** it MUST be refused with `bad_chain`
+
+#### Scenario: A CA certificate as Bob's
+- **GIVEN** a leaf naming Bob that chains to the pinned root but sets `cA=TRUE` in its basicConstraints
+- **WHEN** it is verified for Bob's share
+- **THEN** it MUST be refused with `bad_chain`, whatever its `keyUsage` says
 
 #### Scenario: Another certificate in front of Bob's
 - **GIVEN** the lookup's `certificate` holds base64 of another certificate in front of Bob's PEM block
