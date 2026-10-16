@@ -7,6 +7,7 @@ import { settingsKey } from '@/src/accounts/settings'
 import type { BackgroundToOffscreen } from '@/src/messages'
 
 export const CLIPBOARD_ALARM = 'clipboard-clear'
+const DEFAULT_CLEAR_CLIPBOARD_MS = 30_000
 const OFFSCREEN_PATH = '/offscreen.html'
 
 /** Popup only. Rejects when the browser refuses the write. */
@@ -14,16 +15,19 @@ export function copyText(text: string): Promise<void> {
 	return navigator.clipboard.writeText(text)
 }
 
-/** The delay arrives with ext-settings; absent means never clear. */
+/** A stored `0` means never; a missing or invalid delay reads as the default. */
 async function clearDelayMs(accountId: string): Promise<number | null> {
 	const key = settingsKey(accountId)
 	const stored = (await browser.storage.local.get(key))[key] as { clearClipboardMs?: unknown } | undefined
 	const ms = stored?.clearClipboardMs
-	return typeof ms === 'number' && ms > 0 ? ms : null
+	if (typeof ms !== 'number' || !Number.isFinite(ms) || ms < 0) return DEFAULT_CLEAR_CLIPBOARD_MS
+	return ms === 0 ? null : ms
 }
 
 export async function scheduleClipboardClear(accountId: string, now = Date.now()): Promise<void> {
 	const ms = await clearDelayMs(accountId)
+	// A clear left by an earlier copy would wipe this one, also when this one is never cleared.
+	await browser.alarms.clear(CLIPBOARD_ALARM)
 	if (ms !== null) await browser.alarms.create(CLIPBOARD_ALARM, { when: now + ms })
 }
 

@@ -186,15 +186,15 @@ describe('last tab', () => {
 })
 
 describe('clipboard.copied', () => {
-	it('schedules nothing without a clear delay', async () => {
-		await send({ kind: 'clipboard.copied' })
-		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
-	})
-
-	it('schedules the clear when a delay is set', async () => {
-		await browser.storage.local.set({ [settingsKey(accountId)]: { vaultTimeout: 15, vaultTimeoutAction: 'lock', clearClipboardMs: 20_000 } })
+	it('schedules the clear with the default delay', async () => {
 		await send({ kind: 'clipboard.copied' })
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeDefined()
+	})
+
+	it('schedules nothing when the delay is never', async () => {
+		await browser.storage.local.set({ [settingsKey(accountId)]: { vaultTimeout: 15, vaultTimeoutAction: 'lock', clearClipboardMs: 0 } })
+		await send({ kind: 'clipboard.copied' })
+		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
 	})
 })
 
