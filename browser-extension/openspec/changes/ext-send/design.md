@@ -111,7 +111,7 @@ The background never keeps `input`, the content key or `link` after replying.
 - [A link with a `#k=` fragment is the only copy of the key] → The result screen says so, Copy is one click, and the row keeps Copy link while the popup is open.
 - [Server cap constants drift from the mirrored ones] → The server's 400 message is shown verbatim, and ADR-003 is the place to update the values.
 - [The recipient sees a credential as two text lines, not fields] → Matches what the web app produces today; a structured format is a web app change first.
-- [Copying a link auto-clears the clipboard when the user enabled that setting] → Same behaviour as Bitwarden; the result screen still shows the link until Done.
+- [Copying a link auto-clears the clipboard unless the user set that setting to Never] → The result screen still shows the link until Done.
 
 ## Open Questions
 

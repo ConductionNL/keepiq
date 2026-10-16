@@ -154,7 +154,7 @@ The extension SHALL show the current autofill shortcut read from `browser.comman
 - **THEN** the view shows "Open about:addons, choose the gear menu, then Manage Extension Shortcuts" with a Copy control for `about:addons`
 
 ### Requirement: Clear clipboard
-The extension SHALL offer the clipboard clear delay options Never (default), 10 seconds, 20 seconds, 30 seconds, 1 minute, 2 minutes and 5 minutes, stored per account in `storage.local`, and the value applies to the next copy made from the extension.
+The extension SHALL offer the clipboard clear delay options Never, 10 seconds, 20 seconds, 30 seconds (default), 1 minute, 2 minutes and 5 minutes, stored per account in `storage.local`, and the value applies to the next copy made from the extension.
 
 #### Scenario: Delay applied
 - **GIVEN** the delay is 20 seconds

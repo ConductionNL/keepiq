@@ -111,7 +111,7 @@ The Website name sub-modes SHALL use the hostname of the active tab in the curre
 - **AND** Random is selected
 
 ### Requirement: Output box, Regenerate and Copy
-The output box SHALL show the current value in a monospace font with digits and special characters in two distinct colours and letters in the default colour, as Bitwarden does. A Regenerate button SHALL produce a new value with the current options. A Copy button SHALL copy the value to the clipboard and SHALL schedule the clipboard clear when the clipboard-clear setting is configured. Copying a value that is longer than the box SHALL copy the whole value, not the visible part.
+The output box SHALL show the current value in a monospace font with digits and special characters in two distinct colours and letters in the default colour, as Bitwarden does. A Regenerate button SHALL produce a new value with the current options. A Copy button SHALL copy the value to the clipboard and SHALL schedule the clipboard clear unless the clipboard-clear setting is Never. Copying a value that is longer than the box SHALL copy the whole value, not the visible part.
 
 #### Scenario: Copy respects the clipboard-clear setting
 - **GIVEN** the clipboard-clear setting is 30 seconds
@@ -120,7 +120,7 @@ The output box SHALL show the current value in a monospace font with digits and 
 - **AND** the clipboard is cleared 30 seconds later if it still holds that value
 
 #### Scenario: Copy without a clear setting
-- **GIVEN** the clipboard-clear setting is off
+- **GIVEN** the clipboard-clear setting is Never
 - **WHEN** the user clicks Copy
 - **THEN** the value is on the clipboard and nothing is scheduled
 

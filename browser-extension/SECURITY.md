@@ -20,7 +20,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | --- | --- | --- |
 | Master password | Nowhere | — |
 | Private key | `storage.session` (memory, cleared on browser restart). Firefox below 115 uses background page memory instead. | Lock, timeout, logout, browser restart, extension reload |
-| Decrypted values | Popup memory while shown | Closing the item or the popup |
+| Decrypted values | Popup memory while shown, never the value of a use-only copy | Closing the item or the popup |
 | Ciphertext, names, URLs, folders, types | `storage.local` | Logout, account removal, a key change on the server |
 | App password | `storage.local` | Logout, account removal, the server answering 401 |
 | Account list and settings | `storage.local` | Account removal |
@@ -58,14 +58,15 @@ There is no remote wipe, so these checks stand in for it:
 - The background answers popup messages only from the extension's own pages. Messages from content scripts are ignored, apart from the page-ready signal.
 - Content scripts hold no vault state and never see the key. URL matching and decryption stay in the background. The planned autofill will hand a page exactly one credential, after you picked it.
 - Content scripts run on every page, as in Bitwarden. That is safe only because of the rule above ([ADR-001](openspec/architecture/adr-001-bitwarden-parity.md), ADR-002).
-- The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never.
+- The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never. Of a use-only copy it gets only the login; the background refuses its value and additional fields.
 - No remote code is loaded, and the popup renders no HTML from vault data.
 
 ## Clipboard
 
 - Copy happens in the popup, under your click.
 - The background overwrites the clipboard when a clear delay runs out: through an offscreen document on Chrome, and from the background page on Firefox.
-- The delay is set per account in `ext-settings`. Until then nothing is cleared, which is Bitwarden's default too.
+- The delay is 30 seconds by default, and every copy replaces the pending clear. `ext-settings` will let you change it per account, or set it to Never.
+- The clear is unconditional: anything you copy in those 30 seconds is cleared too. Checking first would need the `clipboardRead` permission and its install warning.
 
 ## Known limits
 

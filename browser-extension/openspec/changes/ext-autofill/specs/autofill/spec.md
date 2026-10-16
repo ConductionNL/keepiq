@@ -126,7 +126,7 @@ The extension SHALL add a "Keepiq" context menu on editable fields with the entr
 - **THEN** the Keepiq menu offers only "Unlock vault", which opens the popup on the unlock view
 
 ### Requirement: Copy from the context menu clears after the configured delay
-The extension SHALL copy the decrypted username or password, or a freshly generated password, to the clipboard when picked from the context menu, and MUST clear the clipboard after the "Clear clipboard" delay from settings when one is set. On Chrome MV3 the write happens in an offscreen document; on Firefox MV2 in the background page. The plaintext lives in memory only for the duration of the copy.
+The extension SHALL copy the decrypted username or password, or a freshly generated password, to the clipboard when picked from the context menu, and MUST clear the clipboard after the "Clear clipboard" delay from settings unless it is Never. On Chrome MV3 the write happens in an offscreen document; on Firefox MV2 in the background page. The plaintext lives in memory only for the duration of the copy.
 
 #### Scenario: Copy password with a clear delay
 - **GIVEN** a matching item and the clear delay set to 30 seconds

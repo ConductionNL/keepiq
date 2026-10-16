@@ -1,7 +1,7 @@
 ## 1. Schema and store
 
 - [ ] 1.1 Create `src/settings/schema.ts` with the `SETTINGS` table (key, scope, default, validator) and the derived `SettingsValues` type for every entry in the spec
-  - Defaults match the spec: timeout 15 minutes, action Lock, clipboard Never, theme System default, autofill on page load off
+  - Defaults match the spec: timeout 15 minutes, action Lock, clipboard 30 seconds, theme System default, autofill on page load off
   - Each validator returns the default for an unknown or malformed value
 - [ ] 1.2 Create `src/settings/store.ts` reading and writing `settings:<accountId>` and `settings:global` in `storage.local`, patching rather than replacing, and deleting the account record on account removal
 - [ ] 1.3 Create `src/settings/policy.ts` with `TimeoutPolicy`, `NO_POLICY` and `applyPolicy` clamping the timeout and forcing the action without rewriting the stored value

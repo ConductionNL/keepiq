@@ -28,7 +28,7 @@
 - [x] 3.3 Add `components/Suggestions.tsx` rendered by `VaultList` from `suggestionIds` and `useCurrentTab`: host heading, hidden without an http(s) tab, "No items for <host>" when empty
 - [x] 3.4 Add `components/Menu.tsx` and the `ItemCard` actions: Launch via `browser.tabs.create` (https prefix), Copy menu (username, password, verification code) through `hooks/useClipboard.ts` and `components/Toast.tsx`, More menu with View enabled and Edit/Clone/Move/Delete disabled with tooltip
 - [x] 3.5 Add `clipboard.copied` arm, `clipboard-clear` alarm and `clearClipboard()` in `src/clipboard.ts` with the Chrome offscreen document (`entrypoints/offscreen/`, `offscreen` permission) and the Firefox page path; `clipboardWrite` on both
-  - Delay read from `settings.clearClipboardMs`, absent means never; build both targets
+  - Delay read from `settings.clearClipboardMs`, absent or invalid means 30 seconds, `0` means never; build both targets
 - [x] 3.6 Add `Banner` to `components/ErrorBanner.tsx`, `components/EmptyState.tsx` and the list states: syncing on first sync, empty vault, no matches with Clear filters, blocked-only, offline banner with "Last synced <relative>" and "Sync now", first-sync error with retry
 
 ## 4. Item detail

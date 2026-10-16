@@ -96,6 +96,14 @@ For a row with `blocked: true` the detail SHALL show the header, the `blockedRea
 - **WHEN** the detail opens
 - **THEN** the reason and the web app link are shown and `item.decrypt` is never sent
 
+### Requirement: Use-only item detail
+For a row with `useOnly: true` (`openspec/specs/use-only-shares` in the Keepiq repo) the detail SHALL request only `login` through `item.decrypt` and show the header, a "Login credentials" section with the Username (value, copy) when present and the note "Its owner lets you sign in with this, but not view or copy it.", the Websites section and the Metadata section. It MUST NOT show or copy the `key` or the additional fields, so it has no password row, no TOTP code, no card, identity, passkey or notes sections and no additional fields.
+
+#### Scenario: Open a use-only login
+- **GIVEN** a use-only login item with a username
+- **WHEN** the detail opens
+- **THEN** the username and the note are shown, `item.decrypt` asks for `login` only, and no password row or reveal control exists
+
 ### Requirement: Metadata section
 The detail SHALL show "Created" and "Updated" from `createdAt` and `updatedAt` as absolute local date-times, and "Expires" from `expiresAt` when set.
 

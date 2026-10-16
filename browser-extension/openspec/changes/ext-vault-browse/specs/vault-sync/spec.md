@@ -158,7 +158,7 @@ The extension SHALL answer `vault.snapshot` with the plaintext metadata of each 
 - **THEN** the background replies with a `locked` state and no rows
 
 ### Requirement: Decryption is on demand and in the background
-The extension SHALL decrypt `login`, `key` and `additionalFields` only when the popup requests them for specific ids through `item.decrypt`, using the private key from ADR-002 in the background. Decrypted values are returned to the popup and held in popup memory only; nothing decrypted is written to `storage.local` or `storage.session`.
+The extension SHALL decrypt `login`, `key` and `additionalFields` only when the popup requests them for specific ids through `item.decrypt`, using the private key from ADR-002 in the background. For a `useOnly` row it MUST decrypt only `login`: a request for `key` or `additionalFields` of a single id is refused with `use_only`, and a batch leaves the row out. Decrypted values are returned to the popup and held in popup memory only; nothing decrypted is written to `storage.local` or `storage.session`.
 
 #### Scenario: Decrypt for the list subtitle
 - **GIVEN** an unlocked vault and 20 rows rendered in the list

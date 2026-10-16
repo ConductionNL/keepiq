@@ -116,7 +116,7 @@ Browser differences: `storage.session` is guarded per WXT-AND-BROWSERS.md and fa
 - [Policy minimum above 128 or below Bitwarden's 5] → the clamp takes `min(max(policyMin, 5), 128)`; the server refuses values below 8 anyway.
 - [Website name leaks the active tab's host into a stored option] → the hostname is never stored; only the sub-mode choice is.
 - [Wordlist fetch fails in a restricted profile] → the Passphrase and Random word generators show "Wordlist unavailable"; passwords and emails keep working.
-- [Copying a generated value leaves it on the clipboard] → the shared copy helper honours the clipboard-clear setting; the default follows ADR-002 (off, as in Bitwarden).
+- [Copying a generated value leaves it on the clipboard] → the shared copy helper honours the clipboard-clear setting; the default follows ADR-002 (30 seconds).
 - [History entries are plaintext in `storage.session`] → same exposure class as the private key bytes ADR-002 already accepts; cleared on lock.
 - [A component reaches past the hooks to `browser.*` or `src/api`] → the only browser call outside hooks is the wordlist fetch in `src/generator/wordlist.ts`; lint the ADR-004 boundary in review.
 - [Slider drags generate many values and flood history] → history is written on Regenerate, Copy, "Use this password" and when a sub-tab loses focus with a value shown, not on every slider tick.

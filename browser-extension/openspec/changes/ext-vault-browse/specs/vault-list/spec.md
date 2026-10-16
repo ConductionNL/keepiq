@@ -88,7 +88,7 @@ Each card SHALL offer a Launch action when the item has a non-empty `url`, openi
 - **THEN** a new tab opens `https://github.com`
 
 ### Requirement: Copy menu
-Each card SHALL offer a Copy menu with "Copy username" (when `login` is present), "Copy password" (the decrypted `key`, for types other than totp, card, identity and passkey) and "Copy verification code" (the current TOTP code, for the totp type). Each entry decrypts on demand through `item.decrypt`, writes to the clipboard with `navigator.clipboard.writeText` in the popup, shows a "Copied" toast, and sends `clipboard.copied` to the background so the clipboard-clear alarm starts when a clear delay is configured. The menu is disabled on blocked rows.
+Each card SHALL offer a Copy menu with "Copy username" (when `login` is present), "Copy password" (the decrypted `key`, for types other than totp, card, identity and passkey) and "Copy verification code" (the current TOTP code, for the totp type). Each entry decrypts on demand through `item.decrypt`, writes to the clipboard with `navigator.clipboard.writeText` in the popup, shows a "Copied" toast, and sends `clipboard.copied` to the background so the clipboard-clear alarm starts unless the delay is Never. The menu is disabled on blocked rows. On a use-only item (`useOnly: true`) it offers only "Copy username", and is disabled when there is no `login`.
 
 #### Scenario: Copy password
 - **GIVEN** an unlocked vault and a login item

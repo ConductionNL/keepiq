@@ -46,7 +46,7 @@ When you are halfway through adding an account, the extension remembers the serv
 | Tabs | Reads the current tab's address for suggestions, and opens an item's website in a new tab. |
 | Alarms | Locks the vault on time and checks for changes every 15 minutes. |
 | Idle | Locks the vault when your computer locks, if you choose that. |
-| Clipboard write | Clears a copied password after a delay, which you set in the settings screen when it comes. Until then the clipboard is not cleared. |
+| Clipboard write | Clears a copied password after 30 seconds. The settings screen, when it comes, lets you change the delay or turn it off. |
 | Offscreen document (Chrome) | Chrome needs a hidden page to clear the clipboard. |
 
 ## What the extension does not do

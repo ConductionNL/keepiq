@@ -47,7 +47,7 @@ Routes under `/api/v1/extension/*` belong to the in-tree reference extension in 
 ```json
 { "id": "<uuid>", "name": "GitHub", "url": "https://github.com", "typeId": "<uuid>", "folderId": null,
   "key": "<base64 RSA blob>", "login": "<base64 RSA blob or null>", "additionalFields": "<base64 RSA blob or null>",
-  "encryptionSuiteId": "<uuid>", "ownerType": "user", "ownerId": "<uid>", "blocked": false,
+  "encryptionSuiteId": "<uuid>", "ownerType": "user", "ownerId": "<uid>", "blocked": false, "useOnly": false,
   "createdAt": "<iso8601>", "updatedAt": "<iso8601>", "keyUpdatedAt": null, "expiresAt": null,
   "possiblyCompromisedAt": null, "tombstonedAt": null, "tombstoneReason": null }
 ```
@@ -55,6 +55,7 @@ Routes under `/api/v1/extension/*` belong to the in-tree reference extension in 
 - `name`, `url`, `typeId`, `folderId` are plaintext. Search and URL matching work without unlocking.
 - `key`, `login`, `additionalFields` are ciphertext. `additionalFields` decrypts to a JSON object of name to value. Names `key`, `login`, `url` are reserved (case-insensitive).
 - When the owner's suite is revoked the same endpoints return a row with `blocked: true`, `blockedReason`, and no `key`, `login` or `additionalFields`. Clients handle both shapes.
+- `useOnly: true` marks a use-only share: the receiver may fill it, but clients never show or copy `key` or `additionalFields`. A missing `useOnly` counts as false.
 - System types: `login`, `api_key`, `ssh_key`, `certificate`, `note`, `database`, `totp`, `passkey`, `card`, `identity`. Users and admins can add more. Composite types (`totp`, `passkey`, `card`, `identity`) store their payload as JSON in `key`.
 - Folders: `{id, name, parentId, ownerType, ownerId, customIcon, customColor, createdAt, updatedAt}`, all plaintext, tree via `parentId`.
 
