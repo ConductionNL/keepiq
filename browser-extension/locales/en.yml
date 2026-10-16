@@ -1,7 +1,7 @@
 # The source catalog. Every key here must exist in every other catalog; locales.test.ts checks it.
 # The BCP 47 tag of this catalog, for dates, numbers and `<html lang>`.
 language: en
-extensionDescription: Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.
+extensionDescription: Keepiq for your browser. Fill in logins, passkeys and one-time codes from your Nextcloud vault, end-to-end encrypted.
 
 errors:
   insecureUrl: Use https for this server

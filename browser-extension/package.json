@@ -2,7 +2,7 @@
 	"name": "@conduction/keepiq-extension",
 	"version": "0.0.1",
 	"private": true,
-	"description": "Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.",
+	"description": "Keepiq for your browser. Fill in logins, passkeys and one-time codes from your Nextcloud vault, end-to-end encrypted.",
 	"type": "module",
 	"scripts": {
 		"build": "wxt build",

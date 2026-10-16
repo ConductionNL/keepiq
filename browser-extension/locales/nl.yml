@@ -1,6 +1,6 @@
 # Terms and tone follow the mobile app: je, kluis, hoofdwachtwoord, app-wachtwoord, webapp.
 language: nl
-extensionDescription: Browserextensie voor Keepiq, de versleutelde wachtwoordkluis voor Nextcloud. Vul logins, passkeys en eenmalige codes in op elke site en bewaar nieuwe terwijl je bezig bent. Alles is versleuteld — je hoofdwachtwoord en je geheimen bereiken de server nooit.
+extensionDescription: Keepiq voor je browser. Vul logins, passkeys en eenmalige codes in vanuit je Nextcloud-kluis, end-to-end versleuteld.
 
 errors:
   insecureUrl: Gebruik https voor deze server
