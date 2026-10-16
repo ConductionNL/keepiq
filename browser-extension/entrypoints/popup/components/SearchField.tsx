@@ -6,7 +6,8 @@ export function SearchField({ value, onChange, disabled }: { value: string; onCh
 	return (
 		<div className="search">
 			<Icon name="search" />
-			<input className="search__input" type="search" aria-label={i18n.t('filters.searchLabel')} placeholder={i18n.t('filters.search')} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} />
+			{/* What is searched for names what the vault holds; see TextField for the spell check. */}
+			<input className="search__input" type="search" aria-label={i18n.t('filters.searchLabel')} placeholder={i18n.t('filters.search')} value={value} disabled={disabled} spellCheck={false} onChange={(event) => onChange(event.target.value)} />
 			{value && <IconButton icon="close" label={i18n.t('filters.clearSearch')} onClick={() => onChange('')} />}
 		</div>
 	)

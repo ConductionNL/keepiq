@@ -11,6 +11,9 @@ export function parseObject(raw: string | undefined): Record<string, unknown> | 
 	}
 }
 
+/** A card's or identity's members, as the web app's `parsePayload` reads them: only from a key that starts a JSON object. */
+export const parsePayload = (key: string): Record<string, unknown> | null => (key.startsWith('{') ? parseObject(key) : null)
+
 /** A field as display text; missing and non-string values read as empty. */
 export function text(payload: Record<string, unknown>, field: string): string {
 	const value = payload[field]

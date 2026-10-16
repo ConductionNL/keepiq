@@ -7,11 +7,14 @@
 import { importPrivateKey } from '@/src/crypto'
 import { fromBase64 } from '@/src/crypto/base64'
 import { effectiveSettings } from '@/src/accounts/settings'
+import { forgetVerifiedPartners } from './verified-partners'
 
 const sessionKey = (accountId: string) => `privateKeyPkcs8.${accountId}`
 export const unlockedAtKey = (accountId: string) => `unlockedAt.${accountId}`
 export const neverLockKey = (accountId: string) => `neverLockKey.${accountId}`
 export const LAST_TAB_KEY = 'popup:lastTab'
+/** The ciphertext and source version open edit forms hold (`write.ts`), cleared with the key. */
+export const editOpenedKey = (accountId: string) => `editOpened.${accountId}`
 
 const memory = new Map<string, string>()
 /** Imported once per worker generation; the bytes are the source of truth. */
@@ -73,9 +76,11 @@ export async function getKey(accountId: string): Promise<CryptoKey | null> {
 	return key
 }
 
+/** Every lock and logout goes through here. */
 export async function clearKey(accountId: string): Promise<void> {
 	imported.delete(accountId)
-	await session.remove([sessionKey(accountId), unlockedAtKey(accountId)])
+	forgetVerifiedPartners()
+	await session.remove([sessionKey(accountId), unlockedAtKey(accountId), editOpenedKey(accountId)])
 	await browser.storage.local.remove(neverLockKey(accountId))
 }
 

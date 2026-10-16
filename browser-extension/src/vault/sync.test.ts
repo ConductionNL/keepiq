@@ -13,6 +13,8 @@ import type { VaultSnapshot } from './types'
 
 const fetchMock = vi.fn<typeof fetch>()
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
+/** What Keepiq answers when the admin disabled offline caching (ADR-003). */
+const manifestDisabled = () => json({ message: 'Offline caching is disabled by the administrator', error: 'forbidden' }, 428)
 const MINUTE = 60_000
 
 /** Routes by path; each handler gets the full URL. Unrouted paths 404 like Nextcloud does. */
@@ -58,20 +60,29 @@ function cached(overrides: Partial<VaultSnapshot> = {}): VaultSnapshot {
 }
 
 describe('full sync', () => {
-	it('takes the whole vault from the manifest in one request', async () => {
-		server({ '/api/v1/offline/manifest': () => json(manifest) })
+	it('takes the whole vault from the manifest, beside the user settings', async () => {
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/user': () => json({ default_secret_type: 'note' }) })
 		const status = await sync(accountId)
-		expect(paths()).toEqual(['/api/v1/offline/manifest'])
+		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest'])
 		const snapshot = await readSnapshot(accountId)
-		expect(snapshot).toMatchObject({ secrets: rows, folders: [folderRow()], total: 2, newestUpdatedAt: '2026-04-01T10:00:00+00:00' })
+		expect(snapshot).toMatchObject({ secrets: rows, folders: [folderRow()], total: 2, newestUpdatedAt: '2026-04-01T10:00:00+00:00', defaultSecretType: 'note' })
 		expect(status).toEqual({ syncing: false, syncedAt: snapshot!.syncedAt, offline: false, lastError: null })
 		expect(await isStale(accountId)).toBe(false)
 	})
 
-	it('pages through the secrets when the admin disabled the manifest', async () => {
+	it('keeps no default type when the user settings fail', async () => {
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/user': () => json({ message: 'Down' }, 503) })
+		expect(await sync(accountId)).toMatchObject({ offline: false, lastError: null })
+		expect(await readSnapshot(accountId)).toMatchObject({ defaultSecretType: null })
+	})
+
+	it.each([
+		['428, as Keepiq refuses on its OCS routes', manifestDisabled],
+		['a bare 403', () => json({ message: 'Offline caching is disabled' }, 403)],
+	])('pages through the secrets when the admin disabled the manifest, refused with %s', async (_, refusal) => {
 		const many = Array.from({ length: 150 }, (_, i) => secretRow({ id: `s${i}` }))
 		server({
-			'/api/v1/offline/manifest': () => json({ message: 'Offline caching is disabled' }, 403),
+			'/api/v1/offline/manifest': refusal,
 			'/api/v1/secrets': (url) => {
 				const page = Number(url.searchParams.get('page'))
 				return json({ items: many.slice((page - 1) * 100, page * 100), total: 150, page, limit: 100 })
@@ -103,7 +114,7 @@ describe('full sync', () => {
 		const before = cached()
 		await writeSnapshot(accountId, before)
 		server({
-			'/api/v1/offline/manifest': () => json({}, 403),
+			'/api/v1/offline/manifest': manifestDisabled,
 			'/api/v1/secrets': (url) => url.searchParams.get('page') === '3'
 				? json({ message: 'Boom' }, 500)
 				: json({ items: Array.from({ length: 100 }, (_, i) => secretRow({ id: `n${i}` })), total: 500, page: 1, limit: 100 }),
@@ -181,7 +192,7 @@ describe('change probe', () => {
 		await writeSnapshot(accountId, cached())
 		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		await sync(accountId, 'full')
-		expect(paths()).toEqual(['/api/v1/offline/manifest'])
+		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest'])
 	})
 })
 
@@ -230,7 +241,7 @@ describe('two-factor policy', () => {
 	it('does the same when the fallback suite comes without its key', async () => {
 		await writeSnapshot(accountId, cached())
 		server({
-			'/api/v1/offline/manifest': () => json({}, 403),
+			'/api/v1/offline/manifest': manifestDisabled,
 			'/api/v1/secrets': () => json({ items: rows, total: 2, page: 1, limit: 100 }),
 			'/api/v1/folders': () => json([]),
 			'/api/v1/secret-types': () => json(typeRows),
@@ -278,7 +289,7 @@ describe('server quirks', () => {
 	it('pages again in another order when rows went missing, and keeps the server count', async () => {
 		const all = Array.from({ length: 101 }, (_, i) => secretRow({ id: `s${i}` }))
 		server({
-			'/api/v1/offline/manifest': () => json({}, 403),
+			'/api/v1/offline/manifest': manifestDisabled,
 			'/api/v1/secrets': (url) => {
 				const page = Number(url.searchParams.get('page'))
 				// The first order loses s100 to a tie; the second returns everything.
@@ -297,7 +308,7 @@ describe('server quirks', () => {
 	it('drops a row deleted between the two passes', async () => {
 		const all = Array.from({ length: 101 }, (_, i) => secretRow({ id: `s${i}` }))
 		server({
-			'/api/v1/offline/manifest': () => json({}, 403),
+			'/api/v1/offline/manifest': manifestDisabled,
 			'/api/v1/secrets': (url) => {
 				const page = Number(url.searchParams.get('page'))
 				// The first pass sees s0 but loses s100; s0 is deleted before the second.
@@ -318,7 +329,7 @@ describe('server quirks', () => {
 
 	it('stores the server count when a row stays missing, so the probe does not download again', async () => {
 		server({
-			'/api/v1/offline/manifest': () => json({}, 403),
+			'/api/v1/offline/manifest': manifestDisabled,
 			'/api/v1/secrets': () => json({ items: rows, total: 3, page: 1, limit: 100 }),
 			'/api/v1/folders': () => json([]),
 			'/api/v1/secret-types': () => json([]),
@@ -331,7 +342,7 @@ describe('server quirks', () => {
 	it('keeps a row once when it shows up on two pages', async () => {
 		const page1 = Array.from({ length: 100 }, (_, i) => secretRow({ id: `s${i}` }))
 		server({
-			'/api/v1/offline/manifest': () => json({}, 403),
+			'/api/v1/offline/manifest': manifestDisabled,
 			'/api/v1/secrets': (url) => json(url.searchParams.get('page') === '1'
 				? { items: page1, total: 101, page: 1, limit: 100 }
 				: { items: [page1[99], secretRow({ id: 'last' })], total: 101, page: 2, limit: 100 }),
@@ -373,7 +384,7 @@ describe('server quirks', () => {
 	it('asks for the suites only when a row is on another suite', async () => {
 		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		await sync(accountId)
-		expect(paths()).toEqual(['/api/v1/offline/manifest'])
+		expect(paths()).not.toContain('/api/v1/suites')
 	})
 })
 
@@ -466,7 +477,7 @@ describe('one sync at a time', () => {
 		await vi.waitFor(async () => expect((await syncStatus(accountId)).syncing).toBe(true))
 		release()
 		await first
-		expect(fetchMock).toHaveBeenCalledTimes(1)
+		expect(paths().filter((path) => path === '/api/v1/offline/manifest')).toHaveLength(1)
 		expect((await syncStatus(accountId)).syncing).toBe(false)
 	})
 })

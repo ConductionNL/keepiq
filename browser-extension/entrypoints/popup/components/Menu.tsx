@@ -17,9 +17,11 @@ interface Props {
 	className?: string
 	pressed?: boolean
 	disabled?: boolean
+	/** Always open upward, e.g. from the footer bar below the scroll area. */
+	above?: boolean
 }
 
-export function Menu({ label, items, icon, text, className, pressed, disabled }: Props) {
+export function Menu({ label, items, icon, text, className, pressed, disabled, above = false }: Props) {
 	const [open, setOpen] = useState(false)
 	const [up, setUp] = useState(false)
 	const wrapper = useRef<HTMLDivElement>(null)
@@ -89,7 +91,7 @@ export function Menu({ label, items, icon, text, className, pressed, disabled }:
 				{text}
 			</button>
 			{open && (
-				<ul className={`popover${up ? ' popover--up' : ''}`} role="menu" id={id} aria-label={label}>
+				<ul className={`popover${up || above ? ' popover--up' : ''}`} role="menu" id={id} aria-label={label}>
 					{items.map((item) => (
 						<li key={item.label} role="none">
 							<button

@@ -99,8 +99,8 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 
 	return (
 		<form className="stack" onSubmit={submit} noValidate>
-			<TextField ref={serverUrlField} label={i18n.t('addAccount.serverUrl')} value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder={i18n.t('addAccount.serverUrlPlaceholder')} autoFocus autoComplete="url" inputMode="url" />
-			<TextField ref={usernameField} label={i18n.t('addAccount.username')} value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" />
+			<TextField ref={serverUrlField} label={i18n.t('addAccount.serverUrl')} value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder={i18n.t('addAccount.serverUrlPlaceholder')} autoFocus autoComplete="url" inputMode="url" verbatim />
+			<TextField ref={usernameField} label={i18n.t('addAccount.username')} value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" verbatim />
 			<TextField
 				ref={appPasswordField}
 				label={i18n.t('common.appPassword')}

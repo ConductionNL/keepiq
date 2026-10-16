@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
-### Requirement: Settings tab with six sections
-The extension SHALL show a Settings tab in the unlocked popup with the sections Account security, Autofill, Notifications, Vault, Appearance and About, in that order, each opening as its own view with a back control. The tab holds no state of its own; every view renders from the background's reply to `settings.get`.
+### Requirement: Every Settings section opens
+The extension SHALL open Account security, Autofill, Notifications, Vault and About from the section list ext-theme added, each as its own view with a back control, so no section shows "Available in a later update". The tab holds no state of its own; every view renders from the background's reply to `settings.get`.
 
 #### Scenario: Opening a section
 - **GIVEN** an unlocked account
@@ -220,12 +220,12 @@ The extension SHALL show Sync now with "Last sync: <time>" (or "Never" before th
 - **THEN** the control shows Login and a note that the server value is not available in this extension
 
 ### Requirement: Appearance settings
-The extension SHALL store in the global `storage.local` record the settings Theme (System default, Light, Dark; default System default), Compact mode (default off), Show animations (default on) and Show quick copy actions on vault (default on), and SHALL show Language read-only as the browser UI language. A theme change applies to the open popup immediately.
+The extension SHALL add to ext-theme's Appearance view, below Theme, and store in the global `storage.local` record the settings Compact mode (default off), Show animations (default on) and Show quick copy actions on vault (default on), and SHALL show Language read-only as the browser UI language.
 
-#### Scenario: Theme change
-- **GIVEN** Theme is System default and the OS is light
-- **WHEN** the user selects Dark
-- **THEN** the popup repaints dark without reopening and the unlock screen is dark on the next open
+#### Scenario: Compact mode
+- **GIVEN** Compact mode is off
+- **WHEN** the user turns it on
+- **THEN** the popup tightens its spacing without reopening
 
 #### Scenario: Language entry
 - **WHEN** the Appearance view renders

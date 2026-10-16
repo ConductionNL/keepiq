@@ -38,7 +38,7 @@ Before fetching a snapshot, a scheduled or popup-open sync SHALL request `GET /a
 - **THEN** the full snapshot is fetched and the suite change purges the key
 
 ### Requirement: Manifest first, paginated fallback
-The extension SHALL fetch the snapshot from `GET /api/v1/offline/manifest`. The manifest stops at 1000 secrets by design (keepiq#1233). When that request returns 403 or 404, or its `secrets` reach 1000, the extension SHALL instead fetch `GET /api/v1/secrets` with `sort=created_at`, `direction=asc` and `limit=100`, incrementing `page` until `page * limit >= total`, and skips the manifest altogether while the cached `total` is 1000 or more. The server's sort has no unique tiebreaker (keepiq#1234), so rows that tie may move between pages: a row seen twice is kept once, and when fewer rows than `total` arrived the extension SHALL page once more with `sort=updated_at` and `direction=desc`. A complete second pass replaces the first; an incomplete one is merged with it, so a row deleted between the passes may then stay listed until the next full sync. The snapshot records the server's `total`, so a row still missing does not make every probe download again. The fallback also fetches `GET /api/v1/folders`, `GET /api/v1/secret-types` and `GET /api/v1/suites` (selecting the row with `status === 'active'`), and assemble the same snapshot shape. All routes and shapes are as in ADR-003.
+The extension SHALL fetch the snapshot from `GET /api/v1/offline/manifest`. The manifest stops at 1000 secrets by design (keepiq#1233). When that request is refused (403 or 428, ADR-003) or returns 404, or its `secrets` reach 1000, the extension SHALL instead fetch `GET /api/v1/secrets` with `sort=created_at`, `direction=asc` and `limit=100`, incrementing `page` until `page * limit >= total`, and skips the manifest altogether while the cached `total` is 1000 or more. The server's sort has no unique tiebreaker (keepiq#1234), so rows that tie may move between pages: a row seen twice is kept once, and when fewer rows than `total` arrived the extension SHALL page once more with `sort=updated_at` and `direction=desc`. A complete second pass replaces the first; an incomplete one is merged with it, so a row deleted between the passes may then stay listed until the next full sync. The snapshot records the server's `total`, so a row still missing does not make every probe download again. The fallback also fetches `GET /api/v1/folders`, `GET /api/v1/secret-types` and `GET /api/v1/suites` (selecting the row with `status === 'active'`), and assemble the same snapshot shape. All routes and shapes are as in ADR-003.
 
 #### Scenario: Manifest available
 - **GIVEN** the server allows offline caching
@@ -46,7 +46,7 @@ The extension SHALL fetch the snapshot from `GET /api/v1/offline/manifest`. The 
 - **THEN** one request to `GET /api/v1/offline/manifest` supplies suite, secrets, folders, types and `syncedAt`
 
 #### Scenario: Manifest disabled by the admin
-- **GIVEN** `GET /api/v1/offline/manifest` returns 403
+- **GIVEN** `GET /api/v1/offline/manifest` returns 428 with `"error": "forbidden"`
 - **WHEN** a sync runs
 - **THEN** the extension pages through `GET /api/v1/secrets` and fetches folders, types and suites
 - **AND** the assembled snapshot is stored exactly as a manifest result would be, with `syncedAt` set to the client time of completion

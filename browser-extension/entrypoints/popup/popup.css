@@ -29,7 +29,7 @@
 	--shadow: 0 4px 16px rgb(16 24 40 / 0.14);
 }
 
-/* Dark follows the system unless ext-settings pins a theme with `data-theme`. */
+/* Dark follows the system unless the Theme setting pins one with `data-theme` (`theme.ts`). */
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
 		--bg: #14171c;
@@ -403,6 +403,24 @@ a {
 	background: var(--surface-hover);
 }
 
+.icon-btn--danger,
+.icon-btn--danger:hover {
+	color: var(--danger);
+}
+
+.icon-btn--danger:hover:not([aria-disabled='true']) {
+	background: var(--danger-soft);
+}
+
+.icon-btn[aria-disabled='true'] {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.icon-btn[aria-disabled='true']:hover {
+	background: none;
+}
+
 .spinner {
 	width: 14px;
 	height: 14px;
@@ -595,13 +613,18 @@ a {
 	color: var(--fg-muted);
 }
 
-.menu__item:hover:not(:disabled) {
+.menu__item:hover:not(:disabled, [aria-disabled='true']) {
 	background: var(--surface-hover);
 }
 
-.menu__item:disabled {
+.menu__item:is(:disabled, [aria-disabled='true']) {
 	opacity: 0.45;
 	cursor: not-allowed;
+}
+
+/* Pushes a trailing chevron to the row's edge. */
+.menu__label {
+	flex: 1;
 }
 
 .menu__item--danger,
@@ -656,13 +679,60 @@ a {
 	outline-offset: -2px;
 }
 
-/* Toast, above the tab bar */
+/* A page's own actions, in place of the tab bar. A page without any shows no bar. */
+
+.popup__footer {
+	flex: none;
+	display: flex;
+	gap: 8px;
+	padding: 12px 16px;
+	background: var(--surface);
+	border-top: 1px solid var(--border);
+}
+
+.popup__footer:empty {
+	display: none;
+}
+
+.popup__footer > .btn {
+	flex: 1;
+}
+
+/* The item detail's: Edit at the start, More and Delete at the end, as in Bitwarden. */
+.detail-actions {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.detail-actions > .btn {
+	margin-right: auto;
+}
+
+/* As tall as Edit, with a glyph to match its weight. */
+.detail-actions .icon-btn {
+	width: 40px;
+	height: 40px;
+}
+
+.detail-actions .icon-btn .icon {
+	width: 20px;
+	height: 20px;
+}
+
+/* Toast, above whichever bar is at the bottom */
+
+.popup__bottom {
+	position: relative;
+	flex: none;
+}
 
 .toast {
 	position: absolute;
 	left: 16px;
 	right: 16px;
-	bottom: 68px;
+	bottom: calc(100% + 16px);
 	display: flex;
 	justify-content: center;
 	pointer-events: none;
@@ -819,6 +889,7 @@ a {
 }
 
 .item {
+	position: relative;
 	display: flex;
 	align-items: center;
 	padding-right: 6px;
@@ -828,12 +899,31 @@ a {
 	border-top: 1px solid var(--border);
 }
 
-.item:first-child .item__main {
+.item:first-child,
+.item:first-child .item__main::after {
 	border-top-left-radius: 11px;
+	border-top-right-radius: 11px;
 }
 
-.item:last-child .item__main {
+.item:last-child,
+.item:last-child .item__main::after {
 	border-bottom-left-radius: 11px;
+	border-bottom-right-radius: 11px;
+}
+
+/*
+ * The open button covers the whole row, under the action buttons, so the row
+ * highlights and opens everywhere but on an action. The actions get no z-index:
+ * a stacking context there would trap their menus under the next row.
+ */
+.item__main::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+
+.item:has(.item__main:hover) {
+	background: var(--surface-hover);
 }
 
 .item__main {
@@ -851,11 +941,12 @@ a {
 	cursor: pointer;
 }
 
-.item__main:hover {
-	background: var(--surface-hover);
+.item__main:focus-visible {
+	outline: none;
 }
 
-.item__main:focus-visible {
+.item__main:focus-visible::after {
+	outline: 2px solid var(--accent);
 	outline-offset: -2px;
 }
 
@@ -904,6 +995,7 @@ a {
 }
 
 .item__actions {
+	position: relative;
 	display: flex;
 	flex: none;
 }
@@ -1083,6 +1175,7 @@ a {
 .field-row__value {
 	margin: 0;
 	font-size: 14px;
+	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
 
@@ -1141,16 +1234,311 @@ a {
 	border-radius: 50%;
 }
 
-.detail-actions {
-	display: flex;
-	gap: 8px;
-}
-
-.detail-actions .btn {
-	flex: 1;
-}
-
 .btn[aria-disabled='true'] {
 	opacity: 0.45;
 	cursor: not-allowed;
+}
+
+/* Fits the header, like Bitwarden's New button. */
+.btn--small {
+	height: 32px;
+	padding: 0 14px 0 10px;
+	gap: 4px;
+	font-size: 13px;
+}
+
+/* Item form */
+
+.form-card {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 14px;
+	overflow: visible;
+}
+
+.field__input--area {
+	height: auto;
+	min-height: 80px;
+	padding: 9px 12px;
+	line-height: 1.45;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	resize: vertical;
+}
+
+.field__input--area:focus {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.field__input--area[aria-invalid='true'] {
+	border-color: var(--danger);
+}
+
+.field__input--mono {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 12.5px;
+}
+
+.field__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+/* Keeps the row as tall as a bare label. */
+.field__head .icon-btn {
+	margin: -8px -4px -8px 0;
+}
+
+.field__masked {
+	display: flex;
+	align-items: center;
+	color: var(--fg-muted);
+}
+
+.picker-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 8px 0 12px;
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	color: var(--fg);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.picker-field:focus-visible {
+	border-color: var(--accent);
+	outline: none;
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.picker-field .icon {
+	color: var(--fg-muted);
+}
+
+.picker-field__value {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.custom-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.custom-fields > .btn--link {
+	align-self: flex-start;
+	padding-left: 0;
+}
+
+.custom-field {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+	align-self: stretch;
+}
+
+.custom-field + .custom-field {
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.custom-field__inputs {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Lines the remove button up with the first input, not its label. */
+.custom-field > .icon-btn {
+	margin-top: 26px;
+}
+
+.advanced {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.advanced > summary {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--accent);
+	cursor: pointer;
+}
+
+.advanced[open] > summary {
+	margin-bottom: 12px;
+}
+
+/* Dialogs */
+
+.dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	background: rgb(16 24 40 / 0.45);
+}
+
+.dialog {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	width: 100%;
+	max-height: 100%;
+	padding: 18px 16px 16px;
+	overflow-y: auto;
+	background: var(--surface);
+	border-radius: 14px;
+	box-shadow: var(--shadow);
+}
+
+.dialog__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.dialog__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	font-size: 14px;
+}
+
+.dialog__body p {
+	margin: 0;
+}
+
+.dialog__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dialog__actions .btn {
+	flex: 1 1 auto;
+}
+
+.resolution {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* Folders */
+
+/* Row menus must reach past the card. */
+.card--menus {
+	overflow: visible;
+}
+
+.folder-tree {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.folder-tree__row {
+	padding-left: calc(var(--depth, 0) * 16px);
+}
+
+.picker {
+	display: flex;
+	flex-direction: column;
+	margin: 0 -8px;
+}
+
+.picker__choice {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 9px 8px;
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.picker__choice:hover:not(:disabled) {
+	background: var(--surface-hover);
+}
+
+.picker__choice:focus-visible {
+	outline: none;
+	box-shadow: inset 0 0 0 2px var(--ring);
+}
+
+.picker__choice .icon {
+	color: var(--fg-muted);
+}
+
+.picker__choice[aria-current='true'] {
+	font-weight: 600;
+}
+
+.picker__choice--new,
+.picker__choice--new .icon {
+	color: var(--accent);
+}
+
+.picker__label {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picker__current .icon {
+	color: var(--accent);
+}
+
+.folder-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 6px 6px 12px;
+}
+
+.folder-row > .icon {
+	color: var(--fg-muted);
+}
+
+.folder-row__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 14px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card .folder-tree__row + .folder-tree__row {
+	border-top: 1px solid var(--border);
 }

@@ -58,10 +58,12 @@ export function toItemMeta(row: StoredSecretRow): ItemMeta {
 		folderId: row.folderId,
 		hasLogin: !row.blocked && row.login !== null && row.login !== undefined,
 		blocked: row.blocked === true,
-		useOnly: row.useOnly === true,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 		expiresAt: row.expiresAt,
+		useOnly: row.useOnly === true,
+		readOnly: row.readOnly === true,
+		accessExpiresAt: row.accessExpiresAt ?? null,
 	}
 	if (row.blocked) {
 		// A snapshot written by an older version holds English text here until the next sync.

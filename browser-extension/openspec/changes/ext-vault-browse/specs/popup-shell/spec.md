@@ -14,6 +14,19 @@ The popup SHALL consist of a fixed header, a scrolling content area and a fixed 
 - **WHEN** the user activates Settings
 - **THEN** the Settings tab becomes active, the content area swaps and the header title updates
 
+### Requirement: Pages cover the tab bar
+A page opened from a tab, such as an item detail or a settings section, SHALL replace the tab bar for as long as it is open, as in Bitwarden. The header shows the page's title and a back control, which returns to the tab and brings the tab bar back. In the tab bar's place the page MAY show a footer with its own actions; a page without actions shows no bar.
+
+#### Scenario: Opening an item
+- **GIVEN** the Vault tab is active
+- **WHEN** the user opens an item
+- **THEN** the tab bar is gone and the footer holds the item's Edit and Delete
+- **AND** back returns to the list with the tab bar
+
+#### Scenario: Page without actions
+- **WHEN** the user opens a settings section that has no actions
+- **THEN** neither the tab bar nor a footer is shown
+
 ### Requirement: Placeholder tabs until their changes land
 The Generator, Send and Settings tabs SHALL exist in the tab bar from this change and SHALL render a placeholder view stating that the feature arrives in a later update, until ext-generator, ext-send and ext-settings replace them.
 
@@ -49,7 +62,7 @@ While the vault is locked the popup SHALL show the unlock view from ext-accounts
 - **THEN** the popup replaces its content with the unlock view and drops every decrypted value from memory
 
 ### Requirement: Popup dimensions
-The popup SHALL be 380 px wide and 600 px high, and the content area scrolls while header and tab bar stay fixed, as in Bitwarden.
+The popup SHALL be 380 px wide and 600 px high, and the content area scrolls while the header and the tab bar or page footer stay fixed, as in Bitwarden.
 
 #### Scenario: Long vault list
 - **GIVEN** 300 items in the vault

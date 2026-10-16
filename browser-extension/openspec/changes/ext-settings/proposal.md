@@ -1,26 +1,29 @@
 ---
 kind: code
-depends_on: [ext-vault-browse]
+depends_on: [ext-vault-browse, ext-theme]
 chain:
   - ext-accounts-and-unlock
   - ext-vault-browse
   - ext-vault-edit
   - ext-generator
   - ext-send
+  - ext-theme
   - ext-settings
   - ext-autofill
 ---
 
 ## Why
 
-The popup shell from ext-accounts-and-unlock has a Settings tab with nothing behind it, and every other change in the chain needs a place to read its knobs from: the vault timeout and action (ADR-002), the clipboard clear delay, the autofill defaults, the theme. Without one schema those values end up as ad hoc `storage.local` keys with different defaults in every module.
+The popup shell from ext-accounts-and-unlock has a Settings tab with nothing behind it, and every other change in the chain needs a place to read its knobs from: the vault timeout and action (ADR-002), the clipboard clear delay, the autofill defaults. Without one schema those values end up as ad hoc `storage.local` keys with different defaults in every module.
 
-This change is spec 6 of 7 in the extension chain. It mirrors the Bitwarden browser extension's Settings tab (ADR-001) and defines the one settings schema every earlier and later change reads through.
+It mirrors the Bitwarden browser extension's Settings tab (ADR-001) and defines the one settings schema every earlier and later change reads through.
+
+ext-theme already delivers the Settings tab's section list, the Appearance view with Theme, the global `settings.global` record and the `settings.get`/`settings.set` pair. This change builds on all four.
 
 ## What Changes
 
-- A Settings tab with six sections, in Bitwarden's order and with Bitwarden's labels: Account security, Autofill, Notifications, Vault, Appearance, About.
-- One typed settings schema (`src/settings/schema.ts`) with keys, defaults, validation and a storage scope per key, read and written through a `settings.get` and `settings.set` message pair handled by the background.
+- The five sections ext-theme lists as "Available in a later update" open their views: Account security, Autofill, Notifications, Vault, About.
+- One typed settings schema (`src/settings/schema.ts`) with keys, defaults, validation and a storage scope per key, absorbing ext-theme's `src/settings/global.ts`, and `settings.get`/`settings.set` widened to the full `SettingsSnapshot`.
 - Account security: vault timeout and timeout action with the ADR-002 options and defaults, Lock now, Log out, Unlock with PIN, biometrics shown as unavailable, Change master password as a link to the Keepiq web app.
 - Unlock with PIN: the RSA private-key bytes are wrapped under a PBKDF2-derived PIN key and stored in `storage.local` or `storage.session` depending on the "Require master password on browser restart" toggle. The unlock screen gains a PIN field. Five wrong PINs revert to the master password.
 - Autofill, Notifications, Vault and Appearance settings entries with their storage, defaults and effect. The behaviour behind the autofill and notification entries is delivered by ext-autofill; folder management by ext-vault-edit. Only the entries live here.
@@ -58,8 +61,8 @@ Sync now reuses the sync routine from ext-vault-browse and adds no calls of its 
 
 ## Impact
 
-- New: `src/settings/schema.ts`, `src/settings/store.ts`, `src/settings/policy.ts`, `src/settings/pin.ts`, `src/settings/server-mirror.ts`; React views `entrypoints/popup/views/settings/{SettingsIndex,AccountSecurity,Autofill,Notifications,Vault,Appearance,About}.tsx`; components `entrypoints/popup/components/{SettingRow,Toggle,Select,SectionList,PinDialog,WarningDialog}.tsx`; hooks `entrypoints/popup/hooks/{useSettings,useServerSettings,useTheme}.ts` (ADR-004).
-- Edited: `src/messages.ts` (settings, PIN and About message kinds), `entrypoints/background.ts` (handlers, timeout config fed from settings, PIN unlock, clearing the PIN blob on lock and logout), ext-accounts-and-unlock's `Unlock` view component (PIN field and "Use master password" link), `entrypoints/popup/popup.css` (theme tokens, compact mode).
+- New: `src/settings/schema.ts`, `src/settings/store.ts`, `src/settings/policy.ts`, `src/settings/pin.ts`, `src/settings/server-mirror.ts`; React views `entrypoints/popup/views/settings/{AccountSecurity,Autofill,Notifications,Vault,About}.tsx`; components `entrypoints/popup/components/{SettingRow,Toggle,PinDialog,WarningDialog}.tsx`; hook `entrypoints/popup/hooks/useServerSettings.ts` (ADR-004).
+- Edited: `src/messages.ts` (settings, PIN and About message kinds), `entrypoints/background.ts` (handlers, timeout config fed from settings, PIN unlock, clearing the PIN blob on lock and logout), ext-accounts-and-unlock's `Unlock` view component (PIN field and "Use master password" link), ext-theme's `SettingsIndex.tsx`, `Settings.tsx`, `Appearance.tsx` and `useSettings.ts`, `entrypoints/popup/popup.css` (compact mode).
 - Other changes in the chain read their knobs through `settings.get` instead of their own keys: ext-accounts-and-unlock (timeout, action), ext-vault-browse (clipboard clear, quick copy actions), ext-vault-edit (default item type), ext-autofill (every Autofill and Notifications entry).
 - No new manifest permissions. The `commands` entry the shortcut display reads is declared by ext-autofill.
 - Security: a PIN-wrapped copy of the private key can live in `storage.local`. Design.md states the trade-off and the mitigations.

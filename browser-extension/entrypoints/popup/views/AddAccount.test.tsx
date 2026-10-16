@@ -32,6 +32,14 @@ describe('AddAccount', () => {
 		expect(button).toHaveProperty('disabled', false)
 	})
 
+	it('keeps the server URL and username from a phone keyboard\'s corrections', () => {
+		render(<AddAccount dispatch={dispatchReturning()} />)
+		for (const label of ['Server URL', 'Username']) {
+			const input = screen.getByLabelText(label)
+			expect([label, input.getAttribute('autocapitalize'), input.getAttribute('autocorrect')]).toEqual([label, 'off', 'off'])
+		}
+	})
+
 	it('links to the server security settings once the URL is entered', async () => {
 		render(<AddAccount dispatch={dispatchReturning()} />)
 		const user = userEvent.setup()
