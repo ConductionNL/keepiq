@@ -23,6 +23,7 @@ use OCA\Keepiq\Db\DashboardSettingMapper;
 use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
@@ -33,6 +34,7 @@ use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
@@ -41,7 +43,9 @@ use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
+use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -76,6 +80,8 @@ class AccountDeletionServiceTest extends TestCase {
 			'dispatcher' => $this->createMock(IEventDispatcher::class),
 			'emergency' => $this->createMock(EmergencyContactMapper::class),
 			'passkey' => $this->createMock(PasskeyMapper::class),
+			'stage' => $this->createMock(ShareSaveStageMapper::class),
+			'federated' => $this->createMock(FederatedShareMapper::class),
 		];
 
 		return new AccountDeletionService(
@@ -90,6 +96,12 @@ class AccountDeletionServiceTest extends TestCase {
 				shareMapper: $this->m['share'],
 				groupShareMapper: $this->m['group'],
 				delegationMapper: $this->m['delegation'],
+				stageMapper: $this->m['stage'],
+				ownerTransfer: new SecretOwnerTransferService(
+					db: $this->createMock(IDBConnection::class),
+					secretMapper: $this->m['secret'],
+					federatedShares: $this->m['federated'],
+				),
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->m['suite'],
@@ -152,6 +164,10 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->m['delegation']->method('findByOriginalOwner')->willReturn([$delegation]);
 
 		$this->m['secret']->expects($this->once())
+			->method('reassignOwner')
+			->with('sec-1', 'bob');
+		// The secret's partner shares go to the delegate with it.
+		$this->m['federated']->expects($this->once())
 			->method('reassignOwner')
 			->with('sec-1', 'bob');
 		$this->m['delegation']->expects($this->once())
@@ -236,6 +252,8 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->m['share']->expects($this->once())
 			->method('deleteByTargetUser')
 			->with('alice');
+		// Staged share-save ciphertext goes too, on either deletion path.
+		$this->m['stage']->expects($this->once())->method('deleteByUser')->with('alice');
 
 		$this->m['link']->method('findByCreatedBy')->willReturn([]);
 		$this->m['suite']->method('findByOwner')->willReturn([]);

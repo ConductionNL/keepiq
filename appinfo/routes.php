@@ -180,6 +180,8 @@ $extra = [
     // and the sharee-search pages these ids come from can be long.
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
+    // The row, every copy and every partner share in one transaction (#1254).
+    ['name' => 'shareSave#save',    'url' => '/api/v1/secrets/{id}/share-save',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
     // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
     ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],

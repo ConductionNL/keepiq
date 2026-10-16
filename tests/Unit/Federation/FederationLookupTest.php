@@ -50,6 +50,7 @@ use OCP\OCM\IOCMDiscoveryService;
 use OCP\OCM\IOCMProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 require_once __DIR__ . '/FederationFixtures.php';
@@ -68,6 +69,8 @@ class FederationLookupTest extends TestCase {
 
 	private IOCMDiscoveryService&MockObject $ocm;
 
+	private LoggerInterface&MockObject $logger;
+
 	/**
 	 * The controller over the given partners.
 	 *
@@ -77,6 +80,7 @@ class FederationLookupTest extends TestCase {
 	 */
 	private function controller(array $partners): FederationController {
 		$this->ocm = $this->createMock(IOCMDiscoveryService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
 		$service = new FederatedCertificateService(
@@ -87,6 +91,7 @@ class FederationLookupTest extends TestCase {
 			$this->createMock(IUserManager::class),
 			$config,
 			$this->ocm,
+			$this->logger,
 		);
 		$session = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
@@ -182,6 +187,26 @@ class FederationLookupTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_BAD_GATEWAY, $controller->recipientCertificate('bob@cloud.partner.example')->getStatus());
 		$this->assertSame(Http::STATUS_BAD_GATEWAY, $controller->recipientCertificate('bob@cloud.partner.example')->getStatus());
+	}
+
+	public function testRefusesAChainOtherThanAnIntermediateAndARoot(): void {
+		// Keepiq serves exactly its intermediate and root; any other chain never reaches the browser.
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturnOnConsecutiveCalls(
+				$this->response(200, ['certificate' => 'BOB', 'chain' => ['LEAF', 'INT', 'ROOT']]),
+				$this->response(200, ['certificate' => 'BOB', 'chain' => ['ROOT']]),
+				$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 7]]),
+				$this->response(200, ['certificate' => 'BOB', 'chain' => ['int' => 'INT', 'root' => 'ROOT']]),
+			);
+		$this->logger->expects($this->exactly(4))->method('warning')
+			->with($this->stringContains('https://cloud.partner.example'));
+
+		for ($i = 0; $i < 4; $i++) {
+			$response = $controller->recipientCertificate('bob@cloud.partner.example');
+			$this->assertSame(Http::STATUS_BAD_GATEWAY, $response->getStatus());
+			$this->assertSame(['message' => 'bad_chain'], $response->getData());
+		}
 	}
 
 	public function testAnInvalidCloudIdIsAnUnknownRecipient(): void {

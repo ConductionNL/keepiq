@@ -864,6 +864,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		'share_save_stages' => Version001013Date20261013120000::TABLE,
 		'siem_queue' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

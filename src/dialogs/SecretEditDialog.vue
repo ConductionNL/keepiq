@@ -12,12 +12,32 @@
 		:name="t('keepiq', 'Edit secret')"
 		:open="open"
 		size="normal"
+		:noClose="saving"
 		@update:open="onUpdateOpen">
 		<NcLoadingIcon v-if="loading" :size="32" class="secret-form__loading" />
 
 		<div v-else class="secret-form">
-			<NcNoteCard v-if="error" type="error">
+			<NcNoteCard v-if="error" type="error" data-testid="secret-edit-error">
 				{{ error }}
+				<NcButton
+					v-if="unreachablePartners.length > 0"
+					variant="secondary"
+					:disabled="saving"
+					data-testid="save-without-unreachable"
+					@click="saveWithoutUnreachable">
+					{{ t('keepiq', 'Save without them') }}
+				</NcButton>
+			</NcNoteCard>
+			<NcNoteCard
+				v-if="saving && waitingForPartners"
+				type="info"
+				data-testid="secret-edit-waiting">
+				{{
+					t(
+						'keepiq',
+						'This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.',
+					)
+				}}
 			</NcNoteCard>
 
 			<NcTextField
@@ -149,7 +169,12 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
+			<!-- A save closed mid-flight would still commit, or fail unseen. -->
+			<NcButton
+				variant="tertiary"
+				:disabled="saving"
+				data-testid="secret-edit-cancel"
+				@click="onUpdateOpen(false)">
 				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
@@ -188,8 +213,11 @@ import {
 	serializeIdentity,
 } from '../cardIdentity/cardIdentity.js'
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { shareSaveErrorText } from '../services/shareSave.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useShareStore } from '../store/modules/share.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
@@ -244,8 +272,12 @@ export default {
 			open: true,
 			loading: true,
 			saving: false,
+			waitingForPartners: false,
 			error: '',
+			// The unreachable partner shares (ids) the last error named.
+			unreachablePartners: [],
 			original: null,
+			sourceBase: null,
 			name: '',
 			typeId: null,
 			value: '',
@@ -416,9 +448,13 @@ export default {
 		async load() {
 			this.loading = true
 			this.error = ''
+			this.sourceBase = null
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				this.original = secret
+				// Read after the secret, so it is never older than the copy the
+				// form shows; not awaited here, the save waits for it.
+				this.sourceBase = this.sourceVersion()
 				this.name = secret.name || ''
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
@@ -466,6 +502,42 @@ export default {
 		},
 
 		/**
+		 * The source version this edit starts from when the secret is a copy,
+		 * so the share save refuses it as `stale_source` when the source moved
+		 * on while the dialog was open. Offline it is the one the cached vault
+		 * row carries. Null when it is not known: the save then takes the
+		 * source version of its own moment. A merge write-back of the secret
+		 * that saved moved the source, so its version is taken instead; one
+		 * that failed leaves the version read on open. Null for an own secret
+		 * whose write-context was read; when that read fails, an own secret's
+		 * write-back that saved gives its version, which the owner's save
+		 * does not send.
+		 *
+		 * @return {Promise<string|null>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 */
+		async sourceVersion() {
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find(
+					(secret) => secret.id === this.secretId,
+				)
+				return cached?.sourceUpdatedAt ?? null
+			}
+			const [context, writeBack] = await Promise.all([
+				useShareStore()
+					.fetchWriteContext(this.secretId)
+					.catch(() => null),
+				useSecretStore().writeBackSettled(this.secretId),
+			])
+			if (context?.sourceSecretId === this.secretId) {
+				return null
+			}
+			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
+		},
+
+		/**
 		 * Forward the open-state change; emit `close` when dismissed.
 		 *
 		 * @param {boolean} value The new open state.
@@ -506,13 +578,28 @@ export default {
 		},
 
 		/**
+		 * Save again after the user chose to stop sharing with the partners
+		 * the error named: only those shares are suspended.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+		 */
+		async saveWithoutUnreachable() {
+			await this.submit({ withoutUnreachable: this.unreachablePartners })
+		},
+
+		/**
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
+		 * @param {object} [options] Options.
+		 * @param {Array<string>} [options.withoutUnreachable] The unreachable partner shares (ids) the user agreed to suspend.
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
-		async submit() {
+		async submit(options = {}) {
 			if (!this.canSubmit) {
 				return
 			}
@@ -522,7 +609,9 @@ export default {
 				return
 			}
 			this.saving = true
+			this.waitingForPartners = false
 			this.error = ''
+			this.unreachablePartners = []
 			try {
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
@@ -588,10 +677,24 @@ export default {
 
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
-					updated = await useSecretStore().updateSecret(
-						this.secretId,
-						diff,
-					)
+					const store = useSecretStore()
+					const onWait = () => {
+						this.waitingForPartners = true
+					}
+					// Waited for here so its partner wait shows. `o` is the copy
+					// the dialog opened, which only a write-back of it that saved
+					// moved, so its version and merged count are read only now.
+					await store.writeBackSettled(this.secretId, onWait)
+					const sourceBaseUpdatedAt = await this.sourceBase
+					if (diff.additionalFields !== undefined && o.mergedPending > 0) {
+						diff.mergedPending = o.mergedPending
+					}
+					updated = await store.updateSecret(this.secretId, diff, {
+						baseUpdatedAt: o.updatedAt,
+						sourceBaseUpdatedAt,
+						withoutUnreachable: options?.withoutUnreachable ?? [],
+						onWait,
+					})
 				}
 				// Tags are the holder's own, stored apart from the value
 				// (vault-favourites-tags-and-last-used).
@@ -604,8 +707,13 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
+				this.unreachablePartners =
+					e?.code === 'partner_unreachable'
+						? e.partners.map((share) => share.shareId)
+						: []
 				this.error =
-					e?.response?.data?.message
+					shareSaveErrorText(e)
+					|| e?.response?.data?.message
 					|| e?.message
 					|| t('keepiq', 'Failed to save secret')
 			} finally {

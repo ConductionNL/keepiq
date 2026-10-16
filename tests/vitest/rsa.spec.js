@@ -26,13 +26,16 @@
 
 import { createPublicKey } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
+import { PemError } from '../../src/crypto/pem.js'
 import {
 	generateKeyPair,
 	importPrivateKey,
 	importPublicKey,
+	importSpkiPublicKey,
 	rsaDecrypt,
 	rsaEncrypt,
 } from '../../src/crypto/rsa.js'
+import { otherKeyText, toBase64 } from './fixtures/pem-extra-text.js'
 import {
 	CERTIFICATE_PEM,
 	pemToDer,
@@ -119,6 +122,50 @@ describe('extractSpkiFromCertificate failure modes', () => {
 	})
 })
 
+describe('importPublicKey — exactly one PEM block', () => {
+	it('refuses base64 text before the block', async () => {
+		const { text } = await otherKeyText()
+
+		await expect(importPublicKey(`${text}\n${CERTIFICATE_PEM}`)).rejects.toThrow(
+			PemError,
+		)
+		await expect(
+			importPublicKey(`${text}\n${PUBLIC_KEY_SPKI_PEM}`),
+		).rejects.toThrow(PemError)
+	})
+
+	it('refuses two blocks, or text around the block', async () => {
+		await expect(
+			importPublicKey(`${CERTIFICATE_PEM}\n${CERTIFICATE_PEM}`),
+		).rejects.toThrow(PemError)
+		await expect(
+			importPublicKey(`${PUBLIC_KEY_SPKI_PEM}\n${CERTIFICATE_PEM}`),
+		).rejects.toThrow(PemError)
+		await expect(importPublicKey(`note\n${CERTIFICATE_PEM}`)).rejects.toThrow(
+			PemError,
+		)
+	})
+
+	it('refuses bytes after the certificate', async () => {
+		const certificate =
+			'-----BEGIN CERTIFICATE-----\n'
+			+ toBase64(Uint8Array.of(...pemToDer(CERTIFICATE_PEM), 0x05, 0x00))
+			+ '\n-----END CERTIFICATE-----'
+		await expect(importPublicKey(certificate)).rejects.toThrow(/DER length/)
+	})
+
+	it('imports the SubjectPublicKeyInfo bytes of a verified certificate', async () => {
+		const spki = createPublicKey(CERTIFICATE_PEM).export({
+			type: 'spki',
+			format: 'der',
+		})
+		const key = await importSpkiPublicKey(new Uint8Array(spki))
+		expect(key.type).toBe('public')
+		expect(key.extractable).toBe(false)
+		expect(key.usages).toEqual(['encrypt'])
+	})
+})
+
 describe('importPrivateKey', () => {
 	it('imports a PKCS#8 private key as a non-extractable decrypt key', async () => {
 		const key = await importPrivateKey(PRIVATE_KEY_PKCS8_PEM)
@@ -133,6 +180,15 @@ describe('importPrivateKey', () => {
 			+ btoa(String.fromCharCode(0x30, 0x02, 0x00, 0x00))
 			+ '\n-----END PRIVATE KEY-----'
 		await expect(importPrivateKey(bad)).rejects.toThrow()
+	})
+
+	it('refuses a key with another block or text around it', async () => {
+		await expect(
+			importPrivateKey(`${PRIVATE_KEY_PKCS8_PEM}\n${CERTIFICATE_PEM}`),
+		).rejects.toThrow(PemError)
+		await expect(
+			importPrivateKey(`Bag Attributes\n${PRIVATE_KEY_PKCS8_PEM}`),
+		).rejects.toThrow(PemError)
 	})
 })
 

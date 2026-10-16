@@ -139,6 +139,7 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			migrationService: $migrationService,
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
 			auditEvents: new AuditEventFactory(),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
 			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper),

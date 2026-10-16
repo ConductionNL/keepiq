@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Keepiq test site</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main class="wide">
+		<h1>Keepiq test site</h1>
+		<p class="tests">Login forms to try the extension on. Nothing you submit is stored or logged. Save a login in Keepiq with the URL <code id="origin">http://localhost:8100</code> to get fill suggestions here.</p>
+		<ul class="pages">
+			<li><a href="/login.html">Basic login</a><span>Username and password in one form. Fill, save bar, redirect chain after submit.</span></li>
+			<li><a href="/email-login.html">Email login</a><span>Email field with <code>autocomplete</code> hints and a "remember me" checkbox.</span></li>
+			<li><a href="/multi-step.html">Multi-step login</a><span>Username first, password on the next page.</span></li>
+			<li><a href="/honeypot.html">Hidden honeypot field</a><span>A hidden password field next to the real one. Only the visible one may be filled.</span></li>
+			<li><a href="/shadow-dom.html">Shadow DOM</a><span>The form lives inside an open shadow root.</span></li>
+			<li><a href="/iframe.html">Iframes</a><span>A same-site iframe that should fill, and a cross-site one that should not.</span></li>
+			<li><a href="/framework.html">Framework-controlled inputs</a><span>Inputs that only see values set with input events, as in React.</span></li>
+			<li><a href="/spa.html">Login without a form</a><span>No <code>&lt;form&gt;</code> element, sent with <code>fetch</code>.</span></li>
+			<li><a href="/signup.html">Sign up</a><span>New password and confirmation. Save bar for a new login.</span></li>
+			<li><a href="/change-password.html">Change password</a><span>Current, new and confirm. Update bar for a changed password.</span></li>
+			<li><a href="/otp.html">One-time code</a><span>The second step after a login, with a code field.</span></li>
+			<li><a href="/no-form.html">No login form</a><span>A page without login fields. The popup should say autofill is not available.</span></li>
+		</ul>
+	</main>
+	<script>
+		document.getElementById('origin').textContent = location.origin
+	</script>
+</body>
+</html>

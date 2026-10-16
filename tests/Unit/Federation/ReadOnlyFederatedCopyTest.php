@@ -201,6 +201,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
 		);
 
 		$response = (new SecretUpdateController($request, $service, $this->session()))->update('copy');

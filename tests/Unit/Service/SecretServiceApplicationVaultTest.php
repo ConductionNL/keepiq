@@ -148,6 +148,7 @@ class SecretServiceApplicationVaultTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->linkShareService,
 			logger: $this->logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
 			secretRequestService: $this->secretRequestService,
 			shareService: $this->shareService,
 			groupShareMapper: $this->groupShareMapper,

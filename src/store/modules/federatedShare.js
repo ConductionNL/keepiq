@@ -5,11 +5,9 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import {
-	FederatedCertificateError,
-	verifyFederatedCertificate,
-} from '../../crypto/federatedCertificate.js'
+import { verifyFederatedCertificate } from '../../crypto/federatedCertificate.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
+import { importSpkiPublicKey } from '../../crypto/rsa.js'
 import { useShareStore } from './share.js'
 
 /**
@@ -53,6 +51,22 @@ function snapshotOf(secret) {
 }
 
 /**
+ * Encrypt a secret for a recipient from lookup(): to the public key of the
+ * certificate that was verified, never to the lookup answer's text.
+ *
+ * @param {object} secret The decrypted secret.
+ * @param {{spki: Uint8Array}} recipient From lookup().
+ * @return {Promise<object>} The ciphertext per field.
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ */
+async function encryptForVerified(secret, recipient) {
+	return useShareStore().encryptWithKey(
+		snapshotOf(secret),
+		await importSpkiPublicKey(recipient.spki),
+	)
+}
+
+/**
  * Sharing a secret with a user of a partner organisation
  * (sharing-federated-recipients D3, D4). The owner's server fetches the
  * recipient's certificate from the partner; this browser verifies it
@@ -90,9 +104,10 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * Fetch and verify a federated recipient's certificate. Rejects with a
 		 * FederatedCertificateError when it does not chain to the pinned
 		 * partner root or names someone else, or with the server's refusal.
+		 * The certificate text is not returned: only the verified key is.
 		 *
 		 * @param {string} cloudId What the owner typed.
-		 * @return {Promise<{cloudId: string, certificate: string, fingerprint: string}>}
+		 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>}
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-verified-remote-certificate
 		 */
 		async lookup(cloudId) {
@@ -101,17 +116,13 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				{ cloudId: cloudId.trim() },
 			)
 			const answer = response.data
-			const { fingerprint } = await verifyFederatedCertificate({
+			const { fingerprint, spki } = await verifyFederatedCertificate({
 				certificate: answer.certificate,
 				chain: answer.chain,
 				partnerRootFingerprint: answer.partnerRootFingerprint,
 				cloudId: answer.cloudId,
 			})
-			return {
-				cloudId: answer.cloudId,
-				certificate: answer.certificate,
-				fingerprint,
-			}
+			return { cloudId: answer.cloudId, fingerprint, spki }
 		},
 
 		/**
@@ -146,81 +157,16 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		},
 
 		/**
-		 * After the owner changed a secret: encrypt the whole new value again for
-		 * every live federated recipient, each with a certificate fetched and
-		 * verified now, and send it. A recipient whose certificate no longer
-		 * verifies, or whom the partner no longer knows, is suspended instead.
-		 *
-		 * @param {string} secretId The owner's secret.
-		 * @return {Promise<{updated: number, suspended: number}>}
-		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
-		 */
-		async syncUpdate(secretId) {
-			const live = (await this.listFor(secretId)).filter(
-				(share) => share.status === 'active',
-			)
-			const result = { updated: 0, suspended: 0 }
-			if (live.length === 0) {
-				return result
-			}
-			const { useSecretStore } = await import('./secret.js')
-			const secret = await useSecretStore().fetchSecret(secretId)
-			for (const share of live) {
-				let recipient
-				try {
-					recipient = await this.lookup(share.recipientCloudId)
-				} catch (e) {
-					const reason =
-						e instanceof FederatedCertificateError
-							? e.reason
-							: e?.response?.data?.message
-					if (
-						e instanceof FederatedCertificateError
-						|| reason === 'unknown_recipient'
-						|| reason === 'not_a_partner'
-					) {
-						await axios.post(
-							generateUrl(
-								`/apps/keepiq/api/v1/federated-shares/${share.id}/suspend`,
-							),
-							{ reason },
-						)
-						result.suspended++
-					}
-					continue
-				}
-				const encrypted = await useShareStore().encryptForRecipient(
-					snapshotOf(secret),
-					recipient.certificate,
-				)
-				await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/federated-shares/${share.id}`),
-					{
-						certFingerprint: fingerprintHex(recipient.fingerprint),
-						key: encrypted.key ?? '',
-						login: encrypted.login ?? null,
-						additionalFields: encrypted.additionalFields ?? null,
-					},
-				)
-				result.updated++
-			}
-			return result
-		},
-
-		/**
 		 * Encrypt a secret for a verified recipient and send the ciphertext.
 		 *
 		 * @param {string} secretId The owner's secret.
 		 * @param {object} secret The decrypted secret (key, login, additionalFields).
-		 * @param {{cloudId: string, certificate: string, fingerprint: string}} recipient From lookup().
+		 * @param {{cloudId: string, fingerprint: string, spki: Uint8Array}} recipient From lookup().
 		 * @return {Promise<object>} The federated share.
 		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 		 */
 		async share(secretId, secret, recipient) {
-			const encrypted = await useShareStore().encryptForRecipient(
-				snapshotOf(secret),
-				recipient.certificate,
-			)
+			const encrypted = await encryptForVerified(secret, recipient)
 			const url = generateUrl(
 				`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
 			)
