@@ -1393,10 +1393,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "lib/Repair/SeedSecretTypes.php:72 seeds 'passkey'; browser-extension/src/background/service-worker.js:23-24 binds the passkey orchestrator to the WebAuthn proxy -> browser-extension/src/passkey/orchestrator.js:81-89 encrypts the new credential and createSecret as a passkey-typed item; src/passkey/passkey.js:36 canonical CXF-aligned schema; src/components/SecretDetailSidebar.vue:232-243 PasskeyDisplay; src/import/parsers/bitwarden.js:21 and src/cxf/cxf.js:27 import them",
+        "evidence": "lib/Repair/SeedSecretTypes.php:72 seeds 'passkey'; src/passkey/passkey.js:36 canonical CXF-aligned schema; src/components/SecretDetailSidebar.vue:232-243 PasskeyDisplay; src/import/parsers/bitwarden.js:21 and src/cxf/cxf.js:27 import them",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension (passkey provider: site registration saves a passkey item after per-site consent); SecretList page (/secrets/:id) -> detail sidebar passkey presentation; Import wizard",
-        "note": "Passkey is its own item type: the browser extension saves a passkey created on a website into the vault and signs with it later, the web app shows it with the private key masked, and Bitwarden and CXF imports create it. The web app has no form to type one in by hand, and the CXF round trip is a known open defect.",
+        "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar passkey presentation; Import wizard",
+        "note": "Passkey is its own item type: the web app shows it with the private key masked, and Bitwarden and CXF imports create it. The browser extension shows passkey items but does not create or use them (clients-05). The web app has no form to type one in by hand, and the CXF round trip is a known open defect.",
         "defects": [
           {
             "at": "src/cxf/cxf.js:27",
@@ -1405,7 +1405,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-passkey-item-type"
+        "change": "openspec/changes/archive/2026-07-18-passkey-item-type",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1739,7 +1740,7 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "Name, date added and date changed were built before; sorting by date last used added: oc_keepiq_secrets.last_used_at is set when the holder opens the value (lib/Service/SecretService.php) or the extension fills it (POST /api/v1/extension/used/{id}, SecretOrganisationController::used, 404 for a row the caller does not hold); SecretList filter menu > Sort by Last used.",
+        "evidence": "Name, date added and date changed were built before; sorting by date last used added: oc_keepiq_secrets.last_used_at is set when the holder opens the value (lib/Service/SecretService.php); SecretList filter menu > Sort by Last used.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets), Filter and sort menu",
         "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
@@ -1891,11 +1892,12 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/lib/match.js matches on that one url",
+        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/vault/match.ts:15 matches on that one url",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "A secret carries one website address.",
-        "change": "openspec/changes/vault-website-addresses"
+        "change": "openspec/changes/vault-website-addresses",
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2352,7 +2354,7 @@
       "id": "crypto-09",
       "area": "crypto",
       "name": "Unlock with a fingerprint or face scan on your device.",
-      "keepiq": "yes",
+      "keepiq": "partial",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -2361,11 +2363,13 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/unlock/ceremony.js enrolBiometric/unlockWithBiometric -> router.js biometric-enrol / biometric-options / unlock-raw -> browser-extension/src/lib/vault.js unlockWithRawKey; server lib/Service/PasskeyService.php enroll(clientKind, rpId) and loginOptions(client, rpId), migration Version001007Date20261002180000; web list src/components/PasskeyManager.vue labels extension credentials",
+        "evidence": "src/App.vue:194 PasskeyManager under Settings -> Security enrols a PRF passkey (src/crypto/passkey.js:72 deriveKekFromPrf, :100 wrapUnlockKey); src/views/LockScreen.vue:261 Unlock with passkey -> :801 handlePasskeyUnlock; server lib/Service/PasskeyService.php:105 enroll and :171 loginOptions; the browser extension unlocks with the master password only (browser-extension/src/vault/unlock.ts:41)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Extension popup -> Settings -> Set up fingerprint or face unlock; locked popup -> Unlock with fingerprint or face",
-        "note": "PRF passkey owned by the extension (its own origin as relying party, user verification required); the server stores only the wrapped unlock key. Vitest with a fake PRF authenticator; the Playwright virtual-authenticator run and the per-browser check are owed.",
-        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Keepiq settings -> Security -> Passkey unlock; Lock screen (/lock) -> Unlock with passkey",
+        "note": "The web app unlocks with a platform passkey (Touch ID, Windows Hello or a security key) through WebAuthn PRF; the server stores only the wrapped unlock key. The browser extension has no fingerprint or face unlock: browser-extension/openspec/changes/ext-accounts-and-unlock keeps it out of scope.",
+        "spec": "openspec/specs/passkey-vault-login",
+        "change": "openspec/changes/archive/2026-07-20-passkey-vault-login",
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2804,10 +2808,11 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "decided-no",
-        "evidence": "Decided no for keepiq on 2026-09-27: owned by nextcloud/server (sessions and app passwords are listed and ended in Nextcloud's Devices and sessions), a platform capability outside the fleet, per the openspec pass addendum. Before: Nextcloud server Settings > Security 'Devices & sessions' lists and revokes sessions and app passwords (platform); keepiq adds appinfo/routes.php:406 extension#unpair called from browser-extension/src/background/service-worker.js:64 doUnpair",
+        "evidence": "Decided no for keepiq on 2026-09-27: owned by nextcloud/server (sessions and app passwords are listed and ended in Nextcloud's Devices and sessions), a platform capability outside the fleet, per the openspec pass addendum. Before: Nextcloud server Settings > Security 'Devices & sessions' lists and revokes sessions and app passwords (platform); keepiq adds appinfo/routes.php:530 extension#unpair, which no client calls",
         "owner": "nextcloud/server",
-        "reachedOn": "Nextcloud personal settings > Security; extension popup unpair",
-        "note": "The Nextcloud login sessions, including the extension's app password, are listed and revocable by the platform. Keepiq has no view of which browsers hold an unlocked vault. Decided no on 2026-09-27: owned by nextcloud/server, sessions and app passwords are listed and ended in Nextcloud's Devices and sessions."
+        "reachedOn": "Nextcloud personal settings > Security",
+        "note": "The Nextcloud login sessions, including the extension's app password, are listed and revocable by the platform. Keepiq has no view of which browsers hold an unlocked vault. Decided no on 2026-09-27: owned by nextcloud/server, sessions and app passwords are listed and ended in Nextcloud's Devices and sessions.",
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2901,12 +2906,12 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "src/views/LockScreen.vue:303 DeviceApprovalRequest ('Approve from another device', and 'Ask your organisation instead' for recovery-enrolled users, src/components/DeviceApprovalRequest.vue:24); src/App.vue:422 DeviceApprovalDialog on an unlocked device seals the unlock key (lib/Controller/DeviceApprovalController.php:173 approve, vault-key proof required); lib/BackgroundJob/ExpireDeviceApprovalsJob.php expires requests; admin switch DeviceApprovalSection (src/views/settings/adminAreas.js:28); extension locked popup uses browser-extension/src/lib/api.js:841",
+        "evidence": "src/views/LockScreen.vue:303 DeviceApprovalRequest ('Approve from another device', and 'Ask your organisation instead' for recovery-enrolled users, src/components/DeviceApprovalRequest.vue:24); src/App.vue:422 DeviceApprovalDialog on an unlocked device seals the unlock key (lib/Controller/DeviceApprovalController.php:173 approve, vault-key proof required); lib/BackgroundJob/ExpireDeviceApprovalsJob.php expires requests; admin switch DeviceApprovalSection (src/views/settings/adminAreas.js:28)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Lock screen (/lock) -> Approve from another device; the approving device gets the approval dialog while unlocked",
-        "note": "A new device asks for approval on the lock screen; an unlocked device of the same user compares the phrase and approves, and the new device unlocks without the master password. Administrators approve only through organisation account recovery (crypto-11), for users enrolled in it; there is no plain admin approval.",
+        "note": "A new device asks for approval on the lock screen; an unlocked device of the same user compares the phrase and approves, and the new device unlocks without the master password. Administrators approve only through organisation account recovery (crypto-11), for users enrolled in it; there is no plain admin approval. The browser extension does not ask for approval; it unlocks with the master password only.",
         "change": "openspec/changes/archive/2026-10-04-crypto-new-device-approval",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -3792,7 +3797,7 @@
       "id": "sharing-24",
       "area": "sharing",
       "name": "Let a colleague sign in with a shared login without being able to see or copy the password.",
-      "keepiq": "yes",
+      "keepiq": "partial",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -3801,12 +3806,12 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "src/components/share/ShareRestrictionFields.vue use-only checkbox in BulkShareDialog (src/dialogs/BulkShareDialog.vue:36), GroupShareForm and TeamFolderDialog; web app hides reveal, copy, edit and versions for use-only copies; browser-extension/src/lib/useOnly.js:22 fills the password field only, no display or copy; lib/Controller/UseOnlyController.php records each use (appinfo/routes.php:149); lib/Db/Secret.php:101 refuses onward shares of the copy; CLI refuses show and copy",
+        "evidence": "src/components/share/ShareRestrictionFields.vue use-only checkbox in BulkShareDialog (src/dialogs/BulkShareDialog.vue:36), GroupShareForm and TeamFolderDialog; web app hides reveal, copy, edit and versions for use-only copies; browser-extension/src/background/requests.ts:76 refuses the password and additional fields of a use-only row, so the popup shows and copies the username only; lib/Controller/UseOnlyController.php records each use (appinfo/routes.php:149), called only by the mobile apps (mobile/shared/src/commonMain/kotlin/nl/conduction/keepiq/shared/api/KeepiqApi.kt:185); lib/Db/Secret.php:101 refuses onward shares of the copy; CLI refuses show and copy",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Share dialog -> Use only (cannot see or copy); the recipient fills through the browser extension",
-        "note": "A use-only recipient can fill the login through the extension but cannot reveal, copy, edit, export or share it onward in the web app, extension or CLI. The dialog says honestly that the browser still holds the value while filling.",
+        "reachedOn": "Share dialog -> Use only (cannot see or copy); the recipient sees the item in the web app and the browser extension; only the mobile preview fills it",
+        "note": "A use-only recipient cannot reveal, copy, edit, export or share the password onward in the web app, extension or CLI. Signing in with it needs a fill: the browser extension does not fill yet (clients-01, browser-extension/openspec/changes/ext-autofill), and the mobile apps that do are still a preview (clients-10).",
         "change": "openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -6626,16 +6631,17 @@
         "evidence": "src/components/settings/OrgPasswordPolicySection.vue:26 policy toggle, min length, required classes, min zxcvbn score, HIBP block (:72) -> PUT /api/settings/admin -> lib/Service/PasswordPolicyService.php; generator clamp lib/Service/KeyGeneratorService.php:110; save checks src/dialogs/SecretCreateDialog.vue:326 and SecretEditDialog.vue via src/policy/policy.js:74 evaluateScore and :113 evaluateHibp",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Org password policy; enforced in New/Edit secret dialogs and the generator",
-        "note": "The generator floor is enforced on the server and the save floor in the create and edit dialogs. Other write paths do not check it: the import wizard (import-batch), the browser extension (browser-extension/src/lib/api.js:121) and write-for-app dialog save without the policy check.",
+        "note": "The generator floor is enforced on the server and the save floor in the create and edit dialogs. Other write paths do not check it: the import wizard (import-batch) and write-for-app dialog save without the policy check. The browser extension does not save secrets.",
         "defects": [
           {
-            "at": "browser-extension/src/lib/api.js:121",
-            "what": "Secrets saved from the browser extension, the import wizard (src/store/modules/import.js:480) and WriteSecretForAppDialog skip src/policy/policy.js, so the save floor is not applied on every save.",
+            "at": "src/store/modules/import.js:557",
+            "what": "Secrets saved from the import wizard and WriteSecretForAppDialog skip src/policy/policy.js, so the save floor is not applied on every save.",
             "issue": null,
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-org-password-policies"
+        "change": "openspec/changes/archive/2026-07-18-org-password-policies",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8690,7 +8696,7 @@
       "id": "clients-01",
       "area": "clients",
       "name": "Fill in logins on websites through a browser extension.",
-      "keepiq": "partial",
+      "keepiq": "no",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -8698,27 +8704,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "browser-extension/build.mjs Chrome and Firefox targets; .github/workflows/extension-release.yml builds and packs on extension-v* tags; browser-extension/src/lib/version.js minimum server version and update state; docs/browser-extension/release.md, privacy.md, permissions.md, rollout.md; autofill itself built (browser-extension/src/background/service-worker.js); owed per the archived change's tasks 2.1-3.2: the green release run, the store accounts and credentials, and the store listings",
+        "state": "specified",
+        "evidence": "Specified in browser-extension/openspec/changes/ext-autofill. Now: browser-extension/entrypoints/content.ts only announces the page to the background; the popup's Autofill suggestions (browser-extension/entrypoints/popup/components/Suggestions.tsx) list the logins matching the open site to copy, with no fill; .github/workflows/browser-extension.yml builds the Chrome and Firefox packages as CI artifacts, with no release or store pipeline",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Browser extension popup (loaded unpacked or from the self-hosted build); not yet in the Chrome, Edge or Firefox stores",
-        "note": "Autofill works, including shared and team-folder secrets, and the release pipeline for Chrome and Firefox is built. The extension is still not in any browser store: the store accounts, credentials and listings are owed, so users load it by hand.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "lib/Controller/ExtensionController.php:195",
-            "what": "Match searches ownerType user only, so secrets shared with the user or held in team folders are never offered for autofill.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/archive/2026-10-04-clients-extension-store-release",
-        "readOn": "2026-10-07"
+        "reachedOn": "nothing",
+        "note": "The browser extension unlocks, browses and copies, but does not fill: fill from the popup, the context menu and the shortcut are specified in ext-autofill. It is not in any browser store either, so users load a CI build by hand.",
+        "change": "browser-extension/openspec/changes/ext-autofill",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8742,7 +8734,7 @@
       "id": "clients-02",
       "area": "clients",
       "name": "Fill in logins inside embedded frames on a page.",
-      "keepiq": "partial",
+      "keepiq": "no",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -8750,26 +8742,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/manifest.json content_scripts all_frames:true -> browser-extension/src/content/content-script.js:175 fill-credential handled in every frame; service-worker.js:122 chrome.tabs.sendMessage without frameId reaches all frames",
+        "state": "specified",
+        "evidence": "Specified in browser-extension/openspec/changes/ext-autofill (autofill spec, 'Fill covers the top frame and matching subframes only'). Now: the browser extension fills nothing (clients-01)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> fill (message delivered to every frame of the tab)",
-        "note": "The content script runs in every frame and every frame with a login form fills on the same message. There is no origin check per frame, and the extension is not distributed.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/background/service-worker.js:122",
-            "what": "The fill message goes to all frames with no frameId and the frame script does not compare its own origin with the matched site, so a credential matched for the top-level host is also typed into any cross-origin iframe on the page that has a password field.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
-        "spec": "openspec/specs/browser-extension-autofill"
+        "reachedOn": "nothing",
+        "note": "No fill in any frame yet. ext-autofill fills the top frame and only those subframes that match the item.",
+        "change": "browser-extension/openspec/changes/ext-autofill",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8792,7 +8771,7 @@
       "id": "clients-03",
       "area": "clients",
       "name": "Be offered to save or update a login after submitting a form.",
-      "keepiq": "yes",
+      "keepiq": "no",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -8800,12 +8779,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/content/content-script.js captureCurrent -> service-worker.js doCapture -> src/lib/capture.js classifyCapture (same-site rows, decrypted login match: save / update with id / none) -> content/save-prompt.js showSavePrompt (closed shadow root, trusted clicks only) -> 'capture-decision' -> doSaveCapture (update sends key+login to the matched id, create otherwise); popup fallback unchanged",
+        "state": "specified",
+        "evidence": "Specified in browser-extension/openspec/changes/ext-autofill (login-capture spec: save bar for a new login, update bar for a changed password). Now: browser-extension/entrypoints/content.ts reads no forms and the extension saves no secrets",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Any website login form: submit, and the Keepiq bar appears top right with Save or Update",
-        "note": "Built 2026-09-30. Tests: vitest tests/extension/saveCapture.spec.js (update with id, unchanged offers nothing, save, trusted click, page click ignored). Store release is still open (clients-extension-store-release), so the extension is loaded from a build.",
-        "change": "openspec/changes/archive/2026-09-30-clients-extension-save-prompt-and-passkey-origin"
+        "reachedOn": "nothing",
+        "note": "The browser extension does not watch form submits and offers no save or update yet.",
+        "change": "browser-extension/openspec/changes/ext-autofill",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8829,7 +8809,7 @@
       "id": "clients-04",
       "area": "clients",
       "name": "Fill in the current one-time code together with the login.",
-      "keepiq": "yes",
+      "keepiq": "no",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -8837,21 +8817,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/content/otp-watch.js watches for a code field that appears after the login step; browser-extension/src/background/router.js:1275 doOtpFieldDetected fills only for the same tab, site, unexpired intent and unlocked vault; one-shot intent in chrome.storage.session holds no seed or code; tests/e2e/workflows/extension-otp-next-step.spec.ts",
+        "state": "specified",
+        "evidence": "Specified in openspec/specs/extension-totp-autofill for the earlier extension; browser-extension/openspec/README.md:25 lists TOTP autofill as a later slice of the current one, not yet specced. Now: the browser extension fills nothing (clients-01); the popup shows the live code and copies it (browser-extension/entrypoints/popup/components/TotpCode.tsx)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Browser extension: fill a login on a site with a matching totp secret; the code field is filled now or on the next step",
-        "note": "After a login fill the extension fills the one-time code, whether the code field is on the same page or appears on the next step. Distribution of the extension is tracked on clients-01.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/archive/2026-10-04-clients-extension-store-release",
-        "readOn": "2026-10-07"
+        "reachedOn": "nothing",
+        "note": "No one-time code fill. The popup shows the current code of a totp item with its countdown and copies it.",
+        "spec": "openspec/specs/extension-totp-autofill",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8875,7 +8847,7 @@
       "id": "clients-05",
       "area": "clients",
       "name": "Use the extension as a passkey provider on websites.",
-      "keepiq": "yes",
+      "keepiq": "no",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -8883,12 +8855,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/background/service-worker.js webauthn-create/get take senderOrigin(sender) (passkey/rp.js), never the page payload; passkey/orchestrator.js handleCreate/handleGet refuse with rp-origin-mismatch unless rpIdAllowed(rpId, origin) before consent or any vault read; dead native proxy path (registration.js, optional webAuthenticationProxy) removed",
+        "state": "specified",
+        "evidence": "Specified in openspec/specs/extension-passkey-provider for the earlier extension; browser-extension/openspec/README.md:25 lists the passkey provider as a later slice of the current one, not yet specced. Now: the browser extension intercepts no WebAuthn call; the item detail shows a passkey item read-only with a not-supported note (browser-extension/entrypoints/popup/views/ItemDetail.tsx:83)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Any website's WebAuthn call while the extension is unlocked -> Keepiq consent window",
-        "note": "Built 2026-09-30. Tests: vitest tests/extension/passkeyOrigin.spec.js (own host, parent domain, foreign rpId, public suffix, insecure origin, sender origin, orchestrator refuses before vault read). Store release is still open (clients-extension-store-release).",
-        "change": "openspec/changes/archive/2026-09-30-clients-extension-save-prompt-and-passkey-origin"
+        "reachedOn": "nothing",
+        "note": "The browser extension does not create or sign with passkeys on websites; it only shows stored passkey items.",
+        "spec": "openspec/specs/extension-passkey-provider",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8912,7 +8885,7 @@
       "id": "clients-06",
       "area": "clients",
       "name": "The extension locks itself automatically.",
-      "keepiq": "yes",
+      "keepiq": "partial",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -8921,11 +8894,12 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/popup/popup.js renderSettings -> set-idle -> browser-extension/src/background/router.js doSetIdle/effectiveIdleMinutes -> browser-extension/src/lib/vault.js armIdleLock (per account); router.js refreshPolicy -> GET /api/v1/extension/policy -> lib/Controller/ExtensionController.php policy() -> AdminSettingsService::extensionMaxIdleMinutes; admin field src/components/settings/ExtensionSection.vue",
+        "evidence": "browser-extension/src/accounts/settings.ts:10 default timeout 15 minutes, action Lock -> browser-extension/src/vault/timeout.ts:28 enforce on the vault-timeout alarm and before every popup reply -> browser-extension/src/vault/unlock.ts:90 lock; the key lives in storage.session (browser-extension/src/vault/key-store.ts), so a browser restart locks too; manual Lock and Lock all in browser-extension/entrypoints/popup/views/AccountSwitcher.tsx:34,78",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Extension popup -> Settings -> Lock after being idle for; Keepiq admin settings -> Browser extension",
-        "note": "User-chosen idle delay per account (1 to 240 minutes, 15 default), capped by the administrator maximum read at every unlock; OS lock, worker termination and the Lock button still lock every account. Distribution is the change clients-extension-store-release.",
-        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup: unlock, leave it for 15 minutes, and the vault is locked; account menu -> Lock or Lock all",
+        "note": "Every account locks 15 minutes after the last interaction, and on browser restart. The user cannot change the timeout yet (browser-extension/openspec/changes/ext-settings), and the extension does not read the administrator maximum from src/components/settings/ExtensionSection.vue (TIMEOUT_POLICY in browser-extension/src/accounts/settings.ts:35 is unset).",
+        "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9181,19 +9155,20 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "building",
-        "evidence": "browser-extension/build.mjs builds dist/chromium (module service worker) and dist/firefox (background scripts, gecko id) from manifest.json + manifests/browsers.mjs; .github/workflows/browser-extension.yml loads both headless (load-check/chromium.mjs, firefox.mjs); browser-extension/safari/convert.sh waits for a macOS runner",
+        "evidence": "browser-extension/wxt.config.ts generates the Chrome MV3 and Firefox MV2 manifests from one source (npm run build, npm run build:firefox); .github/workflows/browser-extension.yml builds both, runs web-ext lint on the Firefox package and uploads both as artifacts; Edge takes the Chrome build; there is no Safari target",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "npm run build:extension -> browser-extension/dist/chromium or dist/firefox, loaded in the browser",
-        "note": "Chromium and Firefox packages are built and load-checked (2026-09-30). The Safari half is open: it needs a macOS runner and an Apple developer identity (DECISIONS row 20), task 1.2 of the change.",
+        "reachedOn": "browser-extension: npm run build or npm run build:firefox -> .output/chrome-mv3 or .output/firefox-mv2, loaded unpacked",
+        "note": "Chrome and Firefox packages are built in CI from one WXT source; neither is load-checked in a headless browser, and Edge is not checked separately. The Safari half is open: it needs a macOS runner and an Apple developer identity (DECISIONS row 20), task 1.2 of the change.",
         "defects": [
           {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "at": ".github/workflows/browser-extension.yml",
+            "what": "The extension has no release or store pipeline: CI only uploads the builds as artifacts, so a user loads one unpacked.",
             "issue": null,
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/clients-extension-firefox-and-safari-builds"
+        "change": "openspec/changes/clients-extension-firefox-and-safari-builds",
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -9262,25 +9237,20 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/popup/popup.js:171 pair form (server URL, user, app password) -> browser-extension/src/background/service-worker.js:52 doPair -> browser-extension/src/lib/api.js:68 POST /api/v1/extension/pair (Basic auth with the app password, api.js:35) -> appinfo/routes.php:405 -> lib/Controller/ExtensionController.php:112 ; unpair api.js:76 -> routes.php:406",
+        "evidence": "browser-extension/entrypoints/popup/views/AddAccount.tsx:53 form (server URL, username, app password) -> browser-extension/src/background/router.ts:52 -> browser-extension/src/accounts/verify.ts:25 verifyCredentials: GET /ocs/v2.php/cloud/user (browser-extension/src/api/client.ts:91, Basic auth with the app password, :45) and the active suite -> browser-extension/src/accounts/store.ts:84 addAccount",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup -> Connect view; user settings page describes the steps (src/App.vue:329)",
-        "note": "The extension is linked by typing the server URL, user name and a manually created Nextcloud app password; it does not reuse the browser's Nextcloud session or a login flow. Disconnect only clears local config and the app password stays valid until revoked in Nextcloud.",
+        "reachedOn": "Extension popup -> Add account",
+        "note": "The extension is linked by typing the server URL, user name and a manually created Nextcloud app password; it does not reuse the browser's Nextcloud session or a login flow. Log out removes the account from the extension only, and the app password stays valid until revoked in Nextcloud. The steps in the Keepiq user settings are hidden until the extension ships (src/App.vue:353).",
         "defects": [
           {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "at": "browser-extension/src/accounts/store.ts:143",
+            "what": "Log out removes the account locally and does not revoke the app password, so a logged-out extension's credential keeps working until the user deletes it in Nextcloud security settings.",
             "issue": null,
             "needsLiveCheck": false
-          },
-          {
-            "at": "lib/Controller/ExtensionController.php:137",
-            "what": "Unpair is an acknowledgement only; the app password is not revoked server-side, so a disconnected extension's credential keeps working until the user deletes it in Nextcloud security settings.",
-            "issue": null,
-            "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-10-04-clients-extension-gaps"
+        "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9555,11 +9525,12 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/lib/api.js addAccount/loadAccounts/setActiveAccount (keepiq.accounts, MAX_ACCOUNTS 5, migrateLegacyConfig) -> browser-extension/src/background/router.js doPair/doSwitchAccount, matchCache per account, doFill refuses another account's ids -> browser-extension/src/popup/views.js renderAccountSwitcher",
+        "evidence": "browser-extension/src/accounts/store.ts:84 addAccount (at most MAX_ACCOUNTS, 5, browser-extension/src/messages.ts:14) and :72 setActive -> browser-extension/entrypoints/popup/views/AccountSwitcher.tsx:58 accounts.switch; key, snapshot and settings are kept per account id (browser-extension/src/vault/key-store.ts, browser-extension/src/vault/store.ts, browser-extension/src/accounts/settings.ts:12)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Extension popup header -> Account select and Add account",
-        "note": "Up to five accounts on one or more servers, each with its own key, lock state, idle timer and settings; matching, filling and saving use the active account. Tests: tests/extension/accounts.spec.js, tests/extension/popupAccounts.spec.js.",
-        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup header -> account menu -> switch account or Add account",
+        "note": "Up to five accounts on one or more servers, each with its own key, lock state, vault snapshot and settings; browsing and copying use the active account. Tests: browser-extension/src/accounts/store.test.ts, browser-extension/entrypoints/popup/views/AccountSwitcher.test.tsx.",
+        "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -9593,10 +9564,11 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "decided-no",
-        "evidence": "Decided no on 2026-09-29: Single competitor, changelog signal only, no demand row. Before: searched 'phish', 'blocklist' in browser-extension/ src/ lib/: only browser-extension/src/lib/match.js:11, which matches the saved URL before any fill; no known-phishing list and no warning page",
+        "evidence": "Decided no on 2026-09-29: Single competitor, changelog signal only, no demand row. Before: searched 'phish', 'blocklist' in browser-extension/ src/ lib/: only browser-extension/src/vault/match.ts:15, which matches the saved URL for the popup's suggestions; no known-phishing list and no warning page",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "The extension refuses to fill on a site whose address does not match the saved login, which blunts phishing, but it never warns about a known phishing site."
+        "note": "The extension suggests only logins whose saved address matches the open site, but it never warns about a known phishing site.",
+        "readOn": "2026-10-16"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -9651,7 +9623,7 @@
       "id": "clients-24",
       "area": "clients",
       "name": "Generate a password or passphrase in the browser extension, and get one suggested in a sign-up field.",
-      "keepiq": "yes",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -9659,11 +9631,13 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/popup/generator-view.js (Generator tab, password and passphrase options, history); browser-extension/src/content/password-suggest.js suggests a strong password in sign-up and change-password fields; policy-locked options per openspec/specs/extension-generator-policy",
+        "state": "specified",
+        "evidence": "Specified in browser-extension/openspec/changes/ext-generator (Generator tab, password, passphrase and username, policy clamp). Now: the Generator tab is a placeholder (browser-extension/entrypoints/popup/views/Shell.tsx:99) and the content script suggests nothing in sign-up fields",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Extension popup -> Generator tab; a sign-up field on a website -> suggestion",
-        "spec": "openspec/specs/extension-generator"
+        "reachedOn": "nothing",
+        "note": "The browser extension generates no passwords yet; the web app generator is unaffected.",
+        "change": "browser-extension/openspec/changes/ext-generator",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9679,7 +9653,7 @@
       "id": "clients-25",
       "area": "clients",
       "name": "Create a one-off send from the browser extension and end the ones you made.",
-      "keepiq": "yes",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -9687,11 +9661,13 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/popup/send-view.js create form and My sends list with revoke (send('send-revoke')), offline refusal per openspec/specs/extension-send-details",
+        "state": "specified",
+        "evidence": "Specified in browser-extension/openspec/changes/ext-send (My sends list, New send form, remove a send). Now: the Send tab is a placeholder (browser-extension/entrypoints/popup/views/Shell.tsx:99)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Extension popup -> Send tab",
-        "spec": "openspec/specs/extension-send"
+        "reachedOn": "nothing",
+        "note": "The browser extension creates and lists no sends yet; sends from the web app are unaffected.",
+        "change": "browser-extension/openspec/changes/ext-send",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9707,7 +9683,7 @@
       "id": "clients-26",
       "area": "clients",
       "name": "Browse, search, add and edit vault items and folders from the browser extension.",
-      "keepiq": "yes",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -9716,10 +9692,12 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/popup/vault-view.js (browse and search), item-detail.js (copy, reveal, edit), folder-view.js (manage folders)",
+        "evidence": "browser-extension/entrypoints/popup/views/VaultList.tsx:102 search and :103 folder filter with type chips; browser-extension/entrypoints/popup/views/ItemDetail.tsx masked fields with reveal and copy, Edit and Delete disabled (:214-215); add, edit and folder management specified in browser-extension/openspec/changes/ext-vault-edit",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Extension popup -> Vault tab",
-        "spec": "openspec/specs/extension-vault"
+        "note": "Browsing, searching, filtering by folder and type, and viewing and copying fields work. Adding, editing, deleting and managing folders are not built; ext-vault-edit specifies them.",
+        "change": "browser-extension/openspec/changes/ext-vault-browse",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9747,10 +9725,11 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/lib/vault.js and src/background/vault-handlers.js keep and refresh the snapshot; a changed suite discards it",
+        "evidence": "browser-extension/src/vault/store.ts:28 writeSnapshot keeps the encrypted rows in storage.local; browser-extension/src/vault/sync.ts:39 sync refreshes it and :63 reports offline instead of failing; browser-extension/src/vault/unlock.ts:109 checkSuite discards it when the suite changed",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Extension popup -> Vault tab while offline (Synced at, Sync now)",
-        "change": "openspec/changes/archive/2026-10-04-clients-extension-complete"
+        "reachedOn": "Extension popup -> Vault tab while offline (offline banner with the last sync time, browser-extension/entrypoints/popup/views/VaultList.tsx:95)",
+        "change": "browser-extension/openspec/changes/ext-vault-browse",
+        "readOn": "2026-10-16"
       },
       "rowSource": "own",
       "provider": "keepiq",
