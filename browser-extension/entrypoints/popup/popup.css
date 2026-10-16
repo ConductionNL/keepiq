@@ -403,6 +403,24 @@ a {
 	background: var(--surface-hover);
 }
 
+.icon-btn--danger,
+.icon-btn--danger:hover {
+	color: var(--danger);
+}
+
+.icon-btn--danger:hover:not([aria-disabled='true']) {
+	background: var(--danger-soft);
+}
+
+.icon-btn[aria-disabled='true'] {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.icon-btn[aria-disabled='true']:hover {
+	background: none;
+}
+
 .spinner {
 	width: 14px;
 	height: 14px;
@@ -676,8 +694,31 @@ a {
 	display: none;
 }
 
-.popup__footer .btn {
+.popup__footer > .btn {
 	flex: 1;
+}
+
+/* The item detail's: Edit at the start, More and Delete at the end, as in Bitwarden. */
+.detail-actions {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.detail-actions > .btn {
+	margin-right: auto;
+}
+
+/* As tall as Edit, with a glyph to match its weight. */
+.detail-actions .icon-btn {
+	width: 40px;
+	height: 40px;
+}
+
+.detail-actions .icon-btn .icon {
+	width: 20px;
+	height: 20px;
 }
 
 /* Toast, above whichever bar is at the bottom */

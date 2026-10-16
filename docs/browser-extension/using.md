@@ -123,7 +123,7 @@ When you change the password, user name or fields of an item you own and shared,
 
 ### Deleting an item
 
-**Delete** asks first, then moves the item to Keepiq's trash, which also stops sharing it. You can restore it from the trash in the Keepiq web app until your organisation's retention ends, 30 days unless an admin changed it; after that it is gone for good.
+**Delete**, the red trash can at the bottom right of an item, asks first, then moves the item to Keepiq's trash, which also stops sharing it. You can restore it from the trash in the Keepiq web app until your organisation's retention ends, 30 days unless an admin changed it; after that it is gone for good.
 
 ### Folders
 

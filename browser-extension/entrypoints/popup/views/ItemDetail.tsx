@@ -6,7 +6,7 @@ import { folderPath, launchUrl } from '@/src/vault/list'
 import { cardBrand, cardLast4, parseObject, parsePayload, text } from '@/src/vault/payloads'
 import { IconButton } from '../components/Button'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
-import { Icon } from '../components/Icon'
+import { Icon, type IconName } from '../components/Icon'
 import { itemActions } from '../components/ItemCard'
 import { Loading } from '../components/Loading'
 import { asLines, MaskedField } from '../components/MaskedField'
@@ -189,17 +189,21 @@ function Decrypted({ item, type, passive }: { item: ItemMeta; type: TypeMeta | u
 	return item.useOnly ? <UseOnly item={item} values={decrypted.item} /> : <Values item={item} type={type} values={decrypted.item} />
 }
 
-/** `aria-disabled` keeps the button focusable, so its reason can be read. */
-function ActionButton({ action, variant }: { action: MenuItem; variant: 'primary' | 'danger' }) {
+/**
+ * `aria-disabled` keeps the button focusable, so its reason can be read. With `icon`, the
+ * label is only its name and tooltip, and the reason takes the tooltip's place.
+ */
+function ActionButton({ action, className, icon }: { action: MenuItem; className: string; icon?: IconName }) {
 	return (
 		<button
 			type="button"
-			className={`btn btn--${variant}`}
+			className={className}
+			aria-label={icon && action.label}
 			aria-disabled={action.disabledReason ? true : undefined}
-			title={action.disabledReason}
+			title={action.disabledReason ?? (icon && action.label)}
 			onClick={action.disabledReason ? undefined : action.onSelect}
 		>
-			{action.label}
+			{icon ? <Icon name={icon} /> : action.label}
 		</button>
 	)
 }
@@ -256,9 +260,11 @@ export function ItemDetail({ item, type, folders, webAppUrl, shareSave }: Props)
 				</dl>
 			</section>
 			<PageFooter>
-				<ActionButton action={actions.edit} variant="primary" />
-				<Menu label={i18n.t('item.moreMenu', { name: item.name })} icon="more" above items={[actions.clone, actions.move]} />
-				<ActionButton action={actions.remove} variant="danger" />
+				<div className="detail-actions">
+					<ActionButton action={actions.edit} className="btn btn--primary" />
+					<Menu label={i18n.t('item.moreMenu', { name: item.name })} icon="more" above items={[actions.clone, actions.move]} />
+					<ActionButton action={actions.remove} className="icon-btn icon-btn--danger" icon="trash" />
+				</div>
 			</PageFooter>
 		</div>
 	)

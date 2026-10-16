@@ -272,6 +272,14 @@ describe('blocked item', () => {
 		expect(screen.getByText(/This item is blocked\./)).toBeTruthy()
 		expect(screen.getByRole('link', { name: 'Open the Keepiq web app' })).toBeTruthy()
 	})
+
+	it('offers no edit and says why, while Delete stays', () => {
+		renderDetail(itemMeta({ blocked: true, hasLogin: false }))
+		const edit = within(footer).getByRole('button', { name: 'Edit' })
+		expect(edit.getAttribute('aria-disabled')).toBe('true')
+		expect(edit.title).toBe('This item is blocked.')
+		expect(within(footer).getByRole('button', { name: 'Delete' }).getAttribute('aria-disabled')).toBeNull()
+	})
 })
 
 describe('use-only copy', () => {
@@ -330,9 +338,27 @@ describe('metadata and actions', () => {
 		expect(items.move).toHaveBeenCalledWith(item)
 	})
 
+	it.each([
+		['en', 'Edit', 'More, GitHub', 'Delete'],
+		['nl', 'Bewerken', 'Meer, GitHub', 'Verwijderen'],
+	] as const)('in %s, puts Edit first and Delete last, as a named icon button', (locale, edit, more, remove) => {
+		setLocale(locale)
+		renderDetail(itemMeta())
+		const buttons = within(footer).getAllByRole('button')
+		expect(buttons.map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([edit, more, remove])
+		expect(buttons[0]!.className).toBe('btn btn--primary')
+		const trash = within(footer).getByRole('button', { name: remove })
+		expect(trash).toBe(buttons.at(-1))
+		expect(trash.className).toBe('icon-btn icon-btn--danger')
+		expect(trash.title).toBe(remove)
+		expect(trash.textContent).toBe('')
+		expect(trash.querySelector('svg')).toBeTruthy()
+	})
+
 	it('holds back the writes while offline, and says why', async () => {
 		const { items } = renderDetail(itemMeta(), undefined, undefined, true)
 		const user = userEvent.setup()
+		// The icon button keeps its name; the reason takes its tooltip.
 		const remove = within(footer).getByRole('button', { name: 'Delete' })
 		expect(remove.getAttribute('aria-disabled')).toBe('true')
 		expect(remove.title).toBe('You are offline. Changes need a connection to Keepiq.')
