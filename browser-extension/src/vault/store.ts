@@ -58,6 +58,7 @@ export function toItemMeta(row: StoredSecretRow): ItemMeta {
 		folderId: row.folderId,
 		hasLogin: !row.blocked && row.login !== null && row.login !== undefined,
 		blocked: row.blocked === true,
+		useOnly: row.useOnly === true,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 		expiresAt: row.expiresAt,

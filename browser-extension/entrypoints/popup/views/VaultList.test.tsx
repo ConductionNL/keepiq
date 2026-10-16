@@ -186,6 +186,17 @@ describe('item cards', () => {
 		await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^\d{6}$/)))
 	})
 
+	it('offers a use-only copy’s username and never its password or code', async () => {
+		const user = userEvent.setup()
+		renderList(snapshotReply({ items: [
+			itemMeta({ id: '1', name: 'Portal', useOnly: true }),
+			itemMeta({ id: '2', name: 'Codes', typeId: 't-totp', hasLogin: false, useOnly: true }),
+		] }))
+		await user.click(screen.getByRole('button', { name: 'Copy, Portal' }))
+		expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual(['Copy username'])
+		expect((screen.getByRole('button', { name: 'Copy, Codes' }) as HTMLButtonElement).disabled).toBe(true)
+	})
+
 	it('says so when the clipboard refuses', async () => {
 		const user = userEvent.setup()
 		fakeClipboard(true)

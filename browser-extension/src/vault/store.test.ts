@@ -64,9 +64,14 @@ describe('toItemMeta', () => {
 	it('keeps metadata and only whether a login exists', () => {
 		const meta = toItemMeta(secretRow({ login: 'ciphertext' }))
 		expect(meta).toEqual({
-			id: 's1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false,
+			id: 's1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false, useOnly: false,
 			createdAt: '2026-01-05T10:00:00+00:00', updatedAt: '2026-03-02T10:00:00+00:00', expiresAt: null,
 		})
+	})
+
+	it('marks a use-only copy, blocked or not', () => {
+		expect(toItemMeta(secretRow({ useOnly: true })).useOnly).toBe(true)
+		expect(toItemMeta(blockedRow({ useOnly: true })).useOnly).toBe(true)
 	})
 
 	it('carries the reason of a blocked row', () => {

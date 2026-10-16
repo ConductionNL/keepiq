@@ -1,7 +1,7 @@
 import { accountStatus, getAccount, getActiveAccountId, type AccountRecord } from '@/src/accounts/store'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
-import type { AccountStatus, DecryptReply, DecryptedItem, PopupReplies, PopupRequest, PopupTab, VaultSnapshotReply } from '@/src/messages'
+import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply } from '@/src/messages'
 import { getKey, LAST_TAB_KEY, sessionValues } from '@/src/vault/key-store'
 import { suggestionIds } from '@/src/vault/match'
 import { readSnapshot, toItemMeta } from '@/src/vault/store'
@@ -62,15 +62,18 @@ function rowsById(snapshot: VaultSnapshot | undefined): Map<string, StoredSecret
 	return index
 }
 
+type RowFailure = 'blocked' | 'use_only' | 'decrypt_failed'
+
 async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promise<DecryptReply> {
 	const account = await activeUnlocked()
 	const key = account ? await getKey(account.id) : null
 	if (!account || !key) return { ok: false, error: 'locked' }
 	const rows = rowsById(await readSnapshot(account.id))
-	const results = await Promise.all(ids.map(async (id): Promise<[string, DecryptedItem | 'blocked' | 'decrypt_failed'] | null> => {
+	const results = await Promise.all(ids.map(async (id): Promise<[string, DecryptedItem | RowFailure] | null> => {
 		const row = rows.get(id)
 		if (!row) return null
 		if (row.blocked) return [id, 'blocked']
+		if (row.useOnly === true && fields.some((field) => !USE_ONLY_FIELDS.includes(field))) return [id, 'use_only']
 		try {
 			const item: DecryptedItem = {}
 			for (const field of fields) {
@@ -84,7 +87,7 @@ async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promi
 		}
 	}))
 	const items: Record<string, DecryptedItem> = {}
-	let failure: 'blocked' | 'decrypt_failed' | null = null
+	let failure: RowFailure | null = null
 	for (const [id, result] of results.filter((r) => r !== null)) {
 		if (typeof result === 'string') failure = result
 		else items[id] = result

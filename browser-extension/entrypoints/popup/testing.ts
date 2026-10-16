@@ -37,7 +37,7 @@ export function dispatchReturning(result: Result = ok()) {
 
 export function itemMeta(overrides: Partial<ItemMeta> = {}): ItemMeta {
 	return {
-		id: 'i1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false,
+		id: 'i1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false, useOnly: false,
 		createdAt: '2026-01-05T10:00:00Z', updatedAt: '2026-03-02T10:00:00Z', expiresAt: null, ...overrides,
 	}
 }
@@ -66,7 +66,7 @@ interface FakeBackground {
 	snapshot?: VaultSnapshotReply
 	/** Decrypted fields per item id; an id missing here decrypts to nothing. */
 	decrypted?: Record<string, DecryptedItem>
-	decryptError?: 'locked' | 'blocked' | 'decrypt_failed'
+	decryptError?: 'locked' | 'blocked' | 'use_only' | 'decrypt_failed'
 	lastTab?: PopupTab
 	tabUrl?: string
 	/** Kinds the background fails on, which reaches the popup as no reply. */

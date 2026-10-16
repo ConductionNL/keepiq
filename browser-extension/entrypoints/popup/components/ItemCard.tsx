@@ -55,8 +55,8 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 
 	const copyItems: MenuItem[] = []
 	if (item.hasLogin) copyItems.push({ label: i18n.t('item.copyUsername'), onSelect: () => void copyField('login', i18n.t('detail.username')) })
-	if (!NO_PASSWORD.has(type?.name ?? '')) copyItems.push({ label: i18n.t('item.copyPassword'), onSelect: () => void copyField('key', i18n.t('detail.password')) })
-	if (type?.name === 'totp') copyItems.push({ label: i18n.t('item.copyCode'), onSelect: () => void copyCode() })
+	if (!item.useOnly && !NO_PASSWORD.has(type?.name ?? '')) copyItems.push({ label: i18n.t('item.copyPassword'), onSelect: () => void copyField('key', i18n.t('detail.password')) })
+	if (!item.useOnly && type?.name === 'totp') copyItems.push({ label: i18n.t('item.copyCode'), onSelect: () => void copyCode() })
 	const later = i18n.t('common.later')
 
 	const subtitle = item.hasLogin ? login : type?.label

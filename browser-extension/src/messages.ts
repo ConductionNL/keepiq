@@ -85,6 +85,8 @@ export interface ItemMeta {
 	folderId: string | null
 	hasLogin: boolean
 	blocked: boolean
+	/** Only its login decrypts; the rest is for filling, never for the popup. */
+	useOnly: boolean
 	/** Absent when the stored reason is not a known code. */
 	blockedReason?: BlockReason
 	migrationError?: string | null
@@ -123,10 +125,13 @@ export type VaultSnapshotReply =
 export type DecryptField = 'login' | 'key' | 'additionalFields'
 export type DecryptedItem = Partial<Record<DecryptField, string>>
 
-/** A batch leaves out rows that are blocked or do not decrypt; a single id gets the reason instead. */
+/** All a use-only copy's holder may see; the background refuses the rest (use-only-shares). */
+export const USE_ONLY_FIELDS: readonly DecryptField[] = ['login']
+
+/** A batch leaves out rows that are blocked, use-only or do not decrypt; a single id gets the reason instead. */
 export type DecryptReply =
 	| { ok: true; items: Record<string, DecryptedItem> }
-	| { ok: false; error: 'locked' | 'blocked' | 'decrypt_failed' }
+	| { ok: false; error: 'locked' | 'blocked' | 'use_only' | 'decrypt_failed' }
 
 /** Popup → background requests with their own reply shapes, listed in `PopupReplies`. */
 export type PopupRequest =

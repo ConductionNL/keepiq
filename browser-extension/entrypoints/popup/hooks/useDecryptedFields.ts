@@ -10,7 +10,7 @@ export type Decrypted = { status: 'loading' } | { status: 'ready'; item: Decrypt
  * Decrypts one item on mount; `enabled: false` (a blocked row) sends nothing.
  * `passive` marks a re-decrypt the user did not ask for, e.g. after a sync changed the item.
  */
-export function useDecryptedFields(id: string, fields: DecryptField[], enabled = true, passive = false): Decrypted {
+export function useDecryptedFields(id: string, fields: readonly DecryptField[], enabled = true, passive = false): Decrypted {
 	const { refreshState } = useShell()
 	const [result, setResult] = useState<Decrypted>({ status: 'loading' })
 	const wanted = fields.join(',')

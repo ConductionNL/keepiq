@@ -11,7 +11,7 @@ afterEach(cleanup)
 
 const folders: FolderMeta[] = [{ id: 'w', name: 'Work', parentId: null }, { id: 'c', name: 'Clients', parentId: 'w' }]
 
-function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 'locked') {
+function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 'locked' | 'use_only') {
 	const sent = fakeBackground({ decrypted: decrypted && { [item.id]: decrypted }, decryptError })
 	const refreshState = vi.fn()
 	const launch = vi.fn()
@@ -172,6 +172,36 @@ describe('blocked item', () => {
 		expect(screen.getByRole('link', { name: 'Open the Keepiq web app' })).toBeTruthy()
 		expect(screen.queryByRole('heading', { name: 'Login credentials' })).toBeNull()
 		expect(sentKinds(sent)).not.toContain('item.decrypt')
+	})
+})
+
+describe('use-only copy', () => {
+	it('asks for the login only and shows no value, reveal or copy beyond it', async () => {
+		const { sent, view } = renderDetail(itemMeta({ useOnly: true }), { login: 'bob', key: 'hunter2', additionalFields: JSON.stringify({ PIN: '1234' }) })
+		const credentials = await screen.findByRole('heading', { name: 'Login credentials' }).then((h) => h.closest('section')!)
+		expect(sent).toHaveBeenCalledWith({ kind: 'item.decrypt', ids: ['i1'], fields: ['login'], passive: false })
+		expect(within(credentials).getByText('bob')).toBeTruthy()
+		expect(within(credentials).getByText('Its owner lets you sign in with this, but not view or copy it.')).toBeTruthy()
+		expect(within(credentials).queryByText('Password')).toBeNull()
+		expect(screen.queryAllByRole('button', { name: /^Show / })).toEqual([])
+		expect(screen.queryAllByRole('button', { name: /^Copy / }).map((b) => b.getAttribute('aria-label'))).toEqual(['Copy username', 'Copy website'])
+		expect(screen.queryByRole('heading', { name: 'Additional fields' })).toBeNull()
+		expect(view.container.innerHTML).not.toMatch(/hunter2|1234/)
+	})
+
+	it('shows no code or payload, whatever its type', async () => {
+		for (const typeId of ['t-totp', 't-card', 't-note']) {
+			renderDetail(itemMeta({ typeId, hasLogin: false, useOnly: true }), { key: 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ' })
+			expect(await screen.findByText('Its owner lets you sign in with this, but not view or copy it.')).toBeTruthy()
+			expect(document.querySelector('.totp')).toBeNull()
+			expect(document.body.innerHTML).not.toContain('GEZDGNBVGY3TQOJQ')
+			cleanup()
+		}
+	})
+
+	it('says so when the background refuses a copy that became use-only', async () => {
+		renderDetail(itemMeta(), undefined, 'use_only')
+		expect((await screen.findByRole('alert')).textContent).toBe('Its owner lets you sign in with this, but not view or copy it.')
 	})
 })
 

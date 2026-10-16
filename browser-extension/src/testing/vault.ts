@@ -17,7 +17,7 @@ export function secretRow(overrides: Partial<OpenSecretRow> = {}): OpenSecretRow
 		key: 'ciphertext', login: null, additionalFields: null, blocked: false,
 		encryptionSuiteId: suiteRow.id, ownerType: 'user', ownerId: 'alice',
 		createdAt: '2026-01-05T10:00:00+00:00', updatedAt: '2026-03-02T10:00:00+00:00',
-		keyUpdatedAt: null, expiresAt: null, possiblyCompromisedAt: null, tombstonedAt: null, tombstoneReason: null,
+		keyUpdatedAt: null, expiresAt: null, possiblyCompromisedAt: null, tombstonedAt: null, tombstoneReason: null, useOnly: false,
 		...overrides,
 	}
 }

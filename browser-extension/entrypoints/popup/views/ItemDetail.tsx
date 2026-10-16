@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
-import type { DecryptedItem, FolderMeta, ItemMeta, TypeMeta } from '@/src/messages'
+import { USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta, type ItemMeta, type TypeMeta } from '@/src/messages'
 import { typeIcon } from '@/src/vault/icons'
 import { folderPath, launchUrl } from '@/src/vault/list'
 import { cardBrand, cardLast4, parseObject, text } from '@/src/vault/payloads'
@@ -95,6 +95,36 @@ function Passkey({ payload }: { payload: Record<string, unknown> }) {
 	)
 }
 
+function Website({ item }: { item: ItemMeta }) {
+	const launch = launchUrl(item.url)
+	const shell = useShell()
+	if (!item.url) return null
+	return (
+		<Section title={i18n.t('detail.website')}>
+			<MaskedField
+				label={i18n.t('detail.website')}
+				value={item.url}
+				actions={launch && <IconButton icon="external" label={i18n.t('item.launch', { name: item.name })} onClick={() => shell.launch(launch)} />}
+			/>
+		</Section>
+	)
+}
+
+/** Whatever its type, a use-only copy shows its login name and site only. */
+function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
+	return (
+		<>
+			<Section title={i18n.t('detail.loginCredentials')}>
+				{values.login !== undefined && <MaskedField label={i18n.t('detail.username')} value={values.login} />}
+				<p className="field-row field-row__note">{i18n.t('detail.useOnly')}</p>
+			</Section>
+			<Website item={item} />
+		</>
+	)
+}
+
+const ALL_FIELDS: readonly DecryptField[] =['login', 'key', 'additionalFields']
+
 function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undefined; values: DecryptedItem }) {
 	const name = type?.name ?? ''
 	const key = values.key ?? ''
@@ -106,8 +136,6 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 	const notes = [...(name === 'note' && key ? [key] : []), ...(extra ?? []).filter(([field]) => field.toLowerCase() === 'notes').map(([, value]) => value)]
 	const fields = (extra ?? []).filter(([field]) => field.toLowerCase() !== 'notes')
 	const payload = ['card', 'identity', 'passkey'].includes(name) ? parseObject(key) : null
-	const launch = launchUrl(item.url)
-	const shell = useShell()
 
 	return (
 		<>
@@ -121,15 +149,7 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 			{name === 'card' && (payload ? <Card payload={payload} /> : <Unreadable title={i18n.t('detail.cardDetails')} message={i18n.t('detail.unreadable')} />)}
 			{name === 'identity' && (payload ? <Identity payload={payload} /> : <Unreadable title={i18n.t('detail.identity')} message={i18n.t('detail.unreadable')} />)}
 			{name === 'passkey' && (payload ? <Passkey payload={payload} /> : <Unreadable title={i18n.t('detail.passkey')} message={i18n.t('detail.unreadablePasskey')} />)}
-			{item.url && (
-				<Section title={i18n.t('detail.website')}>
-					<MaskedField
-						label={i18n.t('detail.website')}
-						value={item.url}
-						actions={launch && <IconButton icon="external" label={i18n.t('item.launch', { name: item.name })} onClick={() => shell.launch(launch)} />}
-					/>
-				</Section>
-			)}
+			<Website item={item} />
 			{extra === null
 				? <Unreadable title={i18n.t('detail.additionalFields')} message={i18n.t('detail.unreadableFields')} />
 				: fields.length > 0 && (
@@ -147,10 +167,11 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 }
 
 function Decrypted({ item, type, passive }: { item: ItemMeta; type: TypeMeta | undefined; passive: boolean }) {
-	const decrypted = useDecryptedFields(item.id, ['login', 'key', 'additionalFields'], true, passive)
+	const decrypted = useDecryptedFields(item.id, item.useOnly ? USE_ONLY_FIELDS : ALL_FIELDS, true, passive)
 	if (decrypted.status === 'loading') return <Loading>{i18n.t('detail.decrypting')}</Loading>
-	if (decrypted.status === 'error') return <ErrorBanner>{i18n.t('detail.decryptFailed')}</ErrorBanner>
-	return <Values item={item} type={type} values={decrypted.item} />
+	// `use_only` only when a sync made the copy use-only after this view asked.
+	if (decrypted.status === 'error') return <ErrorBanner>{i18n.t(decrypted.error === 'use_only' ? 'detail.useOnly' : 'detail.decryptFailed')}</ErrorBanner>
+	return item.useOnly ? <UseOnly item={item} values={decrypted.item} /> : <Values item={item} type={type} values={decrypted.item} />
 }
 
 export function ItemDetail({ item, type, folders, webAppUrl }: Props) {

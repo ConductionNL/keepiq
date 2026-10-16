@@ -52,13 +52,13 @@ describe('vault.snapshot', () => {
 		const login = await encrypt('alice')
 		await snapshot([
 			secretRow({ id: 'a', url: 'https://login.example.co.uk', login, additionalFields: await encrypt('{}') }),
-			secretRow({ id: 'b', url: 'https://other.test' }),
+			secretRow({ id: 'b', url: 'https://other.test', useOnly: true }),
 			blockedRow({ id: 'c', url: 'example.co.uk' }),
 		])
 		const reply = await send({ kind: 'vault.snapshot', tabUrl: 'https://www.example.co.uk/' })
 		if (reply.state !== 'unlocked') throw new Error(reply.state)
 		expect(reply.suggestionIds).toEqual(['a', 'c'])
-		expect(reply.items?.map((item) => [item.id, item.hasLogin, item.blocked])).toEqual([['a', true, false], ['b', false, false], ['c', false, true]])
+		expect(reply.items?.map((item) => [item.id, item.hasLogin, item.blocked, item.useOnly])).toEqual([['a', true, false, false], ['b', false, false, true], ['c', false, true, false]])
 		expect(reply.items?.[2]).toMatchObject({ blockedReason: 'suite_revoked' })
 		expect(reply.folders).toEqual([{ id: 'f1', name: 'Work', parentId: null }])
 		expect(reply.types[0]).toEqual({ id: 't-login', name: 'login', label: 'Login' })
@@ -140,6 +140,21 @@ describe('item.decrypt', () => {
 	it('refuses a blocked row', async () => {
 		await snapshot([blockedRow({ id: 'x' })])
 		expect(await send({ kind: 'item.decrypt', ids: ['x'], fields: ['key'] })).toEqual({ ok: false, error: 'blocked' })
+	})
+
+	it('gives a use-only copy its login and refuses everything else', async () => {
+		await snapshot([secretRow({ id: 'u', useOnly: true, login: await encrypt('bob'), key: await encrypt('hunter2'), additionalFields: await encrypt('{"PIN":"1234"}') })])
+		expect(await send({ kind: 'item.decrypt', ids: ['u'], fields: ['login'] })).toEqual({ ok: true, items: { u: { login: 'bob' } } })
+		for (const fields of [['key'], ['additionalFields'], ['login', 'key', 'additionalFields']] as const) {
+			expect(await send({ kind: 'item.decrypt', ids: ['u'], fields: [...fields] })).toEqual({ ok: false, error: 'use_only' })
+		}
+	})
+
+	it('leaves a use-only copy out of a batch that asks for its value', async () => {
+		await snapshot([secretRow({ id: 'u', useOnly: true, key: await encrypt('hunter2') }), secretRow({ id: 'a', key: await encrypt('pw') })])
+		const reply = await send({ kind: 'item.decrypt', ids: ['u', 'a'], fields: ['key'] })
+		expect(reply).toEqual({ ok: true, items: { a: { key: 'pw' } } })
+		expect(JSON.stringify(reply)).not.toContain('hunter2')
 	})
 
 	it('refuses while locked', async () => {
