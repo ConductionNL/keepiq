@@ -4,7 +4,9 @@
  *
  * A federated share is encrypted to the public key of the certificate the
  * browser verified, and a certificate text that is more than its one PEM
- * block is refused. Each test checks which key a ciphertext was made for.
+ * block is refused. Each encryption test checks which key a ciphertext was
+ * made for. A lookup answer for another cloud id than the one asked for is
+ * refused before anything is verified.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
@@ -17,9 +19,12 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { rsaDecrypt } from '../../src/crypto/rsa.js'
 import { forgetVerifiedPartners, saveShared } from '../../src/services/shareSave.js'
-import { useFederatedShareStore } from '../../src/store/modules/federatedShare.js'
+import {
+	CloudIdMismatchError,
+	useFederatedShareStore,
+} from '../../src/store/modules/federatedShare.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
-import { shareSaveServer } from '../fixtures/shareSaveServer.js'
+import { echoedCloudId, shareSaveServer } from '../fixtures/shareSaveServer.js'
 import {
 	otherKeyText,
 	recordEncryptionKeys,
@@ -48,14 +53,14 @@ const BOB_SPKI = new Uint8Array(
 )
 
 /**
- * A lookup answer for Bob with the partner A chain and pin.
+ * A lookup answer with the partner A chain and pin; the server echoes the
+ * cloud id it was sent unless the answer names one.
  *
  * @param {string} certificate The certificate text.
  * @return {object}
  */
 function answer(certificate) {
 	return {
-		cloudId: BOB,
 		certificate,
 		chain: [F.intermediateA, F.rootA],
 		partnerRootFingerprint: F.rootAFingerprint,
@@ -75,7 +80,7 @@ function server(answer, shares = []) {
 	vi.spyOn(axios, 'get').mockResolvedValue({ data: shares })
 	vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
 		if (url.includes('/federation/recipient-certificate')) {
-			return { data: answer }
+			return { data: { cloudId: echoedCloudId(body.cloudId), ...answer } }
 		}
 		if (url.includes('/suspend')) {
 			suspends.push(body)
@@ -194,4 +199,78 @@ describe('federated share encryption key', () => {
 			expect(key).toEqual(BOB_SPKI)
 		}
 	})
+})
+
+describe('the cloud id of a lookup answer', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+	})
+
+	it.each([
+		['surrounding whitespace', `  ${BOB}\n`, BOB],
+		['a trailing slash', `${BOB}/`, BOB],
+		['a trailing backslash', `${BOB}\\`, BOB],
+		['/index.php', `${BOB}/index.php`, BOB],
+		['a share link', `${BOB}/index.php/s/abc123`, BOB],
+		[
+			'the host in capitals',
+			'bob@CLOUD.Partner.example',
+			'bob@CLOUD.Partner.example',
+		],
+		[
+			'the scheme',
+			'bob@https://cloud.partner.example',
+			'bob@https://cloud.partner.example',
+		],
+	])(
+		'accepts the id the server resolved from one typed with %s',
+		async (_, typed, echoed) => {
+			server(answer(F.bob))
+
+			const recipient = await useFederatedShareStore().lookup(typed)
+
+			expect(axios.post).toHaveBeenCalledWith(
+				expect.stringContaining('/federation/recipient-certificate'),
+				{ cloudId: typed.trim() },
+			)
+			expect(recipient.cloudId).toBe(echoed)
+			expect(recipient.spki).toEqual(BOB_SPKI)
+		},
+	)
+
+	it.each([
+		['another account', 'mallory@cloud.partner.example', F.mallory],
+		['the user in other case', 'Bob@cloud.partner.example', F.bob],
+		['another path', 'bob@cloud.partner.example/other', F.bob],
+	])(
+		'refuses an answer for %s, even when its certificate names it',
+		async (_, cloudId, certificate) => {
+			server({ ...answer(certificate), cloudId })
+
+			const refusal = await useFederatedShareStore()
+				.lookup(BOB)
+				.catch((e) => e)
+
+			expect(refusal).toBeInstanceOf(CloudIdMismatchError)
+			expect(refusal.cloudId).toBe(BOB)
+		},
+	)
+
+	it.each([
+		['empty', '', ''],
+		['blank', '   ', ''],
+		['without a host', 'bob', 'bob'],
+	])(
+		'refuses an answer to a cloud id that is %s, even one that echoes it',
+		async (_, typed, echoed) => {
+			server({ ...answer(F.bob), cloudId: echoed })
+
+			const refusal = await useFederatedShareStore()
+				.lookup(typed)
+				.catch((e) => e)
+
+			expect(refusal).toBeInstanceOf(CloudIdMismatchError)
+		},
+	)
 })

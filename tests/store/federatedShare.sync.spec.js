@@ -115,24 +115,32 @@ describe('a value change reaches federated recipients', () => {
 		])
 	})
 
-	it('suspends a share to a recipient the partner no longer knows', async () => {
+	it.each([
+		['a recipient the partner no longer knows', 'unknown_recipient', 404],
+		['a partner no longer allowlisted', 'not_a_partner', 403],
+		['a chain the server already refused', 'bad_chain', 502],
+	])('suspends a share to %s (%s with %i)', async (_, reason, status) => {
 		const { log } = await save({
-			reject: httpError(404, { message: 'unknown_recipient' }),
-		})
-
-		expect(log.saves.at(-1).suspend).toEqual([
-			{ shareId: 'fs-1', reason: 'unknown_recipient' },
-		])
-	})
-
-	it('suspends a share whose chain the server already refused', async () => {
-		const { log } = await save({
-			reject: httpError(502, { message: 'bad_chain' }),
+			reject: httpError(status, { message: reason }),
 		})
 
 		expect(log.saves.at(-1).federated).toEqual([])
+		expect(log.saves.at(-1).suspend).toEqual([{ shareId: 'fs-1', reason }])
+	})
+
+	it('suspends a share and saves the rest when the server answers for another account', async () => {
+		const { log, result } = await save({
+			...VALID,
+			cloudId: 'mallory@cloud.partner.example',
+			certificate: F.mallory,
+		})
+
+		expect(result).not.toBeInstanceOf(Error)
+		expect(result.federated.written).toBe(0)
+		expect(result.federated.suspended).toBe(1)
+		expect(log.saves.at(-1).federated).toEqual([])
 		expect(log.saves.at(-1).suspend).toEqual([
-			{ shareId: 'fs-1', reason: 'bad_chain' },
+			{ shareId: 'fs-1', reason: 'cloud_id_mismatch' },
 		])
 	})
 
