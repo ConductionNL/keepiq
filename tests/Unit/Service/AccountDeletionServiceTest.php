@@ -101,6 +101,7 @@ class AccountDeletionServiceTest extends TestCase {
 					db: $this->createMock(IDBConnection::class),
 					secretMapper: $this->m['secret'],
 					federatedShares: $this->m['federated'],
+					linkShares: $this->m['link'],
 				),
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
@@ -156,6 +157,7 @@ class AccountDeletionServiceTest extends TestCase {
 		$service = $this->build();
 		$secret = $this->secret('sec-1');
 		$this->m['secret']->method('findByOwner')->willReturn([$secret]);
+		$this->m['secret']->method('findById')->willReturn($secret);
 
 		$delegation = new SecretDelegation();
 		$delegation->setSecretId('sec-1');
@@ -188,6 +190,68 @@ class AccountDeletionServiceTest extends TestCase {
 		$report = $service->deleteAllFor('alice');
 		$this->assertSame(1, $report->secretsTransferred);
 	}//end testDelegatedSecretTransfersOwnership()
+
+	/**
+	 * The departing user's link shares on a delegated secret are deleted with
+	 * the rest of their link shares, not handed to the delegate with the
+	 * secret.
+	 *
+	 * @return void
+	 */
+	public function testLinkSharesOnADelegatedSecretAreDeletedNotHandedOver(): void {
+		$service = $this->build();
+		$secret = $this->secret('sec-1');
+		$this->m['secret']->method('findByOwner')->willReturn([$secret]);
+		$this->m['secret']->method('findById')->willReturn($secret);
+
+		$delegation = new SecretDelegation();
+		$delegation->setSecretId('sec-1');
+		$delegation->setOriginalOwnerId('alice');
+		$delegation->setDelegatedTo('bob');
+		$this->m['delegation']->method('findByOriginalOwner')->willReturn([$delegation]);
+
+		// The link table: Alice's link on the delegated secret, Bob's own.
+		$links = [['sec-1', 'alice'], ['sec-1', 'bob']];
+		$this->m['link']->method('findByCreatedBy')->willReturnCallback(
+			static function (string $userId) use (&$links): array {
+				return array_values(array_filter($links, static fn (array $link): bool => $link[1] === $userId));
+			}
+		);
+		$this->m['link']->method('deleteByUserId')->willReturnCallback(
+			static function (string $userId) use (&$links): void {
+				$links = array_values(array_filter($links, static fn (array $link): bool => $link[1] !== $userId));
+			}
+		);
+		$this->m['link']->method('reassignCreator')->willReturnCallback(
+			static function (string $secretId, string $fromUserId, string $toUserId) use (&$links): int {
+				$moved = 0;
+				foreach ($links as $i => $link) {
+					if ($link === [$secretId, $fromUserId]) {
+						$links[$i] = [$secretId, $toUserId];
+						++$moved;
+					}
+				}
+
+				return $moved;
+			}
+		);
+
+		$this->m['share']->method('findBySourceSecret')->willReturn([]);
+		$this->m['group']->method('findBySecret')->willReturn([]);
+		$this->m['share']->method('findByTargetUser')->willReturn([]);
+		$this->m['suite']->method('findByOwner')->willReturn([]);
+		$this->m['secret']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['folder']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['request']->method('deleteByCreatedBy')->willReturn(0);
+		$this->m['suite']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['migration']->method('deleteBySuiteIds')->willReturn(0);
+
+		$report = $service->deleteAllFor('alice');
+
+		$this->assertSame(1, $report->secretsTransferred);
+		$this->assertSame(1, $report->linkSharesDeleted);
+		$this->assertSame([['sec-1', 'bob']], $links);
+	}//end testLinkSharesOnADelegatedSecretAreDeletedNotHandedOver()
 
 	/**
 	 * Step 2: a granted share detaches — link deleted, recipient copy tombstoned
@@ -268,7 +332,7 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end testReceivedSharesRemoved()
 
 	/**
-	 * Steps 4-7: link shares, requests, secrets, folders, suites + migrations,
+	 * Link shares, requests, secrets, folders, suites + migrations and
 	 * settings all removed, with report counts.
 	 *
 	 * @return void

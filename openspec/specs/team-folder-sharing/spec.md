@@ -61,13 +61,21 @@ The team folder owner MUST be able to approve one waiting member at a time (keep
 - AND C MUST still be listed as waiting
 
 ### Requirement: Admin offboarding
-The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism.
+The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism. The link shares the leaver created on a transferred secret pass to the successor with it, in the same transaction; link shares a delegate created stay with that delegate.
 
 #### Scenario: Offboarding revokes and transfers
 - GIVEN a leaving user U who holds derived shares and owns team secrets, and successor S
 - WHEN an administrator runs the offboarding action
 - THEN every derived share held by U MUST be revoked
 - AND each team secret owned by U MUST be transferred to S via a permanent delegation
+
+#### Scenario: The leaver's link shares pass to the successor
+- GIVEN a team secret owned by U with a link share U created and a link share delegate D created
+- WHEN an administrator offboards U with successor S
+- THEN S MUST be able to list and revoke the link share U created
+- AND U MUST no longer be able to list or revoke it
+- AND the link share D created MUST stay with D
+- AND both links MUST keep working for their recipients
 
 ### Requirement: Auditable without exposing secret material
 The system MUST dispatch typed events for share, unshare, member add, member remove, and offboarding carrying only identifiers — never key material or secret plaintext.

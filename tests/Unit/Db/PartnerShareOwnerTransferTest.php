@@ -23,6 +23,7 @@ namespace OCA\Keepiq\Tests\Unit\Db;
 use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
@@ -139,7 +140,7 @@ class PartnerShareOwnerTransferTest extends TestCase {
 		$other = $this->insertPartnerShare(sourceSecretId: $this->insertSecret(ownerId: 'transfer-test-alice')->getId(), ownerId: 'transfer-test-alice');
 		$version = $mapper->findById($live->getId())->getUpdatedAt()?->getTimestamp();
 
-		(new SecretOwnerTransferService(db: $this->db, secretMapper: new SecretMapper(db: $this->db), federatedShares: $mapper))
+		(new SecretOwnerTransferService(db: $this->db, secretMapper: new SecretMapper(db: $this->db), federatedShares: $mapper, linkShares: new LinkShareMapper(db: $this->db)))
 			->transfer(secretId: $secret->getId(), newOwnerId: 'transfer-test-dave');
 
 		$this->assertSame('transfer-test-dave', (new SecretMapper(db: $this->db))->findById($secret->getId())->getOwnerId());

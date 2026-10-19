@@ -15,7 +15,8 @@
  *
  * Shared-secret semantics:
  *  - Delegated secrets transfer ownership to the delegate (delegation made
- *    permanent, owner reassigned).
+ *    permanent, owner reassigned). The user's link shares on them are deleted
+ *    with the rest of the user's link shares, not handed to the delegate.
  *  - Recipient copies of secrets the user shared are detached: the link is
  *    severed and the copy is tombstoned with a non-personal reason. No personal
  *    data of the deleted user is ever written to a recipient's copy.
@@ -115,6 +116,12 @@ class AccountDeletionService {
 			limit: 100000,
 		);
 
+		// Link shares go before the delegated transfer, which would otherwise
+		// hand the ones on a delegated secret to the delegate. deleteByUserId
+		// returns void, so count first for the report.
+		$report->linkSharesDeleted = count($this->linkShareMapper->findByCreatedBy(userId: $userId));
+		$this->linkShareMapper->deleteByUserId(userId: $userId);
+
 		$this->shareCleanup->transferDelegatedSecrets(
 			userId: $userId,
 			ownedSecrets: $ownedSecrets,
@@ -124,10 +131,6 @@ class AccountDeletionService {
 		$this->shareCleanup->removeReceivedShares(userId: $userId, report: $report);
 		$this->shareCleanup->removeShareSaveStages(userId: $userId);
 
-		// Link shares + secret requests via the existing per-user cascade methods.
-		// deleteByUserId returns void, so count first for the report.
-		$report->linkSharesDeleted = count($this->linkShareMapper->findByCreatedBy(userId: $userId));
-		$this->linkShareMapper->deleteByUserId(userId: $userId);
 		$report->requestsDeleted = $this->requestMapper->deleteByCreatedBy(userId: $userId);
 
 		// Attachments cascade (encrypted-attachments §3.2): remove every

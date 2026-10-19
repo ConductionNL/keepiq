@@ -144,6 +144,49 @@ class LinkShareMapper extends QBMapper {
 	}//end deleteByUserId()
 
 	/**
+	 * Hand the link shares one user created on a secret to another user,
+	 * who then lists and revokes them. Links others created on the secret
+	 * are left alone.
+	 *
+	 * @param string $secretId   The secret the links were created on
+	 * @param string $fromUserId The user who holds the links
+	 * @param string $toUserId   The user who takes them over
+	 *
+	 * @return int The rows handed over
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-manual-revocation
+	 */
+	public function reassignCreator(string $secretId, string $fromUserId, string $toUserId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('created_by', $qb->createNamedParameter($toUserId))
+			->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)))
+			->andWhere($qb->expr()->eq('created_by', $qb->createNamedParameter($fromUserId)));
+
+		return $qb->executeStatement();
+	}//end reassignCreator()
+
+	/**
+	 * Hand one link share to another user, who then lists and revokes it.
+	 *
+	 * @param string $id       The link share ID
+	 * @param string $toUserId The user who takes it over
+	 *
+	 * @return int The rows handed over (0 when it is theirs already or gone)
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-manual-revocation
+	 */
+	public function reassignCreatorById(string $id, string $toUserId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('created_by', $qb->createNamedParameter($toUserId))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->neq('created_by', $qb->createNamedParameter($toUserId)));
+
+		return $qb->executeStatement();
+	}//end reassignCreatorById()
+
+	/**
 	 * Atomically increment the usage count for a token, but only while
 	 * usage_count is still below usage_limit. Returns the number of rows
 	 * affected (1 on success, 0 if the limit was already reached or the

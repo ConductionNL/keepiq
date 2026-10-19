@@ -80,6 +80,7 @@ Two triggers run the same ordered, idempotent cascade
   delegation transfers to the delegate: the delegation becomes permanent and
   the delegate becomes owner. Delegation is Keepiq's existing, explicit
   successor mechanism; deletion respects it rather than silently picking an heir.
+  The link shares the deleted user holds on such a secret are deleted, not passed to the delegate.
 - **Granted shares — detach with tombstone.** Each recipient's copy is already a
   full secret encrypted under the recipient's own suite. The share link is
   deleted (sync severed) and the copy is marked `tombstoned_at` +

@@ -53,7 +53,7 @@ class AccountShareCleanupService {
 	 * @param GroupShareMapper $groupShareMapper The group-share mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
 	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
-	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner shares over
+	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
 	 *
 	 * @return void
 	 *
@@ -75,9 +75,10 @@ class AccountShareCleanupService {
 	 * Each delegation is made permanent (per the user-sharing spec's
 	 * is_permanent semantics for a deleted owner) and the secret's owner is
 	 * reassigned to the delegate, partner shares included, so the delegate's
-	 * access continues uninterrupted. Transferred secrets are excluded from the
-	 * later own-secret hard delete because the owner_id no longer matches the
-	 * departing user.
+	 * access continues uninterrupted. The departing user's link shares are
+	 * deleted before this step, so none of them reach the delegate. Transferred
+	 * secrets are excluded from the later own-secret hard delete because the
+	 * owner_id no longer matches the departing user.
 	 *
 	 * @param string $userId The departing user
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets

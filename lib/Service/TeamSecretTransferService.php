@@ -47,7 +47,7 @@ class TeamSecretTransferService {
 	 * @param TeamFolderMembershipResolver $memberships The membership resolver (subtree walk)
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
-	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner shares over
+	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
 	 *
 	 * @return void
 	 *

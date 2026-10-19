@@ -200,6 +200,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
                 a fresh install has no partner shares.
             -->
             <step>OCA\Keepiq\Repair\ReownTransferredPartnerShares</step>
+            <!--
+                Hands link shares a former owner created on a secret that was
+                transferred away from them to the secret's current owner. Not
+                under <install>: a fresh install has no link shares.
+            -->
+            <step>OCA\Keepiq\Repair\ReownTransferredLinkShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentData</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecrets</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentApplications</step>

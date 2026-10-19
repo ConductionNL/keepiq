@@ -38,7 +38,7 @@ The system MUST support deletion of all of a user's Keepiq data (GDPR Art. 17, r
 
 The in-app trigger wipes every secret, suite and migration in one request, so a Nextcloud session alone MUST NOT be sufficient for it. The master-password re-entry is therefore proven to the server as a signature made with the private key it unlocks, bound to the confirmation phrase, rather than checked only in the browser. The phrase stays as a guard against a slip. A user without an active EncryptionSuite cannot make a proof; their Keepiq data is removed through the automatic trigger when their Nextcloud account is deleted.
 
-The cascade MUST remove: the user's secrets and folders, their EncryptionSuites (including encrypted private keys) and SuiteMigration records, link shares, secret requests, share records per the shared-secret semantics requirement, and user settings. Every cascade step MUST be idempotent so an interrupted run can be safely re-executed.
+The cascade MUST remove: the user's secrets and folders, their EncryptionSuites (including encrypted private keys) and SuiteMigration records, the link shares the user holds (also on secrets that pass to a delegate), secret requests, share records per the shared-secret semantics requirement, and user settings. Every cascade step MUST be idempotent so an interrupted run can be safely re-executed.
 
 #### Scenario: In-app deletion double-gated
 @e2e tests/e2e/workflows/export-gdpr.spec.ts
