@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
 
@@ -45,6 +46,21 @@ use OCP\IDBConnection;
  */
 class ShareSyncService {
 	use TTransactional;
+
+	/**
+	 * How the audit names a write on a team-folder grade.
+	 */
+	public const TEAM_WRITE = 'team-write sync';
+
+	/**
+	 * How the audit names a write by a member of a group the secret is shared with.
+	 */
+	public const GROUP_WRITE = 'group-write sync';
+
+	/**
+	 * How the audit names a write by a delegate.
+	 */
+	public const DELEGATE_WRITE = 'delegate sync';
 
 	/**
 	 * The share audit trail.
@@ -83,7 +99,7 @@ class ShareSyncService {
 	 *
 	 * The browser supplies one blob per recipient (the source secret's
 	 * new value re-encrypted under each recipient's public key). The
-	 * server validates the caller is the owner or an active delegate,
+	 * server validates the caller may write the source (resolveSyncWriter()),
 	 * applies an optimistic-locking check via the source Secret's
 	 * `updatedAt`, moves that version and writes every recipient copy in a
 	 * single transaction, and clears `possiblyCompromisedAt` from any copy
@@ -120,7 +136,7 @@ class ShareSyncService {
 			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
 		}
 
-		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
+		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
 		// The source is locked against the version just read, which is the
@@ -131,11 +147,11 @@ class ShareSyncService {
 		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
 		$allowedIds = $this->collectSyncTargets(source: $source);
 		return $this->atomic(
-			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $isWriter, $userId): int {
+			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
 				$updated = $this->writeCopyBlobs(source: $source, updates: $updates, allowedIds: $allowedIds, savedAt: $savedAt);
 				if ($updated > 0) {
-					$this->recordNonOwnerSync(source: $source, userId: $userId, isWriter: $isWriter);
+					$this->recordNonOwnerSync(source: $source, userId: $userId, writesOn: $writesOn);
 				}
 
 				return $updated;
@@ -147,27 +163,26 @@ class ShareSyncService {
 	/**
 	 * Attribute a sync by anyone but the owner to the writer on the source
 	 * (§3.3), as a share-save through a copy is: a team writer as
-	 * `team-write sync`, a delegate as `delegate sync`. Identifiers only,
-	 * never key material.
+	 * `team-write sync`, a group member as `group-write sync`, a delegate as
+	 * `delegate sync`. Identifiers only, never key material.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param string $userId The requesting user
-	 * @param bool $isWriter Whether the caller writes on a team-folder grade
+	 * @param string|null $writesOn What resolveSyncWriter() found
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$isWriter` is what resolveSyncWriter() found
-	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
-	private function recordNonOwnerSync(Secret $source, string $userId, bool $isWriter): void {
-		$changedFields = 'team-write sync';
-		if ($isWriter === false) {
+	private function recordNonOwnerSync(Secret $source, string $userId, ?string $writesOn): void {
+		$changedFields = $writesOn;
+		if ($changedFields === null) {
 			if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
 				return;
 			}
 
-			$changedFields = 'delegate sync';
+			$changedFields = self::DELEGATE_WRITE;
 		}
 
 		$this->auditTrail->recordTeamWriteSync(
@@ -184,16 +199,20 @@ class ShareSyncService {
 	 * its source and reports the caller's effective grade plus the
 	 * owner-row material a write-grade member needs to run the
 	 * re-encrypt fan-out (the owner's certificate is public key
-	 * material).
+	 * material). A member of a group the secret is shared with gets the
+	 * `write` grade through their copy. Only a caller who reaches the
+	 * source gets an answer: its owner, a delegate, a team-folder member
+	 * with a grade on it, or the holder of a live copy of it.
 	 *
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
 	 *
 	 * @return array{sourceSecretId:string, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
-	 * @throws InvalidArgumentException When the secret does not exist
+	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function writeContext(string $secretId, string $userId): array {
 		$secret = $this->auth->loadSecret(secretId: $secretId);
@@ -205,20 +224,13 @@ class ShareSyncService {
 			$source = $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
 		} catch (DoesNotExistException) {
 			// Not a copy — the secret is its own source.
+		} catch (MultipleObjectsReturnedException) {
+			throw new InvalidArgumentException(message: 'Secret not found');
 		}
 
-		$grade = 'none';
-		$isOwner = ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true);
-		if ($isOwner === true) {
-			$grade = 'owner';
-		}
-
-		if ($isOwner === false) {
-			$resolved = $this->auth->resolveGrade(secret: $source, userId: $userId);
-			if ($resolved !== null) {
-				$grade = $resolved;
-			}
-		}
+		// Unknown and unreachable secrets get the same answer.
+		$grade = $this->standingOn(source: $source, userId: $userId)['grade']
+			?? throw new InvalidArgumentException(message: 'Secret not found');
 
 		$ownerCertificate = null;
 		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
@@ -240,31 +252,60 @@ class ShareSyncService {
 	}//end writeContext()
 
 	/**
+	 * The caller's grade on a source and, when it lets them write every copy
+	 * as someone other than the owner or a delegate, how the audit names that
+	 * write: `owner` for the owner or a delegate, a team-folder write grade
+	 * (TEAM_WRITE), `write` for a member of a group it is shared with who
+	 * holds a live copy they may change (GROUP_WRITE), else their team-folder
+	 * or copy grade. The grade is null when the caller does not reach the
+	 * source.
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $userId The requesting user
+	 *
+	 * @return array{grade:string|null, writesOn:string|null}
+	 */
+	private function standingOn(Secret $source, string $userId): array {
+		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
+			return ['grade' => 'owner', 'writesOn' => null];
+		}
+
+		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
+		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
+			return ['grade' => $grade, 'writesOn' => self::TEAM_WRITE];
+		}
+
+		$copyGrade = $this->auth->copyGrade(source: $source, userId: $userId);
+		if ($copyGrade === 'write') {
+			return ['grade' => $copyGrade, 'writesOn' => self::GROUP_WRITE];
+		}
+
+		return ['grade' => ($grade ?? $copyGrade), 'writesOn' => null];
+	}//end standingOn()
+
+	/**
 	 * Authorization seam for a sync (folder-permission-grades §2.3): the
-	 * owner and active delegates as before, OR a member holding a `write`
-	 * grade on an ancestor team folder. Everyone else keeps the existing
-	 * rejection.
+	 * owner and active delegates, a member holding a `write` or `manage` grade
+	 * on an ancestor team folder, or a member of a group the source is shared with
+	 * who holds a copy of it they may change. Everyone else is refused.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param string $userId The requesting user
 	 *
-	 * @return bool True when the caller writes as a team-folder member rather than the owner.
+	 * @return string|null How the audit names the write (TEAM_WRITE or GROUP_WRITE); null for the owner or a delegate.
 	 *
 	 * @throws InvalidArgumentException When the caller may not write the secret
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
-	public function resolveSyncWriter(Secret $source, string $userId): bool {
-		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
-			return false;
+	public function resolveSyncWriter(Secret $source, string $userId): ?string {
+		$standing = $this->standingOn(source: $source, userId: $userId);
+		if ($standing['grade'] === 'owner' || $standing['writesOn'] !== null) {
+			return $standing['writesOn'];
 		}
 
-		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
-			$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
-		}
-
-		return true;
+		throw new InvalidArgumentException(message: 'Not authorized to manage shares of this secret');
 	}//end resolveSyncWriter()
 
 	/**

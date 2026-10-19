@@ -5,8 +5,9 @@
  *
  * The whole authorization surface of the user-to-user share lifecycle in
  * one place: who owns a secret, who holds an active delegation on it,
- * what team-folder grade a member effectively has, and whether a
- * prospective recipient can hold a share at all.
+ * what team-folder grade a member effectively has, what grade a copy
+ * holder's copy gives them, and whether a prospective recipient can hold
+ * a share at all.
  *
  * Extracted from ShareService so creation, revocation, the bulk
  * registrar and the sync fan-out all fall through the SAME checks
@@ -30,6 +31,7 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
@@ -37,6 +39,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IGroupManager;
 
 /**
  * Authorization decisions for the secret-share lifecycle.
@@ -50,6 +53,8 @@ class ShareAuthorizationService {
 	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (recipient precondition)
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (write-grade resolution)
 	 * @param ShareTargetMapper|null $shareTargetMapper Resolves a received copy to its source (keepiq#214)
+	 * @param GroupShareMapper|null $groupShareMapper The group shares of a source
+	 * @param IGroupManager|null $groupManager Whether a copy holder is in one of their groups
 	 *
 	 * @return void
 	 *
@@ -61,6 +66,8 @@ class ShareAuthorizationService {
 		private EncryptionSuiteMapper $suiteMapper,
 		private ?TeamFolderService $teamFolderService = null,
 		private ?ShareTargetMapper $shareTargetMapper = null,
+		private ?GroupShareMapper $groupShareMapper = null,
+		private ?IGroupManager $groupManager = null,
 	) {
 	}//end __construct()
 
@@ -209,6 +216,81 @@ class ShareAuthorizationService {
 	public function resolveGrade(Secret $secret, string $userId): ?string {
 		return $this->teamFolderService?->resolveGrade(secret: $secret, userId: $userId);
 	}//end resolveGrade()
+
+	/**
+	 * The grade the caller's own copy of a source secret gives them: `write`
+	 * when they may change the copy and are a member of a group the source is
+	 * shared with, however the copy reached them; `none` for any other copy;
+	 * null when they hold no copy of it or its access ended. Fails closed when
+	 * the mappers are not wired.
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $userId The candidate user
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	public function copyGrade(Secret $source, string $userId): ?string {
+		if ($this->shareTargetMapper === null) {
+			return null;
+		}
+
+		try {
+			$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $source->getId(),
+				targetUserId: $userId
+			);
+			$copy = $this->secretMapper->findById($target->getSecretId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return null;
+		}
+
+		$accessEnds = $copy->getAccessExpiresAt();
+		if ($accessEnds !== null && $accessEnds->getTimestamp() <= time()) {
+			return null;
+		}
+
+		if ($copy->getUseOnly() === true || $copy->getReadOnly() === true
+			|| $this->isInSharedGroup(source: $source, userId: $userId) === false
+		) {
+			return 'none';
+		}
+
+		return 'write';
+	}//end copyGrade()
+
+	/**
+	 * Whether the user is a member of a group the source is shared with
+	 * through a full group share that has not expired. A use-only group share
+	 * does not count, even when another grant lifts the use-only flag of the
+	 * copy. The copy's own group share id plays no part: a member's copy may
+	 * have come first through another share, and a direct share's id is not
+	 * checked against its secret.
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $userId The copy's holder
+	 *
+	 * @return bool
+	 */
+	private function isInSharedGroup(Secret $source, string $userId): bool {
+		if ($this->groupShareMapper === null || $this->groupManager === null) {
+			return false;
+		}
+
+		foreach ($this->groupShareMapper->findBySecret($source->getId()) as $groupShare) {
+			$expires = $groupShare->getExpiresAt();
+			if ($groupShare->getUseOnly() === true || ($expires !== null && $expires->getTimestamp() <= time())) {
+				continue;
+			}
+
+			if ($this->groupManager->isInGroup($userId, $groupShare->getGroupId()) === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isInSharedGroup()
 
 	/**
 	 * Verify the recipient has an active EncryptionSuite (without it, no

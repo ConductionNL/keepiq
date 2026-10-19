@@ -70,7 +70,8 @@ class ShareSaveScope {
 	/**
 	 * The path of a save of the caller's own row: the owner path, or the
 	 * copy-editor path when it is a recipient copy, which takes the owner,
-	 * a delegate or a write grade on the source.
+	 * a delegate, a write grade on the source or a member of a group it is
+	 * shared with.
 	 *
 	 * @param Secret $row The caller's row, already checked to be theirs
 	 * @param string $userId The caller
@@ -99,13 +100,13 @@ class ShareSaveScope {
 		}
 
 		$this->assertWritable(source: $source);
-		$teamWriter = $this->writerOn(
+		$writesOn = $this->writerOn(
 			source: $source,
 			userId: $userId,
-			refusal: 'Only the owner, a delegate or a write-grade member saves for every copy'
+			refusal: 'Only the owner, a delegate, a write-grade member or a member of a group it is shared with saves for every copy'
 		);
 
-		return new ShareSavePath(row: $row, source: $source, teamWriter: $teamWriter);
+		return new ShareSavePath(row: $row, source: $source, writesOn: $writesOn);
 	}//end resolve()
 
 	/**
@@ -140,14 +141,14 @@ class ShareSaveScope {
 		}
 
 		$this->assertWritable(source: $source);
-		$teamWriter = $this->writerOn(
+		$writesOn = $this->writerOn(
 			source: $source,
 			userId: $userId,
 			refusal: 'Your access to this secret changed while saving; reload and try again'
 		);
 
 		// The source as resolve() read it: its version is what a refusal reports.
-		return new ShareSavePath(row: $path->row, source: $path->source, teamWriter: $teamWriter);
+		return new ShareSavePath(row: $path->row, source: $path->source, writesOn: $writesOn);
 	}//end assertStillWriter()
 
 	/**
@@ -167,18 +168,20 @@ class ShareSaveScope {
 	}//end assertWritable()
 
 	/**
-	 * Whether the caller writes the source on a team-folder grade rather than
-	 * as owner or delegate, refusing a caller who may not write it at all.
+	 * How the audit names the caller's write of the source when they write on
+	 * a team-folder grade or as a member of a group it is shared with, null
+	 * when they write as owner or delegate, refusing a caller who may not
+	 * write it at all.
 	 *
 	 * @param Secret $source The source
 	 * @param string $userId The caller
 	 * @param string $refusal The message of the refusal
 	 *
-	 * @return bool
+	 * @return string|null
 	 *
 	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy
 	 */
-	private function writerOn(Secret $source, string $userId, string $refusal): bool {
+	private function writerOn(Secret $source, string $userId, string $refusal): ?string {
 		try {
 			return $this->sync->resolveSyncWriter(source: $source, userId: $userId);
 		} catch (InvalidArgumentException) {

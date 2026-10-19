@@ -10,9 +10,10 @@ When the owner, or a recipient allowed to write the source, updates the value, l
 - AND each recipient's copy MUST hold the new value once the request succeeds
 
 #### Scenario: Recipient updates shared secret
-- GIVEN a secret has been shared with user B, who holds a write grade on it
+- GIVEN a secret has been shared with user B, who holds a write grade on it: a `write` or `manage` team-folder grade, or membership of a group the secret is shared with in full (not use-only)
 - WHEN user B updates their copy of the secret
 - THEN the browser MUST encrypt the updated value for the original owner and all other recipients and send it in one share-save
+- AND a recipient who holds the secret through a direct share only, without a write grade, MUST change only their own copy
 
 #### Scenario: Only the changed fields reach the copies
 - GIVEN a shared secret with a login and additional fields

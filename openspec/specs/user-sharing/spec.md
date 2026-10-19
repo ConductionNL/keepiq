@@ -191,7 +191,7 @@ The marks MUST come from an endpoint that takes the search term and the user ids
 - WHEN it reaches the endpoint
 - THEN the system MUST refuse it with 400
 ### Requirement: Sync on Update
-When either party updates a shared secret, the change MUST be propagated to all copies.
+When the owner, or a recipient who holds a write grade on it, updates a shared secret, the change MUST be propagated to all copies.
 
 #### Scenario: Owner updates shared secret
 - GIVEN a secret is shared with one or more users
@@ -199,9 +199,10 @@ When either party updates a shared secret, the change MUST be propagated to all 
 - THEN the system MUST re-encrypt the updated value for each recipient and write it to their copy
 
 #### Scenario: Recipient updates shared secret
-- GIVEN a secret has been shared with user B
+- GIVEN a secret has been shared with user B, who holds a write grade on it: a `write` or `manage` team-folder grade, or membership of a group the secret is shared with in full (not use-only)
 - WHEN user B updates their copy of the secret
 - THEN the system MUST re-encrypt the updated value for the original owner and all other recipients
+- AND a recipient who holds the secret through a direct share only, without a write grade, MUST change only their own copy
 
 ### Requirement: Share with Group (Static Expansion)
 The system MUST allow a secret owner to share a secret with a Nextcloud user group. At the moment of sharing, the system MUST create an individual SecretShare (with `group_share_id` set) for each current member of the group who has an active EncryptionSuite. A GroupShare record MUST be created to track the relationship.
