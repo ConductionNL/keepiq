@@ -684,6 +684,7 @@ describe('verifyFederatedCertificate on chains built here', () => {
 	 * @param {Uint8Array} [spec.outer] The algorithm outside it, by default
 	 *   the same.
 	 * @param {Uint8Array} [spec.spki] The key, by default the throwaway one.
+	 * @param {number} [spec.tbsTag] The TBS tag, by default SEQUENCE.
 	 * @return {Promise<string>} The PEM certificate.
 	 */
 	async function certificate({
@@ -693,10 +694,11 @@ describe('verifyFederatedCertificate on chains built here', () => {
 		algorithm = PKCS1,
 		outer = algorithm,
 		spki = keys.spki,
+		tbsTag = 0x30,
 	}) {
 		const time = (text) => derElement(0x17, ascii(text))
 		const tbs = derElement(
-			0x30,
+			tbsTag,
 			derElement(0xa0, derElement(0x02, [2])),
 			derElement(0x02, [1]),
 			algorithm,
@@ -938,6 +940,52 @@ describe('verifyFederatedCertificate on chains built here', () => {
 			0x30,
 			derElement(0x04, OID.sha256Rsa),
 			derElement(0x05),
+		)
+
+		expect(await reasonOf(verifyBuilt({ leaf: { algorithm } }))).toBe(
+			'malformed',
+		)
+	})
+
+	it('refuses a leaf whose TBS is no SEQUENCE, though it is signed as such', async () => {
+		expect(await reasonOf(verifyBuilt({ leaf: { tbsTag: 0x31 } }))).toBe(
+			'malformed',
+		)
+	})
+
+	it('refuses a signature algorithm that is no SEQUENCE, though the same inside and outside the TBS', async () => {
+		const algorithm = derElement(
+			0x31,
+			derElement(0x06, OID.sha256Rsa),
+			derElement(0x05),
+		)
+
+		expect(await reasonOf(verifyBuilt({ leaf: { algorithm } }))).toBe(
+			'malformed',
+		)
+	})
+
+	it('refuses a signature algorithm with a third part, though the same inside and outside the TBS', async () => {
+		const algorithm = derElement(
+			0x30,
+			derElement(0x06, OID.sha256Rsa),
+			derElement(0x05),
+			derElement(0x05),
+		)
+
+		expect(await reasonOf(verifyBuilt({ leaf: { algorithm } }))).toBe(
+			'malformed',
+		)
+	})
+
+	it('refuses a PSS salt length that is negative as malformed', async () => {
+		const algorithm = pssWith(
+			derElement(
+				0x30,
+				pssHash(OID.sha256),
+				PSS_MASK,
+				derElement(0xa2, derElement(0x02, [0x80])),
+			),
 		)
 
 		expect(await reasonOf(verifyBuilt({ leaf: { algorithm } }))).toBe(
