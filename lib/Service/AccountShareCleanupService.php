@@ -103,6 +103,7 @@ class AccountShareCleanupService {
 
 			$this->ownerTransfer->transfer(
 				secretId: $secretId,
+				fromOwnerId: $userId,
 				newOwnerId: $delegation->getDelegatedTo(),
 			);
 			$report->secretsTransferred++;

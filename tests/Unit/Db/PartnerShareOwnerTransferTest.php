@@ -141,7 +141,7 @@ class PartnerShareOwnerTransferTest extends TestCase {
 		$version = $mapper->findById($live->getId())->getUpdatedAt()?->getTimestamp();
 
 		(new SecretOwnerTransferService(db: $this->db, secretMapper: new SecretMapper(db: $this->db), federatedShares: $mapper, linkShares: new LinkShareMapper(db: $this->db)))
-			->transfer(secretId: $secret->getId(), newOwnerId: 'transfer-test-dave');
+			->transfer(secretId: $secret->getId(), fromOwnerId: 'transfer-test-alice', newOwnerId: 'transfer-test-dave');
 
 		$this->assertSame('transfer-test-dave', (new SecretMapper(db: $this->db))->findById($secret->getId())->getOwnerId());
 		foreach ([$live, $revoking] as $share) {

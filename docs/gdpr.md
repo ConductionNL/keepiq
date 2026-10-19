@@ -53,7 +53,7 @@ browser from two halves:
   encryption-suite records (certificate, status, audit fields — the encrypted
   private-key blob is **excluded**, with the exclusion documented inside the
   package), shares given/received, delegations, link-share metadata (no
-  snapshots), secret requests, user settings, and per secret the user's
+  snapshots; the links the user holds and, flagged `handedOver`, the links they made that team offboarding handed to someone else), secret requests, user settings, and per secret the user's
   favourite star, tags and last-used time (`organisation`).
 - **Client vault**: the decrypted secrets + folder structure.
 
@@ -93,7 +93,9 @@ Two triggers run the same ordered, idempotent cascade
 
 Link shares, secret requests, own secrets and folders, encryption suites
 (including the encrypted private keys) and their migration records, and user
-settings are all removed. Every step is idempotent and keyed by user ID, so an
+settings are all removed.
+Link shares the user made that team offboarding handed to someone else stay with whoever holds them; the user's ID on them is replaced by a deleted-account marker that is not a valid Nextcloud user ID, so the holder's compromise revoke still leaves them.
+Every step is idempotent and keyed by user ID, so an
 interrupted cascade can be safely re-run; the completion event is emitted only
 on a finished run.
 

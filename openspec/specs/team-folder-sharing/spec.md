@@ -61,7 +61,7 @@ The team folder owner MUST be able to approve one waiting member at a time (keep
 - AND C MUST still be listed as waiting
 
 ### Requirement: Admin offboarding
-The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism. The link shares the leaver created on a transferred secret pass to the successor with it, in the same transaction; link shares a delegate created stay with that delegate.
+The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism. The link shares the leaver holds on a transferred secret pass to the successor with it, in the same transaction; link shares a delegate created stay with that delegate. The system MUST keep the leaver as the maker of a handed-over link share, so a compromise revoke of the leaver still revokes it and one of the successor does not.
 
 #### Scenario: Offboarding revokes and transfers
 - GIVEN a leaving user U who holds derived shares and owns team secrets, and successor S
@@ -76,6 +76,8 @@ The system MUST provide a single admin action that, given a leaving user and a s
 - AND U MUST no longer be able to list or revoke it
 - AND the link share D created MUST stay with D
 - AND both links MUST keep working for their recipients
+- AND a compromise revoke of U MUST revoke the link share U created
+- AND a compromise revoke of S MUST NOT revoke it
 
 ### Requirement: Auditable without exposing secret material
 The system MUST dispatch typed events for share, unshare, member add, member remove, and offboarding carrying only identifiers — never key material or secret plaintext.
@@ -87,7 +89,7 @@ The system MUST dispatch typed events for share, unshare, member add, member rem
 
 ### Requirement: Offboarding removes the leaver's direct team folder memberships
 
-The admin offboarding action (`POST /api/v1/team-folders/offboard`) MUST, after revoking derived shares and transferring owned team secrets, delete every direct `user` membership row of the leaving user in every team folder. It MUST NOT delete a group membership row. The response MUST report the number of removed rows as `membershipsRemoved` and MUST list each group row that still covers the leaver as `stillCoveredByGroups`. The `TEAM_FOLDER_OFFBOARDED` audit event MUST carry the removed row count and the covering group ids, and no key material.
+The admin offboarding action (`POST /api/v1/team-folders/offboard`) MUST, after revoking derived shares and transferring owned team secrets, delete every direct `user` membership row of the leaving user in every team folder. It MUST NOT delete a group membership row. The response MUST report the number of removed rows as `membershipsRemoved` and MUST list each group row that still covers the leaver as `stillCoveredByGroups`. The `TEAM_FOLDER_OFFBOARDED` audit event MUST carry the removed row count, the covering group ids and the number of link shares handed to the successor, and no key material.
 
 #### Scenario: Direct membership rows are removed
 

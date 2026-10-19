@@ -719,6 +719,8 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame([['sec-a', 'bob']], $reassigned);
 		$this->assertSame([['sec-a', 'bob']], $partnerSharesReassigned);
 		$this->assertSame([['sec-a', 'dave', 'bob']], $linkSharesReassigned);
+		// The audit records how many of the leaver's links the successor now holds.
+		$this->assertSame(1, $this->auditEvents[0]->getMetadata()['linkSharesTransferredCount']);
 	}//end testOffboardRevokesAndTransfers()
 
 	/**

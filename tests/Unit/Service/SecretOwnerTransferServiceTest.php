@@ -81,9 +81,28 @@ class SecretOwnerTransferServiceTest extends TestCase {
 			return 1;
 		});
 
-		(new SecretOwnerTransferService(db: $db, secretMapper: $secrets, federatedShares: $shares, linkShares: $links))->transfer(secretId: 'sec-1', newOwnerId: 'dave');
+		$moved = (new SecretOwnerTransferService(db: $db, secretMapper: $secrets, federatedShares: $shares, linkShares: $links))->transfer(secretId: 'sec-1', fromOwnerId: 'alice', newOwnerId: 'dave');
 
 		$this->assertSame(['begin', 'secret sec-1 dave', 'partner shares sec-1 dave', 'link shares sec-1 alice dave', 'commit'], $calls);
+		$this->assertSame(1, $moved);
+	}
+
+	/**
+	 * Bob's secret, which an earlier transfer already handed to Alice, still
+	 * goes to Dave when taken from Bob, but the links Bob holds on it stay
+	 * his.
+	 *
+	 * @return void
+	 */
+	public function testLinksStayWhenTheSecretNoLongerBelongsToTheUserItIsTakenFrom(): void {
+		$shares = $this->createMock(FederatedShareMapper::class);
+		$shares->expects($this->once())->method('reassignOwner')->with('sec-1', 'dave')->willReturn(1);
+		$links = $this->createMock(LinkShareMapper::class);
+		$links->expects($this->never())->method('reassignCreator');
+
+		$moved = (new SecretOwnerTransferService(db: $this->createMock(IDBConnection::class), secretMapper: $this->alicesSecret(), federatedShares: $shares, linkShares: $links))->transfer(secretId: 'sec-1', fromOwnerId: 'bob', newOwnerId: 'dave');
+
+		$this->assertSame(0, $moved);
 	}
 
 	/**
@@ -100,7 +119,7 @@ class SecretOwnerTransferServiceTest extends TestCase {
 		$shares->method('reassignOwner')->willThrowException(new RuntimeException('database gone'));
 
 		$this->expectException(RuntimeException::class);
-		(new SecretOwnerTransferService(db: $db, secretMapper: $this->alicesSecret(), federatedShares: $shares, linkShares: $this->createMock(LinkShareMapper::class)))->transfer(secretId: 'sec-1', newOwnerId: 'dave');
+		(new SecretOwnerTransferService(db: $db, secretMapper: $this->alicesSecret(), federatedShares: $shares, linkShares: $this->createMock(LinkShareMapper::class)))->transfer(secretId: 'sec-1', fromOwnerId: 'alice', newOwnerId: 'dave');
 	}
 
 	/**
@@ -117,7 +136,7 @@ class SecretOwnerTransferServiceTest extends TestCase {
 		$links->method('reassignCreator')->willThrowException(new RuntimeException('database gone'));
 
 		$this->expectException(RuntimeException::class);
-		(new SecretOwnerTransferService(db: $db, secretMapper: $this->alicesSecret(), federatedShares: $this->createMock(FederatedShareMapper::class), linkShares: $links))->transfer(secretId: 'sec-1', newOwnerId: 'dave');
+		(new SecretOwnerTransferService(db: $db, secretMapper: $this->alicesSecret(), federatedShares: $this->createMock(FederatedShareMapper::class), linkShares: $links))->transfer(secretId: 'sec-1', fromOwnerId: 'alice', newOwnerId: 'dave');
 	}
 
 	/**
@@ -134,6 +153,6 @@ class SecretOwnerTransferServiceTest extends TestCase {
 		$links = $this->createMock(LinkShareMapper::class);
 		$links->expects($this->never())->method('reassignCreator');
 
-		(new SecretOwnerTransferService(db: $this->createMock(IDBConnection::class), secretMapper: $secrets, federatedShares: $shares, linkShares: $links))->transfer(secretId: 'sec-1', newOwnerId: 'dave');
+		(new SecretOwnerTransferService(db: $this->createMock(IDBConnection::class), secretMapper: $secrets, federatedShares: $shares, linkShares: $links))->transfer(secretId: 'sec-1', fromOwnerId: 'alice', newOwnerId: 'dave');
 	}
 }

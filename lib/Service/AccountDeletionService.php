@@ -17,6 +17,8 @@
  *  - Delegated secrets transfer ownership to the delegate (delegation made
  *    permanent, owner reassigned). The user's link shares on them are deleted
  *    with the rest of the user's link shares, not handed to the delegate.
+ *    Links the user made that an earlier transfer handed to someone else stay
+ *    with their holder; their maker is recorded as a deleted account.
  *  - Recipient copies of secrets the user shared are detached: the link is
  *    severed and the copy is tombstoned with a non-personal reason. No personal
  *    data of the deleted user is ever written to a recipient's copy.
@@ -121,6 +123,9 @@ class AccountDeletionService {
 		// returns void, so count first for the report.
 		$report->linkSharesDeleted = count($this->linkShareMapper->findByCreatedBy(userId: $userId));
 		$this->linkShareMapper->deleteByUserId(userId: $userId);
+		// Links the user made that a transfer handed to someone else stay
+		// with that holder, with a deleted-account marker as their maker.
+		$this->linkShareMapper->forgetOriginalCreator(userId: $userId);
 
 		$this->shareCleanup->transferDelegatedSecrets(
 			userId: $userId,

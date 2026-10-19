@@ -104,8 +104,14 @@ final class ReownTransferredLinkSharesTest extends TestCase {
 			}
 		);
 
+		$logged = [];
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->expects($this->never())->method('warning');
+		$logger->method('info')->willReturnCallback(
+			static function (string $message) use (&$logged): void {
+				$logged[] = $message;
+			}
+		);
 
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('info')->with($this->stringContains(': 2 link share(s)'));
@@ -113,5 +119,9 @@ final class ReownTransferredLinkSharesTest extends TestCase {
 		(new ReownTransferredLinkShares(db: $db, links: $links, logger: $logger))->run($output);
 
 		$this->assertSame([['42', 'dave'], ['link-2', 'zoe']], $handedOver);
+		// Each hand-over is logged with the link id, for the admin to trace.
+		$this->assertCount(2, $logged);
+		$this->assertStringContainsString('link share 42 handed to dave', $logged[0]);
+		$this->assertStringContainsString('link share link-2 handed to zoe', $logged[1]);
 	}//end testEachLeftBehindLinkIsHandedOver()
 }//end class

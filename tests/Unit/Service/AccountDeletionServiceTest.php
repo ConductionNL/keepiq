@@ -254,6 +254,88 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end testLinkSharesOnADelegatedSecretAreDeletedNotHandedOver()
 
 	/**
+	 * A secret delegated to two users is handed over once per delegation.
+	 * The second hand-over takes the secret from the first delegate, not
+	 * from the departing user, so the links the first delegate made stay
+	 * theirs.
+	 *
+	 * @return void
+	 */
+	public function testASecondDelegationLeavesTheFirstDelegatesLinksAlone(): void {
+		$service = $this->build();
+		$secret = $this->secret('sec-1');
+		$this->m['secret']->method('findByOwner')->willReturn([$secret]);
+		$this->m['secret']->method('findById')->willReturn($secret);
+		$this->m['secret']->method('reassignOwner')->willReturnCallback(
+			static function (string $secretId, string $newOwnerId) use ($secret): void {
+				$secret->setOwnerId($newOwnerId);
+			}
+		);
+
+		$delegations = [];
+		foreach (['bob', 'carol'] as $delegate) {
+			$delegation = new SecretDelegation();
+			$delegation->setSecretId('sec-1');
+			$delegation->setOriginalOwnerId('alice');
+			$delegation->setDelegatedTo($delegate);
+			$delegations[] = $delegation;
+		}
+
+		$this->m['delegation']->method('findByOriginalOwner')->willReturn($delegations);
+
+		// The link table: Bob's link, made as Alice's delegate.
+		$links = [['sec-1', 'bob']];
+		$this->m['link']->method('findByCreatedBy')->willReturnCallback(
+			static function (string $userId) use (&$links): array {
+				return array_values(array_filter($links, static fn (array $link): bool => $link[1] === $userId));
+			}
+		);
+		$this->m['link']->method('reassignCreator')->willReturnCallback(
+			static function (string $secretId, string $fromUserId, string $toUserId) use (&$links): int {
+				$moved = 0;
+				foreach ($links as $i => $link) {
+					if ($link === [$secretId, $fromUserId]) {
+						$links[$i] = [$secretId, $toUserId];
+						++$moved;
+					}
+				}
+
+				return $moved;
+			}
+		);
+
+		$this->m['share']->method('findBySourceSecret')->willReturn([]);
+		$this->m['group']->method('findBySecret')->willReturn([]);
+		$this->m['share']->method('findByTargetUser')->willReturn([]);
+		$this->m['suite']->method('findByOwner')->willReturn([]);
+		$this->m['secret']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['folder']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['request']->method('deleteByCreatedBy')->willReturn(0);
+		$this->m['suite']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['migration']->method('deleteBySuiteIds')->willReturn(0);
+
+		$service->deleteAllFor('alice');
+
+		$this->assertSame([['sec-1', 'bob']], $links);
+	}//end testASecondDelegationLeavesTheFirstDelegatesLinksAlone()
+
+	/**
+	 * The departing user is dropped as the maker of the links an earlier
+	 * transfer handed to someone else, so their uid does not outlive the
+	 * deletion there.
+	 *
+	 * @return void
+	 */
+	public function testTheUserIsForgottenAsTheMakerOfLinksHandedOver(): void {
+		$service = $this->build();
+		$this->emptyBaseline();
+
+		$this->m['link']->expects($this->once())->method('forgetOriginalCreator')->with('alice');
+
+		$service->deleteAllFor('alice');
+	}//end testTheUserIsForgottenAsTheMakerOfLinksHandedOver()
+
+	/**
 	 * Step 2: a granted share detaches — link deleted, recipient copy tombstoned
 	 * with a NON-PERSONAL reason (no deleted-user identity written).
 	 *

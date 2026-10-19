@@ -7,7 +7,8 @@
  * transferred away from them stays with that former owner when the transfer
  * did not move it: only they can list and revoke it, and the secret's owner
  * cannot. This step hands every such link to the secret's current owner, as
- * SecretOwnerTransferService does.
+ * SecretOwnerTransferService does, and keeps the former owner as the link's
+ * maker, so their compromise revoke still cuts it.
  *
  * A permanent delegation is the record of a transfer: a link is handed over
  * when its creator is the original owner of a permanent delegation of the
@@ -90,7 +91,12 @@ class ReownTransferredLinkShares implements IRepairStep {
 			$moved = 0;
 			foreach ($this->leftBehind() as $linkId => $ownerId) {
 				// PHP turns a numeric string key into an int.
-				$moved += $this->links->reassignCreatorById(id: (string)$linkId, toUserId: $ownerId);
+				if ($this->links->reassignCreatorById(id: (string)$linkId, toUserId: $ownerId) === 0) {
+					continue;
+				}
+
+				++$moved;
+				$this->logger->info('ReownTransferredLinkShares: link share '.$linkId.' handed to '.$ownerId.', the owner of its secret', ['app' => 'keepiq']);
 			}
 		} catch (Throwable $e) {
 			$this->logger->warning('ReownTransferredLinkShares failed: '.$e->getMessage(), ['exception' => $e]);
