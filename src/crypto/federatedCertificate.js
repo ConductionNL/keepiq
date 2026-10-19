@@ -115,9 +115,6 @@ function tlv(bytes, offset, limit = bytes.length) {
  * @return {Array<object>} Its children.
  */
 function children(bytes, parent) {
-	if (!parent) {
-		throw new FederatedCertificateError('malformed')
-	}
 	const out = []
 	for (let cursor = parent.start; cursor < parent.end;) {
 		const child = tlv(bytes, cursor, parent.end)
