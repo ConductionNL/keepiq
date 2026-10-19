@@ -199,6 +199,7 @@ When the owner, or a recipient who holds a write grade on it, updates a shared s
 - THEN the system MUST re-encrypt the updated value for each recipient and write it to their copy
 
 #### Scenario: Recipient updates shared secret
+@e2e tests/e2e/workflows/share-save.spec.ts
 - GIVEN a secret has been shared with user B, who holds a write grade on it: a `write` or `manage` team-folder grade, or membership of a group the secret is shared with in full (not use-only)
 - WHEN user B updates their copy of the secret
 - THEN the system MUST re-encrypt the updated value for the original owner and all other recipients

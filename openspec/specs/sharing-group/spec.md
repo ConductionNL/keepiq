@@ -46,7 +46,7 @@ The write context MUST answer only a caller who owns the source or is a delegate
 
 #### Scenario: A group member saves for everyone
 
-@e2e exclude Needs two users with vault suites in a shared group; covered by PHPUnit ShareSaveServiceTest::testAGroupMemberWritesTheSourceAndTheOtherCopiesAndIsAuditedAsAGroupWrite and GroupMemberWritesForEveryoneTest.
+@e2e tests/e2e/workflows/share-save.spec.ts
 
 - **GIVEN** Alice shared a login with the group admin, whose members Bob and Carol hold copies
 - **WHEN** Bob changes its username and password in his copy
@@ -55,7 +55,7 @@ The write context MUST answer only a caller who owns the source or is a delegate
 
 #### Scenario: A group member's write context carries the write grade
 
-@e2e exclude Needs a group member holding a copy; covered by PHPUnit GroupMemberWritesForEveryoneTest::testAGroupMemberGetsTheWriteGradeAndTheOwnerCertificate.
+@e2e tests/e2e/workflows/share-save.spec.ts
 
 - **GIVEN** Bob holds a copy of Alice's secret through her share with admin
 - **WHEN** Bob's browser reads the write context of his copy
@@ -63,7 +63,9 @@ The write context MUST answer only a caller who owns the source or is a delegate
 
 #### Scenario: A member who left the group is refused
 
-@e2e exclude Needs a leave cleanup that fails; covered by PHPUnit ShareSaveServiceTest::testAMemberWhoLeftTheGroupIsRefusedThoughTheirCopyRemains and GroupMemberWritesForEveryoneTest::testAMemberWhoLeftTheGroupKeepsTheirCopyButNoWriteGrade.
+@e2e tests/e2e/workflows/share-save.spec.ts
+
+The e2e test keeps the copy through a direct share, which leaving the group does not remove; a copy kept by a failed removal is covered by PHPUnit ShareSaveServiceTest::testAMemberWhoLeftTheGroupIsRefusedThoughTheirCopyRemains and GroupMemberWritesForEveryoneTest::testAMemberWhoLeftTheGroupKeepsTheirCopyButNoWriteGrade.
 
 - **GIVEN** Bob left admin, is in no other group the secret is shared with, and the removal of his copy failed, so the copy is still there
 - **WHEN** Bob saves a change through his copy
@@ -72,7 +74,7 @@ The write context MUST answer only a caller who owns the source or is a delegate
 
 #### Scenario: A member whose copy came another way saves for everyone
 
-@e2e exclude Needs a group member whose copy came through a direct share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testAMemberWhoseCopyCameThroughADirectShareGetsTheWriteGrade and testAMemberWhoLeftOneGroupButIsStillInAnotherGetsTheWriteGrade.
+@e2e tests/e2e/workflows/share-save.spec.ts
 
 - **GIVEN** Alice shared the secret directly with Frank before sharing it with admin, so Frank's copy came through the direct share
 - **AND** Frank is a member of admin
@@ -81,7 +83,7 @@ The write context MUST answer only a caller who owns the source or is a delegate
 
 #### Scenario: A direct-share recipient changes only their own copy
 
-@e2e exclude Needs a second user holding a direct copy; covered by PHPUnit ShareSaveServiceTest::testADirectRecipientIsRefused and GroupMemberWritesForEveryoneTest::testADirectRecipientKeepsEditingOnlyTheirOwnCopy.
+@e2e tests/e2e/workflows/share-save.spec.ts
 
 - **GIVEN** Alice also shared the secret directly with Dan, who is in no group it is shared with
 - **WHEN** Dan saves a change to his copy
@@ -89,7 +91,7 @@ The write context MUST answer only a caller who owns the source or is a delegate
 
 #### Scenario: Knowing a copy's id reveals nothing
 
-@e2e exclude Refusal of a crafted request; covered by PHPUnit GroupMemberWritesForEveryoneTest::testKnowingAGroupCopysIdGivesNoAnswer and testACallerWithoutAccessIsAnsweredAsAnUnknownSecret.
+@e2e tests/e2e/workflows/share-save.spec.ts
 
 - **GIVEN** Eve holds no copy of Alice's secret and no grade on it
 - **WHEN** Eve asks for the write context of Bob's copy by its id

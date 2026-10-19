@@ -10,6 +10,7 @@ When the owner, or a recipient allowed to write the source, updates the value, l
 - AND each recipient's copy MUST hold the new value once the request succeeds
 
 #### Scenario: Recipient updates shared secret
+@e2e tests/e2e/workflows/share-save.spec.ts
 - GIVEN a secret has been shared with user B, who holds a write grade on it: a `write` or `manage` team-folder grade, or membership of a group the secret is shared with in full (not use-only)
 - WHEN user B updates their copy of the secret
 - THEN the browser MUST encrypt the updated value for the original owner and all other recipients and send it in one share-save

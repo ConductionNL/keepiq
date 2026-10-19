@@ -47,6 +47,7 @@ The system MUST allow a `write`-grade member to update a folder secret such that
 - THEN the system MUST accept the fan-out and update every recipient's copy without decrypting any blob
 
 #### Scenario: Read-grade member cannot write
+@e2e tests/e2e/workflows/share-save.spec.ts
 - GIVEN user V holds a `read` grade on a folder containing secret S, and is in no group S is shared with (a use-only group share does not count)
 - WHEN V attempts a value update that would propagate to recipients
 - THEN the system MUST reject the request and change no recipient's copy
