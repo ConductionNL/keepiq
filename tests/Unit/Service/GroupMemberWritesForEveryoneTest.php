@@ -185,7 +185,12 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		);
 
 		$targets = $this->createMock(ShareTargetMapper::class);
-		$targets->method('findBySourceSecret')->willReturnCallback(fn (): array => $this->targets);
+		$targets->method('findBySourceSecret')->willReturnCallback(
+			fn (string $sourceId): array => array_values(array_filter(
+				$this->targets,
+				static fn (ShareTarget $t): bool => $t->getSourceSecretId() === $sourceId
+			))
+		);
 		$targets->method('findByRecipientSecret')->willReturnCallback(
 			fn (string $copyId): ShareTarget => $this->targetWhere(
 				match: static fn (ShareTarget $t): bool => $t->getSecretId() === $copyId
@@ -733,6 +738,17 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->targets[] = $this->target(copyId: 'e-own', userId: 'frank', groupShareId: null);
 
 		$this->assertSame(self::OWN_ROW_ONLY, $this->context()->writeContext('e-own', 'erin'));
+	}
+
+	public function testASharedSourceBehindAShareRowKeyedToSomeoneElseIsAnsweredAsAnUnknownSecret(): void {
+		// Alice's `src` was named as Frank's copy of Erin's secret; saving it alone would skip Bob's and Dan's copies.
+		$this->addRow(id: 'e-src', owner: 'erin');
+		$planted = $this->target(copyId: 'src', userId: 'frank', groupShareId: null);
+		$planted->setSourceSecretId('e-src');
+		$this->targets[] = $planted;
+
+		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
+		$this->context()->writeContext('src', 'alice');
 	}
 
 	public function testSomeoneElsesRowBehindAShareRowKeyedToAnotherUserIsAnsweredAsAnUnknownSecret(): void {

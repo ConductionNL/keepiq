@@ -157,14 +157,15 @@ class ShareWriteContext {
 	 * keyed to someone else. The holder of a live row still gets `none`, so
 	 * their client saves that row alone. The answer names no source, as the
 	 * share row may point at someone else's secret. Anyone else gets the
-	 * answer of an unknown id.
+	 * answer of an unknown id, and so does the owner of a row that is itself
+	 * shared, as saving it alone would leave its copies behind.
 	 *
 	 * @param Secret $row The secret the caller asked about
 	 * @param string $userId The requesting user
 	 *
 	 * @return array{sourceSecretId:null, effectiveGrade:string, ownerCertificate:null, sourceUpdatedAt:null}
 	 *
-	 * @throws InvalidArgumentException When the row is not the caller's, or its access ended
+	 * @throws InvalidArgumentException When the row is not the caller's, its access ended, or it has copies
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
@@ -172,6 +173,7 @@ class ShareWriteContext {
 		$ends = $row->getAccessExpiresAt();
 		if ($row->getOwnerType() !== 'user' || $row->getOwnerId() !== $userId
 			|| ($ends !== null && $ends->getTimestamp() <= time())
+			|| $this->targets->findBySourceSecret($row->getId()) !== []
 		) {
 			throw new InvalidArgumentException(message: 'Secret not found');
 		}
