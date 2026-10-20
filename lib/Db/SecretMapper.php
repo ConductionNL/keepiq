@@ -753,7 +753,7 @@ class SecretMapper extends QBMapper {
 	/**
 	 * Reassign the owner of a single secret (delegation ownership transfer).
 	 * Only the secret row: SecretOwnerTransferService moves its partner
-	 * shares with it.
+	 * shares and the previous owner's link shares with it.
 	 *
 	 * @param string $secretId The Secret ID
 	 * @param string $newOwnerId The delegate's Nextcloud user ID

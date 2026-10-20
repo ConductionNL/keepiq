@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
@@ -114,6 +115,61 @@ class GdprServiceTest extends TestCase {
 		// Defensive: the blob value never appears anywhere in the document.
 		$this->assertStringNotContainsString('SUPER-SECRET-ENCRYPTED-KEY', json_encode($doc));
 	}//end testSuitePrivateKeyExcludedWithNote()
+
+	/**
+	 * A link Alice made that a transfer handed to Dave is in Alice's export,
+	 * flagged as handed over, and in Dave's without the flag. Neither export
+	 * carries the token or the snapshot.
+	 *
+	 * @return void
+	 */
+	public function testAHandedOverLinkIsExportedToItsMakerAndItsHolder(): void {
+		$link = new LinkShare();
+		$link->setId('link-1');
+		$link->setSecretId('sec-1');
+		$link->setToken('THE-ACCESS-TOKEN');
+		$link->setEncryptedSecretSnapshot('THE-SNAPSHOT');
+		$link->setCreatedBy('dave');
+		$link->setOriginalCreatedBy('alice');
+
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findByOwner')->willReturn([]);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suiteMapper->method('findByOwner')->willReturn([]);
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getUserPreferences')->willReturn([]);
+		$linkShareMapper = $this->createMock(LinkShareMapper::class);
+		$linkShareMapper->method('findByCreatedBy')->willReturnCallback(
+			static fn (string $userId): array => array_values(array_filter([$link], static fn (LinkShare $row): bool => $row->getCreatedBy() === $userId))
+		);
+		$linkShareMapper->method('findHeldOrMadeBy')->willReturnCallback(
+			static fn (string $userId): array => array_values(array_filter([$link], static fn (LinkShare $row): bool => in_array($userId, [$row->getCreatedBy(), $row->getOriginalCreatedBy()], true)))
+		);
+
+		$service = new GdprService(
+			secretMapper: $secretMapper,
+			shareMapper: $this->createMock(ShareTargetMapper::class),
+			delegationMapper: $this->createMock(SecretDelegationMapper::class),
+			linkShareMapper: $linkShareMapper,
+			requestMapper: $this->createMock(SecretRequestMapper::class),
+			suiteMapper: $suiteMapper,
+			settingsService: $settingsService,
+		);
+
+		$alices = $service->collectMetadata('alice');
+		$daves = $service->collectMetadata('dave');
+
+		$this->assertCount(1, $alices['linkShares']);
+		$this->assertSame('link-1', $alices['linkShares'][0]['id']);
+		$this->assertTrue($alices['linkShares'][0]['handedOver']);
+		$this->assertCount(1, $daves['linkShares']);
+		$this->assertSame('link-1', $daves['linkShares'][0]['id']);
+		$this->assertFalse($daves['linkShares'][0]['handedOver']);
+		foreach ([$alices, $daves] as $doc) {
+			$this->assertStringNotContainsString('THE-ACCESS-TOKEN', json_encode($doc));
+			$this->assertStringNotContainsString('THE-SNAPSHOT', json_encode($doc));
+		}
+	}//end testAHandedOverLinkIsExportedToItsMakerAndItsHolder()
 
 	/**
 	 * The collector is strictly self-scoped: the userId drives every lookup.

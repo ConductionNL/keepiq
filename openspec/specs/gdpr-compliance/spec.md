@@ -8,7 +8,7 @@ TBD - created by archiving change secret-export-gdpr. Update Purpose after archi
 ### Requirement: GDPR Personal Data Export
 The system MUST provide a full personal data export (GDPR Art. 15, right of access) as one machine-readable, versioned JSON package, assembled in the browser from two halves:
 
-- **Server metadata** (`GET /api/v1/gdpr/metadata`, session user only): EncryptionSuite records (certificate, status, revocation/reinstatement audit fields — excluding the encrypted private-key blob, with the exclusion documented inside the package), shares given and received, delegations, link-share metadata (no encrypted snapshots), secret requests, and user settings
+- **Server metadata** (`GET /api/v1/gdpr/metadata`, session user only): EncryptionSuite records (certificate, status, revocation/reinstatement audit fields — excluding the encrypted private-key blob, with the exclusion documented inside the package), shares given and received, delegations, link-share metadata (no encrypted snapshots) of the links the user holds and, flagged `handedOver`, of the links they made that a transfer handed to someone else, secret requests, and user settings
 - **Client vault**: the decrypted secrets and folder structure, produced in the browser when the vault is unlocked
 
 If the user cannot unlock the vault, the package MUST still be produced with the server half only, and the vault section MUST explicitly state that the vault is end-to-end encrypted and was not unlocked by the data subject. The package MUST be downloaded locally and MUST NOT be stored server-side.
@@ -38,7 +38,7 @@ The system MUST support deletion of all of a user's Keepiq data (GDPR Art. 17, r
 
 The in-app trigger wipes every secret, suite and migration in one request, so a Nextcloud session alone MUST NOT be sufficient for it. The master-password re-entry is therefore proven to the server as a signature made with the private key it unlocks, bound to the confirmation phrase, rather than checked only in the browser. The phrase stays as a guard against a slip. A user without an active EncryptionSuite cannot make a proof; their Keepiq data is removed through the automatic trigger when their Nextcloud account is deleted.
 
-The cascade MUST remove: the user's secrets and folders, their EncryptionSuites (including encrypted private keys) and SuiteMigration records, link shares, secret requests, share records per the shared-secret semantics requirement, and user settings. Every cascade step MUST be idempotent so an interrupted run can be safely re-executed.
+The cascade MUST remove: the user's secrets and folders, their EncryptionSuites (including encrypted private keys) and SuiteMigration records, the link shares the user holds (also on secrets that pass to a delegate), secret requests, share records per the shared-secret semantics requirement, and user settings. It MUST also replace the user as the recorded maker of link shares another user holds with a marker that is not a valid Nextcloud user ID, so the holder's compromise revoke does not revoke them. Every cascade step MUST be idempotent so an interrupted run can be safely re-executed.
 
 #### Scenario: In-app deletion double-gated
 @e2e tests/e2e/workflows/export-gdpr.spec.ts

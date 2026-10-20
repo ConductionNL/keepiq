@@ -47,7 +47,7 @@ class TeamSecretTransferService {
 	 * @param TeamFolderMembershipResolver $memberships The membership resolver (subtree walk)
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
-	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner shares over
+	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
 	 *
 	 * @return void
 	 *
@@ -72,12 +72,13 @@ class TeamSecretTransferService {
 	 * @param string $successorUserId The successor taking ownership
 	 * @param string $adminId The admin running the offboarding
 	 *
-	 * @return array{transferred:int,skipped:array<int,string>}
+	 * @return array{transferred:int,linksTransferred:int,skipped:array<int,string>} What was handed over and skipped
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
 	 */
 	public function transfer(string $leavingUserId, string $successorUserId, string $adminId): array {
 		$transferred = 0;
+		$linksTransferred = 0;
 		$skipped = [];
 		foreach ($this->mapper->findByOwner(ownerId: $leavingUserId) as $teamFolder) {
 			foreach ($this->memberships->subtreeSecretRefs(teamFolder: $teamFolder) as $secretRef) {
@@ -103,8 +104,9 @@ class TeamSecretTransferService {
 				$delegation->setIsPermanent(true);
 				$this->delegationMapper->insert($delegation);
 
-				$this->ownerTransfer->transfer(
+				$linksTransferred += $this->ownerTransfer->transfer(
 					secretId: $secretRef['id'],
+					fromOwnerId: $leavingUserId,
 					newOwnerId: $successorUserId
 				);
 				++$transferred;
@@ -113,6 +115,7 @@ class TeamSecretTransferService {
 
 		return [
 			'transferred' => $transferred,
+			'linksTransferred' => $linksTransferred,
 			'skipped' => $skipped,
 		];
 	}//end transfer()

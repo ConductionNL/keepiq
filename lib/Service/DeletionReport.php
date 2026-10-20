@@ -74,6 +74,14 @@ class DeletionReport implements JsonSerializable {
 	public int $linkSharesDeleted = 0;
 
 	/**
+	 * Number of handed-over link shares whose maker was replaced by the
+	 * deleted-account marker.
+	 *
+	 * @var integer
+	 */
+	public int $linkMakersForgotten = 0;
+
+	/**
 	 * Number of secret requests deleted.
 	 *
 	 * @var integer
@@ -123,6 +131,7 @@ class DeletionReport implements JsonSerializable {
 			'sharesRemoved' => $this->sharesRemoved,
 			'foldersDeleted' => $this->foldersDeleted,
 			'linkSharesDeleted' => $this->linkSharesDeleted,
+			'linkSharesMakerForgotten' => $this->linkMakersForgotten,
 			'requestsDeleted' => $this->requestsDeleted,
 			'suitesDeleted' => $this->suitesDeleted,
 			'settingsDeleted' => $this->settingsDeleted,
