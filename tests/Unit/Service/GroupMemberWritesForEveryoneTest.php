@@ -85,6 +85,9 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	/** @var (callable(Secret):void)|null What happens to `src` once the sync holds its lock */
 	private $srcUnderLock = null;
 
+	/** Whether the sync holds the source lock */
+	private bool $locked = false;
+
 	protected function setUp(): void {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
 		$this->versions = $this->createMock(SecretVersionService::class);
@@ -134,19 +137,26 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	private function sync(): ShareSyncService {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturnCallback(
-			fn (string $id): Secret => $this->rows[$id] ?? throw new DoesNotExistException('none')
+			function (string $id): Secret {
+				$row = $this->rows[$id] ?? throw new DoesNotExistException('none');
+				// Under the lock a read is a new object, as a database read is.
+				return $this->locked ? clone $row : $row;
+			}
 		);
 		$secrets->method('findByIds')->willReturnCallback(
 			fn (array $ids): array => array_intersect_key($this->rows, array_flip($ids))
 		);
 		$secrets->method('advanceVersion')->willReturnCallback(
 			function (): int {
+				$this->locked = true;
 				// A leave that commits after the first check, before the lock.
 				if ($this->groupsUnderLock !== null) {
 					$this->groups = $this->groupsUnderLock;
 				}
 
 				if ($this->srcUnderLock !== null) {
+					// A change the sync's own source object does not see.
+					$this->rows['src'] = clone $this->rows['src'];
 					($this->srcUnderLock)($this->rows['src']);
 				}
 
@@ -156,6 +166,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$secrets->method('update')->willReturnCallback(
 			function (Secret $row): Secret {
 				$this->written[] = $row->getId();
+				$this->rows[$row->getId()] = $row;
 				return $row;
 			}
 		);
@@ -265,6 +276,20 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 				'bob'
 			)
 			->willReturn(new SecretVersion());
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+	}
+
+	public function testAGroupMembersSyncThatChangesNoValueKeepsNoVersion(): void {
+		$this->rows['src']->setKey('NEW');
+		$this->versions->expects($this->never())->method('snapshot');
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+	}
+
+	public function testAGroupMembersSyncOverAnEmptySourceKeepsNoVersion(): void {
+		// `src` holds no key, login or fields: there is no earlier value to return to.
+		$this->versions->expects($this->never())->method('snapshot');
 
 		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
 	}
@@ -388,8 +413,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame('none', $context['effectiveGrade']);
 		$this->assertNull($context['ownerCertificate']);
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob');
+		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
 	}
 
 	public function testADirectRecipientKeepsEditingOnlyTheirOwnCopy(): void {
@@ -397,8 +422,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame('none', $context['effectiveGrade']);
 		$this->assertNull($context['ownerCertificate']);
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'dan');
+		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan');
 	}
 
 	public function testAMemberWhoseCopyCameThroughADirectShareGetsTheWriteGrade(): void {
@@ -503,8 +528,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 		$this->assertSame('none', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'dan');
+		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan');
 	}
 
 	public function testARevokedGroupShareGivesNone(): void {
@@ -513,8 +538,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 		$this->assertSame('none', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob');
+		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
 	}
 
 	public function testAnExpiredGroupShareGivesNone(): void {
@@ -530,8 +555,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 		$this->assertSame('none', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'dan');
+		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan');
 	}
 
 	public function testAMemberOfAUseOnlyAndAFullGroupShareGetsTheWriteGrade(): void {

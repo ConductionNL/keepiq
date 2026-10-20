@@ -27,11 +27,12 @@ use PHPUnit\Framework\TestCase;
  */
 class ManagerWritesLikeAnEditorTest extends TestCase {
 
-	private function sync(string $grade): ShareSyncService {
+	private function sync(string $grade, ?SecretVersionService $versions = null): ShareSyncService {
 		$source = new Secret();
 		$source->setId('src');
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
+		$source->setKey('OLD');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);
 		$delegations = $this->createMock(SecretDelegationMapper::class);
@@ -57,12 +58,24 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				teamFolderService: $teamFolders,
 			),
-			versionService: $this->createMock(SecretVersionService::class),
+			versionService: ($versions ?? $this->createMock(SecretVersionService::class)),
 		);
 	}
 
 	public function testAManagerMaySync(): void {
 		$this->assertSame(1, $this->sync('manage')->syncUpdate('src', [['secretId' => 'src', 'key' => 'NEW']], '', 'olga'));
+	}
+
+	public function testATeamWritersSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$versions = $this->createMock(SecretVersionService::class);
+		$versions->expects($this->once())->method('snapshot')
+			->with(
+				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src' && $preUpdate->getKey() === 'OLD'),
+				'user',
+				'wendy'
+			);
+
+		$this->sync('write', $versions)->syncUpdate('src', [['secretId' => 'src', 'key' => 'NEW']], '', 'wendy');
 	}
 
 	public function testAViewerMayNot(): void {
