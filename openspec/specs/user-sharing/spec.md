@@ -9,7 +9,7 @@
 
 @e2e exclude No user-sharing UI is built in v0.1; all sharing scenarios require the encrypted secret CRUD surface (itself unbuilt) — covered by integration tests, not Playwright UI flows.
 
-A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when either party updates the secret, the change is written back to all copies.
+A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, a delegate or a recipient who holds a write grade on it updates the secret, the change is written back to all copies.
 
 Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. Direct shares are always independent of group membership.
 
@@ -191,7 +191,7 @@ The marks MUST come from an endpoint that takes the search term and the user ids
 - WHEN it reaches the endpoint
 - THEN the system MUST refuse it with 400
 ### Requirement: Sync on Update
-When the owner, or a recipient who holds a write grade on it, updates a shared secret, the change MUST be propagated to all copies.
+When the owner, a delegate, or a recipient who holds a write grade on it updates a shared secret, the change MUST be propagated to all copies.
 
 #### Scenario: Owner updates shared secret
 - GIVEN a secret is shared with one or more users
@@ -437,7 +437,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] The recipient receives an encrypted copy in their own vault
 - [ ] The copy is encrypted with the recipient's public certificate — the sender cannot read it after sharing
 - [ ] The recipient receives a Nextcloud notification when a secret is shared with them
-- [ ] Updates by either party propagate to all copies of the shared secret
+- [ ] Updates by the owner, a delegate or a recipient who holds a write grade on it propagate to all copies of the shared secret
 - [ ] The original owner can revoke a share at any time
 - [ ] Revoking a share deletes the recipient's copy
 - [ ] Sharing fails with a clear error if the recipient has no EncryptionSuite
