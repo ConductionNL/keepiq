@@ -16,6 +16,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -63,6 +64,9 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 	/** @var array<int,string> The rows the sync wrote, in order */
 	private array $written = [];
+
+	/** @var (callable(Secret):void)|null What happens to `src` once the sync holds its lock */
+	private $srcUnderLock = null;
 
 	protected function setUp(): void {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
@@ -123,6 +127,10 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 				// A leave that commits after the first check, before the lock.
 				if ($this->groupsUnderLock !== null) {
 					$this->groups = $this->groupsUnderLock;
+				}
+
+				if ($this->srcUnderLock !== null) {
+					($this->srcUnderLock)($this->rows['src']);
 				}
 
 				return 1;
@@ -295,6 +303,31 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			$this->fail('A member who left the group wrote every copy');
 		} catch (InvalidArgumentException $e) {
 			$this->assertSame('Not authorized to manage shares of this secret', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testASourceMadeReadOnlyBeforeTheSyncsLockRefusesAGroupMember(): void {
+		$this->srcUnderLock = static fn (Secret $src) => $src->setReadOnly(true);
+
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+			$this->fail('A group member wrote a source that became read-only');
+		} catch (ForbiddenException) {
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testASourceMadeUseOnlyBeforeTheSyncsLockRefusesAGroupMember(): void {
+		$this->srcUnderLock = static fn (Secret $src) => $src->setUseOnly(true);
+
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+			$this->fail('A group member wrote a source that became use-only');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('A use-only copy cannot be changed', $e->getMessage());
 		}
 
 		$this->assertSame([], $this->written);

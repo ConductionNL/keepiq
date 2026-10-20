@@ -180,8 +180,10 @@ class ShareSyncService {
 
 	/**
 	 * Share-save's guards for a member of a group the secret is shared with,
-	 * run under the source lock: the caller is checked again, so a leave or a
-	 * revoke that committed after the first check refuses the sync, and the
+	 * run under the source lock: the source is read again and refused when it
+	 * became a read-only or use-only copy, the caller is checked again, so a
+	 * leave or a revoke that committed after the first check refuses the sync,
+	 * and the
 	 * updates must name exactly the source and every copy whose access has
 	 * not ended, so no holder is left on the old value. Only those rows are
 	 * written.
@@ -198,7 +200,15 @@ class ShareSyncService {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function assertGroupWriteGuards(Secret $source, array $updates, string $userId): array {
-		$writesOn = $this->resolveSyncWriter(source: $this->auth->loadSecret(secretId: $source->getId()), userId: $userId);
+		// Read again, as share-save's assertStillWriter() does: becoming a
+		// read-only or use-only copy does not move the version the lock checks.
+		$current = $this->auth->loadSecret(secretId: $source->getId());
+		$current->assertNotReadOnly();
+		if ($current->getUseOnly() === true) {
+			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
+		}
+
+		$writesOn = $this->resolveSyncWriter(source: $current, userId: $userId);
 
 		$required = [$source->getId() => true];
 		$ignored = [];
