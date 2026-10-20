@@ -258,7 +258,8 @@ class ShareSyncService {
 				);
 			}
 
-			// No vault key to encrypt for: the row keeps its value and its version.
+			// No vault key to encrypt for: the row keeps its value. A copy keeps
+			// its version too; the source's version already moved with the lock.
 			unset($required[$copyId]);
 		}
 
