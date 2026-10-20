@@ -1167,7 +1167,7 @@ class ShareServiceTest extends TestCase {
 		$this->delegationMapper->method('findActiveBySecretAndUser')
 			->with('src-1', 'carol')
 			->willReturn(new SecretDelegation());
-		$versions = $this->createMock(SecretVersionService::class);
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versions->expects($this->once())->method('snapshot')
 			->with(
 				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src-1' && $preUpdate->getKey() === 'OLD'),

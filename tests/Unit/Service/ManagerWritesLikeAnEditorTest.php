@@ -67,7 +67,7 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 	}
 
 	public function testATeamWritersSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
-		$versions = $this->createMock(SecretVersionService::class);
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versions->expects($this->once())->method('snapshot')
 			->with(
 				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src' && $preUpdate->getKey() === 'OLD'),

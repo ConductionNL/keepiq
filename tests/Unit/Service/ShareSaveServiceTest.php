@@ -125,7 +125,10 @@ class ShareSaveServiceTest extends TestCase {
 		$this->federated = $this->createMock(FederatedShareService::class);
 		$this->delivery = $this->createMock(FederatedNotificationDelivery::class);
 		$this->audit = $this->createMock(ShareAuditTrail::class);
-		$this->versionHistory = $this->createMock(SecretVersionService::class);
+		$this->versionHistory = $this->createPartialMock(
+			SecretVersionService::class,
+			['snapshot', 'getVersion', 'recordRestored', 'logRestored']
+		);
 		$this->stageMapper = $this->createMock(ShareSaveStageMapper::class);
 		$this->db = $this->createMock(IDBConnection::class);
 
@@ -307,7 +310,6 @@ class ShareSaveServiceTest extends TestCase {
 				targets: $this->targets,
 				secrets: $this->secretMapper,
 				federatedShares: $this->federatedMapper,
-				suites: $this->suites,
 				sync: $sync,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),

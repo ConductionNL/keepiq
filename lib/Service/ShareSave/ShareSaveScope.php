@@ -19,9 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service\ShareSave;
 
-use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
@@ -40,7 +38,7 @@ use OCP\AppFramework\Http;
  * @psalm-type Requirement = array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,federated:array<string,FederatedShare>,ownerOnly:bool}
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads the sharing graph from
- *   copies, share targets, partner shares and suites, each through its mapper.
+ *   copies, share targets and partner shares, each through its mapper.
  *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
@@ -51,8 +49,7 @@ class ShareSaveScope {
 	 * @param ShareTargetMapper $targets The share targets (copy to source)
 	 * @param SecretMapper $secrets The secrets
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
-	 * @param EncryptionSuiteMapper $suites The suites (vault keys)
-	 * @param ShareSyncService $sync Who may write for every copy
+	 * @param ShareSyncService $sync Who may write for every copy, the live copies and their holders' vault keys
 	 *
 	 * @return void
 	 *
@@ -62,7 +59,6 @@ class ShareSaveScope {
 		private ShareTargetMapper $targets,
 		private SecretMapper $secrets,
 		private FederatedShareMapper $federatedShares,
-		private EncryptionSuiteMapper $suites,
 		private ShareSyncService $sync,
 	) {
 	}//end __construct()
@@ -161,9 +157,10 @@ class ShareSaveScope {
 	 * @throws ForbiddenException When the source is a read-only or use-only copy
 	 */
 	private function assertWritable(Secret $source): void {
-		$source->assertNotReadOnly();
-		if ($source->getUseOnly() === true) {
-			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
+		try {
+			$this->sync->assertWritable(source: $source);
+		} catch (InvalidArgumentException $refusal) {
+			throw new ForbiddenException(message: $refusal->getMessage());
 		}
 	}//end assertWritable()
 
@@ -287,33 +284,9 @@ class ShareSaveScope {
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
-		$copies = [];
+		['copies' => $copies, 'ignored' => $ignored] = $this->sync->liveCopies(source: $source, leaveOut: $path->row->getId());
 		if ($path->isCopyEditor() === true) {
-			$copies[$source->getId()] = ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null];
-		}
-
-		$ignored = [];
-		$targets = $this->targets->findBySourceSecret($source->getId());
-		$rows = $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
-		$now = new DateTime();
-		foreach ($targets as $target) {
-			$copyId = $target->getSecretId();
-			if ($copyId === $path->row->getId()) {
-				continue;
-			}
-
-			// A copy whose access ended, or whose row is gone, is not written.
-			$ends = $now;
-			if (isset($rows[$copyId]) === true) {
-				$ends = $rows[$copyId]->getAccessExpiresAt();
-			}
-
-			if ($ends !== null && $ends <= $now) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			$copies[$copyId] = ['secretId' => $copyId, 'holder' => 'recipient', 'targetUserId' => $target->getTargetUserId()];
+			$copies = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $copies;
 		}
 
 		$federated = $this->activePartnerShares(source: $source);
@@ -356,19 +329,8 @@ class ShareSaveScope {
 	private function refusedSkips(ShareSavePath $path, array $skipped, array $required): array {
 		$refused = [];
 		foreach ($skipped as $skip) {
-			$copy = $required[$skip['secretId']] ?? null;
-			if ($copy === null) {
-				continue;
-			}
-
-			$ownerType = 'user';
-			$ownerId = (string)$copy['targetUserId'];
-			if ($copy['holder'] === 'owner') {
-				$ownerType = $path->source->getOwnerType();
-				$ownerId = $path->source->getOwnerId();
-			}
-
-			if ($this->suites->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId) > 0) {
+			$copy = ($required[$skip['secretId']] ?? null);
+			if ($copy !== null && $this->sync->holderHasVaultKey(source: $path->source, copy: $copy) === true) {
 				$refused[] = $skip['secretId'];
 			}
 		}

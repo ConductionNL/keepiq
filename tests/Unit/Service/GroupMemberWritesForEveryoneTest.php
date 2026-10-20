@@ -90,7 +90,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 	protected function setUp(): void {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
-		$this->versions = $this->createMock(SecretVersionService::class);
+		$this->versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$this->addRow(id: 'src', owner: 'alice');
 		$this->rows['src']->setUpdatedAt(new DateTime(self::BASE));
 		$this->addRow(id: 'c-bob', owner: 'bob');

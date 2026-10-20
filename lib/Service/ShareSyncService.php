@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntryParser;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
@@ -134,13 +135,7 @@ class ShareSyncService {
 		string $userId,
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
-		// A copy from another organisation is never written by its holder
-		// (sharing-federated-recipients task 3.4).
-		$source->assertNotReadOnly();
-		if ($source->getUseOnly() === true) {
-			// A use-only copy is never written by its holder (D4).
-			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
-		}
+		$this->assertWritable(source: $source);
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		if ($writesOn === self::GROUP_WRITE && $expectedUpdatedAt === '') {
@@ -208,37 +203,13 @@ class ShareSyncService {
 		// Read again, as share-save's assertStillWriter() does: becoming a
 		// read-only or use-only copy does not move the version the lock checks.
 		$current = $this->auth->loadSecret(secretId: $source->getId());
-		$current->assertNotReadOnly();
-		if ($current->getUseOnly() === true) {
-			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
-		}
+		$this->assertWritable(source: $current);
 
 		$writesOn = $this->resolveSyncWriter(source: $current, userId: $userId);
 		$this->assertShareSaveBody(updates: $updates);
 
-		$required = [$source->getId() => true];
-		$holders = [$source->getId() => [$source->getOwnerType(), $source->getOwnerId()]];
-		$ignored = [];
-		$targets = $this->mapper->findBySourceSecret($source->getId());
-		$rows = $this->secretMapper->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
-		$now = time();
-		foreach ($targets as $target) {
-			// A copy whose access ended, or whose row is gone, may be named but is not written.
-			$copyId = $target->getSecretId();
-			if (isset($rows[$copyId]) === false) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			$ends = $rows[$copyId]->getAccessExpiresAt();
-			if ($ends !== null && $ends->getTimestamp() <= $now) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			$required[$copyId] = true;
-			$holders[$copyId] = ['user', $target->getTargetUserId()];
-		}
+		$live = $this->liveCopies(source: $source, leaveOut: null);
+		$required = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $live['copies'];
 
 		$named = [];
 		$valueless = [];
@@ -249,15 +220,14 @@ class ShareSyncService {
 			}
 		}
 
-		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $ignored) !== []) {
+		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $live['ignored']) !== []) {
 			throw new InvalidArgumentException(
 				message: 'Name the source and every copy whose access has not ended, and nothing else'
 			);
 		}
 
 		foreach (array_keys(array_intersect_key($valueless, $required)) as $copyId) {
-			[$ownerType, $ownerId] = $holders[$copyId];
-			if ($this->suiteMapper->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId) > 0) {
+			if ($this->holderHasVaultKey(source: $source, copy: $required[$copyId]) === true) {
 				throw new InvalidArgumentException(
 					message: 'Every holder with a vault key must get the new value'
 				);
@@ -268,8 +238,89 @@ class ShareSyncService {
 			unset($required[$copyId]);
 		}
 
-		return [$writesOn, $required];
+		return [$writesOn, array_fill_keys(array_keys($required), true)];
 	}//end assertGroupWriteGuards()
+
+	/**
+	 * Refuse a source that is a copy its holder may not write: a copy from
+	 * another organisation (sharing-federated-recipients task 3.4) or a
+	 * use-only copy (D4).
+	 *
+	 * @param Secret $source The source
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When the source is a read-only copy
+	 * @throws InvalidArgumentException When the source is a use-only copy
+	 *
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	public function assertWritable(Secret $source): void {
+		$source->assertNotReadOnly();
+		if ($source->getUseOnly() === true) {
+			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
+		}
+	}//end assertWritable()
+
+	/**
+	 * The copies of a source a save for every copy writes, keyed by id: every
+	 * copy whose access has not ended. The ignored ones may be named but are
+	 * not written: their access ended, or their row is gone.
+	 *
+	 * @param Secret $source The source
+	 * @param string|null $leaveOut A copy left out of both lists, as share-save leaves out the caller's own row
+	 *
+	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>}
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	public function liveCopies(Secret $source, ?string $leaveOut): array {
+		$copies = [];
+		$ignored = [];
+		$targets = $this->mapper->findBySourceSecret($source->getId());
+		$rows = $this->secretMapper->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
+		$now = time();
+		foreach ($targets as $target) {
+			$copyId = $target->getSecretId();
+			if ($copyId === $leaveOut) {
+				continue;
+			}
+
+			// A copy whose access ended, or whose row is gone, is not written.
+			$row = ($rows[$copyId] ?? null);
+			$ends = $row?->getAccessExpiresAt();
+			if ($row === null || ($ends !== null && $ends->getTimestamp() <= $now)) {
+				$ignored[$copyId] = true;
+				continue;
+			}
+
+			$copies[$copyId] = ['secretId' => $copyId, 'holder' => 'recipient', 'targetUserId' => $target->getTargetUserId()];
+		}
+
+		return ['copies' => $copies, 'ignored' => $ignored];
+	}//end liveCopies()
+
+	/**
+	 * Whether the holder of a copy liveCopies() names, or of the source
+	 * (holder `owner`), has a vault key to encrypt the new value for.
+	 *
+	 * @param Secret $source The source
+	 * @param array{secretId:string,holder:string,targetUserId:?string} $copy The copy
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	public function holderHasVaultKey(Secret $source, array $copy): bool {
+		$ownerType = 'user';
+		$ownerId = (string)$copy['targetUserId'];
+		if ($copy['holder'] === 'owner') {
+			$ownerType = $source->getOwnerType();
+			$ownerId = $source->getOwnerId();
+		}
+
+		return $this->suiteMapper->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId) > 0;
+	}//end holderHasVaultKey()
 
 	/**
 	 * Share-save's checks of a body, on a sync's rows: no key may be empty,
@@ -625,8 +676,8 @@ class ShareSyncService {
 	 * writer as its actor, for the source written by anyone but its owner (a
 	 * delegate, a team-folder writer or a member of a group it is shared with)
 	 * and for a copy of the writer's own, as share-save keeps the caller's
-	 * row: only when a value changes and the row held a value, as SecretService
-	 * does on an update. Other holders' copies are not kept: a recipient's
+	 * row, under the rule of SecretVersionService::snapshotIfChanged(), as on
+	 * any update. Other holders' copies are not kept: a recipient's
 	 * history is their own, and the owner's update keeps none of them either.
 	 *
 	 * @param Secret $source The source secret being synced
@@ -641,18 +692,8 @@ class ShareSyncService {
 	private function keepVersion(Secret $source, Secret $preUpdate, Secret $after, string $writerId): void {
 		// The source unless the writer owns it, a copy only when they do.
 		$writersOwn = $preUpdate->getOwnerType() === 'user' && $preUpdate->getOwnerId() === $writerId;
-		if (($preUpdate->getId() === $source->getId()) === $writersOwn) {
-			return;
-		}
-
-		$hadValues = (string)$preUpdate->getKey() !== ''
-			|| (string)$preUpdate->getLogin() !== ''
-			|| (string)$preUpdate->getAdditionalFields() !== '';
-		$changed = $preUpdate->getKey() !== $after->getKey()
-			|| $preUpdate->getLogin() !== $after->getLogin()
-			|| $preUpdate->getAdditionalFields() !== $after->getAdditionalFields();
-		if ($hadValues === true && $changed === true) {
-			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $writerId);
+		if (($preUpdate->getId() === $source->getId()) !== $writersOwn) {
+			$this->versionService->snapshotIfChanged(preUpdate: $preUpdate, after: $after, actorType: 'user', actorId: $writerId);
 		}
 	}//end keepVersion()
 
