@@ -78,6 +78,7 @@ class ShareSyncService {
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param SecretVersionService|null $versionService The version history (snapshot of a source written by anyone but its owner)
 	 *
 	 * @return void
 	 *
@@ -90,6 +91,7 @@ class ShareSyncService {
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
 		?ShareAuditTrail $auditTrail = null,
+		private ?SecretVersionService $versionService = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -149,7 +151,13 @@ class ShareSyncService {
 		return $this->atomic(
 			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
-				$updated = $this->writeCopyBlobs(source: $source, updates: $updates, allowedIds: $allowedIds, savedAt: $savedAt);
+				$updated = $this->writeCopyBlobs(
+					source: $source,
+					updates: $updates,
+					allowedIds: $allowedIds,
+					savedAt: $savedAt,
+					writerId: $userId
+				);
 				if ($updated > 0) {
 					$this->recordNonOwnerSync(source: $source, userId: $userId, writesOn: $writesOn);
 				}
@@ -380,19 +388,29 @@ class ShareSyncService {
 
 	/**
 	 * Write every permitted recipient blob. Opens no transaction: the caller
-	 * runs it inside its own, so it commits with the rest of the save.
+	 * runs it inside its own, so it commits with the rest of the save. When
+	 * anyone but the owner writes the source, its state before the write is
+	 * kept as a version, as the owner's own update keeps it.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
 	 * @param DateTime $savedAt The version every written row gets
+	 * @param string|null $writerId The caller; null takes no snapshot
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
 	 */
-	public function writeCopyBlobs(Secret $source, array $updates, array $allowedIds, DateTime $savedAt): int {
+	public function writeCopyBlobs(
+		Secret $source,
+		array $updates,
+		array $allowedIds,
+		DateTime $savedAt,
+		?string $writerId = null,
+	): int {
 		$updated = 0;
 		foreach ($updates as $update) {
 			$recipientSecretId = (string)($update['secretId'] ?? '');
@@ -406,7 +424,11 @@ class ShareSyncService {
 				continue;
 			}
 
+			$preUpdate = clone $copy;
 			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt);
+			if ($recipientSecretId === $source->getId()) {
+				$this->snapshotSource(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
+			}
 
 			// A key rewrite of the SOURCE row is a real rotation —
 			// advance keyUpdatedAt so rotation proofs stay honest
@@ -421,6 +443,41 @@ class ShareSyncService {
 
 		return $updated;
 	}//end writeCopyBlobs()
+
+	/**
+	 * Keep the source's state before a write by anyone but its owner (a
+	 * delegate, a team-folder writer or a member of a group it is shared with)
+	 * as a version, with the writer as its actor: only when a value changes
+	 * and the source held a value, as SecretService does on the owner's own
+	 * update. The other copies are not kept: a recipient's history is its own
+	 * copy's, and the owner's update keeps none of them either.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param Secret $preUpdate The source row as read under the lock
+	 * @param Secret $after The source row with the write applied
+	 * @param string|null $writerId The caller; null takes no snapshot
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 */
+	private function snapshotSource(Secret $source, Secret $preUpdate, Secret $after, ?string $writerId): void {
+		if ($this->versionService === null || $writerId === null
+			|| ($source->getOwnerType() === 'user' && $source->getOwnerId() === $writerId)
+		) {
+			return;
+		}
+
+		$hadValues = (string)$preUpdate->getKey() !== ''
+			|| (string)$preUpdate->getLogin() !== ''
+			|| (string)$preUpdate->getAdditionalFields() !== '';
+		$changed = $preUpdate->getKey() !== $after->getKey()
+			|| $preUpdate->getLogin() !== $after->getLogin()
+			|| $preUpdate->getAdditionalFields() !== $after->getAdditionalFields();
+		if ($hadValues === true && $changed === true) {
+			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $writerId);
+		}
+	}//end snapshotSource()
 
 	/**
 	 * Copy one re-encrypted blob onto a recipient's Secret row.

@@ -287,6 +287,7 @@ class ShareSaveServiceTest extends TestCase {
 			suiteMapper: $this->suites,
 			db: $this->db,
 			auth: ($auth ?? $this->auth),
+			versionService: $this->versionHistory,
 		);
 
 		return new ShareSaveService(
@@ -850,16 +851,55 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(['written' => 1, 'skipped' => 1], $result['copies']);
 	}
 
+	/**
+	 * Log the snapshots the copy fan-out takes, as `snapshot <id> <key> <actor>`.
+	 *
+	 * @return void
+	 */
+	private function logSnapshots(): void {
+		$this->versionHistory->method('snapshot')->willReturnCallback(
+			function (Secret $preUpdate, string $actorType, string $actorId): SecretVersion {
+				$this->log[] = 'snapshot '.$preUpdate->getId().' '.$preUpdate->getKey().' '.$actorType.':'.$actorId;
+				return new SecretVersion();
+			}
+		);
+	}
+
 	public function testAGroupMemberWritesTheSourceAndTheOtherCopiesAndIsAuditedAsAGroupWrite(): void {
 		$auth = $this->groupAuth(members: ['bob']);
+		$this->logSnapshots();
 		$this->audit->expects($this->once())->method('recordTeamWriteSync')->with('bob', 'src', 'Router', 'group-write sync');
 		$this->federated->expects($this->never())->method('writeCiphertext');
 
 		$result = $this->service($auth)->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
 
-		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'row c-bob', 'commit'], $this->log);
+		// Alice's value before Bob's save is kept as a version of her source, Bob as its actor.
+		$this->assertSame(
+			['begin', 'lock src', 'lock c-bob', 'snapshot src OLD-src user:bob', 'copy src', 'copy c-carol', 'row c-bob', 'commit'],
+			$this->log
+		);
 		$this->assertSame(['written' => 2, 'skipped' => 0], $result['copies']);
 		$this->assertTrue($result['federated']['ownerOnly']);
+	}
+
+	public function testAWriteGradeMembersSaveKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$this->bobWritesOnAGrade();
+		$this->logSnapshots();
+
+		$this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
+
+		$this->assertSame(
+			['begin', 'lock src', 'lock c-bob', 'snapshot src OLD-src user:bob', 'copy src', 'copy c-carol', 'row c-bob', 'commit'],
+			$this->log
+		);
+	}
+
+	public function testTheOwnersSaveTakesNoSnapshotInTheCopyFanOut(): void {
+		// The owner's row is snapshotted by SecretService::update(); the copies keep no version.
+		$this->delivery->method('deliver')->willReturn(true);
+		$this->versionHistory->expects($this->never())->method('snapshot');
+
+		$this->service()->save(id: 'src', request: $this->ownerRequest(), userId: 'alice');
 	}
 
 	public function testAMemberWhoLeftTheGroupIsRefusedThoughTheirCopyRemains(): void {

@@ -11,12 +11,14 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -52,8 +54,11 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 	private ShareAuditTrail&MockObject $audit;
 
+	private SecretVersionService&MockObject $versions;
+
 	protected function setUp(): void {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
+		$this->versions = $this->createMock(SecretVersionService::class);
 		$this->addRow(id: 'src', owner: 'alice');
 		$this->addRow(id: 'c-bob', owner: 'bob');
 		$this->addRow(id: 'c-dan', owner: 'dan');
@@ -154,6 +159,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 				groupManager: $groups,
 			),
 			auditTrail: $this->audit,
+			versionService: $this->versions,
 		);
 	}
 
@@ -193,6 +199,27 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			->with('bob', 'src', 'Router', 'group-write sync');
 
 		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob'));
+	}
+
+	public function testAGroupMembersSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$this->rows['src']->setKey('OLD');
+		$this->versions->expects($this->once())->method('snapshot')
+			->with(
+				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src' && $preUpdate->getKey() === 'OLD'),
+				'user',
+				'bob'
+			)
+			->willReturn(new SecretVersion());
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob');
+	}
+
+	public function testTheOwnersSyncTakesNoSnapshotOfTheSource(): void {
+		// The owner's own update through PUT /secrets/{id} keeps her version.
+		$this->rows['src']->setKey('OLD');
+		$this->versions->expects($this->never())->method('snapshot');
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'alice');
 	}
 
 	public function testAMemberWhoLeftTheGroupKeepsTheirCopyButNoWriteGrade(): void {
