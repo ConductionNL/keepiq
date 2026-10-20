@@ -240,7 +240,7 @@ A user who already holds a copy of the secret when they join, for example throug
 ### Requirement: Member Leaves Group — Auto-Revocation
 When a user leaves a Nextcloud group, all SecretShares for that user originating from a GroupShare for that group MUST be automatically revoked (deleted), along with the encrypted copies in the user's vault.
 
-Direct shares (where `group_share_id` is null) are unaffected — leaving a group does not remove access granted independently of the group.
+Direct shares (where `group_share_id` is null) are not removed: leaving a group does not remove access granted independently of the group, though the holder loses the right to save for everyone that the group gave them (see `sharing-group`).
 
 #### Scenario: Member leaves group
 - GIVEN user Y has a SecretShare for secret S with `group_share_id` referencing GroupShare for group G
