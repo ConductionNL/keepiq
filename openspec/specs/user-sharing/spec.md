@@ -11,7 +11,7 @@
 
 A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, a delegate or a recipient who holds a write grade on it updates the secret, the change is written back to all copies.
 
-Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. A direct share is never created or removed by a change in group membership. What its holder may do with their copy does follow membership, though: a holder who is in a group the secret is shared with in full saves for everyone, also when they joined that group after their copy was made, with nothing for the owner to approve (see `sharing-group`).
+Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding those who don't hold a copy yet. When members leave a group, their group-derived shares are automatically revoked. A direct share is never created or removed by a change in group membership. What its holder may do with their copy does follow membership, though: a holder who is in a group the secret is shared with in full saves for everyone, also when they joined that group after their copy was made. The owner is then told, with nothing to approve (see `sharing-group`).
 
 ## Data Model
 
@@ -217,7 +217,7 @@ Members without an active EncryptionSuite are skipped at expansion time. No erro
 - AND a GroupShare record MUST be created for the secret-group pair
 
 ### Requirement: New Group Member — Owner Notification
-When a new user joins a Nextcloud group that has a GroupShare for one or more secrets, the secret owner MUST be notified for each affected secret and asked to approve adding the new member.
+When a new user joins a Nextcloud group that has a GroupShare for one or more secrets, the secret owner MUST be notified for each affected secret and asked to approve adding the new member, unless the new member already holds a copy of that secret (see below).
 
 This follows the same pattern as the share request mechanism: the owner approves or denies; the system acts on their decision.
 
@@ -228,7 +228,16 @@ Notification content:
 On approval: a new SecretShare is created for X (with `group_share_id` set), and X is notified of the new share.
 On denial: no share is created. The GroupShare remains active for future members.
 
-A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share. The owner is still notified, and approving creates nothing. Their existing copy gains the right to save for everyone from the moment they are in the group, as `sharing-group` requires.
+A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share and the owner is not asked to approve anything. When joining lets their copy save for everyone, as `sharing-group` requires from the moment they are in the group, the owner MUST instead get the `group_member_gained_write` notification, without Approve or Deny: "*{X}* joined the group *{G}* and can now change *{secret}* for everyone it is shared with. Revoke their share to stop this." It follows the owner's `notify_security` setting, not `notify_group_shares`. When joining changes nothing for them, for example because the group share or their copy is use-only, the owner MUST NOT be notified.
+
+#### Scenario: A copy holder who joins a shared group can now change the secret
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testACopyHolderWhoJoinsASharedGroupLaterSavesForEveryone.
+
+- GIVEN group G has a full GroupShare for a secret owned by A, and A shared the secret directly with X
+- WHEN user X joins group G
+- THEN A MUST receive a `group_member_gained_write` notification saying X can now change the secret for everyone, with no actions
+- AND no second SecretShare MUST be created for X
 
 #### Scenario: New member joins group
 - GIVEN group G has a GroupShare for a secret owned by A
