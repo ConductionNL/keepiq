@@ -40,6 +40,14 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	/** The version of `src` a sync is made from */
 	private const BASE = '2026-10-01T10:00:00+00:00';
 
+	/** The write context of a row that leads to no source the caller stands on */
+	private const OWN_ROW_ONLY = [
+		'sourceSecretId' => null,
+		'effectiveGrade' => 'none',
+		'ownerCertificate' => null,
+		'sourceUpdatedAt' => null,
+	];
+
 	/** @var array<string,Secret> */
 	private array $rows = [];
 
@@ -504,6 +512,36 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		// Even the owner, who reaches the source, gets the answer of an unknown id.
 		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
 		$this->sync()->writeContext('c-bob', 'alice');
+	}
+
+	public function testTheHolderOfACopyWithTwoShareRowsGetsNoneForTheirOwnRow(): void {
+		$this->targets[] = $this->target(copyId: 'c-bob', userId: 'bob', groupShareId: null);
+
+		$this->assertSame(self::OWN_ROW_ONLY, $this->sync()->writeContext('c-bob', 'bob'));
+	}
+
+	public function testAHolderWithTwoShareRowsForTheSourceGetsNoneForTheirOwnRow(): void {
+		// A second share to Bob, raced past the first, made him a second copy.
+		$this->addRow(id: 'c-bob-2', owner: 'bob');
+		$this->targets[] = $this->target(copyId: 'c-bob-2', userId: 'bob', groupShareId: null);
+
+		$this->assertSame(self::OWN_ROW_ONLY, $this->sync()->writeContext('c-bob', 'bob'));
+	}
+
+	public function testAnOwnRowBehindAShareRowKeyedToSomeoneElseGetsNoneAndNoSource(): void {
+		// Erin's own secret was named as Frank's copy of Alice's secret.
+		$this->addRow(id: 'e-own', owner: 'erin');
+		$this->targets[] = $this->target(copyId: 'e-own', userId: 'frank', groupShareId: null);
+
+		$this->assertSame(self::OWN_ROW_ONLY, $this->sync()->writeContext('e-own', 'erin'));
+	}
+
+	public function testSomeoneElsesRowBehindAShareRowKeyedToAnotherUserIsAnsweredAsAnUnknownSecret(): void {
+		$this->addRow(id: 'e-own', owner: 'erin');
+		$this->targets[] = $this->target(copyId: 'e-own', userId: 'frank', groupShareId: null);
+
+		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
+		$this->sync()->writeContext('e-own', 'mallory');
 	}
 
 	public function testACallerWithoutAccessIsAnsweredAsAnUnknownSecret(): void {

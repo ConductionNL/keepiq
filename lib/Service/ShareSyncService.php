@@ -321,12 +321,13 @@ class ShareSyncService {
 	 * material). A member of a group the secret is shared with gets the
 	 * `write` grade through their copy. Only a caller who reaches the
 	 * source gets an answer: its owner, a delegate, a team-folder member
-	 * with a grade on it, or the holder of a live copy of it.
+	 * with a grade on it, or the holder of a live copy of it. A caller who
+	 * reaches no source through a live row of their own gets ownRowContext().
 	 *
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
 	 *
-	 * @return array{sourceSecretId:string, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
+	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
 	 *
@@ -344,12 +345,13 @@ class ShareSyncService {
 		} catch (DoesNotExistException) {
 			// Not a copy — the secret is its own source.
 		} catch (MultipleObjectsReturnedException) {
-			throw new InvalidArgumentException(message: 'Secret not found');
+			return $this->ownRowContext(row: $secret, userId: $userId);
 		}
 
-		// Unknown and unreachable secrets get the same answer.
-		$grade = $this->standingOn(source: $source, userId: $userId)['grade']
-			?? throw new InvalidArgumentException(message: 'Secret not found');
+		$grade = $this->standingOn(source: $source, userId: $userId)['grade'];
+		if ($grade === null) {
+			return $this->ownRowContext(row: $secret, userId: $userId);
+		}
 
 		$ownerCertificate = null;
 		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
@@ -369,6 +371,39 @@ class ShareSyncService {
 			'sourceUpdatedAt' => $source->getUpdatedAt()?->format(DateTime::ATOM),
 		];
 	}//end writeContext()
+
+	/**
+	 * The write context of a row whose share rows lead to no source the
+	 * caller stands on: two share rows for one copy or source, or a share row
+	 * keyed to someone else. The holder of a live row still gets `none`, so
+	 * their client saves that row alone. The answer names no source, as the
+	 * share row may point at someone else's secret. Anyone else gets the
+	 * answer of an unknown id.
+	 *
+	 * @param Secret $row The secret the caller asked about
+	 * @param string $userId The requesting user
+	 *
+	 * @return array{sourceSecretId:null, effectiveGrade:string, ownerCertificate:null, sourceUpdatedAt:null}
+	 *
+	 * @throws InvalidArgumentException When the row is not the caller's, or its access ended
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	private function ownRowContext(Secret $row, string $userId): array {
+		$ends = $row->getAccessExpiresAt();
+		if ($row->getOwnerType() !== 'user' || $row->getOwnerId() !== $userId
+			|| ($ends !== null && $ends->getTimestamp() <= time())
+		) {
+			throw new InvalidArgumentException(message: 'Secret not found');
+		}
+
+		return [
+			'sourceSecretId' => null,
+			'effectiveGrade' => 'none',
+			'ownerCertificate' => null,
+			'sourceUpdatedAt' => null,
+		];
+	}//end ownRowContext()
 
 	/**
 	 * The caller's grade on a source and, when it lets them write every copy

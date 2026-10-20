@@ -421,7 +421,7 @@ class ShareService {
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
 	 *
-	 * @return array{sourceSecretId:string, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
+	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
 	 *
