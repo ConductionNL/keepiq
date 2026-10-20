@@ -115,7 +115,10 @@
 <script>
 import { NcButton, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { FederatedCertificateError } from '../../crypto/federatedCertificate.js'
-import { useFederatedShareStore } from '../../store/modules/federatedShare.js'
+import {
+	CloudIdMismatchError,
+	useFederatedShareStore,
+} from '../../store/modules/federatedShare.js'
 import { useSecretStore } from '../../store/modules/secret.js'
 
 export default {
@@ -276,7 +279,10 @@ export default {
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
 		 */
 		explain(e) {
-			if (e instanceof FederatedCertificateError) {
+			if (
+				e instanceof FederatedCertificateError
+				|| e instanceof CloudIdMismatchError
+			) {
 				return t(
 					'keepiq',
 					'The certificate could not be verified. Nothing was shared.',

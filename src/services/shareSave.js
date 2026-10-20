@@ -22,6 +22,7 @@ import { FederatedCertificateError } from '../crypto/federatedCertificate.js'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../crypto/index.js'
 import { importSpkiPublicKey } from '../crypto/rsa.js'
 import {
+	CloudIdMismatchError,
 	fingerprintHex,
 	useFederatedShareStore,
 } from '../store/modules/federatedShare.js'
@@ -46,9 +47,15 @@ const COPY_WRITER_GRADES = ['owner', 'write', 'manage']
 
 /**
  * Partner lookup refusals that mean the share is gone for good, so it is
- * suspended; `bad_chain` from the server is the refusal the browser makes.
+ * suspended, each with the status this server answers it with; on another
+ * status the reason is not this server's refusal. `bad_chain` from the server
+ * is the refusal the browser makes.
  */
-const PARTNER_GONE = ['bad_chain', 'unknown_recipient', 'not_a_partner']
+const PARTNER_GONE = new Map([
+	['unknown_recipient', 404],
+	['not_a_partner', 403],
+	['bad_chain', 502],
+])
 
 /**
  * How long one save waits in total on the partner lookup limit (60 per
@@ -112,6 +119,20 @@ function partnerUnreachable(error) {
 	return (
 		error?.response?.status === 502
 		&& error.response.data?.message === 'partner_unreachable'
+	)
+}
+
+/**
+ * Whether a lookup refusal says the partner share is gone for good.
+ *
+ * @param {object} error The lookup's axios error.
+ * @return {boolean}
+ */
+function partnerGone(error) {
+	const reason = error?.response?.data?.message
+	return (
+		PARTNER_GONE.has(reason)
+		&& PARTNER_GONE.get(reason) === error.response.status
 	)
 }
 
@@ -444,14 +465,13 @@ export async function saveShared({
 			try {
 				recipient = await partnerCertificate(share)
 			} catch (e) {
-				const reason =
+				// An answer for another cloud id is not a certificate for this
+				// recipient, so like one that does not verify it suspends the share.
+				const unverified =
 					e instanceof FederatedCertificateError
-						? e.reason
-						: e?.response?.data?.message
-				if (
-					e instanceof FederatedCertificateError
-					|| PARTNER_GONE.includes(reason)
-				) {
+					|| e instanceof CloudIdMismatchError
+				const reason = unverified ? e.reason : e?.response?.data?.message
+				if (unverified || partnerGone(e)) {
 					suspend.set(share.shareId, { shareId: share.shareId, reason })
 				} else if (partnerUnreachable(e)) {
 					unreachable.push({ ...share, reason })

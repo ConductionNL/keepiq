@@ -486,12 +486,20 @@ describe('saveShared on the owner path', () => {
 	})
 
 	it('aborts with an ordinary error when this server fails the partner lookup', async () => {
-		for (const status of [500, 409]) {
+		for (const [status, message] of [
+			[500, 'x'],
+			[409, 'x'],
+			// A gone reason only counts with the status this server sends it with.
+			[500, 'unknown_recipient'],
+			[500, 'not_a_partner'],
+			[500, 'bad_chain'],
+			[404, 'not_a_partner'],
+		]) {
 			const log = shareSaveServer({
 				id: 's1',
 				partners: [{ shareId: 'fs-1', recipientCloudId: 'bob@partner' }],
 				lookup: {
-					'bob@partner': { reject: httpError(status, { message: 'x' }) },
+					'bob@partner': { reject: httpError(status, { message }) },
 				},
 			})
 

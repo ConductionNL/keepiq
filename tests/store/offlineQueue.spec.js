@@ -682,6 +682,36 @@ describe('replay', () => {
 		)
 	})
 
+	it('a partner lookup answered for another account suspends that share, and the queue goes on', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		await secrets.createSecret({ name: 'B', key: 'v' })
+		goOnline()
+		const log = shareSaveServer({
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+			rows: { s1: { id: 's1', updatedAt: BASE } },
+			posts: { '/api/v1/secrets': { id: 'created' } },
+			lookup: {
+				[BOB]: {
+					...BOB_VERIFIED,
+					cloudId: 'mallory@cloud.partner.example',
+					certificate: CHAIN.mallory,
+				},
+			},
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 2, stopped: false })
+		expect(log.saves.at(-1).federated).toEqual([])
+		expect(log.saves.at(-1).suspend).toEqual([
+			{ shareId: 'fs-1', reason: 'cloud_id_mismatch' },
+		])
+		expect(offline.failedEntries).toEqual([])
+		expect(stored.size).toBe(0)
+	})
+
 	it('keeps the reason sealed with the entry, so it is still shown after a reload', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { key: 'new' })
