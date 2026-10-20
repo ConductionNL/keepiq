@@ -6,6 +6,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
@@ -17,17 +18,22 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\GroupShareService;
+use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
+use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Alice owns `src`, shared with the `admin` group (Bob's copy `c-bob`) and
@@ -402,6 +408,73 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
 		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
+	}
+
+	public function testACopyHolderWhoJoinsASharedGroupLaterSavesForEveryone(): void {
+		// Dan's copy came through a direct share; later a group admin adds him to admin.
+		$this->assertSame('none', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->once())->method('notify')
+			->with('group_member_added', 'alice', $this->anything(), 'secret', 'src');
+		$groupShares = $this->groupShareService(notifications: $notifications);
+		$this->groups['admin'][] = 'dan';
+		$groupShares->handleNewGroupMember('dan', 'admin');
+
+		// Before Alice answers the notification.
+		$context = $this->sync()->writeContext('c-dan', 'dan');
+		$this->assertSame('write', $context['effectiveGrade']);
+		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
+
+		// Approving it changes nothing: Dan already holds a copy.
+		$groupShares->approveGroupMemberShare('gs-admin', 'dan', 'c-dan-2', 'alice');
+		$this->assertCount(2, $this->targets);
+	}
+
+	private function groupShareService(NotificationService $notifications): GroupShareService {
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findById')->willReturnCallback(
+			fn (string $id): Secret => $this->rows[$id] ?? throw new DoesNotExistException('none')
+		);
+		$targets = $this->createMock(ShareTargetMapper::class);
+		$targets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceId, string $userId): ShareTarget => $this->targetWhere(
+				match: static fn (ShareTarget $t): bool => $t->getSourceSecretId() === $sourceId && $t->getTargetUserId() === $userId
+			)
+		);
+		$targets->method('insert')->willReturnCallback(
+			function (ShareTarget $target): ShareTarget {
+				$this->targets[] = $target;
+				return $target;
+			}
+		);
+		$groupShares = $this->createMock(GroupShareMapper::class);
+		$groupShares->method('findById')->willReturnCallback(
+			fn (string $id): GroupShare => array_values(array_filter(
+				$this->groupShares,
+				static fn (GroupShare $share): bool => $share->getId() === $id
+			))[0] ?? throw new DoesNotExistException('none')
+		);
+		$groupShares->method('findByGroup')->willReturnCallback(
+			fn (string $groupId): array => array_values(array_filter(
+				$this->groupShares,
+				static fn (GroupShare $share): bool => $share->getGroupId() === $groupId
+			))
+		);
+
+		return new GroupShareService(
+			mapper: $groupShares,
+			shareTargetMapper: $targets,
+			bulkGrantMapper: $this->createMock(BulkGrantShareTargetMapper::class),
+			secretMapper: $secrets,
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			delegationMapper: $this->createMock(SecretDelegationMapper::class),
+			groupManager: $this->createMock(IGroupManager::class),
+			notificationService: $notifications,
+			logger: $this->createMock(LoggerInterface::class),
+			shareManager: $this->createMock(IShareManager::class),
+			revocationService: $this->createMock(ShareRevocationService::class),
+		);
 	}
 
 	public function testAMemberWhoseCopyCameThroughATeamFolderGetsTheWriteGrade(): void {
