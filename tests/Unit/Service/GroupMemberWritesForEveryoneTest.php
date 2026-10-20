@@ -25,6 +25,7 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -136,6 +137,17 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	}
 
 	private function sync(): ShareSyncService {
+		return $this->wire()[0];
+	}
+
+	private function context(): ShareWriteContext {
+		return $this->wire()[1];
+	}
+
+	/**
+	 * @return array{0:ShareSyncService,1:ShareWriteContext}
+	 */
+	private function wire(): array {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturnCallback(
 			function (string $id): Secret {
@@ -221,16 +233,19 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			groupManager: $groups,
 		);
 
-		return new ShareSyncService(
+		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth);
+		$sync = new ShareSyncService(
 			mapper: $targets,
 			secretMapper: $secrets,
-			suiteMapper: $suites,
 			db: $this->createMock(IDBConnection::class),
 			auth: $auth,
 			auditTrail: $this->audit,
 			versionService: $this->versions,
 			guards: new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth),
+			contexts: $contexts,
 		);
+
+		return [$sync, $contexts];
 	}
 
 	/**
@@ -257,7 +272,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	}
 
 	public function testAGroupMemberGetsTheWriteGradeAndTheOwnerCertificate(): void {
-		$context = $this->sync()->writeContext('c-bob', 'bob');
+		$context = $this->context()->writeContext('c-bob', 'bob');
 
 		$this->assertSame('src', $context['sourceSecretId']);
 		$this->assertSame('write', $context['effectiveGrade']);
@@ -458,7 +473,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		// The leave cleanup failed: Bob's copy and its share row are still there.
 		$this->groups['admin'] = ['mallory'];
 
-		$context = $this->sync()->writeContext('c-bob', 'bob');
+		$context = $this->context()->writeContext('c-bob', 'bob');
 		$this->assertSame('none', $context['effectiveGrade']);
 		$this->assertNull($context['ownerCertificate']);
 
@@ -467,7 +482,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	}
 
 	public function testADirectRecipientKeepsEditingOnlyTheirOwnCopy(): void {
-		$context = $this->sync()->writeContext('c-dan', 'dan');
+		$context = $this->context()->writeContext('c-dan', 'dan');
 		$this->assertSame('none', $context['effectiveGrade']);
 		$this->assertNull($context['ownerCertificate']);
 
@@ -480,13 +495,13 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->audit->expects($this->once())->method('recordTeamWriteSync')
 			->with('dan', 'src', 'Router', 'group-write sync');
 
-		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame('write', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
 	}
 
 	public function testACopyHolderWhoJoinsASharedGroupLaterSavesForEveryone(): void {
 		// Dan's copy came through a direct share; later a group admin adds him to admin.
-		$this->assertSame('none', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 
 		$notifications = $this->createMock(NotificationService::class);
 		$notifications->expects($this->once())->method('notify')
@@ -496,7 +511,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$groupShares->handleNewGroupMember('dan', 'admin');
 
 		// Before Alice answers the notification.
-		$context = $this->sync()->writeContext('c-dan', 'dan');
+		$context = $this->context()->writeContext('c-dan', 'dan');
 		$this->assertSame('write', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
 
@@ -559,7 +574,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->audit->expects($this->once())->method('recordTeamWriteSync')
 			->with('dan', 'src', 'Router', 'group-write sync');
 
-		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame('write', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
 	}
 
@@ -568,14 +583,14 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->groupShares[] = $this->groupShare(id: 'gs-ops', secretId: 'src', groupId: 'ops');
 		$this->groups = ['admin' => ['mallory'], 'ops' => ['bob']];
 
-		$this->assertSame('write', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
+		$this->assertSame('write', $this->context()->writeContext('c-bob', 'bob')['effectiveGrade']);
 	}
 
 	public function testADirectCopyCarryingAnotherSecretsGroupShareIdGivesNone(): void {
 		$this->targets[1]->setGroupShareId('gs-other');
 		$this->groups['staff'] = ['dan'];
 
-		$this->assertSame('none', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 
 		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
 		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan');
@@ -585,7 +600,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		// The revoke removed the group share; Bob's copy is still there.
 		$this->groupShares = [];
 
-		$this->assertSame('none', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
+		$this->assertSame('none', $this->context()->writeContext('c-bob', 'bob')['effectiveGrade']);
 
 		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
 		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
@@ -594,7 +609,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	public function testAnExpiredGroupShareGivesNone(): void {
 		$this->groupShares[0]->setExpiresAt(new DateTime('-1 minute'));
 
-		$this->assertSame('none', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
+		$this->assertSame('none', $this->context()->writeContext('c-bob', 'bob')['effectiveGrade']);
 	}
 
 	public function testAFullDirectSharePlusAUseOnlyGroupShareGivesNone(): void {
@@ -602,7 +617,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->groupShares[0]->setUseOnly(true);
 		$this->groups['admin'][] = 'dan';
 
-		$this->assertSame('none', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 
 		$this->expectExceptionObject(new InvalidArgumentException('Not authorized to manage shares of this secret'));
 		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan');
@@ -613,7 +628,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->groupShares[] = $this->groupShare(id: 'gs-ops', secretId: 'src', groupId: 'ops');
 		$this->groups['ops'] = ['bob'];
 
-		$this->assertSame('write', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
+		$this->assertSame('write', $this->context()->writeContext('c-bob', 'bob')['effectiveGrade']);
 	}
 
 	public function testATeamReadMemberWithAUseOnlyGroupShareGetsRead(): void {
@@ -621,13 +636,13 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->groupShares[0]->setUseOnly(true);
 		$this->teamGrades['bob'] = 'read';
 
-		$this->assertSame('read', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
+		$this->assertSame('read', $this->context()->writeContext('c-bob', 'bob')['effectiveGrade']);
 	}
 
 	public function testATeamReadMemberStillGetsRead(): void {
 		$this->teamGrades['tina'] = 'read';
 
-		$context = $this->sync()->writeContext('src', 'tina');
+		$context = $this->context()->writeContext('src', 'tina');
 		$this->assertSame('read', $context['effectiveGrade']);
 		$this->assertNull($context['ownerCertificate']);
 	}
@@ -635,7 +650,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	public function testATeamReadMemberInTheGroupWithACopyGetsWrite(): void {
 		$this->teamGrades['bob'] = 'read';
 
-		$context = $this->sync()->writeContext('c-bob', 'bob');
+		$context = $this->context()->writeContext('c-bob', 'bob');
 		$this->assertSame('write', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
 	}
@@ -643,14 +658,14 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	public function testAUseOnlyGroupCopyGivesNoWriteGrade(): void {
 		$this->rows['c-bob']->setUseOnly(true);
 
-		$this->assertSame('none', $this->sync()->writeContext('c-bob', 'bob')['effectiveGrade']);
+		$this->assertSame('none', $this->context()->writeContext('c-bob', 'bob')['effectiveGrade']);
 	}
 
 	public function testAGroupCopyWhoseAccessEndedIsAnsweredAsAnUnknownSecret(): void {
 		$this->rows['c-bob']->setAccessExpiresAt(new DateTime('-1 minute'));
 
 		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
-		$this->sync()->writeContext('c-bob', 'bob');
+		$this->context()->writeContext('c-bob', 'bob');
 	}
 
 	public function testACopyWithTwoShareRowsIsAnsweredAsAnUnknownSecret(): void {
@@ -658,13 +673,13 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 		// Even the owner, who reaches the source, gets the answer of an unknown id.
 		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
-		$this->sync()->writeContext('c-bob', 'alice');
+		$this->context()->writeContext('c-bob', 'alice');
 	}
 
 	public function testTheHolderOfACopyWithTwoShareRowsGetsNoneForTheirOwnRow(): void {
 		$this->targets[] = $this->target(copyId: 'c-bob', userId: 'bob', groupShareId: null);
 
-		$this->assertSame(self::OWN_ROW_ONLY, $this->sync()->writeContext('c-bob', 'bob'));
+		$this->assertSame(self::OWN_ROW_ONLY, $this->context()->writeContext('c-bob', 'bob'));
 	}
 
 	public function testAHolderWithTwoShareRowsForTheSourceGetsNoneForTheirOwnRow(): void {
@@ -672,7 +687,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->addRow(id: 'c-bob-2', owner: 'bob');
 		$this->targets[] = $this->target(copyId: 'c-bob-2', userId: 'bob', groupShareId: null);
 
-		$this->assertSame(self::OWN_ROW_ONLY, $this->sync()->writeContext('c-bob', 'bob'));
+		$this->assertSame(self::OWN_ROW_ONLY, $this->context()->writeContext('c-bob', 'bob'));
 	}
 
 	public function testAnOwnRowBehindAShareRowKeyedToSomeoneElseGetsNoneAndNoSource(): void {
@@ -680,7 +695,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->addRow(id: 'e-own', owner: 'erin');
 		$this->targets[] = $this->target(copyId: 'e-own', userId: 'frank', groupShareId: null);
 
-		$this->assertSame(self::OWN_ROW_ONLY, $this->sync()->writeContext('e-own', 'erin'));
+		$this->assertSame(self::OWN_ROW_ONLY, $this->context()->writeContext('e-own', 'erin'));
 	}
 
 	public function testSomeoneElsesRowBehindAShareRowKeyedToAnotherUserIsAnsweredAsAnUnknownSecret(): void {
@@ -688,22 +703,22 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->targets[] = $this->target(copyId: 'e-own', userId: 'frank', groupShareId: null);
 
 		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
-		$this->sync()->writeContext('e-own', 'mallory');
+		$this->context()->writeContext('e-own', 'mallory');
 	}
 
 	public function testACallerWithoutAccessIsAnsweredAsAnUnknownSecret(): void {
 		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
-		$this->sync()->writeContext('src', 'eve');
+		$this->context()->writeContext('src', 'eve');
 	}
 
 	public function testKnowingAGroupCopysIdGivesNoAnswer(): void {
 		// Mallory is in the group but holds no copy; Bob's copy id is all she has.
 		$this->expectExceptionObject(new InvalidArgumentException('Secret not found'));
-		$this->sync()->writeContext('c-bob', 'mallory');
+		$this->context()->writeContext('c-bob', 'mallory');
 	}
 
 	public function testTheOwnerStillGetsTheOwnerGradeThroughAnyCopy(): void {
-		$context = $this->sync()->writeContext('c-bob', 'alice');
+		$context = $this->context()->writeContext('c-bob', 'alice');
 
 		$this->assertSame('owner', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);

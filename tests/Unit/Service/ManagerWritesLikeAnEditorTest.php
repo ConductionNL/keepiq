@@ -14,6 +14,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -29,6 +30,13 @@ use PHPUnit\Framework\TestCase;
 class ManagerWritesLikeAnEditorTest extends TestCase {
 
 	private function sync(string $grade, ?SecretVersionService $versions = null): ShareSyncService {
+		return $this->wire(grade: $grade, versions: $versions)[0];
+	}
+
+	/**
+	 * @return array{0:ShareSyncService,1:ShareWriteContext}
+	 */
+	private function wire(string $grade, ?SecretVersionService $versions = null): array {
 		$source = new Secret();
 		$source->setId('src');
 		$source->setOwnerType('user');
@@ -55,15 +63,18 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 			teamFolderService: $teamFolders,
 		);
 
-		return new ShareSyncService(
+		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth);
+		$sync = new ShareSyncService(
 			mapper: $targets,
 			secretMapper: $secrets,
-			suiteMapper: $suites,
 			db: $this->createMock(IDBConnection::class),
 			auth: $auth,
 			versionService: ($versions ?? $this->createMock(SecretVersionService::class)),
 			guards: new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth),
+			contexts: $contexts,
 		);
+
+		return [$sync, $contexts];
 	}
 
 	public function testAManagerMaySync(): void {
@@ -88,7 +99,7 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 	}
 
 	public function testAManagerGetsTheOwnerCertificateForTheFanOut(): void {
-		$context = $this->sync('manage')->writeContext('src', 'olga');
+		$context = $this->wire('manage')[1]->writeContext('src', 'olga');
 		$this->assertSame('manage', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
 	}

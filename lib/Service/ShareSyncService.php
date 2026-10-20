@@ -4,10 +4,10 @@
  * Keepiq Share Sync Service
  *
  * The multi-recipient re-encryption fan-out of the share lifecycle
- * (implement-user-sharing §3.4, folder-permission-grades §2.3): the write
- * context a client needs to prepare a sync, the optimistic-lock check,
- * the membership guard that confines a sync to the source row and its
- * ACTUAL recipient copies, and the transactional blob write itself.
+ * (implement-user-sharing §3.4, folder-permission-grades §2.3): who may
+ * write a source for every copy, the optimistic-lock check, the membership
+ * guard that confines a sync to the source row and its ACTUAL recipient
+ * copies, and the transactional blob write itself.
  *
  * Extracted from ShareService — the fan-out is a distinct transaction
  * with its own authorization seam (a write-grade team member may sync a
@@ -31,14 +31,12 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
-use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
 
@@ -75,11 +73,11 @@ class ShareSyncService {
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
 	 * @param SecretMapper $secretMapper The Secret mapper (recipient copies)
-	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (owner certificate)
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param SecretVersionService $versionService The version history (snapshot of a source written by anyone but its owner)
 	 * @param ShareSyncGuards $guards The checks a write for every copy passes
+	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 *
 	 * @return void
@@ -89,11 +87,11 @@ class ShareSyncService {
 	public function __construct(
 		private ShareTargetMapper $mapper,
 		private SecretMapper $secretMapper,
-		private EncryptionSuiteMapper $suiteMapper,
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
 		private SecretVersionService $versionService,
 		private ShareSyncGuards $guards,
+		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
@@ -206,16 +204,8 @@ class ShareSyncService {
 	}//end recordNonOwnerSync()
 
 	/**
-	 * The write context of a secret for the current user
-	 * (folder-permission-grades §4): resolves a recipient copy back to
-	 * its source and reports the caller's effective grade plus the
-	 * owner-row material a write-grade member needs to run the
-	 * re-encrypt fan-out (the owner's certificate is public key
-	 * material). A member of a group the secret is shared with gets the
-	 * `write` grade through their copy. Only a caller who reaches the
-	 * source gets an answer: its owner, a delegate, a team-folder member
-	 * with a grade on it, or the holder of a live copy of it. A caller who
-	 * reaches no source through a live row of their own gets ownRowContext().
+	 * The write context of a secret for the current user, as
+	 * ShareWriteContext::writeContext() answers it.
 	 *
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
@@ -228,107 +218,8 @@ class ShareSyncService {
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function writeContext(string $secretId, string $userId): array {
-		$secret = $this->auth->loadSecret(secretId: $secretId);
-
-		// Pivot a recipient copy back to its source.
-		$source = $secret;
-		try {
-			$shareRow = $this->mapper->findByRecipientSecret(recipientSecretId: $secretId);
-			$source = $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
-		} catch (DoesNotExistException) {
-			// Not a copy — the secret is its own source.
-		} catch (MultipleObjectsReturnedException) {
-			return $this->ownRowContext(row: $secret, userId: $userId);
-		}
-
-		$grade = $this->standingOn(source: $source, userId: $userId)['grade'];
-		if ($grade === null) {
-			return $this->ownRowContext(row: $secret, userId: $userId);
-		}
-
-		$ownerCertificate = null;
-		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
-			try {
-				$ownerCertificate = $this->suiteMapper
-					->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
-					->getCertificate();
-			} catch (DoesNotExistException) {
-				// Owner without an active suite — fan-out skips the source row.
-			}
-		}
-
-		return [
-			'sourceSecretId' => $source->getId(),
-			'effectiveGrade' => $grade,
-			'ownerCertificate' => $ownerCertificate,
-			'sourceUpdatedAt' => $source->getUpdatedAt()?->format(DateTime::ATOM),
-		];
+		return $this->contexts->writeContext(secretId: $secretId, userId: $userId);
 	}//end writeContext()
-
-	/**
-	 * The write context of a row whose share rows lead to no source the
-	 * caller stands on: two share rows for one copy or source, or a share row
-	 * keyed to someone else. The holder of a live row still gets `none`, so
-	 * their client saves that row alone. The answer names no source, as the
-	 * share row may point at someone else's secret. Anyone else gets the
-	 * answer of an unknown id.
-	 *
-	 * @param Secret $row The secret the caller asked about
-	 * @param string $userId The requesting user
-	 *
-	 * @return array{sourceSecretId:null, effectiveGrade:string, ownerCertificate:null, sourceUpdatedAt:null}
-	 *
-	 * @throws InvalidArgumentException When the row is not the caller's, or its access ended
-	 *
-	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
-	 */
-	private function ownRowContext(Secret $row, string $userId): array {
-		$ends = $row->getAccessExpiresAt();
-		if ($row->getOwnerType() !== 'user' || $row->getOwnerId() !== $userId
-			|| ($ends !== null && $ends->getTimestamp() <= time())
-		) {
-			throw new InvalidArgumentException(message: 'Secret not found');
-		}
-
-		return [
-			'sourceSecretId' => null,
-			'effectiveGrade' => 'none',
-			'ownerCertificate' => null,
-			'sourceUpdatedAt' => null,
-		];
-	}//end ownRowContext()
-
-	/**
-	 * The caller's grade on a source and, when it lets them write every copy
-	 * as someone other than the owner or a delegate, how the audit names that
-	 * write: `owner` for the owner or a delegate, a team-folder write grade
-	 * (TEAM_WRITE), `write` for a member of a group it is shared with who
-	 * holds a live copy they may change (GROUP_WRITE), else their team-folder
-	 * or copy grade. The grade is null when the caller does not reach the
-	 * source.
-	 *
-	 * @param Secret $source The source secret
-	 * @param string $userId The requesting user
-	 *
-	 * @return array{grade:string|null, writesOn:string|null}
-	 */
-	private function standingOn(Secret $source, string $userId): array {
-		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
-			return ['grade' => 'owner', 'writesOn' => null];
-		}
-
-		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
-			return ['grade' => $grade, 'writesOn' => self::TEAM_WRITE];
-		}
-
-		$copyGrade = $this->auth->copyGrade(source: $source, userId: $userId);
-		if ($copyGrade === 'write') {
-			return ['grade' => $copyGrade, 'writesOn' => self::GROUP_WRITE];
-		}
-
-		return ['grade' => ($grade ?? $copyGrade), 'writesOn' => null];
-	}//end standingOn()
 
 	/**
 	 * Authorization seam for a sync (folder-permission-grades §2.3): the
@@ -347,7 +238,7 @@ class ShareSyncService {
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function resolveSyncWriter(Secret $source, string $userId): ?string {
-		$standing = $this->standingOn(source: $source, userId: $userId);
+		$standing = $this->contexts->standingOn(source: $source, userId: $userId);
 		if ($standing['grade'] === 'owner' || $standing['writesOn'] !== null) {
 			return $standing['writesOn'];
 		}
