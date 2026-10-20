@@ -97,6 +97,12 @@ class ShareSaveServiceTest extends TestCase {
 	/** The holder whose share row is gone when read again under the lock */
 	private ?string $goneUnderLock = null;
 
+	/** Whether the caller left the `admin` group before the lock */
+	private bool $leftGroupUnderLock = false;
+
+	/** Whether the share with the `admin` group was revoked before the lock */
+	private bool $groupShareRevokedUnderLock = false;
+
 	/** @var array<int,array{id:string,key:?string,updatedAt:?DateTime}> Rows written by the copy fan-out */
 	private array $copyWrites = [];
 
@@ -374,11 +380,14 @@ class ShareSaveServiceTest extends TestCase {
 		$groupShare->setGroupId('admin');
 		$groupShares = $this->createMock(GroupShareMapper::class);
 		$groupShares->method('findBySecret')->willReturnCallback(
-			static fn (string $secretId): array => ($secretId === 'src') ? [$groupShare] : []
+			fn (string $secretId): array => ($secretId === 'src' && $this->underLock($this->groupShareRevokedUnderLock) === false)
+				? [$groupShare]
+				: []
 		);
 		$groups = $this->createMock(IGroupManager::class);
 		$groups->method('isInGroup')->willReturnCallback(
-			static fn (string $userId, string $groupId): bool => $groupId === 'admin' && in_array($userId, $members, true)
+			fn (string $userId, string $groupId): bool => $groupId === 'admin' && in_array($userId, $members, true)
+				&& $this->underLock($this->leftGroupUnderLock) === false
 		);
 		$delegations = $this->createMock(SecretDelegationMapper::class);
 		$delegations->method('findActiveBySecretAndUser')->willThrowException(new DoesNotExistException('none'));
@@ -391,6 +400,18 @@ class ShareSaveServiceTest extends TestCase {
 			groupShareMapper: $groupShares,
 			groupManager: $groups,
 		);
+	}
+
+	/**
+	 * Whether a change set to happen before the lock has happened: the save's
+	 * transaction began.
+	 *
+	 * @param bool $happens Whether the change happens at all
+	 *
+	 * @return bool
+	 */
+	private function underLock(bool $happens): bool {
+		return $happens === true && in_array('begin', $this->log, true) === true;
 	}
 
 	/**
@@ -917,6 +938,30 @@ class ShareSaveServiceTest extends TestCase {
 		// Bob's leave cleanup removes his share row after resolve() read it.
 		$auth = $this->groupAuth(members: ['bob']);
 		$this->goneUnderLock = 'bob';
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$refusal = $this->refusal(fn () => $this->service($auth)->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
+	public function testAMemberWhoLeftTheGroupBeforeTheLockIsRefused(): void {
+		// Bob was in `admin` at resolve(); his leave commits before the lock.
+		$auth = $this->groupAuth(members: ['bob']);
+		$this->leftGroupUnderLock = true;
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$refusal = $this->refusal(fn () => $this->service($auth)->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));
+
+		$this->assertSame(['not_allowed', 403], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+	}
+
+	public function testAGroupShareRevokedBeforeTheLockRefusesTheSave(): void {
+		// Alice revokes the `admin` share after resolve() read it; Bob's copy is still there.
+		$auth = $this->groupAuth(members: ['bob']);
+		$this->groupShareRevokedUnderLock = true;
 		$this->audit->expects($this->never())->method('recordTeamWriteSync');
 
 		$refusal = $this->refusal(fn () => $this->service($auth)->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'));

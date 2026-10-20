@@ -334,6 +334,18 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
 	}
 
+	public function testAMemberWhoseCopyCameThroughATeamFolderGetsTheWriteGrade(): void {
+		// Dan's copy came with his `read` membership of a team folder; he is in `admin` too.
+		$this->targets[1]->setTeamFolderId('tf-1');
+		$this->teamGrades['dan'] = 'read';
+		$this->groups['admin'][] = 'dan';
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('dan', 'src', 'Router', 'group-write sync');
+
+		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
+	}
+
 	public function testAMemberWhoLeftOneGroupButIsStillInAnotherGetsTheWriteGrade(): void {
 		// Bob's copy is tied to the admin share; the ops share reaches him too.
 		$this->groupShares[] = $this->groupShare(id: 'gs-ops', secretId: 'src', groupId: 'ops');
