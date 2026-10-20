@@ -36,6 +36,9 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
+use OCA\Keepiq\Service\ShareSave\ShareSaveEntryParser;
+use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
@@ -184,10 +187,11 @@ class ShareSyncService {
 	 * became a read-only or use-only copy, the caller is checked again, so a
 	 * leave or a revoke that committed after the first check refuses the sync,
 	 * and the updates must name exactly the source and every copy whose access
-	 * has not ended, so no holder is left on the old value. Only those rows are
-	 * written. A named row that carries no value is left out, untouched, as
-	 * share-save's `skipped` list leaves it, and only when its holder has no
-	 * vault key: every other holder must get the new value.
+	 * has not ended, so no holder is left on the old value, with no empty key
+	 * and no row named twice. Only those rows are written. A named row that
+	 * carries no value is left out, untouched, as share-save's `skipped` list
+	 * leaves it, and only when its holder has no vault key: every other holder
+	 * must get the new value.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
@@ -210,6 +214,7 @@ class ShareSyncService {
 		}
 
 		$writesOn = $this->resolveSyncWriter(source: $current, userId: $userId);
+		$this->assertShareSaveBody(updates: $updates);
 
 		$required = [$source->getId() => true];
 		$holders = [$source->getId() => [$source->getOwnerType(), $source->getOwnerId()]];
@@ -265,6 +270,31 @@ class ShareSyncService {
 
 		return [$writesOn, $required];
 	}//end assertGroupWriteGuards()
+
+	/**
+	 * Share-save's checks of a body, on a sync's rows: no key may be empty,
+	 * and no row may be named twice.
+	 *
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a key is empty or a row is named twice
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	private function assertShareSaveBody(array $updates): void {
+		$parser = new ShareSaveEntryParser();
+		try {
+			foreach ($updates as $update) {
+				$parser->assertKeyNotEmpty(entry: $update);
+			}
+
+			(new ShareSaveEntries(copies: array_values($updates)))->assertNoDuplicates();
+		} catch (ShareSaveRefusal $refusal) {
+			throw new InvalidArgumentException(message: $refusal->getMessage());
+		}
+	}//end assertShareSaveBody()
 
 	/**
 	 * Whether an update row carries ciphertext for its copy: a non-empty key,

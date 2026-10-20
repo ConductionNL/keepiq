@@ -367,6 +367,33 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame([], $this->written);
 	}
 
+	public function testAGroupMembersSyncWithAnEmptyKeyIsRefused(): void {
+		// The login makes the row carry a value; the empty key would wipe Dan's password.
+		$this->rows['c-dan']->setKey('DAN-OLD');
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan', 'key' => '', 'login' => 'L']];
+
+		try {
+			$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+			$this->fail('A group member wrote an empty key');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('A key may not be empty', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+		$this->assertSame('DAN-OLD', $this->rows['c-dan']->getKey());
+	}
+
+	public function testAGroupMembersSyncNamingACopyTwiceIsRefused(): void {
+		try {
+			$this->sync()->syncUpdate('src', [...$this->everyRow(), ['secretId' => 'c-dan', 'key' => 'OTHER']], self::BASE, 'bob');
+			$this->fail('A group member named a copy twice');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('An entry is named twice', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
 	public function testAGroupMembersSyncLeavesTheCopyOfAHolderWithoutAVaultKeyUntouched(): void {
 		$this->keyless = ['dan'];
 		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan']];
