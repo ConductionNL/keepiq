@@ -280,6 +280,24 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
 	}
 
+	public function testAGroupMembersSyncKeepsTheirOwnCopysPreviousValueAsAVersion(): void {
+		$this->rows['src']->setKey('OLD');
+		$this->rows['c-bob']->setKey('BOB-OLD');
+		$this->rows['c-dan']->setKey('DAN-OLD');
+		$kept = [];
+		$this->versions->method('snapshot')->willReturnCallback(
+			function (Secret $preUpdate, string $actorType, string $actorId) use (&$kept): SecretVersion {
+				$kept[] = $preUpdate->getId().' '.$preUpdate->getKey().' '.$actorType.':'.$actorId;
+				return new SecretVersion();
+			}
+		);
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+
+		// Dan's copy is his own history, as on share-save.
+		$this->assertSame(['src OLD user:bob', 'c-bob BOB-OLD user:bob'], $kept);
+	}
+
 	public function testAGroupMembersSyncThatChangesNoValueKeepsNoVersion(): void {
 		$this->rows['src']->setKey('NEW');
 		$this->versions->expects($this->never())->method('snapshot');

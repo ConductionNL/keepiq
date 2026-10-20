@@ -566,8 +566,9 @@ class ShareSyncService {
 	/**
 	 * Write every permitted recipient blob. Opens no transaction: the caller
 	 * runs it inside its own, so it commits with the rest of the save. When
-	 * anyone but the owner writes the source, its state before the write is
-	 * kept as a version, as the owner's own update keeps it.
+	 * anyone but the owner writes the source, or the writer writes a copy of
+	 * their own, its state before the write is kept as a version
+	 * (keepVersion()).
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
@@ -603,9 +604,7 @@ class ShareSyncService {
 
 			$preUpdate = clone $copy;
 			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt);
-			if ($recipientSecretId === $source->getId()) {
-				$this->snapshotSource(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
-			}
+			$this->keepVersion(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
 
 			// A key rewrite of the SOURCE row is a real rotation —
 			// advance keyUpdatedAt so rotation proofs stay honest
@@ -622,24 +621,27 @@ class ShareSyncService {
 	}//end writeCopyBlobs()
 
 	/**
-	 * Keep the source's state before a write by anyone but its owner (a
+	 * Keep a written row's state before the write as a version, with the
+	 * writer as its actor, for the source written by anyone but its owner (a
 	 * delegate, a team-folder writer or a member of a group it is shared with)
-	 * as a version, with the writer as its actor: only when a value changes
-	 * and the source held a value, as SecretService does on the owner's own
-	 * update. The other copies are not kept: a recipient's history is its own
-	 * copy's, and the owner's update keeps none of them either.
+	 * and for a copy of the writer's own, as share-save keeps the caller's
+	 * row: only when a value changes and the row held a value, as SecretService
+	 * does on an update. Other holders' copies are not kept: a recipient's
+	 * history is their own, and the owner's update keeps none of them either.
 	 *
 	 * @param Secret $source The source secret being synced
-	 * @param Secret $preUpdate The source row as read under the lock
-	 * @param Secret $after The source row with the write applied
+	 * @param Secret $preUpdate The row as read under the lock
+	 * @param Secret $after The row with the write applied
 	 * @param string $writerId The caller
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
 	 */
-	private function snapshotSource(Secret $source, Secret $preUpdate, Secret $after, string $writerId): void {
-		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $writerId) {
+	private function keepVersion(Secret $source, Secret $preUpdate, Secret $after, string $writerId): void {
+		// The source unless the writer owns it, a copy only when they do.
+		$writersOwn = $preUpdate->getOwnerType() === 'user' && $preUpdate->getOwnerId() === $writerId;
+		if (($preUpdate->getId() === $source->getId()) === $writersOwn) {
 			return;
 		}
 
@@ -652,7 +654,7 @@ class ShareSyncService {
 		if ($hadValues === true && $changed === true) {
 			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $writerId);
 		}
-	}//end snapshotSource()
+	}//end keepVersion()
 
 	/**
 	 * Copy one re-encrypted blob onto a recipient's Secret row.
