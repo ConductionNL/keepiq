@@ -700,7 +700,8 @@ class ShareServiceTest extends TestCase {
 				['secretId' => 'stranger', 'key' => 'enc-x'],
 			],
 			allowedIds: ['src-1' => true, 'copy-1' => true],
-			savedAt: $at
+			savedAt: $at,
+			writerId: 'alice'
 		);
 
 		$this->assertSame(2, $written);

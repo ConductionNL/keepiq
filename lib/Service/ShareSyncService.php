@@ -77,8 +77,8 @@ class ShareSyncService {
 	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (owner certificate)
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
+	 * @param SecretVersionService $versionService The version history (snapshot of a source written by anyone but its owner)
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
-	 * @param SecretVersionService|null $versionService The version history (snapshot of a source written by anyone but its owner)
 	 *
 	 * @return void
 	 *
@@ -90,8 +90,8 @@ class ShareSyncService {
 		private EncryptionSuiteMapper $suiteMapper,
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
+		private SecretVersionService $versionService,
 		?ShareAuditTrail $auditTrail = null,
-		private ?SecretVersionService $versionService = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -543,7 +543,7 @@ class ShareSyncService {
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
 	 * @param DateTime $savedAt The version every written row gets
-	 * @param string|null $writerId The caller; null takes no snapshot
+	 * @param string $writerId The caller
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
@@ -556,7 +556,7 @@ class ShareSyncService {
 		array $updates,
 		array $allowedIds,
 		DateTime $savedAt,
-		?string $writerId = null,
+		string $writerId,
 	): int {
 		$updated = 0;
 		foreach ($updates as $update) {
@@ -602,16 +602,14 @@ class ShareSyncService {
 	 * @param Secret $source The source secret being synced
 	 * @param Secret $preUpdate The source row as read under the lock
 	 * @param Secret $after The source row with the write applied
-	 * @param string|null $writerId The caller; null takes no snapshot
+	 * @param string $writerId The caller
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
 	 */
-	private function snapshotSource(Secret $source, Secret $preUpdate, Secret $after, ?string $writerId): void {
-		if ($this->versionService === null || $writerId === null
-			|| ($source->getOwnerType() === 'user' && $source->getOwnerId() === $writerId)
-		) {
+	private function snapshotSource(Secret $source, Secret $preUpdate, Secret $after, string $writerId): void {
+		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $writerId) {
 			return;
 		}
 
