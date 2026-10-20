@@ -106,7 +106,8 @@ class ShareSyncService {
 	 * `updatedAt`, moves that version and writes every recipient copy in a
 	 * single transaction, and clears `possiblyCompromisedAt` from any copy
 	 * where it was set. A sync by anyone but the owner is audited on the
-	 * source in that transaction.
+	 * source in that transaction. A member of a group the secret is shared
+	 * with gets share-save's guards (assertGroupWriteGuards()).
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
@@ -139,6 +140,11 @@ class ShareSyncService {
 		}
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
+		if ($writesOn === self::GROUP_WRITE && $expectedUpdatedAt === '') {
+			// A member never overwrites a value they have not seen.
+			throw new InvalidArgumentException(message: 'expectedUpdatedAt is required when saving as a group member');
+		}
+
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
 		// The source is locked against the version just read, which is the
@@ -151,6 +157,10 @@ class ShareSyncService {
 		return $this->atomic(
 			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
+				if ($writesOn === self::GROUP_WRITE) {
+					[$writesOn, $allowedIds] = $this->assertGroupWriteGuards(source: $source, updates: $updates, userId: $userId);
+				}
+
 				$updated = $this->writeCopyBlobs(
 					source: $source,
 					updates: $updates,
@@ -167,6 +177,64 @@ class ShareSyncService {
 			db: $this->db
 		);
 	}//end syncUpdate()
+
+	/**
+	 * Share-save's guards for a member of a group the secret is shared with,
+	 * run under the source lock: the caller is checked again, so a leave or a
+	 * revoke that committed after the first check refuses the sync, and the
+	 * updates must name exactly the source and every copy whose access has
+	 * not ended, so no holder is left on the old value. Only those rows are
+	 * written.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 * @param string $userId The requesting user
+	 *
+	 * @return array{0:string|null,1:array<string,bool>} How the audit names the write now, and the ids to write
+	 *
+	 * @throws InvalidArgumentException When the caller lost the right to write, or a row is missing or unexpected
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	private function assertGroupWriteGuards(Secret $source, array $updates, string $userId): array {
+		$writesOn = $this->resolveSyncWriter(source: $this->auth->loadSecret(secretId: $source->getId()), userId: $userId);
+
+		$required = [$source->getId() => true];
+		$ignored = [];
+		$targets = $this->mapper->findBySourceSecret($source->getId());
+		$rows = $this->secretMapper->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
+		$now = time();
+		foreach ($targets as $target) {
+			// A copy whose access ended, or whose row is gone, may be named but is not written.
+			$copyId = $target->getSecretId();
+			if (isset($rows[$copyId]) === false) {
+				$ignored[$copyId] = true;
+				continue;
+			}
+
+			$ends = $rows[$copyId]->getAccessExpiresAt();
+			if ($ends !== null && $ends->getTimestamp() <= $now) {
+				$ignored[$copyId] = true;
+				continue;
+			}
+
+			$required[$copyId] = true;
+		}
+
+		$named = [];
+		foreach ($updates as $update) {
+			$named[(string)($update['secretId'] ?? '')] = true;
+		}
+
+		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $ignored) !== []) {
+			throw new InvalidArgumentException(
+				message: 'Name the source and every copy whose access has not ended, and nothing else'
+			);
+		}
+
+		return [$writesOn, $required];
+	}//end assertGroupWriteGuards()
 
 	/**
 	 * Attribute a sync by anyone but the owner to the writer on the source

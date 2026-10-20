@@ -36,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
  */
 class GroupMemberWritesForEveryoneTest extends TestCase {
+	/** The version of `src` a sync is made from */
+	private const BASE = '2026-10-01T10:00:00+00:00';
 
 	/** @var array<string,Secret> */
 	private array $rows = [];
@@ -56,10 +58,17 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 	private SecretVersionService&MockObject $versions;
 
+	/** @var array<string,list<string>>|null The members of each group once the sync holds the source lock */
+	private ?array $groupsUnderLock = null;
+
+	/** @var array<int,string> The rows the sync wrote, in order */
+	private array $written = [];
+
 	protected function setUp(): void {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
 		$this->versions = $this->createMock(SecretVersionService::class);
 		$this->addRow(id: 'src', owner: 'alice');
+		$this->rows['src']->setUpdatedAt(new DateTime(self::BASE));
 		$this->addRow(id: 'c-bob', owner: 'bob');
 		$this->addRow(id: 'c-dan', owner: 'dan');
 		$this->targets = [
@@ -106,7 +115,25 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$secrets->method('findById')->willReturnCallback(
 			fn (string $id): Secret => $this->rows[$id] ?? throw new DoesNotExistException('none')
 		);
-		$secrets->method('update')->willReturnArgument(0);
+		$secrets->method('findByIds')->willReturnCallback(
+			fn (array $ids): array => array_intersect_key($this->rows, array_flip($ids))
+		);
+		$secrets->method('advanceVersion')->willReturnCallback(
+			function (): int {
+				// A leave that commits after the first check, before the lock.
+				if ($this->groupsUnderLock !== null) {
+					$this->groups = $this->groupsUnderLock;
+				}
+
+				return 1;
+			}
+		);
+		$secrets->method('update')->willReturnCallback(
+			function (Secret $row): Secret {
+				$this->written[] = $row->getId();
+				return $row;
+			}
+		);
 
 		$targets = $this->createMock(ShareTargetMapper::class);
 		$targets->method('findBySourceSecret')->willReturnCallback(fn (): array => $this->targets);
@@ -198,7 +225,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->audit->expects($this->once())->method('recordTeamWriteSync')
 			->with('bob', 'src', 'Router', 'group-write sync');
 
-		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob'));
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob'));
 	}
 
 	public function testAGroupMembersSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
@@ -211,7 +238,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			)
 			->willReturn(new SecretVersion());
 
-		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob');
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
 	}
 
 	public function testTheOwnersSyncTakesNoSnapshotOfTheSource(): void {
@@ -220,6 +247,61 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->versions->expects($this->never())->method('snapshot');
 
 		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'alice');
+	}
+
+	public function testAGroupMembersSyncWithoutABaseIsRefused(): void {
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob');
+			$this->fail('A group member overwrote a value they had not seen');
+		} catch (InvalidArgumentException $e) {
+			$this->assertStringContainsString('expectedUpdatedAt is required', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncLeavingOutACopyIsRefused(): void {
+		// Dan's copy is left on the old value.
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW']];
+
+		try {
+			$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+			$this->fail('A group member changed the source and left a copy behind');
+		} catch (InvalidArgumentException $e) {
+			$this->assertStringContainsString('every copy', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncNamingARowThatIsNotACopyIsRefused(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->sync()->syncUpdate('src', [...$this->everyRow(), ['secretId' => 'other', 'key' => 'NEW']], self::BASE, 'bob');
+	}
+
+	public function testAGroupMembersSyncSkipsACopyWhoseAccessEnded(): void {
+		$this->rows['c-dan']->setAccessExpiresAt(new DateTime('-1 minute'));
+
+		$this->assertSame(2, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob'));
+		$this->assertSame(['src', 'c-bob'], $this->written);
+	}
+
+	public function testAMemberWhoLeftTheGroupBeforeTheSyncsLockIsRefused(): void {
+		$this->groupsUnderLock = ['admin' => ['mallory']];
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+			$this->fail('A member who left the group wrote every copy');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Not authorized to manage shares of this secret', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testTheOwnersSyncKeepsWorkingWithoutABase(): void {
+		$this->assertSame(1, $this->sync()->syncUpdate('src', [['secretId' => 'src', 'key' => 'NEW']], '', 'alice'));
 	}
 
 	public function testAMemberWhoLeftTheGroupKeepsTheirCopyButNoWriteGrade(): void {
@@ -249,7 +331,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			->with('dan', 'src', 'Router', 'group-write sync');
 
 		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
-		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), '', 'dan'));
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
 	}
 
 	public function testAMemberWhoLeftOneGroupButIsStillInAnotherGetsTheWriteGrade(): void {
