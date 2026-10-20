@@ -768,9 +768,9 @@ Every force-revoke, compromise or not, that deletes usable emergency contacts MU
 
 #### Scenario: The account is contained
 @e2e exclude Ends the sessions of the user under test; covered by PHPUnit on CompromiseContainmentService.
-- **GIVEN** A has a link share and an active session
+- **GIVEN** A made a link share and has an active session
 - **WHEN** an administrator force-revokes A's suite with `markCompromised: true`
-- **THEN** A's link shares and passkeys MUST be revoked
+- **THEN** the link shares A made and A's passkeys MUST be revoked
 - **AND** every session and app password of A MUST be invalidated
 
 #### Scenario: The owner learns their emergency contacts are gone

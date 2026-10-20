@@ -330,9 +330,12 @@ class AccountDeletionServiceTest extends TestCase {
 		$service = $this->build();
 		$this->emptyBaseline();
 
-		$this->m['link']->expects($this->once())->method('forgetOriginalCreator')->with('alice');
+		$this->m['link']->expects($this->once())->method('forgetOriginalCreator')->with('alice')->willReturn(2);
 
-		$service->deleteAllFor('alice');
+		$report = $service->deleteAllFor('alice');
+
+		$this->assertSame(2, $report->linkMakersForgotten);
+		$this->assertSame(2, $report->jsonSerialize()['linkSharesMakerForgotten']);
 	}//end testTheUserIsForgottenAsTheMakerOfLinksHandedOver()
 
 	/**

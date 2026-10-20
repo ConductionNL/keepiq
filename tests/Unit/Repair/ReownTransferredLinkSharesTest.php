@@ -69,31 +69,12 @@ final class ReownTransferredLinkSharesTest extends TestCase {
 	 * @return void
 	 */
 	public function testEachLeftBehindLinkIsHandedOver(): void {
-		$expr = $this->createMock(IExpressionBuilder::class);
-		$expr->method('eq')->willReturn('eq');
-		$expr->method('neq')->willReturn('neq');
-		$expr->method('lte')->willReturn('lte');
-		$expr->method('andX')->willReturn($this->createMock(ICompositeExpression::class));
-
-		$result = $this->createMock(IResult::class);
-		$result->method('fetch')->willReturnOnConsecutiveCalls(
-			['id' => '42', 'owner_id' => 'dave'],
-			['id' => 'link-2', 'owner_id' => 'zoe'],
-			false
+		$db = $this->dbReturning(
+			[
+				['id' => '42', 'owner_id' => 'dave'],
+				['id' => 'link-2', 'owner_id' => 'zoe'],
+			]
 		);
-
-		$qb = $this->createMock(IQueryBuilder::class);
-		$qb->method('selectDistinct')->willReturnSelf();
-		$qb->method('from')->willReturnSelf();
-		$qb->method('innerJoin')->willReturnSelf();
-		$qb->method('where')->willReturnSelf();
-		$qb->method('andWhere')->willReturnSelf();
-		$qb->method('expr')->willReturn($expr);
-		$qb->method('createNamedParameter')->willReturn(':param');
-		$qb->method('executeQuery')->willReturn($result);
-
-		$db = $this->createMock(IDBConnection::class);
-		$db->method('getQueryBuilder')->willReturn($qb);
 
 		$handedOver = [];
 		$links = $this->createMock(LinkShareMapper::class);
@@ -124,4 +105,72 @@ final class ReownTransferredLinkSharesTest extends TestCase {
 		$this->assertStringContainsString('link share 42 handed to dave', $logged[0]);
 		$this->assertStringContainsString('link share link-2 handed to zoe', $logged[1]);
 	}//end testEachLeftBehindLinkIsHandedOver()
+
+	/**
+	 * A link whose update changed no row is neither logged nor counted.
+	 *
+	 * @return void
+	 */
+	public function testALinkNoRowChangedForIsNotCounted(): void {
+		$db = $this->dbReturning(
+			[
+				['id' => '42', 'owner_id' => 'dave'],
+				['id' => 'link-2', 'owner_id' => 'zoe'],
+			]
+		);
+
+		$links = $this->createMock(LinkShareMapper::class);
+		$links->method('reassignCreatorById')->willReturnCallback(
+			static fn (string $id): int => ($id === '42') ? 0 : 1
+		);
+
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('info')->willReturnCallback(
+			static function (string $message) use (&$logged): void {
+				$logged[] = $message;
+			}
+		);
+
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('info')->with($this->stringContains(': 1 link share(s)'));
+
+		(new ReownTransferredLinkShares(db: $db, links: $links, logger: $logger))->run($output);
+
+		$this->assertCount(1, $logged);
+		$this->assertStringContainsString('link share link-2 handed to zoe', $logged[0]);
+	}//end testALinkNoRowChangedForIsNotCounted()
+
+	/**
+	 * A connection whose left-behind query yields the given rows.
+	 *
+	 * @param array<int,array<string,string>> $rows The rows the query returns
+	 *
+	 * @return IDBConnection
+	 */
+	private function dbReturning(array $rows): IDBConnection {
+		$expr = $this->createMock(IExpressionBuilder::class);
+		$expr->method('eq')->willReturn('eq');
+		$expr->method('neq')->willReturn('neq');
+		$expr->method('lte')->willReturn('lte');
+		$expr->method('andX')->willReturn($this->createMock(ICompositeExpression::class));
+
+		$result = $this->createMock(IResult::class);
+		$result->method('fetch')->willReturnOnConsecutiveCalls(...[...$rows, false]);
+
+		$qb = $this->createMock(IQueryBuilder::class);
+		$qb->method('selectDistinct')->willReturnSelf();
+		$qb->method('from')->willReturnSelf();
+		$qb->method('innerJoin')->willReturnSelf();
+		$qb->method('where')->willReturnSelf();
+		$qb->method('andWhere')->willReturnSelf();
+		$qb->method('expr')->willReturn($expr);
+		$qb->method('createNamedParameter')->willReturn(':param');
+		$qb->method('executeQuery')->willReturn($result);
+
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('getQueryBuilder')->willReturn($qb);
+
+		return $db;
+	}//end dbReturning()
 }//end class

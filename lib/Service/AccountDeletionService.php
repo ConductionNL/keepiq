@@ -125,7 +125,7 @@ class AccountDeletionService {
 		$this->linkShareMapper->deleteByUserId(userId: $userId);
 		// Links the user made that a transfer handed to someone else stay
 		// with that holder, with a deleted-account marker as their maker.
-		$this->linkShareMapper->forgetOriginalCreator(userId: $userId);
+		$report->linkMakersForgotten = $this->linkShareMapper->forgetOriginalCreator(userId: $userId);
 
 		$this->shareCleanup->transferDelegatedSecrets(
 			userId: $userId,
