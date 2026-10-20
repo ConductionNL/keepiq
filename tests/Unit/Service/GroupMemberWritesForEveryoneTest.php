@@ -145,7 +145,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	}
 
 	/**
-	 * @return array{0:ShareSyncService,1:ShareWriteContext}
+	 * @return array{0:ShareSyncService,1:ShareWriteContext,2:ShareAuthorizationService}
 	 */
 	private function wire(): array {
 		$secrets = $this->createMock(SecretMapper::class);
@@ -245,7 +245,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			contexts: $contexts,
 		);
 
-		return [$sync, $contexts];
+		return [$sync, $contexts, $auth];
 	}
 
 	/**
@@ -503,21 +503,57 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		// Dan's copy came through a direct share; later a group admin adds him to admin.
 		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 
+		// Alice is told he can now change her secret, with nothing to approve.
 		$notifications = $this->createMock(NotificationService::class);
 		$notifications->expects($this->once())->method('notify')
-			->with('group_member_added', 'alice', $this->anything(), 'secret', 'src');
+			->with(
+				'group_member_gained_write',
+				'alice',
+				$this->callback(static fn (array $params): bool => $params['newMemberId'] === 'dan' && $params['groupId'] === 'admin'),
+				'secret',
+				'src'
+			);
 		$groupShares = $this->groupShareService(notifications: $notifications);
 		$this->groups['admin'][] = 'dan';
-		$groupShares->handleNewGroupMember('dan', 'admin');
+		$this->assertSame(1, $groupShares->handleNewGroupMember('dan', 'admin'));
 
-		// Before Alice answers the notification.
 		$context = $this->context()->writeContext('c-dan', 'dan');
 		$this->assertSame('write', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
 
-		// Approving it changes nothing: Dan already holds a copy.
+		// An approval would change nothing: Dan already holds a copy.
 		$groupShares->approveGroupMemberShare('gs-admin', 'dan', 'c-dan-2', 'alice');
 		$this->assertCount(2, $this->targets);
+	}
+
+	public function testANewMemberWithoutACopyIsStillAskedToApprove(): void {
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->once())->method('notify')
+			->with('group_member_added', 'alice', $this->anything(), 'secret', 'src');
+		$this->groups['admin'][] = 'erin';
+
+		$this->assertSame(1, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('erin', 'admin'));
+	}
+
+	public function testACopyHolderWhoJoinsAUseOnlyGroupShareTellsTheOwnerNothing(): void {
+		// Joining gives Dan no write, and an approval would create nothing.
+		$this->groupShares[0]->setUseOnly(true);
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->never())->method('notify');
+		$this->groups['admin'][] = 'dan';
+
+		$this->assertSame(0, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
+	}
+
+	public function testAUseOnlyCopyHolderWhoJoinsASharedGroupTellsTheOwnerNothing(): void {
+		$this->rows['c-dan']->setUseOnly(true);
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->never())->method('notify');
+		$this->groups['admin'][] = 'dan';
+
+		$this->assertSame(0, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 	}
 
 	private function groupShareService(NotificationService $notifications): GroupShareService {
@@ -563,6 +599,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			auth: $this->wire()[2],
 		);
 	}
 

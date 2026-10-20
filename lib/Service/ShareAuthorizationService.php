@@ -279,12 +279,9 @@ class ShareAuthorizationService {
 		}
 
 		foreach ($this->groupShareMapper->findBySecret($source->getId()) as $groupShare) {
-			$expires = $groupShare->getExpiresAt();
-			if ($groupShare->getUseOnly() === true || ($expires !== null && $expires->getTimestamp() <= time())) {
-				continue;
-			}
-
-			if ($this->groupManager->isInGroup($userId, $groupShare->getGroupId()) === true) {
+			if ($groupShare->isFullAndLive() === true
+				&& $this->groupManager->isInGroup($userId, $groupShare->getGroupId()) === true
+			) {
 				return true;
 			}
 		}
