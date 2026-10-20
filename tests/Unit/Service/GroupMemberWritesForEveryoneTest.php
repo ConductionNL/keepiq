@@ -65,6 +65,9 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	/** @var array<int,string> The rows the sync wrote, in order */
 	private array $written = [];
 
+	/** @var list<string> The users without a vault key */
+	private array $keyless = [];
+
 	/** @var (callable(Secret):void)|null What happens to `src` once the sync holds its lock */
 	private $srcUnderLock = null;
 
@@ -178,6 +181,9 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$suite->setCertificate('OWNER-CERT');
 		$suites = $this->createMock(EncryptionSuiteMapper::class);
 		$suites->method('findActiveByOwner')->willReturn($suite);
+		$suites->method('countActiveByOwner')->willReturnCallback(
+			fn (string $ownerType, string $ownerId): int => in_array($ownerId, $this->keyless, true) ? 0 : 1
+		);
 
 		return new ShareSyncService(
 			mapper: $targets,
@@ -306,6 +312,29 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		}
 
 		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncNamingACopyWithoutAValueIsRefused(): void {
+		// Dan has a vault key: his copy would keep the old value under a new version.
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan']];
+
+		try {
+			$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+			$this->fail('A copy was named without a value and its holder has a vault key');
+		} catch (InvalidArgumentException $e) {
+			$this->assertStringContainsString('must get the new value', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncLeavesTheCopyOfAHolderWithoutAVaultKeyUntouched(): void {
+		$this->keyless = ['dan'];
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan']];
+
+		$this->assertSame(2, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
+		$this->assertSame(['src', 'c-bob'], $this->written);
+		$this->assertNull($this->rows['c-dan']->getUpdatedAt());
 	}
 
 	public function testASourceMadeReadOnlyBeforeTheSyncsLockRefusesAGroupMember(): void {
