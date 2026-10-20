@@ -132,13 +132,15 @@ class ShareSaveVersionLockTest extends TestCase {
 				return true;
 			}
 		);
+		$suites = new \OCA\Keepiq\Db\EncryptionSuiteMapper(db: $this->db);
 		$sync = new \OCA\Keepiq\Service\ShareSyncService(
 			mapper: $targets,
 			secretMapper: $mapper,
-			suiteMapper: new \OCA\Keepiq\Db\EncryptionSuiteMapper(db: $this->db),
+			suiteMapper: $suites,
 			db: $this->db,
 			auth: $auth,
 			versionService: $this->createMock(\OCA\Keepiq\Service\SecretVersionService::class),
+			guards: new \OCA\Keepiq\Service\ShareSync\ShareSyncGuards(targets: $targets, secrets: $mapper, suites: $suites, auth: $auth),
 		);
 		$expected = $mapper->findById($source->getId())->getUpdatedAt()?->format(DateTime::ATOM);
 

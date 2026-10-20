@@ -27,6 +27,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -49,7 +50,8 @@ class ShareSaveScope {
 	 * @param ShareTargetMapper $targets The share targets (copy to source)
 	 * @param SecretMapper $secrets The secrets
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
-	 * @param ShareSyncService $sync Who may write for every copy, the live copies and their holders' vault keys
+	 * @param ShareSyncService $sync Who may write for every copy
+	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
 	 *
 	 * @return void
 	 *
@@ -60,6 +62,7 @@ class ShareSaveScope {
 		private SecretMapper $secrets,
 		private FederatedShareMapper $federatedShares,
 		private ShareSyncService $sync,
+		private ShareSyncGuards $guards,
 	) {
 	}//end __construct()
 
@@ -158,7 +161,7 @@ class ShareSaveScope {
 	 */
 	private function assertWritable(Secret $source): void {
 		try {
-			$this->sync->assertWritable(source: $source);
+			$this->guards->assertWritable(source: $source);
 		} catch (InvalidArgumentException $refusal) {
 			throw new ForbiddenException(message: $refusal->getMessage());
 		}
@@ -284,7 +287,7 @@ class ShareSaveScope {
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
-		['copies' => $copies, 'ignored' => $ignored] = $this->sync->liveCopies(source: $source, leaveOut: $path->row->getId());
+		['copies' => $copies, 'ignored' => $ignored] = $this->guards->liveCopies(source: $source, leaveOut: $path->row->getId());
 		if ($path->isCopyEditor() === true) {
 			$copies = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $copies;
 		}
@@ -330,7 +333,7 @@ class ShareSaveScope {
 		$refused = [];
 		foreach ($skipped as $skip) {
 			$copy = ($required[$skip['secretId']] ?? null);
-			if ($copy !== null && $this->sync->holderHasVaultKey(source: $path->source, copy: $copy) === true) {
+			if ($copy !== null && $this->guards->holderHasVaultKey(source: $path->source, copy: $copy) === true) {
 				$refused[] = $skip['secretId'];
 			}
 		}

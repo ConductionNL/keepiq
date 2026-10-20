@@ -50,6 +50,7 @@ use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
 use OCA\Keepiq\Service\ShareSave\ShareSaveStages;
 use OCA\Keepiq\Service\ShareSaveService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -290,6 +291,12 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	private function service(?ShareAuthorizationService $auth = null): ShareSaveService {
+		$guards = new ShareSyncGuards(
+			targets: $this->targets,
+			secrets: $this->secretMapper,
+			suites: $this->suites,
+			auth: ($auth ?? $this->auth),
+		);
 		$sync = new ShareSyncService(
 			mapper: $this->targets,
 			secretMapper: $this->secretMapper,
@@ -297,6 +304,7 @@ class ShareSaveServiceTest extends TestCase {
 			db: $this->db,
 			auth: ($auth ?? $this->auth),
 			versionService: $this->versionHistory,
+			guards: $guards,
 		);
 
 		return new ShareSaveService(
@@ -311,6 +319,7 @@ class ShareSaveServiceTest extends TestCase {
 				secrets: $this->secretMapper,
 				federatedShares: $this->federatedMapper,
 				sync: $sync,
+				guards: $guards,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
 			db: $this->db,

@@ -24,6 +24,7 @@ use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -210,22 +211,25 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			fn (string $ownerType, string $ownerId): int => in_array($ownerId, $this->keyless, true) ? 0 : 1
 		);
 
+		$auth = new ShareAuthorizationService(
+			secretMapper: $secrets,
+			delegationMapper: $delegations,
+			suiteMapper: $suites,
+			teamFolderService: $teamFolders,
+			shareTargetMapper: $targets,
+			groupShareMapper: $groupShares,
+			groupManager: $groups,
+		);
+
 		return new ShareSyncService(
 			mapper: $targets,
 			secretMapper: $secrets,
 			suiteMapper: $suites,
 			db: $this->createMock(IDBConnection::class),
-			auth: new ShareAuthorizationService(
-				secretMapper: $secrets,
-				delegationMapper: $delegations,
-				suiteMapper: $suites,
-				teamFolderService: $teamFolders,
-				shareTargetMapper: $targets,
-				groupShareMapper: $groupShares,
-				groupManager: $groups,
-			),
+			auth: $auth,
 			auditTrail: $this->audit,
 			versionService: $this->versions,
+			guards: new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth),
 		);
 	}
 

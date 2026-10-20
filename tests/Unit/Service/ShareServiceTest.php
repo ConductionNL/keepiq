@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -180,6 +181,7 @@ class ShareServiceTest extends TestCase {
 				auth: $auth,
 				auditTrail: $auditTrail,
 				versionService: ($versionService ?? $this->createMock(SecretVersionService::class)),
+				guards: new ShareSyncGuards(targets: $this->mapper, secrets: $this->secretMapper, suites: $this->suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->mapper,
@@ -691,6 +693,7 @@ class ShareServiceTest extends TestCase {
 			db: $this->db,
 			auth: $this->createMock(ShareAuthorizationService::class),
 			versionService: $this->createMock(SecretVersionService::class),
+			guards: $this->createMock(ShareSyncGuards::class),
 		);
 		$at = new DateTime('2026-10-13T12:00:00+00:00');
 

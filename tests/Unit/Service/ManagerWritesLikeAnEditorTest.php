@@ -13,6 +13,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -47,18 +48,21 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 		$suites = $this->createMock(EncryptionSuiteMapper::class);
 		$suites->method('findActiveByOwner')->willReturn($suite);
 
+		$auth = new ShareAuthorizationService(
+			secretMapper: $secrets,
+			delegationMapper: $delegations,
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			teamFolderService: $teamFolders,
+		);
+
 		return new ShareSyncService(
 			mapper: $targets,
 			secretMapper: $secrets,
 			suiteMapper: $suites,
 			db: $this->createMock(IDBConnection::class),
-			auth: new ShareAuthorizationService(
-				secretMapper: $secrets,
-				delegationMapper: $delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				teamFolderService: $teamFolders,
-			),
+			auth: $auth,
 			versionService: ($versions ?? $this->createMock(SecretVersionService::class)),
+			guards: new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth),
 		);
 	}
 
