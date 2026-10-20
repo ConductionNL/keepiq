@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\FolderOwnershipGuard;
 use OCA\Keepiq\Service\LinkShareService;
@@ -36,6 +37,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -76,6 +78,11 @@ class SecretServiceTest extends TestCase {
 	private $linkShareService;
 
 	/**
+	 * @var FolderOwnershipGuard
+	 */
+	private FolderOwnershipGuard $folderOwnership;
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -100,6 +107,7 @@ class SecretServiceTest extends TestCase {
 				return $folder;
 			}
 		);
+		$this->folderOwnership = new FolderOwnershipGuard($folderMapper);
 
 		$this->service = new SecretService(
 			mapper: $this->mapper,
@@ -109,7 +117,7 @@ class SecretServiceTest extends TestCase {
 			linkShareService: $this->linkShareService,
 			logger: $logger,
 			db: $this->createMock(\OCP\IDBConnection::class),
-			folderOwnership: new FolderOwnershipGuard($folderMapper),
+			folderOwnership: $this->folderOwnership,
 		);
 	}//end setUp()
 
@@ -1212,4 +1220,97 @@ class SecretServiceTest extends TestCase {
 			}
 		}
 	}//end testLoadForUpdateRefusesWhatUpdateRefuses()
+
+	/**
+	 * The service with a view-only guard that records the fields it is asked
+	 * about and refuses any value change.
+	 *
+	 * @param array<int,string[]> $asked Receives the fields of each call
+	 *
+	 * @return SecretService
+	 */
+	private function serviceWithViewOnlyGuard(array &$asked): SecretService {
+		$guard = $this->createMock(ViewOnlyCopyGuard::class);
+		$guard->method('assertMayChangeValue')->willReturnCallback(
+			static function (Secret $row, array $fields, string $userId) use (&$asked): void {
+				$asked[] = $fields;
+				if ($fields !== []) {
+					throw new ViewOnlyCopyException();
+				}
+			}
+		);
+
+		return new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			folderOwnership: $this->folderOwnership,
+			viewOnlyCopies: $guard,
+		);
+	}//end serviceWithViewOnlyGuard()
+
+	/**
+	 * A new key, login or extra-field blob on a view-only copy is refused
+	 * before anything is written (keepiq#1287).
+	 *
+	 * @return void
+	 */
+	public function testAValueChangeOfAViewOnlyCopyIsRefusedBeforeAnyWrite(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setLogin('LOGIN');
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->never())->method('update');
+		$asked = [];
+		$service = $this->serviceWithViewOnlyGuard(asked: $asked);
+
+		$changes = [
+			['name' => 'Renamed', 'key' => 'NEW-CIPHERTEXT'],
+			['login' => null],
+			['additionalFields' => 'EXTRA'],
+		];
+		foreach ($changes as $data) {
+			try {
+				$service->update(id: 's-1', data: $data, userId: 'alice');
+				$this->fail('A value change of a view-only copy must be refused');
+			} catch (ViewOnlyCopyException $e) {
+				$this->assertSame(Secret::VIEW_ONLY_REFUSAL, $e->getMessage());
+			}
+		}
+
+		$this->assertSame([['key'], ['login'], ['additionalFields']], $asked);
+		$this->assertSame('GitHub', $stored->getName());
+		$this->assertSame('CIPHERTEXT', $stored->getKey());
+	}//end testAValueChangeOfAViewOnlyCopyIsRefusedBeforeAnyWrite()
+
+	/**
+	 * Filing and renaming a view-only copy still work, and so does an update
+	 * that resends the stored value unchanged (keepiq#1287).
+	 *
+	 * @return void
+	 */
+	public function testAViewOnlyCopyIsStillFiledRenamedAndResentUnchanged(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+		$asked = [];
+		$service = $this->serviceWithViewOnlyGuard(asked: $asked);
+
+		$service->update(id: 's-1', data: ['folderId' => 'f-1'], userId: 'alice');
+		$secret = $service->update(
+			id: 's-1',
+			data: ['name' => 'Renamed', 'key' => 'CIPHERTEXT', 'login' => '', 'additionalFields' => null],
+			userId: 'alice'
+		);
+
+		$this->assertSame([[], []], $asked);
+		$this->assertSame('f-1', $secret->getFolderId());
+		$this->assertSame('Renamed', $secret->getName());
+	}//end testAViewOnlyCopyIsStillFiledRenamedAndResentUnchanged()
 }//end class

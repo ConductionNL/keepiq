@@ -22,6 +22,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
@@ -187,4 +188,21 @@ class SecretUpdateControllerTest extends TestCase {
 
 		$this->assertSame(423, $controller->update('s-1')->getStatus());
 	}//end testAWriteLockAnswers423()
+
+	/**
+	 * A value change of a view-only copy answers 403 with the refusal and its
+	 * code `view_only`, and is not tried again (keepiq#1287).
+	 *
+	 * @return void
+	 */
+	public function testAValueChangeOfAViewOnlyCopyAnswers403(): void {
+		$controller = $this->controller(['key' => 'NEW']);
+		$this->secretService->expects($this->once())->method('update')
+			->willThrowException(new ViewOnlyCopyException());
+
+		$response = $controller->update('s-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => Secret::VIEW_ONLY_REFUSAL, 'code' => 'view_only'], $response->getData());
+	}//end testAValueChangeOfAViewOnlyCopyAnswers403()
 }//end class

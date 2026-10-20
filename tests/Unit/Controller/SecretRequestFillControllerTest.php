@@ -24,13 +24,17 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\SecretRequestFillController;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -268,6 +272,43 @@ class SecretRequestFillControllerTest extends TestCase {
 		$this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
 
 	}//end testFillReturns500OnGenericFailure()
+
+	/**
+	 * Refusals a fill can meet from the secret's holder side.
+	 *
+	 * @return array<string,array{ForbiddenException}>
+	 */
+	public static function holderRefusals(): array {
+		return [
+			'a copy shared to view only' => [new ViewOnlyCopyException()],
+			'a copy from another organisation' => [new ForbiddenException(message: Secret::READ_ONLY_REFUSAL)],
+		];
+	}//end holderRefusals()
+
+	/**
+	 * A fill the secret's holder may not take, such as one onto a copy shared
+	 * with them to view only, answers 403 without the holder-facing refusal
+	 * (keepiq#1287).
+	 *
+	 * @param ForbiddenException $refusal The refusal the fill meets
+	 *
+	 * @return void
+	 */
+	#[DataProvider('holderRefusals')]
+	public function testFillReturns403WhenTheSecretMayNotBeChanged(ForbiddenException $refusal): void {
+		$this->secretRequestService->expects($this->once())
+			->method('fill')
+			->willThrowException($refusal);
+
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'B']);
+
+		$this->assertSame(expected: Http::STATUS_FORBIDDEN, actual: $response->getStatus());
+		$this->assertSame(
+			expected: ['message' => 'The secret this request writes to cannot be changed'],
+			actual: $response->getData()
+		);
+	}//end testFillReturns403WhenTheSecretMayNotBeChanged()
+
 	/**
 	 * The fill response never tells the recipient which fields already hold values.
 	 *

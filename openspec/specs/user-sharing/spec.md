@@ -9,7 +9,7 @@
 
 @e2e exclude No user-sharing UI is built in v0.1; all sharing scenarios require the encrypted secret CRUD surface (itself unbuilt) — covered by integration tests, not Playwright UI flows.
 
-A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when either party updates the secret, the change is written back to all copies.
+A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, or a recipient who may write the source, updates the secret, the change is written back to all copies. Any other recipient's copy is view-only.
 
 Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. Direct shares are always independent of group membership.
 
@@ -191,7 +191,7 @@ The marks MUST come from an endpoint that takes the search term and the user ids
 - WHEN it reaches the endpoint
 - THEN the system MUST refuse it with 400
 ### Requirement: Sync on Update
-When either party updates a shared secret, the change MUST be propagated to all copies.
+When the owner, or a recipient who may write the source, updates a shared secret, the change MUST be propagated to all copies. Any other recipient's copy is view-only (see "View-Only Copies").
 
 #### Scenario: Owner updates shared secret
 - GIVEN a secret is shared with one or more users
@@ -199,9 +199,30 @@ When either party updates a shared secret, the change MUST be propagated to all 
 - THEN the system MUST re-encrypt the updated value for each recipient and write it to their copy
 
 #### Scenario: Recipient updates shared secret
-- GIVEN a secret has been shared with user B
+- GIVEN a secret has been shared with user B, who may write the source, such as with a `write` grade on its team folder
 - WHEN user B updates their copy of the secret
 - THEN the system MUST re-encrypt the updated value for the original owner and all other recipients
+
+### Requirement: View-Only Copies
+A received copy is view-only for its holder unless they may write its source: as its owner or a delegate, or with an effective `write` or `manage` grade on a team folder that holds it. A team-folder Viewer (`read`) and a recipient of a direct or group share hold view-only copies. The system MUST refuse a change of the value, login or additional fields of a view-only copy and change nothing, whether it comes through `PUT /api/v1/secrets/{id}`, `POST /api/v1/versions/{id}/restore` or a fill of a secret request for that copy. A field sent with the value already stored is not a change. The update and the restore MUST answer HTTP 428 with `code` and `error` set to `view_only` and the message "Shared with you to view only. Ask its owner for edit rights to change it." A change of any other field, such as the folder, MUST still save.
+
+The web app MUST read the copy's write-context to tell a view-only copy apart. On a view-only copy it MUST NOT offer Edit, a version restore or asking for new values, MUST say "Shared with you to view only. Ask its owner for edit rights to change it.", and MUST keep moving it to a folder, starring, archiving, tagging and deleting it. Its edit dialog MUST NOT save, so the web app offers no way to change its name or URL either, as on a read-only copy from another organisation. A share-save of a view-only copy MUST be refused in the browser before anything is sent.
+
+#### Scenario: A direct-share recipient cannot change the value
+- GIVEN a secret Alice shared directly with Bob
+- WHEN Bob sends `PUT /api/v1/secrets/{id}` for his copy with a new value
+- THEN the system MUST answer 428 with `error` `view_only` and leave Bob's copy, Alice's secret and every other copy unchanged
+
+#### Scenario: A view-only holder still files their copy
+- GIVEN a secret Alice shared directly with Bob, and a folder of Bob's
+- WHEN Bob moves his copy to that folder and archives it
+- THEN the system MUST store the new folder and the archive, and the value MUST stay as Alice saved it
+
+#### Scenario: A team-folder Viewer sees no Edit
+- GIVEN user V holds a `read` grade on a team folder containing secret S
+- WHEN V opens their copy of S
+- THEN the detail view MUST NOT show Edit, Restore or "Ask for new values"
+- AND it MUST say that the secret is shared with V to view only
 
 ### Requirement: Share with Group (Static Expansion)
 The system MUST allow a secret owner to share a secret with a Nextcloud user group. At the moment of sharing, the system MUST create an individual SecretShare (with `group_share_id` set) for each current member of the group who has an active EncryptionSuite. A GroupShare record MUST be created to track the relationship.
@@ -435,7 +456,8 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] The recipient receives an encrypted copy in their own vault
 - [ ] The copy is encrypted with the recipient's public certificate — the sender cannot read it after sharing
 - [ ] The recipient receives a Nextcloud notification when a secret is shared with them
-- [ ] Updates by either party propagate to all copies of the shared secret
+- [ ] Updates by the owner, or by a recipient who may write the source, propagate to all copies of the shared secret
+- [ ] A recipient who may not write the source cannot change the value of their copy
 - [ ] The original owner can revoke a share at any time
 - [ ] Revoking a share deletes the recipient's copy
 - [ ] Sharing fails with a clear error if the recipient has no EncryptionSuite

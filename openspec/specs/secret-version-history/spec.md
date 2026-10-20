@@ -20,12 +20,17 @@ The system MUST snapshot a secret's pre-update state as an immutable version whe
 - THEN a version row MUST retain `C0` with the actor and prior encryption_suite_id, and the head MUST hold `C1`
 
 ### Requirement: List, view, and restore versions
-The system MUST let a user list versions newest-first (metadata only), view a version via client-side decryption identical to a head read, and restore a version — creating a new head version and propagating via sync-on-update.
+The system MUST let a user list versions newest-first (metadata only), view a version via client-side decryption identical to a head read, and restore a version — creating a new head version and propagating via sync-on-update. The holder of a view-only copy (user-sharing, "View-Only Copies") MAY list and view its versions but MUST NOT restore one: the web app MUST NOT offer Restore on it, and `POST /api/v1/versions/{id}/restore` MUST answer 428 with `error` `view_only` and change nothing.
 
 #### Scenario: Restore becomes a new head and syncs
 - GIVEN a secret shared with a recipient and a prior version `V`
 - WHEN the owner restores `V`
 - THEN the current head MUST first be snapshotted, the head MUST become `V`'s values, and the change MUST propagate to the recipient's copy
+
+#### Scenario: A view-only holder cannot restore
+- GIVEN a secret shared directly with Bob, whose copy has a prior version `V`
+- WHEN Bob sends `POST /api/v1/versions/{id}/restore` for `V`
+- THEN the system MUST answer 428 with `error` `view_only`, and Bob's copy and its version list MUST stay as they were
 
 ### Requirement: Admin-configurable retention and pruning
 The system MUST bound retention by count and/or age (defaults 20 versions / 365 days, 0 = unlimited), administrator-configurable, pruned in bounded batches by a background job that never touches the head.

@@ -7,8 +7,8 @@
  * pre-update snapshots (ciphertext copied verbatim — never decrypted),
  * metadata listing, blob reads gated exactly like head reads, and restore
  * (snapshot the current head first, then set the head to the selected
- * version). restore() changes one row only; the web app restores through
- * share-save and calls it only for a copy holder without a write grade.
+ * version). restore() changes one row only and refuses a copy its holder
+ * may only view; the web app restores through share-save.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -66,6 +66,7 @@ class SecretVersionService {
 	 * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 * @param OfflineEditGuard $editGuard Refuses a restore over a head that moved on
+	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies Refuses a restore of a copy its holder may not write
 	 *
 	 * @return void
 	 */
@@ -78,6 +79,7 @@ class SecretVersionService {
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
+		private ?ViewOnlyCopyGuard $viewOnlyCopies = null,
 	) {
 	}//end __construct()
 
@@ -163,6 +165,8 @@ class SecretVersionService {
 	 * @return Secret The updated head
 	 *
 	 * @throws \InvalidArgumentException On not found / not owned / suite blocked / a malformed base
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the head is a copy its holder may only view
+	 * @throws \OCA\Keepiq\Exception\NotFoundException When the head is a copy whose source cannot be resolved
 	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
@@ -171,6 +175,11 @@ class SecretVersionService {
 	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
 		$secret = $this->reload(id: $version->getSecretId());
+		$this->viewOnlyCopies?->assertMayChangeValue(
+			row: $secret,
+			fields: ViewOnlyCopyGuard::VALUE_FIELDS,
+			userId: $userId
+		);
 		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
 
 		$restored = $this->atomic(

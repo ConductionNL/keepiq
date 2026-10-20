@@ -25,13 +25,14 @@ When the administrator setting `offline_edits_enabled` is true and the vault is 
 
 ### Requirement: Failed entries are kept, never dropped silently
 
-A replay answered with 403 or 404, a share-save refused with 400, or a share-save stopped by an unreachable partner or by the partner lookup limit MUST move the entry to a failed list where the user can copy their values (decrypted in the browser) or discard the entry, with the reason shown next to it, also after a reload. An entry stopped by an unreachable partner or the lookup limit MUST also offer to try again. A 423 or a network error MUST keep the entry queued. A failed entry MUST NOT stop the replay of the entries after it.
+A replay answered with 403 or 404, a share-save refused with 400, a share-save stopped by an unreachable partner or by the partner lookup limit, or a share-save of a copy the user may only view (user-sharing, "View-Only Copies") MUST move the entry to a failed list where the user can copy their values (decrypted in the browser) or discard the entry, with the reason shown next to it, also after a reload. Offline the web app doesn't know a copy's grade, so it lets the user edit any copy; the replay MUST refuse a value change of a view-only copy in the browser, before anything is sent. An entry stopped by an unreachable partner or the lookup limit MUST also offer to try again; one refused as view-only MUST NOT, as no retry can save it. A 423 or a network error MUST keep the entry queued. A failed entry MUST NOT stop the replay of the entries after it.
 
 #### Scenario: Write grade removed while offline
 
 - **GIVEN** a team-folder member who edited a folder secret offline, and whose grade was lowered to read meanwhile
 - **WHEN** the replay runs
-- **THEN** the replay MUST save the change to the member's own copy only, since the queue doesn't know the grade the edit was made under, and MUST NOT write the source or any other copy
+- **THEN** the replay MUST send nothing for the entry and write neither the member's copy, the source nor any other copy
+- **AND** the entry MUST move to the failed list with the reason that the secret is shared with the member to view only, with copy and discard actions and without one to try again
 
 #### Scenario: A refused share-save is kept
 
@@ -94,7 +95,7 @@ A queued update that changes a value, login or additional fields MUST be replaye
 - **GIVEN** a queued edit of a copy whose replay was refused with 409 `stale`, because the owner saved the secret meanwhile
 - **WHEN** the user keeps their change, before or after a reload
 - **THEN** the replay MUST send the copy version and the source version that 409 named, and save when neither has moved again
-- **AND** when the copy was written after its source, such as by a plain update of the copy, the 409 names the source version the edit was made from, so keeping the change MAY first be refused with 409 `stale_source` and cost the user one more choice before it saves
+- **AND** when the copy was written after its source, such as by a change of only its folder, the 409 names the source version the edit was made from, so keeping the change MAY first be refused with 409 `stale_source` and cost the user one more choice before it saves
 
 #### Scenario: A pending sync from before the change is finished
 

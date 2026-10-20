@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Sync on Update
-When the owner, or a recipient allowed to write the source, updates the value, login or additional fields of a shared secret, the change MUST reach every copy in the same request, through `PUT /api/v1/secrets/{id}/share-save`. The browser MUST encrypt the change for each holder's certificate; the server MUST NOT decrypt or re-encrypt anything.
+When the owner, or a recipient allowed to write the source, updates the value, login or additional fields of a shared secret, the change MUST reach every copy in the same request, through `PUT /api/v1/secrets/{id}/share-save`. The browser MUST encrypt the change for each holder's certificate; the server MUST NOT decrypt or re-encrypt anything. Any other recipient's copy is view-only (see "View-Only Copies").
 
 #### Scenario: Owner updates shared secret
 - GIVEN a secret is shared with one or more users

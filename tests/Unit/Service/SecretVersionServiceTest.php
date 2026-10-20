@@ -28,8 +28,10 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -248,6 +250,40 @@ class SecretVersionServiceTest extends TestCase {
 
 		return $head;
 	}//end restorableHead()
+
+	/**
+	 * A restore of a copy its holder may only view is refused before the
+	 * head is snapshotted or written, whichever value fields the version
+	 * holds (keepiq#1287).
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAViewOnlyCopyIsRefusedUntouched(): void {
+		$head = $this->restorableHead();
+		$guard = $this->createMock(ViewOnlyCopyGuard::class);
+		$guard->expects($this->once())->method('assertMayChangeValue')
+			->with($head, ['key', 'login', 'additionalFields'], 'alice')
+			->willThrowException(new ViewOnlyCopyException());
+		$service = new SecretVersionService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			accessGuard: new SecretVersionAccessGuard(
+				mapper: $this->mapper,
+				secretMapper: $this->secretMapper,
+				suiteMapper: $this->suiteMapper,
+			),
+			logger: $this->logger,
+			db: $this->createMock(originalClassName: IDBConnection::class),
+			viewOnlyCopies: $guard,
+		);
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+		$this->secretMapper->expects($this->never())->method('update');
+
+		$this->expectException(ViewOnlyCopyException::class);
+		$this->expectExceptionMessage(Secret::VIEW_ONLY_REFUSAL);
+		$service->restore(versionId: 'v-1', userId: 'alice');
+	}//end testARestoreOfAViewOnlyCopyIsRefusedUntouched()
 
 	/**
 	 * A restore chosen on an older head changes nothing.

@@ -577,6 +577,76 @@ test.describe('atomic share-save, end to end', () => {
 		await expectShows(bob, bobCopy, changed)
 	})
 
+	test('a direct-share recipient sees their copy as view only and still files and archives it', async () => {
+		const value = original('view')
+		const sourceId = await createSecret(
+			alice,
+			`View only ${alice.user.uid}`,
+			value,
+		)
+		const copies = await share(alice, sourceId, [bob])
+		const bobCopy = copies[bob.user.uid]
+		const folder = await api(bob.page, 'POST', '/folders', {
+			name: `Filed ${bob.user.uid}`,
+		})
+		expect(folder.status).toBe(201)
+
+		await openDetail(bob.page, bobCopy)
+		await expect(bob.page.getByTestId('secret-detail-view-only')).toHaveText(
+			'Shared with you to view only. Ask its owner for edit rights to change it.',
+			{ timeout: 20_000 },
+		)
+		await expect(bob.page.getByTestId('secret-detail-edit')).toHaveCount(0)
+
+		// Moving goes through the store the move dialog calls.
+		const watch = watchApi(bob.page)
+		await withStore(
+			bob.page,
+			'secret',
+			'async (store, data) => store.updateSecret(data.id, { folderId: data.folderId })',
+			{ id: bobCopy, folderId: folder.body.id },
+		)
+
+		// The server holds the same line: a new value is refused with
+		// `view_only`, filing the copy is not.
+		const certificate = await withStore<string>(
+			bob.page,
+			'session',
+			'async (store) => store.certificate',
+		)
+		const key = await withStore<string>(
+			bob.page,
+			'share',
+			'async (store, data) => (await store.encryptForRecipient({ key: data.key }, data.cert)).key',
+			{ key: 'Never-saved-view-1!', cert: certificate },
+		)
+		const refused = await api(bob.page, 'PUT', `/secrets/${bobCopy}`, { key })
+		expect(refused.status, JSON.stringify(refused.body)).toBe(428)
+		expect(refused.body.error).toBe('view_only')
+		const filed = await api(bob.page, 'PUT', `/secrets/${bobCopy}`, {
+			folderId: folder.body.id,
+		})
+		expect(filed.status, JSON.stringify(filed.body)).toBe(200)
+
+		await bob.page
+			.getByRole('button', { name: /Secret actions/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await expect(bob.page.getByRole('menuitem', { name: 'Move' })).toBeVisible()
+		await bob.page.getByRole('menuitem', { name: 'Archive' }).click()
+		await expect
+			.poll(async () => Boolean((await row(bob.page, bobCopy)).archivedAt), {
+				timeout: 30_000,
+			})
+			.toBe(true)
+
+		expect((await row(bob.page, bobCopy)).folderId).toBe(folder.body.id)
+		expect(
+			(await watch.calls()).filter((c) => c.path.endsWith('/share-save')),
+		).toEqual([])
+		expect(await readValue(bob, bobCopy)).toEqual(value)
+		expect(await readValue(alice, sourceId)).toEqual(value)
+	})
+
 	test('a save from a stale dialog is refused, shown, and changes nothing', async () => {
 		const value = original('three')
 		const sourceId = await createSecret(alice, `Stale ${alice.user.uid}`, value)

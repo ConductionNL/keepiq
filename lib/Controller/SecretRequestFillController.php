@@ -32,6 +32,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
@@ -189,6 +190,13 @@ class SecretRequestFillController extends OCSController {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
 				statusCode: $status
+			);
+		} catch (ForbiddenException) {
+			// The refusal speaks to the secret's holder; the filler gets its
+			// outcome only. The request stays pending.
+			return new JSONResponse(
+				data: ['message' => 'The secret this request writes to cannot be changed'],
+				statusCode: Http::STATUS_FORBIDDEN
 			);
 		} catch (Throwable) {
 			return new JSONResponse(

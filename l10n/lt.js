@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ši paslaptis bendrinama su daug partnerių organizacijų, todėl išsaugojimas laukia užklausų ribos ir tada tęsiamas. Neuždarykite šio lango.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Per daug užklausų partnerių organizacijoms. Niekas neišsaugota; bandykite dar kartą po minutės.",
         "This version cannot be restored to this secret. Nothing was saved.": "Šios versijos negalima atkurti šiai paslapčiai. Niekas neišsaugota.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Bendrinama su jumis tik peržiūrai. Norėdami pakeisti, paprašykite savininko redagavimo teisių.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Bendrinama su jumis tik peržiūrai. Niekas neišsaugota; norėdami pakeisti, paprašykite savininko redagavimo teisių.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerių organizacija, su kuria bendrinama ši paslaptis, nepasiekiama ({partners}). Pakartokite pakeitimą prisijungę, kur galite išsaugoti be jų.",
         "Save without them": "Išsaugoti be jų",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Išsaugota. Gavėjai partnerių organizacijose gaus šį pakeitimą, kai savininkas kitą kartą išsaugos šią paslaptį.",

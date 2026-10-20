@@ -159,6 +159,7 @@ class SecretService {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
+	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies Refuses a value change of a copy its holder may not write
 	 *
 	 * @return void
 	 */
@@ -185,6 +186,7 @@ class SecretService {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
+		private ?ViewOnlyCopyGuard $viewOnlyCopies = null,
 	) {
 	}//end __construct()
 
@@ -906,7 +908,7 @@ class SecretService {
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws ForbiddenException When the secret belongs to another user, or its value changes on a copy its holder may only view
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
 	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
@@ -926,6 +928,11 @@ class SecretService {
 	 */
 	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null): Secret {
 		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
+		$this->viewOnlyCopies?->assertMayChangeValue(
+			row: $secret,
+			fields: $this->changedValueFields(secret: $secret, data: $data),
+			userId: $userId
+		);
 
 		// The write is locked against the version just read, whether or not
 		// the client named one; the check below compares a named one. A
@@ -1532,6 +1539,42 @@ class SecretService {
 
 		return $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: $fields);
 	}//end loadForUpdate()
+
+	/**
+	 * The value fields an update writes with a value other than the stored
+	 * one, compared as update() stores them. Resending the stored ciphertext
+	 * changes nothing, so it does not count.
+	 *
+	 * @param Secret $secret The row as loaded
+	 * @param array<string,mixed> $data The update data
+	 *
+	 * @return string[]
+	 */
+	private function changedValueFields(Secret $secret, array $data): array {
+		$stored = [
+			'key' => $secret->getKey(),
+			'login' => $secret->getLogin(),
+			'additionalFields' => $secret->getAdditionalFields(),
+		];
+
+		$changed = [];
+		foreach ($stored as $field => $value) {
+			if (array_key_exists($field, $data) === false) {
+				continue;
+			}
+
+			$new = $this->nullableString(value: $data[$field]);
+			if ($field === 'key') {
+				$new = (string)$data[$field];
+			}
+
+			if ($new !== $value) {
+				$changed[] = $field;
+			}
+		}
+
+		return $changed;
+	}//end changedValueFields()
 
 	/**
 	 * Assert the user has an active encryption suite, or block.

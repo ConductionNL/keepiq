@@ -28,6 +28,7 @@ import {
 } from '../store/modules/federatedShare.js'
 import { onVaultLock, useSessionStore } from '../store/modules/session.js'
 import { useShareStore } from '../store/modules/share.js'
+import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
 
 /** The encrypted value fields of a secret. */
@@ -41,9 +42,6 @@ export const SHARE_SAVE_BATCH = 100
 
 /** How many `incomplete` answers end a save, so a churning share list cannot loop. */
 export const MAX_INCOMPLETE_ROUNDS = 3
-
-/** Grades that let a copy holder save for every holder (TeamFolderMember::WRITE_GRADES plus owner). */
-const COPY_WRITER_GRADES = ['owner', 'write', 'manage']
 
 /**
  * Partner lookup refusals that mean the share is gone for good, so it is
@@ -141,8 +139,9 @@ function partnerGone(error) {
  *
  * `code` is `incomplete` (the share list kept changing), `stale` (the row moved
  * on before the partner value was built), `partner_lookup_limit` (the partner
- * lookup limit held for longer than the save waits) or `partner_unreachable` (`partners`
- * names them, each with its `reason`).
+ * lookup limit held for longer than the save waits), `view_only` (the caller's
+ * copy has no write grade) or `partner_unreachable` (`partners` names them,
+ * each with its `reason`).
  */
 export class ShareSaveError extends Error {
 	/**
@@ -262,9 +261,8 @@ function idsOf(list, key) {
  * Save a value change of `{id}` for every holder in one transaction.
  *
  * On the copy-editor path partner shares are never written; the answer's
- * `federated.ownerOnly` counts them. A copy holder without a write grade saves
- * only their own copy, through `PUT /secrets/{id}`, or restores it through
- * `POST /versions/{restoredFrom}/restore`.
+ * `federated.ownerOnly` counts them. A copy holder without a write grade is
+ * refused before anything is sent, for an edit and a restore alike.
  *
  * @param {object} options The save.
  * @param {string} options.id The caller's own row.
@@ -304,22 +302,8 @@ export async function saveShared({
 	// The source version the edit was made from; only an edit that recorded
 	// none (a queue entry from before it was recorded) takes this moment's.
 	const sourceBase = sourceBaseUpdatedAt ?? context.sourceUpdatedAt ?? ''
-	if (copyPath && !COPY_WRITER_GRADES.includes(context.effectiveGrade)) {
-		// A plain update would not record the restore; the version's own
-		// restore does, and touches only this copy.
-		const response =
-			restoredFrom === null
-				? await axios.put(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`), {
-						...patch,
-						baseUpdatedAt,
-					})
-				: await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/versions/${restoredFrom}/restore`,
-						),
-						{ baseUpdatedAt },
-					)
-		return { secret: response.data }
+	if (isViewOnlyCopy(context, id)) {
+		throw new ShareSaveError('view_only')
 	}
 
 	const epoch = lockEpoch
@@ -695,6 +679,12 @@ export function shareSaveErrorText(error) {
 		return t(
 			'keepiq',
 			'Too many partner lookups. Nothing was saved; try again in a minute.',
+		)
+	}
+	if (code === 'view_only') {
+		return t(
+			'keepiq',
+			'Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.',
 		)
 	}
 	if (code === 'partner_unreachable') {

@@ -22,7 +22,7 @@ At development `94ad83fa`:
 
 ## Decisions
 
-**D1. `{id}` is always the caller's own row.** On the owner path it is the source; on the copy-editor path it is the caller's recipient copy, and the caller must be the owner, a delegate or hold a write or manage grade on the source. A copy holder without one keeps using `PUT /api/v1/secrets/{id}` for their own copy only.
+**D1. `{id}` is always the caller's own row.** On the owner path it is the source; on the copy-editor path it is the caller's recipient copy, and the caller must be the owner, a delegate or hold a write or manage grade on the source. A copy holder without one holds a view-only copy (keepiq#1287): the browser refuses their share-save before sending anything, and `PUT /api/v1/secrets/{id}` refuses a value change of that copy with 428 `view_only`, so a view-only copy can't drift from its source.
 
 **D2. Compare-and-set inside the transaction.** The server advances `updated_at` with `UPDATE … WHERE id = :id AND updated_at = :base` and treats 0 affected rows as stale. On the copy-editor path the source is advanced first, so an owner save and a copy save of one secret queue up instead of deadlocking. The completeness check runs again under that lock. The new version is at least the base plus one second, because `updated_at` is stored in whole seconds.
 
@@ -34,7 +34,7 @@ At development `94ad83fa`:
 
 **D6. Notify after commit, queued in the row.** Writing a partner share stores `SHARE_UPDATED` as its pending notification inside the transaction; after the commit the server delivers it, and `RetryFederatedNotificationsJob` picks up whatever a crash left behind. The stored notification is leased for 60 seconds, so the retry job doesn't send it again while the first send is still running. A share revoked meanwhile is never overwritten.
 
-**D7. A restore is a share-save.** The browser decrypts the version and sends it as a full-value patch with `restoredFrom`, so the restored value reaches every copy in the same transaction, and the server records the restore audit event there. A copy holder without a write grade can only change their own copy, so they restore through `POST /api/v1/versions/{id}/restore`, which also records the restore and now takes an optional `baseUpdatedAt`.
+**D7. A restore is a share-save.** The browser decrypts the version and sends it as a full-value patch with `restoredFrom`, so the restored value reaches every copy in the same transaction, and the server records the restore audit event there. A copy holder without a write grade can't restore: the web app offers no Restore on a view-only copy, and `POST /api/v1/versions/{id}/restore` refuses it with 428 `view_only`. That route changes one row only, records the restore and takes an optional `baseUpdatedAt`; the web app doesn't use it.
 
 ## Security and zero-knowledge
 
