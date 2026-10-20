@@ -11,7 +11,7 @@
 
 A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, a delegate or a recipient who holds a write grade on it updates the secret, the change is written back to all copies.
 
-Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. Direct shares are always independent of group membership.
+Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. A direct share is never created or removed by a change in group membership. What its holder may do with their copy does follow membership, though: a holder who is in a group the secret is shared with in full saves for everyone, also when they joined that group after their copy was made, with nothing for the owner to approve (see `sharing-group`).
 
 ## Data Model
 
@@ -228,6 +228,8 @@ Notification content:
 On approval: a new SecretShare is created for X (with `group_share_id` set), and X is notified of the new share.
 On denial: no share is created. The GroupShare remains active for future members.
 
+A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share. The owner is still notified, and approving creates nothing. Their existing copy gains the right to save for everyone from the moment they are in the group, as `sharing-group` requires.
+
 #### Scenario: New member joins group
 - GIVEN group G has a GroupShare for a secret owned by A
 - WHEN user X joins group G
@@ -425,7 +427,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - As a user, I want changes I make to a shared secret to be visible to my colleagues immediately
 - As a user, I want to revoke a share when a colleague leaves the team
 - As a user, I want to share a secret with an entire team group so that all current members get access at once
-- As a user, I want to be notified when a new member joins a group I shared a secret with, so that I can decide whether to extend access
+- As a user, I want to be notified when a new member joins a group I shared a secret with, so that I can decide whether to give them a copy
 - As a user, I want shares derived from a group to be automatically cleaned up when a member leaves the group
 - As an administrator, I want to take over management of a secret shared with me so that I can handle sharing when the owner is unavailable
 - As a user, I want to delegate ownership of my secret to a trusted colleague so they can manage sharing on my behalf
@@ -454,7 +456,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] Each group-derived SecretShare references its GroupShare via `group_share_id`
 - [ ] When a new user joins a group, the secret owner receives a notification and must approve before the share is created
 - [ ] When a user leaves a group, all their group-derived SecretShares are automatically revoked
-- [ ] Direct shares (group_share_id = null) are unaffected by group membership changes
+- [ ] Direct shares (group_share_id = null) are not removed by group membership changes
 - [ ] The owner can revoke a GroupShare, cascade-deleting all derived SecretShares
 - [ ] A vault administrator can create a delegation for any secret already shared with them (no owner consent required)
 - [ ] A secret owner can create a delegation for their own secret to any user who already holds a share
