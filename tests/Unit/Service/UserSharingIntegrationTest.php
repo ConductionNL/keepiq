@@ -62,6 +62,7 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -173,6 +174,7 @@ class UserSharingIntegrationTest extends TestCase {
 				suiteMapper: $suiteMapper,
 				db: $db,
 				auth: $auth,
+				versionService: $this->createMock(SecretVersionService::class),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $shareTargetMapper,

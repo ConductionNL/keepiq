@@ -12,6 +12,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -56,6 +57,7 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				teamFolderService: $teamFolders,
 			),
+			versionService: $this->createMock(SecretVersionService::class),
 		);
 	}
 

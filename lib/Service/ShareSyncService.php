@@ -78,6 +78,7 @@ class ShareSyncService {
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param SecretVersionService|null $versionService The version history (snapshot of a source written by anyone but its owner)
 	 *
 	 * @return void
 	 *
@@ -90,6 +91,7 @@ class ShareSyncService {
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
 		?ShareAuditTrail $auditTrail = null,
+		private ?SecretVersionService $versionService = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -104,7 +106,8 @@ class ShareSyncService {
 	 * `updatedAt`, moves that version and writes every recipient copy in a
 	 * single transaction, and clears `possiblyCompromisedAt` from any copy
 	 * where it was set. A sync by anyone but the owner is audited on the
-	 * source in that transaction.
+	 * source in that transaction. A member of a group the secret is shared
+	 * with gets share-save's guards (assertGroupWriteGuards()).
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
@@ -137,6 +140,11 @@ class ShareSyncService {
 		}
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
+		if ($writesOn === self::GROUP_WRITE && $expectedUpdatedAt === '') {
+			// A member never overwrites a value they have not seen.
+			throw new InvalidArgumentException(message: 'expectedUpdatedAt is required when saving as a group member');
+		}
+
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
 		// The source is locked against the version just read, which is the
@@ -149,7 +157,17 @@ class ShareSyncService {
 		return $this->atomic(
 			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
-				$updated = $this->writeCopyBlobs(source: $source, updates: $updates, allowedIds: $allowedIds, savedAt: $savedAt);
+				if ($writesOn === self::GROUP_WRITE) {
+					[$writesOn, $allowedIds] = $this->assertGroupWriteGuards(source: $source, updates: $updates, userId: $userId);
+				}
+
+				$updated = $this->writeCopyBlobs(
+					source: $source,
+					updates: $updates,
+					allowedIds: $allowedIds,
+					savedAt: $savedAt,
+					writerId: $userId
+				);
 				if ($updated > 0) {
 					$this->recordNonOwnerSync(source: $source, userId: $userId, writesOn: $writesOn);
 				}
@@ -159,6 +177,107 @@ class ShareSyncService {
 			db: $this->db
 		);
 	}//end syncUpdate()
+
+	/**
+	 * Share-save's guards for a member of a group the secret is shared with,
+	 * run under the source lock: the source is read again and refused when it
+	 * became a read-only or use-only copy, the caller is checked again, so a
+	 * leave or a revoke that committed after the first check refuses the sync,
+	 * and the updates must name exactly the source and every copy whose access
+	 * has not ended, so no holder is left on the old value. Only those rows are
+	 * written. A named row that carries no value is left out, untouched, as
+	 * share-save's `skipped` list leaves it, and only when its holder has no
+	 * vault key: every other holder must get the new value.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 * @param string $userId The requesting user
+	 *
+	 * @return array{0:string|null,1:array<string,bool>} How the audit names the write now, and the ids to write
+	 *
+	 * @throws InvalidArgumentException When the caller lost the right to write, or a row is missing, unexpected or valueless
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	private function assertGroupWriteGuards(Secret $source, array $updates, string $userId): array {
+		// Read again, as share-save's assertStillWriter() does: becoming a
+		// read-only or use-only copy does not move the version the lock checks.
+		$current = $this->auth->loadSecret(secretId: $source->getId());
+		$current->assertNotReadOnly();
+		if ($current->getUseOnly() === true) {
+			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
+		}
+
+		$writesOn = $this->resolveSyncWriter(source: $current, userId: $userId);
+
+		$required = [$source->getId() => true];
+		$holders = [$source->getId() => [$source->getOwnerType(), $source->getOwnerId()]];
+		$ignored = [];
+		$targets = $this->mapper->findBySourceSecret($source->getId());
+		$rows = $this->secretMapper->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
+		$now = time();
+		foreach ($targets as $target) {
+			// A copy whose access ended, or whose row is gone, may be named but is not written.
+			$copyId = $target->getSecretId();
+			if (isset($rows[$copyId]) === false) {
+				$ignored[$copyId] = true;
+				continue;
+			}
+
+			$ends = $rows[$copyId]->getAccessExpiresAt();
+			if ($ends !== null && $ends->getTimestamp() <= $now) {
+				$ignored[$copyId] = true;
+				continue;
+			}
+
+			$required[$copyId] = true;
+			$holders[$copyId] = ['user', $target->getTargetUserId()];
+		}
+
+		$named = [];
+		$valueless = [];
+		foreach ($updates as $update) {
+			$named[(string)($update['secretId'] ?? '')] = true;
+			if ($this->carriesValue(update: $update) === false) {
+				$valueless[(string)($update['secretId'] ?? '')] = true;
+			}
+		}
+
+		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $ignored) !== []) {
+			throw new InvalidArgumentException(
+				message: 'Name the source and every copy whose access has not ended, and nothing else'
+			);
+		}
+
+		foreach (array_keys(array_intersect_key($valueless, $required)) as $copyId) {
+			[$ownerType, $ownerId] = $holders[$copyId];
+			if ($this->suiteMapper->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId) > 0) {
+				throw new InvalidArgumentException(
+					message: 'Every holder with a vault key must get the new value'
+				);
+			}
+
+			// No vault key to encrypt for: the row keeps its value and its version.
+			unset($required[$copyId]);
+		}
+
+		return [$writesOn, $required];
+	}//end assertGroupWriteGuards()
+
+	/**
+	 * Whether an update row carries ciphertext for its copy: a non-empty key,
+	 * or a login or additional fields.
+	 *
+	 * @param array<string,string|null> $update The blob row
+	 *
+	 * @return bool
+	 */
+	private function carriesValue(array $update): bool {
+		return (isset($update['key']) === true && $update['key'] !== '')
+			|| array_key_exists('login', $update) === true
+			|| array_key_exists('additionalFields', $update) === true;
+	}//end carriesValue()
 
 	/**
 	 * Attribute a sync by anyone but the owner to the writer on the source
@@ -380,19 +499,29 @@ class ShareSyncService {
 
 	/**
 	 * Write every permitted recipient blob. Opens no transaction: the caller
-	 * runs it inside its own, so it commits with the rest of the save.
+	 * runs it inside its own, so it commits with the rest of the save. When
+	 * anyone but the owner writes the source, its state before the write is
+	 * kept as a version, as the owner's own update keeps it.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
 	 * @param DateTime $savedAt The version every written row gets
+	 * @param string|null $writerId The caller; null takes no snapshot
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
 	 */
-	public function writeCopyBlobs(Secret $source, array $updates, array $allowedIds, DateTime $savedAt): int {
+	public function writeCopyBlobs(
+		Secret $source,
+		array $updates,
+		array $allowedIds,
+		DateTime $savedAt,
+		?string $writerId = null,
+	): int {
 		$updated = 0;
 		foreach ($updates as $update) {
 			$recipientSecretId = (string)($update['secretId'] ?? '');
@@ -406,7 +535,11 @@ class ShareSyncService {
 				continue;
 			}
 
+			$preUpdate = clone $copy;
 			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt);
+			if ($recipientSecretId === $source->getId()) {
+				$this->snapshotSource(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
+			}
 
 			// A key rewrite of the SOURCE row is a real rotation —
 			// advance keyUpdatedAt so rotation proofs stay honest
@@ -421,6 +554,41 @@ class ShareSyncService {
 
 		return $updated;
 	}//end writeCopyBlobs()
+
+	/**
+	 * Keep the source's state before a write by anyone but its owner (a
+	 * delegate, a team-folder writer or a member of a group it is shared with)
+	 * as a version, with the writer as its actor: only when a value changes
+	 * and the source held a value, as SecretService does on the owner's own
+	 * update. The other copies are not kept: a recipient's history is its own
+	 * copy's, and the owner's update keeps none of them either.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param Secret $preUpdate The source row as read under the lock
+	 * @param Secret $after The source row with the write applied
+	 * @param string|null $writerId The caller; null takes no snapshot
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 */
+	private function snapshotSource(Secret $source, Secret $preUpdate, Secret $after, ?string $writerId): void {
+		if ($this->versionService === null || $writerId === null
+			|| ($source->getOwnerType() === 'user' && $source->getOwnerId() === $writerId)
+		) {
+			return;
+		}
+
+		$hadValues = (string)$preUpdate->getKey() !== ''
+			|| (string)$preUpdate->getLogin() !== ''
+			|| (string)$preUpdate->getAdditionalFields() !== '';
+		$changed = $preUpdate->getKey() !== $after->getKey()
+			|| $preUpdate->getLogin() !== $after->getLogin()
+			|| $preUpdate->getAdditionalFields() !== $after->getAdditionalFields();
+		if ($hadValues === true && $changed === true) {
+			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $writerId);
+		}
+	}//end snapshotSource()
 
 	/**
 	 * Copy one re-encrypted blob onto a recipient's Secret row.

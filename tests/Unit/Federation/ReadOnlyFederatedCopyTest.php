@@ -50,6 +50,7 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\WriteLockService;
@@ -170,6 +171,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 				suiteMapper: $this->suites,
 				db: $db,
 				auth: $auth,
+				versionService: $this->createMock(SecretVersionService::class),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->targets,

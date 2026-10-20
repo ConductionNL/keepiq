@@ -11,12 +11,15 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -34,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
  */
 class GroupMemberWritesForEveryoneTest extends TestCase {
+	/** The version of `src` a sync is made from */
+	private const BASE = '2026-10-01T10:00:00+00:00';
 
 	/** @var array<string,Secret> */
 	private array $rows = [];
@@ -52,9 +57,25 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 	private ShareAuditTrail&MockObject $audit;
 
+	private SecretVersionService&MockObject $versions;
+
+	/** @var array<string,list<string>>|null The members of each group once the sync holds the source lock */
+	private ?array $groupsUnderLock = null;
+
+	/** @var array<int,string> The rows the sync wrote, in order */
+	private array $written = [];
+
+	/** @var list<string> The users without a vault key */
+	private array $keyless = [];
+
+	/** @var (callable(Secret):void)|null What happens to `src` once the sync holds its lock */
+	private $srcUnderLock = null;
+
 	protected function setUp(): void {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
+		$this->versions = $this->createMock(SecretVersionService::class);
 		$this->addRow(id: 'src', owner: 'alice');
+		$this->rows['src']->setUpdatedAt(new DateTime(self::BASE));
 		$this->addRow(id: 'c-bob', owner: 'bob');
 		$this->addRow(id: 'c-dan', owner: 'dan');
 		$this->targets = [
@@ -101,7 +122,29 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$secrets->method('findById')->willReturnCallback(
 			fn (string $id): Secret => $this->rows[$id] ?? throw new DoesNotExistException('none')
 		);
-		$secrets->method('update')->willReturnArgument(0);
+		$secrets->method('findByIds')->willReturnCallback(
+			fn (array $ids): array => array_intersect_key($this->rows, array_flip($ids))
+		);
+		$secrets->method('advanceVersion')->willReturnCallback(
+			function (): int {
+				// A leave that commits after the first check, before the lock.
+				if ($this->groupsUnderLock !== null) {
+					$this->groups = $this->groupsUnderLock;
+				}
+
+				if ($this->srcUnderLock !== null) {
+					($this->srcUnderLock)($this->rows['src']);
+				}
+
+				return 1;
+			}
+		);
+		$secrets->method('update')->willReturnCallback(
+			function (Secret $row): Secret {
+				$this->written[] = $row->getId();
+				return $row;
+			}
+		);
 
 		$targets = $this->createMock(ShareTargetMapper::class);
 		$targets->method('findBySourceSecret')->willReturnCallback(fn (): array => $this->targets);
@@ -138,6 +181,9 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$suite->setCertificate('OWNER-CERT');
 		$suites = $this->createMock(EncryptionSuiteMapper::class);
 		$suites->method('findActiveByOwner')->willReturn($suite);
+		$suites->method('countActiveByOwner')->willReturnCallback(
+			fn (string $ownerType, string $ownerId): int => in_array($ownerId, $this->keyless, true) ? 0 : 1
+		);
 
 		return new ShareSyncService(
 			mapper: $targets,
@@ -154,6 +200,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 				groupManager: $groups,
 			),
 			auditTrail: $this->audit,
+			versionService: $this->versions,
 		);
 	}
 
@@ -192,7 +239,131 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->audit->expects($this->once())->method('recordTeamWriteSync')
 			->with('bob', 'src', 'Router', 'group-write sync');
 
-		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob'));
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob'));
+	}
+
+	public function testAGroupMembersSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$this->rows['src']->setKey('OLD');
+		$this->versions->expects($this->once())->method('snapshot')
+			->with(
+				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src' && $preUpdate->getKey() === 'OLD'),
+				'user',
+				'bob'
+			)
+			->willReturn(new SecretVersion());
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+	}
+
+	public function testTheOwnersSyncTakesNoSnapshotOfTheSource(): void {
+		// The owner's own update through PUT /secrets/{id} keeps her version.
+		$this->rows['src']->setKey('OLD');
+		$this->versions->expects($this->never())->method('snapshot');
+
+		$this->sync()->syncUpdate('src', $this->everyRow(), '', 'alice');
+	}
+
+	public function testAGroupMembersSyncWithoutABaseIsRefused(): void {
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), '', 'bob');
+			$this->fail('A group member overwrote a value they had not seen');
+		} catch (InvalidArgumentException $e) {
+			$this->assertStringContainsString('expectedUpdatedAt is required', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncLeavingOutACopyIsRefused(): void {
+		// Dan's copy is left on the old value.
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW']];
+
+		try {
+			$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+			$this->fail('A group member changed the source and left a copy behind');
+		} catch (InvalidArgumentException $e) {
+			$this->assertStringContainsString('every copy', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncNamingARowThatIsNotACopyIsRefused(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->sync()->syncUpdate('src', [...$this->everyRow(), ['secretId' => 'other', 'key' => 'NEW']], self::BASE, 'bob');
+	}
+
+	public function testAGroupMembersSyncSkipsACopyWhoseAccessEnded(): void {
+		$this->rows['c-dan']->setAccessExpiresAt(new DateTime('-1 minute'));
+
+		$this->assertSame(2, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob'));
+		$this->assertSame(['src', 'c-bob'], $this->written);
+	}
+
+	public function testAMemberWhoLeftTheGroupBeforeTheSyncsLockIsRefused(): void {
+		$this->groupsUnderLock = ['admin' => ['mallory']];
+		$this->audit->expects($this->never())->method('recordTeamWriteSync');
+
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+			$this->fail('A member who left the group wrote every copy');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Not authorized to manage shares of this secret', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncNamingACopyWithoutAValueIsRefused(): void {
+		// Dan has a vault key: his copy would keep the old value under a new version.
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan']];
+
+		try {
+			$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+			$this->fail('A copy was named without a value and its holder has a vault key');
+		} catch (InvalidArgumentException $e) {
+			$this->assertStringContainsString('must get the new value', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testAGroupMembersSyncLeavesTheCopyOfAHolderWithoutAVaultKeyUntouched(): void {
+		$this->keyless = ['dan'];
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan']];
+
+		$this->assertSame(2, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
+		$this->assertSame(['src', 'c-bob'], $this->written);
+		$this->assertNull($this->rows['c-dan']->getUpdatedAt());
+	}
+
+	public function testASourceMadeReadOnlyBeforeTheSyncsLockRefusesAGroupMember(): void {
+		$this->srcUnderLock = static fn (Secret $src) => $src->setReadOnly(true);
+
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+			$this->fail('A group member wrote a source that became read-only');
+		} catch (ForbiddenException) {
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testASourceMadeUseOnlyBeforeTheSyncsLockRefusesAGroupMember(): void {
+		$this->srcUnderLock = static fn (Secret $src) => $src->setUseOnly(true);
+
+		try {
+			$this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'bob');
+			$this->fail('A group member wrote a source that became use-only');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('A use-only copy cannot be changed', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testTheOwnersSyncKeepsWorkingWithoutABase(): void {
+		$this->assertSame(1, $this->sync()->syncUpdate('src', [['secretId' => 'src', 'key' => 'NEW']], '', 'alice'));
 	}
 
 	public function testAMemberWhoLeftTheGroupKeepsTheirCopyButNoWriteGrade(): void {
@@ -222,7 +393,19 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			->with('dan', 'src', 'Router', 'group-write sync');
 
 		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
-		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), '', 'dan'));
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
+	}
+
+	public function testAMemberWhoseCopyCameThroughATeamFolderGetsTheWriteGrade(): void {
+		// Dan's copy came with his `read` membership of a team folder; he is in `admin` too.
+		$this->targets[1]->setTeamFolderId('tf-1');
+		$this->teamGrades['dan'] = 'read';
+		$this->groups['admin'][] = 'dan';
+		$this->audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('dan', 'src', 'Router', 'group-write sync');
+
+		$this->assertSame('write', $this->sync()->writeContext('c-dan', 'dan')['effectiveGrade']);
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $this->everyRow(), self::BASE, 'dan'));
 	}
 
 	public function testAMemberWhoLeftOneGroupButIsStillInAnotherGetsTheWriteGrade(): void {
