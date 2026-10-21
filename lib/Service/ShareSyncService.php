@@ -239,7 +239,7 @@ class ShareSyncService {
 	 */
 	public function resolveSyncWriter(Secret $source, string $userId): ?string {
 		$standing = $this->contexts->standingOn(source: $source, userId: $userId);
-		if ($standing['grade'] === 'owner' || $standing['writesOn'] !== null) {
+		if ($this->contexts->writesForEveryone(standing: $standing) === true) {
 			return $standing['writesOn'];
 		}
 

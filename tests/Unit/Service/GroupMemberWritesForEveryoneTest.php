@@ -13,6 +13,7 @@ use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -70,6 +71,9 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 
 	/** @var array<string,string> The team-folder grade of each user on `src` */
 	private array $teamGrades = [];
+
+	/** @var list<string> The users with an active delegation on `src` */
+	private array $delegates = [];
 
 	private ShareAuditTrail&MockObject $audit;
 
@@ -219,7 +223,11 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		);
 
 		$delegations = $this->createMock(SecretDelegationMapper::class);
-		$delegations->method('findActiveBySecretAndUser')->willThrowException(new DoesNotExistException('none'));
+		$delegations->method('findActiveBySecretAndUser')->willReturnCallback(
+			fn (string $secretId, string $userId): SecretDelegation => $secretId === 'src' && in_array($userId, $this->delegates, true)
+				? new SecretDelegation()
+				: throw new DoesNotExistException('none')
+		);
 		$suite = new EncryptionSuite();
 		$suite->setCertificate('OWNER-CERT');
 		$suites = $this->createMock(EncryptionSuiteMapper::class);
@@ -614,6 +622,45 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame(1, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
 	}
 
+	public function testACopyHolderWhoJoinsAGroupWithTwoFullSharesOfTheSourceTellsTheOwner(): void {
+		// Neither share of the group just joined counts as having granted the write before.
+		$this->groupShares[] = $this->groupShare(id: 'gs-admin-2', secretId: 'src', groupId: 'admin');
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->atLeastOnce())->method('notify')
+			->with('group_member_gained_write', 'alice', $this->anything(), 'secret', 'src');
+		$this->groups['admin'][] = 'dan';
+
+		$this->assertGreaterThan(0, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+	}
+
+	public function testATeamFolderWriterWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing(): void {
+		$this->teamGrades['dan'] = 'write';
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->never())->method('notify');
+		$this->groups['admin'][] = 'dan';
+
+		$this->assertSame(0, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+	}
+
+	public function testADelegateWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing(): void {
+		$this->delegates[] = 'dan';
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->never())->method('notify');
+		$this->groups['admin'][] = 'dan';
+
+		$this->assertSame(0, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+	}
+
+	public function testATeamFolderReaderWithACopyWhoJoinsASharedGroupTellsTheOwner(): void {
+		$this->teamGrades['dan'] = 'read';
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->once())->method('notify')
+			->with('group_member_gained_write', 'alice', $this->anything(), 'secret', 'src');
+		$this->groups['admin'][] = 'dan';
+
+		$this->assertSame(1, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+	}
+
 	private function groupShareService(NotificationService $notifications): GroupShareService {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturnCallback(
@@ -645,6 +692,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			))
 		);
 
+		[, $contexts, $auth] = $this->wire();
+
 		return new GroupShareService(
 			mapper: $groupShares,
 			shareTargetMapper: $targets,
@@ -657,7 +706,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
-			auth: $this->wire()[2],
+			auth: $auth,
+			contexts: $contexts,
 		);
 	}
 

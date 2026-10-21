@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
@@ -72,6 +73,7 @@ class GroupShareService {
 	 * @param ShareRevocationService $revocationService Revokes one member's share and deletes its copy
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 * @param ShareAuthorizationService|null $auth Whether a new member's existing copy now saves for everyone
+	 * @param ShareWriteContext|null $contexts Whether a new member already saved for everyone without the group
 	 *
 	 * @return void
 	 */
@@ -89,6 +91,7 @@ class GroupShareService {
 		private ShareRevocationService $revocationService,
 		private ?ShareRestrictionResolver $restrictions = null,
 		private ?ShareAuthorizationService $auth = null,
+		private ?ShareWriteContext $contexts = null,
 	) {
 	}//end __construct()
 
@@ -317,8 +320,11 @@ class GroupShareService {
 	 * owner whose secret is shared with that group so they can approve
 	 * the new member. A new member who already holds a live copy has
 	 * nothing to approve: the owner is told when the group share lets that
-	 * copy save for everyone and no other group already did, and is not
-	 * notified otherwise.
+	 * copy save for everyone and the member did not already save for everyone
+	 * without this group, and is not notified otherwise. Another shared group
+	 * the member is already in by the time this runs counts as already
+	 * granting it, so memberships that arrive together, as from one LDAP sync
+	 * or through nested groups, tell the owner nothing.
 	 *
 	 * @param string $userId The user newly added to the group
 	 * @param string $groupId The group that gained the member
@@ -345,9 +351,8 @@ class GroupShareService {
 			$subject = 'group_member_added';
 			$copyGrade = $this->auth?->copyGrade(source: $secret, userId: $userId);
 			if ($copyGrade !== null) {
-				// News only when this group, not another one, lets the copy save for everyone.
 				if ($copyGrade !== 'write' || $groupShare->isFullAndLive() === false
-					|| $this->auth?->copyGrade(source: $secret, userId: $userId, exceptGroupId: $groupId) === 'write'
+					|| $this->writesForEveryoneWithout(secret: $secret, userId: $userId, groupId: $groupId) === true
 				) {
 					continue;
 				}
@@ -373,6 +378,30 @@ class GroupShareService {
 
 		return $dispatched;
 	}//end handleNewGroupMember()
+
+	/**
+	 * Whether the user saves for everyone the source is shared with when the
+	 * group's shares of it are left out: as the owner or a delegate, through a
+	 * team-folder write grade or through another group. False when the write
+	 * context is not wired, which errs towards telling the owner.
+	 *
+	 * @param Secret $secret The source secret
+	 * @param string $userId The user newly added to the group
+	 * @param string $groupId The group that gained the member
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	private function writesForEveryoneWithout(Secret $secret, string $userId, string $groupId): bool {
+		if ($this->contexts === null) {
+			return false;
+		}
+
+		$standing = $this->contexts->standingOn(source: $secret, userId: $userId, exceptGroupId: $groupId);
+
+		return $this->contexts->writesForEveryone(standing: $standing);
+	}//end writesForEveryoneWithout()
 
 	/**
 	 * Approve the new-member notification — creates the ShareTarget that
