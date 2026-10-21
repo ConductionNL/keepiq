@@ -228,7 +228,15 @@ Notification content:
 On approval: a new SecretShare is created for X (with `group_share_id` set), and X is notified of the new share.
 On denial: no share is created. The GroupShare remains active for future members.
 
-A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share and the owner is not asked to approve anything. When joining lets their copy save for everyone, as `sharing-group` requires from the moment they are in the group, the owner MUST instead get the `group_member_gained_write` notification, without Approve or Deny: "*{X}* joined the group *{G}* and can now change *{secret}* for everyone it is shared with. Revoke their share to stop this." It follows the owner's `notify_security` setting, not `notify_group_shares`. When joining changes nothing for them, for example because the group share or their copy is use-only, the owner MUST NOT be notified.
+A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share and the owner is not asked to approve anything. When joining lets their copy save for everyone, as `sharing-group` requires from the moment they are in the group, the owner MUST instead get the `group_member_gained_write` notification, without Approve or Deny: "*{X}* joined the group *{G}* and can now change *{secret}* for everyone it is shared with. Revoke their share to stop this." It follows the owner's `notify_security` setting, not `notify_group_shares`. When joining changes nothing for them, for example because the group share or their copy is use-only, or because they already save for everyone through another group's full, live share, the owner MUST NOT be notified.
+
+#### Scenario: A copy holder who already saves for everyone joins another shared group
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testACopyHolderWhoAlreadySavesThroughAnotherGroupTellsTheOwnerNothing.
+
+- GIVEN groups G and H both have a full GroupShare for a secret owned by A, and X holds a copy and is in group H
+- WHEN user X joins group G
+- THEN A MUST NOT receive a notification
 
 #### Scenario: A copy holder who joins a shared group can now change the secret
 
