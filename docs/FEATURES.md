@@ -236,6 +236,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Secret request fulfilled | `request_fulfilled` | `notify_requests` | Notify requester | **MVP** |
 | Application pending approval | `app_pending` | — (always notify admins) | Members of the Nextcloud `admin` group | **MVP** |
 | Group share: new member needs approval | `group_member_added` | `notify_group_shares` | Notify secret owner | **MVP** |
+| Group share: a copy holder who joined can now change the secret | `group_member_gained_write` | `notify_security` | Notify secret owner | **V1** |
 | Share request from recipient | `share_request` | `notify_shares` | Notify secret owner | **MVP** |
 | Share request approved/denied | `share_request_result` | `notify_shares` | Notify requester | **MVP** |
 | CA certificate expiring (90/30/7 days) | `ca_expiring` | — (always notify admins) | All admins | **V1** |

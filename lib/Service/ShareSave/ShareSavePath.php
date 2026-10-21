@@ -25,9 +25,6 @@ use OCA\Keepiq\Db\Secret;
  * Who saves what: the owner saving the source (`{id}` is the source), or a
  * copy holder saving through their copy (`{id}` is a recipient copy).
  *
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$teamWriter` is a fact the
- *   value carries for the audit, not a switch in this class's behaviour.
- *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 final class ShareSavePath {
@@ -36,14 +33,14 @@ final class ShareSavePath {
 	 *
 	 * @param Secret $row The caller's own row, `{id}`
 	 * @param Secret $source The source: `$row` itself on the owner path
-	 * @param bool $teamWriter Whether the copy holder writes on a team-folder grade
+	 * @param string|null $writesOn The audit label of the copy holder's write; null for the owner or a delegate
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		public readonly Secret $row,
 		public readonly Secret $source,
-		public readonly bool $teamWriter = false,
+		public readonly ?string $writesOn = null,
 	) {
 	}//end __construct()
 

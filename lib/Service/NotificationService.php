@@ -53,6 +53,9 @@ class NotificationService {
 		// A partner instance shared a secret (sharing-federated-recipients D4).
 		'federated_share_received' => 'notify_shares',
 		'group_member_added' => 'notify_group_shares',
+		// A copy holder who joined a shared group can now overwrite the owner's
+		// secret without approval: a change in who can write it, not a request.
+		'group_member_gained_write' => 'notify_security',
 		'secret_compromised' => 'notify_security',
 		'request_fulfilled' => 'notify_requests',
 		'app_pending' => null,

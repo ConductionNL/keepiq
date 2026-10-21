@@ -632,7 +632,7 @@ class SecretService {
 			}
 		}
 
-		if ($this->versionService !== null && $this->fieldsChanged(before: $preUpdate, after: $secret) === true) {
+		if ($this->versionService?->fieldsChanged(before: $preUpdate, after: $secret) === true) {
 			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'application', actorId: $applicationId);
 		}
 
@@ -1064,9 +1064,7 @@ class SecretService {
 				throw new StaleWriteException(current: $this->loadOwned(id: $secret->getId(), userId: $userId));
 			}
 
-			if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
-				$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
-			}
+			$this->versionService?->snapshotIfChanged(preUpdate: $preUpdate, after: $secret, actorType: 'user', actorId: $userId);
 
 			$secret->setUpdatedAt($savedAt);
 			$this->mapper->update($secret);
@@ -1678,72 +1676,6 @@ class SecretService {
 
 		return $secret;
 	}//end setExpiry()
-
-	/**
-	 * Whether this update should be recorded in version history.
-	 *
-	 * A placeholder's FIRST fill is not a revision: there is no earlier value to
-	 * return to, so the snapshot would be a version row saying "nothing" in the
-	 * history panel. `fieldsChanged()` is true in that case (empty -> value),
-	 * which is why emptiness has to be asked separately.
-	 *
-	 * @param Secret $before The pre-update row
-	 * @param Secret $after The row about to be written
-	 *
-	 * @return bool True when a version row is warranted.
-	 *
-	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
-	 */
-	private function shouldSnapshot(Secret $before, Secret $after): bool {
-		if ($this->versionService === null) {
-			return false;
-		}
-
-		if ($this->hadNoValues(secret: $before) === true) {
-			return false;
-		}
-
-		return $this->fieldsChanged(before: $before, after: $after);
-	}//end shouldSnapshot()
-
-	/**
-	 * Whether this row held no values at all — an unfilled request placeholder.
-	 *
-	 * Used to skip the version snapshot on a placeholder's first fill. Checked on
-	 * the value columns only: `name`, `url`, folder and type are metadata the
-	 * requester set when asking, so a placeholder legitimately has them.
-	 *
-	 * @param Secret $secret The pre-update row
-	 *
-	 * @return bool True when the row carried no value.
-	 *
-	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
-	 */
-	private function hadNoValues(Secret $secret): bool {
-		return (string)$secret->getKey() === ''
-			&& (string)$secret->getLogin() === ''
-			&& (string)$secret->getAdditionalFields() === '';
-	}//end hadNoValues()
-
-	/**
-	 * Whether any versionable field differs between two states of a
-	 * secret row (secret-version-history §2.2). Pure string comparison —
-	 * ciphertext blobs are opaque; no decryption anywhere.
-	 *
-	 * @param Secret $before The pre-mutation clone
-	 * @param Secret $after The mutated row
-	 *
-	 * @return bool
-	 */
-	private function fieldsChanged(Secret $before, Secret $after): bool {
-		return $before->getName() !== $after->getName()
-			|| $before->getUrl() !== $after->getUrl()
-			|| $before->getFolderId() !== $after->getFolderId()
-			|| $before->getTypeId() !== $after->getTypeId()
-			|| $before->getKey() !== $after->getKey()
-			|| $before->getLogin() !== $after->getLogin()
-			|| $before->getAdditionalFields() !== $after->getAdditionalFields();
-	}//end fieldsChanged()
 
 	/**
 	 * Normalise a value to a non-empty string or null.
