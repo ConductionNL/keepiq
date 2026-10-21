@@ -569,15 +569,43 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame('none', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
 	}
 
-	public function testACopyHolderWhoAlreadySavesThroughAnotherGroupTellsTheOwnerNothing(): void {
+	public function testACopyHolderWhoAlreadySavesThroughAnotherGroupTellsTheOwner(): void {
+		// The ops membership may have arrived in the same directory sync as this one.
 		$this->groupShares[] = $this->groupShare(id: 'gs-ops', secretId: 'src', groupId: 'ops');
 		$this->groups['ops'] = ['dan'];
 		$notifications = $this->createMock(NotificationService::class);
-		$notifications->expects($this->never())->method('notify');
+		$notifications->expects($this->once())->method('notify')
+			->with(
+				'group_member_gained_write',
+				'alice',
+				$this->callback(static fn (array $params): bool => $params['newMemberId'] === 'dan' && $params['groupId'] === 'admin'),
+				'secret',
+				'src'
+			);
 		$this->groups['admin'][] = 'dan';
 
-		$this->assertSame(0, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
+		$this->assertSame(1, $this->groupShareService(notifications: $notifications)->handleNewGroupMember('dan', 'admin'));
 		$this->assertSame('write', $this->context()->writeContext('c-dan', 'dan')['effectiveGrade']);
+	}
+
+	public function testACopyHolderAddedToTwoSharedGroupsInOneSyncTellsTheOwnerForEach(): void {
+		// A directory sync adds every membership before it announces the first.
+		$this->groupShares[] = $this->groupShare(id: 'gs-ops', secretId: 'src', groupId: 'ops');
+		$this->groups['ops'] = ['dan'];
+		$this->groups['admin'][] = 'dan';
+		$told = [];
+		$notifications = $this->createMock(NotificationService::class);
+		$notifications->expects($this->exactly(2))->method('notify')->willReturnCallback(
+			function (string $subject, string $recipientId, array $params) use (&$told): bool {
+				$told[] = $subject.' '.$recipientId.' '.$params['groupId'];
+				return true;
+			}
+		);
+		$groupShares = $this->groupShareService(notifications: $notifications);
+
+		$this->assertSame(1, $groupShares->handleNewGroupMember('dan', 'admin'));
+		$this->assertSame(1, $groupShares->handleNewGroupMember('dan', 'ops'));
+		$this->assertSame(['group_member_gained_write alice admin', 'group_member_gained_write alice ops'], $told);
 	}
 
 	public function testACopyHolderWhoSavesThroughAnotherGroupAndJoinsAUseOnlyGroupShareTellsTheOwnerNothing(): void {
@@ -623,7 +651,6 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 	}
 
 	public function testACopyHolderWhoJoinsAGroupWithTwoFullSharesOfTheSourceTellsTheOwner(): void {
-		// Neither share of the group just joined counts as having granted the write before.
 		$this->groupShares[] = $this->groupShare(id: 'gs-admin-2', secretId: 'src', groupId: 'admin');
 		$notifications = $this->createMock(NotificationService::class);
 		$notifications->expects($this->atLeastOnce())->method('notify')

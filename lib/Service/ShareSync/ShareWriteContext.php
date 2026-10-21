@@ -68,13 +68,12 @@ class ShareWriteContext {
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The requesting user
-	 * @param string|null $exceptGroupId A group whose shares of the source do not count
 	 *
 	 * @return array{grade:string|null, writesOn:string|null}
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
-	public function standingOn(Secret $source, string $userId, ?string $exceptGroupId = null): array {
+	public function standingOn(Secret $source, string $userId): array {
 		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
 			return ['grade' => 'owner', 'writesOn' => null];
 		}
@@ -84,7 +83,7 @@ class ShareWriteContext {
 			return ['grade' => $grade, 'writesOn' => ShareSyncService::TEAM_WRITE];
 		}
 
-		$copyGrade = $this->auth->copyGrade(source: $source, userId: $userId, exceptGroupId: $exceptGroupId);
+		$copyGrade = $this->auth->copyGrade(source: $source, userId: $userId);
 		if ($copyGrade === 'write') {
 			return ['grade' => $copyGrade, 'writesOn' => ShareSyncService::GROUP_WRITE];
 		}
@@ -106,6 +105,27 @@ class ShareWriteContext {
 	public function writesForEveryone(array $standing): bool {
 		return $standing['grade'] === 'owner' || $standing['writesOn'] !== null;
 	}//end writesForEveryone()
+
+	/**
+	 * Whether the user writes every copy of the source other than through a
+	 * group share: as the owner or a delegate, or through a team-folder write
+	 * grade, even one that comes through a group. Group shares never count, as
+	 * memberships can arrive together in one directory sync or through nested
+	 * groups; a team-folder grade gives the write on its own, so counting it
+	 * never silences a group share's alert.
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $userId The candidate user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	public function writesForEveryoneWithoutGroupShares(Secret $source, string $userId): bool {
+		$standing = $this->standingOn(source: $source, userId: $userId);
+
+		return $standing['grade'] === 'owner' || $standing['writesOn'] === ShareSyncService::TEAM_WRITE;
+	}//end writesForEveryoneWithoutGroupShares()
 
 	/**
 	 * The write context of a secret for the current user

@@ -226,13 +226,12 @@ class ShareAuthorizationService {
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The candidate user
-	 * @param string|null $exceptGroupId A group whose shares of the source do not count
 	 *
 	 * @return string|null
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
-	public function copyGrade(Secret $source, string $userId, ?string $exceptGroupId = null): ?string {
+	public function copyGrade(Secret $source, string $userId): ?string {
 		if ($this->shareTargetMapper === null) {
 			return null;
 		}
@@ -253,7 +252,7 @@ class ShareAuthorizationService {
 		}
 
 		if ($copy->getUseOnly() === true || $copy->getReadOnly() === true
-			|| $this->isInSharedGroup(source: $source, userId: $userId, exceptGroupId: $exceptGroupId) === false
+			|| $this->isInSharedGroup(source: $source, userId: $userId) === false
 		) {
 			return 'none';
 		}
@@ -271,18 +270,16 @@ class ShareAuthorizationService {
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The copy's holder
-	 * @param string|null $exceptGroupId A group whose shares of the source do not count
 	 *
 	 * @return bool
 	 */
-	private function isInSharedGroup(Secret $source, string $userId, ?string $exceptGroupId = null): bool {
+	private function isInSharedGroup(Secret $source, string $userId): bool {
 		if ($this->groupShareMapper === null || $this->groupManager === null) {
 			return false;
 		}
 
 		foreach ($this->groupShareMapper->findBySecret($source->getId()) as $groupShare) {
 			if ($groupShare->isFullAndLive() === true
-				&& $groupShare->getGroupId() !== $exceptGroupId
 				&& $this->groupManager->isInGroup($userId, $groupShare->getGroupId()) === true
 			) {
 				return true;
