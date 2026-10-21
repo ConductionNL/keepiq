@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestPolicy;
@@ -276,12 +277,13 @@ class SecretRequestFillControllerTest extends TestCase {
 	/**
 	 * Refusals a fill can meet from the secret's holder side.
 	 *
-	 * @return array<string,array{ForbiddenException}>
+	 * @return array<string,array{RuntimeException}>
 	 */
 	public static function holderRefusals(): array {
 		return [
 			'a copy shared to view only' => [new ViewOnlyCopyException()],
 			'a copy from another organisation' => [new ForbiddenException(message: Secret::READ_ONLY_REFUSAL)],
+			'a copy whose source cannot be resolved' => [new NotFoundException(message: 'Secret not found')],
 		];
 	}//end holderRefusals()
 
@@ -290,12 +292,12 @@ class SecretRequestFillControllerTest extends TestCase {
 	 * with them to view only, answers 403 without the holder-facing refusal
 	 * (keepiq#1287).
 	 *
-	 * @param ForbiddenException $refusal The refusal the fill meets
+	 * @param RuntimeException $refusal The refusal the fill meets
 	 *
 	 * @return void
 	 */
 	#[DataProvider('holderRefusals')]
-	public function testFillReturns403WhenTheSecretMayNotBeChanged(ForbiddenException $refusal): void {
+	public function testFillReturns403WhenTheSecretMayNotBeChanged(RuntimeException $refusal): void {
 		$this->secretRequestService->expects($this->once())
 			->method('fill')
 			->willThrowException($refusal);

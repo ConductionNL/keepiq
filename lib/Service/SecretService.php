@@ -142,6 +142,7 @@ class SecretService {
 	 * @param LinkShareService $linkShareService The link share service (cascade delete)
 	 * @param LoggerInterface $logger The logger interface
 	 * @param IDBConnection $db The transaction an update's version lock runs in
+	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a value change of a copy its holder may not write
 	 * @param SecretRequestService|null $secretRequestService The secret-request service
 	 * @param ShareService|null $shareService The share service
 	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper
@@ -159,7 +160,6 @@ class SecretService {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
-	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies Refuses a value change of a copy its holder may not write
 	 *
 	 * @return void
 	 */
@@ -171,6 +171,7 @@ class SecretService {
 		private LinkShareService $linkShareService,
 		private LoggerInterface $logger,
 		private IDBConnection $db,
+		private ViewOnlyCopyGuard $viewOnlyCopies,
 		private ?SecretRequestService $secretRequestService = null,
 		private ?ShareService $shareService = null,
 		private ?GroupShareMapper $groupShareMapper = null,
@@ -186,7 +187,6 @@ class SecretService {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
-		private ?ViewOnlyCopyGuard $viewOnlyCopies = null,
 	) {
 	}//end __construct()
 
@@ -928,7 +928,7 @@ class SecretService {
 	 */
 	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null): Secret {
 		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
-		$this->viewOnlyCopies?->assertMayChangeValue(
+		$this->viewOnlyCopies->assertMayChangeValue(
 			row: $secret,
 			fields: $this->changedValueFields(secret: $secret, data: $data),
 			userId: $userId

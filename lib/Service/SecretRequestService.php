@@ -81,7 +81,7 @@ class SecretRequestService {
 	 * @param SecretMapper $secretMapper Reads the Secret a request writes to
 	 * @param ContainerInterface $container Resolves SecretService lazily (see fill)
 	 * @param SecretPlaceholderCleaner $placeholderCleaner Removes an unfilled placeholder
-	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies Refuses a fill onto a copy its holder may not write
+	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a fill onto a copy its holder may not write
 	 *
 	 * @return void
 	 */
@@ -94,7 +94,7 @@ class SecretRequestService {
 		private SecretMapper $secretMapper,
 		private ContainerInterface $container,
 		private SecretPlaceholderCleaner $placeholderCleaner,
-		private ?ViewOnlyCopyGuard $viewOnlyCopies = null,
+		private ViewOnlyCopyGuard $viewOnlyCopies,
 	) {
 	}//end __construct()
 
@@ -163,6 +163,7 @@ class SecretRequestService {
 	 *
 	 * @throws InvalidArgumentException
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the secret's holder may not change it, as with a copy shared with them to view only
+	 * @throws \OCA\Keepiq\Exception\NotFoundException When the secret is a copy whose source cannot be resolved, or is gone by the write
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
 	 */
@@ -315,6 +316,7 @@ class SecretRequestService {
 	 *
 	 * @throws InvalidArgumentException With code 409 when the row moved twice during the fill
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the owner may not change the secret, as with a copy shared with them to view only
+	 * @throws \OCA\Keepiq\Exception\NotFoundException When the secret is a copy whose source cannot be resolved, or is gone by the write
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
@@ -334,7 +336,7 @@ class SecretRequestService {
 
 		// Before the hold-back: it stores a filled extra-field blob on its own,
 		// and that is a value change too.
-		$this->viewOnlyCopies?->assertMayChangeValue(row: $secret, fields: array_keys($data), userId: $secret->getOwnerId());
+		$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: array_keys($data), userId: $secret->getOwnerId());
 
 		$data = $this->holdBackAdditionalFields(secret: $secret, data: $data);
 		if ($data === []) {

@@ -117,6 +117,7 @@ class SecretServiceTest extends TestCase {
 			linkShareService: $this->linkShareService,
 			logger: $logger,
 			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			folderOwnership: $this->folderOwnership,
 		);
 	}//end setUp()
@@ -376,6 +377,7 @@ class SecretServiceTest extends TestCase {
 			linkShareService: $this->linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			versionService: $versionService,
 		);
 	}//end serviceWithVersions()
@@ -741,6 +743,7 @@ class SecretServiceTest extends TestCase {
 			linkShareService: $this->linkShareService,
 			logger: $logger,
 			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			secretRequestService: null,
 			shareService: null,
 			groupShareMapper: $groupShareMapper,
@@ -1075,6 +1078,7 @@ class SecretServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			versionService: $versions,
 			db: $db,
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		try {

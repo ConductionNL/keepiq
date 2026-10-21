@@ -83,6 +83,7 @@ class SecretVersionServiceTest extends TestCase {
 			),
 			logger: $this->logger,
 			db: $db,
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			eventDispatcher: null,
 		);
 	}//end setUp()
@@ -554,6 +555,7 @@ class SecretVersionServiceTest extends TestCase {
 			accessGuard: $this->createMock(SecretVersionAccessGuard::class),
 			logger: $this->logger,
 			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			eventDispatcher: $dispatcher,
 		);
 

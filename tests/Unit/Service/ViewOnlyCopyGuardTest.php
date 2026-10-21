@@ -29,12 +29,10 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\ShareAuthorizationService;
-use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\IDBConnection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -236,17 +234,11 @@ class ViewOnlyCopyGuardTest extends TestCase {
 		$this->guard = new ViewOnlyCopyGuard(
 			targets: $this->targets,
 			secrets: $this->secrets,
-			sync: new ShareSyncService(
-				mapper: $this->targets,
+			auth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
+				delegationMapper: $this->delegations,
 				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				db: $this->createMock(IDBConnection::class),
-				auth: new ShareAuthorizationService(
-					secretMapper: $this->secrets,
-					delegationMapper: $this->delegations,
-					suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-					teamFolderService: $this->teamFolders,
-				),
+				teamFolderService: $this->teamFolders,
 			),
 		);
 	}//end buildGuard()

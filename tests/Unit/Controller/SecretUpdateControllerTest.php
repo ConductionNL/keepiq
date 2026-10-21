@@ -29,6 +29,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\IDBConnection;
 use OCP\IRequest;
@@ -149,6 +150,7 @@ class SecretUpdateControllerTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			versionService: $versions,
 			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$response = $this->controller(['key' => 'NEW-CIPHERTEXT'], $service)->update('s-1');

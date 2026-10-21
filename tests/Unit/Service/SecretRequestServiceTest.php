@@ -123,6 +123,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->suiteLockService = new SecretRequestSuiteLockService(
@@ -442,6 +443,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		// The linked Secret, user-owned.
@@ -514,6 +516,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
@@ -554,6 +557,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -744,7 +748,7 @@ class SecretRequestServiceTest extends TestCase {
 	/**
 	 * Build a service wired for the fill tests.
 	 *
-	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies The view-only guard, if any
+	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies The view-only guard; a stub that lets every fill through when null
 	 *
 	 * @return SecretRequestService
 	 */
@@ -758,7 +762,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
-			viewOnlyCopies: $viewOnlyCopies,
+			viewOnlyCopies: $viewOnlyCopies ?? $this->createStub(ViewOnlyCopyGuard::class),
 		);
 	}//end makeFillService()
 
@@ -857,6 +861,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		try {
@@ -1129,6 +1134,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
@@ -1160,6 +1166,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1187,6 +1194,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1257,6 +1265,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1306,6 +1315,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1357,6 +1367,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->createForApplication(
@@ -1398,6 +1409,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1458,6 +1470,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->createReRequest(
@@ -1501,6 +1514,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1550,6 +1564,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -2336,6 +2351,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $service->refusalReason(token: 'tok-good'));

@@ -63,10 +63,10 @@ class SecretVersionService {
 	 * @param SecretVersionAccessGuard $accessGuard The read-authorization guard
 	 * @param LoggerInterface $logger The logger
 	 * @param IDBConnection $db The restore's transaction
+	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a restore of a copy its holder may not write
 	 * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 * @param OfflineEditGuard $editGuard Refuses a restore over a head that moved on
-	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies Refuses a restore of a copy its holder may not write
 	 *
 	 * @return void
 	 */
@@ -76,10 +76,10 @@ class SecretVersionService {
 		private SecretVersionAccessGuard $accessGuard,
 		private LoggerInterface $logger,
 		private IDBConnection $db,
+		private ViewOnlyCopyGuard $viewOnlyCopies,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
-		private ?ViewOnlyCopyGuard $viewOnlyCopies = null,
 	) {
 	}//end __construct()
 
@@ -175,7 +175,7 @@ class SecretVersionService {
 	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
 		$secret = $this->reload(id: $version->getSecretId());
-		$this->viewOnlyCopies?->assertMayChangeValue(
+		$this->viewOnlyCopies->assertMayChangeValue(
 			row: $secret,
 			fields: ViewOnlyCopyGuard::VALUE_FIELDS,
 			userId: $userId

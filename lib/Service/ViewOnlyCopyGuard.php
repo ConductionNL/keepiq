@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -50,7 +50,7 @@ class ViewOnlyCopyGuard {
 	 *
 	 * @param ShareTargetMapper $targets The share targets (copy to source)
 	 * @param SecretMapper $secrets The secrets
-	 * @param ShareSyncService $sync Who may write for every copy
+	 * @param ShareAuthorizationService $auth Owner, delegate and team-folder grade
 	 *
 	 * @return void
 	 *
@@ -59,7 +59,7 @@ class ViewOnlyCopyGuard {
 	public function __construct(
 		private ShareTargetMapper $targets,
 		private SecretMapper $secrets,
-		private ShareSyncService $sync,
+		private ShareAuthorizationService $auth,
 	) {
 	}//end __construct()
 
@@ -98,9 +98,14 @@ class ViewOnlyCopyGuard {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		try {
-			$this->sync->resolveSyncWriter(source: $source, userId: $userId);
-		} catch (InvalidArgumentException) {
+		// The rule a sync is authorized on (resolveSyncWriter()). Not called
+		// through it: the services this guards must not depend on the sync.
+		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
+			return;
+		}
+
+		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
+		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
 			throw new ViewOnlyCopyException();
 		}
 	}//end assertMayChangeValue()
