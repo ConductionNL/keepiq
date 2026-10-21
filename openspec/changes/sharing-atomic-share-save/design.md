@@ -5,7 +5,7 @@
 At development `94ad83fa`:
 
 - `PUT /api/v1/secrets/{id}` (`SecretUpdateController`) saves the caller's own row and checks an optional `baseUpdatedAt`.
-- `PUT /api/v1/secrets/{sourceSecretId}/sync` (`ShareSyncService::syncUpdate`) writes recipient copies in its own transaction; the caller is the owner, a delegate or a write-grade member (`resolveSyncWriter`).
+- `PUT /api/v1/secrets/{sourceSecretId}/sync` (`ShareSyncService::syncUpdate`) writes recipient copies in its own transaction; the caller is the owner, a delegate or a write-grade member (`resolveSyncWriter`), and a sync that names a received copy instead of the source is refused (#1287).
 - `PUT /api/v1/federated-shares/{id}` (`FederatedShareService::update`) writes one partner share's ciphertext without a version check and notifies the partner through `FederatedNotificationDelivery`.
 - `POST /api/v1/shares/recipient-certificates` returns certificates for at most 100 users per call; `POST /api/v1/federation/recipient-certificate` returns a partner certificate that the browser verifies against the pinned root.
 

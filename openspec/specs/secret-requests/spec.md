@@ -147,7 +147,7 @@ Anyone with the fill-in link MUST be able to submit values for the requested fie
 
 #### Scenario: A fill onto a secret its owner may not change is refused
 
-- GIVEN a pending request whose linked Secret is a copy its owner may not change: shared with them to view only (user-sharing, "View-Only Copies"), use-only, or a read-only copy from another organisation
+- GIVEN a pending request whose linked Secret is a copy its owner may not change: shared with them to view only (user-sharing, "View-Only Copies"), use-only, a read-only copy from another organisation, or a copy whose source can no longer be found
 - WHEN an external party submits values via the token link
 - THEN the system MUST store nothing and answer 428 with `error` `forbidden` and the message "The secret this request writes to cannot be changed", which says nothing about the owner's access
 - AND the SecretRequest MUST remain `pending`
