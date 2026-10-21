@@ -317,7 +317,8 @@ class GroupShareService {
 	 * owner whose secret is shared with that group so they can approve
 	 * the new member. A new member who already holds a live copy has
 	 * nothing to approve: the owner is told when the group share lets that
-	 * copy save for everyone, and is not notified otherwise.
+	 * copy save for everyone and no other group already did, and is not
+	 * notified otherwise.
 	 *
 	 * @param string $userId The user newly added to the group
 	 * @param string $groupId The group that gained the member
@@ -344,7 +345,10 @@ class GroupShareService {
 			$subject = 'group_member_added';
 			$copyGrade = $this->auth?->copyGrade(source: $secret, userId: $userId);
 			if ($copyGrade !== null) {
-				if ($copyGrade !== 'write' || $groupShare->isFullAndLive() === false) {
+				// News only when this group, not another one, lets the copy save for everyone.
+				if ($copyGrade !== 'write' || $groupShare->isFullAndLive() === false
+					|| $this->auth?->copyGrade(source: $secret, userId: $userId, exceptGroupId: $groupId) === 'write'
+				) {
 					continue;
 				}
 
