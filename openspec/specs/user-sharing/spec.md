@@ -247,6 +247,15 @@ A user who already holds a copy of the secret when they join, for example throug
 - WHEN user X joins group G
 - THEN A MUST NOT receive a notification
 
+#### Scenario: A team-folder writer or delegate who holds a copy joins a shared group
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testATeamFolderWriterWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing, ::testADelegateWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing and ::testATeamFolderReaderWithACopyWhoJoinsASharedGroupTellsTheOwner.
+
+- GIVEN group G has a full GroupShare for a secret owned by A, and X holds a copy and is a delegate of A or holds a team-folder write grade on the secret
+- WHEN user X joins group G
+- THEN A MUST NOT receive a notification
+- AND when X holds only a team-folder read grade instead, A MUST receive the `group_member_gained_write` notification
+
 #### Scenario: New member joins group
 - GIVEN group G has a GroupShare for a secret owned by A
 - WHEN user X joins group G
