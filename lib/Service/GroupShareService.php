@@ -324,7 +324,8 @@ class GroupShareService {
 	 * without this group, and is not notified otherwise. Another shared group
 	 * the member is already in by the time this runs counts as already
 	 * granting it, so memberships that arrive together, as from one LDAP sync
-	 * or through nested groups, tell the owner nothing.
+	 * or through nested groups, tell the owner nothing. So does a team-folder
+	 * write grade that comes through this group.
 	 *
 	 * @param string $userId The user newly added to the group
 	 * @param string $groupId The group that gained the member
