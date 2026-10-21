@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
+use Psr\Log\LoggerInterface;
 
 /**
  * Materialises the effective use-only flag and access end date of every
@@ -48,6 +49,7 @@ class ShareRestrictionResolver {
 	 * @param GroupShareMapper       $groupShareMapper  The group-share mapper
 	 * @param TeamFolderQueryService $teamFolders       The team-folder read side (covering memberships)
 	 * @param IGroupManager          $groupManager      The Nextcloud group manager
+	 * @param LoggerInterface|null   $logger            The logger (skipped cross-user copies)
 	 *
 	 * @return void
 	 *
@@ -59,6 +61,7 @@ class ShareRestrictionResolver {
 		private GroupShareMapper $groupShareMapper,
 		private TeamFolderQueryService $teamFolders,
 		private IGroupManager $groupManager,
+		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
 
@@ -88,6 +91,18 @@ class ShareRestrictionResolver {
 		try {
 			$copy = $this->secretMapper->findById($target->getSecretId());
 		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		// Defence in depth: a copy not genuinely held by this share's target
+		// (a poisoned or drifted `secret_id`) is left untouched, so resolving a
+		// restriction can never rewrite another user's secret. A quarantined row
+		// (GHSA-m5p9-6pw7-pf3g) is left untouched the same way.
+		if ($target->isQuarantined() === true || $target->isHeldByTarget(copy: $copy) === false) {
+			$this->logger?->warning(
+				'Skipped a restriction resolve for a copy not held by its share target',
+				['app' => 'keepiq', 'shareId' => $target->getId(), 'secretId' => $target->getSecretId()]
+			);
 			return false;
 		}
 

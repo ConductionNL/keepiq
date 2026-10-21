@@ -357,6 +357,10 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->m['share']->method('findBySourceSecret')->willReturn([$share]);
 		$this->m['group']->method('findBySecret')->willReturn([]);
 
+		// The recipient copy is genuinely held by its target, so it is tombstoned.
+		$this->m['secret']->method('findById')->with('recipient-copy-1')
+			->willReturn($this->secret('recipient-copy-1', 'bob'));
+
 		// Tombstone the recipient copy with the non-personal reason.
 		$this->m['secret']->expects($this->once())
 			->method('tombstone')

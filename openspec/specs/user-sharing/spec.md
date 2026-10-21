@@ -22,11 +22,11 @@ Group sharing expands statically to individual shares at share time. When new me
 | `id` | UUID | No | Primary key |
 | `source_secret_id` | FK | No | The original secret being shared |
 | `target_user_id` | string | No | Nextcloud user ID of the recipient |
-| `secret_id` | FK | No | The encrypted copy in the recipient's vault |
+| `secret_id` | FK | No | The encrypted copy in the recipient's vault — server-minted, owned by the recipient, and unique across shares |
 | `group_share_id` | FK | No | Nullable — set if this share was created from a GroupShare; null for direct shares |
 | `created_at` | datetime | No | |
 
-The recipient's copy is itself a full `Secret` row, encrypted with the recipient's EncryptionSuite. The `SecretShare` links the two.
+The recipient's copy is itself a full `Secret` row, encrypted with the recipient's EncryptionSuite. The `SecretShare` links the two. The copy is minted by the server when the share is registered — its owner is always the recipient — so `secret_id` is never a client-supplied value, and a unique index on the column keeps any two shares from pointing at the same copy.
 
 A `group_share_id` allows the system to identify which shares originated from a group share, enabling automatic revocation when a user leaves the group and targeted notifications when a new member joins.
 
@@ -60,13 +60,31 @@ Tracks ownership delegation of a secret. Multiple active delegations per secret 
 ## Requirements
 
 ### Requirement: Share a Secret
-The system MUST allow a user to share a secret they own with another Nextcloud user who has an active EncryptionSuite.
+The system MUST allow a user to share a secret they own with another Nextcloud user who has an active EncryptionSuite. The secret's owner or an ACTIVE delegate of it (SecretDelegation) MAY create the share; no one else can. `register-batch` and group-share create apply the same owner-or-delegate check, so a delegate can create both a direct share and a group share, and a plain recipient can create neither. Delegation does not widen who may share: only an active delegate qualifies.
+
+Both paths share only an ORIGINAL secret as the source. A received copy — a secret that is itself some share target's recipient secret — MUST be refused as a source, which enforces at creation the "Recipients MUST NOT be able to share a secret directly" rule below: a recipient who owns their copy still cannot re-share it. And a delegate shares with the owner's authority but keeps their own copy's limits: when the delegate's own copy of the source is use-only, expiring or read-only, both paths MUST refuse, so a restricted copy can never mint a full, unrestricted one.
 
 #### Scenario: Share with valid recipient
 - GIVEN user A owns a secret and user B has an active EncryptionSuite
 - WHEN user A shares the secret with user B
 - THEN the system MUST create an encrypted copy of the secret in user B's vault using user B's public certificate
 - AND create a SecretShare linking the original to the copy
+
+#### Scenario: Active delegate creates a share
+- GIVEN user A owns a secret and user D holds an active delegation on it
+- WHEN user D registers a direct share or a group share of the secret
+- THEN the system MUST create the share exactly as it would for the owner, minting each recipient's copy server-side
+- AND a user who is neither the owner nor an active delegate MUST be refused on both paths
+
+#### Scenario: A recipient may not re-share their copy
+- GIVEN user B holds a shared copy of A's secret and is neither the owner nor an active delegate
+- WHEN B uses that copy as the source of a direct share or a group share
+- THEN both paths MUST refuse it, because a received copy is never a share source
+
+#### Scenario: A delegate's restricted copy cannot mint a full copy
+- GIVEN user D holds an active delegation on A's secret but D's own copy of it is use-only, expiring or read-only
+- WHEN D registers a direct share or a group share of the secret
+- THEN both paths MUST refuse the share as restricted, so a restricted copy cannot mint a full one
 
 #### Scenario: Share with user without EncryptionSuite
 - GIVEN user B has never opened Keepiq and has no EncryptionSuite
@@ -76,30 +94,17 @@ The system MUST allow a user to share a secret they own with another Nextcloud u
 ### Requirement: Sharing With A New Party Requires A Verified Key Proof
 A session alone MUST NOT be able to add a new party who then receives a secret and every later value of it through sync (keepiq#818). The risky sharing shapes MUST carry a verified vault-key proof (a signature with the caller's active suite key over a single-use, purpose-bound challenge), enforced by `#[VaultKeyProofRequired]` and VaultKeyProofMiddleware:
 
-- `POST /api/v1/secrets/{secretId}/shares` (purpose `share-new-recipient`, bound to `secretId` and `targetUserId`), unless the caller already holds a DIRECT share (no group share, no team folder) of any secret with that recipient. Group and team folder rows do not count, because they are created without a proof.
-- `POST /api/v1/shares/register-batch` (purpose `share-register-batch`), on every call.
+- `POST /api/v1/shares/register-batch` (purpose `share-register-batch`), on every call. This is the only route that creates a user-to-user share: it mints the recipient's copy server-side, so there is no per-recipient exemption — every share carries a proof.
 - `POST /api/v1/secrets/{secretId}/delegations` (purpose `delegation-create`, bound to `secretId` and `delegatedTo`) and `POST /api/v1/secrets/{secretId}/delegations/handover` (purpose `delegation-handover`, bound to `secretId`).
 
-A missing or invalid proof MUST be refused with `428` and `error: key_proof_required` before the share or delegation is written (not `403`: Nextcloud's OCS layer turns a `403` of an OCS controller into an HTTP `200` envelope, so a refused first share read as a success), and audited as `KEY_PROOF_REFUSED`. The exemption MUST fail closed: when it cannot decide, a proof is required. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
-
-#### Scenario: A share to a new recipient without a proof is refused
-@e2e exclude Needs two vault users and a stolen-session request without proof headers; covered by PHPUnit SharingKeyProofGuardTest through the real middleware and controller.
-- GIVEN user A has no direct share with user M
-- WHEN a request on A's session shares a secret with M without a vault-key proof
-- THEN the request MUST be refused with `428` and `error: key_proof_required`
-- AND no share target MUST be written
-
-#### Scenario: A share to a known recipient needs no proof
-@e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on the share store.
-- GIVEN user A already holds a direct share with user B
-- WHEN A shares another secret with B
-- THEN the share MUST be created without a vault-key proof
+A missing or invalid proof MUST be refused with `428` and `error: key_proof_required` before the share or delegation is written (not `403`: Nextcloud's OCS layer turns a `403` of an OCS controller into an HTTP `200` envelope, so a refused first share read as a success), and audited as `KEY_PROOF_REFUSED`. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
 
 #### Scenario: Batch registration and delegations always need a proof
 @e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on BulkShareDialog and the delegation store.
 - GIVEN any user with an unlocked vault
 - WHEN they register a batch of shares, create a delegation or take over a secret as vault admin without a vault-key proof
 - THEN the request MUST be refused with `428` and `error: key_proof_required`
+- AND no share target or delegation MUST be written
 
 ### Requirement: Recipient Shareability Lookup
 Sharing requires the recipient's public certificate, so a client MUST be able to
@@ -444,8 +449,9 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 #### Scenario: Revoke share
 - GIVEN a share exists between user A and user B
 - WHEN user A revokes the share
-- THEN the recipient's Secret copy MUST be deleted
-- AND the SecretShare record MUST be removed
+- THEN the recipient's Secret copy MUST be deleted when it is owned by the share's target
+- AND a linked copy that is not owned by the target MUST be left untouched, as a defence-in-depth guard against a mis-linked share
+- AND the SecretShare record MUST be removed in either case
 
 ## User Stories
 

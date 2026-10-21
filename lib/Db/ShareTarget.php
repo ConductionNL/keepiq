@@ -48,6 +48,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setUseOnly(bool $useOnly)
  * @method DateTime|null getExpiresAt()
  * @method void setExpiresAt(?DateTime $expiresAt)
+ * @method DateTime|null getQuarantinedAt()
+ * @method void setQuarantinedAt(?DateTime $quarantinedAt)
+ * @method string|null getQuarantineReason()
+ * @method void setQuarantineReason(?string $quarantineReason)
  */
 class ShareTarget extends Entity implements JsonSerializable {
 
@@ -116,6 +120,22 @@ class ShareTarget extends Entity implements JsonSerializable {
 	protected ?DateTime $expiresAt = null;
 
 	/**
+	 * When this row was quarantined, or null when it is active. A quarantined
+	 * row is skipped by every runtime path (GHSA-m5p9-6pw7-pf3g); clearing this
+	 * restores normal behaviour.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $quarantinedAt = null;
+
+	/**
+	 * Why this row was quarantined (nullable).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $quarantineReason = null;
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -158,7 +178,51 @@ class ShareTarget extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'useOnly', type: 'boolean');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
+		$this->addType(fieldName: 'quarantinedAt', type: 'datetime');
+		$this->addType(fieldName: 'quarantineReason', type: 'string');
 	}//end __construct()
+
+	/**
+	 * Whether this row has been quarantined (GHSA-m5p9-6pw7-pf3g): a row whose
+	 * recipient copy predated it, so the server did not mint the copy for the
+	 * row. A quarantined row MUST NOT be used to read, write or delete the
+	 * linked copy; the migration's audit report still sees it, and clearing
+	 * `quarantined_at` restores it.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+	 */
+	public function isQuarantined(): bool {
+		return $this->quarantinedAt !== null;
+	}//end isQuarantined()
+
+	/**
+	 * Whether the recipient copy this row points at is genuinely held by the
+	 * row's recipient: it is the copy named here, it is user-owned, and its
+	 * owner is the target user.
+	 *
+	 * This does NOT stop the core advisory case where the recipient is handed
+	 * a pointer to one of their OWN pre-existing secrets (`target === owner`,
+	 * so the check passes) — that hole is closed by minting the copy
+	 * server-side and retiring the client-supplied-id share-create endpoints.
+	 * What it does defend is every path that writes to or deletes a linked
+	 * copy against a stored row whose `secret_id` names a DIFFERENT user's
+	 * secret: an existing poisoned row, or ordinary DB drift. Such a copy is
+	 * left untouched so one user's share lifecycle can never corrupt another
+	 * user's secret.
+	 *
+	 * @param Secret $copy The Secret the row's secret_id resolves to
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+	 */
+	public function isHeldByTarget(Secret $copy): bool {
+		return $copy->getId() === $this->secretId
+			&& $copy->getOwnerType() === 'user'
+			&& $copy->getOwnerId() === $this->targetUserId;
+	}//end isHeldByTarget()
 
 	/**
 	 * Serialize the entity to an array for the API.

@@ -39,7 +39,11 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\DB\Exception as DbException;
+use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 /**
  * Registers batches of pre-encrypted direct shares.
@@ -67,6 +71,8 @@ class DirectShareRegistrar {
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper (rows linked to a group share)
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
+	 * @param ShareAuthorizationService|null $authorization Owner-or-delegate check on the source secret
+	 * @param IDBConnection|null $connection Wraps the copy mint and link insert in one transaction
 	 *
 	 * @return void
 	 *
@@ -80,6 +86,8 @@ class DirectShareRegistrar {
 		?ShareAuditTrail $auditTrail = null,
 		private ?GroupShareMapper $groupShareMapper = null,
 		private ?ShareRestrictionResolver $restrictions = null,
+		private ?ShareAuthorizationService $authorization = null,
+		private ?IDBConnection $connection = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -223,7 +231,7 @@ class DirectShareRegistrar {
 		// reported, not guessed.
 		$source = $this->loadOwnedSource(sourceSecretId: $sourceSecretId, userId: $userId);
 		$restriction = $this->parseRestriction(row: $row);
-		$refusal = $this->refusalFor(source: $source, restriction: $restriction);
+		$refusal = $this->refusalFor(source: $source, restriction: $restriction, userId: $userId);
 		if ($refusal !== null || $source === null || $restriction === null) {
 			return [
 				'sourceSecretId' => $sourceSecretId,
@@ -247,36 +255,62 @@ class DirectShareRegistrar {
 			// No existing share — create below.
 		}
 
-		$copy = $this->copyFactory->create(
-			source: $source,
-			targetUserId: $targetUserId,
-			encryptedKey: $encryptedKey,
-			encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
-			encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
-		);
-		if ($copy === null) {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => 'no_suite',
-			];
-		}
+		// Mint the recipient copy and link it in one transaction: if the link
+		// insert fails the minted copy is rolled back with it, so a decryptable
+		// copy is never left behind with no share row to revoke it
+		// (GHSA-m5p9-6pw7-pf3g).
+		$this->connection?->beginTransaction();
+		try {
+			$copy = $this->copyFactory->create(
+				source: $source,
+				targetUserId: $targetUserId,
+				encryptedKey: $encryptedKey,
+				encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
+				encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+			);
+			if ($copy === null) {
+				$this->connection?->rollBack();
+				return [
+					'sourceSecretId' => $sourceSecretId,
+					'targetUserId' => $targetUserId,
+					'status' => 'no_suite',
+				];
+			}
 
-		$entity = new ShareTarget();
-		$entity->setId(Uuid::uuid4()->toString());
-		$entity->setSourceSecretId($sourceSecretId);
-		$entity->setTargetUserId($targetUserId);
-		$entity->setSecretId($copy->getId());
-		$entity->setGroupShareId($this->optionalString(value: ($row['groupShareId'] ?? null)));
-		$entity->setCreatedBy($userId);
-		$entity->setCreatedAt(new DateTime());
-		if ($entity->getGroupShareId() === null) {
-			// A group-linked row takes its restriction from the group share.
-			$entity->setUseOnly($restriction->useOnly);
-			$entity->setExpiresAt($restriction->expiresAt);
-		}
+			$entity = new ShareTarget();
+			$entity->setId(Uuid::uuid4()->toString());
+			$entity->setSourceSecretId($sourceSecretId);
+			$entity->setTargetUserId($targetUserId);
+			$entity->setSecretId($copy->getId());
+			$entity->setGroupShareId($this->optionalString(value: ($row['groupShareId'] ?? null)));
+			$entity->setCreatedBy($userId);
+			$entity->setCreatedAt(new DateTime());
+			if ($entity->getGroupShareId() === null) {
+				// A group-linked row takes its restriction from the group share.
+				$entity->setUseOnly($restriction->useOnly);
+				$entity->setExpiresAt($restriction->expiresAt);
+			}
 
-		$persisted = $this->mapper->insert($entity);
+			$persisted = $this->mapper->insert($entity);
+			$this->connection?->commit();
+		} catch (Throwable $exception) {
+			$this->connection?->rollBack();
+			// Defensive guard for the unique index on secret_id: if a copy is
+			// somehow already linked to a share, report it as an existing share
+			// rather than a 500 — the copy minted above is gone with the rollback.
+			if ($exception instanceof DbException
+				&& $exception->getReason() === DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION
+			) {
+				return [
+					'sourceSecretId' => $sourceSecretId,
+					'targetUserId' => $targetUserId,
+					'status' => 'exists',
+				];
+			}
+
+			throw $exception;
+		}//end try
+
 		$this->restrictions?->resolveTarget(target: $persisted);
 
 		$this->auditTrail->recordBulkShareGranted(
@@ -295,18 +329,32 @@ class DirectShareRegistrar {
 	}//end createDirectShare()
 
 	/**
-	 * The caller's own user-owned source secret, or null.
+	 * The source secret the caller may share — one they own or hold an active
+	 * delegation on — or null. An active delegate may create shares exactly as
+	 * the owner can (user-sharing: Who may create a share), matching the group
+	 * share path; without the authorization service wired the check falls back
+	 * to plain ownership.
 	 *
 	 * @param string $sourceSecretId The source secret
-	 * @param string $userId The sharing owner
+	 * @param string $userId The sharing owner or delegate
 	 *
 	 * @return Secret|null
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	private function loadOwnedSource(string $sourceSecretId, string $userId): ?Secret {
 		try {
 			$source = $this->secretMapper->findById($sourceSecretId);
 		} catch (DoesNotExistException) {
 			return null;
+		}
+
+		if ($this->authorization !== null) {
+			if ($this->authorization->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
+				return null;
+			}
+
+			return $source;
 		}
 
 		if ($source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
@@ -342,17 +390,32 @@ class DirectShareRegistrar {
 	 *
 	 * @param Secret|null $source The caller's own source, or null
 	 * @param ShareRestriction|null $restriction The parsed restriction, or null
+	 * @param string $userId The sharing owner or delegate
 	 *
 	 * @return string|null
 	 *
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
-	private function refusalFor(?Secret $source, ?ShareRestriction $restriction): ?string {
+	private function refusalFor(?Secret $source, ?ShareRestriction $restriction, string $userId): ?string {
 		if ($source === null) {
 			return 'not_owned';
 		}
 
 		if ($source->isRestrictedCopy() === true) {
+			return 'restricted';
+		}
+
+		// Only an original may be a share source: a received copy (one that is
+		// itself a share target's recipient secret) is never one, so a recipient
+		// can never re-share what was shared with them (user-sharing: Share a Secret).
+		if ($this->isReceivedCopy(secret: $source) === true) {
+			return 'not_shareable';
+		}
+
+		// A delegate borrows the owner's authority but keeps their own copy's
+		// limits: a use-only, expiring or read-only copy may not mint a full one
+		// (GHSA-m5p9-6pw7-pf3g).
+		if ($this->callerCopyRestricted(source: $source, userId: $userId) === true) {
 			return 'restricted';
 		}
 
@@ -362,6 +425,59 @@ class DirectShareRegistrar {
 
 		return null;
 	}//end refusalFor()
+
+	/**
+	 * Whether the source is itself a received copy — a secret that is some share
+	 * target's recipient secret. Fails open to "original" only when the row is
+	 * genuinely absent; an ambiguous match counts as a copy.
+	 *
+	 * @param Secret $secret The source secret
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	private function isReceivedCopy(Secret $secret): bool {
+		try {
+			$this->mapper->findByRecipientSecret(recipientSecretId: $secret->getId());
+		} catch (DoesNotExistException) {
+			return false;
+		} catch (MultipleObjectsReturnedException) {
+			return true;
+		}
+
+		return true;
+	}//end isReceivedCopy()
+
+	/**
+	 * Whether a delegate's own copy of the source is restricted. The owner is
+	 * judged by the source itself and never restricted this way; a delegate is
+	 * judged by the copy their delegation sits on.
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $userId The sharing owner or delegate
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 */
+	private function callerCopyRestricted(Secret $source, string $userId): bool {
+		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
+			return false;
+		}
+
+		try {
+			$target = $this->mapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $source->getId(),
+				targetUserId: $userId
+			);
+			$copy = $this->secretMapper->findById($target->getSecretId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return false;
+		}
+
+		return $copy->isRestrictedCopy();
+	}//end callerCopyRestricted()
 
 	/**
 	 * Whether a row's optional groupShareId names a group share of the SAME

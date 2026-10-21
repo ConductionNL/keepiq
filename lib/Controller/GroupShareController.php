@@ -7,8 +7,9 @@
  *  - index   list group shares for a secret
  *  - create  create a group share and return the per-member fan-out
  *  - destroy revoke a group share (cascade)
- *  - approveNewMember + denyNewMember resolve the
- *    'group_member_added' notification path
+ *  - denyNewMember dismisses the 'group_member_added' notification; approval
+ *    registers the new member's server-minted copy through the bulk
+ *    register-batch path instead
  *
  * @category Controller
  * @package  OCA\Keepiq\Controller
@@ -180,48 +181,6 @@ class GroupShareController extends OCSController {
 
 		return new JSONResponse(data: ['status' => 'deleted']);
 	}//end destroy()
-
-	/**
-	 * Approve a new member's share (resolves the 'group_member_added'
-	 * notification).
-	 *
-	 * @param string $id The GroupShare ID
-	 * @param string $newMemberId The new member's UID
-	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.2
-	 */
-	#[NoAdminRequired]
-	public function approveNewMember(
-		string $id,
-		string $newMemberId,
-		string $recipientSecretId,
-	): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$this->groupShareService->approveGroupMemberShare(
-				groupShareId: $id,
-				newMemberId: $newMemberId,
-				recipientSecretId: $recipientSecretId,
-				userId: $user->getUID()
-			);
-		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		return new JSONResponse(data: ['status' => 'approved']);
-	}//end approveNewMember()
 
 	/**
 	 * Deny a new member's share. No state changes server-side — the

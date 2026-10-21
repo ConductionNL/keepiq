@@ -363,7 +363,7 @@ class TeamFolderShareService {
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
 	private function revokeRow(ShareTarget $row): void {
-		$this->copies->deleteById(secretId: $row->getSecretId());
+		$this->copies->deleteByShare(share: $row);
 		$this->shareTargetMapper->delete($row);
 	}//end revokeRow()
 

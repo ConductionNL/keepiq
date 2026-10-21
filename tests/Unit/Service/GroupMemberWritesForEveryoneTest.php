@@ -533,10 +533,6 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$context = $this->context()->writeContext('c-dan', 'dan');
 		$this->assertSame('write', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
-
-		// An approval would change nothing: Dan already holds a copy.
-		$groupShares->approveGroupMemberShare('gs-admin', 'dan', 'c-dan-2', 'alice');
-		$this->assertCount(2, $this->targets);
 	}
 
 	public function testANewMemberWithoutACopyIsStillAskedToApprove(): void {

@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 
 /**
  * Pushes an updated encrypted blob to every recipient of a secret.
@@ -79,6 +80,7 @@ class ShareSyncService {
 	 * @param ShareSyncGuards $guards The checks a write for every copy passes
 	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param LoggerInterface|null $logger The logger (skipped cross-user copy writes)
 	 *
 	 * @return void
 	 *
@@ -93,6 +95,7 @@ class ShareSyncService {
 		private ShareSyncGuards $guards,
 		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
+		private ?LoggerInterface $logger = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -310,6 +313,12 @@ class ShareSyncService {
 	private function collectSyncTargets(Secret $source): array {
 		$allowedIds = [$source->getId() => true];
 		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+			// GHSA-m5p9-6pw7-pf3g: a quarantined row is never a sync target, so a
+			// planted copy is not written to.
+			if ($shareRow->isQuarantined() === true) {
+				continue;
+			}
+
 			$allowedIds[$shareRow->getSecretId()] = true;
 		}
 
@@ -342,6 +351,15 @@ class ShareSyncService {
 		DateTime $savedAt,
 		string $writerId,
 	): int {
+		// Defence in depth: the share row that owns each recipient copy, so a
+		// copy whose row does not genuinely belong to its target (a poisoned or
+		// drifted `secret_id`) is skipped rather than overwritten. The source
+		// row itself carries no share row and is always writable.
+		$shareRows = [];
+		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+			$shareRows[$shareRow->getSecretId()] = $shareRow;
+		}
+
 		$updated = 0;
 		foreach ($updates as $update) {
 			$recipientSecretId = (string)($update['secretId'] ?? '');
@@ -353,6 +371,18 @@ class ShareSyncService {
 				$copy = $this->secretMapper->findById($recipientSecretId);
 			} catch (DoesNotExistException) {
 				continue;
+			}
+
+			if ($recipientSecretId !== $source->getId()) {
+				$shareRow = ($shareRows[$recipientSecretId] ?? null);
+				// GHSA-m5p9-6pw7-pf3g: a quarantined row is never written to.
+				if ($shareRow === null || $shareRow->isQuarantined() === true || $shareRow->isHeldByTarget(copy: $copy) === false) {
+					$this->logger?->warning(
+						'Skipped a sync write to a copy not held by its share target',
+						['app' => 'keepiq', 'secretId' => $recipientSecretId, 'sourceSecretId' => $source->getId()]
+					);
+					continue;
+				}
 			}
 
 			$preUpdate = clone $copy;

@@ -7,9 +7,10 @@
  * the member fan-out the browser needs to encrypt for each eligible
  * member, revokeGroupShare cascades through every ShareTarget the group
  * fan-out produced, handleNewGroupMember notifies the secret owner so
- * they can approve the new member, approveGroupMemberShare creates the
- * ShareTarget for that member, and handleMemberLeave revokes only the
- * group-derived shares (direct shares stay intact).
+ * they can approve the new member (the browser then registers that member's
+ * server-minted copy through the bulk register-batch path), and
+ * handleMemberLeave revokes only the group-derived shares (direct shares
+ * stay intact).
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -36,10 +37,10 @@ use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
 use Psr\Log\LoggerInterface;
@@ -131,6 +132,7 @@ class GroupShareService {
 		$secret = $this->loadSecret(secretId: $secretId);
 		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 		$secret->assertOnwardShareable();
+		$this->assertShareableSource(secret: $secret, userId: $userId);
 
 		$group = $this->groupManager->get($groupId);
 		if ($group === null) {
@@ -381,69 +383,6 @@ class GroupShareService {
 	}//end handleNewGroupMember()
 
 	/**
-	 * Approve the new-member notification — creates the ShareTarget that
-	 * fans the secret out to the new member.
-	 *
-	 * @param string $groupShareId The GroupShare ID
-	 * @param string $newMemberId The new member's Nextcloud user ID
-	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
-	 * @param string $userId The approver (must be owner or delegate)
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.5
-	 */
-	public function approveGroupMemberShare(
-		string $groupShareId,
-		string $newMemberId,
-		string $recipientSecretId,
-		string $userId,
-	): void {
-		try {
-			$entity = $this->mapper->findById($groupShareId);
-		} catch (DoesNotExistException) {
-			throw new InvalidArgumentException(message: 'Group share not found');
-		}
-
-		$secret = $this->loadSecret(secretId: $entity->getSecretId());
-		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
-
-		// Skip if a ShareTarget already exists for this pair (idempotent).
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $entity->getSecretId(),
-				targetUserId: $newMemberId
-			);
-			return;
-		} catch (DoesNotExistException) {
-			// Continue.
-		}
-
-		$shareTarget = new ShareTarget();
-		$shareTarget->setId(Uuid::uuid4()->toString());
-		$shareTarget->setSourceSecretId($entity->getSecretId());
-		$shareTarget->setTargetUserId($newMemberId);
-		$shareTarget->setSecretId($recipientSecretId);
-		$shareTarget->setGroupShareId($groupShareId);
-		$shareTarget->setCreatedBy($userId);
-		$shareTarget->setCreatedAt(new DateTime());
-		$persisted = $this->shareTargetMapper->insert($shareTarget);
-		$this->restrictions?->resolveTarget(target: $persisted);
-
-		$this->notificationService->notify(
-			subject: 'secret_shared',
-			recipientId: $newMemberId,
-			params: [
-				'secretId' => $entity->getSecretId(),
-				'secretName' => $secret->getName(),
-				'sharedBy' => $userId,
-			],
-			objectType: 'secret',
-			objectId: $entity->getSecretId(),
-		);
-	}//end approveGroupMemberShare()
-
-	/**
 	 * Handle a member leaving a group — revoke only the ShareTargets that
 	 * were fanned out from a GroupShare for that group; direct shares to
 	 * the same user are NOT touched.
@@ -464,10 +403,27 @@ class GroupShareService {
 					continue;
 				}
 
-				// Delete the recipient's encrypted Secret copy too.
+				// Delete the recipient's encrypted Secret copy too. Defence in
+				// depth: a copy not genuinely held by this share's target (a
+				// poisoned or drifted `secret_id`) is kept, so a member leaving
+				// can never delete another user's secret; the share row goes.
 				try {
 					$copy = $this->secretMapper->findById($row->getSecretId());
-					$this->secretMapper->delete($copy);
+					// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's
+					// own secret, so a member leaving never deletes its secret.
+					if ($row->isQuarantined() === true) {
+						$this->logger->warning(
+							'Kept a quarantined share target\'s secret when a member left',
+							['app' => 'keepiq', 'shareId' => $row->getId(), 'secretId' => $row->getSecretId()]
+						);
+					} elseif ($row->isHeldByTarget(copy: $copy) === true) {
+						$this->secretMapper->delete($copy);
+					} else {
+						$this->logger->warning(
+							'Kept a secret not held by the departing member\'s share target',
+							['app' => 'keepiq', 'shareId' => $row->getId(), 'secretId' => $row->getSecretId()]
+						);
+					}
 				} catch (DoesNotExistException) {
 					// Already gone.
 				}
@@ -497,6 +453,67 @@ class GroupShareService {
 			);
 		}
 	}//end assertOwnerOrDelegate()
+
+	/**
+	 * Refuse a source that may not be shared onward even though the caller is
+	 * the owner or an active delegate: a received copy is never a share source
+	 * (a recipient must not re-share), and a delegate's own use-only, expiring
+	 * or read-only copy may not mint full group copies (GHSA-m5p9-6pw7-pf3g).
+	 *
+	 * @param Secret $secret The source secret
+	 * @param string $userId The initiator
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the source is a received copy
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is read-only
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	private function assertShareableSource(Secret $secret, string $userId): void {
+		if ($this->isReceivedCopy(secret: $secret) === true) {
+			throw new InvalidArgumentException(message: 'A received copy cannot be shared onward');
+		}
+
+		if ($secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId) {
+			return;
+		}
+
+		try {
+			$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $secret->getId(),
+				targetUserId: $userId
+			);
+			$copy = $this->secretMapper->findById($target->getSecretId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return;
+		}
+
+		$copy->assertOnwardShareable();
+	}//end assertShareableSource()
+
+	/**
+	 * Whether the source is itself a received copy — a secret that is some share
+	 * target's recipient secret. An ambiguous match counts as a copy; only a
+	 * genuinely absent row reads as an original.
+	 *
+	 * @param Secret $secret The source secret
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	private function isReceivedCopy(Secret $secret): bool {
+		try {
+			$this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $secret->getId());
+		} catch (DoesNotExistException) {
+			return false;
+		} catch (MultipleObjectsReturnedException) {
+			return true;
+		}
+
+		return true;
+	}//end isReceivedCopy()
 
 	/**
 	 * Return true when $userId is the owner of $secret or an active delegate.

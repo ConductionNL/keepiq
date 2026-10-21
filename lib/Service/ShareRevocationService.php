@@ -30,6 +30,7 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -99,23 +100,44 @@ class ShareRevocationService {
 		$source = $this->auth->loadSecret(secretId: $entity->getSourceSecretId());
 		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
 
+		// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's own secret,
+		// so a revoke must never reach it. Leave both the secret and the row (the
+		// row is the audit record); clearing quarantined_at restores the revoke.
+		if ($entity->isQuarantined() === true) {
+			$this->logger->warning(
+				'Refused to revoke a quarantined share; its secret and row were left intact',
+				['app' => 'keepiq', 'shareId' => $shareId, 'secretId' => $entity->getSecretId()]
+			);
+			return;
+		}
+
 		$this->db->beginTransaction();
 		try {
 			// Delete the recipient's encrypted Secret copy (best-effort —
 			// a stale row is harmless because the Secret is already
 			// unreachable through the share index, but a clean delete
-			// keeps the table small).
+			// keeps the table small). Defence in depth: a copy that is not
+			// genuinely held by this share's target (a poisoned or drifted
+			// `secret_id`) is kept, so a revoke can never delete another
+			// user's secret; the share row still goes.
 			try {
 				$recipientCopy = $this->secretMapper->findById($entity->getSecretId());
-				$this->secretMapper->delete($recipientCopy);
+				if ($entity->isHeldByTarget(copy: $recipientCopy) === true) {
+					$this->secretMapper->delete($recipientCopy);
+					// Attachment grants of the revoked copy go with it; the
+					// owner's blob and grants are untouched (encrypted-attachments
+					// §3.3).
+					$this->attachmentService?->deleteGrantsForSecretCopy($entity->getSecretId());
+				} else {
+					$this->logger->warning(
+						'Kept a secret not held by the revoked share target',
+						['app' => 'keepiq', 'shareId' => $shareId, 'secretId' => $entity->getSecretId()]
+					);
+				}
 			} catch (DoesNotExistException) {
-				// Already gone — continue.
+				// Already gone — its leftover grants, if any, go with it.
+				$this->attachmentService?->deleteGrantsForSecretCopy($entity->getSecretId());
 			}
-
-			// Attachment grants of the revoked copy go with it; the
-			// owner's blob and grants are untouched (encrypted-attachments
-			// §3.3).
-			$this->attachmentService?->deleteGrantsForSecretCopy($entity->getSecretId());
 
 			$this->mapper->delete($entity);
 			$this->db->commit();
@@ -155,7 +177,7 @@ class ShareRevocationService {
 		$this->db->beginTransaction();
 		try {
 			foreach ($this->mapper->findBySourceSecret($sourceSecretId) as $share) {
-				$this->deleteRecipientCopy(copyId: $share->getSecretId());
+				$this->deleteRecipientCopy(share: $share);
 			}
 
 			$this->mapper->deleteBySourceSecret($sourceSecretId);
@@ -168,19 +190,41 @@ class ShareRevocationService {
 
 	/**
 	 * Delete one recipient copy and the attachment grants it holds. A copy
-	 * that is already gone is fine.
+	 * that is already gone is fine. Defence in depth: a copy not genuinely held
+	 * by the share's target (a poisoned or drifted `secret_id`) is kept, so the
+	 * cascade can never delete another user's secret.
 	 *
-	 * @param string $copyId The recipient copy's Secret ID
+	 * @param ShareTarget $share The share row whose copy is being removed
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
-	private function deleteRecipientCopy(string $copyId): void {
+	private function deleteRecipientCopy(ShareTarget $share): void {
+		$copyId = $share->getSecretId();
+		// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's own secret,
+		// so the cascade must never delete its secret.
+		if ($share->isQuarantined() === true) {
+			$this->logger->warning(
+				'Kept a quarantined share target\'s secret during cascade delete',
+				['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $copyId]
+			);
+			return;
+		}
+
 		try {
-			$this->secretMapper->delete($this->secretMapper->findById($copyId));
+			$copy = $this->secretMapper->findById($copyId);
+			if ($share->isHeldByTarget(copy: $copy) === false) {
+				$this->logger->warning(
+					'Kept a secret not held by the share target during cascade delete',
+					['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $copyId]
+				);
+				return;
+			}
+
+			$this->secretMapper->delete($copy);
 		} catch (DoesNotExistException) {
-			// Already gone; continue.
+			// Already gone; its leftover grants go with it below.
 		}
 
 		$this->attachmentService?->deleteGrantsForSecretCopy($copyId);
