@@ -14,6 +14,7 @@ function nextcloud(uid = 'alice') {
 		const path = String(url)
 		if (path.includes('/cloud/user')) return json({ ocs: { data: { id: uid, displayname: 'Alice', email: 'a@x' } } })
 		if (path.includes('/api/v1/suites')) return json([suiteRow])
+		if (path.includes('/api/health')) return json({ status: 'ok', version: '0.3.12' })
 		return new Response(null, { status: 404 })
 	})
 }
@@ -34,7 +35,7 @@ async function state(message: PopupToBackground): Promise<PopupState> {
 
 async function stored(uid = 'alice') {
 	return addAccount({
-		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })
 }
 

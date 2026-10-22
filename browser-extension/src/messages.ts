@@ -42,6 +42,10 @@ export type ErrorCode =
 	| 'unauthorized' | 'keepiq_missing' | 'no_active_suite' | 'unlock_blocked' | 'duplicate'
 	| 'limit_reached' | 'invalid_master_password' | 'offline_no_cache' | 'session_revoked'
 	| 'write_locked' | 'server_error' | 'not_responding' | 'unknown'
+	/** Keepiq is older than `MIN_KEEPIQ_VERSION`. */
+	| 'keepiq_outdated'
+	/** The master password opened the vault key, but it isn't one PEM private key. */
+	| 'key_unreadable'
 
 // Codes, never text: the popup words them in the browser's language (ext-i18n).
 export type NoticeCode = 'session_revoked' | 'key_changed'
@@ -214,6 +218,11 @@ export type WriteErrorCode =
 	| 'partner_lookup_limit'
 	/** The server runs a Nextcloud without the OCM endpoint event partner sharing needs (below 33). */
 	| 'federation_unavailable'
+	/** The route a save needs is missing, as on a Keepiq older than `MIN_KEEPIQ_VERSION`. */
+	| 'keepiq_outdated'
+	/** A partner certificate is not valid by this machine's clock, which may be wrong, so nothing is suspended on it. */
+	| 'partner_clock'
+	| 'passkey_clone'
 
 export interface VaultWriteError {
 	code: WriteErrorCode

@@ -17,7 +17,7 @@ describe('DeleteItemDialog', () => {
 		const sent = fakeBackground()
 		const onDeleted = vi.fn()
 		render(withShell(<DeleteItemDialog item={itemMeta()} onDeleted={onDeleted} onCancel={() => {}} />))
-		expect(screen.getByRole('dialog', { name: 'Delete item' }).textContent).toContain('Move GitHub to the trash? It stops being shared. You can restore it from the trash in the Keepiq web app.')
+		expect(screen.getByRole('dialog', { name: 'Delete item' }).textContent).toContain('Move GitHub to the trash? It stops being shared, also after a restore from the trash in the Keepiq web app.')
 		await userEvent.setup().click(screen.getByRole('button', { name: 'Delete' }))
 		await waitFor(() => expect(onDeleted).toHaveBeenCalled())
 		expect(sentOf(sent, 'item.delete')).toEqual([{ kind: 'item.delete', accountId: 'a1', id: 'i1' }])

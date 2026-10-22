@@ -1,4 +1,5 @@
 import { createClient, KeepiqNotInstalled, Offline, SessionRevoked } from '@/src/api/client'
+import { supportedKeepiq } from '@/src/api/keepiq-version'
 import type { CachedSuite } from '@/src/api/types'
 import { decryptPrivateKeyPem, importPrivateKey, InvalidMasterPassword, pemToPkcs8, toBase64 } from '@/src/crypto'
 import { activeSuite } from '@/src/accounts/verify'
@@ -34,6 +35,21 @@ async function decrypt(suite: CachedSuite, method: UnlockMethod): Promise<string
 	}
 }
 
+/** Reads the version again only when the stored one is missing or too old, since the server may have been updated; offline, a stored one stands. */
+async function checkServer(account: AccountRecord): Promise<void> {
+	if (supportedKeepiq(account.keepiqVersion)) return
+	let version: string | null
+	try {
+		version = await createClient(account).fetchVersion()
+	} catch (error) {
+		if (error instanceof SessionRevoked) throw new Failure('session_revoked')
+		if (account.keepiqVersion === undefined) return
+		throw new Failure('keepiq_outdated')
+	}
+	await updateAccount(account.id, { keepiqVersion: version })
+	if (!supportedKeepiq(version)) throw new Failure('keepiq_outdated')
+}
+
 const sameSuite = (a: Pick<CachedSuite, 'id' | 'unlockKeyEpoch'>, b: Pick<CachedSuite, 'id' | 'unlockKeyEpoch'>) =>
 	a.id === b.id && a.unlockKeyEpoch === b.unlockKeyEpoch
 
@@ -46,6 +62,7 @@ async function attempt(accountId: string, method: UnlockMethod, retried: boolean
 	const account = await getAccount(accountId)
 	if (!account) throw new Failure('unknown', 'Unknown account')
 	if (account.appPassword === null) throw new Failure('session_revoked')
+	if (!retried) await checkServer(account)
 	// The suite is cached at add time; it is fetched only when missing or when it no longer opens.
 	const cached = await cachedSuite(accountId)
 	let suite = cached ?? (await fetchSuite(account)).suite
@@ -63,9 +80,14 @@ async function attempt(accountId: string, method: UnlockMethod, retried: boolean
 		suite = fresh.suite
 		pem = await decrypt(suite, method)
 	}
-	const pkcs8 = pemToPkcs8(pem)
 	// Imported once here so a corrupt key fails the unlock, not the first decrypt.
-	await importPrivateKey(pkcs8)
+	let pkcs8: Uint8Array<ArrayBuffer>
+	try {
+		pkcs8 = pemToPkcs8(pem)
+		await importPrivateKey(pkcs8)
+	} catch {
+		throw new Failure('key_unreadable')
+	}
 	// Cleared before the key is stored, so a suite change landing after this keeps its notice.
 	if ((await getAccount(accountId))?.keyChanged) await updateAccount(accountId, { keyChanged: false })
 	await putKey(accountId, toBase64(pkcs8))

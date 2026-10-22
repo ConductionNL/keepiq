@@ -22,6 +22,8 @@ export interface AccountRecord {
 	revoked?: boolean
 	/** Set when a sync found a new suite, so the unlock screen can say why. */
 	keyChanged?: boolean
+	/** Keepiq's version as last read; absent on accounts added before it was kept. */
+	keepiqVersion?: string | null
 }
 
 const ACCOUNTS = 'accounts'

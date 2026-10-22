@@ -71,6 +71,7 @@ async function reauthenticate(accountId: string, appPassword: string): Promise<v
 		email: verified.email,
 		// Keep the old picture when this fetch failed; it retries on the next login.
 		avatarDataUrl: verified.avatarDataUrl ?? account.avatarDataUrl,
+		keepiqVersion: verified.keepiqVersion,
 	})
 	await checkSuite(accountId, verified.suite)
 }

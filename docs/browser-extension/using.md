@@ -6,7 +6,7 @@ The extension is in development. You can browse, copy, add, edit and delete toda
 
 ## Getting the extension
 
-The extension runs on Chrome and other Chromium browsers, such as Edge and Brave, and on Firefox 109 or later.
+The extension runs on Chrome and other Chromium browsers, such as Edge and Brave, and on Firefox 109 or later. Your server needs Keepiq 0.3.12 or later; [Supported Keepiq versions](supported-keepiq-versions.md) lists which versions are supported and until when.
 
 It is not in the Chrome Web Store or on Firefox Add-ons yet. Until it is, you build it from the Keepiq source:
 
@@ -40,6 +40,7 @@ The extension checks the details with your server before it stores anything. Whe
 | *server* is unavailable right now, try again later | The server had a problem. Try again later. |
 | Wrong username or app password | Check both, or create a new app password. |
 | Keepiq is not installed on *server* | Ask your administrator to install Keepiq. |
+| Keepiq on *server* is too old for this extension | Ask your administrator to update Keepiq to the version the message names. |
 | Open the Keepiq web app once and set a master password, then try again | Set your master password in the web app first. |
 | This account is already added | This user on this server is already in the extension. |
 | Maximum of 5 accounts reached | Log out of an account you no longer need first. |
@@ -51,6 +52,8 @@ You can add up to five accounts, on the same server or on different ones. Your N
 Enter your master password and choose **Unlock**. Your master password never leaves the browser, and the extension does not store it.
 
 **Invalid master password** means the password did not open your vault. When you changed your master password in the web app, the extension notices and takes the new one.
+
+The extension also refuses to unlock when Keepiq on your server is older than it supports, or when your vault key can't be read; the message says so. Ask your administrator in both cases.
 
 Does your organisation require two-factor authentication? Then the extension refuses to unlock until you set up a second factor in Nextcloud under **Settings**, then **Security**.
 
@@ -117,6 +120,7 @@ When you change the password, user name or fields of an item you own and shared,
 - **Team editor or delegate:** when you edit an item through a team folder where you may write, or as the owner's delegate, the owner's item and the copies in your own organisation are updated too. Recipients at a partner organisation get it with the owner's next save, and the item says so.
 - **Partner organisation can't be reached:** nothing is saved, and the form names the recipients there. **Save without them** saves anyway and pauses sharing with them until the item is shared with them again, and the item says so.
 - **Partner certificate can't be verified, or their organisation no longer accepts the share:** sharing with them is paused, the save goes through, and the item says so; the Keepiq web app shows the share.
+- **Partner certificate isn't valid by your computer's clock:** nothing is saved and nothing is paused, since your clock may be wrong; check your computer's date and time, or make the change in the Keepiq web app.
 - **Your server can't share with partner organisations:** an item shared with one can't be saved in the extension; ask your administrator.
 - **Part of the item the form doesn't show:** for an item shared with a partner organisation, such as a card with a detail the form has no field for, the extension can't confirm they would get the item exactly as you saw it, so nothing is saved; make the change in the Keepiq web app.
 - **Shared with you to view only:** Edit is unavailable on the item, with the reason; from the list's More menu it opens and says why. You can still clone the item or move it to one of your folders. That holds for a direct share, a group share and a team folder where you're a Viewer.

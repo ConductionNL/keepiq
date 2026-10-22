@@ -50,7 +50,7 @@ function server(routes: Record<string, (sent: Sent) => Response | Promise<Respon
 }
 
 const sent = () => fetchMock.mock.calls.map(([input, init]) => `${init?.method ?? 'GET'} ${new URL(String(input)).pathname.replace('/index.php/apps/keepiq', '')}${new URL(String(input)).search}`)
-const writes = () => sent().filter((line) => !['GET /api/v1/offline/manifest', 'GET /api/settings/user', 'GET /api/v1/suites'].includes(line))
+const writes = () => sent().filter((line) => !['GET /api/v1/offline/manifest', 'GET /api/settings/user', 'GET /api/v1/suites', 'GET /api/health'].includes(line))
 const bodiesOf = (line: string) => fetchMock.mock.calls.filter((_, i) => sent()[i] === line).map(([, init]) => JSON.parse(String(init!.body)) as Record<string, unknown>)
 const bodyOf = (line: string) => bodiesOf(line)[0]!
 const lastBodyOf = (line: string) => bodiesOf(line).at(-1)!
@@ -88,7 +88,7 @@ beforeEach(async () => {
 	vi.mocked(rsaDecrypt).mockClear()
 	vi.spyOn(console, 'error').mockImplementation(() => {})
 	accountId = (await addAccount({
-		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })).id
 	const pkcs8 = pemToPkcs8(envelope.privateKeyPem)
 	privateKey = await importPrivateKey(pkcs8)
@@ -354,6 +354,14 @@ describe('fetchItem', () => {
 		await serve(secretRow({ typeId: 't-passkey', key: await encrypt('{"privateKey":"secret"}') }))
 		const reply = await fetchItem('s1')
 		expect(reply).toMatchObject({ ok: true, value: { typeName: 'passkey', key: '' } })
+	})
+
+	it('refuses to clone a row either side calls a passkey, before decrypting', async () => {
+		const passkey = secretRow({ typeId: 't-passkey', key: await encrypt('{"privateKey":"secret"}') })
+		await snapshot([{ ...passkey, typeId: 't-login' }])
+		server({ 'GET /api/v1/secrets/s1': () => json(passkey) }, [{ ...passkey, typeId: 't-login' }])
+		expect(await fetchItem('s1', 'clone')).toEqual({ ok: false, error: { code: 'passkey_clone' } })
+		expect(vi.mocked(rsaDecrypt)).not.toHaveBeenCalled()
 	})
 
 	it('withholds a passkey credential the server sends under another type', async () => {

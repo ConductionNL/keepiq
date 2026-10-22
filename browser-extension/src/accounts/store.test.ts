@@ -12,7 +12,7 @@ import {
 const suite = { ...suiteRow }
 
 function fields(uid = 'alice', serverUrl = 'https://cloud.example.org') {
-	return { serverUrl, uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw' }
+	return { serverUrl, uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12' }
 }
 
 async function local(key: string) {

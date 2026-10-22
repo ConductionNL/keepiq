@@ -11,11 +11,13 @@ errors:
   serverError: "{host} is nu niet beschikbaar, probeer het later opnieuw"
   unauthorized: Verkeerde gebruikersnaam of app-wachtwoord
   keepiqMissing: Keepiq is niet geïnstalleerd op {host}
+  keepiqOutdated: Keepiq op {host} is te oud voor deze extensie, die versie {version} of nieuwer nodig heeft. Vraag je beheerder om Keepiq bij te werken.
   noActiveSuite: Open de Keepiq-webapp één keer en stel een hoofdwachtwoord in, probeer het daarna opnieuw
   unlockBlocked: Je organisatie vereist inloggen in twee stappen. Stel een tweede factor in onder Nextcloud Instellingen, Beveiliging en probeer het daarna opnieuw
   duplicate: Dit account is al toegevoegd
   limitReached: Je kunt maximaal {count} accounts toevoegen
   invalidMasterPassword: Ongeldig hoofdwachtwoord
+  keyUnreadable: Je kluissleutel in Keepiq kan niet worden gelezen, dus deze browser kan je kluis niet ontgrendelen. Meld dit bij je Keepiq-beheerder.
   offlineNoCache: Je bent offline en deze kluis is nog niet gesynchroniseerd
   sessionRevoked: Sessie ingetrokken, log opnieuw in
   writeLocked: Je kluis kan nu niet worden gewijzigd, probeer het later opnieuw
@@ -147,7 +149,7 @@ item:
   deleted: Item naar de prullenbak verplaatst
   moved: Verplaatst naar {folder}
   deleteTitle: Item verwijderen
-  deleteConfirm: "{name} naar de prullenbak verplaatsen? Het wordt niet langer gedeeld. Je kunt het terugzetten vanuit de prullenbak in de Keepiq-webapp."
+  deleteConfirm: "{name} naar de prullenbak verplaatsen? Het wordt niet langer gedeeld, ook niet na terugzetten vanuit de prullenbak in de Keepiq-webapp."
   gone: Dit item bestaat niet meer
 
 form:
@@ -214,6 +216,8 @@ writeErrors:
   partnerUnreachable: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar ({cloudIds}). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
   partnerLookupLimit: Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.
   federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
+  keepiqOutdated: Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie {version} of nieuwer.
+  partnerClock: Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.
 
 shareSave:
   saveWithout: Opslaan zonder hen

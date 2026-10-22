@@ -58,7 +58,7 @@ function popupRequestKinds(): string[] {
 
 async function storedAccount() {
 	return addAccount({
-		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })
 }
 

@@ -22,6 +22,7 @@ All paths relative to the base URL. All require the Basic auth above unless mark
 
 | Purpose | Method and path | Notes |
 | --- | --- | --- |
+| Health | `GET /api/health` | Public. `{status, app, version, checks}`, also with a 503. `version` is the installed Keepiq; the extension needs 0.3.12 or later (`MIN_KEEPIQ_VERSION`, see `keepiq-version` in `ext-share-sync`). A `development` checkout reports an older `-unstable` version, so those always pass. |
 | Suites | `GET /api/v1/suites` | Returns a bare JSON array. Pick `status === 'active'`. Row carries `certificate` (X.509 PEM), `privateKey` (AES envelope, base64), `unlockKeyEpoch`. |
 | List secrets | `GET /api/v1/secrets` | Query: `folderId`, `search`, `sort` (`name`, `url`, `created_at`, `updated_at`, `last_used_at`), `direction`, `page` (1-based), `limit` (default 50, max 100), `typeId`. Envelope `{items,total,page,limit}`. When `search` is set the other filters are ignored. Sorts end in `name` with no unique tiebreaker, so tied rows can move between pages (keepiq#1234). |
 | Full snapshot | `GET /api/v1/offline/manifest` | `{suite, secrets, folders, types, syncedAt}`. Unpaginated. Refused (428) when the admin disabled offline caching, 404 when no active suite. `syncedAt` is a server timestamp, not a cursor. Rows never use the blocked shape here. Secrets stop at 1000 by design (keepiq#1233); a full 1000 means page instead. Rows carry no `migrationError` (keepiq#1235). Under the two-factor policy `suite` is `null` and `unlockBlocked` is set. |

@@ -17,7 +17,7 @@ function saved(outcome: 'failed' | 'succeeded', accountId = 'a1', share = BOB) {
 const kept = (accountId = 'a1', share = BOB) => verifiedPartners(accountId).get(share)
 
 const account = (uid: string) => addAccount({
-	serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+	serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 }, { ...suiteRow })
 
 beforeEach(() => {

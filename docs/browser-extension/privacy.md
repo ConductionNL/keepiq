@@ -12,6 +12,7 @@ The extension talks to your own Nextcloud, and to nobody else. It sends your ser
 
 - your Nextcloud user name and app password, with every request, to sign in;
 - requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault and your Keepiq preferences, of which it uses the default item type;
+- a request for the Keepiq version your server runs, to check the extension supports it;
 - the items and folders you add, change or delete. An item's secrets, user name, notes and additional fields are encrypted in the browser first; its name, web address, type and folder go as you typed them, as Keepiq stores them. Folder names are not encrypted.
 - when you open an item, a check whether you may edit it, which names the item;
 - when you change a shared item's secrets, user name or fields, a lookup of the encryption certificates of everyone it is shared with (by user id, or by cloud id at a partner organisation), and the change encrypted for each of them.
@@ -22,7 +23,7 @@ The extension sends nothing to Conduction. It has no analytics, no crash reports
 
 ## What the extension stores in your browser
 
-Per account: the server address, your Nextcloud user name, display name, email address and profile picture, an app password, and your settings. These stay until you log out of the account. The app password also goes when the server stops accepting it.
+Per account: the server address and its Keepiq version, your Nextcloud user name, display name, email address and profile picture, an app password, and your settings. These stay until you log out of the account. The app password also goes when the server stops accepting it.
 
 A copy of your vault as the server stores it, so you can open it offline. It holds your encrypted secrets and the names, web addresses and folders of your items, which Keepiq keeps unencrypted. The copy goes when you log out of the account, when your vault key changes in Keepiq, and when your organisation's two-factor policy stops this login from opening the vault.
 

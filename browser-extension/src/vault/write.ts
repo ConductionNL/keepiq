@@ -220,6 +220,8 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 		const typeNames = await typeNamesOf(account.id, [row.typeId, cached.typeId])
 		// Either side naming a passkey withholds it, so a swapped type id does not open the credential.
 		const passkey = typeNames.includes('passkey')
+		// A clone would save a passkey item without its credential, which only a passkey ceremony writes.
+		if (passkey && purpose === 'clone') throw new WriteFailure({ code: 'passkey_clone' })
 		let item: EditableItem
 		let fields: string | null
 		try {

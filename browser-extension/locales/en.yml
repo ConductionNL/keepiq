@@ -12,11 +12,13 @@ errors:
   serverError: "{host} is unavailable right now, try again later"
   unauthorized: Wrong username or app password
   keepiqMissing: Keepiq is not installed on {host}
+  keepiqOutdated: Keepiq on {host} is too old for this extension, which needs version {version} or later. Ask your administrator to update Keepiq.
   noActiveSuite: Open the Keepiq web app once and set a master password, then try again
   unlockBlocked: Your organisation requires two-factor login. Set up a second factor in Nextcloud Settings, Security, then try again
   duplicate: This account is already added
   limitReached: Maximum of {count} accounts reached
   invalidMasterPassword: Invalid master password
+  keyUnreadable: Your vault key in Keepiq could not be read, so this browser can't unlock it. Tell your Keepiq administrator.
   offlineNoCache: You are offline and this vault has not been synced yet
   sessionRevoked: Session revoked, please log in again
   writeLocked: Your vault cannot be changed right now, try again later
@@ -148,7 +150,7 @@ item:
   deleted: Item moved to the trash
   moved: Moved to {folder}
   deleteTitle: Delete item
-  deleteConfirm: Move {name} to the trash? It stops being shared. You can restore it from the trash in the Keepiq web app.
+  deleteConfirm: Move {name} to the trash? It stops being shared, also after a restore from the trash in the Keepiq web app.
   gone: This item no longer exists
 
 form:
@@ -215,6 +217,8 @@ writeErrors:
   partnerUnreachable: "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
   partnerLookupLimit: Too many partner lookups. Nothing was saved; try again in a minute.
   federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
+  keepiqOutdated: Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version {version} or later.
+  partnerClock: The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.
 
 shareSave:
   saveWithout: Save without them

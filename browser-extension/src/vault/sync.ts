@@ -1,6 +1,6 @@
 import { ApiError, createClient, Offline, SessionRevoked, VaultWriteLocked, type Client } from '@/src/api/client'
 import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow, UserSettings } from '@/src/api/types'
-import { getAccount, suiteKey } from '@/src/accounts/store'
+import { getAccount, suiteKey, updateAccount, type AccountRecord } from '@/src/accounts/store'
 import { broadcast } from '@/src/background/broadcast'
 import type { BlockReason, SyncStatus } from '@/src/messages'
 import { checkedAt, clearSnapshot, markChecked, readSnapshot, writeSnapshot } from './store'
@@ -81,6 +81,12 @@ function outcomeOf(error: unknown): Pick<SyncStatus, 'offline' | 'lastError'> {
 	return { offline: false, lastError: 'server' }
 }
 
+/** Kept current for `keepiqSupports` by every full sync, which every write starts; a read that names none leaves the stored one. */
+async function refreshVersion(client: Client, account: AccountRecord): Promise<void> {
+	const version = await client.fetchVersion().catch(() => null)
+	if (version !== null && version !== account.keepiqVersion) await updateAccount(account.id, { keepiqVersion: version })
+}
+
 async function run(accountId: string, mode: SyncMode): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account || account.appPassword === null) return
@@ -96,7 +102,7 @@ async function run(accountId: string, mode: SyncMode): Promise<void> {
 			return
 		}
 	}
-	const fetched = await fetchSnapshot(client, (cached?.total ?? 0) >= MANIFEST_ROW_CAP)
+	const [fetched] = await Promise.all([fetchSnapshot(client, (cached?.total ?? 0) >= MANIFEST_ROW_CAP), refreshVersion(client, account)])
 	// A logout during the fetch must not bring the suite or the vault back. Logout marks the
 	// account before it purges, so checking after each write catches one that lands in between.
 	if (!(await loggedIn(accountId))) return

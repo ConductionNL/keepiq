@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createClient } from '@/src/api/client'
-import { importPrivateKey, pemToPkcs8, rsaDecrypt, verifyFederatedCertificate } from '@/src/crypto'
+import { FederatedCertificateError, importPrivateKey, pemToPkcs8, rsaDecrypt, verifyFederatedCertificate } from '@/src/crypto'
 import { decodePem, extractSpki } from '@/src/crypto/rsa'
 import { encrypt, secretRow } from '@/src/testing/vault'
 import { envelope, federationChain } from '@/src/testing/vectors'
@@ -508,6 +508,12 @@ describe('partner shares', () => {
 		expect(lastFinal().federated).toHaveLength(1)
 	})
 
+	it('stops on a certificate not valid by this machine\'s clock and suspends nothing', async () => {
+		vi.mocked(verifyFederatedCertificate).mockRejectedValueOnce(new FederatedCertificateError('not_valid_now'))
+		expect(await failure(save({ opened: await openedX() }))).toEqual({ code: 'partner_clock' })
+		expect(saves).toHaveLength(1)
+	})
+
 	it('stops on an unreachable partner, naming it, and sends nothing more', async () => {
 		world.lookups[BOB.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
 		expect(await failure(save({ opened: await openedX() }))).toEqual({ code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId }] })
@@ -698,6 +704,8 @@ describe('failures', () => {
 		['a policy', json({ error: 'org_ownership_required', code: 'org_ownership_required', message: 'Policy' }, 428), { code: 'policy' }],
 		['a write lock', json({ error: 'write_locked', message: 'Locked' }, 423), { code: 'write_locked' }],
 		['a 400', json({ error: 'copy_fields_mismatch' }, 400), { code: 'invalid' }],
+		['Nextcloud\'s page for a route this Keepiq lacks', new Response('<html/>', { status: 404 }), { code: 'keepiq_outdated' }],
+		['Keepiq\'s own 404', json({ message: 'Secret not found' }, 404), { code: 'not_found' }],
 	])('maps %s through writeError', async (_, answer, error) => {
 		world.onFinal = () => answer
 		expect(await failure(save())).toEqual(error)

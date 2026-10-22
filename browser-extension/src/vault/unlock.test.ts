@@ -3,6 +3,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { addAccount, getAccount, markLoggedOut, setActive, suiteKey, updateAccount } from '@/src/accounts/store'
 import { writeSettings } from '@/src/accounts/settings'
 import { decodeEnvelope, encodeEnvelope } from '@/src/crypto/envelope'
+import { decryptPrivateKeyPem, deriveUnlockKey } from '@/src/crypto/kdf'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { getKey, hasKey, LAST_TAB_KEY, sessionValues } from './key-store'
 import { blockUnlock, checkSuite, lock, lockAll, logoutForTimeout, unlock } from './unlock'
@@ -12,7 +13,7 @@ const password = { type: 'masterPassword' as const, masterPassword: envelope.pas
 
 async function newAccount(uid = 'alice') {
 	return addAccount({
-		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })
 }
 
@@ -21,6 +22,15 @@ function staleSuite() {
 	const decoded = decodeEnvelope(envelope.envelope)
 	decoded.ciphertextWithTag[decoded.ciphertextWithTag.length - 1]! ^= 1
 	return { ...suiteRow, privateKey: encodeEnvelope(decoded), unlockKeyEpoch: 0 }
+}
+
+/** The suite's key envelope re-encrypted around `change(pem)`, under the same master password. */
+async function rewrap(change: (pem: string) => string): Promise<string> {
+	const { salt, iv } = decodeEnvelope(envelope.envelope)
+	const pem = change(await decryptPrivateKeyPem(envelope.envelope, envelope.password))
+	const key = await deriveUnlockKey(envelope.password, salt)
+	const ciphertextWithTag = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(pem)))
+	return encodeEnvelope({ salt, iv, ciphertextWithTag })
 }
 
 beforeEach(() => {
@@ -36,6 +46,40 @@ describe('unlock', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 		expect(await hasKey(account.id)).toBe(true)
 		expect(await getKey(account.id)).not.toBeNull()
+	})
+
+	it('reads the Keepiq version again when the stored one is too old, and unlocks once it was updated', async () => {
+		const account = await newAccount()
+		await updateAccount(account.id, { keepiqVersion: '0.3.11' })
+		fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'ok', version: '0.3.12' })))
+		await unlock(account.id, password)
+		expect(await hasKey(account.id)).toBe(true)
+		expect((await getAccount(account.id))?.keepiqVersion).toBe('0.3.12')
+	})
+
+	it('refuses a Keepiq older than the minimum and stays locked', async () => {
+		const account = await newAccount()
+		await updateAccount(account.id, { keepiqVersion: '0.3.11' })
+		fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'ok', version: '0.3.11' })))
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'keepiq_outdated' })
+		expect(await hasKey(account.id)).toBe(false)
+	})
+
+	it('refuses a stored old version offline, but not a missing one', async () => {
+		const account = await newAccount()
+		fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+		await updateAccount(account.id, { keepiqVersion: '0.3.11' })
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'keepiq_outdated' })
+		await updateAccount(account.id, { keepiqVersion: undefined })
+		await unlock(account.id, password)
+		expect(await hasKey(account.id)).toBe(true)
+	})
+
+	it('names a vault key that is not one PEM block', async () => {
+		const account = await newAccount()
+		await fakeBrowser.storage.local.set({ [suiteKey(account.id)]: { ...suiteRow, privateKey: await rewrap((pem) => `${pem}\ntrailing text`) } })
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'key_unreadable' })
+		expect(await hasKey(account.id)).toBe(false)
 	})
 
 	it('rejects a wrong master password and stays locked', async () => {

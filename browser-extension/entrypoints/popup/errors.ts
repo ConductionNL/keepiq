@@ -1,4 +1,5 @@
 import { i18n } from '#i18n'
+import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
 import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type VaultWriteError } from '@/src/messages'
 import type { FieldError } from '@/src/vault/fields'
 import { language } from './i18n'
@@ -14,7 +15,9 @@ export function errorText(code: ErrorCode, host: string): string {
 		case 'server_error': return i18n.t('errors.serverError', { host })
 		case 'unauthorized': return i18n.t('errors.unauthorized')
 		case 'keepiq_missing': return i18n.t('errors.keepiqMissing', { host })
+		case 'keepiq_outdated': return i18n.t('errors.keepiqOutdated', { host, version: MIN_KEEPIQ_VERSION })
 		case 'no_active_suite': return i18n.t('errors.noActiveSuite')
+		case 'key_unreadable': return i18n.t('errors.keyUnreadable')
 		case 'unlock_blocked': return i18n.t('errors.unlockBlocked')
 		case 'duplicate': return i18n.t('errors.duplicate')
 		case 'limit_reached': return i18n.t('errors.limitReached', { count: MAX_ACCOUNTS })
@@ -70,6 +73,9 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
 		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
 		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
+		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
+		case 'partner_clock': return i18n.t('writeErrors.partnerClock')
+		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'locked':
 		case 'unknown':
 		default: return i18n.t('errors.unknown')

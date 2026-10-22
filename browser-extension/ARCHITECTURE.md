@@ -13,7 +13,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 
 ## Modules
 
-- `src/api/`: the Keepiq client, the only code that calls `fetch`. Basic auth on the app password, `credentials: 'omit'`, a 401 that logs the account out ([ADR-003](openspec/architecture/adr-003-keepiq-api-contract.md)).
+- `src/api/`: the Keepiq client, the only code that calls `fetch`. Basic auth on the app password, `credentials: 'omit'`, a 401 that logs the account out ([ADR-003](openspec/architecture/adr-003-keepiq-api-contract.md)). `keepiq-version.ts` holds the minimum Keepiq version and the features of newer ones ([KEEPIQ-VERSIONS.md](KEEPIQ-VERSIONS.md)).
 - `src/crypto/`: PBKDF2 key derivation, AES-GCM envelope and RSA-OAEP, byte compatible with the web app (tested against `../tests/vectors/crypto/`). `federated-certificate.ts` verifies a partner recipient's certificate chain, ported from the web app.
 - `src/accounts/`:
   - `store.ts`: the account list, behind one write queue.

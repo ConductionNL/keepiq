@@ -46,7 +46,7 @@ beforeEach(async () => {
 	vi.spyOn(console, 'error').mockImplementation(() => {})
 	setUnauthorizedHandler((id) => markLoggedOut(id, true))
 	accountId = (await addAccount({
-		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })).id
 	await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
 })
@@ -63,11 +63,20 @@ describe('full sync', () => {
 	it('takes the whole vault from the manifest, beside the user settings', async () => {
 		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/user': () => json({ default_secret_type: 'note' }) })
 		const status = await sync(accountId)
-		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest'])
+		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
 		const snapshot = await readSnapshot(accountId)
 		expect(snapshot).toMatchObject({ secrets: rows, folders: [folderRow()], total: 2, newestUpdatedAt: '2026-04-01T10:00:00+00:00', defaultSecretType: 'note' })
 		expect(status).toEqual({ syncing: false, syncedAt: snapshot!.syncedAt, offline: false, lastError: null })
 		expect(await isStale(accountId)).toBe(false)
+	})
+
+	it('keeps the Keepiq version the health check names, and the stored one when it names none', async () => {
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/health': () => json({ status: 'ok', version: '0.3.13' }) })
+		await sync(accountId)
+		expect((await getAccount(accountId))?.keepiqVersion).toBe('0.3.13')
+		server({ '/api/v1/offline/manifest': () => json(manifest) })
+		await sync(accountId)
+		expect((await getAccount(accountId))?.keepiqVersion).toBe('0.3.13')
 	})
 
 	it('keeps no default type when the user settings fail', async () => {
@@ -192,7 +201,7 @@ describe('change probe', () => {
 		await writeSnapshot(accountId, cached())
 		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		await sync(accountId, 'full')
-		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest'])
+		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
 	})
 })
 

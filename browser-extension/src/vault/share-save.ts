@@ -1,5 +1,5 @@
 /** A value change of a possibly shared item in one `PUT /api/v1/secrets/{id}/share-save`, ported from the web app's `saveShared` (`src/services/shareSave.js`); the server's rules are in `ShareSaveService`. */
-import { ApiError, type Client } from '@/src/api/client'
+import { ApiError, KeepiqNotInstalled, type Client } from '@/src/api/client'
 import { FederatedCertificateError, importPublicKey, importSpki, rsaDecrypt, rsaEncrypt, verifyFederatedCertificate, type VerifiedFederatedCertificate } from '@/src/crypto'
 import type { DecryptField, ShareSaveNote } from '@/src/messages'
 import { verifiedPartners } from './verified-partners'
@@ -88,6 +88,8 @@ function incompleteOf(body: unknown) {
 /** The share-save's own refusals that read otherwise through `writeError`. */
 function refusalOf(error: unknown): unknown {
 	if (!(error instanceof ApiError)) return error
+	// Nextcloud's page for a route this Keepiq doesn't have, as an `-unstable` build from before share-save.
+	if (error instanceof KeepiqNotInstalled) return new WriteFailure({ code: 'keepiq_outdated' })
 	if (error.status === 409 && error.code === 'stale_source') return new WriteFailure({ code: 'stale_source' })
 	if (error.refused && error.code === 'not_allowed') return new WriteFailure({ code: 'forbidden' })
 	return error
@@ -136,6 +138,8 @@ async function lookUp(client: Client, share: RequiredShare): Promise<PartnerOutc
 	try {
 		return { verified: await verifyFederatedCertificate({ certificate: answer.certificate, chain, partnerRootFingerprint: pin, cloudId: share.recipientCloudId }) }
 	} catch (error) {
+		// Validity is judged by this machine's clock, which may be wrong, so it stops the save instead of suspending for good.
+		if (error instanceof FederatedCertificateError && error.reason === 'not_valid_now') throw new WriteFailure({ code: 'partner_clock' })
 		if (error instanceof FederatedCertificateError) return { suspend: error.reason }
 		throw error
 	}

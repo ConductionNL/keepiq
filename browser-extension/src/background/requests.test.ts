@@ -35,7 +35,7 @@ beforeEach(async () => {
 	fetchMock.mockReset()
 	fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: 'Down' }), { status: 503 }))
 	accountId = (await addAccount({
-		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })).id
 	await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
 })

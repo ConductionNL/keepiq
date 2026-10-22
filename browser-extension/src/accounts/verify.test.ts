@@ -6,13 +6,14 @@ const fetchMock = vi.fn<typeof fetch>()
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status })
 const identity = json(200, { ocs: { data: { id: 'alice', displayname: 'Alice A', email: '' } } })
 
-/** Answers by route: identity, suites, avatar. */
-function server(routes: { identity?: Response | Error; suites?: Response; avatar?: Response }) {
+/** Answers by route: identity, suites, health, avatar. Health names a supported Keepiq unless given. */
+function server(routes: { identity?: Response | Error; suites?: Response; health?: Response; avatar?: Response }) {
 	fetchMock.mockImplementation(async (url) => {
 		const path = String(url)
 		const answer = path.includes('/cloud/user') ? routes.identity
 			: path.includes('/api/v1/suites') ? routes.suites
-				: routes.avatar ?? new Response(null, { status: 404 })
+				: path.includes('/api/health') ? routes.health ?? json(200, { status: 'ok', version: '0.3.12' })
+					: routes.avatar ?? new Response(null, { status: 404 })
 		if (answer instanceof Error) throw answer
 		return answer!.clone()
 	})
@@ -34,6 +35,7 @@ describe('verifyCredentials', () => {
 			displayName: 'Alice A',
 			email: null,
 			avatarDataUrl: null,
+			keepiqVersion: '0.3.12',
 			suite: suiteRow,
 		})
 		// The avatar is fetched by uid, not by the typed login name.
@@ -55,6 +57,8 @@ describe('verifyCredentials', () => {
 		['keepiq_missing', { identity, suites: new Response('<html/>', { status: 404 }) }],
 		['no_active_suite', { identity, suites: json(200, []) }],
 		['unlock_blocked', { identity, suites: json(200, [{ ...suiteRow, privateKey: undefined, unlockBlocked: '2fa' }]) }],
+		['keepiq_outdated', { identity, suites: json(200, [suiteRow]), health: json(200, { status: 'ok', version: '0.3.11' }) }],
+		['keepiq_outdated', { identity, suites: json(200, [suiteRow]), health: new Response('<html/>', { status: 404 }) }],
 	] as const)('fails with %s', async (code, routes) => {
 		server(routes)
 		await expect(verify()).rejects.toMatchObject({ code })

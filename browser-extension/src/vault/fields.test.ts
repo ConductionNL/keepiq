@@ -231,6 +231,7 @@ describe('shownInFull', () => {
 		expect(shownInFull('key', identity, 'identity')).toBe(true)
 		expect(shownInFull('key', '{"number":4111,"cardholder":"Alice"}', 'card')).toBe(true)
 		expect(shownInFull('key', '{}', 'card')).toBe(true)
+		expect(shownInFull('key', card.replace(':', ': '), 'card')).toBe(true)
 		const hidden = [
 			card.replace('}', ',"recovery":"Y-BANK-PASSWORD"}'),
 			card.replace('"cvv":"cvv value"', '"cvv":"Y-BANK-PASSWORD","cvv":"cvv value"'),
@@ -239,8 +240,8 @@ describe('shownInFull', () => {
 			card.replace('"pin":"pin value"', '"pin":true'),
 			card.replace('"pin":"pin value"', '"pin":null'),
 			'{"number":"4111","__proto__":"Y-BANK-PASSWORD"}',
-			card.replace(':', ': '),
 			'{"number":4.10}',
+			'{"number":12345678901234567890}',
 		]
 		for (const key of hidden) expect(shownInFull('key', key, 'card')).toBe(false)
 		expect(shownInFull('key', identity.replace('}', ',"recovery":"Y-BANK-PASSWORD"}'), 'identity')).toBe(false)
@@ -251,8 +252,14 @@ describe('shownInFull', () => {
 		expect(shownUnder('additionalFields', '{"pin":"1234","Notes":"Y-BANK-PASSWORD"}')).toEqual(notPasskey)
 	})
 
+	it('shows additional fields in any writer\'s formatting, as Python\'s json.dumps', () => {
+		for (const fields of ['{"pin": "1234", "meta": {"a": 1, "b": [1, 2]}}', '{\n  "pin": "1234"\n}', '{"p\\u0069n":"1234"}']) {
+			expect(shownUnder('additionalFields', fields)).toEqual(notPasskey)
+		}
+	})
+
 	it('refuses additional fields whose parse loses something, as a duplicate member does', () => {
-		for (const fields of ['{"pin":"Y-BANK-PASSWORD","pin":"1234"}', '{"meta":{"a":"Y-BANK-PASSWORD","a":1}}', '{ "pin": "1234" }', '[1]']) {
+		for (const fields of ['{"pin":"Y-BANK-PASSWORD","pin":"1234"}', '{"meta":{"a":"Y-BANK-PASSWORD","a":1}}', '{"pin":"Y-BANK-PASSWORD", "p\\u0069n":"1234"}', '{"pin": 12345678901234567890}', '[1]']) {
 			expect(shownUnder('additionalFields', fields)).toEqual([])
 		}
 	})

@@ -107,6 +107,14 @@ export function createClient(account: ClientAccount) {
 		},
 
 		/** `null` on any failure; callers fall back to initials. */
+		/** Keepiq's version from its public health check, which names it in a 503 too; `null` when it names none, as a Keepiq older than the check. */
+		async fetchVersion(): Promise<string | null> {
+			const response = await send(`${keepiqBase}/api/health`)
+			const json: unknown = await response.json().catch(() => undefined)
+			const version = (json as { version?: unknown } | undefined)?.version
+			return typeof version === 'string' ? version : null
+		},
+
 		async fetchAvatarDataUrl(size = 64): Promise<string | null> {
 			try {
 				const response = await send(`${account.serverUrl}/index.php/avatar/${encodeURIComponent(account.uid)}/${size}`, { accept: 'image/*' })

@@ -130,7 +130,7 @@ The extension SHALL, when the user presses Edit, call `GET /api/v1/secrets/{id}`
 - **THEN** the extension MUST run sync, which marks the item blocked, and the popup MUST refuse to edit and show the blocked reason as ext-vault-browse does for detail
 
 ### Requirement: Delete with confirmation
-The extension SHALL delete an item only after the user confirms an in-popup dialog "Move <name> to the trash? It stops being shared. You can restore it from the trash in the Keepiq web app." and MUST then call `DELETE /api/v1/secrets/{id}`, run sync and return to the list. The server moves the item to its trash and revokes every share of it (Keepiq `vault-trash-and-archive`); the extension has no trash view, so restoring is done in the web app.
+The extension SHALL delete an item only after the user confirms an in-popup dialog "Move <name> to the trash? It stops being shared, also after a restore from the trash in the Keepiq web app." and MUST then call `DELETE /api/v1/secrets/{id}`, run sync and return to the list. The server moves the item to its trash and revokes every share of it (Keepiq `vault-trash-and-archive`); the extension has no trash view, so restoring is done in the web app.
 
 #### Scenario: Confirmed delete
 - **GIVEN** the detail view of "GitHub" is open
@@ -154,6 +154,7 @@ The extension SHALL offer Clone on item detail, which MUST fresh-fetch and decry
 - **GIVEN** the detail view of a `passkey` item is open
 - **WHEN** the user presses Clone
 - **THEN** Clone MUST be unavailable with the hint "Passkeys cannot be cloned"
+- **AND** the background MUST refuse a clone fetch of a row that the fresh fetch or the vault cache names a `passkey` with `passkey_clone`, before decrypting
 
 ### Requirement: Move to folder
 The extension SHALL offer Move on item detail, which MUST open the folder picker and on selection send `PUT /api/v1/secrets/{id}` with only `folderId`, then run sync.

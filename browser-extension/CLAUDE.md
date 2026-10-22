@@ -74,6 +74,19 @@ Keep them short. These are rules, not preferences:
   fetching, no icon services, no telemetry; API calls go from the background only,
   with `credentials: 'omit'`. (ADR-002, ADR-003)
 
+## Keepiq version support
+
+We are contractually bound to these. They are rules, not preferences; [KEEPIQ-VERSIONS.md](KEEPIQ-VERSIONS.md) has the how-to.
+
+- **Every released Keepiq from `MIN_KEEPIQ_VERSION` on stays supported for five years from its release date.** No change may break a supported version, also not "temporarily".
+- **Never raise `MIN_KEEPIQ_VERSION` past a release still within its five years.** Check [supported-keepiq-versions.md](../docs/browser-extension/supported-keepiq-versions.md) first, and never raise it to avoid a fallback.
+- **Any call to a route or field newer than the minimum must be gated** with an entry in `KEEPIQ_FEATURES` and a `keepiqSupports` check, in the background. Older supported versions get the old path or a refusal that names the version they need, never a failed request.
+- **Compare versions only through `src/api/keepiq-version.ts`.** Never parse or compare a version string elsewhere, and never in the popup or a content script; they get a boolean or a code from the background.
+- **Never detect a feature by probing its route.** Handling a gated route's HTML 404 as `keepiq_outdated` is the fallback for `-unstable` builds only.
+- **Test every gate on both sides:** the version that has it, the one before, an `-unstable` build and no stored version.
+- **Keep the record current in the same change:** a row per Keepiq release in the supported list, the version that added a route in ADR-003, and a scenario for an older Keepiq in the feature's spec.
+- **Unsure whether a change affects a supported version?** Ask before building it.
+
 ## Open decisions
 
 <!-- Surface these to the user rather than assuming. Delete the section once it's
