@@ -515,7 +515,8 @@ class ShareController extends OCSController {
 	/**
 	 * The write context of a secret for the current user
 	 * (folder-permission-grades §4): source resolution + effective grade
-	 * + the owner-row material a write-grade fan-out needs.
+	 * + the owner-row material a write-grade fan-out needs. A caller who
+	 * does not reach the secret gets the 404 of an unknown id.
 	 *
 	 * @param string $id The secret (source or recipient copy) UUID
 	 *
@@ -524,6 +525,7 @@ class ShareController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	#[NoAdminRequired]
 	public function writeContext(string $id): JSONResponse {

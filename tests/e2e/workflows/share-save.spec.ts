@@ -11,12 +11,16 @@
  * dialogs call, as the other multi-user specs do. Partner (federated) shares
  * need a second instance and are not covered here.
  *
+ * A group share goes through the sidebar's group-share form instead.
+ *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
  */
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
 import type { VaultUser } from './_vault-users.ts'
 
 import { expect, test } from '@playwright/test'
+import { randomUUID } from 'node:crypto'
 import { BASE_URL } from '../base-url.ts'
 import { withStore } from './_vault-actions.ts'
 import {
@@ -150,9 +154,10 @@ async function startSession(
 			return route.abort()
 		},
 	)
-	// The first-open support dialog would cover the lock screen; see global-setup.ts.
+	// The first-open support dialog and the walkthrough would cover the page; see global-setup.ts.
 	await context.addInitScript(() => {
 		window.localStorage.setItem('cn-support-dialog-shown:keepiq', '1')
+		window.localStorage.setItem('cn-walkthrough-seen:keepiq', '999.0.0')
 	})
 	await setUpVault(page, user)
 	await openList(page)
@@ -390,6 +395,105 @@ async function openEdit(page: Page, id: string): Promise<void> {
 }
 
 /**
+ * Share a secret with a group through the sidebar's group-share form.
+ *
+ * @param owner The owner.
+ * @param sourceId The secret.
+ * @param groupId The group.
+ * @param received How many members should receive a copy.
+ */
+async function shareWithGroup(
+	owner: Session,
+	sourceId: string,
+	groupId: string,
+	received: number,
+): Promise<void> {
+	const { page } = owner
+	await openDetail(page, sourceId)
+	await page
+		.getByTestId('secret-detail-more-info')
+		.evaluate((el: HTMLElement) => el.click())
+	await page
+		.getByTestId('group-share-open-form')
+		.evaluate((el: HTMLElement) => el.click())
+	const form = page.getByTestId('group-share-form')
+	const box = form.getByRole('combobox')
+	await box.click()
+	await box.fill(groupId)
+	await page.getByRole('option').filter({ hasText: groupId }).first().click()
+	await form.getByTestId('group-share-form-submit').click()
+	const prompt = page.getByTestId('key-proof-prompt')
+	await expect(prompt).toBeVisible({ timeout: 20_000 })
+	await prompt.getByLabel('Your master password').fill(owner.user.masterPassword)
+	await page.getByTestId('key-proof-prompt-confirm').click()
+	await expect(page.getByTestId('group-share-result')).toContainText(
+		`${received} members received it, 0 did not`,
+		{ timeout: 60_000 },
+	)
+}
+
+/**
+ * The write context the holder's browser reads for a row.
+ *
+ * @param session The holder.
+ * @param id The row.
+ * @return The status and the context.
+ */
+async function writeContext(
+	session: Session,
+	id: string,
+): Promise<{ status: number; body: any }> {
+	return api(session.page, 'GET', `/secrets/${id}/write-context`)
+}
+
+/**
+ * Send a share-save of a new password from a holder's row that the server's writer check refuses with `not_allowed` before it looks at the base version.
+ * The request carries no copies and is encrypted for the holder's own certificate.
+ *
+ * @param session The holder.
+ * @param id The holder's row.
+ * @param password The new password.
+ * @return The status and the answer; a refusal leaves as 428 through OcsRefusalMiddleware.
+ */
+async function shareSaveFrom(
+	session: Session,
+	id: string,
+	password: string,
+): Promise<{ status: number; body: any }> {
+	await ensureUnlocked(session)
+	await openDetail(session.page, id)
+	const current = await row(session.page, id)
+	const key = await withStore<string>(
+		session.page,
+		'share',
+		`async (store, key) => {
+			const pinia = document.querySelector('#keepiq-app').__vue_app__.config.globalProperties.$pinia
+			const certificate = pinia._s.get('session').certificate
+			return (await store.encryptForRecipient({ key }, certificate)).key
+		}`,
+		password,
+	)
+	return api(session.page, 'PUT', `/secrets/${id}/share-save`, {
+		baseUpdatedAt: current.updatedAt,
+		patch: { key },
+		copies: [],
+	})
+}
+
+/**
+ * Type a new login into the open edit dialog.
+ *
+ * @param page A page with the edit dialog open.
+ * @param login The new login.
+ */
+async function fillLogin(page: Page, login: string): Promise<void> {
+	await page
+		.locator('.secret-form')
+		.getByLabel('Login (optional)')
+		.fill(login, { force: true })
+}
+
+/**
  * Type a new password into the open edit dialog and press Save.
  *
  * @param page A page with the edit dialog open.
@@ -474,6 +578,31 @@ test.describe('atomic share-save, end to end', () => {
 	const users = ['alice', 'bob', 'carol', 'dave'].map((p) =>
 		newVaultUser(`ss${p}`),
 	)
+	/** The groups the tests created, deleted in afterAll. */
+	const groups: string[] = []
+
+	/**
+	 * A new group with these members.
+	 *
+	 * @param members The members.
+	 * @return The group id.
+	 */
+	async function newGroup(members: Session[]): Promise<string> {
+		const groupId = `e2e-share-save-${Date.now().toString(36)}`
+		const created = await admin.post('/ocs/v2.php/cloud/groups?format=json', {
+			form: { groupid: groupId },
+		})
+		expect(created.status(), await created.text()).toBe(200)
+		groups.push(groupId)
+		for (const member of members) {
+			const added = await admin.post(
+				`/ocs/v2.php/cloud/users/${encodeURIComponent(member.user.uid)}/groups?format=json`,
+				{ form: { groupid: groupId } },
+			)
+			expect(added.status(), await added.text()).toBe(200)
+		}
+		return groupId
+	}
 
 	test.beforeAll(async ({ browser }) => {
 		test.setTimeout(300_000)
@@ -488,6 +617,11 @@ test.describe('atomic share-save, end to end', () => {
 		test.setTimeout(300_000)
 		for (const session of [alice, bob, carol, dave]) {
 			await session?.context.close().catch(() => undefined)
+		}
+		for (const group of groups) {
+			await admin
+				.delete(`/ocs/v2.php/cloud/groups/${group}?format=json`)
+				.catch(() => undefined)
 		}
 		await deleteUsers(admin, users)
 		await admin.dispose()
@@ -575,6 +709,214 @@ test.describe('atomic share-save, end to end', () => {
 		await expectShows(alice, sourceId, changed)
 		await expectShows(carol, carolCopy, changed)
 		await expectShows(bob, bobCopy, changed)
+	})
+
+	test('a member of a group the secret is shared with saves for the owner and every other member', async () => {
+		// @e2e sharing-group::a-group-member-saves-for-everyone
+		// @e2e sharing-group::a-group-members-write-context-carries-the-write-grade
+		// @e2e sharing-group::knowing-a-copys-id-reveals-nothing
+		// @e2e user-sharing::recipient-updates-shared-secret
+		const groupId = await newGroup([alice, bob, carol])
+		const value = original('nine')
+		const name = `Group member edit ${alice.user.uid}`
+		const sourceId = await createSecret(alice, name, value)
+		await shareWithGroup(alice, sourceId, groupId, 2)
+		const bobCopy = await copyByName(bob, name)
+		const carolCopy = await copyByName(carol, name)
+
+		const context = await writeContext(bob, bobCopy)
+		expect(context.status, JSON.stringify(context.body)).toBe(200)
+		expect(context.body.effectiveGrade).toBe('write')
+		expect(context.body.ownerCertificate).toBe(
+			await withStore<string>(
+				alice.page,
+				'session',
+				'async (store) => store.certificate',
+			),
+		)
+		const unknown = await writeContext(dave, randomUUID())
+		expect(unknown.status).toBe(404)
+		expect(await writeContext(dave, bobCopy)).toEqual(unknown)
+
+		await ensureUnlocked(bob)
+		const watch = watchApi(bob.page)
+		await openEdit(bob.page, bobCopy)
+		watch.reset()
+		await fillLogin(bob.page, 'bob-wrote-this@example.test')
+		await savePassword(bob.page, 'Bob-wrote-this-9!')
+		await expect(bob.page.locator('.secret-form')).toHaveCount(0, {
+			timeout: 60_000,
+		})
+		expectShareSaveOnly(await watch.calls(), bobCopy, [
+			[409, 'incomplete'],
+			[200],
+		])
+
+		const changed = {
+			...value,
+			login: 'bob-wrote-this@example.test',
+			key: 'Bob-wrote-this-9!',
+		}
+		await expectShows(alice, sourceId, changed)
+		await expectShows(carol, carolCopy, changed)
+		await expectShows(bob, bobCopy, changed)
+
+		const audit = await api(alice.page, 'GET', `/audit/secret/${sourceId}`)
+		expect(audit.status).toBe(200)
+		const entries = audit.body.entries as Array<{
+			eventType: string
+			actorId: string
+			metadata: Record<string, unknown>
+		}>
+		expect(
+			entries
+				.filter(
+					(e) =>
+						e.eventType === 'secret.updated'
+						&& e.actorId === bob.user.uid,
+				)
+				.map((e) => e.metadata.changedFields),
+			JSON.stringify(entries),
+		).toEqual(['group-write sync'])
+	})
+
+	test('a member whose copy came through a direct share saves for everyone, and is refused once they left the group', async () => {
+		// @e2e sharing-group::a-member-whose-copy-came-another-way-saves-for-everyone
+		// @e2e sharing-group::a-member-who-left-the-group-is-refused
+		const groupId = await newGroup([alice, bob, carol])
+		const value = original('ten')
+		const name = `Direct then group ${alice.user.uid}`
+		const sourceId = await createSecret(alice, name, value)
+		const bobCopy = (await share(alice, sourceId, [bob]))[bob.user.uid]
+		await shareWithGroup(alice, sourceId, groupId, 2)
+		const carolCopy = await copyByName(carol, name)
+		expect((await writeContext(bob, bobCopy)).body.effectiveGrade).toBe('write')
+
+		await ensureUnlocked(bob)
+		const watch = watchApi(bob.page)
+		await openEdit(bob.page, bobCopy)
+		watch.reset()
+		await savePassword(bob.page, 'Bob-direct-copy-10!')
+		await expect(bob.page.locator('.secret-form')).toHaveCount(0, {
+			timeout: 60_000,
+		})
+		expectShareSaveOnly(await watch.calls(), bobCopy, [
+			[409, 'incomplete'],
+			[200],
+		])
+		const changed = { ...value, key: 'Bob-direct-copy-10!' }
+		await expectShows(alice, sourceId, changed)
+		await expectShows(carol, carolCopy, changed)
+
+		// Leaving removes only copies of the group share, so Bob's direct copy stays.
+		const left = await admin.delete(
+			`/ocs/v2.php/cloud/users/${encodeURIComponent(bob.user.uid)}/groups?format=json&groupid=${groupId}`,
+		)
+		expect(left.status(), await left.text()).toBe(200)
+		expect(await copyByName(bob, name)).toBe(bobCopy)
+		const context = await writeContext(bob, bobCopy)
+		expect(context.body.effectiveGrade, JSON.stringify(context.body)).toBe(
+			'none',
+		)
+		const before = await row(alice.page, sourceId)
+		const refused = await shareSaveFrom(bob, bobCopy, 'Bob-after-leaving-10!')
+		expect([refused.status, refused.body.error]).toEqual([428, 'not_allowed'])
+		expect((await row(alice.page, sourceId)).updatedAt).toBe(before.updatedAt)
+		await expectShows(alice, sourceId, changed)
+		await expectShows(carol, carolCopy, changed)
+		await expectShows(bob, bobCopy, changed)
+	})
+
+	test('a direct recipient in no group the secret is shared with changes only their own copy', async () => {
+		// @e2e sharing-group::a-direct-share-recipient-changes-only-their-own-copy
+		// @e2e user-sharing::recipient-updates-shared-secret
+		const groupId = await newGroup([alice, bob, carol])
+		const value = original('eleven')
+		const name = `Direct edit ${alice.user.uid}`
+		const sourceId = await createSecret(alice, name, value)
+		await shareWithGroup(alice, sourceId, groupId, 2)
+		const daveCopy = (await share(alice, sourceId, [dave]))[dave.user.uid]
+		const bobCopy = await copyByName(bob, name)
+		const carolCopy = await copyByName(carol, name)
+
+		const context = await writeContext(dave, daveCopy)
+		expect(context.body.effectiveGrade, JSON.stringify(context.body)).toBe(
+			'none',
+		)
+		const refused = await shareSaveFrom(dave, daveCopy, 'Dave-everyone-11!')
+		expect([refused.status, refused.body.error]).toEqual([428, 'not_allowed'])
+
+		const watch = watchApi(dave.page)
+		await openEdit(dave.page, daveCopy)
+		watch.reset()
+		await fillLogin(dave.page, 'dave-wrote-this@example.test')
+		await savePassword(dave.page, 'Dave-wrote-this-11!')
+		await expect(dave.page.locator('.secret-form')).toHaveCount(0, {
+			timeout: 60_000,
+		})
+		const calls = await watch.calls()
+		expect(
+			calls.filter((c) => c.path.endsWith('/share-save')),
+			JSON.stringify(calls),
+		).toEqual([])
+		expect(
+			calls
+				.filter(
+					(c) => c.method === 'PUT' && c.path === `/secrets/${daveCopy}`,
+				)
+				.map((c) => c.status),
+		).toEqual([200])
+
+		await expectShows(dave, daveCopy, {
+			...value,
+			login: 'dave-wrote-this@example.test',
+			key: 'Dave-wrote-this-11!',
+		})
+		await expectShows(alice, sourceId, value)
+		await expectShows(bob, bobCopy, value)
+		await expectShows(carol, carolCopy, value)
+	})
+
+	test('a read-grade member in no group the secret is shared with is refused and changes no copy', async () => {
+		// @e2e folder-permission-grades::read-grade-member-cannot-write
+		const folder = await api(alice.page, 'POST', '/folders', {
+			name: `Read team ${alice.user.uid}`,
+		})
+		expect(folder.status).toBe(201)
+		const value = original('twelve')
+		const name = `Read grade ${alice.user.uid}`
+		const sourceId = await createSecret(alice, name, value, folder.body.id)
+		const teamFolder = await withStore<{ id: string }>(
+			alice.page,
+			'teamFolder',
+			'async (store, folderId) => store.shareFolder(folderId)',
+			folder.body.id,
+		)
+		for (const member of [bob, carol]) {
+			await withStore(
+				alice.page,
+				'teamFolder',
+				`async (store, data) => {
+					await store.addMember(data.teamFolderId, 'user', data.uid)
+					return await store.runFanOut(data.teamFolderId)
+				}`,
+				{ teamFolderId: teamFolder.id, uid: member.user.uid },
+			)
+		}
+		const bobCopy = await copyByName(bob, name)
+		const carolCopy = await copyByName(carol, name)
+
+		const context = await writeContext(bob, bobCopy)
+		expect(context.body.effectiveGrade, JSON.stringify(context.body)).toBe(
+			'read',
+		)
+		const before = await row(alice.page, sourceId)
+		const refused = await shareSaveFrom(bob, bobCopy, 'Bob-read-only-12!')
+		expect([refused.status, refused.body.error]).toEqual([428, 'not_allowed'])
+		expect((await row(alice.page, sourceId)).updatedAt).toBe(before.updatedAt)
+		await expectShows(alice, sourceId, value)
+		await expectShows(carol, carolCopy, value)
+		await expectShows(bob, bobCopy, value)
 	})
 
 	test('a save from a stale dialog is refused, shown, and changes nothing', async () => {

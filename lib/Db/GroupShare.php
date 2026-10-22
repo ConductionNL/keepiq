@@ -131,6 +131,19 @@ class GroupShare extends Entity implements JsonSerializable {
 	}//end __construct()
 
 	/**
+	 * Whether this is a full group share, not use-only, that has not expired.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	public function isFullAndLive(): bool {
+		$expires = $this->expiresAt;
+
+		return $this->useOnly !== true && ($expires === null || $expires->getTimestamp() > time());
+	}//end isFullAndLive()
+
+	/**
 	 * Serialize the entity to an array for the API.
 	 *
 	 * @return array<string,mixed>

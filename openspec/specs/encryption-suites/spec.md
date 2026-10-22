@@ -206,7 +206,7 @@ Per-secret migration steps (all in browser):
 If re-encryption of a specific secret fails, the error MUST be recorded on the secret (`migration_error`) and migration MUST continue with the remaining secrets. The user MUST be informed of failures.
 
 After all secrets are processed — and only once nothing remains that nobody has attempted, per "A Migration Always Has A Way To Terminate", which also governs what happens when a record cannot be carried across at all:
-- Link shares associated with the old suite MUST be revoked
+- The link shares the user made MUST be revoked, also those team offboarding handed to a successor; a link share someone else made and handed to the user MUST NOT be revoked
 - Locked SecretRequests MUST be unlocked and re-pointed to the new suite
 - The old EncryptionSuite status MUST be set to `compromised`
 - The SuiteMigration status MUST be set to `completed` or `completed_with_errors`
@@ -701,7 +701,7 @@ After the revoke the system MUST:
 
 - stamp and flag every secret in the blast radius and, for a shared copy, its source, and warn each affected owner once with the first secret's name and the number of other affected secrets (keepiq#875);
 - warn every user who holds a copy of the revoked user's own secrets, and every grantor whose `approved` emergency grant is sealed to a revoked suite, because that envelope escrows the grantor's private key (keepiq#872);
-- revoke the revoked user's link shares and passkeys through the same helper the owner's compromise recovery uses (keepiq#858);
+- revoke the revoked user's passkeys and the link shares they made, also those handed to a successor, through the same helper the owner's compromise recovery uses (keepiq#858);
 - end every Nextcloud session and app password of the revoked user (keepiq#860).
 
 Each step MUST contain its own failure: a failure on one secret, one notification or one cleanup step MUST NOT stop the others. The number of failed steps MUST be returned in the response as `cascade.failed`, with `cascadeIncomplete: true` when it is above zero, so the administrator is not told containment ran when part of it did not (keepiq#863). A lookup failure that leaves an owner unwarned, such as a failed lookup of a shared copy's source, MUST count as a failed step. The tally MUST also be audited as `suite.compromise_contained`, with `incomplete: true` when a step failed (keepiq#1189).
@@ -768,9 +768,9 @@ Every force-revoke, compromise or not, that deletes usable emergency contacts MU
 
 #### Scenario: The account is contained
 @e2e exclude Ends the sessions of the user under test; covered by PHPUnit on CompromiseContainmentService.
-- **GIVEN** A has a link share and an active session
+- **GIVEN** A made a link share and has an active session
 - **WHEN** an administrator force-revokes A's suite with `markCompromised: true`
-- **THEN** A's link shares and passkeys MUST be revoked
+- **THEN** the link shares A made and A's passkeys MUST be revoked
 - **AND** every session and app password of A MUST be invalidated
 
 #### Scenario: The owner learns their emergency contacts are gone

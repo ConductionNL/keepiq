@@ -234,6 +234,7 @@ class TeamFolderAuditor {
 	 * @param string $successorUserId The successor taking ownership
 	 * @param int $revoked The number of derived shares revoked
 	 * @param int $transferred The number of secrets transferred
+	 * @param int $linksTransferred The number of the leaver's link shares handed to the successor with them
 	 * @param int $membershipsRemoved The number of direct team-folder memberships removed
 	 * @param string[] $coveringGroupIds The groups whose membership rows still cover the leaver
 	 *
@@ -248,6 +249,7 @@ class TeamFolderAuditor {
 		string $successorUserId,
 		int $revoked,
 		int $transferred,
+		int $linksTransferred=0,
 		int $membershipsRemoved=0,
 		array $coveringGroupIds=[],
 	): void {
@@ -263,6 +265,7 @@ class TeamFolderAuditor {
 					'successorUserId' => $successorUserId,
 					'revokedCount' => $revoked,
 					'transferredCount' => $transferred,
+					'linkSharesTransferredCount' => $linksTransferred,
 					'membershipsRemovedCount' => $membershipsRemoved,
 					'coveringGroupIds' => $coveringGroupIds,
 				],

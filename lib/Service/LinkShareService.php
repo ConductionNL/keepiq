@@ -365,7 +365,8 @@ class LinkShareService {
 	}//end deleteBySecretId()
 
 	/**
-	 * Cascade-delete all link shares for a user (called on compromise recovery).
+	 * Cascade-delete all link shares a user made (called on compromise
+	 * recovery), also the ones an ownership transfer handed to someone else.
 	 *
 	 * @param string $userId The Nextcloud user ID
 	 *
@@ -373,10 +374,10 @@ class LinkShareService {
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
-	public function deleteByUserId(string $userId): void {
-		$this->mapper->deleteByUserId($userId);
-		$this->logger->info("Keepiq: cascade-deleted link shares for user {$userId}");
-	}//end deleteByUserId()
+	public function deleteMadeBy(string $userId): void {
+		$this->mapper->deleteMadeBy($userId);
+		$this->logger->info("Keepiq: cascade-deleted link shares made by user {$userId}");
+	}//end deleteMadeBy()
 
 	/**
 	 * Generate a URL-safe access token with 128 bits of entropy.

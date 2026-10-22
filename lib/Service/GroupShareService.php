@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
@@ -71,6 +72,8 @@ class GroupShareService {
 	 * @param IShareManager $shareManager Nextcloud's share settings (group sharing on, own groups only)
 	 * @param ShareRevocationService $revocationService Revokes one member's share and deletes its copy
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
+	 * @param ShareAuthorizationService|null $auth Whether a new member's existing copy now saves for everyone
+	 * @param ShareWriteContext|null $contexts Whether a new member already saves for everyone other than through a group share
 	 *
 	 * @return void
 	 */
@@ -87,6 +90,8 @@ class GroupShareService {
 		private IShareManager $shareManager,
 		private ShareRevocationService $revocationService,
 		private ?ShareRestrictionResolver $restrictions = null,
+		private ?ShareAuthorizationService $auth = null,
+		private ?ShareWriteContext $contexts = null,
 	) {
 	}//end __construct()
 
@@ -313,7 +318,14 @@ class GroupShareService {
 	/**
 	 * Handle a new user being added to a group — notify every secret
 	 * owner whose secret is shared with that group so they can approve
-	 * the new member.
+	 * the new member. A new member who already holds a live copy has
+	 * nothing to approve: the owner is told when the group share lets that
+	 * copy save for everyone, unless the member already saves for everyone
+	 * other than through a group share: as the owner or a delegate, or
+	 * through a team-folder write grade, even one that comes through this
+	 * group. The owner is not notified otherwise. No group share counts as
+	 * already granting it, not even a share with a group the member joined in
+	 * the same directory sync or through a nested group.
 	 *
 	 * @param string $userId The user newly added to the group
 	 * @param string $groupId The group that gained the member
@@ -321,6 +333,7 @@ class GroupShareService {
 	 * @return int Number of notifications dispatched
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.4
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function handleNewGroupMember(string $userId, string $groupId): int {
 		$dispatched = 0;
@@ -336,8 +349,20 @@ class GroupShareService {
 				continue;
 			}
 
+			$subject = 'group_member_added';
+			$copyGrade = $this->auth?->copyGrade(source: $secret, userId: $userId);
+			if ($copyGrade !== null) {
+				if ($copyGrade !== 'write' || $groupShare->isFullAndLive() === false
+					|| $this->contexts?->writesForEveryoneWithoutGroupShares(source: $secret, userId: $userId) === true
+				) {
+					continue;
+				}
+
+				$subject = 'group_member_gained_write';
+			}
+
 			$this->notificationService->notify(
-				subject: 'group_member_added',
+				subject: $subject,
 				recipientId: $secret->getOwnerId(),
 				params: [
 					'newMemberId' => $userId,

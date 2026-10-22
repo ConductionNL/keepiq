@@ -421,11 +421,12 @@ class ShareService {
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
 	 *
-	 * @return array{sourceSecretId:string, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
+	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
-	 * @throws InvalidArgumentException When the secret does not exist
+	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function writeContext(string $secretId, string $userId): array {
 		return $this->syncService->writeContext(secretId: $secretId, userId: $userId);

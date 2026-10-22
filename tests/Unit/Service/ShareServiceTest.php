@@ -38,6 +38,9 @@ use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -135,6 +138,7 @@ class ShareServiceTest extends TestCase {
 	 * @param LoggerInterface|null $logger The logger
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (grade resolution)
 	 * @param ShareAuditTrail|null $auditTrail The sync's audit trail
+	 * @param SecretVersionService|null $versionService The sync's version history
 	 *
 	 * @return ShareService
 	 */
@@ -142,6 +146,7 @@ class ShareServiceTest extends TestCase {
 		?LoggerInterface $logger = null,
 		?TeamFolderService $teamFolderService = null,
 		?ShareAuditTrail $auditTrail = null,
+		?SecretVersionService $versionService = null,
 	): ShareService {
 		$logger ??= $this->createMock(originalClassName: LoggerInterface::class);
 
@@ -172,10 +177,12 @@ class ShareServiceTest extends TestCase {
 			syncService: new ShareSyncService(
 				mapper: $this->mapper,
 				secretMapper: $this->secretMapper,
-				suiteMapper: $this->suiteMapper,
 				db: $this->db,
 				auth: $auth,
 				auditTrail: $auditTrail,
+				versionService: ($versionService ?? $this->createMock(SecretVersionService::class)),
+				guards: new ShareSyncGuards(targets: $this->mapper, secrets: $this->secretMapper, suites: $this->suiteMapper, auth: $auth),
+				contexts: new ShareWriteContext(targets: $this->mapper, suites: $this->suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->mapper,
@@ -683,9 +690,11 @@ class ShareServiceTest extends TestCase {
 		$sync = new ShareSyncService(
 			mapper: $this->mapper,
 			secretMapper: $this->secretMapper,
-			suiteMapper: $this->suiteMapper,
 			db: $this->db,
 			auth: $this->createMock(ShareAuthorizationService::class),
+			versionService: $this->createMock(SecretVersionService::class),
+			guards: $this->createMock(ShareSyncGuards::class),
+			contexts: $this->createMock(ShareWriteContext::class),
 		);
 		$at = new DateTime('2026-10-13T12:00:00+00:00');
 
@@ -697,7 +706,8 @@ class ShareServiceTest extends TestCase {
 				['secretId' => 'stranger', 'key' => 'enc-x'],
 			],
 			allowedIds: ['src-1' => true, 'copy-1' => true],
-			savedAt: $at
+			savedAt: $at,
+			writerId: 'alice'
 		);
 
 		$this->assertSame(2, $written);
@@ -1068,14 +1078,19 @@ class ShareServiceTest extends TestCase {
 	 *
 	 * @param string|null $grade The resolved grade
 	 * @param ShareAuditTrail|null $auditTrail The sync's audit trail
+	 * @param SecretVersionService|null $versionService The sync's version history
 	 *
 	 * @return ShareService
 	 */
-	private function gradedService(?string $grade, ?ShareAuditTrail $auditTrail = null): ShareService {
+	private function gradedService(
+		?string $grade,
+		?ShareAuditTrail $auditTrail = null,
+		?SecretVersionService $versionService = null,
+	): ShareService {
 		$teamFolderService = $this->createMock(originalClassName: TeamFolderService::class);
 		$teamFolderService->method('resolveGrade')->willReturn($grade);
 
-		return $this->wireService(teamFolderService: $teamFolderService, auditTrail: $auditTrail);
+		return $this->wireService(teamFolderService: $teamFolderService, auditTrail: $auditTrail, versionService: $versionService);
 	}//end gradedService()
 
 	/**
@@ -1139,6 +1154,38 @@ class ShareServiceTest extends TestCase {
 
 		$this->assertSame(['begin', 'audit', 'commit'], $log);
 	}//end testADelegatesSyncIsAuditedOnTheSourceInItsTransaction()
+
+	/**
+	 * A delegate's sync keeps the source's value before it as a version, with
+	 * the delegate as its actor.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 */
+	public function testADelegatesSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setKey('OLD');
+		$this->secretMapper->method('findById')->willReturn($source);
+		$this->mapper->method('findBySourceSecret')->willReturn([]);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->with('src-1', 'carol')
+			->willReturn(new SecretDelegation());
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
+		$versions->expects($this->once())->method('snapshot')
+			->with(
+				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src-1' && $preUpdate->getKey() === 'OLD'),
+				'user',
+				'carol'
+			);
+
+		$this->gradedService(grade: null, versionService: $versions)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'src-1', 'key' => 'NEW']],
+			expectedUpdatedAt: '',
+			userId: 'carol'
+		);
+	}//end testADelegatesSyncKeepsTheSourcesPreviousValueAsAVersion()
 
 	/**
 	 * The owner's sync has no attribution entry: the row's own audit covers it.

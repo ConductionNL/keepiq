@@ -295,6 +295,7 @@ class ShareSaveService {
 			updates: $entries->copies,
 			allowedIds: array_fill_keys(array_keys($required['copies']), true),
 			savedAt: $savedAt,
+			writerId: $userId,
 		);
 		$federatedRows = $this->writePartners(
 			path: $path,
