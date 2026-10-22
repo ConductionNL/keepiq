@@ -53,6 +53,7 @@ describe('verifyCredentials', () => {
 		['not_nextcloud', { identity: new Response('<html/>', { status: 200 }) }],
 		['server_error', { identity: new Response('<html>Maintenance</html>', { status: 503 }) }],
 		['server_error', { identity, suites: json(500, { message: 'boom' }) }],
+		['server_error', { identity, suites: json(200, [suiteRow]), health: new Response('<html>Bad Gateway</html>', { status: 502 }) }],
 		['unauthorized', { identity: json(401, { message: 'no' }) }],
 		['keepiq_missing', { identity, suites: new Response('<html/>', { status: 404 }) }],
 		['no_active_suite', { identity, suites: json(200, []) }],

@@ -75,6 +75,17 @@ describe('unlock', () => {
 		expect(await hasKey(account.id)).toBe(true)
 	})
 
+	it('treats a server error without a version like being offline', async () => {
+		const account = await newAccount()
+		fetchMock.mockResolvedValue(new Response('<html>Maintenance</html>', { status: 503 }))
+		await updateAccount(account.id, { keepiqVersion: '0.3.11' })
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'keepiq_outdated' })
+		await updateAccount(account.id, { keepiqVersion: undefined })
+		await unlock(account.id, password)
+		expect(await hasKey(account.id)).toBe(true)
+		expect((await getAccount(account.id))?.keepiqVersion).toBeUndefined()
+	})
+
 	it('names a vault key that is not one PEM block', async () => {
 		const account = await newAccount()
 		await fakeBrowser.storage.local.set({ [suiteKey(account.id)]: { ...suiteRow, privateKey: await rewrap((pem) => `${pem}\ntrailing text`) } })
