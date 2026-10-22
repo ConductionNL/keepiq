@@ -1,3 +1,4 @@
+import { getConfig } from '@testing-library/react'
 import { vi } from 'vitest'
 import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type {
@@ -181,6 +182,9 @@ export function editableItem(overrides: Partial<EditableItem> = {}): EditableIte
 
 /** The messages of one kind sent so far. */
 export const sentOf = (spy: ReturnType<typeof fakeBackground>, kind: string) => spy.mock.calls.map(([message]) => message as Record<string, unknown>).filter((message) => message.kind === kind)
+
+/** How often a mount effect runs: twice in the popup-dev project, as StrictMode mounts, cleans up and mounts again. */
+export const mounts = () => (getConfig().reactStrictMode ? 2 : 1)
 
 /** The kinds sent so far, in order. */
 export const sentKinds = (spy: ReturnType<typeof fakeBackground>) => spy.mock.calls.map(([message]) => message.kind)

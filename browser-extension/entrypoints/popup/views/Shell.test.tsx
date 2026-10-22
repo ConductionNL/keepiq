@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generate } from '@/src/generator/generate'
 import App from '../App'
-import { editableItem, everythingVisible, fakeBackground, itemMeta, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
+import { editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
 
 vi.mock('@/src/generator/generate', async (original) => ({ ...await original<typeof import('@/src/generator/generate')>(), generate: vi.fn() }))
 
@@ -92,8 +92,9 @@ describe('Shell', () => {
 
 	it('re-reads the state when the background broadcasts a lock', async () => {
 		const sent = fakeBackground()
-		const listeners: Array<(message: unknown) => void> = []
-		vi.spyOn(browser.runtime.onMessage, 'addListener').mockImplementation((listener) => void listeners.push(listener as never))
+		const listeners = new Set<(message: unknown) => void>()
+		vi.spyOn(browser.runtime.onMessage, 'addListener').mockImplementation((listener) => void listeners.add(listener as never))
+		vi.spyOn(browser.runtime.onMessage, 'removeListener').mockImplementation((listener) => void listeners.delete(listener as never))
 		render(<App />)
 		await title()
 		const before = sentKinds(sent).filter((kind) => kind === 'vault.status').length
@@ -145,7 +146,7 @@ describe('Shell', () => {
 		expect(screen.queryByText('Login credentials')).toBeNull()
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		await screen.findByText('Login credentials')
-		expect(sent.mock.calls.filter(([m]) => m.kind === 'item.decrypt' && m.fields?.includes('key'))).toHaveLength(2)
+		expect(sent.mock.calls.filter(([m]) => m.kind === 'item.decrypt' && m.fields?.includes('key'))).toHaveLength(2 * mounts())
 	})
 
 	it('decrypts again when an item is reopened', async () => {
@@ -159,7 +160,7 @@ describe('Shell', () => {
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		await open()
 		await screen.findByText('Login credentials')
-		expect(detailDecrypts()).toBe(2)
+		expect(detailDecrypts()).toBe(2 * mounts())
 	})
 
 	it('launches a website in the window of the tab the popup belongs to', async () => {

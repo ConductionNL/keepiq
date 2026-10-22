@@ -166,6 +166,7 @@ The specs are in `openspec/changes/ext-i18n/`.
 
 - Every module and popup component has a `*.test.ts(x)` next to it, run by vitest on WXT's in-memory `browser`.
 - Popup tests use happy-dom and the helpers in `entrypoints/popup/testing.ts`.
+- Popup tests (`*.test.tsx`) run twice: project `popup-prod` as built, `popup-dev` under StrictMode as `npm run dev` renders; count mount effects with `mounts()`.
 - Tests render in English from the real catalogs; `setLocale('nl')` from `src/testing/i18n.ts` switches one to Dutch.
 - `test-site/` holds mock pages for manual checks, one per fill and capture case.
 - The commands are in the [README](README.md#checks--builds). Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching `entrypoints/`.

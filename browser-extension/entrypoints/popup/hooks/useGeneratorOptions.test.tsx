@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultOptions, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { fakeBackground, sentOf } from '../testing'
+import { fakeBackground, mounts, sentOf } from '../testing'
 import { useGeneratorOptions } from './useGeneratorOptions'
 
 afterEach(cleanup)
@@ -24,7 +24,7 @@ describe('useGeneratorOptions', () => {
 		const { sent, result } = await loaded({ generator: { accountEmail: 'bob@example.org' } })
 		expect(result.current.options).toEqual(defaultOptions())
 		expect(result.current).toMatchObject({ policy: null, accountEmail: 'bob@example.org', failed: false })
-		expect(sentOf(sent, 'generator.context')).toEqual([{ kind: 'generator.context', accountId: 'a2' }])
+		expect(sentOf(sent, 'generator.context')).toEqual(Array(mounts()).fill({ kind: 'generator.context', accountId: 'a2' }))
 	})
 
 	it('shows and saves a change at once', async () => {

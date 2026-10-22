@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VaultSnapshotReply } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { emptyValues } from '@/src/vault/fields'
-import { everythingVisible, fakeBackground, fakeClipboard, sentKinds, snapshotReply, types } from '../testing'
+import { everythingVisible, fakeBackground, fakeClipboard, mounts, sentKinds, snapshotReply, types } from '../testing'
 import { useItemDraft } from './useItemDraft'
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard'
 import { useBackgroundMessage } from './useBackgroundMessage'
@@ -191,10 +191,11 @@ describe('useVaultSnapshot', () => {
 		const { send } = broadcasts()
 		const sent = fakeBackground()
 		renderHook(() => useVaultSnapshot('https://github.com', true))
-		await waitFor(() => expect(sent).toHaveBeenCalledOnce())
+		await waitFor(() => expect(sent).toHaveBeenCalledTimes(mounts()))
 		send({ kind: 'vault.changed', sync: snapshotReply().sync })
-		await waitFor(() => expect(sent).toHaveBeenCalledTimes(2))
-		expect(sent.mock.calls.map(([message]) => (message as { opened?: boolean }).opened)).toEqual([true, false])
+		await waitFor(() => expect(sent).toHaveBeenCalledTimes(mounts() + 1))
+		const opened = sent.mock.calls.map(([message]) => (message as { opened?: boolean }).opened)
+		expect(opened).toEqual([true, ...Array<boolean>(mounts()).fill(false)])
 	})
 
 	it('waits until the tab is known', () => {
@@ -208,11 +209,12 @@ describe('useVaultSnapshot', () => {
 		const replies: Array<(reply: VaultSnapshotReply) => void> = []
 		vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(() => new Promise((resolve) => replies.push(resolve as never)) as never)
 		const { result } = renderHook(() => useVaultSnapshot('https://github.com', true))
-		await waitFor(() => expect(replies).toHaveLength(1))
+		await waitFor(() => expect(replies).toHaveLength(mounts()))
+		const mounted = mounts()
 		send({ kind: 'vault.changed', sync: snapshotReply().sync })
-		await waitFor(() => expect(replies).toHaveLength(2))
-		await act(async () => replies[1]!(snapshotReply({ suggestionIds: ['new'] })))
-		await act(async () => replies[0]!(snapshotReply({ suggestionIds: ['old'] })))
+		await waitFor(() => expect(replies).toHaveLength(mounted + 1))
+		await act(async () => replies[mounted]!(snapshotReply({ suggestionIds: ['new'] })))
+		for (const older of replies.slice(0, mounted)) await act(async () => older(snapshotReply({ suggestionIds: ['old'] })))
 		expect(result.current.reply).toMatchObject({ suggestionIds: ['new'] })
 	})
 
@@ -221,14 +223,15 @@ describe('useVaultSnapshot', () => {
 		const replies: Array<(reply: VaultSnapshotReply) => void> = []
 		vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(() => new Promise((resolve) => replies.push(resolve as never)) as never)
 		const { result } = renderHook(() => useVaultSnapshot('https://github.com', true))
-		await waitFor(() => expect(replies).toHaveLength(1))
-		await act(async () => replies[0]!(snapshotReply()))
+		await waitFor(() => expect(replies).toHaveLength(mounts()))
+		const mounted = mounts()
+		for (const read of replies.slice(0, mounted)) await act(async () => read(snapshotReply()))
 		let reloaded!: Promise<VaultSnapshotReply | undefined>
 		act(() => void (reloaded = result.current.reload()))
 		send({ kind: 'vault.changed', sync: snapshotReply().sync })
-		await waitFor(() => expect(replies).toHaveLength(3))
-		await act(async () => replies[1]!(snapshotReply({ suggestionIds: ['old'] })))
-		await act(async () => replies[2]!(snapshotReply({ suggestionIds: ['new'] })))
+		await waitFor(() => expect(replies).toHaveLength(mounted + 2))
+		await act(async () => replies[mounted]!(snapshotReply({ suggestionIds: ['old'] })))
+		await act(async () => replies[mounted + 1]!(snapshotReply({ suggestionIds: ['new'] })))
 		expect(await reloaded).toMatchObject({ suggestionIds: ['new'] })
 	})
 })

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { GeneratorHistoryEntry } from '@/src/generator/options'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { fakeBackground, sentKinds, sentOf } from '../testing'
+import { fakeBackground, mounts, sentKinds, sentOf } from '../testing'
 import { useGeneratorHistory } from './useGeneratorHistory'
 
 afterEach(cleanup)
@@ -21,7 +21,7 @@ describe('useGeneratorHistory', () => {
 
 		const listed = renderHook(() => useGeneratorHistory(true), { wrapper })
 		await waitFor(() => expect(listed.result.current.entries).toEqual([entry]))
-		expect(sentOf(sent, 'generator.history.list')).toEqual([{ kind: 'generator.history.list', accountId: 'a2' }])
+		expect(sentOf(sent, 'generator.history.list')).toEqual(Array(mounts()).fill({ kind: 'generator.history.list', accountId: 'a2' }))
 	})
 
 	it('adds for the shell account and takes the list the background answers', async () => {

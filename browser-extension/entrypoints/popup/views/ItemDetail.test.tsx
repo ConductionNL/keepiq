@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DecryptedItem, FolderMeta, ItemMeta, ShareSaveNote } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { setLocale } from '@/src/testing/i18n'
-import { fakeBackground, fakeClipboard, itemMeta, sentKinds, sentOf, types } from '../testing'
+import { fakeBackground, fakeClipboard, itemMeta, mounts, sentKinds, sentOf, types } from '../testing'
 import { ItemDetail } from './ItemDetail'
 
 // Shell's footer bar, where the detail portals Edit and Delete.
@@ -93,13 +93,14 @@ describe('login credentials', () => {
 		const { sent, view } = renderDetail(itemMeta(), { login: 'alice', key: 'old' })
 		await screen.findByRole('heading', { name: 'Login credentials' })
 		const decrypts = () => sentKinds(sent).filter((kind) => kind === 'item.decrypt').length
-		expect(decrypts()).toBe(1)
+		expect(decrypts()).toBe(mounts())
 		view.rerender(
 			<ShellContext.Provider value={{ ...DEFAULT_SHELL, footer }}>
 				<ItemDetail item={itemMeta({ updatedAt: '2026-04-01T00:00:00Z' })} type={types[0]} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
 			</ShellContext.Provider>,
 		)
-		await vi.waitFor(() => expect(decrypts()).toBe(2))
+		// The new version mounts a fresh `Decrypted`.
+		await vi.waitFor(() => expect(decrypts()).toBe(2 * mounts()))
 		// Not the user's doing, so it does not reset the vault timeout.
 		expect(sent.mock.calls.at(-1)![0]).toMatchObject({ kind: 'item.decrypt', passive: true })
 	})
@@ -426,7 +427,7 @@ describe('metadata and actions', () => {
 		const { sent, items } = renderDetail(itemMeta(), undefined, undefined, false, { ok: true, value: { editable: false } })
 		const edit = within(footer).getByRole('button', { name: locale === 'en' ? 'Edit' : 'Bewerken' })
 		await vi.waitFor(() => expect(edit.getAttribute('aria-disabled')).toBe('true'))
-		expect(sentOf(sent, 'item.editable')).toEqual([{ kind: 'item.editable', accountId: 'a1', id: 'i1' }])
+		expect(sentOf(sent, 'item.editable')).toEqual(Array(mounts()).fill({ kind: 'item.editable', accountId: 'a1', id: 'i1' }))
 		expect(edit.title).toBe(reason)
 		const user = userEvent.setup()
 		await user.click(edit)

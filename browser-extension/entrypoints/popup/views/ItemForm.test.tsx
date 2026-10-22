@@ -510,14 +510,15 @@ describe('editing', () => {
 	})
 
 	it('says when the fetched item does not match the vault, and fetches again on Try again', async () => {
-		let attempts = 0
+		let healed = false
 		const { user } = renderForm({
 			mode: 'edit', id: 'i1',
-			replies: { 'item.fetch': () => (++attempts === 1 ? { ok: false, error: { code: 'conflict' } } : { ok: true, value: editableItem() }) },
+			replies: { 'item.fetch': () => (healed ? { ok: true, value: editableItem() } : { ok: false, error: { code: 'conflict' } }) },
 		})
 		const alert = await screen.findByRole('alert')
 		expect(alert.textContent).toContain('Keepiq sent a version of this item that your vault does not hold, so it was not opened.')
 		expect(screen.queryByLabelText('Name')).toBeNull()
+		healed = true
 		await user.click(within(alert).getByRole('button', { name: 'Try again' }))
 		expect((await screen.findByLabelText('Name') as HTMLInputElement).value).toBe('GitHub')
 	})
