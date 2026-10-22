@@ -4,6 +4,8 @@
  * these unions once, at its boundary.
  */
 
+import type { GeneratorHistoryEntry, GeneratorOptions, GeneratorPolicy } from '@/src/generator/options'
+
 /** Content script → background. Fire-and-forget. */
 export type ContentToBackground =
 	| { kind: 'page_ready'; url: string }
@@ -256,6 +258,7 @@ export type PopupRequest =
 	| { kind: 'settings.get' }
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
 	| VaultWrite
+	| GeneratorRequest
 
 /**
  * Each names the account the popup showed, so a write never lands in another account's vault
@@ -280,6 +283,22 @@ export type VaultWrite = { accountId: string } & (
 	| { kind: 'folder.dismissNotice' }
 )
 
+/** Per account, like `VaultWrite`, so a stale window never reads or writes another account's generator. */
+export type GeneratorRequest = { accountId: string } & (
+	| { kind: 'generator.context' }
+	| { kind: 'generator.saveOptions'; options: GeneratorOptions }
+	| { kind: 'generator.history.list' }
+	| { kind: 'generator.history.add'; entry: Omit<GeneratorHistoryEntry, 'createdAt'> }
+	| { kind: 'generator.history.clear' }
+)
+
+/** Options as stored, the policy as cached; the popup applies the policy when it generates. */
+export interface GeneratorContext {
+	options: GeneratorOptions
+	policy: GeneratorPolicy | null
+	accountEmail: string | null
+}
+
 export interface PopupReplies {
 	'vault.sync': SyncStatus
 	'vault.snapshot': VaultSnapshotReply
@@ -299,12 +318,21 @@ export interface PopupReplies {
 	'folder.children': WriteResult<FolderChildren>
 	'folder.delete': WriteResult<null>
 	'folder.dismissNotice': null
+	/** `null` when `accountId` is not the active account. */
+	'generator.context': GeneratorContext | null
+	/** The options as stored after sanitising; `null` when refused. */
+	'generator.saveOptions': GeneratorOptions | null
+	/** Newest first. */
+	'generator.history.list': GeneratorHistoryEntry[]
+	'generator.history.add': GeneratorHistoryEntry[]
+	'generator.history.clear': null
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
 	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
 	'settings.get', 'settings.set', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
+	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
 ])
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */

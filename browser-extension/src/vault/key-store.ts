@@ -15,6 +15,8 @@ export const neverLockKey = (accountId: string) => `neverLockKey.${accountId}`
 export const LAST_TAB_KEY = 'popup:lastTab'
 /** The ciphertext and source version open edit forms hold (`write.ts`), cleared with the key. */
 export const editOpenedKey = (accountId: string) => `editOpened.${accountId}`
+/** Generated values in plaintext (`generator/history.ts`): session-only and gone with the key (ADR-002). */
+export const generatorHistoryKey = (accountId: string) => `generatorHistory.${accountId}`
 
 const memory = new Map<string, string>()
 /** Imported once per worker generation; the bytes are the source of truth. */
@@ -76,11 +78,19 @@ export async function getKey(accountId: string): Promise<CryptoKey | null> {
 	return key
 }
 
+const epochs = new Map<string, number>()
+
+/** Changes on every `clearKey`, so a session write that started before one can tell it must not land. */
+export function sessionEpoch(accountId: string): number {
+	return epochs.get(accountId) ?? 0
+}
+
 /** Every lock and logout goes through here. */
 export async function clearKey(accountId: string): Promise<void> {
+	epochs.set(accountId, sessionEpoch(accountId) + 1)
 	imported.delete(accountId)
 	forgetVerifiedPartners()
-	await session.remove([sessionKey(accountId), unlockedAtKey(accountId), editOpenedKey(accountId)])
+	await session.remove([sessionKey(accountId), unlockedAtKey(accountId), editOpenedKey(accountId), generatorHistoryKey(accountId)])
 	await browser.storage.local.remove(neverLockKey(accountId))
 }
 

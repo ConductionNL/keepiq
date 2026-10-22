@@ -44,6 +44,10 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
 - `src/clipboard.ts`: copy in the popup, clear from the background.
 - `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module.
+- `src/generator/`: a port of the web app's password, passphrase and username generator, tested against `../tests/vectors/generator/`. All modules are safe for the popup, except three background-only ones:
+  - `store.ts`: the options and the cached policy.
+  - `history.ts`: the session history.
+  - `queue.ts`: one-at-a-time saves for both.
 - `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2.
 
 ## Messages
@@ -53,7 +57,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | Direction | Kinds | Reply |
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
-| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
@@ -75,6 +79,8 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `suite.<id>` | local | The active suite row, private key still wrapped |
 | `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts, the default item type |
 | `folderNotice.<id>` | local | The folder manager's plaintext-names notice was dismissed |
+| `generatorOptions.<id>` | local | The generator's options and last sub-tab, as the user set them; the policy applies on read |
+| `generatorPolicy.<id>` | local | The organisation policy as the generator reads it, from the last successful sync; gone on logout |
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
@@ -82,6 +88,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `popup:lastTab` | session | The popup tab to reopen |
 | `addAccountDraft` | session | Server URL and username while adding an account |
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
+| `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
 

@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type { AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, TypeMeta, VaultSnapshotReply } from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
@@ -80,14 +81,21 @@ interface FakeBackground {
 	/** Kinds the background fails on, which reaches the popup as no reply. */
 	unanswered?: string[]
 	settings?: GlobalSettings
+	/** The generator's stored state; options and history change with the requests. */
+	generator?: { options?: GeneratorOptions; policy?: GeneratorPolicy | null; accountEmail?: string | null; history?: GeneratorHistoryEntry[] }
 }
 
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
 	let settings: GlobalSettings = options.settings ?? { theme: 'system' }
+	let generatorOptions = options.generator?.options ?? defaultOptions()
+	let history = options.generator?.history ?? []
 	const snapshot = () => (typeof options.snapshot === 'function' ? options.snapshot() : options.snapshot) ?? snapshotReply()
-	const reply = vi.fn(async (message: { kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings> }): Promise<unknown> => {
+	const reply = vi.fn(async (message: {
+		kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings>
+		options?: GeneratorOptions; entry?: Omit<GeneratorHistoryEntry, 'createdAt'>
+	}): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
 		const canned = options.replies?.[message.kind]
 		if (canned !== undefined) return typeof canned === 'function' ? canned(message) : canned
@@ -117,6 +125,11 @@ export function fakeBackground(options: FakeBackground = {}) {
 				)]))
 				return { ok: true, items }
 			}
+			case 'generator.context': return { options: generatorOptions, policy: options.generator?.policy ?? null, accountEmail: options.generator?.accountEmail === undefined ? 'alice@example.org' : options.generator.accountEmail }
+			case 'generator.saveOptions': return (generatorOptions = message.options!)
+			case 'generator.history.list': return history
+			case 'generator.history.add': return (history = [{ ...message.entry!, createdAt: new Date().toISOString() }, ...history].slice(0, HISTORY_LIMIT))
+			case 'generator.history.clear': return (history = [], null)
 			case 'popup.lastTab.set':
 			case 'popup.popout':
 			case 'clipboard.copied': return null

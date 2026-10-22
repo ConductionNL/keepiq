@@ -1,49 +1,76 @@
-## 1. Randomness and data
+Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Popup tests use React Testing Library with `fakeBackground` from `entrypoints/popup/testing.ts`; this change adds component tests, as ADR-004 asks to be stated.
 
-- [ ] 1.1 Add `src/crypto/random.ts` with `randomInt(maxExclusive)` by rejection sampling over `crypto.getRandomValues`, plus `randomPick`, `shuffle` (Fisher-Yates) and `randomString(alphabet, length)`.
+## 1. Contract (step 0, before the rest)
+
+- [x] 1.1 Add the generator types and the five `generator.*` arms to `src/messages.ts` (`PopupRequest`, `PopupReplies`, `POPUP_REQUEST_KINDS`), and the option types, defaults and ranges to `src/generator/options.ts`, with `options.test.ts`.
+  - Defaults and ranges as the spec's "Password options and defaults", "Passphrase options and generation" and "Username types and defaults" say.
+  - Every arm carries `accountId`.
+
+## 2. Generator core (WP1)
+
+- [x] 2.1 Port `randomInt(min, max)` and an unbiased `shuffle` to `src/generator/random.ts`, with `random.test.ts`.
+  - Over 1 000 000 draws in 7776 buckets, no bucket is empty and none exceeds twice the mean.
   - No `Math.random` under `src/`.
-  - `randomInt` throws on `maxExclusive <= 0` or above 2^32.
-- [ ] 1.2 Add `public/wordlist/eff-large.txt` (7776 words, one per line, no dice numbers) and `public/wordlist/LICENSE.txt` with the EFF CC BY 3.0 attribution; add `src/generator/wordlist.ts` that fetches it via `browser.runtime.getURL` once and caches the promise.
-  - Loader rejects with a typed error the popup maps to "Wordlist unavailable".
-- [ ] 1.3 Add `src/generator/options.ts` with the option types, Bitwarden defaults (length 14, A-Z, a-z, 0-9 on, special off, min numbers 1, min special 1, avoid ambiguous on, 3 words, `-`, word username capitalised with number) and `sanitize(options, policy)` applying spec ranges, then policy, then the sum-of-minimums rule.
-  - Turning off the last enabled class is rejected by `sanitize`.
+- [x] 2.2 Port the charset password path of `../src/generator/generator.js` to `src/generator/password.ts`, with `password.test.ts`, and add `src/generator/vectors.test.ts` running `../tests/vectors/generator/cases.json` through `../tests/vectors/seeded-random.mjs`.
+  - The regex cases are skipped by name, with the reason.
+  - Property tests over 1000 passwords per option set: exact length, minimums met, no disabled class, no ambiguous character when avoided, no positional bias.
+- [x] 2.3 Port the passphrase and username generators to `src/generator/passphrase.ts` and `username.ts`, with tests, returning the failure codes from design.md instead of text.
+- [x] 2.4 Generate `public/wordlist/eff-large.txt` from `../src/generator/eff-large-wordlist.js`, add `public/wordlist/LICENSE.txt` (EFF, CC BY 3.0 US), and add `src/generator/wordlist.ts` with an injectable loader and a cached promise, with `wordlist.test.ts`.
+  - The test checks the file equals the web app's list.
+  - A failed load resolves `null`, which `generate` maps to `wordlist_unavailable`, and the next use retries.
+- [x] 2.5 Add `effective(options, policy)` to `options.ts` (the policy, plus the length raised to `minimumLength`), with tests.
+  - `effective` never writes back.
 
-## 2. Generators
+## 3. Background state (WP2)
 
-- [ ] 2.1 Implement `src/generator/password.ts` with Bitwarden's slot algorithm: per-class minimums (at least 1 for every enabled class), shuffled slots, ambiguous set `I O l 0 1`, special set `!@#$%^&*`.
-- [ ] 2.2 Implement `src/generator/passphrase.ts`: uniform word draws, separator, capitalize, one digit appended to one random word.
-- [ ] 2.3 Implement `src/generator/username.ts`: random word (capitalize, four-digit number), plus addressed email (random 8 lowercase alphanumerics or website host before `@`), catch-all (random or website host as local part).
-  - Returns a typed "needs input" result when the email or domain is empty.
-- [ ] 2.4 Add `vitest` as a dev dependency with an `npm test` script and property tests in `src/generator/*.test.ts` and `src/crypto/random.test.ts`.
-  - 1000 passwords per option set: exact length, minimum counts met, no disabled class, no ambiguous character when avoided.
-  - Passphrase word count, separator and single-digit rule.
-  - `randomInt` distribution over 7776 buckets has no empty bucket after 1 000 000 draws and no bucket above twice the mean.
-  - No component tests in this change (ADR-004).
+- [x] 3.1 Add `src/generator/store.ts` for `generatorOptions.<id>` (saves queued) and `generatorPolicy.<id>` in `storage.local`, `src/generator/policy.ts` (the policy body to `GeneratorPolicy | null`, the floor capped at 128), and `sanitize` and `minimumLength` in `options.ts`, with tests next to each.
+  - `sanitize` clamps to the ranges only and keeps the previous classes when the last is turned off.
+  - `purge` in `src/accounts/store.ts` removes both. `markLoggedOut` removes the policy. Covered in `store.test.ts`.
+- [x] 3.2 Fetch the policy in `run()` of `src/vault/sync.ts` for probe and full syncs, write it even when the vault part fails, and clear it in `undoWrites`; add `refreshPolicy` and call it after a login and a re-login in `src/background/router.ts`. Cases in `sync.test.ts` and `router.test.ts`.
+  - The cache is replaced only on a 2xx with a boolean `policy_enabled`, and kept on a network error, a 5xx, a refusal or another body.
+  - Written only while the account is logged in.
+- [x] 3.3 Add `src/generator/history.ts` over `sessionValues` (`generatorHistory.<id>`, 50 newest first, one queue, the newest value not repeated, no write after a `clearKey` during an add), and add its key to `clearKey`'s remove list, with `history.test.ts` and a case in `key-store.test.ts`.
+- [x] 3.4 Handle the `generator.*` arms in `performGenerator` of `src/background/requests.ts`, with cases in `requests.test.ts`.
+  - A request for another account than the active one, or for a logged-out one, gets `null` (context, saveOptions, clear) or `[]` (list, add) and writes nothing.
+  - `generator.context` is not an interaction; the others are only while the named active account is unlocked, and `clipboard.copied` only while the active account is unlocked.
+  - An add reads the session epoch when it arrives, so a lock or logout while it waits writes nothing.
 
-## 3. Background state
+## 4. Generator UI (WP3)
 
-- [ ] 3.1 Extend `src/messages.ts` with `GeneratorOptions`, `GeneratorPolicy`, `GeneratorHistoryEntry`, `GeneratorContext` and the five `generator.*` request arms from design.md.
-- [ ] 3.2 In `entrypoints/background.ts` add `generator.getContext` and `generator.saveOptions`: read and write the options under the active account's settings record in `storage.local`, return the cached email from the account record, and derive `websiteHost` from `browser.tabs.query({ active: true, lastFocusedWindow: true })`; add `tabs` to `wxt.config.ts` permissions if `ext-vault-browse` did not.
-  - Saved options pass through `sanitize` before storage and before reply.
-- [ ] 3.3 Add `src/generator/policy.ts` and a policy fetch of `GET /api/settings/policy` after unlock and after each sync, cached per account in `storage.local`, replaced only on a 2xx response and cleared on logout and account removal.
-  - `policy_enabled` false maps to `null`; the other non-generator fields are ignored.
-- [ ] 3.4 Add `src/generator/history.ts` over `storage.session` (background memory below Firefox 115), capped at 50 newest-first per account, with the `generator.history.*` arms, and purge it on lock, logout and account removal.
-  - Never touches `storage.local`.
+- [x] 4.1 Add `SubTabs` (a segmented tab bar), `OptionCheckbox`, `LengthSlider`, `NumberField` and `GeneratedValue` under `entrypoints/popup/components/`, each with its own test file, plus their styles in `popup.css` and a history icon in `Icon.tsx`.
+  - `GeneratedValue` colour-codes digits and symbols and copies through `useClipboard`.
+  - `OptionCheckbox` and `LengthSlider` take a `lockedBy` label, and `OptionCheckbox` a `lockedHint` id for a row's single reason; `NumberField` takes `hint` and `describedBy`.
+- [x] 4.2 Add `useGeneratorOptions` and `useGeneratorHistory` under `entrypoints/popup/hooks/`, with tests, and the generator arms in `fakeBackground`.
+  - The hooks are the only senders of `generator.*`.
+- [x] 4.3 Add `views/Generator.tsx` with an optional `pick`, and `Generator.test.tsx`.
+  - The panels follow the spec: the policy locks "Set by your organisation", the Passphrase sub-tab disabled with "Turned off by your organisation", the website label from `useCurrentTab` (hostname, http(s) only), and the "Enter an email address", "Enter a domain", "No website detected" and "Wordlist unavailable" states.
+  - History is recorded per the design's rule.
+- [x] 4.4 Add `views/GeneratorHistory.tsx` and its test: newest first, relative time from `relative-time.ts`, Copy per entry, Clear behind `ConfirmDialog`, and the empty state "No generated values yet".
+  - Every string of tasks 4 and 5 gets a key in a new `generator:` group in `locales/en.yml` and `locales/nl.yml`.
 
-## 4. Popup
+## 5. Shell integration (WP4, after WP3)
 
-- [ ] 4.1 Add the components `SubTabs.tsx`, `OptionToggle.tsx`, `LengthSlider.tsx` and `GeneratedValue.tsx` under `entrypoints/popup/components/`: `GeneratedValue` renders the value in monospace with colour-coded digits and symbols, Regenerate, Copy through the shared copy hook and an optional "Use this password" button; `LengthSlider` and `OptionToggle` take a `lockedBy` label that disables the control.
-  - Styles in `entrypoints/popup/popup.css`; no webfonts, no CSS-in-JS.
-- [ ] 4.2 Add the hooks `useGeneratorOptions.ts` (loads through `generator.getContext`, saves through `generator.saveOptions` on every change, exposes sanitised options, policy, account email and website host) and `useGeneratorHistory.ts` (`generator.history.list`, `add`, `clear`) under `entrypoints/popup/hooks/`.
-  - Hooks are the only place generator messages are sent; components never call `browser.*`.
-- [ ] 4.3 Add `entrypoints/popup/views/Generator.tsx` with `SubTabs` and the Password panel: `LengthSlider`, four class `OptionToggle`s, minimum numbers and minimum special inputs, avoid ambiguous toggle, policy clamp rendered as `lockedBy="Set by your organisation"`, generation via `src/generator/password.ts` on mount and on every option change with the value in `useState`.
-- [ ] 4.4 Add the Passphrase panel (number of words, separator, capitalize, include number) and the Username panel (type select, word toggles, email and domain inputs, Random or Website name sub-mode disabled with "No website detected" when `websiteHost` is null) to `Generator.tsx`, including the "Enter an email address" and "Wordlist unavailable" output states.
-- [ ] 4.5 Add `entrypoints/popup/views/GeneratorHistory.tsx` on `useGeneratorHistory`: newest first, `GeneratedValue` styling, relative time, Copy per entry, Clear with confirmation, empty state "No generated values yet"; record history on Regenerate, Copy, "Use this password" and sub-tab blur.
-- [ ] 4.6 Wire pick mode: `Generator` reads `{ pick: { field, onPick } }` from the shell router state, shows "Use this password", calls `onPick(value)` and navigates back; add the generate button next to the item form's Password, which `ext-vault-edit` leaves out.
-- [ ] 4.7 Register the Generator tab in `entrypoints/popup/App.tsx` and add the "Generate a password" link on the lock screen that renders `Generator` with the tab bar hidden and no `pick` state.
+- [x] 5.1 In `Shell.tsx`, render `Generator` for the Generator tab, add the History page, and add pick state with `generate(target, apply, opener)` on `ShellContextValue` and `DEFAULT_SHELL`; focus returns to `opener`.
+  - The form stays mounted but hidden under a provider with `footer: null`; "Use" and Back clear `pick`.
+  - Move the placeholder test in `Shell.test.tsx` to Send.
+- [x] 5.2 Give `TextField` an optional `action`, and add the Password and Username generate buttons to the `credential` form kind in `ItemForm.tsx`, with cases in `components.test.tsx` and `ItemForm.test.tsx`.
+  - No button on a multiline secret.
+- [x] 5.3 Add a `'generator'` panel to `App.tsx` with a `ShellContext.Provider`, a `Toast` host, a History sub-page and the Header's back, opened by a "Generate a password" link in `Unlock.tsx`, with cases in `App.test.tsx` and `Unlock.test.tsx`.
+  - Focus moves into the generator, and back to the link on return.
 
-## 5. Verification
+## 6. Records (WP5)
 
-- [ ] 5.1 Manually verify in Chrome and Firefox: defaults match Bitwarden, last class cannot be disabled, minimums raise the length, history caps at 50 and clears on lock, options survive popup close and account switch, policy clamp appears with a test policy and persists offline, generator works while locked with the network disabled.
-- [ ] 5.2 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`, then load `.output/chrome-mv3/` and `.output/firefox-mv2/manifest.json` in both browsers and open the Generator tab.
+- [x] 6.1 Bring proposal, design, spec and tasks in line with the code, the i18n rules and the shared generator, and update ADR-002 (history in session storage), ADR-003 (the policy fields and their versions), `openspec/README.md` (the chain), `ARCHITECTURE.md`, `SECURITY.md`, and `../docs/browser-extension/using.md` and `privacy.md`.
+
+## 7. Verification
+
+- [x] 7.1 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`.
   - `grep -rn "chrome\." src/ entrypoints/` matches only comments.
+  - `grep -rn "Math.random" src/` matches nothing.
+- [ ] 7.2 Load `.output/chrome-mv3/` and `.output/firefox-mv2/manifest.json` and walk the spec's scenarios in both browsers. Include:
+  - a pop-out;
+  - the locked generator with the network off;
+  - a test policy with passphrases turned off;
+  - pick mode on a `login` and a `database` item;
+  - history clearing on lock;
+  - options surviving a popup close and an account switch.

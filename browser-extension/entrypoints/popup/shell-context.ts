@@ -26,13 +26,17 @@ export interface ShellContextValue {
 	items: ItemActions
 	/** An open form's dirty check; Shell asks before Back, Pop out or the account switcher drops a dirty form. */
 	setLeaveGuard: (isDirty: (() => boolean) | null) => void
+	/** Opens the generator over the form in pick mode; "Use" hands the value to `apply`, and focus returns to `opener`. */
+	generate: (target: GenerateTarget, apply: (value: string) => void, opener: HTMLElement | null) => void
 }
+
+export type GenerateTarget = 'password' | 'username'
 
 const noop = () => {}
 
 export const DEFAULT_SHELL: ShellContextValue = {
 	accountId: 'a1', refreshState: noop, toast: noop, launch: noop, footer: null, offline: false, syncNow: noop,
-	items: { add: noop, edit: noop, clone: noop, move: noop, remove: noop }, setLeaveGuard: noop,
+	items: { add: noop, edit: noop, clone: noop, move: noop, remove: noop }, setLeaveGuard: noop, generate: noop,
 }
 
 export const ShellContext = createContext<ShellContextValue>(DEFAULT_SHELL)

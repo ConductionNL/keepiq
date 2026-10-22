@@ -336,3 +336,58 @@ settings:
   themeSystem: System default
   themeLight: Light
   themeDark: Dark
+
+generator:
+  kinds: What to generate
+  password: Password
+  passphrase: Passphrase
+  username: Username
+  length: Length
+  lengthValue: Length in characters
+  uppercase: Uppercase (A-Z)
+  lowercase: Lowercase (a-z)
+  digits: Numbers (0-9)
+  special: Special characters, such as !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Character types
+  lastClassOn: At least one type stays on
+  minNumbers: Minimum numbers
+  minSpecial: Minimum special
+  avoidAmbiguous: Avoid ambiguous characters
+  lockedByPolicy: Set by your organisation
+  passphraseOff: Turned off by your organisation
+  words: Number of words
+  separator: Word separator
+  capitalizeWords: Capitalize
+  capitalize: Capitalize
+  includeNumber: Include number
+  usernameType: Type
+  typeWord: Random word
+  typePlus: Plus addressed email
+  typeCatchall: Catch-all email
+  email: Email
+  emailPlaceholder: name@example.com
+  domain: Domain
+  domainPlaceholder: example.com
+  basedOn: Based on
+  random: Random
+  websiteName: Website name
+  noWebsite: No website detected
+  needsEmail: Enter an email address
+  needsDomain: Enter a domain
+  wordlistUnavailable: Wordlist unavailable
+  regenerate: Regenerate
+  usePassword: Use this password
+  useUsername: Use this username
+  history: Generator history
+  historyMeta: "{kind}, {time}"
+  historyEmpty: No generated values yet
+  clearHistory: Clear
+  clearHistoryTitle: Clear the generator history?
+  clearHistoryText: This removes every value in the list from this browser.
+  generatePasswordLink: Generate a password
+  generatePassword: Generate password
+  generateUsername: Generate username

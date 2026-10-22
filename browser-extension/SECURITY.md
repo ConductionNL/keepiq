@@ -25,6 +25,9 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | Ciphertext, names, URLs, folders, types | `storage.local` | Logout, account removal, a key change on the server |
 | App password | `storage.local` | Logout, account removal, the server answering 401 |
 | Account list and settings | `storage.local` | Account removal |
+| Generated values, the 50 newest | `storage.session`, like the private key | Clear in the History view; lock, timeout, logout, account removal, browser restart, extension reload |
+| Generator options | `storage.local` | Account removal |
+| Organisation password policy | `storage.local` | Logout, account removal |
 
 - Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. The settings screen (`ext-settings`) will warn about it when you pick it.
 - `storage.session` keeps its default access level, so content scripts cannot read it.
@@ -96,6 +99,7 @@ There is no remote wipe, so these checks stand in for it:
 - **A server that swaps another item's value into this one before you open it for editing** is not caught. The form shows that value as this item's, masked if it is a password or another secret, and saving shares it with whoever the server lists. Fields the form doesn't show are never shared this way.
 - **Revocation takes effect on the next contact with the server:** at most the 15-minute sync interval, or sooner when the popup opens.
 - **A share that becomes use-only** shows as use-only after the next full sync: within an hour and a quarter, or at once after unlock or Sync now. The server doesn't change the copy's `updatedAt`, so the quick probe misses it.
+- **The generator history** is readable without unlocking, since the generator works while locked. Values generated while locked stay until the next lock, logout or browser restart. **Clear** removes them sooner.
 - **Offline caching turned off by an admin:** the extension still caches the vault on disk. Whether it should keep it in session storage instead is still open.
 
 ## Supply chain

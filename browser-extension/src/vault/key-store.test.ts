@@ -3,7 +3,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { TIMEOUT_POLICY, writeSettings } from '@/src/accounts/settings'
 import { envelope } from '@/src/testing/vectors'
-import { clearKey, editOpenedKey, getKey, hasKey, neverLockKey, putKey, sessionValues, syncNeverLockKey } from './key-store'
+import { clearKey, editOpenedKey, generatorHistoryKey, getKey, hasKey, neverLockKey, putKey, sessionValues, syncNeverLockKey } from './key-store'
 
 const pkcs8 = toBase64(pemToPkcs8(envelope.privateKeyPem))
 
@@ -26,9 +26,9 @@ describe('key store on storage.session', () => {
 		expect(key?.usages).toEqual(['decrypt'])
 	})
 
-	it('clears the key, and what edit forms opened with it', async () => {
+	it('clears the key, what edit forms opened with it and the generator history', async () => {
 		await putKey('a', pkcs8)
-		await browser.storage.session.set({ [editOpenedKey('a')]: '[{"id":"s1"}]' })
+		await browser.storage.session.set({ [editOpenedKey('a')]: '[{"id":"s1"}]', [generatorHistoryKey('a')]: '[]' })
 		await clearKey('a')
 		expect(await hasKey('a')).toBe(false)
 		expect(await getKey('a')).toBeNull()

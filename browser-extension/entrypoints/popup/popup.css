@@ -698,6 +698,13 @@ a {
 	flex: 1;
 }
 
+/* A single action at its own width at the start, like the item detail's Edit, not stretched as above. */
+.footer-actions {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
 /* The item detail's: Edit at the start, More and Delete at the end, as in Bitwarden. */
 .detail-actions {
 	flex: 1;
@@ -1180,7 +1187,8 @@ a {
 }
 
 .field-row__value--mono,
-.totp {
+.totp,
+.gen-value {
 	font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
@@ -1541,4 +1549,254 @@ a {
 
 .card .folder-tree__row + .folder-tree__row {
 	border-top: 1px solid var(--border);
+}
+
+/* Generator */
+
+.sub-tabs {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+/*
+ * The selected segment is a primary button inside a secondary one: same pill, fill and weight.
+ * One pill slides under the tabs; `SubTabs` sets `--index` and `--count`.
+ */
+.segmented {
+	position: relative;
+	isolation: isolate;
+	display: flex;
+	padding: 2px;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+}
+
+.segmented__pill {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	left: 2px;
+	width: calc((100% - 4px) / var(--count));
+	background: var(--accent);
+	border-radius: 999px;
+	transform: translateX(calc(var(--index) * 100%));
+}
+
+.segmented--sliding .segmented__pill {
+	transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.segmented__tab {
+	position: relative;
+	flex: 1 1 0;
+	min-width: 0;
+	height: 32px;
+	padding: 0 4px;
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 500;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	border-radius: 999px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.segmented--sliding .segmented__tab {
+	transition: color 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* After the rules above, which it must override at the same specificity. */
+@media (prefers-reduced-motion: reduce) {
+	.segmented--sliding :is(.segmented__pill, .segmented__tab) {
+		transition: none;
+	}
+}
+
+/* A divider between two unselected tabs only, painted under the pill so it slides over them. */
+.segmented__tab + .segmented__tab:not([aria-selected='true'])::before {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	top: 8px;
+	bottom: 8px;
+	left: 0;
+	width: 1px;
+	background: var(--border);
+}
+
+.segmented__tab[aria-selected='true'] + .segmented__tab::before,
+.segmented__tab:hover:not([aria-disabled='true'])::before,
+.segmented__tab:hover:not([aria-disabled='true']) + .segmented__tab::before {
+	display: none;
+}
+
+/* Under the pill too, so a hovered tab never covers it as it slides past. */
+.segmented__tab::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0;
+	border-radius: inherit;
+	transition: background-color 0.15s ease;
+}
+
+.segmented__tab:hover:not([aria-selected='true'], [aria-disabled='true'])::after {
+	background: var(--surface-hover);
+}
+
+.segmented__tab[aria-selected='true'] {
+	font-weight: 600;
+	color: var(--accent-fg);
+	cursor: default;
+}
+
+.segmented__tab[aria-disabled='true'] {
+	color: var(--fg-muted);
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.generated__box {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	min-height: 56px;
+	padding: 8px 6px 8px 14px;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+}
+
+.generated__value {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	font-size: 16px;
+}
+
+.generated__failure {
+	font-size: 13.5px;
+	color: var(--fg-muted);
+}
+
+.gen-value {
+	overflow-wrap: anywhere;
+}
+
+.gen-digit {
+	color: var(--accent);
+}
+
+.gen-symbol {
+	color: var(--danger);
+}
+
+.slider {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.slider__range {
+	flex: 1;
+	min-width: 0;
+	accent-color: var(--accent);
+}
+
+.number-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.number-field__label {
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.number-field__input {
+	box-sizing: border-box;
+	width: 100%;
+	height: 40px;
+	padding: 0 12px;
+	font: inherit;
+	font-size: 14px;
+	color: var(--fg);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+}
+
+.number-field__input:focus {
+	border-color: var(--accent);
+	outline: none;
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.number-field__input:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.slider .number-field__input {
+	width: 64px;
+	padding: 0 8px;
+}
+
+/* Two inputs side by side, each half the card. */
+.field-pair {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 12px;
+}
+
+.check-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+}
+
+.check {
+	display: inline-flex;
+	align-self: flex-start;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.check__input {
+	width: 15px;
+	height: 15px;
+	margin: 0;
+	accent-color: var(--accent);
+}
+
+.check:has(.check__input:is(:disabled, [aria-disabled='true'])) {
+	color: var(--fg-muted);
+	cursor: not-allowed;
+}
+
+.check__input:is(:disabled, [aria-disabled='true']) {
+	opacity: 0.5;
+}
+
+.radio-group {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+/* A fieldset's legend ignores the flex gap, so it gets the same space itself. */
+.radio-group > legend {
+	margin-bottom: 6px;
+	padding: 0;
 }

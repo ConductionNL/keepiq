@@ -37,8 +37,8 @@ All paths relative to the base URL. All require the Basic auth above unless mark
 | Sends | `POST/GET /api/v1/sends`, `DELETE /api/v1/sends/{id}` | See payload below. |
 | Public send access | `GET /api/v1/public/sends/{token}`, `POST …/access`, `POST …/confirm`, `POST …/failure` | Public, rate limited 15/min. The extension only needs the create side; the web app renders the recipient page. |
 | User settings | `GET/PUT /api/settings/user` | `session_timeout` (`session`, `10min`, `30min` or empty for admin default), notification toggles, `default_secret_type`, `offline_cache_optin`. |
-| Policy | `GET /api/settings/policy` | Read-only org password policy. |
-| Server generator | `POST /api/v1/generate-key` | `{length, includeSpecialCharacters, excludedCharacters, regex}` returns `{generatedKey}`. Not used by the extension; generation is client-side (ADR-001, Bitwarden parity, offline). |
+| Policy | `GET /api/settings/policy` | Read-only org password policy, a flat object (`SettingsController::getPolicy`, `#[NoAdminRequired]`). The generator reads `policy_enabled` (default false), `generator_min_length` (8 or more, default 12; the extension caps it at 128) and `generator_require_upper`, `_lower`, `_digit` and `_symbol`, all since Keepiq 0.1.4, and `generator_allow_passphrase` (default true) since 0.3.8. Both are older than the minimum, so nothing is gated. |
+| Server generator | `POST /api/v1/generate-key` | `{length, includeSpecialCharacters, excludedCharacters, regex}` returns `{generatedKey}`. Not used by the extension: it ports the web app's client-side generator (`src/generator/`), so it generates while locked and offline. |
 
 Error bodies are `{"message": "<text>"}`. Status codes: 400 invalid input, 401 bad credentials, 403 or 428 refused (see Refusals), 404 missing, 423 vault write-locked during a key migration (retry later, do not treat as an auth failure).
 

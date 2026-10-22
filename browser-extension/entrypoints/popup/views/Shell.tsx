@@ -12,8 +12,11 @@ import { Toast } from '../components/Toast'
 import { errorText } from '../errors'
 import { isPopout, useCurrentTab } from '../hooks/useCurrentTab'
 import { request } from '../hooks/useMessage'
+import { useToast } from '../hooks/useToast'
 import { useVaultSnapshot } from '../hooks/useVaultSnapshot'
-import { ShellContext, type ItemActions } from '../shell-context'
+import { ShellContext, type GenerateTarget, type ItemActions, type ShellContextValue } from '../shell-context'
+import { Generator } from './Generator'
+import { GeneratorHistory } from './GeneratorHistory'
 import { DeleteItemDialog, MoveItemDialog } from './ItemDialogs'
 import { ItemDetail } from './ItemDetail'
 import { ItemForm, type FormMode } from './ItemForm'
@@ -21,8 +24,6 @@ import { Placeholder } from './Placeholder'
 import { Settings } from './settings/Settings'
 import { SECTION_PARENT, sectionLabel, type SettingsSection } from './settings/SettingsIndex'
 import { VaultList } from './VaultList'
-
-const TOAST_MS = 2500
 
 interface Props {
 	active: AccountSummary
@@ -34,6 +35,8 @@ interface Props {
 }
 
 type FormPage = { mode: FormMode; id?: string }
+
+type Pick = { target: GenerateTarget; apply: (value: string) => void }
 
 type ShellDialog =
 	| { kind: 'delete'; item: ItemMeta }
@@ -48,27 +51,41 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const [detailId, setDetailId] = useState<string | null>(null)
 	const [form, setForm] = useState<FormPage | null>(null)
 	const [section, setSection] = useState<SettingsSection | null>(null)
+	const [history, setHistory] = useState(false)
+	const [pick, setPick] = useState<Pick | null>(null)
 	const [dialog, setDialog] = useState<ShellDialog | null>(null)
 	// In memory only, so it is gone once the popup closes (share-sync).
 	const [shareSave, setShareSave] = useState<{ id: string; note: ShareSaveNote } | null>(null)
-	// A fresh object per call, so the same message twice restarts the timer.
-	const [toast, setToast] = useState<{ text: string } | null>(null)
+	const { message: toast, show: showToast } = useToast()
 	const [footer, setFooter] = useState<HTMLElement | null>(null)
 	const body = useRef<HTMLDivElement>(null)
 	const listScroll = useRef(0)
 	const onList = useRef(true)
 	const leaveGuard = useRef<(() => boolean) | null>(null)
+	/** Where the form was when pick mode opened, restored when it ends. */
+	const pickedFrom = useRef<{ button: HTMLElement | null; scroll: number } | null>(null)
 	const { reply, failed, syncNow, reload } = useVaultSnapshot(tab?.url, tab !== undefined)
+
+	// Pick mode belongs to the form under it.
+	if (pick && !form) setPick(null)
 
 	useEffect(() => {
 		if (reply && reply.state !== 'unlocked') refreshState()
 	}, [reply, refreshState])
 
-	useEffect(() => {
-		if (!toast) return
-		const timer = setTimeout(() => setToast(null), TOAST_MS)
-		return () => clearTimeout(timer)
-	}, [toast])
+	// Before the list's effect, which wins when the form closed too.
+	useLayoutEffect(() => {
+		if (!body.current) return
+		if (pick) {
+			body.current.scrollTop = 0
+			return
+		}
+		const from = pickedFrom.current
+		pickedFrom.current = null
+		if (!from) return
+		body.current.scrollTop = from.scroll
+		from.button?.focus()
+	}, [pick])
 
 	// Back restores where the list was scrolled.
 	useLayoutEffect(() => {
@@ -100,11 +117,17 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 
 	const snapshot = reply?.state === 'unlocked' ? reply : undefined
 
-	const context = useMemo(() => ({
+	// The opener, not `document.activeElement`: Firefox on macOS and Safari don't focus a clicked button.
+	const generate = useCallback((target: GenerateTarget, apply: (value: string) => void, opener: HTMLElement | null) => {
+		pickedFrom.current = { button: opener, scroll: body.current?.scrollTop ?? 0 }
+		setPick({ target, apply })
+	}, [])
+
+	const context = useMemo<ShellContextValue>(() => ({
 		accountId: active.id,
 		refreshState,
-		toast: (text: string) => setToast({ text }),
-		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => setToast({ text: i18n.t('vault.openFailed') })),
+		toast: showToast,
+		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => showToast(i18n.t('vault.openFailed'))),
 		footer,
 		offline: snapshot?.sync.offline ?? false,
 		syncNow: () => void syncNow(),
@@ -112,7 +135,10 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		setLeaveGuard: (guard: (() => boolean) | null) => {
 			leaveGuard.current = guard
 		},
-	}), [active.id, refreshState, tab?.windowId, footer, snapshot?.sync.offline, syncNow, items])
+		generate,
+	}), [active.id, refreshState, showToast, tab?.windowId, footer, snapshot?.sync.offline, syncNow, items, generate])
+	// The form under the generator keeps its Save and Cancel out of the bar.
+	const hiddenFormContext = useMemo(() => ({ ...context, footer: null }), [context])
 
 	/** Runs `then` now, or after the user agreed to drop a dirty form. */
 	function leave(then: () => void) {
@@ -131,6 +157,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		setDetailId(null)
 		setForm(null)
 		setSection(null)
+		setHistory(false)
 		void request({ kind: 'popup.lastTab.set', tab: next })
 	}
 
@@ -145,7 +172,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	async function popout() {
 		// `null` is the background's success reply; with no window opened, stay open.
 		if (await request({ kind: 'popup.popout', tabId: tab?.id }) === null) window.close()
-		else setToast({ text: i18n.t('vault.popoutFailed') })
+		else showToast(i18n.t('vault.popoutFailed'))
 	}
 
 	/** The write's reply came after its sync, so one re-read shows the result. A note opens the item's detail, which shows it. */
@@ -154,7 +181,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		setDetailId(form?.mode === 'edit' && !note ? detailId : id)
 		setShareSave(note ? { id, note } : null)
 		setForm(null)
-		setToast({ text: i18n.t('item.saved') })
+		showToast(i18n.t('item.saved'))
 	}
 
 	const closeForm = useCallback(() => setForm(null), [])
@@ -179,7 +206,25 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 						<div hidden={detail !== undefined || form !== null}>
 							<VaultList snapshot={snapshot} tab={tab} syncNow={() => void syncNow()} onOpen={open} />
 						</div>
-						{form && <ItemForm key={`${form.mode}:${form.id ?? ''}`} mode={form.mode} id={form.id} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />}
+						{form && (
+							// Hidden under the generator, so pick mode keeps the draft.
+							<div hidden={pick !== null}>
+								<ShellContext.Provider value={pick ? hiddenFormContext : context}>
+									<ItemForm key={`${form.mode}:${form.id ?? ''}`} mode={form.mode} id={form.id} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />
+								</ShellContext.Provider>
+							</div>
+						)}
+						{form && pick && (
+							<Generator
+								pick={{
+									target: pick.target,
+									onUse: (value) => {
+										pick.apply(value)
+										setPick(null)
+									},
+								}}
+							/>
+						)}
 						{/* Unmounted under a panel, so no decrypted value waits in the hidden DOM; it decrypts again on return. */}
 						{detail && !form && !hidden && (
 							<ItemDetail
@@ -196,21 +241,28 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 				: <Loading />
 	} else if (current === 'settings') {
 		content = <Settings section={section} onOpen={setSection} snapshot={snapshot} />
+	} else if (current === 'generator') {
+		content = history ? <GeneratorHistory /> : <Generator onOpenHistory={() => setHistory(true)} />
 	} else {
 		content = <Placeholder icon={TABS.find((t) => t.id === current)!.icon} title={tabLabel(current)} />
 	}
 
 	const inSection = current === 'settings' && section !== null
+	const inHistory = current === 'generator' && history
 	let title = tabLabel(current)
-	if (form) title = form.mode === 'edit' ? i18n.t('titles.editItem') : i18n.t('titles.newItem')
+	if (form && pick) title = tabLabel('generator')
+	else if (form) title = form.mode === 'edit' ? i18n.t('titles.editItem') : i18n.t('titles.newItem')
 	else if (detail) title = i18n.t('titles.viewItem')
 	else if (inSection) title = sectionLabel(section)
+	else if (inHistory) title = i18n.t('generator.history')
 	let back: (() => void) | undefined
-	if (form) back = () => leave(closeForm)
+	if (form && pick) back = () => setPick(null)
+	else if (form) back = () => leave(closeForm)
 	else if (detail) back = () => setDetailId(null)
 	else if (inSection) back = () => setSection(SECTION_PARENT[section] ?? null)
+	else if (inHistory) back = () => setHistory(false)
 	// A page opened from a tab covers the tab bar, as in Bitwarden, and gets the bar for its own actions.
-	const page = form !== null || detail !== undefined || inSection
+	const page = form !== null || detail !== undefined || inSection || inHistory
 
 	return (
 		<ShellContext.Provider value={context}>
@@ -225,7 +277,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 				/>
 				<div className="popup__body" ref={body}>{content}</div>
 				<div className="popup__bottom">
-					<Toast message={toast?.text ?? null} />
+					<Toast message={toast} />
 					{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={current} onSelect={select} />}
 				</div>
 				{dialog?.kind === 'discard' && (
@@ -253,7 +305,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 							await reload()
 							setDialog(null)
 							setDetailId(null)
-							setToast({ text: i18n.t('item.deleted') })
+							showToast(i18n.t('item.deleted'))
 						}}
 						onCancel={() => setDialog(null)}
 					/>
@@ -267,7 +319,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 							const next = await reload()
 							const folders = next?.state === 'unlocked' ? next.folders : snapshot.folders
 							setDialog(null)
-							setToast({ text: i18n.t('item.moved', { folder: folderPath(folders, folderId) ?? i18n.t('filters.noFolder') }) })
+							showToast(i18n.t('item.moved', { folder: folderPath(folders, folderId) ?? i18n.t('filters.noFolder') }))
 						}}
 						onCancel={() => setDialog(null)}
 					/>

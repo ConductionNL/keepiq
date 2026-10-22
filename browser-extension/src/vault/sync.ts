@@ -2,6 +2,9 @@ import { ApiError, createClient, Offline, SessionRevoked, VaultWriteLocked, type
 import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow, UserSettings } from '@/src/api/types'
 import { getAccount, suiteKey, updateAccount, type AccountRecord } from '@/src/accounts/store'
 import { broadcast } from '@/src/background/broadcast'
+import type { GeneratorPolicy } from '@/src/generator/options'
+import { toPolicy } from '@/src/generator/policy'
+import { clearPolicy, writePolicy } from '@/src/generator/store'
 import type { BlockReason, SyncStatus } from '@/src/messages'
 import { checkedAt, clearSnapshot, markChecked, readSnapshot, writeSnapshot } from './store'
 import type { StoredBlockedRow, StoredSecretRow, VaultSnapshot } from './types'
@@ -87,10 +90,48 @@ async function refreshVersion(client: Client, account: AccountRecord): Promise<v
 	if (version !== null && version !== account.keepiqVersion) await updateAccount(account.id, { keepiqVersion: version })
 }
 
+/** `undefined` when the server gave no answer of the policy's shape, so the cached policy stays. */
+async function fetchPolicy(client: Client): Promise<GeneratorPolicy | null | undefined> {
+	try {
+		const body = await client.keepiq<{ policy_enabled?: unknown } | null>('GET', '/api/settings/policy')
+		return typeof body?.policy_enabled === 'boolean' ? toPolicy(body) : undefined
+	} catch {
+		return undefined
+	}
+}
+
+/** Written only while the account stays logged in, like the vault (see `run`). */
+async function storePolicy(accountId: string, pending: Promise<GeneratorPolicy | null | undefined>): Promise<void> {
+	const fetched = await pending
+	if (fetched === undefined || !(await loggedIn(accountId))) return
+	await writePolicy(accountId, fetched)
+	if (!(await loggedIn(accountId))) await undoWrites(accountId)
+}
+
+/** After a login, so the lock screen's generator follows the policy before the first unlock. */
+export async function refreshPolicy(accountId: string): Promise<void> {
+	try {
+		const account = await getAccount(accountId)
+		if (account && account.appPassword !== null) await storePolicy(accountId, fetchPolicy(createClient(account)))
+	} catch (error) {
+		console.error('[keepiq] policy refresh failed', error)
+	}
+}
+
 async function run(accountId: string, mode: SyncMode): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account || account.appPassword === null) return
 	const client = createClient(account)
+	const policy = fetchPolicy(client)
+	// The policy does not depend on the vault, so a failed vault sync keeps a policy that arrived.
+	try {
+		await runVault(accountId, mode, client, account)
+	} finally {
+		await storePolicy(accountId, policy)
+	}
+}
+
+async function runVault(accountId: string, mode: SyncMode, client: Client, account: AccountRecord): Promise<void> {
 	const cached = await readSnapshot(accountId)
 	if (mode === 'probe' && cached) {
 		const [same, suite] = await Promise.all([unchanged(client, cached), client.listSuites().then(activeRow)])
@@ -118,6 +159,7 @@ async function run(accountId: string, mode: SyncMode): Promise<void> {
 async function undoWrites(accountId: string): Promise<void> {
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove(suiteKey(accountId))
+	await clearPolicy(accountId)
 }
 
 async function loggedIn(accountId: string): Promise<boolean> {

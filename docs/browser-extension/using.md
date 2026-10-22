@@ -2,7 +2,7 @@
 
 The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
 
-The extension is in development. You can browse, copy, add, edit and delete today; filling in logins, saving them as you sign up, the generator and Send come in later updates (see [Coming next](#coming-next)).
+The extension is in development. You can browse, copy, add, edit, delete and generate passwords today; filling in logins, saving them as you sign up, and Send come in later updates (see [Coming next](#coming-next)).
 
 ## Getting the extension
 
@@ -141,6 +141,22 @@ Folder names are not encrypted in Keepiq, so pick names you don't mind your serv
 
 The pop-out button at the top opens the extension in its own window, which stays open while you work in the browser. Suggestions keep following the tab you opened it from.
 
+## Generator
+
+The **Generator** tab makes a new value as soon as it opens, and again whenever you change an option. **Regenerate** makes another one and **Copy** copies it. The value is made in your browser, the same way the Keepiq web app makes it, and is sent nowhere. Your options are remembered per account.
+
+- **Password:** 14 characters by default, 8 to 128. Choose upper case, lower case, numbers and special characters, and how many numbers and special characters at least. **Avoid ambiguous characters** leaves out characters that are easy to confuse, such as `l` and `1`.
+- **Passphrase:** five words by default, 4 to 12, with a separator of your choice, optionally capitalised and with a number.
+- **Username:** a random word with four digits, or an email address. **Plus addressed email** adds a random tag or the current site's name to your own address (`you+shop.example.com@example.org`); **Catch-all email** makes an address at a domain you own.
+
+When your organisation has a password policy, the controls it decides are locked and say **Set by your organisation**, and passphrases are made long and varied enough to meet it. When your organisation turned passphrases off, the Passphrase tab says so.
+
+The History button lists the last 50 values you regenerated, copied or used, or left on a sub-tab, with **Clear** to empty it. The list is gone when the vault locks or the browser closes.
+
+While adding or editing an item, the button next to **Password** or **Username** opens the generator; **Use this password** or **Use this username** puts the value in the form.
+
+The generator also works while the vault is locked and while you're offline: choose **Generate a password** on the lock screen.
+
 ## Offline
 
 The extension keeps an encrypted copy of your vault in the browser. Without a connection you can still unlock, search, open and copy. The vault shows **Offline** and when it last synced; **Sync now** tries again. Adding, changing and deleting need the connection, so they wait until it is back.
@@ -163,6 +179,6 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 - **Fill in logins** on websites, and save new logins as you sign up.
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
-- **Generator and Send**, as in the web app.
+- **Send**, as in the web app.
 - **More settings:** the lock delay, a PIN and when the clipboard is cleared.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

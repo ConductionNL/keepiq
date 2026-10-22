@@ -335,3 +335,58 @@ settings:
   themeSystem: Systeemstandaard
   themeLight: Licht
   themeDark: Donker
+
+generator:
+  kinds: Wat wil je genereren?
+  password: Wachtwoord
+  passphrase: Wachtwoordzin
+  username: Gebruikersnaam
+  length: Lengte
+  lengthValue: Lengte in tekens
+  uppercase: Hoofdletters (A-Z)
+  lowercase: Kleine letters (a-z)
+  digits: Cijfers (0-9)
+  special: Speciale tekens, zoals !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Soorten tekens
+  lastClassOn: Er blijft minstens één soort aan
+  minNumbers: Min. cijfers
+  minSpecial: Min. speciale tekens
+  avoidAmbiguous: Tekens die op elkaar lijken vermijden
+  lockedByPolicy: Ingesteld door je organisatie
+  passphraseOff: Uitgezet door je organisatie
+  words: Aantal woorden
+  separator: Scheidingsteken
+  capitalizeWords: Woorden met een hoofdletter
+  capitalize: Met een hoofdletter beginnen
+  includeNumber: Cijfer toevoegen
+  usernameType: Soort
+  typeWord: Willekeurig woord
+  typePlus: E-mailadres met plus
+  typeCatchall: Catch-all-e-mailadres
+  email: E-mailadres
+  emailPlaceholder: naam@voorbeeld.nl
+  domain: Domein
+  domainPlaceholder: voorbeeld.nl
+  basedOn: Gebaseerd op
+  random: Willekeurig
+  websiteName: Naam van de website
+  noWebsite: Geen website gevonden
+  needsEmail: Vul een e-mailadres in
+  needsDomain: Vul een domein in
+  wordlistUnavailable: Woordenlijst niet beschikbaar
+  regenerate: Opnieuw genereren
+  usePassword: Dit wachtwoord gebruiken
+  useUsername: Deze gebruikersnaam gebruiken
+  history: Generatorgeschiedenis
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Nog geen gegenereerde waarden
+  clearHistory: Wissen
+  clearHistoryTitle: Generatorgeschiedenis wissen?
+  clearHistoryText: Dit verwijdert alle waarden in de lijst uit deze browser.
+  generatePasswordLink: Een wachtwoord genereren
+  generatePassword: Wachtwoord genereren
+  generateUsername: Gebruikersnaam genereren
