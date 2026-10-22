@@ -33,6 +33,12 @@ const DIGITS = '0123456789'
 const SPECIAL = '!@#$%^&*()-_=+[]{}|;:,.<>?/'
 /** Characters that are easy to mistake for one another. */
 const AMBIGUOUS = 'IOl01'
+/**
+ * The list without its four hyphenated words (drop-down, felt-tip, t-shirt,
+ * yo-yo): with the `-` separator they let two word sequences give the same
+ * passphrase.
+ */
+const PASSPHRASE_WORDS = EFF_LARGE_WORDLIST.filter((word) => !word.includes('-'))
 
 /** Thrown for a request the generator refuses; `message` is user-facing. */
 export class GeneratorError extends Error {
@@ -85,7 +91,11 @@ export function generatorPolicy(raw) {
 	}
 	const floor = Number.parseInt(raw.generator_min_length ?? 12, 10)
 	return {
-		minLength: Math.max(MIN_LENGTH, Number.isNaN(floor) ? 12 : floor),
+		// The server stores any floor of 8 or more; above 128 nothing could be generated.
+		minLength: Math.min(
+			MAX_LENGTH,
+			Math.max(MIN_LENGTH, Number.isNaN(floor) ? 12 : floor),
+		),
 		requireUpper: raw.generator_require_upper === true,
 		requireLower: raw.generator_require_lower === true,
 		requireDigit: raw.generator_require_digit === true,
@@ -201,44 +211,34 @@ function buildString(charset, length, rand) {
 }
 
 /**
- * Put one character of every required class the result lacks into it, each
- * at a different position.
+ * Fisher–Yates shuffle in place: every arrangement is equally likely, so a
+ * character forced in for a minimum may land on any position.
  *
- * @param {string} result The generated value.
- * @param {object} policy A normalised policy.
- * @param {string} charset The resolved set.
+ * @param {string[]} chars The characters.
  * @param {(min: number, max: number) => number} rand The random-integer source.
- * @return {string}
+ * @return {string[]}
  */
-function forceRequiredClasses(result, policy, charset, rand) {
-	const chars = [...result]
-	const used = new Set()
-	for (const [, classSet] of requiredClasses(policy)) {
-		if (intersects(result, classSet)) {
-			continue
-		}
-		const allowed = [...classSet].filter((c) => charset.includes(c))
-		if (allowed.length === 0) {
-			continue
-		}
-		let position
-		do {
-			position = rand(0, chars.length - 1)
-		} while (used.has(position))
-		used.add(position)
-		chars[position] = allowed[rand(0, allowed.length - 1)]
+function shuffle(chars, rand) {
+	for (let i = chars.length - 1; i > 0; i--) {
+		const j = rand(0, i)
+		const swap = chars[i]
+		chars[i] = chars[j]
+		chars[j] = swap
 	}
-	return chars.join('')
+	return chars
 }
 
 /**
- * Generate from the built-in character classes.
+ * Generate from the built-in character classes: a uniform draw from the set,
+ * topped up to the minimum of every chosen class, then shuffled.
  *
  * @param {object} options The request.
  * @param {object|null} policy A normalised policy.
  * @param {(min: number, max: number) => number} rand The random-integer source.
  * @return {string}
  * @spec openspec/specs/extension-generator-policy/spec.md#requirement-every-chosen-kind-of-character-appears
+ * @spec openspec/specs/extension-generator/spec.md#requirement-password-options
+ * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
  */
 function generateFromCharset(options, policy, rand) {
 	let length = Number(options.length ?? 16)
@@ -246,8 +246,9 @@ function generateFromCharset(options, policy, rand) {
 	let includeLower = options.includeLowercase !== false
 	let includeDigits = options.includeDigits !== false
 	let includeSpecial = options.includeSpecialCharacters !== false
-	let minDigits = Math.max(0, Number(options.minDigits ?? 0) || 0)
-	let minSpecial = Math.max(0, Number(options.minSpecial ?? 0) || 0)
+	// Whole numbers only: a fraction would make the length a fraction too.
+	const minDigits = Math.max(0, Math.floor(Number(options.minDigits ?? 0)) || 0)
+	const minSpecial = Math.max(0, Math.floor(Number(options.minSpecial ?? 0)) || 0)
 	const excluded = new Set(options.excludedCharacters ?? '')
 	if (options.avoidAmbiguous === true) {
 		for (const char of AMBIGUOUS) {
@@ -267,12 +268,6 @@ function generateFromCharset(options, policy, rand) {
 	if (!includeUpper && !includeLower && !includeDigits && !includeSpecial) {
 		throw new GeneratorError('Choose at least one kind of character')
 	}
-	minDigits = includeDigits ? minDigits : 0
-	minSpecial = includeSpecial ? minSpecial : 0
-	// The minimums must fit: the length grows to hold them.
-	length = Math.max(length, minDigits + minSpecial)
-	assertLengthInRange(length)
-
 	let charset =
 		(includeUpper ? UPPERCASE : '')
 		+ (includeLower ? LOWERCASE : '')
@@ -287,29 +282,36 @@ function generateFromCharset(options, policy, rand) {
 			}
 		}
 	}
+
+	// Every chosen kind appears at least once, on top of the minimums. A
+	// required class is chosen and in the set, so this also meets the policy.
+	const minimums = [
+		[UPPERCASE, includeUpper ? 1 : 0],
+		[LOWERCASE, includeLower ? 1 : 0],
+		[DIGITS, includeDigits ? Math.max(minDigits, 1) : 0],
+		[SPECIAL, includeSpecial ? Math.max(minSpecial, 1) : 0],
+	].filter(([classSet, count]) => count > 0 && intersects(charset, classSet))
+	// The length grows to hold every minimum, as Bitwarden's atLeastSum does.
+	length = Math.max(
+		length,
+		minimums.reduce((sum, [, count]) => sum + count, 0),
+	)
+	assertLengthInRange(length)
 	assertCharsetViable(charset)
 
-	let result = buildString(charset, length, rand)
-	// Every chosen kind appears at least once, on top of the minimums.
-	result = ensureMinimums(
-		result,
+	const value = ensureMinimums(
+		buildString(charset, length, rand),
 		charset,
-		[
-			[UPPERCASE, includeUpper ? 1 : 0],
-			[LOWERCASE, includeLower ? 1 : 0],
-			[DIGITS, includeDigits ? Math.max(minDigits, 1) : 0],
-			[SPECIAL, includeSpecial ? Math.max(minSpecial, 1) : 0],
-		],
+		minimums,
 		rand,
 	)
-	return policy !== null
-		? forceRequiredClasses(result, policy, charset, rand)
-		: result
+	return shuffle([...value], rand).join('')
 }
 
 /**
  * Make sure the value holds at least `count` characters of each class, by
- * replacing characters of other classes at random positions.
+ * replacing characters of other classes at random positions. The length
+ * must hold the sum of the counts.
  *
  * @param {string} value The generated value.
  * @param {string} charset The resolved set.
@@ -322,25 +324,17 @@ function ensureMinimums(value, charset, minimums, rand) {
 	const reserved = new Set()
 	for (const [classSet, count] of minimums) {
 		const allowed = [...classSet].filter((c) => charset.includes(c))
-		if (count === 0 || allowed.length === 0) {
-			continue
-		}
 		const have = chars
 			.map((c, i) => (classSet.includes(c) ? i : -1))
 			.filter((i) => i >= 0)
 		for (const i of have.slice(0, count)) {
 			reserved.add(i)
 		}
-		let missing = count - Math.min(have.length, count)
-		while (missing > 0) {
+		for (let missing = count - have.length; missing > 0; missing--) {
 			const free = chars.map((c, i) => i).filter((i) => !reserved.has(i))
-			if (free.length === 0) {
-				break
-			}
 			const position = free[rand(0, free.length - 1)]
 			chars[position] = allowed[rand(0, allowed.length - 1)]
 			reserved.add(position)
-			missing--
 		}
 	}
 	return chars.join('')
@@ -560,7 +554,7 @@ export function generateKey(options = {}, rawPolicy = null, rand = randomInt) {
 
 /**
  * Generate a passphrase in the browser: words drawn uniformly from the EFF
- * large word list, joined by a separator.
+ * large word list without its hyphenated words, joined by a separator.
  *
  * With the org policy on, the passphrase is made to meet it rather than
  * refused: words are added until the length floor is met, words are
@@ -609,7 +603,7 @@ export function generatePassphrase(
 	}
 
 	const draw = () => {
-		const word = EFF_LARGE_WORDLIST[rand(0, EFF_LARGE_WORDLIST.length - 1)]
+		const word = PASSPHRASE_WORDS[rand(0, PASSPHRASE_WORDS.length - 1)]
 		return capitalise ? word[0].toUpperCase() + word.slice(1) : word
 	}
 	const words = Array.from({ length: count }, draw)

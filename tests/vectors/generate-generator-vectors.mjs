@@ -49,6 +49,8 @@ const POLICY_30_DIGIT = {
 	generator_min_length: 30,
 	generator_require_digit: true,
 }
+const POLICY_ALL_8 = { ...POLICY_ALL, generator_min_length: 8 }
+const POLICY_FLOOR_200 = { policy_enabled: true, generator_min_length: 200 }
 const POLICY_OFF = { policy_enabled: false, generator_min_length: 64 }
 const POLICY_NO_PASSPHRASE = {
 	policy_enabled: true,
@@ -108,6 +110,52 @@ const CASES = [
 		null,
 	],
 	[
+		'minimums that fill the length',
+		'password',
+		{ length: 10, minDigits: 5, minSpecial: 5 },
+		null,
+	],
+	[
+		'one upper case among seven digits',
+		'password',
+		{
+			length: 8,
+			includeLowercase: false,
+			includeSpecialCharacters: false,
+			minDigits: 7,
+		},
+		null,
+	],
+	[
+		'a top-up without the ambiguous digits',
+		'password',
+		{
+			length: 8,
+			includeLowercase: false,
+			includeSpecialCharacters: false,
+			minDigits: 7,
+			avoidAmbiguous: true,
+		},
+		null,
+	],
+	[
+		'a minimum of an excluded kind adds no length',
+		'password',
+		{
+			length: 8,
+			includeSpecialCharacters: false,
+			minDigits: 4,
+			excludedCharacters: '0123456789',
+		},
+		null,
+	],
+	[
+		'minimums over 128',
+		'password',
+		{ length: 8, minDigits: 100, minSpecial: 100 },
+		null,
+	],
+	[
 		'a set of exactly two',
 		'password',
 		{
@@ -134,6 +182,25 @@ const CASES = [
 		'password',
 		{ length: 12, excludedCharacters: '0123456789' },
 		POLICY_20_DIGIT,
+	],
+	[
+		'policy with every class at 8, digits fill the length',
+		'password',
+		{ length: 9, minDigits: 9 },
+		POLICY_ALL_8,
+	],
+	['policy floor above 128', 'password', {}, POLICY_FLOOR_200],
+	[
+		'regex reaches a floor above 128',
+		'password',
+		{ regex: '[a-z0-9]{8,150}' },
+		POLICY_FLOOR_200,
+	],
+	[
+		'regex below a floor above 128',
+		'password',
+		{ regex: '[a-z0-9]{8,100}' },
+		POLICY_FLOOR_200,
 	],
 	['policy off changes nothing', 'password', { length: 8 }, POLICY_OFF],
 	['regex exact length', 'password', { regex: '^[a-zA-Z0-9]{16}$' }, null],
@@ -223,6 +290,12 @@ const CASES = [
 		'passphrase',
 		{ words: 4, separator: ' ' },
 		POLICY_UPPER_SYMBOL,
+	],
+	[
+		'passphrase policy floor above 128',
+		'passphrase',
+		{ words: 4 },
+		POLICY_FLOOR_200,
 	],
 	['passphrase three words', 'passphrase', { words: 3 }, null],
 	['passphrase thirteen words', 'passphrase', { words: 13 }, null],
