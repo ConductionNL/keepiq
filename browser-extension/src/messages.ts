@@ -225,6 +225,8 @@ export type WriteErrorCode =
 	/** A partner certificate is not valid by this machine's clock, which may be wrong, so nothing is suspended on it. */
 	| 'partner_clock'
 	| 'passkey_clone'
+	/** A send password needs Argon2id, whose WebAssembly this browser does not run. */
+	| 'argon2_unavailable'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
@@ -259,6 +261,7 @@ export type PopupRequest =
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
 	| VaultWrite
 	| GeneratorRequest
+	| SendRequest
 
 /**
  * Each names the account the popup showed, so a write never lands in another account's vault
@@ -299,6 +302,41 @@ export interface GeneratorContext {
 	accountEmail: string | null
 }
 
+/** Per account, like `VaultWrite`, so a send never goes out from another account's server. */
+export type SendRequest = { accountId: string } & (
+	| { kind: 'send.list' }
+	| { kind: 'send.create'; input: SendCreateInput }
+	| { kind: 'send.delete'; id: string }
+)
+
+export type SendPayloadType = 'text' | 'credential'
+
+export interface SendCreateInput {
+	payloadType: SendPayloadType
+	/** For a credential, the body from `serializeCredential`, so only one plaintext string crosses to the background. */
+	content: string
+	maxViews: number
+	/** 3600 up to `TTL_CAP_SECONDS`; the extension offers no send without expiry. */
+	ttlSeconds: number
+	password?: string
+}
+
+/** A send as the server lists it; it never holds the content or its key. */
+export interface SendRow {
+	id: string
+	token: string
+	payloadType: SendPayloadType
+	hasPassword: boolean
+	maxViews: number
+	viewCount: number
+	remainingViews: number
+	/** `null` never expires. An expired send is listed until the server's hourly purge. */
+	expiresAt: string | null
+	createdAt: string
+	/** Password sends only: their link carries no secret, so it is rebuilt from `token`. */
+	link?: string
+}
+
 export interface PopupReplies {
 	'vault.sync': SyncStatus
 	'vault.snapshot': VaultSnapshotReply
@@ -326,6 +364,12 @@ export interface PopupReplies {
 	'generator.history.list': GeneratorHistoryEntry[]
 	'generator.history.add': GeneratorHistoryEntry[]
 	'generator.history.clear': null
+	/** Newest first. `passwordProtection`: whether this browser can make a password send. */
+	'send.list': WriteResult<{ sends: SendRow[]; passwordProtection: boolean }>
+	/** `link` is shown once: the background keeps neither it nor the key. */
+	'send.create': WriteResult<{ row: SendRow; link: string }>
+	/** Also `ok` on a 404: the send was already burned or expired. */
+	'send.delete': WriteResult<null>
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
@@ -333,6 +377,7 @@ export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupRepli
 	'settings.get', 'settings.set', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
+	'send.list', 'send.create', 'send.delete',
 ])
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */

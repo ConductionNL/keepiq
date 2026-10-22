@@ -31,13 +31,13 @@ describe('Shell', () => {
 		expect(tabs[0]!.getAttribute('aria-current')).toBe('page')
 	})
 
-	it('switches tabs, shows the placeholder and remembers the tab', async () => {
+	it('switches tabs, shows the sends and remembers the tab', async () => {
 		const sent = fakeBackground()
 		render(<App />)
 		await title()
 		await userEvent.setup().click(screen.getByRole('button', { name: 'Send' }))
 		expect((await title()).textContent).toBe('Send')
-		expect(screen.getByText('This arrives in a later update.')).toBeTruthy()
+		expect(await screen.findByText('No sends yet')).toBeTruthy()
 		expect(screen.queryByRole('searchbox')).toBeNull()
 		expect(sent).toHaveBeenCalledWith({ kind: 'popup.lastTab.set', tab: 'send' })
 	})

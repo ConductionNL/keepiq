@@ -4,7 +4,8 @@ import { rsaDecrypt } from '@/src/crypto'
 import { addHistory, clearHistory, listHistory } from '@/src/generator/history'
 import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
-import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
+import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
+import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { suggestionIds } from '@/src/vault/match'
@@ -141,6 +142,10 @@ async function perform(message: Exclude<PopupRequest, GeneratorRequest>): Promis
 			return readGlobalSettings()
 		case 'settings.set':
 			return updateGlobalSettings(message.patch)
+		case 'send.list':
+		case 'send.create':
+		case 'send.delete':
+			return performSend(message)
 		default:
 			return performWrite(message)
 	}
@@ -208,6 +213,20 @@ async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrit
 			if (account?.id === accountId) await browser.storage.local.set({ [folderNoticeKey(account.id)]: true })
 			return null
 		}
+	}
+}
+
+/** Like a write, a send without the account it was meant for is refused. */
+async function performSend(message: SendRequest): Promise<PopupReplies[SendRequest['kind']]> {
+	const accountId = message.accountId
+	if (typeof accountId !== 'string') return { ok: false, error: { code: 'invalid' } }
+	switch (message.kind) {
+		case 'send.list':
+			return listSendsFor(accountId)
+		case 'send.create':
+			return createSendFor(message.input, accountId)
+		case 'send.delete':
+			return deleteSendFor(message.id, accountId)
 	}
 }
 

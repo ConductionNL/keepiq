@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
-import type { AccountSummary, ItemMeta, PopupTab, ShareSaveNote } from '@/src/messages'
+import type { AccountSummary, ItemMeta, PopupTab, SendRow, ShareSaveNote } from '@/src/messages'
 import { folderPath } from '@/src/vault/list'
 import { webUrl } from '@/src/vault/url'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { Header } from '../components/Header'
 import { Loading } from '../components/Loading'
-import { TabBar, tabLabel, TABS } from '../components/TabBar'
+import { TabBar, tabLabel } from '../components/TabBar'
 import { Toast } from '../components/Toast'
 import { errorText } from '../errors'
 import { isPopout, useCurrentTab } from '../hooks/useCurrentTab'
 import { request } from '../hooks/useMessage'
+import { SendProvider } from '../hooks/useSends'
 import { useToast } from '../hooks/useToast'
 import { useVaultSnapshot } from '../hooks/useVaultSnapshot'
 import { ShellContext, type GenerateTarget, type ItemActions, type ShellContextValue } from '../shell-context'
@@ -20,7 +21,9 @@ import { GeneratorHistory } from './GeneratorHistory'
 import { DeleteItemDialog, MoveItemDialog } from './ItemDialogs'
 import { ItemDetail } from './ItemDetail'
 import { ItemForm, type FormMode } from './ItemForm'
-import { Placeholder } from './Placeholder'
+import { NewSend, type SendPrefill } from './send/NewSend'
+import { SendCreated } from './send/SendCreated'
+import { SendList } from './send/SendList'
 import { Settings } from './settings/Settings'
 import { SECTION_PARENT, sectionLabel, type SettingsSection } from './settings/SettingsIndex'
 import { VaultList } from './VaultList'
@@ -38,6 +41,9 @@ type FormPage = { mode: FormMode; id?: string }
 
 type Pick = { target: GenerateTarget; apply: (value: string) => void }
 
+/** `key` remounts the form when another item's Send opens it. */
+type SendPage = { kind: 'new'; key: number; prefill?: SendPrefill } | { kind: 'created'; row: SendRow; link: string }
+
 type ShellDialog =
 	| { kind: 'delete'; item: ItemMeta }
 	| { kind: 'move'; item: ItemMeta }
@@ -53,6 +59,10 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const [section, setSection] = useState<SettingsSection | null>(null)
 	const [history, setHistory] = useState(false)
 	const [pick, setPick] = useState<Pick | null>(null)
+	const [sendPage, setSendPage] = useState<SendPage | null>(null)
+	const [sendBusy, setSendBusy] = useState(false)
+	/** Back from a created send, whose page held focus: its row takes it. */
+	const [sendFocus, setSendFocus] = useState<string | null>(null)
 	const [dialog, setDialog] = useState<ShellDialog | null>(null)
 	// In memory only, so it is gone once the popup closes (share-sync).
 	const [shareSave, setShareSave] = useState<{ id: string; note: ShareSaveNote } | null>(null)
@@ -93,10 +103,36 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		if (body.current) body.current.scrollTop = onList.current ? listScroll.current : 0
 	}, [detailId, form])
 
+	useLayoutEffect(() => {
+		if (sendPage && body.current) body.current.scrollTop = 0
+	}, [sendPage])
+
 	/** Opening a page from the list remembers its scroll position. */
 	const leaveList = useCallback(() => {
 		if (onList.current) listScroll.current = body.current?.scrollTop ?? 0
 	}, [])
+
+	/** Shows a tab with none of its pages open, as the tab bar does. */
+	const show = useCallback((next: PopupTab) => {
+		setCurrent(next)
+		setDetailId(null)
+		setForm(null)
+		setSection(null)
+		setHistory(false)
+		setSendPage(null)
+		setSendFocus(null)
+		void request({ kind: 'popup.lastTab.set', tab: next })
+	}, [])
+
+	/** Decrypts the login here, so the form opens filled or not at all. */
+	const sendItem = useCallback(async (item: ItemMeta) => {
+		const reply = await request({ kind: 'item.decrypt', ids: [item.id], fields: ['login', 'key'] })
+		const fields = reply?.ok ? reply.items[item.id] : undefined
+		if (reply?.ok === false && reply.error === 'locked') return refreshState()
+		if (!fields) return showToast(i18n.t('send.prefillFailed'))
+		show('send')
+		setSendPage({ kind: 'new', key: Date.now(), prefill: { username: fields.login ?? '', password: fields.key ?? '' } })
+	}, [refreshState, showToast, show])
 
 	const items = useMemo<ItemActions>(() => ({
 		add: () => {
@@ -113,7 +149,8 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		},
 		move: (item) => setDialog({ kind: 'move', item }),
 		remove: (item) => setDialog({ kind: 'delete', item }),
-	}), [leaveList])
+		send: (item) => void sendItem(item),
+	}), [leaveList, sendItem])
 
 	const snapshot = reply?.state === 'unlocked' ? reply : undefined
 
@@ -140,8 +177,21 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	// The form under the generator keeps its Save and Cancel out of the bar.
 	const hiddenFormContext = useMemo(() => ({ ...context, footer: null }), [context])
 
+	function newSend() {
+		setSendFocus(null)
+		setSendPage({ kind: 'new', key: Date.now() })
+	}
+
+	/** Only onto the form it came from: one left meanwhile keeps the link in the list alone. */
+	function created(key: number, row: SendRow, link: string) {
+		setSendBusy(false)
+		setSendPage((page) => (page?.kind === 'new' && page.key === key ? { kind: 'created', row, link } : page))
+	}
+
 	/** Runs `then` now, or after the user agreed to drop a dirty form. */
 	function leave(then: () => void) {
+		// A create in flight would land on a page that is gone.
+		if (sendBusy) return
 		if (leaveGuard.current?.()) setDialog({ kind: 'discard', then })
 		else then()
 	}
@@ -152,19 +202,11 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		setShareSave((current) => (current?.id === id ? current : null))
 	}, [leaveList])
 
-	function select(next: PopupTab) {
-		setCurrent(next)
-		setDetailId(null)
-		setForm(null)
-		setSection(null)
-		setHistory(false)
-		void request({ kind: 'popup.lastTab.set', tab: next })
-	}
-
 	/** A switch would drop the form unasked, and under the switcher its decrypted values would wait in the hidden page. */
 	function accounts() {
 		leave(() => {
 			setForm(null)
+			setSendPage(null)
 			onAccounts()
 		})
 	}
@@ -244,87 +286,109 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	} else if (current === 'generator') {
 		content = history ? <GeneratorHistory /> : <Generator onOpenHistory={() => setHistory(true)} />
 	} else {
-		content = <Placeholder icon={TABS.find((t) => t.id === current)!.icon} title={tabLabel(current)} />
+		content = sendPage?.kind === 'new'
+			? <NewSend key={sendPage.key} prefill={sendPage.prefill} onCreated={(row, link) => created(sendPage.key, row, link)} onCancel={() => leave(() => setSendPage(null))} onBusy={setSendBusy} />
+			: sendPage?.kind === 'created'
+				? (
+					<SendCreated
+						row={sendPage.row}
+						link={sendPage.link}
+						onDone={() => {
+							setSendFocus(sendPage.row.id)
+							setSendPage(null)
+						}}
+					/>
+				)
+				: <SendList focusId={sendFocus} onNew={newSend} />
 	}
 
 	const inSection = current === 'settings' && section !== null
 	const inHistory = current === 'generator' && history
+	const inSend = current === 'send' ? sendPage : null
 	let title = tabLabel(current)
 	if (form && pick) title = tabLabel('generator')
 	else if (form) title = form.mode === 'edit' ? i18n.t('titles.editItem') : i18n.t('titles.newItem')
 	else if (detail) title = i18n.t('titles.viewItem')
 	else if (inSection) title = sectionLabel(section)
 	else if (inHistory) title = i18n.t('generator.history')
+	else if (inSend) title = inSend.kind === 'new' ? i18n.t('titles.newSend') : i18n.t('titles.sendCreated')
 	let back: (() => void) | undefined
 	if (form && pick) back = () => setPick(null)
 	else if (form) back = () => leave(closeForm)
 	else if (detail) back = () => setDetailId(null)
 	else if (inSection) back = () => setSection(SECTION_PARENT[section] ?? null)
 	else if (inHistory) back = () => setHistory(false)
+	else if (inSend) back = () => leave(() => setSendPage(null))
 	// A page opened from a tab covers the tab bar, as in Bitwarden, and gets the bar for its own actions.
-	const page = form !== null || detail !== undefined || inSection || inHistory
+	const page = form !== null || detail !== undefined || inSection || inHistory || inSend !== null
+	let add: (() => void) | undefined
+	if (!page && current === 'vault' && snapshot?.items) add = items.add
+	else if (!page && current === 'send') add = newSend
 
 	return (
 		<ShellContext.Provider value={context}>
-			<main className={`popup${isPopout ? ' popup--popout' : ''}`} hidden={hidden}>
-				<Header
-					title={title}
-					active={active}
-					onAvatarClick={accounts}
-					onBack={back}
-					onAdd={current === 'vault' && !page && snapshot?.items ? items.add : undefined}
-					onPopout={isPopout ? undefined : () => leave(() => void popout())}
-				/>
-				<div className="popup__body" ref={body}>{content}</div>
-				<div className="popup__bottom">
-					<Toast message={toast} />
-					{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={current} onSelect={select} />}
-				</div>
-				{dialog?.kind === 'discard' && (
-					<ConfirmDialog
-						title={i18n.t('form.unsavedTitle')}
-						actions={[{
-							label: i18n.t('form.discard'),
-							variant: 'danger',
-							onClick: () => {
-								leaveGuard.current = null
+			<SendProvider>
+				<main className={`popup${isPopout ? ' popup--popout' : ''}`} hidden={hidden}>
+					<Header
+						title={title}
+						active={active}
+						busy={sendBusy}
+						onAvatarClick={accounts}
+						onBack={back}
+						onAdd={add}
+						onPopout={isPopout ? undefined : () => leave(() => void popout())}
+					/>
+					<div className="popup__body" ref={body}>{content}</div>
+					<div className="popup__bottom">
+						<Toast message={toast} />
+						{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={current} onSelect={show} />}
+					</div>
+					{dialog?.kind === 'discard' && (
+						<ConfirmDialog
+							title={i18n.t('form.unsavedTitle')}
+							actions={[{
+								label: i18n.t('form.discard'),
+								variant: 'danger',
+								onClick: () => {
+									leaveGuard.current = null
+									setDialog(null)
+									dialog.then()
+								},
+							}]}
+							cancelLabel={i18n.t('form.keepEditing')}
+							onCancel={() => setDialog(null)}
+						>
+							<p>{i18n.t('form.unsaved')}</p>
+						</ConfirmDialog>
+					)}
+					{dialog?.kind === 'delete' && (
+						<DeleteItemDialog
+							item={dialog.item}
+							onDeleted={async () => {
+								await reload()
 								setDialog(null)
-								dialog.then()
-							},
-						}]}
-						cancelLabel={i18n.t('form.keepEditing')}
-						onCancel={() => setDialog(null)}
-					>
-						<p>{i18n.t('form.unsaved')}</p>
-					</ConfirmDialog>
-				)}
-				{dialog?.kind === 'delete' && (
-					<DeleteItemDialog
-						item={dialog.item}
-						onDeleted={async () => {
-							await reload()
-							setDialog(null)
-							setDetailId(null)
-							showToast(i18n.t('item.deleted'))
-						}}
-						onCancel={() => setDialog(null)}
-					/>
-				)}
-				{dialog?.kind === 'move' && snapshot && (
-					<MoveItemDialog
-						item={dialog.item}
-						folders={snapshot.folders}
-						onMoved={async (folderId) => {
-							// The re-read, not this render's snapshot: the folder may have been made in the picker.
-							const next = await reload()
-							const folders = next?.state === 'unlocked' ? next.folders : snapshot.folders
-							setDialog(null)
-							showToast(i18n.t('item.moved', { folder: folderPath(folders, folderId) ?? i18n.t('filters.noFolder') }))
-						}}
-						onCancel={() => setDialog(null)}
-					/>
-				)}
-			</main>
+								setDetailId(null)
+								showToast(i18n.t('item.deleted'))
+							}}
+							onCancel={() => setDialog(null)}
+						/>
+					)}
+					{dialog?.kind === 'move' && snapshot && (
+						<MoveItemDialog
+							item={dialog.item}
+							folders={snapshot.folders}
+							onMoved={async (folderId) => {
+								// The re-read, not this render's snapshot: the folder may have been made in the picker.
+								const next = await reload()
+								const folders = next?.state === 'unlocked' ? next.folders : snapshot.folders
+								setDialog(null)
+								showToast(i18n.t('item.moved', { folder: folderPath(folders, folderId) ?? i18n.t('filters.noFolder') }))
+							}}
+							onCancel={() => setDialog(null)}
+						/>
+					)}
+				</main>
+			</SendProvider>
 		</ShellContext.Provider>
 	)
 }

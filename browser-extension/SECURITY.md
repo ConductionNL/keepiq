@@ -12,7 +12,9 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 
 - Your master password never leaves the device. It derives an AES-256-GCM key with PBKDF2-SHA-256 at 600,000 iterations, which unwraps your RSA-4096 private key. The password is then dropped.
 - Every secret is encrypted with RSA-OAEP (SHA-256) to your key. The server only ever sees ciphertext.
-- All cryptography is WebCrypto. The private key is imported as a non-extractable `CryptoKey` that can only decrypt.
+- All cryptography is WebCrypto, except Argon2id. The private key is imported as a non-extractable `CryptoKey` that can only decrypt.
+- A send is encrypted with AES-256-GCM under a fresh content key. Without a password the key is only in the link's `#k=` fragment, which browsers never send to the server; with one, the key is wrapped under Argon2id (64 MiB, 3 iterations, parallelism 1) of the password, as in the web app.
+- Argon2id runs in WebAssembly from `hash-wasm`, bundled. The extension pages' CSP adds `'wasm-unsafe-eval'` for it, which allows compiling WebAssembly, not `eval` of scripts.
 
 ## Where data lives
 
@@ -28,6 +30,10 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | Generated values, the 50 newest | `storage.session`, like the private key | Clear in the History view; lock, timeout, logout, account removal, browser restart, extension reload |
 | Generator options | `storage.local` | Account removal |
 | Organisation password policy | `storage.local` | Logout, account removal |
+| Send content, content key, send password | Background memory for the one request; popup memory while the form is open | The request's reply; leaving the form or closing the popup |
+| Link of a send without a password | Popup memory, from creation | Closing the popup, lock, timeout, account switch |
+| Link of a password send | Popup memory with the list; holds no secret, the background rebuilds it from the token the server lists | Closing the popup, lock, timeout, account switch |
+| The list of sends | Popup memory, fetched per popup session | Closing the popup, lock, timeout, account switch |
 
 - Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. The settings screen (`ext-settings`) will warn about it when you pick it.
 - `storage.session` keeps its default access level, so content scripts cannot read it.
@@ -100,9 +106,10 @@ There is no remote wipe, so these checks stand in for it:
 - **Revocation takes effect on the next contact with the server:** at most the 15-minute sync interval, or sooner when the popup opens.
 - **A share that becomes use-only** shows as use-only after the next full sync: within an hour and a quarter, or at once after unlock or Sync now. The server doesn't change the copy's `updatedAt`, so the quick probe misses it.
 - **The generator history** is readable without unlocking, since the generator works while locked. Values generated while locked stay until the next lock, logout or browser restart. **Clear** removes them sooner.
+- **A send link without a password** is the secret itself: anyone who gets it can open the send, up to its view count. The server burns a password send after five wrong passwords.
 - **Offline caching turned off by an admin:** the extension still caches the vault on disk. Whether it should keep it in session storage instead is still open.
 
 ## Supply chain
 
-- Four runtime dependencies: React, React DOM, `tldts` (the public suffix list, bundled; it makes no requests) and `@wxt-dev/i18n` (a thin wrapper over `browser.i18n`).
+- Five runtime dependencies: React, React DOM, `tldts` (the public suffix list, bundled; it makes no requests), `@wxt-dev/i18n` (a thin wrapper over `browser.i18n`) and `hash-wasm` (Argon2id for send passwords; its WebAssembly is bundled, nothing is fetched).
 - CI runs the tests, typecheck, lint, both builds and `web-ext lint` on every change.

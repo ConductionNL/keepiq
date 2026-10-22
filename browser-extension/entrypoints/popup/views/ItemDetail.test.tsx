@@ -24,7 +24,7 @@ function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 
 	const sent = fakeBackground({ decrypted: decrypted && { [item.id]: decrypted }, decryptError, replies: editable === undefined ? undefined : { 'item.editable': editable } })
 	const refreshState = vi.fn()
 	const launch = vi.fn()
-	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn() }
+	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	const view = render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, refreshState, launch, footer, items, offline }}>
 			<ItemDetail item={item} type={types.find((t) => t.id === item.typeId)} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
@@ -336,6 +336,29 @@ describe('metadata and actions', () => {
 		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
 		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
 		expect(items.move).toHaveBeenCalledWith(item)
+		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		expect(items.send).toHaveBeenCalledWith(item)
+	})
+
+	it('holds back Send on a share whose access ends, and says why', async () => {
+		const { items } = renderDetail(itemMeta({ accessExpiresAt: '2026-12-01T12:00:00Z' }))
+		const user = userEvent.setup()
+		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
+		const send = screen.getByRole('menuitem', { name: 'Send' })
+		expect(send.title).toBe(`Your access ends ${new Date('2026-12-01T12:00:00Z').toLocaleDateString('en')}, so it cannot be sent`)
+		await user.click(send)
+		expect(items.send).not.toHaveBeenCalled()
+	})
+
+	it('holds back Send while offline, and says why', async () => {
+		const { items } = renderDetail(itemMeta(), undefined, undefined, true)
+		const user = userEvent.setup()
+		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
+		const send = screen.getByRole('menuitem', { name: 'Send' })
+		expect(send.title).toBe('Sends need a connection to your Keepiq server')
+		await user.click(send)
+		expect(items.send).not.toHaveBeenCalled()
 	})
 
 	it.each([

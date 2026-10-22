@@ -37,7 +37,6 @@ common:
   addAccount: Account toevoegen
   openWebApp: Open de Keepiq-webapp
   later: Beschikbaar in een latere update
-  laterUpdate: Dit komt in een latere update.
   justNow: zojuist
 
 titles:
@@ -47,12 +46,14 @@ titles:
   viewItem: Item bekijken
   newItem: Nieuw item
   editItem: Item bewerken
+  newSend: Nieuwe verzending
+  sendCreated: Verzending aangemaakt
 
 tabs:
   label: Hoofdmenu
   vault: Kluis
   generator: Generator
-  send: Send
+  send: Verzenden
   settings: Instellingen
 
 header:
@@ -139,12 +140,14 @@ item:
   clone: Klonen
   move: Naar map verplaatsen
   delete: Verwijderen
+  send: Verzenden
   cloneName: "{name} - Kloon"
   passkeyNoClone: Passkeys kun je niet klonen
   useOnly: Alleen met je gedeeld om in te loggen
   readOnly: Gedeeld vanuit een andere organisatie, dus je kunt het alleen verplaatsen
   viewOnly: Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.
   expiringNoClone: Je toegang stopt op {date}, dus je kunt het niet klonen
+  expiringNoSend: Je toegang stopt op {date}, dus je kunt het niet verzenden
   saved: Item opgeslagen
   deleted: Item naar de prullenbak verplaatst
   moved: Verplaatst naar {folder}
@@ -218,6 +221,9 @@ writeErrors:
   federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
   keepiqOutdated: Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie {version} of nieuwer.
   partnerClock: Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.
+  sendInvalid: Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw.
+  sendOffline: De server is niet bereikbaar, er is niets verzonden
+  argon2Unavailable: Wachtwoordbeveiliging is niet beschikbaar in deze browser
 
 shareSave:
   saveWithout: Opslaan zonder hen
@@ -390,3 +396,59 @@ generator:
   generatePasswordLink: Een wachtwoord genereren
   generatePassword: Wachtwoord genereren
   generateUsername: Gebruikersnaam genereren
+
+send:
+  new: Nieuwe verzending
+  empty: Nog geen verzendingen
+  emptyText: Deel tekst of inloggegevens via een link die zichzelf verwijdert.
+  loadFailed: Je verzendingen konden niet worden geladen
+  retry: Opnieuw proberen
+  labelText: "Tekst, {time}"
+  labelCredential: "Inloggegevens, {time}"
+  viewsLeft:
+    1: "Nog {left} van 1 weergave"
+    n: "Nog {left} van $1 weergaven"
+  expires: "Verloopt {date}"
+  neverExpires: Verloopt nooit
+  expired: Verlopen
+  passwordBadge: Wachtwoord
+  link: Link
+  copyLink: Link kopiëren
+  copyLinkOf: "Link kopiëren, {name}"
+  linkGone: Link niet meer beschikbaar
+  remove: Verwijderen
+  removeOf: "Verwijderen, {name}"
+  removeTitle: Verzending verwijderen
+  removeConfirm: Deze verzending verwijderen? Iedereen met de link verliest de toegang.
+  removed: Verzending verwijderd
+  contentSection: Inhoud
+  optionsSection: Opties
+  type: Type
+  text: Tekst
+  credential: Inloggegevens
+  content: Te delen tekst
+  maxViews: Max. weergaven
+  maxViewsRange: "Tussen 1 en {max}"
+  expiry: Verloopt na
+  expiry1h: 1 uur
+  expiry1d: 1 dag
+  expiry2d: 2 dagen
+  expiry3d: 3 dagen
+  expiry7d: 7 dagen
+  expiry30d: 30 dagen
+  expiryCustom: Aangepast
+  customHours: Uren
+  customHoursMin: Minimaal 1 uur
+  customHoursMax: Maximaal 720 uur (30 dagen)
+  accessPassword: Toegangswachtwoord
+  accessPasswordHint: Optioneel. De ontvanger heeft het nodig om de verzending te openen.
+  create: Aanmaken
+  protecting: Beveiligen met wachtwoord…
+  offline: Voor verzendingen is een verbinding met je Keepiq-server nodig
+  prefillFailed: Deze login kon niet worden gelezen
+  ready: Je verzending is klaar
+  shownOnce:
+    1: Kopieer deze link nu. Je ziet hem alleen tot je dit venster sluit, en de inhoud verdwijnt na 1 weergave.
+    n: Kopieer deze link nu. Je ziet hem alleen tot je dit venster sluit, en de inhoud verdwijnt na $1 weergaven.
+  passwordNote: Deel het toegangswachtwoord apart van de link. Na 5 foute pogingen wordt de verzending verwijderd.
+  done: Klaar

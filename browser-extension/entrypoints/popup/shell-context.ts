@@ -8,6 +8,8 @@ export interface ItemActions {
 	clone: (id: string) => void
 	move: (item: ItemMeta) => void
 	remove: (item: ItemMeta) => void
+	/** Opens New send with the login's username and password filled in. */
+	send: (item: ItemMeta) => void
 }
 
 export interface ShellContextValue {
@@ -36,7 +38,7 @@ const noop = () => {}
 
 export const DEFAULT_SHELL: ShellContextValue = {
 	accountId: 'a1', refreshState: noop, toast: noop, launch: noop, footer: null, offline: false, syncNow: noop,
-	items: { add: noop, edit: noop, clone: noop, move: noop, remove: noop }, setLeaveGuard: noop, generate: noop,
+	items: { add: noop, edit: noop, clone: noop, move: noop, remove: noop, send: noop }, setLeaveGuard: noop, generate: noop,
 }
 
 export const ShellContext = createContext<ShellContextValue>(DEFAULT_SHELL)

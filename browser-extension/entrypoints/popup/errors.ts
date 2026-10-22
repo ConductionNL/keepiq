@@ -39,8 +39,8 @@ export function noticeText(notice: NoticeCode): string {
 	}
 }
 
-/** What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from. */
-export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete'
+/** What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one. */
+export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send'
 
 /** `undefined` is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
@@ -51,7 +51,9 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
 		case 'policy': return i18n.t('writeErrors.policy')
 		case 'account_changed': return i18n.t('writeErrors.accountChanged')
-		case 'invalid': return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
+		case 'invalid':
+			if (context === 'send') return i18n.t('writeErrors.sendInvalid')
+			return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 		case 'conflict':
 			if (context === 'edit') return i18n.t('writeErrors.stale')
 			if (context === 'open') return i18n.t('writeErrors.unmatched')
@@ -63,7 +65,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'restricted': return i18n.t('writeErrors.restricted')
 		case 'view_only': return i18n.t('item.viewOnly')
 		case 'key_mismatch': return i18n.t('writeErrors.keyMismatch')
-		case 'offline': return i18n.t('writeErrors.offline')
+		case 'offline': return context === 'send' ? i18n.t('writeErrors.sendOffline') : i18n.t('writeErrors.offline')
 		case 'server_error': return i18n.t('writeErrors.serverError')
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
 		case 'stale_source': return i18n.t('writeErrors.staleSource')
@@ -76,6 +78,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
 		case 'partner_clock': return i18n.t('writeErrors.partnerClock')
 		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
+		case 'argon2_unavailable': return i18n.t('writeErrors.argon2Unavailable')
 		case 'locked':
 		case 'unknown':
 		default: return i18n.t('errors.unknown')

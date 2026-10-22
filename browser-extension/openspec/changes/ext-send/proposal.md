@@ -1,12 +1,14 @@
 ---
 kind: code
-depends_on: [ext-vault-browse]
+depends_on: [ext-vault-edit, ext-i18n]
 chain:
   - ext-accounts-and-unlock
   - ext-vault-browse
   - ext-vault-edit
+  - ext-i18n
   - ext-generator
   - ext-send
+  - ext-theme
   - ext-settings
   - ext-autofill
 ---
@@ -17,10 +19,10 @@ Bitwarden's Send tab lets a user hand someone a secret through a self-destructin
 
 ## What Changes
 
-- The popup's Send tab gets a "My sends" list fetched from the server, with per-row Copy link and Remove, and an empty state.
-- A "New send" form: type (Text or Credential), content, max views, expiry, optional password, then Create. The result screen shows the link once with a Copy button.
-- "Send from item" in an item's More menu (ext-vault-browse) opens the form prefilled with the item's decrypted username and password as a credential send.
-- Client-side send crypto in the background: AES-256-GCM under a fresh content key, key in the URL fragment or wrapped under an Argon2id-derived key when a password is set. This adds a WASM Argon2id dependency and a `wasm-unsafe-eval` CSP entry to the manifest.
+- The popup's Send tab, a placeholder today, gets a "My sends" list fetched from the server, with per-row Copy link and Remove, and an empty state.
+- A "New send" form: type (Text or Credential), content, max views, expiry, optional password, then Create. The result screen shows the link with a Copy button.
+- "Send" in an item's More menu, in the list row and in the detail, opens the form prefilled with the item's decrypted username and password as a credential send. It shows for login items only and is disabled with the reason for blocked, use-only, expiring shares and offline.
+- Client-side send crypto in the background: AES-256-GCM under a fresh content key, key in the URL fragment or wrapped under an Argon2id-derived key when a password is set. This adds the `hash-wasm` dependency and a `wasm-unsafe-eval` CSP entry to the manifest.
 - Creation works only while unlocked and online. Nothing about a send (plaintext, content key, link fragment) is written to any extension storage.
 
 ## Capabilities
@@ -39,11 +41,12 @@ Bitwarden feature mirrored: the Send tab (list, new send, copy link, delete). De
 - No File send type. Keepiq accepts `payloadType` `text` or `credential` only. Credential is offered as a second type instead.
 - No send name. Keepiq sends have no name field, so each row shows a label derived from type and creation time.
 - Max access count is required, defaults to 1 and is capped at 100. Bitwarden defaults to unlimited; Keepiq refuses unlimited views.
-- One expiry instead of Bitwarden's separate Deletion date and Expiration date. Keepiq has a single TTL, and an expired send is deleted. Bitwarden's presets (1 hour, 1 day, 2, 3, 7, 30 days, custom) are kept; the default is 7 days as in Bitwarden. Keepiq's "no time limit" option is not offered, because Bitwarden has no such option (not forced, see design Open Questions).
-- Copy link works only for sends created in the current popup session. Bitwarden can rebuild a link at any time because it stores the send key in the vault; Keepiq never stores the content key anywhere, so a link that left the popup cannot be recovered. Older rows say "Link no longer available".
+- One expiry instead of Bitwarden's separate Deletion date and Expiration date. Keepiq has a single TTL, and an expired send is deleted by the hourly purge. Bitwarden's presets (1 hour, 1 day, 2, 3, 7, 30 days, custom) are kept with 7 days as default; all fit Keepiq's 30-day cap. Keepiq's "no time limit" is not offered (not forced: Bitwarden has no such option), but sends made that way in the web app are listed as "Never expires".
+- A send without a password has its link only for the popup session it was created in. Keepiq never stores the content key, so a closed popup cannot rebuild the `#k=` fragment; such rows say "Link no longer available". Password sends carry no secret in the link, so their Copy link always works, as in Bitwarden.
 - No Remove password, Disable send, Notes, Hide email or Hide text by default. Keepiq has no such fields and no update endpoint.
 - The send password is hashed with Argon2id, not PBKDF2, because the Keepiq recipient page derives the key that way.
 - The sends list is not part of the vault sync and is not cached on disk. It is fetched from the server per popup session, because Keepiq's offline manifest does not carry sends and a stale list would misreport remaining views.
+- No length limit on the content (not forced). Keepiq sets none, and a body the server refuses comes back as an error.
 
 ## Keepiq API used
 
@@ -51,13 +54,12 @@ Bitwarden feature mirrored: the Send tab (list, new send, copy link, delete). De
 - `POST /api/v1/sends`
 - `DELETE /api/v1/sends/{id}`
 
-The share link points at the web app's public page `<base>/public/send/<token>`; the extension only builds that URL and never calls the public routes.
+The routes and every field used exist since Keepiq 0.1.4 and the path-form recipient link since 0.3.0, both older than `MIN_KEEPIQ_VERSION` 0.3.12, so nothing is gated (ADR-003). The share link points at the web app's public page `<base>/index.php/apps/keepiq/public/send/<token>`; the extension only builds that URL and never calls the public routes.
 
 ## Impact
 
-- New module `src/send/` (crypto, Argon2id wrapper, payload serialisation, expiry presets, API calls, link builder).
-- `src/messages.ts` gains `send.list`, `send.create`, `send.delete` and `send.prefillFromItem`.
-- `entrypoints/background.ts` registers the send handlers. The popup gains React views `SendList`, `NewSend` and `SendCreated` under `entrypoints/popup/views/send/`, components `SendRow`, `ExpirySelect` and `MaxViewsInput`, and a `SendProvider` context with a `useSends` hook (ADR-004). Components talk to the background only through the `send.*` messages.
-- `wxt.config.ts` gains a `content_security_policy` with `'wasm-unsafe-eval'` for Chrome MV3 and the string form for Firefox MV2.
-- New dependency `hash-wasm` (Argon2id entry point about 30 KB minified with the WASM inlined). No new permissions.
-- Depends on ext-vault-browse for the popup shell, the item More menu hook and the API client, crypto helpers and clipboard helper from earlier changes in the chain.
+- New module `src/send/` (crypto, Argon2id wrapper, payload serialisation, expiry presets, API calls, link builder, request handlers).
+- `src/messages.ts` gains `send.list`, `send.create` and `send.delete` on `PopupRequest`, each naming its account, and the write error code `argon2_unavailable`. They are dispatched in `src/background/requests.ts`; `entrypoints/background.ts` is unchanged. The prefill reuses `item.decrypt`.
+- The popup gains views `SendList`, `NewSend` and `SendCreated` under `entrypoints/popup/views/send/`, the component `SendRow` and the hook `useSends` with its `SendProvider`. The provider is mounted inside `Shell`, so send state is dropped on lock and on an account switch, and `views/Placeholder.tsx` goes. The item actions in `shell-context.ts`, `ItemCard.tsx` and `ItemDetail.tsx` gain Send. Every string is in `locales/en.yml` and `locales/nl.yml`.
+- `wxt.config.ts` declares `content_security_policy` with `'wasm-unsafe-eval'` once; WXT writes the MV2 string form for Firefox.
+- New dependency `hash-wasm` 4.12.0 (Argon2id with the WASM inlined, about 11 kB gzipped). No new permissions.

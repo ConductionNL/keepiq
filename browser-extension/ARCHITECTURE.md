@@ -48,6 +48,12 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `store.ts`: the options and the cached policy.
   - `history.ts`: the session history.
   - `queue.ts`: one-at-a-time saves for both.
+- `src/send/`: Keepiq ephemeral sends, byte compatible with the web app (tested against `../tests/vectors/crypto/send.json`). `expiry.ts` and `payload.ts` are safe for the popup; the rest is background-only:
+  - `crypto.ts`: the content key and the AES-256-GCM blobs.
+  - `argon2.ts`: the Argon2id key for a send password, through `hash-wasm`.
+  - `link.ts`: builds the recipient link.
+  - `api.ts`: the send routes.
+  - `handlers.ts`: the `send.*` requests.
 - `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2.
 
 ## Messages
@@ -59,6 +65,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
 | Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
+| Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
 | Content → background | `page_ready` | None |
@@ -122,6 +129,15 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 - **A refused save writes nothing** and keeps the form open; when the reply to the final call is lost, the server wrote everything or nothing. Nothing about a save outlives the request but verified partner certificates, kept in background memory for 5 minutes and forgotten on lock, logout and account switch, and the server's version check orders concurrent saves. The `item.update` reply carries `shareSave` when the item's detail has a note to show.
 - **Every write records** whether the server answered, which drives the same offline flag as sync.
 - **A successful write runs a full sync** and replies after it, waiting for a sync that started earlier.
+
+### Send
+
+- **The popup sends plaintext,** the background encrypts it under a fresh content key, wraps that key under Argon2id when a password is set, posts the send and replies with the row and the link.
+- **Each request names its account,** and is refused when locked or no longer the active account, like a write; a create checks again after Argon2id.
+- **Offline is an outcome:** the background tries the request and answers `offline` when no server answers; the popup disables Create while the account is offline.
+- **Nothing is stored:** the content, the content key and the link live in background memory for the request only. The popup keeps the links of sends without a password in `SendProvider` (`hooks/useSends.tsx`), mounted inside `Shell`, so they go on popup close, lock and account switch.
+- **Password sends** carry no secret in their link, so `send.list` rebuilds it from the row's `token`.
+- **Send from an item** reads the login with `item.decrypt` and opens New send with it.
 
 ### Timeout
 

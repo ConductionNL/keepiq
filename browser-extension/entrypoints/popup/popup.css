@@ -1030,6 +1030,11 @@ a {
 	border-radius: 999px;
 }
 
+.badge--accent {
+	color: var(--accent);
+	background: var(--accent-soft);
+}
+
 /* Menus */
 
 .menu-anchor {
@@ -1799,4 +1804,45 @@ a {
 .radio-group > legend {
 	margin-bottom: 6px;
 	padding: 0;
+}
+
+/* Send */
+
+/* The form card's own gap, for the fields under the type tabs. */
+.stack--tight {
+	gap: 14px;
+}
+
+.send-row__main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 9px 6px 9px 12px;
+}
+
+/* A send's label and dates are its only identity, so they wrap rather than lose their end. */
+.send-row .item__name,
+.send-row .item__sub {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.send-row__tags {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 2px 8px;
+}
+
+.send-row__note {
+	margin-top: 2px;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.item__sub.send-row__expired {
+	font-weight: 600;
+	color: var(--danger);
 }

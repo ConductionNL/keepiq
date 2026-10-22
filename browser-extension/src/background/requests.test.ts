@@ -455,3 +455,35 @@ describe('generator', () => {
 		expect(hits).toEqual([])
 	})
 })
+
+describe('send', () => {
+	const interaction = async () => (await browser.storage.session.get('lastInteractionAt')).lastInteractionAt
+
+	it('routes a send request to the server and counts it as interaction', async () => {
+		await send({ kind: 'settings.get' })
+		const before = await interaction()
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		fetchMock.mockResolvedValue(new Response(JSON.stringify({ revoked: true })))
+		expect(await send({ kind: 'send.delete', accountId, id: 'b9c1' })).toEqual({ ok: true, value: null })
+		expect(String(fetchMock.mock.calls[0]![0])).toBe('https://cloud.example.org/index.php/apps/keepiq/api/v1/sends/b9c1')
+		expect(Number(await interaction())).toBeGreaterThan(Number(before ?? 0))
+	})
+
+	it('routes send.list and send.create to the server', async () => {
+		const row = { id: 'b9c1', token: 'f'.repeat(64), payloadType: 'text', hasPassword: false, maxViews: 1, viewCount: 0, remainingViews: 1, expiresAt: null, createdAt: '2026-10-22T10:00:00+00:00' }
+		fetchMock.mockImplementation(async (_input, init) => new Response(JSON.stringify(init?.method === 'POST' ? row : [row]), { status: init?.method === 'POST' ? 201 : 200 }))
+		expect(await send({ kind: 'send.list', accountId })).toEqual({ ok: true, value: { sends: [row], passwordProtection: true } })
+		const created = await send({ kind: 'send.create', accountId, input: { payloadType: 'text', content: 'hello', maxViews: 1, ttlSeconds: 3600 } })
+		expect(created).toMatchObject({ ok: true, value: { row, link: expect.stringMatching(/\/public\/send\/f{64}#k=[\w-]{43}$/) } })
+		expect(fetchMock.mock.calls.map(([input, init]) => `${init?.method ?? 'GET'} ${String(input)}`)).toEqual([
+			'GET https://cloud.example.org/index.php/apps/keepiq/api/v1/sends',
+			'POST https://cloud.example.org/index.php/apps/keepiq/api/v1/sends',
+		])
+	})
+
+	it('refuses a send request that names no account, or another, without a request', async () => {
+		expect(await send({ kind: 'send.list' } as never)).toEqual({ ok: false, error: { code: 'invalid' } })
+		expect(await send({ kind: 'send.list', accountId: 'another' })).toEqual({ ok: false, error: { code: 'account_changed' } })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})

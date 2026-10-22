@@ -34,7 +34,7 @@ All paths relative to the base URL. All require the Basic auth above unless mark
 | Recipient certificates | `POST /api/v1/shares/recipient-certificates` | `{userIds}`, 1 to 100 distinct (400 outside). `{recipients: [{userId, shareable: true, certificate} \| {userId, shareable: false, reason}]}`. |
 | Partner certificate | `POST /api/v1/federation/recipient-certificate` | `{cloudId}` → `{cloudId, certificate, chain, partnerRootFingerprint}`. Plain controller: 404 `unknown_recipient`, 403 `not_a_partner`, 409 `federation_unavailable`, 502 `partner_unreachable` or `bad_chain` (the partner served the wrong chain shape), the reason only as `message`. 60 per minute per user. |
 | Types | `GET /api/v1/secret-types` | Types are rows, resolve `typeId` from here. |
-| Sends | `POST/GET /api/v1/sends`, `DELETE /api/v1/sends/{id}` | See payload below. |
+| Sends | `POST/GET /api/v1/sends`, `DELETE /api/v1/sends/{id}` | Since 0.1.4, and the path-form recipient link since 0.3.0, so no gate. See payload below. `DELETE` of an unknown or foreign id is a JSON 404. |
 | Public send access | `GET /api/v1/public/sends/{token}`, `POST …/access`, `POST …/confirm`, `POST …/failure` | Public, rate limited 15/min. The extension only needs the create side; the web app renders the recipient page. |
 | User settings | `GET/PUT /api/settings/user` | `session_timeout` (`session`, `10min`, `30min` or empty for admin default), notification toggles, `default_secret_type`, `offline_cache_optin`. |
 | Policy | `GET /api/settings/policy` | Read-only org password policy, a flat object (`SettingsController::getPolicy`, `#[NoAdminRequired]`). The generator reads `policy_enabled` (default false), `generator_min_length` (8 or more, default 12; the extension caps it at 128) and `generator_require_upper`, `_lower`, `_digit` and `_symbol`, all since Keepiq 0.1.4, and `generator_allow_passphrase` (default true) since 0.3.8. Both are older than the minimum, so nothing is gated. |
@@ -92,25 +92,27 @@ Field ciphertext (base64 of):
 - Plaintext is UTF-8, chunked at 446 bytes. Decrypt all chunks, concatenate the bytes, then decode UTF-8 once. Decoding per chunk tears multi-byte characters.
 - An empty string encrypts as one chunk of zero bytes.
 - The salt lives inside the envelope, so the KDF parameters needed for unlock are always available offline once the suite row is cached.
-- Argon2id (64 MiB, 3 iterations, parallelism 1, 32-byte output, 16-byte salt) is used only for password-protected sends and link shares. The web app uses `argon2-browser` (WASM).
+- Argon2id (64 MiB, 3 iterations, parallelism 1, 32-byte output, 16-byte salt) is used only for password-protected sends and link shares. The web app uses `argon2-browser` and the extension `hash-wasm`, both WASM with the same parameters; the password is passed as UTF-8.
 
 ## Ephemeral send payload
 
 ```
 POST /api/v1/sends
 { "encryptedPayload": "<base64>", "payloadType": "text" | "credential",
-  "maxViews": 1..cap, "hasPassword": false, "wrappedKey": null, "argon2idSalt": null }
+  "maxViews": 1..cap, "ttlSeconds": 3600..2592000, "hasPassword": false }
 ```
+
+With a password, `"hasPassword": true` adds `"wrappedKey"` and `"argon2idSalt"`; without one both are left out, not null.
 
 - The payload is AES-256-GCM encrypted client-side under a random content key.
 - Without a password the content key travels in the URL fragment of the share link and never reaches the server.
 - With a password, `wrappedKey` is the content key wrapped under an Argon2id-derived key and `argon2idSalt` is its salt.
-- Optional expiry is `ttlSeconds` (0 or absent means none, cap 2592000 = 30 days), stored as `expiresAt`.
+- Optional expiry is `ttlSeconds` (0 or absent means none, cap 2592000 = 30 days), stored as `expiresAt`. The extension always sends one of at least an hour.
 - `maxViews` cap is 100 (server constant, not exposed by any endpoint). Unlimited views are refused. Five failed password attempts burn the send.
 - Row JSON: `id, token, payloadType, hasPassword, maxViews, viewCount, remainingViews, expiresAt, createdAt`.
 - Content blob layout is base64 of `[12-byte IV][ciphertext || tag]`; `wrappedKey` uses the same layout with the raw content key as plaintext; `argon2idSalt` is base64 of 16 random bytes.
 - Recipient link: `<origin>/index.php/apps/keepiq/public/send/<token>#k=<base64url raw key, unpadded>` when no password; without the fragment when password-protected.
-- The web app's "credential" payload type is free text, not structured JSON. `GET /api/v1/sends` lists the caller's sends; `DELETE` revokes.
+- The "credential" payload type is free text, not structured JSON; the extension sends `Username: …` and `Password: …` on two lines, with English labels. `GET /api/v1/sends` lists the caller's sends, expired ones included until the hourly purge; `DELETE` revokes.
 - The recipient link points at the Keepiq web app's public page. The extension does not render it.
 
 ## Server-side settings that affect the client

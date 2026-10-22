@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 
 /** Test vectors the Keepiq web app's own crypto wrote (`tests/vectors/crypto/` in the app repo). */
-export function vectors(name: 'envelope' | 'fields') {
+export function vectors(name: 'envelope' | 'fields' | 'send') {
 	return JSON.parse(readFileSync(new URL(`../../../tests/vectors/crypto/${name}.json`, import.meta.url), 'utf8'))
 }
 

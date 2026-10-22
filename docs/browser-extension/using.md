@@ -2,7 +2,7 @@
 
 The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
 
-The extension is in development. You can browse, copy, add, edit, delete and generate passwords today; filling in logins, saving them as you sign up, and Send come in later updates (see [Coming next](#coming-next)).
+The extension is in development. You can browse, copy, add, edit, delete, generate passwords and send secrets today; filling in logins and saving them as you sign up come in later updates (see [Coming next](#coming-next)).
 
 ## Getting the extension
 
@@ -87,7 +87,7 @@ Each item has three actions:
 
 - **Launch** opens the item's website in a new tab.
 - **Copy** copies the user name, the password or the current one-time code. Copied values are cleared from the clipboard after 30 seconds.
-- **More** has **View**, **Edit**, **Clone**, **Move to folder** and **Delete**.
+- **More** has **View**, **Edit**, **Clone**, **Move to folder** and **Delete**, and on a login **Send** (see [Send](#send)).
 
 The extension shows a type icon for each item. It does not load website icons, so no site learns which accounts you have.
 
@@ -157,9 +157,24 @@ While adding or editing an item, the button next to **Password** or **Username**
 
 The generator also works while the vault is locked and while you're offline: choose **Generate a password** on the lock screen.
 
+## Send
+
+The **Send** tab shares a secret with anyone through a link that stops working after a number of views or a time. The secret is encrypted in your browser; your server only stores the encrypted text. The recipient opens the link in Keepiq's web page and needs no account.
+
+- **New send:** the **New** button at the top. Choose **Text** for any text, or **Credential** for a user name and password, which the recipient gets as two lines labelled `Username:` and `Password:`.
+- **Max views:** 1 by default, up to 100. The send is deleted after its last view.
+- **Expiry:** 1 hour, 1, 2, 3, 7 or 30 days, or **Custom** hours up to 720 (30 days); 7 days by default.
+- **Access password:** optional. The recipient must type it; after five wrong tries the send is deleted. Share it separately from the link.
+- **Create** shows the link with **Copy link**. Copy it now: a link without a password can't be shown again once you close the extension, since only your browser ever had its key. A password send's link can be copied from the list at any time.
+- **The list** shows your sends, newest first, with the views left and when each expires, including sends made in the web app. An expired send stays listed until Keepiq's hourly cleanup runs.
+- **Remove** asks to confirm, then deletes the send, so its link stops working.
+- **From an item:** **Send** in a login's **More** menu opens a credential send with its user name and password. It is unavailable for an item shared with you for signing in only, a blocked item, a share whose access ends on a date, and while you're offline.
+
+Sending needs the vault unlocked and a connection to your server.
+
 ## Offline
 
-The extension keeps an encrypted copy of your vault in the browser. Without a connection you can still unlock, search, open and copy. The vault shows **Offline** and when it last synced; **Sync now** tries again. Adding, changing and deleting need the connection, so they wait until it is back.
+The extension keeps an encrypted copy of your vault in the browser. Without a connection you can still unlock, search, open and copy. The vault shows **Offline** and when it last synced; **Sync now** tries again. Adding, changing and deleting, and sending, need the connection, so they wait until it is back.
 
 The extension checks your server for changes every 15 minutes while the vault is unlocked, and when you open it after a while. When your master password or vault key changed in Keepiq, the extension locks and asks for your current master password.
 
@@ -179,6 +194,5 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 - **Fill in logins** on websites, and save new logins as you sign up.
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
-- **Send**, as in the web app.
 - **More settings:** the lock delay, a PIN and when the clipboard is cleared.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.
