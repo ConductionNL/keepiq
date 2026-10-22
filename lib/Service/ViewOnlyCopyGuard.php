@@ -26,16 +26,17 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
-use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
- * A copy is view-only for its holder unless they write its source: as its
- * owner or a delegate, or on a team-folder write or manage grade. This is
- * the rule a share-save through a copy is held to.
+ * A copy is view-only for its holder unless they write its source for every
+ * copy, as ShareWriteContext::standingOn() decides it: as its owner or a
+ * delegate, on a team-folder write or manage grade, or as a member of a group
+ * it is shared with in full. This is the rule a sync is authorized on.
  */
 class ViewOnlyCopyGuard {
 	/**
@@ -50,7 +51,7 @@ class ViewOnlyCopyGuard {
 	 *
 	 * @param ShareTargetMapper $targets The share targets (copy to source)
 	 * @param SecretMapper $secrets The secrets
-	 * @param ShareAuthorizationService $auth Owner, delegate and team-folder grade
+	 * @param ShareWriteContext $contexts The holder's standing on the source
 	 *
 	 * @return void
 	 *
@@ -59,7 +60,7 @@ class ViewOnlyCopyGuard {
 	public function __construct(
 		private ShareTargetMapper $targets,
 		private SecretMapper $secrets,
-		private ShareAuthorizationService $auth,
+		private ShareWriteContext $contexts,
 	) {
 	}//end __construct()
 
@@ -98,14 +99,10 @@ class ViewOnlyCopyGuard {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		// The rule a sync is authorized on (resolveSyncWriter()). Not called
-		// through it: the services this guards must not depend on the sync.
-		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
-			return;
-		}
-
-		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
+		// Not through resolveSyncWriter(): the services this guards must not
+		// depend on the sync.
+		$standing = $this->contexts->standingOn(source: $source, userId: $userId);
+		if ($this->contexts->writesForEveryone(standing: $standing) === false) {
 			throw new ViewOnlyCopyException();
 		}
 	}//end assertMayChangeValue()

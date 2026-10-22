@@ -19,7 +19,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
@@ -29,10 +32,12 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -50,6 +55,9 @@ class ViewOnlyCopyGuardTest extends TestCase {
 	private SecretDelegationMapper&MockObject $delegations;
 
 	private TeamFolderService&MockObject $teamFolders;
+
+	/** @var array<int,GroupShare> The group shares of `src`; bob is a member of `admin` */
+	private array $groupShares = [];
 
 	private ViewOnlyCopyGuard $guard;
 
@@ -72,8 +80,12 @@ class ViewOnlyCopyGuardTest extends TestCase {
 
 		$this->targets = $this->createMock(ShareTargetMapper::class);
 		$this->targets->method('findByRecipientSecret')->willReturn($target);
+		$this->targets->method('findBySourceSecretAndTargetUser')->willReturn($target);
+		$copy = $this->copy();
 		$this->secrets = $this->createMock(SecretMapper::class);
-		$this->secrets->method('findById')->willReturn($source);
+		$this->secrets->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'copy' ? $copy : $source)
+		);
 		$this->delegations = $this->createMock(SecretDelegationMapper::class);
 		$this->delegations->method('findActiveBySecretAndUser')->willThrowException(new DoesNotExistException(''));
 		$this->teamFolders = $this->createMock(TeamFolderService::class);
@@ -183,6 +195,63 @@ class ViewOnlyCopyGuardTest extends TestCase {
 	}//end testADelegateMayChangeTheValue()
 
 	/**
+	 * A member of a group the source is shared with in full writes it for
+	 * every copy (sharing-group).
+	 *
+	 * @return void
+	 */
+	public function testAMemberOfAFullLiveGroupShareMayChangeTheValue(): void {
+		$this->groupShares = [$this->groupShare()];
+
+		$this->guard->assertMayChangeValue(row: $this->copy(), fields: ['key'], userId: 'bob');
+		$this->addToAssertionCount(1);
+	}//end testAMemberOfAFullLiveGroupShareMayChangeTheValue()
+
+	/**
+	 * Group shares that give a member no write.
+	 *
+	 * @return array<string,array{0:bool,1:DateTime|null}>
+	 */
+	public static function groupSharesThatOnlyShow(): array {
+		return [
+			'a use-only group share' => [true, null],
+			'an expired group share' => [false, new DateTime('-1 hour')],
+		];
+	}//end groupSharesThatOnlyShow()
+
+	/**
+	 * A member of a use-only or expired group share holds a view-only copy.
+	 *
+	 * @param bool $useOnly Whether the group share is use-only
+	 * @param DateTime|null $expiresAt When the group share expires
+	 *
+	 * @return void
+	 */
+	#[DataProvider('groupSharesThatOnlyShow')]
+	public function testAMemberOfAGroupShareThatOnlyShowsMayNotChangeTheValue(bool $useOnly, ?DateTime $expiresAt): void {
+		$groupShare = $this->groupShare();
+		$groupShare->setUseOnly($useOnly);
+		$groupShare->setExpiresAt($expiresAt);
+		$this->groupShares = [$groupShare];
+
+		$this->expectException(ViewOnlyCopyException::class);
+		$this->guard->assertMayChangeValue(row: $this->copy(), fields: ['key'], userId: 'bob');
+	}//end testAMemberOfAGroupShareThatOnlyShowsMayNotChangeTheValue()
+
+	/**
+	 * A share of `src` with the group `admin`.
+	 *
+	 * @return GroupShare
+	 */
+	private function groupShare(): GroupShare {
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-admin');
+		$groupShare->setSecretId('src');
+		$groupShare->setGroupId('admin');
+		return $groupShare;
+	}//end groupShare()
+
+	/**
 	 * A row that is no copy is its owner's to change.
 	 *
 	 * @return void
@@ -231,15 +300,26 @@ class ViewOnlyCopyGuardTest extends TestCase {
 	 * @return void
 	 */
 	private function buildGuard(): void {
+		$groupShares = $this->createMock(GroupShareMapper::class);
+		$groupShares->method('findBySecret')->willReturnCallback(fn (): array => $this->groupShares);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(
+			static fn (string $userId, string $groupId): bool => ($userId === 'bob' && $groupId === 'admin')
+		);
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$auth = new ShareAuthorizationService(
+			secretMapper: $this->secrets,
+			delegationMapper: $this->delegations,
+			suiteMapper: $suites,
+			teamFolderService: $this->teamFolders,
+			shareTargetMapper: $this->targets,
+			groupShareMapper: $groupShares,
+			groupManager: $groups,
+		);
 		$this->guard = new ViewOnlyCopyGuard(
 			targets: $this->targets,
 			secrets: $this->secrets,
-			auth: new ShareAuthorizationService(
-				secretMapper: $this->secrets,
-				delegationMapper: $this->delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				teamFolderService: $this->teamFolders,
-			),
+			contexts: new ShareWriteContext(targets: $this->targets, suites: $suites, auth: $auth),
 		);
 	}//end buildGuard()
 }//end class
