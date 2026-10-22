@@ -8,7 +8,8 @@
  * never seen by the server: only its ciphertext is ever sent. This is a port
  * of the server's KeyGeneratorService and KeyGeneratorRegexParser with the
  * same options, the same org policy clamp and the same error messages. The
- * browser extension imports it verbatim, as it does `src/totp`.
+ * browser extension has its own TypeScript port, held in step by
+ * `tests/vectors/generator/cases.json`.
  *
  * Pure module: the org policy is passed in, and the random source can be
  * swapped for tests.
