@@ -9,9 +9,9 @@
 
 @e2e exclude No user-sharing UI is built in v0.1; all sharing scenarios require the encrypted secret CRUD surface (itself unbuilt) — covered by integration tests, not Playwright UI flows.
 
-A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, or a recipient who may write the source, updates the secret, the change is written back to all copies. Any other recipient's copy is view-only.
+A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, a delegate or a recipient who holds a write grade on it updates the secret, the change is written back to all copies. Any other recipient's copy is view-only.
 
-Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. Direct shares are always independent of group membership.
+Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding those who don't hold a copy yet. When members leave a group, their group-derived shares are automatically revoked. A direct share is never created or removed by a change in group membership. What its holder may do with their copy does follow membership, though: a holder who is in a group the secret is shared with in full saves for everyone, also when they joined that group after their copy was made. The owner is then told, with nothing to approve (see `sharing-group`).
 
 ## Data Model
 
@@ -191,7 +191,7 @@ The marks MUST come from an endpoint that takes the search term and the user ids
 - WHEN it reaches the endpoint
 - THEN the system MUST refuse it with 400
 ### Requirement: Sync on Update
-When the owner, or a recipient who may write the source, updates a shared secret, the change MUST be propagated to all copies. Any other recipient's copy is view-only (see "View-Only Copies"). A sync names the source secret; one that names a received copy MUST be refused.
+When the owner, a delegate, or a recipient who holds a write grade on it updates a shared secret, the change MUST be propagated to all copies. Any other recipient's copy is view-only (see "View-Only Copies"). A sync names the source secret; one that names a received copy MUST be refused.
 
 #### Scenario: Owner updates shared secret
 - GIVEN a secret is shared with one or more users
@@ -199,12 +199,14 @@ When the owner, or a recipient who may write the source, updates a shared secret
 - THEN the system MUST re-encrypt the updated value for each recipient and write it to their copy
 
 #### Scenario: Recipient updates shared secret
-- GIVEN a secret has been shared with user B, who may write the source, such as with a `write` grade on its team folder
+@e2e tests/e2e/workflows/share-save.spec.ts
+- GIVEN a secret has been shared with user B, who holds a write grade on it: a `write` or `manage` team-folder grade, or membership of a group the secret is shared with in full (not use-only)
 - WHEN user B updates their copy of the secret
 - THEN the system MUST re-encrypt the updated value for the original owner and all other recipients
+- AND a recipient without a write grade MUST NOT be able to change the value of their copy (see "View-Only Copies")
 
 ### Requirement: View-Only Copies
-A received copy is view-only for its holder unless they may write its source: as its owner or a delegate, or with an effective `write` or `manage` grade on a team folder that holds it. A team-folder Viewer (`read`) and a recipient of a direct or group share hold view-only copies. The system MUST refuse a change of the value, login or additional fields of a view-only copy and change nothing, whether it comes through `PUT /api/v1/secrets/{id}`, `POST /api/v1/versions/{id}/restore`, `PUT /api/v1/secrets/{id}/sync` or a fill of a secret request for that copy. A field sent with the value already stored is not a change. The update and the restore MUST answer HTTP 428 with `code` and `error` set to `view_only` and the message "Shared with you to view only. Ask its owner for edit rights to change it." A sync starts from the source, so a sync that names any received copy MUST answer 428 with `error` `forbidden`, whatever the holder's grade. A change of any other field, such as the folder, MUST still save. A suite migration re-seals the copy under its holder's new key with values encrypted in their browser; the server can't tell a re-seal from a new value, so it doesn't check it.
+A received copy is view-only for its holder unless they may write its source: as its owner or a delegate, with an effective `write` or `manage` grade on a team folder that holds it, or as a member of a group the source is shared with through a full group share that has not expired (see `sharing-group`). A team-folder Viewer (`read`), a recipient of a direct share only, and a member of a group whose share is use-only or expired hold view-only copies. The system MUST refuse a change of the value, login or additional fields of a view-only copy and change nothing, whether it comes through `PUT /api/v1/secrets/{id}`, `POST /api/v1/versions/{id}/restore`, `PUT /api/v1/secrets/{id}/sync` or a fill of a secret request for that copy. A field sent with the value already stored is not a change. The update and the restore MUST answer HTTP 428 with `code` and `error` set to `view_only` and the message "Shared with you to view only. Ask its owner for edit rights to change it." A sync starts from the source, so a sync that names any received copy MUST answer 428 with `error` `forbidden`, whatever the holder's grade. A change of any other field, such as the folder, MUST still save. A suite migration re-seals the copy under its holder's new key with values encrypted in their browser; the server can't tell a re-seal from a new value, so it doesn't check it.
 
 The web app MUST read the copy's write-context to tell a view-only copy apart. On a view-only copy it MUST NOT offer Edit, a version restore or asking for new values, MUST say "Shared with you to view only. Ask its owner for edit rights to change it.", and MUST keep moving it to a folder, starring, archiving, tagging and deleting it. Its edit dialog MUST NOT save, so the web app offers no way to change its name or URL either, as on a read-only copy from another organisation. A share-save of a view-only copy MUST be refused in the browser before anything is sent.
 
@@ -236,7 +238,7 @@ Members without an active EncryptionSuite are skipped at expansion time. No erro
 - AND a GroupShare record MUST be created for the secret-group pair
 
 ### Requirement: New Group Member — Owner Notification
-When a new user joins a Nextcloud group that has a GroupShare for one or more secrets, the secret owner MUST be notified for each affected secret and asked to approve adding the new member.
+When a new user joins a Nextcloud group that has a GroupShare for one or more secrets, the secret owner MUST be notified for each affected secret and asked to approve adding the new member, unless the new member already holds a copy of that secret (see below).
 
 This follows the same pattern as the share request mechanism: the owner approves or denies; the system acts on their decision.
 
@@ -246,6 +248,34 @@ Notification content:
 
 On approval: a new SecretShare is created for X (with `group_share_id` set), and X is notified of the new share.
 On denial: no share is created. The GroupShare remains active for future members.
+
+A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share and the owner is not asked to approve anything. When joining lets their copy save for everyone, as `sharing-group` requires from the moment they are in the group, the owner MUST instead get the `group_member_gained_write` notification, without Approve or Deny: "*{X}* joined the group *{G}* and can now change *{secret}* for everyone it is shared with. Revoke their share to stop this." It follows the owner's `notify_security` setting, not `notify_group_shares`. When joining gives them nothing, for example because the group share or their copy is use-only, or when they already save for everyone as a delegate or through a team-folder write grade, the owner MUST NOT be notified. A team-folder write grade that comes through the group just joined counts as already granting too. Another group's share MUST NOT count as already granting, even a full, live one, so when one directory sync or a nested group adds the holder to several shared groups at once, the owner MUST be notified for each of them unless an exemption above applies.
+
+#### Scenario: A copy holder who joins a shared group can now change the secret
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testACopyHolderWhoJoinsASharedGroupLaterSavesForEveryone.
+
+- GIVEN group G has a full GroupShare for a secret owned by A, and A shared the secret directly with X
+- WHEN user X joins group G
+- THEN A MUST receive a `group_member_gained_write` notification saying X can now change the secret for everyone, with no actions
+- AND no second SecretShare MUST be created for X
+
+#### Scenario: A copy holder who already saves through another group joins a second shared group
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testACopyHolderWhoAlreadySavesThroughAnotherGroupTellsTheOwner and ::testACopyHolderAddedToTwoSharedGroupsInOneSyncTellsTheOwnerForEach.
+
+- GIVEN groups G and H both have a full GroupShare for a secret owned by A, and X holds a copy and is in group H
+- WHEN user X joins group G
+- THEN A MUST receive a `group_member_gained_write` notification for group G
+
+#### Scenario: A team-folder writer or delegate who holds a copy joins a shared group
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testATeamFolderWriterWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing, ::testADelegateWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing and ::testATeamFolderReaderWithACopyWhoJoinsASharedGroupTellsTheOwner.
+
+- GIVEN group G has a full GroupShare for a secret owned by A, and X holds a copy and is a delegate of A or holds a team-folder write grade on the secret
+- WHEN user X joins group G
+- THEN A MUST NOT receive a notification
+- AND when X holds only a team-folder read grade instead, A MUST receive the `group_member_gained_write` notification
 
 #### Scenario: New member joins group
 - GIVEN group G has a GroupShare for a secret owned by A
@@ -257,7 +287,7 @@ On denial: no share is created. The GroupShare remains active for future members
 ### Requirement: Member Leaves Group — Auto-Revocation
 When a user leaves a Nextcloud group, all SecretShares for that user originating from a GroupShare for that group MUST be automatically revoked (deleted), along with the encrypted copies in the user's vault.
 
-Direct shares (where `group_share_id` is null) are unaffected — leaving a group does not remove access granted independently of the group.
+Direct shares (where `group_share_id` is null) are not removed: leaving a group does not remove access granted independently of the group, though the holder loses the right to save for everyone that the group gave them (see `sharing-group`).
 
 #### Scenario: Member leaves group
 - GIVEN user Y has a SecretShare for secret S with `group_share_id` referencing GroupShare for group G
@@ -444,7 +474,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - As a user, I want changes I make to a shared secret to be visible to my colleagues immediately
 - As a user, I want to revoke a share when a colleague leaves the team
 - As a user, I want to share a secret with an entire team group so that all current members get access at once
-- As a user, I want to be notified when a new member joins a group I shared a secret with, so that I can decide whether to extend access
+- As a user, I want to be notified when a new member joins a group I shared a secret with, so that I can decide whether to give them a copy
 - As a user, I want shares derived from a group to be automatically cleaned up when a member leaves the group
 - As an administrator, I want to take over management of a secret shared with me so that I can handle sharing when the owner is unavailable
 - As a user, I want to delegate ownership of my secret to a trusted colleague so they can manage sharing on my behalf
@@ -456,8 +486,8 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] The recipient receives an encrypted copy in their own vault
 - [ ] The copy is encrypted with the recipient's public certificate — the sender cannot read it after sharing
 - [ ] The recipient receives a Nextcloud notification when a secret is shared with them
-- [ ] Updates by the owner, or by a recipient who may write the source, propagate to all copies of the shared secret
-- [ ] A recipient who may not write the source cannot change the value of their copy
+- [ ] Updates by the owner, a delegate or a recipient who holds a write grade on it propagate to all copies of the shared secret
+- [ ] A recipient without a write grade cannot change the value of their copy
 - [ ] The original owner can revoke a share at any time
 - [ ] Revoking a share deletes the recipient's copy
 - [ ] Sharing fails with a clear error if the recipient has no EncryptionSuite
@@ -474,7 +504,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] Each group-derived SecretShare references its GroupShare via `group_share_id`
 - [ ] When a new user joins a group, the secret owner receives a notification and must approve before the share is created
 - [ ] When a user leaves a group, all their group-derived SecretShares are automatically revoked
-- [ ] Direct shares (group_share_id = null) are unaffected by group membership changes
+- [ ] Direct shares (group_share_id = null) are not removed by group membership changes
 - [ ] The owner can revoke a GroupShare, cascade-deleting all derived SecretShares
 - [ ] A vault administrator can create a delegation for any secret already shared with them (no owner consent required)
 - [ ] A secret owner can create a delegation for their own secret to any user who already holds a share

@@ -296,7 +296,7 @@ class SecretServiceMachineWriteTest extends TestCase {
 				return new \OCA\Keepiq\Db\AuditEntry();
 			}
 		);
-		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versionService->method('snapshot')->willReturnCallback(
 			function (Secret $preUpdate) use (&$snapshots) {
 				$snapshots[] = $preUpdate;

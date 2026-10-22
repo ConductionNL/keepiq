@@ -24,6 +24,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuditTrail;
+use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Http;
 
 /**
@@ -113,9 +114,10 @@ class ShareSaveHistory {
 
 	/**
 	 * Attribute a copy-editor's save to the writer on the source, whether
-	 * they write on a team-folder grade or as a delegate, naming the holders
-	 * of the copies left out for want of a vault key: the owner for the source
-	 * itself. The owner path has the row's own audit.
+	 * they write on a team-folder grade, as a member of a group it is shared
+	 * with or as a delegate, naming the holders of the copies left out for
+	 * want of a vault key: the owner for the source itself. The owner path
+	 * has the row's own audit.
 	 *
 	 * @param ShareSavePath $path The path, as assertStillWriter() returned it
 	 * @param string $userId The caller
@@ -132,10 +134,7 @@ class ShareSaveHistory {
 			return;
 		}
 
-		$changedFields = 'delegate sync';
-		if ($path->teamWriter === true) {
-			$changedFields = 'team-write sync';
-		}
+		$changedFields = ($path->writesOn ?? ShareSyncService::DELEGATE_WRITE);
 
 		$holders = [];
 		foreach ($skipped as $skip) {

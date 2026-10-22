@@ -138,7 +138,7 @@ class SecretUpdateControllerTest extends TestCase {
 		$mapper->method('findById')->willReturnOnConsecutiveCalls($read, $moved, $moved);
 		$mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnOnConsecutiveCalls(0, 1);
 		$mapper->expects($this->once())->method('update')->with($this->identicalTo($moved))->willReturnArgument(0);
-		$versions = $this->createMock(SecretVersionService::class);
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versions->expects($this->once())->method('snapshot')
 			->with($this->callback(static fn (Secret $before): bool => $before->getKey() === 'SAVED-MEANWHILE'));
 		$service = new SecretService(

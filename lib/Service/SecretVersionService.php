@@ -114,6 +114,55 @@ class SecretVersionService {
 	}//end snapshot()
 
 	/**
+	 * Snapshot a secret's pre-update state when the update is a revision: a
+	 * versioned field changes and the row held a value. A placeholder's first
+	 * fill is not one: there is no earlier value to return to, so the version
+	 * would say "nothing" in the history panel.
+	 *
+	 * @param Secret $preUpdate The secret row BEFORE the head overwrite
+	 * @param Secret $after The row about to be written
+	 * @param string $actorType The actor type (`user`|`application`)
+	 * @param string $actorId The actor id
+	 *
+	 * @return SecretVersion|null The version, or null when the update is no revision
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function snapshotIfChanged(Secret $preUpdate, Secret $after, string $actorType, string $actorId): ?SecretVersion {
+		$hadValues = (string)$preUpdate->getKey() !== ''
+			|| (string)$preUpdate->getLogin() !== ''
+			|| (string)$preUpdate->getAdditionalFields() !== '';
+		if ($hadValues === false || $this->fieldsChanged(before: $preUpdate, after: $after) === false) {
+			return null;
+		}
+
+		return $this->snapshot(preUpdate: $preUpdate, actorType: $actorType, actorId: $actorId);
+	}//end snapshotIfChanged()
+
+	/**
+	 * Whether any versioned field differs between two states of a secret row
+	 * (secret-version-history §2.2). Pure string comparison: ciphertext blobs
+	 * are opaque, nothing is decrypted.
+	 *
+	 * @param Secret $before The pre-mutation clone
+	 * @param Secret $after The mutated row
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 */
+	public function fieldsChanged(Secret $before, Secret $after): bool {
+		return $before->getName() !== $after->getName()
+			|| $before->getUrl() !== $after->getUrl()
+			|| $before->getFolderId() !== $after->getFolderId()
+			|| $before->getTypeId() !== $after->getTypeId()
+			|| $before->getKey() !== $after->getKey()
+			|| $before->getLogin() !== $after->getLogin()
+			|| $before->getAdditionalFields() !== $after->getAdditionalFields();
+	}//end fieldsChanged()
+
+	/**
 	 * List a secret's versions (metadata only), newest first — owner-only;
 	 * an inaccessible secret yields an empty list (no existence oracle).
 	 *

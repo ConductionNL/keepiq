@@ -314,7 +314,7 @@ class SecretServiceTest extends TestCase {
 
 		// versionService is not wired in setUp (it is an optional dependency), so
 		// the snapshot branch would be dead here without an explicit instance.
-		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versionService->expects($this->never())->method('snapshot');
 		$service = $this->serviceWithVersions($versionService);
 
@@ -350,7 +350,7 @@ class SecretServiceTest extends TestCase {
 		$this->mapper->method('findById')->willReturn($filled);
 		$this->mapper->method('update')->willReturnArgument(0);
 
-		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versionService->expects($this->once())->method('snapshot');
 		$service = $this->serviceWithVersions($versionService);
 
@@ -1059,7 +1059,7 @@ class SecretServiceTest extends TestCase {
 		$this->mapper->method('findById')->willReturn($stored);
 		$this->mapper->expects($this->once())->method('advanceVersion')->willReturn(0);
 		$this->mapper->expects($this->never())->method('update');
-		$versions = $this->createMock(SecretVersionService::class);
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versions->expects($this->never())->method('snapshot');
 		$transaction = [];
 		$db = $this->createMock(\OCP\IDBConnection::class);
