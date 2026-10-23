@@ -3,6 +3,8 @@
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Šis noslēpums ir kopīgots ar daudzām partneru organizācijām, tāpēc saglabāšana gaida vaicājumu ierobežojumu un pēc tam turpinās. Neaizveriet šo logu.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Pārāk daudz vaicājumu partneru organizācijām. Nekas netika saglabāts; mēģiniet vēlreiz pēc minūtes.",
         "This version cannot be restored to this secret. Nothing was saved.": "Šo versiju nevar atjaunot šim noslēpumam. Nekas netika saglabāts.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Kopīgots ar jums tikai skatīšanai. Lai to mainītu, lūdziet īpašniekam rediģēšanas tiesības.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Kopīgots ar jums tikai skatīšanai. Nekas netika saglabāts; lai to mainītu, lūdziet īpašniekam rediģēšanas tiesības.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partneru organizācija, ar kuru šis noslēpums ir koplietots, nav sasniedzama ({partners}). Veiciet izmaiņas vēlreiz tiešsaistē, kur varat saglabāt bez viņiem.",
         "Save without them": "Saglabāt bez viņiem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Saglabāts. Saņēmēji partneru organizācijās saņems šīs izmaiņas, kad īpašnieks nākamreiz saglabās šo noslēpumu.",
