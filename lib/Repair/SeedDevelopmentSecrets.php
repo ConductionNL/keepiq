@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Repair;
 
 use DateTime;
+use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
@@ -122,18 +123,6 @@ class SeedDevelopmentSecrets implements IRepairStep {
 			return;
 		}
 
-		$certificate = $suite->getCertificate();
-		$suiteId = $suite->getId();
-
-		$typeIds = $this->resolveTypeIds();
-		if ($typeIds === []) {
-			$output->info('Keepiq: system types not seeded yet, skipping secret seed');
-			return;
-		}
-
-		$workId = $this->createFolder(name: 'Work', parentId: null);
-		$personalId = $this->createFolder(name: 'Personal', parentId: null);
-
 		$secrets = [
 			[
 				'name' => 'GitHub',
@@ -141,7 +130,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'type' => 'login',
 				'key' => 'gh_dev_P@ssw0rd!2024',
 				'login' => 'dev-user',
-				'folder' => $workId,
+				'folder' => 'Work',
 				'favourite' => true,
 				'tags' => ['on call'],
 				'usedDaysAgo' => 0,
@@ -152,7 +141,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'type' => 'api_key',
 				'key' => 'AKIAIOSFODNN7EXAMPLE',
 				'login' => 'dev-access-key',
-				'folder' => $workId,
+				'folder' => 'Work',
 				'favourite' => true,
 				'tags' => ['finance', 'on call'],
 				'usedDaysAgo' => 1,
@@ -190,19 +179,54 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'type' => 'note',
 				'key' => 'Combination: 42-17-89. Door code: 5523#',
 				'login' => null,
-				'folder' => $personalId,
+				'folder' => 'Personal',
 			],
 		];
 
-		$count = 0;
-		foreach ($secrets as $spec) {
-			$this->createSecret(spec: $spec, typeIds: $typeIds, certificate: $certificate, suiteId: $suiteId);
-			$count++;
+		$count = $this->seedSecrets(ownerId: self::DEV_USER_ID, suite: $suite, folderNames: ['Work', 'Personal'], secrets: $secrets);
+		if ($count === 0) {
+			$output->info('Keepiq: system types not seeded yet, skipping secret seed');
+			return;
 		}
 
 		$output->info('Keepiq: seeded ' . $count . ' development secrets in 2 folders');
 		$this->logger->info('Keepiq dev seed: created ' . $count . ' secrets');
 	}//end run()
+
+	/**
+	 * Create root folders and encrypted secrets in a user's vault. Each
+	 * secret spec names its folder by name (or null for the vault root); its
+	 * key and login are encrypted with the suite's certificate.
+	 *
+	 * @param string                           $ownerId     The vault owner
+	 * @param EncryptionSuite                  $suite       The owner's active suite
+	 * @param array<int,string>                $folderNames The root folders to create
+	 * @param array<int,array<string,mixed>>   $secrets     The secret specs
+	 *
+	 * @return int The number of secrets created; 0 when the system types are not seeded yet
+	 *
+	 * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md#requirement-a-demo-vault-holds-only-demo-secrets
+	 */
+	public function seedSecrets(string $ownerId, EncryptionSuite $suite, array $folderNames, array $secrets): int {
+		$typeIds = $this->resolveTypeIds();
+		if ($typeIds === []) {
+			return 0;
+		}
+
+		$folderIds = [];
+		foreach ($folderNames as $name) {
+			$folderIds[$name] = $this->createFolder(name: $name, parentId: null, ownerId: $ownerId);
+		}
+
+		$count = 0;
+		foreach ($secrets as $spec) {
+			$spec['folder'] = ($folderIds[$spec['folder'] ?? ''] ?? null);
+			$this->createSecret(spec: $spec, typeIds: $typeIds, suite: $suite, ownerId: $ownerId);
+			$count++;
+		}
+
+		return $count;
+	}//end seedSecrets()
 
 	/**
 	 * Build a name => id map of the system secret types.
@@ -219,21 +243,22 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	}//end resolveTypeIds()
 
 	/**
-	 * Create a root-level dev folder and return its ID.
+	 * Create a root-level folder and return its ID.
 	 *
 	 * @param string $name The folder name
 	 * @param string|null $parentId The parent folder ID
+	 * @param string $ownerId The vault owner
 	 *
 	 * @return string The created folder ID
 	 */
-	private function createFolder(string $name, ?string $parentId): string {
+	private function createFolder(string $name, ?string $parentId, string $ownerId): string {
 		$now = new DateTime();
 		$folder = new Folder();
 		$folder->setId(Uuid::uuid4()->toString());
 		$folder->setName($name);
 		$folder->setParentId($parentId);
 		$folder->setOwnerType('user');
-		$folder->setOwnerId(self::DEV_USER_ID);
+		$folder->setOwnerId($ownerId);
 		$folder->setCreatedAt($now);
 		$folder->setUpdatedAt($now);
 
@@ -243,16 +268,17 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	}//end createFolder()
 
 	/**
-	 * Create a single encrypted dev secret.
+	 * Create a single encrypted secret.
 	 *
 	 * @param array<string,mixed> $spec The secret specification
 	 * @param array<string,string> $typeIds The system type name => id map
-	 * @param string $certificate The dev user's public certificate PEM
-	 * @param string $suiteId The encryption suite ID
+	 * @param EncryptionSuite $suite The owner's active suite
+	 * @param string $ownerId The vault owner
 	 *
 	 * @return void
 	 */
-	private function createSecret(array $spec, array $typeIds, string $certificate, string $suiteId): void {
+	private function createSecret(array $spec, array $typeIds, EncryptionSuite $suite, string $ownerId): void {
+		$certificate = $suite->getCertificate();
 		$now = new DateTime();
 		$secret = new Secret();
 		$secret->setId(Uuid::uuid4()->toString());
@@ -268,9 +294,9 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		}
 
 		$secret->setAdditionalFields(null);
-		$secret->setEncryptionSuiteId($suiteId);
+		$secret->setEncryptionSuiteId($suite->getId());
 		$secret->setOwnerType('user');
-		$secret->setOwnerId(self::DEV_USER_ID);
+		$secret->setOwnerId($ownerId);
 		$secret->setCreatedAt($now);
 		$secret->setUpdatedAt($now);
 		// Favourites, tags and last used (vault-favourites-tags-and-last-used seed data).
@@ -281,7 +307,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 
 		$this->secretMapper->insert($secret);
 		if (($spec['tags'] ?? []) !== []) {
-			$this->tagMapper?->replaceForSecret($secret->getId(), self::DEV_USER_ID, $spec['tags']);
+			$this->tagMapper?->replaceForSecret($secret->getId(), $ownerId, $spec['tags']);
 		}
 	}//end createSecret()
 }//end class
