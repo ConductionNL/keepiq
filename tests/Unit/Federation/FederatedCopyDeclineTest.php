@@ -79,7 +79,8 @@ class FederatedCopyDeclineTest extends TestCase {
 
 	private Secret $copy;
 
-	private FederatedShare $outbound;
+	/** What Alice's database holds of her share, or null once it is deleted */
+	private ?FederatedShare $outbound;
 
 	/** @var FakeCloudFederationNotification[] */
 	private array $sent = [];
@@ -91,6 +92,9 @@ class FederatedCopyDeclineTest extends TestCase {
 	private array $audit = [];
 
 	private int $pulls = 0;
+
+	/** @var \Closure|null Runs once while the signature of the next request Alice receives is checked */
+	private ?\Closure $meanwhile = null;
 
 	/** @var string|null The verified signer of the incoming request */
 	private ?string $signer = 'cloud.city.example';
@@ -228,6 +232,11 @@ class FederatedCopyDeclineTest extends TestCase {
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
 			function () {
+				if ($this->meanwhile !== null) {
+					$meanwhile = $this->meanwhile;
+					$this->meanwhile = null;
+					$meanwhile();
+				}
 				if ($this->signer === null) {
 					return null;
 				}
@@ -294,9 +303,38 @@ class FederatedCopyDeclineTest extends TestCase {
 	private function alicesProvider(): KeepiqSecretFederationProvider {
 		$shares = $this->createMock(FederatedShareMapper::class);
 		$shares->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => ($id === self::SHARE_ID) ? $this->outbound : throw new DoesNotExistException('none')
+			fn (string $id): FederatedShare => ($this->outbound !== null && $id === self::SHARE_ID) ? clone $this->outbound : throw new DoesNotExistException('none')
 		);
-		$shares->method('update')->willReturnArgument(0);
+		$shares->method('deleteIfPending')->willReturnCallback(
+			function (FederatedShare $row, string $pending): int {
+				if ($this->outbound === null || $this->outbound->getPendingNotification() !== $pending) {
+					return 0;
+				}
+
+				$this->outbound = null;
+				return 1;
+			}
+		);
+		// $this->outbound is what the database holds; a read gets a copy.
+		$shares->method('update')->willReturnCallback(
+			function (FederatedShare $row): FederatedShare {
+				$this->outbound = clone $row;
+				return $row;
+			}
+		);
+		$shares->method('updateIfStatus')->willReturnCallback(
+			function (FederatedShare $row, string $status, string $ending): int {
+				if ($this->outbound === null
+					|| $this->outbound->getStatus() !== $status
+					|| $this->outbound->getPendingNotification() === $ending
+				) {
+					return 0;
+				}
+
+				$this->outbound = clone $row;
+				return 1;
+			}
+		);
 
 		$changes = $this->createMock(FederatedRemoteChangeService::class);
 		$changes->method('senderOf')->willReturn('');
@@ -493,15 +531,139 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->assertSame('', $provider->getFederationIdFromSharedSecret(self::SHARED_SECRET, ['providerId' => 'other']));
 	}
 
-	public function testARevocationOnItsWayStaysARevocation(): void {
+	/**
+	 * The trail says why a revoked share went: the recipient's decline, with
+	 * identifiers only and no local actor.
+	 */
+	private function assertTheDeclineEndedTheRevocation(): void {
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+		$this->assertNull($this->audit[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example'],
+			$this->audit[0]->getMetadata()
+		);
+		$this->assertIdentifiersOnly();
+	}
+
+	/**
+	 * A decline for a share whose revocation is still on its way shows the
+	 * copy is gone, which is what the unshare was for: the revocation
+	 * finishes as a delivered unshare does, and the row goes.
+	 */
+	public function testADeclineFinishesARevocationOnItsWay(): void {
 		$this->outbound->setStatus(FederatedShare::STATUS_REVOKED);
 		$this->outbound->setPendingNotification('SHARE_UNSHARED');
 		$this->signer = 'cloud.partner.example';
 
-		$this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 
-		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
-		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertSame([], $result);
+		$this->assertNull($this->outbound);
+		$this->assertTheDeclineEndedTheRevocation();
+	}
+
+	/**
+	 * Alice revokes while the signature of Bob's decline is checked (a
+	 * partner can stall that check), and the revoke's own unshare fails.
+	 * The decline must not replace the revocation: it finishes it.
+	 */
+	public function testADeclineNeverUndoesARevokeThatLandedMeanwhile(): void {
+		$this->signer = 'cloud.partner.example';
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_REVOKED);
+			$this->outbound->setPendingNotification('SHARE_UNSHARED');
+			$this->outbound->setNotifyAttempts(1);
+		};
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertNull($this->outbound);
+		$this->assertTheDeclineEndedTheRevocation();
+	}
+
+	/**
+	 * The retry job gave an update up while the signature of Bob's decline
+	 * was checked: the decline still counts.
+	 */
+	public function testADeclineStillCountsWhenARetryGaveUpMeanwhile(): void {
+		$this->signer = 'cloud.partner.example';
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_FAILED);
+			$this->outbound->setPendingNotification('SHARE_UPDATED');
+		};
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $this->outbound->getStatus());
+		$this->assertNull($this->outbound->getPendingNotification());
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+	}
+
+	/**
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function suspensions(): array {
+		return [
+			'suspended before the decline' => [false],
+			'the owner suspends while the decline is checked' => [true],
+		];
+	}
+
+	/**
+	 * Only the owner ends a suspension. A decline that made the share
+	 * declined would let Bob's later accept make it live again. The trail
+	 * still tells Alice that Bob's copy is gone.
+	 *
+	 * @dataProvider suspensions
+	 */
+	public function testADeclineLeavesASuspendedShareSuspended(bool $meanwhile): void {
+		$this->signer = 'cloud.partner.example';
+		$suspend = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_SUSPENDED);
+		};
+		if ($meanwhile === true) {
+			$this->meanwhile = $suspend;
+		} else {
+			$suspend();
+		}
+
+		$provider = $this->alicesProvider();
+		$result = $provider->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->outbound->getStatus());
+		$this->assertCount(1, $this->audit);
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
+		$this->assertNull($this->audit[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'kept' => 'suspended'],
+			$this->audit[0]->getMetadata()
+		);
+		$this->assertIdentifiersOnly();
+
+		$this->meanwhile = null;
+		$this->expectException(ShareNotFound::class);
+		$provider->notificationReceived('SHARE_ACCEPTED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+	}
+
+	/**
+	 * A revocation whose retries gave up leaves the share failed with the
+	 * unshare still pending and never retried: a decline finishes it.
+	 */
+	public function testADeclineFinishesARevocationThatGaveUp(): void {
+		$this->outbound->setStatus(FederatedShare::STATUS_FAILED);
+		$this->outbound->setPendingNotification('SHARE_UNSHARED');
+		$this->signer = 'cloud.partner.example';
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertNull($this->outbound);
+		$this->assertTheDeclineEndedTheRevocation();
 	}
 
 	/**

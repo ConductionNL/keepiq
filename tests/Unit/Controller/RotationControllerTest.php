@@ -299,6 +299,23 @@ class RotationControllerTest extends TestCase {
 	}//end testSetExpiryHidesOwnershipBehindTheSameNotFoundBody()
 
 	/**
+	 * A secret that kept moving while its expiry was set answers 409.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryOverASecretThatKeptMovingAnswersConflict(): void {
+		$secret = new \OCA\Keepiq\Db\Secret();
+		$this->secretService->method('setExpiry')
+			->willThrowException(new \OCA\Keepiq\Exception\StaleWriteException(current: $secret));
+
+		$response = $this->controller('alice')->setExpiry(id: 'cc000000-0000-4000-8000-00000000000c');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	}//end testSetExpiryOverASecretThatKeptMovingAnswersConflict()
+
+	/**
 	 * An anonymous caller gets 401 and no write is attempted.
 	 *
 	 * @return void

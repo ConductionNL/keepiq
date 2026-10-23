@@ -62,6 +62,9 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -170,9 +173,11 @@ class UserSharingIntegrationTest extends TestCase {
 			syncService: new ShareSyncService(
 				mapper: $shareTargetMapper,
 				secretMapper: $secretMapper,
-				suiteMapper: $suiteMapper,
 				db: $db,
 				auth: $auth,
+				versionService: $this->createMock(SecretVersionService::class),
+				guards: new ShareSyncGuards(targets: $shareTargetMapper, secrets: $secretMapper, suites: $suiteMapper, auth: $auth),
+				contexts: new ShareWriteContext(targets: $shareTargetMapper, suites: $suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $shareTargetMapper,
@@ -265,6 +270,7 @@ class UserSharingIntegrationTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
 			secretRequestService: null,
 			shareService: $shareService,
 			groupShareMapper: $groupShareMapper,

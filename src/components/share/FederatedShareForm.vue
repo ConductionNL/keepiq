@@ -115,7 +115,10 @@
 <script>
 import { NcButton, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { FederatedCertificateError } from '../../crypto/federatedCertificate.js'
-import { useFederatedShareStore } from '../../store/modules/federatedShare.js'
+import {
+	CloudIdMismatchError,
+	useFederatedShareStore,
+} from '../../store/modules/federatedShare.js'
 import { useSecretStore } from '../../store/modules/secret.js'
 
 export default {
@@ -251,7 +254,7 @@ export default {
 				active: t('keepiq', 'Shared'),
 				suspended: t(
 					'keepiq',
-					'Paused: their certificate or the partnership changed. Revoke it or share again.',
+					'Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.',
 				),
 
 				failed: t(
@@ -276,7 +279,10 @@ export default {
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
 		 */
 		explain(e) {
-			if (e instanceof FederatedCertificateError) {
+			if (
+				e instanceof FederatedCertificateError
+				|| e instanceof CloudIdMismatchError
+			) {
 				return t(
 					'keepiq',
 					'The certificate could not be verified. Nothing was shared.',
@@ -296,6 +302,12 @@ export default {
 				partner_unreachable: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
+				),
+
+				// The owner's server refused the partner's chain before the browser saw it.
+				bad_chain: t(
+					'keepiq',
+					'The certificate could not be verified. Nothing was shared.',
 				),
 
 				delivery_failed: t(

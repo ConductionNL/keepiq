@@ -1,147 +1,168 @@
 # Using the browser extension
 
-The Keepiq extension fills your logins, one-time codes and passkeys from your Keepiq vault, in Chrome, Edge and Firefox. It opens your vault inside the extension with your master password. The server only ever sees encrypted values.
+The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
+
+The extension is in development. You can browse, copy, add, edit and delete today; filling in logins, saving them as you sign up, the generator and Send come in later updates (see [Coming next](#coming-next)).
 
 ## Getting the extension
 
-The store listings for Chrome, Edge and Firefox are not live yet. Until then, download the packages from the [Keepiq releases on GitHub](https://github.com/ConductionNL/keepiq/releases?q=extension-v&expanded=true). Each `extension-v<version>` release carries:
+The extension runs on Chrome and other Chromium browsers, such as Edge and Brave, and on Firefox 109 or later. Your server needs Keepiq 0.3.12 or later; [Supported Keepiq versions](supported-keepiq-versions.md) lists which versions are supported and until when.
 
-- `keepiq-chromium-<version>.zip` for Chrome and Edge. Unzip it, open `chrome://extensions`, switch on developer mode and choose **Load unpacked**.
-- `keepiq-firefox-<version>-amo-signed.xpi` for Firefox, once Firefox Add-ons has signed that version. Open the file in Firefox to install it.
-- `keepiq-firefox-<version>.zip`, the unsigned Firefox package. Firefox only loads it as a temporary add-on, from `about:debugging`.
+It is not in the Chrome Web Store or on Firefox Add-ons yet. Until it is, you build it from the Keepiq source:
 
-Your organisation can also install the extension for you. See [rolling it out](rollout.md).
+1. Install [Node.js](https://nodejs.org). Keepiq is tested with version 24.
+2. In the `browser-extension` folder of the Keepiq repository, run `npm install`, then `npm run build` for Chrome or `npm run build:firefox` for Firefox.
+3. Load the build:
+   - **Chrome:** open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the `.output/chrome-mv3` folder.
+   - **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on…** and pick `.output/firefox-mv2/manifest.json`. Firefox removes a temporary add-on when it restarts.
 
-## Connecting your account
+Pin the Keepiq icon to the toolbar so it is one click away.
 
-1. In Nextcloud, open **Settings → Security** and create an app password for the extension.
-2. Click the Keepiq button in the browser toolbar.
-3. Enter the address of your Nextcloud, your user name and the app password, and choose **Connect**.
+## Adding an account
 
-![The Keepiq popup asks for the server address, the Nextcloud user and an app password](/media/browser-extension/pair.png)
+Before you start, open the Keepiq web app once and set your master password.
 
-You can paste any Nextcloud address, for example one you copied from a Keepiq page: the extension keeps only the server part. It needs an https address, so your app password is never sent in clear. Only a server on your own computer may use http.
+1. Click the Keepiq icon. The extension shows **Add account**.
+2. Enter your **Server URL**. The address of any Nextcloud page works; the extension keeps only the server part.
+3. Enter your Nextcloud **Username**.
+4. Enter an **App password**. Create one in Nextcloud under **Settings**, then **Security**. Once you have entered the server, the form links straight to that page. Never enter your Nextcloud login password here.
+5. Choose **Add account**. The browser asks whether Keepiq may reach your server. Allow it.
 
-You can connect up to five accounts, on one or more servers. Pick the account you want in the bar at the top of the popup.
+The extension checks the details with your server before it stores anything. When something is wrong, it says what:
+
+| Message | What to do |
+| --- | --- |
+| Enter a valid server URL | Check the address you typed. |
+| Use https for this server | The extension only connects over https. |
+| Keepiq needs permission to reach *server* | You declined the browser's question. Choose **Add account** again and allow it. |
+| Could not reach *server* | Check the address and your connection. |
+| *server* does not look like a Nextcloud server | Check the address. |
+| *server* is unavailable right now, try again later | The server had a problem. Try again later. |
+| Wrong username or app password | Check both, or create a new app password. |
+| Keepiq is not installed on *server* | Ask your administrator to install Keepiq. |
+| Keepiq on *server* is too old for this extension | Ask your administrator to update Keepiq to the version the message names. |
+| Open the Keepiq web app once and set a master password, then try again | Set your master password in the web app first. |
+| This account is already added | This user on this server is already in the extension. |
+| Maximum of 5 accounts reached | Log out of an account you no longer need first. |
+
+You can add up to five accounts, on the same server or on different ones. Your Nextcloud security settings list each app password you made. Revoke it there to cut the browser off.
 
 ## Unlocking
 
-Enter your master password and press Enter. **Show** lets you check what you typed. Your master password never leaves the extension.
+Enter your master password and choose **Unlock**. Your master password never leaves the browser, and the extension does not store it.
 
-![The lock screen with the master password field and the Unlock button](/media/browser-extension/unlock.png)
+**Invalid master password** means the password did not open your vault. When you changed your master password in the web app, the extension notices and takes the new one.
 
-<video controls muted playsInline width="380" style={{ maxWidth: '100%' }} src="/media/browser-extension/pair-and-unlock.webm"></video>
+The extension also refuses to unlock when Keepiq on your server is older than it supports, or when your vault key can't be read; the message says so. Ask your administrator in both cases.
 
-Other ways to unlock:
+Does your organisation require two-factor authentication? Then the extension refuses to unlock until you set up a second factor in Nextcloud under **Settings**, then **Security**.
 
-- **A PIN.** In **Settings → This account**, enter your master password and a PIN of at least six characters. After that, the lock screen offers the PIN first. The PIN works until you close the browser, and after five wrong PINs Keepiq asks for your master password again.
-- **Fingerprint or face.** Where your computer supports it, **Settings** offers fingerprint or face unlock.
-- **Without a connection.** When your server cannot be reached, your master password still unlocks the copy of your vault the extension keeps.
+### Locking
 
-The vault locks again after the idle time you choose in **Settings** (1 minute to 4 hours), when your computer locks, or when you press the lock button. When it locks, the popup clears everything it showed.
+The vault locks after 15 minutes without use, and when you restart the browser. Locking forgets your vault key; your vault stays in the browser in encrypted form only, and you unlock it with your master password again.
 
-## The tabs
+To lock straight away, click your avatar at the top right and choose **Lock**, or **Lock all** for every account.
 
-The tabs at the bottom of the popup:
+## Accounts
 
-- **This site** lists the logins for the site you are on. Pick one to fill it in.
-- **Vault** lists all your items. Search, filter by folder or type, and open an item to see, copy, edit, clone, move or send it. Each item shows its type and site, with **Copy** for a password and **Open** for a web address.
-- **Generator** makes passwords, passphrases and usernames.
-- **Send** shares text or a username and password through a link that expires.
-- **Settings** holds your account, autofill and appearance settings.
+Click your avatar at the top right to see your accounts. Each one shows whether it is **Unlocked**, **Locked** or **Logged out**. Click an account to switch to it; the others stay as they are.
 
-The pop-out button opens the popup in its own window, which stays with the site you opened it from.
+- **Lock** forgets the vault key. Your account stays.
+- **Log out** removes the account from the browser, with its vault copy and app password. The extension asks first.
+- **Log out all** removes every account.
 
-![This site shows the one login saved for webmail.example.com](/media/browser-extension/this-site.png)
+When your app password stops working, for example because you revoked it, the account shows **Logged out**. Open it and enter a new app password under **Log in again**. Your settings stay.
 
-### The vault
+## The vault
 
-Search the vault, or filter it by folder or type. Open an item to see its details. **Show** reveals the password, **Copy** copies it.
+The **Vault** tab lists your items alphabetically. Above the list you can narrow it down:
 
-![The Vault tab lists five demo logins, each with Copy and Open](/media/browser-extension/vault.png)
+- **Search** finds items by name or web address.
+- The folder menu shows one folder, or **No folder** for items outside a folder.
+- The type chips show only logins, cards, identities, notes, authenticators or passkeys. **More** has the other types.
 
-![The details of the demo bank login, with its username, password and web address](/media/browser-extension/vault-item.png)
+**Autofill suggestions** at the top lists the items for the site in your current tab. It matches on the site's domain, so `login.example.com` also finds an item saved for `example.com`.
 
-<video controls muted playsInline width="380" style={{ maxWidth: '100%' }} src="/media/browser-extension/vault.webm"></video>
+Each item has three actions:
 
-### The generator
+- **Launch** opens the item's website in a new tab.
+- **Copy** copies the user name, the password or the current one-time code. Copied values are cleared from the clipboard after 30 seconds.
+- **More** has **View**, **Edit**, **Clone**, **Move to folder** and **Delete**.
 
-Pick a password, a passphrase or a username. Set the length and the characters you want. **Regenerate** makes a new one, **Copy** copies it.
+The extension shows a type icon for each item. It does not load website icons, so no site learns which accounts you have.
 
-![The generator shows a 14 character password and its options](/media/browser-extension/generator.png)
+### Opening an item
 
-![The generator shows a passphrase of words joined by dashes](/media/browser-extension/generator-passphrase.png)
+Click an item to see its details. Passwords and other secret fields are hidden; the eye button shows them and the copy button copies them. An item shared with you as use-only shows only its user name and website. The back arrow takes you to the list as you left it.
 
-<video controls muted playsInline width="380" style={{ maxWidth: '100%' }} src="/media/browser-extension/generator.webm"></video>
+An authenticator item shows its current code and counts down to the next one.
 
-## Filling logins
+A **blocked** item cannot be opened. Its key was revoked or compromised. The item says why and links to the web app, where you can see what to do.
 
-Open the popup on a login page and pick a login under **This site**. Keepiq fills it only in the parts of the page that belong to that site, not in an advert or a frame from somewhere else.
+### Adding an item
 
-You can also:
+**New** at the top of the vault, next to the pop-out button, opens a new item. It starts with the type you chose as your default in Keepiq, or **Login**, and with the address of the site in your current tab. Pick a type, give the item a name and fill in what you need: a login has a user name and password, a card and an identity have their own fields, and an authenticator takes the setup key or `otpauth://` link the site gave you. **Additional fields** holds anything else, such as a PIN, and **Notes** holds free text. **Save** opens the new item.
 
-- right-click a form field and choose **Fill a login with Keepiq**;
-- press **Ctrl+Shift+L** (**Command+Shift+L** on a Mac). You can change the shortcut in your browser's extension settings.
+Passkeys are not added here; they are made when you sign up on a website with one.
 
-When the site has one login, it fills at once. When it has several, or the vault is locked, the popup opens so you can choose. When a login was saved for a secure (https) site and the page is not secure, Keepiq asks before it fills.
+### Editing an item
 
-After a login, Keepiq fills the one-time code on the next step when it can, or copies it for you to paste.
+**Edit** on an item, or in its **More** menu, opens it with the values from your server, not from the copy in your browser, so nothing someone else changed meanwhile is lost. Only what you changed is saved. When the item was changed elsewhere while you were editing, the extension says so and keeps what you typed; go back and edit it again.
 
-![A demo webmail sign-in page with the email address and password filled in by Keepiq](/media/browser-extension/fill-filled.png)
+**Clone** opens a new item with the same values and " - Clone" after the name. **Move to folder** moves the item without opening it. Leaving a form with changes asks whether to discard them; closing the extension drops them.
 
-<video controls muted playsInline width="640" style={{ maxWidth: '100%' }} src="/media/browser-extension/fill.webm"></video>
+A passkey item only lets you change its name, folder and website.
 
-## Saving logins
+An item someone shared with you keeps the limits they set. One shared for signing in only shows its user name but never its password or fields, and can't be edited, cloned or moved. One shared from another organisation can only be moved, one shared to view only can't be edited, and one whose access ends on a date can't be cloned.
 
-When you sign in with a login Keepiq does not know, a bar asks whether to save it. You can save it, choose **Not now**, or choose **Never for this site**. When you change a password, Keepiq offers to update the saved login. The bar comes back on the next page of the same site if the login page moves you on.
+When you change the password, user name or fields of an item you own and shared, the extension saves it for everyone it is shared with in one go, directly, through a group or team folder, or at a partner organisation, before it says **Item saved**. Either everyone gets the change or nothing is saved: when a save fails, the form stays open with your change and the reason, and you save again. A new name, website or folder stays your own.
 
-![After signing in to a demo forum, a bar asks whether to save the login in Keepiq](/media/browser-extension/save-prompt.png)
+- **Team editor or delegate:** when you edit an item through a team folder where you may write, or as the owner's delegate, the owner's item and the copies in your own organisation are updated too. Recipients at a partner organisation get it with the owner's next save, and the item says so.
+- **Partner organisation can't be reached:** nothing is saved, and the form names the recipients there. **Save without them** saves anyway and pauses sharing with them until the item is shared with them again, and the item says so.
+- **Partner certificate can't be verified, or their organisation no longer accepts the share:** sharing with them is paused, the save goes through, and the item says so; the Keepiq web app shows the share.
+- **Partner certificate isn't valid by your computer's clock:** nothing is saved and nothing is paused, since your clock may be wrong; check your computer's date and time, or make the change in the Keepiq web app.
+- **Your server can't share with partner organisations:** an item shared with one can't be saved in the extension; ask your administrator.
+- **Part of the item the form doesn't show:** for an item shared with a partner organisation, such as a card with a detail the form has no field for, the extension can't confirm they would get the item exactly as you saw it, so nothing is saved; make the change in the Keepiq web app.
+- **Shared with you to view only:** Edit is unavailable on the item, with the reason; from the list's More menu it opens and says why. You can still clone the item or move it to one of your folders. That holds for a direct share, a group share and a team folder where you're a Viewer.
 
-![The bar confirms the login was saved to Keepiq](/media/browser-extension/save-done.png)
+### Deleting an item
 
-<video controls muted playsInline width="640" style={{ maxWidth: '100%' }} src="/media/browser-extension/save-prompt.webm"></video>
+**Delete**, the red trash can at the bottom right of an item, asks first, then moves the item to Keepiq's trash, which also stops sharing it. You can restore it from the trash in the Keepiq web app until your organisation's retention ends, 30 days unless an admin changed it; after that it is gone for good.
 
-From the popup you can also pick the folder a new login goes into. **Settings → Autofill** switches the save and update offers off, and lists the sites you said never to.
+### Folders
 
-## Passkeys
+Open **Settings**, **Vault**, **Folders** to add, rename and delete folders. Folders can hold folders; **Add folder** in a folder's menu makes one inside it. A folder name cannot contain `/`. You can also add a folder while choosing one for an item.
 
-When a website offers to create a passkey, Keepiq asks whether to store it in your vault. Choose **Allow**. The next time you sign in on that site, Keepiq asks again and signs you in with the passkey. The passkey's private key stays in the extension: the popup never shows it.
+Deleting a folder that holds items asks whether to delete them too or move them to the folder above. The count it shows includes archived items and items in the trash, which go the same way. A folder with folders inside asks, for each of them, whether to keep it (it moves up a level), move its items up, or delete it.
 
-![Keepiq asks whether to create and store a passkey for passkeys.example.com](/media/browser-extension/passkey-consent.png)
+Folder names are not encrypted in Keepiq, so pick names you don't mind your server seeing.
 
-![The demo page says you are signed in with your passkey](/media/browser-extension/passkey-signed-in.png)
+### Pop out
 
-<video controls muted playsInline width="640" style={{ maxWidth: '100%' }} src="/media/browser-extension/passkey.webm"></video>
+The pop-out button at the top opens the extension in its own window, which stays open while you work in the browser. Suggestions keep following the tab you opened it from.
 
-## Copying
+## Offline
 
-Everything you copy from the extension is cleared from the clipboard after 30 seconds, also when the popup has closed. Change the delay in **Settings → Autofill**, or switch it off.
+The extension keeps an encrypted copy of your vault in the browser. Without a connection you can still unlock, search, open and copy. The vault shows **Offline** and when it last synced; **Sync now** tries again. Adding, changing and deleting need the connection, so they wait until it is back.
 
-## Sends
+The extension checks your server for changes every 15 minutes while the vault is unlocked, and when you open it after a while. When your master password or vault key changed in Keepiq, the extension locks and asks for your current master password.
 
-A send shares text, or a username and password, through a link. Choose how often it may be opened and when it expires. With an optional password, share the password another way: the link alone then cannot open it. **My sends** shows each send with how often it was opened, when it expires and whether it has a password. **End** stops a link working. You need a connection to make a send.
+## Theme
 
-![The Send tab with a short text, opened once and expiring after one hour](/media/browser-extension/send-form.png)
+The extension follows your browser's light or dark setting, which on most browsers follows your computer's. To pick one yourself, open **Settings**, **Appearance** and choose **Light** or **Dark** under **Theme**; **System default** follows the browser again. The choice applies to every account and stays when you log out.
 
-![The new link, with Copy link, and the send listed under My sends](/media/browser-extension/send-link.png)
+## Language
 
-<video controls muted playsInline width="380" style={{ maxWidth: '100%' }} src="/media/browser-extension/send.webm"></video>
+The extension speaks your browser's language. It is available in English and Dutch; in any other language it uses English. To change it, change your browser's language. Item names, folder names and item types come from your vault and stay as they are.
 
-## Without a connection
+## Privacy
 
-The extension keeps an encrypted copy of your vault, updated every 15 minutes while it is unlocked and after every change you make. When your server cannot be reached, you can still unlock, browse and fill from that copy. Changes, folders and sends need the connection back.
+The extension talks to your own Nextcloud and sends nothing to Conduction. It has no analytics. The [browser extension privacy policy](privacy.md) lists what it sends where and what it keeps in your browser.
 
-## Signed out
+## Coming next
 
-When Keepiq refuses your app password, because it was revoked or changed in Nextcloud, the extension signs the account out and deletes what it kept of it. Create a new app password in Nextcloud and enter it in the popup to sign in again. **Settings → This account** can also log out on purpose, which deletes the app password in Nextcloud. **Disconnect** removes the account from the extension.
-
-## Settings
-
-- **This account:** the idle lock time, a PIN, fingerprint or face unlock, log out, lock all accounts, log out of all accounts, disconnect.
-- **Autofill:** the save and update offers, password suggestions in sign-up fields, the sites never to save on, the clipboard delay, and the keyboard shortcut.
-- **New items:** the type a new item starts with.
-- **Appearance:** light, dark, or the same as your system.
-- **Keepiq on the web:** import and export, notifications and your master password are managed in Keepiq on your Nextcloud.
-- **About:** the version of the extension and of Keepiq on your server, and the third-party notices.
-
-See also [the permissions the extension asks for](permissions.md) and [the privacy policy](privacy.md).
+- **Fill in logins** on websites, and save new logins as you sign up.
+- **Passkeys.** Sign in to websites with the passkeys in your vault.
+- **Generator and Send**, as in the web app.
+- **More settings:** the lock delay, a PIN and when the clipboard is cleared.
+- **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

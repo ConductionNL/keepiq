@@ -301,6 +301,8 @@ class FederatedShareAcceptTest extends TestCase {
 		$source = new Secret();
 		$source->setId('src');
 		$source->setName('Supplier portal');
+		$source->setOwnerType('user');
+		$source->setOwnerId('alice');
 		$source->setKey('ALICE-OWN-CIPHERTEXT');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);

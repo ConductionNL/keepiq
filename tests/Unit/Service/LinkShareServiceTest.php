@@ -628,13 +628,13 @@ class LinkShareServiceTest extends TestCase {
 	}//end testDeleteBySecretIdCascades()
 
 	/**
-	 * Test deleteByUserId cascades to the mapper.
+	 * Test deleteMadeBy cascades to the mapper.
 	 *
 	 * @return void
 	 */
-	public function testDeleteByUserIdCascades(): void {
-		$this->mapper->expects($this->once())->method('deleteByUserId')->with('alice');
+	public function testDeleteMadeByCascades(): void {
+		$this->mapper->expects($this->once())->method('deleteMadeBy')->with('alice');
 
-		$this->service->deleteByUserId('alice');
-	}//end testDeleteByUserIdCascades()
+		$this->service->deleteMadeBy('alice');
+	}//end testDeleteMadeByCascades()
 }//end class

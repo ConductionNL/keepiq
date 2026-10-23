@@ -1,0 +1,207 @@
+import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, type AccountRecord } from '@/src/accounts/store'
+import { scheduleClipboardClear } from '@/src/clipboard'
+import { rsaDecrypt } from '@/src/crypto'
+import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
+import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
+import { getKey, LAST_TAB_KEY, sessionValues } from '@/src/vault/key-store'
+import { suggestionIds } from '@/src/vault/match'
+import { readSnapshot, toItemMeta } from '@/src/vault/store'
+import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
+import { isStale, sync, syncStatus } from '@/src/vault/sync'
+import { cancelPopout, enforce, expectPopout, touch } from '@/src/vault/timeout'
+import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, itemEditable, renameFolder, updateItem } from '@/src/vault/write'
+
+const TABS: readonly PopupTab[] = ['vault', 'generator', 'send', 'settings']
+
+/** Vault unless another tab was left open in this browser session. */
+export async function readLastTab(): Promise<PopupTab> {
+	const tab = await sessionValues.get(LAST_TAB_KEY)
+	return TABS.includes(tab as PopupTab) ? tab as PopupTab : 'vault'
+}
+
+async function activeAccount(): Promise<{ account: AccountRecord; status: AccountStatus } | null> {
+	const id = await getActiveAccountId()
+	const account = id ? await getAccount(id) : undefined
+	return account ? { account, status: await accountStatus(account) } : null
+}
+
+async function activeUnlocked(): Promise<AccountRecord | null> {
+	const active = await activeAccount()
+	return active?.status === 'unlocked' ? active.account : null
+}
+
+async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<VaultSnapshotReply> {
+	const active = await activeAccount()
+	if (active?.status !== 'unlocked') return { state: active?.status === 'locked' ? 'locked' : 'logged_out' }
+	const { account } = active
+	const cached = await readSnapshot(account.id)
+	// Only on open: re-reads after `vault.changed` must not retry a failed sync in a loop.
+	// Started before the status is read, so the popup sees `syncing` and waits for `vault.changed`.
+	if (opened && !cached) void sync(account.id, 'full')
+	else if (opened && await isStale(account.id)) void sync(account.id, 'probe')
+	const items = cached?.secrets.map(toItemMeta) ?? null
+	return {
+		state: 'unlocked',
+		items,
+		folders: cached?.folders.map(({ id, name, parentId }) => ({ id, name, parentId })) ?? [],
+		types: cached?.types.map(({ id, name, label }) => ({ id, name, label: typeof label === 'string' && label ? label : name })) ?? [],
+		suggestionIds: suggestionIds(items ?? [], tabUrl),
+		sync: await syncStatus(account.id),
+		webAppUrl: `${account.serverUrl}/index.php/apps/keepiq/`,
+		defaultSecretType: cached?.defaultSecretType ?? null,
+		folderNoticeDismissed: (await browser.storage.local.get(folderNoticeKey(account.id)))[folderNoticeKey(account.id)] === true,
+	}
+}
+
+/** Rows by id, built once per snapshot object rather than per decrypt batch. */
+const indexes = new WeakMap<VaultSnapshot, Map<string, StoredSecretRow>>()
+
+function rowsById(snapshot: VaultSnapshot | undefined): Map<string, StoredSecretRow> {
+	if (!snapshot) return new Map()
+	let index = indexes.get(snapshot)
+	if (!index) {
+		index = new Map(snapshot.secrets.map((row) => [row.id, row]))
+		indexes.set(snapshot, index)
+	}
+	return index
+}
+
+type RowFailure = 'blocked' | 'use_only' | 'decrypt_failed'
+
+async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promise<DecryptReply> {
+	const account = await activeUnlocked()
+	const key = account ? await getKey(account.id) : null
+	if (!account || !key) return { ok: false, error: 'locked' }
+	const rows = rowsById(await readSnapshot(account.id))
+	const results = await Promise.all(ids.map(async (id): Promise<[string, DecryptedItem | RowFailure] | null> => {
+		const row = rows.get(id)
+		if (!row) return null
+		if (row.blocked) return [id, 'blocked']
+		if (row.useOnly === true && fields.some((field) => !USE_ONLY_FIELDS.includes(field))) return [id, 'use_only']
+		try {
+			const item: DecryptedItem = {}
+			for (const field of fields) {
+				const ciphertext = row[field]
+				if (typeof ciphertext === 'string') item[field] = await rsaDecrypt(ciphertext, key)
+			}
+			return [id, item]
+		} catch (error) {
+			console.error('[keepiq] decrypt failed for', id, error)
+			return [id, 'decrypt_failed']
+		}
+	}))
+	const items: Record<string, DecryptedItem> = {}
+	let failure: RowFailure | null = null
+	for (const [id, result] of results.filter((r) => r !== null)) {
+		if (typeof result === 'string') failure = result
+		else items[id] = result
+	}
+	// One bad row must not blank the rest of a batch.
+	return ids.length === 1 && failure ? { ok: false, error: failure } : { ok: true, items }
+}
+
+async function popout(tabId: number | undefined): Promise<null> {
+	const query = new URLSearchParams({ popout: '1' })
+	if (tabId !== undefined) query.set('tabId', String(tabId))
+	// The toolbar popup closes before the window connects; that gap is not "popup closed".
+	expectPopout()
+	try {
+		await browser.windows.create({ type: 'popup', width: 380, height: 630, url: browser.runtime.getURL(`/popup.html?${query}`) })
+	} catch (error) {
+		cancelPopout()
+		throw error
+	}
+	return null
+}
+
+async function perform(message: PopupRequest): Promise<PopupReplies[PopupRequest['kind']]> {
+	switch (message.kind) {
+		case 'vault.sync': {
+			const account = await activeUnlocked()
+			return account ? sync(account.id, 'full') : { syncing: false, syncedAt: null, offline: false, lastError: null }
+		}
+		case 'vault.snapshot':
+			return snapshot(message.tabUrl, message.opened === true)
+		case 'item.decrypt':
+			return decrypt(message.ids, message.fields)
+		case 'clipboard.copied': {
+			const accountId = await getActiveAccountId()
+			if (accountId) await scheduleClipboardClear(accountId)
+			return null
+		}
+		case 'popup.popout':
+			return popout(message.tabId)
+		case 'popup.lastTab.set':
+			if (TABS.includes(message.tab)) await sessionValues.set({ [LAST_TAB_KEY]: message.tab })
+			return null
+		case 'settings.get':
+			return readGlobalSettings()
+		case 'settings.set':
+			return updateGlobalSettings(message.patch)
+		default:
+			return performWrite(message)
+	}
+}
+
+const isString = (value: unknown): value is string => typeof value === 'string'
+const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString)
+
+/** A write without the account it was meant for is refused, so a stale window never writes elsewhere. */
+async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrite['kind']]> {
+	const accountId = message.accountId
+	if (typeof accountId !== 'string') return message.kind === 'folder.dismissNotice' ? null : { ok: false, error: { code: 'invalid' } }
+	switch (message.kind) {
+		case 'item.fetch':
+			return fetchItem(message.id, message.purpose === 'clone' ? 'clone' : 'edit', accountId)
+		case 'item.create':
+			return createItem(message.draft, accountId)
+		case 'item.update':
+			return updateItem(message.id, message.patch ?? {}, message.baseUpdatedAt, accountId, isString(message.recordId) ? message.recordId : undefined,
+				isStrings(message.withoutUnreachable) ? message.withoutUnreachable : undefined)
+		case 'item.delete':
+			return deleteItem(message.id, accountId)
+		case 'item.editable':
+			return itemEditable(message.id, accountId)
+		case 'folder.create':
+			return createFolder(message.name, message.parentId ?? null, accountId)
+		case 'folder.rename':
+			return renameFolder(message.id, message.name, accountId)
+		case 'folder.children':
+			return folderChildren(message.id, accountId)
+		case 'folder.delete':
+			return deleteFolder(message.id, message.plan ?? { mode: 'plain' }, accountId)
+		case 'folder.dismissNotice': {
+			const account = await activeUnlocked()
+			if (account?.id === accountId) await browser.storage.local.set({ [folderNoticeKey(account.id)]: true })
+			return null
+		}
+	}
+}
+
+/** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
+function isInteraction(message: PopupRequest): boolean {
+	// Every popup reads it on open, which `vault.status` already counts.
+	if (message.kind === 'settings.get') return false
+	if (message.kind === 'vault.snapshot') return message.opened === true
+	if (message.kind === 'item.decrypt') return message.passive !== true
+	return true
+}
+
+/** Like account messages, the timeout is enforced first so a sleeping worker can't serve a vault that should be locked. */
+export async function handlePopupRequest(message: PopupRequest): Promise<unknown> {
+	try {
+		await enforce()
+		if (isInteraction(message)) await touch()
+		return await perform(message)
+	} catch (error) {
+		console.error('[keepiq]', message.kind, error)
+		return undefined
+	}
+}
+
+/** The `vault-sync` alarm: a cheap probe for the active account, after the timeout had its say. */
+export async function syncOnAlarm(): Promise<void> {
+	await enforce()
+	const account = await activeUnlocked()
+	if (account) await sync(account.id, 'probe')
+}

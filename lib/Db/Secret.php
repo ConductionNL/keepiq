@@ -33,6 +33,10 @@ use OCP\AppFramework\Db\Entity;
 /**
  * Entity representing a secret.
  *
+ * The getId() tag restates the real method's type: psalm reads an inherited
+ * tag before a real method, and Entity tags getId() as int.
+ *
+ * @method string getId()
  * @method string getName()
  * @method void setName(string $name)
  * @method string|null getUrl()

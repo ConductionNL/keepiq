@@ -23,7 +23,7 @@ The system MUST let an administrator, after Nextcloud password confirmation, add
 
 ### Requirement: Certificate lookup is signed, allowlisted and verified in the browser
 
-The system MUST fetch a federated recipient's certificate only from an outbound partner, as a signed OCM request. A partner MUST answer only signed requests from its own inbound partners about users who allow receiving from other organisations, and MUST answer every other case as for an unknown user. The owner's browser MUST refuse a certificate whose chain does not end at the pinned partner root or whose common name is not the recipient's cloud id, and MUST show the certificate fingerprint before encrypting.
+The system MUST fetch a federated recipient's certificate only from an outbound partner, as a signed OCM request. A partner MUST answer only signed requests from its own inbound partners about users who allow receiving from other organisations, and MUST answer every other case as for an unknown user. The owner's browser MUST refuse a lookup answer for another cloud id than the one asked for, after applying the server's normalisation of backslashes, `/index.php` and trailing slashes to the requested id and ignoring the scheme and the host's case on both sides. It MUST refuse a certificate whose chain does not end at the pinned partner root, whose intermediate is self-issued, whose recipient certificate is marked as a CA, or whose common name is not the recipient's cloud id, ignoring only the scheme, a trailing slash and the host's case, and MUST show the certificate fingerprint before encrypting. The pinned root reaches the browser in the owner's own server's answer, so the browser trusts its own server: that server holds the data and serves the web app, so a pin it can't change would not protect against it.
 
 #### Scenario: A verified remote certificate
 
@@ -34,6 +34,18 @@ The system MUST fetch a federated recipient's certificate only from an outbound 
 #### Scenario: A certificate from another root is refused
 
 - **GIVEN** a lookup answer whose chain ends at a root other than the pinned one
+- **WHEN** the browser checks it
+- **THEN** the share dialog MUST refuse to encrypt and say the certificate could not be verified
+
+#### Scenario: An answer for another account is refused
+
+- **GIVEN** the owner enters `bob@cloud.partner.example`
+- **WHEN** the lookup answers with a verifying certificate for `mallory@cloud.partner.example`
+- **THEN** the share dialog MUST refuse to encrypt and say the certificate could not be verified
+
+#### Scenario: A CA certificate as the recipient's is refused
+
+- **GIVEN** a lookup answer whose chain ends at the pinned root and whose recipient certificate names Bob but is marked `cA=TRUE`
 - **WHEN** the browser checks it
 - **THEN** the share dialog MUST refuse to encrypt and say the certificate could not be verified
 
@@ -62,7 +74,7 @@ The owner's browser MUST encrypt the value, login and additional fields for the 
 
 ### Requirement: Owner updates reach the remote copy and revocation removes it
 
-When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, or whose recipient certificate no longer verifies, MUST be suspended and shown to the owner.
+When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner.
 
 #### Scenario: A password change reaches Bob
 

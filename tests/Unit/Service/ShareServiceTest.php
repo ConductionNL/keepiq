@@ -34,9 +34,13 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -133,12 +137,16 @@ class ShareServiceTest extends TestCase {
 	 *
 	 * @param LoggerInterface|null $logger The logger
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (grade resolution)
+	 * @param ShareAuditTrail|null $auditTrail The sync's audit trail
+	 * @param SecretVersionService|null $versionService The sync's version history
 	 *
 	 * @return ShareService
 	 */
 	private function wireService(
 		?LoggerInterface $logger = null,
 		?TeamFolderService $teamFolderService = null,
+		?ShareAuditTrail $auditTrail = null,
+		?SecretVersionService $versionService = null,
 	): ShareService {
 		$logger ??= $this->createMock(originalClassName: LoggerInterface::class);
 
@@ -169,9 +177,12 @@ class ShareServiceTest extends TestCase {
 			syncService: new ShareSyncService(
 				mapper: $this->mapper,
 				secretMapper: $this->secretMapper,
-				suiteMapper: $this->suiteMapper,
 				db: $this->db,
 				auth: $auth,
+				auditTrail: $auditTrail,
+				versionService: ($versionService ?? $this->createMock(SecretVersionService::class)),
+				guards: new ShareSyncGuards(targets: $this->mapper, secrets: $this->secretMapper, suites: $this->suiteMapper, auth: $auth),
+				contexts: new ShareWriteContext(targets: $this->mapper, suites: $this->suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->mapper,
@@ -614,6 +625,11 @@ class ShareServiceTest extends TestCase {
 		$row2->setSecretId('copy-2');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row1, $row2]);
 
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with('src-1', $this->callback(
+				static fn (DateTime $base): bool => $base->getTimestamp() === (new DateTime('2026-01-01T00:00:00+00:00'))->getTimestamp()
+			))
+			->willReturn(1);
 		$this->secretMapper->expects($this->exactly(2))->method('update');
 
 		$written = $this->service->syncUpdate(
@@ -629,6 +645,78 @@ class ShareServiceTest extends TestCase {
 		$this->assertSame(2, $written);
 		$this->assertNull($copy1->getPossiblyCompromisedAt());
 	}//end testSyncUpdateWritesEveryCopyAndClearsCompromise()
+
+	/**
+	 * The old sync route keeps its own transaction around the copy writes.
+	 *
+	 * @return void
+	 */
+	public function testSyncUpdateCommitsItsCopiesInOneTransaction(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('commit');
+		$this->db->expects($this->never())->method('rollBack');
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'alice'
+		);
+	}//end testSyncUpdateCommitsItsCopiesInOneTransaction()
+
+	/**
+	 * The copy writes a share-save runs inside its own transaction open none,
+	 * stamp every row with the save's version and rotate the source's key age.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$this->db->expects($this->never())->method('beginTransaction');
+		$sync = new ShareSyncService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			db: $this->db,
+			auth: $this->createMock(ShareAuthorizationService::class),
+			versionService: $this->createMock(SecretVersionService::class),
+			guards: $this->createMock(ShareSyncGuards::class),
+			contexts: $this->createMock(ShareWriteContext::class),
+		);
+		$at = new DateTime('2026-10-13T12:00:00+00:00');
+
+		$written = $sync->writeCopyBlobs(
+			source: $source,
+			updates: [
+				['secretId' => 'src-1', 'key' => 'enc-src'],
+				['secretId' => 'copy-1', 'key' => 'enc-1', 'login' => null],
+				['secretId' => 'stranger', 'key' => 'enc-x'],
+			],
+			allowedIds: ['src-1' => true, 'copy-1' => true],
+			savedAt: $at,
+			writerId: 'alice'
+		);
+
+		$this->assertSame(2, $written);
+		$this->assertSame($at->getTimestamp(), $copy->getUpdatedAt()?->getTimestamp());
+		$this->assertNull($copy->getLogin());
+		$this->assertSame($at->getTimestamp(), $source->getUpdatedAt()?->getTimestamp());
+		$this->assertSame($at->getTimestamp(), $source->getKeyUpdatedAt()?->getTimestamp());
+		$this->assertNull($copy->getKeyUpdatedAt());
+	}//end testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion()
 
 	/**
 	 * A recipient's star and last-used time survive the owner's edit: the
@@ -655,6 +743,7 @@ class ShareServiceTest extends TestCase {
 		$row->setSourceSecretId('src-1');
 		$row->setSecretId('copy-1');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
 		$written = [];
 		$this->secretMapper->method('update')->willReturnCallback(
@@ -697,6 +786,98 @@ class ShareServiceTest extends TestCase {
 			userId: 'alice'
 		);
 	}//end testSyncUpdateRejectsStaleExpectedTimestamp()
+
+	/**
+	 * The sync that names the source version it was prepared on and the one
+	 * that doesn't.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function expectedVersionOrNone(): array {
+		return [
+			'with an expected version'    => ['2026-01-01T00:00:00+00:00'],
+			'without an expected version' => [''],
+		];
+	}//end expectedVersionOrNone()
+
+	/**
+	 * A save that commits after the sync's read but before its write moves
+	 * the source: the compare-and-set finds it gone, and the sync is refused
+	 * and rolled back instead of overwriting the save's copies, whether or
+	 * not the client named the version.
+	 *
+	 * @param string $expectedUpdatedAt The client's expected source version, or ''
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('expectedVersionOrNone')]
+	public function testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused(string $expectedUpdatedAt): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$this->secretMapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('has changed');
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: $expectedUpdatedAt,
+			userId: 'alice'
+		);
+	}//end testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused()
+
+	/**
+	 * A sync moves the source and stamps its copies past the stored version,
+	 * even when that version sits ahead of now, so a save in the same second
+	 * still gets a new version.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testSyncUpdateMovesTheSourcePastItsStoredVersion(): void {
+		$stored = (new DateTime('+1 hour'))->getTimestamp();
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('@'.$stored));
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$this->secretMapper->expects($this->once())->method('advanceVersion')
+			->with(
+				'src-1',
+				$this->callback(static fn (DateTime $base): bool => $base->getTimestamp() === $stored),
+				$this->callback(static fn (DateTime $savedAt): bool => $savedAt->getTimestamp() === $stored + 1)
+			)
+			->willReturn(1);
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: $source->getUpdatedAt()->format(DateTime::ATOM),
+			userId: 'alice'
+		);
+
+		$this->assertSame($stored + 1, $copy->getUpdatedAt()?->getTimestamp());
+	}//end testSyncUpdateMovesTheSourcePastItsStoredVersion()
 
 	/**
 	 * Test createBatchShares creates each row inside one transaction.
@@ -896,15 +1077,162 @@ class ShareServiceTest extends TestCase {
 	 * resolves the given grade (folder-permission-grades §5.2).
 	 *
 	 * @param string|null $grade The resolved grade
+	 * @param ShareAuditTrail|null $auditTrail The sync's audit trail
+	 * @param SecretVersionService|null $versionService The sync's version history
 	 *
 	 * @return ShareService
 	 */
-	private function gradedService(?string $grade): ShareService {
+	private function gradedService(
+		?string $grade,
+		?ShareAuditTrail $auditTrail = null,
+		?SecretVersionService $versionService = null,
+	): ShareService {
 		$teamFolderService = $this->createMock(originalClassName: TeamFolderService::class);
 		$teamFolderService->method('resolveGrade')->willReturn($grade);
 
-		return $this->wireService(teamFolderService: $teamFolderService);
+		return $this->wireService(teamFolderService: $teamFolderService, auditTrail: $auditTrail, versionService: $versionService);
 	}//end gradedService()
+
+	/**
+	 * Stub a source owned by alice with one copy, a sync of it, and a
+	 * transaction that logs where it opens and commits.
+	 *
+	 * @param list<string> $log The log the transaction writes to
+	 *
+	 * @return void
+	 */
+	private function stubLoggedSync(array &$log): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+		$this->db->method('beginTransaction')->willReturnCallback(
+			static function () use (&$log): void {
+				$log[] = 'begin';
+			}
+		);
+		$this->db->method('commit')->willReturnCallback(
+			static function () use (&$log): void {
+				$log[] = 'commit';
+			}
+		);
+	}//end stubLoggedSync()
+
+	/**
+	 * A delegate's sync writes the owner's copies, so it is attributed to the
+	 * delegate on the source, in the sync's transaction, as their share-save is.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testADelegatesSyncIsAuditedOnTheSourceInItsTransaction(): void {
+		$log = [];
+		$this->stubLoggedSync(log: $log);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->with('src-1', 'carol')
+			->willReturn(new SecretDelegation());
+		$audit = $this->createMock(originalClassName: ShareAuditTrail::class);
+		$audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('carol', 'src-1', 'demo-secret', 'delegate sync')
+			->willReturnCallback(
+				static function () use (&$log): void {
+					$log[] = 'audit';
+				}
+			);
+
+		$this->gradedService(grade: null, auditTrail: $audit)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'carol'
+		);
+
+		$this->assertSame(['begin', 'audit', 'commit'], $log);
+	}//end testADelegatesSyncIsAuditedOnTheSourceInItsTransaction()
+
+	/**
+	 * A delegate's sync keeps the source's value before it as a version, with
+	 * the delegate as its actor.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 */
+	public function testADelegatesSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setKey('OLD');
+		$this->secretMapper->method('findById')->willReturn($source);
+		$this->mapper->method('findBySourceSecret')->willReturn([]);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->with('src-1', 'carol')
+			->willReturn(new SecretDelegation());
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
+		$versions->expects($this->once())->method('snapshot')
+			->with(
+				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src-1' && $preUpdate->getKey() === 'OLD'),
+				'user',
+				'carol'
+			);
+
+		$this->gradedService(grade: null, versionService: $versions)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'src-1', 'key' => 'NEW']],
+			expectedUpdatedAt: '',
+			userId: 'carol'
+		);
+	}//end testADelegatesSyncKeepsTheSourcesPreviousValueAsAVersion()
+
+	/**
+	 * The owner's sync has no attribution entry: the row's own audit covers it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testTheOwnersSyncIsNotAttributed(): void {
+		$log = [];
+		$this->stubLoggedSync(log: $log);
+		$audit = $this->createMock(originalClassName: ShareAuditTrail::class);
+		$audit->expects($this->never())->method('recordTeamWriteSync');
+
+		$written = $this->gradedService(grade: null, auditTrail: $audit)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'alice'
+		);
+
+		$this->assertSame(1, $written);
+	}//end testTheOwnersSyncIsNotAttributed()
+
+	/**
+	 * A write-grade member's sync is attributed to them as a team write.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testATeamWritersSyncIsAuditedAsATeamWrite(): void {
+		$log = [];
+		$this->stubLoggedSync(log: $log);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->willThrowException(new DoesNotExistException('none'));
+		$audit = $this->createMock(originalClassName: ShareAuditTrail::class);
+		$audit->expects($this->once())->method('recordTeamWriteSync')
+			->with('bob', 'src-1', 'demo-secret', 'team-write sync');
+
+		$this->gradedService(grade: 'write', auditTrail: $audit)->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-1']],
+			expectedUpdatedAt: '',
+			userId: 'bob'
+		);
+	}//end testATeamWritersSyncIsAuditedAsATeamWrite()
 
 	/**
 	 * folder-permission-grades §5.2: a write-grade non-owner syncs, and

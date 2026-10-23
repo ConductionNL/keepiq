@@ -123,7 +123,6 @@ module.exports = {
 						'tests/dialogs/**/*.spec.{js,ts}',
 						'tests/modals/**/*.spec.{js,ts}',
 						'tests/store/**/*.spec.{js,ts}',
-						'tests/extension/**/*.spec.{js,ts}',
 					],
 				},
 			},

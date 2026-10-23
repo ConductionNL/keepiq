@@ -305,15 +305,19 @@ class GdprService {
 	}//end collectDelegations()
 
 	/**
-	 * Collect link-share metadata (no encrypted snapshots).
+	 * Collect link-share metadata (no encrypted snapshots) for the links the
+	 * user holds or made. `handedOver` marks a link they made that an
+	 * ownership transfer handed to someone else.
 	 *
 	 * @param string $userId The user ID
 	 *
 	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	private function collectLinkShares(string $userId): array {
 		$rows = [];
-		foreach ($this->linkShareMapper->findByCreatedBy(userId: $userId) as $link) {
+		foreach ($this->linkShareMapper->findHeldOrMadeBy(userId: $userId) as $link) {
 			$rows[] = [
 				'id' => $link->getId(),
 				'secretId' => $link->getSecretId(),
@@ -321,6 +325,7 @@ class GdprService {
 				'usageCount' => $link->getUsageCount(),
 				'createdAt' => $link->getCreatedAt()?->format('c'),
 				'expiresAt' => $link->getExpiresAt()?->format('c'),
+				'handedOver' => ($link->getCreatedBy() !== $userId),
 				// The token + encryptedSecretSnapshot are deliberately omitted.
 			];
 		}

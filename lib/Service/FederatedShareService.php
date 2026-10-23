@@ -133,10 +133,7 @@ class FederatedShareService {
 		// A read-only or restricted copy never leaves (task 3.4).
 		$source->assertOnwardShareable();
 
-		$certFingerprint = strtolower(trim($certFingerprint));
-		if (preg_match('/^[0-9a-f]{64}$/', $certFingerprint) !== 1 || ($ciphertext['key'] ?? '') === '') {
-			throw new InvalidArgumentException('invalid');
-		}
+		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
 
 		try {
 			$recipient = $this->cloudIdManager->resolveCloudId($recipientCloudId);
@@ -203,23 +200,84 @@ class FederatedShareService {
 			throw new NotFoundException(message: 'Share not found');
 		}
 
+		$row = $this->writeCiphertext(
+			row: $row,
+			certFingerprint: $certFingerprint,
+			ciphertext: $ciphertext,
+			savedAt: new DateTime()
+		);
+		$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED);
+
+		return $row;
+	}//end update()
+
+	/**
+	 * Store a share's new ciphertext and queue the SHARE_UPDATED notification
+	 * on the row itself. A share-save calls this inside its transaction and
+	 * sends after the commit; should that send never happen, the retry job
+	 * finds the row once the first send's lease from `$savedAt` is over.
+	 *
+	 * @param FederatedShare $row The live share, already checked to be the caller's
+	 * @param string $certFingerprint SHA-256 of the certificate the browser verified now
+	 * @param array{key:string,login:?string,additionalFields:?string} $ciphertext Encrypted for the recipient
+	 * @param DateTime $savedAt The save's version, which the share gets unless it already had it
+	 *
+	 * @return FederatedShare
+	 *
+	 * @throws InvalidArgumentException `invalid`
+	 * @throws NotFoundException When the share stopped being active meanwhile
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function writeCiphertext(
+		FederatedShare $row,
+		string $certFingerprint,
+		array $ciphertext,
+		DateTime $savedAt,
+	): FederatedShare {
+		$row->setRecipientCertFingerprint(
+			$this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext)
+		);
+		$row->setKey($ciphertext['key']);
+		$row->setLogin($ciphertext['login'] ?? null);
+		$row->setAdditionalFields($ciphertext['additionalFields'] ?? null);
+		$row->stamp(now: $savedAt);
+		$row->setPendingNotification(FederatedNotificationDelivery::SHARE_UPDATED);
+		$row->setNotifyAttempts(0);
+		$row->setNextNotifyAt($this->delivery->leaseFrom(queuedAt: $savedAt));
+		// A revoke whose SHARE_UNSHARED is still pending must keep it.
+		if ($this->shareMapper->updateIfActive(share: $row) === 0) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		$this->audit->recordOutbound(
+			eventType: AuditEventTypes::FEDERATED_SHARE_UPDATED,
+			row: $row,
+			actorId: $row->getOwnerId()
+		);
+
+		return $row;
+	}//end writeCiphertext()
+
+	/**
+	 * Refuse a fingerprint that is no SHA-256 hex or a ciphertext without a key.
+	 *
+	 * @param string $certFingerprint The fingerprint as the browser sent it
+	 * @param array<string,mixed> $ciphertext The ciphertext
+	 *
+	 * @return string The fingerprint, lowercased
+	 *
+	 * @throws InvalidArgumentException `invalid`
+	 */
+	private function assertCiphertext(string $certFingerprint, array $ciphertext): string {
 		$certFingerprint = strtolower(trim($certFingerprint));
 		if (preg_match('/^[0-9a-f]{64}$/', $certFingerprint) !== 1 || ($ciphertext['key'] ?? '') === '') {
 			throw new InvalidArgumentException('invalid');
 		}
 
-		$row->setRecipientCertFingerprint($certFingerprint);
-		$row->setKey($ciphertext['key']);
-		$row->setLogin($ciphertext['login'] ?? null);
-		$row->setAdditionalFields($ciphertext['additionalFields'] ?? null);
-		$row->setUpdatedAt(new DateTime());
-		$this->shareMapper->update(entity: $row);
-
-		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_UPDATED, row: $row, actorId: $userId);
-		$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED);
-
-		return $row;
-	}//end update()
+		return $certFingerprint;
+	}//end assertCiphertext()
 
 	/**
 	 * Tell every live federated recipient of a secret that its plain name or
@@ -241,7 +299,7 @@ class FederatedShareService {
 				continue;
 			}
 
-			$row->setUpdatedAt(new DateTime());
+			$row->stamp(now: new DateTime());
 			$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_UPDATED, row: $row, actorId: $userId);
 			$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED);
 			$count++;
@@ -267,7 +325,7 @@ class FederatedShareService {
 	public function revoke(string $shareId, string $userId): void {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
 		$row->setStatus(FederatedShare::STATUS_REVOKED);
-		$row->setUpdatedAt(new DateTime());
+		$row->stamp(now: new DateTime());
 		$this->shareMapper->update(entity: $row);
 
 		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_REVOKED, row: $row, actorId: $userId);
@@ -285,9 +343,10 @@ class FederatedShareService {
 	 *
 	 * @return FederatedShare
 	 *
-	 * @throws NotFoundException When it is not the user's share
+	 * @throws NotFoundException When it is not the user's live share
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function suspend(string $shareId, string $userId, string $reason): FederatedShare {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
@@ -307,9 +366,11 @@ class FederatedShareService {
 	public function suspendForPartner(string $partnerId): int {
 		$count = 0;
 		foreach ($this->shareMapper->findByPartner(partnerId: $partnerId) as $row) {
-			if ($row->getStatus() === FederatedShare::STATUS_ACTIVE) {
+			try {
 				$this->suspendRow(row: $row, actorId: null, reason: 'partner_removed');
 				$count++;
+			} catch (NotFoundException) {
+				// Not active: revoked, suspended or failed.
 			}
 		}
 
@@ -324,6 +385,8 @@ class FederatedShareService {
 	 * @param string $reason Why
 	 *
 	 * @return FederatedShare
+	 *
+	 * @throws NotFoundException When the share is no longer active
 	 */
 	private function suspendRow(FederatedShare $row, ?string $actorId, string $reason): FederatedShare {
 		$reason = (string)preg_replace('/[^a-z_]/', '', strtolower($reason));
@@ -331,8 +394,17 @@ class FederatedShareService {
 			$reason = 'unverified';
 		}
 		$row->setStatus(FederatedShare::STATUS_SUSPENDED);
-		$row->setUpdatedAt(new DateTime());
-		$this->shareMapper->update(entity: $row);
+		// Nothing is served any more: drop a queued update. Only a send that
+		// is under way already can still deliver it once.
+		$row->setPendingNotification(null);
+		$row->setNotifyAttempts(0);
+		$row->setNextNotifyAt(null);
+		$row->stamp(now: new DateTime());
+		// A revoke that landed meanwhile keeps its status and pending unshare.
+		if ($this->shareMapper->updateIfActive(share: $row) === 0) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
 		$this->audit->recordOutbound(
 			eventType: AuditEventTypes::FEDERATED_SHARE_SUSPENDED,
 			row: $row,
@@ -418,6 +490,7 @@ class FederatedShareService {
 	 * @return array<string,mixed>|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function answerPull(?string $signer, string $shareId, array $payload): ?array {
 		$sharedSecret = $payload['sharedSecret'] ?? null;
@@ -436,7 +509,7 @@ class FederatedShareService {
 		// receive from here, and the share must be live.
 		$partner = $this->partners->outboundPartnerForRemote(remote: $signer);
 		if ($partner === null || $partner->getId() !== $row->getPartnerId()
-			|| $row->getStatus() !== FederatedShare::STATUS_ACTIVE
+			|| $this->isLive(row: $row, source: $source) === false
 			|| hash_equals($row->getSharedSecretHash(), hash('sha256', $sharedSecret)) === false
 		) {
 			return null;
@@ -456,6 +529,19 @@ class FederatedShareService {
 			'updatedAt' => $row->getUpdatedAt()?->format(DATE_ATOM),
 		];
 	}//end answerPull()
+
+	/**
+	 * Whether a share is active and belongs to its secret's owner: one that
+	 * an ownership transfer left with the previous owner is not served.
+	 *
+	 * @param FederatedShare $row The share
+	 * @param Secret $source The secret it is of
+	 *
+	 * @return bool
+	 */
+	private function isLive(FederatedShare $row, Secret $source): bool {
+		return $row->getStatus() === FederatedShare::STATUS_ACTIVE && $row->getOwnerId() === $source->getOwnerId();
+	}//end isLive()
 
 	/**
 	 * The user's own secret, or not found.

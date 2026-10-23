@@ -5,8 +5,9 @@
  * The share dialog's option for another organisation (keepiq#789,
  * sharing-federated-recipients task 2.3). It runs the real verifier on real
  * openssl certificates (tests/fixtures/generate-federation-chain.sh): a
- * chain that ends at another root, or a certificate that names someone
- * else, is refused, nothing is decrypted or encrypted, and nothing is sent.
+ * chain that ends at another root, a certificate that names someone else,
+ * or an answer for another account than the one typed is refused, nothing
+ * is decrypted or encrypted, and nothing is sent.
  * A verified certificate shows its fingerprint and only ciphertext leaves.
  *
  * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
@@ -21,6 +22,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import FederatedShareForm from '../../src/components/share/FederatedShareForm.vue'
 import SecretShareDialog from '../../src/dialogs/SecretShareDialog.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
+import { echoedCloudId } from '../fixtures/shareSaveServer.js'
 
 const F = JSON.parse(
 	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
@@ -69,18 +71,20 @@ const stubs = {
 }
 
 /**
- * Mount the form; the owner's server answers the lookup with `answer`.
+ * Mount the form; the owner's server answers the lookup with `answer`,
+ * echoing the cloud id it was sent unless the answer names one.
  *
  * @param {object} answer The lookup answer, or an axios-style rejection under `reject`.
+ * @param {string} [typed] The cloud id the owner types.
  * @return {Promise<{wrapper: object, post: object, fetchSecret: object}>}
  */
-async function mountWith(answer) {
+async function mountWith(answer, typed = BOB) {
 	const post = vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
 		if (url.includes('/federation/recipient-certificate')) {
 			if (answer.reject) {
 				throw answer.reject
 			}
-			return { data: answer }
+			return { data: { cloudId: echoedCloudId(body.cloudId), ...answer } }
 		}
 		return {
 			data: {
@@ -100,7 +104,7 @@ async function mountWith(answer) {
 		props: { secretId: 'src' },
 		global: { stubs },
 	})
-	await wrapper.find('[data-testid="federated-share-cloud-id"]').setValue(BOB)
+	await wrapper.find('[data-testid="federated-share-cloud-id"]').setValue(typed)
 	await wrapper.find('[data-testid="federated-share-check"]').trigger('click')
 	await settled(wrapper, ['federated-share-fingerprint', 'federated-share-error'])
 	return { wrapper, post, fetchSecret }
@@ -124,7 +128,6 @@ describe('FederatedShareForm', () => {
 
 	it('shows the fingerprint of a verified certificate and sends only ciphertext', async () => {
 		const { wrapper, post } = await mountWith({
-			cloudId: BOB,
 			certificate: F.bob,
 			chain: [F.intermediateA, F.rootA],
 			partnerRootFingerprint: F.rootAFingerprint,
@@ -163,7 +166,6 @@ describe('FederatedShareForm', () => {
 
 	it('refuses a chain that ends at another root and encrypts nothing', async () => {
 		const { wrapper, post, fetchSecret } = await mountWith({
-			cloudId: BOB,
 			certificate: F.bobOtherRoot,
 			chain: [F.intermediateB, F.rootB],
 			partnerRootFingerprint: F.rootAFingerprint,
@@ -181,7 +183,6 @@ describe('FederatedShareForm', () => {
 
 	it('refuses a certificate that names someone else', async () => {
 		const { wrapper, post, fetchSecret } = await mountWith({
-			cloudId: BOB,
 			certificate: F.mallory,
 			chain: [F.intermediateA, F.rootA],
 			partnerRootFingerprint: F.rootAFingerprint,
@@ -194,6 +195,42 @@ describe('FederatedShareForm', () => {
 		expect(shareCalls(post)).toHaveLength(0)
 	})
 
+	it('refuses an answer for another account, though its certificate names it', async () => {
+		const { wrapper, post, fetchSecret } = await mountWith({
+			cloudId: 'mallory@cloud.partner.example',
+			certificate: F.mallory,
+			chain: [F.intermediateA, F.rootA],
+			partnerRootFingerprint: F.rootAFingerprint,
+		})
+
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('could not be verified')
+		expect(wrapper.find('[data-testid="federated-share-submit"]').exists()).toBe(
+			false,
+		)
+		expect(fetchSecret).not.toHaveBeenCalled()
+		expect(shareCalls(post)).toHaveLength(0)
+	})
+
+	it('shares with the account the server resolved from the typed one', async () => {
+		const { wrapper, post } = await mountWith(
+			{
+				certificate: F.bob,
+				chain: [F.intermediateA, F.rootA],
+				partnerRootFingerprint: F.rootAFingerprint,
+			},
+			' bob@Cloud.Partner.Example/index.php/ ',
+		)
+
+		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
+		await settled(wrapper, ['federated-share-done', 'federated-share-error'])
+
+		const calls = shareCalls(post)
+		expect(calls).toHaveLength(1)
+		expect(calls[0][1].recipientCloudId).toBe('bob@Cloud.Partner.Example')
+	})
+
 	it('says when the organisation is not a partner', async () => {
 		const { wrapper } = await mountWith({
 			reject: { response: { data: { message: 'not_a_partner' } } },
@@ -202,6 +239,17 @@ describe('FederatedShareForm', () => {
 		expect(
 			wrapper.find('[data-testid="federated-share-error"]').text(),
 		).toContain('not one of your partners')
+	})
+
+	it('says the certificate could not be verified when the server refused the chain', async () => {
+		const { wrapper, fetchSecret } = await mountWith({
+			reject: { response: { data: { message: 'bad_chain' } } },
+		})
+
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('could not be verified')
+		expect(fetchSecret).not.toHaveBeenCalled()
 	})
 })
 
