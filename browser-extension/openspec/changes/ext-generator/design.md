@@ -102,7 +102,7 @@ New, each with a test next to it:
 - `src/generator/generate.ts`: `generate`, `applyPolicy` and `passphraseAllowed`, which the popup calls.
 - `src/generator/store.ts`: options and the policy cache in `storage.local`.
 - `src/generator/history.ts`: the history over `sessionValues`.
-- `src/generator/queue.ts`: one-at-a-time queues for option saves and history.
+- `src/queue.ts`: one-at-a-time queues for option saves and history.
 - `public/wordlist/eff-large.txt`, `public/wordlist/LICENSE.txt`.
 - `entrypoints/popup/views/Generator.tsx`: the sub-tabs and panels, with an optional `pick`.
 - `entrypoints/popup/views/GeneratorHistory.tsx`.

@@ -3,10 +3,14 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { addHistory, listHistory } from '@/src/generator/history'
 import type { GeneratorPolicy } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions, writePolicy } from '@/src/generator/store'
+import { pemToPkcs8 } from '@/src/crypto'
 import { neverLockKey, putKey } from '@/src/vault/key-store'
+import { pinGeneration, pinKey, pinSealKey, sealPin, storePinCopies, wrapPin } from '@/src/vault/pin'
 import { vaultCacheKey } from '@/src/vault/store'
-import { suiteRow } from '@/src/testing/vectors'
-import { readSettings, writeSettings } from './settings'
+import { envelope, suiteRow } from '@/src/testing/vectors'
+import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
+import { patchAccountPolicy, readAccountPolicy } from './policy'
+import { DEFAULT_SETTINGS, readSettings, writeSettings } from './settings'
 import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId, listAccounts,
 	markLoggedOut, removeAccount, removeAllAccounts, setActive, suiteKey, updateAccount, updateSettings,
@@ -32,7 +36,7 @@ describe('adding', () => {
 		const account = await addAccount(fields(), suite)
 		expect(await getAccount(account.id)).toEqual(account)
 		expect(await getActiveAccountId()).toBe(account.id)
-		expect(await local(`settings.${account.id}`)).toEqual({ vaultTimeout: 15, vaultTimeoutAction: 'lock' })
+		expect(await local(`settings.${account.id}`)).toEqual(DEFAULT_SETTINGS)
 		expect(await local(suiteKey(account.id))).toEqual(suite)
 	})
 
@@ -72,7 +76,7 @@ describe('logging out', () => {
 		expect(await local(suiteKey(account.id))).toBeUndefined()
 		expect(await local(vaultCacheKey(account.id))).toBeUndefined()
 		expect(await browser.storage.session.get(null)).toEqual({})
-		expect(await readSettings(account.id)).toEqual({ vaultTimeout: 15, vaultTimeoutAction: 'lock' })
+		expect(await readSettings(account.id)).toEqual(DEFAULT_SETTINGS)
 	})
 
 	it('drops the generator policy and history but keeps the options', async () => {
@@ -87,13 +91,23 @@ describe('logging out', () => {
 		expect(await listHistory(account.id)).toEqual([])
 	})
 
+	it('keeps the organisation policy through a 401, so a new login is never unclamped', async () => {
+		const account = await addAccount(fields(), suite)
+		await patchAccountPolicy(account.id, { maxIdleMinutes: 30, exportDisabled: true })
+		await markLoggedOut(account.id, true)
+		expect(await readAccountPolicy(account.id)).toEqual({ maxIdleMinutes: 30, exportDisabled: true })
+	})
+
 	it('manually removes everything of the account', async () => {
 		const account = await addAccount(fields(), suite)
 		await putKey(account.id, 'AAAA')
 		await saveOptions(account.id, { tab: 'username' })
 		await writePolicy(account.id, policy)
+		await patchAccountPolicy(account.id, { maxIdleMinutes: 30 })
 		await addHistory(account.id, { value: 'one', kind: 'password' })
+		const appearance = await updateGlobalSettings({ theme: 'dark', compactMode: true })
 		await removeAccount(account.id)
+		expect(await readGlobalSettings()).toEqual(appearance)
 		expect(await browser.storage.session.get(null)).toEqual({})
 		const left = await browser.storage.local.get(null)
 		expect(Object.keys(left).filter((k) => k.includes(account.id))).toEqual([])
@@ -117,6 +131,22 @@ describe('logging out', () => {
 		expect(await getActiveAccountId()).toBeNull()
 		expect(await browser.storage.local.get(null)).toEqual({})
 		expect(await browser.storage.session.get(null)).toEqual({})
+	})
+})
+
+describe('the PIN', () => {
+	it.each<[string, (id: string) => Promise<unknown>]>([
+		['a 401', (id) => markLoggedOut(id, true)],
+		['the timeout action Log out', (id) => markLoggedOut(id)],
+		['Log out', (id) => removeAccount(id)],
+		['Log out all', () => removeAllAccounts()],
+	])('loses both copies on %s', async (_, event) => {
+		const account = await addAccount(fields(), suite)
+		const bytes = pemToPkcs8(envelope.privateKeyPem)
+		await storePinCopies(account.id, await wrapPin('246813', bytes, suite), await sealPin(account.id, '246813', bytes, suite), pinGeneration(account.id))
+		await event(account.id)
+		expect((await browser.storage.session.get(pinKey(account.id)))[pinKey(account.id)]).toBeUndefined()
+		expect(await local(pinSealKey(account.id))).toBeUndefined()
 	})
 })
 
@@ -177,21 +207,28 @@ describe('concurrent writes', () => {
 describe('settings', () => {
 	it('reads invalid stored values as their default', async () => {
 		await browser.storage.local.set({ 'settings.x': { vaultTimeout: 'tomorrow', vaultTimeoutAction: 'explode' } })
-		expect(await readSettings('x')).toEqual({ vaultTimeout: 15, vaultTimeoutAction: 'lock' })
+		expect(await readSettings('x')).toEqual(DEFAULT_SETTINGS)
 	})
 
 	it('moves the key off disk when leaving Never', async () => {
 		const account = await addAccount(fields(), suite)
-		await updateSettings(account.id, { vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
+		await updateSettings(account.id, { vaultTimeout: 'never' })
 		await putKey(account.id, 'AAAA')
 		expect(await local(neverLockKey(account.id))).toBe('AAAA')
-		await updateSettings(account.id, { vaultTimeout: 5, vaultTimeoutAction: 'lock' })
+		await updateSettings(account.id, { vaultTimeout: 5 })
 		expect(await local(neverLockKey(account.id))).toBeUndefined()
 		expect(await accountStatus(account)).toBe('unlocked')
 	})
 
+	it('patches, keeping every key the change does not name', async () => {
+		const account = await addAccount(fields(), suite)
+		await updateSettings(account.id, { clearClipboardMs: 20_000 })
+		await updateSettings(account.id, { vaultTimeout: 60 })
+		expect(await readSettings(account.id)).toMatchObject({ vaultTimeout: 60, clearClipboardMs: 20_000 })
+	})
+
 	it('keeps valid values', async () => {
 		await writeSettings('x', { vaultTimeout: 'never', vaultTimeoutAction: 'logout' })
-		expect(await readSettings('x')).toEqual({ vaultTimeout: 'never', vaultTimeoutAction: 'logout' })
+		expect(await readSettings('x')).toMatchObject({ vaultTimeout: 'never', vaultTimeoutAction: 'logout' })
 	})
 })

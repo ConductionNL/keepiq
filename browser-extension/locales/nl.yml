@@ -22,6 +22,13 @@ errors:
   sessionRevoked: Sessie ingetrokken, log opnieuw in
   writeLocked: Je kluis kan nu niet worden gewijzigd, probeer het later opnieuw
   notResponding: Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.
+  invalidPin:
+    1: Verkeerde pincode, nog 1 poging over
+    n: Verkeerde pincode, nog $1 pogingen over
+  wrongPin: Verkeerde pincode
+  pinForgotten: Pincode gewist na te veel pogingen
+  pinKeyChanged: Je kluissleutel is gewijzigd. Ontgrendel met je hoofdwachtwoord.
+  pinTooShort: Gebruik minstens {count} tekens
   unknown: Er ging iets mis
 
 notices:
@@ -36,7 +43,6 @@ common:
   appPassword: App-wachtwoord
   addAccount: Account toevoegen
   openWebApp: Open de Keepiq-webapp
-  later: Beschikbaar in een latere update
   justNow: zojuist
 
 titles:
@@ -64,6 +70,8 @@ header:
 unlock:
   masterPassword: Hoofdwachtwoord
   submit: Ontgrendelen
+  pin: Pincode
+  useMasterPassword: Hoofdwachtwoord gebruiken
 
 logInAgain:
   submit: Inloggen
@@ -341,6 +349,102 @@ settings:
   themeSystem: Systeemstandaard
   themeLight: Licht
   themeDark: Donker
+  comingLater: Komt later
+  setByOrganisation: Ingesteld door je organisatie
+  turnedOffByOrganisation: Uitgezet door je organisatie
+  never: Nooit
+  durationHours: "{count} u"
+  durationMinutes: "{count} min"
+  pin: Ontgrendelen met pincode
+  pinTurnOn: Aanzetten
+  masterPasswordRequired: Vul je hoofdwachtwoord in
+  pinAgain: Pincode bevestigen
+  pinMismatch: De pincodes zijn niet gelijk
+  pinAdvice: Gebruik geen pincode die je al voor je telefoon of bank gebruikt.
+  pinAfterRestart: Na een herstart van de browser vul je één keer je hoofdwachtwoord in; daarna werkt je pincode weer.
+  biometrics: Ontgrendelen met biometrie
+  notAvailableYet: Nog niet beschikbaar
+  vaultTimeout: Time-out van de kluis
+  timeoutImmediately: Direct
+  timeoutMinutes:
+    1: 1 minuut
+    n: $1 minuten
+  timeoutHours:
+    1: 1 uur
+    n: $1 uur
+  timeoutOnSystemLock: Bij vergrendelen van het systeem
+  timeoutOnSystemLockCapped: Bij vergrendelen van het systeem, of na {duration} inactiviteit (ingesteld door je organisatie)
+  timeoutOnRestart: Bij herstarten van de browser
+  timeoutCustom: Aangepast
+  hours: Uren
+  minutes: Minuten
+  customAtLeastOne: Vul minstens één minuut in
+  customWhole: Vul hele uren en minuten in
+  customAtMost: Je organisatie staat maximaal {duration} toe
+  neverTitle: Kluis ontgrendeld houden?
+  neverWarning: Je kluis blijft ontgrendeld tot je hem zelf vergrendelt. De sleutel die hem opent wordt op de schijf van dit browserprofiel opgeslagen, waar iedereen die het profiel kan lezen hem kan lezen.
+  neverConfirm: Ontgrendeld houden
+  timeoutAction: Actie na time-out
+  actionLock: Vergrendelen
+  actionLogOutNote: Als de time-out afloopt word je uitgelogd en heb je het app-wachtwoord opnieuw nodig
+  lockNow: Nu vergrendelen
+  changeMasterPassword: Hoofdwachtwoord wijzigen
+  autofillOnPageLoad: Automatisch invullen bij laden van de pagina
+  autofillOnPageLoadWarning: Gehackte of onbetrouwbare websites kunnen misbruik maken van automatisch invullen bij het laden van de pagina
+  defaultAutofill: Standaardinstelling voor automatisch invullen van logins
+  defaultAutofillOnPageLoad: Invullen bij laden van de pagina, als dat aanstaat
+  uriMatch: Standaard URI-overeenkomst
+  uriBaseDomain: Basisdomein
+  uriHost: Host
+  uriStartsWith: Begint met
+  uriExact: Exact
+  uriRegex: Reguliere expressie
+  uriRegexNote: Reguliere expressies zijn een geavanceerde optie en kunnen het herkennen van websites verstoren
+  inlineSuggestions: Invulsuggesties tonen in formuliervelden
+  contextMenu: Opties in het contextmenu tonen
+  shortcut: Sneltoets voor automatisch invullen
+  shortcutNotSet: Niet ingesteld
+  shortcutChange: Wijzigen
+  shortcutFirefox: Open about:addons, kies het tandwielmenu en dan Extensiesneltoetsen beheren
+  clearClipboard: Klembord wissen
+  clipboardSeconds:
+    1: 1 seconde
+    n: $1 seconden
+  askToAdd: Vragen om login toe te voegen
+  askToUpdate: Vragen om bestaande login bij te werken
+  excludedDomains: Uitgesloten domeinen
+  addCurrentSite: Huidige site toevoegen
+  domain: Domein
+  addDomain: Toevoegen
+  domainEmpty: Vul een domein in
+  domainUnreadable: Vul een domein in, zoals example.org
+  domainDuplicate: Al uitgesloten
+  removeDomain: "{domain} verwijderen"
+  webTitle: Keepiq op het web
+  webText: De meldingen van Keepiq zelf, importeren en exporteren, en je hoofdwachtwoord beheer je in Keepiq op Nextcloud, onder Persoonlijke instellingen.
+  openKeepiq: Keepiq openen
+  lastSync: "Laatst gesynchroniseerd: {time}"
+  lastSyncNever: "Laatst gesynchroniseerd: nooit"
+  syncOffline: Synchroniseren mislukt, je bent offline
+  syncFailed: Synchroniseren mislukt, probeer het later opnieuw
+  importItems: Items importeren
+  exportVault: Kluis exporteren
+  defaultItemType: Standaard itemtype in deze extensie
+  compactMode: Compacte weergave
+  showAnimations: Animaties tonen
+  quickCopy: Snelle kopieeracties tonen in de kluis
+  language: Taal
+  languageFollows: Volgt je browser
+  version: Versie {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq-versie onbekend
+  help: Help
+  reportBug: Bug melden
+  contactSupport: Contact opnemen met support
+  privacyPolicy: Privacybeleid
+  webApp: Keepiq-webapp
+  rate: Extensie beoordelen
 
 generator:
   kinds: Wat wil je genereren?

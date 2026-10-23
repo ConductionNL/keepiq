@@ -73,11 +73,16 @@ The account switcher SHALL offer a "Lock" action that purges the private key fro
 - **THEN** `privateKeyPkcs8.<accountId>` is removed, the unlock screen is shown and no server request is made
 
 ### Requirement: Timeout options and defaults
-Each account SHALL have a vault timeout and a timeout action stored in `storage.local` under `settings.<accountId>`. Options: Immediately, 1 minute, 5 minutes, 15 minutes, 30 minutes, 1 hour, 4 hours, On system lock, On browser restart, Never, Custom (minutes). Actions: Lock, Log out. Defaults: 15 minutes and Lock (ADR-002); a browser restart locks regardless of the chosen option because `storage.session` does not survive it. The maximum timeout and a forced action MUST be read from one policy object so an admin policy can clamp them later. The option picker itself is owned by ext-settings.
+Each account SHALL have a vault timeout and a timeout action stored in `storage.local` under `settings.<accountId>`. Options: Immediately, 1 minute, 5 minutes, 15 minutes, 30 minutes, 1 hour, 4 hours, On system lock, On browser restart, Never, Custom (minutes). Actions: Lock, Log out. Defaults: 15 minutes and Lock (ADR-002); a browser restart locks regardless of the chosen option because `storage.session` does not survive it. The effective timeout MUST be the lower of the user's choice and the organisation's idle maximum stored for the account (ADR-002), and everything that acts on the timeout MUST read it through one function that applies that maximum; Immediately and On system lock also lock at the maximum. There is no forced action: the action is always the user's. Reading the maximum and the option picker are owned by ext-settings.
 
 #### Scenario: New account
 - **WHEN** an account is added
-- **THEN** `settings.<accountId>` is `{ vaultTimeout: 15, vaultTimeoutAction: 'lock' }`
+- **THEN** `settings.<accountId>` holds `vaultTimeout: 15` and `vaultTimeoutAction: 'lock'`
+
+#### Scenario: Organisation maximum
+- **GIVEN** a stored organisation maximum of 30 minutes, a timeout of 4 hours and the action Lock
+- **WHEN** 30 minutes pass without interaction
+- **THEN** the account is locked and the stored timeout is still 4 hours
 
 ### Requirement: Idle timeout enforcement
 For a timed option the extension SHALL lock the account when the time since the user's last interaction with the extension reaches the timeout. Last interaction is refreshed by every popup message and stored in `storage.session` as `lastInteractionAt`. The check MUST run on a `browser.alarms` tick at most every minute while any account is unlocked and again on every popup open, so a sleeping worker cannot extend a session.

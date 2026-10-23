@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
 import { addAccount, getAccount, markLoggedOut } from '@/src/accounts/store'
+import { pemToPkcs8 } from '@/src/crypto'
 import { readPolicy } from '@/src/generator/store'
+import { forgetPin, pinGeneration, sealPin, storePinCopies, wrapPin } from '@/src/vault/pin'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import type { PopupState, PopupToBackground, Result } from '@/src/messages'
 import { handlePopupMessage } from './router'
@@ -164,6 +166,44 @@ describe('accounts', () => {
 	it('maps a wrong master password to its code', async () => {
 		const account = await stored()
 		expect(await send(unlockWith(account.id, 'nope'))).toEqual({ ok: false, code: 'invalid_master_password' })
+	})
+})
+
+describe('PIN', () => {
+	async function withPin() {
+		const account = await stored()
+		// The sync after the unlock finds the server offline.
+		fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+		await state(unlockWith(account.id))
+		const bytes = pemToPkcs8(envelope.privateKeyPem)
+		await storePinCopies(account.id, await wrapPin('246813', bytes, suiteRow), await sealPin(account.id, '246813', bytes, suiteRow), pinGeneration(account.id))
+		return account.id
+	}
+
+	it('reports whether the account has one', async () => {
+		const id = await withPin()
+		expect((await state({ kind: 'vault.lock', accountId: id })).active).toMatchObject({ pin: true, pinAfterRestart: false })
+		await forgetPin(id)
+		expect((await state({ kind: 'vault.status' })).active).toMatchObject({ pin: false, pinAfterRestart: false })
+	})
+
+	it('reports a PIN that needs the master password once after a restart', async () => {
+		const id = await withPin()
+		await state({ kind: 'vault.lock', accountId: id })
+		await browser.storage.session.clear()
+		expect((await state({ kind: 'vault.status' })).active).toMatchObject({ pin: false, pinAfterRestart: true })
+	})
+
+	it('unlocks with the PIN', async () => {
+		const id = await withPin()
+		await state({ kind: 'vault.lock', accountId: id })
+		expect((await state({ kind: 'vault.unlock', accountId: id, method: { type: 'pin', pin: '246813' } })).screen).toBe('unlocked')
+	})
+
+	it('copies the attempts left into the result', async () => {
+		const id = await withPin()
+		await state({ kind: 'vault.lock', accountId: id })
+		expect(await send({ kind: 'vault.unlock', accountId: id, method: { type: 'pin', pin: '0000' } })).toEqual({ ok: false, code: 'invalid_pin', attemptsLeft: 4 })
 	})
 })
 

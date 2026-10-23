@@ -20,19 +20,23 @@ interface Props {
 	error?: string | null
 	/** Offered beside the error, for failures a second try can fix. */
 	onRetry?: () => void
+	/** Starts on Cancel rather than the first action, for a risky one. */
+	focusCancel?: boolean
 }
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]'
 
 /** In the page, never `window.confirm`: Firefox closes an extension popup when a native dialog opens. */
-export function ConfirmDialog({ title, children, actions, onCancel, cancelLabel, error, onRetry }: Props) {
+export function ConfirmDialog({ title, children, actions, onCancel, cancelLabel, error, onRetry, focusCancel = false }: Props) {
 	const id = useId()
 	const box = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
 		const opener = document.activeElement as HTMLElement | null
-		box.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
+		box.current?.querySelector<HTMLElement>(focusCancel ? '[data-cancel]' : FOCUSABLE)?.focus()
 		return () => opener?.focus()
+		// Once, on open.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	function onKeyDown(event: KeyboardEvent) {
@@ -59,7 +63,7 @@ export function ConfirmDialog({ title, children, actions, onCancel, cancelLabel,
 					{actions.map((action) => (
 						<Button key={action.label} variant={action.variant ?? 'primary'} busy={action.busy} disabled={action.disabled} onClick={action.onClick}>{action.label}</Button>
 					))}
-					<Button variant="secondary" onClick={onCancel}>{cancelLabel ?? i18n.t('common.cancel')}</Button>
+					<Button variant="secondary" data-cancel onClick={onCancel}>{cancelLabel ?? i18n.t('common.cancel')}</Button>
 				</div>
 			</div>
 		</div>

@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
-import { TIMEOUT_POLICY, writeSettings } from '@/src/accounts/settings'
+import { patchAccountPolicy } from '@/src/accounts/policy'
+import { writeSettings } from '@/src/accounts/settings'
 import { envelope } from '@/src/testing/vectors'
 import { clearKey, editOpenedKey, generatorHistoryKey, getKey, hasKey, neverLockKey, putKey, sessionValues, syncNeverLockKey } from './key-store'
 
@@ -67,19 +68,42 @@ describe('the Never timeout', () => {
 		expect(await local(neverLockKey('a'))).toBeUndefined()
 	})
 
+	it('writes no copy to disk for a key a lock cleared while the copy was being written', async () => {
+		await writeSettings('a', { vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
+		await putKey('a', pkcs8)
+		await browser.storage.local.remove(neverLockKey('a'))
+		const get = browser.storage.session.get.bind(browser.storage.session)
+		let locked = false
+		vi.spyOn(browser.storage.session, 'get').mockImplementation(async (keys) => {
+			const values = await get(keys)
+			if (!locked) {
+				locked = true
+				await clearKey('a')
+			}
+			return values
+		})
+		await syncNeverLockKey('a')
+		expect(await local(neverLockKey('a'))).toBeUndefined()
+	})
+
+	it('ends with the copy matching the last of two timeout changes made at once', async () => {
+		await putKey('a', pkcs8)
+		await Promise.all([
+			writeSettings('a', { vaultTimeout: 'never' }).then(() => syncNeverLockKey('a')),
+			writeSettings('a', { vaultTimeout: 15 }).then(() => syncNeverLockKey('a')),
+		])
+		expect(await local(neverLockKey('a'))).toBeUndefined()
+	})
+
 	it('ignores a leftover copy on disk under any other timeout', async () => {
 		await browser.storage.local.set({ [neverLockKey('a')]: pkcs8 })
 		expect(await hasKey('a')).toBe(false)
 	})
 
-	describe('under a policy maximum', () => {
-		afterEach(() => {
-			TIMEOUT_POLICY.maxMinutes = null
-		})
-
+	describe('under an organisation maximum', () => {
 		it('neither writes nor restores the copy on disk', async () => {
 			await writeSettings('a', { vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
-			TIMEOUT_POLICY.maxMinutes = 60
+			await patchAccountPolicy('a', { maxIdleMinutes: 60 })
 			await putKey('a', pkcs8)
 			expect(await local(neverLockKey('a'))).toBeUndefined()
 

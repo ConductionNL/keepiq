@@ -1,13 +1,15 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { applyTheme, followMirror, mirroredTheme, showTheme, THEME_MIRROR_KEY } from './theme'
+import { APPEARANCE_MIRROR_KEY, applyAppearance, applyTheme, followMirror, mirroredAppearance, mirroredTheme, showAppearance, showTheme, THEME_MIRROR_KEY } from './theme'
 
 const attribute = () => document.documentElement.dataset.theme
+const classes = () => document.documentElement.classList
 
 afterEach(() => {
 	vi.restoreAllMocks()
 	localStorage.clear()
 	applyTheme('system')
+	applyAppearance({ compactMode: false, showAnimations: true })
 })
 
 describe('theme', () => {
@@ -35,6 +37,22 @@ describe('theme', () => {
 		expect(mirroredTheme()).toBe('system')
 		showTheme('dark')
 		expect(attribute()).toBe('dark')
+	})
+
+	it('mirrors compact mode and animations, reading anything unknown as the defaults', () => {
+		expect(mirroredAppearance()).toEqual({ compactMode: false, showAnimations: true })
+		showAppearance({ compactMode: true, showAnimations: false })
+		expect(classes().contains('compact')).toBe(true)
+		expect(classes().contains('no-animations')).toBe(true)
+		expect(mirroredAppearance()).toEqual({ compactMode: true, showAnimations: false })
+		localStorage.setItem(APPEARANCE_MIRROR_KEY, '{oops')
+		expect(mirroredAppearance()).toEqual({ compactMode: false, showAnimations: true })
+	})
+
+	it('follows an appearance change written by another window', () => {
+		followMirror(new StorageEvent('storage', { key: APPEARANCE_MIRROR_KEY, newValue: JSON.stringify({ compactMode: true, showAnimations: true }) }))
+		expect(classes().contains('compact')).toBe(true)
+		expect(classes().contains('no-animations')).toBe(false)
 	})
 
 	it('follows a change written by another window, and nothing else', () => {

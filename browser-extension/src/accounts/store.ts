@@ -3,8 +3,10 @@ import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
 import { clearPolicy, generatorOptionsKey, generatorPolicyKey } from '@/src/generator/store'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
+import { forgetPin } from '@/src/vault/pin'
 import { clearSnapshot } from '@/src/vault/store'
 import { forgetVerifiedPartners } from '@/src/vault/verified-partners'
+import { accountPolicyKey } from './policy'
 import { DEFAULT_SETTINGS, settingsKey, writeSettings, type AccountSettings } from './settings'
 
 export { MAX_ACCOUNTS }
@@ -111,8 +113,8 @@ export async function updateAccount(accountId: string, patch: Partial<Omit<Accou
 }
 
 /** Changing settings moves the "Never" copy of the key on or off disk with them. */
-export async function updateSettings(accountId: string, settings: AccountSettings): Promise<void> {
-	await writeSettings(accountId, settings)
+export async function updateSettings(accountId: string, patch: Partial<AccountSettings>): Promise<void> {
+	await writeSettings(accountId, patch)
 	await syncNeverLockKey(accountId)
 }
 
@@ -136,6 +138,7 @@ async function isActive(accountId: string): Promise<boolean> {
 export async function markLoggedOut(accountId: string, revoked = false): Promise<void> {
 	await updateAccount(accountId, { appPassword: null, revoked })
 	await clearKey(accountId)
+	await forgetPin(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove(suiteKey(accountId))
 	await clearPolicy(accountId)
@@ -145,9 +148,11 @@ export async function markLoggedOut(accountId: string, revoked = false): Promise
 /** `clearKey` takes the generator history with the key. */
 async function purge(accountId: string): Promise<void> {
 	await clearKey(accountId)
+	await forgetPin(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove([
 		suiteKey(accountId), settingsKey(accountId), folderNoticeKey(accountId), generatorOptionsKey(accountId), generatorPolicyKey(accountId),
+		accountPolicyKey(accountId),
 	])
 }
 

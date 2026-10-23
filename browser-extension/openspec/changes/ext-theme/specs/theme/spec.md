@@ -46,7 +46,7 @@ The extension SHALL apply the theme to every popup screen, the unlock, add-accou
 - **THEN** the pop-out window repaints in the new theme
 
 ### Requirement: No flash of the other theme
-The extension SHALL paint the first frame of the popup in the stored theme. To do that, the popup mirrors the theme into the extension origin's `localStorage` under `keepiq.theme`, reads it before mounting, and replaces it with the background's value once that arrives. The mirror holds only the theme name. When `localStorage` is unavailable, the first frame follows the system and the background's value applies when it arrives.
+The extension SHALL paint the first frame of the popup in the stored theme. To do that, the popup mirrors the theme into the extension origin's `localStorage` under `keepiq.theme`, reads it before mounting, and replaces it with the background's value once that arrives. The mirror holds only display values: the theme name, and under `keepiq.appearance` the Compact mode and Show animations switches (ext-settings). When `localStorage` is unavailable, the first frame follows the system and the background's value applies when it arrives.
 
 #### Scenario: Reopen with a pinned theme
 - **GIVEN** Theme is Light, the mirror holds `light` and the OS is dark

@@ -13,14 +13,18 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' |
 	verbatim?: boolean
 	/** An icon button after the input, e.g. to generate its value. */
 	action?: { icon: IconName; label: string; onClick: (button: HTMLButtonElement) => void }
+	/** Reads `error` out as it appears, also while the field already has focus. */
+	announce?: boolean
 }
 
 /** A labelled input; `type="password"` gets a show/hide toggle that keeps the value. */
-export const TextField = forwardRef<HTMLInputElement, Props>(function TextField({ label, value, onChange, hint, error, verbatim = false, action, type = 'text', ...rest }, ref) {
+export const TextField = forwardRef<HTMLInputElement, Props>(function TextField({ label, value, onChange, hint, error, verbatim = false, action, announce = false, type = 'text', ...rest }, ref) {
 	const id = useId()
 	const [revealed, setRevealed] = useState(false)
 	const isPassword = type === 'password'
-	const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ')
+	// A given description, e.g. one error under two fields, joins the field's own.
+	const describedBy = [hint && `${id}-hint`, error && `${id}-error`, rest['aria-describedby']].filter(Boolean).join(' ')
+	const invalid = error ? true : rest['aria-invalid']
 	return (
 		<div className="field">
 			<label className="field__label" htmlFor={id}>{label}</label>
@@ -36,7 +40,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 					type={isPassword && revealed ? 'text' : type}
 					value={value}
 					onChange={(event) => onChange(event.target.value)}
-					aria-invalid={error ? true : undefined}
+					aria-invalid={invalid || undefined}
 					aria-describedby={describedBy || undefined}
 				/>
 				{isPassword && (
@@ -50,7 +54,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 				{action && <IconButton icon={action.icon} label={action.label} onClick={(event) => action.onClick(event.currentTarget)} />}
 			</div>
 			{hint && <p className="field__hint" id={`${id}-hint`}>{hint}</p>}
-			{error && <p className="field__error" id={`${id}-error`}>{error}</p>}
+			{error && <p className="field__error" id={`${id}-error`} role={announce ? 'alert' : undefined}>{error}</p>}
 		</div>
 	)
 })

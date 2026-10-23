@@ -5,12 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from '../../App'
 import type { FolderMeta } from '@/src/messages'
 import { everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentOf, snapshotReply } from '../../testing'
-import { applyTheme, THEME_MIRROR_KEY } from '../../theme'
+import { applyAppearance, applyTheme, THEME_MIRROR_KEY } from '../../theme'
 
 afterEach(() => {
 	cleanup()
 	localStorage.clear()
 	applyTheme('system')
+	applyAppearance({ compactMode: false, showAnimations: true })
 })
 beforeEach(everythingVisible)
 
@@ -26,16 +27,63 @@ async function openSettings() {
 }
 
 describe('Settings', () => {
-	it('lists the sections in order, with Vault and Appearance open', async () => {
+	it('lists the sections in order and opens each with a way back', async () => {
 		fakeBackground()
 		const user = await openSettings()
 		const rows = within(screen.getByRole('list')).getAllByRole('button')
-		expect(rows.map((row) => row.textContent)).toEqual(['Account security', 'Autofill', 'Notifications', 'Vault', 'Appearance', 'About'])
-		const unbuilt = rows.filter((row) => row.getAttribute('aria-disabled') === 'true')
-		expect(unbuilt.map((row) => row.textContent)).toEqual(['Account security', 'Autofill', 'Notifications', 'About'])
-		expect(unbuilt.every((row) => row.title === 'Available in a later update')).toBe(true)
-		await user.click(rows[0]!)
-		expect((await title()).textContent).toBe('Settings')
+		const names = ['Account security', 'Autofill', 'Notifications', 'Vault', 'Appearance', 'About']
+		expect(rows.map((row) => row.textContent)).toEqual(names)
+		expect(rows.some((row) => row.getAttribute('aria-disabled'))).toBe(false)
+		for (const name of names) {
+			await user.click(within(screen.getByRole('list')).getByRole('button', { name }))
+			expect((await title()).textContent).toBe(name)
+			expect(screen.queryByText('Available in a later update')).toBeNull()
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			expect((await title()).textContent).toBe('Settings')
+		}
+	})
+
+	it('opens Autofill with every entry\'s stored value', async () => {
+		fakeBackground({ accountSettings: { values: { contextMenu: false, clearClipboardMs: 60_000 } } })
+		const user = await openSettings()
+		await user.click(screen.getByRole('button', { name: 'Autofill' }))
+		expect((await screen.findByRole<HTMLInputElement>('checkbox', { name: 'Enable context menu options' })).checked).toBe(false)
+		expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Show autofill suggestions on form fields' }).checked).toBe(true)
+		expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Clear clipboard' }).value).toBe('60000')
+	})
+
+	it('returns from Excluded domains to Notifications', async () => {
+		fakeBackground({ accountSettings: { autofillFeatures: ['savePrompts'] } })
+		const user = await openSettings()
+		await user.click(screen.getByRole('button', { name: 'Notifications' }))
+		await user.click(await screen.findByRole('button', { name: 'Excluded domains' }))
+		expect((await title()).textContent).toBe('Excluded domains')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Notifications')
+	})
+
+	it('starts New with the default item type chosen here', async () => {
+		fakeBackground()
+		const user = await openSettings()
+		await user.click(within(screen.getByRole('list')).getByRole('button', { name: 'Vault' }))
+		await user.selectOptions(await screen.findByRole('combobox', { name: 'Default item type in this extension' }), 'Note')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: 'Vault' }))
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		expect((await screen.findByRole<HTMLSelectElement>('combobox', { name: 'Type' })).value).toBe('t-note')
+	})
+
+	it('drops the cards\' copy actions when quick copy is off, keeping the detail\'s', async () => {
+		fakeBackground({ decrypted: { i1: { login: 'alice', key: 'hunter2' } } })
+		const user = await openSettings()
+		await user.click(screen.getByRole('button', { name: 'Appearance' }))
+		await user.click(await screen.findByRole('checkbox', { name: 'Show quick copy actions on vault' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: 'Vault' }))
+		await screen.findByRole('button', { name: 'More, GitHub' })
+		expect(screen.queryByRole('button', { name: 'Copy, GitHub' })).toBeNull()
+		await user.click(screen.getAllByRole('button', { name: /^GitHub/ })[0]!)
+		expect(await screen.findByRole('button', { name: 'Copy username' })).toBeTruthy()
 	})
 
 	it('opens Appearance with the stored theme and goes back to the list', async () => {
@@ -88,8 +136,17 @@ describe('the stored theme', () => {
 		fakeBackground({ state: popupState({ screen: 'unlock' }), settings: { theme: 'dark' } })
 		render(<App />)
 		expect((await title()).textContent).toBe('Unlock')
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
 		await waitFor(() => expect(theme()).toBe('dark'))
 		expect(localStorage.getItem(THEME_MIRROR_KEY)).toBe('dark')
+	})
+
+	it('applies compact mode and stopped animations to the unlock screen', async () => {
+		fakeBackground({ state: popupState({ screen: 'unlock' }), settings: { compactMode: true, showAnimations: false } })
+		render(<App />)
+		expect((await title()).textContent).toBe('Unlock')
+		await waitFor(() => expect(document.documentElement.classList.contains('compact')).toBe(true))
+		expect(document.documentElement.classList.contains('no-animations')).toBe(true)
 	})
 
 	it('follows a change made in another window', async () => {

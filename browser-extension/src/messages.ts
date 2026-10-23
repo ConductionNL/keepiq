@@ -4,6 +4,7 @@
  * these unions once, at its boundary.
  */
 
+import type { AccountSettings, VaultTimeout } from '@/src/accounts/settings'
 import type { GeneratorHistoryEntry, GeneratorOptions, GeneratorPolicy } from '@/src/generator/options'
 
 /** Content script → background. Fire-and-forget. */
@@ -24,6 +25,10 @@ export interface AccountSummary {
 	avatarDataUrl: string | null
 	status: AccountStatus
 	active: boolean
+	/** The PIN's session copy exists, so the PIN field can work. */
+	pin: boolean
+	/** Only the seal exists, after a restart: the master password once, then the PIN. */
+	pinAfterRestart: boolean
 }
 
 export type PopupScreen = 'add_account' | 'reauthenticate' | 'unlock' | 'unlocked'
@@ -48,15 +53,26 @@ export type ErrorCode =
 	| 'keepiq_outdated'
 	/** The master password opened the vault key, but it isn't one PEM private key. */
 	| 'key_unreadable'
+	/** Carries `attemptsLeft`. */
+	| 'invalid_pin'
+	/** The fifth wrong PIN in a row forgot it, or another window's did. */
+	| 'pin_forgotten'
+	/** The PIN wraps a key from another suite or epoch than the cached one, so it was forgotten. */
+	| 'pin_key_changed'
 
 // Codes, never text: the popup words them in the browser's language (ext-i18n).
 export type NoticeCode = 'session_revoked' | 'key_changed'
 
 export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
 
-export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode }
+export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; attemptsLeft?: number }
 
-export type UnlockMethod = { type: 'masterPassword'; masterPassword: string }
+export type UnlockMethod =
+	| { type: 'masterPassword'; masterPassword: string }
+	| { type: 'pin'; pin: string }
+
+/** In code points, any characters. Here so the popup can name it without importing the PIN code. */
+export const PIN_MIN_LENGTH = 6
 
 /** Popup → background. Request/response, every arm resolves to `Result`. */
 export type PopupToBackground =
@@ -74,12 +90,25 @@ export type PopupToBackground =
 
 export type PopupTab = 'vault' | 'generator' | 'send' | 'settings'
 
+/** Autofill behaviours ext-autofill delivers; an entry for one not yet delivered shows "Coming later". */
+export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts'
+
+/** Here rather than in the settings module, so the popup can list them without its storage code. */
+export const URI_MATCHES = ['baseDomain', 'host', 'startsWith', 'exact', 'regex', 'never'] as const
+export type UriMatch = typeof URI_MATCHES[number]
+/** Milliseconds; `0` is Never. */
+export const CLEAR_CLIPBOARD_OPTIONS = [0, 10_000, 20_000, 30_000, 60_000, 120_000, 300_000] as const
+
 export const THEMES = ['system', 'light', 'dark'] as const
 export type Theme = typeof THEMES[number]
 
 /** Settings that apply before an account is chosen, so they are not per account. */
 export interface GlobalSettings {
 	theme: Theme
+	compactMode: boolean
+	showAnimations: boolean
+	/** Copy actions on the vault list's cards; the item detail keeps its own. */
+	quickCopy: boolean
 }
 
 export interface SyncStatus {
@@ -138,7 +167,7 @@ export type VaultSnapshotReply =
 		sync: SyncStatus
 		/** The account's Keepiq web app, for "open the web app" links. */
 		webAppUrl: string
-		/** The user's `default_secret_type` slug; `null` means `login`. */
+		/** The extension's Default item type when the cached types hold it; `null` means `login`. */
 		defaultSecretType: string | null
 		folderNoticeDismissed: boolean
 	}
@@ -259,6 +288,7 @@ export type PopupRequest =
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
 	| { kind: 'settings.get' }
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
+	| AccountSettingsRequest
 	| VaultWrite
 	| GeneratorRequest
 	| SendRequest
@@ -285,6 +315,37 @@ export type VaultWrite = { accountId: string } & (
 	| { kind: 'folder.delete'; id: string; plan: FolderDeletePlan }
 	| { kind: 'folder.dismissNotice' }
 )
+
+/** Named by the account the popup shows, like `VaultWrite`; `settings.get`/`set` stay global for the theme, read before any account exists. */
+export type AccountSettingsRequest = { accountId: string } & (
+	| { kind: 'account.settings.get' }
+	| { kind: 'account.settings.set'; patch: Partial<AccountSettings> }
+	| { kind: 'pin.set'; pin: string; masterPassword: string }
+	| { kind: 'pin.remove' }
+)
+
+export interface AccountSettingsSnapshot {
+	accountId: string
+	/** As stored, validated. */
+	values: AccountSettings
+	/** After the organisation maximum. */
+	effectiveTimeout: VaultTimeout
+	/** `null` until the first read. */
+	maxIdleMinutes: number | null
+	exportDisabled: boolean
+	/** Either copy exists, so the toggle shows on. */
+	pin: boolean
+	/** Empty until ext-autofill. */
+	autofillFeatures: AutofillFeature[]
+	/** Of the `autofill_login` command; `null` when it is missing or has none. */
+	shortcut: string | null
+	serverUrl: string
+	webAppUrl: string
+	/** Raw, for display only. */
+	keepiqVersion: string | null
+}
+
+export type PinSetReply = { ok: true } | { ok: false; code: 'invalid_master_password' | 'pin_too_short' | 'locked' }
 
 /** Per account, like `VaultWrite`, so a stale window never reads or writes another account's generator. */
 export type GeneratorRequest = { accountId: string } & (
@@ -346,6 +407,12 @@ export interface PopupReplies {
 	'popup.lastTab.set': null
 	'settings.get': GlobalSettings
 	'settings.set': GlobalSettings
+	/** `null` for an unknown account. */
+	'account.settings.get': AccountSettingsSnapshot | null
+	/** `'locked'` while the account is not unlocked. */
+	'account.settings.set': AccountSettingsSnapshot | 'locked' | null
+	'pin.set': PinSetReply
+	'pin.remove': null
 	'item.fetch': WriteResult<EditableItem>
 	'item.create': WriteResult<{ id: string }>
 	'item.update': WriteResult<{ id: string; shareSave?: ShareSaveNote }>
@@ -374,7 +441,7 @@ export interface PopupReplies {
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
 	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
-	'settings.get', 'settings.set', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
+	'settings.get', 'settings.set', 'account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
 	'send.list', 'send.create', 'send.delete',

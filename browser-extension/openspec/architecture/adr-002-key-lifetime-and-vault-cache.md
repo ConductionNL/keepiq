@@ -26,7 +26,7 @@ Four adversaries against the data the extension holds. "Exposed" means the adver
 
 Consequences drawn from the table:
 
-- The infostealer row is why key material never touches `storage.local`: ciphertext plus app password on disk gives an attacker exactly what the server already has, no more.
+- The infostealer row is why key material never touches `storage.local`: ciphertext plus app password on disk gives an attacker exactly what the server already has, no more. The rule: `storage.local` may hold ciphertext, the app password, and the PIN sealed under a key derived from the private key; nothing on disk may open the private key for less than the master password, except under the warned "Never" timeout.
 - The app password is the weakest item. Nextcloud app passwords are long-lived and have no refresh flow, so the short-lived token the first-principles design asked for is not available. Mitigations: it is scoped to one Nextcloud user, revocable in one click in Nextcloud, and cannot decrypt anything or destroy the vault (destructive suite operations need a vault-key proof, ADR-003).
 - The walk-up row is what the idle timeout bounds. The physical-access adversary is the one the timeout defends against; malware already running as the user can also keylog, so the timeout buys little there.
 - The content script row is why URL matching and decryption happen in the background and the page receives one credential at a time.
@@ -46,7 +46,10 @@ The extension caches ciphertext on disk and never persists the private key or an
 | App password | `browser.storage.local` | Logout, account removal, server returns 401 |
 | Generated values, the 50 newest per account, in plaintext | `browser.storage.session` | Clear in the History view; lock, timeout, logout, account removal, browser restart, extension reload |
 | Generator options | `browser.storage.local` | Account removal |
+| PIN session copy: the private key wrapped under the PIN, and its failed-attempt count | `browser.storage.session`; background-page memory on Firefox below 115. Never `storage.local`. | Fifth wrong PIN, removing the PIN, logout, account removal, server returns 401, suite change, the two-factor policy withholding the key, browser restart, extension reload. Not a lock, by hand or by the timeout. |
+| PIN seal: the PIN under a key derived from the private key | `browser.storage.local` | The same as the session copy, except browser restart and extension reload. |
 | Organisation policy, as the generator reads it | `browser.storage.local` | Logout, account removal |
+| Organisation idle lock maximum and export switch | `browser.storage.local` | Account removal. Kept through a logout, so a new login is never unclamped. |
 | Account list, active account id, settings | `browser.storage.local` | Account removal |
 
 `storage.session` is memory-backed, holds up to 10 MB, is cleared when the extension is disabled, reloaded, updated or the browser restarts, and is not exposed to content scripts unless `setAccessLevel` changes that. Do not change that default.
@@ -59,12 +62,30 @@ The private key is stored as bytes, not as a `CryptoKey`, because `storage.sessi
 
 Lock and logout are different states and are labelled differently everywhere in the UI.
 
-- **Lock** purges the private key. Ciphertext, metadata, app password and account list stay. Unlock needs the master password, or a PIN when the user enabled it, with no server round trip.
+- **Lock** purges the private key. Ciphertext, metadata, app password, account list and both PIN copies stay. Unlock needs the master password, or a PIN when the user enabled it, with no server round trip.
 - **Logout** purges everything belonging to the account, including the app password. Returning needs the app password again.
 
-Defaults: vault timeout 15 minutes idle, timeout action "Lock". A browser restart always locks regardless of the setting, because `storage.session` does not survive it. Options: Immediately, 1 minute, 5 minutes, 15 minutes, 30 minutes, 1 hour, 4 hours, On system lock, On browser restart, Never, Custom. Idle means time since the user last interacted with the extension, not system sleep. "Never" carries an explicit warning because it writes key material to `storage.local`; Bitwarden shipped it as the default for years and regretted it. Whether Custom should be capped (for example at 24 hours) is open. The maximum timeout and the forced action are read from one config object so an admin policy can later clamp them.
+Defaults: vault timeout 15 minutes idle, timeout action "Lock". A browser restart always locks regardless of the setting, because `storage.session` does not survive it. Options: Immediately, 1 minute, 5 minutes, 15 minutes, 30 minutes, 1 hour, 4 hours, On system lock, On browser restart, Never, Custom. Idle means time since the user last interacted with the extension, not system sleep. "Never" carries an explicit warning because it writes key material to `storage.local`; Bitwarden shipped it as the default for years and regretted it.
 
-The extension's lock is independent of the web app's. Keepiq's web app timeout preference (`session_timeout`) is shown in settings as the server default but does not drive the extension. Logging out of the Nextcloud web UI does not lock the extension.
+The organisation's idle lock maximum caps every option. Keepiq's admin sets it as `maxIdleMinutes` (ADR-003), one of 1, 5, 15, 30, 60 or 240 minutes, 240 when the admin set none, and the server does not say which. The extension uses the lower of the user's choice and the maximum:
+
+- Never, On browser restart and Custom values above the maximum are clamped to it, so with the default no option outlives 4 hours idle. This also caps Custom.
+- On system lock locks on system lock or at the maximum, whichever comes first.
+- Immediately locks when the popup closes or after the maximum idle time, whichever comes first.
+- The maximum is read with the generator policy on every sync and login, and the last value seen applies offline and through a logout. Before the first read the user's choice applies unclamped.
+- A clamp never rewrites the stored choice, so a raised maximum restores it. A stored maximum deletes the Never copy of the key from `storage.local` at once.
+
+Keepiq has no forced timeout action, so the action is always the user's.
+
+The extension's lock is independent of the web app's. Keepiq's web app timeout preference (`session_timeout`) does not drive the extension, and the extension does not show it. Logging out of the Nextcloud web UI does not lock the extension.
+
+A PIN wraps the private key under a key derived from the PIN for the browser session (see the table). Setting one needs the master password again, so whoever finds the vault unlocked cannot set a PIN to outlast the timeout. A PIN has at least 6 characters.
+
+- **Across a restart.** The PIN itself is sealed in `storage.local` with AES-256-GCM under a key derived (HKDF) from the private key, bound to the account, suite and epoch. After a restart the master password unlocks once, and the seal then rebuilds the session copy. A PIN alone never unlocks after a restart.
+- **Why the seal is authenticated.** A seal to the public key could be written by anyone who can write storage, planting a PIN of their choosing for the next master-password unlock to adopt. Only a key derived from the private key can make a seal that opens.
+- **Accepted: rollback.** Whoever can write `storage.local` can restore an old seal after five wrong PINs or after the PIN was turned off, and the next master-password unlock re-enables that PIN. That attacker could already set the timeout to Never, so the seal adds no power they lack.
+- **Accepted: PIN reuse.** Whoever opens the private key can read the PIN, so a PIN reused elsewhere leaks with the vault.
+- **The five-try limit binds the unlock screen only.** Anyone with the running browser can read the session copy, on Firefox through about:debugging, and try every 6-digit PIN offline within minutes on a GPU. A PIN is only as strong as its length and character set.
 
 ## Revocation
 

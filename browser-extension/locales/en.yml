@@ -23,6 +23,13 @@ errors:
   sessionRevoked: Session revoked, please log in again
   writeLocked: Your vault cannot be changed right now, try again later
   notResponding: Keepiq is not responding. Reload the extension and reopen this popup.
+  invalidPin:
+    1: Wrong PIN, 1 attempt left
+    n: Wrong PIN, $1 attempts left
+  wrongPin: Wrong PIN
+  pinForgotten: PIN forgotten after too many attempts
+  pinKeyChanged: Your vault key changed. Unlock with your master password.
+  pinTooShort: Use at least {count} characters
   unknown: Something went wrong
 
 notices:
@@ -37,7 +44,6 @@ common:
   appPassword: App password
   addAccount: Add account
   openWebApp: Open the Keepiq web app
-  later: Available in a later update
   justNow: just now
 
 titles:
@@ -65,6 +71,8 @@ header:
 unlock:
   masterPassword: Master password
   submit: Unlock
+  pin: PIN
+  useMasterPassword: Use master password
 
 logInAgain:
   submit: Log in
@@ -342,6 +350,102 @@ settings:
   themeSystem: System default
   themeLight: Light
   themeDark: Dark
+  comingLater: Coming later
+  setByOrganisation: Set by your organisation
+  turnedOffByOrganisation: Turned off by your organisation
+  never: Never
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Unlock with PIN
+  pinTurnOn: Turn on
+  masterPasswordRequired: Enter your master password
+  pinAgain: Confirm PIN
+  pinMismatch: PINs don't match
+  pinAdvice: Don't reuse a PIN from your phone or bank.
+  pinAfterRestart: After a browser restart you enter your master password once; then your PIN works again.
+  biometrics: Unlock with biometrics
+  notAvailableYet: Not available yet
+  vaultTimeout: Vault timeout
+  timeoutImmediately: Immediately
+  timeoutMinutes:
+    1: 1 minute
+    n: $1 minutes
+  timeoutHours:
+    1: 1 hour
+    n: $1 hours
+  timeoutOnSystemLock: On system lock
+  timeoutOnSystemLockCapped: On system lock, or after {duration} idle (set by your organisation)
+  timeoutOnRestart: On browser restart
+  timeoutCustom: Custom
+  hours: Hours
+  minutes: Minutes
+  customAtLeastOne: Enter at least one minute
+  customWhole: Enter whole hours and minutes
+  customAtMost: Your organisation allows at most {duration}
+  neverTitle: Keep the vault unlocked?
+  neverWarning: Your vault stays unlocked until you lock it by hand. The key that opens it is written to this browser profile's disk, where anyone who can read the profile can read it.
+  neverConfirm: Keep unlocked
+  timeoutAction: Timeout action
+  actionLock: Lock
+  actionLogOutNote: When the timeout ends you are logged out and need the app password again
+  lockNow: Lock now
+  changeMasterPassword: Change master password
+  autofillOnPageLoad: Autofill on page load
+  autofillOnPageLoadWarning: Compromised or untrusted websites can exploit autofill on page load
+  defaultAutofill: Default autofill setting for login items
+  defaultAutofillOnPageLoad: Autofill on page load if enabled
+  uriMatch: Default URI match detection
+  uriBaseDomain: Base domain
+  uriHost: Host
+  uriStartsWith: Starts with
+  uriExact: Exact
+  uriRegex: Regular expression
+  uriRegexNote: Regular expressions are an advanced option and can break matching
+  inlineSuggestions: Show autofill suggestions on form fields
+  contextMenu: Enable context menu options
+  shortcut: Autofill keyboard shortcut
+  shortcutNotSet: Not set
+  shortcutChange: Change
+  shortcutFirefox: Open about:addons, choose the gear menu, then Manage Extension Shortcuts
+  clearClipboard: Clear clipboard
+  clipboardSeconds:
+    1: 1 second
+    n: $1 seconds
+  askToAdd: Ask to add login
+  askToUpdate: Ask to update existing login
+  excludedDomains: Excluded domains
+  addCurrentSite: Add current site
+  domain: Domain
+  addDomain: Add
+  domainEmpty: Enter a domain
+  domainUnreadable: Enter a domain such as example.org
+  domainDuplicate: Already excluded
+  removeDomain: Remove {domain}
+  webTitle: Keepiq on the web
+  webText: Keepiq's own notifications, import and export, and your master password are managed in Keepiq on Nextcloud, under Personal settings.
+  openKeepiq: Open Keepiq
+  lastSync: "Last sync: {time}"
+  lastSyncNever: "Last sync: Never"
+  syncOffline: Sync failed, you are offline
+  syncFailed: Sync failed, try again later
+  importItems: Import items
+  exportVault: Export vault
+  defaultItemType: Default item type in this extension
+  compactMode: Compact mode
+  showAnimations: Show animations
+  quickCopy: Show quick copy actions on vault
+  language: Language
+  languageFollows: Follows your browser
+  version: Version {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq version unknown
+  help: Help
+  reportBug: Report a bug
+  contactSupport: Contact support
+  privacyPolicy: Privacy policy
+  webApp: Keepiq web app
+  rate: Rate the extension
 
 generator:
   kinds: What to generate
