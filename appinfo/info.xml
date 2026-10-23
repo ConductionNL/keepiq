@@ -213,6 +213,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\SeedDevelopmentLinkShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
+            <step>OCA\Keepiq\Repair\SeedDemoVaults</step>
         </post-migration>
         <install>
             <step>OCA\Keepiq\Repair\MigrateAppConfigKeys</step>
@@ -231,6 +232,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\SeedDevelopmentLinkShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
+            <step>OCA\Keepiq\Repair\SeedDemoVaults</step>
         </install>
     </repair-steps>
 

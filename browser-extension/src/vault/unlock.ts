@@ -44,7 +44,7 @@ async function decrypt(suite: CachedSuite, masterPassword: string): Promise<stri
 	}
 }
 
-/** Reads the version again only when the stored one is missing or too old, since the server may have been updated; offline, a stored one stands. */
+/** Reads the version again only when the stored one is missing or too old, since the server may have been updated; offline or on a server error, a stored one stands. */
 async function checkServer(account: AccountRecord): Promise<void> {
 	if (supportedKeepiq(account.keepiqVersion)) return
 	let version: string | null
