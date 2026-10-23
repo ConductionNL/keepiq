@@ -1,126 +1,144 @@
 ## Context
 
-ext-accounts-and-unlock owns accounts, lock state and the timeout config object from ADR-002. ext-vault-browse owns sync, the cached type rows and copy. The popup shell has a Settings tab with no views. This change adds the schema everyone reads settings from, the views, PIN unlock and the two server-mirrored preference groups. The behaviours behind most Autofill and Notifications entries arrive with ext-autofill; this change only stores and shows the values.
+ext-accounts-and-unlock stores each account's timeout and action in `settings.<accountId>` (`src/accounts/settings.ts`) and enforces them in `src/vault/timeout.ts`. ext-vault-browse owns sync and the clipboard clear, which already reads `clearClipboardMs` from the same record. ext-generator fetches `GET /api/settings/policy` on every sync and login and stores it per account. ext-theme built the section list, Appearance, `settings.global` and `settings.get`/`settings.set`. ext-i18n is live. This change fills in the remaining views, the rest of the per-account record, the organisation idle maximum and PIN unlock. The behaviours behind most Autofill and Notifications entries arrive with ext-autofill; this change only stores and shows the values.
 
-Server facts used here, verified in the Keepiq app: `SettingsController::getUserSettings` and `updateUserSettings` behind `GET/PUT /api/settings/user`, whitelisted in `SettingsService::USER_PREF_KEYS`. Reads return every value as a string (`'1'`/`'0'` for toggles, `'login'` for `default_secret_type`); writes accept booleans or strings and echo the full preference set back. Secret type rows carry `name` (the slug the server stores) and `label`. The app registers no `ICapability`, so `/ocs/v2.php/cloud/capabilities` has no Keepiq entry.
+Server facts, verified in the Keepiq app (ADR-003): `ExtensionController::policy` answers `{maxIdleMinutes}`, one of 1, 5, 15, 30, 60 or 240, and 240 when the admin set none. `GET /api/settings/policy` carries `vault_export_disabled` for the calling user. Both shipped in 0.3.8. The web app's Personal settings, import and export are dialogs with no URL of their own.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- One schema module that every change reads through, with a default and a validator per key.
-- Bitwarden's Settings tab structure and defaults (ADR-001), with the deviations listed in the proposal.
-- PIN unlock that keeps ADR-002's storage table honest: the only new place key material can live is a PIN-wrapped blob, and the user is told when it goes to disk.
-- Server-mirrored preferences that never show a guess as fact: stale is visible, writes are online-only.
-- A policy hook so an admin clamp can be wired in later without touching the views.
+- One validated per-account record that every change reads through, written by patch.
+- The organisation's idle maximum obeyed as ADR-002 describes, offline included.
+- PIN unlock that survives a browser restart after one master-password unlock, with nothing on disk that opens the private key for less than the master password.
+- Bitwarden's Settings tab structure and defaults (ADR-001), with the deviations in the proposal.
 
 **Non-Goals:**
-- Timeout enforcement, idle tracking and the lock itself (ext-accounts-and-unlock).
+- Timeout enforcement beyond the clamp (ext-accounts-and-unlock).
 - Autofill, inline menu, context menu and the save prompts (ext-autofill).
-- Folder CRUD (ext-vault-edit), in-extension import or export, biometrics, translations.
-- Mirroring `session_timeout` into the extension's timeout (ADR-002 keeps them independent; it is displayed as "Web app default").
+- Folder CRUD (ext-vault-edit), in-extension import or export, biometrics.
+- Any of Keepiq's own user preferences (`/api/settings/user`).
 
 ## Decisions
 
-- **One schema module, scoped keys.** `src/settings/schema.ts` exports a `SETTINGS` table of `{ key, scope: 'account' | 'global' | 'server', default, validate }` and the derived `SettingsValues` type. Every read passes through `validate` and falls back to the default, so an old or hand-edited record can never produce an unexpected type. Alternative: per-module keys with local defaults, which is what produced Bitwarden's settings drift.
-- **Two records, not one per key.** Account settings live in `storage.local` under `settings.<accountId>`, global (Appearance) under ext-theme's `settings.global`. One read per render, one write per change, and account removal deletes one key. Alternative: a key per setting, which needs a prefix scan to clear.
-- **Appearance is global.** Theme must apply to the unlock and account-picker screens before an account is chosen, so it cannot be per account. Every other setting is per account because Bitwarden scopes them that way.
-- **The background owns reads and writes; components go through hooks.** The `useSettings` hook sends `settings.get` and `settings.set`, applies `applyPolicy` to the returned values for display, and hands views the clamped values plus the policy for labels. The background validates, writes and returns the full snapshot, and applies the same `applyPolicy` for enforcement. No component touches `browser.storage` or the API client (ADR-004). `settings.set` takes a partial patch so one message serves every toggle.
-- **Views compose shared components.** Every entry is a `SettingRow` (label, description, control slot) holding a `Toggle`, `Select` or link; the section list is a `SectionList`; the Never-timeout and PIN-on-disk confirmations are one `WarningDialog` with different copy; the PIN entry is a `PinDialog`. Alternative: markup per view, which is how the vanilla draft would have drifted.
-- **Policy hook is a pure function.** `src/settings/policy.ts` exports `applyPolicy(values, policy)` where `policy` is the ADR-002 clamp object `{ maxTimeoutMinutes?: number; forcedAction?: 'lock' | 'logout' }`. Today the only source is the constant `NO_POLICY`. ADR-003's `GET /api/settings/policy` is a password policy and does not carry these fields, so no endpoint is wired; the hook is the single place to add one.
-- **PIN wraps the PKCS#8 bytes, not a CryptoKey.** `src/settings/pin.ts` derives an AES-256-GCM key from the PIN with PBKDF2-SHA256, 600 000 iterations and a random 16-byte salt, and wraps the private-key bytes ADR-002 already keeps in `storage.session`. The blob uses the same `[version][salt][iv][ciphertext]` layout as the ADR-003 envelope so one codec serves both. Alternative: wrapping the master password, which would put a password-equivalent on disk.
-- **Blob placement follows one toggle.** "Require master password on browser restart" on (default) puts the blob in `storage.session`; off puts it in `storage.local`. On Firefox below 115 the session variant falls back to a background-page variable, which the MV2 persistent page keeps until restart. The failed-attempt counter sits next to the blob in the same area so a browser restart cannot reset it when the blob survived.
-- **The security trade-off, stated plainly.** A PIN is short. With the blob in `storage.local`, anyone who copies the profile can brute-force the PIN offline; PBKDF2 at 600 000 iterations costs about half a second per guess on a laptop, so a four-digit PIN falls in under two hours on one core and the five-attempt limit does not apply to an offline attacker. Mitigations: the default keeps the blob in `storage.session`, the minimum is four characters of any kind and the dialog recommends more, the on-disk variant shows a warning before it is stored, and the blob is purged on every lock path. Users who want the convenience accept the same risk Bitwarden's "Lock with master password on restart: off" carries.
-- **Server mirror is a cache with a timestamp.** `src/settings/server-mirror.ts` performs `GET /api/settings/user` at the end of every sync and on Sync now, stores `{ values, fetchedAt }` under the `server` field of the account record, and marks it stale when the read fails or the extension is offline. Writes send the changed key as `'1'`/`'0'` or the type slug, wait for the echoed set and store it. No write queue: an offline toggle is disabled rather than deferred, because a queued write that lands hours later would surprise the user.
-- **Default item type stores the slug.** The control lists cached type rows by `label`, stores `name` as `default_secret_type`, and ext-vault-edit resolves the slug to a `typeId` at create time. If the slug matches no cached row the control falls back to `login`.
-- **Keyboard shortcut is read, not owned.** The background calls `browser.commands.getAll()`, which exists on both targets, and fills the snapshot's `shortcut` with the first command's binding or `null`; the `Autofill` view shows it or "Not set" when ext-autofill has not declared one. Chromium allows `browser.tabs.create({ url: 'chrome://extensions/shortcuts' })`; Firefox refuses privileged `about:` URLs from `tabs.create`, so Firefox gets instructions plus a Copy control. Detected with `import.meta.env.FIREFOX`.
-- **Add current site uses activeTab.** Opening the popup from the toolbar action grants `activeTab` for that tab, so `browser.tabs.query({ active: true, currentWindow: true })` returns the URL without a `tabs` permission.
-- **Appearance extends ext-theme.** Theme and how it is applied come from ext-theme's design. Compact mode is a second root attribute next to its `data-theme` that tightens spacing tokens. Show animations toggles a `prefers-reduced-motion`-style class.
-- **About reads the manifest.** `browser.runtime.getManifest().version` is identical on both targets. Store URLs are constants set to `<store-url>` until publication; the view hides Rate the extension while the constant is a placeholder.
+- **Extend `src/accounts/settings.ts`, no new schema module.** `AccountSettings` gains every account-scoped entry, each with a default and a validator in one table; `readSettings` validates per key. `clearClipboardMs` keeps its name and unit (milliseconds, `0` is Never). The background's `clipboard.copied` handler reads it through `readSettings` and passes it to `scheduleClipboardClear(ms)`, so `src/clipboard.ts` (in the offscreen bundle) stays free of the settings code and `tldts`. Global entries (compact mode, animations, quick copy) join `GlobalSettings` in `src/settings/global.ts`.
+- **Writes patch.** `writeSettings` and `updateSettings(accountId, patch)` read, merge and write, so a key a write does not name survives. Every write still goes through `updateSettings`, which calls `syncNeverLockKey`.
+- **The organisation policy is stored like the generator's, but outlives a logout.** `src/accounts/policy.ts` keeps `accountPolicy.<accountId>` = `{ maxIdleMinutes: number | null; exportDisabled: boolean }`, initially `null` and `false`, in `storage.local`.
+  - `src/vault/sync.ts` fetches `GET /api/v1/extension/policy` beside `fetchPolicy` in `run()` and `refreshPolicy()`.
+  - `fetchPolicy` returns `{ generator, exportDisabled }`, reading `vault_export_disabled` whatever `policy_enabled` says.
+  - A failed request, a `maxIdleMinutes` that is not a positive whole number, or a missing or non-boolean `vault_export_disabled` keeps that half as stored.
+  - Writes go through `storePolicy`'s logged-in guard and are followed by `syncNeverLockKey`.
+  - The record survives `markLoggedOut`, so a new login is never unclamped. It goes in the account purge, and in `undoWrites` only when the account record itself is gone.
+- **`effectiveSettings(accountId)` applies the stored maximum.** It returns `Promise<AccountSettings & { maxIdleMinutes: number | null }>`, and `TIMEOUT_POLICY` and `forcedAction` go. A number becomes the lower of itself and the maximum, Never and On browser restart become the maximum, and Immediately and On system lock stay while `enforce()` also locks them at the maximum, so a pop-out window kept open cannot outlast it. Keepiq has no forced action.
+- **PIN session copy in `src/vault/pin.ts`.** It derives the wrapping key with `deriveUnlockKey` (PBKDF2-SHA256, 600 000 iterations, `src/crypto/kdf.ts`) from a random 16-byte salt and stores the wrapped PKCS#8 bytes with `encodeEnvelope`/`decodeEnvelope` (`src/crypto/envelope.ts`). The record `pin.<accountId>` = `{ envelope, suiteId, unlockKeyEpoch, failures }` is stored as a JSON string through `sessionValues` (`src/vault/key-store.ts`), which takes strings only and already falls back to background memory on Firefox below 115.
+- **Setting a PIN proves the master password.** `pin.set` decrypts the cached suite envelope with the master password, the same check unlock makes, and wraps the bytes that come out.
+- **PIN unlock is an `UnlockMethod`.** `{ type: 'pin'; pin }` runs through `attempt()` in `src/vault/unlock.ts`, skipping the stale-suite refetch, since a failed unwrap is a wrong PIN.
+  - Attempts on one account are serialised. Each is counted in the record before the unwrap, and the count resets on success, so concurrent tries cannot outrun the limit.
+  - A wrong PIN fails `invalid_pin` with `attemptsLeft`; the fifth forgets the PIN and fails `pin_forgotten`. A cached suite whose id or epoch differs from the record's forgets the PIN and fails `pin_key_changed`.
+  - `Failure` (`src/failure.ts`) gains an optional `attemptsLeft`, which `handlePopupMessage` copies into the result.
+- **The PIN survives a restart as a seal in `storage.local`.** `pinSeal.<accountId>` = `{ v: 1, salt, iv, ciphertext, suiteId, unlockKeyEpoch }` holds the PIN under AES-256-GCM.
+  - The seal key is HKDF-SHA256 over the unwrapped PKCS#8 bytes, with the record's salt and info `"keepiq pin seal v1"`. The AAD binds `v`, the account id, `suiteId` and `unlockKeyEpoch`.
+  - The key is derived only while the PKCS#8 bytes are in hand, in `enablePin` and in the master-password unlock, and is never stored. Never seal with RSA-OAEP or the public key: anyone who can write storage could forge such a seal, and the next master-password unlock would adopt their PIN.
+  - `enablePin` writes the seal beside the session copy, under the same `pinGeneration` guard.
+  - A master-password unlock that finds a seal and no session copy rebuilds after the unlock reply, so the 600 000-iteration PBKDF2 does not slow the unlock. It opens the seal, checks the suite and epoch, wraps again with a fresh salt and stores the session copy under the generation it read first. A seal that fails to open or is stale is deleted.
+  - `PIN_MIN_LENGTH` is 6, any characters.
+- **The PIN purge never hooks `clearKey`,** which every lock runs. `forgetPin` removes both copies. It is called from `markLoggedOut` (the timeout action, a 401), the account purge (Log out, removal), `checkSuite`'s changed branch, `blockUnlock`, `pin.remove` and the fifth wrong PIN. A browser restart or extension reload clears only the session copy.
+- **Account settings get their own messages.** `settings.get` and `settings.set` stay global, because the theme reads them before an account exists. `account.settings.get` and `account.settings.set` carry the account id the popup shows, like `VaultWrite`.
+- **Default item type is local.** It is stored as a type name in `settings.<accountId>`, default `login`. The snapshot reply's `defaultSecretType` reads it, so ext-vault-edit's New form is unchanged. The `GET /api/settings/user` read in `src/vault/sync.ts` and `VaultSnapshot.defaultSecretType` go. Revisit this if a Keepiq release lets an admin set a default type; that release gets a `KEEPIQ_FEATURES` gate.
+- **Links open the web app root.** They open `webAppUrl` (`${serverUrl}/index.php/apps/keepiq/`). `serverUrl` keeps a subfolder, and the `index.php` form works with and without pretty URLs.
+- **Views reuse the popup's components.** They use `OptionCheckbox` for toggles, `Select` for choices, `ConfirmDialog` for the Never warning, and `LogOutConfirm` for Log out. `PinDialog` is the only new component: master password and PIN twice in a `ConfirmDialog`.
+  - `Select` gains a `hint` prop for "Set by your organisation". It takes `T extends string`, so the timeout control maps each `VaultTimeout`, numbers included, to a string key such as `'15'` or `'onSystemLock'`.
+- **Autofill entries wait for ext-autofill.** `AUTOFILL_FEATURES` in `src/accounts/settings.ts` lists the delivered behaviours (`pageLoad`, `uriMatch`, `inlineSuggestions`, `contextMenu`, `savePrompts`) and is empty here. The snapshot carries it, and each entry whose behaviour is missing renders disabled with "Coming later".
+- **Keyboard shortcut is read, not owned.** The background reads the `autofill_login` command from `browser.commands.getAll()`, `null` when it is missing or its shortcut is empty. Chromium opens `chrome://extensions/shortcuts` with `browser.tabs.create`, and Firefox gets instructions, detected with `import.meta.env.BROWSER === 'firefox'` (vitest can set `FIREFOX` only as a string).
+- **Excluded domains hold base domains.** Entries go through `baseDomain` in `src/vault/match.ts`, the public-suffix rule ext-autofill matches and excludes with. Free text is lowercased and given `https://` when it has no scheme, so a host or URL reduces the same way. The background validator refuses any entry that isn't its own base domain. Add current site uses the URL from `useCurrentTab()`; the `tabs` permission is already declared.
+- **About** reads the extension version with `browser.runtime.getManifest()` in the view, and the server's Keepiq version as the raw string from the account snapshot. Its addresses are one constant, `ABOUT_LINKS` in `entrypoints/popup/views/settings/about-links.ts`:
+  - Help: `https://keepiq.conduction.nl/`
+  - Report a bug: `https://github.com/ConductionNL/keepiq/issues/new?template=bug-report.yml`
+  - Contact support: `mailto:support@conduction.nl`
+  - Privacy policy: `https://keepiq.conduction.nl/docs/browser-extension/privacy/`, published from `../docs/browser-extension/privacy.md`
+  - Keepiq web app: the account's `webAppUrl`
+  - Rate the extension: per store, `null` until publication
+- **Texts are codes until the popup.** Every string is an `i18n.t()` key in `locales/en.yml` and `locales/nl.yml`; the background returns codes.
 
 ## Module layout
 
-New:
-- `src/settings/schema.ts`: keys, scopes, defaults, validators, `SettingsValues`.
-- `src/settings/store.ts`: read and write the two records, apply validation, delete on account removal.
-- `src/settings/policy.ts`: `applyPolicy`, `NO_POLICY`, the clamp type.
-- `src/settings/pin.ts`: derive, wrap, unwrap, blob codec, placement helper.
-- `src/settings/server-mirror.ts`: fetch, write, stale computation for `/api/settings/user`.
-- `entrypoints/popup/views/settings/AccountSecurity.tsx`, `Autofill.tsx`, `Notifications.tsx`, `Vault.tsx`, `About.tsx`: one view per section.
-- `entrypoints/popup/components/SettingRow.tsx` (label, description, control slot), `Toggle.tsx`, `PinDialog.tsx`, `WarningDialog.tsx` (Never-timeout and PIN-on-disk confirmations).
-- `entrypoints/popup/hooks/useServerSettings.ts` (stale indicator, disabled offline, `settings.server.set`).
+Core:
+- `src/accounts/settings.ts`: the full `AccountSettings`, validators, patch writes, `effectiveSettings` with the maximum, `AUTOFILL_FEATURES`.
+- `src/accounts/policy.ts` (new): read, patch and clear `accountPolicy.<accountId>`.
+- `src/accounts/store.ts`: `updateSettings` takes a patch; `markLoggedOut` forgets the PIN; the purge forgets the PIN and the policy.
+- `src/failure.ts`: optional `attemptsLeft`.
+- `src/vault/pin.ts` (new): derive, wrap, unwrap, the session record and its failure count; the seal, its rebuild and `forgetPin` over both copies.
+- `src/vault/unlock.ts`: the PIN method; PIN purge in `checkSuite` and `blockUnlock`.
+- `src/vault/timeout.ts`: On system lock at the maximum.
+- `src/vault/sync.ts`: the extension policy fetch, `fetchPolicy` returning `{ generator, exportDisabled }`, no `/api/settings/user`.
+- `src/vault/types.ts`: drop `defaultSecretType`.
+- `src/clipboard.ts`: `scheduleClipboardClear(ms)` takes the delay; the background reads it.
+- `src/settings/global.ts`: the new global entries.
+- `src/messages.ts`, `src/background/requests.ts`, `src/background/router.ts`: the contract below. `URI_MATCHES` and `CLEAR_CLIPBOARD_OPTIONS` live in `src/messages.ts`, like `THEMES`, so the popup lists them without the settings module's storage code.
 
-Edited:
-- `src/messages.ts`: the kinds below.
-- `entrypoints/background.ts`: handlers for the new kinds, timeout config fed from the store through `applyPolicy`, PIN blob purge on lock, timeout, logout, account removal and suite change, server mirror refresh at the end of sync.
-- ext-accounts-and-unlock's `Unlock` view component (`entrypoints/popup/views/Unlock.tsx`): a PIN field and "Use master password" link rendered when `useSettings` reports `pin.enabled`, sending `pin.unlock`.
-- ext-theme's `SettingsIndex.tsx` and `Settings.tsx` (open the five sections), `Appearance.tsx` (the other entries) and `useSettings.ts` (the full snapshot, policy clamp applied).
-- `entrypoints/popup/popup.css`: compact tokens.
-
-Nothing changes in `wxt.config.ts`. `storage` is already declared; `commands` belongs to ext-autofill.
+Popup:
+- `views/settings/AccountSecurity.tsx`, `Autofill.tsx`, `Notifications.tsx`, `ExcludedDomains.tsx`, `About.tsx` (new); `views/settings/timeout.ts` (timeout keys and durations) and `domains.ts` (excluded-domain rules, loaded lazily for the public suffix list) (new); `Vault.tsx`, `Appearance.tsx`, `Settings.tsx`, `SettingsIndex.tsx` (edited).
+- `views/Unlock.tsx`: PIN field first, "Use master password", attempts left; the restart line while only the seal exists.
+- `components/PinDialog.tsx`, `hooks/useAccountSettings.ts`, `views/settings/about-links.ts` (new); `components/Select.tsx` (`hint`); `components/ItemCard.tsx` (quick copy off); `hooks/useSettings.ts`: `SettingsProvider` in `<App />` replaces `useTheme`, one read that applies and mirrors the theme and appearance for every screen.
+- `popup.css`: compact tokens, no-animation class.
+- `locales/en.yml`, `locales/nl.yml`.
 
 ## Message contract
 
 ```ts
-// Popup → background, request/response.
-export type PopupToBackground =
-	| { kind: 'settings.get' }
-	| { kind: 'settings.set'; patch: Partial<SettingsValues> }
-	| { kind: 'settings.server.set'; patch: Partial<ServerSettings> }
-	| { kind: 'pin.enable'; pin: string; requireMasterPasswordOnRestart: boolean }
-	| { kind: 'pin.disable' }
-	| { kind: 'pin.unlock'; pin: string }
-	| { kind: 'about.get' }
-	// existing kinds unchanged
+export type UnlockMethod =
+	| { type: 'masterPassword'; masterPassword: string }
+	| { type: 'pin'; pin: string }
 
-export interface SettingsSnapshot {
-	values: SettingsValues            // account and global keys merged and validated; useSettings applies the policy
-	policy: TimeoutPolicy             // what applyPolicy clamped with, so views can label it
-	server: { values: ServerSettings; fetchedAt: string | null; stale: boolean }
-	pin: { enabled: boolean; onDisk: boolean }
-	capabilities: { inlineMenu: boolean }   // reported by ext-autofill, false until it ships
-	lastSyncAt: string | null
-	shortcut: string | null
+// ErrorCode gains 'invalid_pin' (carries attemptsLeft), 'pin_forgotten' (the fifth wrong PIN) and 'pin_key_changed'.
+export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; attemptsLeft?: number }
+
+export interface AccountSummary {
+	// existing fields
+	pin: boolean                // the session copy exists, so the PIN field can work
+	pinAfterRestart: boolean    // only the seal exists: master password once, then the PIN
 }
 
-export type ServerSettings = {
-	notify_shares: boolean
-	notify_requests: boolean
-	notify_group_shares: boolean
-	notify_security: boolean
-	default_secret_type: string
-	session_timeout: 'session' | '10min' | '30min' | ''
+// Added to PopupRequest, with these PopupReplies:
+//   'account.settings.get' → AccountSettingsSnapshot | null (null: unknown account)
+//   'account.settings.set' → AccountSettingsSnapshot | 'locked' | null ('locked' unless the account is unlocked; null: unknown account)
+//   'pin.set' → PinSetReply, 'pin.remove' → null
+| { kind: 'account.settings.get'; accountId: string }
+| { kind: 'account.settings.set'; accountId: string; patch: Partial<AccountSettings> }
+| { kind: 'pin.set'; accountId: string; pin: string; masterPassword: string }
+| { kind: 'pin.remove'; accountId: string }
+
+export interface AccountSettingsSnapshot {
+	accountId: string
+	values: AccountSettings           // as stored, validated
+	effectiveTimeout: VaultTimeout    // after the organisation maximum
+	maxIdleMinutes: number | null     // null until first read
+	exportDisabled: boolean
+	pin: boolean                        // either copy exists
+	autofillFeatures: AutofillFeature[] // AUTOFILL_FEATURES; empty until ext-autofill
+	shortcut: string | null             // of `autofill_login`
+	serverUrl: string
+	webAppUrl: string
+	keepiqVersion: string | null      // raw, for display only
 }
 
-export type TimeoutPolicy = { maxTimeoutMinutes?: number; forcedAction?: 'lock' | 'logout' }
-
-export type PinUnlockResult =
-	| { ok: true }
-	| { ok: false; attemptsLeft: number }
-	| { ok: false; attemptsLeft: 0; pinDisabled: true }
-
-export interface AboutInfo {
-	version: string
-	serverOrigin: string | null
-	storeUrl: string | null
-}
+export type PinSetReply = { ok: true } | { ok: false; code: 'invalid_master_password' | 'pin_too_short' | 'locked' }
 ```
 
-`settings.set` and `settings.server.set` both reply with a fresh `SettingsSnapshot`. `settings.server.set` rejects with the server's `message` on a non-2xx reply and with `'offline'` when the request never reached the server.
+`account.settings.get` and `settings.get` are not user activity; the other new kinds are.
 
 ## Risks / Trade-offs
 
-- [PIN blob in `storage.local` is brute-forceable offline] → Default keeps it in `storage.session`; four-character minimum with a recommendation for more; warning before the on-disk variant is written; purge on every lock path.
-- [MV3 worker restart mid-unlock loses an in-memory attempt counter] → The counter is stored beside the blob in the same storage area, never in a variable.
-- [Firefox below 115 has no `storage.session`] → Session-scoped blob falls back to a background-page variable, which the persistent MV2 page keeps until restart; the same guard ADR-002 uses for the private key.
-- [Firefox cannot open `about:addons` from `tabs.create`] → Instructions plus Copy control instead of a link on Firefox.
-- [A server write lands while the cached copy is stale and overwrites a change made in the web app] → Writes send only the changed key and store the echoed full set, so the other keys are refreshed by the same request.
-- [Policy clamp hides the user's stored timeout without explanation] → The view shows "Set by your organisation" and the clamped value; the stored value is not rewritten, so lifting the policy restores it.
-- [Unknown keys from a newer extension version in an older one] → Validation drops unknown keys on read and preserves them on write by patching, not replacing, the record.
-- [`default_secret_type` slug matches no cached type on a server with custom types removed] → Fall back to `login` with a visible note; never write the fallback back to the server unprompted.
+- [The server answers 240 when the admin set nothing] → Accepted: the cap applies to everyone, so Never and On browser restart are offered only before the first read.
+- [A stored choice above a lowered maximum looks lost] → It stays stored and is shown clamped with "Set by your organisation"; a higher maximum restores it.
+- [A maximum arrives while the Never key is on disk] → `syncNeverLockKey` runs after every policy write.
+- [Anyone with the running browser can read the session copy, on Firefox through about:debugging, and try PINs offline; a 6-digit PIN falls within minutes on a GPU] → The five-try limit binds the unlock screen only. The minimum is 6 characters of any kind, and the dialog advises against a reused phone or bank PIN.
+- [A forged seal would plant the forger's PIN] → The seal key comes from the private key, which only the master password opens, and GCM's tag rejects anything else (ADR-002).
+- [Someone with write access to `storage.local` restores an old seal after five wrong PINs or after the PIN was turned off, and the next master-password unlock re-enables it] → Accepted: that attacker could already set the timeout to Never, so the seal adds no new power; a seal for a stale suite or epoch is deleted.
+- [Whoever opens the private key can read the PIN] → Accepted: they already hold the vault; the dialog advises against reusing a PIN from elsewhere.
+- [An MV3 worker restart mid-unlock loses an in-memory failure count] → The count lives in the session record and is written before the unwrap.
+- [A stored default type is gone from the server] → Read as Login, never written back unprompted.
+- [Firefox cannot open `about:addons` from `tabs.create`] → Instructions plus a Copy control.
 
 ## Open Questions
 
-- Should Appearance settings become per account if a later change adds account-specific branding? Global for now.
-- Does ext-autofill ship the inline menu in its first cut? The `capabilities.inlineMenu` flag keeps the toggle honest either way.
-- Store URLs for Chrome Web Store and AMO are unknown until publication; constants stay `<store-url>`.
-- Whether to show `session_timeout` at all under Account security as "Web app default", given ADR-002 says it does not drive the extension. Shown read-only for now.
+- Store URLs for the Chrome Web Store and AMO are unknown until publication.

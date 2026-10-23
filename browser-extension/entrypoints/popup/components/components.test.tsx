@@ -18,6 +18,7 @@ import { TextField } from './TextField'
 import { TypeSelect } from './TypeSelect'
 import { MaskedField } from './MaskedField'
 import { PageFooter } from './PageFooter'
+import { PinDialog } from './PinDialog'
 import { SearchField } from './SearchField'
 import { Select } from './Select'
 import { TabBar } from './TabBar'
@@ -71,6 +72,14 @@ describe('errorText', () => {
 		expect(errorText('future_code' as ErrorCode, 'h')).toBe(generic)
 		expect(errorText('unreachable', 'cloud.example.org')).toBe('Could not reach cloud.example.org')
 		expect(errorText('limit_reached', 'h')).toBe('Maximum of 5 accounts reached')
+	})
+
+	it('words the PIN codes, counting the attempts left', () => {
+		expect(errorText('invalid_pin', 'h', 1)).toBe('Wrong PIN, 1 attempt left')
+		expect(errorText('invalid_pin', 'h', 3)).toBe('Wrong PIN, 3 attempts left')
+		expect(errorText('invalid_pin', 'h')).toBe('Wrong PIN')
+		expect(errorText('pin_forgotten', 'h')).toBe('PIN forgotten after too many attempts')
+		expect(errorText('pin_key_changed', 'h')).toBe('Your vault key changed. Unlock with your master password.')
 	})
 
 	it('words a code in the browser language', () => {
@@ -138,6 +147,104 @@ describe('Select', () => {
 		await userEvent.setup().selectOptions(select, 'Second')
 		expect(onChange).toHaveBeenCalledWith('b')
 	})
+
+	it('shows a hint under the control and links it', () => {
+		const { rerender } = render(<Select label="Pick" value="a" options={[{ value: 'a', label: 'First' }]} onChange={vi.fn()} hint="Set by your organisation" />)
+		const select = screen.getByRole('combobox', { name: 'Pick' })
+		expect(document.getElementById(select.getAttribute('aria-describedby')!)!.textContent).toBe('Set by your organisation')
+		rerender(<Select label="Pick" value="a" options={[{ value: 'a', label: 'First' }]} onChange={vi.fn()} />)
+		expect(select.getAttribute('aria-describedby')).toBeNull()
+		expect(screen.queryByText('Set by your organisation')).toBeNull()
+	})
+})
+
+/** Read out as it appears, and named by the focused field. */
+function expectAnnounced(label: string, text: string) {
+	const alert = screen.getByRole('alert')
+	expect(alert.textContent).toBe(text)
+	const field = screen.getByLabelText(label)
+	expect(document.activeElement).toBe(field)
+	expect(field.getAttribute('aria-describedby')!.split(' ')).toContain(alert.id)
+}
+
+describe('PinDialog', () => {
+	function renderPin(replies: Record<string, unknown> = {}) {
+		const sent = fakeBackground({ replies })
+		const onDone = vi.fn()
+		const onCancel = vi.fn()
+		const refreshState = vi.fn()
+		render(<ShellContext.Provider value={{ ...DEFAULT_SHELL, refreshState }}><PinDialog onDone={onDone} onCancel={onCancel} /></ShellContext.Provider>)
+		return { sent, onDone, onCancel, refreshState, user: userEvent.setup() }
+	}
+
+	async function fill(user: ReturnType<typeof userEvent.setup>, pin: string, again = pin, masterPassword = 'hunter2') {
+		if (masterPassword) await user.type(screen.getByLabelText('Master password'), masterPassword)
+		await user.type(screen.getByLabelText('PIN'), pin)
+		await user.type(screen.getByLabelText('Confirm PIN'), again)
+	}
+
+	it('advises against a reused PIN, says what a restart asks, and sets it with the master password', async () => {
+		const { sent, onDone, user } = renderPin()
+		const describedBy = (label: string) => screen.getByLabelText(label).getAttribute('aria-describedby')!.split(' ').map((id) => document.getElementById(id)!.textContent)
+		expect(describedBy('PIN')).toEqual(['Don\'t reuse a PIN from your phone or bank.'])
+		expect(describedBy('Master password')).toEqual(['After a browser restart you enter your master password once; then your PIN works again.'])
+		expect(document.activeElement).toBe(screen.getByLabelText('Master password'))
+		await fill(user, '246801')
+		await user.click(screen.getByRole('button', { name: 'Turn on' }))
+		expect(sentOf(sent, 'pin.set')).toEqual([{ kind: 'pin.set', accountId: 'a1', pin: '246801', masterPassword: 'hunter2' }])
+		expect(onDone).toHaveBeenCalledOnce()
+	})
+
+	it('refuses a short PIN before sending anything, focusing it', async () => {
+		const { sent, user } = renderPin()
+		await fill(user, '12345', '12345{Enter}')
+		expectAnnounced('PIN', 'Use at least 6 characters')
+		expect(sentOf(sent, 'pin.set')).toEqual([])
+	})
+
+	it('counts characters, not UTF-16 units, as the background does', async () => {
+		const { sent, user } = renderPin()
+		await fill(user, '😀😀😀😀😀', '😀😀😀😀😀{Enter}')
+		expectAnnounced('PIN', 'Use at least 6 characters')
+		expect(sentOf(sent, 'pin.set')).toEqual([])
+	})
+
+	it('refuses PINs that differ, focusing the second once it names the error', async () => {
+		const { sent, user } = renderPin()
+		await fill(user, '246801', '246812')
+		const again = screen.getByLabelText('Confirm PIN')
+		let describedOnFocus: string | null = null
+		again.addEventListener('focus', () => (describedOnFocus = again.getAttribute('aria-describedby')))
+		await user.click(screen.getByRole('button', { name: 'Turn on' }))
+		expectAnnounced('Confirm PIN', 'PINs don\'t match')
+		expect(describedOnFocus).toContain(screen.getByRole('alert').id)
+		expect(sentOf(sent, 'pin.set')).toEqual([])
+	})
+
+	it('refuses an empty master password before sending anything', async () => {
+		const { sent, user } = renderPin()
+		await fill(user, '246801', '246801', '')
+		await user.click(screen.getByRole('button', { name: 'Turn on' }))
+		expectAnnounced('Master password', 'Enter your master password')
+		expect(sentOf(sent, 'pin.set')).toEqual([])
+	})
+
+	it('says when the master password is wrong and sets nothing', async () => {
+		const { onDone, user } = renderPin({ 'pin.set': { ok: false, code: 'invalid_master_password' } })
+		await fill(user, '246801')
+		await user.click(screen.getByRole('button', { name: 'Turn on' }))
+		expect(await screen.findByText('Invalid master password')).toBeTruthy()
+		expect(screen.getByLabelText<HTMLInputElement>('Master password').value).toBe('')
+		expect(onDone).not.toHaveBeenCalled()
+	})
+
+	it('re-reads the popup state when the account locked meanwhile', async () => {
+		const { refreshState, onCancel, user } = renderPin({ 'pin.set': { ok: false, code: 'locked' } })
+		await fill(user, '246801')
+		await user.click(screen.getByRole('button', { name: 'Turn on' }))
+		expect(refreshState).toHaveBeenCalled()
+		expect(onCancel).toHaveBeenCalled()
+	})
 })
 
 describe('Toast', () => {
@@ -181,6 +288,31 @@ describe('MaskedField', () => {
 		expect(screen.getByText('alice')).toBeTruthy()
 		expect(screen.queryByRole('button', { name: /^Show/ })).toBeNull()
 		expect(screen.getByRole('button', { name: 'Copy username' })).toBeTruthy()
+	})
+})
+
+describe('ConfirmDialog focusing Cancel', () => {
+	it('starts on Cancel when asked, for a risky action', () => {
+		render(<ConfirmDialog title="Keep unlocked?" actions={[{ label: 'Keep unlocked', variant: 'danger', onClick: vi.fn() }]} onCancel={vi.fn()} focusCancel />)
+		expect(document.activeElement?.textContent).toBe('Cancel')
+	})
+})
+
+describe('TextField announcing its error', () => {
+	it('reads the error out when asked, and only then', () => {
+		const { rerender } = render(<TextField label="Domain" value="" onChange={vi.fn()} error="Enter a domain" announce />)
+		expect(screen.getByRole('alert').textContent).toBe('Enter a domain')
+		rerender(<TextField label="Domain" value="" onChange={vi.fn()} error="Enter a domain" />)
+		expect(screen.queryByRole('alert')).toBeNull()
+	})
+})
+
+describe('TextField with an error shown elsewhere', () => {
+	it('keeps its own description and adds the given one', () => {
+		render(<><TextField label="Hours" value="" onChange={vi.fn()} hint="Whole hours" aria-invalid aria-describedby="shared" /><p id="shared">Enter at least one minute</p></>)
+		const field = screen.getByLabelText('Hours')
+		expect(field.getAttribute('aria-invalid')).toBe('true')
+		expect(field.getAttribute('aria-describedby')!.split(' ').map((id) => document.getElementById(id)!.textContent)).toEqual(['Whole hours', 'Enter at least one minute'])
 	})
 })
 

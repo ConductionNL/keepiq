@@ -63,8 +63,9 @@ Keep them short. These are rules, not preferences:
 - **Key material never touches disk.** The master password is dropped after
   derivation, the RSA private key lives only in `storage.session` (re-imported as a
   non-extractable `CryptoKey` on every worker wake) or MV2 background memory.
-  Ciphertext and the app password may go in `storage.local`; nothing derived from
-  the master password may, except under the warned "Never" timeout. (ADR-002)
+  `storage.local` may hold ciphertext, the app password, and the PIN sealed under a
+  key derived from the private key; nothing on disk may open the private key for
+  less than the master password, except under the warned "Never" timeout. (ADR-002)
 - **Content scripts run in a hostile page.** They hold no vault state, never see the
   key, and receive exactly one credential per fill after the user picked it. URL
   matching and decryption stay in the background; `storage.session` keeps its
@@ -92,8 +93,6 @@ We are contractually bound to these. They are rules, not preferences; [KEEPIQ-VE
 <!-- Surface these to the user rather than assuming. Delete the section once it's
 empty. Each entry: the choice, the options, and what it blocks. -->
 
-- Whether the "Custom" vault timeout is capped (for example at 24 hours) or
-  unbounded. Blocks the timeout options in `ext-settings` (ADR-002).
 - Whether the paginated fallback may persist the vault when the admin turned off
   offline caching (the manifest refuses with 428). It does today, as `ext-vault-browse`
   specifies; the alternative keeps it in `storage.session` for the browser session only.

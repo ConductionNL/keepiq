@@ -5,6 +5,7 @@
   - Content script `matches` stays `*://*/*`
 - [ ] 1.2 Add the `fill.*`, `capture.*` and `clipboard.write` envelopes from design.md to `src/messages.ts`, with new `NotificationToBackground` and `BackgroundToOffscreen` unions
   - Every listener keeps the `unknown` cast at the boundary
+- [ ] 1.3 Add each behaviour this change delivers (`pageLoad`, `uriMatch`, `inlineSuggestions`, `contextMenu`, `savePrompts`) to ext-settings' `AUTOFILL_FEATURES` in `src/accounts/settings.ts`, so its Settings entries leave "Coming later"
 
 ## 2. Matching and last used
 

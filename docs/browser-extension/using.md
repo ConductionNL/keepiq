@@ -51,6 +51,8 @@ You can add up to five accounts, on the same server or on different ones. Your N
 
 Enter your master password and choose **Unlock**. Your master password never leaves the browser, and the extension does not store it.
 
+When you set a PIN in [Settings](#settings), the lock screen asks for it instead, with **Use master password** beside it. After a browser restart you enter your master password once; then your PIN works again.
+
 **Invalid master password** means the password did not open your vault. When you changed your master password in the web app, the extension notices and takes the new one.
 
 The extension also refuses to unlock when Keepiq on your server is older than it supports, or when your vault key can't be read; the message says so. Ask your administrator in both cases.
@@ -59,7 +61,7 @@ Does your organisation require two-factor authentication? Then the extension ref
 
 ### Locking
 
-The vault locks after 15 minutes without use, and when you restart the browser. Locking forgets your vault key; your vault stays in the browser in encrypted form only, and you unlock it with your master password again.
+The vault locks after 15 minutes without use, and when you restart the browser; you can change the delay in [Settings](#settings). Locking forgets your vault key; your vault stays in the browser in encrypted form only, and you unlock it with your master password or your PIN again.
 
 To lock straight away, click your avatar at the top right and choose **Lock**, or **Lock all** for every account.
 
@@ -86,7 +88,7 @@ The **Vault** tab lists your items alphabetically. Above the list you can narrow
 Each item has three actions:
 
 - **Launch** opens the item's website in a new tab.
-- **Copy** copies the user name, the password or the current one-time code. Copied values are cleared from the clipboard after 30 seconds.
+- **Copy** copies the user name, the password or the current one-time code. Copied values are cleared from the clipboard after 30 seconds, or the delay you set in [Settings](#settings).
 - **More** has **View**, **Edit**, **Clone**, **Move to folder** and **Delete**, and on a login **Send** (see [Send](#send)).
 
 The extension shows a type icon for each item. It does not load website icons, so no site learns which accounts you have.
@@ -101,7 +103,7 @@ A **blocked** item cannot be opened. Its key was revoked or compromised. The ite
 
 ### Adding an item
 
-**New** at the top of the vault, next to the pop-out button, opens a new item. It starts with the type you chose as your default in Keepiq, or **Login**, and with the address of the site in your current tab. Pick a type, give the item a name and fill in what you need: a login has a user name and password, a card and an identity have their own fields, and an authenticator takes the setup key or `otpauth://` link the site gave you. **Additional fields** holds anything else, such as a PIN, and **Notes** holds free text. **Save** opens the new item.
+**New** at the top of the vault, next to the pop-out button, opens a new item. It starts with your **Default item type in this extension**, **Login** unless you chose another in [Settings](#settings), and with the address of the site in your current tab. Pick a type, give the item a name and fill in what you need: a login has a user name and password, a card and an identity have their own fields, and an authenticator takes the setup key or `otpauth://` link the site gave you. **Additional fields** holds anything else, such as a PIN, and **Notes** holds free text. **Save** opens the new item.
 
 Passkeys are not added here; they are made when you sign up on a website with one.
 
@@ -178,9 +180,30 @@ The extension keeps an encrypted copy of your vault in the browser. Without a co
 
 The extension checks your server for changes every 15 minutes while the vault is unlocked, and when you open it after a while. When your master password or vault key changed in Keepiq, the extension locks and asks for your current master password.
 
-## Theme
+## Settings
 
-The extension follows your browser's light or dark setting, which on most browsers follows your computer's. To pick one yourself, open **Settings**, **Appearance** and choose **Light** or **Dark** under **Theme**; **System default** follows the browser again. The choice applies to every account and stays when you log out.
+The **Settings** tab has a section per topic. Your choices are kept per account, except Appearance, which applies to every account and stays when you log out.
+
+- **Account security:**
+  - **Vault timeout:** Immediately, 1 minute to 4 hours, On system lock, On browser restart, Never or Custom; 15 minutes by default. **Never** keeps the key that opens your vault on disk, and asks first.
+  - **Your organisation's maximum:** the vault never stays unlocked longer without use than your organisation allows, 4 hours unless your administrator chose less. Longer options, On browser restart and Never are not offered, and On system lock and Immediately also lock after the maximum. A longer choice you made before shows the maximum with **Set by your organisation**, and comes back when the maximum rises.
+  - **Timeout action:** **Lock**, or **Log out**, after which you need the app password again.
+  - **Unlock with PIN:** enter your master password and a PIN of at least 6 characters, twice. Don't reuse the PIN of your phone or bank card.
+  - **After a browser restart you enter your master password once; then your PIN works again.** Locking keeps the PIN; five wrong PINs in a row, logging out and a changed vault key forget it, and you unlock with your master password.
+  - **Unlock with biometrics** is not available yet.
+  - **Lock now**, **Log out**, and **Change master password**, which opens the Keepiq web app.
+- **Autofill:** **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default, and the **Autofill keyboard shortcut**. The other entries say **Coming later** until filling in logins arrives.
+- **Notifications:** **Ask to add login**, **Ask to update existing login** and **Excluded domains** say **Coming later** too. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.
+- **Vault:**
+  - **Sync now**, with the time of the last sync.
+  - **Folders**, see [Folders](#folders).
+  - **Import items** and **Export vault** open the Keepiq web app. Export shows **Turned off by your organisation** when your organisation turned it off.
+  - **Default item type in this extension:** the type **New** starts with, **Login** by default.
+- **Appearance:**
+  - **Theme:** **System default** follows your browser's light or dark setting; **Light** or **Dark** picks one.
+  - **Compact mode** tightens the spacing. Turning off **Show animations** stops transitions, and turning off **Show quick copy actions on vault** hides the copy buttons on the vault list.
+  - **Language** shows your browser's language, see [Language](#language).
+- **About:** the extension's version, your server and its Keepiq version, and links to help, bug reports, support, the privacy policy and the Keepiq web app.
 
 ## Language
 
@@ -194,5 +217,4 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 - **Fill in logins** on websites, and save new logins as you sign up.
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
-- **More settings:** the lock delay, a PIN and when the clipboard is cleared.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

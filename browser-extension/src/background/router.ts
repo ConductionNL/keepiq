@@ -8,6 +8,7 @@ import { readLastTab } from '@/src/background/requests'
 import { Failure } from '@/src/failure'
 import type { AccountSummary, NoticeCode, PopupScreen, PopupState, PopupToBackground, Result } from '@/src/messages'
 import { enforce, syncAlarm, touch } from '@/src/vault/timeout'
+import { hasPin, hasSeal } from '@/src/vault/pin'
 import { refreshPolicy, sync } from '@/src/vault/sync'
 import { checkSuite, lock, lockAll, unlock } from '@/src/vault/unlock'
 
@@ -15,6 +16,7 @@ export async function buildState(): Promise<PopupState> {
 	const activeId = await getActiveAccountId()
 	const accounts: AccountSummary[] = []
 	for (const account of await listAccounts()) {
+		const pin = await hasPin(account.id)
 		accounts.push({
 			id: account.id,
 			serverUrl: account.serverUrl,
@@ -24,6 +26,8 @@ export async function buildState(): Promise<PopupState> {
 			avatarDataUrl: account.avatarDataUrl,
 			status: await accountStatus(account),
 			active: account.id === activeId,
+			pin,
+			pinAfterRestart: !pin && await hasSeal(account.id),
 		})
 	}
 	const active = accounts.find((a) => a.active) ?? null
@@ -117,7 +121,9 @@ export async function handlePopupMessage(message: PopupToBackground): Promise<Re
 		await syncAlarm()
 		return { ok: true, state: await buildState() }
 	} catch (error) {
-		if (error instanceof Failure) return { ok: false, code: error.code }
+		if (error instanceof Failure) {
+			return error.attemptsLeft === undefined ? { ok: false, code: error.code } : { ok: false, code: error.code, attemptsLeft: error.attemptsLeft }
+		}
 		console.error('[keepiq]', error)
 		return { ok: false, code: 'unknown' }
 	}

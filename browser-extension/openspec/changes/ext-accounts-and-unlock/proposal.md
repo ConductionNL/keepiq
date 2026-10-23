@@ -54,7 +54,7 @@ None. `openspec/specs/` is empty today.
 - `GET /index.php/avatar/{uid}/{size}` (Nextcloud avatar, ADR-003)
 - `GET /api/v1/suites`
 
-All other typed shapes in the API client (`/api/v1/secrets`, `/api/v1/folders`, `/api/v1/secret-types`, `/api/v1/offline/manifest`, `/api/settings/user`) are declared here for downstream changes but not called by this change.
+All other typed shapes in the API client (`/api/v1/secrets`, `/api/v1/folders`, `/api/v1/secret-types`, `/api/v1/offline/manifest`) are declared here for downstream changes but not called by this change.
 
 ## Impact
 

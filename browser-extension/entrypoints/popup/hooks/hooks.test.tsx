@@ -6,7 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VaultSnapshotReply } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { emptyValues } from '@/src/vault/fields'
-import { everythingVisible, fakeBackground, fakeClipboard, mounts, sentKinds, snapshotReply, types } from '../testing'
+import { everythingVisible, fakeBackground, fakeClipboard, mounts, sentKinds, sentOf, snapshotReply, types } from '../testing'
+import { applyAppearance, applyTheme } from '../theme'
+import { useAccountSettings } from './useAccountSettings'
+import { request } from './useMessage'
+import { SettingsProvider, useGlobalSettings, useSettings } from './useSettings'
 import { useItemDraft } from './useItemDraft'
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard'
 import { useBackgroundMessage } from './useBackgroundMessage'
@@ -267,6 +271,92 @@ describe('useItemDraft', () => {
 			draft = result.current.submit()
 		})
 		expect(draft).toMatchObject({ name: 'GitHub', login: 'alice', typeId: 't-login' })
+	})
+})
+
+describe('useGlobalSettings', () => {
+	afterEach(() => {
+		applyTheme('system')
+		applyAppearance({ compactMode: false, showAnimations: true })
+	})
+
+	it('reads once and applies the stored theme and appearance', async () => {
+		const sent = fakeBackground({ settings: { theme: 'dark', compactMode: true, showAnimations: false } })
+		const { result } = renderHook(() => useGlobalSettings())
+		await waitFor(() => expect(result.current.settings?.compactMode).toBe(true))
+		expect(sentKinds(sent)).toEqual(Array(mounts()).fill('settings.get'))
+		expect(document.documentElement.dataset.theme).toBe('dark')
+		expect(document.documentElement.classList.contains('compact')).toBe(true)
+		expect(document.documentElement.classList.contains('no-animations')).toBe(true)
+	})
+
+	it('applies a change at once and says when the background did not answer', async () => {
+		fakeBackground({ unanswered: ['settings.set'] })
+		const { result } = renderHook(() => useGlobalSettings())
+		await waitFor(() => expect(result.current.settings).not.toBeNull())
+		await act(() => result.current.update({ compactMode: true }))
+		expect(result.current.failed).toBe(true)
+		expect(document.documentElement.classList.contains('compact')).toBe(false)
+	})
+
+	it('shows as failed when the first read gets no answer', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		fakeBackground({ unanswered: ['settings.get'] })
+		const { result } = renderHook(() => useGlobalSettings())
+		await waitFor(() => expect(result.current.failed).toBe(true))
+		expect(result.current.settings).toBeNull()
+	})
+
+	it('is shared through its provider, so every reader sees a change', async () => {
+		const sent = fakeBackground({ settings: { quickCopy: false } })
+		const { result } = renderHook(() => [useSettings(), useSettings()] as const, { wrapper: SettingsProvider })
+		await waitFor(() => expect(result.current[0].settings?.quickCopy).toBe(false))
+		await act(() => result.current[0].update({ quickCopy: true }))
+		expect(result.current[1].settings?.quickCopy).toBe(true)
+		expect(sentOf(sent, 'settings.get')).toHaveLength(mounts())
+	})
+})
+
+describe('useAccountSettings', () => {
+	it('reads the shell\'s account and patches it', async () => {
+		const sent = fakeBackground({ accountSettings: { values: { clearClipboardMs: 20_000 } } })
+		const { result } = renderHook(() => useAccountSettings(), { wrapper: shell().wrapper })
+		await waitFor(() => expect(result.current.snapshot?.values.clearClipboardMs).toBe(20_000))
+		let saved: boolean | undefined
+		await act(async () => {
+			saved = await result.current.update({ vaultTimeout: 30 })
+		})
+		expect(saved).toBe(true)
+		expect(sentOf(sent, 'account.settings.set')).toEqual([{ kind: 'account.settings.set', accountId: 'a1', patch: { vaultTimeout: 30 } }])
+		expect(result.current.snapshot?.values).toMatchObject({ vaultTimeout: 30, clearClipboardMs: 20_000 })
+		expect(sentOf(sent, 'account.settings.get')).toEqual(Array(mounts()).fill({ kind: 'account.settings.get', accountId: 'a1' }))
+	})
+
+	it('re-reads the popup state when the account locked meanwhile', async () => {
+		fakeBackground({ replies: { 'account.settings.set': 'locked' } })
+		const { value, wrapper } = shell()
+		const { result } = renderHook(() => useAccountSettings(), { wrapper })
+		await waitFor(() => expect(result.current.snapshot).toBeTruthy())
+		await act(async () => void await result.current.update({ vaultTimeout: 30 }))
+		expect(value.refreshState).toHaveBeenCalled()
+		expect(result.current.snapshot?.values.vaultTimeout).toBe(15)
+	})
+
+	it('says when the background did not answer', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		fakeBackground({ unanswered: ['account.settings.get'] })
+		const { result } = renderHook(() => useAccountSettings(), { wrapper: shell().wrapper })
+		await waitFor(() => expect(result.current.failed).toBe(true))
+		expect(result.current.snapshot).toBeUndefined()
+	})
+
+	it('re-reads after a PIN change', async () => {
+		fakeBackground()
+		const { result } = renderHook(() => useAccountSettings(), { wrapper: shell().wrapper })
+		await waitFor(() => expect(result.current.snapshot?.pin).toBe(false))
+		await act(async () => void await request({ kind: 'pin.set', accountId: 'a1', pin: '2468', masterPassword: 'pw' }))
+		await act(() => result.current.reload())
+		expect(result.current.snapshot?.pin).toBe(true)
 	})
 })
 

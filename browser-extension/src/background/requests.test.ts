@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { patchAccountPolicy } from '@/src/accounts/policy'
 import { addAccount, folderNoticeKey, markLoggedOut, removeAccount, updateAccount } from '@/src/accounts/store'
-import { settingsKey, writeSettings } from '@/src/accounts/settings'
+import { DEFAULT_SETTINGS, readSettings, settingsKey, writeSettings } from '@/src/accounts/settings'
 import { CLIPBOARD_ALARM } from '@/src/clipboard'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
@@ -9,7 +10,8 @@ import { writePolicy } from '@/src/generator/store'
 import type { PopupReplies, PopupRequest } from '@/src/messages'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { editOpenedKey, hasKey, putKey, sessionValues } from '@/src/vault/key-store'
+import { editOpenedKey, hasKey, neverLockKey, putKey, sessionValues } from '@/src/vault/key-store'
+import { hasPin, hasSeal } from '@/src/vault/pin'
 import { writeSnapshot } from '@/src/vault/store'
 import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
@@ -195,14 +197,14 @@ describe('last tab', () => {
 describe('settings', () => {
 	it('reads and writes the theme while locked', async () => {
 		await lock(accountId)
-		expect(await send({ kind: 'settings.get' })).toEqual({ theme: 'system' })
-		expect(await send({ kind: 'settings.set', patch: { theme: 'dark' } })).toEqual({ theme: 'dark' })
-		expect(await send({ kind: 'settings.get' })).toEqual({ theme: 'dark' })
+		expect(await send({ kind: 'settings.get' })).toMatchObject({ theme: 'system' })
+		expect(await send({ kind: 'settings.set', patch: { theme: 'dark' } })).toMatchObject({ theme: 'dark' })
+		expect(await send({ kind: 'settings.get' })).toMatchObject({ theme: 'dark' })
 	})
 
 	it('ignores an invalid theme', async () => {
 		await send({ kind: 'settings.set', patch: { theme: 'light' } })
-		expect(await send({ kind: 'settings.set', patch: { theme: 'blue' as never } })).toEqual({ theme: 'light' })
+		expect(await send({ kind: 'settings.set', patch: { theme: 'blue' as never } })).toMatchObject({ theme: 'light' })
 	})
 
 	it('does not count a read as interaction', async () => {
@@ -214,13 +216,134 @@ describe('settings', () => {
 	})
 })
 
-describe('vault writes', () => {
-	it('answers with the snapshot\'s default type and the folder notice flag', async () => {
-		await writeSnapshot(accountId, {
-			suite: { id: suiteRow.id, unlockKeyEpoch: 1 }, secrets: [], folders: [], types: typeRows,
-			syncedAt: new Date().toISOString(), listsSyncedAt: new Date().toISOString(), newestUpdatedAt: null, total: 0, defaultSecretType: 'note',
+describe('account settings', () => {
+	afterEach(() => {
+		Object.assign(browser, { commands: undefined })
+	})
+
+	const shortcuts = (commands: Array<{ name?: string; shortcut?: string }>) =>
+		Object.assign(browser, { commands: { getAll: vi.fn(async () => commands) } })
+
+	it('answers the stored values, the policy and the account around them', async () => {
+		expect(await send({ kind: 'account.settings.get', accountId })).toEqual({
+			accountId,
+			values: DEFAULT_SETTINGS,
+			effectiveTimeout: 15,
+			maxIdleMinutes: null,
+			exportDisabled: false,
+			pin: false,
+			autofillFeatures: [],
+			shortcut: null,
+			serverUrl: 'https://cloud.example.org',
+			webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',
+			keepiqVersion: '0.3.12',
 		})
-		expect(await send({ kind: 'vault.snapshot' })).toMatchObject({ defaultSecretType: 'note', folderNoticeDismissed: false })
+	})
+
+	it('answers the stored timeout and the one the organisation maximum leaves', async () => {
+		await writeSettings(accountId, { vaultTimeout: 240 })
+		await patchAccountPolicy(accountId, { maxIdleMinutes: 30, exportDisabled: true })
+		expect(await send({ kind: 'account.settings.get', accountId })).toMatchObject({
+			values: { vaultTimeout: 240 }, effectiveTimeout: 30, maxIdleMinutes: 30, exportDisabled: true,
+		})
+	})
+
+	it('answers no Keepiq version for an account that never stored one', async () => {
+		await updateAccount(accountId, { keepiqVersion: undefined })
+		expect(await send({ kind: 'account.settings.get', accountId })).toMatchObject({ keepiqVersion: null })
+	})
+
+	it.each<[string, Array<{ name?: string; shortcut?: string }>, string | null]>([
+		['its shortcut', [{ name: '_execute_action', shortcut: 'Alt+K' }, { name: 'autofill_login', shortcut: 'Ctrl+Shift+L' }], 'Ctrl+Shift+L'],
+		['none when the user removed it', [{ name: 'autofill_login', shortcut: '' }], null],
+		['none when the manifest declares no such command', [{ name: '_execute_action', shortcut: 'Alt+K' }], null],
+	])('answers for the autofill_login command %s', async (_, commands, shortcut) => {
+		shortcuts(commands)
+		expect(await send({ kind: 'account.settings.get', accountId })).toMatchObject({ shortcut })
+	})
+
+	it('answers null for an unknown account or none', async () => {
+		expect(await send({ kind: 'account.settings.get', accountId: 'another' })).toBeNull()
+		expect(await send({ kind: 'account.settings.get' } as never)).toBeNull()
+		expect(await send({ kind: 'account.settings.set', accountId: 'another', patch: { askToAdd: false } })).toBeNull()
+		expect(await browser.storage.local.get(settingsKey('another'))).toEqual({})
+	})
+
+	it('patches the valid keys and answers a fresh snapshot', async () => {
+		await writeSettings(accountId, { clearClipboardMs: 20_000 })
+		expect(await send({ kind: 'account.settings.set', accountId, patch: { vaultTimeout: 60, uriMatch: 'fuzzy' as never } })).toMatchObject({
+			values: { vaultTimeout: 60, clearClipboardMs: 20_000, uriMatch: 'baseDomain' },
+			effectiveTimeout: 60,
+		})
+	})
+
+	it('moves the Never key onto disk with the timeout', async () => {
+		await send({ kind: 'account.settings.set', accountId, patch: { vaultTimeout: 'never' } })
+		expect((await browser.storage.local.get(neverLockKey(accountId)))[neverLockKey(accountId)]).toBe(toBase64(pemToPkcs8(envelope.privateKeyPem)))
+	})
+
+	it.each<[string, () => Promise<unknown>]>([
+		['locked', () => lock(accountId)],
+		['logged out', () => markLoggedOut(accountId)],
+	])('refuses a change while the account is %s, writing nothing', async (_, leave) => {
+		await leave()
+		expect(await send({ kind: 'account.settings.set', accountId, patch: { vaultTimeout: 'never' } })).toBe('locked')
+		expect((await readSettings(accountId)).vaultTimeout).toBe(15)
+	})
+
+	it('counts a change as interaction, and a read not', async () => {
+		await send({ kind: 'account.settings.set', accountId, patch: { askToAdd: false } })
+		const before = await browser.storage.session.get('lastInteractionAt')
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		await send({ kind: 'account.settings.get', accountId })
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+		await send({ kind: 'pin.remove', accountId })
+		expect(await browser.storage.session.get('lastInteractionAt')).not.toEqual(before)
+	})
+})
+
+describe('PIN', () => {
+	it('sets a PIN after the master password and reports it while either copy exists', async () => {
+		expect(await send({ kind: 'pin.set', accountId, pin: '246813', masterPassword: envelope.password })).toEqual({ ok: true })
+		expect(await send({ kind: 'account.settings.get', accountId })).toMatchObject({ pin: true })
+		await browser.storage.session.clear()
+		expect(await hasSeal(accountId)).toBe(true)
+		expect(await send({ kind: 'account.settings.get', accountId })).toMatchObject({ pin: true })
+	})
+
+	it.each<[string, string, string, string]>([
+		['a wrong master password', '246813', envelope.wrongPassword, 'invalid_master_password'],
+		['a PIN under six characters', '24681', envelope.password, 'pin_too_short'],
+	])('refuses %s', async (_, pin, masterPassword, code) => {
+		expect(await send({ kind: 'pin.set', accountId, pin, masterPassword })).toEqual({ ok: false, code })
+		expect(await hasPin(accountId)).toBe(false)
+	})
+
+	it('refuses a locked or unknown account', async () => {
+		await lock(accountId)
+		expect(await send({ kind: 'pin.set', accountId, pin: '246813', masterPassword: envelope.password })).toEqual({ ok: false, code: 'locked' })
+		expect(await send({ kind: 'pin.set', accountId: 'another', pin: '246813', masterPassword: envelope.password })).toEqual({ ok: false, code: 'locked' })
+	})
+
+	it('removes both copies of the PIN', async () => {
+		await send({ kind: 'pin.set', accountId, pin: '246813', masterPassword: envelope.password })
+		expect(await send({ kind: 'pin.remove', accountId })).toBeNull()
+		expect(await hasPin(accountId)).toBe(false)
+		expect(await hasSeal(accountId)).toBe(false)
+		expect(await send({ kind: 'account.settings.get', accountId })).toMatchObject({ pin: false })
+	})
+})
+
+describe('vault writes', () => {
+	it.each<[string | undefined, string | null]>([
+		[undefined, 'login'],
+		['note', 'note'],
+		['nonexistent', null],
+		['passkey', null],
+	])('answers the extension\'s default type (%s) as %s, and the folder notice flag', async (defaultItemType, defaultSecretType) => {
+		await snapshot([])
+		if (defaultItemType) await writeSettings(accountId, { defaultItemType })
+		expect(await send({ kind: 'vault.snapshot' })).toMatchObject({ defaultSecretType, folderNoticeDismissed: false })
 		expect(await send({ kind: 'folder.dismissNotice', accountId })).toBeNull()
 		expect(await send({ kind: 'vault.snapshot' })).toMatchObject({ folderNoticeDismissed: true })
 	})
@@ -303,9 +426,17 @@ describe('vault writes', () => {
 })
 
 describe('clipboard.copied', () => {
-	it('schedules the clear with the default delay', async () => {
+	it.each<[string, number | undefined, number]>([
+		['the default delay', undefined, 30_000],
+		['the stored delay', 20_000, 20_000],
+		['the default delay for an invalid one', 15_000, 30_000],
+	])('schedules the clear with %s', async (_, clearClipboardMs, delay) => {
+		if (clearClipboardMs !== undefined) await browser.storage.local.set({ [settingsKey(accountId)]: { clearClipboardMs } })
+		const before = Date.now()
 		await send({ kind: 'clipboard.copied' })
-		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeDefined()
+		const { scheduledTime } = (await browser.alarms.get(CLIPBOARD_ALARM))!
+		expect(scheduledTime).toBeGreaterThanOrEqual(before + delay)
+		expect(scheduledTime).toBeLessThanOrEqual(Date.now() + delay)
 	})
 
 	it('schedules nothing when the delay is never', async () => {

@@ -19,8 +19,6 @@ export interface VaultSnapshot {
 	/** What the change probe compares against. */
 	newestUpdatedAt: string | null
 	total: number
-	/** `default_secret_type` from the user settings; absent in a snapshot written before it was read. */
-	defaultSecretType?: string | null
 }
 
 export type { ItemMeta, SyncStatus } from '@/src/messages'

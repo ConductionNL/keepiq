@@ -7,6 +7,7 @@ import { useClipboard } from '../hooks/useClipboard'
 import { language } from '../i18n'
 import { loginKey } from '../hooks/useDecryptedFields'
 import { request } from '../hooks/useMessage'
+import { useSettings } from '../hooks/useSettings'
 import { useShell, type ItemActions } from '../shell-context'
 import { IconButton } from './Button'
 import { Icon } from './Icon'
@@ -54,6 +55,7 @@ interface Props {
 export function ItemCard({ item, type, login, onOpen }: Props) {
 	const copy = useClipboard()
 	const shell = useShell()
+	const quickCopy = useSettings().settings?.quickCopy !== false
 	const { toast, refreshState } = shell
 	const launch = launchUrl(item.url)
 
@@ -104,7 +106,7 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 			</button>
 			<div className="item__actions">
 				{launch && <IconButton icon="external" label={i18n.t('item.launch', { name: item.name })} onClick={() => shell.launch(launch)} />}
-				<Menu label={i18n.t('item.copyMenu', { name: item.name })} icon="copy" items={copyItems} disabled={item.blocked || copyItems.length === 0} />
+				{quickCopy && <Menu label={i18n.t('item.copyMenu', { name: item.name })} icon="copy" items={copyItems} disabled={item.blocked || copyItems.length === 0} />}
 				<Menu
 					label={i18n.t('item.moreMenu', { name: item.name })}
 					icon="more"

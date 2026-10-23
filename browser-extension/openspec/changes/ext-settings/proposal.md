@@ -1,6 +1,6 @@
 ---
 kind: code
-depends_on: [ext-vault-browse, ext-theme]
+depends_on: [ext-vault-browse, ext-vault-edit, ext-generator, ext-theme, ext-i18n]
 chain:
   - ext-accounts-and-unlock
   - ext-vault-browse
@@ -14,55 +14,57 @@ chain:
 
 ## Why
 
-The popup shell from ext-accounts-and-unlock has a Settings tab with nothing behind it, and every other change in the chain needs a place to read its knobs from: the vault timeout and action (ADR-002), the clipboard clear delay, the autofill defaults. Without one schema those values end up as ad hoc `storage.local` keys with different defaults in every module.
+The Settings tab still shows four of its six sections as "Available in a later update". The vault timeout, its action and the clipboard clear delay are stored per account but have no control, and the organisation's idle lock maximum, which Keepiq admins set for the extension, is ignored. ext-autofill also needs a place to read its knobs from.
 
-It mirrors the Bitwarden browser extension's Settings tab (ADR-001) and defines the one settings schema every earlier and later change reads through.
-
-ext-theme already delivers the Settings tab's section list, the Appearance view with Theme, the global `settings.global` record and the `settings.get`/`settings.set` pair. This change builds on all four.
+It mirrors the Bitwarden browser extension's Settings tab (ADR-001), on top of what ext-theme built: the section list, the Appearance view with Theme, `settings.global` and the `settings.get`/`settings.set` pair.
 
 ## What Changes
 
-- The five sections ext-theme lists as "Available in a later update" open their views: Account security, Autofill, Notifications, Vault, About.
-- One typed settings schema (`src/settings/schema.ts`) with keys, defaults, validation and a storage scope per key, absorbing ext-theme's `src/settings/global.ts`, and `settings.get`/`settings.set` widened to the full `SettingsSnapshot`.
-- Account security: vault timeout and timeout action with the ADR-002 options and defaults, Lock now, Log out, Unlock with PIN, biometrics shown as unavailable, Change master password as a link to the Keepiq web app.
-- Unlock with PIN: the RSA private-key bytes are wrapped under a PBKDF2-derived PIN key and stored in `storage.local` or `storage.session` depending on the "Require master password on browser restart" toggle. The unlock screen gains a PIN field. Five wrong PINs revert to the master password.
-- Autofill, Notifications, Vault and Appearance settings entries with their storage, defaults and effect. The behaviour behind the autofill and notification entries is delivered by ext-autofill; folder management by ext-vault-edit. Only the entries live here.
-- Server-mirrored settings: the four Keepiq notification toggles and the default secret type are read from and written to `GET/PUT /api/settings/user`, cached per account, marked stale when offline, and re-read on every sync.
-- A policy hook so an admin-provided clamp object (ADR-002) can restrict the maximum timeout and force the timeout action later without touching the views.
-- About: extension version, server origin, help and store links.
+- The sections Account security, Autofill, Notifications and About open their views; Vault and Appearance gain their remaining entries.
+- The per-account settings record (`src/accounts/settings.ts`) grows from the timeout and action to every account-scoped entry, with a validator and default per key, and writes become patches.
+- The organisation's idle lock maximum is read from `GET /api/v1/extension/policy` alongside the generator policy and clamps the timeout as ADR-002 describes. The Export vault link follows the organisation's `vault_export_disabled`.
+- Account security: vault timeout (now with On system lock) and action, Lock now, Log out, Unlock with PIN, biometrics shown as unavailable, Change master password as a link to the Keepiq web app.
+- Unlock with PIN: a PIN of at least six characters, set after re-entering the master password and offered first on the unlock screen. After a browser restart the master password is needed once, then the PIN works again.
+- Autofill, Notifications, Vault and Appearance entries with their storage, defaults and effect. The behaviour behind the autofill and notification entries comes with ext-autofill, so those entries show "Coming later" until it lands.
+- A "Keepiq on the web" group says that Keepiq's notifications, import and export and the master password are managed in Keepiq on Nextcloud, with a link.
+- Default item type becomes an extension setting per account, replacing the `GET /api/settings/user` read that ext-vault-edit added to the sync.
+- About: extension version, server address, the server's Keepiq version, and links to help, bug reports, support and the privacy policy.
 
 ## Capabilities
 
 ### New Capabilities
-- `settings`: the Settings tab, the settings schema and storage, PIN unlock, server-mirrored preferences and the About panel.
+- `settings`: the Settings tab's remaining views, the per-account settings record, the organisation idle maximum, PIN unlock and the About panel.
 
 ### Modified Capabilities
 
-None. `openspec/specs/` is empty today.
+None. `openspec/specs/` is empty today. ext-vault-edit's New form keeps reading `defaultSecretType` from the snapshot; this change only changes where that value comes from.
 
 ## Deviations from Bitwarden
 
-- **Unlock with biometrics** is shown but disabled with "Not available yet". Bitwarden needs a native messaging host installed on the desktop; this project has none.
+- **Timeout options are capped by the organisation's maximum,** 4 hours unless the Keepiq admin chose less, so Never and On browser restart are normally unavailable. Bitwarden caps only under an opt-in organisation policy.
+- **Unlock with PIN** asks for the master password once after a browser restart, as Bitwarden does by default, but offers no choice to turn that off. Setting a PIN asks for the master password. Five wrong PINs forget the PIN instead of logging out, since Keepiq's logout costs a new app password.
+- **Unlock with biometrics** is shown but disabled with "Not available yet". A later change can add it through a WebAuthn PRF passkey, which Keepiq already stores for extensions (`client_kind: extension` on `/api/v1/passkeys`).
 - **Two-step login** and **Fingerprint phrase** are omitted. Keepiq has no second factor of its own (Nextcloud owns login) and no account fingerprint.
-- **Change master password** opens the Keepiq web app instead of a form. ADR-003 places master password changes out of reach for an app-password client.
-- **Import items** and **Export vault** open the Keepiq web app. There is no in-extension import or export; Keepiq's web app owns both.
-- **Show identities as suggestions** and **Show cards as suggestions** are not rendered until ext-autofill supports those item types. Bitwarden shows them by default.
-- **No "Show website icons" setting.** Bitwarden has one, on by default. ADR-002 rules out fetching icons from sites or icon services, so there is nothing to toggle; the setting returns when Keepiq stores a favicon on the secret.
-- **Five wrong PINs** return the unlock screen to master-password mode and discard the PIN-wrapped key. Bitwarden logs the account out instead. Keepiq's logout costs a new app password, which is disproportionate for a mistyped PIN.
-- **Keepiq server notifications** and **Default item type** are additions. They mirror Keepiq's own per-user preferences so the extension and the web app agree.
-- **Vault timeout default** is 15 minutes idle with a lock on every browser restart, and **Never** carries a warning (ADR-002). Bitwarden's extension default differs; ADR-002 explains why 15 minutes was chosen.
+- **Change master password**, **Import items** and **Export vault** open the Keepiq web app (ADR-003). Export is shown disabled when the organisation turned it off.
+- **Show identities as suggestions** and **Show cards as suggestions** are not rendered until ext-autofill supports those item types.
+- **No "Show website icons" setting.** ADR-002 rules out fetching icons, so there is nothing to toggle.
+- **Default item type** and the **Keepiq on the web** group are additions.
+- **Vault timeout default** is 15 minutes idle, and Never carries a warning (ADR-002).
 
 ## Keepiq API used
 
-- `GET /api/settings/user`: read `notify_shares`, `notify_requests`, `notify_group_shares`, `notify_security`, `default_secret_type` and `session_timeout` (the last is display-only per ADR-002).
-- `PUT /api/settings/user`: write a changed notification toggle or default secret type.
+- `GET /api/v1/extension/policy`: `maxIdleMinutes`, since Keepiq 0.3.8.
+- `GET /api/settings/policy`: adds `vault_export_disabled` to what the generator already reads, since 0.3.8.
 
-Sync now reuses the sync routine from ext-vault-browse and adds no calls of its own. The type list that backs Default item type is the cached `GET /api/v1/secret-types` result from ext-vault-browse.
+Both predate `MIN_KEEPIQ_VERSION` (0.3.12), so nothing is gated in `KEEPIQ_FEATURES`. `GET/PUT /api/settings/user` is no longer called.
+
+Sync now reuses the existing sync and adds no request.
 
 ## Impact
 
-- New: `src/settings/schema.ts`, `src/settings/store.ts`, `src/settings/policy.ts`, `src/settings/pin.ts`, `src/settings/server-mirror.ts`; React views `entrypoints/popup/views/settings/{AccountSecurity,Autofill,Notifications,Vault,About}.tsx`; components `entrypoints/popup/components/{SettingRow,Toggle,PinDialog,WarningDialog}.tsx`; hook `entrypoints/popup/hooks/useServerSettings.ts` (ADR-004).
-- Edited: `src/messages.ts` (settings, PIN and About message kinds), `entrypoints/background.ts` (handlers, timeout config fed from settings, PIN unlock, clearing the PIN blob on lock and logout), ext-accounts-and-unlock's `Unlock` view component (PIN field and "Use master password" link), ext-theme's `SettingsIndex.tsx`, `Settings.tsx`, `Appearance.tsx` and `useSettings.ts`, `entrypoints/popup/popup.css` (compact mode).
-- Other changes in the chain read their knobs through `settings.get` instead of their own keys: ext-accounts-and-unlock (timeout, action), ext-vault-browse (clipboard clear, quick copy actions), ext-vault-edit (default item type), ext-autofill (every Autofill and Notifications entry).
-- No new manifest permissions. The `commands` entry the shortcut display reads is declared by ext-autofill.
-- Security: a PIN-wrapped copy of the private key can live in `storage.local`. Design.md states the trade-off and the mitigations.
+- Core: `src/accounts/settings.ts`, `src/accounts/store.ts`, new `src/accounts/policy.ts` and `src/vault/pin.ts`, `src/vault/unlock.ts`, `src/vault/timeout.ts`, `src/vault/key-store.ts`, `src/vault/sync.ts`, `src/vault/types.ts`, `src/clipboard.ts`, `src/failure.ts`, `src/messages.ts`, `src/background/requests.ts`, `src/background/router.ts`.
+- Popup: new views `AccountSecurity`, `Autofill`, `Notifications`, `About` and the `PinDialog` component and `useAccountSettings` hook; edits to `Unlock`, `Settings`, `SettingsIndex`, `Vault`, `Appearance`, `Select`, `ItemCard` and `popup.css`; keys in `locales/en.yml` and `locales/nl.yml`.
+- Docs: `ARCHITECTURE.md` storage rows, `../docs/browser-extension/privacy.md` and `using.md`, ext-vault-edit's item-editing spec on the default type, ext-accounts-and-unlock's timeout policy text.
+- No new manifest permissions. `commands` is declared by ext-autofill.
+- Security: the PIN-wrapped private key lives in `storage.session` only. `storage.local` gains a seal of the PIN under a key derived from the private key, which opens nothing without the master password (ADR-002).
+- Later, out of scope: an admin policy to remove unlock with PIN, which needs a Keepiq change and a `KEEPIQ_FEATURES` gate.

@@ -58,7 +58,10 @@ describe('AccountSwitcher', () => {
 
 	it('disables Add account at the limit', () => {
 		renderSwitcher(popupState({ accounts: [a], active: a, canAddAccount: false }))
-		expect(screen.getByRole('button', { name: 'Add account' })).toHaveProperty('disabled', true)
+		const add = screen.getByRole('button', { name: 'Add account' })
+		expect(add).toHaveProperty('disabled', true)
+		// The label in its own element, which popup.css fades like the icon.
+		expect(add.querySelector('.menu__label > span')?.textContent).toBe('Add account')
 		expect(screen.getByText('Maximum of 5 accounts reached')).toBeTruthy()
 	})
 

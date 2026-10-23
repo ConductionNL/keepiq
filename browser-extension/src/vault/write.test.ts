@@ -50,7 +50,7 @@ function server(routes: Record<string, (sent: Sent) => Response | Promise<Respon
 }
 
 const sent = () => fetchMock.mock.calls.map(([input, init]) => `${init?.method ?? 'GET'} ${new URL(String(input)).pathname.replace('/index.php/apps/keepiq', '')}${new URL(String(input)).search}`)
-const writes = () => sent().filter((line) => !['GET /api/v1/offline/manifest', 'GET /api/settings/user', 'GET /api/settings/policy', 'GET /api/v1/suites', 'GET /api/health'].includes(line))
+const writes = () => sent().filter((line) => !['GET /api/v1/offline/manifest', 'GET /api/v1/extension/policy', 'GET /api/settings/policy', 'GET /api/v1/suites', 'GET /api/health'].includes(line))
 const bodiesOf = (line: string) => fetchMock.mock.calls.filter((_, i) => sent()[i] === line).map(([, init]) => JSON.parse(String(init!.body)) as Record<string, unknown>)
 const bodyOf = (line: string) => bodiesOf(line)[0]!
 const lastBodyOf = (line: string) => bodiesOf(line).at(-1)!

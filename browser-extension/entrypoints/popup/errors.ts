@@ -4,8 +4,8 @@ import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type V
 import type { FieldError } from '@/src/vault/fields'
 import { language } from './i18n'
 
-/** What the user reads for each error code; `host` names the server where it matters. */
-export function errorText(code: ErrorCode, host: string): string {
+/** What the user reads for each error code; `host` names the server where it matters, `attemptsLeft` comes with `invalid_pin`. */
+export function errorText(code: ErrorCode, host: string, attemptsLeft?: number): string {
 	switch (code) {
 		case 'insecure_url': return i18n.t('errors.insecureUrl')
 		case 'invalid_url': return i18n.t('errors.invalidUrl')
@@ -26,6 +26,9 @@ export function errorText(code: ErrorCode, host: string): string {
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
 		case 'write_locked': return i18n.t('errors.writeLocked')
 		case 'not_responding': return i18n.t('errors.notResponding')
+		case 'invalid_pin': return attemptsLeft === undefined ? i18n.t('errors.wrongPin') : i18n.t('errors.invalidPin', attemptsLeft)
+		case 'pin_forgotten': return i18n.t('errors.pinForgotten')
+		case 'pin_key_changed': return i18n.t('errors.pinKeyChanged')
 		// A newer background can send a code this popup does not know yet.
 		case 'unknown':
 		default: return i18n.t('errors.unknown')

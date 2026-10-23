@@ -67,13 +67,12 @@ All from ADR-003.
 - `DELETE /api/v1/folders/{id}`
 - `GET /api/v1/secret-types`
 - `GET /api/v1/suites` (before each write that encrypts)
-- `GET /api/settings/user`
 
 ## Impact
 
 - New: `src/vault/write.ts`, `src/vault/fields.ts`; React views `ItemForm`, `ItemDialogs`, `FolderPicker`, and `Vault` and `FolderManager` under `views/settings/`; components `TypeSelect`, `AdditionalFieldsEditor`, `ConfirmDialog`, `FolderTree`, `FolderNameDialog`, `TextArea`; hooks `useItemDraft`, `useUnsavedChangesGuard` (ADR-004).
 - Reused: `TextField`, `Select`, `Button`, `Banner`, `Menu`, `PageFooter` and `request` from earlier changes.
-- Edited: `src/messages.ts` (write requests), `src/background/requests.ts` (write arms), `src/vault/sync.ts` (outcomes, the user settings read), Shell and the header (the "New" button), item card and item detail (the live actions), the settings section list.
+- Edited: `src/messages.ts` (write requests), `src/background/requests.ts` (write arms), `src/vault/sync.ts` (outcomes), Shell and the header (the "New" button), item card and item detail (the live actions), the settings section list.
 - Depends on the API client and `src/crypto/` from ext-accounts-and-unlock and on sync, cached `secret-types`, the vault list and item detail from ext-vault-browse.
 - The generate button next to Password comes with ext-generator's pick mode, which adds it to this form.
 - No new manifest permissions. The current-tab URL prefill uses the `tabs` permission ext-vault-browse already needs for URL matching.

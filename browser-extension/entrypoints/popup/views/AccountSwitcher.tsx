@@ -71,7 +71,8 @@ export function AccountSwitcher({ state, dispatch, onClose, onAddAccount }: Prop
 				<ul className="card menu">
 					<li>
 						<button type="button" className="menu__item" onClick={onAddAccount} disabled={!state.canAddAccount} aria-describedby={state.canAddAccount ? undefined : 'limit-hint'}>
-							<Icon name="plus" />{i18n.t('common.addAccount')}
+							<Icon name="plus" />
+							<span className="menu__label"><span>{i18n.t('common.addAccount')}</span></span>
 						</button>
 					</li>
 					<li>

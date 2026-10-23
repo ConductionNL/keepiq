@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { settingsKey } from '@/src/accounts/settings'
 import { CLIPBOARD_ALARM, clearClipboard, overwriteClipboard, scheduleClipboardClear } from './clipboard'
 
 beforeEach(() => {
@@ -27,34 +26,20 @@ function fakeCopyCommand() {
 }
 
 describe('scheduleClipboardClear', () => {
-	it('clears after 30 seconds when no delay is stored', async () => {
-		await scheduleClipboardClear('a', 1_000)
-		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toMatchObject({ scheduledTime: 31_000 })
-	})
-
-	it('schedules the clear after the stored delay', async () => {
-		await browser.storage.local.set({ [settingsKey('a')]: { clearClipboardMs: 20_000 } })
-		await scheduleClipboardClear('a', 1_000)
+	it('schedules the clear after the delay', async () => {
+		await scheduleClipboardClear(20_000, 1_000)
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toMatchObject({ scheduledTime: 21_000 })
 	})
 
 	it('schedules nothing when the delay is never', async () => {
-		await browser.storage.local.set({ [settingsKey('a')]: { clearClipboardMs: 0 } })
-		await scheduleClipboardClear('a')
+		await scheduleClipboardClear(0)
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
 	})
 
 	it('cancels the clear an earlier copy scheduled when the delay is never', async () => {
-		await scheduleClipboardClear('a', 1_000)
-		await browser.storage.local.set({ [settingsKey('b')]: { clearClipboardMs: 0 } })
-		await scheduleClipboardClear('b')
+		await scheduleClipboardClear(30_000, 1_000)
+		await scheduleClipboardClear(0)
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
-	})
-
-	it.each(['soon', -1, Number.POSITIVE_INFINITY])('reads an invalid delay (%s) as the default', async (clearClipboardMs) => {
-		await browser.storage.local.set({ [settingsKey('a')]: { clearClipboardMs } })
-		await scheduleClipboardClear('a', 1_000)
-		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toMatchObject({ scheduledTime: 31_000 })
 	})
 })
 

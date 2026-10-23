@@ -1,11 +1,13 @@
 import { ApiError, createClient, Offline, SessionRevoked, VaultWriteLocked, type Client } from '@/src/api/client'
-import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow, UserSettings } from '@/src/api/types'
+import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow } from '@/src/api/types'
+import { clearAccountPolicy, isMaximum, patchAccountPolicy } from '@/src/accounts/policy'
 import { getAccount, suiteKey, updateAccount, type AccountRecord } from '@/src/accounts/store'
 import { broadcast } from '@/src/background/broadcast'
 import type { GeneratorPolicy } from '@/src/generator/options'
 import { toPolicy } from '@/src/generator/policy'
 import { clearPolicy, writePolicy } from '@/src/generator/store'
 import type { BlockReason, SyncStatus } from '@/src/messages'
+import { syncNeverLockKey } from './key-store'
 import { checkedAt, clearSnapshot, markChecked, readSnapshot, writeSnapshot } from './store'
 import type { StoredBlockedRow, StoredSecretRow, VaultSnapshot } from './types'
 import { blockUnlock, checkSuite } from './unlock'
@@ -90,29 +92,58 @@ async function refreshVersion(client: Client, account: AccountRecord): Promise<v
 	if (version !== null && version !== account.keepiqVersion) await updateAccount(account.id, { keepiqVersion: version })
 }
 
-/** `undefined` when the server gave no answer of the policy's shape, so the cached policy stays. */
-async function fetchPolicy(client: Client): Promise<GeneratorPolicy | null | undefined> {
+/** Each `undefined` keeps what is cached: the server gave no answer of that part's shape. */
+interface FetchedPolicies {
+	generator: GeneratorPolicy | null | undefined
+	exportDisabled: boolean | undefined
+	maxIdleMinutes: number | undefined
+}
+
+async function fetchPolicy(client: Client): Promise<Pick<FetchedPolicies, 'generator' | 'exportDisabled'>> {
 	try {
-		const body = await client.keepiq<{ policy_enabled?: unknown } | null>('GET', '/api/settings/policy')
-		return typeof body?.policy_enabled === 'boolean' ? toPolicy(body) : undefined
+		const body = await client.keepiq<{ policy_enabled?: unknown; vault_export_disabled?: unknown } | null>('GET', '/api/settings/policy')
+		return {
+			generator: typeof body?.policy_enabled === 'boolean' ? toPolicy(body) : undefined,
+			// Applies to the calling user whatever `policy_enabled` says (ADR-003).
+			exportDisabled: typeof body?.vault_export_disabled === 'boolean' ? body.vault_export_disabled : undefined,
+		}
+	} catch {
+		return { generator: undefined, exportDisabled: undefined }
+	}
+}
+
+async function fetchMaxIdleMinutes(client: Client): Promise<number | undefined> {
+	try {
+		const max = (await client.keepiq<{ maxIdleMinutes?: unknown } | null>('GET', '/api/v1/extension/policy'))?.maxIdleMinutes
+		return isMaximum(max) ? max : undefined
 	} catch {
 		return undefined
 	}
 }
 
+async function fetchPolicies(client: Client): Promise<FetchedPolicies> {
+	const [settings, maxIdleMinutes] = await Promise.all([fetchPolicy(client), fetchMaxIdleMinutes(client)])
+	return { ...settings, maxIdleMinutes }
+}
+
 /** Written only while the account stays logged in, like the vault (see `run`). */
-async function storePolicy(accountId: string, pending: Promise<GeneratorPolicy | null | undefined>): Promise<void> {
-	const fetched = await pending
-	if (fetched === undefined || !(await loggedIn(accountId))) return
-	await writePolicy(accountId, fetched)
+async function storePolicy(accountId: string, pending: Promise<FetchedPolicies>): Promise<void> {
+	const { generator, exportDisabled, maxIdleMinutes } = await pending
+	if (!(await loggedIn(accountId))) return
+	if (generator !== undefined) await writePolicy(accountId, generator)
+	if (exportDisabled !== undefined || maxIdleMinutes !== undefined) {
+		await patchAccountPolicy(accountId, { exportDisabled, maxIdleMinutes })
+		// A maximum rules out Never, so its copy of the key leaves the disk at once (ADR-002).
+		await syncNeverLockKey(accountId)
+	}
 	if (!(await loggedIn(accountId))) await undoWrites(accountId)
 }
 
-/** After a login, so the lock screen's generator follows the policy before the first unlock. */
+/** After a login, so the lock screen's generator and the timeout follow the policies before the first unlock. */
 export async function refreshPolicy(accountId: string): Promise<void> {
 	try {
 		const account = await getAccount(accountId)
-		if (account && account.appPassword !== null) await storePolicy(accountId, fetchPolicy(createClient(account)))
+		if (account && account.appPassword !== null) await storePolicy(accountId, fetchPolicies(createClient(account)))
 	} catch (error) {
 		console.error('[keepiq] policy refresh failed', error)
 	}
@@ -122,7 +153,7 @@ async function run(accountId: string, mode: SyncMode): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account || account.appPassword === null) return
 	const client = createClient(account)
-	const policy = fetchPolicy(client)
+	const policy = fetchPolicies(client)
 	// The policy does not depend on the vault, so a failed vault sync keeps a policy that arrived.
 	try {
 		await runVault(accountId, mode, client, account)
@@ -160,6 +191,8 @@ async function undoWrites(accountId: string): Promise<void> {
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove(suiteKey(accountId))
 	await clearPolicy(accountId)
+	// The organisation policy outlives a logout, but not the account.
+	if (!(await getAccount(accountId))) await clearAccountPolicy(accountId)
 }
 
 async function loggedIn(accountId: string): Promise<boolean> {
@@ -199,18 +232,7 @@ type Fetched =
 	| { unlockBlocked: true }
 	| { unlockBlocked: false; suite: SuiteRow & { privateKey: string }; snapshot: VaultSnapshot }
 
-/** The add form's default type; `null` (meaning `login`) when the settings can't be read. */
-async function defaultSecretType(client: Client): Promise<string | null> {
-	try {
-		const settings = await client.keepiq<Partial<UserSettings>>('GET', '/api/settings/user')
-		return typeof settings.default_secret_type === 'string' && settings.default_secret_type ? settings.default_secret_type : null
-	} catch {
-		return null
-	}
-}
-
 async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fetched> {
-	const defaultType = defaultSecretType(client)
 	let manifest: Manifest | null = null
 	try {
 		if (!skipManifest) manifest = await client.keepiq<Manifest>('GET', '/api/v1/offline/manifest')
@@ -261,7 +283,6 @@ async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fet
 			newestUpdatedAt: newest(stored),
 			// The server's count, so a row lost to paging does not make every probe download again.
 			total,
-			defaultSecretType: await defaultType,
 		},
 	}
 }

@@ -17,13 +17,18 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 - `src/crypto/`: PBKDF2 key derivation, AES-GCM envelope and RSA-OAEP, byte compatible with the web app (tested against `../tests/vectors/crypto/`). `federated-certificate.ts` verifies a partner recipient's certificate chain, ported from the web app.
 - `src/accounts/`:
   - `store.ts`: the account list, behind one write queue.
-  - `settings.ts`: the per-account timeout settings and the policy clamp.
+  - `settings.ts`: every per-account setting with its default and validator, patch writes, and the clamp to the organisation's maximum.
+  - `policy.ts`: the organisation's idle maximum and export switch, as last read.
   - `verify.ts`: checks credentials before an account is stored.
   - `normalize-server-url.ts`: turns whatever was typed into a server URL.
-- `src/settings/global.ts`: settings that apply before an account is chosen, today the theme.
+- `src/settings/`:
+  - `global.ts`: settings that apply before an account is chosen: the theme and the appearance switches.
+  - `pick-valid.ts`: keeps the keys of a stored record or patch that pass their validator, for both settings records.
+- `src/queue.ts`: one-at-a-time queues, so a read-modify-write never works on a stale read.
 - `src/vault/`:
   - `key-store.ts`: where the unlocked key lives ([ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md)).
-  - `unlock.ts`: unlock, lock and the suite checks.
+  - `unlock.ts`: unlock by master password or PIN, lock and the suite checks.
+  - `pin.ts`: the PIN-wrapped key and its failure count in session storage, and the PIN's seal on disk that brings it back after a restart.
   - `timeout.ts`: the timeout engine and both alarms.
   - `sync.ts` and `store.ts`: sync and the snapshot cache.
   - `match.ts`: base-domain matching for suggestions.
@@ -44,10 +49,9 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
 - `src/clipboard.ts`: copy in the popup, clear from the background.
 - `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module.
-- `src/generator/`: a port of the web app's password, passphrase and username generator, tested against `../tests/vectors/generator/`. All modules are safe for the popup, except three background-only ones:
+- `src/generator/`: a port of the web app's password, passphrase and username generator, tested against `../tests/vectors/generator/`. All modules are safe for the popup, except two background-only ones:
   - `store.ts`: the options and the cached policy.
   - `history.ts`: the session history.
-  - `queue.ts`: one-at-a-time saves for both.
 - `src/send/`: Keepiq ephemeral sends, byte compatible with the web app (tested against `../tests/vectors/crypto/send.json`). `expiry.ts` and `payload.ts` are safe for the popup; the rest is background-only:
   - `crypto.ts`: the content key and the AES-256-GCM blobs.
   - `argon2.ts`: the Argon2id key for a send password, through `hash-wasm`.
@@ -55,6 +59,11 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `api.ts`: the send routes.
   - `handlers.ts`: the `send.*` requests.
 - `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2.
+- `entrypoints/popup/`, settings:
+  - `views/settings/`: one view per Settings section; `timeout.ts` holds the timeout options and durations, `domains.ts` the excluded-domain rules.
+  - `hooks/useSettings.ts`: `SettingsProvider` in `<App />` reads the global settings once and applies and mirrors the theme and appearance on every screen.
+  - `hooks/useAccountSettings.ts`: the shown account's settings, through `account.settings.get` and `account.settings.set`.
+  - `theme.ts`: the `keepiq.theme` and `keepiq.appearance` mirrors that paint the first frame.
 
 ## Messages
 
@@ -63,7 +72,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | Direction | Kinds | Reply |
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
-| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
@@ -80,17 +89,21 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | --- | --- | --- |
 | `accounts` | local | Account records, app passwords included |
 | `activeAccountId` | local | The active account; heals itself when it points nowhere |
-| `settings.<id>` | local | Vault timeout and action |
-| `settings.global` | local | The theme; survives logout |
+| `settings.<id>` | local | Every account-scoped setting: vault timeout and action, clipboard delay, autofill and notification entries, excluded domains, default item type; kept through a logout |
+| `settings.global` | local | Theme, compact mode, animations and quick copy; survives logout |
+| `accountPolicy.<id>` | local | The organisation's idle maximum and export switch, from the last successful read; kept through a logout |
 | `keepiq.theme` | popup `localStorage` | A mirror of the theme for the first frame, never read by the background |
+| `keepiq.appearance` | popup `localStorage` | A mirror of compact mode and animations for the first frame, never read by the background |
 | `suite.<id>` | local | The active suite row, private key still wrapped |
-| `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts, the default item type |
+| `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts |
 | `folderNotice.<id>` | local | The folder manager's plaintext-names notice was dismissed |
 | `generatorOptions.<id>` | local | The generator's options and last sub-tab, as the user set them; the policy applies on read |
 | `generatorPolicy.<id>` | local | The organisation policy as the generator reads it, from the last successful sync; gone on logout |
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
+| `pinSeal.<id>` | local | The PIN, sealed under a key derived from the private key and bound to the account, suite and epoch; survives a restart, gone with `pin.<id>` otherwise |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
+| `pin.<id>` | session | The key wrapped under the PIN, its suite and epoch, and the wrong PINs in a row; kept through a lock, gone on restart, logout, a changed suite or epoch and the fifth wrong PIN |
 | `unlockedAt.<id>`, `lastInteractionAt` | session | Timeout bookkeeping |
 | `popup:lastTab` | session | The popup tab to reopen |
 | `addAccountDraft` | session | Server URL and username while adding an account |
@@ -108,15 +121,20 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 3. Check again that the account is still logged in and that the stored suite is still the one that was decrypted. Otherwise take the key back.
 4. Start a full sync.
 
+A PIN unlock replaces step 1 with unwrapping the session record, with no request while the stored Keepiq version is supported; each attempt is counted before the unwrap.
+
+After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the seal is opened with the fresh key bytes and the session record rebuilt, after the unlock has replied. A seal that fails or names another suite or epoch is deleted.
+
 ### Sync
 
 - **Triggers:** unlock, opening the popup with a missing or stale snapshot, the `vault-sync` alarm every 15 minutes, and "Sync now". One sync runs per account; a later trigger joins the one running.
 - **Probe:** the newest row and the total, plus the suite list. When nothing changed and the folder and type lists are under 60 minutes old, the sync only records the check time.
 - **Full:**
-  1. Fetch the manifest, and the user settings beside it for the default item type. On a refusal (403 or 428) or 404, at 1000 rows, or when the cached total is 1000 or more, page through the secret list instead.
+  1. Fetch the manifest. On a refusal (403 or 428) or 404, at 1000 rows, or when the cached total is 1000 or more, page through the secret list instead.
   2. Handle a two-factor block, then a suite change.
   3. Mark rows on blocked suites.
   4. Write the snapshot in one `set`.
+- **Policies:** every sync and every login also read `GET /api/settings/policy` and `GET /api/v1/extension/policy`; a failed or unusable read keeps what is stored.
 - **Logout during a sync:** checked after every write, and the writes are undone.
 
 ### Writes
@@ -142,6 +160,7 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 ### Timeout
 
 - `enforce()` runs on the `vault-timeout` alarm and before every popup request, and locks or logs out each account past its timeout.
+- The timeout is read through `effectiveSettings`, capped at the organisation's stored maximum; Immediately and On system lock also lock at that maximum.
 - `syncAlarm()` keeps both alarms only while something is unlocked.
 
 ### Lock and logout

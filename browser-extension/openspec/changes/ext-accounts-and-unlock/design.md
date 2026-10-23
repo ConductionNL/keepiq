@@ -28,7 +28,7 @@ Constraints that shape the design: the background is the only place with host pe
 - **The suite row is cached by this change under `suite.<accountId>`, separate from `vaultCache.<accountId>`.** Unlock needs it offline and ext-vault-browse does not exist yet. Alternative: wait for the manifest cache, rejected because unlock would then need the network.
 - **Key store is a shim with two backends.** `src/vault/key-store.ts` writes PKCS#8 bytes to `browser.storage.session` when it exists and to a module-level `Map` otherwise (Firefox below 115, persistent MV2 page). It re-imports to a non-extractable `CryptoKey` on first use per worker generation and memoises it. Alternative: raise `strict_min_version` to 115, deferred to a later decision.
 - **Timeout engine uses one `browser.alarms` alarm plus a popup port.** A `vault-timeout` alarm with `periodInMinutes: 1` runs while any account is unlocked and compares `lastInteractionAt` against each account's timeout. The popup opens a `runtime.connect` port on load; `onDisconnect` implements "Immediately". `browser.idle.onStateChanged` with state `locked` implements "On system lock". `vault.status` runs the same check first so a sleeping worker cannot extend a session. Alternative: `setTimeout` in the worker, rejected because MV3 kills it.
-- **Timeout policy is one constant object** (`TIMEOUT_POLICY = { maxMinutes, forcedAction }` in `src/accounts/settings.ts`) so an admin clamp later touches one place (ADR-002). The timer and the "Never" key both read `effectiveSettings`, so a clamp also keeps the key off disk.
+- **The organisation's idle maximum caps the timeout in one place** (ADR-002). `effectiveSettings` in `src/accounts/settings.ts` clamps the user's choice to the maximum stored per account; the timer and the "Never" key both read it, so a clamp also keeps the key off disk. Keepiq has no forced action.
 - **"Never" writes the same PKCS#8 base64 to `storage.local` under `neverLockKey.<accountId>`** and the key store reads it back after a restart. Every lock path deletes it. Alternative: refuse "Never", rejected for Bitwarden parity.
 - **Errors cross the message boundary as a discriminated `code`, not as thrown errors.** Every request/response message resolves to `{ ok: true, state } | { ok: false, code, message }` so the popup can map codes to copy and `sendMessage` never rejects on a domain error.
 - **The popup is React with TypeScript through `@wxt-dev/module-react` (ADR-004).** `main.tsx` mounts `<App />`, which picks a view from `state.screen`; views compose components, and hooks are the only bridge to the background (`useMessage` wraps `browser.runtime.sendMessage` with the typed envelopes, `usePopupState` holds the background-owned `PopupState`). No component imports `src/api` or `src/crypto`, and the background and content scripts stay plain TypeScript. This change lands the dependencies once for the whole chain. Alternative: the template's vanilla view modules, rejected by ADR-004 because shared stateful components across seven changes need one component model.
@@ -47,7 +47,7 @@ Constraints that shape the design: the background is the only place with host pe
 
 New:
 
-- `src/api/types.ts`: suite, secret (normal and blocked), folder, type, paginated envelope, manifest, user settings, OCS user.
+- `src/api/types.ts`: suite, secret (normal and blocked), folder, type, paginated envelope, manifest, OCS user.
 - `src/api/client.ts`: `createClient(account)`, `request()`, error classes `ApiError`, `SessionRevoked`, `VaultWriteLocked`, `Offline`, `KeepiqNotInstalled`, identity helpers `fetchIdentity`, `fetchAvatarDataUrl`, and an `onUnauthorized` hook the account store registers.
 - `src/crypto/base64.ts`, `src/crypto/envelope.ts` (decode and version check), `src/crypto/kdf.ts` (PBKDF2 to AES-GCM key), `src/crypto/rsa.ts` (PKCS#8 import, X.509 SPKI extraction, chunked RSA-OAEP decrypt and encrypt), `src/crypto/index.ts`.
 - `src/crypto/*.test.ts`: vitest round-trip and layout tests.
@@ -56,7 +56,7 @@ New:
 - `src/accounts/verify.ts`: identity then suites, error mapping, avatar fetch.
 - `src/vault/key-store.ts`: session or memory backend, re-import, `neverLockKey` handling.
 - `src/vault/unlock.ts`: `unlock(accountId, method)`, suite fetch when uncached, epoch check, `lock`, `lockAll`, `logoutForTimeout`.
-- `src/vault/timeout.ts`: alarm, idle listener, popup port tracking; the settings and `TIMEOUT_POLICY` live in `src/accounts/settings.ts`.
+- `src/vault/timeout.ts`: alarm, idle listener, popup port tracking; the settings and `effectiveSettings` live in `src/accounts/settings.ts`.
 - `entrypoints/popup/main.tsx`: mounts `<App />` and opens the `popup` interaction port.
 - `entrypoints/popup/App.tsx`: reads `usePopupState()` and renders the view for `state.screen` inside the `Header`.
 - `entrypoints/popup/hooks/useMessage.ts`: typed wrapper around `browser.runtime.sendMessage` for `PopupToBackground`, resolving to `Result`; the single `unknown` cast in the popup.

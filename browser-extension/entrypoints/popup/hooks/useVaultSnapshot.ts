@@ -36,10 +36,11 @@ export function useVaultSnapshot(tabUrl: string | undefined, ready: boolean) {
 		if (opened.current) void load()
 	})
 
+	/** Resolves with the snapshot read after the sync, so its caller can tell how that sync ended. */
 	const syncNow = useCallback(async () => {
 		setReply((current) => current?.state === 'unlocked' ? { ...current, sync: { ...current.sync, syncing: true } } : current)
 		await request({ kind: 'vault.sync' })
-		await load()
+		return load()
 	}, [load])
 
 	/** `reload` re-reads without syncing, e.g. after a write whose reply already followed its sync. */

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { effectiveSettings, TIMEOUT_POLICY, writeSettings, type AccountSettings } from '@/src/accounts/settings'
+import { patchAccountPolicy } from '@/src/accounts/policy'
+import { writeSettings, type AccountSettings } from '@/src/accounts/settings'
 import { addAccount, getAccount } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { envelope, suiteRow } from '@/src/testing/vectors'
@@ -10,7 +11,7 @@ import { enforce, expectPopout, onIdleStateChanged, onPopupClosed, onPopupOpened
 const pkcs8 = toBase64(pemToPkcs8(envelope.privateKeyPem))
 const MINUTE = 60_000
 
-async function unlocked(settings: AccountSettings, uid = 'alice') {
+async function unlocked(settings: Partial<AccountSettings>, uid = 'alice') {
 	const account = await addAccount({
 		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })
@@ -21,10 +22,6 @@ async function unlocked(settings: AccountSettings, uid = 'alice') {
 
 beforeEach(() => {
 	fakeBrowser.reset()
-})
-afterEach(() => {
-	TIMEOUT_POLICY.maxMinutes = null
-	TIMEOUT_POLICY.forcedAction = null
 })
 
 describe('timed options', () => {
@@ -90,12 +87,57 @@ describe('alarm', () => {
 	})
 })
 
-describe('policy', () => {
-	it('clamps the timeout and forces the action', async () => {
-		await writeSettings('x', { vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
-		TIMEOUT_POLICY.maxMinutes = 60
-		TIMEOUT_POLICY.forcedAction = 'logout'
-		expect(await effectiveSettings('x')).toEqual({ vaultTimeout: 60, vaultTimeoutAction: 'logout' })
+describe('organisation maximum', () => {
+	it('locks a stored 4 hours after 30 idle minutes under a maximum of 30', async () => {
+		const id = await unlocked({ vaultTimeout: 240, vaultTimeoutAction: 'lock' })
+		await patchAccountPolicy(id, { maxIdleMinutes: 30 })
+		const now = Date.now()
+		await touch(now)
+		await enforce(now + 29 * MINUTE)
+		expect(await hasKey(id)).toBe(true)
+		await enforce(now + 31 * MINUTE)
+		expect(await hasKey(id)).toBe(false)
+	})
+
+	it('locks On system lock after the maximum idle time, though the system stays unlocked', async () => {
+		const id = await unlocked({ vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'lock' })
+		await patchAccountPolicy(id, { maxIdleMinutes: 60 })
+		const now = Date.now()
+		await touch(now)
+		await enforce(now + 59 * MINUTE)
+		expect(await hasKey(id)).toBe(true)
+		await enforce(now + 61 * MINUTE)
+		expect(await hasKey(id)).toBe(false)
+	})
+
+	it('locks Immediately after the maximum idle time, for a popup window kept open', async () => {
+		const id = await unlocked({ vaultTimeout: 'immediately', vaultTimeoutAction: 'lock' })
+		await patchAccountPolicy(id, { maxIdleMinutes: 60 })
+		const now = Date.now()
+		await touch(now)
+		await enforce(now + 59 * MINUTE)
+		expect(await hasKey(id)).toBe(true)
+		await enforce(now + 61 * MINUTE)
+		expect(await hasKey(id)).toBe(false)
+	})
+
+	it('leaves Immediately to the popup closing before the first read', async () => {
+		const id = await unlocked({ vaultTimeout: 'immediately', vaultTimeoutAction: 'lock' })
+		await enforce(Date.now() + 10_000 * MINUTE)
+		expect(await hasKey(id)).toBe(true)
+	})
+
+	it('leaves On system lock to the system lock alone before the first read', async () => {
+		const id = await unlocked({ vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'lock' })
+		await enforce(Date.now() + 10_000 * MINUTE)
+		expect(await hasKey(id)).toBe(true)
+	})
+
+	it('locks Never after the maximum', async () => {
+		const id = await unlocked({ vaultTimeout: 'never', vaultTimeoutAction: 'lock' })
+		await patchAccountPolicy(id, { maxIdleMinutes: 240 })
+		await enforce(Date.now() + 241 * MINUTE)
+		expect(await hasKey(id)).toBe(false)
 	})
 })
 

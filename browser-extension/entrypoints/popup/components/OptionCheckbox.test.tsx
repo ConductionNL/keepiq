@@ -19,6 +19,12 @@ describe('OptionCheckbox', () => {
 		expect(onChange).toHaveBeenCalledWith(false)
 	})
 
+	it('describes itself with a hint beside a lock reason', () => {
+		render(<OptionCheckbox label="Autofill on page load" checked onChange={vi.fn()} hint="Careful" lockedBy="Coming later" />)
+		const ids = checkbox('Autofill on page load').getAttribute('aria-describedby')!.split(' ')
+		expect(ids.map((id) => document.getElementById(id)!.textContent)).toEqual(['Coming later', 'Careful'])
+	})
+
 	it('shows the short text while keeping the full label as its name', () => {
 		render(<OptionCheckbox label="Numbers (0-9)" short="0-9" checked onChange={vi.fn()} />)
 		expect(checkbox('Numbers (0-9)')).toBeTruthy()
