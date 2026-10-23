@@ -64,9 +64,15 @@ describe('toItemMeta', () => {
 	it('keeps metadata and only whether a login exists', () => {
 		const meta = toItemMeta(secretRow({ login: 'ciphertext' }))
 		expect(meta).toEqual({
-			id: 's1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false, useOnly: false,
+			id: 's1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false,
 			createdAt: '2026-01-05T10:00:00+00:00', updatedAt: '2026-03-02T10:00:00+00:00', expiresAt: null,
+			useOnly: false, readOnly: false, accessExpiresAt: null,
 		})
+	})
+
+	it('carries the limits of a shared copy', () => {
+		const meta = toItemMeta(secretRow({ useOnly: true, readOnly: true, accessExpiresAt: '2026-12-01T00:00:00+00:00' }))
+		expect(meta).toMatchObject({ useOnly: true, readOnly: true, accessExpiresAt: '2026-12-01T00:00:00+00:00' })
 	})
 
 	it('marks a use-only copy, blocked or not', () => {

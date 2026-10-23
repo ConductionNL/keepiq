@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { AccountSummary, DecryptField, DecryptedItem, ItemMeta, PopupState, PopupTab, Result, TypeMeta, VaultSnapshotReply } from '@/src/messages'
+import type { AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, TypeMeta, VaultSnapshotReply } from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
 	return {
@@ -37,8 +37,9 @@ export function dispatchReturning(result: Result = ok()) {
 
 export function itemMeta(overrides: Partial<ItemMeta> = {}): ItemMeta {
 	return {
-		id: 'i1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false, useOnly: false,
-		createdAt: '2026-01-05T10:00:00Z', updatedAt: '2026-03-02T10:00:00Z', expiresAt: null, ...overrides,
+		id: 'i1', name: 'GitHub', url: 'https://github.com', typeId: 't-login', folderId: null, hasLogin: true, blocked: false,
+		createdAt: '2026-01-05T10:00:00Z', updatedAt: '2026-03-02T10:00:00Z', expiresAt: null,
+		useOnly: false, readOnly: false, accessExpiresAt: null, ...overrides,
 	}
 }
 
@@ -57,13 +58,20 @@ export function snapshotReply(overrides: Partial<UnlockedSnapshot> = {}): Unlock
 		suggestionIds: [],
 		sync: { syncing: false, syncedAt: new Date().toISOString(), offline: false, lastError: null },
 		webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',
+		defaultSecretType: null,
+		folderNoticeDismissed: false,
 		...overrides,
 	}
 }
 
 interface FakeBackground {
 	state?: PopupState
-	snapshot?: VaultSnapshotReply
+	/** A function is read per request, so a test can change the vault after a write. */
+	snapshot?: VaultSnapshotReply | (() => VaultSnapshotReply)
+	/** Replies by kind, for the write requests; a function gets the message. */
+	replies?: Record<string, unknown>
+	/** `item.fetch` replies by id. */
+	items?: Record<string, EditableItem>
 	/** Decrypted fields per item id; an id missing here decrypts to nothing. */
 	decrypted?: Record<string, DecryptedItem>
 	decryptError?: 'locked' | 'blocked' | 'use_only' | 'decrypt_failed'
@@ -71,16 +79,37 @@ interface FakeBackground {
 	tabUrl?: string
 	/** Kinds the background fails on, which reaches the popup as no reply. */
 	unanswered?: string[]
+	settings?: GlobalSettings
 }
 
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
-	const reply = vi.fn(async (message: { kind: string; ids?: string[]; fields?: DecryptField[] }): Promise<unknown> => {
+	let settings: GlobalSettings = options.settings ?? { theme: 'system' }
+	const snapshot = () => (typeof options.snapshot === 'function' ? options.snapshot() : options.snapshot) ?? snapshotReply()
+	const reply = vi.fn(async (message: { kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings> }): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
+		const canned = options.replies?.[message.kind]
+		if (canned !== undefined) return typeof canned === 'function' ? canned(message) : canned
 		switch (message.kind) {
-			case 'vault.snapshot': return options.snapshot ?? snapshotReply()
-			case 'vault.sync': return (options.snapshot as UnlockedSnapshot | undefined)?.sync ?? snapshotReply().sync
+			case 'settings.get': return settings
+			case 'settings.set': return (settings = { ...settings, ...message.patch })
+			case 'vault.snapshot': return snapshot()
+			case 'vault.sync': return (snapshot() as UnlockedSnapshot).sync ?? snapshotReply().sync
+			case 'item.fetch': {
+				const item = options.items?.[message.id!]
+				return item ? { ok: true, value: item } : { ok: false, error: { code: 'not_found' } }
+			}
+			case 'item.create': return { ok: true, value: { id: 'new' } }
+			// A save that reached everyone carries no `shareSave`.
+			case 'item.update': return { ok: true, value: { id: message.id } }
+			case 'item.editable': return { ok: true, value: { editable: true } }
+			case 'item.delete':
+			case 'folder.rename':
+			case 'folder.delete': return { ok: true, value: null }
+			case 'folder.create': return { ok: true, value: { id: 'f-new' } }
+			case 'folder.children': return { ok: true, value: { directSecretCount: 0, subfolders: [] } }
+			case 'folder.dismissNotice': return null
 			case 'item.decrypt': {
 				if (options.decryptError) return { ok: false, error: options.decryptError }
 				const items = Object.fromEntries(message.ids!.map((id) => [id, Object.fromEntries(
@@ -98,6 +127,18 @@ export function fakeBackground(options: FakeBackground = {}) {
 	vi.spyOn(browser.tabs, 'query').mockResolvedValue([{ id: 7, windowId: 3, url: options.tabUrl ?? 'https://github.com/login' }] as never)
 	return reply
 }
+
+/** Its `typeName` is what `types` calls its type, unless given. */
+export function editableItem(overrides: Partial<EditableItem> = {}): EditableItem {
+	const typeId = overrides.typeId ?? 't-login'
+	return {
+		id: 'i1', typeId, typeName: types.find((type) => type.id === typeId)?.name, name: 'GitHub', url: 'https://github.com', folderId: null, key: 'hunter2', login: 'alice',
+		additionalFields: {}, updatedAt: '2026-03-02T10:00:00Z', ...overrides,
+	}
+}
+
+/** The messages of one kind sent so far. */
+export const sentOf = (spy: ReturnType<typeof fakeBackground>, kind: string) => spy.mock.calls.map(([message]) => message as Record<string, unknown>).filter((message) => message.kind === kind)
 
 /** The kinds sent so far, in order. */
 export const sentKinds = (spy: ReturnType<typeof fakeBackground>) => spy.mock.calls.map(([message]) => message.kind)

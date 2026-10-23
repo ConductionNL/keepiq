@@ -2,16 +2,18 @@ import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode }
 import { fieldAction } from '../i18n'
 import { IconButton } from './Button'
 
-interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'spellCheck'> {
 	label: string
 	value: string
 	onChange: (value: string) => void
 	hint?: ReactNode
 	error?: string | null
+	/** No capitals or corrections from a phone keyboard, e.g. for a username or URL. A password field always is. */
+	verbatim?: boolean
 }
 
 /** A labelled input; `type="password"` gets a show/hide toggle that keeps the value. */
-export const TextField = forwardRef<HTMLInputElement, Props>(function TextField({ label, value, onChange, hint, error, type = 'text', ...rest }, ref) {
+export const TextField = forwardRef<HTMLInputElement, Props>(function TextField({ label, value, onChange, hint, error, verbatim = false, type = 'text', ...rest }, ref) {
 	const id = useId()
 	const [revealed, setRevealed] = useState(false)
 	const isPassword = type === 'password'
@@ -22,6 +24,9 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 			<div className="field__box">
 				<input
 					{...rest}
+					{...((verbatim || isPassword) && { autoCapitalize: 'off', autoCorrect: 'off' })}
+					// Every field here holds vault or account data, which a browser's spelling service may send to Google or Microsoft; a revealed password is plain text to it.
+					spellCheck={false}
 					ref={ref}
 					id={id}
 					className="field__input"

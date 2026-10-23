@@ -125,7 +125,12 @@ The output box SHALL show the current value in a monospace font with digits and 
 - **THEN** the value is on the clipboard and nothing is scheduled
 
 ### Requirement: Pick mode from the item form
-When the item form opens the generator in pick mode, the generator SHALL show a "Use this password" button in addition to Regenerate and Copy, SHALL keep the same options and history behaviour, and on click SHALL return the current value to the form field that requested it and navigate back to the form. Passphrases and usernames returned this way go to the field that requested them (login field for usernames, password field for the other two). Pick mode is never offered while locked, because there is no item form.
+The item form's Password field SHALL get a generate button that opens the generator in pick mode. When the item form opens the generator in pick mode, the generator SHALL show a "Use this password" button in addition to Regenerate and Copy, SHALL keep the same options and history behaviour, and on click SHALL return the current value to the form field that requested it and navigate back to the form. Passphrases and usernames returned this way go to the field that requested them (login field for usernames, password field for the other two). Pick mode is never offered while locked, because there is no item form.
+
+#### Scenario: Generate a password
+- **GIVEN** the add-item form is open for a `login` item
+- **WHEN** the user presses the generate button next to Password
+- **THEN** the popup MUST open the generator in pick mode
 
 #### Scenario: Use this password
 - **GIVEN** the item form's password field opened the generator in pick mode

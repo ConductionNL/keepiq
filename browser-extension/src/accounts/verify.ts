@@ -1,5 +1,6 @@
 import { ApiError, createClient, KeepiqNotInstalled, NotNextcloud, Offline, SessionRevoked } from '@/src/api/client'
 import type { CachedSuite, SuiteRow } from '@/src/api/types'
+import { supportedKeepiq } from '@/src/api/keepiq-version'
 import { Failure } from '@/src/failure'
 
 export interface Verified {
@@ -8,6 +9,7 @@ export interface Verified {
 	displayName: string
 	email: string | null
 	avatarDataUrl: string | null
+	keepiqVersion: string | null
 	suite: CachedSuite
 }
 
@@ -27,12 +29,15 @@ export async function verifyCredentials(serverUrl: string, loginName: string, ap
 		const identity = await probe.fetchIdentity()
 		const client = createClient({ serverUrl, uid: identity.id, loginName, appPassword })
 		const suite = activeSuite(await client.listSuites())
+		const keepiqVersion = await client.fetchVersion()
+		if (!supportedKeepiq(keepiqVersion)) throw new Failure('keepiq_outdated')
 		return {
 			uid: identity.id,
 			loginName,
 			displayName: identity.displayname || identity.id,
 			email: identity.email || null,
 			avatarDataUrl: await client.fetchAvatarDataUrl(),
+			keepiqVersion,
 			suite,
 		}
 	} catch (error) {

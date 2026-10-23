@@ -1,8 +1,9 @@
+import { readdirSync, readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import background from '@/entrypoints/background'
 import { addAccount } from '@/src/accounts/store'
-import { POPUP_PORT, type Result } from '@/src/messages'
+import { POPUP_PORT, POPUP_REQUEST_KINDS, type Result } from '@/src/messages'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey } from '@/src/vault/key-store'
 import { SYNC_ALARM } from '@/src/vault/sync'
@@ -47,9 +48,17 @@ beforeEach(() => {
 	messageListener = addListener.mock.calls[0]![0] as never
 })
 
+/** The kinds the popup's code sends through `request`, read from its source. */
+function popupRequestKinds(): string[] {
+	const root = new URL('../../entrypoints/popup/', import.meta.url)
+	const files = readdirSync(root, { recursive: true, encoding: 'utf8' }).filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file))
+	const kinds = files.flatMap((file) => [...readFileSync(new URL(file, root), 'utf8').matchAll(/\brequest\(\{ kind: '([^']+)'/g)].map((match) => match[1]!))
+	return [...new Set(kinds)]
+}
+
 async function storedAccount() {
 	return addAccount({
-		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid: 'alice', loginName: 'alice', displayName: 'Alice', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })
 }
 
@@ -78,6 +87,19 @@ describe('background entrypoint', () => {
 			const reply = await deliver(message, popupSender) as Result
 			expect(reply, message.kind).toHaveProperty('ok')
 			expect(reply.ok ? typeof reply.state.screen : reply.code, message.kind).toBeTypeOf('string')
+		}
+	})
+
+	it('routes every request kind the popup sends to the request handler', async () => {
+		const kinds = popupRequestKinds()
+		// So a change in how the popup calls `request` cannot leave this checking nothing.
+		expect(kinds).toEqual(expect.arrayContaining(['vault.snapshot', 'item.fetch', 'item.update']))
+		// A popout that opened would leave the next test expecting its window.
+		vi.spyOn(browser.windows, 'create').mockRejectedValue(new Error('no window'))
+		for (const kind of kinds) {
+			expect(POPUP_REQUEST_KINDS.has(kind), kind).toBe(true)
+			// What the account router answers a kind it does not know.
+			expect(await deliver({ kind, accountId: 'nobody', id: 'i1' }, popupSender), kind).not.toEqual({ ok: false, code: 'unknown' })
 		}
 	})
 
@@ -117,6 +139,16 @@ describe('background entrypoint', () => {
 		expect(await deliver({ kind: 'popup.lastTab.set', tab: 'send' }, popupSender)).toBeNull()
 		expect(await deliver({ kind: 'vault.snapshot' }, pageSender)).toBeUndefined()
 		expect(await deliver({ kind: 'item.decrypt', ids: ['x'], fields: ['key'] }, pageSender)).toBeUndefined()
+	})
+
+	it('ignores writes from a content script', async () => {
+		const account = await storedAccount()
+		await deliver({ kind: 'vault.unlock', accountId: account.id, method: { type: 'masterPassword', masterPassword: envelope.password } }, popupSender)
+		const draft = { typeId: 't', name: 'Planted', url: null, folderId: null, key: 'k', login: null, additionalFields: {} }
+		expect(await deliver({ kind: 'item.create', accountId: account.id, draft }, pageSender)).toBeUndefined()
+		expect(await deliver({ kind: 'folder.delete', accountId: account.id, id: 'f1', plan: { mode: 'cascade', cascade: 'delete' } }, pageSender)).toBeUndefined()
+		// The unlock's own sync only reads.
+		expect(fetchMock.mock.calls.filter(([, init]) => init?.method && init.method !== 'GET')).toEqual([])
 	})
 
 	it('creates the sync alarm on unlock and syncs the active account when it fires', async () => {

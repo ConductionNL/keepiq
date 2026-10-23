@@ -3,7 +3,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { TIMEOUT_POLICY, writeSettings } from '@/src/accounts/settings'
 import { envelope } from '@/src/testing/vectors'
-import { clearKey, getKey, hasKey, neverLockKey, putKey, syncNeverLockKey } from './key-store'
+import { clearKey, editOpenedKey, getKey, hasKey, neverLockKey, putKey, sessionValues, syncNeverLockKey } from './key-store'
 
 const pkcs8 = toBase64(pemToPkcs8(envelope.privateKeyPem))
 
@@ -26,8 +26,9 @@ describe('key store on storage.session', () => {
 		expect(key?.usages).toEqual(['decrypt'])
 	})
 
-	it('clears the key', async () => {
+	it('clears the key, and what edit forms opened with it', async () => {
 		await putKey('a', pkcs8)
+		await browser.storage.session.set({ [editOpenedKey('a')]: '[{"id":"s1"}]' })
 		await clearKey('a')
 		expect(await hasKey('a')).toBe(false)
 		expect(await getKey('a')).toBeNull()
@@ -95,7 +96,9 @@ describe('key store without storage.session (Firefox < 115)', () => {
 		await putKey('m', pkcs8)
 		expect(await hasKey('m')).toBe(true)
 		expect(await browser.storage.local.get(null)).toEqual({})
+		await sessionValues.set({ [editOpenedKey('m')]: '[]' })
 		await clearKey('m')
 		expect(await hasKey('m')).toBe(false)
+		expect(await sessionValues.get(editOpenedKey('m'))).toBeUndefined()
 	})
 })

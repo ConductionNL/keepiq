@@ -3,7 +3,7 @@
 - [x] 1.1 Add `src/vault/types.ts` and `src/vault/store.ts` with `readSnapshot`, `writeSnapshot`, `clearSnapshot` and `toItemMeta` on one `storage.local` key per account
   - Handles both the full row and the blocked row shape from ADR-003
   - `clearSnapshot` is called from the logout and account-removal paths of ext-accounts-and-unlock
-- [x] 1.2 Add `src/vault/sync.ts`: change probe (`updated_at` desc, limit 1, compare `updatedAt` and `total`) with the suite list, manifest fetch, fallback on 403/404 or a full 1000 rows to paginated secrets (second pass on a short count) plus folders, types and suites, suite-change check, single in-flight promise, `SyncStatus`
+- [x] 1.2 Add `src/vault/sync.ts`: change probe (`updated_at` desc, limit 1, compare `updatedAt` and `total`) with the suite list, manifest fetch, fallback on a refusal (403 or 428), a 404 or a full 1000 rows to paginated secrets (second pass on a short count) plus folders, types and suites, suite-change check, single in-flight promise, `SyncStatus`
   - Uses `src/api/client.ts`; 401 is delegated to the account layer, 423 sets `lastError: 'busy'`
   - A failed fallback leaves the previous snapshot untouched
 - [x] 1.3 Wire sync triggers in `entrypoints/background.ts`: `vault-sync` alarm with `SYNC_INTERVAL_MINUTES`, unlock and lock hooks, popup-open staleness check, `vault.sync` arm; add `alarms` and `unlimitedStorage` to `wxt.config.ts`

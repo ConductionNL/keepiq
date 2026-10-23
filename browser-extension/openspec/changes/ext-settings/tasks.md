@@ -1,14 +1,14 @@
 ## 1. Schema and store
 
-- [ ] 1.1 Create `src/settings/schema.ts` with the `SETTINGS` table (key, scope, default, validator) and the derived `SettingsValues` type for every entry in the spec
+- [ ] 1.1 Create `src/settings/schema.ts` with the `SETTINGS` table (key, scope, default, validator) and the derived `SettingsValues` type for every entry in the spec, absorbing ext-theme's `src/settings/global.ts`
   - Defaults match the spec: timeout 15 minutes, action Lock, clipboard 30 seconds, theme System default, autofill on page load off
   - Each validator returns the default for an unknown or malformed value
-- [ ] 1.2 Create `src/settings/store.ts` reading and writing `settings:<accountId>` and `settings:global` in `storage.local`, patching rather than replacing, and deleting the account record on account removal
+- [ ] 1.2 Create `src/settings/store.ts` reading and writing `settings.<accountId>` and `settings.global` in `storage.local`, patching rather than replacing, and deleting the account record on account removal
 - [ ] 1.3 Create `src/settings/policy.ts` with `TimeoutPolicy`, `NO_POLICY` and `applyPolicy` clamping the timeout and forcing the action without rewriting the stored value
 
 ## 2. Messages and background
 
-- [ ] 2.1 Add `settings.get`, `settings.set`, `settings.server.set`, `pin.enable`, `pin.disable`, `pin.unlock`, `about.get` and the `SettingsSnapshot`, `ServerSettings`, `PinUnlockResult`, `AboutInfo` types to `src/messages.ts`
+- [ ] 2.1 Widen ext-theme's `settings.get` and `settings.set` replies to `SettingsSnapshot`, and add `settings.server.set`, `pin.enable`, `pin.disable`, `pin.unlock`, `about.get` and the `SettingsSnapshot`, `ServerSettings`, `PinUnlockResult`, `AboutInfo` types to `src/messages.ts`
 - [ ] 2.2 Handle the new kinds in `entrypoints/background.ts` and feed the ADR-002 timeout config from the store through `applyPolicy` on every read
   - Request/response arms return the Promise; nothing new is fire-and-forget
   - The clipboard clear delay is read by ext-vault-browse through the same snapshot
@@ -25,15 +25,15 @@
 
 ## 5. Popup components, hooks and views
 
-- [ ] 5.1 Create the shared components under `entrypoints/popup/components/`: `SettingRow.tsx` (label, description, control slot), `Toggle.tsx`, `Select.tsx`, `SectionList.tsx`, `PinDialog.tsx`, `WarningDialog.tsx`
+- [ ] 5.1 Create the shared components under `entrypoints/popup/components/`: `SettingRow.tsx` (label, description, control slot), `Toggle.tsx`, `PinDialog.tsx`, `WarningDialog.tsx`; dropdowns reuse ext-theme's `Select.tsx`
   - No component imports `src/api` or `src/crypto` (ADR-004)
-- [ ] 5.2 Create the hooks under `entrypoints/popup/hooks/`: `useSettings.ts` over `settings.get` and `settings.set` with `applyPolicy` applied to the returned values, `useServerSettings.ts` with the stale indicator and disabled-offline state over `settings.server.set`, `useTheme.ts` applying the global theme to the document root from `<App />` so unlock and account screens are themed
-- [ ] 5.3 Create `entrypoints/popup/views/settings/SettingsIndex.tsx` with the six-section `SectionList`, per-section navigation and back control, wired into the Settings tab of the popup shell
+- [ ] 5.2 Extend ext-theme's `useSettings.ts` to the full snapshot with `applyPolicy` applied to the returned values, and create `useServerSettings.ts` with the stale indicator and disabled-offline state over `settings.server.set`
+- [ ] 5.3 Open the five remaining sections from ext-theme's `SettingsIndex.tsx` and route them in `Settings.tsx`
 - [ ] 5.4 Create `AccountSecurity.tsx`: timeout options with Custom entry and policy-aware hiding, Never `WarningDialog`, action with Log out note, Lock now, Log out with confirmation, PIN toggle with `PinDialog` and the on-disk `WarningDialog`, biometrics disabled, Change master password link, `session_timeout` shown read-only as "Web app default"
 - [ ] 5.5 Create `Autofill.tsx`: the five entries with their warnings and notes, the inline-menu "Coming later" state from `capabilities.inlineMenu`, shortcut display from the snapshot's `shortcut` with the Chromium link and the Firefox instructions, clear clipboard options
 - [ ] 5.6 Create `Notifications.tsx`: Ask to add, Ask to update, Excluded domains with Add current site via `activeTab`, free-text add, duplicate and empty rejection, remove; the Keepiq server notifications subsection driven by `useServerSettings` with revert-on-error behaviour
 - [ ] 5.7 Create `Vault.tsx`: Sync now with Last sync and the offline failure message, Folders entry opening the ext-vault-edit folder manager, Import and Export links to the web app, Default item type from cached types with the `login` fallback and note
-- [ ] 5.8 Create `Appearance.tsx` and extend `entrypoints/popup/popup.css`: theme tokens under `[data-theme]`, compact mode tokens, show animations class, quick copy actions toggle, read-only Language line
+- [ ] 5.8 Extend ext-theme's `Appearance.tsx` and `entrypoints/popup/popup.css`: compact mode tokens, show animations class, quick copy actions toggle, read-only Language line
 - [ ] 5.9 Create `About.tsx`: version and server URL from `about.get`, Help, Report a bug, Privacy policy, Keepiq web app links, Rate the extension hidden while the store constant is `<store-url>`
 
 ## 6. Verification

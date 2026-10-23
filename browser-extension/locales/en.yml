@@ -12,11 +12,13 @@ errors:
   serverError: "{host} is unavailable right now, try again later"
   unauthorized: Wrong username or app password
   keepiqMissing: Keepiq is not installed on {host}
+  keepiqOutdated: Keepiq on {host} is too old for this extension, which needs version {version} or later. Ask your administrator to update Keepiq.
   noActiveSuite: Open the Keepiq web app once and set a master password, then try again
   unlockBlocked: Your organisation requires two-factor login. Set up a second factor in Nextcloud Settings, Security, then try again
   duplicate: This account is already added
   limitReached: Maximum of {count} accounts reached
   invalidMasterPassword: Invalid master password
+  keyUnreadable: Your vault key in Keepiq could not be read, so this browser can't unlock it. Tell your Keepiq administrator.
   offlineNoCache: You are offline and this vault has not been synced yet
   sessionRevoked: Session revoked, please log in again
   writeLocked: Your vault cannot be changed right now, try again later
@@ -44,6 +46,8 @@ titles:
   logInAgain: Log in again
   unlock: Unlock
   viewItem: View item
+  newItem: New item
+  editItem: Edit item
 
 tabs:
   label: Main
@@ -55,6 +59,7 @@ tabs:
 header:
   popout: Pop out
   accounts: Accounts, signed in as {name}
+  new: New
 
 unlock:
   masterPassword: Master password
@@ -135,6 +140,128 @@ item:
   clone: Clone
   move: Move to folder
   delete: Delete
+  cloneName: "{name} - Clone"
+  passkeyNoClone: Passkeys cannot be cloned
+  useOnly: Shared with you for signing in only
+  readOnly: Shared from another organisation, so it can only be moved
+  viewOnly: Shared with you to view only. Ask its owner for edit rights to change it.
+  expiringNoClone: Your access ends {date}, so it cannot be cloned
+  saved: Item saved
+  deleted: Item moved to the trash
+  moved: Moved to {folder}
+  deleteTitle: Delete item
+  deleteConfirm: Move {name} to the trash? It stops being shared, also after a restore from the trash in the Keepiq web app.
+  gone: This item no longer exists
+
+form:
+  itemDetails: Item details
+  type: Type
+  name: Name
+  folder: Folder
+  chooseFolder: Choose a folder, now {folder}
+  website: Website URL
+  autofillOptions: Autofill options
+  additionalOptions: Additional options
+  authenticator: Authenticator
+  note: Note
+  secret: Secret
+  advanced: Advanced
+  algorithm: Algorithm
+  digits: Digits
+  period: Period in seconds
+  addField: Add field
+  fieldName: Field name
+  fieldValue: Value
+  removeField: Remove {name}
+  removeUnnamed: Remove field
+  save: Save
+  passkeyReadOnly: Passkey credentials can only be changed in the Keepiq web app
+  offline: You are offline. Changes need a connection to Keepiq.
+  unsavedTitle: Unsaved changes
+  unsaved: You have unsaved changes. Discard them?
+  discard: Discard
+  keepEditing: Keep editing
+
+fieldErrors:
+  required: Name is required
+  tooLong: At most {max} characters
+  tooLongBytes: Too long (max {max} bytes)
+  reserved: This name is reserved
+  duplicate: A field with this name already exists
+  invalidTotp: Not a valid authenticator secret
+  slash: Folder names cannot contain slashes
+
+writeErrors:
+  writeLocked: Vault is temporarily locked for a key migration, try again later
+  forbidden: Keepiq does not allow this change. The Keepiq web app shows why.
+  policy: Your organisation's policy does not allow this change
+  accountChanged: You switched to another account meanwhile, so nothing was saved. Switch back to save it.
+  keepClash: A folder named {name} already exists one level up. Choose Move items to parent or Delete for it, or rename one of them first.
+  keepClashAfter: A folder you chose to keep has the same name as one a level up, so nothing was deleted. Check the choices again.
+  invalid: Keepiq refused this change
+  stale: This item was changed elsewhere. Go back and edit it again to see the latest version.
+  itemGone: This item no longer exists
+  folderGone: This folder no longer exists
+  duplicateFolder: A folder with this name already exists here
+  folderChanged: This folder changed. Check the choices again.
+  offline: Could not reach the server
+  serverError: Keepiq is unavailable right now, try again later
+  unreadable: Could not read this item, so it cannot be edited here
+  restricted: This item was shared with you with limits, so it cannot be changed or copied here
+  unmatched: Keepiq sent a version of this item that your vault does not hold, so it was not opened.
+  keyMismatch: Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.
+  staleSource: The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.
+  incomplete: The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.
+  badCertificate: Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.
+  unverified: This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.
+  partnerUnreachable: "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+  partnerLookupLimit: Too many partner lookups. Nothing was saved; try again in a minute.
+  federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
+  keepiqOutdated: Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version {version} or later.
+  partnerClock: The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.
+
+shareSave:
+  saveWithout: Save without them
+  ownerOnly: Saved. Recipients at partner organisations get this change when the owner next saves it.
+  suspended: Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.
+  paused: Sharing with {cloudIds} is paused until you share this item with them again.
+
+folders:
+  add: Add folder
+  newFolder: New folder
+  rename: Rename
+  renameTitle: Rename folder
+  delete: Delete
+  more: More, {name}
+  name: Folder name
+  empty: No folders yet
+  notice: Folder names are not encrypted
+  dismiss: Dismiss
+  current: Current folder
+  pickTitle: Choose folder
+  moveTitle: Move to folder
+  saved: Folder saved
+  deleted: Folder deleted
+  deleteTitle: Delete folder
+  deleteConfirm: Delete {name}? This cannot be undone.
+  cascade:
+    1: Delete {name} and its 1 item, or move it to {parent}?
+    n: Delete {name} and its $1 items, or move them to {parent}?
+  countsAll: Archived and trashed items count too.
+  deleteItems: Delete items too
+  moveItems: Move items to parent
+  items:
+    1: 1 item
+    n: $1 items
+  subfolders:
+    1: 1 subfolder
+    n: $1 subfolders
+  directRow: Items in {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Delete
+  actionMove: Move items to parent
+  actionKeep: Keep
+  directMove: Move to parent
 
 clipboard:
   copied: "{what} copied"
@@ -156,7 +283,6 @@ detail:
   item: Item
   decrypting: Decrypting…
   decryptFailed: Could not decrypt this item
-  unreadable: Could not read this item
   unreadablePasskey: Could not read this passkey
   unreadableFields: Could not read additional fields
   loginCredentials: Login credentials
@@ -197,3 +323,16 @@ totp:
   changesIn:
     1: Changes in 1 second
     n: Changes in $1 seconds
+
+settings:
+  accountSecurity: Account security
+  autofill: Autofill
+  notifications: Notifications
+  vault: Vault
+  appearance: Appearance
+  about: About
+  folders: Folders
+  theme: Theme
+  themeSystem: System default
+  themeLight: Light
+  themeDark: Dark
