@@ -115,6 +115,25 @@ describe('errors', () => {
 	})
 })
 
+describe('version', () => {
+	it('reads the version from the health check, also from its 503', async () => {
+		fetchMock.mockResolvedValue(reply(200, { status: 'ok', version: '0.3.12' }))
+		expect(await createClient(account).fetchVersion()).toBe('0.3.12')
+		fetchMock.mockResolvedValue(reply(503, { status: 'error', version: '0.3.12' }))
+		expect(await createClient(account).fetchVersion()).toBe('0.3.12')
+	})
+
+	it('returns null for a Keepiq without the health check', async () => {
+		fetchMock.mockResolvedValue(reply(404, '<html/>'))
+		expect(await createClient(account).fetchVersion()).toBeNull()
+	})
+
+	it('throws on a server error that names no version', async () => {
+		fetchMock.mockResolvedValue(reply(502, '<html>Bad Gateway</html>'))
+		await expect(createClient(account).fetchVersion()).rejects.toMatchObject({ status: 502 })
+	})
+})
+
 describe('avatar', () => {
 	it('returns a data URL', async () => {
 		fetchMock.mockResolvedValue(new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'Content-Type': 'image/png' } }))
