@@ -9,7 +9,17 @@ import { TextField } from '../components/TextField'
 import { errorText, noticeText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
 
-export function Unlock({ account, notice = null, dispatch }: { account: AccountSummary; notice?: NoticeCode | null; dispatch: Dispatch }) {
+interface Props {
+	account: AccountSummary
+	notice?: NoticeCode | null
+	dispatch: Dispatch
+	/** Opens the generator, which needs no unlock. */
+	onGenerate?: () => void
+	/** Back from the generator: focus returns to its link rather than the master password. */
+	focusGenerate?: boolean
+}
+
+export function Unlock({ account, notice = null, dispatch, onGenerate, focusGenerate = false }: Props) {
 	const [masterPassword, setMasterPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
@@ -34,9 +44,10 @@ export function Unlock({ account, notice = null, dispatch }: { account: AccountS
 		<form className="stack" onSubmit={submit}>
 			<Identity account={account} />
 			{notice && <Banner tone="warning" role="status">{noticeText(notice)}</Banner>}
-			<TextField ref={field} label={i18n.t('unlock.masterPassword')} type="password" value={masterPassword} onChange={setMasterPassword} autoFocus autoComplete="current-password" />
+			<TextField ref={field} label={i18n.t('unlock.masterPassword')} type="password" value={masterPassword} onChange={setMasterPassword} autoFocus={!(focusGenerate && onGenerate)} autoComplete="current-password" />
 			<ErrorBanner>{error}</ErrorBanner>
 			<Button type="submit" busy={busy} disabled={!masterPassword}>{i18n.t('unlock.submit')}</Button>
+			{onGenerate && <Button variant="link" onClick={onGenerate} autoFocus={focusGenerate}>{i18n.t('generator.generatePasswordLink')}</Button>}
 			{logOut.confirming
 				? <LogOutConfirm account={account} onConfirm={() => void dispatch({ kind: 'accounts.remove', accountId: account.id })} onCancel={logOut.cancel} />
 				: <Button variant="link" onClick={logOut.ask} autoFocus={logOut.triggerAutoFocus}>{i18n.t('common.logOut')}</Button>}

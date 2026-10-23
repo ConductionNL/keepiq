@@ -1,6 +1,7 @@
 import { MAX_ACCOUNTS, type AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
+import { clearPolicy, generatorOptionsKey, generatorPolicyKey } from '@/src/generator/store'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { clearSnapshot } from '@/src/vault/store'
 import { forgetVerifiedPartners } from '@/src/vault/verified-partners'
@@ -137,13 +138,17 @@ export async function markLoggedOut(accountId: string, revoked = false): Promise
 	await clearKey(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove(suiteKey(accountId))
+	await clearPolicy(accountId)
 	await announceLock(await isActive(accountId))
 }
 
+/** `clearKey` takes the generator history with the key. */
 async function purge(accountId: string): Promise<void> {
 	await clearKey(accountId)
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove([suiteKey(accountId), settingsKey(accountId), folderNoticeKey(accountId)])
+	await browser.storage.local.remove([
+		suiteKey(accountId), settingsKey(accountId), folderNoticeKey(accountId), generatorOptionsKey(accountId), generatorPolicyKey(accountId),
+	])
 }
 
 /** Manual "Log out": the account is gone. The host permission is kept (another account may share it). */

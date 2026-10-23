@@ -3,11 +3,12 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
 import { addAccount, getAccount, markLoggedOut } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
+import { clearPolicy, readPolicy, writePolicy } from '@/src/generator/store'
 import { blockedRow, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey, putKey } from './key-store'
 import { checkedAt, markChecked, readSnapshot, writeSnapshot } from './store'
-import { isStale, sync, syncStatus } from './sync'
+import { isStale, refreshPolicy, sync, syncStatus } from './sync'
 import { unlock } from './unlock'
 import type { VaultSnapshot } from './types'
 
@@ -60,10 +61,10 @@ function cached(overrides: Partial<VaultSnapshot> = {}): VaultSnapshot {
 }
 
 describe('full sync', () => {
-	it('takes the whole vault from the manifest, beside the user settings', async () => {
+	it('takes the whole vault from the manifest, beside the user settings and the policy', async () => {
 		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/user': () => json({ default_secret_type: 'note' }) })
 		const status = await sync(accountId)
-		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
+		expect(paths()).toEqual(['/api/settings/policy', '/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
 		const snapshot = await readSnapshot(accountId)
 		expect(snapshot).toMatchObject({ secrets: rows, folders: [folderRow()], total: 2, newestUpdatedAt: '2026-04-01T10:00:00+00:00', defaultSecretType: 'note' })
 		expect(status).toEqual({ syncing: false, syncedAt: snapshot!.syncedAt, offline: false, lastError: null })
@@ -139,7 +140,7 @@ describe('full sync', () => {
 
 describe('change probe', () => {
 	const probe = (total: number, updatedAt: string) => () => json({ items: [secretRow({ updatedAt })], total, page: 1, limit: 1 })
-	const probeRequests = ['/api/v1/secrets?sort=updated_at&direction=desc&limit=1', '/api/v1/suites']
+	const probeRequests = ['/api/settings/policy', '/api/v1/secrets?sort=updated_at&direction=desc&limit=1', '/api/v1/suites']
 	const suites = () => json([suiteRow])
 
 	it('costs the probe and the suite list when nothing changed', async () => {
@@ -201,7 +202,7 @@ describe('change probe', () => {
 		await writeSnapshot(accountId, cached())
 		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		await sync(accountId, 'full')
-		expect(paths()).toEqual(['/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
+		expect(paths()).toEqual(['/api/settings/policy', '/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
 	})
 })
 
@@ -472,6 +473,100 @@ describe('errors', () => {
 		await markLoggedOut(accountId)
 		await sync(accountId)
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('generator policy', () => {
+	const enabled = { policy_enabled: true, generator_min_length: 20, generator_require_symbol: true, generator_allow_passphrase: false }
+	const mapped = { minLength: 20, requireUpper: false, requireLower: false, requireDigit: false, requireSymbol: true, allowPassphrase: false }
+	const old = { ...mapped, minLength: 10 }
+	const probeRoutes = {
+		'/api/v1/secrets': () => json({ items: [secretRow({ updatedAt: '2026-04-01T10:00:00+00:00' })], total: 2, page: 1, limit: 1 }),
+		'/api/v1/suites': () => json([suiteRow]),
+	}
+
+	it('is cached by a full sync and by a probe that finds nothing changed', async () => {
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/policy': () => json(enabled) })
+		await sync(accountId)
+		expect(await readPolicy(accountId)).toEqual(mapped)
+		await clearPolicy(accountId)
+		server({ ...probeRoutes, '/api/settings/policy': () => json(enabled) })
+		await sync(accountId, 'probe')
+		expect(await readPolicy(accountId)).toEqual(mapped)
+	})
+
+	it('is dropped when the server says no policy applies', async () => {
+		await writePolicy(accountId, old)
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/policy': () => json({ ...enabled, policy_enabled: false }) })
+		await sync(accountId)
+		expect(await readPolicy(accountId)).toBeNull()
+	})
+
+	it.each([
+		['a 500', () => json({ message: 'Down' }, 500)],
+		['a refusal', () => json({ message: 'No', error: 'forbidden' }, 428)],
+		['an HTML page', () => new Response('<html></html>', { status: 200 })],
+		['an empty object', () => json({})],
+		['an array', () => json([])],
+		['a network error', () => Promise.reject(new TypeError('Failed to fetch'))],
+	])('keeps the cached one on %s', async (_, answer) => {
+		await writePolicy(accountId, old)
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/policy': answer })
+		await sync(accountId)
+		expect(await readSnapshot(accountId)).toBeDefined()
+		expect(await readPolicy(accountId)).toEqual(old)
+	})
+
+	it('is cached even when the vault sync fails', async () => {
+		await writePolicy(accountId, old)
+		server({ '/api/v1/offline/manifest': () => json({ message: 'Down' }, 503), '/api/settings/policy': () => json(enabled) })
+		expect(await sync(accountId)).toMatchObject({ offline: true, lastError: 'server' })
+		expect(await readPolicy(accountId)).toEqual(mapped)
+	})
+
+	it('is cached by refreshPolicy, and only for a logged in account', async () => {
+		server({ '/api/settings/policy': () => json(enabled) })
+		await refreshPolicy(accountId)
+		expect(await readPolicy(accountId)).toEqual(mapped)
+		await markLoggedOut(accountId)
+		await refreshPolicy(accountId)
+		expect(await readPolicy(accountId)).toBeNull()
+	})
+
+	it('logs the account out on a 401 like any other request', async () => {
+		await writePolicy(accountId, old)
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/policy': () => json({ message: 'Unauthorized' }, 401) })
+		await sync(accountId)
+		expect((await getAccount(accountId))?.appPassword).toBeNull()
+		expect(await readPolicy(accountId)).toBeNull()
+	})
+
+	it('is not brought back by a logout during the fetch', async () => {
+		let release!: () => void
+		const gate = new Promise<void>((resolve) => (release = resolve))
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/policy': async () => { await gate; return json(enabled) } })
+		const running = sync(accountId)
+		await vi.waitFor(() => expect(paths()).toContain('/api/v1/offline/manifest'))
+		await markLoggedOut(accountId)
+		release()
+		await running
+		expect(await readPolicy(accountId)).toBeNull()
+	})
+
+	it('is not left behind when the logout lands as sync writes it', async () => {
+		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/policy': () => json(enabled) })
+		const set = browser.storage.local.set.bind(browser.storage.local)
+		let loggedOut = false
+		vi.spyOn(browser.storage.local, 'set').mockImplementation(async (values) => {
+			if (!loggedOut && Object.keys(values).some((key) => key.startsWith('generatorPolicy.'))) {
+				loggedOut = true
+				await markLoggedOut(accountId)
+			}
+			return set(values)
+		})
+		await sync(accountId)
+		expect(loggedOut).toBe(true)
+		expect(await readPolicy(accountId)).toBeNull()
 	})
 })
 

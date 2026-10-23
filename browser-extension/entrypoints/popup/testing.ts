@@ -1,5 +1,9 @@
+import { getConfig } from '@testing-library/react'
 import { vi } from 'vitest'
-import type { AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, TypeMeta, VaultSnapshotReply } from '@/src/messages'
+import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
+import type {
+	AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
+} from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
 	return {
@@ -80,14 +84,34 @@ interface FakeBackground {
 	/** Kinds the background fails on, which reaches the popup as no reply. */
 	unanswered?: string[]
 	settings?: GlobalSettings
+	/** The generator's stored state; options and history change with the requests. */
+	generator?: { options?: GeneratorOptions; policy?: GeneratorPolicy | null; accountEmail?: string | null; history?: GeneratorHistoryEntry[] }
+	/** The server's sends; create and delete change them. */
+	send?: { sends?: SendRow[]; passwordProtection?: boolean }
 }
+
+export function sendRow(overrides: Partial<SendRow> = {}): SendRow {
+	return {
+		id: 's1', token: 'a'.repeat(64), payloadType: 'text', hasPassword: false, maxViews: 5, viewCount: 3, remainingViews: 2,
+		expiresAt: '2099-01-01T12:00:00Z', createdAt: '2026-10-22T09:30:00Z', ...overrides,
+	}
+}
+
+const sendBase = 'https://cloud.example.org/index.php/apps/keepiq/public/send/'
 
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
 	let settings: GlobalSettings = options.settings ?? { theme: 'system' }
+	let generatorOptions = options.generator?.options ?? defaultOptions()
+	let history = options.generator?.history ?? []
+	let sends = options.send?.sends ?? []
+	let created = 0
 	const snapshot = () => (typeof options.snapshot === 'function' ? options.snapshot() : options.snapshot) ?? snapshotReply()
-	const reply = vi.fn(async (message: { kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings> }): Promise<unknown> => {
+	const reply = vi.fn(async (message: {
+		kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings>
+		options?: GeneratorOptions; entry?: Omit<GeneratorHistoryEntry, 'createdAt'>; input?: SendCreateInput
+	}): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
 		const canned = options.replies?.[message.kind]
 		if (canned !== undefined) return typeof canned === 'function' ? canned(message) : canned
@@ -117,6 +141,25 @@ export function fakeBackground(options: FakeBackground = {}) {
 				)]))
 				return { ok: true, items }
 			}
+			case 'generator.context': return { options: generatorOptions, policy: options.generator?.policy ?? null, accountEmail: options.generator?.accountEmail === undefined ? 'alice@example.org' : options.generator.accountEmail }
+			case 'generator.saveOptions': return (generatorOptions = message.options!)
+			case 'generator.history.list': return history
+			case 'generator.history.add': return (history = [{ ...message.entry!, createdAt: new Date().toISOString() }, ...history].slice(0, HISTORY_LIMIT))
+			case 'generator.history.clear': return (history = [], null)
+			case 'send.list': return { ok: true, value: { sends, passwordProtection: options.send?.passwordProtection ?? true } }
+			case 'send.create': {
+				const input = message.input!
+				const id = `s-new-${++created}`
+				const token = String(created).padStart(64, '0')
+				const row = sendRow({
+					id, token, payloadType: input.payloadType, hasPassword: input.password !== undefined, maxViews: input.maxViews, viewCount: 0, remainingViews: input.maxViews,
+					expiresAt: new Date(Date.now() + input.ttlSeconds * 1000).toISOString(), createdAt: new Date().toISOString(),
+					...(input.password !== undefined && { link: `${sendBase}${token}` }),
+				})
+				sends = [row, ...sends]
+				return { ok: true, value: { row, link: input.password === undefined ? `${sendBase}${token}#k=key${created}` : `${sendBase}${token}` } }
+			}
+			case 'send.delete': return (sends = sends.filter((row) => row.id !== message.id), { ok: true, value: null })
 			case 'popup.lastTab.set':
 			case 'popup.popout':
 			case 'clipboard.copied': return null
@@ -139,6 +182,9 @@ export function editableItem(overrides: Partial<EditableItem> = {}): EditableIte
 
 /** The messages of one kind sent so far. */
 export const sentOf = (spy: ReturnType<typeof fakeBackground>, kind: string) => spy.mock.calls.map(([message]) => message as Record<string, unknown>).filter((message) => message.kind === kind)
+
+/** How often a mount effect runs: twice in the popup-dev project, as StrictMode mounts, cleans up and mounts again. */
+export const mounts = () => (getConfig().reactStrictMode ? 2 : 1)
 
 /** The kinds sent so far, in order. */
 export const sentKinds = (spy: ReturnType<typeof fakeBackground>) => spy.mock.calls.map(([message]) => message.kind)

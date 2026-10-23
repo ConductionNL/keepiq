@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
 import { addAccount, getAccount, markLoggedOut } from '@/src/accounts/store'
+import { readPolicy } from '@/src/generator/store'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import type { PopupState, PopupToBackground, Result } from '@/src/messages'
 import { handlePopupMessage } from './router'
@@ -9,9 +10,10 @@ import { handlePopupMessage } from './router'
 const fetchMock = vi.fn<typeof fetch>()
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
-function nextcloud(uid = 'alice') {
+function nextcloud(uid = 'alice', policy?: unknown) {
 	fetchMock.mockImplementation(async (url) => {
 		const path = String(url)
+		if (path.includes('/api/settings/policy') && policy) return json(policy)
 		if (path.includes('/cloud/user')) return json({ ocs: { data: { id: uid, displayname: 'Alice', email: 'a@x' } } })
 		if (path.includes('/api/v1/suites')) return json([suiteRow])
 		if (path.includes('/api/health')) return json({ status: 'ok', version: '0.3.12' })
@@ -40,6 +42,7 @@ async function stored(uid = 'alice') {
 }
 
 const add = { kind: 'accounts.add', serverUrl: 'cloud.example.org', username: 'alice', appPassword: 'pw' } as const
+const policyBody = { policy_enabled: true, generator_min_length: 20 }
 const unlockWith = (accountId: string, masterPassword = envelope.password) =>
 	({ kind: 'vault.unlock', accountId, method: { type: 'masterPassword', masterPassword } }) as const
 
@@ -105,6 +108,13 @@ describe('adding', () => {
 		expect(await send(add)).toMatchObject({ ok: false, code: 'limit_reached' })
 		expect((await state({ kind: 'accounts.list' })).canAddAccount).toBe(false)
 	})
+
+	it('caches the generator policy before the first unlock', async () => {
+		grant()
+		nextcloud('alice', policyBody)
+		const id = (await state(add)).active!.id
+		await vi.waitFor(async () => expect(await readPolicy(id)).toMatchObject({ minLength: 20 }))
+	})
 })
 
 describe('re-login', () => {
@@ -116,6 +126,14 @@ describe('re-login', () => {
 		expect(s.screen).toBe('unlock')
 		expect(s.notice).toBeNull()
 		expect((await getAccount(account.id))?.appPassword).toBe('new')
+	})
+
+	it('caches the generator policy again, which the logout dropped', async () => {
+		const account = await stored()
+		await markLoggedOut(account.id, true)
+		nextcloud('alice', policyBody)
+		await state({ kind: 'accounts.reauthenticate', accountId: account.id, appPassword: 'new' })
+		await vi.waitFor(async () => expect(await readPolicy(account.id)).toMatchObject({ minLength: 20 }))
 	})
 
 	it('refuses an app password of another user', async () => {

@@ -74,7 +74,7 @@ async function matchingKey(certificate: string, privateKey: CryptoKey): Promise<
 }
 
 /** Runs one request, records whether the server answered, and replies once the sync holds the change. */
-async function run<T>(write: (context: Context) => Promise<T>, then: 'sync' | 'reply', accountId: string | undefined): Promise<WriteResult<T>> {
+export async function run<T>(write: (context: Context) => Promise<T>, then: 'sync' | 'reply', accountId: string | undefined): Promise<WriteResult<T>> {
 	let ctx: Context
 	try {
 		ctx = await context(accountId)

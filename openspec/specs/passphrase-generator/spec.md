@@ -6,7 +6,7 @@ Beside a random password, the key generator can make a passphrase: several words
 ## Requirements
 
 ### Requirement: Generate a passphrase
-The key generator MUST offer a passphrase mode with a word count (4 to 12, default 5), a separator (default `-`), whether to capitalise each word (default false) and whether to add a digit (default false). It MUST draw each word uniformly from the EFF large word list of 7,776 words with `crypto.getRandomValues`, in the browser. A word count below 4 or above 12 MUST be refused with a message that names the allowed range.
+The key generator MUST offer a passphrase mode with a word count (4 to 12, default 5), a separator (default `-`), whether to capitalise each word (default false) and whether to add a digit (default false). It MUST draw each word uniformly from the EFF large word list of 7,776 words with `crypto.getRandomValues`, in the browser, leaving out its four hyphenated words (`drop-down`, `felt-tip`, `t-shirt`, `yo-yo`): with the `-` separator they let two word sequences give the same passphrase. Each of the remaining 7,772 words adds about 12.9 bits. A word count below 4 or above 12 MUST be refused with a message that names the allowed range.
 
 #### Scenario: A vault user generates a passphrase for a new secret
 @e2e tests/e2e/workflows/key-generator.spec.ts
@@ -21,7 +21,7 @@ The key generator MUST offer a passphrase mode with a word count (4 to 12, defau
 - **THEN** the generator refuses and names the allowed range of 4 to 12 words
 
 ### Requirement: Passphrases follow the organisation password policy
-When the organisation password policy is on, a generated passphrase MUST meet the policy's length floor and required character classes, by adding words, capitalising, adding a digit or using a symbol separator. An administrator MUST be able to switch passphrases off in the organisation policy section; the generator dialog then offers Password only and the generator refuses the mode.
+When the organisation password policy is on, a generated passphrase MUST meet the policy's length floor, capped at 128 characters as for passwords, and required character classes, by adding words, capitalising, adding a digit or using a symbol separator. An administrator MUST be able to switch passphrases off in the organisation policy section; the generator dialog then offers Password only and the generator refuses the mode.
 
 #### Scenario: The policy requires a digit and 30 characters
 @e2e exclude Needs an org-policy write that would leak into every other spec on the shared e2e instance. Covered by tests/vitest/generator.spec.js ("meets a policy of 30 characters and a digit from 4 words").

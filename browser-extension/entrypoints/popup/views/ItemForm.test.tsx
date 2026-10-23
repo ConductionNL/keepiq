@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EditableItem, FolderMeta } from '@/src/messages'
@@ -32,7 +32,7 @@ interface Options {
 
 function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies }: Options = {}) {
 	const sent = fakeBackground({ snapshot, items, replies })
-	const shell = { ...DEFAULT_SHELL, footer, offline, toast: vi.fn(), refreshState: vi.fn(), syncNow: vi.fn(), setLeaveGuard: vi.fn() }
+	const shell = { ...DEFAULT_SHELL, footer, offline, toast: vi.fn(), refreshState: vi.fn(), syncNow: vi.fn(), setLeaveGuard: vi.fn(), generate: vi.fn() }
 	const onSaved = vi.fn()
 	const onCancel = vi.fn()
 	const onGone = vi.fn()
@@ -179,6 +179,46 @@ describe('adding', () => {
 		expect(isDirty()).toBe(false)
 		await user.type(field('Name'), 'x')
 		expect(isDirty()).toBe(true)
+	})
+})
+
+describe('generate buttons', () => {
+	const withTypes = (...names: string[]) => snapshotReply({ types: [...types, ...names.map((name) => ({ id: `t-${name}`, name, label: name }))] })
+
+	it('opens pick mode for the password and the username, and fills in what comes back', async () => {
+		const { shell, user } = renderForm()
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		expect(shell.generate).toHaveBeenCalledWith('password', expect.any(Function), screen.getByRole('button', { name: 'Generate password' }))
+		act(() => shell.generate.mock.calls[0]![1]('Gen3rated!'))
+		expect(field('Password').value).toBe('Gen3rated!')
+
+		await user.click(screen.getByRole('button', { name: 'Generate username' }))
+		expect(shell.generate).toHaveBeenLastCalledWith('username', expect.any(Function), screen.getByRole('button', { name: 'Generate username' }))
+		act(() => shell.generate.mock.calls[1]![1]('brave-otter'))
+		expect(field('Username').value).toBe('brave-otter')
+		expect(field('Password').value).toBe('Gen3rated!')
+	})
+
+	it.each(['database', 'api_key', 'custom_thing'])('offers the password button on the credential type %s', async (name) => {
+		const snapshot = withTypes('database', 'custom_thing')
+		renderForm({ snapshot })
+		await userEvent.setup().selectOptions(screen.getByLabelText('Type'), `t-${name}`)
+		expect(screen.getByRole('button', { name: 'Generate password' })).toBeTruthy()
+	})
+
+	it('offers no button on a multiline key, which a generated value would not fit, but keeps the username one', async () => {
+		renderForm({ snapshot: withTypes('ssh_key') })
+		await userEvent.setup().selectOptions(screen.getByLabelText('Type'), 't-ssh_key')
+		expect(screen.getByLabelText('ssh_key').tagName).toBe('TEXTAREA')
+		expect(screen.queryByRole('button', { name: 'Generate password' })).toBeNull()
+		expect(screen.getByRole('button', { name: 'Generate username' })).toBeTruthy()
+	})
+
+	it.each(['note', 'card'])('offers no generate button on %s', async (name) => {
+		renderForm()
+		await userEvent.setup().selectOptions(screen.getByLabelText('Type'), `t-${name}`)
+		expect(screen.queryByRole('button', { name: 'Generate password' })).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Generate username' })).toBeNull()
 	})
 })
 
@@ -470,14 +510,15 @@ describe('editing', () => {
 	})
 
 	it('says when the fetched item does not match the vault, and fetches again on Try again', async () => {
-		let attempts = 0
+		let healed = false
 		const { user } = renderForm({
 			mode: 'edit', id: 'i1',
-			replies: { 'item.fetch': () => (++attempts === 1 ? { ok: false, error: { code: 'conflict' } } : { ok: true, value: editableItem() }) },
+			replies: { 'item.fetch': () => (healed ? { ok: true, value: editableItem() } : { ok: false, error: { code: 'conflict' } }) },
 		})
 		const alert = await screen.findByRole('alert')
 		expect(alert.textContent).toContain('Keepiq sent a version of this item that your vault does not hold, so it was not opened.')
 		expect(screen.queryByLabelText('Name')).toBeNull()
+		healed = true
 		await user.click(within(alert).getByRole('button', { name: 'Try again' }))
 		expect((await screen.findByLabelText('Name') as HTMLInputElement).value).toBe('GitHub')
 	})

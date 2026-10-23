@@ -44,6 +44,16 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
 - `src/clipboard.ts`: copy in the popup, clear from the background.
 - `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module.
+- `src/generator/`: a port of the web app's password, passphrase and username generator, tested against `../tests/vectors/generator/`. All modules are safe for the popup, except three background-only ones:
+  - `store.ts`: the options and the cached policy.
+  - `history.ts`: the session history.
+  - `queue.ts`: one-at-a-time saves for both.
+- `src/send/`: Keepiq ephemeral sends, byte compatible with the web app (tested against `../tests/vectors/crypto/send.json`). `expiry.ts` and `payload.ts` are safe for the popup; the rest is background-only:
+  - `crypto.ts`: the content key and the AES-256-GCM blobs.
+  - `argon2.ts`: the Argon2id key for a send password, through `hash-wasm`.
+  - `link.ts`: builds the recipient link.
+  - `api.ts`: the send routes.
+  - `handlers.ts`: the `send.*` requests.
 - `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2.
 
 ## Messages
@@ -53,8 +63,9 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | Direction | Kinds | Reply |
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
-| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
+| Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
 | Content → background | `page_ready` | None |
@@ -75,6 +86,8 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `suite.<id>` | local | The active suite row, private key still wrapped |
 | `vaultCache.<id>` | local | The snapshot: secret rows, folders, types, suite id and epoch, counts, the default item type |
 | `folderNotice.<id>` | local | The folder manager's plaintext-names notice was dismissed |
+| `generatorOptions.<id>` | local | The generator's options and last sub-tab, as the user set them; the policy applies on read |
+| `generatorPolicy.<id>` | local | The organisation policy as the generator reads it, from the last successful sync; gone on logout |
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
@@ -82,6 +95,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `popup:lastTab` | session | The popup tab to reopen |
 | `addAccountDraft` | session | Server URL and username while adding an account |
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
+| `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
 
@@ -116,6 +130,15 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 - **Every write records** whether the server answered, which drives the same offline flag as sync.
 - **A successful write runs a full sync** and replies after it, waiting for a sync that started earlier.
 
+### Send
+
+- **The popup sends plaintext,** the background encrypts it under a fresh content key, wraps that key under Argon2id when a password is set, posts the send and replies with the row and the link.
+- **Each request names its account,** and is refused when locked or no longer the active account, like a write; a create checks again after Argon2id.
+- **Offline is an outcome:** the background tries the request and answers `offline` when no server answers; the popup disables Create while the account is offline.
+- **Nothing is stored:** the content, the content key and the link live in background memory for the request only. The popup keeps the links of sends without a password in `SendProvider` (`hooks/useSends.tsx`), mounted inside `Shell`, so they go on popup close, lock and account switch.
+- **Password sends** carry no secret in their link, so `send.list` rebuilds it from the row's `token`.
+- **Send from an item** reads the login with `item.decrypt` and opens New send with it.
+
 ### Timeout
 
 - `enforce()` runs on the `vault-timeout` alarm and before every popup request, and locks or logs out each account past its timeout.
@@ -143,6 +166,7 @@ The specs are in `openspec/changes/ext-i18n/`.
 
 - Every module and popup component has a `*.test.ts(x)` next to it, run by vitest on WXT's in-memory `browser`.
 - Popup tests use happy-dom and the helpers in `entrypoints/popup/testing.ts`.
+- Popup tests (`*.test.tsx`) run twice: project `popup-prod` as built, `popup-dev` under StrictMode as `npm run dev` renders; count mount effects with `mounts()`.
 - Tests render in English from the real catalogs; `setLocale('nl')` from `src/testing/i18n.ts` switches one to Dutch.
 - `test-site/` holds mock pages for manual checks, one per fill and capture case.
 - The commands are in the [README](README.md#checks--builds). Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching `entrypoints/`.

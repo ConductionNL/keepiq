@@ -15,7 +15,7 @@ import { Menu, type MenuItem } from './Menu'
 /** Types whose `key` is a structured payload or a seed, not something to paste as a password. */
 const NO_PASSWORD = new Set(['totp', 'card', 'identity', 'passkey'])
 
-/** Edit, Clone, Move and Delete with the reason each is unavailable, for the More menu and item detail alike. `viewOnly`: the detail's `item.editable` answer, which the list does not ask. */
+/** Edit, Clone, Move, Send and Delete with the reason each is unavailable, for the More menu and item detail alike. `viewOnly`: the detail's `item.editable` answer, which the list does not ask. Send is for logins only. */
 export function itemActions(item: ItemMeta, type: TypeMeta | undefined, offline: boolean, actions: ItemActions, viewOnly = false) {
 	const offlineReason = offline ? i18n.t('form.offline') : undefined
 	const blockedReason = item.blocked ? i18n.t('blocked.generic') : undefined
@@ -24,14 +24,23 @@ export function itemActions(item: ItemMeta, type: TypeMeta | undefined, offline:
 	const useOnly = item.useOnly ? i18n.t('item.useOnly') : undefined
 	const readOnly = item.readOnly ? i18n.t('item.readOnly') : undefined
 	const viewOnlyReason = viewOnly ? i18n.t('item.viewOnly') : undefined
-	const expiring = item.accessExpiresAt ? i18n.t('item.expiringNoClone', { date: new Date(item.accessExpiresAt).toLocaleDateString(language()) }) : undefined
+	const accessEnds = item.accessExpiresAt ? new Date(item.accessExpiresAt).toLocaleDateString(language()) : undefined
+	const expiring = accessEnds && i18n.t('item.expiringNoClone', { date: accessEnds })
 	return {
 		// Edit reads the item first and refuses there when offline, so it is not refused for that up front.
 		edit: { label: i18n.t('item.edit'), onSelect: () => actions.edit(item.id), disabledReason: blockedReason ?? useOnly ?? readOnly ?? viewOnlyReason },
 		clone: { label: i18n.t('item.clone'), onSelect: () => actions.clone(item.id), disabledReason: passkeyReason ?? blockedReason ?? useOnly ?? readOnly ?? expiring ?? offlineReason },
 		move: { label: i18n.t('item.move'), onSelect: () => actions.move(item), disabledReason: useOnly ?? offlineReason },
 		remove: { label: i18n.t('item.delete'), onSelect: () => actions.remove(item), disabledReason: offlineReason },
-	} satisfies Record<string, MenuItem>
+		// A use-only copy's password can't be revealed, and an expiring one would outlive the access in a send.
+		send: type?.name === 'login'
+			? {
+				label: i18n.t('item.send'),
+				onSelect: () => actions.send(item),
+				disabledReason: blockedReason ?? useOnly ?? (accessEnds && i18n.t('item.expiringNoSend', { date: accessEnds })) ?? (offline ? i18n.t('send.offline') : undefined),
+			}
+			: undefined,
+	} satisfies Record<string, MenuItem | undefined>
 }
 
 interface Props {
@@ -104,6 +113,7 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 						actions.edit,
 						actions.clone,
 						actions.move,
+						...(actions.send ? [actions.send] : []),
 						actions.remove,
 					]}
 				/>

@@ -1,6 +1,7 @@
 import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { fieldAction } from '../i18n'
 import { IconButton } from './Button'
+import type { IconName } from './Icon'
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'spellCheck'> {
 	label: string
@@ -10,10 +11,12 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' |
 	error?: string | null
 	/** No capitals or corrections from a phone keyboard, e.g. for a username or URL. A password field always is. */
 	verbatim?: boolean
+	/** An icon button after the input, e.g. to generate its value. */
+	action?: { icon: IconName; label: string; onClick: (button: HTMLButtonElement) => void }
 }
 
 /** A labelled input; `type="password"` gets a show/hide toggle that keeps the value. */
-export const TextField = forwardRef<HTMLInputElement, Props>(function TextField({ label, value, onChange, hint, error, verbatim = false, type = 'text', ...rest }, ref) {
+export const TextField = forwardRef<HTMLInputElement, Props>(function TextField({ label, value, onChange, hint, error, verbatim = false, action, type = 'text', ...rest }, ref) {
 	const id = useId()
 	const [revealed, setRevealed] = useState(false)
 	const isPassword = type === 'password'
@@ -44,6 +47,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 						aria-pressed={revealed}
 					/>
 				)}
+				{action && <IconButton icon={action.icon} label={action.label} onClick={(event) => action.onClick(event.currentTarget)} />}
 			</div>
 			{hint && <p className="field__hint" id={`${id}-hint`}>{hint}</p>}
 			{error && <p className="field__error" id={`${id}-error`}>{error}</p>}

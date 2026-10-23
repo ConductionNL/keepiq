@@ -19,7 +19,7 @@ function renderList(snapshot: UnlockedSnapshot, options: { tab?: CurrentTab; dec
 	const launch = vi.fn()
 	const onOpen = vi.fn()
 	const syncNow = vi.fn()
-	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn() }
+	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast, launch, items }}>
 			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} syncNow={syncNow} onOpen={onOpen} />
@@ -222,6 +222,38 @@ describe('item cards', () => {
 		await more()
 		await user.click(screen.getByRole('menuitem', { name: 'View' }))
 		expect(onOpen).toHaveBeenCalledWith('i1')
+	})
+
+	it('offers Send on a read-only share', async () => {
+		renderList(snapshotReply({ items: [itemMeta({ readOnly: true })] }))
+		await userEvent.setup().click(screen.getByRole('button', { name: 'More, GitHub' }))
+		expect(screen.getByRole('menuitem', { name: 'Send' }).getAttribute('aria-disabled')).toBeNull()
+	})
+
+	it('offers Send on a login only, before Delete', async () => {
+		const { items } = renderList(snapshotReply({ items: [itemMeta(), itemMeta({ id: 'i2', name: 'Licence', typeId: 't-api_key' })] }))
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'More, GitHub' }))
+		expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual(['View', 'Edit', 'Clone', 'Move to folder', 'Send', 'Delete'])
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		expect(items.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'i1' }))
+		await user.click(screen.getByRole('button', { name: 'More, Licence' }))
+		expect(screen.queryByRole('menuitem', { name: 'Send' })).toBeNull()
+	})
+
+	it.each([
+		[{ blocked: true, hasLogin: false }, 'This item is blocked.'],
+		[{ useOnly: true }, 'Shared with you for signing in only'],
+		[{ accessExpiresAt: '2026-12-01T12:00:00Z' }, `Your access ends ${new Date('2026-12-01T12:00:00Z').toLocaleDateString('en')}, so it cannot be sent`],
+	])('disables Send with the reason for %o', async (overrides, reason) => {
+		const { items } = renderList(snapshotReply({ items: [itemMeta(overrides)] }))
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'More, GitHub' }))
+		const send = screen.getByRole('menuitem', { name: 'Send' })
+		expect(send.getAttribute('aria-disabled')).toBe('true')
+		expect(send.title).toBe(reason)
+		await user.click(send)
+		expect(items.send).not.toHaveBeenCalled()
 	})
 
 	it('does not edit or clone a blocked item', async () => {

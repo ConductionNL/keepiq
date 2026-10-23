@@ -216,9 +216,9 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 		? i18n.t('detail.password')
 		: rendered?.label ?? i18n.t('form.secret')
 	const areaChange = (field: 'secret' | 'notes') => (value: string) => update({ [field]: keepLineBreaks(value, initial[field]) })
-	const secretField = (label: string, autoComplete: string, area = multiline) => area
+	const secretField = (label: string, autoComplete: string, area = multiline, generate = false) => area
 		? <TextArea label={label} value={values.secret} onChange={areaChange('secret')} error={error('secret')} rows={6} mono concealed />
-		: <TextField label={label} type="password" value={values.secret} onChange={(secret) => update({ secret })} error={error('secret')} autoComplete={autoComplete} />
+		: <TextField label={label} type="password" value={values.secret} onChange={(secret) => update({ secret })} error={error('secret')} autoComplete={autoComplete} action={generate ? { icon: 'generate', label: i18n.t('generator.generatePassword'), onClick: (button) => shell.generate('password', (secret) => update({ secret }), button) } : undefined} />
 
 	return (
 		<>
@@ -254,9 +254,8 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				{kind === 'passkey' && <p className="hint">{i18n.t('form.passkeyReadOnly')}</p>}
 				{kind === 'credential' && (
 					<FormSection title={i18n.t('detail.loginCredentials')}>
-						{sections.login && <TextField label={i18n.t('detail.username')} value={values.login} onChange={(login) => update({ login })} error={error('login')} autoComplete="off" verbatim />}
-						{/* The generate button joins the single-line field with ext-generator's pick mode. */}
-						{secretField(secretLabel, 'new-password', isMultiline(draft.typeName) || multiline)}
+						{sections.login && <TextField label={i18n.t('detail.username')} value={values.login} onChange={(login) => update({ login })} error={error('login')} autoComplete="off" verbatim action={{ icon: 'generate', label: i18n.t('generator.generateUsername'), onClick: (button) => shell.generate('username', (login) => update({ login }), button) }} />}
+						{secretField(secretLabel, 'new-password', isMultiline(draft.typeName) || multiline, true)}
 					</FormSection>
 				)}
 				{kind === 'totp' && (
