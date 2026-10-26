@@ -84,7 +84,11 @@ operators and works councils know it is the default.
 ## Event-type reference
 
 `secret.created`, `secret.updated`, `secret.read`, `secret.deleted`,
-`folder.deleted_cascade`, `share.granted`, `share.revoked`, `share.delegated`,
+`folder.deleted_cascade`, `share.granted`, `share.revoked`,
+`share.quarantined` (records the copy's use-only flag and access end date),
+`share.quarantine_released` (records whether it was forced),
+`share.quarantine_dropped` (records whether the copy's restrictions were cleared),
+`share.delegated`,
 `share.delegation_reclaimed`, `link_share.created`, `link_share.accessed`,
 `link_share.access_failed`, `link_share.revoked`, `link_share.auto_deleted`,
 `request.created`, `request.fulfilled`, `request.re_requested`,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Migration;
 
 use OCA\Keepiq\Migration\Version001015Date20261021120000;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCP\DB\IResult;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\QueryBuilder\IExpressionBuilder;
@@ -20,19 +21,20 @@ use ReflectionNamedType;
 
 /**
  * The unique index on keepiq_share_targets.secret_id, the pre-index duplicate
- * cleanup, and the provenance quarantine (GHSA-m5p9-6pw7-pf3g).
+ * cleanup, and the hand-off to the quarantine scan (GHSA-m5p9-6pw7-pf3g).
  *
- * The migration is driven over a small in-memory model of
- * `keepiq_share_targets` and `keepiq_secrets` through a query-builder double, so
- * the dedup DELETE loop and the quarantine scan/UPDATE are actually exercised.
+ * The dedup is driven over a small in-memory model of `keepiq_share_targets`
+ * and `keepiq_secrets` through a query-builder double, so its DELETE loop is
+ * actually exercised. The scan itself is tested against a real database in
+ * ShareQuarantineScannerTest.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+ * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
  */
 class ShareTargetCopyUniqueMigrationTest extends TestCase {
 
 	/**
-	 * A base epoch the fixtures offset from, so stored datetimes parse back to
-	 * the same gaps the migration compares against the mint window.
+	 * A base epoch the fixtures offset from.
 	 *
 	 * @var int
 	 */
@@ -40,17 +42,16 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 
 	/**
 	 * Share-target rows, each {id, source_secret_id, target_user_id, secret_id,
-	 * created_at, quarantined_at}. `created_at` is an epoch; `quarantined_at` is
-	 * null until the migration quarantines the row.
+	 * created_at}. `created_at` is an epoch.
 	 *
-	 * @var array<int,array{id:string,source_secret_id:string,target_user_id:string,secret_id:string,created_at:int,quarantined_at:int|null}>
+	 * @var array<int,array{id:string,source_secret_id:string,target_user_id:string,secret_id:string,created_at:int}>
 	 */
 	private array $shareTargets = [];
 
 	/**
-	 * Secrets, id => {owner_type, owner_id, created_at}.
+	 * Secrets, id => {owner_type, owner_id}.
 	 *
-	 * @var array<string,array{owner_type:string,owner_id:string,created_at:int}>
+	 * @var array<string,array{owner_type:string,owner_id:string}>
 	 */
 	private array $secrets = [];
 
@@ -69,14 +70,6 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	private array $logged = [];
 
 	/**
-	 * The ids the filtered candidate (join) query returned, proving SQL — not
-	 * PHP — narrowed the scan to copy-predates-row rows.
-	 *
-	 * @var list<string>
-	 */
-	private array $candidateIds = [];
-
-	/**
 	 * Indexes/columns dropped and added, recorded by the table double.
 	 *
 	 * @var array{dropped:list<string>,unique:list<string>,columns:list<string>}
@@ -85,8 +78,9 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 
 	/**
 	 * A table double recording index and column changes, typed after whatever
-	 * getTable() declares (ITable when it declares nothing), so the schema tests
-	 * run wherever the unit suite runs.
+	 * getTable() declares (ITable, or Doctrine's Table on a server whose
+	 * getTable() declares nothing), so the schema tests run wherever the unit
+	 * suite runs.
 	 *
 	 * @param array<string,bool> $hasIndex  The hasIndex answer per index name
 	 * @param array<string,bool> $hasColumn The hasColumn answer per column name
@@ -96,6 +90,9 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	private function table(array $hasIndex, array $hasColumn = []): object {
 		$returnType = (new \ReflectionMethod(ISchemaWrapper::class, 'getTable'))->getReturnType();
 		$class      = ($returnType instanceof ReflectionNamedType) ? $returnType->getName() : ITable::class;
+		if (interface_exists($class) === false && class_exists($class) === false) {
+			$class = \Doctrine\DBAL\Schema\Table::class;
+		}
 
 		$mock = $this->createMock($class);
 		$mock->method('hasIndex')->willReturnCallback(
@@ -105,20 +102,24 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 			static fn (string $name): bool => ($hasColumn[$name] ?? false)
 		);
 		$mock->method('dropIndex')->willReturnCallback(
-			function (string $name) use ($mock): object {
+			function (string $name) use ($mock) {
 				$this->recorded['dropped'][] = $name;
 				return $mock;
 			}
 		);
 		$mock->method('addUniqueIndex')->willReturnCallback(
-			function (array $columns, ?string $name = null) use ($mock): object {
+			function (array $columns, ?string $name = null) use ($mock) {
 				$this->recorded['unique'][] = (string)$name;
 				return $mock;
 			}
 		);
 		$columnReturn = (new \ReflectionMethod($class, 'addColumn'))->getReturnType();
 		$columnClass  = ($columnReturn instanceof ReflectionNamedType) ? $columnReturn->getName() : \OCP\DB\Schema\IColumn::class;
-		$column       = $this->createMock($columnClass);
+		if (interface_exists($columnClass) === false && class_exists($columnClass) === false) {
+			$columnClass = \Doctrine\DBAL\Schema\Column::class;
+		}
+
+		$column = $this->createMock($columnClass);
 		$mock->method('addColumn')->willReturnCallback(
 			function (string $name) use ($column): object {
 				$this->recorded['columns'][] = $name;
@@ -152,27 +153,6 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	 * @return void
 	 */
 	private function preSchemaChange(): void {
-		$migration = $this->migration();
-		$migration->preSchemaChange($this->outputDouble(), fn () => $this->tableSchema(true), []);
-	}
-
-	/**
-	 * Run postSchemaChange (quarantine scan) over the in-memory tables.
-	 *
-	 * @return void
-	 */
-	private function postSchemaChange(): void {
-		$migration = $this->migration();
-		$migration->postSchemaChange($this->outputDouble(), fn () => $this->tableSchema(true), []);
-	}
-
-	/**
-	 * A migration wired to the in-memory query-builder double and the recording
-	 * logger.
-	 *
-	 * @return Version001015Date20261021120000
-	 */
-	private function migration(): Version001015Date20261021120000 {
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->method('warning')->willReturnCallback(function (string|\Stringable $message, array $context = []): void {
 			$this->logged[] = (string)$message;
@@ -181,7 +161,8 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 		$db = $this->createMock(IDBConnection::class);
 		$db->method('getQueryBuilder')->willReturnCallback(fn (): IQueryBuilder => $this->queryBuilder());
 
-		return new Version001015Date20261021120000($db, $logger);
+		(new Version001015Date20261021120000($db, $logger))
+			->preSchemaChange($this->outputDouble(), fn () => $this->tableSchema(true), []);
 	}
 
 	/**
@@ -198,7 +179,8 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	}
 
 	/**
-	 * A schema whose share-targets table reports the quarantine column present.
+	 * A schema whose share-targets table reports the quarantine column present
+	 * or not.
 	 *
 	 * @param bool $hasColumn Whether the quarantine column exists yet
 	 *
@@ -212,8 +194,8 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	}
 
 	/**
-	 * A query builder that records its table, kind, columns, join, grouping and
-	 * filter, then answers from or writes to the in-memory tables.
+	 * A query builder that records its table, kind, grouping and filter, then
+	 * answers from or deletes in the in-memory tables.
 	 *
 	 * @return IQueryBuilder
 	 */
@@ -221,37 +203,22 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 		$state = (object)[
 			'kind' => 'select',
 			'table' => '',
-			'join' => false,
 			'groupBy' => false,
 			'whereCol' => null,
 			'params' => [],
-			'setCols' => [],
 		];
 		$qb = $this->createMock(IQueryBuilder::class);
-		foreach (['select', 'selectAlias', 'having', 'orderBy', 'addOrderBy', 'setMaxResults', 'where', 'andWhere'] as $fluent) {
+		foreach (['select', 'having', 'orderBy', 'addOrderBy', 'setMaxResults', 'where', 'andWhere'] as $fluent) {
 			$qb->method($fluent)->willReturnSelf();
 		}
 
-		$qb->method('from')->willReturnCallback(function (string $table, ?string $alias = null) use ($qb, $state): IQueryBuilder {
+		$qb->method('from')->willReturnCallback(function (string $table) use ($qb, $state): IQueryBuilder {
 			$state->table = $table;
-			return $qb;
-		});
-		$qb->method('innerJoin')->willReturnCallback(function () use ($qb, $state): IQueryBuilder {
-			$state->join = true;
 			return $qb;
 		});
 		$qb->method('delete')->willReturnCallback(function (string $table) use ($qb, $state): IQueryBuilder {
 			$state->kind  = 'delete';
 			$state->table = $table;
-			return $qb;
-		});
-		$qb->method('update')->willReturnCallback(function (string $table) use ($qb, $state): IQueryBuilder {
-			$state->kind  = 'update';
-			$state->table = $table;
-			return $qb;
-		});
-		$qb->method('set')->willReturnCallback(function (string $column) use ($qb, $state): IQueryBuilder {
-			$state->setCols[] = $column;
 			return $qb;
 		});
 		$qb->method('groupBy')->willReturnCallback(function () use ($qb, $state): IQueryBuilder {
@@ -269,8 +236,6 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 			return 'eq';
 		});
 		$expr->method('gt')->willReturn('gt');
-		$expr->method('lt')->willReturn('lt');
-		$expr->method('isNull')->willReturn('isNull');
 		$qb->method('expr')->willReturn($expr);
 
 		$func = $this->createMock(IFunctionBuilder::class);
@@ -286,7 +251,7 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	/**
 	 * Share-target rows ordered oldest first.
 	 *
-	 * @return list<array{id:string,source_secret_id:string,target_user_id:string,secret_id:string,created_at:int,quarantined_at:int|null}>
+	 * @return list<array{id:string,source_secret_id:string,target_user_id:string,secret_id:string,created_at:int}>
 	 */
 	private function orderedRows(): array {
 		$rows = array_values($this->shareTargets);
@@ -297,33 +262,13 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	/**
 	 * Answer a SELECT from the in-memory tables.
 	 *
-	 * @param object $state The builder's recorded table, join, grouping and filter
+	 * @param object $state The builder's recorded table, grouping and filter
 	 *
 	 * @return IResult
 	 */
 	private function answer(object $state): IResult {
 		$rows = [];
-		if ($state->join === true) {
-			// The filtered candidate query: active rows whose copy was created
-			// before the row. The database does the narrowing, so only these
-			// cross to PHP (N2).
-			foreach ($this->orderedRows() as $row) {
-				$secret = ($this->secrets[$row['secret_id']] ?? null);
-				if ($row['quarantined_at'] !== null || $secret === null || $secret['created_at'] >= $row['created_at']) {
-					continue;
-				}
-
-				$this->candidateIds[] = $row['id'];
-				$rows[] = [
-					'id' => $row['id'],
-					'source_secret_id' => $row['source_secret_id'],
-					'target_user_id' => $row['target_user_id'],
-					'secret_id' => $row['secret_id'],
-					'row_created_at' => date('Y-m-d H:i:s', $row['created_at']),
-					'copy_created_at' => date('Y-m-d H:i:s', $secret['created_at']),
-				];
-			}
-		} elseif ($state->table === 'keepiq_secrets') {
+		if ($state->table === 'keepiq_secrets') {
 			$secret = ($this->secrets[(string)($state->params[0] ?? '')] ?? null);
 			if ($secret !== null) {
 				$rows[] = ['owner_type' => $secret['owner_type'], 'owner_id' => $secret['owner_id']];
@@ -362,33 +307,24 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	}
 
 	/**
-	 * Apply a DELETE or UPDATE to the in-memory share-target table.
+	 * Apply a DELETE to the in-memory share-target table.
 	 *
-	 * @param object $state The builder's recorded kind, table, set columns and params
+	 * @param object $state The builder's recorded kind, table and params
 	 *
 	 * @return int Affected rows
 	 */
 	private function write(object $state): int {
-		if ($state->table !== 'keepiq_share_targets' || $state->whereCol !== 'id') {
+		if ($state->kind !== 'delete' || $state->table !== 'keepiq_share_targets' || $state->whereCol !== 'id') {
 			return 0;
 		}
 
-		// The id parameter is the last one bound (set() values come first on an
-		// UPDATE).
 		$id      = (string)($state->params[array_key_last($state->params)] ?? '');
 		$changed = 0;
 		foreach ($this->shareTargets as $key => $row) {
-			if ($row['id'] !== $id) {
-				continue;
-			}
-
-			if ($state->kind === 'delete') {
+			if ($row['id'] === $id) {
 				unset($this->shareTargets[$key]);
-			} elseif ($state->kind === 'update' && in_array('quarantined_at', $state->setCols, true) === true) {
-				$this->shareTargets[$key]['quarantined_at'] = self::BASE;
+				$changed++;
 			}
-
-			$changed++;
 		}
 
 		return $changed;
@@ -404,23 +340,7 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	}
 
 	/**
-	 * The ids of the rows the migration quarantined.
-	 *
-	 * @return list<string>
-	 */
-	private function quarantinedIds(): array {
-		$ids = [];
-		foreach ($this->shareTargets as $row) {
-			if ($row['quarantined_at'] !== null) {
-				$ids[] = $row['id'];
-			}
-		}
-
-		return array_values($ids);
-	}
-
-	/**
-	 * Build a share-target row with an optional creation offset from BASE.
+	 * Build a share-target row with a creation offset from BASE.
 	 *
 	 * @param string $id       The row id
 	 * @param string $source   The source secret id
@@ -428,7 +348,7 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	 * @param string $secretId The recipient copy id
 	 * @param int    $offset   Seconds added to BASE for created_at
 	 *
-	 * @return array{id:string,source_secret_id:string,target_user_id:string,secret_id:string,created_at:int,quarantined_at:null}
+	 * @return array{id:string,source_secret_id:string,target_user_id:string,secret_id:string,created_at:int}
 	 */
 	private function row(string $id, string $source, string $target, string $secretId, int $offset): array {
 		return [
@@ -437,21 +357,7 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 			'target_user_id' => $target,
 			'secret_id' => $secretId,
 			'created_at' => (self::BASE + $offset),
-			'quarantined_at' => null,
 		];
-	}
-
-	/**
-	 * Build a secret with an optional creation offset from BASE.
-	 *
-	 * @param string $ownerType The owner type
-	 * @param string $ownerId   The owner id
-	 * @param int    $offset    Seconds added to BASE for created_at
-	 *
-	 * @return array{owner_type:string,owner_id:string,created_at:int}
-	 */
-	private function secret(string $ownerType, string $ownerId, int $offset): array {
-		return ['owner_type' => $ownerType, 'owner_id' => $ownerId, 'created_at' => (self::BASE + $offset)];
 	}
 
 	/**
@@ -509,136 +415,7 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	}
 
 	/**
-	 * Over-deletion case (the reviewer's 🔴): a legitimate onward-share row
-	 * `{V_A, B, C_B}`, whose copy C_B is itself a share source but was minted
-	 * with its row (created_at within the mint window), is NOT quarantined and
-	 * stays functional. The old source-membership rule deleted it; the
-	 * provenance rule keeps it.
-	 *
-	 * @return void
-	 */
-	public function testKeepsALegitimateOnwardShareRowMintedWithItsRow(): void {
-		// A's share of V_A to B gives B the copy C_B (minted with the row).
-		// B then shares C_B onward to C, so C_B is also a source — but its copy
-		// C_C is likewise minted with that row.
-		$this->shareTargets = [
-			$this->row('st-ab', 'V_A', 'bob', 'C_B', 0),
-			$this->row('st-bc', 'C_B', 'carol', 'C_C', 5),
-		];
-		$this->secrets = [
-			'C_B' => $this->secret('user', 'bob', 0),
-			'C_C' => $this->secret('user', 'carol', 5),
-		];
-
-		$this->preSchemaChange();
-		$this->postSchemaChange();
-
-		$this->assertSame(['st-ab', 'st-bc'], $this->survivingIds());
-		$this->assertSame([], $this->quarantinedIds(), 'a copy minted with its row is never quarantined');
-		$this->assertSame([], $this->warnings);
-	}
-
-	/**
-	 * The core advisory case: a planted row whose secret_id is the victim's OWN,
-	 * pre-existing secret V (owner == target) is QUARANTINED, not deleted, with V
-	 * intact — so no revoke or sync from the attacker's source can reach V while
-	 * the row stays for the audit. Removing the quarantine scan leaves the row
-	 * active and turns this red.
-	 *
-	 * @return void
-	 */
-	public function testQuarantinesARowWhoseCopyPredatesIt(): void {
-		// The victim's secret V was created long before the planted row.
-		$this->shareTargets = [
-			$this->row('st-hijack', 'S_a', 'victim', 'V', 100000),
-		];
-		$this->secrets = [
-			'V' => $this->secret('user', 'victim', 0),
-		];
-
-		$this->preSchemaChange();
-		$this->postSchemaChange();
-
-		$this->assertSame(['st-hijack'], $this->survivingIds(), 'the row is kept (reversible), not deleted');
-		$this->assertSame(['st-hijack'], $this->quarantinedIds(), 'the row is quarantined');
-		$this->assertArrayHasKey('V', $this->secrets, 'the victim secret V was never deleted');
-		$this->assertCount(1, $this->warnings);
-		$this->assertStringContainsString('quarantined', $this->warnings[0]);
-		$this->assertStringContainsString('st-hijack', $this->warnings[0]);
-		$this->assertStringContainsString('secret_id V', $this->warnings[0]);
-		$this->assertStringContainsString('st-hijack', implode("\n", $this->logged), 'the quarantine is logged for admins');
-	}
-
-	/**
-	 * Under-catch case (the reviewer's 🔴 follow-up): a planted row whose V is no
-	 * longer any share's source is still quarantined, because the signal is the
-	 * copy's created_at, not source membership.
-	 *
-	 * @return void
-	 */
-	public function testQuarantinesAPlantedRowEvenWhenVIsNoLongerASource(): void {
-		// V is named only by the planted row; it is nobody's source_secret_id.
-		$this->shareTargets = [
-			$this->row('st-planted', 'S_a', 'victim', 'V', 50000),
-		];
-		$this->secrets = [
-			'V' => $this->secret('user', 'victim', 0),
-		];
-
-		$this->preSchemaChange();
-		$this->postSchemaChange();
-
-		$this->assertSame(['st-planted'], $this->quarantinedIds(), 'the created_at signal catches it without a source signal');
-		$this->assertArrayHasKey('V', $this->secrets);
-	}
-
-	/**
-	 * The scan runs off a filtered candidate query (N2): a row whose copy is
-	 * NEWER than the row never reaches PHP, so the full table is never loaded.
-	 *
-	 * @return void
-	 */
-	public function testScanUsesTheFilteredCandidateQuery(): void {
-		$this->shareTargets = [
-			// Copy predates the row — a candidate.
-			$this->row('st-old', 'S_a', 'victim', 'V', 100000),
-			// Copy minted with the row — not a candidate.
-			$this->row('st-fresh', 'S_b', 'bob', 'C_B', 0),
-		];
-		$this->secrets = [
-			'V' => $this->secret('user', 'victim', 0),
-			'C_B' => $this->secret('user', 'bob', 0),
-		];
-
-		$this->postSchemaChange();
-
-		$this->assertSame(['st-old'], $this->candidateIds, 'only the copy-predates-row candidate is streamed');
-		$this->assertSame(['st-old'], $this->quarantinedIds());
-	}
-
-	/**
-	 * A copy minted a little before its row — within the mint window of the
-	 * legacy two-step client flow — is a candidate but is NOT quarantined.
-	 *
-	 * @return void
-	 */
-	public function testKeepsACopyMintedWithinTheMintWindow(): void {
-		$withinWindow = (Version001015Date20261021120000::MINT_WINDOW_SECONDS - 60);
-		$this->shareTargets = [
-			$this->row('st-legacy', 'S', 'bob', 'C_B', $withinWindow),
-		];
-		$this->secrets = [
-			'C_B' => $this->secret('user', 'bob', 0),
-		];
-
-		$this->postSchemaChange();
-
-		$this->assertSame(['st-legacy'], $this->candidateIds, 'it is a candidate (copy older than row)');
-		$this->assertSame([], $this->quarantinedIds(), 'but the gap is within the window, so it is kept');
-	}
-
-	/**
-	 * Exact duplicates are still deduplicated down to the row held by its target
+	 * Exact duplicates are deduplicated down to the row held by its target
 	 * before the unique index is added; the two others are deleted and reported.
 	 * Flipping `$row['id'] === $keep` to `!==` deletes the held row instead,
 	 * which this catches.
@@ -654,7 +431,7 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 		// The copy is held by bob, so d2 is the keeper even though it is not the
 		// earliest row.
 		$this->secrets = [
-			'dup' => $this->secret('user', 'bob', 2),
+			'dup' => ['owner_type' => 'user', 'owner_id' => 'bob'],
 		];
 
 		$this->preSchemaChange();
@@ -665,39 +442,47 @@ class ShareTargetCopyUniqueMigrationTest extends TestCase {
 	}
 
 	/**
-	 * The quarantine scan is non-fatal: when the candidate query throws, the
-	 * upgrade continues and the failure is reported rather than raised.
+	 * Once the quarantine column exists, postSchemaChange hands the scan to
+	 * ShareQuarantineScanner with the migration output. The scanner, not the
+	 * migration, decides whether the pass completed, so a failure leaves the
+	 * background job to retry it (ShareQuarantineScannerTest).
 	 *
 	 * @return void
 	 */
-	public function testQuarantineScanIsNonFatal(): void {
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->method('warning')->willReturnCallback(function (string|\Stringable $message, array $context = []): void {
-			$this->logged[] = (string)$message;
-		});
+	public function testPostSchemaChangeRunsTheQuarantineScan(): void {
+		$output  = $this->createMock(IOutput::class);
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->expects($this->once())->method('run')->with($output)->willReturn(false);
 
-		$db = $this->createMock(IDBConnection::class);
-		$db->method('getQueryBuilder')->willThrowException(new \RuntimeException('boom'));
-
-		// Must not throw.
-		(new Version001015Date20261021120000($db, $logger))
-			->postSchemaChange($this->outputDouble(), fn () => $this->tableSchema(true), []);
-
-		$this->assertNotSame([], $this->warnings, 'the failure is reported to the admin');
-		$this->assertStringContainsString('quarantine scan failed', $this->warnings[0]);
+		(new Version001015Date20261021120000($this->createMock(IDBConnection::class), null, $scanner))
+			->postSchemaChange($output, fn () => $this->tableSchema(true), []);
 	}
 
 	/**
-	 * postSchemaChange is skipped (no DB access) until the quarantine column
-	 * exists, so a schema that reports it missing touches nothing.
+	 * Without a scanner, postSchemaChange says in the migration output that
+	 * the background job will quarantine planted rows.
+	 *
+	 * @return void
+	 */
+	public function testPostSchemaChangeWarnsWhenTheScannerIsMissing(): void {
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('warning')->with($this->stringContains('ShareQuarantineScanJob'));
+
+		(new Version001015Date20261021120000($this->createMock(IDBConnection::class), null, null))
+			->postSchemaChange($output, fn () => $this->tableSchema(true), []);
+	}
+
+	/**
+	 * postSchemaChange is skipped until the quarantine column exists, so a
+	 * schema that reports it missing runs no scan.
 	 *
 	 * @return void
 	 */
 	public function testPostSchemaChangeIsSkippedBeforeTheColumnExists(): void {
-		$db = $this->createMock(IDBConnection::class);
-		$db->expects($this->never())->method('getQueryBuilder');
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->expects($this->never())->method('run');
 
-		(new Version001015Date20261021120000($db))
+		(new Version001015Date20261021120000($this->createMock(IDBConnection::class), null, $scanner))
 			->postSchemaChange($this->createMock(IOutput::class), fn () => $this->tableSchema(false), []);
 	}
 

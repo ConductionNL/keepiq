@@ -36,6 +36,7 @@ use OCA\Keepiq\Command\BackupVerify;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCP\App\IAppManager;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IAppData;
@@ -87,6 +88,18 @@ class RestoreCommandTest extends TestCase {
 
 	private BackupService $backups;
 
+	private ArchiveWriter $writer;
+
+	/** @var array<int,string> Every share quarantine scanner call, with the table replacement as "replace", each blob write as "blob" and the restore audit as "audit", in order */
+	private array $scanCalls = [];
+
+	private ?\Throwable $blobsFail = null;
+
+	/** @var array<int,bool> The maintenance switch at each scan run */
+	private array $maintenanceDuringScan = [];
+
+	private bool $scanCompletes = true;
+
 	/**
 	 * Write a backup of a two-user vault.
 	 *
@@ -110,6 +123,7 @@ class RestoreCommandTest extends TestCase {
 		$tables->method('newestAuditEntry')->willReturnCallback(fn (): ?string => $this->newestAudit);
 		$tables->method('replaceAll')->willReturnCallback(function (callable $rowsFor): array {
 			$this->maintenanceDuringReplace[] = $this->maintenance;
+			$this->scanCalls[] = 'replace';
 			if ($this->replaceFails !== null) {
 				throw $this->replaceFails;
 			}
@@ -141,8 +155,8 @@ class RestoreCommandTest extends TestCase {
 		});
 
 		$this->archive = $this->dir . '/keepiq-backup.zip';
-		(new ArchiveWriter(tables: $tables, appDataFactory: $this->blobStore(), appManager: $appManager, config: $config, fingerprint: $fingerprint))
-			->write(zipPath: $this->archive, workDir: $this->dir . '/work');
+		$this->writer  = new ArchiveWriter(tables: $tables, appDataFactory: $this->blobStore(), appManager: $appManager, config: $config, fingerprint: $fingerprint);
+		$this->writer->write(zipPath: $this->archive, workDir: $this->dir . '/work');
 
 		$temp = $this->createMock(ITempManager::class);
 		$temp->method('getTemporaryFile')->willReturnCallback(fn () => tempnam($this->dir, 'kq'));
@@ -153,7 +167,19 @@ class RestoreCommandTest extends TestCase {
 		$audit = $this->createMock(AuditService::class);
 		$audit->method('record')->willReturnCallback(function (AuditEvent $event) {
 			$this->events[] = $event;
+			if ($event->getEventType() === AuditEventTypes::BACKUP_RESTORED) {
+				$this->scanCalls[] = 'audit';
+			}
 			return new \OCA\Keepiq\Db\AuditEntry();
+		});
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('reopen')->willReturnCallback(function (): void {
+			$this->scanCalls[] = 'reopen';
+		});
+		$scanner->method('run')->willReturnCallback(function (): bool {
+			$this->scanCalls[] = 'run';
+			$this->maintenanceDuringScan[] = $this->maintenance;
+			return $this->scanCompletes;
 		});
 
 		$this->restore = new RestoreService(
@@ -166,6 +192,7 @@ class RestoreCommandTest extends TestCase {
 			userManager: $users,
 			crypto: $crypto,
 			audit: $audit,
+			quarantineScan: $scanner,
 		);
 		$this->backups = $this->createMock(BackupService::class);
 		$this->backups->method('localCopy')->willReturnArgument(0);
@@ -207,6 +234,10 @@ class RestoreCommandTest extends TestCase {
 			return $list;
 		});
 		$folder->method('newFile')->willReturnCallback(function (string $name) {
+			$this->scanCalls[] = 'blob';
+			if ($this->blobsFail !== null) {
+				throw $this->blobsFail;
+			}
 			$file = $this->createMock(ISimpleFile::class);
 			$file->method('putContent')->willReturnCallback(function ($content) use ($name): void {
 				$this->blobs[$name] = (string)$content;
@@ -418,4 +449,71 @@ class RestoreCommandTest extends TestCase {
 		$this->assertSame(['blob-1' => 'ATTACHMENT-CIPHERTEXT'], $this->blobs);
 		$this->assertSame(AuditEventTypes::BACKUP_RESTORED, end($this->events)->getEventType());
 	}//end testRestoreWarnsConfirmsAndReplacesEveryTable()
+
+	/**
+	 * A restore that brings back share rows sets the share quarantine scan
+	 * pending again before it writes them, as the archive may predate the
+	 * scan's pass, and runs the scan right after the table write, before the
+	 * blobs and the audit, while maintenance mode is still on. One without
+	 * share rows leaves the scan alone.
+	 *
+	 * @return void
+	 */
+	public function testRestoringShareRowsReopensAndRunsTheQuarantineScan(): void {
+		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
+		$restore->setInputs(['yes']);
+		$this->assertSame(0, $restore->execute(['file' => $this->archive]));
+		$this->assertSame(['replace', 'blob', 'audit'], $this->scanCalls);
+
+		$this->scanCalls = [];
+		$this->db['share_targets'] = [['id' => 'st-1', 'source_secret_id' => 's1', 'target_user_id' => 'bob', 'secret_id' => 's2']];
+		$this->writer->write(zipPath: $this->archive, workDir: $this->dir . '/work');
+		$restore->setInputs(['yes']);
+		$this->assertSame(0, $restore->execute(['file' => $this->archive]));
+		$this->assertSame(['reopen', 'replace', 'run', 'blob', 'audit'], $this->scanCalls);
+		$this->assertSame([true], $this->maintenanceDuringScan);
+	}//end testRestoringShareRowsReopensAndRunsTheQuarantineScan()
+
+	/**
+	 * A restore whose blob replacement fails after the tables were written
+	 * still scans the restored rows before it ends.
+	 *
+	 * @return void
+	 */
+	public function testAFailedBlobReplacementStillScansTheRestoredRows(): void {
+		$this->db['share_targets'] = [['id' => 'st-1', 'source_secret_id' => 's1', 'target_user_id' => 'bob', 'secret_id' => 's2']];
+		$this->writer->write(zipPath: $this->archive, workDir: $this->dir . '/work');
+		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
+
+		$this->blobsFail = new \RuntimeException('disk full');
+		$restore->setInputs(['yes']);
+		$this->assertSame(1, $restore->execute(['file' => $this->archive]));
+		$this->assertSame(['reopen', 'replace', 'run', 'blob'], $this->scanCalls);
+		$this->assertSame([true], $this->maintenanceDuringScan);
+	}//end testAFailedBlobReplacementStillScansTheRestoredRows()
+
+	/**
+	 * A failed restore still leaves the scan reopened, so its background job
+	 * scans whatever is there; a scan that does not complete does not fail the
+	 * restore.
+	 *
+	 * @return void
+	 */
+	public function testTheScanStaysPendingWhateverHappensToTheRestore(): void {
+		$this->db['share_targets'] = [['id' => 'st-1', 'source_secret_id' => 's1', 'target_user_id' => 'bob', 'secret_id' => 's2']];
+		$this->writer->write(zipPath: $this->archive, workDir: $this->dir . '/work');
+		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
+
+		$this->replaceFails = new \RuntimeException('disk full');
+		$restore->setInputs(['yes']);
+		$this->assertSame(1, $restore->execute(['file' => $this->archive]));
+		$this->assertSame(['reopen', 'replace'], $this->scanCalls);
+
+		$this->replaceFails = null;
+		$this->scanCompletes = false;
+		$this->scanCalls = [];
+		$restore->setInputs(['yes']);
+		$this->assertSame(0, $restore->execute(['file' => $this->archive]));
+		$this->assertSame(['reopen', 'replace', 'run', 'blob', 'audit'], $this->scanCalls);
+	}//end testTheScanStaysPendingWhateverHappensToTheRestore()
 }//end class

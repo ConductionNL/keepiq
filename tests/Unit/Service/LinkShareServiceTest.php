@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -91,6 +92,30 @@ class LinkShareServiceTest extends TestCase {
 
 				$row = new ShareTarget();
 				$row->setSourceSecretId($this->copies[$copyId]);
+				return $row;
+			}
+		);
+		// A user's own copy of a source: the copies of it whose row they own.
+		$this->shareTargets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceSecretId, string $targetUserId): ShareTarget {
+				$own = array_keys(array_filter(
+					$this->copies,
+					fn (string $source, string $copyId): bool => $source === $sourceSecretId
+						&& ($this->secretRows[$copyId] ?? null)?->getOwnerId() === $targetUserId,
+					ARRAY_FILTER_USE_BOTH
+				));
+				if (count($own) > 1) {
+					throw new MultipleObjectsReturnedException('two copies');
+				}
+
+				if ($own === []) {
+					throw new DoesNotExistException('no copy');
+				}
+
+				$row = new ShareTarget();
+				$row->setSourceSecretId($sourceSecretId);
+				$row->setTargetUserId($targetUserId);
+				$row->setSecretId((string)$own[0]);
 				return $row;
 			}
 		);
@@ -211,6 +236,56 @@ class LinkShareServiceTest extends TestCase {
 
 		$this->assertSame('bob', $this->createAs(secretId: 'copy-bob', userId: 'bob')->getCreatedBy());
 	}//end testADelegateMayCreateALinkShareFromTheirCopy()
+
+	/**
+	 * A delegate who names the SOURCE is judged on their own copy: a use-only
+	 * copy may not leave as a link, whichever id the delegate names.
+	 *
+	 * @return void
+	 */
+	public function testADelegateNamingTheSourceIsJudgedOnTheirOwnRestrictedCopy(): void {
+		$copy = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$copy->setUseOnly(true);
+		$this->secretRows['copy-bob'] = $copy;
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'bob');
+	}//end testADelegateNamingTheSourceIsJudgedOnTheirOwnRestrictedCopy()
+
+	/**
+	 * An active delegate who holds no copy of the source (it was revoked or it
+	 * expired) has no grant left to share from: refused.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithNoCopyIsRefused(): void {
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'dave');
+	}//end testADelegateWithNoCopyIsRefused()
+
+	/**
+	 * A delegate with two copies of the source has no single grant to judge:
+	 * refused.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithTwoCopiesIsRefused(): void {
+		$this->secretRows['copy-dave-1'] = $this->secret(id: 'copy-dave-1', ownerId: 'dave');
+		$this->secretRows['copy-dave-2'] = $this->secret(id: 'copy-dave-2', ownerId: 'dave');
+		$this->copies['copy-dave-1'] = 'secret-1';
+		$this->copies['copy-dave-2'] = 'secret-1';
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'dave');
+	}//end testADelegateWithTwoCopiesIsRefused()
 
 	/**
 	 * A plain recipient owns their copy row, but the copy's source is not

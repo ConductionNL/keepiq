@@ -62,7 +62,7 @@ Tracks ownership delegation of a secret. Multiple active delegations per secret 
 ### Requirement: Share a Secret
 The system MUST allow a user to share a secret they own with another Nextcloud user who has an active EncryptionSuite. The secret's owner or an ACTIVE delegate of it (SecretDelegation) MAY create the share; no one else can. `register-batch` and group-share create apply the same owner-or-delegate check, so a delegate can create both a direct share and a group share, and a plain recipient can create neither. Delegation does not widen who may share: only an active delegate qualifies.
 
-Both paths share only an ORIGINAL secret as the source. A received copy — a secret that is itself some share target's recipient secret — MUST be refused as a source, which enforces at creation the "Recipients MUST NOT be able to share a secret directly" rule below: a recipient who owns their copy still cannot re-share it. And a delegate shares with the owner's authority but keeps their own copy's limits: when the delegate's own copy of the source is use-only, expiring or read-only, both paths MUST refuse, so a restricted copy can never mint a full, unrestricted one.
+Both paths share only an ORIGINAL secret as the source. A received copy — a secret that is itself some share target's recipient secret — MUST be refused as a source, which enforces at creation the "Recipients MUST NOT be able to share a secret directly" rule below: a recipient who owns their copy still cannot re-share it. The one exception is a caller who holds the copy and is an active delegate of its source: the copy resolves to the source, and every minted row hangs on the source. A delegate shares with the owner's authority but keeps their own copy's limits, whether they name their copy or the source: when that copy is use-only, expiring or read-only, or when they hold no copy of the source (revoked or expired) or more than one, the direct, group and link paths MUST refuse, so a restricted or ended grant can never mint a full, unrestricted copy.
 
 #### Scenario: Share with valid recipient
 - GIVEN user A owns a secret and user B has an active EncryptionSuite
@@ -74,6 +74,7 @@ Both paths share only an ORIGINAL secret as the source. A received copy — a se
 - GIVEN user A owns a secret and user D holds an active delegation on it
 - WHEN user D registers a direct share or a group share of the secret
 - THEN the system MUST create the share exactly as it would for the owner, minting each recipient's copy server-side
+- AND when D names their own received copy of the secret, the share MUST be created on A's secret, so the minted row's source is A's secret
 - AND a user who is neither the owner nor an active delegate MUST be refused on both paths
 
 #### Scenario: A recipient may not re-share their copy
@@ -82,9 +83,9 @@ Both paths share only an ORIGINAL secret as the source. A received copy — a se
 - THEN both paths MUST refuse it, because a received copy is never a share source
 
 #### Scenario: A delegate's restricted copy cannot mint a full copy
-- GIVEN user D holds an active delegation on A's secret but D's own copy of it is use-only, expiring or read-only
-- WHEN D registers a direct share or a group share of the secret
-- THEN both paths MUST refuse the share as restricted, so a restricted copy cannot mint a full one
+- GIVEN user D holds an active delegation on A's secret but D's own copy of it is use-only, expiring or read-only, or D holds no copy of it, or two
+- WHEN D creates a direct share, a group share or a link share of the secret
+- THEN all three paths MUST refuse the share as restricted, so a restricted or ended grant cannot mint a full copy
 
 #### Scenario: Share with user without EncryptionSuite
 - GIVEN user B has never opened Keepiq and has no EncryptionSuite
@@ -452,6 +453,66 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - THEN the recipient's Secret copy MUST be deleted when it is owned by the share's target
 - AND a linked copy that is not owned by the target MUST be left untouched, as a defence-in-depth guard against a mis-linked share
 - AND the SecretShare record MUST be removed in either case
+
+#### Scenario: Revoking a quarantined share is an explicit error
+- GIVEN a share row the GHSA-m5p9 scan quarantined
+- WHEN its source's owner or an active delegate revokes it
+- THEN the system MUST answer `409` with `error: share_quarantined` and touch neither the row nor its copy
+- AND anyone else MUST get the same not-found answer as for a missing share
+
+### Requirement: Planted Share Rows Are Quarantined
+Before GHSA-m5p9-6pw7-pf3g was fixed, a client could link a share row to any secret id, including a secret the target already owned. Rows planted that way MUST be quarantined; the scan never deletes a row or a secret. A quarantined row keeps `quarantined_at` and a `quarantine_reason`, and no runtime lookup in `ShareTargetMapper` or `BulkGrantShareTargetMapper` returns it, so it cannot read, write, delete, sync, delegate or alert through its copy. Only the admin tooling, the scan, the revoke refusal, the GDPR export and backups read quarantined rows.
+
+The scan considers only rows whose copy was created in an earlier second than the row or has a `secret.created` audit entry, and quarantines such a row on the first of three signals that holds, checked in this order:
+- its copy was the source of a share to anyone, created no later than the row, found in `share_targets` or in a `share.granted` audit entry naming the copy as its object (register-batch grants): the attacker learned the copy's id because it was shared with them or an accomplice, and a server-minted copy cannot have been a share source before its row;
+- its copy has a `secret.created` audit entry (object type `secret`), so it was created as a secret of its own, which no server-minted copy is. This applies whatever the timing, so it catches a row planted in the same second as its copy, for example on a secret the attacker contributed to a team folder;
+- its copy was created more than 60 seconds before the row. Every first-party client mints a copy in the same request as its row, so the window only covers a slow request or a third-party API client.
+
+The scan runs once from the upgrade migration and then from the `ShareQuarantineScanJob` background job until one full pass completes, recorded in the `share_quarantine_scan_completed_at` app-config key. A failed pass MUST leave the key unset and log an error, so the job retries every 15 minutes and skips rows already quarantined; the upgrade itself MUST NOT fail because of the scan. While the key is unset, the admin overview MUST show a setup-check warning that planted rows are not quarantined yet. A restore whose archive holds share rows MUST clear the key before it writes them and MUST run the scan directly after the tables are written, before the attachment blobs and while maintenance mode is still on; a scan that does not complete MUST NOT fail the restore and stays pending for the job. A released row keeps its reason and is never quarantined again.
+
+An admin manages quarantined rows with `occ keepiq:share-quarantine list|release <id> [--force]|drop <id> [--clear-restrictions]`. `list` shows who holds each copy, the copy's use-only flag and access end date and the row's own end date, since a planted row may have written those restrictions onto the target's own secret. `release` restores the row as a live share and MUST be refused while a live share for the same source and target exists. Without `--force` it MUST only release a row whose copy is gone or is held by the row's creator, as every legacy two-step copy was; a copy held by anyone else may be that person's own secret, which a released row would make look like a received copy again. It MUST also be refused unless `--force` is passed for a row quarantined because its copy was shared before the row, for a row whose copy belongs to the recipient (whatever the reason, since revoking the released share would delete it), for a row whose copy is the source of a live share, which a share copy may no longer be, and for a row whose share, linked group share or copy carries an access end date, because the expiry job revokes an ended share and deletes its copy; the refusal lists every reason at once, with the earliest end date. `drop` removes the row and keeps its copy; with `--clear-restrictions` it also clears the copy's `use_only` and `access_expires_at` when the row's recipient holds the copy. A legitimately shared use-only copy looks the same, so on a row quarantined by mistake this leaves the recipient a full copy nobody can revoke. Each quarantine is audited as `share.quarantined`, with the system as actor and the row's source, recipient, copy, reason and the copy's restrictions, and forwarded to the SIEM sinks; each release as `share.quarantine_released`, recording whether it was forced; each drop as `share.quarantine_dropped`, recording whether the copy's restrictions were cleared. A cascade that removes rows by source, target or group share removes quarantined rows too, without touching their copies, and the account-deletion report counts the received rows it removes, quarantined ones included.
+
+#### Scenario: A planted row is inert after the upgrade
+- GIVEN a quarantined row `{source: S_a, target: victim, secret: V}` where V is the victim's own secret
+- WHEN the owner of S_a revokes, syncs, delegates or flags S_a as honey, or the victim edits, reads or shares V
+- THEN V MUST be neither deleted nor written through the row, the victim's edits MUST NOT reach S_a, no alert MUST be raised on S_a, and the victim MUST be able to share V as an original
+
+#### Scenario: A failed scan is retried
+- GIVEN the quarantine scan throws during the upgrade
+- WHEN the next cron run executes `ShareQuarantineScanJob`
+- THEN the scan MUST run again over the rows not yet quarantined and set the completion key only after a full pass
+
+#### Scenario: Releasing a row caught on the strong signal needs --force
+- GIVEN a row quarantined because its copy was shared before the row
+- WHEN an admin runs `occ keepiq:share-quarantine release <id>` without `--force`
+- THEN the release MUST be refused, the row MUST stay quarantined and nothing MUST be audited
+- AND with `--force` the row MUST be released and the audit entry MUST record `forced: true`
+
+#### Scenario: A restore sets the scan pending again
+- GIVEN the quarantine scan has completed
+- WHEN an admin restores an archive that holds share rows
+- THEN the completion key MUST be cleared before the rows are written and the scan MUST run directly after them, while maintenance mode is still on, also when replacing the attachment blobs fails afterwards
+
+#### Scenario: Releasing a row whose copy anyone but its creator holds needs --force
+- GIVEN a quarantined row whose copy belongs to its recipient, to a third party, or is the source of a live share, whatever its quarantine reason
+- WHEN an admin releases it without `--force`
+- THEN the release MUST be refused, because the copy may be the holder's own secret, which the released row would delete or link to the attacker's source
+- AND a legacy row whose copy is still held by the row's creator, or whose copy is gone, with no other reason, MUST release without `--force`
+
+#### Scenario: A same-second plant on a secret of its own is quarantined
+- GIVEN member A contributed secret T to a team folder owned by B, and a row `{source: S_a, target: B, secret: T}` was created in the same second
+- WHEN the quarantine scan runs
+- THEN the row MUST be quarantined, on the first signal that holds: a member's copy minted from T in that second makes it the first, T's `secret.created` audit entry the second
+
+#### Scenario: A release that would let the expiry job delete the copy needs --force
+- GIVEN a quarantined row whose share, linked group share or copy carries an access end date
+- WHEN an admin releases it without `--force`
+- THEN the release MUST be refused with a message that names the date and points at `drop --clear-restrictions`
+
+#### Scenario: Dropping a planted row can clear the restrictions it wrote
+- GIVEN a quarantined row whose recipient holds the copy, and the copy is use-only or has an access end date
+- WHEN an admin runs `occ keepiq:share-quarantine drop <id> --clear-restrictions`
+- THEN the row MUST be removed, the copy MUST be kept with `use_only` and `access_expires_at` cleared, and the drop audit MUST record that the restrictions were cleared
 
 ## User Stories
 

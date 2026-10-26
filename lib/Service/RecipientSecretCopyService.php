@@ -136,16 +136,6 @@ class RecipientSecretCopyService {
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
 	public function deleteByShare(ShareTarget $share): void {
-		// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's own secret,
-		// so its secret is never deleted.
-		if ($share->isQuarantined() === true) {
-			$this->logger?->warning(
-				'Kept a quarantined share target\'s secret on team-folder revoke',
-				['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
-			);
-			return;
-		}
-
 		try {
 			$copy = $this->secretMapper->findById($share->getSecretId());
 		} catch (DoesNotExistException) {

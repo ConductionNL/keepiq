@@ -313,12 +313,6 @@ class ShareSyncService {
 	private function collectSyncTargets(Secret $source): array {
 		$allowedIds = [$source->getId() => true];
 		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
-			// GHSA-m5p9-6pw7-pf3g: a quarantined row is never a sync target, so a
-			// planted copy is not written to.
-			if ($shareRow->isQuarantined() === true) {
-				continue;
-			}
-
 			$allowedIds[$shareRow->getSecretId()] = true;
 		}
 
@@ -375,8 +369,7 @@ class ShareSyncService {
 
 			if ($recipientSecretId !== $source->getId()) {
 				$shareRow = ($shareRows[$recipientSecretId] ?? null);
-				// GHSA-m5p9-6pw7-pf3g: a quarantined row is never written to.
-				if ($shareRow === null || $shareRow->isQuarantined() === true || $shareRow->isHeldByTarget(copy: $copy) === false) {
+				if ($shareRow === null || $shareRow->isHeldByTarget(copy: $copy) === false) {
 					$this->logger?->warning(
 						'Skipped a sync write to a copy not held by its share target',
 						['app' => 'keepiq', 'secretId' => $recipientSecretId, 'sourceSecretId' => $source->getId()]

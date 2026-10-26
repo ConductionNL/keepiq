@@ -131,59 +131,6 @@ class ShareSyncServiceTest extends TestCase {
 		$this->assertNotContains('victim', $written);
 	}
 
-	/**
-	 * GHSA-m5p9-6pw7-pf3g: a sync never writes to a QUARANTINED row's copy, even
-	 * when the id is passed in allowedIds. The source row and a genuine copy are
-	 * still written. Removing the quarantine guard in writeCopyBlobs overwrites
-	 * the quarantined copy and turns this red.
-	 *
-	 * @return void
-	 */
-	public function testAQuarantinedRowsCopyIsNotWritten(): void {
-		$source   = $this->secret('src-1', 'alice');
-		$heldCopy = $this->secret('copy-held', 'bob');
-		$victim   = $this->secret('victim', 'victim');
-
-		$this->secretMapper->method('findById')->willReturnMap(
-			[
-				['src-1', $source],
-				['copy-held', $heldCopy],
-				['victim', $victim],
-			]
-		);
-
-		// The quarantined row names a copy the target genuinely holds, so only
-		// the quarantine flag keeps it out of the write set.
-		$quarantined = $this->row('victim', 'victim');
-		$quarantined->setQuarantinedAt(new DateTime());
-		$this->mapper->method('findBySourceSecret')->willReturn(
-			[$this->row('copy-held', 'bob'), $quarantined]
-		);
-
-		$written = [];
-		$this->secretMapper->method('update')->willReturnCallback(
-			static function (Secret $secret) use (&$written): Secret {
-				$written[] = $secret->getId();
-				return $secret;
-			}
-		);
-
-		$count = $this->sync->writeCopyBlobs(
-			source: $source,
-			updates: [
-				['secretId' => 'src-1', 'key' => 'NEW_SRC'],
-				['secretId' => 'copy-held', 'key' => 'NEW_HELD'],
-				['secretId' => 'victim', 'key' => 'EVIL'],
-			],
-			allowedIds: ['src-1' => true, 'copy-held' => true, 'victim' => true],
-			savedAt: new DateTime('2026-10-21T00:00:00+00:00'),
-			writerId: 'alice'
-		);
-
-		$this->assertSame(2, $count);
-		$this->assertEqualsCanonicalizing(['src-1', 'copy-held'], $written);
-		$this->assertNotContains('victim', $written);
-	}
 
 	/**
 	 * A copy whose row is gone entirely is also skipped (there is nothing to

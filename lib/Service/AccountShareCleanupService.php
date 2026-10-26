@@ -149,16 +149,6 @@ class AccountShareCleanupService {
 					$copy = null;
 				}
 
-				// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's own
-				// secret, so it is never tombstoned.
-				if ($share->isQuarantined() === true) {
-					$this->logger?->warning(
-						'Kept a quarantined share target\'s secret while detaching granted shares',
-						['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
-					);
-					continue;
-				}
-
 				if ($copy !== null && $share->isHeldByTarget(copy: $copy) === false) {
 					$this->logger?->warning(
 						'Kept a secret not held by the detached share target',
@@ -200,8 +190,7 @@ class AccountShareCleanupService {
 	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function removeReceivedShares(string $userId, DeletionReport $report): void {
-		$report->sharesRemoved = count($this->shareMapper->findByTargetUser(targetUserId: $userId));
-		$this->shareMapper->deleteByTargetUser(targetUserId: $userId);
+		$report->sharesRemoved = $this->shareMapper->deleteByTargetUser(targetUserId: $userId);
 	}//end removeReceivedShares()
 
 	/**

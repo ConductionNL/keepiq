@@ -96,9 +96,8 @@ class ShareRestrictionResolver {
 
 		// Defence in depth: a copy not genuinely held by this share's target
 		// (a poisoned or drifted `secret_id`) is left untouched, so resolving a
-		// restriction can never rewrite another user's secret. A quarantined row
-		// (GHSA-m5p9-6pw7-pf3g) is left untouched the same way.
-		if ($target->isQuarantined() === true || $target->isHeldByTarget(copy: $copy) === false) {
+		// restriction can never rewrite another user's secret.
+		if ($target->isHeldByTarget(copy: $copy) === false) {
 			$this->logger?->warning(
 				'Skipped a restriction resolve for a copy not held by its share target',
 				['app' => 'keepiq', 'shareId' => $target->getId(), 'secretId' => $target->getSecretId()]

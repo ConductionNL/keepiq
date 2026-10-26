@@ -162,7 +162,7 @@ class ShareService {
 		if ($userId === '') {
 			// Back-compat: callers that do not provide a userId get the
 			// raw list (scaffold semantics, used by the cascade path).
-			return $this->activeShares(shares: $this->mapper->findBySourceSecret($sourceSecretId));
+			return $this->mapper->findBySourceSecret($sourceSecretId);
 		}
 
 		try {
@@ -180,26 +180,8 @@ class ShareService {
 			}
 		}
 
-		return $this->activeShares(shares: $this->mapper->findBySourceSecret($sourceSecretId));
+		return $this->mapper->findBySourceSecret($sourceSecretId);
 	}//end listSharesForSecret()
-
-	/**
-	 * Drop quarantined rows from a share list (GHSA-m5p9-6pw7-pf3g): a
-	 * quarantined row is not a recipient anyone may see or sync to; clearing
-	 * `quarantined_at` restores it. The migration's own audit query still sees
-	 * quarantined rows.
-	 *
-	 * @param ShareTarget[] $shares The rows to filter
-	 *
-	 * @return ShareTarget[]
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
-	 */
-	private function activeShares(array $shares): array {
-		return array_values(
-			array_filter($shares, static fn (ShareTarget $share): bool => $share->isQuarantined() === false)
-		);
-	}//end activeShares()
 
 	/**
 	 * Revoke a single share target — deletes the recipient's encrypted
@@ -212,6 +194,7 @@ class ShareService {
 	 *
 	 * @throws InvalidArgumentException When the row does not exist or
 	 *                                  the caller is not authorized.
+	 * @throws \OCA\Keepiq\Exception\ConflictException When the row is quarantined
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */

@@ -29,9 +29,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use OCA\Keepiq\Db\QuarantinedShareTargetMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ConflictException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -39,6 +41,10 @@ use Throwable;
 
 /**
  * Revokes share targets and cascades their dependent rows.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Telling an owner that a
+ *   revoke hit a quarantined row (GHSA-m5p9-6pw7-pf3g) takes the quarantine
+ *   mapper and the conflict it raises.
  */
 class ShareRevocationService {
 
@@ -59,6 +65,7 @@ class ShareRevocationService {
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param AttachmentService|null $attachmentService The attachment service (revoke cascade)
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param QuarantinedShareTargetMapper|null $quarantined Tells an owner their revoke hit a quarantined row
 	 *
 	 * @return void
 	 *
@@ -72,6 +79,7 @@ class ShareRevocationService {
 		private ShareAuthorizationService $auth,
 		private ?AttachmentService $attachmentService = null,
 		?ShareAuditTrail $auditTrail = null,
+		private ?QuarantinedShareTargetMapper $quarantined = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -87,6 +95,7 @@ class ShareRevocationService {
 	 *
 	 * @throws InvalidArgumentException When the row does not exist or
 	 *                                  the caller is not authorized.
+	 * @throws ConflictException When the owner or a delegate revokes a quarantined row
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
@@ -94,22 +103,12 @@ class ShareRevocationService {
 		try {
 			$entity = $this->mapper->findById($shareId);
 		} catch (DoesNotExistException) {
+			$this->refuseQuarantined(shareId: $shareId, userId: $userId);
 			throw new InvalidArgumentException(message: 'Share not found');
 		}
 
 		$source = $this->auth->loadSecret(secretId: $entity->getSourceSecretId());
 		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
-
-		// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's own secret,
-		// so a revoke must never reach it. Leave both the secret and the row (the
-		// row is the audit record); clearing quarantined_at restores the revoke.
-		if ($entity->isQuarantined() === true) {
-			$this->logger->warning(
-				'Refused to revoke a quarantined share; its secret and row were left intact',
-				['app' => 'keepiq', 'shareId' => $shareId, 'secretId' => $entity->getSecretId()]
-			);
-			return;
-		}
 
 		$this->db->beginTransaction();
 		try {
@@ -160,6 +159,42 @@ class ShareRevocationService {
 	}//end revokeShare()
 
 	/**
+	 * Tell the owner or a delegate that the share they revoke is quarantined
+	 * (GHSA-m5p9-6pw7-pf3g), instead of a silent success or "not found": its
+	 * copy may be someone else's own secret, so only an administrator may
+	 * release or drop it. Anyone else gets "not found", as for an unknown id.
+	 *
+	 * @param string $shareId The share-target row ID
+	 * @param string $userId The Nextcloud user ID requesting the revoke
+	 *
+	 * @return void
+	 *
+	 * @throws ConflictException When the row is quarantined and the caller manages its source
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+	 */
+	private function refuseQuarantined(string $shareId, string $userId): void {
+		if ($this->quarantined === null) {
+			return;
+		}
+
+		try {
+			$row = $this->quarantined->findQuarantinedById($shareId);
+			$source = $this->auth->loadSecret(secretId: $row->getSourceSecretId());
+		} catch (DoesNotExistException|InvalidArgumentException) {
+			return;
+		}
+
+		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
+			return;
+		}
+
+		throw new ConflictException(
+			message: 'This share is quarantined for an administrator to review and cannot be revoked; ask an administrator to release or drop it'
+		);
+	}//end refuseQuarantined()
+
+	/**
 	 * End every share of a secret (called when the secret is trashed or
 	 * deleted): each recipient's copy goes with its share row, exactly as a
 	 * single revokeShare() does (keepiq#83). Deleting only the link rows left
@@ -202,16 +237,6 @@ class ShareRevocationService {
 	 */
 	private function deleteRecipientCopy(ShareTarget $share): void {
 		$copyId = $share->getSecretId();
-		// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's own secret,
-		// so the cascade must never delete its secret.
-		if ($share->isQuarantined() === true) {
-			$this->logger->warning(
-				'Kept a quarantined share target\'s secret during cascade delete',
-				['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $copyId]
-			);
-			return;
-		}
-
 		try {
 			$copy = $this->secretMapper->findById($copyId);
 			if ($share->isHeldByTarget(copy: $copy) === false) {

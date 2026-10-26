@@ -3,7 +3,8 @@
 /**
  * Unit tests for DirectShareRegistrar: the recipient copy and the share row are
  * minted in one transaction (GHSA-m5p9-6pw7-pf3g), and an active delegate may
- * register a share just as the owner can.
+ * register a share just as the owner can, from the source or their own copy,
+ * judged on that copy.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\Service
@@ -22,18 +23,24 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception as DbException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 
@@ -87,9 +94,14 @@ class DirectShareRegistrarTest extends TestCase {
 		$this->connection = $this->createMock(IDBConnection::class);
 
 		// By default a source is an original: the reverse copy lookup finds no
-		// row. A test that shares a received copy flips the flag.
+		// row. A test that shares a received copy flips the flag or names the
+		// copy's row.
 		$this->mapper->method('findByRecipientSecret')->willReturnCallback(
-			function (): ShareTarget {
+			function (string $recipientSecretId): ShareTarget {
+				if (isset($this->copyRows[$recipientSecretId]) === true) {
+					return $this->copyRows[$recipientSecretId];
+				}
+
 				if ($this->sourceIsReceivedCopy === true) {
 					return new ShareTarget();
 				}
@@ -98,6 +110,77 @@ class DirectShareRegistrarTest extends TestCase {
 			}
 		);
 	}//end setUp()
+
+	/**
+	 * Share rows of received copies, by copy id.
+	 *
+	 * @var array<string,ShareTarget>
+	 */
+	private array $copyRows = [];
+
+	/**
+	 * A share row giving a user a copy of a source.
+	 *
+	 * @param string $sourceId The source
+	 * @param string $userId   The copy's holder
+	 * @param string $copyId   The copy
+	 *
+	 * @return ShareTarget
+	 */
+	private function copyRow(string $sourceId, string $userId, string $copyId): ShareTarget {
+		$row = new ShareTarget();
+		$row->setSourceSecretId($sourceId);
+		$row->setTargetUserId($userId);
+		$row->setSecretId($copyId);
+		return $row;
+	}//end copyRow()
+
+	/**
+	 * The real authorization service over this test's mappers, with active
+	 * delegations given as "secretId/userId".
+	 *
+	 * @param list<string> $delegates The active delegations
+	 *
+	 * @return ShareAuthorizationService
+	 */
+	private function realAuthorization(array $delegates): ShareAuthorizationService {
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->method('findActiveBySecretAndUser')->willReturnCallback(
+			static function (string $secretId, string $userId) use ($delegates): SecretDelegation {
+				if (in_array($secretId.'/'.$userId, $delegates, true) === true) {
+					return new SecretDelegation();
+				}
+
+				throw new DoesNotExistException('none');
+			}
+		);
+
+		return new ShareAuthorizationService(
+			secretMapper: $this->secretMapper,
+			delegationMapper: $delegationMapper,
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			shareTargetMapper: $this->mapper,
+		);
+	}//end realAuthorization()
+
+	/**
+	 * Secrets by id, for a findById() stub.
+	 *
+	 * @param array<string,Secret> $secrets The secrets
+	 *
+	 * @return void
+	 */
+	private function secrets(array $secrets): void {
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($secrets): Secret {
+				if (isset($secrets[$id]) === false) {
+					throw new DoesNotExistException('none');
+				}
+
+				return $secrets[$id];
+			}
+		);
+	}//end secrets()
 
 	/**
 	 * Build a user-owned source secret.
@@ -135,16 +218,24 @@ class DirectShareRegistrarTest extends TestCase {
 	/**
 	 * Build the registrar, with an authorization service when one is given.
 	 *
-	 * @param ShareAuthorizationService|null $authorization The owner-or-delegate check
+	 * @param ShareAuthorizationService|null $authorization    The owner-or-delegate check
+	 * @param GroupShareMapper|null          $groupShareMapper The group shares a row may name
+	 * @param ShareAuditTrail|null           $auditTrail       The share audit trail
 	 *
 	 * @return DirectShareRegistrar
 	 */
-	private function registrar(?ShareAuthorizationService $authorization = null): DirectShareRegistrar {
+	private function registrar(
+		?ShareAuthorizationService $authorization = null,
+		?GroupShareMapper $groupShareMapper = null,
+		?ShareAuditTrail $auditTrail = null,
+	): DirectShareRegistrar {
 		return new DirectShareRegistrar(
 			mapper: $this->mapper,
 			secretMapper: $this->secretMapper,
 			copyFactory: $this->copyFactory,
 			notificationService: $this->notificationService,
+			auditTrail: $auditTrail,
+			groupShareMapper: $groupShareMapper,
 			authorization: $authorization,
 			connection: $this->connection,
 		);
@@ -232,31 +323,301 @@ class DirectShareRegistrarTest extends TestCase {
 	}//end testASuccessfulRegistrationCommits()
 
 	/**
-	 * An active delegate of the source may register the share, exactly as the
-	 * owner can. Routing the ownership check through isOwnerOrDelegate restores
-	 * the capability the retired createShare endpoint had.
+	 * An active delegate of the source, holding one unrestricted copy of it,
+	 * may register the share exactly as the owner can, by naming the source.
 	 *
 	 * @return void
 	 */
 	public function testAnActiveDelegateMayRegisterAShare(): void {
-		$source = $this->ownerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-		$this->mapper->method('findBySourceSecretAndTargetUser')
-			->willThrowException(new DoesNotExistException('none'));
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
 		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
 		$this->mapper->method('insert')->willReturnArgument(0);
 
-		$authorization = $this->createMock(ShareAuthorizationService::class);
-		$authorization->method('isOwnerOrDelegate')
-			->willReturnCallback(static fn (Secret $secret, string $userId): bool => $userId === 'dave');
-
-		// Dave, an active delegate (not the owner), succeeds.
-		$report = $this->registrar(authorization: $authorization)->registerDirectShares(
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
 			userId: 'dave',
 			shares: [['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
 		);
 		$this->assertSame('created', $report[0]['status']);
 	}//end testAnActiveDelegateMayRegisterAShare()
+
+	/**
+	 * A delegate's client names their own received copy, as it cannot decrypt
+	 * the source. The copy resolves to its source: the share is created and the
+	 * minted row hangs on the source, where the owner sees and revokes it.
+	 *
+	 * @return void
+	 */
+	public function testADelegateMayShareFromTheirOwnCopy(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$minted = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			static function (ShareTarget $row) use (&$minted): ShareTarget {
+				$minted[] = $row;
+				return $row;
+			}
+		);
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'dave-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('created', $report[0]['status']);
+		$this->assertCount(1, $minted);
+		$this->assertSame('src-1', $minted[0]->getSourceSecretId());
+		$this->assertSame('dave', $minted[0]->getCreatedBy());
+	}//end testADelegateMayShareFromTheirOwnCopy()
+
+	/**
+	 * The `share.granted` audit entry of a delegate's share names the source
+	 * the row hangs on, not the copy the delegate named.
+	 *
+	 * @return void
+	 */
+	public function testADelegatesGrantIsAuditedOnTheSource(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$events = [];
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(static function (AuditEvent $event) use (&$events): void {
+			$events[] = $event;
+		});
+
+		$this->registrar(
+			authorization: $this->realAuthorization(['src-1/dave']),
+			auditTrail: new ShareAuditTrail(eventDispatcher: $dispatcher),
+		)->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'dave-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertCount(1, $events);
+		$this->assertSame(AuditEventTypes::SHARE_GRANTED, $events[0]->getEventType());
+		$this->assertSame('src-1', $events[0]->getObjectId());
+	}//end testADelegatesGrantIsAuditedOnTheSource()
+
+	/**
+	 * A delegate naming their own copy for a recipient who already holds a
+	 * live share of the source gets `exists`: the check looks at the resolved
+	 * source, not the copy named, and nothing is minted.
+	 *
+	 * @return void
+	 */
+	public function testADelegatesCopyFindsTheRecipientsExistingShareOfTheSource(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => match (true) {
+				$sourceSecretId === 'src-1' && $targetUserId === 'dave' => $this->copyRow('src-1', 'dave', 'dave-copy'),
+				$sourceSecretId === 'src-1' && $targetUserId === 'bob' => $this->copyRow('src-1', 'bob', 'bob-copy'),
+				default => throw new DoesNotExistException('none'),
+			}
+		);
+		$this->copyFactory->expects($this->never())->method('create');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'dave-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('exists', $report[0]['status']);
+	}//end testADelegatesCopyFindsTheRecipientsExistingShareOfTheSource()
+
+	/**
+	 * An owner naming a copy they hold of their own source is not resolved to
+	 * the source: a received copy is never a share source, for the owner too.
+	 *
+	 * @return void
+	 */
+	public function testAnOwnersCopyOfTheirOwnSourceIsNotResolved(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'alice-copy' => $this->recipientCopy('alice-copy', 'alice')]);
+		$this->copyRows['alice-copy'] = $this->copyRow('src-1', 'alice', 'alice-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willThrowException(new DoesNotExistException('none'));
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$report = $this->registrar(authorization: $this->realAuthorization([]))->registerDirectShares(
+			userId: 'alice',
+			shares: [['sourceSecretId' => 'alice-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('not_shareable', $report[0]['status']);
+	}//end testAnOwnersCopyOfTheirOwnSourceIsNotResolved()
+
+	/**
+	 * A delegate naming their own copy with a group share of its source is
+	 * matched against the resolved source, not the copy they named, so the
+	 * share is created and linked to that group share.
+	 *
+	 * @return void
+	 */
+	public function testADelegatesCopyMatchesAGroupShareOfItsSource(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-1');
+		$groupShare->setSecretId('src-1');
+		$groupShareMapper = $this->createMock(GroupShareMapper::class);
+		$groupShareMapper->method('findById')->willReturnCallback(
+			static fn (string $id): GroupShare => ($id === 'gs-1' ? $groupShare : throw new DoesNotExistException('none'))
+		);
+
+		$report = $this->registrar(
+			authorization: $this->realAuthorization(['src-1/dave']),
+			groupShareMapper: $groupShareMapper,
+		)->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'dave-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob', 'groupShareId' => 'gs-1']]
+		);
+
+		$this->assertSame('created', $report[0]['status']);
+	}//end testADelegatesCopyMatchesAGroupShareOfItsSource()
+
+	/**
+	 * A delegate naming another recipient's copy of the same source does not
+	 * reach the source through it: only the delegate's own copy resolves.
+	 *
+	 * @return void
+	 */
+	public function testADelegateMayNotShareFromAnotherRecipientsCopy(): void {
+		$this->secrets([
+			'src-1' => $this->ownerSecret('src-1', 'alice'),
+			'dave-copy' => $this->recipientCopy('dave-copy', 'dave'),
+			'carol-copy' => $this->recipientCopy('carol-copy', 'carol'),
+		]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->copyRows['carol-copy'] = $this->copyRow('src-1', 'carol', 'carol-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'carol-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('not_owned', $report[0]['status']);
+	}//end testADelegateMayNotShareFromAnotherRecipientsCopy()
+
+	/**
+	 * A row naming the delegate as target but pointing at a secret someone else
+	 * owns does not resolve to the source: the delegate does not hold that copy.
+	 *
+	 * @return void
+	 */
+	public function testADelegateMayNotShareFromACopyTheyDoNotHold(): void {
+		$this->secrets([
+			'src-1' => $this->ownerSecret('src-1', 'alice'),
+			'dave-copy' => $this->recipientCopy('dave-copy', 'dave'),
+			'mallory-secret' => $this->recipientCopy('mallory-secret', 'mallory'),
+		]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->copyRows['mallory-secret'] = $this->copyRow('src-1', 'dave', 'mallory-secret');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'mallory-secret', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('not_owned', $report[0]['status']);
+	}//end testADelegateMayNotShareFromACopyTheyDoNotHold()
+
+	/**
+	 * The same call by a plain recipient, who holds no delegation, is still
+	 * refused: their copy is a received copy, not a share source.
+	 *
+	 * @return void
+	 */
+	public function testAPlainRecipientsCopyIsStillNotShareable(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'carol-copy' => $this->recipientCopy('carol-copy', 'carol')]);
+		$this->copyRows['carol-copy'] = $this->copyRow('src-1', 'carol', 'carol-copy');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$report = $this->registrar(authorization: $this->realAuthorization([]))->registerDirectShares(
+			userId: 'carol',
+			shares: [['sourceSecretId' => 'carol-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('not_shareable', $report[0]['status']);
+	}//end testAPlainRecipientsCopyIsStillNotShareable()
+
+	/**
+	 * An active delegate whose copy is gone (revoked or expired) holds no grant
+	 * to share from: `restricted`, nothing minted.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithNoCopyIsRestricted(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice')]);
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('restricted', $report[0]['status']);
+	}//end testADelegateWithNoCopyIsRestricted()
+
+	/**
+	 * An active delegate with two rows for (source, delegate) has no single
+	 * grant to judge: `restricted`, nothing minted.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithTwoCopiesIsRestricted(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice')]);
+		$this->mapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new \OCP\AppFramework\Db\MultipleObjectsReturnedException('two'));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame('restricted', $report[0]['status']);
+	}//end testADelegateWithTwoCopiesIsRestricted()
 
 	/**
 	 * A caller who is neither owner nor an active delegate is refused.
@@ -266,8 +627,7 @@ class DirectShareRegistrarTest extends TestCase {
 	public function testAStrangerMayNotRegisterAShare(): void {
 		$this->secretMapper->method('findById')->willReturn($this->ownerSecret('src-1', 'alice'));
 
-		$authorization = $this->createMock(ShareAuthorizationService::class);
-		$authorization->method('isOwnerOrDelegate')->willReturn(false);
+		$authorization = $this->realAuthorization([]);
 		$this->mapper->expects($this->never())->method('insert');
 
 		$report = $this->registrar(authorization: $authorization)->registerDirectShares(
@@ -306,15 +666,7 @@ class DirectShareRegistrarTest extends TestCase {
 
 		$this->mapper->expects($this->never())->method('insert');
 
-		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
-		$delegationMapper->method('findActiveBySecretAndUser')->willReturn(new SecretDelegation());
-		$authorization = new ShareAuthorizationService(
-			secretMapper: $this->secretMapper,
-			delegationMapper: $delegationMapper,
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-		);
-
-		$report = $this->registrar(authorization: $authorization)->registerDirectShares(
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
 			userId: 'dave',
 			shares: [['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
 		);
@@ -334,8 +686,7 @@ class DirectShareRegistrarTest extends TestCase {
 
 		$this->mapper->expects($this->never())->method('insert');
 
-		$authorization = $this->createMock(ShareAuthorizationService::class);
-		$authorization->method('isOwnerOrDelegate')->willReturn(true);
+		$authorization = $this->realAuthorization([]);
 
 		$report = $this->registrar(authorization: $authorization)->registerDirectShares(
 			userId: 'bob',

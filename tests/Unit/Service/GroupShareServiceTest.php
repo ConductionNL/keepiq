@@ -127,6 +127,13 @@ class GroupShareServiceTest extends TestCase {
 	private bool $sourceIsReceivedCopy = false;
 
 	/**
+	 * Share rows of received copies, by copy id.
+	 *
+	 * @var array<string,ShareTarget>
+	 */
+	private array $copyRows = [];
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -149,7 +156,11 @@ class GroupShareServiceTest extends TestCase {
 		// By default a source is an original: the reverse copy lookup finds no
 		// row. A test that shares a received copy flips the flag.
 		$this->shareTargetMapper->method('findByRecipientSecret')->willReturnCallback(
-			function (): ShareTarget {
+			function (string $recipientSecretId): ShareTarget {
+				if (isset($this->copyRows[$recipientSecretId]) === true) {
+					return $this->copyRows[$recipientSecretId];
+				}
+
 				if ($this->sourceIsReceivedCopy === true) {
 					return new ShareTarget();
 				}
@@ -351,22 +362,7 @@ class GroupShareServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testCreateGroupShareAllowsAnActiveDelegate(): void {
-		$secret = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($secret);
-		// Dave is not the owner but holds an active delegation, so the lookup
-		// succeeds instead of throwing.
-		$this->delegationMapper->method('findActiveBySecretAndUser')
-			->willReturnCallback(static function (string $secretId, string $userId) {
-				if ($userId === 'dave') {
-					return new \OCA\Keepiq\Db\SecretDelegation();
-				}
-
-				throw new DoesNotExistException('no');
-			});
-
-		// Dave's delegation sits on no restricted copy of his own.
-		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
-			->willThrowException(new DoesNotExistException('no'));
+		$this->delegateDaveWithCopy();
 
 		$group = $this->createMock(IGroup::class);
 		$group->method('getUsers')->willReturn([]);
@@ -382,6 +378,103 @@ class GroupShareServiceTest extends TestCase {
 
 		$this->assertSame('engineering', $result['groupShare']->getGroupId());
 	}//end testCreateGroupShareAllowsAnActiveDelegate()
+
+	/**
+	 * Dave holds an active delegation on alice's src-1 and one unrestricted
+	 * copy of it, dave-copy. The service checks both through its real
+	 * authorization rules.
+	 *
+	 * @param int $copies How many share rows dave holds for src-1 (0, 1 or 2)
+	 *
+	 * @return void
+	 */
+	private function delegateDaveWithCopy(int $copies = 1): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy   = $this->makeOwnerSecret('dave-copy', 'dave');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'dave-copy' ? $copy : $source)
+		);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->willReturnCallback(static function (string $secretId, string $userId) {
+				if ($secretId === 'src-1' && $userId === 'dave') {
+					return new SecretDelegation();
+				}
+
+				throw new DoesNotExistException('no');
+			});
+
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setTargetUserId('dave');
+		$row->setSecretId('dave-copy');
+		$this->copyRows['dave-copy'] = $row;
+		$lookup = $this->shareTargetMapper->method('findBySourceSecretAndTargetUser');
+		if ($copies === 1) {
+			$lookup->willReturn($row);
+		} elseif ($copies === 0) {
+			$lookup->willThrowException(new DoesNotExistException('no'));
+		} else {
+			$lookup->willThrowException(new \OCP\AppFramework\Db\MultipleObjectsReturnedException('two'));
+		}
+	}//end delegateDaveWithCopy()
+
+	/**
+	 * A reachable group with no members, and no existing group share.
+	 *
+	 * @return void
+	 */
+	private function emptyGroup(): void {
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$this->mapper->method('findBySecretAndGroup')->willThrowException(new DoesNotExistException('no'));
+	}//end emptyGroup()
+
+	/**
+	 * A delegate's client names their own copy; the group share hangs on its
+	 * source, where the owner sees it, and the member copies it fans out to
+	 * are then registered against that source.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareFromADelegatesOwnCopyHangsOnTheSource(): void {
+		$this->delegateDaveWithCopy();
+		$this->emptyGroup();
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$result = $this->service->createGroupShare(secretId: 'dave-copy', groupId: 'engineering', userId: 'dave');
+
+		$this->assertSame('src-1', $result['groupShare']->getSecretId());
+	}//end testCreateGroupShareFromADelegatesOwnCopyHangsOnTheSource()
+
+	/**
+	 * An active delegate whose copy is gone (revoked or expired) is refused:
+	 * no copy means the grant ended.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesADelegateWithNoCopy(): void {
+		$this->delegateDaveWithCopy(copies: 0);
+		$this->emptyGroup();
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave');
+	}//end testCreateGroupShareRefusesADelegateWithNoCopy()
+
+	/**
+	 * An active delegate with two rows for (source, delegate) is refused.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesADelegateWithTwoCopies(): void {
+		$this->delegateDaveWithCopy(copies: 2);
+		$this->emptyGroup();
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave');
+	}//end testCreateGroupShareRefusesADelegateWithTwoCopies()
 
 	/**
 	 * A delegate whose own copy of the source is use-only (restricted) may not

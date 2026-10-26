@@ -12,19 +12,11 @@
  * attacker chose — including a victim's own, pre-existing secret — so a revoke
  * or sync from the attacker's source would reach that secret. Cleanup never
  * deletes such a row: a false positive would destroy a legitimate, still
- * revocable user share, and a planted row is a reversible problem. Instead the
- * step QUARANTINES a suspect row (sets `quarantined_at`), which every runtime
- * path skips, and writes an admin report. Clearing `quarantined_at` restores
- * the row. Only exact duplicates are deleted, and only so the unique index can
- * be added; no secret is ever deleted.
- *
- * Provenance decides a quarantine, not source membership: a server-minted
- * recipient copy is created in the SAME request as its share row, so the copy
- * and the row share a `created_at`. A planted row points at a secret that
- * PREDATES it. A row whose copy was created clearly before the row — by more
- * than `MINT_WINDOW_SECONDS`, sized for the legacy two-step client flow — is
- * quarantined. A legitimate onward-share row (a recipient's copy that is itself
- * a share source) was minted with its row, so it is kept.
+ * revocable user share. Once the quarantine columns exist, the step runs
+ * ShareQuarantineScanner, which QUARANTINES suspect rows. When that pass does
+ * not complete, ShareQuarantineScanJob runs it again from cron. Only exact
+ * duplicates are deleted, and only so the unique index can be added; no
+ * secret is ever deleted.
  *
  * @category Migration
  * @package  OCA\Keepiq\Migration
@@ -43,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Migration;
 
 use Closure;
-use DateTime;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\DB\Types;
@@ -51,15 +43,15 @@ use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Deduplicates `keepiq_share_targets.secret_id`, makes it unique, and
- * quarantines (never deletes) rows whose copy predates the row.
+ * quarantines (never deletes) planted rows.
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+ * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
  */
 class Version001015Date20261021120000 extends SimpleMigrationStep {
 
@@ -71,7 +63,7 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	private const TABLE = 'keepiq_share_targets';
 
 	/**
-	 * The secrets table, joined to read a copy's creation time.
+	 * The secrets table, read for a duplicated copy's owner.
 	 *
 	 * @var string
 	 */
@@ -106,27 +98,11 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	public const COL_QUARANTINE_REASON = 'quarantine_reason';
 
 	/**
-	 * How far a recipient copy's `created_at` may trail its share row's and
-	 * still count as minted with it. Sized for the legacy two-step client flow;
-	 * a copy older than this is treated as one the server did not mint for the
-	 * row (a planted victim secret).
-	 *
-	 * @var int
-	 */
-	public const MINT_WINDOW_SECONDS = 600;
-
-	/**
-	 * The reason recorded on a quarantined row.
-	 *
-	 * @var string
-	 */
-	private const QUARANTINE_REASON = 'GHSA-m5p9-6pw7-pf3g: recipient copy predates its share row';
-
-	/**
 	 * Constructor.
 	 *
 	 * @param IDBConnection $connection The database connection
-	 * @param LoggerInterface|null $logger The logger (durable record of quarantined rows)
+	 * @param LoggerInterface|null $logger The logger (durable record of deleted duplicates)
+	 * @param ShareQuarantineScanner|null $scanner Quarantines planted rows (left to the background job when null)
 	 *
 	 * @return void
 	 *
@@ -135,6 +111,7 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	public function __construct(
 		private IDBConnection $connection,
 		private ?LoggerInterface $logger = null,
+		private ?ShareQuarantineScanner $scanner = null,
 	) {
 	}//end __construct()
 
@@ -178,6 +155,7 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();
@@ -215,9 +193,10 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	}//end changeSchema()
 
 	/**
-	 * Quarantine suspect rows now that the columns exist. Non-fatal: any failure
-	 * is logged and the upgrade continues, so a detection error can never brick
-	 * `occ upgrade`. The schema changes above are deliberately NOT in this guard.
+	 * Quarantine planted rows now that the columns exist. The scanner never
+	 * throws, so a detection error cannot brick `occ upgrade`; a pass that does
+	 * not complete leaves its completion flag unset and ShareQuarantineScanJob
+	 * runs it again.
 	 *
 	 * @param IOutput $output        The migration output
 	 * @param Closure $schemaClosure Returns the current schema
@@ -227,7 +206,7 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 		$schema = $schemaClosure();
@@ -237,147 +216,16 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 			return;
 		}
 
-		try {
-			$this->quarantineSuspectRows(output: $output);
-		} catch (Throwable $exception) {
-			$message = 'GHSA-m5p9-6pw7-pf3g: quarantine scan failed; the upgrade continued'
-				.' and no row was quarantined ('.$exception->getMessage().')';
-			$output->warning($message);
-			$this->logger?->warning($message, ['app' => 'keepiq', 'exception' => $exception]);
-		}
-	}//end postSchemaChange()
-
-	/**
-	 * Stream the candidate rows — those whose recipient copy was created before
-	 * the row (a filtered join to `keepiq_secrets`, never the whole table) — and
-	 * quarantine any whose copy predates the row by more than the mint window.
-	 *
-	 * @param IOutput $output The migration output
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
-	 */
-	private function quarantineSuspectRows(IOutput $output): void {
-		$result = $this->candidateQuery()->executeQuery();
-		while (($row = $result->fetch()) !== false) {
-			$rowCreatedAt  = $this->toTimestamp((string)$row['row_created_at']);
-			$copyCreatedAt = $this->toTimestamp((string)$row['copy_created_at']);
-			if ($rowCreatedAt === null || $copyCreatedAt === null) {
-				continue;
-			}
-
-			if (($rowCreatedAt - $copyCreatedAt) <= self::MINT_WINDOW_SECONDS) {
-				continue;
-			}
-
-			$this->quarantineRow(id: (string)$row['id']);
-			$this->reportQuarantine(
-				output: $output,
-				row: [
-					'id' => (string)$row['id'],
-					'sourceSecretId' => (string)$row['source_secret_id'],
-					'targetUserId' => (string)$row['target_user_id'],
-					'secretId' => (string)$row['secret_id'],
-				],
-				rowCreatedAt: (string)$row['row_created_at'],
-				copyCreatedAt: (string)$row['copy_created_at']
+		if ($this->scanner === null) {
+			$output->warning(
+				'GHSA-m5p9-6pw7-pf3g: the share quarantine scanner is not available here, '
+					.'so planted share rows are quarantined by the ShareQuarantineScanJob background job'
 			);
+			return;
 		}
 
-		$result->closeCursor();
-	}//end quarantineSuspectRows()
-
-	/**
-	 * The filtered candidate query: active (not already quarantined) share rows
-	 * joined to their recipient copy, keeping only rows whose copy was created
-	 * BEFORE the row. SQL does the filtering, so only a provenance-suspect subset
-	 * crosses to PHP — never the whole `share_targets` table. The exact window is
-	 * then applied per streamed row (portable datetime math).
-	 *
-	 * @return IQueryBuilder
-	 */
-	private function candidateQuery(): IQueryBuilder {
-		$qb = $this->connection->getQueryBuilder();
-		$qb->select('st.id', 'st.source_secret_id', 'st.target_user_id', 'st.secret_id')
-			->selectAlias('st.created_at', 'row_created_at')
-			->selectAlias('s.created_at', 'copy_created_at')
-			->from(self::TABLE, 'st')
-			->innerJoin('st', self::SECRETS_TABLE, 's', $qb->expr()->eq('s.id', 'st.secret_id'))
-			->where($qb->expr()->isNull('st.'.self::COL_QUARANTINED_AT))
-			->andWhere($qb->expr()->lt('s.created_at', 'st.created_at'));
-
-		return $qb;
-	}//end candidateQuery()
-
-	/**
-	 * Mark one row quarantined (reversible: clearing quarantined_at restores it).
-	 *
-	 * @param string $id The share-target row id
-	 *
-	 * @return void
-	 */
-	private function quarantineRow(string $id): void {
-		$qb = $this->connection->getQueryBuilder();
-		$qb->update(self::TABLE)
-			->set(key: self::COL_QUARANTINED_AT, value: $qb->createNamedParameter((new DateTime())->format('Y-m-d H:i:s')))
-			->set(key: self::COL_QUARANTINE_REASON, value: $qb->createNamedParameter(self::QUARANTINE_REASON))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-		$qb->executeStatement();
-	}//end quarantineRow()
-
-	/**
-	 * Record one quarantined row to the migration output and the log, so admins
-	 * can find which rows were held back and why (id, source, target, secret_id,
-	 * copy vs row created_at). The secret is never touched.
-	 *
-	 * @param IOutput                                                                    $output        The migration output
-	 * @param array{id:string,sourceSecretId:string,targetUserId:string,secretId:string} $row           The quarantined row
-	 * @param string                                                                     $rowCreatedAt  The row's created_at
-	 * @param string                                                                     $copyCreatedAt The copy's created_at
-	 *
-	 * @return void
-	 */
-	private function reportQuarantine(IOutput $output, array $row, string $rowCreatedAt, string $copyCreatedAt): void {
-		$message = 'GHSA-m5p9-6pw7-pf3g: quarantined keepiq_share_targets row '.$row['id']
-			.' (source '.$row['sourceSecretId'].', target '.$row['targetUserId']
-			.', secret_id '.$row['secretId'].'): copy created_at '.$copyCreatedAt
-			.' predates row created_at '.$rowCreatedAt.'; its secret was left untouched and the row is reversible';
-		$output->warning($message);
-		$this->logger?->warning(
-			$message,
-			[
-				'app' => 'keepiq',
-				'id' => $row['id'],
-				'source' => $row['sourceSecretId'],
-				'target' => $row['targetUserId'],
-				'secretId' => $row['secretId'],
-				'copyCreatedAt' => $copyCreatedAt,
-				'rowCreatedAt' => $rowCreatedAt,
-			]
-		);
-	}//end reportQuarantine()
-
-	/**
-	 * Parse a stored datetime into a Unix timestamp, or null when it cannot be
-	 * read (so an unparsable value never triggers a quarantine).
-	 *
-	 * @param string $value The stored datetime
-	 *
-	 * @return int|null
-	 */
-	private function toTimestamp(string $value): ?int {
-		if ($value === '') {
-			return null;
-		}
-
-		$parsed = strtotime($value);
-		if ($parsed === false) {
-			return null;
-		}
-
-		return $parsed;
-	}//end toTimestamp()
+		$this->scanner->run(output: $output);
+	}//end postSchemaChange()
 
 	/**
 	 * Deduplicate `secret_id` groups, keeping the row whose copy is actually

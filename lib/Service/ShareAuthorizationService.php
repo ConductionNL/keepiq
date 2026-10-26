@@ -142,7 +142,8 @@ class ShareAuthorizationService {
 	 * A received copy is owned by its recipient, so a copy is judged by its
 	 * SOURCE secret: a plain recipient fails, a delegate passes. A missing
 	 * secret and a foreign one get the same DoesNotExistException. Fails closed
-	 * when the share-target mapper is not wired.
+	 * when the share-target mapper is not wired. A delegate is judged on their
+	 * own copy whether they name it or the source (assertMayShareOnward()).
 	 *
 	 * @param string $secretId The secret (source or received copy) id
 	 * @param string $userId   The acting user
@@ -150,7 +151,7 @@ class ShareAuthorizationService {
 	 * @return void
 	 *
 	 * @throws DoesNotExistException When the user may not re-share the secret
-	 * @throws InvalidArgumentException When the copy is use-only or expiring
+	 * @throws InvalidArgumentException When the copy is use-only or expiring, or a delegate holds no single copy
 	 * @throws ForbiddenException When the copy is a read-only copy from another organisation
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
@@ -172,9 +173,87 @@ class ShareAuthorizationService {
 			throw new DoesNotExistException('Secret not found');
 		}
 
-		// A delegate's use-only or expiring copy still may not leave as a link.
 		$copy->assertOnwardShareable();
+		$this->assertMayShareOnward(source: $source, userId: $userId);
 	}//end assertMayReshare()
+
+	/**
+	 * The source a share made by $userId hangs on. A delegate cannot decrypt
+	 * the source, so their client names their own received copy; when they
+	 * hold that copy and are an active delegate of its source, the source is
+	 * returned. Anything else comes back as is, so a plain recipient's copy
+	 * stays a received copy and is refused as a share source.
+	 *
+	 * @param Secret $secret The secret the caller named
+	 * @param string $userId The acting user
+	 *
+	 * @return Secret
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	public function resolveShareSource(Secret $secret, string $userId): Secret {
+		if ($this->shareTargetMapper === null) {
+			return $secret;
+		}
+
+		try {
+			$row = $this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $secret->getId());
+			$source = $this->secretMapper->findById($row->getSourceSecretId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return $secret;
+		}
+
+		if ($row->getTargetUserId() !== $userId || $row->isHeldByTarget(copy: $secret) === false
+			|| ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId)
+			|| $this->isOwnerOrDelegate(secret: $source, userId: $userId) === false
+		) {
+			return $secret;
+		}
+
+		return $source;
+	}//end resolveShareSource()
+
+	/**
+	 * Refuse a delegate whose own grant may not leave as a full share. The
+	 * owner is never refused here. Anyone else is judged by their own copy of
+	 * the source: it must be the one live copy they hold, and not use-only,
+	 * expiring or read-only. No copy (revoked or expired) or two copies
+	 * refuse, as there is no single grant to judge.
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $userId The sharing owner or delegate
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the caller holds no single copy, or it is use-only or expiring
+	 * @throws ForbiddenException When the caller's copy is a read-only copy from another organisation
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 */
+	public function assertMayShareOnward(Secret $source, string $userId): void {
+		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
+			return;
+		}
+
+		$copy = null;
+		if ($this->shareTargetMapper !== null) {
+			try {
+				$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
+					sourceSecretId: $source->getId(),
+					targetUserId: $userId
+				);
+				$copy = $this->secretMapper->findById($target->getSecretId());
+			} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+				$copy = null;
+			}
+		}
+
+		if ($copy === null) {
+			throw new InvalidArgumentException(message: 'You hold no single copy of this secret to share it from');
+		}
+
+		$copy->assertOnwardShareable();
+	}//end assertMayShareOnward()
 
 	/**
 	 * The source secret of a received copy, or the secret itself when it is

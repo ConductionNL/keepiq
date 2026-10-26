@@ -129,7 +129,12 @@ class GroupShareService {
 			throw new InvalidArgumentException(message: 'groupId is required');
 		}
 
-		$secret = $this->loadSecret(secretId: $secretId);
+		// A delegate names their own copy; the group share hangs on its source.
+		$secret = $this->authorization()->resolveShareSource(
+			secret: $this->loadSecret(secretId: $secretId),
+			userId: $userId
+		);
+		$secretId = $secret->getId();
 		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 		$secret->assertOnwardShareable();
 		$this->assertShareableSource(secret: $secret, userId: $userId);
@@ -409,14 +414,7 @@ class GroupShareService {
 				// can never delete another user's secret; the share row goes.
 				try {
 					$copy = $this->secretMapper->findById($row->getSecretId());
-					// GHSA-m5p9-6pw7-pf3g: a quarantined row may name a victim's
-					// own secret, so a member leaving never deletes its secret.
-					if ($row->isQuarantined() === true) {
-						$this->logger->warning(
-							'Kept a quarantined share target\'s secret when a member left',
-							['app' => 'keepiq', 'shareId' => $row->getId(), 'secretId' => $row->getSecretId()]
-						);
-					} elseif ($row->isHeldByTarget(copy: $copy) === true) {
+					if ($row->isHeldByTarget(copy: $copy) === true) {
 						$this->secretMapper->delete($copy);
 					} else {
 						$this->logger->warning(
@@ -457,15 +455,16 @@ class GroupShareService {
 	/**
 	 * Refuse a source that may not be shared onward even though the caller is
 	 * the owner or an active delegate: a received copy is never a share source
-	 * (a recipient must not re-share), and a delegate's own use-only, expiring
-	 * or read-only copy may not mint full group copies (GHSA-m5p9-6pw7-pf3g).
+	 * (a recipient must not re-share), and a delegate whose own copy is
+	 * use-only, expiring or read-only, or who holds no single copy, may not
+	 * mint full group copies (GHSA-m5p9-6pw7-pf3g).
 	 *
 	 * @param Secret $secret The source secret
 	 * @param string $userId The initiator
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When the source is a received copy
+	 * @throws InvalidArgumentException When the source is a received copy, or the delegate's copy is missing, ambiguous or restricted
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is read-only
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
@@ -475,22 +474,23 @@ class GroupShareService {
 			throw new InvalidArgumentException(message: 'A received copy cannot be shared onward');
 		}
 
-		if ($secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId) {
-			return;
-		}
-
-		try {
-			$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $secret->getId(),
-				targetUserId: $userId
-			);
-			$copy = $this->secretMapper->findById($target->getSecretId());
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-			return;
-		}
-
-		$copy->assertOnwardShareable();
+		$this->authorization()->assertMayShareOnward(source: $secret, userId: $userId);
 	}//end assertShareableSource()
+
+	/**
+	 * The share authorization service, or one built on this service's own
+	 * mappers when none is wired.
+	 *
+	 * @return ShareAuthorizationService
+	 */
+	private function authorization(): ShareAuthorizationService {
+		return ($this->auth ?? new ShareAuthorizationService(
+			secretMapper: $this->secretMapper,
+			delegationMapper: $this->delegationMapper,
+			suiteMapper: $this->suiteMapper,
+			shareTargetMapper: $this->shareTargetMapper,
+		));
+	}//end authorization()
 
 	/**
 	 * Whether the source is itself a received copy — a secret that is some share

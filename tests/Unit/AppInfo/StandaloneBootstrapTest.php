@@ -34,6 +34,7 @@ use OCA\Keepiq\AppInfo\McpRegistrar;
 use OCA\Keepiq\Mcp\KeepiqScannableServices;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\SetupCheck\ShareQuarantineScanPending;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -127,6 +128,11 @@ final class StandaloneBootstrapTest extends TestCase {
 		self::assertCount(1, $this->callsOf(method: 'registerSearchProvider'), 'PlatformIntegrationRegistrar');
 		self::assertCount(1, $this->callsOf(method: 'registerNotifierService'), 'PlatformIntegrationRegistrar');
 		self::assertCount(3, $this->callsOf(method: 'registerMiddleware'), 'PlatformIntegrationRegistrar');
+		self::assertSame(
+			[ShareQuarantineScanPending::class],
+			array_column($this->callsOf(method: 'registerSetupCheck'), 1),
+			'PlatformIntegrationRegistrar'
+		);
 	}//end testEveryRegistrarRan()
 
 	/**

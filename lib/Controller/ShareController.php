@@ -28,6 +28,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
@@ -44,6 +45,8 @@ use OCP\IUserSession;
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
  *   operation; the use-only change added the restriction update.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A revoke of a quarantined
+ *   share (GHSA-m5p9-6pw7-pf3g) gets its own 409, which takes its own exception.
  */
 class ShareController extends OCSController {
 	/**
@@ -175,6 +178,11 @@ class ShareController extends OCSController {
 
 		try {
 			$this->shareService->revokeShare(shareId: $id, userId: $user->getUID());
+		} catch (ConflictException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_quarantined', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],

@@ -19,22 +19,27 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\QuarantinedShareTargetMapper;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\GdprService;
 use OCA\Keepiq\Service\SettingsService;
+use OCA\Keepiq\Tests\Support\ShareTargetDatabase;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for GdprService::collectMetadata.
  */
 class GdprServiceTest extends TestCase {
+	use ShareTargetDatabase;
+
 	/**
 	 * Build a service with all collaborator mocks.
 	 *
@@ -193,4 +198,59 @@ class GdprServiceTest extends TestCase {
 
 		$service->collectMetadata('alice');
 	}//end testStrictlySelfScoped()
+
+	/**
+	 * Quarantined share rows (GHSA-m5p9-6pw7-pf3g) that name the subject, as
+	 * the owner of their source or as their recipient, are exported and
+	 * flagged; live rows are flagged as not quarantined.
+	 *
+	 * @return void
+	 */
+	public function testExportsQuarantinedRowsNamingTheSubjectFlagged(): void {
+		$this->openDatabase();
+		try {
+			$subject = $this->user('subject');
+			$other   = $this->user('other');
+			$now     = new DateTime();
+			$source  = $this->insertSecret(ownerId: $subject, createdAt: $now);
+			foreach ([false, true] as $quarantined) {
+				$recipient = $this->user('recipient');
+				$this->insertShareTarget(
+					sourceSecretId: $source->getId(),
+					targetUserId: $recipient,
+					secretId: $this->insertSecret(ownerId: $recipient, createdAt: $now)->getId(),
+					createdBy: $subject,
+					createdAt: $now,
+					quarantined: $quarantined,
+				);
+			}
+
+			$planted = $this->insertShareTarget(
+				sourceSecretId: $this->insertSecret(ownerId: $other, createdAt: $now)->getId(),
+				targetUserId: $subject,
+				secretId: $this->insertSecret(ownerId: $subject, createdAt: $now)->getId(),
+				createdBy: $other,
+				createdAt: $now,
+				quarantined: true,
+			);
+
+			$doc = (new GdprService(
+				secretMapper: new SecretMapper(db: $this->db),
+				shareMapper: new ShareTargetMapper(db: $this->db),
+				delegationMapper: $this->createMock(SecretDelegationMapper::class),
+				linkShareMapper: $this->createMock(LinkShareMapper::class),
+				requestMapper: $this->createMock(SecretRequestMapper::class),
+				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+				settingsService: $this->createMock(SettingsService::class),
+				quarantinedMapper: new QuarantinedShareTargetMapper(db: $this->db),
+			))->collectMetadata($subject);
+
+			$this->assertSame([false, true], array_column($doc['sharesGiven'], 'quarantined'));
+			$this->assertCount(1, $doc['sharesReceived']);
+			$this->assertSame($planted->getSecretId(), $doc['sharesReceived'][0]['recipientCopyId']);
+			$this->assertTrue($doc['sharesReceived'][0]['quarantined']);
+		} finally {
+			$this->closeDatabase();
+		}
+	}//end testExportsQuarantinedRowsNamingTheSubjectFlagged()
 }//end class

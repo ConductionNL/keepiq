@@ -120,16 +120,18 @@ class ShareTarget extends Entity implements JsonSerializable {
 	protected ?DateTime $expiresAt = null;
 
 	/**
-	 * When this row was quarantined, or null when it is active. A quarantined
-	 * row is skipped by every runtime path (GHSA-m5p9-6pw7-pf3g); clearing this
-	 * restores normal behaviour.
+	 * When this row was quarantined, or null when it is active. The mappers'
+	 * finders never return a quarantined row (GHSA-m5p9-6pw7-pf3g), so no
+	 * runtime path reads, writes or deletes its copy; `occ
+	 * keepiq:share-quarantine` lists, releases or drops it.
 	 *
 	 * @var DateTime|null
 	 */
 	protected ?DateTime $quarantinedAt = null;
 
 	/**
-	 * Why this row was quarantined (nullable).
+	 * Why this row was quarantined (nullable). Kept when an administrator
+	 * releases the row, so the scan does not quarantine it again.
 	 *
 	 * @var string|null
 	 */
@@ -181,21 +183,6 @@ class ShareTarget extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'quarantinedAt', type: 'datetime');
 		$this->addType(fieldName: 'quarantineReason', type: 'string');
 	}//end __construct()
-
-	/**
-	 * Whether this row has been quarantined (GHSA-m5p9-6pw7-pf3g): a row whose
-	 * recipient copy predated it, so the server did not mint the copy for the
-	 * row. A quarantined row MUST NOT be used to read, write or delete the
-	 * linked copy; the migration's audit report still sees it, and clearing
-	 * `quarantined_at` restores it.
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
-	 */
-	public function isQuarantined(): bool {
-		return $this->quarantinedAt !== null;
-	}//end isQuarantined()
 
 	/**
 	 * Whether the recipient copy this row points at is genuinely held by the

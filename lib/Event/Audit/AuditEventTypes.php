@@ -52,6 +52,11 @@ final class AuditEventTypes {
 	public const SHARE_REVOKED = 'share.revoked';
 	public const SHARE_DELEGATED = 'share.delegated';
 	public const SHARE_DELEGATION_RECLAIMED = 'share.delegation_reclaimed';
+	// The scan quarantined a planted share row (GHSA-m5p9-6pw7-pf3g), and an
+	// administrator released or dropped one with occ keepiq:share-quarantine.
+	public const SHARE_QUARANTINED = 'share.quarantined';
+	public const SHARE_QUARANTINE_RELEASED = 'share.quarantine_released';
+	public const SHARE_QUARANTINE_DROPPED = 'share.quarantine_dropped';
 
 	// Link share.
 	public const LINK_SHARE_CREATED = 'link_share.created';
@@ -285,6 +290,9 @@ final class AuditEventTypes {
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
 		self::SHARE_DELEGATED => ['delegatedTo', 'isPermanent'],
 		self::SHARE_DELEGATION_RECLAIMED => ['delegatedTo'],
+		self::SHARE_QUARANTINED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'copyUseOnly', 'copyAccessEndsAt'],
+		self::SHARE_QUARANTINE_RELEASED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'forced'],
+		self::SHARE_QUARANTINE_DROPPED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'restrictionsCleared'],
 		self::LINK_SHARE_CREATED => ['hasPassword', 'expiresAt'],
 		self::LINK_SHARE_ACCESSED => [],
 		self::LINK_SHARE_ACCESS_FAILED => ['reason'],

@@ -149,4 +149,19 @@ class AccountShareCleanupServiceTest extends TestCase {
 		$this->service->detachGrantedShares([$this->secret('src-1', 'user', 'alice')], $report);
 		$this->assertSame(0, $report->sharesDetached);
 	}//end testNeverTombstonesACopyNotHeldByItsTarget()
+
+	/**
+	 * The received shares removed are the rows actually deleted, quarantined
+	 * ones included, not the live rows a finder sees.
+	 *
+	 * @return void
+	 */
+	public function testReportsEveryReceivedShareRowDeleted(): void {
+		$this->shareMapper->method('findByTargetUser')->willReturn([$this->share('copy-1', 'bob')]);
+		$this->shareMapper->expects($this->once())->method('deleteByTargetUser')->with('bob')->willReturn(2);
+
+		$report = new DeletionReport();
+		$this->service->removeReceivedShares('bob', $report);
+		$this->assertSame(2, $report->sharesRemoved);
+	}//end testReportsEveryReceivedShareRowDeleted()
 }//end class

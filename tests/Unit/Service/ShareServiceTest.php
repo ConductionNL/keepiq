@@ -287,33 +287,6 @@ class ShareServiceTest extends TestCase {
 	}//end testListSharesForSecretOwnerSeesRows()
 
 	/**
-	 * GHSA-m5p9-6pw7-pf3g: a quarantined row is dropped from the recipient list,
-	 * so it is never shown and never re-encrypted for. Removing the activeShares
-	 * filter leaves the quarantined row in the result and turns this red.
-	 *
-	 * @return void
-	 */
-	public function testListSharesForSecretExcludesQuarantinedRows(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-
-		$active = new ShareTarget();
-		$active->setId('st-active');
-		$quarantined = new ShareTarget();
-		$quarantined->setId('st-quarantined');
-		$quarantined->setQuarantinedAt(new DateTime());
-
-		$this->mapper->expects($this->once())
-			->method('findBySourceSecret')
-			->willReturn([$active, $quarantined]);
-
-		$result = $this->service->listSharesForSecret('src-1', 'alice');
-
-		$this->assertCount(1, $result);
-		$this->assertSame('st-active', $result[0]->getId());
-	}//end testListSharesForSecretExcludesQuarantinedRows()
-
-	/**
 	 * Test listSharesForSecret returns empty array when caller is recipient.
 	 *
 	 * @return void

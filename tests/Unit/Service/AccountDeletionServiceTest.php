@@ -404,7 +404,8 @@ class AccountDeletionServiceTest extends TestCase {
 
 		$this->m['share']->expects($this->once())
 			->method('deleteByTargetUser')
-			->with('alice');
+			->with('alice')
+			->willReturn(1);
 		// Staged share-save ciphertext goes too, on either deletion path.
 		$this->m['stage']->expects($this->once())->method('deleteByUser')->with('alice');
 

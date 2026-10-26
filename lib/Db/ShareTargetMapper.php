@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -28,6 +29,11 @@ use OCP\IDBConnection;
 
 /**
  * Mapper for ShareTarget entities.
+ *
+ * Every finder and exists-check sees live rows only: a quarantined row
+ * (GHSA-m5p9-6pw7-pf3g) is not a share to any runtime path. Only
+ * QuarantinedShareTargetMapper returns quarantined rows. The row-only deletes
+ * match quarantined rows too: they never touch a copy.
  *
  * @extends QBMapper<ShareTarget>
  */
@@ -46,7 +52,7 @@ class ShareTargetMapper extends QBMapper {
 	}//end __construct()
 
 	/**
-	 * Find a share target by its UUID.
+	 * Find a live share target by its UUID.
 	 *
 	 * @param string $id The share target ID
 	 *
@@ -59,13 +65,14 @@ class ShareTargetMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntity(query: $qb);
 	}//end findById()
 
 	/**
-	 * Find all share targets for a given source secret.
+	 * Find all live share targets for a given source secret.
 	 *
 	 * @param string $sourceSecretId The owner's source secret ID
 	 *
@@ -75,13 +82,14 @@ class ShareTargetMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)));
+			->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntities(query: $qb);
 	}//end findBySourceSecret()
 
 	/**
-	 * Find all share targets for a given recipient user.
+	 * Find all live share targets for a given recipient user.
 	 *
 	 * @param string $targetUserId The recipient Nextcloud user ID
 	 *
@@ -91,7 +99,8 @@ class ShareTargetMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
+			->where($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntities(query: $qb);
 	}//end findByTargetUser()
@@ -112,7 +121,8 @@ class ShareTargetMapper extends QBMapper {
 	}//end deleteBySourceSecret()
 
 	/**
-	 * Find the share target identifying a (source secret, recipient user) pair.
+	 * Find the live share target identifying a (source secret, recipient user)
+	 * pair.
 	 *
 	 * Used by the authorization path before creating a new share to enforce
 	 * the "one share per recipient per source secret" invariant.
@@ -132,17 +142,18 @@ class ShareTargetMapper extends QBMapper {
 		$qb->select('*')
 			->from($this->getTableName())
 			->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)))
-			->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
+			->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntity(query: $qb);
 	}//end findBySourceSecretAndTargetUser()
 
 	/**
-	 * Whether $createdBy already holds a DIRECT share (no group share, no team
-	 * folder) of any secret with $targetUserId. Drives the keepiq#818 proof
-	 * exemption: a share to a recipient the caller already shares with directly
-	 * needs no vault-key proof, a share to anyone else does. Group and team
-	 * folder rows do not count, because those are created without a proof.
+	 * Whether $createdBy already holds a live DIRECT share (no group share, no
+	 * team folder) of any secret with $targetUserId. Drives the keepiq#818
+	 * proof exemption: a share to a recipient the caller already shares with
+	 * directly needs no vault-key proof, a share to anyone else does. Group and
+	 * team folder rows do not count, because those are created without a proof.
 	 *
 	 * @param string $createdBy    The sharing user
 	 * @param string $targetUserId The recipient
@@ -159,6 +170,7 @@ class ShareTargetMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
 			->andWhere($qb->expr()->isNull('group_share_id'))
 			->andWhere($qb->expr()->isNull('team_folder_id'))
+			->andWhere($qb->expr()->isNull('quarantined_at'))
 			->setMaxResults(1);
 
 		$result = $qb->executeQuery();
@@ -177,16 +189,16 @@ class ShareTargetMapper extends QBMapper {
 	 *
 	 * @param string $targetUserId The recipient Nextcloud user ID
 	 *
-	 * @return void
+	 * @return int The rows deleted, quarantined ones included
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
 	 */
-	public function deleteByTargetUser(string $targetUserId): void {
+	public function deleteByTargetUser(string $targetUserId): int {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
 
-		$qb->executeStatement();
+		return $qb->executeStatement();
 	}//end deleteByTargetUser()
 
 	/**
@@ -220,7 +232,7 @@ class ShareTargetMapper extends QBMapper {
 	}//end deleteByTargetUserAndSuite()
 
 	/**
-	 * Reverse-lookup a ShareTarget by the recipient Secret copy ID.
+	 * Reverse-lookup a live ShareTarget by the recipient Secret copy ID.
 	 *
 	 * Used by the SuiteCompromiseListener to walk from a flagged
 	 * recipient copy back to the source secret (and thus the owner who
@@ -239,8 +251,26 @@ class ShareTargetMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($recipientSecretId)));
+			->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($recipientSecretId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntity(query: $qb);
 	}//end findByRecipientSecret()
+
+	/**
+	 * The live share targets whose end date falls in (from, to].
+	 *
+	 * @param DateTime|null $from Exclusive lower bound (null = none)
+	 * @param DateTime      $to   Inclusive upper bound
+	 *
+	 * @return ShareTarget[]
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 */
+	public function findEndingBetween(?DateTime $from, DateTime $to): array {
+		$qb = $this->endingBetweenQuery(from: $from, to: $to);
+		$qb->andWhere($qb->expr()->isNull('quarantined_at'));
+
+		return $this->findEntities(query: $qb);
+	}//end findEndingBetween()
 }//end class

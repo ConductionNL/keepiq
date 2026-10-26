@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Db\QuarantinedShareTargetMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -36,8 +38,12 @@ class ShareRevocationServiceTest extends TestCase {
 
 	private ShareRevocationService $service;
 
+	/** @var QuarantinedShareTargetMapper&MockObject */
+	private QuarantinedShareTargetMapper $quarantined;
+
 	protected function setUp(): void {
 		$this->mapper       = $this->createMock(ShareTargetMapper::class);
+		$this->quarantined  = $this->createMock(QuarantinedShareTargetMapper::class);
 		$this->secretMapper = $this->createMock(SecretMapper::class);
 		$this->auth         = $this->createMock(ShareAuthorizationService::class);
 		$this->auth->method('loadSecret')->willReturn($this->secret('src-1', 'alice'));
@@ -48,6 +54,7 @@ class ShareRevocationServiceTest extends TestCase {
 			db: $this->createMock(IDBConnection::class),
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->auth,
+			quarantined: $this->quarantined,
 		);
 	}
 
@@ -153,56 +160,44 @@ class ShareRevocationServiceTest extends TestCase {
 	}
 
 	/**
-	 * GHSA-m5p9-6pw7-pf3g: a revoke of a QUARANTINED row touches nothing — the
-	 * secret (which may be the victim's own) and the row (the audit record) are
-	 * both left intact. Removing the quarantine guard in revokeShare deletes the
-	 * secret here and turns this red.
+	 * GHSA-m5p9-6pw7-pf3g: the mapper hides a quarantined row, so its owner's
+	 * revoke finds no live share. The owner is told the share is quarantined,
+	 * an explicit error rather than a silent success or "not found", and
+	 * nothing is deleted.
 	 *
 	 * @return void
 	 */
-	public function testARevokeOfAQuarantinedRowLeavesTheSecretAndRowIntact(): void {
+	public function testRevokingAQuarantinedRowIsAnExplicitError(): void {
 		$entity = $this->row('victim', 'victim');
 		$entity->setQuarantinedAt(new \DateTime());
-		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('quarantined'));
+		$this->quarantined->method('findQuarantinedById')->with('st-1')->willReturn($entity);
+		$this->auth->method('isOwnerOrDelegate')->willReturn(true);
 
-		$this->secretMapper->expects($this->never())->method('findById');
 		$this->secretMapper->expects($this->never())->method('delete');
 		$this->mapper->expects($this->never())->method('delete');
 
+		$this->expectException(ConflictException::class);
+		$this->expectExceptionMessage('quarantined');
 		$this->service->revokeShare(shareId: 'st-1', userId: 'alice');
 	}
 
 	/**
-	 * GHSA-m5p9-6pw7-pf3g: the cascade delete keeps a QUARANTINED row's secret
-	 * (it may be a victim's own) while still severing the link rows in bulk.
+	 * To anyone but the owner or a delegate of its source, a quarantined row
+	 * reads as "not found", like any unknown id.
 	 *
 	 * @return void
 	 */
-	public function testDeleteAllForSecretKeepsAQuarantinedRowsSecret(): void {
-		$held       = $this->row('copy-held', 'bob');
-		$quarantined = $this->row('victim', 'victim');
-		$quarantined->setQuarantinedAt(new \DateTime());
-		$this->mapper->method('findBySourceSecret')->willReturn([$held, $quarantined]);
+	public function testAQuarantinedRowIsNotFoundForAnyoneElse(): void {
+		$entity = $this->row('victim', 'victim');
+		$entity->setQuarantinedAt(new \DateTime());
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('quarantined'));
+		$this->quarantined->method('findQuarantinedById')->willReturn($entity);
+		$this->auth->method('isOwnerOrDelegate')->willReturn(false);
 
-		$this->secretMapper->method('findById')->willReturnMap(
-			[
-				['copy-held', $this->secret('copy-held', 'bob')],
-				['victim', $this->secret('victim', 'victim')],
-			]
-		);
-
-		$deleted = [];
-		$this->secretMapper->method('delete')->willReturnCallback(
-			static function (Secret $secret) use (&$deleted): Secret {
-				$deleted[] = $secret->getId();
-				return $secret;
-			}
-		);
-		$this->mapper->expects($this->once())->method('deleteBySourceSecret')->with('src-1');
-
-		$this->service->deleteAllForSecret(sourceSecretId: 'src-1');
-
-		$this->assertSame(['copy-held'], $deleted, 'the quarantined row\'s secret is never deleted');
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('Share not found');
+		$this->service->revokeShare(shareId: 'st-1', userId: 'mallory');
 	}
 
 	/**

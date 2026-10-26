@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\ShareController;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -183,6 +184,24 @@ class ShareControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 		$this->assertSame(['message' => 'Secret changed since it was loaded'], $response->getData());
 	}//end testSyncAnswers409WhenTheSourceMovedUnderTheCaller()
+
+	/**
+	 * Revoking a quarantined share (GHSA-m5p9-6pw7-pf3g) is an explicit 409
+	 * with its own error code, never a success the owner would read as "access
+	 * revoked".
+	 *
+	 * @return void
+	 */
+	public function testRevokingAQuarantinedShareAnswers409(): void {
+		$this->shareService->expects($this->once())->method('revokeShare')
+			->with('st-1', 'alice')
+			->willThrowException(new ConflictException('This share is quarantined'));
+
+		$response = $this->controller('alice')->destroy(id: 'st-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_quarantined', 'message' => 'This share is quarantined'], $response->getData());
+	}//end testRevokingAQuarantinedShareAnswers409()
 
 	/**
 	 * An anonymous caller may not push blobs at other users' copies.

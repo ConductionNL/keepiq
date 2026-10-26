@@ -110,7 +110,8 @@ class ComplianceReportService {
 			],
 			'secretsPerUser' => $this->secretsPerUserSection(),
 			'shareHygiene' => [
-				'userShares' => $this->countAll(table: 'keepiq_share_targets'),
+				// A quarantined row (GHSA-m5p9-6pw7-pf3g) is no share.
+				'userShares' => $this->countWhere(table: 'keepiq_share_targets', where: 'quarantined_at IS NULL'),
 				'groupShares' => $this->countAll(table: 'keepiq_group_shares'),
 				'linkShares' => $this->countAll(table: 'keepiq_link_shares'),
 				// Every link share carries an Argon2id-wrapped snapshot;

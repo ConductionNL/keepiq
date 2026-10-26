@@ -201,9 +201,8 @@ class ShareSyncGuards {
 
 			// Defence in depth: a copy whose row does not genuinely belong to its
 			// target (a poisoned or drifted `secret_id`) is dropped from the write
-			// set, so a save can never overwrite another user's secret. A
-			// quarantined row (GHSA-m5p9-6pw7-pf3g) is dropped the same way.
-			if ($target->isQuarantined() === true || $target->isHeldByTarget(copy: $row) === false) {
+			// set, so a save can never overwrite another user's secret.
+			if ($target->isHeldByTarget(copy: $row) === false) {
 				$ignored[$copyId] = true;
 				continue;
 			}
