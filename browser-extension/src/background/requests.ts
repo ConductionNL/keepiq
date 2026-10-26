@@ -1,9 +1,13 @@
 import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, type AccountRecord } from '@/src/accounts/store'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
-import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type PopupReplies, type PopupRequest, type PopupTab, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
+import { addHistory, clearHistory, openHistory, sealHistory } from '@/src/generator/history'
+import { GENERATOR_KINDS } from '@/src/generator/options'
+import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
+import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
+import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
-import { getKey, LAST_TAB_KEY, sessionValues } from '@/src/vault/key-store'
+import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { suggestionIds } from '@/src/vault/match'
 import { readSnapshot, toItemMeta } from '@/src/vault/store'
 import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
@@ -114,7 +118,7 @@ async function popout(tabId: number | undefined): Promise<null> {
 	return null
 }
 
-async function perform(message: PopupRequest): Promise<PopupReplies[PopupRequest['kind']]> {
+async function perform(message: Exclude<PopupRequest, GeneratorRequest>): Promise<PopupReplies[PopupRequest['kind']]> {
 	switch (message.kind) {
 		case 'vault.sync': {
 			const account = await activeUnlocked()
@@ -138,8 +142,50 @@ async function perform(message: PopupRequest): Promise<PopupReplies[PopupRequest
 			return readGlobalSettings()
 		case 'settings.set':
 			return updateGlobalSettings(message.patch)
+		case 'send.list':
+		case 'send.create':
+		case 'send.delete':
+			return performSend(message)
 		default:
 			return performWrite(message)
+	}
+}
+
+const isGeneratorRequest = (message: PopupRequest): message is GeneratorRequest => message.kind.startsWith('generator.')
+
+/**
+ * The active account when the message names it, locked too for the lock screen's generator.
+ * Never another or a logged-out one, so a stale window writes no options or history there.
+ */
+async function generatorTarget(message: GeneratorRequest): Promise<{ account: AccountRecord; status: AccountStatus } | null> {
+	const active = await activeAccount()
+	return active && active.account.id === message.accountId && active.status !== 'logged_out' ? active : null
+}
+
+async function performGenerator(message: GeneratorRequest, target: { account: AccountRecord; status: AccountStatus } | null, epoch: number): Promise<PopupReplies[GeneratorRequest['kind']]> {
+	const account = target?.account ?? null
+	// The lock keeps the history from whoever walks up to the browser (ADR-002): a locked account only adds to it, sealed.
+	const reader = target?.status === 'unlocked' ? target.account : null
+	switch (message.kind) {
+		case 'generator.context':
+			return account ? { options: await readOptions(account.id), policy: await readPolicy(account.id), accountEmail: account.email } : null
+		case 'generator.saveOptions':
+			return account ? saveOptions(account.id, message.options) : null
+		case 'generator.history.list':
+			return reader ? openHistory(reader.id, epoch) : []
+		case 'generator.history.add': {
+			const { value, kind } = message.entry ?? {}
+			if (!account || typeof value !== 'string' || !value || !GENERATOR_KINDS.includes(kind)) return reader ? openHistory(reader.id, epoch) : []
+			if (!reader) {
+				await sealHistory(account.id, { value, kind }, epoch)
+				return []
+			}
+			await openHistory(reader.id, epoch)
+			return addHistory(reader.id, { value, kind }, epoch)
+		}
+		case 'generator.history.clear':
+			if (reader) await clearHistory(reader.id)
+			return null
 	}
 }
 
@@ -178,8 +224,22 @@ async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrit
 	}
 }
 
+/** Like a write, a send without the account it was meant for is refused. */
+async function performSend(message: SendRequest): Promise<PopupReplies[SendRequest['kind']]> {
+	const accountId = message.accountId
+	if (typeof accountId !== 'string') return { ok: false, error: { code: 'invalid' } }
+	switch (message.kind) {
+		case 'send.list':
+			return listSendsFor(accountId)
+		case 'send.create':
+			return createSendFor(message.input, accountId)
+		case 'send.delete':
+			return deleteSendFor(message.id, accountId)
+	}
+}
+
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
-function isInteraction(message: PopupRequest): boolean {
+function isInteraction(message: Exclude<PopupRequest, GeneratorRequest>): boolean {
 	// Every popup reads it on open, which `vault.status` already counts.
 	if (message.kind === 'settings.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
@@ -191,7 +251,16 @@ function isInteraction(message: PopupRequest): boolean {
 export async function handlePopupRequest(message: PopupRequest): Promise<unknown> {
 	try {
 		await enforce()
-		if (isInteraction(message)) await touch()
+		if (isGeneratorRequest(message)) {
+			// Read before any await, so a lock or logout while this request waits keeps its add from landing.
+			const epoch = sessionEpoch(message.accountId)
+			const target = await generatorTarget(message)
+			// Context is read on open. The lock screen's generator must not keep another account's vault from timing out.
+			if (message.kind !== 'generator.context' && target?.status === 'unlocked') await touch()
+			return await performGenerator(message, target, epoch)
+		}
+		// Copy from the lock screen's generator must not keep another account's vault from timing out either.
+		if (message.kind === 'clipboard.copied' ? await activeUnlocked() : isInteraction(message)) await touch()
 		return await perform(message)
 	} catch (error) {
 		console.error('[keepiq]', message.kind, error)

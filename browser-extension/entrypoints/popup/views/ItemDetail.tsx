@@ -262,7 +262,7 @@ export function ItemDetail({ item, type, folders, webAppUrl, shareSave }: Props)
 			<PageFooter>
 				<div className="detail-actions">
 					<ActionButton action={actions.edit} className="btn btn--primary" />
-					<Menu label={i18n.t('item.moreMenu', { name: item.name })} icon="more" above items={[actions.clone, actions.move]} />
+					<Menu label={i18n.t('item.moreMenu', { name: item.name })} icon="more" above items={[actions.clone, actions.move, ...(actions.send ? [actions.send] : [])]} />
 					<ActionButton action={actions.remove} className="icon-btn icon-btn--danger" icon="trash" />
 				</div>
 			</PageFooter>

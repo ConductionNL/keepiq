@@ -28,7 +28,7 @@ The dev profile lives in `.wxt/chrome-data`, so a paired account survives restar
 ## Checks & builds
 
 ```sh
-npm test               # vitest unit and component tests
+npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
 npm run typecheck      # tsc --noEmit — does NOT build
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/

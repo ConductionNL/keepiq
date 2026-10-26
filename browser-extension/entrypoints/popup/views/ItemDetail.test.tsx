@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DecryptedItem, FolderMeta, ItemMeta, ShareSaveNote } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { setLocale } from '@/src/testing/i18n'
-import { fakeBackground, fakeClipboard, itemMeta, sentKinds, sentOf, types } from '../testing'
+import { fakeBackground, fakeClipboard, itemMeta, mounts, sentKinds, sentOf, types } from '../testing'
 import { ItemDetail } from './ItemDetail'
 
 // Shell's footer bar, where the detail portals Edit and Delete.
@@ -24,7 +24,7 @@ function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 
 	const sent = fakeBackground({ decrypted: decrypted && { [item.id]: decrypted }, decryptError, replies: editable === undefined ? undefined : { 'item.editable': editable } })
 	const refreshState = vi.fn()
 	const launch = vi.fn()
-	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn() }
+	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	const view = render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, refreshState, launch, footer, items, offline }}>
 			<ItemDetail item={item} type={types.find((t) => t.id === item.typeId)} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
@@ -93,13 +93,14 @@ describe('login credentials', () => {
 		const { sent, view } = renderDetail(itemMeta(), { login: 'alice', key: 'old' })
 		await screen.findByRole('heading', { name: 'Login credentials' })
 		const decrypts = () => sentKinds(sent).filter((kind) => kind === 'item.decrypt').length
-		expect(decrypts()).toBe(1)
+		expect(decrypts()).toBe(mounts())
 		view.rerender(
 			<ShellContext.Provider value={{ ...DEFAULT_SHELL, footer }}>
 				<ItemDetail item={itemMeta({ updatedAt: '2026-04-01T00:00:00Z' })} type={types[0]} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
 			</ShellContext.Provider>,
 		)
-		await vi.waitFor(() => expect(decrypts()).toBe(2))
+		// The new version mounts a fresh `Decrypted`.
+		await vi.waitFor(() => expect(decrypts()).toBe(2 * mounts()))
 		// Not the user's doing, so it does not reset the vault timeout.
 		expect(sent.mock.calls.at(-1)![0]).toMatchObject({ kind: 'item.decrypt', passive: true })
 	})
@@ -336,6 +337,29 @@ describe('metadata and actions', () => {
 		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
 		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
 		expect(items.move).toHaveBeenCalledWith(item)
+		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		expect(items.send).toHaveBeenCalledWith(item)
+	})
+
+	it('holds back Send on a share whose access ends, and says why', async () => {
+		const { items } = renderDetail(itemMeta({ accessExpiresAt: '2026-12-01T12:00:00Z' }))
+		const user = userEvent.setup()
+		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
+		const send = screen.getByRole('menuitem', { name: 'Send' })
+		expect(send.title).toBe(`Your access ends ${new Date('2026-12-01T12:00:00Z').toLocaleDateString('en')}, so it cannot be sent`)
+		await user.click(send)
+		expect(items.send).not.toHaveBeenCalled()
+	})
+
+	it('holds back Send while offline, and says why', async () => {
+		const { items } = renderDetail(itemMeta(), undefined, undefined, true)
+		const user = userEvent.setup()
+		await user.click(within(footer).getByRole('button', { name: 'More, GitHub' }))
+		const send = screen.getByRole('menuitem', { name: 'Send' })
+		expect(send.title).toBe('Sends need a connection to your Keepiq server')
+		await user.click(send)
+		expect(items.send).not.toHaveBeenCalled()
 	})
 
 	it.each([
@@ -403,7 +427,7 @@ describe('metadata and actions', () => {
 		const { sent, items } = renderDetail(itemMeta(), undefined, undefined, false, { ok: true, value: { editable: false } })
 		const edit = within(footer).getByRole('button', { name: locale === 'en' ? 'Edit' : 'Bewerken' })
 		await vi.waitFor(() => expect(edit.getAttribute('aria-disabled')).toBe('true'))
-		expect(sentOf(sent, 'item.editable')).toEqual([{ kind: 'item.editable', accountId: 'a1', id: 'i1' }])
+		expect(sentOf(sent, 'item.editable')).toEqual(Array(mounts()).fill({ kind: 'item.editable', accountId: 'a1', id: 'i1' }))
 		expect(edit.title).toBe(reason)
 		const user = userEvent.setup()
 		await user.click(edit)

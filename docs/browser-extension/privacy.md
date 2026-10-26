@@ -11,11 +11,12 @@ Keepiq opens your Keepiq vault in your browser. Your vault lives on your organis
 The extension talks to your own Nextcloud, and to nobody else. It sends your server:
 
 - your Nextcloud user name and app password, with every request, to sign in;
-- requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault and your Keepiq preferences, of which it uses the default item type;
+- requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault, your Keepiq preferences, of which it uses the default item type, and your organisation's password policy, which the generator follows;
 - a request for the Keepiq version your server runs, to check the extension supports it;
 - the items and folders you add, change or delete. An item's secrets, user name, notes and additional fields are encrypted in the browser first; its name, web address, type and folder go as you typed them, as Keepiq stores them. Folder names are not encrypted.
 - when you open an item, a check whether you may edit it, which names the item;
-- when you change a shared item's secrets, user name or fields, a lookup of the encryption certificates of everyone it is shared with (by user id, or by cloud id at a partner organisation), and the change encrypted for each of them.
+- when you change a shared item's secrets, user name or fields, a lookup of the encryption certificates of everyone it is shared with (by user id, or by cloud id at a partner organisation), and the change encrypted for each of them;
+- the sends you create, encrypted in the browser first, with their type, number of views, expiry and, for a password send, the encrypted key and its salt, never the password; and requests to list and remove your sends. The key of a send without a password is only in its link, which goes only where you paste it.
 
 Your master password never leaves the browser. Neither do your decrypted secrets.
 
@@ -35,13 +36,19 @@ Your theme choice, for every account. It stays when you log out.
 
 Per account, your default item type from Keepiq, with the vault copy, and whether you dismissed the notice that folder names are not encrypted, until you remove the account.
 
+Per account, your generator options, until you remove the account, and your organisation's password policy, until you log out.
+
+The last 50 values you regenerated, copied or used, or left on a sub-tab, in the browser's session storage, which lives in memory. They are not encrypted, and the extension shows them only while the vault is unlocked. They go when the vault locks, when you log out, when the browser closes, or when you clear the history. Values you generate on the lock screen are kept encrypted until you unlock, and only then show in the history.
+
 An item you are adding or editing stays in memory only, and is gone when you save, leave the form or close the extension.
+
+A send you are writing, its password and the links of the sends you just made stay in memory only, and are gone when you close the extension, lock it or switch account. Your list of sends is fetched from your server each time and is not stored.
 
 When you are halfway through adding an account, the extension remembers the server address and user name until the browser closes, so closing the popup does not lose them. It never remembers the app password you typed.
 
 ## What the extension reads in your browser
 
-- **The address of your current tab,** to suggest the items for that site. It stays in the extension.
+- **The address of your current tab,** to suggest the items for that site, and for the site name in a generated email address when you choose it. It stays in the extension.
 - **The pages you visit:** the extension's page script runs on every site, so that filling in logins can work there. Today it only tells the extension a page has loaded. It never receives your vault, and when autofill arrives it gets one login, after you chose it.
 - **Whether your computer is locked,** for the **On system lock** lock option, which comes with the settings screen.
 - **Your browser's language,** to show the extension in it. It stays in the extension.

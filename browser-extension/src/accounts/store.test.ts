@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { addHistory, listHistory } from '@/src/generator/history'
+import type { GeneratorPolicy } from '@/src/generator/options'
+import { readOptions, readPolicy, saveOptions, writePolicy } from '@/src/generator/store'
 import { neverLockKey, putKey } from '@/src/vault/key-store'
 import { vaultCacheKey } from '@/src/vault/store'
 import { suiteRow } from '@/src/testing/vectors'
@@ -10,6 +13,7 @@ import {
 } from './store'
 
 const suite = { ...suiteRow }
+const policy: GeneratorPolicy = { minLength: 16, requireUpper: true, requireLower: false, requireDigit: false, requireSymbol: false, allowPassphrase: true }
 
 function fields(uid = 'alice', serverUrl = 'https://cloud.example.org') {
 	return { serverUrl, uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12' }
@@ -71,10 +75,26 @@ describe('logging out', () => {
 		expect(await readSettings(account.id)).toEqual({ vaultTimeout: 15, vaultTimeoutAction: 'lock' })
 	})
 
+	it('drops the generator policy and history but keeps the options', async () => {
+		const account = await addAccount(fields(), suite)
+		await putKey(account.id, 'AAAA')
+		const options = await saveOptions(account.id, { tab: 'passphrase' })
+		await writePolicy(account.id, policy)
+		await addHistory(account.id, { value: 'one', kind: 'password' })
+		await markLoggedOut(account.id)
+		expect(await readOptions(account.id)).toEqual(options)
+		expect(await readPolicy(account.id)).toBeNull()
+		expect(await listHistory(account.id)).toEqual([])
+	})
+
 	it('manually removes everything of the account', async () => {
 		const account = await addAccount(fields(), suite)
 		await putKey(account.id, 'AAAA')
+		await saveOptions(account.id, { tab: 'username' })
+		await writePolicy(account.id, policy)
+		await addHistory(account.id, { value: 'one', kind: 'password' })
 		await removeAccount(account.id)
+		expect(await browser.storage.session.get(null)).toEqual({})
 		const left = await browser.storage.local.get(null)
 		expect(Object.keys(left).filter((k) => k.includes(account.id))).toEqual([])
 		expect(await listAccounts()).toEqual([])

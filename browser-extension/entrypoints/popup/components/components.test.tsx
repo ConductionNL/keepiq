@@ -373,6 +373,21 @@ describe('TextField', () => {
 		expect(attributes('Name')).toEqual(['false', null, null])
 		expect(attributes('Username')).toEqual(['false', 'off', 'off'])
 	})
+
+	it('puts an action after the show toggle, named by its label', async () => {
+		const onClick = vi.fn()
+		render(<TextField label="Password" type="password" value="" onChange={vi.fn()} action={{ icon: 'generate', label: 'Generate password', onClick }} />)
+		const buttons = screen.getAllByRole('button')
+		expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual(['Show password', 'Generate password'])
+		await userEvent.setup().click(buttons[1]!)
+		// The button itself, since a mouse click does not focus it in every browser.
+		expect(onClick).toHaveBeenCalledExactlyOnceWith(buttons[1])
+	})
+
+	it('has no action unless given one', () => {
+		render(<TextField label="Name" value="" onChange={vi.fn()} />)
+		expect(screen.queryByRole('button')).toBeNull()
+	})
 })
 
 describe('SearchField', () => {

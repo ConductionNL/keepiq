@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from '../../App'
 import type { FolderMeta } from '@/src/messages'
-import { everythingVisible, fakeBackground, itemMeta, popupState, sentOf, snapshotReply } from '../../testing'
+import { everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentOf, snapshotReply } from '../../testing'
 import { applyTheme, THEME_MIRROR_KEY } from '../../theme'
 
 afterEach(() => {
@@ -190,6 +190,42 @@ describe('Folders', () => {
 		await waitFor(() => expect(sentOf(sent, 'folder.delete')).toEqual([{ kind: 'folder.delete', accountId: 'a1', id: 'o', plan: { mode: 'plain' } }]))
 	})
 
+	it('shows the children read it kept, and drops an error once a read succeeds', async () => {
+		let reads = 0
+		const { user } = await openFolders({
+			snapshot: snapshotReply({ folders: [old], items: [] }),
+			replies: { 'folder.children': () => (++reads === 1 ? { ok: false, error: { code: 'server_error' } } : { ok: true, value: { directSecretCount: 0, subfolders: [] } }) },
+		})
+		await choose(user, 'Old', 'Delete')
+		// Under StrictMode the failing read belongs to the first mount, whose reply is dropped.
+		if (mounts() === 1) await user.click(within(await within(dialog()).findByRole('alert')).getByRole('button', { name: 'Try again' }))
+		expect(await within(dialog()).findByText('Delete Old? This cannot be undone.')).toBeTruthy()
+		expect(within(dialog()).queryByRole('alert')).toBeNull()
+	})
+
+	it('ignores a children reply that arrives after its read was dropped', async () => {
+		let answerFirst!: (reply: unknown) => void
+		let reads = 0
+		const { user } = await openFolders({
+			snapshot: snapshotReply({ folders: [old], items: [] }),
+			replies: {
+				'folder.children': () => (++reads === 1
+					? new Promise((resolve) => (answerFirst = resolve))
+					: { ok: true, value: { directSecretCount: 0, subfolders: [] } }),
+			},
+		})
+		await choose(user, 'Old', 'Delete')
+		const cascade = 'Delete Old and its 3 items, or move them to No folder?'
+		if (mounts() === 2) await within(dialog()).findByText('Delete Old? This cannot be undone.')
+		await act(async () => answerFirst({ ok: true, value: { directSecretCount: 3, subfolders: [] } }))
+		if (mounts() === 2) {
+			expect(within(dialog()).getByText('Delete Old? This cannot be undone.')).toBeTruthy()
+			expect(within(dialog()).queryByText(cascade)).toBeNull()
+		} else {
+			expect(await within(dialog()).findByText(cascade)).toBeTruthy()
+		}
+	})
+
 	it('counts a leaf folder\'s items on the server, archived and trashed ones included', async () => {
 		// The cache holds 1 live item; the server counts 3.
 		const { sent, user } = await openFolders({
@@ -199,18 +235,22 @@ describe('Folders', () => {
 		await choose(user, 'Old', 'Delete')
 		expect(await within(dialog()).findByText('Delete Old and its 3 items, or move them to No folder?')).toBeTruthy()
 		expect(dialog().textContent).toContain('Archived and trashed items count too.')
-		expect(sentOf(sent, 'folder.children')).toEqual([{ kind: 'folder.children', accountId: 'a1', id: 'o' }])
+		expect(sentOf(sent, 'folder.children')).toEqual(Array(mounts()).fill({ kind: 'folder.children', accountId: 'a1', id: 'o' }))
 		await user.click(within(dialog()).getByRole('button', { name: 'Move items to parent' }))
 		await waitFor(() => expect(sentOf(sent, 'folder.delete')).toEqual([{ kind: 'folder.delete', accountId: 'a1', id: 'o', plan: { mode: 'cascade', cascade: 'move' } }]))
 	})
 
 	it('re-reads the children when an item landed after they were read', async () => {
-		let reads = 0
+		let landed = 0
 		const { sent, user } = await openFolders({
 			snapshot: snapshotReply({ folders: [old], items: [] }),
 			replies: {
-				'folder.delete': (message: { plan: { mode: string } }) => (message.plan.mode === 'plain' ? { ok: false, error: { code: 'conflict' } } : { ok: true, value: null }),
-				'folder.children': () => ({ ok: true, value: { directSecretCount: reads++, subfolders: [] } }),
+				'folder.delete': (message: { plan: { mode: string } }) => {
+					if (message.plan.mode !== 'plain') return { ok: true, value: null }
+					landed = 1
+					return { ok: false, error: { code: 'conflict' } }
+				},
+				'folder.children': () => ({ ok: true, value: { directSecretCount: landed, subfolders: [] } }),
 			},
 		})
 		await choose(user, 'Old', 'Delete')
@@ -255,17 +295,20 @@ describe('Folders', () => {
 		await user.click(await within(dialog()).findByRole('button', { name: 'Delete' }))
 		expect(await within(dialog()).findByText(/^A folder you chose to keep has the same name.*, so nothing was deleted\./)).toBeTruthy()
 		expect(sentOf(sent, 'folder.delete')).toHaveLength(1)
-		expect(sentOf(sent, 'folder.children')).toHaveLength(1)
+		expect(sentOf(sent, 'folder.children')).toHaveLength(mounts())
 		await waitFor(() => expect(sentOf(sent, 'vault.sync')).toHaveLength(1))
 	})
 
 	it('asks again when a subfolder appeared since the children were read', async () => {
-		let reads = 0
+		let appeared = 0
 		const { sent, user } = await openFolders({
 			snapshot: snapshotReply({ folders: [work, clients] }),
 			replies: {
-				'folder.children': () => ({ ok: true, value: { directSecretCount: 0, subfolders: [{ id: 'c', name: 'Clients', secretCount: 0, subfolderCount: ++reads - 1 }] } }),
-				'folder.delete': { ok: false, error: { code: 'invalid' } },
+				'folder.children': () => ({ ok: true, value: { directSecretCount: 0, subfolders: [{ id: 'c', name: 'Clients', secretCount: 0, subfolderCount: appeared }] } }),
+				'folder.delete': () => {
+					appeared = 1
+					return { ok: false, error: { code: 'invalid' } }
+				},
 			},
 		})
 		await choose(user, 'Work', 'Delete')
@@ -274,7 +317,7 @@ describe('Folders', () => {
 		expect(await within(dialog()).findByText('This folder changed. Check the choices again.')).toBeTruthy()
 		await user.click(within(dialog()).getByRole('button', { name: 'Try again' }))
 		expect(await within(dialog()).findByLabelText('Clients, 0 items, 1 subfolder')).toBeTruthy()
-		expect(sentOf(sent, 'folder.children')).toHaveLength(2)
+		expect(sentOf(sent, 'folder.children')).toHaveLength(mounts() + 1)
 	})
 
 	it('disables every change while offline but still shows the tree', async () => {

@@ -1,6 +1,8 @@
 import { MAX_ACCOUNTS, type AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
+import { clearPolicy, generatorOptionsKey, generatorPolicyKey } from '@/src/generator/store'
+import { provenCertificateKey } from '@/src/vault/certificate'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { clearSnapshot } from '@/src/vault/store'
 import { forgetVerifiedPartners } from '@/src/vault/verified-partners'
@@ -134,16 +136,20 @@ async function isActive(accountId: string): Promise<boolean> {
  */
 export async function markLoggedOut(accountId: string, revoked = false): Promise<void> {
 	await updateAccount(accountId, { appPassword: null, revoked })
-	await clearKey(accountId)
+	await clearKey(accountId, { sealed: 'drop' })
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove(suiteKey(accountId))
+	await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
+	await clearPolicy(accountId)
 	await announceLock(await isActive(accountId))
 }
 
+/** `clearKey` takes the generator history, sealed values too, with the key. */
 async function purge(accountId: string): Promise<void> {
-	await clearKey(accountId)
+	await clearKey(accountId, { sealed: 'drop' })
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove([suiteKey(accountId), settingsKey(accountId), folderNoticeKey(accountId)])
+	await browser.storage.local.remove([
+		suiteKey(accountId), provenCertificateKey(accountId), settingsKey(accountId), folderNoticeKey(accountId), generatorOptionsKey(accountId), generatorPolicyKey(accountId),
+	])
 }
 
 /** Manual "Log out": the account is gone. The host permission is kept (another account may share it). */

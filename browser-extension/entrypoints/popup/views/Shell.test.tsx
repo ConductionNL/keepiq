@@ -1,12 +1,19 @@
 // @vitest-environment happy-dom
-import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { generate } from '@/src/generator/generate'
 import App from '../App'
-import { editableItem, everythingVisible, fakeBackground, itemMeta, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
+import { editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
+
+vi.mock('@/src/generator/generate', async (original) => ({ ...await original<typeof import('@/src/generator/generate')>(), generate: vi.fn() }))
 
 afterEach(cleanup)
 beforeEach(everythingVisible)
+beforeEach(() => {
+	let counter = 0
+	vi.mocked(generate).mockImplementation(async (kind) => ({ ok: true, value: `${kind}-${++counter}` }))
+})
 
 const title = () => screen.findByRole('heading', { level: 1 })
 
@@ -24,15 +31,15 @@ describe('Shell', () => {
 		expect(tabs[0]!.getAttribute('aria-current')).toBe('page')
 	})
 
-	it('switches tabs, shows the placeholder and remembers the tab', async () => {
+	it('switches tabs, shows the sends and remembers the tab', async () => {
 		const sent = fakeBackground()
 		render(<App />)
 		await title()
-		await userEvent.setup().click(screen.getByRole('button', { name: 'Generator' }))
-		expect((await title()).textContent).toBe('Generator')
-		expect(screen.getByText('This arrives in a later update.')).toBeTruthy()
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Send' }))
+		expect((await title()).textContent).toBe('Send')
+		expect(await screen.findByText('No sends yet')).toBeTruthy()
 		expect(screen.queryByRole('searchbox')).toBeNull()
-		expect(sent).toHaveBeenCalledWith({ kind: 'popup.lastTab.set', tab: 'generator' })
+		expect(sent).toHaveBeenCalledWith({ kind: 'popup.lastTab.set', tab: 'send' })
 	})
 
 	it('reopens on the last tab from its first frame', async () => {
@@ -85,8 +92,9 @@ describe('Shell', () => {
 
 	it('re-reads the state when the background broadcasts a lock', async () => {
 		const sent = fakeBackground()
-		const listeners: Array<(message: unknown) => void> = []
-		vi.spyOn(browser.runtime.onMessage, 'addListener').mockImplementation((listener) => void listeners.push(listener as never))
+		const listeners = new Set<(message: unknown) => void>()
+		vi.spyOn(browser.runtime.onMessage, 'addListener').mockImplementation((listener) => void listeners.add(listener as never))
+		vi.spyOn(browser.runtime.onMessage, 'removeListener').mockImplementation((listener) => void listeners.delete(listener as never))
 		render(<App />)
 		await title()
 		const before = sentKinds(sent).filter((kind) => kind === 'vault.status').length
@@ -138,7 +146,7 @@ describe('Shell', () => {
 		expect(screen.queryByText('Login credentials')).toBeNull()
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		await screen.findByText('Login credentials')
-		expect(sent.mock.calls.filter(([m]) => m.kind === 'item.decrypt' && m.fields?.includes('key'))).toHaveLength(2)
+		expect(sent.mock.calls.filter(([m]) => m.kind === 'item.decrypt' && m.fields?.includes('key'))).toHaveLength(2 * mounts())
 	})
 
 	it('decrypts again when an item is reopened', async () => {
@@ -152,7 +160,7 @@ describe('Shell', () => {
 		await user.click(screen.getByRole('button', { name: 'Back' }))
 		await open()
 		await screen.findByText('Login credentials')
-		expect(detailDecrypts()).toBe(2)
+		expect(detailDecrypts()).toBe(2 * mounts())
 	})
 
 	it('launches a website in the window of the tab the popup belongs to', async () => {
@@ -439,5 +447,140 @@ describe('the share-save note after a save', () => {
 		await vi.waitFor(() => expect(sentOf(sent, 'item.update')).toHaveLength(2))
 		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
 		expect(notes()).toEqual([])
+	})
+})
+
+describe('the generator', () => {
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')
+	const tabBar = () => screen.queryByRole('navigation', { name: 'Main' })
+	const input = (label: string) => screen.getByLabelText(label) as HTMLInputElement
+	const enabled = (name: string) => waitFor(() => {
+		const button = screen.getByRole('button', { name }) as HTMLButtonElement
+		expect(button.disabled).toBe(false)
+		return button
+	})
+
+	it('shows on its tab, with its history as a page over the tab bar', async () => {
+		fakeBackground({ lastTab: 'generator' })
+		render(<App />)
+		expect((await title()).textContent).toBe('Generator')
+		await enabled('Copy password')
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'Generator history' }))
+		expect((await title()).textContent).toBe('Generator history')
+		expect(screen.getByText('No generated values yet')).toBeTruthy()
+		expect(tabBar()).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Generator')
+		expect(tabBar()).toBeTruthy()
+	})
+
+	it('leaves the history page when another tab is picked', async () => {
+		fakeBackground({ lastTab: 'generator' })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'Generator history' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(screen.getByRole('button', { name: 'Vault' }))
+		await user.click(screen.getByRole('button', { name: 'Generator' }))
+		expect((await title()).textContent).toBe('Generator')
+	})
+
+	it('fills the password from pick mode and keeps the rest of the draft', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Name'), 'Bank')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		expect((await title()).textContent).toBe('Generator')
+		expect(within(screen.getByRole('tablist')).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Password', 'Passphrase'])
+		// The form waits hidden, and its Save and Cancel leave the bar.
+		expect(input('Name').closest('[hidden]')).not.toBeNull()
+		expect(within(footer()!).queryByRole('button', { name: 'Save' })).toBeNull()
+		expect(tabBar()).toBeNull()
+
+		await user.click(await enabled('Use this password'))
+		expect((await title()).textContent).toBe('New item')
+		expect(input('Name').value).toBe('Bank')
+		expect(input('Password').value).toBe('password-1')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+		expect(within(footer()!).getByRole('button', { name: 'Save' })).toBeTruthy()
+	})
+
+	it('offers only usernames for the username, and Back leaves the field as it was', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Username'), 'alice')
+		await user.click(screen.getByRole('button', { name: 'Generate username' }))
+		expect((await title()).textContent).toBe('Generator')
+		expect(screen.queryByRole('tablist')).toBeNull()
+		await enabled('Use this username')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('New item')
+		expect(input('Username').value).toBe('alice')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate username' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+	})
+
+	it('still asks before the account switcher drops a form left in pick mode, and Discard ends pick mode with it', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Name'), 'Draft')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await user.click(screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' }))
+		await user.click(within(screen.getByRole('dialog', { name: 'Unsaved changes' })).getByRole('button', { name: 'Discard' }))
+		expect((await title()).textContent).toBe('Accounts')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByRole('button', { name: 'Use this password' })).toBeNull()
+		expect(screen.queryByLabelText('Name')).toBeNull()
+	})
+
+	it('still asks before Pop out drops a form left in pick mode', async () => {
+		const sent = fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Name'), 'Draft')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await user.click(screen.getByRole('button', { name: 'Pop out' }))
+		expect(screen.getByRole('dialog', { name: 'Unsaved changes' })).toBeTruthy()
+		expect(sentOf(sent, 'popup.popout')).toEqual([])
+	})
+
+	it('leaves the password as it was on Back', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Password'), 'mine')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await enabled('Use this password')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('New item')
+		expect(input('Password').value).toBe('mine')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+	})
+
+	it('fills the username of a database item being edited', async () => {
+		fakeBackground({
+			snapshot: snapshotReply({ items: [itemMeta({ typeId: 't-database' })], types: [...snapshotReply().types, { id: 't-database', name: 'database', label: 'Database' }] }),
+			decrypted: { i1: { login: 'alice', key: 'pw' } },
+			items: { i1: editableItem({ typeId: 't-database', typeName: 'database' }) },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()!).getByRole('button', { name: 'Edit' }))
+		expect(input('Username').value).toBe('alice')
+		await user.click(screen.getByRole('button', { name: 'Generate username' }))
+		await user.click(await enabled('Use this username'))
+		expect((await title()).textContent).toBe('Edit item')
+		expect(input('Username').value).toBe('username-1')
 	})
 })

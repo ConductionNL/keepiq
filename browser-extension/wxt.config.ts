@@ -73,6 +73,11 @@ export default defineConfig({
 			action: {
 				default_title: `Keepiq${nameSuffix}`,
 			},
+			// Argon2id for send passwords is WebAssembly. Dev builds get this from WXT, production
+			// only from here; WXT turns the object into MV2's string.
+			content_security_policy: {
+				extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+			},
 			browser_specific_settings: {
 				gecko: {
 					id: 'keepiq@conduction.nl',

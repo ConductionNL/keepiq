@@ -15,7 +15,7 @@ npm install            # postinstall runs `wxt prepare`, which generates .wxt/
 npm run dev            # Chromium dev + HMR, starts the test site and opens a browser on it. runs as a watcher, does not end unless on purpose or it crashes
 npm run dev:firefox    # Firefox dev (MV2) + HMR
 npm run test-site      # the test site alone, http://localhost:8100
-npm test               # vitest: unit and popup component tests
+npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
 npm run typecheck      # tsc --noEmit — does not build or catch MV drift
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/

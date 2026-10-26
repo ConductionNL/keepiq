@@ -125,8 +125,9 @@ function DeleteFolderDialog({ folder, snapshot, onDeleted, onCancel }: { folder:
 	}
 
 	function showChildren(reply: WriteResult<FolderChildren> | undefined) {
-		if (reply?.ok) return setState(stageFor(reply.value))
-		fail(reply?.error, 'children')
+		if (!reply?.ok) return fail(reply?.error, 'children')
+		setFailure(null)
+		setState(stageFor(reply.value))
 	}
 
 	async function loadChildren() {
@@ -135,7 +136,13 @@ function DeleteFolderDialog({ folder, snapshot, onDeleted, onCancel }: { folder:
 	}
 
 	useEffect(() => {
-		void request({ kind: 'folder.children', accountId, id: folder.id }).then(showChildren)
+		let live = true
+		void request({ kind: 'folder.children', accountId, id: folder.id }).then((reply) => {
+			if (live) showChildren(reply)
+		})
+		return () => {
+			live = false
+		}
 		// Once, for the folder the dialog opened on.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])

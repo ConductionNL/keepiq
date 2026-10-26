@@ -1,14 +1,14 @@
 import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
 import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId,
-	listAccounts, MAX_ACCOUNTS, removeAccount, removeAllAccounts, setActive, updateAccount,
+	listAccounts, MAX_ACCOUNTS, removeAccount, removeAllAccounts, setActive, updateAccount, type AccountRecord,
 } from '@/src/accounts/store'
 import { verifyCredentials } from '@/src/accounts/verify'
 import { readLastTab } from '@/src/background/requests'
 import { Failure } from '@/src/failure'
 import type { AccountSummary, NoticeCode, PopupScreen, PopupState, PopupToBackground, Result } from '@/src/messages'
 import { enforce, syncAlarm, touch } from '@/src/vault/timeout'
-import { sync } from '@/src/vault/sync'
+import { refreshPolicy, sync } from '@/src/vault/sync'
 import { checkSuite, lock, lockAll, unlock } from '@/src/vault/unlock'
 
 export async function buildState(): Promise<PopupState> {
@@ -50,13 +50,15 @@ async function add(serverUrl: string, username: string, appPassword: string): Pr
 	// Checked again by `addAccount`; this one saves the round trip.
 	if ((await listAccounts()).length >= MAX_ACCOUNTS) throw new Failure('limit_reached')
 	const { suite, ...identity } = await verifyCredentials(normalized.serverUrl, username.trim(), appPassword)
+	let added: AccountRecord
 	try {
-		await addAccount({ serverUrl: normalized.serverUrl, ...identity, appPassword }, suite)
+		added = await addAccount({ serverUrl: normalized.serverUrl, ...identity, appPassword }, suite)
 	} catch (error) {
 		if (error instanceof DuplicateAccount) throw new Failure('duplicate')
 		if (error instanceof AccountLimitReached) throw new Failure('limit_reached')
 		throw error
 	}
+	void refreshPolicy(added.id)
 }
 
 async function reauthenticate(accountId: string, appPassword: string): Promise<void> {
@@ -74,6 +76,7 @@ async function reauthenticate(accountId: string, appPassword: string): Promise<v
 		keepiqVersion: verified.keepiqVersion,
 	})
 	await checkSuite(accountId, verified.suite)
+	void refreshPolicy(accountId)
 }
 
 async function perform(message: PopupToBackground): Promise<void> {

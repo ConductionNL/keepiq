@@ -27,9 +27,10 @@
  */
 
 import axios from '@nextcloud/axios'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import KeyGeneratorModal from '../../src/dialogs/KeyGeneratorModal.vue'
+import { resetPolicyCache } from '../../src/policy/policy.js'
 
 const ncStubs = {
 	NcDialog: {
@@ -72,6 +73,7 @@ const ncStubs = {
 describe('KeyGeneratorModal', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
+		resetPolicyCache()
 	})
 
 	it('generate(): makes no request and follows the basic options', async () => {
@@ -137,6 +139,23 @@ describe('KeyGeneratorModal', () => {
 
 		expect(wrapper.vm.generatedKey).toHaveLength(30)
 		expect(wrapper.vm.generatedKey).toMatch(/[0-9]/)
+	})
+
+	it('mounted(): a policy floor above 128 starts the length at 128', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { policy_enabled: true, generator_min_length: 200 },
+		})
+		const wrapper = mount(KeyGeneratorModal, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+		await flushPromises()
+
+		expect(wrapper.vm.minLength).toBe(128)
+		expect(Number(wrapper.vm.lengthInput)).toBe(128)
+		await wrapper.vm.generate()
+		expect(wrapper.vm.error).toBeNull()
+		expect(wrapper.vm.generatedKey).toHaveLength(128)
 	})
 
 	it('generate(): passphrase mode makes words from the options, without a request', async () => {
