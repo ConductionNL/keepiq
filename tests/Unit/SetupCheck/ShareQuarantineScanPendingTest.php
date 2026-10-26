@@ -41,14 +41,14 @@ class ShareQuarantineScanPendingTest extends TestCase {
 	/**
 	 * The check over a scanner whose completion key holds the given value.
 	 *
-	 * @param string $completedAt The stored completion key ('' when unset)
+	 * @param string $completed The stored completion key, the generation a pass completed in ('' when unset)
 	 *
 	 * @return ShareQuarantineScanPending
 	 */
-	private function check(string $completedAt): ShareQuarantineScanPending {
+	private function check(string $completed): ShareQuarantineScanPending {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => ($key === ShareQuarantineScanner::COMPLETED_KEY && $completedAt !== '' ? $completedAt : $default)
+			static fn (string $app, string $key, string $default = ''): string => ($key === ShareQuarantineScanner::COMPLETED_KEY && $completed !== '' ? $completed : $default)
 		);
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
@@ -66,29 +66,32 @@ class ShareQuarantineScanPendingTest extends TestCase {
 	}//end check()
 
 	/**
-	 * While no pass has completed, the admin overview warns and points at the
-	 * background job and the log.
+	 * While no pass has completed, the admin overview warns that planted rows
+	 * are still exploitable and points at the background job and the log.
 	 *
 	 * @return void
 	 */
 	public function testWarnsWhileTheScanIsPending(): void {
-		$result = $this->check(completedAt: '')->run();
+		$result = $this->check(completed: '')->run();
 
 		$this->assertSame(SetupResult::WARNING, $result->getSeverity());
-		$this->assertStringContainsString('not quarantined yet', (string)$result->getDescription());
+		$this->assertStringContainsString('not quarantined and can still be used against other users\' secrets', (string)$result->getDescription());
+		$this->assertStringContainsString('urgent', (string)$result->getDescription());
 		$this->assertStringContainsString('ShareQuarantineScanJob', (string)$result->getDescription());
 		$this->assertStringContainsString('log', (string)$result->getDescription());
 	}//end testWarnsWhileTheScanIsPending()
 
 	/**
-	 * Once a pass has completed, the check passes.
+	 * Once a pass has completed in the current generation, the check passes; a
+	 * pass of an earlier generation does not count.
 	 *
 	 * @return void
 	 */
 	public function testPassesOnceTheScanCompleted(): void {
-		$check = $this->check(completedAt: '2026-10-26T12:00:00+00:00');
+		$check = $this->check(completed: ShareQuarantineScanner::INITIAL_GENERATION);
 
 		$this->assertSame(SetupResult::SUCCESS, $check->run()->getSeverity());
 		$this->assertSame('security', $check->getCategory());
+		$this->assertSame(SetupResult::WARNING, $this->check(completed: 'an-earlier-generation')->run()->getSeverity());
 	}//end testPassesOnceTheScanCompleted()
 }//end class

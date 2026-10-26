@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
@@ -38,10 +39,14 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareGrantReader;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception as DbException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -139,11 +144,12 @@ class DirectShareRegistrarTest extends TestCase {
 	 * The real authorization service over this test's mappers, with active
 	 * delegations given as "secretId/userId".
 	 *
-	 * @param list<string> $delegates The active delegations
+	 * @param list<string>                  $delegates    The active delegations
+	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy
 	 *
 	 * @return ShareAuthorizationService
 	 */
-	private function realAuthorization(array $delegates): ShareAuthorizationService {
+	private function realAuthorization(array $delegates, ?ShareGrantReader $grants = null): ShareAuthorizationService {
 		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
 		$delegationMapper->method('findActiveBySecretAndUser')->willReturnCallback(
 			static function (string $secretId, string $userId) use ($delegates): SecretDelegation {
@@ -160,6 +166,7 @@ class DirectShareRegistrarTest extends TestCase {
 			delegationMapper: $delegationMapper,
 			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 			shareTargetMapper: $this->mapper,
+			grants: $grants,
 		);
 	}//end realAuthorization()
 
@@ -673,6 +680,71 @@ class DirectShareRegistrarTest extends TestCase {
 
 		$this->assertSame('restricted', $report[0]['status']);
 	}//end testADelegateWithARestrictedCopyIsRefused()
+
+	/**
+	 * Dave's grants on src-1: his direct share (full, with the given end
+	 * date) and a use-only group share without an end date that he is in.
+	 * His copy reads as full and permanent either way.
+	 *
+	 * @return array<string,array{0:string|null,1:string}>
+	 */
+	public static function delegateGrants(): array {
+		return [
+			'full direct grant ended, use-only group grant left' => ['-1 hour', 'restricted'],
+			'full direct grant ends tomorrow, use-only group grant' => ['+1 day', 'restricted'],
+			'full permanent direct grant, use-only group grant' => [null, 'created'],
+		];
+	}//end delegateGrants()
+
+	/**
+	 * A delegate mints a full copy through register-batch only while one of
+	 * their own grants is unrestricted on its own: a full grant that ends
+	 * does not count, even beside a permanent use-only one
+	 * (GHSA-m5p9-6pw7-pf3g).
+	 *
+	 * @param string|null $directEndsAt When dave's direct share ends
+	 * @param string      $status       The registration status
+	 *
+	 * @return void
+	 */
+	#[DataProvider('delegateGrants')]
+	public function testADelegateMayRegisterAFullShareOnlyOnAnUnrestrictedGrant(?string $directEndsAt, string $status): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$daveRow = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$daveRow->setExpiresAt($directEndsAt === null ? null : new DateTime($directEndsAt));
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			static fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $daveRow
+				: throw new DoesNotExistException('none'))
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-1');
+		$groupShare->setSecretId('src-1');
+		$groupShare->setGroupId('team');
+		$groupShare->setUseOnly(true);
+		$groupShares = $this->createMock(GroupShareMapper::class);
+		$groupShares->method('findBySecret')->willReturn([$groupShare]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'dave' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+		$grants = new ShareGrantReader(
+			secretMapper: $this->secretMapper,
+			groupShareMapper: $groupShares,
+			teamFolders: $teamFolders,
+			groupManager: $groups,
+		);
+
+		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave'], $grants))->registerDirectShares(
+			userId: 'dave',
+			shares: [['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'blob']]
+		);
+
+		$this->assertSame($status, $report[0]['status']);
+	}//end testADelegateMayRegisterAFullShareOnlyOnAnUnrestrictedGrant()
 
 	/**
 	 * A received copy may never be a share source: a recipient cannot re-share a

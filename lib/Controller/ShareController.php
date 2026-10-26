@@ -29,6 +29,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
@@ -151,6 +152,19 @@ class ShareController extends OCSController {
 				restriction: $restriction,
 				userId: $user->getUID()
 			);
+		} catch (ForbiddenException $e) {
+			// A delegate's copy from another organisation.
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (ShareScanPendingException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		} catch (ConflictException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_quarantined', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		}
@@ -178,6 +192,11 @@ class ShareController extends OCSController {
 
 		try {
 			$this->shareService->revokeShare(shareId: $id, userId: $user->getUID());
+		} catch (ShareScanPendingException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (ConflictException $e) {
 			return new JSONResponse(
 				data: ['error' => 'share_quarantined', 'message' => $e->getMessage()],

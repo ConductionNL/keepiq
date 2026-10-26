@@ -36,6 +36,12 @@ use OCP\IDBConnection;
  * match quarantined rows too: they never touch a copy.
  *
  * @extends QBMapper<ShareTarget>
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ *   A mapper's public surface is its query set. The eleventh, findPage(),
+ *   lets the share quarantine scan job resolve every live copy a page at a
+ *   time; splitting share-row queries across two mappers over one table
+ *   would only move them.
  */
 class ShareTargetMapper extends QBMapper {
 	use ExpiringGrantQueries;
@@ -104,6 +110,26 @@ class ShareTargetMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findByTargetUser()
+
+	/**
+	 * One page of live share targets, by id.
+	 *
+	 * @param string $after The last id of the previous page ('' for the first)
+	 * @param int    $limit The page size
+	 *
+	 * @return ShareTarget[]
+	 */
+	public function findPage(string $after, int $limit): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->gt('id', $qb->createNamedParameter($after)))
+			->andWhere($qb->expr()->isNull('quarantined_at'))
+			->orderBy('id', 'ASC')
+			->setMaxResults($limit);
+
+		return $this->findEntities(query: $qb);
+	}//end findPage()
 
 	/**
 	 * Delete all share targets for a given source secret (cascade).

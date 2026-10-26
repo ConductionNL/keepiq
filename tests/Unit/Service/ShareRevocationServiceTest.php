@@ -215,4 +215,64 @@ class ShareRevocationServiceTest extends TestCase {
 
 		$this->service->revokeShare(shareId: 'st-1', userId: 'alice');
 	}
+
+	/**
+	 * An id that is neither a live nor a quarantined row is "not found".
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownIdIsNotFound(): void {
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('none'));
+		$this->quarantined->method('findQuarantinedById')->willThrowException(new DoesNotExistException('none'));
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('Share not found');
+		$this->service->revokeShare(shareId: 'st-unknown', userId: 'alice');
+	}
+
+	/**
+	 * A quarantined row whose source is gone is "not found": no owner or
+	 * delegate is left to tell.
+	 *
+	 * @return void
+	 */
+	public function testAQuarantinedRowWhoseSourceIsGoneIsNotFound(): void {
+		$auth = $this->createMock(ShareAuthorizationService::class);
+		$auth->method('loadSecret')->willThrowException(new \InvalidArgumentException('Secret not found'));
+		$auth->expects($this->never())->method('isOwnerOrDelegate');
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('quarantined'));
+		$this->quarantined->method('findQuarantinedById')->willReturn($this->row('victim', 'victim'));
+		$service = new ShareRevocationService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			db: $this->createMock(IDBConnection::class),
+			logger: $this->createMock(LoggerInterface::class),
+			auth: $auth,
+			quarantined: $this->quarantined,
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('Share not found');
+		$service->revokeShare(shareId: 'st-1', userId: 'alice');
+	}
+
+	/**
+	 * Without the quarantine mapper, an unknown id is "not found" too.
+	 *
+	 * @return void
+	 */
+	public function testWithoutTheQuarantineMapperAnUnknownIdIsNotFound(): void {
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('none'));
+		$service = new ShareRevocationService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			db: $this->createMock(IDBConnection::class),
+			logger: $this->createMock(LoggerInterface::class),
+			auth: $this->auth,
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('Share not found');
+		$service->revokeShare(shareId: 'st-unknown', userId: 'alice');
+	}
 }

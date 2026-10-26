@@ -42,6 +42,9 @@ use OCP\EventDispatcher\IEventDispatcher;
  * Lists, releases and drops quarantined share rows.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A release judges the row against its copy, its group share and the
+ *   live shares, and every release or drop is audited; each collaborator is one of those.
  */
 class ShareQuarantineService {
 	/**
@@ -199,20 +202,10 @@ class ShareQuarantineService {
 			$reasons[] = 'its copy was shared before the row existed, the mark of a planted row';
 		}
 
-		// Only a copy that is gone or held by the row's creator, as a legacy
-		// two-step client left it, is released without force. A copy the
-		// recipient holds cannot be told apart from their own secret, which
-		// revoking the released share deletes.
-		$copy = $this->copyOf(row: $row);
-		if ($copy !== null && $row->isHeldByTarget(copy: $copy) === true) {
-			if ($row->getQuarantineReason() === ShareQuarantineScanner::REASON_COPY_CREATED_AS_SECRET) {
-				$reasons[] = 'its copy was created as a secret of its own and belongs to the recipient, the mark of a planted row';
-			} else {
-				$reasons[] = 'its copy belongs to the recipient and may be their own secret, which revoking the released share deletes';
-			}
-		} elseif ($copy !== null && ($copy->getOwnerType() !== 'user' || $copy->getOwnerId() !== $row->getCreatedBy())) {
-			$reasons[] = 'its copy is held by '.$copy->getOwnerType().' '.$copy->getOwnerId()
-				.', neither the recipient nor the row\'s creator, so it may be that holder\'s own secret';
+		$copy   = $this->copyOf(row: $row);
+		$holder = $this->holderReason(row: $row, copy: $copy);
+		if ($holder !== null) {
+			$reasons[] = $holder;
 		}
 
 		if ($this->mapper->findBySourceSecret(sourceSecretId: $row->getSecretId()) !== []) {
@@ -239,6 +232,39 @@ class ShareQuarantineService {
 				.'. To keep the copy, drop the row instead, with --clear-restrictions to lift the copy\'s restrictions'
 		);
 	}//end assertReleasableWithoutForce()
+
+	/**
+	 * Why the copy's holder makes a release need --force, or null. Only a copy
+	 * that is gone or held by the row's creator, as a legacy two-step client
+	 * left it, is released without force. A copy the recipient holds cannot be
+	 * told apart from their own secret, which revoking the released share
+	 * deletes.
+	 *
+	 * @param ShareTarget $row  The quarantined row
+	 * @param Secret|null $copy Its copy, or null when it is gone
+	 *
+	 * @return string|null
+	 */
+	private function holderReason(ShareTarget $row, ?Secret $copy): ?string {
+		if ($copy === null) {
+			return null;
+		}
+
+		if ($row->isHeldByTarget(copy: $copy) === true) {
+			if ($row->getQuarantineReason() === ShareQuarantineScanner::REASON_COPY_CREATED_AS_SECRET) {
+				return 'its copy was created as a secret of its own and belongs to the recipient, the mark of a planted row';
+			}
+
+			return 'its copy belongs to the recipient and may be their own secret, which revoking the released share deletes';
+		}
+
+		if ($copy->getOwnerType() !== 'user' || $copy->getOwnerId() !== $row->getCreatedBy()) {
+			return 'its copy is held by '.$copy->getOwnerType().' '.$copy->getOwnerId()
+				.', neither the recipient nor the row\'s creator, so it may be that holder\'s own secret';
+		}
+
+		return null;
+	}//end holderReason()
 
 	/**
 	 * The earliest access end date among the row's own, the group share it is

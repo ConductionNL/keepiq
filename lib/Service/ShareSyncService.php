@@ -33,6 +33,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
@@ -43,6 +44,10 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Pushes an updated encrypted blob to every recipient of a secret.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A sync authorizes, locks, versions, audits and writes every copy in
+ *   one transaction, and asks the pending share quarantine scan before each copy write (GHSA-m5p9-6pw7-pf3g).
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: each is one collaborator of that transaction.
  */
 class ShareSyncService {
 	use TTransactional;
@@ -81,6 +86,7 @@ class ShareSyncService {
 	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user copy writes)
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -96,6 +102,7 @@ class ShareSyncService {
 		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
 		private ?LoggerInterface $logger = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -110,8 +117,8 @@ class ShareSyncService {
 	 * `updatedAt`, moves that version and writes every recipient copy in a
 	 * single transaction, and clears `possiblyCompromisedAt` from any copy
 	 * where it was set. A sync by anyone but the owner is audited on the
-	 * source in that transaction. A member of a group the secret is shared
-	 * with gets share-save's guards (ShareSyncGuards).
+	 * source in that transaction. No row may be named twice. A member of a
+	 * group the secret is shared with gets share-save's guards (ShareSyncGuards).
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
@@ -139,6 +146,7 @@ class ShareSyncService {
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
+		$this->guards->assertNoDuplicates(updates: $updates);
 
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
@@ -347,12 +355,10 @@ class ShareSyncService {
 	): int {
 		// Defence in depth: the share row that owns each recipient copy, so a
 		// copy whose row does not genuinely belong to its target (a poisoned or
-		// drifted `secret_id`) is skipped rather than overwritten. The source
-		// row itself carries no share row and is always writable.
-		$shareRows = [];
-		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
-			$shareRows[$shareRow->getSecretId()] = $shareRow;
-		}
+		// drifted `secret_id`) is skipped rather than overwritten, and so is the
+		// copy of a row the pending quarantine scan holds back. The source row
+		// itself carries no share row and is always writable.
+		$shareRows = $this->shareRowsByCopy(source: $source);
 
 		$updated = 0;
 		foreach ($updates as $update) {
@@ -367,15 +373,10 @@ class ShareSyncService {
 				continue;
 			}
 
-			if ($recipientSecretId !== $source->getId()) {
-				$shareRow = ($shareRows[$recipientSecretId] ?? null);
-				if ($shareRow === null || $shareRow->isHeldByTarget(copy: $copy) === false) {
-					$this->logger?->warning(
-						'Skipped a sync write to a copy not held by its share target',
-						['app' => 'keepiq', 'secretId' => $recipientSecretId, 'sourceSecretId' => $source->getId()]
-					);
-					continue;
-				}
+			if ($recipientSecretId !== $source->getId()
+				&& $this->mayWriteCopy(source: $source, copy: $copy, shareRow: ($shareRows[$recipientSecretId] ?? null)) === false
+			) {
+				continue;
 			}
 
 			$preUpdate = clone $copy;
@@ -395,6 +396,46 @@ class ShareSyncService {
 
 		return $updated;
 	}//end writeCopyBlobs()
+
+	/**
+	 * The live share rows of a source, keyed by the copy each names.
+	 *
+	 * @param Secret $source The source secret being synced
+	 *
+	 * @return array<string,ShareTarget>
+	 */
+	private function shareRowsByCopy(Secret $source): array {
+		$shareRows = [];
+		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+			$shareRows[$shareRow->getSecretId()] = $shareRow;
+		}
+
+		return $shareRows;
+	}//end shareRowsByCopy()
+
+	/**
+	 * Whether a sync may write a recipient copy: its share row's target holds
+	 * it, and the pending quarantine scan does not hold the row back.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param Secret $copy The recipient copy
+	 * @param ShareTarget|null $shareRow The share row naming the copy, or null when none does
+	 *
+	 * @return bool
+	 */
+	private function mayWriteCopy(Secret $source, Secret $copy, ?ShareTarget $shareRow): bool {
+		if ($shareRow !== null
+			&& ($this->quarantineScan?->mayTouchCopy(row: $shareRow, copy: $copy) ?? $shareRow->isHeldByTarget(copy: $copy)) === true
+		) {
+			return true;
+		}
+
+		$this->logger?->warning(
+			'Skipped a sync write to a copy its share target does not hold, or the pending quarantine scan holds back',
+			['app' => 'keepiq', 'secretId' => $copy->getId(), 'sourceSecretId' => $source->getId()]
+		);
+		return false;
+	}//end mayWriteCopy()
 
 	/**
 	 * Keep a written row's state before the write as a version, with the

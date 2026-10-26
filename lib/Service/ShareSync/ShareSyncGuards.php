@@ -253,12 +253,32 @@ class ShareSyncGuards {
 			foreach ($updates as $update) {
 				$parser->assertKeyNotEmpty(entry: $update);
 			}
+		} catch (ShareSaveRefusal $refusal) {
+			throw new InvalidArgumentException(message: $refusal->getMessage());
+		}
 
+		$this->assertNoDuplicates(updates: $updates);
+	}//end assertBody()
+
+	/**
+	 * Refuse a sync that names a row twice, whoever writes: each row is judged
+	 * once, so a later entry cannot write a copy an earlier one held back.
+	 *
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a row is named twice
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 */
+	public function assertNoDuplicates(array $updates): void {
+		try {
 			(new ShareSaveEntries(copies: array_values($updates)))->assertNoDuplicates();
 		} catch (ShareSaveRefusal $refusal) {
 			throw new InvalidArgumentException(message: $refusal->getMessage());
 		}
-	}//end assertBody()
+	}//end assertNoDuplicates()
 
 	/**
 	 * Whether an update row carries ciphertext for its copy: a non-empty key,

@@ -43,6 +43,11 @@ use OCP\IGroupManager;
 
 /**
  * Authorization decisions for the secret-share lifecycle.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Every share path authorizes here, so the authorization surface stays
+ *   in one place; judging a delegate by the grants reaching their own copy (GHSA-m5p9-6pw7-pf3g) reads them through
+ *   ShareGrantReader.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: one rule set for every share path.
  */
 class ShareAuthorizationService {
 	/**
@@ -55,6 +60,7 @@ class ShareAuthorizationService {
 	 * @param ShareTargetMapper|null $shareTargetMapper Resolves a received copy to its source (keepiq#214)
 	 * @param GroupShareMapper|null $groupShareMapper The group shares of a source
 	 * @param IGroupManager|null $groupManager Whether a copy holder is in one of their groups
+	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy
 	 *
 	 * @return void
 	 *
@@ -68,6 +74,7 @@ class ShareAuthorizationService {
 		private ?ShareTargetMapper $shareTargetMapper = null,
 		private ?GroupShareMapper $groupShareMapper = null,
 		private ?IGroupManager $groupManager = null,
+		private ?ShareGrantReader $grants = null,
 	) {
 	}//end __construct()
 
@@ -140,10 +147,11 @@ class ShareAuthorizationService {
 	 * Refuse unless $userId owns the secret or is an active delegate of it,
 	 * the people whose share permits re-sharing (keepiq#214, a public link).
 	 * A received copy is owned by its recipient, so a copy is judged by its
-	 * SOURCE secret: a plain recipient fails, a delegate passes. A missing
-	 * secret and a foreign one get the same DoesNotExistException. Fails closed
-	 * when the share-target mapper is not wired. A delegate is judged on their
-	 * own copy whether they name it or the source (assertMayShareOnward()).
+	 * SOURCE secret: a plain recipient fails, a delegate passes, and a copy
+	 * someone else holds is not found. A missing secret and a foreign one get
+	 * the same DoesNotExistException. Fails closed when the share-target mapper
+	 * is not wired. A delegate is judged on their own copy whether they name it
+	 * or the source (assertMayShareOnward()).
 	 *
 	 * @param string $secretId The secret (source or received copy) id
 	 * @param string $userId   The acting user
@@ -170,6 +178,11 @@ class ShareAuthorizationService {
 		}
 
 		if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
+			throw new DoesNotExistException('Secret not found');
+		}
+
+		// A delegate shares from their own copy only, as on the other paths.
+		if ($copy !== $source && ($copy->getOwnerType() !== 'user' || $copy->getOwnerId() !== $userId)) {
 			throw new DoesNotExistException('Secret not found');
 		}
 
@@ -218,7 +231,11 @@ class ShareAuthorizationService {
 	 * owner is never refused here. Anyone else is judged by their own copy of
 	 * the source: it must be the one live copy they hold, and not use-only,
 	 * expiring or read-only. No copy (revoked or expired) or two copies
-	 * refuse, as there is no single grant to judge.
+	 * refuse, as there is no single grant to judge. One of the grants reaching
+	 * that copy must also be unrestricted on its own: the copy combines its
+	 * grants per dimension, so a full grant that ends and a use-only one that
+	 * does not read as unrestricted together, and neither may mint a full,
+	 * permanent copy.
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The sharing owner or delegate
@@ -235,7 +252,8 @@ class ShareAuthorizationService {
 			return;
 		}
 
-		$copy = null;
+		$target = null;
+		$copy   = null;
 		if ($this->shareTargetMapper !== null) {
 			try {
 				$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
@@ -248,11 +266,14 @@ class ShareAuthorizationService {
 			}
 		}
 
-		if ($copy === null) {
+		if ($target === null || $copy === null) {
 			throw new InvalidArgumentException(message: 'You hold no single copy of this secret to share it from');
 		}
 
 		$copy->assertOnwardShareable();
+		if ($this->grants?->hasUnrestrictedGrant(target: $target) === false) {
+			throw new InvalidArgumentException(message: Secret::ONWARD_SHARE_REFUSAL);
+		}
 	}//end assertMayShareOnward()
 
 	/**

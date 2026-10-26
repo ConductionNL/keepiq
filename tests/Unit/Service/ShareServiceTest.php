@@ -36,15 +36,19 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -1122,4 +1126,223 @@ class ShareServiceTest extends TestCase {
 			}
 		}
 	}//end testSyncUpdateRejectsReadAndUngraded()
+
+	/**
+	 * A ShareService whose authorization reads share rows, as the container
+	 * wires it. Alice owns src-1; dave is an active delegate of it and holds
+	 * his own direct copy, use-only or full; bob holds a use-only direct copy.
+	 *
+	 * @param bool                          $daveUseOnly  Whether dave's own copy is use-only
+	 * @param DateTime|null                 $daveEndsAt   The end date of dave's own share
+	 * @param ShareGrantReader|null         $grants       Judges dave's grants that have not ended
+	 *
+	 * @return ShareService
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The scenario switch.
+	 */
+	private function delegateScenario(
+		bool $daveUseOnly,
+		?DateTime $daveEndsAt = null,
+		?ShareGrantReader $grants = null,
+	): ShareService {
+		$rows = [
+			'dave' => $this->directRow(id: 'row-dave', target: 'dave', useOnly: $daveUseOnly),
+			'bob' => $this->directRow(id: 'row-bob', target: 'bob', useOnly: true),
+		];
+		$rows['dave']->setExpiresAt($daveEndsAt);
+		$secrets = [
+			'src-1' => $this->makeOwnerSecret(id: 'src-1', ownerId: 'alice'),
+			'copy-dave' => $this->makeOwnerSecret(id: 'copy-dave', ownerId: 'dave'),
+			'copy-bob' => $this->makeOwnerSecret(id: 'copy-bob', ownerId: 'bob'),
+		];
+		$secrets['copy-dave']->setUseOnly($daveUseOnly);
+		$secrets['copy-bob']->setUseOnly(true);
+
+		$this->mapper->method('findById')->willReturnCallback(
+			static fn (string $id): ShareTarget => ($rows[substr($id, 4)] ?? throw new DoesNotExistException('none'))
+		);
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			static fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($rows[$targetUserId] ?? throw new DoesNotExistException('none'))
+		);
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($secrets[$id] ?? throw new DoesNotExistException('none'))
+		);
+		$this->delegationMapper->method('findActiveBySecretAndUser')->willReturnCallback(
+			static fn (string $secretId, string $userId): SecretDelegation => ($secretId === 'src-1' && $userId === 'dave'
+				? new SecretDelegation()
+				: throw new DoesNotExistException('none'))
+		);
+
+		return new ShareService(
+			mapper: $this->mapper,
+			auth: new ShareAuthorizationService(
+				secretMapper: $this->secretMapper,
+				delegationMapper: $this->delegationMapper,
+				suiteMapper: $this->suiteMapper,
+				shareTargetMapper: $this->mapper,
+				grants: $grants,
+			),
+			directRegistrar: $this->createMock(DirectShareRegistrar::class),
+			syncService: $this->createMock(ShareSyncService::class),
+			revocationService: $this->createMock(ShareRevocationService::class),
+		);
+	}//end delegateScenario()
+
+	/**
+	 * A direct share row of src-1.
+	 *
+	 * @param string $id      The row id
+	 * @param string $target  The recipient
+	 * @param bool   $useOnly Whether the share is use-only
+	 *
+	 * @return ShareTarget
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A fixture field.
+	 */
+	private function directRow(string $id, string $target, bool $useOnly): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId($id);
+		$row->setSourceSecretId('src-1');
+		$row->setTargetUserId($target);
+		$row->setSecretId('copy-'.$target);
+		$row->setUseOnly($useOnly);
+		return $row;
+	}//end directRow()
+
+	/**
+	 * A delegate whose own copy is use-only cannot lift it through
+	 * PATCH /shares/{id} (GHSA-m5p9-6pw7-pf3g): the copy stays use-only.
+	 *
+	 * @return void
+	 */
+	public function testADelegateCannotLiftTheirOwnUseOnlyShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: true);
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$service->updateRestriction(shareId: 'row-dave', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+			$this->fail('dave lifted his own use-only share');
+		} catch (InvalidArgumentException) {
+			$this->assertTrue($this->secretMapper->findById('copy-dave')->getUseOnly());
+		}
+	}//end testADelegateCannotLiftTheirOwnUseOnlyShare()
+
+	/**
+	 * A delegate whose own copy is use-only cannot lift anyone else's
+	 * restriction either, as that would turn a restricted grant into a full
+	 * copy for someone else.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithAUseOnlyCopyCannotLiftAnotherRecipientsShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: true);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateWithAUseOnlyCopyCannotLiftAnotherRecipientsShare()
+
+	/**
+	 * A delegate never changes a share made to themselves, even when their
+	 * copy is full.
+	 *
+	 * @return void
+	 */
+	public function testADelegateCannotChangeAShareMadeToThem(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('You cannot change a share made to you');
+		$service->updateRestriction(shareId: 'row-dave', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateCannotChangeAShareMadeToThem()
+
+	/**
+	 * A delegate with a full copy of their own may still change another
+	 * recipient's share, as they could share a full copy anyway.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithAFullCopyMayChangeAnotherRecipientsShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
+
+		$updated = $service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+
+		$this->assertFalse($updated->getUseOnly());
+	}//end testADelegateWithAFullCopyMayChangeAnotherRecipientsShare()
+
+	/**
+	 * Dave's copy still reads as full because his full direct share ended an
+	 * hour ago and the expiry job has not removed it yet; the use-only group
+	 * share he is in is all that is left, so he is judged use-only.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWhoseFullGrantEndedIsJudgedOnTheGrantsLeft(): void {
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-1');
+		$groupShare->setSecretId('src-1');
+		$groupShare->setGroupId('team');
+		$groupShare->setUseOnly(true);
+		$this->groupShareMapper->method('findBySecret')->willReturn([$groupShare]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'dave' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		$service = $this->delegateScenario(
+			daveUseOnly: false,
+			daveEndsAt: new DateTime('-1 hour'),
+			grants: new ShareGrantReader(
+				secretMapper: $this->secretMapper,
+				groupShareMapper: $this->groupShareMapper,
+				teamFolders: $teamFolders,
+				groupManager: $groups,
+			),
+		);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateWhoseFullGrantEndedIsJudgedOnTheGrantsLeft()
+
+	/**
+	 * Dave's full direct share ends tomorrow and the group share he is in is
+	 * use-only without an end date. Combined per dimension his copy reads as
+	 * full and permanent, but neither grant is, so he may not lift bob's
+	 * restriction.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused(): void {
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-1');
+		$groupShare->setSecretId('src-1');
+		$groupShare->setGroupId('team');
+		$groupShare->setUseOnly(true);
+		$this->groupShareMapper->method('findBySecret')->willReturn([$groupShare]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'dave' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		$service = $this->delegateScenario(
+			daveUseOnly: false,
+			daveEndsAt: new DateTime('+1 day'),
+			grants: new ShareGrantReader(
+				secretMapper: $this->secretMapper,
+				groupShareMapper: $this->groupShareMapper,
+				teamFolders: $teamFolders,
+				groupManager: $groups,
+			),
+		);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused()
 }//end class

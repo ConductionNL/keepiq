@@ -648,4 +648,58 @@ class ShareQuarantineCommandTest extends TestCase {
 		$this->assertSame(1, $tester->execute(['action' => 'frobnicate', 'id' => $this->row->getId()]));
 		$this->assertSame([], $this->events);
 	}//end testAnIdThatIsNotQuarantinedIsRefused()
+
+	/**
+	 * `release` and `drop` without an id print the usage and change nothing.
+	 *
+	 * @return void
+	 */
+	public function testReleaseOrDropWithoutAnIdIsAUsageError(): void {
+		$tester = $this->command();
+
+		foreach (['release', 'drop'] as $action) {
+			$this->assertSame(1, $tester->execute(['action' => $action]));
+			$this->assertStringContainsString('Use: keepiq:share-quarantine list | release <id>', $tester->getDisplay());
+		}
+
+		$this->assertSame([], $this->events);
+	}//end testReleaseOrDropWithoutAnIdIsAUsageError()
+
+	/**
+	 * `release` is refused when the owner shares the source with the same
+	 * recipient twice over again, as when once.
+	 *
+	 * @return void
+	 */
+	public function testReleaseIsRefusedWhenTwoLiveSharesReplaceTheRow(): void {
+		for ($i = 0; $i < 2; $i++) {
+			$this->insertShareTarget(
+				sourceSecretId: $this->row->getSourceSecretId(),
+				targetUserId: $this->row->getTargetUserId(),
+				secretId: $this->insertSecret(ownerId: $this->row->getTargetUserId(), createdAt: new DateTime())->getId(),
+				createdBy: $this->owner,
+				createdAt: new DateTime(),
+			);
+		}
+
+		$tester = $this->command();
+
+		$this->assertSame(1, $tester->execute(['action' => 'release', 'id' => $this->row->getId()]));
+		$this->assertStringContainsString('drop this row instead', $tester->getDisplay());
+		$this->assertSame([], $this->events);
+	}//end testReleaseIsRefusedWhenTwoLiveSharesReplaceTheRow()
+
+	/**
+	 * A row linked to a group share that is gone carries no group end date,
+	 * so it is released without --force.
+	 *
+	 * @return void
+	 */
+	public function testAGroupShareThatIsGoneSetsNoEndDate(): void {
+		$this->row->setGroupShareId(Uuid::uuid4()->toString());
+		(new QuarantinedShareTargetMapper(db: $this->db))->update($this->row);
+
+		$this->assertSame(0, $this->command()->execute(['action' => 'release', 'id' => $this->row->getId()]));
+		$this->assertSame([$this->row->getId()], $this->ownersListing());
+	}//end testAGroupShareThatIsGoneSetsNoEndDate()
 }//end class

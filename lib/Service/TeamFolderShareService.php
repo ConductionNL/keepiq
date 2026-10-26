@@ -343,7 +343,9 @@ class TeamFolderShareService {
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
 		$persisted = $this->shareTargetMapper->insert($entity);
-		$this->restrictions?->resolveTarget(target: $persisted);
+		// Inside the fan-out's transaction, so a restricted membership never
+		// commits a full copy.
+		$this->restrictions?->resolveMinted(target: $persisted);
 
 		return [
 			'sourceSecretId' => $sourceSecretId,

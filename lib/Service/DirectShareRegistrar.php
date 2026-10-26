@@ -52,6 +52,8 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The registrar validates each
  *   row (owner, restriction, idempotency) and writes the copy, the share row,
  *   the restriction and the audit entry; each collaborator is one of those.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: each refusal of a row is a status the batch reports,
+ *   and the copy is minted and linked in one transaction (GHSA-m5p9-6pw7-pf3g).
  */
 class DirectShareRegistrar {
 
@@ -249,10 +251,61 @@ class DirectShareRegistrar {
 			// No existing share — create below.
 		}
 
-		// Mint the recipient copy and link it in one transaction: if the link
-		// insert fails the minted copy is rolled back with it, so a decryptable
-		// copy is never left behind with no share row to revoke it
-		// (GHSA-m5p9-6pw7-pf3g).
+		$copy = $this->mintAndLink(
+			source: $source,
+			restriction: $restriction,
+			userId: $userId,
+			targetUserId: $targetUserId,
+			encryptedKey: $encryptedKey,
+			row: $row
+		);
+		if (is_string($copy) === true) {
+			return [
+				'sourceSecretId' => $sourceSecretId,
+				'targetUserId' => $targetUserId,
+				'status' => $copy,
+			];
+		}
+
+		$this->auditTrail->recordBulkShareGranted(
+			userId: $userId,
+			sourceSecretId: $source->getId(),
+			secretName: $source->getName(),
+			recipientId: $targetUserId,
+		);
+
+		return [
+			'sourceSecretId' => $sourceSecretId,
+			'targetUserId' => $targetUserId,
+			'status' => 'created',
+			'recipientSecretId' => $copy->getId(),
+		];
+	}//end createDirectShare()
+
+	/**
+	 * Mint the recipient copy, link it and give it its restriction in one
+	 * transaction: if the link insert fails the minted copy is rolled back
+	 * with it, so a decryptable copy is never left behind with no share row to
+	 * revoke it, and a use-only or expiring share never commits a full copy
+	 * (GHSA-m5p9-6pw7-pf3g).
+	 *
+	 * @param Secret $source The source secret
+	 * @param ShareRestriction $restriction The restriction of a direct row
+	 * @param string $userId The sharer
+	 * @param string $targetUserId The recipient
+	 * @param string $encryptedKey Recipient-encrypted key blob
+	 * @param array<string,mixed> $row The original row (optional blobs)
+	 *
+	 * @return Secret|string The copy, or the status when neither it nor its row was written
+	 */
+	private function mintAndLink(
+		Secret $source,
+		ShareRestriction $restriction,
+		string $userId,
+		string $targetUserId,
+		string $encryptedKey,
+		array $row,
+	): Secret|string {
 		$this->connection?->beginTransaction();
 		try {
 			$copy = $this->copyFactory->create(
@@ -264,11 +317,7 @@ class DirectShareRegistrar {
 			);
 			if ($copy === null) {
 				$this->connection?->rollBack();
-				return [
-					'sourceSecretId' => $sourceSecretId,
-					'targetUserId' => $targetUserId,
-					'status' => 'no_suite',
-				];
+				return 'no_suite';
 			}
 
 			$entity = new ShareTarget();
@@ -286,6 +335,7 @@ class DirectShareRegistrar {
 			}
 
 			$persisted = $this->mapper->insert($entity);
+			$this->restrictions?->resolveMinted(target: $persisted);
 			$this->connection?->commit();
 		} catch (Throwable $exception) {
 			$this->connection?->rollBack();
@@ -295,32 +345,14 @@ class DirectShareRegistrar {
 			if ($exception instanceof DbException
 				&& $exception->getReason() === DbException::REASON_UNIQUE_CONSTRAINT_VIOLATION
 			) {
-				return [
-					'sourceSecretId' => $sourceSecretId,
-					'targetUserId' => $targetUserId,
-					'status' => 'exists',
-				];
+				return 'exists';
 			}
 
 			throw $exception;
 		}//end try
 
-		$this->restrictions?->resolveTarget(target: $persisted);
-
-		$this->auditTrail->recordBulkShareGranted(
-			userId: $userId,
-			sourceSecretId: $source->getId(),
-			secretName: $source->getName(),
-			recipientId: $targetUserId,
-		);
-
-		return [
-			'sourceSecretId' => $sourceSecretId,
-			'targetUserId' => $targetUserId,
-			'status' => 'created',
-			'recipientSecretId' => $copy->getId(),
-		];
-	}//end createDirectShare()
+		return $copy;
+	}//end mintAndLink()
 
 	/**
 	 * The source secret the caller may share — one they own or hold an active

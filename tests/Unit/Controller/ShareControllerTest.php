@@ -28,6 +28,8 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\ShareController;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -202,6 +204,69 @@ class ShareControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 		$this->assertSame(['error' => 'share_quarantined', 'message' => 'This share is quarantined'], $response->getData());
 	}//end testRevokingAQuarantinedShareAnswers409()
+
+	/**
+	 * A share the pending quarantine scan could not judge answers 409 with an
+	 * error code of its own, as it is not quarantined.
+	 *
+	 * @return void
+	 */
+	public function testRevokingAShareTheScanCannotJudgeAnswers409WithItsOwnCode(): void {
+		$this->shareService->method('revokeShare')
+			->willThrowException(new ShareScanPendingException('This share waits for the share quarantine scan'));
+
+		$response = $this->controller('alice')->destroy(id: 'st-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_scan_pending', 'message' => 'This share waits for the share quarantine scan'], $response->getData());
+	}//end testRevokingAShareTheScanCannotJudgeAnswers409WithItsOwnCode()
+
+	/**
+	 * Restricting a share the pending quarantine scan quarantines on the spot
+	 * answers 409 as a revoke does.
+	 *
+	 * @return void
+	 */
+	public function testRestrictingAQuarantinedShareAnswers409(): void {
+		$this->shareService->method('updateRestriction')
+			->willThrowException(new ConflictException('This share is quarantined'));
+
+		$response = $this->controller('alice')->update(id: 'st-1', useOnly: true);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_quarantined', 'message' => 'This share is quarantined'], $response->getData());
+	}//end testRestrictingAQuarantinedShareAnswers409()
+
+	/**
+	 * Restricting a share the pending quarantine scan cannot judge answers 409
+	 * with the error code of its own.
+	 *
+	 * @return void
+	 */
+	public function testRestrictingAShareTheScanCannotJudgeAnswers409WithItsOwnCode(): void {
+		$this->shareService->method('updateRestriction')
+			->willThrowException(new ShareScanPendingException('This share waits for the share quarantine scan'));
+
+		$response = $this->controller('alice')->update(id: 'st-1', useOnly: true);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_scan_pending', 'message' => 'This share waits for the share quarantine scan'], $response->getData());
+	}//end testRestrictingAShareTheScanCannotJudgeAnswers409WithItsOwnCode()
+
+	/**
+	 * A delegate whose own copy is a read-only copy from another organisation
+	 * is refused a restriction change with 403, not a server error.
+	 *
+	 * @return void
+	 */
+	public function testARestrictionChangeOnAReadOnlyCopyAnswers403(): void {
+		$this->shareService->method('updateRestriction')
+			->willThrowException(new ForbiddenException('A copy from another organisation cannot be shared onward'));
+
+		$response = $this->controller('dave')->update(id: 'st-1', useOnly: false);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testARestrictionChangeOnAReadOnlyCopyAnswers403()
 
 	/**
 	 * An anonymous caller may not push blobs at other users' copies.

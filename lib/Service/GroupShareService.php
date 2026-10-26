@@ -37,14 +37,19 @@ use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 /**
  * Business logic for the GroupShare lifecycle.
@@ -56,6 +61,9 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: the
  *   Nextcloud share settings and the per-share revocation path joined the
  *   group-share flow (sharing-02); each is a single collaborator, not options.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: the group-share flow in one place, including on each
+ *   path holding back the rows the pending share quarantine scan judges and refusing a delegate's change of their own
+ *   grant (GHSA-m5p9-6pw7-pf3g).
  */
 class GroupShareService {
 	/**
@@ -75,6 +83,9 @@ class GroupShareService {
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 * @param ShareAuthorizationService|null $auth Whether a new member's existing copy now saves for everyone
 	 * @param ShareWriteContext|null $contexts Whether a new member already saves for everyone other than through a group share
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
+	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy, when no authorization service is wired
+	 * @param IDBConnection|null $db Makes a restriction change and a revoke all-or-nothing
 	 *
 	 * @return void
 	 */
@@ -93,6 +104,9 @@ class GroupShareService {
 		private ?ShareRestrictionResolver $restrictions = null,
 		private ?ShareAuthorizationService $auth = null,
 		private ?ShareWriteContext $contexts = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
+		private ?ShareGrantReader $grants = null,
+		private ?IDBConnection $db = null,
 	) {
 	}//end __construct()
 
@@ -114,6 +128,7 @@ class GroupShareService {
 	 * @return array{groupShare:GroupShare,members:array<int,array{userId:string,certificate:string}>,skipped:int}
 	 *
 	 * @throws InvalidArgumentException On unauthorized / missing secret / empty group
+	 * @throws ShareScanPendingException When a restriction change reaches a row the pending quarantine scan cannot judge
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.2
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
@@ -167,12 +182,8 @@ class GroupShareService {
 			$existing = $this->mapper->insert($row);
 		} elseif ($restriction !== null) {
 			// Sharing again with the same group changes its restriction.
-			$existing->setUseOnly($restriction->useOnly);
-			$existing->setExpiresAt($restriction->expiresAt);
-			$existing = $this->mapper->update($existing);
-			$this->restrictions?->resolveTargets(
-				targets: $this->bulkGrantMapper->findByGroupShare(groupShareId: $existing->getId())
-			);
+			$this->assertMayChangeRestriction(secret: $secret, groupShare: $existing, restriction: $restriction, userId: $userId);
+			$existing = $this->changeRestriction(groupShare: $existing, restriction: $restriction);
 		}
 
 		$members = [];
@@ -245,6 +256,7 @@ class GroupShareService {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException On unauthorized / not found
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge one of its rows
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.3
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
@@ -259,14 +271,38 @@ class GroupShareService {
 		$secret = $this->loadSecret(secretId: $entity->getSecretId());
 		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 
+		// Every row is judged before anything changes, so a row the pending
+		// quarantine scan cannot judge refuses the revoke rather than leave
+		// its copy behind with no row, and a quarantine this makes is not
+		// rolled back with it. A row it quarantines goes with the group share
+		// below and keeps its copy.
+		$live = [];
 		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShareId) as $target) {
-			$this->revocationService->revokeShare(shareId: $target->getId(), userId: $userId);
+			if ($this->quarantineScan?->refuseUnjudged(
+				row: $target,
+				refusal: 'A share of this group waits for the share quarantine scan, so the group share cannot be revoked yet'
+			) !== true
+			) {
+				$live[] = $target;
+			}
 		}
 
-		// Anything the per-share revoke could not reach (a row whose source
-		// moved) still goes with the group share.
-		$this->bulkGrantMapper->deleteByGroupShare(groupShareId: $groupShareId);
-		$this->mapper->delete($entity);
+		$this->db?->beginTransaction();
+		try {
+			foreach ($live as $target) {
+				$this->revokeMemberShare(target: $target, userId: $userId, groupShareId: $groupShareId);
+			}
+
+			// Anything the per-share revoke could not reach (a row whose
+			// source moved, or one the pending scan quarantined) still goes
+			// with the group share.
+			$this->bulkGrantMapper->deleteByGroupShare(groupShareId: $groupShareId);
+			$this->mapper->delete($entity);
+			$this->db?->commit();
+		} catch (Throwable $exception) {
+			$this->db?->rollBack();
+			throw $exception;
+		}
 
 		$this->logger->info(
 			'Revoked group share ' . $groupShareId . ' for secret ' . $entity->getSecretId(),
@@ -408,22 +444,8 @@ class GroupShareService {
 					continue;
 				}
 
-				// Delete the recipient's encrypted Secret copy too. Defence in
-				// depth: a copy not genuinely held by this share's target (a
-				// poisoned or drifted `secret_id`) is kept, so a member leaving
-				// can never delete another user's secret; the share row goes.
-				try {
-					$copy = $this->secretMapper->findById($row->getSecretId());
-					if ($row->isHeldByTarget(copy: $copy) === true) {
-						$this->secretMapper->delete($copy);
-					} else {
-						$this->logger->warning(
-							'Kept a secret not held by the departing member\'s share target',
-							['app' => 'keepiq', 'shareId' => $row->getId(), 'secretId' => $row->getSecretId()]
-						);
-					}
-				} catch (DoesNotExistException) {
-					// Already gone.
+				if ($this->deleteLeavingCopy(row: $row) === false) {
+					continue;
 				}
 
 				$this->shareTargetMapper->delete($row);
@@ -433,6 +455,47 @@ class GroupShareService {
 
 		return $revoked;
 	}//end handleMemberLeave()
+
+	/**
+	 * Delete a departing member's copy, and say whether their share row goes
+	 * too. Defence in depth: a copy not genuinely held by the row's target (a
+	 * poisoned or drifted `secret_id`) is kept, so a member leaving can never
+	 * delete another user's secret; the row goes. A row the pending quarantine
+	 * scan quarantines stays with its copy, for an administrator to judge. A
+	 * row it cannot judge goes and its copy is kept, as a group-share revoke
+	 * keeps it, so the departed member gets no later sync.
+	 *
+	 * @param ShareTarget $row The departing member's share row
+	 *
+	 * @return bool Whether the row goes
+	 */
+	private function deleteLeavingCopy(ShareTarget $row): bool {
+		try {
+			$copy = $this->secretMapper->findById($row->getSecretId());
+		} catch (DoesNotExistException) {
+			return true;
+		}
+
+		$context = ['app' => 'keepiq', 'shareId' => $row->getId(), 'secretId' => $row->getSecretId()];
+		if ($row->isHeldByTarget(copy: $copy) === false) {
+			$this->logger->warning('Kept a secret not held by the departing member\'s share target', $context);
+			return true;
+		}
+
+		$held = $this->quarantineScan?->heldBack(row: $row);
+		if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
+			$this->logger->warning('Kept the departing member\'s share row and copy the pending quarantine scan quarantined', $context);
+			return false;
+		}
+
+		if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+			$this->logger->warning('Kept the copy of the departing member\'s share row the pending quarantine scan cannot judge', $context);
+			return true;
+		}
+
+		$this->secretMapper->delete($copy);
+		return true;
+	}//end deleteLeavingCopy()
 
 	/**
 	 * Assert that $userId is the owner of $secret or an active delegate.
@@ -478,6 +541,110 @@ class GroupShareService {
 	}//end assertShareableSource()
 
 	/**
+	 * Refuse a delegate who changes the restriction of a group share that
+	 * reaches them, as a delegate may not change their own grant
+	 * (GHSA-m5p9-6pw7-pf3g). Sharing again unchanged is not a change.
+	 *
+	 * @param Secret $secret The source secret
+	 * @param GroupShare $groupShare The existing group share
+	 * @param ShareRestriction $restriction The restriction asked for
+	 * @param string $userId The initiator
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a delegate in the group changes its restriction
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	private function assertMayChangeRestriction(
+		Secret $secret,
+		GroupShare $groupShare,
+		ShareRestriction $restriction,
+		string $userId,
+	): void {
+		$current = new ShareRestriction(useOnly: ($groupShare->getUseOnly() === true), expiresAt: $groupShare->getExpiresAt());
+		if (($secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId)
+			|| $current->equals(other: $restriction) === true
+			|| $this->groupManager->isInGroup($userId, $groupShare->getGroupId()) === false
+		) {
+			return;
+		}
+
+		throw new InvalidArgumentException(message: 'You cannot change a group share that reaches you');
+	}//end assertMayChangeRestriction()
+
+	/**
+	 * Change a group share's restriction and resolve its members' copies in
+	 * one transaction. A row the pending share quarantine scan cannot judge
+	 * refuses the change (GHSA-m5p9-6pw7-pf3g), as the group share would take
+	 * the new restriction while that row's copy kept the old one. A row the
+	 * scan quarantines leaves the group share, so the change goes on without
+	 * it.
+	 *
+	 * @param GroupShare       $groupShare  The existing group share
+	 * @param ShareRestriction $restriction The new restriction
+	 *
+	 * @return GroupShare
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of its rows
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	private function changeRestriction(GroupShare $groupShare, ShareRestriction $restriction): GroupShare {
+		$refusal = 'A share of this group waits for the share quarantine scan, so its restriction cannot be changed yet';
+		// Judged before the transaction, so a quarantine this makes is not
+		// rolled back with a refused change.
+		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShare->getId()) as $row) {
+			$this->quarantineScan?->refuseUnjudged(row: $row, refusal: $refusal);
+		}
+
+		$this->db?->beginTransaction();
+		try {
+			$groupShare->setUseOnly($restriction->useOnly);
+			$groupShare->setExpiresAt($restriction->expiresAt);
+			$updated = $this->mapper->update($groupShare);
+			// Judging a row again can fail where it just succeeded, which
+			// rolls the change back.
+			$this->restrictions?->resolveTargetsOrRefuse(
+				targets: $this->bulkGrantMapper->findByGroupShare(groupShareId: $updated->getId()),
+				refusal: $refusal
+			);
+			$this->db?->commit();
+		} catch (Throwable $exception) {
+			$this->db?->rollBack();
+			throw $exception;
+		}
+
+		return $updated;
+	}//end changeRestriction()
+
+	/**
+	 * Revoke one member's share of a group share being revoked. A row the
+	 * pending quarantine scan quarantines meanwhile is kept with its copy, to
+	 * go with the group share; one it cannot judge refuses the whole revoke.
+	 *
+	 * @param ShareTarget $target       The member's share row
+	 * @param string      $userId       The user revoking the group share
+	 * @param string      $groupShareId The group share
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge the row
+	 */
+	private function revokeMemberShare(ShareTarget $target, string $userId, string $groupShareId): void {
+		try {
+			$this->revocationService->revokeShare(shareId: $target->getId(), userId: $userId);
+		} catch (ShareScanPendingException $exception) {
+			throw $exception;
+		} catch (ConflictException) {
+			$this->logger->warning(
+				'Kept the copy of a group share row the pending quarantine scan quarantined',
+				['app' => 'keepiq', 'shareId' => $target->getId(), 'groupShareId' => $groupShareId]
+			);
+		}
+	}//end revokeMemberShare()
+
+	/**
 	 * The share authorization service, or one built on this service's own
 	 * mappers when none is wired.
 	 *
@@ -489,6 +656,9 @@ class GroupShareService {
 			delegationMapper: $this->delegationMapper,
 			suiteMapper: $this->suiteMapper,
 			shareTargetMapper: $this->shareTargetMapper,
+			groupShareMapper: $this->mapper,
+			groupManager: $this->groupManager,
+			grants: $this->grants,
 		));
 	}//end authorization()
 

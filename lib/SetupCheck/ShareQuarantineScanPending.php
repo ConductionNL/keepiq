@@ -88,11 +88,8 @@ class ShareQuarantineScanPending implements ISetupCheck {
 		}
 
 		return SetupResult::warning(
-			$this->l10n->t(
-				'Keepiq has not finished scanning for share rows planted through GHSA-m5p9-6pw7-pf3g, '
-				.'so such rows are not quarantined yet. The ShareQuarantineScanJob background job retries every 15 minutes: '
-				.'check that background jobs run, and look in the Nextcloud log for errors from the share quarantine scan.'
-			)
+			// phpcs:ignore Generic.Files.LineLength.MaxExceeded -- one literal, so l10n extraction reads the whole string.
+			$this->l10n->t('Keepiq has not finished scanning for share rows planted through GHSA-m5p9-6pw7-pf3g. Until it does, such rows are not quarantined and can still be used against other users\' secrets, so treat this as urgent. The ShareQuarantineScanJob background job retries every 15 minutes: check that background jobs run, and look in the Nextcloud log for errors from the share quarantine scan.')
 		);
 	}//end run()
 }//end class

@@ -30,10 +30,12 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\QuarantinedShareTargetMapper;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -43,10 +45,26 @@ use Throwable;
  * Revokes share targets and cascades their dependent rows.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Telling an owner that a
- *   revoke hit a quarantined row (GHSA-m5p9-6pw7-pf3g) takes the quarantine
- *   mapper and the conflict it raises.
+ *   revoke hit a quarantined row, or one the pending scan holds back
+ *   (GHSA-m5p9-6pw7-pf3g), takes the quarantine mapper, the scanner and the
+ *   conflicts they raise.
  */
 class ShareRevocationService {
+
+	/**
+	 * The refusal of a revoke that hits a quarantined row.
+	 *
+	 * @var string
+	 */
+	private const QUARANTINED_MESSAGE = 'This share is quarantined for an administrator to review and cannot be revoked; '
+		.'ask an administrator to release or drop it';
+
+	/**
+	 * The refusal of a revoke whose row the pending quarantine scan cannot judge.
+	 *
+	 * @var string
+	 */
+	private const REVOKE_REFUSAL = 'This share waits for the share quarantine scan and cannot be revoked yet';
 
 	/**
 	 * The share audit trail.
@@ -66,6 +84,7 @@ class ShareRevocationService {
 	 * @param AttachmentService|null $attachmentService The attachment service (revoke cascade)
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param QuarantinedShareTargetMapper|null $quarantined Tells an owner their revoke hit a quarantined row
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -80,6 +99,7 @@ class ShareRevocationService {
 		private ?AttachmentService $attachmentService = null,
 		?ShareAuditTrail $auditTrail = null,
 		private ?QuarantinedShareTargetMapper $quarantined = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -95,7 +115,7 @@ class ShareRevocationService {
 	 *
 	 * @throws InvalidArgumentException When the row does not exist or
 	 *                                  the caller is not authorized.
-	 * @throws ConflictException When the owner or a delegate revokes a quarantined row
+	 * @throws ConflictException When the owner or a delegate revokes a quarantined row, or one the pending scan holds back
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
@@ -109,34 +129,17 @@ class ShareRevocationService {
 
 		$source = $this->auth->loadSecret(secretId: $entity->getSourceSecretId());
 		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
+		// Before the transaction, so a quarantine this makes is not rolled
+		// back with the refused revoke.
+		$this->quarantineScan?->assertNotHeldBack(row: $entity, verb: 'revoked');
 
 		$this->db->beginTransaction();
 		try {
-			// Delete the recipient's encrypted Secret copy (best-effort —
-			// a stale row is harmless because the Secret is already
-			// unreachable through the share index, but a clean delete
-			// keeps the table small). Defence in depth: a copy that is not
-			// genuinely held by this share's target (a poisoned or drifted
-			// `secret_id`) is kept, so a revoke can never delete another
-			// user's secret; the share row still goes.
-			try {
-				$recipientCopy = $this->secretMapper->findById($entity->getSecretId());
-				if ($entity->isHeldByTarget(copy: $recipientCopy) === true) {
-					$this->secretMapper->delete($recipientCopy);
-					// Attachment grants of the revoked copy go with it; the
-					// owner's blob and grants are untouched (encrypted-attachments
-					// §3.3).
-					$this->attachmentService?->deleteGrantsForSecretCopy($entity->getSecretId());
-				} else {
-					$this->logger->warning(
-						'Kept a secret not held by the revoked share target',
-						['app' => 'keepiq', 'shareId' => $shareId, 'secretId' => $entity->getSecretId()]
-					);
-				}
-			} catch (DoesNotExistException) {
-				// Already gone — its leftover grants, if any, go with it.
-				$this->attachmentService?->deleteGrantsForSecretCopy($entity->getSecretId());
-			}
+			// The recipient's copy and its attachment grants go with the row,
+			// as in the cascade; the owner's blob and grants are untouched
+			// (encrypted-attachments §3.3). Judging the row again can fail
+			// where it just succeeded, which rolls the revoke back.
+			$this->deleteRecipientCopy(share: $entity, refusal: self::REVOKE_REFUSAL);
 
 			$this->mapper->delete($entity);
 			$this->db->commit();
@@ -189,16 +192,16 @@ class ShareRevocationService {
 			return;
 		}
 
-		throw new ConflictException(
-			message: 'This share is quarantined for an administrator to review and cannot be revoked; ask an administrator to release or drop it'
-		);
+		throw new ConflictException(message: self::QUARANTINED_MESSAGE);
 	}//end refuseQuarantined()
 
 	/**
-	 * End every share of a secret (called when the secret is trashed or
-	 * deleted): each recipient's copy goes with its share row, exactly as a
-	 * single revokeShare() does (keepiq#83). Deleting only the link rows left
-	 * the copies behind as ordinary-looking live secrets nobody tracked.
+	 * End every share of a secret where nobody can be refused (its delete by
+	 * a background job or another app, or a rollback): each recipient's copy
+	 * goes with its share row, exactly as a single revokeShare() does
+	 * (keepiq#83). Deleting only the link rows left the copies behind as
+	 * ordinary-looking live secrets nobody tracked. The row of a copy the
+	 * pending quarantine scan holds back goes and its copy is kept.
 	 *
 	 * @param string $sourceSecretId The source secret ID
 	 *
@@ -209,10 +212,51 @@ class ShareRevocationService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
 	public function deleteAllForSecret(string $sourceSecretId): void {
+		$this->deleteAll(sourceSecretId: $sourceSecretId, refusal: null);
+	}//end deleteAllForSecret()
+
+	/**
+	 * End every share of a secret at its owner's request (the secret is
+	 * trashed), as deleteAllForSecret() does, except that a row the pending
+	 * quarantine scan cannot judge refuses the request instead of leaving its
+	 * copy behind with no row. Every row is judged before anything changes.
+	 *
+	 * @param string $sourceSecretId The source secret ID
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of its rows
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	public function revokeAllForSecret(string $sourceSecretId): void {
+		$refusal = 'A share of this secret waits for the share quarantine scan, so the secret cannot be deleted yet';
+		// Before the transaction, so a quarantine this makes is not rolled
+		// back with a refused delete.
+		foreach ($this->mapper->findBySourceSecret($sourceSecretId) as $share) {
+			$this->quarantineScan?->refuseUnjudged(row: $share, refusal: $refusal);
+		}
+
+		$this->deleteAll(sourceSecretId: $sourceSecretId, refusal: $refusal);
+	}//end revokeAllForSecret()
+
+	/**
+	 * Delete every share row of a secret and the copies they hold, in one
+	 * transaction.
+	 *
+	 * @param string      $sourceSecretId The source secret ID
+	 * @param string|null $refusal        What waits for the scan when a row it cannot judge refuses the delete, or
+	 *                                    null to keep that row's copy
+	 *
+	 * @return void
+	 *
+	 * @throws Throwable When a step fails; the transaction is rolled back
+	 */
+	private function deleteAll(string $sourceSecretId, ?string $refusal): void {
 		$this->db->beginTransaction();
 		try {
 			foreach ($this->mapper->findBySourceSecret($sourceSecretId) as $share) {
-				$this->deleteRecipientCopy(share: $share);
+				$this->deleteRecipientCopy(share: $share, refusal: $refusal);
 			}
 
 			$this->mapper->deleteBySourceSecret($sourceSecretId);
@@ -221,27 +265,32 @@ class ShareRevocationService {
 			$this->db->rollBack();
 			throw $exception;
 		}
-	}//end deleteAllForSecret()
+	}//end deleteAll()
 
 	/**
 	 * Delete one recipient copy and the attachment grants it holds. A copy
 	 * that is already gone is fine. Defence in depth: a copy not genuinely held
-	 * by the share's target (a poisoned or drifted `secret_id`) is kept, so the
-	 * cascade can never delete another user's secret.
+	 * by the share's target (a poisoned or drifted `secret_id`) is kept, so a
+	 * revoke or the cascade can never delete another user's secret. So is the
+	 * copy of a row the pending quarantine scan holds back; with a refusal, a
+	 * row it cannot judge refuses the caller's request instead.
 	 *
-	 * @param ShareTarget $share The share row whose copy is being removed
+	 * @param ShareTarget $share   The share row whose copy is being removed
+	 * @param string|null $refusal What waits for the scan, or null to keep an unjudged row's copy
 	 *
 	 * @return void
 	 *
+	 * @throws ShareScanPendingException When a refusal is given and the scan cannot judge the row
+	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
-	private function deleteRecipientCopy(ShareTarget $share): void {
+	private function deleteRecipientCopy(ShareTarget $share, ?string $refusal = null): void {
 		$copyId = $share->getSecretId();
 		try {
 			$copy = $this->secretMapper->findById($copyId);
-			if ($share->isHeldByTarget(copy: $copy) === false) {
+			if ($this->keepsCopy(share: $share, copy: $copy, refusal: $refusal) === true) {
 				$this->logger->warning(
-					'Kept a secret not held by the share target during cascade delete',
+					'Kept a secret its share target does not hold, or the pending quarantine scan holds back, on a revoke or cascade delete',
 					['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $copyId]
 				);
 				return;
@@ -254,4 +303,28 @@ class ShareRevocationService {
 
 		$this->attachmentService?->deleteGrantsForSecretCopy($copyId);
 	}//end deleteRecipientCopy()
+
+	/**
+	 * Whether a revoke or cascade keeps a row's copy: its target does not
+	 * hold it, or the pending quarantine scan holds the row back.
+	 *
+	 * @param ShareTarget $share   The share row
+	 * @param Secret      $copy    The copy its `secret_id` names
+	 * @param string|null $refusal What waits for the scan, or null to keep an unjudged row's copy
+	 *
+	 * @return bool
+	 *
+	 * @throws ShareScanPendingException When a refusal is given and the scan cannot judge the row
+	 */
+	private function keepsCopy(ShareTarget $share, Secret $copy, ?string $refusal): bool {
+		if ($share->isHeldByTarget(copy: $copy) === false) {
+			return true;
+		}
+
+		if ($refusal !== null) {
+			return $this->quarantineScan?->refuseUnjudged(row: $share, refusal: $refusal) === true;
+		}
+
+		return $this->quarantineScan?->heldBack(row: $share) !== null;
+	}//end keepsCopy()
 }//end class

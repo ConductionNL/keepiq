@@ -43,9 +43,11 @@ use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareQuarantineService;
+use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Service\SiemSinkService;
 use OCA\Keepiq\Service\SiemTransport;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Tests\Support\ShareTargetDatabase;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -138,9 +140,10 @@ class ShareQuarantineScannerTest extends TestCase {
 	 * A scanner on the given connection, an in-memory app config and a
 	 * recording logger.
 	 *
-	 * @param IDBConnection|null $db       The connection (the real one when null)
-	 * @param int                $pageSize Candidate rows per query
-	 * @param SiemService|null   $siem     The SIEM forwarder (one with no sinks when null)
+	 * @param IDBConnection|null $db           The connection (the real one when null)
+	 * @param int                $pageSize     Candidate rows per query
+	 * @param SiemService|null   $siem         The SIEM forwarder (one with no sinks when null)
+	 * @param AuditService|null  $auditService The audit log (the real one when null)
 	 *
 	 * @return ShareQuarantineScanner
 	 */
@@ -148,6 +151,7 @@ class ShareQuarantineScannerTest extends TestCase {
 		?IDBConnection $db = null,
 		int $pageSize = ShareQuarantineScanner::PAGE_SIZE,
 		?SiemService $siem = null,
+		?AuditService $auditService = null,
 	): ShareQuarantineScanner {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -181,7 +185,7 @@ class ShareQuarantineScannerTest extends TestCase {
 			db: ($db ?? $this->db),
 			appConfig: $appConfig,
 			logger: $logger,
-			auditService: new AuditService(mapper: new AuditEntryMapper(db: $this->db)),
+			auditService: ($auditService ?? new AuditService(mapper: new AuditEntryMapper(db: $this->db))),
 			siem: ($siem ?? $this->createMock(SiemService::class)),
 			pageSize: $pageSize,
 		);
@@ -230,7 +234,7 @@ class ShareQuarantineScannerTest extends TestCase {
 	}//end shareOf()
 
 	/**
-	 * A row planted soon after its copy, inside the mint window.
+	 * A row planted on the victim's own secret.
 	 *
 	 * @param Secret   $copy     The victim's own secret
 	 * @param string   $attacker Who planted it
@@ -286,10 +290,10 @@ class ShareQuarantineScannerTest extends TestCase {
 	}//end stored()
 
 	/**
-	 * The advisory's timeline: the victim creates V, shares it with the
-	 * attacker, and the attacker plants {S_a, victim, V} 120 seconds after V
-	 * was created, well inside the mint window. The row is quarantined because
-	 * V was shared with the row's creator first.
+	 * The advisory's timeline at its fastest: the victim creates V and shares
+	 * it with the attacker, and the attacker plants {S_a, victim, V} inside
+	 * the mint window. The row is quarantined because V was shared with the
+	 * row's creator first.
 	 *
 	 * @return void
 	 */
@@ -302,16 +306,16 @@ class ShareQuarantineScannerTest extends TestCase {
 		$this->insertShareTarget(
 			sourceSecretId: $secretV->getId(),
 			targetUserId: $attacker,
-			secretId: $this->insertSecret(ownerId: $attacker, createdAt: $this->at(30))->getId(),
+			secretId: $this->insertSecret(ownerId: $attacker, createdAt: $this->at(1))->getId(),
 			createdBy: $victim,
-			createdAt: $this->at(30),
+			createdAt: $this->at(1),
 		);
 		$planted = $this->insertShareTarget(
 			sourceSecretId: $sourceA->getId(),
 			targetUserId: $victim,
 			secretId: $secretV->getId(),
 			createdBy: $attacker,
-			createdAt: $this->at(120),
+			createdAt: $this->at(ShareQuarantineScanner::MINT_WINDOW_SECONDS),
 		);
 
 		$this->assertTrue($this->scanner()->run());
@@ -335,7 +339,7 @@ class ShareQuarantineScannerTest extends TestCase {
 		$attacker = $this->user('attacker');
 		$secretV  = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
 		$entry    = new AuditEntry();
-		$entry->setOccurredAt($this->at(20));
+		$entry->setOccurredAt($this->at(1));
 		$entry->setActorType('user');
 		$entry->setActorId($victim);
 		$entry->setEventType(AuditEventTypes::SHARE_GRANTED);
@@ -349,7 +353,7 @@ class ShareQuarantineScannerTest extends TestCase {
 			targetUserId: $victim,
 			secretId: $secretV->getId(),
 			createdBy: $attacker,
-			createdAt: $this->at(45),
+			createdAt: $this->at(3),
 		);
 
 		$this->scanner()->run();
@@ -368,12 +372,12 @@ class ShareQuarantineScannerTest extends TestCase {
 		$victim     = $this->user('victim');
 		$accomplice = $this->user('accomplice');
 		$secretV    = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
-		$this->shareOf(secret: $secretV, recipient: $accomplice, at: $this->at(10));
-		$planted = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(40));
+		$this->shareOf(secret: $secretV, recipient: $accomplice, at: $this->at(1));
+		$planted = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(3));
 
 		$secretW = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
 		$entry   = new AuditEntry();
-		$entry->setOccurredAt($this->at(10));
+		$entry->setOccurredAt($this->at(1));
 		$entry->setActorType('user');
 		$entry->setActorId($victim);
 		$entry->setEventType(AuditEventTypes::SHARE_GRANTED);
@@ -382,7 +386,7 @@ class ShareQuarantineScannerTest extends TestCase {
 		$entry->setObjectName('W');
 		$entry->setMetadata((string)json_encode(['recipientType' => 'user', 'recipientId' => $accomplice]));
 		(new AuditEntryMapper(db: $this->db))->insert($entry);
-		$plantedAfterRevoke = $this->plant(copy: $secretW, attacker: $this->user('attacker'), at: $this->at(40));
+		$plantedAfterRevoke = $this->plant(copy: $secretW, attacker: $this->user('attacker'), at: $this->at(3));
 
 		$this->scanner()->run();
 
@@ -568,12 +572,12 @@ class ShareQuarantineScannerTest extends TestCase {
 	public function testQuarantinesARowPlantedInTheSecondItsCopyWasShared(): void {
 		$victim  = $this->user('victim');
 		$secretV = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
-		$this->shareOf(secret: $secretV, recipient: $this->user('accomplice'), at: $this->at(30));
-		$plantedAfterRow = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(30));
+		$this->shareOf(secret: $secretV, recipient: $this->user('accomplice'), at: $this->at(3));
+		$plantedAfterRow = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(3));
 
 		$secretW = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
-		$this->auditEntry(eventType: AuditEventTypes::SHARE_GRANTED, objectType: 'secret', objectId: $secretW->getId(), at: $this->at(30));
-		$plantedAfterEntry = $this->plant(copy: $secretW, attacker: $this->user('attacker'), at: $this->at(30));
+		$this->auditEntry(eventType: AuditEventTypes::SHARE_GRANTED, objectType: 'secret', objectId: $secretW->getId(), at: $this->at(3));
+		$plantedAfterEntry = $this->plant(copy: $secretW, attacker: $this->user('attacker'), at: $this->at(3));
 
 		$this->scanner()->run();
 
@@ -591,12 +595,12 @@ class ShareQuarantineScannerTest extends TestCase {
 	public function testOnlyAGrantOfTheCopyCountsAsAShare(): void {
 		$victim  = $this->user('victim');
 		$secretV = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
-		$this->auditEntry(eventType: AuditEventTypes::SHARE_GRANTED, objectType: 'share', objectId: $secretV->getId(), at: $this->at(10));
-		$grantOfAnotherKind = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(30));
+		$this->auditEntry(eventType: AuditEventTypes::SHARE_GRANTED, objectType: 'share', objectId: $secretV->getId(), at: $this->at(1));
+		$grantOfAnotherKind = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(3));
 
 		$secretW = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
-		$this->auditEntry(eventType: AuditEventTypes::SECRET_READ, objectType: 'secret', objectId: $secretW->getId(), at: $this->at(10));
-		$anotherEvent = $this->plant(copy: $secretW, attacker: $this->user('attacker'), at: $this->at(30));
+		$this->auditEntry(eventType: AuditEventTypes::SECRET_READ, objectType: 'secret', objectId: $secretW->getId(), at: $this->at(1));
+		$anotherEvent = $this->plant(copy: $secretW, attacker: $this->user('attacker'), at: $this->at(3));
 
 		$this->scanner()->run();
 
@@ -692,26 +696,25 @@ class ShareQuarantineScannerTest extends TestCase {
 	}//end testKeepsRowsMintedInTheSameRequest()
 
 	/**
-	 * A row kept inside the mint window but with a gap no same-request mint has
-	 * is logged for the admin.
+	 * A plant whose evidence is gone: V was created 30 seconds before the
+	 * row, and no share row, `share.granted` entry or `secret.created` entry
+	 * names V any more (the accomplice's account was deleted and the audit
+	 * retention passed). The gap alone quarantines it.
 	 *
 	 * @return void
 	 */
-	public function testLogsAKeptRowCloseToTheBoundary(): void {
-		$recipient = $this->user('recipient');
-		$row = $this->insertShareTarget(
-			sourceSecretId: $this->insertSecret(ownerId: $this->user('owner'), createdAt: $this->at(-3600))->getId(),
-			targetUserId: $recipient,
-			secretId: $this->insertSecret(ownerId: $recipient, createdAt: $this->at(0))->getId(),
-			createdBy: $this->user('owner'),
-			createdAt: $this->at(ShareQuarantineScanner::MINT_WINDOW_SECONDS - 10),
-		);
+	public function testQuarantinesAPlantThirtySecondsAfterItsCopyWithNoOtherEvidence(): void {
+		$victim  = $this->user('victim');
+		$secretV = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
+		$planted = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(30));
 
 		$this->scanner()->run();
 
-		$this->assertFalse($this->stored(row: $row)['quarantined']);
-		$this->assertNotSame([], array_filter($this->warnings, static fn (string $m): bool => str_contains($m, 'kept') && str_contains($m, $row->getId())));
-	}//end testLogsAKeptRowCloseToTheBoundary()
+		$this->assertSame(
+			['quarantined' => true, 'reason' => ShareQuarantineScanner::REASON_COPY_PREDATES_ROW],
+			$this->stored(row: $planted)
+		);
+	}//end testQuarantinesAPlantThirtySecondsAfterItsCopyWithNoOtherEvidence()
 
 	/**
 	 * The scan pages through the candidates by row id and reaches every one,
@@ -798,7 +801,12 @@ class ShareQuarantineScannerTest extends TestCase {
 				return $real->getQueryBuilder();
 			}
 		);
-		$job = new ShareQuarantineScanJob(time: $this->createMock(ITimeFactory::class), scanner: $this->scanner(db: $db));
+		$job = new ShareQuarantineScanJob(
+			time: $this->createMock(ITimeFactory::class),
+			scanner: $this->scanner(db: $db),
+			restrictions: $this->createMock(ShareRestrictionResolver::class),
+			logger: $this->createMock(LoggerInterface::class),
+		);
 		$run = new ReflectionMethod($job, 'run');
 
 		$run->invoke($job, null);
@@ -815,6 +823,150 @@ class ShareQuarantineScannerTest extends TestCase {
 		$run->invoke($job, null);
 		$this->assertCount(1, $this->errors, 'a completed scan is not run again');
 	}//end testAFailedRunStaysPendingAndTheJobsNextRunCompletesIt()
+
+	/**
+	 * A restriction resolve that skips a row the pending scan cannot judge is
+	 * recorded, and the job resolves the copy once the scan completes: a
+	 * use-only row does not keep a full copy for good.
+	 *
+	 * @return void
+	 */
+	public function testAResolveTheScanCouldNotJudgeIsDoneOnceTheScanCompletes(): void {
+		$owner     = $this->user('owner');
+		$recipient = $this->user('recipient');
+		$row       = $this->insertShareTarget(
+			sourceSecretId: $this->insertSecret(ownerId: $owner, createdAt: $this->at(-3600))->getId(),
+			targetUserId: $recipient,
+			secretId: $this->insertSecret(ownerId: $recipient, createdAt: $this->at(0))->getId(),
+			createdBy: $owner,
+			createdAt: $this->at(0),
+		);
+		$row->setUseOnly(true);
+		$row = (new ShareTargetMapper(db: $this->db))->update($row);
+
+		$failing = true;
+		$real    = $this->db;
+		$db      = $this->createMock(IDBConnection::class);
+		$db->method('getQueryBuilder')->willReturnCallback(
+			static function () use (&$failing, $real): IQueryBuilder {
+				if ($failing === true) {
+					throw new RuntimeException('database went away');
+				}
+
+				return $real->getQueryBuilder();
+			}
+		);
+		$scanner      = $this->scanner(db: $db);
+		$restrictions = $this->restrictions(scanner: $scanner);
+
+		$this->assertFalse($restrictions->resolveTarget(target: $row), 'the pending scan cannot judge the row');
+		$this->assertNotTrue($this->copyOf(row: $row)->getUseOnly());
+		$this->assertArrayHasKey(ShareQuarantineScanner::RESOLVE_PENDING_KEY, $this->config);
+
+		$failing = false;
+		$job     = new ShareQuarantineScanJob(
+			time: $this->createMock(ITimeFactory::class),
+			scanner: $scanner,
+			restrictions: $restrictions,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		(new ReflectionMethod($job, 'run'))->invoke($job, null);
+
+		$this->assertTrue($scanner->isComplete());
+		$this->assertTrue($this->copyOf(row: $row)->getUseOnly(), 'the copy takes the row\'s restriction');
+		$this->assertArrayNotHasKey(ShareQuarantineScanner::RESOLVE_PENDING_KEY, $this->config);
+	}//end testAResolveTheScanCouldNotJudgeIsDoneOnceTheScanCompletes()
+
+	/**
+	 * The job leaves a held-back resolve recorded while the scan is pending,
+	 * and when resolving fails, so a later run does it.
+	 *
+	 * @return void
+	 */
+	public function testAHeldBackResolveStaysRecordedUntilItIsDone(): void {
+		$this->config[ShareQuarantineScanner::RESOLVE_PENDING_KEY] = '1';
+		$broken = $this->createMock(IDBConnection::class);
+		$broken->method('getQueryBuilder')->willThrowException(new RuntimeException('database went away'));
+		$restrictions = $this->createMock(ShareRestrictionResolver::class);
+		$restrictions->expects($this->once())->method('resolveAll')->willThrowException(new RuntimeException('resolve failed'));
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->atLeastOnce())->method('error');
+
+		$pending = new ShareQuarantineScanJob(
+			time: $this->createMock(ITimeFactory::class),
+			scanner: $this->scanner(db: $broken),
+			restrictions: $restrictions,
+			logger: $logger,
+		);
+		(new ReflectionMethod($pending, 'run'))->invoke($pending, null);
+		$this->assertArrayHasKey(ShareQuarantineScanner::RESOLVE_PENDING_KEY, $this->config, 'kept while the scan is pending');
+
+		$this->config[ShareQuarantineScanner::COMPLETED_KEY] = ShareQuarantineScanner::INITIAL_GENERATION;
+		(new ReflectionMethod($pending, 'run'))->invoke($pending, null);
+		$this->assertArrayHasKey(ShareQuarantineScanner::RESOLVE_PENDING_KEY, $this->config, 'kept when resolving fails');
+	}//end testAHeldBackResolveStaysRecordedUntilItIsDone()
+
+	/**
+	 * A resolve held back while the job resolves every copy stays recorded
+	 * after the run, so the next run picks up the copy it skipped.
+	 *
+	 * @return void
+	 */
+	public function testAResolveHeldBackDuringTheRunStaysRecorded(): void {
+		$this->config[ShareQuarantineScanner::COMPLETED_KEY] = ShareQuarantineScanner::INITIAL_GENERATION;
+		$scanner = $this->scanner();
+		$scanner->holdBackResolve();
+		$restrictions = $this->createMock(ShareRestrictionResolver::class);
+		$restrictions->expects($this->once())->method('resolveAll')->willReturnCallback(
+			static function () use ($scanner): int {
+				$scanner->holdBackResolve();
+				return 0;
+			}
+		);
+
+		$job = new ShareQuarantineScanJob(
+			time: $this->createMock(ITimeFactory::class),
+			scanner: $scanner,
+			restrictions: $restrictions,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		(new ReflectionMethod($job, 'run'))->invoke($job, null);
+
+		$this->assertArrayHasKey(ShareQuarantineScanner::RESOLVE_PENDING_KEY, $this->config);
+	}//end testAResolveHeldBackDuringTheRunStaysRecorded()
+
+	/**
+	 * The restriction resolver on the real mappers with the given scanner;
+	 * nobody is in a group and no team folder covers anyone.
+	 *
+	 * @param ShareQuarantineScanner $scanner The scanner
+	 *
+	 * @return ShareRestrictionResolver
+	 */
+	private function restrictions(ShareQuarantineScanner $scanner): ShareRestrictionResolver {
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		return new ShareRestrictionResolver(
+			secretMapper: new SecretMapper(db: $this->db),
+			shareTargetMapper: new ShareTargetMapper(db: $this->db),
+			groupShareMapper: new GroupShareMapper(db: $this->db),
+			teamFolders: $teamFolders,
+			groupManager: $this->createMock(IGroupManager::class),
+			quarantineScan: $scanner,
+		);
+	}//end restrictions()
+
+	/**
+	 * A row's copy as stored now.
+	 *
+	 * @param ShareTarget $row The row
+	 *
+	 * @return Secret
+	 */
+	private function copyOf(ShareTarget $row): Secret {
+		return (new SecretMapper(db: $this->db))->findById($row->getSecretId());
+	}//end copyOf()
 
 	/**
 	 * reopen() sets a completed scan pending again, so the job runs a new pass.
@@ -846,4 +998,297 @@ class ShareQuarantineScannerTest extends TestCase {
 		$this->assertArrayNotHasKey(ShareQuarantineScanner::COMPLETED_KEY, $this->config);
 		$this->assertCount(1, $this->errors);
 	}//end testAFailureToRecordThePassLeavesItPending()
+
+	/**
+	 * A pass that was already running when a restore reopened the scan walks
+	 * the data from before the restore, so it does not record completion; the
+	 * next pass, in the new generation, does.
+	 *
+	 * @return void
+	 */
+	public function testAPassReopenedWhileRunningDoesNotRecordCompletion(): void {
+		$scanner  = null;
+		$reopened = false;
+		$real     = $this->db;
+		$db       = $this->createMock(IDBConnection::class);
+		$db->method('getQueryBuilder')->willReturnCallback(
+			static function () use (&$scanner, &$reopened, $real): IQueryBuilder {
+				if ($reopened === false) {
+					$reopened = true;
+					$scanner->reopen();
+				}
+
+				return $real->getQueryBuilder();
+			}
+		);
+		$scanner = $this->scanner(db: $db);
+
+		$this->assertFalse($scanner->run());
+		$this->assertFalse($scanner->isComplete());
+		$this->assertArrayNotHasKey(ShareQuarantineScanner::COMPLETED_KEY, $this->config);
+
+		$this->assertTrue($scanner->run());
+		$this->assertTrue($scanner->isComplete());
+	}//end testAPassReopenedWhileRunningDoesNotRecordCompletion()
+
+	/**
+	 * A completion recorded for an earlier generation, as a pass that started
+	 * before a reopen() and ended after it would write, does not count.
+	 *
+	 * @return void
+	 */
+	public function testACompletionOfAnEarlierGenerationDoesNotCount(): void {
+		$scanner = $this->scanner();
+		$this->assertTrue($scanner->run());
+
+		$scanner->reopen();
+		$this->config[ShareQuarantineScanner::COMPLETED_KEY] = ShareQuarantineScanner::INITIAL_GENERATION;
+
+		$this->assertFalse($scanner->isComplete());
+	}//end testACompletionOfAnEarlierGenerationDoesNotCount()
+
+	/**
+	 * While the scan is pending, heldBack() judges a candidate on the spot: a
+	 * row a signal catches is quarantined, audited once and held back. A
+	 * candidate no signal catches (copy and row a second apart), a row minted
+	 * with its copy and a row an administrator released go through. Once a
+	 * pass completed, nothing is judged or held back.
+	 *
+	 * @return void
+	 */
+	public function testHeldBackJudgesACandidateOnTheSpotUntilAPassCompleted(): void {
+		$victim  = $this->user('victim');
+		$planted = $this->plant(copy: $this->insertSecret(ownerId: $victim, createdAt: $this->at(0)), attacker: $this->user('attacker'), at: $this->at(3600));
+
+		$secretT = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
+		$this->auditEntry(eventType: AuditEventTypes::SECRET_CREATED, objectType: 'secret', objectId: $secretT->getId(), at: $this->at(0));
+		$createdAsSecret = $this->plant(copy: $secretT, attacker: $this->user('attacker'), at: $this->at(0));
+
+		$owner     = $this->user('owner');
+		$recipient = $this->user('recipient');
+		$minted    = $this->shareOf(secret: $this->insertSecret(ownerId: $owner, createdAt: $this->at(-3600)), recipient: $recipient, at: $this->at(0));
+		$acrossASecond = $this->insertShareTarget(
+			sourceSecretId: $this->insertSecret(ownerId: $owner, createdAt: $this->at(-3600))->getId(),
+			targetUserId: $recipient,
+			secretId: $this->insertSecret(ownerId: $recipient, createdAt: $this->at(0))->getId(),
+			createdBy: $owner,
+			createdAt: $this->at(1),
+		);
+		$released = $this->plant(copy: $this->insertSecret(ownerId: $victim, createdAt: $this->at(0)), attacker: $this->user('attacker'), at: $this->at(3600));
+		$qb = $this->db->getQueryBuilder();
+		$qb->update('keepiq_share_targets')
+			->set('quarantine_reason', $qb->createNamedParameter(ShareQuarantineScanner::REASON_COPY_PREDATES_ROW))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($released->getId())))
+			->executeStatement();
+
+		$scanner = $this->scanner();
+
+		$this->assertSame(ShareQuarantineScanner::HELD_QUARANTINED, $scanner->heldBack(row: $planted));
+		$this->assertSame(ShareQuarantineScanner::REASON_COPY_PREDATES_ROW, $this->stored(row: $planted)['reason']);
+		$this->assertSame(ShareQuarantineScanner::HELD_QUARANTINED, $scanner->heldBack(row: $createdAsSecret));
+		$this->assertSame(ShareQuarantineScanner::REASON_COPY_CREATED_AS_SECRET, $this->stored(row: $createdAsSecret)['reason']);
+		$this->assertCount(1, $this->quarantineEntries(row: $planted));
+		$this->assertCount(1, $this->quarantineEntries(row: $createdAsSecret));
+
+		foreach ([$minted, $acrossASecond, $released] as $row) {
+			$this->assertNull($scanner->heldBack(row: $row));
+			$this->assertFalse($this->stored(row: $row)['quarantined']);
+		}
+
+		$this->config[ShareQuarantineScanner::COMPLETED_KEY] = ShareQuarantineScanner::INITIAL_GENERATION;
+		$later = $this->plant(copy: $this->insertSecret(ownerId: $victim, createdAt: $this->at(0)), attacker: $this->user('attacker'), at: $this->at(3600));
+		$this->assertNull($scanner->heldBack(row: $later));
+		$this->assertFalse($this->stored(row: $later)['quarantined'], 'a completed scan judges nothing on the spot');
+	}//end testHeldBackJudgesACandidateOnTheSpotUntilAPassCompleted()
+
+	/**
+	 * When judging fails, the scan itself is broken: a candidate is held back
+	 * unjudged, not quarantined, and the failure is logged at error level.
+	 * That holds whether the candidate query or a signal's query fails.
+	 *
+	 * @return void
+	 */
+	public function testHeldBackHoldsARowBackUnjudgedWhenJudgingFails(): void {
+		foreach ([1, 2] as $failFrom) {
+			$planted = $this->plant(copy: $this->insertSecret(ownerId: $this->user('victim'), createdAt: $this->at(0)), attacker: $this->user('attacker'), at: $this->at(3600));
+			$calls   = 0;
+			$real    = $this->db;
+			$db      = $this->createMock(IDBConnection::class);
+			$db->method('getQueryBuilder')->willReturnCallback(
+				static function () use (&$calls, $failFrom, $real): IQueryBuilder {
+					if (++$calls >= $failFrom) {
+						throw new RuntimeException('database went away');
+					}
+
+					return $real->getQueryBuilder();
+				}
+			);
+			$this->errors = [];
+
+			$this->assertSame(ShareQuarantineScanner::HELD_UNJUDGED, $this->scanner(db: $db)->heldBack(row: $planted), 'failing from query '.$failFrom);
+			$this->assertFalse($this->stored(row: $planted)['quarantined']);
+			$this->assertCount(1, $this->errors);
+			$this->assertStringContainsString('could not be judged while the share quarantine scan is pending', $this->errors[0]);
+		}
+	}//end testHeldBackHoldsARowBackUnjudgedWhenJudgingFails()
+
+	/**
+	 * mayTouchCopy() needs both: the row's target holds the copy, and the
+	 * pending scan does not hold the row back.
+	 *
+	 * @return void
+	 */
+	public function testMayTouchCopyNeedsAHeldCopyAndARowTheScanLetsThrough(): void {
+		$victim    = $this->user('victim');
+		$secretV   = $this->insertSecret(ownerId: $victim, createdAt: $this->at(0));
+		$planted   = $this->plant(copy: $secretV, attacker: $this->user('attacker'), at: $this->at(3600));
+		$recipient = $this->user('recipient');
+		$minted    = $this->shareOf(secret: $this->insertSecret(ownerId: $this->user('owner'), createdAt: $this->at(-3600)), recipient: $recipient, at: $this->at(0));
+		$secrets   = new SecretMapper(db: $this->db);
+		$scanner   = $this->scanner();
+
+		$this->assertTrue($scanner->mayTouchCopy(row: $minted, copy: $secrets->findById($minted->getSecretId())));
+		$this->assertFalse($scanner->mayTouchCopy(row: $minted, copy: $secretV), 'a copy the target does not hold');
+		$this->assertFalse($scanner->mayTouchCopy(row: $planted, copy: $secretV), 'a row the scan quarantines on the spot');
+	}//end testMayTouchCopyNeedsAHeldCopyAndARowTheScanLetsThrough()
+
+	/**
+	 * An audit entry that cannot be written leaves the row quarantined, logs
+	 * the failure, and does not fail the pass.
+	 *
+	 * @return void
+	 */
+	public function testAQuarantineWhoseAuditFailsStaysQuarantined(): void {
+		$planted = $this->plant(
+			copy: $this->insertSecret(ownerId: $this->user('victim'), createdAt: $this->at(0)),
+			attacker: $this->user('attacker'),
+			at: $this->at(3600)
+		);
+		$auditService = $this->createMock(AuditService::class);
+		$auditService->method('record')->willThrowException(new RuntimeException('audit log is full'));
+
+		$this->assertTrue($this->scanner(auditService: $auditService)->run());
+
+		$this->assertTrue($this->stored(row: $planted)['quarantined']);
+		$logged = array_values(array_filter($this->errors, static fn (string $m): bool => str_contains($m, $planted->getId())));
+		$this->assertCount(1, $logged);
+		$this->assertStringContainsString('could not be recorded or forwarded: audit log is full', $logged[0]);
+	}//end testAQuarantineWhoseAuditFailsStaysQuarantined()
+
+	/**
+	 * A candidate whose dates cannot be read is kept: an unreadable value
+	 * never triggers a quarantine.
+	 *
+	 * @return void
+	 */
+	public function testACandidateWithAnUnreadableDateIsKept(): void {
+		$planted = $this->plant(
+			copy: $this->insertSecret(ownerId: $this->user('victim'), createdAt: $this->at(0)),
+			attacker: $this->user('attacker'),
+			at: $this->at(3600)
+		);
+		$scanner = $this->scanner();
+		$judge   = new ReflectionMethod($scanner, 'judge');
+
+		$this->assertFalse($judge->invoke($scanner, $this->candidate(row: $planted, rowCreatedAt: 'not a date'), null));
+		$this->assertSame(['quarantined' => false, 'reason' => null], $this->stored(row: $planted));
+	}//end testACandidateWithAnUnreadableDateIsKept()
+
+	/**
+	 * A candidate that another pass quarantined after this one read it is not
+	 * quarantined or audited again.
+	 *
+	 * @return void
+	 */
+	public function testACandidateQuarantinedMeanwhileIsNotAuditedAgain(): void {
+		$victim  = $this->user('victim');
+		$planted = $this->insertShareTarget(
+			sourceSecretId: $this->insertSecret(ownerId: $this->user('attacker'), createdAt: $this->at(-3600))->getId(),
+			targetUserId: $victim,
+			secretId: $this->insertSecret(ownerId: $victim, createdAt: $this->at(0))->getId(),
+			createdBy: $this->user('attacker'),
+			createdAt: $this->at(3600),
+			quarantined: true,
+		);
+		$scanner = $this->scanner();
+		$judge   = new ReflectionMethod($scanner, 'judge');
+
+		$this->assertFalse($judge->invoke($scanner, $this->candidate(row: $planted, rowCreatedAt: $this->at(3600)->format('Y-m-d H:i:s')), null));
+		$this->assertSame('test', $this->stored(row: $planted)['reason']);
+		$this->assertSame([], $this->quarantineEntries(row: $planted));
+	}//end testACandidateQuarantinedMeanwhileIsNotAuditedAgain()
+
+	/**
+	 * A pass that fails after quarantining some rows leaves the scan pending;
+	 * the next pass quarantines the rest, and every row is audited once.
+	 *
+	 * @return void
+	 */
+	public function testAPassThatFailsPartWayResumesWhereItStopped(): void {
+		$rows = [];
+		for ($i = 0; $i < 5; $i++) {
+			$rows[] = $this->plant(
+				copy: $this->insertSecret(ownerId: $this->user('victim'), createdAt: $this->at(0)),
+				attacker: $this->user('attacker'),
+				at: $this->at(3600)
+			);
+		}
+
+		$ids     = array_map(static fn (ShareTarget $row): string => $row->getId(), $rows);
+		$failing = true;
+		$real    = $this->db;
+		$db      = $this->createMock(IDBConnection::class);
+		$db->method('getQueryBuilder')->willReturnCallback(
+			static function () use (&$failing, $real, $ids): IQueryBuilder {
+				$qb = $real->getQueryBuilder();
+				$qb->select('id')
+					->from('keepiq_share_targets')
+					->where($qb->expr()->in('id', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_STR_ARRAY)))
+					->andWhere($qb->expr()->isNotNull('quarantined_at'));
+				$result = $qb->executeQuery();
+				$done   = count($result->fetchAll());
+				$result->closeCursor();
+				if ($failing === true && $done >= 2) {
+					throw new RuntimeException('database went away');
+				}
+
+				return $real->getQueryBuilder();
+			}
+		);
+
+		$this->assertFalse($this->scanner(db: $db, pageSize: 2)->run());
+		$quarantined = array_filter($rows, fn (ShareTarget $row): bool => $this->stored(row: $row)['quarantined']);
+		$this->assertCount(2, $quarantined, 'the pass stopped part-way');
+		$this->assertArrayNotHasKey(ShareQuarantineScanner::COMPLETED_KEY, $this->config);
+
+		$failing = false;
+		$this->assertTrue($this->scanner(db: $db, pageSize: 2)->run());
+		foreach ($rows as $row) {
+			$this->assertTrue($this->stored(row: $row)['quarantined']);
+			$this->assertCount(1, $this->quarantineEntries(row: $row), 'row '.$row->getId().' is audited once');
+		}
+	}//end testAPassThatFailsPartWayResumesWhereItStopped()
+
+	/**
+	 * A seeded row as candidatePage() reads it, with the given row date.
+	 *
+	 * @param ShareTarget $row          The seeded row
+	 * @param string      $rowCreatedAt The row's stored creation date
+	 *
+	 * @return array<string,string>
+	 */
+	private function candidate(ShareTarget $row, string $rowCreatedAt): array {
+		return [
+			'id' => $row->getId(),
+			'sourceSecretId' => $row->getSourceSecretId(),
+			'targetUserId' => $row->getTargetUserId(),
+			'secretId' => $row->getSecretId(),
+			'createdBy' => $row->getCreatedBy(),
+			'rowCreatedAt' => $rowCreatedAt,
+			'copyCreatedAt' => $this->at(0)->format('Y-m-d H:i:s'),
+			'createdAsSecret' => '0',
+			'copyUseOnly' => '0',
+			'copyAccessEndsAt' => '',
+		];
+	}//end candidate()
 }//end class

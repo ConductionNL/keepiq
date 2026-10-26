@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\GroupShareController;
 use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\GroupShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -147,6 +148,46 @@ class GroupShareControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 		$this->assertSame(['message' => 'Group not found'], $response->getData());
 	}//end testCreateForAGroupOutOfReachIs400()
+
+	/**
+	 * A restriction change the pending share quarantine scan cannot judge a
+	 * row of answers 409 with the error code a revoke gets.
+	 *
+	 * @return void
+	 */
+	public function testCreateThatWaitsForTheQuarantineScanIs409(): void {
+		$this->signIn('alice');
+		$this->groupShareService->method('createGroupShare')
+			->willThrowException(new ShareScanPendingException('A share of this group waits for the share quarantine scan'));
+
+		$response = $this->controller()->create(secretId: 'sec-1', groupId: 'finance', useOnly: true);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(
+			['error' => 'share_scan_pending', 'message' => 'A share of this group waits for the share quarantine scan'],
+			$response->getData()
+		);
+	}//end testCreateThatWaitsForTheQuarantineScanIs409()
+
+	/**
+	 * A group-share revoke the pending share quarantine scan cannot judge a
+	 * row of answers 409 with the error code a single revoke gets.
+	 *
+	 * @return void
+	 */
+	public function testDestroyThatWaitsForTheQuarantineScanIs409(): void {
+		$this->signIn('alice');
+		$this->groupShareService->method('revokeGroupShare')
+			->willThrowException(new ShareScanPendingException('A share of this group waits for the share quarantine scan'));
+
+		$response = $this->controller()->destroy(id: 'gs-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(
+			['error' => 'share_scan_pending', 'message' => 'A share of this group waits for the share quarantine scan'],
+			$response->getData()
+		);
+	}//end testDestroyThatWaitsForTheQuarantineScanIs409()
 
 	/**
 	 * The client-supplied-id group-member approval endpoint is retired

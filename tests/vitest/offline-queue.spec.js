@@ -179,4 +179,12 @@ describe('the offline view and replay helpers', () => {
 		expect(classifyReplayError({ response: { status: 423 } })).toBe('retry')
 		expect(classifyReplayError(new Error('Network Error'))).toBe('retry')
 	})
+
+	it('fails a write the share quarantine scan holds back, so it does not block the rest', () => {
+		expect(
+			classifyReplayError({
+				response: { status: 409, data: { error: 'share_scan_pending' } },
+			}),
+		).toBe('failed')
+	})
 })

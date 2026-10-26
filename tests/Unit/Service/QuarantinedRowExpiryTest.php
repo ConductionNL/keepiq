@@ -9,7 +9,9 @@
  * on the group share it is linked to. The real ShareExpiryService runs against
  * the real database (the quarantine filter is SQL), inside a transaction that
  * is rolled back. Each scenario is run with the row live as well, to show the
- * same run does delete V without the quarantine.
+ * same run does delete V without the quarantine. The row is planted in V's
+ * own second, so a pending quarantine scan on the instance does not hold its
+ * copy back either.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\Service
@@ -147,7 +149,7 @@ class QuarantinedRowExpiryTest extends TestCase {
 			targetUserId: $this->victim,
 			secretId: $this->secretV->getId(),
 			createdBy: $this->attacker,
-			createdAt: new DateTime('-2 hours'),
+			createdAt: clone $this->secretV->getCreatedAt(),
 			quarantined: $quarantined,
 			grants: ['expiresAt' => '-1 hour'],
 		);
@@ -183,7 +185,7 @@ class QuarantinedRowExpiryTest extends TestCase {
 			targetUserId: $this->victim,
 			secretId: $this->secretV->getId(),
 			createdBy: $this->attacker,
-			createdAt: new DateTime('-2 hours'),
+			createdAt: clone $this->secretV->getCreatedAt(),
 			quarantined: $quarantined,
 			grants: ['groupShareId' => $groupShare->getId()],
 		);
