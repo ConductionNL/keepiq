@@ -1679,7 +1679,9 @@ OC.L10N.register(
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.",
         "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.",
-        "This version cannot be restored to this secret. Nothing was saved.": "This version cannot be restored to this secret. Nothing was saved."
+        "This version cannot be restored to this secret. Nothing was saved.": "This version cannot be restored to this secret. Nothing was saved.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Shared with you to view only. Ask its owner for edit rights to change it.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
     },
     "nplurals=2; plural=(n != 1);"
 )

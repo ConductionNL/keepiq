@@ -739,7 +739,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {Array<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached.
 		 * @param {boolean} [options.writeBack] This is the merge write-back itself, so it does not wait for one.
 		 * @param {(ms: number) => void} [options.onWait] Called when the save waits on the partner lookup limit, its own or that of a merge write-back it is held behind.
-		 * @param {(sourceUpdatedAt: string|null) => void} [options.onSourceSaved] Called after a share save with the source version it wrote, null when it saved only the own copy.
+		 * @param {(sourceUpdatedAt: string|null) => void} [options.onSourceSaved] Called after a share save with the source version it wrote (on the owner path, the saved row's own version), null when its answer names none.
 		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue

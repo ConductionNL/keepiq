@@ -457,6 +457,10 @@ describe('saveShared on the owner path', () => {
 		expect(error.response.status).toBe(409)
 		expect(error.fromShareSave).toBe(true)
 		expect(shareSaveErrorText(error)).toContain('changed elsewhere')
+		// A plain update's 409 carries no code, only the current row.
+		expect(
+			shareSaveErrorText(httpError(409, { current: { id: 's1' } })),
+		).toContain('changed elsewhere')
 		expect(
 			shareSaveErrorText(httpError(409, { error: 'stale_source' })),
 		).toContain('original')
@@ -688,127 +692,78 @@ describe('saveShared on the copy-editor path', () => {
 		expect(log.saves.at(-1).copies).toEqual([{ secretId: 'src', login: null }])
 	})
 
-	it('saves only the own copy through the plain update without a write grade', async () => {
+	it.each(['none', 'read'])(
+		'refuses an edit of a copy with grade %s before anything is sent',
+		async (grade) => {
+			const log = shareSaveServer({
+				id: 'copy-me',
+				context: { ...context, effectiveGrade: grade },
+			})
+
+			const error = await saveShared({
+				id: 'copy-me',
+				plainDiff: { key: 'k' },
+				patch: { key: 'K' },
+				baseUpdatedAt: BASE,
+			}).catch((e) => e)
+
+			expect(error).toBeInstanceOf(ShareSaveError)
+			expect(error.code).toBe('view_only')
+			expect(shareSaveErrorText(error)).toContain('view only')
+			expect(log.saves).toHaveLength(0)
+			expect(log.plainPuts).toHaveLength(0)
+		},
+	)
+
+	it('refuses a restore of a copy without a write grade, sends nothing and shows why', async () => {
 		const log = shareSaveServer({
 			id: 'copy-me',
-			context: { ...context, effectiveGrade: 'none' },
+			context: { ...context, effectiveGrade: 'read' },
+			rows: { v1: { id: 'v1', name: 'Router', key: null, login: null } },
+		})
+		useSecretStore().currentSecret = { id: 'copy-me', updatedAt: BASE }
+		const store = useSecretVersionStore()
+
+		await expect(store.restore('v1', 'copy-me')).rejects.toBeInstanceOf(
+			ShareSaveError,
+		)
+
+		expect(log.saves).toHaveLength(0)
+		expect(log.plainPuts).toHaveLength(0)
+		expect(axios.post).not.toHaveBeenCalled()
+		expect(store.error).toContain('Shared with you to view only')
+	})
+
+	it('saves a copy with grade manage through the share save', async () => {
+		const log = shareSaveServer({
+			id: 'copy-me',
+			context: { ...context, effectiveGrade: 'manage' },
+			required: [{ secretId: 'src', holder: 'owner', targetUserId: null }],
 		})
 
-		const result = await saveShared({
+		await saveShared({
 			id: 'copy-me',
 			plainDiff: { key: 'k' },
 			patch: { key: 'K' },
 			baseUpdatedAt: BASE,
 		})
 
-		expect(log.saves).toHaveLength(0)
-		expect(log.plainPuts[0][0]).toContain('/api/v1/secrets/copy-me')
-		expect(log.plainPuts[0][1]).toEqual({ key: 'K', baseUpdatedAt: BASE })
-		expect(result.secret.updatedAt).toBe(SAVED_AT)
-	})
-
-	it('restores the own copy without a write grade through the version restore, which records it', async () => {
-		const log = shareSaveServer({
-			id: 'copy-me',
-			context: { ...context, effectiveGrade: 'read' },
-			posts: {
-				'/api/v1/versions/v1/restore': {
-					id: 'copy-me',
-					updatedAt: SAVED_AT,
-				},
-			},
-		})
-		const whole = { key: 'k', login: null, additionalFields: null }
-
-		const result = await saveShared({
-			id: 'copy-me',
-			plainDiff: whole,
-			patch: { ...whole, key: 'K' },
-			baseUpdatedAt: BASE,
-			restoredFrom: 'v1',
-		})
-
-		expect(log.saves).toHaveLength(0)
+		expect(log.saves.at(-1).copies.map((c) => c.secretId)).toEqual(['src'])
 		expect(log.plainPuts).toHaveLength(0)
-		expect(axios.post).toHaveBeenCalledWith(
-			expect.stringContaining('/api/v1/versions/v1/restore'),
-			{ baseUpdatedAt: BASE },
-		)
-		expect(result.secret.updatedAt).toBe(SAVED_AT)
-	})
-
-	it('shows a stale restore of the own copy like any stale save, and changes nothing', async () => {
-		const moved = '2026-10-01T10:30:00+00:00'
-		const restores = []
-		shareSaveServer({
-			id: 'copy-me',
-			context: { ...context, effectiveGrade: 'read' },
-			rows: { v1: { id: 'v1', name: 'Router', key: null, login: null } },
-			posts: {
-				'/api/v1/versions/v1/restore': (body) => {
-					restores.push(body)
-					if (body.baseUpdatedAt !== moved) {
-						throw httpError(409, {
-							error: 'stale',
-							message: 'Secret changed',
-							current: { id: 'copy-me', updatedAt: moved },
-						})
-					}
-					return { id: 'copy-me', updatedAt: SAVED_AT }
-				},
-			},
-		})
-		useSecretStore().currentSecret = { id: 'copy-me', updatedAt: BASE }
-		const store = useSecretVersionStore()
-
-		await expect(store.restore('v1', 'copy-me')).rejects.toBeTruthy()
-
-		expect(restores).toEqual([{ baseUpdatedAt: BASE }])
-		expect(store.error).toContain('changed elsewhere')
-	})
-
-	it("shows the restore route's own 409, which carries no error code, as a stale restore", async () => {
-		shareSaveServer({
-			id: 'copy-me',
-			context: { ...context, effectiveGrade: 'read' },
-			rows: { v1: { id: 'v1', name: 'Router', key: null, login: null } },
-			posts: {
-				// As SecretVersionController answers a StaleWriteException.
-				'/api/v1/versions/v1/restore': () => {
-					throw httpError(409, {
-						message: 'Secret changed',
-						current: { id: 'copy-me', updatedAt: SAVED_AT },
-					})
-				},
-			},
-		})
-		useSecretStore().currentSecret = { id: 'copy-me', updatedAt: BASE }
-		const store = useSecretVersionStore()
-
-		await expect(store.restore('v1', 'copy-me')).rejects.toBeTruthy()
-
-		expect(store.error).toContain('changed elsewhere')
 	})
 
 	it('never sends a restore without a base', async () => {
-		const restores = []
-		shareSaveServer({
+		const log = shareSaveServer({
 			id: 'copy-me',
-			context: { ...context, effectiveGrade: 'read' },
+			context,
 			rows: { v1: { id: 'v1', name: 'Router', key: null, login: null } },
-			posts: {
-				'/api/v1/versions/v1/restore': (body) => {
-					restores.push(body)
-					return { id: 'copy-me', updatedAt: SAVED_AT }
-				},
-			},
 		})
 		const store = useSecretVersionStore()
 
 		await expect(store.restore('v1', 'copy-me')).rejects.toThrow(
 			'No base version',
 		)
-		expect(restores).toEqual([])
+		expect(log.saves).toEqual([])
 	})
 })
 

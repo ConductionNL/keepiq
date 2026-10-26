@@ -34,14 +34,20 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
 
 /**
  * Pushes an updated encrypted blob to every recipient of a secret.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 14 against a threshold of 13:
+ * telling a source from a received copy takes both outcomes of the share-row
+ * lookup and a refusal of its own.
  */
 class ShareSyncService {
 	use TTransactional;
@@ -120,8 +126,10 @@ class ShareSyncService {
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
+	 * @throws ForbiddenException When the secret is a read-only copy or a received copy
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 	 */
@@ -133,6 +141,7 @@ class ShareSyncService {
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
 		$this->guards->assertWritable(source: $source);
+		$this->assertNotACopy(secret: $source);
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
@@ -169,6 +178,31 @@ class ShareSyncService {
 			db: $this->db
 		);
 	}//end syncUpdate()
+
+	/**
+	 * Refuse a sync that starts from a received copy. A copy is owned by its
+	 * holder, so the owner check would pass and the sync would write that copy
+	 * alone, whether or not the holder may write its source.
+	 *
+	 * @param Secret $secret The secret the sync names
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When the secret is a received copy
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 */
+	private function assertNotACopy(Secret $secret): void {
+		try {
+			$this->mapper->findByRecipientSecret(recipientSecretId: $secret->getId());
+		} catch (DoesNotExistException) {
+			return;
+		} catch (MultipleObjectsReturnedException) {
+			// More than one share row: still a copy.
+		}
+
+		throw new ForbiddenException(message: 'A sync starts from the source secret, not from a copy');
+	}//end assertNotACopy()
 
 	/**
 	 * Attribute a sync by anyone but the owner to the writer on the source

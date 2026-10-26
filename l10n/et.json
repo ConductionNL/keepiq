@@ -3,6 +3,8 @@
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "See saladus on jagatud paljude partnerorganisatsioonidega, seega salvestamine ootab päringupiirangu möödumist ja jätkub siis. Hoia see aken avatuna.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Liiga palju partnerorganisatsioonide päringuid. Midagi ei salvestatud; proovi minuti pärast uuesti.",
         "This version cannot be restored to this secret. Nothing was saved.": "Seda versiooni ei saa selle saladuse jaoks taastada. Midagi ei salvestatud.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Sinuga jagatud ainult vaatamiseks. Selle muutmiseks küsi omanikult muutmisõigust.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Sinuga jagatud ainult vaatamiseks. Midagi ei salvestatud; selle muutmiseks küsi omanikult muutmisõigust.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerorganisatsioon, kellega see saladus on jagatud, ei ole kättesaadav ({partners}). Tee muudatus uuesti võrgus olles, kus saad salvestada ilma nendeta.",
         "Save without them": "Salvesta ilma nendeta",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Salvestatud. Partnerorganisatsioonide saajad saavad selle muudatuse, kui omanik selle saladuse järgmine kord salvestab.",
