@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
@@ -122,6 +123,8 @@ class ShareServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		$this->mapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+		// No secret is a received copy unless a test says so.
+		$this->mapper->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('Not a copy'));
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$this->suiteMapper = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
 		$this->delegationMapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
@@ -1345,4 +1348,36 @@ class ShareServiceTest extends TestCase {
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
 		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
 	}//end testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused()
+
+	/**
+	 * Bob owns his copy of alice's secret, so the owner check passes on it. A
+	 * sync that names the copy is still refused and writes nothing, as it
+	 * would change his copy alone (keepiq#1287).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 */
+	public function testASyncThatNamesARecipientCopyIsRefused(): void {
+		$copy = $this->makeOwnerSecret('copy-1', 'bob');
+		$this->secretMapper->method('findById')->willReturn($copy);
+		$shareRow = new ShareTarget();
+		$shareRow->setSourceSecretId('src-1');
+		$shareRow->setTargetUserId('bob');
+		$shareRow->setSecretId('copy-1');
+		$this->mapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+		$this->mapper->method('findByRecipientSecret')->with('copy-1')->willReturn($shareRow);
+		$this->service = $this->wireService();
+
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+
+		$this->expectException(ForbiddenException::class);
+		$this->service->syncUpdate(
+			secretId: 'copy-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'OTHER_VALUE']],
+			expectedUpdatedAt: '',
+			userId: 'bob'
+		);
+	}//end testASyncThatNamesARecipientCopyIsRefused()
 }//end class

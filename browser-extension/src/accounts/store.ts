@@ -1,8 +1,11 @@
 import { MAX_ACCOUNTS, type AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
+import { clearPolicy, generatorOptionsKey, generatorPolicyKey } from '@/src/generator/store'
+import { provenCertificateKey } from '@/src/vault/certificate'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { clearSnapshot } from '@/src/vault/store'
+import { forgetVerifiedPartners } from '@/src/vault/verified-partners'
 import { DEFAULT_SETTINGS, settingsKey, writeSettings, type AccountSettings } from './settings'
 
 export { MAX_ACCOUNTS }
@@ -21,11 +24,15 @@ export interface AccountRecord {
 	revoked?: boolean
 	/** Set when a sync found a new suite, so the unlock screen can say why. */
 	keyChanged?: boolean
+	/** Keepiq's version as last read; absent on accounts added before it was kept. */
+	keepiqVersion?: string | null
 }
 
 const ACCOUNTS = 'accounts'
 const ACTIVE = 'activeAccountId'
 export const suiteKey = (accountId: string) => `suite.${accountId}`
+/** Set once the folder manager's plaintext-names notice is dismissed. */
+export const folderNoticeKey = (accountId: string) => `folderNotice.${accountId}`
 
 export class AccountLimitReached extends Error {}
 export class DuplicateAccount extends Error {}
@@ -71,6 +78,7 @@ export async function getActiveAccountId(): Promise<string | null> {
 
 export async function setActive(accountId: string): Promise<void> {
 	if (!(await getAccount(accountId))) throw new Error(`Unknown account ${accountId}`)
+	if ((await getActiveAccountId()) !== accountId) forgetVerifiedPartners()
 	await browser.storage.local.set({ [ACTIVE]: accountId })
 }
 
@@ -92,6 +100,7 @@ export async function addAccount(fields: Omit<AccountRecord, 'id'>, suite: Cache
 		return added
 	})
 	// Only once the list holds it, or getActiveAccountId() would heal the pointer away.
+	forgetVerifiedPartners()
 	await browser.storage.local.set({ [ACTIVE]: record.id })
 	return record
 }
@@ -127,16 +136,20 @@ async function isActive(accountId: string): Promise<boolean> {
  */
 export async function markLoggedOut(accountId: string, revoked = false): Promise<void> {
 	await updateAccount(accountId, { appPassword: null, revoked })
-	await clearKey(accountId)
+	await clearKey(accountId, { sealed: 'drop' })
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove(suiteKey(accountId))
+	await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
+	await clearPolicy(accountId)
 	await announceLock(await isActive(accountId))
 }
 
+/** `clearKey` takes the generator history, sealed values too, with the key. */
 async function purge(accountId: string): Promise<void> {
-	await clearKey(accountId)
+	await clearKey(accountId, { sealed: 'drop' })
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove([suiteKey(accountId), settingsKey(accountId)])
+	await browser.storage.local.remove([
+		suiteKey(accountId), provenCertificateKey(accountId), settingsKey(accountId), folderNoticeKey(accountId), generatorOptionsKey(accountId), generatorPolicyKey(accountId),
+	])
 }
 
 /** Manual "Log out": the account is gone. The host permission is kept (another account may share it). */

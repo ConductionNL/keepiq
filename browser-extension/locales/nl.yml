@@ -11,11 +11,13 @@ errors:
   serverError: "{host} is nu niet beschikbaar, probeer het later opnieuw"
   unauthorized: Verkeerde gebruikersnaam of app-wachtwoord
   keepiqMissing: Keepiq is niet geïnstalleerd op {host}
+  keepiqOutdated: Keepiq op {host} is te oud voor deze extensie, die versie {version} of nieuwer nodig heeft. Vraag je beheerder om Keepiq bij te werken.
   noActiveSuite: Open de Keepiq-webapp één keer en stel een hoofdwachtwoord in, probeer het daarna opnieuw
   unlockBlocked: Je organisatie vereist inloggen in twee stappen. Stel een tweede factor in onder Nextcloud Instellingen, Beveiliging en probeer het daarna opnieuw
   duplicate: Dit account is al toegevoegd
   limitReached: Je kunt maximaal {count} accounts toevoegen
   invalidMasterPassword: Ongeldig hoofdwachtwoord
+  keyUnreadable: Je kluissleutel in Keepiq kan niet worden gelezen, dus deze browser kan je kluis niet ontgrendelen. Meld dit bij je Keepiq-beheerder.
   offlineNoCache: Je bent offline en deze kluis is nog niet gesynchroniseerd
   sessionRevoked: Sessie ingetrokken, log opnieuw in
   writeLocked: Je kluis kan nu niet worden gewijzigd, probeer het later opnieuw
@@ -35,7 +37,6 @@ common:
   addAccount: Account toevoegen
   openWebApp: Open de Keepiq-webapp
   later: Beschikbaar in een latere update
-  laterUpdate: Dit komt in een latere update.
   justNow: zojuist
 
 titles:
@@ -43,17 +44,22 @@ titles:
   logInAgain: Opnieuw inloggen
   unlock: Ontgrendelen
   viewItem: Item bekijken
+  newItem: Nieuw item
+  editItem: Item bewerken
+  newSend: Nieuwe verzending
+  sendCreated: Verzending aangemaakt
 
 tabs:
   label: Hoofdmenu
   vault: Kluis
   generator: Generator
-  send: Send
+  send: Verzenden
   settings: Instellingen
 
 header:
   popout: Openen in apart venster
   accounts: Accounts, ingelogd als {name}
+  new: Nieuw
 
 unlock:
   masterPassword: Hoofdwachtwoord
@@ -134,6 +140,133 @@ item:
   clone: Klonen
   move: Naar map verplaatsen
   delete: Verwijderen
+  send: Verzenden
+  cloneName: "{name} - Kloon"
+  passkeyNoClone: Passkeys kun je niet klonen
+  useOnly: Alleen met je gedeeld om in te loggen
+  readOnly: Gedeeld vanuit een andere organisatie, dus je kunt het alleen verplaatsen
+  viewOnly: Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.
+  expiringNoClone: Je toegang stopt op {date}, dus je kunt het niet klonen
+  expiringNoSend: Je toegang stopt op {date}, dus je kunt het niet verzenden
+  saved: Item opgeslagen
+  deleted: Item naar de prullenbak verplaatst
+  moved: Verplaatst naar {folder}
+  deleteTitle: Item verwijderen
+  deleteConfirm: "{name} naar de prullenbak verplaatsen? Het wordt niet langer gedeeld, ook niet na terugzetten vanuit de prullenbak in de Keepiq-webapp."
+  gone: Dit item bestaat niet meer
+
+form:
+  itemDetails: Itemgegevens
+  type: Type
+  name: Naam
+  folder: Map
+  chooseFolder: Kies een map, nu {folder}
+  website: Website-URL
+  autofillOptions: Opties voor automatisch invullen
+  additionalOptions: Extra opties
+  authenticator: Authenticator
+  note: Notitie
+  secret: Geheim
+  advanced: Geavanceerd
+  algorithm: Algoritme
+  digits: Cijfers
+  period: Periode in seconden
+  addField: Veld toevoegen
+  fieldName: Veldnaam
+  fieldValue: Waarde
+  removeField: "{name} verwijderen"
+  removeUnnamed: Veld verwijderen
+  save: Opslaan
+  passkeyReadOnly: De gegevens van een passkey kun je alleen in de Keepiq-webapp wijzigen
+  offline: Je bent offline. Voor wijzigingen is een verbinding met Keepiq nodig.
+  unsavedTitle: Niet-opgeslagen wijzigingen
+  unsaved: Je hebt wijzigingen die niet zijn opgeslagen. Wil je ze weggooien?
+  discard: Weggooien
+  keepEditing: Verder bewerken
+
+fieldErrors:
+  required: Naam is verplicht
+  tooLong: Maximaal {max} tekens
+  tooLongBytes: Te lang (maximaal {max} bytes)
+  reserved: Deze naam is gereserveerd
+  duplicate: Er bestaat al een veld met deze naam
+  invalidTotp: Geen geldige authenticatorsleutel
+  slash: Mapnamen mogen geen schuine streep bevatten
+
+writeErrors:
+  writeLocked: De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw
+  forbidden: Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.
+  policy: Het beleid van je organisatie staat deze wijziging niet toe
+  accountChanged: Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.
+  keepClash: Er bestaat al een map {name} één niveau hoger. Kies daarvoor Items naar bovenliggende map of Verwijderen, of wijzig eerst een van de namen.
+  keepClashAfter: Een map die je wilde behouden heeft dezelfde naam als een map één niveau hoger, dus er is niets verwijderd. Controleer de keuzes opnieuw.
+  invalid: Keepiq heeft deze wijziging geweigerd
+  stale: Dit item is ergens anders gewijzigd. Ga terug en bewerk het opnieuw om de nieuwste versie te zien.
+  itemGone: Dit item bestaat niet meer
+  folderGone: Deze map bestaat niet meer
+  duplicateFolder: Hier bestaat al een map met deze naam
+  folderChanged: Deze map is gewijzigd. Controleer de keuzes opnieuw.
+  offline: Kan de server niet bereiken
+  serverError: Keepiq is nu niet beschikbaar, probeer het later opnieuw
+  unreadable: Dit item kan niet worden gelezen en dus hier niet worden bewerkt
+  restricted: Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren
+  unmatched: Keepiq stuurde een versie van dit item die je kluis niet heeft, dus het is niet geopend.
+  keyMismatch: Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.
+  staleSource: Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.
+  incomplete: Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.
+  badCertificate: Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.
+  unverified: Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.
+  partnerUnreachable: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar ({cloudIds}). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+  partnerLookupLimit: Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.
+  federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
+  keepiqOutdated: Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie {version} of nieuwer.
+  partnerClock: Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.
+  sendInvalid: Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw.
+  sendOffline: De server is niet bereikbaar, er is niets verzonden
+  argon2Unavailable: Wachtwoordbeveiliging is niet beschikbaar in deze browser
+
+shareSave:
+  saveWithout: Opslaan zonder hen
+  ownerOnly: Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar het item weer opslaat.
+  suspended: Delen met {cloudIds} is gepauzeerd, omdat hun certificaat niet kon worden geverifieerd of hun organisatie de deling niet meer accepteert. De Keepiq-webapp toont de deling.
+  paused: Delen met {cloudIds} is gepauzeerd tot je dit item opnieuw met hen deelt.
+
+folders:
+  add: Map toevoegen
+  newFolder: Nieuwe map
+  rename: Naam wijzigen
+  renameTitle: Mapnaam wijzigen
+  delete: Verwijderen
+  more: Meer, {name}
+  name: Mapnaam
+  empty: Nog geen mappen
+  notice: Mapnamen zijn niet versleuteld
+  dismiss: Sluiten
+  current: Huidige map
+  pickTitle: Map kiezen
+  moveTitle: Naar map verplaatsen
+  saved: Map opgeslagen
+  deleted: Map verwijderd
+  deleteTitle: Map verwijderen
+  deleteConfirm: "{name} verwijderen? Dit kan niet ongedaan worden gemaakt."
+  cascade:
+    1: "{name} en het item erin verwijderen, of het item verplaatsen naar {parent}?"
+    n: "{name} en de $1 items erin verwijderen, of de items verplaatsen naar {parent}?"
+  countsAll: Gearchiveerde items en items in de prullenbak tellen ook mee.
+  deleteItems: Items ook verwijderen
+  moveItems: Items naar bovenliggende map
+  items:
+    1: 1 item
+    n: $1 items
+  subfolders:
+    1: 1 submap
+    n: $1 submappen
+  directRow: Items in {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Verwijderen
+  actionMove: Items naar bovenliggende map
+  actionKeep: Behouden
+  directMove: Naar bovenliggende map
 
 clipboard:
   copied: "{what} gekopieerd"
@@ -155,7 +288,6 @@ detail:
   item: Item
   decrypting: Ontsleutelen…
   decryptFailed: Kan dit item niet ontsleutelen
-  unreadable: Kan dit item niet lezen
   unreadablePasskey: Kan deze passkey niet lezen
   unreadableFields: Kan de extra velden niet lezen
   loginCredentials: Inloggegevens
@@ -196,3 +328,127 @@ totp:
   changesIn:
     1: Wijzigt over 1 seconde
     n: Wijzigt over $1 seconden
+
+settings:
+  accountSecurity: Accountbeveiliging
+  autofill: Automatisch invullen
+  notifications: Meldingen
+  vault: Kluis
+  appearance: Weergave
+  about: Over
+  folders: Mappen
+  theme: Thema
+  themeSystem: Systeemstandaard
+  themeLight: Licht
+  themeDark: Donker
+
+generator:
+  kinds: Wat wil je genereren?
+  password: Wachtwoord
+  passphrase: Wachtwoordzin
+  username: Gebruikersnaam
+  length: Lengte
+  lengthValue: Lengte in tekens
+  uppercase: Hoofdletters (A-Z)
+  lowercase: Kleine letters (a-z)
+  digits: Cijfers (0-9)
+  special: Speciale tekens, zoals !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Soorten tekens
+  lastClassOn: Er blijft minstens één soort aan
+  minNumbers: Min. cijfers
+  minSpecial: Min. speciale tekens
+  avoidAmbiguous: Tekens die op elkaar lijken vermijden
+  lockedByPolicy: Ingesteld door je organisatie
+  passphraseOff: Uitgezet door je organisatie
+  words: Aantal woorden
+  separator: Scheidingsteken
+  capitalizeWords: Woorden met een hoofdletter
+  capitalize: Met een hoofdletter beginnen
+  includeNumber: Cijfer toevoegen
+  usernameType: Soort
+  typeWord: Willekeurig woord
+  typePlus: E-mailadres met plus
+  typeCatchall: Catch-all-e-mailadres
+  email: E-mailadres
+  emailPlaceholder: naam@voorbeeld.nl
+  domain: Domein
+  domainPlaceholder: voorbeeld.nl
+  basedOn: Gebaseerd op
+  random: Willekeurig
+  websiteName: Naam van de website
+  noWebsite: Geen website gevonden
+  needsEmail: Vul een e-mailadres in
+  needsDomain: Vul een domein in
+  wordlistUnavailable: Woordenlijst niet beschikbaar
+  regenerate: Opnieuw genereren
+  usePassword: Dit wachtwoord gebruiken
+  useUsername: Deze gebruikersnaam gebruiken
+  history: Generatorgeschiedenis
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Nog geen gegenereerde waarden
+  clearHistory: Wissen
+  clearHistoryTitle: Generatorgeschiedenis wissen?
+  clearHistoryText: Dit verwijdert alle waarden in de lijst uit deze browser.
+  generatePasswordLink: Een wachtwoord genereren
+  generatePassword: Wachtwoord genereren
+  generateUsername: Gebruikersnaam genereren
+
+send:
+  new: Nieuwe verzending
+  empty: Nog geen verzendingen
+  emptyText: Deel tekst of inloggegevens via een link die zichzelf verwijdert.
+  loadFailed: Je verzendingen konden niet worden geladen
+  retry: Opnieuw proberen
+  labelText: "Tekst, {time}"
+  labelCredential: "Inloggegevens, {time}"
+  viewsLeft:
+    1: "Nog {left} van 1 weergave"
+    n: "Nog {left} van $1 weergaven"
+  expires: "Verloopt {date}"
+  neverExpires: Verloopt nooit
+  expired: Verlopen
+  passwordBadge: Wachtwoord
+  link: Link
+  copyLink: Link kopiëren
+  copyLinkOf: "Link kopiëren, {name}"
+  linkGone: Link niet meer beschikbaar
+  remove: Verwijderen
+  removeOf: "Verwijderen, {name}"
+  removeTitle: Verzending verwijderen
+  removeConfirm: Deze verzending verwijderen? Iedereen met de link verliest de toegang.
+  removed: Verzending verwijderd
+  contentSection: Inhoud
+  optionsSection: Opties
+  type: Type
+  text: Tekst
+  credential: Inloggegevens
+  content: Te delen tekst
+  maxViews: Max. weergaven
+  maxViewsRange: "Tussen 1 en {max}"
+  expiry: Verloopt na
+  expiry1h: 1 uur
+  expiry1d: 1 dag
+  expiry2d: 2 dagen
+  expiry3d: 3 dagen
+  expiry7d: 7 dagen
+  expiry30d: 30 dagen
+  expiryCustom: Aangepast
+  customHours: Uren
+  customHoursMin: Minimaal 1 uur
+  customHoursMax: Maximaal 720 uur (30 dagen)
+  accessPassword: Toegangswachtwoord
+  accessPasswordHint: Optioneel. De ontvanger heeft het nodig om de verzending te openen.
+  create: Aanmaken
+  protecting: Beveiligen met wachtwoord…
+  offline: Voor verzendingen is een verbinding met je Keepiq-server nodig
+  prefillFailed: Deze login kon niet worden gelezen
+  ready: Je verzending is klaar
+  shownOnce:
+    1: Kopieer deze link nu. Je ziet hem alleen tot je dit venster sluit, en de inhoud verdwijnt na 1 weergave.
+    n: Kopieer deze link nu. Je ziet hem alleen tot je dit venster sluit, en de inhoud verdwijnt na $1 weergaven.
+  passwordNote: Deel het toegangswachtwoord apart van de link. Na 5 foute pogingen wordt de verzending verwijderd.
+  done: Klaar

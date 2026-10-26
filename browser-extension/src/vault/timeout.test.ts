@@ -12,7 +12,7 @@ const MINUTE = 60_000
 
 async function unlocked(settings: AccountSettings, uid = 'alice') {
 	const account = await addAccount({
-		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw',
+		serverUrl: 'https://cloud.example.org', uid, loginName: uid, displayName: uid, email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 	}, { ...suiteRow })
 	await writeSettings(account.id, settings)
 	await putKey(account.id, pkcs8)

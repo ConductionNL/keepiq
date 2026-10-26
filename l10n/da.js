@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Denne hemmelighed er delt med mange partnerorganisationer, så gemningen venter på opslagsgrænsen og fortsætter derefter. Hold denne dialog åben.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "For mange opslag hos partnerorganisationer. Intet blev gemt; prøv igen om et minut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Denne version kan ikke gendannes for denne hemmelighed. Intet blev gemt.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Delt med dig kun til visning. Bed ejeren om redigeringsrettigheder for at ændre den.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Delt med dig kun til visning. Intet blev gemt; bed ejeren om redigeringsrettigheder for at ændre den.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation, som denne hemmelighed er delt med, kan ikke nås ({partners}). Foretag ændringen igen online, hvor du kan gemme uden dem.",
         "Save without them": "Gem uden dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gemt. Modtagere hos partnerorganisationer får denne ændring, næste gang ejeren gemmer denne hemmelighed.",

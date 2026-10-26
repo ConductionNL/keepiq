@@ -16,11 +16,14 @@ Changes build on each other in this order. Each proposal lists its predecessors 
 1. `ext-accounts-and-unlock`: accounts, app-password auth, unlock and lock, storage, API client, crypto module
 2. `ext-vault-browse`: sync, popup shell with tabs, vault list, item detail
 3. `ext-vault-edit`: add, edit, delete, clone, move, folders
-4. `ext-generator`: password, passphrase and username generator
-5. `ext-send`: ephemeral sends
-6. `ext-settings`: the Settings tab
-7. `ext-autofill`: fill from popup, context menu, shortcut, save and update prompts
-8. `ext-toolbar-icon`: logged out, locked and unlocked icon, badge counter of matching logins
+4. `ext-i18n`: English and Dutch message catalogs, which every later change's text goes through
+5. `ext-generator`: password, passphrase and username generator, ported from Keepiq's shared generator
+6. `ext-send`: ephemeral sends
+7. `ext-theme`: the Theme setting, the Settings tab's section list and its Appearance view
+8. `ext-settings`: the rest of the Settings tab
+9. `ext-autofill`: fill from popup, context menu, shortcut, save and update prompts
+10. `ext-toolbar-icon`: logged out, locked and unlocked icon, badge counter of matching logins
+11. `ext-share-sync`: an edit of a shared item reaches every recipient's copy, from the ext-vault-edit review
 
 Later slices not yet specced: inline autofill menu, passkey provider, TOTP autofill, card and identity fill, password history, import and export. Website icons wait on a Keepiq change that stores a favicon on the secret (ADR-002).
 

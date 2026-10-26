@@ -107,8 +107,8 @@ const OPEN_WITH_PENDING = {
 
 /**
  * Mount the dialog over a copy whose open starts the merge write-back, like
- * the store's fetchSecret, against a server that refuses a stale copy or
- * source version, through the share save and the plain update alike.
+ * the store's fetchSecret, against a server whose share save refuses a stale
+ * copy or source version.
  *
  * @param {object} options The copy.
  * @param {string} options.grade The caller's grade on the source.
@@ -147,15 +147,9 @@ async function mountCopyWithWriteBack({
 	let arrive
 	const arrived = new Promise((resolve) => (arrive = resolve))
 	axios.put.mockImplementation(async (url, body) => {
-		if (hold && (body.patch ?? body).mergedPending) {
+		if (hold && body.patch?.mergedPending) {
 			arrive()
 			await hold
-		}
-		if (!url.endsWith('/share-save')) {
-			if (body.baseUpdatedAt !== server.copy) {
-				throw stale()
-			}
-			server.copy = SAVED_AT
 		}
 		return serve(url, body)
 	})
@@ -216,11 +210,16 @@ describe('SecretEditDialog — share save', () => {
 	it('saves a copy from the source version it opened on, not the one at save time', async () => {
 		const opened = '2026-09-30T08:00:00+00:00'
 		const wrapper = await mountEdited({
-			context: { sourceSecretId: 'src', sourceUpdatedAt: opened },
+			context: {
+				sourceSecretId: 'src',
+				effectiveGrade: 'write',
+				sourceUpdatedAt: opened,
+			},
 		})
 		// The owner changed the source while the dialog was open.
 		useShareStore().fetchWriteContext.mockResolvedValue({
 			sourceSecretId: 'src',
+			effectiveGrade: 'write',
 			sourceUpdatedAt: '2026-10-01T09:00:00+00:00',
 		})
 		const update = vi
@@ -482,31 +481,39 @@ describe('SecretEditDialog — share save', () => {
 		expect(wrapper.emitted('saved')).toBeFalsy()
 	})
 
-	it('saves the own copy without a write grade held behind a merge write-back, not refused as stale against it', async () => {
-		let release
-		const hold = new Promise((resolve) => (release = resolve))
-		const { wrapper, log, writeBack, arrived } = await mountCopyWithWriteBack({
+	it('shows a copy without a write grade as view only and saves nothing, also not its merge write-back', async () => {
+		const { wrapper, log, writeBack } = await mountCopyWithWriteBack({
 			grade: 'read',
-			hold,
 		})
-
-		const saving = wrapper.vm.submit()
-		await arrived
-		release()
 		await writeBack()
-		await saving
+		await wrapper.vm.sourceBase
 		await wrapper.vm.$nextTick()
 
-		// Both go through the plain update, which moves only the copy.
+		expect(
+			wrapper.find('[data-testid="secret-edit-view-only"]').text(),
+		).toContain('Shared with you to view only')
+		const save = wrapper.findAll('button').find((b) => b.text() === 'Save')
+		expect(save.attributes('disabled')).toBeDefined()
+
+		await wrapper.vm.submit()
+
 		expect(log.saves).toHaveLength(0)
-		expect(log.plainPuts.map(([, body]) => body.baseUpdatedAt)).toEqual([
-			BASE,
-			SAVED_AT,
-		])
-		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(
+		expect(log.plainPuts).toHaveLength(0)
+		expect(wrapper.emitted('saved')).toBeFalsy()
+	})
+
+	it('keeps Save for a copy with a write grade', async () => {
+		const { wrapper, writeBack } = await mountCopyWithWriteBack({
+			grade: 'manage',
+		})
+		await writeBack()
+		await wrapper.vm.sourceBase
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.find('[data-testid="secret-edit-view-only"]').exists()).toBe(
 			false,
 		)
-		expect(wrapper.emitted('saved')).toBeTruthy()
+		expect(wrapper.vm.canSubmit).toBe(true)
 	})
 
 	it('shows a stale refusal as translated text and stays open', async () => {

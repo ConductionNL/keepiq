@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ta skrivnost je deljena z mnogimi partnerskimi organizacijami, zato shranjevanje čaka na omejitev poizvedb in se nato nadaljuje. Pustite to okno odprto.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Preveč poizvedb pri partnerskih organizacijah. Nič ni bilo shranjeno; poskusite znova čez minuto.",
         "This version cannot be restored to this secret. Nothing was saved.": "Te različice ni mogoče obnoviti za to skrivnost. Nič ni bilo shranjeno.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Deljeno z vami samo za ogled. Če jo želite spremeniti, prosite lastnika za pravice urejanja.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Deljeno z vami samo za ogled. Nič ni bilo shranjeno; če jo želite spremeniti, prosite lastnika za pravice urejanja.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerska organizacija, s katero je deljena ta skrivnost, ni dosegljiva ({partners}). Spremembo ponovite na spletu, kjer lahko shranite brez njih.",
         "Save without them": "Shrani brez njih",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Shranjeno. Prejemniki v partnerskih organizacijah bodo to spremembo prejeli, ko bo lastnik naslednjič shranil to skrivnost.",

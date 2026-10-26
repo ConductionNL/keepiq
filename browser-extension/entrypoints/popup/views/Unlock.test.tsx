@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import { account, dispatchReturning } from '../testing'
 import { LogInAgain } from './LogInAgain'
@@ -18,6 +18,22 @@ describe('Unlock in a Dutch browser', () => {
 		expect(screen.getByRole('button', { name: 'Uitloggen' })).toBeTruthy()
 		await userEvent.setup().type(screen.getByLabelText('Hoofdwachtwoord'), 'nope{Enter}')
 		expect(screen.getByRole('alert').textContent).toBe('Ongeldig hoofdwachtwoord')
+	})
+})
+
+describe('the lock screen generator link', () => {
+	it('opens the generator without unlocking', async () => {
+		const dispatch = dispatchReturning()
+		const onGenerate = vi.fn()
+		render(<Unlock account={account()} dispatch={dispatch} onGenerate={onGenerate} />)
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Generate a password' }))
+		expect(onGenerate).toHaveBeenCalledOnce()
+		expect(dispatch).not.toHaveBeenCalled()
+	})
+
+	it('is not shown without a place to open it', () => {
+		render(<Unlock account={account()} dispatch={dispatchReturning()} />)
+		expect(screen.queryByRole('button', { name: 'Generate a password' })).toBeNull()
 	})
 })
 

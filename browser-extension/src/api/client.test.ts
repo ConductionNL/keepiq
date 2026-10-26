@@ -93,6 +93,17 @@ describe('errors', () => {
 		expect(error).toMatchObject({ status: 400, message: 'name is required' })
 	})
 
+	it.each([
+		[428, { message: 'Blocked', error: 'org_ownership_required' }, 'org_ownership_required'],
+		[428, { message: 'Offline caching is disabled', error: 'forbidden' }, undefined],
+		[403, { message: 'Blocked', code: 'org_ownership_required' }, 'org_ownership_required'],
+		[403, { message: 'Suite blocked' }, undefined],
+	])('reads a %i refusal and its reason', async (status, body, code) => {
+		fetchMock.mockResolvedValue(reply(status, body))
+		const error = await createClient(account).keepiq('PUT', '/api/v1/folders/1', {}).catch((e) => e)
+		expect(error).toMatchObject({ refused: true, code })
+	})
+
 	it('reports an HTML 404 on a Keepiq route as Keepiq not installed', async () => {
 		fetchMock.mockResolvedValue(reply(404, '<html>Not found</html>'))
 		await expect(createClient(account).listSuites()).rejects.toBeInstanceOf(KeepiqNotInstalled)
@@ -101,6 +112,25 @@ describe('errors', () => {
 	it('never sends a request for a logged out account', async () => {
 		await expect(createClient({ ...account, appPassword: null }).listSuites()).rejects.toBeInstanceOf(SessionRevoked)
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('version', () => {
+	it('reads the version from the health check, also from its 503', async () => {
+		fetchMock.mockResolvedValue(reply(200, { status: 'ok', version: '0.3.12' }))
+		expect(await createClient(account).fetchVersion()).toBe('0.3.12')
+		fetchMock.mockResolvedValue(reply(503, { status: 'error', version: '0.3.12' }))
+		expect(await createClient(account).fetchVersion()).toBe('0.3.12')
+	})
+
+	it('returns null for a Keepiq without the health check', async () => {
+		fetchMock.mockResolvedValue(reply(404, '<html/>'))
+		expect(await createClient(account).fetchVersion()).toBeNull()
+	})
+
+	it('throws on a server error that names no version', async () => {
+		fetchMock.mockResolvedValue(reply(502, '<html>Bad Gateway</html>'))
+		await expect(createClient(account).fetchVersion()).rejects.toMatchObject({ status: 502 })
 	})
 })
 

@@ -27,6 +27,8 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Http;
@@ -126,8 +128,8 @@ class SecretVersionController extends OCSController {
 
 	/**
 	 * Restore a version onto this one row. The web app restores through
-	 * share-save (`restoredFrom`) and uses this route only for a copy holder
-	 * without a write grade, whose restore changes their own copy alone.
+	 * share-save (`restoredFrom`). A copy whose holder may not write its
+	 * source is view-only and its restore is refused.
 	 *
 	 * @param string $id The version UUID
 	 * @param string|null $baseUpdatedAt The head version the restore was chosen on
@@ -153,12 +155,24 @@ class SecretVersionController extends OCSController {
 				data: ['message' => $exception->getMessage(), 'current' => $exception->getCurrent()->jsonSerialize()],
 				statusCode: Http::STATUS_CONFLICT
 			);
+		} catch (ForbiddenException $exception) {
+			$body = ['message' => $exception->getMessage()];
+			if ($exception->policyCode() !== null) {
+				$body['code'] = $exception->policyCode();
+			}
+
+			return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
+		} catch (NotFoundException $exception) {
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage()],
+				statusCode: Http::STATUS_NOT_FOUND
+			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
-		}
+		}//end try
 
 		return new JSONResponse(data: $secret->jsonSerialize());
 	}//end restore()

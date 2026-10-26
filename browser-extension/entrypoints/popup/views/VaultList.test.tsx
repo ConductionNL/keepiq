@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DecryptedItem } from '@/src/messages'
 import type { CurrentTab } from '../hooks/useCurrentTab'
-import { ShellContext } from '../shell-context'
+import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { everythingVisible, fakeBackground, fakeClipboard, itemMeta, sentKinds, snapshotReply, types, type UnlockedSnapshot } from '../testing'
 import { VaultList } from './VaultList'
 
@@ -19,12 +19,13 @@ function renderList(snapshot: UnlockedSnapshot, options: { tab?: CurrentTab; dec
 	const launch = vi.fn()
 	const onOpen = vi.fn()
 	const syncNow = vi.fn()
+	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	render(
-		<ShellContext.Provider value={{ refreshState: vi.fn(), toast, launch }}>
+		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast, launch, items }}>
 			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} syncNow={syncNow} onOpen={onOpen} />
 		</ShellContext.Provider>,
 	)
-	return { sent, toast, launch, onOpen, syncNow }
+	return { sent, toast, launch, onOpen, syncNow, items }
 }
 
 /** Names of the item cards in the main list, in order. */
@@ -207,17 +208,58 @@ describe('item cards', () => {
 		expect(sentKinds(sent)).not.toContain('clipboard.copied')
 	})
 
-	it('offers View and the edit actions disabled until a later update', async () => {
-		const { onOpen } = renderList(snapshotReply())
+	it('offers View and the edit actions', async () => {
+		const { onOpen, items } = renderList(snapshotReply())
 		const user = userEvent.setup()
-		await user.click(screen.getByRole('button', { name: 'More, GitHub' }))
-		for (const label of ['Edit', 'Clone', 'Move to folder', 'Delete']) {
-			const entry = screen.getByRole('menuitem', { name: label })
-			expect(entry.getAttribute('aria-disabled')).toBe('true')
-			expect(entry.getAttribute('title')).toBe('Available in a later update')
-		}
+		const more = () => user.click(screen.getByRole('button', { name: 'More, GitHub' }))
+		await more()
+		for (const label of ['Edit', 'Clone', 'Move to folder', 'Delete']) expect(screen.getByRole('menuitem', { name: label }).getAttribute('aria-disabled')).toBeNull()
+		await user.click(screen.getByRole('menuitem', { name: 'Edit' }))
+		expect(items.edit).toHaveBeenCalledWith('i1')
+		await more()
+		await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+		expect(items.remove).toHaveBeenCalledWith(expect.objectContaining({ id: 'i1' }))
+		await more()
 		await user.click(screen.getByRole('menuitem', { name: 'View' }))
 		expect(onOpen).toHaveBeenCalledWith('i1')
+	})
+
+	it('offers Send on a read-only share', async () => {
+		renderList(snapshotReply({ items: [itemMeta({ readOnly: true })] }))
+		await userEvent.setup().click(screen.getByRole('button', { name: 'More, GitHub' }))
+		expect(screen.getByRole('menuitem', { name: 'Send' }).getAttribute('aria-disabled')).toBeNull()
+	})
+
+	it('offers Send on a login only, before Delete', async () => {
+		const { items } = renderList(snapshotReply({ items: [itemMeta(), itemMeta({ id: 'i2', name: 'Licence', typeId: 't-api_key' })] }))
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'More, GitHub' }))
+		expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual(['View', 'Edit', 'Clone', 'Move to folder', 'Send', 'Delete'])
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		expect(items.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'i1' }))
+		await user.click(screen.getByRole('button', { name: 'More, Licence' }))
+		expect(screen.queryByRole('menuitem', { name: 'Send' })).toBeNull()
+	})
+
+	it.each([
+		[{ blocked: true, hasLogin: false }, 'This item is blocked.'],
+		[{ useOnly: true }, 'Shared with you for signing in only'],
+		[{ accessExpiresAt: '2026-12-01T12:00:00Z' }, `Your access ends ${new Date('2026-12-01T12:00:00Z').toLocaleDateString('en')}, so it cannot be sent`],
+	])('disables Send with the reason for %o', async (overrides, reason) => {
+		const { items } = renderList(snapshotReply({ items: [itemMeta(overrides)] }))
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'More, GitHub' }))
+		const send = screen.getByRole('menuitem', { name: 'Send' })
+		expect(send.getAttribute('aria-disabled')).toBe('true')
+		expect(send.title).toBe(reason)
+		await user.click(send)
+		expect(items.send).not.toHaveBeenCalled()
+	})
+
+	it('does not edit or clone a blocked item', async () => {
+		renderList(snapshotReply({ items: [itemMeta({ blocked: true, hasLogin: false })] }))
+		await userEvent.setup().click(screen.getByRole('button', { name: 'More, GitHub' }))
+		for (const label of ['Edit', 'Clone']) expect(screen.getByRole('menuitem', { name: label }).title).toBe('This item is blocked.')
 	})
 
 	it('closes a menu on Escape and returns focus to its button', async () => {

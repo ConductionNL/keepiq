@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Dëst Geheimnis ass mat ville Partnerorganisatiounen gedeelt, dofir waart d'Späicheren op d'Ufrolimit a geet duerno weider. Loosst dës Fënster op.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Ze vill Ufroe bei Partnerorganisatiounen. Et gouf näischt gespäichert; probéiert an enger Minutt nach eng Kéier.",
         "This version cannot be restored to this secret. Nothing was saved.": "Dës Versioun kann net fir dëst Geheimnis restauréiert ginn. Et gouf näischt gespäichert.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Mat Iech nëmmen zum Ukucken gedeelt. Frot de Besëtzer no Ännerungsrechter, fir et z'änneren.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Mat Iech nëmmen zum Ukucken gedeelt. Et gouf näischt gespäichert; frot de Besëtzer no Ännerungsrechter, fir et z'änneren.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Eng Partnerorganisatioun, mat där dëst Geheimnis gedeelt ass, ass net erreechbar ({partners}). Maacht d'Ännerung online nach eng Kéier; do kënnt Dir ouni si späicheren.",
         "Save without them": "Ouni si späicheren",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gespäichert. Empfänger bei Partnerorganisatiounen kréien dës Ännerung, wann de Besëtzer dëst Geheimnis déi nächst Kéier späichert.",

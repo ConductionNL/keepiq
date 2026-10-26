@@ -22,7 +22,7 @@ Server facts used here, verified in the Keepiq app: `SettingsController::getUser
 ## Decisions
 
 - **One schema module, scoped keys.** `src/settings/schema.ts` exports a `SETTINGS` table of `{ key, scope: 'account' | 'global' | 'server', default, validate }` and the derived `SettingsValues` type. Every read passes through `validate` and falls back to the default, so an old or hand-edited record can never produce an unexpected type. Alternative: per-module keys with local defaults, which is what produced Bitwarden's settings drift.
-- **Two records, not one per key.** Account settings live in `storage.local` under `settings:<accountId>`, global (Appearance) under `settings:global`. One read per render, one write per change, and account removal deletes one key. Alternative: a key per setting, which needs a prefix scan to clear.
+- **Two records, not one per key.** Account settings live in `storage.local` under `settings.<accountId>`, global (Appearance) under ext-theme's `settings.global`. One read per render, one write per change, and account removal deletes one key. Alternative: a key per setting, which needs a prefix scan to clear.
 - **Appearance is global.** Theme must apply to the unlock and account-picker screens before an account is chosen, so it cannot be per account. Every other setting is per account because Bitwarden scopes them that way.
 - **The background owns reads and writes; components go through hooks.** The `useSettings` hook sends `settings.get` and `settings.set`, applies `applyPolicy` to the returned values for display, and hands views the clamped values plus the policy for labels. The background validates, writes and returns the full snapshot, and applies the same `applyPolicy` for enforcement. No component touches `browser.storage` or the API client (ADR-004). `settings.set` takes a partial patch so one message serves every toggle.
 - **Views compose shared components.** Every entry is a `SettingRow` (label, description, control slot) holding a `Toggle`, `Select` or link; the section list is a `SectionList`; the Never-timeout and PIN-on-disk confirmations are one `WarningDialog` with different copy; the PIN entry is a `PinDialog`. Alternative: markup per view, which is how the vanilla draft would have drifted.
@@ -34,7 +34,7 @@ Server facts used here, verified in the Keepiq app: `SettingsController::getUser
 - **Default item type stores the slug.** The control lists cached type rows by `label`, stores `name` as `default_secret_type`, and ext-vault-edit resolves the slug to a `typeId` at create time. If the slug matches no cached row the control falls back to `login`.
 - **Keyboard shortcut is read, not owned.** The background calls `browser.commands.getAll()`, which exists on both targets, and fills the snapshot's `shortcut` with the first command's binding or `null`; the `Autofill` view shows it or "Not set" when ext-autofill has not declared one. Chromium allows `browser.tabs.create({ url: 'chrome://extensions/shortcuts' })`; Firefox refuses privileged `about:` URLs from `tabs.create`, so Firefox gets instructions plus a Copy control. Detected with `import.meta.env.FIREFOX`.
 - **Add current site uses activeTab.** Opening the popup from the toolbar action grants `activeTab` for that tab, so `browser.tabs.query({ active: true, currentWindow: true })` returns the URL without a `tabs` permission.
-- **Theme via a root attribute from one hook.** `useTheme` runs in `<App />`, above the router, so it sets `data-theme` on the document root for every screen including unlock and the account picker, in a layout effect so the first paint is already themed; `popup.css` keeps `color-scheme: light dark` for System default and overrides the tokens under `[data-theme="light"]` and `[data-theme="dark"]`. Compact mode is a second attribute that tightens spacing tokens. Show animations toggles a `prefers-reduced-motion`-style class.
+- **Appearance extends ext-theme.** Theme and how it is applied come from ext-theme's design. Compact mode is a second root attribute next to its `data-theme` that tightens spacing tokens. Show animations toggles a `prefers-reduced-motion`-style class.
 - **About reads the manifest.** `browser.runtime.getManifest().version` is identical on both targets. Store URLs are constants set to `<store-url>` until publication; the view hides Rate the extension while the constant is a placeholder.
 
 ## Module layout
@@ -45,16 +45,16 @@ New:
 - `src/settings/policy.ts`: `applyPolicy`, `NO_POLICY`, the clamp type.
 - `src/settings/pin.ts`: derive, wrap, unwrap, blob codec, placement helper.
 - `src/settings/server-mirror.ts`: fetch, write, stale computation for `/api/settings/user`.
-- `entrypoints/popup/views/settings/SettingsIndex.tsx`: section list and navigation.
-- `entrypoints/popup/views/settings/AccountSecurity.tsx`, `Autofill.tsx`, `Notifications.tsx`, `Vault.tsx`, `Appearance.tsx`, `About.tsx`: one view per section.
-- `entrypoints/popup/components/SettingRow.tsx` (label, description, control slot), `Toggle.tsx`, `Select.tsx`, `SectionList.tsx`, `PinDialog.tsx`, `WarningDialog.tsx` (Never-timeout and PIN-on-disk confirmations).
-- `entrypoints/popup/hooks/useSettings.ts` (over `settings.get` and `settings.set`, policy clamp applied), `useServerSettings.ts` (stale indicator, disabled offline, `settings.server.set`), `useTheme.ts` (global theme on the document root, including unlock and account screens).
+- `entrypoints/popup/views/settings/AccountSecurity.tsx`, `Autofill.tsx`, `Notifications.tsx`, `Vault.tsx`, `About.tsx`: one view per section.
+- `entrypoints/popup/components/SettingRow.tsx` (label, description, control slot), `Toggle.tsx`, `PinDialog.tsx`, `WarningDialog.tsx` (Never-timeout and PIN-on-disk confirmations).
+- `entrypoints/popup/hooks/useServerSettings.ts` (stale indicator, disabled offline, `settings.server.set`).
 
 Edited:
 - `src/messages.ts`: the kinds below.
 - `entrypoints/background.ts`: handlers for the new kinds, timeout config fed from the store through `applyPolicy`, PIN blob purge on lock, timeout, logout, account removal and suite change, server mirror refresh at the end of sync.
 - ext-accounts-and-unlock's `Unlock` view component (`entrypoints/popup/views/Unlock.tsx`): a PIN field and "Use master password" link rendered when `useSettings` reports `pin.enabled`, sending `pin.unlock`.
-- `entrypoints/popup/popup.css`: theme and compact tokens.
+- ext-theme's `SettingsIndex.tsx` and `Settings.tsx` (open the five sections), `Appearance.tsx` (the other entries) and `useSettings.ts` (the full snapshot, policy clamp applied).
+- `entrypoints/popup/popup.css`: compact tokens.
 
 Nothing changes in `wxt.config.ts`. `storage` is already declared; `commands` belongs to ext-autofill.
 

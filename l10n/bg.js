@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Тази тайна е споделена с много партньорски организации, затова запазването изчаква лимита на заявките и след това продължава. Не затваряйте този прозорец.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Твърде много заявки към партньорски организации. Нищо не е запазено; опитайте отново след минута.",
         "This version cannot be restored to this secret. Nothing was saved.": "Тази версия не може да бъде възстановена за тази тайна. Нищо не е запазено.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Споделено с вас само за преглед. Помолете собственика за права за редактиране, за да го промените.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Споделено с вас само за преглед. Нищо не е запазено; помолете собственика за права за редактиране, за да го промените.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партньорска организация, с която е споделена тази тайна, е недостъпна ({partners}). Направете промяната отново онлайн, където можете да запазите без тях.",
         "Save without them": "Запазване без тях",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Запазено. Получателите в партньорски организации ще получат тази промяна, когато собственикът запази тази тайна следващия път.",

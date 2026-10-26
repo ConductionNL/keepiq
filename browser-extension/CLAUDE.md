@@ -15,7 +15,7 @@ npm install            # postinstall runs `wxt prepare`, which generates .wxt/
 npm run dev            # Chromium dev + HMR, starts the test site and opens a browser on it. runs as a watcher, does not end unless on purpose or it crashes
 npm run dev:firefox    # Firefox dev (MV2) + HMR
 npm run test-site      # the test site alone, http://localhost:8100
-npm test               # vitest: unit and popup component tests
+npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
 npm run typecheck      # tsc --noEmit — does not build or catch MV drift
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
@@ -74,6 +74,19 @@ Keep them short. These are rules, not preferences:
   fetching, no icon services, no telemetry; API calls go from the background only,
   with `credentials: 'omit'`. (ADR-002, ADR-003)
 
+## Keepiq version support
+
+We are contractually bound to these. They are rules, not preferences; [KEEPIQ-VERSIONS.md](KEEPIQ-VERSIONS.md) has the how-to.
+
+- **Every released Keepiq from `MIN_KEEPIQ_VERSION` on stays supported for five years from its release date.** No change may break a supported version, also not "temporarily".
+- **Never raise `MIN_KEEPIQ_VERSION` past a release still within its five years.** Check [supported-keepiq-versions.md](../docs/browser-extension/supported-keepiq-versions.md) first, and never raise it to avoid a fallback.
+- **Any call to a route or field newer than the minimum must be gated** with an entry in `KEEPIQ_FEATURES` and a `keepiqSupports` check, in the background. Older supported versions get the old path or a refusal that names the version they need, never a failed request.
+- **Compare versions only through `src/api/keepiq-version.ts`.** Never parse or compare a version string elsewhere, and never in the popup or a content script; they get a boolean or a code from the background.
+- **Never detect a feature by probing its route.** Handling a gated route's HTML 404 as `keepiq_outdated` is the fallback for `-unstable` builds only.
+- **Test every gate on both sides:** the version that has it, the one before, an `-unstable` build and no stored version.
+- **Keep the record current in the same change:** a row per Keepiq release in the supported list, the version that added a route in ADR-003, and a scenario for an older Keepiq in the feature's spec.
+- **Unsure whether a change affects a supported version?** Ask before building it.
+
 ## Open decisions
 
 <!-- Surface these to the user rather than assuming. Delete the section once it's
@@ -82,7 +95,7 @@ empty. Each entry: the choice, the options, and what it blocks. -->
 - Whether the "Custom" vault timeout is capped (for example at 24 hours) or
   unbounded. Blocks the timeout options in `ext-settings` (ADR-002).
 - Whether the paginated fallback may persist the vault when the admin turned off
-  offline caching (the manifest answers 403). It does today, as `ext-vault-browse`
+  offline caching (the manifest refuses with 428). It does today, as `ext-vault-browse`
   specifies; the alternative keeps it in `storage.session` for the browser session only.
 
 ## Additional rules

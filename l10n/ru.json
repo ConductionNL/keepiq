@@ -3,6 +3,8 @@
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Этот секрет доступен многим партнёрским организациям, поэтому сохранение ждёт снятия лимита запросов и затем продолжится. Не закрывайте это окно.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Слишком много запросов к партнёрским организациям. Ничего не сохранено; попробуйте ещё раз через минуту.",
         "This version cannot be restored to this secret. Nothing was saved.": "Эту версию нельзя восстановить для этого секрета. Ничего не сохранено.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Предоставлено вам только для просмотра. Чтобы изменить, попросите владельца дать права на редактирование.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Предоставлено вам только для просмотра. Ничего не сохранено; чтобы изменить, попросите владельца дать права на редактирование.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнёрская организация, с которой поделён этот секрет, недоступна ({partners}). Повторите изменение в сети, где можно сохранить без неё.",
         "Save without them": "Сохранить без них",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Сохранено. Получатели в партнёрских организациях получат это изменение, когда владелец в следующий раз сохранит этот секрет.",

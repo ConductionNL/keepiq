@@ -66,6 +66,7 @@ use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
@@ -269,6 +270,7 @@ class UserSharingIntegrationTest extends TestCase {
 			linkShareService: $linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			secretRequestService: null,
 			shareService: $shareService,
 			groupShareMapper: $groupShareMapper,

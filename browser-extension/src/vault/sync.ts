@@ -1,7 +1,10 @@
 import { ApiError, createClient, Offline, SessionRevoked, VaultWriteLocked, type Client } from '@/src/api/client'
-import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow } from '@/src/api/types'
-import { getAccount, suiteKey } from '@/src/accounts/store'
+import type { BlockedSecretRow, FolderRow, OpenSecretRow, Page, SecretRow, SecretTypeRow, SuiteRow, UserSettings } from '@/src/api/types'
+import { getAccount, suiteKey, updateAccount, type AccountRecord } from '@/src/accounts/store'
 import { broadcast } from '@/src/background/broadcast'
+import type { GeneratorPolicy } from '@/src/generator/options'
+import { toPolicy } from '@/src/generator/policy'
+import { clearPolicy, writePolicy } from '@/src/generator/store'
 import type { BlockReason, SyncStatus } from '@/src/messages'
 import { checkedAt, clearSnapshot, markChecked, readSnapshot, writeSnapshot } from './store'
 import type { StoredBlockedRow, StoredSecretRow, VaultSnapshot } from './types'
@@ -56,6 +59,21 @@ export function sync(accountId: string, mode: SyncMode = 'full'): Promise<SyncSt
 	return started
 }
 
+/** A sync already running may have read the server before the write landed, so it is not joined. */
+export async function syncAfterWrite(accountId: string): Promise<SyncStatus> {
+	await inFlight.get(accountId)
+	return sync(accountId, 'full')
+}
+
+/** Any request that got an answer proves the server reachable, so writes keep the offline flag current too. */
+export async function recordOutcome(accountId: string, error: unknown): Promise<void> {
+	if (error instanceof SessionRevoked) return
+	const before = outcomes.get(accountId)?.offline ?? false
+	const unreachable = error instanceof Offline || (error instanceof ApiError && error.status >= 500)
+	outcomes.set(accountId, unreachable ? outcomeOf(error) : { offline: false, lastError: null })
+	if (before !== unreachable) broadcast({ kind: 'vault.changed', sync: await syncStatus(accountId) })
+}
+
 function outcomeOf(error: unknown): Pick<SyncStatus, 'offline' | 'lastError'> {
 	// The account layer already purged and logged out.
 	if (error instanceof SessionRevoked) return { offline: false, lastError: null }
@@ -66,10 +84,54 @@ function outcomeOf(error: unknown): Pick<SyncStatus, 'offline' | 'lastError'> {
 	return { offline: false, lastError: 'server' }
 }
 
+/** Kept current for `keepiqSupports` by every full sync, which every write starts; a read that names none leaves the stored one. */
+async function refreshVersion(client: Client, account: AccountRecord): Promise<void> {
+	const version = await client.fetchVersion().catch(() => null)
+	if (version !== null && version !== account.keepiqVersion) await updateAccount(account.id, { keepiqVersion: version })
+}
+
+/** `undefined` when the server gave no answer of the policy's shape, so the cached policy stays. */
+async function fetchPolicy(client: Client): Promise<GeneratorPolicy | null | undefined> {
+	try {
+		const body = await client.keepiq<{ policy_enabled?: unknown } | null>('GET', '/api/settings/policy')
+		return typeof body?.policy_enabled === 'boolean' ? toPolicy(body) : undefined
+	} catch {
+		return undefined
+	}
+}
+
+/** Written only while the account stays logged in, like the vault (see `run`). */
+async function storePolicy(accountId: string, pending: Promise<GeneratorPolicy | null | undefined>): Promise<void> {
+	const fetched = await pending
+	if (fetched === undefined || !(await loggedIn(accountId))) return
+	await writePolicy(accountId, fetched)
+	if (!(await loggedIn(accountId))) await undoWrites(accountId)
+}
+
+/** After a login, so the lock screen's generator follows the policy before the first unlock. */
+export async function refreshPolicy(accountId: string): Promise<void> {
+	try {
+		const account = await getAccount(accountId)
+		if (account && account.appPassword !== null) await storePolicy(accountId, fetchPolicy(createClient(account)))
+	} catch (error) {
+		console.error('[keepiq] policy refresh failed', error)
+	}
+}
+
 async function run(accountId: string, mode: SyncMode): Promise<void> {
 	const account = await getAccount(accountId)
 	if (!account || account.appPassword === null) return
 	const client = createClient(account)
+	const policy = fetchPolicy(client)
+	// The policy does not depend on the vault, so a failed vault sync keeps a policy that arrived.
+	try {
+		await runVault(accountId, mode, client, account)
+	} finally {
+		await storePolicy(accountId, policy)
+	}
+}
+
+async function runVault(accountId: string, mode: SyncMode, client: Client, account: AccountRecord): Promise<void> {
 	const cached = await readSnapshot(accountId)
 	if (mode === 'probe' && cached) {
 		const [same, suite] = await Promise.all([unchanged(client, cached), client.listSuites().then(activeRow)])
@@ -81,7 +143,7 @@ async function run(accountId: string, mode: SyncMode): Promise<void> {
 			return
 		}
 	}
-	const fetched = await fetchSnapshot(client, (cached?.total ?? 0) >= MANIFEST_ROW_CAP)
+	const [fetched] = await Promise.all([fetchSnapshot(client, (cached?.total ?? 0) >= MANIFEST_ROW_CAP), refreshVersion(client, account)])
 	// A logout during the fetch must not bring the suite or the vault back. Logout marks the
 	// account before it purges, so checking after each write catches one that lands in between.
 	if (!(await loggedIn(accountId))) return
@@ -97,6 +159,7 @@ async function run(accountId: string, mode: SyncMode): Promise<void> {
 async function undoWrites(accountId: string): Promise<void> {
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove(suiteKey(accountId))
+	await clearPolicy(accountId)
 }
 
 async function loggedIn(accountId: string): Promise<boolean> {
@@ -136,13 +199,24 @@ type Fetched =
 	| { unlockBlocked: true }
 	| { unlockBlocked: false; suite: SuiteRow & { privateKey: string }; snapshot: VaultSnapshot }
 
+/** The add form's default type; `null` (meaning `login`) when the settings can't be read. */
+async function defaultSecretType(client: Client): Promise<string | null> {
+	try {
+		const settings = await client.keepiq<Partial<UserSettings>>('GET', '/api/settings/user')
+		return typeof settings.default_secret_type === 'string' && settings.default_secret_type ? settings.default_secret_type : null
+	} catch {
+		return null
+	}
+}
+
 async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fetched> {
+	const defaultType = defaultSecretType(client)
 	let manifest: Manifest | null = null
 	try {
 		if (!skipManifest) manifest = await client.keepiq<Manifest>('GET', '/api/v1/offline/manifest')
 	} catch (error) {
-		// 403: the admin disabled offline caching. 404: no active suite.
-		if (!(error instanceof ApiError) || (error.status !== 403 && error.status !== 404)) throw error
+		// Refused: the admin disabled offline caching. 404: no active suite.
+		if (!(error instanceof ApiError) || (!error.refused && error.status !== 404)) throw error
 	}
 	// The two-factor policy withholds the suite; the web app drops its snapshot on this signal.
 	if (manifest?.unlockBlocked) return { unlockBlocked: true }
@@ -187,6 +261,7 @@ async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fet
 			newestUpdatedAt: newest(stored),
 			// The server's count, so a row lost to paging does not make every probe download again.
 			total,
+			defaultSecretType: await defaultType,
 		},
 	}
 }

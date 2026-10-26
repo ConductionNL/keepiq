@@ -43,7 +43,7 @@ For items of type totp the detail SHALL parse the decrypted `key` as an `otpauth
 - **THEN** "Invalid authenticator key" is shown and no code is displayed or copyable
 
 ### Requirement: Websites section
-When the item has a `url` the detail SHALL show a "Website" entry with launch and copy actions using the same launch rules as the list card. Bitwarden's multiple URIs collapse to Keepiq's single `url`.
+When the item has a `url` the detail SHALL show a "Website" entry with launch and copy actions using the same launch rules as the list card. A totp, card, identity or note item with a `login` SHALL show its Username (value, copy) there too, under the title "Autofill options", as the edit form does; a passkey never shows it. Bitwarden's multiple URIs collapse to Keepiq's single `url`.
 
 #### Scenario: Launch from detail
 - **GIVEN** an item with url `https://example.com`
@@ -67,7 +67,7 @@ The detail SHALL show a "Notes" section with multi-line, unmasked text when the 
 - **THEN** the Notes section shows the text with line breaks preserved and no Login credentials section is shown
 
 ### Requirement: Card and identity sections
-For type card the detail SHALL parse the decrypted `key` as `{number, expiry, cvv, pin, cardholder}` and render Cardholder and Expiry in plain text, Number, CVV and PIN masked with reveal and copy, and show the brand and last four digits derived in memory from the number. For type identity it SHALL parse `{firstName, lastName, address, phone, email, bsn}` and render all fields in plain text except BSN, which is masked with reveal and copy. A payload that does not parse shows "Could not read this item" and no fields.
+For type card the detail SHALL parse the decrypted `key` as `{number, expiry, cvv, pin, cardholder}` and render Cardholder and Expiry in plain text, Number, CVV and PIN masked with reveal and copy, and show the brand and last four digits derived in memory from the number. For type identity it SHALL parse `{firstName, lastName, address, phone, email, bsn}` and render all fields in plain text except BSN, which is masked with reveal and copy. A `key` that does not start with `{` or does not parse as a JSON object is shown as one secret, masked with reveal and copy, as the edit form shows it.
 
 #### Scenario: Card detail
 - **GIVEN** a card item with a Visa number ending 1111
@@ -113,12 +113,12 @@ The detail SHALL show "Created" and "Updated" from `createdAt` and `updatedAt` a
 - **THEN** both dates appear in the metadata section in the user's locale
 
 ### Requirement: Edit and Delete placeholders
-The detail SHALL show Edit and Delete buttons at the bottom, disabled with the tooltip "Available in a later update" until ext-vault-edit enables them. For blocked items they stay disabled after ext-vault-edit as well, and for use-only items Edit does, since the server refuses to change a use-only copy.
+The detail SHALL show Edit and Delete buttons in its page footer, fixed below the scrolling content, disabled with the tooltip "Available in a later update" until ext-vault-edit enables them. For blocked items they stay disabled after ext-vault-edit as well, and for use-only items Edit does, since the server refuses to change a use-only copy.
 
 #### Scenario: Buttons before ext-vault-edit
 - **GIVEN** ext-vault-edit is not implemented
 - **WHEN** the detail opens
-- **THEN** Edit and Delete are visible and disabled with the tooltip
+- **THEN** Edit and Delete are visible in the footer without scrolling, and disabled with the tooltip
 
 ### Requirement: Decrypted values are dropped on close
 The detail view MUST keep decrypted values, parsed payloads, TOTP state and reveal state in popup memory only, MUST clear them when the view closes, the popup closes or the vault locks, and MUST NOT persist them anywhere.

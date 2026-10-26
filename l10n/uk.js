@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Цей секрет спільний із багатьма партнерськими організаціями, тому збереження чекає на ліміт запитів і потім продовжиться. Не закривайте це вікно.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Забагато запитів до партнерських організацій. Нічого не збережено; спробуйте ще раз за хвилину.",
         "This version cannot be restored to this secret. Nothing was saved.": "Цю версію не можна відновити для цього секрету. Нічого не збережено.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Надано вам лише для перегляду. Щоб змінити, попросіть власника надати права на редагування.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Надано вам лише для перегляду. Нічого не збережено; щоб змінити, попросіть власника надати права на редагування.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партнерська організація, з якою поділено цей секрет, недоступна ({partners}). Повторіть зміну онлайн, де можна зберегти без неї.",
         "Save without them": "Зберегти без них",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Збережено. Одержувачі в партнерських організаціях отримають цю зміну, коли власник наступного разу збереже цей секрет.",

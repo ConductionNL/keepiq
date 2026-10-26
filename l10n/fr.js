@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ce secret est partagé avec de nombreuses organisations partenaires, l'enregistrement attend donc la limite de recherches puis reprend. Gardez cette fenêtre ouverte.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Trop de recherches auprès des organisations partenaires. Rien n'a été enregistré ; veuillez réessayer dans une minute.",
         "This version cannot be restored to this secret. Nothing was saved.": "Cette version ne peut pas être restaurée pour ce secret. Rien n'a été enregistré.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Partagé avec vous en lecture seule. Demandez au propriétaire des droits de modification pour le changer.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Partagé avec vous en lecture seule. Rien n'a été enregistré ; demandez au propriétaire des droits de modification pour le changer.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Une organisation partenaire avec laquelle ce secret est partagé est injoignable ({partners}). Refaites la modification en ligne, où vous pouvez enregistrer sans elle.",
         "Save without them": "Enregistrer sans eux",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Enregistré. Les destinataires des organisations partenaires recevront cette modification lorsque le propriétaire enregistrera de nouveau ce secret.",

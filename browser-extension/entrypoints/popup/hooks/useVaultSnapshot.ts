@@ -7,19 +7,25 @@ import { request } from './useMessage'
 export function useVaultSnapshot(tabUrl: string | undefined, ready: boolean) {
 	const [reply, setReply] = useState<VaultSnapshotReply>()
 	const [failed, setFailed] = useState(false)
-	const latest = useRef(0)
+	const newest = useRef<Promise<VaultSnapshotReply | undefined>>(undefined)
 	const opened = useRef(false)
 
-	/** Only the newest request's reply is applied, whatever order replies arrive in. */
-	const load = useCallback(async () => {
-		const ticket = ++latest.current
+	/**
+	 * Only the newest read's reply is applied, whatever order replies arrive in. Each read returns the
+	 * reply applied, so a read overtaken by a newer one answers with the newer one's.
+	 */
+	const load = useCallback((): Promise<VaultSnapshotReply | undefined> => {
 		// The first read is the popup opening; later ones follow broadcasts and must not restart a failed sync.
 		const first = !opened.current
 		opened.current = true
-		const next = await request({ kind: 'vault.snapshot', tabUrl, opened: first })
-		if (ticket !== latest.current) return
-		if (next) setReply(next)
-		setFailed(!next)
+		const read: Promise<VaultSnapshotReply | undefined> = request({ kind: 'vault.snapshot', tabUrl, opened: first }).then((next) => {
+			if (newest.current !== read) return newest.current
+			if (next) setReply(next)
+			setFailed(!next)
+			return next
+		})
+		newest.current = read
+		return read
 	}, [tabUrl])
 
 	useEffect(() => {
@@ -36,5 +42,6 @@ export function useVaultSnapshot(tabUrl: string | undefined, ready: boolean) {
 		await load()
 	}, [load])
 
-	return { reply, failed, syncNow }
+	/** `reload` re-reads without syncing, e.g. after a write whose reply already followed its sync. */
+	return { reply, failed, syncNow, reload: load }
 }

@@ -4,8 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { createRef, type ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VaultSnapshotReply } from '@/src/messages'
-import { ShellContext } from '../shell-context'
-import { everythingVisible, fakeBackground, fakeClipboard, sentKinds, snapshotReply } from '../testing'
+import { DEFAULT_SHELL, ShellContext } from '../shell-context'
+import { emptyValues } from '@/src/vault/fields'
+import { everythingVisible, fakeBackground, fakeClipboard, mounts, sentKinds, snapshotReply, types } from '../testing'
+import { useItemDraft } from './useItemDraft'
+import { useUnsavedChangesGuard } from './useUnsavedChangesGuard'
 import { useBackgroundMessage } from './useBackgroundMessage'
 import { useClipboard } from './useClipboard'
 import { useCurrentTab } from './useCurrentTab'
@@ -15,7 +18,7 @@ import { useVaultSnapshot } from './useVaultSnapshot'
 afterEach(cleanup)
 
 function shell(overrides: { refreshState?: () => void; toast?: (text: string) => void } = {}) {
-	const value = { refreshState: vi.fn(), toast: vi.fn(), launch: vi.fn(), ...overrides }
+	const value = { ...DEFAULT_SHELL, refreshState: vi.fn(), toast: vi.fn(), launch: vi.fn(), ...overrides }
 	const wrapper = ({ children }: { children: ReactNode }) => <ShellContext.Provider value={value}>{children}</ShellContext.Provider>
 	return { value, wrapper }
 }
@@ -188,10 +191,11 @@ describe('useVaultSnapshot', () => {
 		const { send } = broadcasts()
 		const sent = fakeBackground()
 		renderHook(() => useVaultSnapshot('https://github.com', true))
-		await waitFor(() => expect(sent).toHaveBeenCalledOnce())
+		await waitFor(() => expect(sent).toHaveBeenCalledTimes(mounts()))
 		send({ kind: 'vault.changed', sync: snapshotReply().sync })
-		await waitFor(() => expect(sent).toHaveBeenCalledTimes(2))
-		expect(sent.mock.calls.map(([message]) => (message as { opened?: boolean }).opened)).toEqual([true, false])
+		await waitFor(() => expect(sent).toHaveBeenCalledTimes(mounts() + 1))
+		const opened = sent.mock.calls.map(([message]) => (message as { opened?: boolean }).opened)
+		expect(opened).toEqual([true, ...Array<boolean>(mounts()).fill(false)])
 	})
 
 	it('waits until the tab is known', () => {
@@ -205,11 +209,77 @@ describe('useVaultSnapshot', () => {
 		const replies: Array<(reply: VaultSnapshotReply) => void> = []
 		vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(() => new Promise((resolve) => replies.push(resolve as never)) as never)
 		const { result } = renderHook(() => useVaultSnapshot('https://github.com', true))
-		await waitFor(() => expect(replies).toHaveLength(1))
+		await waitFor(() => expect(replies).toHaveLength(mounts()))
+		const mounted = mounts()
 		send({ kind: 'vault.changed', sync: snapshotReply().sync })
-		await waitFor(() => expect(replies).toHaveLength(2))
-		await act(async () => replies[1]!(snapshotReply({ suggestionIds: ['new'] })))
-		await act(async () => replies[0]!(snapshotReply({ suggestionIds: ['old'] })))
+		await waitFor(() => expect(replies).toHaveLength(mounted + 1))
+		await act(async () => replies[mounted]!(snapshotReply({ suggestionIds: ['new'] })))
+		for (const older of replies.slice(0, mounted)) await act(async () => older(snapshotReply({ suggestionIds: ['old'] })))
 		expect(result.current.reply).toMatchObject({ suggestionIds: ['new'] })
+	})
+
+	it('answers an overtaken reload with the newer read', async () => {
+		const { send } = broadcasts()
+		const replies: Array<(reply: VaultSnapshotReply) => void> = []
+		vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(() => new Promise((resolve) => replies.push(resolve as never)) as never)
+		const { result } = renderHook(() => useVaultSnapshot('https://github.com', true))
+		await waitFor(() => expect(replies).toHaveLength(mounts()))
+		const mounted = mounts()
+		for (const read of replies.slice(0, mounted)) await act(async () => read(snapshotReply()))
+		let reloaded!: Promise<VaultSnapshotReply | undefined>
+		act(() => void (reloaded = result.current.reload()))
+		send({ kind: 'vault.changed', sync: snapshotReply().sync })
+		await waitFor(() => expect(replies).toHaveLength(mounted + 2))
+		await act(async () => replies[mounted]!(snapshotReply({ suggestionIds: ['old'] })))
+		await act(async () => replies[mounted + 1]!(snapshotReply({ suggestionIds: ['new'] })))
+		expect(await reloaded).toMatchObject({ suggestionIds: ['new'] })
+	})
+})
+
+describe('useItemDraft', () => {
+	const initial = { ...emptyValues('t-login'), name: 'GitHub', login: 'alice' }
+
+	it('is clean until a value changes, and patches only that value', () => {
+		const { result } = renderHook(() => useItemDraft(initial, types))
+		expect(result.current.dirty).toBe(false)
+		act(() => result.current.update({ login: '' }))
+		expect(result.current.dirty).toBe(true)
+		expect(result.current.patch).toEqual({ login: null })
+	})
+
+	it('shows name refusals only after Save, field name refusals at once', () => {
+		const { result } = renderHook(() => useItemDraft({ ...initial, name: '' }, types))
+		act(() => result.current.update({ fields: [{ id: 1, name: 'url', value: 'x' }] }))
+		expect(result.current.errors).toEqual({ 'field.1.name': { code: 'reserved' } })
+		expect(result.current.blocked).toBe(true)
+		let draft: unknown
+		act(() => {
+			draft = result.current.submit()
+		})
+		expect(draft).toBeNull()
+		expect(result.current.errors).toMatchObject({ name: { code: 'required' } })
+	})
+
+	it('hands over the draft once valid', () => {
+		const { result } = renderHook(() => useItemDraft(initial, types))
+		let draft: unknown
+		act(() => {
+			draft = result.current.submit()
+		})
+		expect(draft).toMatchObject({ name: 'GitHub', login: 'alice', typeId: 't-login' })
+	})
+})
+
+describe('useUnsavedChangesGuard', () => {
+	it('registers a live dirty check with Shell and removes it on unmount', () => {
+		const setLeaveGuard = vi.fn()
+		const wrapper = ({ children }: { children: ReactNode }) => <ShellContext.Provider value={{ ...DEFAULT_SHELL, setLeaveGuard }}>{children}</ShellContext.Provider>
+		const { rerender, unmount } = renderHook(({ dirty }) => useUnsavedChangesGuard(dirty), { wrapper, initialProps: { dirty: false } })
+		const isDirty = setLeaveGuard.mock.calls[0]![0] as () => boolean
+		expect(isDirty()).toBe(false)
+		rerender({ dirty: true })
+		expect(isDirty()).toBe(true)
+		unmount()
+		expect(setLeaveGuard).toHaveBeenLastCalledWith(null)
 	})
 })

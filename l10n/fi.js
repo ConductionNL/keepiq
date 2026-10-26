@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Tämä salaisuus on jaettu monen kumppaniorganisaation kanssa, joten tallennus odottaa hakurajaa ja jatkuu sitten. Pidä tämä ikkuna auki.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Liian monta hakua kumppaniorganisaatioilta. Mitään ei tallennettu; yritä uudelleen minuutin kuluttua.",
         "This version cannot be restored to this secret. Nothing was saved.": "Tätä versiota ei voi palauttaa tähän salaisuuteen. Mitään ei tallennettu.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Jaettu sinulle vain katseltavaksi. Pyydä omistajalta muokkausoikeudet, jos haluat muuttaa sitä.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Jaettu sinulle vain katseltavaksi. Mitään ei tallennettu; pyydä omistajalta muokkausoikeudet, jos haluat muuttaa sitä.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Kumppaniorganisaatiota, jonka kanssa tämä salaisuus on jaettu, ei tavoiteta ({partners}). Tee muutos uudelleen verkossa, jossa voit tallentaa ilman heitä.",
         "Save without them": "Tallenna ilman heitä",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Tallennettu. Kumppaniorganisaatioiden vastaanottajat saavat tämän muutoksen, kun omistaja seuraavan kerran tallentaa tämän salaisuuden.",

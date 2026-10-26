@@ -4,15 +4,44 @@ import { generateCode, parseTotpSeed } from '@/src/totp/totp'
 import { typeIcon } from '@/src/vault/icons'
 import { launchUrl } from '@/src/vault/list'
 import { useClipboard } from '../hooks/useClipboard'
+import { language } from '../i18n'
 import { loginKey } from '../hooks/useDecryptedFields'
 import { request } from '../hooks/useMessage'
-import { useShell } from '../shell-context'
+import { useShell, type ItemActions } from '../shell-context'
 import { IconButton } from './Button'
 import { Icon } from './Icon'
 import { Menu, type MenuItem } from './Menu'
 
 /** Types whose `key` is a structured payload or a seed, not something to paste as a password. */
 const NO_PASSWORD = new Set(['totp', 'card', 'identity', 'passkey'])
+
+/** Edit, Clone, Move, Send and Delete with the reason each is unavailable, for the More menu and item detail alike. `viewOnly`: the detail's `item.editable` answer, which the list does not ask. Send is for logins only. */
+export function itemActions(item: ItemMeta, type: TypeMeta | undefined, offline: boolean, actions: ItemActions, viewOnly = false) {
+	const offlineReason = offline ? i18n.t('form.offline') : undefined
+	const blockedReason = item.blocked ? i18n.t('blocked.generic') : undefined
+	const passkeyReason = type?.name === 'passkey' ? i18n.t('item.passkeyNoClone') : undefined
+	// The share's limits, which the background enforces too (Keepiq `use-only-shares`, `expiring-shares`).
+	const useOnly = item.useOnly ? i18n.t('item.useOnly') : undefined
+	const readOnly = item.readOnly ? i18n.t('item.readOnly') : undefined
+	const viewOnlyReason = viewOnly ? i18n.t('item.viewOnly') : undefined
+	const accessEnds = item.accessExpiresAt ? new Date(item.accessExpiresAt).toLocaleDateString(language()) : undefined
+	const expiring = accessEnds && i18n.t('item.expiringNoClone', { date: accessEnds })
+	return {
+		// Edit reads the item first and refuses there when offline, so it is not refused for that up front.
+		edit: { label: i18n.t('item.edit'), onSelect: () => actions.edit(item.id), disabledReason: blockedReason ?? useOnly ?? readOnly ?? viewOnlyReason },
+		clone: { label: i18n.t('item.clone'), onSelect: () => actions.clone(item.id), disabledReason: passkeyReason ?? blockedReason ?? useOnly ?? readOnly ?? expiring ?? offlineReason },
+		move: { label: i18n.t('item.move'), onSelect: () => actions.move(item), disabledReason: useOnly ?? offlineReason },
+		remove: { label: i18n.t('item.delete'), onSelect: () => actions.remove(item), disabledReason: offlineReason },
+		// A use-only copy's password can't be revealed, and an expiring one would outlive the access in a send.
+		send: type?.name === 'login'
+			? {
+				label: i18n.t('item.send'),
+				onSelect: () => actions.send(item),
+				disabledReason: blockedReason ?? useOnly ?? (accessEnds && i18n.t('item.expiringNoSend', { date: accessEnds })) ?? (offline ? i18n.t('send.offline') : undefined),
+			}
+			: undefined,
+	} satisfies Record<string, MenuItem | undefined>
+}
 
 interface Props {
 	item: ItemMeta
@@ -57,7 +86,7 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 	if (item.hasLogin) copyItems.push({ label: i18n.t('item.copyUsername'), onSelect: () => void copyField('login', i18n.t('detail.username')) })
 	if (!item.useOnly && !NO_PASSWORD.has(type?.name ?? '')) copyItems.push({ label: i18n.t('item.copyPassword'), onSelect: () => void copyField('key', i18n.t('detail.password')) })
 	if (!item.useOnly && type?.name === 'totp') copyItems.push({ label: i18n.t('item.copyCode'), onSelect: () => void copyCode() })
-	const later = i18n.t('common.later')
+	const actions = itemActions(item, type, shell.offline, shell.items)
 
 	const subtitle = item.hasLogin ? login : type?.label
 
@@ -81,10 +110,11 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 					icon="more"
 					items={[
 						{ label: i18n.t('item.view'), onSelect: () => onOpen(item.id) },
-						{ label: i18n.t('item.edit'), onSelect: () => {}, disabledReason: later },
-						{ label: i18n.t('item.clone'), onSelect: () => {}, disabledReason: later },
-						{ label: i18n.t('item.move'), onSelect: () => {}, disabledReason: later },
-						{ label: i18n.t('item.delete'), onSelect: () => {}, disabledReason: later },
+						actions.edit,
+						actions.clone,
+						actions.move,
+						...(actions.send ? [actions.send] : []),
+						actions.remove,
 					]}
 				/>
 			</div>

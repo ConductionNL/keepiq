@@ -479,35 +479,35 @@ describe('replay', () => {
 			expect(stored.size).toBe(1)
 		})
 
-		it('"keep mine" on a stale copy saved without a write grade replays its plain update on the row version that 409 returned', async () => {
+		it('an edit of a copy without a write grade fails with its reason, sends nothing, is not retried, and the queue goes on', async () => {
 			await goOffline()
 			await secrets.updateSecret(
 				's1',
 				{ key: 'new' },
 				{ sourceBaseUpdatedAt: EDIT_SOURCE },
 			)
+			await secrets.createSecret({ name: 'B', key: 'v' })
 			goOnline()
 			const log = shareSaveServer({
 				id: 's1',
 				context: { ...context, effectiveGrade: 'read' },
-			})
-			const current = { id: 's1', updatedAt: '2026-10-02T09:00:00+00:00' }
-			// The plain update names no source version: it sends none either.
-			axios.put.mockRejectedValueOnce(
-				httpError(409, { message: 'This secret changed', current }),
-			)
-			await offline.replayQueue()
-			expect(writeContextReads()).toBe(1)
-			expect([...stored.values()][0]).toMatchObject({
-				conflictUpdatedAt: current.updatedAt,
-				conflictSourceUpdatedAt: null,
+				posts: { '/api/v1/secrets': { id: 'created' } },
 			})
 
-			await offline.resolveConflict(offline.conflictEntries[0].entryId, 'mine')
+			const result = await offline.replayQueue()
 
-			expect(log.plainPuts.at(-1)[1].baseUpdatedAt).toBe(current.updatedAt)
+			expect(result).toEqual({ synced: 1, stopped: false })
 			expect(log.saves).toHaveLength(0)
-			expect(stored.size).toBe(0)
+			expect(log.plainPuts).toHaveLength(0)
+			const [failed] = offline.failedEntries
+			expect(failed.secretId).toBe('s1')
+			expect(failed.failure).toEqual({ code: 'view_only' })
+			expect(failureText(failed.failure)).toContain('view only')
+
+			await offline.replayQueue()
+
+			expect(writeContextReads()).toBe(1)
+			expect(offline.failedEntries).toHaveLength(1)
 		})
 
 		it('an edit in the dialog of a copy opened from the cached snapshot replays on the source version the manifest carried', async () => {

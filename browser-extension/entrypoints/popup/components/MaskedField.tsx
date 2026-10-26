@@ -17,6 +17,9 @@ interface Props {
 	copyable?: boolean
 }
 
+/** For display only: `pre-wrap` shows a lone CR as a space, so a CR-separated value would show on one line. */
+export const asLines = (value: string) => value.replace(/\r\n?/g, '\n')
+
 export function MaskedField({ label, value, masked = false, maskedText = '••••••••', what, actions, copyable = true }: Props) {
 	const [revealed, setRevealed] = useState(false)
 	const copy = useClipboard()
@@ -25,7 +28,7 @@ export function MaskedField({ label, value, masked = false, maskedText = '••
 		<div className="field-row">
 			<div className="field-row__text">
 				<span className="field-row__label">{label}</span>
-				<span className={`field-row__value${masked && revealed ? ' field-row__value--mono' : ''}`}>{hidden ? maskedText : value}</span>
+				<span className={`field-row__value${masked && revealed ? ' field-row__value--mono' : ''}`}>{hidden ? maskedText : asLines(value)}</span>
 			</div>
 			{masked && <IconButton icon={revealed ? 'eyeOff' : 'eye'} label={fieldAction(revealed ? 'field.hide' : 'field.show', label)} aria-pressed={revealed} onClick={() => setRevealed(!revealed)} />}
 			{actions}

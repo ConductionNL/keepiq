@@ -19,7 +19,9 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\SecretVersionController;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -78,5 +80,25 @@ class SecretVersionControllerTest extends TestCase {
 			->willReturn($this->head());
 
 		$this->assertSame(Http::STATUS_OK, $this->controller->restore(id: 'v-1')->getStatus());
+	}
+
+	public function testARestoreOfAViewOnlyCopyAnswers403(): void {
+		$this->versionService->method('restore')
+			->willThrowException(new ViewOnlyCopyException());
+
+		$response = $this->controller->restore(id: 'v-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => Secret::VIEW_ONLY_REFUSAL, 'code' => 'view_only'], $response->getData());
+	}
+
+	public function testARestoreOfACopyWithoutASourceAnswers404(): void {
+		$this->versionService->method('restore')
+			->willThrowException(new NotFoundException(message: 'Secret not found'));
+
+		$response = $this->controller->restore(id: 'v-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame(['message' => 'Secret not found'], $response->getData());
 	}
 }

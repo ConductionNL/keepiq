@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Quest secret è parti cun bleras organisaziuns partenarias, perquai spetga la memorisaziun il limit da dumondas e cuntinuescha lura. Tegna avert quest dialog.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Memia bleras dumondas tar organisaziuns partenarias. Nagut n'è vegnì memorisà; emprova anc ina giada en ina minuta.",
         "This version cannot be restored to this secret. Nothing was saved.": "Questa versiun na po betg vegnir restaurada per quest secret. Nagut n'è vegnì memorisà.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Parti cun tai mo per guardar. Dumonda il possessur per dretgs da modifitgar, per al midar.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Parti cun tai mo per guardar. Nagut n'è vegnì memorisà; dumonda il possessur per dretgs da modifitgar, per al midar.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Ina organisaziun partenaria cun la quala quest secret è partì n'è betg cuntanschibla ({partners}). Fa la midada danovamain online, nua che ti pos memorisar senza els.",
         "Save without them": "Memorisar senza els",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Memorisà. Destinaturs en organisaziuns partenarias survegnan questa midada, cura che il proprietari memorisescha la proxima giada quest secret.",

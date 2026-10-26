@@ -55,6 +55,7 @@ use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderQueryService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -205,6 +206,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$response = (new SecretUpdateController($request, $service, $this->session()))->update('copy');

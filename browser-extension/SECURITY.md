@@ -12,7 +12,9 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 
 - Your master password never leaves the device. It derives an AES-256-GCM key with PBKDF2-SHA-256 at 600,000 iterations, which unwraps your RSA-4096 private key. The password is then dropped.
 - Every secret is encrypted with RSA-OAEP (SHA-256) to your key. The server only ever sees ciphertext.
-- All cryptography is WebCrypto. The private key is imported as a non-extractable `CryptoKey` that can only decrypt.
+- All cryptography is WebCrypto, except Argon2id. The private key is imported as a non-extractable `CryptoKey` that can only decrypt.
+- A send is encrypted with AES-256-GCM under a fresh content key. Without a password the key is only in the link's `#k=` fragment, which browsers never send to the server; with one, the key is wrapped under Argon2id (64 MiB, 3 iterations, parallelism 1) of the password, as in the web app.
+- Argon2id runs in WebAssembly from `hash-wasm`, bundled. The extension pages' CSP adds `'wasm-unsafe-eval'` for it, which allows compiling WebAssembly, not `eval` of scripts.
 
 ## Where data lives
 
@@ -20,10 +22,19 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | --- | --- | --- |
 | Master password | Nowhere | — |
 | Private key | `storage.session` (memory, cleared on browser restart). Firefox below 115 uses background page memory instead. | Lock, timeout, logout, browser restart, extension reload |
-| Decrypted values | Popup memory while shown, never the value of a use-only copy | Closing the item or the popup |
+| Decrypted values, unsaved forms | Popup memory while shown, never the value of a use-only copy | Closing the item, the form or the popup |
+| Ciphertext of the 10 newest edit forms, with the item's and its source's version | `storage.session`, like the private key | That form's accepted save, or 10 newer entries; lock, timeout, logout, account removal, browser restart, extension reload. Closing the form or popup leaves it. |
 | Ciphertext, names, URLs, folders, types | `storage.local` | Logout, account removal, a key change on the server |
 | App password | `storage.local` | Logout, account removal, the server answering 401 |
 | Account list and settings | `storage.local` | Account removal |
+| Generated values, the 50 newest | `storage.session`, like the private key | Clear in the History view; lock, timeout, logout, account removal, browser restart, extension reload |
+| Values generated while locked | `storage.session`, encrypted to the account's public key | The first history read or recorded value after the unlock, which moves them into the history; a lock after that unlock, other than for a key change on the server; logout, account removal, browser restart, extension reload |
+| Generator options | `storage.local` | Account removal |
+| Organisation password policy | `storage.local` | Logout, account removal |
+| Send content, content key, send password | Background memory for the one request; popup memory while the form is open | The request's reply; leaving the form or closing the popup |
+| Link of a send without a password | Popup memory, from creation | Closing the popup, lock, timeout, account switch |
+| Link of a password send | Popup memory with the list; holds no secret, the background rebuilds it from the token the server lists | Closing the popup, lock, timeout, account switch |
+| The list of sends | Popup memory, fetched per popup session | Closing the popup, lock, timeout, account switch |
 
 - Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. The settings screen (`ext-settings`) will warn about it when you pick it.
 - `storage.session` keeps its default access level, so content scripts cannot read it.
@@ -39,6 +50,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 ## Server and network
 
 - The extension only talks to your own Nextcloud server. It sends no telemetry and doesn't fetch favicons from websites or icon services, and the Firefox manifest declares no data collection.
+- Every popup field turns off the browser's spell check, so cloud spelling services, such as Chrome's Enhanced spell check or Edge's Microsoft Editor, never receive vault text.
 - Requests go from the background only, with Basic auth on an app password and `credentials: 'omit'`, so browser cookies are never sent.
 - Server URLs must be `https`. Plain `http` is allowed only for `localhost`, `127.0.0.1` and `.test` hosts, for development.
 - Host access is requested per server, when you add an account. The extension holds no other host permissions.
@@ -61,6 +73,23 @@ There is no remote wipe, so these checks stand in for it:
 - The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never. Of a use-only copy it gets only the login; the background refuses its value and additional fields.
 - No remote code is loaded, and the popup renders no HTML from vault data.
 
+## Saving
+
+- The popup sends what you typed to the background, which does all the encryption.
+- Before it encrypts, the extension checks that the server's active key is still the one it holds, and proves the server's certificate belongs to your unlocked key. Otherwise nothing is written.
+- A save goes to the account the popup showed, and is refused when another window switched accounts.
+- Edit fetches the item fresh, sends only what changed, and is refused when a newer version was saved elsewhere. Edit and Clone only open what your vault already holds for that item, and a save gives partners the fields you didn't touch only as the form showed them in full, under the type the fetch checked. A swap while the form is open changes nothing partners get; a swap before the form opens is not caught (see Known limits, and [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#sharing)).
+- Shared copies keep their limits: a use-only copy is never shown, copied or changed, a read-only one can only be filed in a folder, one shared to view only can't be changed but can be cloned or filed, and a use-only, read-only or expiring copy can't be cloned.
+- Delete moves an item to Keepiq's trash and ends its shares. A folder delete is immediate, and "Delete items too" deletes them for good.
+
+## Shared items
+
+- A changed password, username or field of a shared item is encrypted again, in the background, for every copy the server lists, and saved in one request: the server writes your row, every copy in your organisation and every partner share together, or nothing. It refuses a save over a newer version of the item, or, for a team editor, of the original.
+- Recipients in your own organisation are trusted as the server lists them, with the certificate it serves, as in the Keepiq web app. A compromised server could list someone you never shared with, or make up a partner share, and get the password, username and fields of any item whose password, username or fields you edit, shared or not. When the form didn't show every part of an item, a partner share stops the save, so such a server gets only what you changed ([ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#sharing)).
+- A recipient at a partner organisation gets nothing until their certificate chains to the partner root your server pinned and names them. Otherwise their share is paused. When their server can't be reached, nothing is saved until you choose to save without them, which pauses their share too.
+- Both your server and the partner's are still trusted for partner recipients: the check catches a certificate for the wrong person, an expired one, or one from another partner, not a server that lies.
+- The decrypted value lives in background memory for that one request. The popup only learns codes and the partner shares paused or not reached, and forgets them when it closes.
+
 ## Clipboard
 
 - Copy happens in the popup, under your click.
@@ -73,11 +102,14 @@ There is no remote wipe, so these checks stand in for it:
 - **The app password** is long-lived. It can't decrypt anything, but it does give read and write access to the ciphertext. You can revoke it from Nextcloud's security settings.
 - **Names, URLs and folders** are stored in plain text on disk, as the server returns them. They reveal which sites you have accounts on, though not the secrets.
 - **While the vault is unlocked,** anyone at the machine can use it, up to the timeout.
+- **The recipient list of a shared item** comes from the server, so editing a shared item trusts it (see Shared items).
+- **A server that swaps another item's value into this one before you open it for editing** is not caught. The form shows that value as this item's, masked if it is a password or another secret, and saving shares it with whoever the server lists. Fields the form doesn't show are never shared this way.
 - **Revocation takes effect on the next contact with the server:** at most the 15-minute sync interval, or sooner when the popup opens.
 - **A share that becomes use-only** shows as use-only after the next full sync: within an hour and a quarter, or at once after unlock or Sync now. The server doesn't change the copy's `updatedAt`, so the quick probe misses it.
+- **A send link without a password** is the secret itself: anyone who gets it can open the send, up to its view count. The server burns a password send after five wrong passwords.
 - **Offline caching turned off by an admin:** the extension still caches the vault on disk. Whether it should keep it in session storage instead is still open.
 
 ## Supply chain
 
-- Four runtime dependencies: React, React DOM, `tldts` (the public suffix list, bundled; it makes no requests) and `@wxt-dev/i18n` (a thin wrapper over `browser.i18n`).
+- Five runtime dependencies: React, React DOM, `tldts` (the public suffix list, bundled; it makes no requests), `@wxt-dev/i18n` (a thin wrapper over `browser.i18n`) and `hash-wasm` (Argon2id for send passwords; its WebAssembly is bundled, nothing is fetched).
 - CI runs the tests, typecheck, lint, both builds and `web-ext lint` on every change.

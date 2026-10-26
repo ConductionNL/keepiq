@@ -29,8 +29,12 @@ interface SecretBase {
 	possiblyCompromisedAt: string | null
 	tombstonedAt: string | null
 	tombstoneReason: string | null
-	/** A share the holder may sign in with but never view or copy. Absent from servers before 0.3.7. */
+	/** A recipient copy that may be filled but never shown, copied or changed. Absent from servers before 0.3.7. */
 	useOnly?: boolean
+	/** When the holder's access to this copy ends; not `expiresAt`, which is credential expiry. */
+	accessExpiresAt?: string | null
+	/** A copy from another organisation, which may only be filed in a folder. */
+	readOnly?: boolean
 }
 
 export interface OpenSecretRow extends SecretBase {

@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Þetta leyndarmál er deilt með mörgum samstarfsaðilum, svo vistunin bíður eftir uppflettimörkunum og heldur svo áfram. Hafðu þennan glugga opinn.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Of margar uppflettingar hjá samstarfsaðilum. Ekkert var vistað; reyndu aftur eftir eina mínútu.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ekki er hægt að endurheimta þessa útgáfu fyrir þetta leyndarmál. Ekkert var vistað.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Deilt með þér eingöngu til skoðunar. Biddu eigandann um breytingaheimild til að breyta því.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Deilt með þér eingöngu til skoðunar. Ekkert var vistað; biddu eigandann um breytingaheimild til að breyta því.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Ekki næst í samstarfsfyrirtæki sem þetta leyndarmál er samnýtt með ({partners}). Gerðu breytinguna aftur á netinu, þar sem þú getur vistað án þeirra.",
         "Save without them": "Vista án þeirra",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Vistað. Viðtakendur hjá samstarfsfyrirtækjum fá þessa breytingu þegar eigandinn vistar þetta leyndarmál næst.",

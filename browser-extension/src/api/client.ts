@@ -2,8 +2,14 @@ import { toBase64 } from '@/src/crypto/base64'
 import type { NextcloudUser, SuiteRow } from './types'
 
 export class ApiError extends Error {
-	constructor(readonly status: number, message: string) {
+	/** `code`: the body's machine-readable reason, e.g. a vault policy's, when the server sends one. `body`: the parsed answer, as a share-save's `incomplete` lists. */
+	constructor(readonly status: number, message: string, readonly code?: string, readonly body?: unknown) {
 		super(message)
+	}
+
+	/** Keepiq's OCS routes refuse with 428 (`OcsRefusalMiddleware`), since Nextcloud turns their 403 into a 200; both mean the same. */
+	get refused(): boolean {
+		return this.status === 403 || this.status === 428
 	}
 }
 export class SessionRevoked extends Error {
@@ -75,7 +81,10 @@ export function createClient(account: ClientAccount) {
 		if (response.status === 423) throw new VaultWriteLocked(423, message)
 		// Nextcloud answers unknown app routes with an HTML page.
 		if (response.status === 404 && json === undefined) throw new KeepiqNotInstalled(404, message)
-		throw new ApiError(response.status, message)
+		// A 428 names its reason as `error`, a 403 as `code`; `forbidden` names none.
+		const { error, code } = (json ?? {}) as { error?: unknown; code?: unknown }
+		const reason = [error, code].find((value): value is string => typeof value === 'string' && value !== 'forbidden')
+		throw new ApiError(response.status, message, reason, json)
 	}
 
 	return {
@@ -95,6 +104,17 @@ export function createClient(account: ClientAccount) {
 			if (response.status >= 500) throw new ApiError(response.status, response.statusText)
 			if (!response.ok || typeof data?.id !== 'string') throw new NotNextcloud()
 			return data
+		},
+
+		/** Keepiq's version from its public health check, which names it in a 503 too; `null` when it names none, as a Keepiq older than the check. */
+		async fetchVersion(): Promise<string | null> {
+			const response = await send(`${keepiqBase}/api/health`)
+			const json: unknown = await response.json().catch(() => undefined)
+			const version = (json as { version?: unknown } | undefined)?.version
+			if (typeof version === 'string') return version
+			// Maintenance or a proxy error says nothing about the version.
+			if (response.status >= 500) throw new ApiError(response.status, response.statusText)
+			return null
 		},
 
 		/** `null` on any failure; callers fall back to initials. */
