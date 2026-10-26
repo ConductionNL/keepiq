@@ -66,7 +66,7 @@ None.
 ## Deviations from Bitwarden
 
 - **Generation follows Keepiq's shared generator, not Bitwarden's.** Keepiq's policy contract requires passphrases to meet the floor and classes, and the generator's output must match the cross-client vectors. That makes the ranges and defaults Keepiq's: length 8 to 128, 4 to 12 words, 5 words by default. ADR-001 parity still covers the layout and the flows.
-- **Generator is reachable while locked.** Bitwarden's popup shows only the unlock screen when locked. Here the lock screen links to the Generator. History, options and the cached policy are all readable without the private key.
+- **Generator is reachable while locked.** Bitwarden's popup shows only the unlock screen when locked. Here the lock screen links to the Generator. Options and the cached policy are readable without the private key; the history is not.
 - **Forwarded email alias is omitted.** Keepiq has no alias-service integration. The Username type select lists only Random word, Plus addressed email and Catch-all email.
 - **History is 50 entries in session storage, not 100 encrypted entries in the vault.** Keepiq has no vault-side place for it.
 - **Policy is Keepiq's.** It sets a floor, four required classes and whether passphrases are allowed. There is no forced default type and no override button.

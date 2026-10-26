@@ -34,6 +34,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
   - A request for another account than the active one, or for a logged-out one, gets `null` (context, saveOptions, clear) or `[]` (list, add) and writes nothing.
   - `generator.context` is not an interaction; the others are only while the named active account is unlocked, and `clipboard.copied` only while the active account is unlocked.
   - An add reads the session epoch when it arrives, so a lock or logout while it waits writes nothing.
+  - While the active account is locked, the history arms follow design.md, History while locked.
 
 ## 4. Generator UI (WP3)
 
@@ -55,7 +56,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
   - Move the placeholder test in `Shell.test.tsx` to Send.
 - [x] 5.2 Give `TextField` an optional `action`, and add the Password and Username generate buttons to the `credential` form kind in `ItemForm.tsx`, with cases in `components.test.tsx` and `ItemForm.test.tsx`.
   - No button on a multiline secret.
-- [x] 5.3 Add a `'generator'` panel to `App.tsx` with a `ShellContext.Provider`, a `Toast` host, a History sub-page and the Header's back, opened by a "Generate a password" link in `Unlock.tsx`, with cases in `App.test.tsx` and `Unlock.test.tsx`.
+- [x] 5.3 Add a `'generator'` panel to `App.tsx` with a `ShellContext.Provider`, a `Toast` host and the Header's back, without History, opened by a "Generate a password" link in `Unlock.tsx`, with cases in `App.test.tsx` and `Unlock.test.tsx`.
   - Focus moves into the generator, and back to the link on return.
 
 ## 6. Records (WP5)
@@ -72,5 +73,5 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
   - the locked generator with the network off;
   - a test policy with passphrases turned off;
   - pick mode on a `login` and a `database` item;
-  - history clearing on lock;
+  - history clearing on lock, no History on the lock screen, and a value generated while locked showing after the unlock;
   - options surviving a popup close and an account switch.

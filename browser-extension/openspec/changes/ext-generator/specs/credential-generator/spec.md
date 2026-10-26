@@ -224,6 +224,7 @@ The extension SHALL keep the last 50 recorded values for the account, newest fir
 - **Storage:** `storage.session`, or background memory on Firefox below 115. Never `storage.local`.
 - **When a value is recorded:** on Regenerate, Copy, "Use this password", "Use this username", and when the user switches to another sub-tab with a value shown. Never on an option change. A value equal to the newest entry is not added again.
 - **What clears it:** lock, timeout, logout, account removal, extension reload and browser restart.
+- **Only an unlocked account shows it.** For a locked account the background returns no entries and ignores Clear. A value recorded while locked is stored only encrypted to the account's public key and joins the history when it is first read after the unlock, so no stored generated value is readable without unlocking.
 - **History view:** lists the entries in the output box's colour-coded monospace style, with the relative time, a Copy button per entry and a Clear button.
 
 #### Scenario: Option changes are not recorded
@@ -238,7 +239,7 @@ The extension SHALL keep the last 50 recorded values for the account, newest fir
 
 #### Scenario: Lock clears history
 - **GIVEN** the history holds entries
-- **WHEN** the vault locks by timeout
+- **WHEN** the vault locks by timeout and the user unlocks again
 - **THEN** the History view shows the empty state "No generated values yet"
 
 #### Scenario: Clear button
@@ -332,7 +333,8 @@ When `generator_allow_passphrase` is false, the Passphrase sub-tab SHALL be unav
 
 ### Requirement: Works while locked and offline
 The Generator SHALL be reachable from the lock screen through a "Generate a password" link.
-- It SHALL generate, show history, copy and save options while the vault is locked and while the server is unreachable, using the cached policy.
+- It SHALL generate, copy and save options while the vault is locked and while the server is unreachable, using the cached policy.
+- It SHALL NOT show the history while the vault is locked (see Generator history).
 - No generation path SHALL depend on the private key, the network or the server generator endpoint.
 
 #### Scenario: Locked generation
@@ -341,11 +343,20 @@ The Generator SHALL be reachable from the lock screen through a "Generate a pass
 - **THEN** a value is generated and can be copied
 - **AND** no request is sent to the server
 
-#### Scenario: Locked history
-- **GIVEN** the generator is open from the lock screen
-- **WHEN** the user opens Generator history and then goes Back twice
-- **THEN** the history is shown without an unlock
-- **AND** Back returns to the generator, then to the lock screen
+#### Scenario: No history while locked
+- **GIVEN** a value was generated on the lock screen
+- **WHEN** the user opens the generator from the lock screen again
+- **THEN** it offers no History, and no history is read from the background
+
+#### Scenario: A value generated while locked shows after the unlock
+- **GIVEN** the user copied a value from the lock screen generator
+- **WHEN** the user unlocks and opens Generator history
+- **THEN** the copied value is the newest entry
+
+#### Scenario: Nothing is kept before the first unlock
+- **GIVEN** the account was not unlocked since it was added or last logged in
+- **WHEN** the user copies a value from the lock screen generator, then unlocks and opens Generator history
+- **THEN** the copied value is not in the history
 
 #### Scenario: Copy while locked keeps no other vault open
 - **GIVEN** account A is unlocked and account B, the active one, is locked

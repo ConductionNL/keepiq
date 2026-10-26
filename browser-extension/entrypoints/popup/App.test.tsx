@@ -87,22 +87,35 @@ describe('App', () => {
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate a password' }))
 	})
 
-	it('shows the history from the lock screen generator, with Back to the generator and then to Unlock', async () => {
+	it('offers no history from the lock screen generator and never lists it, while still recording a copy', async () => {
 		vi.mocked(generate).mockResolvedValue({ ok: true, value: 'Gen3rated' })
 		const sent = background(popupState({ screen: 'unlock' }))
 		render(<App />)
 		await heading()
 		const user = userEvent.setup()
+		fakeClipboard()
 		await user.click(screen.getByRole('button', { name: 'Generate a password' }))
-		await user.click(screen.getByRole('button', { name: 'Generator history' }))
-		expect((await heading()).textContent).toBe('Generator history')
-		expect(screen.getByText('No generated values yet')).toBeTruthy()
-		expect(sentOf(sent, 'generator.history.list')[0]?.accountId).toBe('a1')
-		await user.click(screen.getByRole('button', { name: 'Back' }))
-		expect((await heading()).textContent).toBe('Generator')
-		await user.click(screen.getByRole('button', { name: 'Back' }))
-		expect((await heading()).textContent).toBe('Unlock')
-		expect(sentOf(sent, 'vault.unlock')).toHaveLength(0)
+		const copy = screen.getByRole('button', { name: 'Copy password' })
+		await waitFor(() => expect((copy as HTMLButtonElement).disabled).toBe(false))
+		await user.click(copy)
+		await waitFor(() => expect(sentOf(sent, 'generator.history.add')).toHaveLength(1))
+		expect(screen.queryByRole('button', { name: 'Generator history' })).toBeNull()
+		expect(sentOf(sent, 'generator.history.list')).toEqual([])
+	})
+
+	it('leaves no history on screen when the vault locks while it is open', async () => {
+		const listeners: Array<(message: unknown) => void> = []
+		vi.spyOn(browser.runtime.onMessage, 'addListener').mockImplementation((listener) => void listeners.push(listener as never))
+		fakeBackground({ lastTab: 'generator', generator: { history: [{ value: 'S3cretValue', kind: 'password', createdAt: new Date().toISOString() }] } })
+		render(<App />)
+		await userEvent.setup().click(await screen.findByRole('button', { name: 'Generator history' }))
+		// Rendered a span per character, so it is matched on the page's text.
+		await waitFor(() => expect(document.body.textContent).toContain('S3cretValue'))
+		background(popupState({ screen: 'unlock' }))
+		act(() => listeners.forEach((listener) => listener({ kind: 'vault.locked' })))
+		await waitFor(async () => expect((await heading()).textContent).toBe('Unlock'))
+		expect(document.body.textContent).not.toContain('S3cretValue')
+		expect(screen.queryByRole('button', { name: 'Generator history' })).toBeNull()
 	})
 
 	it('closes the lock screen generator when another window unlocks', async () => {

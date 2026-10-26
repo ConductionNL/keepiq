@@ -88,6 +88,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `folderNotice.<id>` | local | The folder manager's plaintext-names notice was dismissed |
 | `generatorOptions.<id>` | local | The generator's options and last sub-tab, as the user set them; the policy applies on read |
 | `generatorPolicy.<id>` | local | The organisation policy as the generator reads it, from the last successful sync; gone on logout |
+| `provenCertificate.<id>` | local | The certificate the last unlock proved against the private key, which the lock screen seals to; gone when a proof fails, at logout, account removal and the two-factor block |
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
@@ -96,6 +97,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `addAccountDraft` | session | Server URL and username while adding an account |
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
 | `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
+| `generatorSealed.<id>` | session | Values generated while locked, RSA-OAEP-sealed to the certificate proven at the last unlock; merged into `generatorHistory.<id>` by the first history request after the unlock; dropped as in [design.md, History while locked](openspec/changes/ext-generator/design.md) |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
 

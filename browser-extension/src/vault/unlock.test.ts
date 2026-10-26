@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { addAccount, getAccount, markLoggedOut, setActive, suiteKey, updateAccount } from '@/src/accounts/store'
+import { addAccount, getAccount, markLoggedOut, removeAccount, setActive, suiteKey, updateAccount } from '@/src/accounts/store'
 import { writeSettings } from '@/src/accounts/settings'
+import { toBase64 } from '@/src/crypto'
 import { decodeEnvelope, encodeEnvelope } from '@/src/crypto/envelope'
 import { decryptPrivateKeyPem, deriveUnlockKey } from '@/src/crypto/kdf'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { getKey, hasKey, LAST_TAB_KEY, sessionValues } from './key-store'
+import { provenCertificateKey, readProvenCertificate } from './certificate'
+import { generatorSealedKey, getKey, hasKey, LAST_TAB_KEY, sessionValues } from './key-store'
 import { blockUnlock, checkSuite, lock, lockAll, logoutForTimeout, unlock } from './unlock'
 
 const fetchMock = vi.fn<typeof fetch>()
@@ -161,6 +163,73 @@ describe('unlock', () => {
 	})
 })
 
+describe('the proven certificate', () => {
+	const proven = (accountId: string) => readProvenCertificate(accountId)
+
+	it('is kept at the unlock and through a lock', async () => {
+		const account = await newAccount()
+		await unlock(account.id, password)
+		expect(await proven(account.id)).toBe(suiteRow.certificate)
+		await lock(account.id)
+		await lockAll()
+		expect(await proven(account.id)).toBe(suiteRow.certificate)
+	})
+
+	it('is not kept when the cached certificate is not the key\'s, and the one before goes', async () => {
+		const account = await newAccount()
+		await unlock(account.id, password)
+		const { publicKey } = await crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 4096, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['encrypt', 'decrypt'])
+		const spki = toBase64(new Uint8Array(await crypto.subtle.exportKey('spki', publicKey)))
+		// What a sync stores when the server swapped the certificate but kept the suite id and epoch.
+		await browser.storage.local.set({ [suiteKey(account.id)]: { ...suiteRow, certificate: `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----` } })
+		await lock(account.id)
+		await unlock(account.id, password)
+		expect(await proven(account.id)).toBeUndefined()
+	})
+
+	it.each([
+		['a logout', (id: string) => markLoggedOut(id)],
+		['the account removal', (id: string) => removeAccount(id)],
+		['the two-factor block', (id: string) => blockUnlock(id)],
+	])('goes at %s', async (_, end) => {
+		const account = await newAccount()
+		await unlock(account.id, password)
+		await end(account.id)
+		expect(await browser.storage.local.get(provenCertificateKey(account.id))).toEqual({})
+	})
+
+	/** `end` runs to completion right before the unlock writes the certificate it proved. */
+	function endAtProof(end: () => Promise<unknown>) {
+		const set = browser.storage.local.set.bind(browser.storage.local)
+		let ended = false
+		vi.spyOn(browser.storage.local, 'set').mockImplementation(async (values) => {
+			if (!ended && Object.keys(values).some((key) => key.startsWith('provenCertificate.'))) {
+				ended = true
+				await end()
+			}
+			return set(values)
+		})
+	}
+
+	it('goes at a logout that lands as the unlock proves it', async () => {
+		const account = await newAccount()
+		endAtProof(() => markLoggedOut(account.id))
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'session_revoked' })
+		expect(await browser.storage.local.get(provenCertificateKey(account.id))).toEqual({})
+	})
+
+	it('goes at a two-factor block that lands as the unlock proves it', async () => {
+		const account = await newAccount()
+		const withheld: Partial<typeof suiteRow> = { ...suiteRow }
+		delete withheld.privateKey
+		fetchMock.mockResolvedValue(new Response(JSON.stringify([{ ...withheld, unlockBlocked: 'two_factor_required' }])))
+		endAtProof(() => blockUnlock(account.id))
+		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'unlock_blocked' })
+		expect(await hasKey(account.id)).toBe(false)
+		expect(await browser.storage.local.get(provenCertificateKey(account.id))).toEqual({})
+	})
+})
+
 describe('lock and log out', () => {
 	it('lock keeps the app password and the suite', async () => {
 		const account = await newAccount()
@@ -251,7 +320,7 @@ describe('a logout racing an unlock', () => {
 		})
 		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'session_revoked' })
 		expect(await hasKey(account.id)).toBe(false)
-		expect(await browser.storage.local.get([`neverLockKey.${account.id}`, `suite.${account.id}`])).toEqual({})
+		expect(await browser.storage.local.get([`neverLockKey.${account.id}`, `suite.${account.id}`, provenCertificateKey(account.id)])).toEqual({})
 	})
 })
 
@@ -295,6 +364,24 @@ describe('a suite change racing an unlock', () => {
 		syncDuringUnlock(() => blockUnlock(account.id))
 		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'unlock_blocked' })
 		expect(await hasKey(account.id)).toBe(false)
+	})
+
+	it('keeps the values sealed before the unlock when a sync lands before the key is stored', async () => {
+		const account = await newAccount()
+		await sessionValues.set({ [generatorSealedKey(account.id)]: '[]' })
+		const set = browser.storage.session.set.bind(browser.storage.session)
+		let synced = false
+		vi.spyOn(browser.storage.session, 'set').mockImplementation(async (values) => {
+			if (!synced && Object.keys(values).some((key) => key.startsWith('privateKeyPkcs8.'))) {
+				synced = true
+				await checkSuite(account.id, { ...suiteRow, unlockKeyEpoch: suiteRow.unlockKeyEpoch + 1 })
+			}
+			return set(values)
+		})
+		await unlock(account.id, password)
+		expect(synced).toBe(true)
+		expect(await hasKey(account.id)).toBe(true)
+		expect(await sessionValues.get(generatorSealedKey(account.id))).toBe('[]')
 	})
 
 	it('keeps the key changed notice a sync sets after the unlock cleared it', async () => {

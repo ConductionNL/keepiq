@@ -45,13 +45,15 @@ The extension caches ciphertext on disk and never persists the private key or an
 | Suite row, secret rows (ciphertext plus plaintext metadata), folders, types | `browser.storage.local` | Logout, account removal, suite change (`encryptionSuiteId` or `unlockKeyEpoch` differs on sync) |
 | App password | `browser.storage.local` | Logout, account removal, server returns 401 |
 | Generated values, the 50 newest per account, in plaintext | `browser.storage.session` | Clear in the History view; lock, timeout, logout, account removal, browser restart, extension reload |
+| Values generated while locked, sealed to the certificate proven at the last unlock | `browser.storage.session` | The first history request after the unlock, which merges them into the history; Clear in the History view; a lock after that unlock, other than for a suite change; logout, account removal, the two-factor block, browser restart, extension reload |
 | Generator options | `browser.storage.local` | Account removal |
 | Organisation policy, as the generator reads it | `browser.storage.local` | Logout, account removal |
+| The certificate the last unlock proved, public | `browser.storage.local` | A failed proof, logout, account removal, the two-factor block |
 | Account list, active account id, settings | `browser.storage.local` | Account removal |
 
 `storage.session` is memory-backed, holds up to 10 MB, is cleared when the extension is disabled, reloaded, updated or the browser restarts, and is not exposed to content scripts unless `setAccessLevel` changes that. Do not change that default.
 
-Generated values are plaintext secrets that may not be saved anywhere yet, so they get the private key's storage and its clearing, never `storage.local`. The generator works while locked, so values generated while locked stay readable without the master password until the next lock, logout or browser restart.
+Generated values are plaintext secrets that may not be saved anywhere yet, so they get the private key's storage and its clearing, never `storage.local`. The generator works while locked, but the background returns the history only for an unlocked account, and a value generated while locked is stored only sealed to the certificate proven at the last unlock, so no stored generated value is readable without unlocking.
 
 The private key is stored as bytes, not as a `CryptoKey`, because `storage.session` values must be serializable. A non-extractable `CryptoKey` cannot survive an MV3 service worker restart, which happens after about 30 seconds idle. The worker re-imports the bytes into a non-extractable key on wake. This trades a small window of raw key bytes in `storage.session` for a lock that survives worker restarts. Firefox below 115 has no `storage.session`; there the key lives only in the background page's memory (MV2 pages are persistent), and the same lock rules apply.
 
@@ -74,7 +76,7 @@ A cached vault on a machine the user no longer controls cannot be remotely wiped
 - The suite. If a sync returns an active suite whose `id` or `unlockKeyEpoch` differs from the cached one, the cached ciphertext is undecryptable. The extension purges the cache and the key and forces a fresh unlock and full sync.
 - `blocked: true` rows. A revoked suite yields metadata-only rows. The extension shows them as blocked and never fills from them.
 
-A compromised server could also keep the suite id and epoch and swap only the certificate, so new secrets would be encrypted to its own key. The extension can catch this where the web app cannot, because its code does not come from the server: before it encrypts with a certificate, it proves the certificate matches the unlocked private key, which only the master password opens, and refuses every write otherwise. Before each write it also asks for the active suite: the server stamps a write with that suite whatever key it was encrypted to, so a key changed on another device since the last sync locks instead of writing an item no one can open.
+A compromised server could also keep the suite id and epoch and swap only the certificate, so new secrets would be encrypted to its own key. The extension can catch this where the web app cannot, because its code does not come from the server: before it encrypts with a certificate, it proves the certificate matches the unlocked private key, which only the master password opens, and refuses every write otherwise. The lock screen generator seals only to a certificate the last unlock proved this way. Before each write it also asks for the active suite: the server stamps a write with that suite whatever key it was encrypted to, so a key changed on another device since the last sync locks instead of writing an item no one can open.
 
 The window between revocation and next contact is bounded by the sync interval. Sync runs on unlock, on popup open when the last sync is older than the interval, on a fixed interval while unlocked, and after every local write. The interval is a named constant, not an emergent property.
 
