@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Aquest secret es comparteix amb moltes organitzacions associades, així que el desament espera el límit de consultes i després continua. Mantén aquest diàleg obert.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Massa consultes a organitzacions associades. No s'ha desat res; torna-ho a provar d'aquí a un minut.",
         "This version cannot be restored to this secret. Nothing was saved.": "Aquesta versió no es pot restaurar en aquest secret. No s'ha desat res.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Compartit amb tu només per veure'l. Demana al propietari permisos d'edició per canviar-lo.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Compartit amb tu només per veure'l. No s'ha desat res; demana al propietari permisos d'edició per canviar-lo.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "No es pot contactar amb una organització associada amb qui es comparteix aquest secret ({partners}). Torna a fer el canvi en línia, on pots desar sense ells.",
         "Save without them": "Desa sense ells",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Desat. Els destinataris d'organitzacions associades rebran aquest canvi quan el propietari torni a desar aquest secret.",

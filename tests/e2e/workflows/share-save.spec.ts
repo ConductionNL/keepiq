@@ -711,6 +711,76 @@ test.describe('atomic share-save, end to end', () => {
 		await expectShows(bob, bobCopy, changed)
 	})
 
+	test('a direct-share recipient sees their copy as view only and still files and archives it', async () => {
+		const value = original('view')
+		const sourceId = await createSecret(
+			alice,
+			`View only ${alice.user.uid}`,
+			value,
+		)
+		const copies = await share(alice, sourceId, [bob])
+		const bobCopy = copies[bob.user.uid]
+		const folder = await api(bob.page, 'POST', '/folders', {
+			name: `Filed ${bob.user.uid}`,
+		})
+		expect(folder.status).toBe(201)
+
+		await openDetail(bob.page, bobCopy)
+		await expect(bob.page.getByTestId('secret-detail-view-only')).toHaveText(
+			'Shared with you to view only. Ask its owner for edit rights to change it.',
+			{ timeout: 20_000 },
+		)
+		await expect(bob.page.getByTestId('secret-detail-edit')).toHaveCount(0)
+
+		// Moving goes through the store the move dialog calls.
+		const watch = watchApi(bob.page)
+		await withStore(
+			bob.page,
+			'secret',
+			'async (store, data) => store.updateSecret(data.id, { folderId: data.folderId })',
+			{ id: bobCopy, folderId: folder.body.id },
+		)
+
+		// The server holds the same line: a new value is refused with
+		// `view_only`, filing the copy is not.
+		const certificate = await withStore<string>(
+			bob.page,
+			'session',
+			'async (store) => store.certificate',
+		)
+		const key = await withStore<string>(
+			bob.page,
+			'share',
+			'async (store, data) => (await store.encryptForRecipient({ key: data.key }, data.cert)).key',
+			{ key: 'Never-saved-view-1!', cert: certificate },
+		)
+		const refused = await api(bob.page, 'PUT', `/secrets/${bobCopy}`, { key })
+		expect(refused.status, JSON.stringify(refused.body)).toBe(428)
+		expect(refused.body.error).toBe('view_only')
+		const filed = await api(bob.page, 'PUT', `/secrets/${bobCopy}`, {
+			folderId: folder.body.id,
+		})
+		expect(filed.status, JSON.stringify(filed.body)).toBe(200)
+
+		await bob.page
+			.getByRole('button', { name: /Secret actions/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await expect(bob.page.getByRole('menuitem', { name: 'Move' })).toBeVisible()
+		await bob.page.getByRole('menuitem', { name: 'Archive' }).click()
+		await expect
+			.poll(async () => Boolean((await row(bob.page, bobCopy)).archivedAt), {
+				timeout: 30_000,
+			})
+			.toBe(true)
+
+		expect((await row(bob.page, bobCopy)).folderId).toBe(folder.body.id)
+		expect(
+			(await watch.calls()).filter((c) => c.path.endsWith('/share-save')),
+		).toEqual([])
+		expect(await readValue(bob, bobCopy)).toEqual(value)
+		expect(await readValue(alice, sourceId)).toEqual(value)
+	})
+
 	test('a member of a group the secret is shared with saves for the owner and every other member', async () => {
 		// @e2e sharing-group::a-group-member-saves-for-everyone
 		// @e2e sharing-group::a-group-members-write-context-carries-the-write-grade
@@ -827,8 +897,8 @@ test.describe('atomic share-save, end to end', () => {
 		await expectShows(bob, bobCopy, changed)
 	})
 
-	test('a direct recipient in no group the secret is shared with changes only their own copy', async () => {
-		// @e2e sharing-group::a-direct-share-recipient-changes-only-their-own-copy
+	test('a direct recipient in no group the secret is shared with holds a view-only copy', async () => {
+		// @e2e sharing-group::a-direct-share-recipient-cannot-change-their-copy
 		// @e2e user-sharing::recipient-updates-shared-secret
 		const groupId = await newGroup([alice, bob, carol])
 		const value = original('eleven')
@@ -846,32 +916,28 @@ test.describe('atomic share-save, end to end', () => {
 		const refused = await shareSaveFrom(dave, daveCopy, 'Dave-everyone-11!')
 		expect([refused.status, refused.body.error]).toEqual([428, 'not_allowed'])
 
-		const watch = watchApi(dave.page)
-		await openEdit(dave.page, daveCopy)
-		watch.reset()
-		await fillLogin(dave.page, 'dave-wrote-this@example.test')
-		await savePassword(dave.page, 'Dave-wrote-this-11!')
-		await expect(dave.page.locator('.secret-form')).toHaveCount(0, {
-			timeout: 60_000,
+		// Without a write grade the copy is view-only (user-sharing).
+		await openDetail(dave.page, daveCopy)
+		await expect(dave.page.getByTestId('secret-detail-view-only')).toBeVisible({
+			timeout: 20_000,
 		})
-		const calls = await watch.calls()
-		expect(
-			calls.filter((c) => c.path.endsWith('/share-save')),
-			JSON.stringify(calls),
-		).toEqual([])
-		expect(
-			calls
-				.filter(
-					(c) => c.method === 'PUT' && c.path === `/secrets/${daveCopy}`,
-				)
-				.map((c) => c.status),
-		).toEqual([200])
+		await expect(dave.page.getByTestId('secret-detail-edit')).toHaveCount(0)
+		const certificate = await withStore<string>(
+			dave.page,
+			'session',
+			'async (store) => store.certificate',
+		)
+		const key = await withStore<string>(
+			dave.page,
+			'share',
+			'async (store, data) => (await store.encryptForRecipient({ key: data.key }, data.cert)).key',
+			{ key: 'Dave-wrote-this-11!', cert: certificate },
+		)
+		const ownCopy = await api(dave.page, 'PUT', `/secrets/${daveCopy}`, { key })
+		expect(ownCopy.status, JSON.stringify(ownCopy.body)).toBe(428)
+		expect(ownCopy.body.error).toBe('view_only')
 
-		await expectShows(dave, daveCopy, {
-			...value,
-			login: 'dave-wrote-this@example.test',
-			key: 'Dave-wrote-this-11!',
-		})
+		await expectShows(dave, daveCopy, value)
 		await expectShows(alice, sourceId, value)
 		await expectShows(bob, bobCopy, value)
 		await expectShows(carol, carolCopy, value)

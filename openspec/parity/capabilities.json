@@ -1513,7 +1513,7 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "lib/Service/SecretService.php:892 versionService->snapshot on every user update; src/components/SecretDetailSidebar.vue:781 VersionHistoryPanel -> src/store/modules/secretVersion.js:42 GET /api/v1/secrets/{secretId}/versions, :68 view, :108 POST /api/v1/versions/{id}/restore (appinfo/routes.php:330-332) -> lib/Controller/SecretVersionController.php:139; src/components/VersionHistoryPanel.vue:155 restore after VersionRestoreDialog confirm",
+        "evidence": "lib/Service/SecretService.php:1075 versionService->snapshot on every user update; src/components/SecretDetailSidebar.vue:907 VersionHistoryPanel -> src/store/modules/secretVersion.js:51 GET /api/v1/secrets/{secretId}/versions, :78 view, :114 restore as saveShared with restoredFrom -> PUT /api/v1/secrets/{id}/share-save (appinfo/routes.php:184) -> lib/Controller/ShareSaveController.php:90; src/components/VersionHistoryPanel.vue:156 restore after VersionRestoreDialog confirm",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Version history panel -> View / Restore",
         "note": "Each update snapshots the prior value; the owner can view an earlier version decrypted in session and restore it after a confirm, with the current value kept as a new version.",

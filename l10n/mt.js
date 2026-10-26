@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Dan is-sigriet huwa kondiviż ma' ħafna organizzazzjonijiet sħab, għalhekk is-salvataġġ qed jistenna l-limitu tat-tfittxijiet u mbagħad ikompli. Żomm din it-tieqa miftuħa.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Wisq tfittxijiet għand organizzazzjonijiet sħab. Ma ġie ssejvjat xejn; erġa' pprova wara minuta.",
         "This version cannot be restored to this secret. Nothing was saved.": "Din il-verżjoni ma tistax terġa' tiġi restawrata għal dan is-sigriet. Ma ġie ssejvjat xejn.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Maqsum miegħek biex tarah biss. Itlob lis-sid drittijiet ta' editjar biex tibdlu.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Maqsum miegħek biex tarah biss. Ma ġie ssejvjat xejn; itlob lis-sid drittijiet ta' editjar biex tibdlu.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizzazzjoni sieħba li magħha huwa kondiviż dan is-sigriet ma tistax tintlaħaq ({partners}). Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
         "Save without them": "Issejvja mingħajrhom",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Issejvjat. Ir-riċevituri f'organizzazzjonijiet sħab jirċievu din il-bidla meta s-sid jerġa' jissejvja dan is-sigriet.",
