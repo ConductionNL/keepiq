@@ -10,7 +10,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
 
 - [x] 2.1 Port `randomInt(min, max)` and an unbiased `shuffle` to `src/generator/random.ts`, with `random.test.ts`.
   - Over 1 000 000 draws in 7776 buckets, no bucket is empty and none exceeds twice the mean.
-  - No `Math.random` under `src/`.
+  - No `Math.random` under `src/` or `entrypoints/`.
 - [x] 2.2 Port the charset password path of `../src/generator/generator.js` to `src/generator/password.ts`, with `password.test.ts`, and add `src/generator/vectors.test.ts` running `../tests/vectors/generator/cases.json` through `../tests/vectors/seeded-random.mjs`.
   - The regex cases are skipped by name, with the reason.
   - Property tests over 1000 passwords per option set: exact length, minimums met, no disabled class, no ambiguous character when avoided, no positional bias.
@@ -66,7 +66,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
 
 - [x] 7.1 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`.
   - `grep -rn "chrome\." src/ entrypoints/` matches only comments.
-  - `grep -rn "Math.random" src/` matches nothing.
+  - `grep -rn "Math.random" src/ entrypoints/` matches nothing outside tests.
 - [ ] 7.2 Load `.output/chrome-mv3/` and `.output/firefox-mv2/manifest.json` and walk the spec's scenarios in both browsers. Include:
   - a pop-out;
   - the locked generator with the network off;

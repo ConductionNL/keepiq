@@ -36,7 +36,7 @@ The policy is served by `SettingsController::getPolicy` at `GET /api/settings/po
   - The generated value is React state in `Generator` and is dropped on unmount.
   - Options, history, the cached policy and the account email reach components only through `useGeneratorOptions` and `useGeneratorHistory`, the only senders of `generator.*` requests.
   - A round trip per slider tick would only add latency.
-- **Unbiased randomness.** `randomInt(min, max)` in `src/generator/random.ts` uses rejection sampling over `crypto.getRandomValues`, with the web module's signature, so the vectors' seeded source plugs in. There is no `Math.random` under `src/`.
+- **Unbiased randomness.** `randomInt(min, max)` in `src/generator/random.ts` uses rejection sampling over `crypto.getRandomValues`, with the web module's signature, so the vectors' seeded source plugs in. There is no `Math.random` under `src/` or `entrypoints/`.
 - **Failures are codes.** The port returns a code for each of the web module's `GeneratorError` messages. The popup words `needs_email`, `needs_domain`, `no_website`, `passphrase_off` and `wordlist_unavailable`; the rest (length, empty set, no kind, word count) can't follow from `sanitize`d and `effective` options, so `generate` throws on them as a bug. The background sends no text (ext-i18n).
 - **Wordlist as a static resource.**
   - `public/wordlist/eff-large.txt` is generated from `../src/generator/eff-large-wordlist.js`, and a test checks the two are equal.
