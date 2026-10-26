@@ -3,6 +3,8 @@
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ova tajna je podijeljena s mnogo partnerskih organizacija, pa čuvanje čeka na ograničenje upita i zatim se nastavlja. Ne zatvarajte ovaj prozor.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Previše upita partnerskim organizacijama. Ništa nije sačuvano; pokušajte ponovo za minutu.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ova verzija se ne može vratiti za ovu tajnu. Ništa nije sačuvano.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Podijeljeno s vama samo za pregled. Zatražite od vlasnika prava uređivanja da biste je promijenili.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Podijeljeno s vama samo za pregled. Ništa nije sačuvano; zatražite od vlasnika prava uređivanja da biste je promijenili.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerska organizacija s kojom se dijeli ova tajna nije dostupna ({partners}). Napravite promjenu ponovo dok ste na mreži, gdje je možete sačuvati bez njih.",
         "Save without them": "Sačuvaj bez njih",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sačuvano. Primaoci u partnerskim organizacijama dobit će ovu promjenu kada vlasnik sljedeći put sačuva ovu tajnu.",

@@ -29,6 +29,17 @@
 				</NcButton>
 			</NcNoteCard>
 			<NcNoteCard
+				v-if="viewOnly"
+				type="info"
+				data-testid="secret-edit-view-only">
+				{{
+					t(
+						'keepiq',
+						'Shared with you to view only. Ask its owner for edit rights to change it.',
+					)
+				}}
+			</NcNoteCard>
+			<NcNoteCard
 				v-if="saving && waitingForPartners"
 				type="info"
 				data-testid="secret-edit-waiting">
@@ -219,6 +230,7 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useShareStore } from '../store/modules/share.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import {
@@ -278,6 +290,8 @@ export default {
 			unreachablePartners: [],
 			original: null,
 			sourceBase: null,
+			// A copy without a write grade, known once the write-context answers.
+			viewOnly: false,
 			name: '',
 			typeId: null,
 			value: '',
@@ -399,6 +413,7 @@ export default {
 			return (
 				!this.loading
 				&& !this.saving
+				&& !this.viewOnly
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
 			)
@@ -449,6 +464,7 @@ export default {
 			this.loading = true
 			this.error = ''
 			this.sourceBase = null
+			this.viewOnly = false
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				this.original = secret
@@ -511,7 +527,8 @@ export default {
 		 * that failed leaves the version read on open. Null for an own secret
 		 * whose write-context was read; when that read fails, an own secret's
 		 * write-back that saved gives its version, which the owner's save
-		 * does not send.
+		 * does not send. A copy without a write grade marks the dialog view
+		 * only, so it cannot be saved.
 		 *
 		 * @return {Promise<string|null>}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
@@ -531,6 +548,7 @@ export default {
 					.catch(() => null),
 				useSecretStore().writeBackSettled(this.secretId),
 			])
+			this.viewOnly = isViewOnlyCopy(context, this.secretId)
 			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}

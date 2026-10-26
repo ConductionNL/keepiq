@@ -90,13 +90,14 @@ The e2e test keeps the copy through a direct share, which leaving the group does
 - **THEN** Alice MUST be notified that Dan can now change the secret for everyone, with nothing to approve, and no second share MUST be created for Dan
 - **AND** the write context of Dan's copy MUST answer `effectiveGrade: 'write'` at once, before Alice answers
 
-#### Scenario: A direct-share recipient changes only their own copy
+#### Scenario: A direct-share recipient cannot change their copy
 
 @e2e tests/e2e/workflows/share-save.spec.ts
 
 - **GIVEN** Alice also shared the secret directly with Dan, who is in no group it is shared with
-- **WHEN** Dan saves a change to his copy
+- **WHEN** Dan tries to save a change to his copy
 - **THEN** the write context MUST NOT answer `write` for Dan, and a share-save for every copy MUST be refused
+- **AND** his copy MUST be view-only, so a change of its value through `PUT /api/v1/secrets/{id}` MUST be refused with 428 `view_only` (see `user-sharing`)
 
 #### Scenario: Knowing a copy's id reveals nothing
 

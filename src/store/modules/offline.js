@@ -52,7 +52,7 @@ const SENSITIVE = ['key', 'login', 'additionalFields']
  * How a replay error settles its entry. A queued entry has no "save without
  * them", so an unreachable partner, a partner lookup limit that outlasted the
  * wait or a malformed share save fails the entry instead of holding up every
- * later one.
+ * later one. So does a copy without a write grade, which no retry can save.
  *
  * @param {Error|object} e The error.
  * @return {string} conflict, failed or retry.
@@ -66,6 +66,7 @@ function replayKind(e) {
 				stale: 'conflict',
 				partner_unreachable: 'failed',
 				partner_lookup_limit: 'failed',
+				view_only: 'failed',
 			}[e.code] ?? 'retry'
 		)
 	}
@@ -78,9 +79,8 @@ function replayKind(e) {
 /**
  * The source version keeping a change after a 409 replays on: the one a
  * share save of a copy names with its `stale` or `stale_source` answer. Null
- * for an own secret, a copy saved without a write grade (its plain update
- * names no source version) and any other 409; the replay then keeps the
- * source version the edit was made from.
+ * for an own secret and any other 409; the replay then keeps the source
+ * version the edit was made from.
  *
  * @param {object} [answer] The 409's body.
  * @return {string|null}
@@ -107,8 +107,11 @@ function failureOf(e) {
 			partners: e.partners.map((p) => p.recipientCloudId),
 		}
 	}
-	if (e instanceof ShareSaveError && e.code === 'partner_lookup_limit') {
-		return { code: 'partner_lookup_limit' }
+	if (
+		e instanceof ShareSaveError
+		&& ['partner_lookup_limit', 'view_only'].includes(e.code)
+	) {
+		return { code: e.code }
 	}
 	if (e?.fromShareSave === true && e.response?.status === 400) {
 		return { code: 'refused', reason: e.response.data?.error ?? '' }
@@ -136,7 +139,8 @@ export function failureText(failure) {
 				{ partners: failure.partners.join(', ') },
 			)
 		case 'partner_lookup_limit':
-			return shareSaveErrorText(new ShareSaveError('partner_lookup_limit'))
+		case 'view_only':
+			return shareSaveErrorText(new ShareSaveError(failure.code))
 		case 'refused':
 			// The server's code stays stored with the entry; the list shows
 			// words, never the code.

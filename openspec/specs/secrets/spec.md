@@ -121,13 +121,19 @@ The system MUST decrypt and return secret fields when the user has their master 
 - THEN the app MUST send them to the lock screen, keeping the requested route as the return address
 
 ### Requirement: Update Secret
-The system MUST allow a user to update any field of a secret they own, including moving it to a different folder. Updated encrypted fields MUST be re-encrypted before storage.
+The system MUST allow a user to update any field of a secret they own, including moving it to a different folder. Updated encrypted fields MUST be re-encrypted before storage. On a copy shared with the user to view only (user-sharing, "View-Only Copies"), `PUT /api/v1/secrets/{id}` MUST refuse a change of `key`, `login` or `additionalFields` with HTTP 428 and `error` `view_only`, and change nothing; a field sent with the value already stored is not a change, and an update that changes only other fields MUST still save.
 
 #### Scenario: Owner updates a secret
 - GIVEN a user owns a secret
 - WHEN they update one of its fields
 - THEN the system MUST persist the change
 - AND any updated encrypted fields MUST be re-encrypted before storage
+
+#### Scenario: A new value for a view-only copy is refused
+- GIVEN a copy shared with Bob to view only
+- WHEN Bob sends `PUT /api/v1/secrets/{id}` with a new `key` and a new `folderId`
+- THEN the system MUST answer 428 with `code` and `error` `view_only` and the message "Shared with you to view only. Ask its owner for edit rights to change it."
+- AND neither the value nor the folder MUST change
 
 ### Requirement: Delete Secret
 The system MUST allow a user to delete a secret they own. Deletion MUST cascade to any SecretShares derived from this secret and any SecretRequests linked to it.

@@ -35,6 +35,7 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -90,6 +91,7 @@ class ReadOnlyCopyFilingTest extends TestCase {
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			folderOwnership: $folders,
 		);
 

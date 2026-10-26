@@ -18,6 +18,8 @@ export const LAST_TAB_KEY = 'popup:lastTab'
 export const editOpenedKey = (accountId: string) => `editOpened.${accountId}`
 /** Generated values in plaintext (`generator/history.ts`): session-only and gone with the key (ADR-002). */
 export const generatorHistoryKey = (accountId: string) => `generatorHistory.${accountId}`
+/** Values generated while locked, each encrypted to the certificate the last unlock proved, until the next unlock opens them. */
+export const generatorSealedKey = (accountId: string) => `generatorSealed.${accountId}`
 
 const memory = new Map<string, string>()
 /** Imported once per worker generation; the bytes are the source of truth. */
@@ -53,11 +55,14 @@ export async function putKey(accountId: string, pkcs8Base64: string): Promise<vo
 
 /** The PKCS#8 bytes, restoring them from `storage.local` after a restart under "Never". */
 async function getBytes(accountId: string): Promise<string | undefined> {
+	const epoch = sessionEpoch(accountId)
 	const bytes = await session.get(sessionKey(accountId))
 	if (bytes !== undefined) return bytes
 	if ((await effectiveSettings(accountId)).vaultTimeout !== 'never') return undefined
 	const stored = (await browser.storage.local.get(neverLockKey(accountId)))[neverLockKey(accountId)] as string | undefined
-	if (stored !== undefined) await session.set({ [sessionKey(accountId)]: stored, [unlockedAtKey(accountId)]: String(Date.now()) })
+	// A lock since the read removed both copies; restoring would undo it.
+	if (stored === undefined || sessionEpoch(accountId) !== epoch) return undefined
+	await session.set({ [sessionKey(accountId)]: stored, [unlockedAtKey(accountId)]: String(Date.now()) })
 	return stored
 }
 
@@ -86,13 +91,22 @@ export function sessionEpoch(accountId: string): number {
 	return epochs.get(accountId) ?? 0
 }
 
-/** Every lock and logout goes through here. */
-export async function clearKey(accountId: string): Promise<void> {
+/**
+ * Every lock and logout goes through here. The sealed generator values go with a held key; without
+ * one, as on Lock all while locked, they stay for the coming unlock. `sealed` overrides that.
+ */
+export async function clearKey(accountId: string, { sealed }: { sealed?: 'drop' | 'keep' } = {}): Promise<void> {
 	epochs.set(accountId, sessionEpoch(accountId) + 1)
 	imported.delete(accountId)
 	forgetVerifiedPartners()
-	await session.remove([sessionKey(accountId), unlockedAtKey(accountId), editOpenedKey(accountId), generatorHistoryKey(accountId)])
-	await browser.storage.local.remove(neverLockKey(accountId))
+	// Issued in the bump's step, no await between: a request that sees the new epoch finds no key in session or on disk, and a history write from before it is removed.
+	const [held] = await Promise.all([
+		Promise.all([session.get(sessionKey(accountId)), browser.storage.local.get(neverLockKey(accountId))])
+			.then(([bytes, onDisk]) => bytes !== undefined || onDisk[neverLockKey(accountId)] !== undefined),
+		session.remove([sessionKey(accountId), unlockedAtKey(accountId), editOpenedKey(accountId), generatorHistoryKey(accountId)]),
+		browser.storage.local.remove(neverLockKey(accountId)),
+	])
+	if ((sealed ?? (held ? 'drop' : 'keep')) === 'drop') await session.remove([generatorSealedKey(accountId)])
 }
 
 const neverLockQueue = createKeyedQueue()

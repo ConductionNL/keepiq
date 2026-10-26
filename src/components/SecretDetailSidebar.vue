@@ -77,6 +77,7 @@
 						(!offlineReadOnly || offlineEditable)
 						&& !useOnly
 						&& !federatedReadOnly
+						&& !viewOnlyCopy
 					"
 					variant="primary"
 					data-testid="secret-detail-edit"
@@ -217,6 +218,20 @@
 						'keepiq',
 						'{sender} shared this from another organisation. You can read it, but not change or share it.',
 						{ sender: secret.federatedSource || t('keepiq', 'Someone') },
+					)
+				}}
+			</NcNoteCard>
+			<!-- A copy without a write grade: its holder files, stars and
+			     archives it, but its value changes only through a writer.
+			     A use-only copy has its own note above. -->
+			<NcNoteCard
+				v-if="viewOnlyCopy && !useOnly"
+				type="info"
+				data-testid="secret-detail-view-only">
+				{{
+					t(
+						'keepiq',
+						'Shared with you to view only. Ask its owner for edit rights to change it.',
 					)
 				}}
 			</NcNoteCard>
@@ -826,7 +841,9 @@
 						{{ t('keepiq', 'Requests') }}
 					</h3>
 
-					<div class="secret-detail__requests-actions">
+					<div
+						v-if="!viewOnlyCopy"
+						class="secret-detail__requests-actions">
 						<!-- This action always targets THIS Secret, so the label
 					     says which of the two things it does. Asking for a
 					     credential you do not have yet starts from the vault,
@@ -890,7 +907,7 @@
 								<VersionHistoryPanel
 									v-if="!useOnly"
 									:secretId="secretId"
-									:canManage="isOwner"
+									:canManage="isOwner && !viewOnlyCopy"
 									@restored="load" />
 							</div>
 						</div>
@@ -994,6 +1011,7 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
@@ -1090,6 +1108,8 @@ export default {
 			error: '',
 			requestDialogOpen: false,
 			teamWritable: false,
+			/** A copy without a write grade: no edit, restore or new request. */
+			viewOnlyCopy: false,
 			/** Per-field reveal state for the card rows (masked by default). */
 			cardRevealed: { number: false, cvv: false, pin: false },
 			/** Reveal state for the identity's BSN row (masked by default). */
@@ -1600,28 +1620,36 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async load() {
+			const id = this.secretId
 			this.loading = true
 			this.error = ''
 			try {
-				this.secret = await useSecretStore().fetchSecret(this.secretId)
+				// Fetched together and applied together, so the flags below
+				// always describe the secret on show and a view-only copy
+				// never shows Edit while its write-context is on its way.
+				const [secret, context] = await Promise.all([
+					useSecretStore().fetchSecret(id),
+					this.fetchWriteContext(id),
+				])
+				// An answer for a secret the sidebar has left is dropped.
+				if (id !== this.secretId) {
+					return
+				}
+				this.secret = secret
 				// Retire the previous secret's decrypted plaintext with the
 				// secret it came from. See `secretLoadToken` in data().
 				this.secretLoadToken += 1
 				// Write-grade badge (folder-permission-grades §4.3) — a
-				// copy the user may team-write shows the sync warning.
-				try {
-					const { useShareStore } =
-						await import('../store/modules/share.js')
-					const context = await useShareStore().fetchWriteContext(
-						this.secretId,
-					)
-					this.teamWritable =
-						['write', 'manage'].includes(context.effectiveGrade)
-						&& context.sourceSecretId !== this.secretId
-				} catch {
-					this.teamWritable = false
-				}
+				// copy the user may team-write shows the sync warning; one
+				// without a write grade is view only.
+				this.teamWritable =
+					['write', 'manage'].includes(context?.effectiveGrade)
+					&& context.sourceSecretId !== id
+				this.viewOnlyCopy = isViewOnlyCopy(context, id)
 			} catch (e) {
+				if (id !== this.secretId) {
+					return
+				}
 				if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
@@ -1633,7 +1661,26 @@ export default {
 						|| t('keepiq', 'Failed to load secret')
 				}
 			} finally {
-				this.loading = false
+				if (id === this.secretId) {
+					this.loading = false
+				}
+			}
+		},
+
+		/**
+		 * The write-context of a secret, or null when it cannot be read: the
+		 * secret then loads without a write grade badge or view-only state.
+		 *
+		 * @param {string} id The secret.
+		 * @return {Promise<object|null>}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+		 */
+		async fetchWriteContext(id) {
+			try {
+				const { useShareStore } = await import('../store/modules/share.js')
+				return await useShareStore().fetchWriteContext(id)
+			} catch {
+				return null
 			}
 		},
 

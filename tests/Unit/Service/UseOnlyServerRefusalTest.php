@@ -33,6 +33,7 @@ use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
@@ -75,6 +76,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 	}
 

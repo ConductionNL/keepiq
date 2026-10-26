@@ -9,6 +9,7 @@ import {
 import { Failure } from '@/src/failure'
 import { createKeyedQueue } from '@/src/queue'
 import { PIN_MIN_LENGTH, type PinSetReply, type UnlockMethod } from '@/src/messages'
+import { proveCertificate, provenCertificateKey } from './certificate'
 import { clearKey, putKey, sessionEpoch } from './key-store'
 import {
 	deleteSeal, forgetPin, openSeal, pinGeneration, readPin, readSeal, sealPin, storePin, storePinCopies, unwrapPin, wrapPin, WrongPin,
@@ -154,28 +155,32 @@ async function attempt(accountId: string, method: UnlockMethod, retried: boolean
 	const { suite, key } = method.type === 'pin' ? await openWithPin(accountId, method.pin) : await openWithMasterPassword(account, method.masterPassword)
 	// Imported once here so a corrupt key fails the unlock, not the first decrypt.
 	let pkcs8: Uint8Array<ArrayBuffer>
+	let privateKey: CryptoKey
 	try {
 		pkcs8 = typeof key === 'string' ? pemToPkcs8(key) : key
-		await importPrivateKey(pkcs8)
+		privateKey = await importPrivateKey(pkcs8)
 	} catch {
 		throw new Failure('key_unreadable')
 	}
 	// Cleared before the key is stored, so a suite change landing after this keeps its notice.
 	if ((await getAccount(accountId))?.keyChanged) await updateAccount(accountId, { keyChanged: false })
 	await putKey(accountId, toBase64(pkcs8))
+	await proveCertificate(accountId, suite.certificate, privateKey)
 	// A logout during the unlock marked the account before purging; take back what this unlock wrote.
 	const after = await getAccount(accountId)
 	if (typeof after?.appPassword !== 'string') {
-		await clearKey(accountId)
-		await browser.storage.local.remove(suiteKey(accountId))
+		await clearKey(accountId, { sealed: 'drop' })
+		await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
 		throw new Failure('session_revoked')
 	}
 	// A sync stored a new suite while this unlock decrypted the old one, so this key opens nothing.
-	// A missing suite means the two-factor block dropped it; the retry asks the server, which refuses.
+	// A missing suite means the two-factor block dropped it, and the certificate this unlock proved goes too; the retry asks the server, which refuses.
 	const current = await cachedSuite(accountId)
 	if (!current || !sameSuite(current, suite)) {
-		await clearKey(accountId)
+		// No one used this key, so it does not take what was sealed before this unlock.
+		await clearKey(accountId, { sealed: 'keep' })
 		if (current) await updateAccount(accountId, { keyChanged: true })
+		else await browser.storage.local.remove(provenCertificateKey(accountId))
 		// Either change also forgot the PIN, so only the master password can retry.
 		if (method.type === 'pin') throw new Failure(current ? 'pin_key_changed' : 'unlock_blocked')
 		if (retried) throw new Failure('unknown')
@@ -238,7 +243,8 @@ export async function checkSuite(accountId: string, suite: CachedSuite): Promise
 	await browser.storage.local.set({ [suiteKey(accountId)]: suite })
 	// The cached rows are encrypted to the old key, so they go with it.
 	if (changed) {
-		await clearKey(accountId)
+		// A new epoch can be the same key pair; values sealed to another key are dropped when they fail to open.
+		await clearKey(accountId, { sealed: 'keep' })
 		await forgetPin(accountId)
 		await clearSnapshot(accountId)
 		await updateAccount(accountId, { keyChanged: true })
@@ -252,9 +258,9 @@ export async function checkSuite(accountId: string, suite: CachedSuite): Promise
  * web app drops its snapshot, so the next unlock asks the server and is refused.
  */
 export async function blockUnlock(accountId: string): Promise<void> {
-	await clearKey(accountId)
+	await clearKey(accountId, { sealed: 'drop' })
 	await forgetPin(accountId)
 	await clearSnapshot(accountId)
-	await browser.storage.local.remove(suiteKey(accountId))
+	await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
 	await announceLock((await getActiveAccountId()) === accountId)
 }

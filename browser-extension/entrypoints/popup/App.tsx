@@ -13,7 +13,6 @@ import { DEFAULT_SHELL, ShellContext } from './shell-context'
 import { AccountSwitcher } from './views/AccountSwitcher'
 import { AddAccount } from './views/AddAccount'
 import { Generator } from './views/Generator'
-import { GeneratorHistory } from './views/GeneratorHistory'
 import { LogInAgain } from './views/LogInAgain'
 import { Shell } from './views/Shell'
 import { Unlock } from './views/Unlock'
@@ -29,7 +28,6 @@ export default function App() {
 function Popup() {
 	const { state, error, dispatch } = usePopupState()
 	const [panel, setPanel] = useState<Panel>(null)
-	const [lockedHistory, setLockedHistory] = useState(false)
 	/** Unlock was left for the generator, so focus returns to its link. */
 	const [fromGenerator, setFromGenerator] = useState(false)
 	const { message: toast, show: showToast } = useToast()
@@ -42,7 +40,6 @@ function Popup() {
 
 	// It is the lock screen's; an unlock in another window leaves it.
 	if (panel === 'generator' && state && state.screen !== 'unlock') setPanel(null)
-	if (lockedHistory && panel !== 'generator') setLockedHistory(false)
 	if (fromGenerator && state && state.screen !== 'unlock') setFromGenerator(false)
 
 	if (!state) {
@@ -63,10 +60,7 @@ function Popup() {
 		setFromGenerator(next === null && panel === 'generator')
 		setPanel(next)
 	}
-	const back = () => {
-		if (lockedHistory) setLockedHistory(false)
-		else openPanel(panel === 'add_account' ? 'switcher' : null)
-	}
+	const back = () => openPanel(panel === 'add_account' ? 'switcher' : null)
 	// Kept mounted under a panel, so leaving the switcher returns to the same tab, filters and scroll.
 	const shell = state.screen === 'unlocked' && active
 		? <Shell key={active.id} hidden={panel !== null} active={active} lastTab={state.lastTab} onAccounts={() => setPanel('switcher')} refreshState={refreshState} />
@@ -77,10 +71,11 @@ function Popup() {
 		title = i18n.t('titles.accounts')
 		body = <AccountSwitcher state={state} dispatch={dispatch} onClose={close} onAddAccount={() => setPanel('add_account')} />
 	} else if (panel === 'generator' && active) {
-		title = lockedHistory ? i18n.t('generator.history') : tabLabel('generator')
+		title = tabLabel('generator')
+		// No History link: the lock guards it from whoever walks up to the browser (ADR-002).
 		body = (
 			<ShellContext.Provider value={lockedContext}>
-				{lockedHistory ? <GeneratorHistory /> : <Generator key={active.id} takeFocus onOpenHistory={() => setLockedHistory(true)} />}
+				<Generator key={active.id} takeFocus />
 			</ShellContext.Provider>
 		)
 	} else if (panel === 'add_account' || !active || state.screen === 'add_account') {
