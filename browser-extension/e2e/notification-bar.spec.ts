@@ -189,8 +189,11 @@ test('the save bar fits at every width in English', async ({ page }) => {
 })
 
 test.describe('an update card for a long name without a username', () => {
-	/** Wider than the row, but a question of two lines on the full card. */
-	const NAME = 'Stadsdeel Nieuw-West medewerkersportaal (productie)'
+	/**
+	 * Wider than the row, but a question of two lines on the full card. Ideographs are 1 em wide in every CJK font, so
+	 * this holds whatever the system font; a Latin name in that window is too narrow in one font or too long in another.
+	 */
+	const NAME = '東京都新宿区役所職員向けポータルサイト本番環境の管理画面'
 	test.use({ loginItem: { name: NAME, username: null } })
 
 	test('cuts the name off in the row with an ellipsis, and fits at every width', async ({ page }) => {
@@ -200,7 +203,18 @@ test.describe('an update card for a long name without a username', () => {
 		await expect(name).toHaveText(NAME)
 		await expect(frame.locator('.bar__item-user')).toHaveCount(0)
 		expect(await name.evaluate((el) => [getComputedStyle(el).textOverflow, el.scrollWidth > el.clientWidth])).toEqual(['ellipsis', true])
-		// Where the narrower card needs the row's room for the question, the row gives way, so nothing is clipped.
+		await fitsEveryWidth(page)
+	})
+})
+
+test.describe('an update card for a name too long to fit beside the row', () => {
+	/** A question too long to fit beside the row on any card, but short enough to fit without it. */
+	const NAME = 'Stadsdeel Nieuw-West medewerkersportaal en roosterplanning (productie)'
+	test.use({ loginItem: { name: NAME, username: null } })
+
+	test('gives the row\'s room to the question, and fits at every width', async ({ page }) => {
+		const frame = await submit(page, '', 'a-new-password')
+		await expect(frame.locator('.bar__title')).toHaveText(`Update password for ${NAME}?`)
 		await fitsEveryWidth(page)
 		await page.setViewportSize({ width: WIDTHS[0]!, height: 700 })
 		await expect(frame.locator('.bar__item')).toBeHidden()

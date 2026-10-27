@@ -263,9 +263,13 @@ p {
 	margin: -6px -6px -6px 0;
 }
 
+/*
+ * A label too wide for the row, as with a wide system font, wraps between its words instead of pushing a button off
+ * the card; two lines fit the 32 px, so the question keeps its room.
+ */
 .btn {
 	box-sizing: border-box;
-	flex: none;
+	flex: 0 1 auto;
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -274,7 +278,8 @@ p {
 	font: inherit;
 	font-size: 14px;
 	font-weight: 600;
-	white-space: nowrap;
+	line-height: 15px;
+	text-align: center;
 	border: 1px solid transparent;
 	border-radius: 999px;
 	cursor: pointer;
