@@ -143,6 +143,6 @@ The team folder reconcile (`GET /api/v1/team-folders/{id}/reconcile`) MUST exclu
 ## Notes
 
 - Introduces `keepiq_team_folders` and `keepiq_team_folder_members` tables plus a nullable `team_folder_id` provenance column on the existing share table (parallel to `group_share_id`).
-- Reuses `ShareService::createBatchShares`/`revokeShare`/`syncUpdate`, `GroupShareService` group-expansion/propagation, and `DelegationService::createDelegation`/`makePermanent` — no new crypto.
+- Reuses the server-side recipient-copy minting (`DirectShareRegistrar`/`RecipientSecretCopyFactory`), `revokeShare`/`syncUpdate`, `GroupShareService` group-expansion/propagation, and `DelegationService::createDelegation`/`makePermanent` — no new crypto.
 - Related ADRs: ADR-001 (own tables), ADR-003 (per-recipient RSA, write-without-read, zero-knowledge).
 - Out of scope for v1: shared symmetric folder key, folder co-ownership, per-secret read/write permission grades, subfolder membership narrowing.

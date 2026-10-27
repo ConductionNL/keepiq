@@ -642,6 +642,30 @@ describe('replay', () => {
 		expect(stored.size).toBe(1)
 	})
 
+	it('a write the share quarantine scan holds back fails with the server\'s words, and the queue goes on', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { name: 'A' })
+		await secrets.createSecret({ name: 'B', key: 'v' })
+		goOnline()
+		const message = 'This share waits for the share quarantine scan and cannot be changed yet; ask an administrator to check that background jobs run'
+		vi.spyOn(axios, 'put').mockRejectedValueOnce(
+			httpError(409, { error: 'share_scan_pending', message }),
+		)
+		const post = vi.spyOn(axios, 'post').mockResolvedValueOnce({
+			data: { id: 'created' },
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 1, stopped: false })
+		expect(post).toHaveBeenCalledTimes(1)
+		expect(offline.failedEntries.map((e) => e.secretId)).toEqual(['s1'])
+		const failed = offline.failedEntries[0]
+		expect(failed.failure).toEqual({ code: 'share_scan_pending', message })
+		expect(failureText(failed.failure)).toBe(message)
+		expect(stored.size).toBe(1)
+	})
+
 	it('a failed share save writes nothing and keeps the whole entry queued', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { key: 'new' })

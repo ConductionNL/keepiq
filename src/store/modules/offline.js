@@ -116,6 +116,9 @@ function failureOf(e) {
 	if (e?.fromShareSave === true && e.response?.status === 400) {
 		return { code: 'refused', reason: e.response.data?.error ?? '' }
 	}
+	if (e?.response?.data?.error === 'share_scan_pending') {
+		return { code: 'share_scan_pending', message: e.response.data.message ?? null }
+	}
 	if (shareSaveErrorText(e) !== null) {
 		return { code: 'not_allowed' }
 	}
@@ -480,8 +483,9 @@ export const useOfflineStore = defineStore('offline', {
 		/**
 		 * Replay the queue oldest first through the online paths (D2, D5).
 		 * Runs only online with the vault unlocked online. A 409 stops that
-		 * entry for the user's choice, 403 and 404 move it to the failed
-		 * list, a 423 or a network error stops the replay and keeps the rest.
+		 * entry for the user's choice, 403, 404 and a 409 that waits for the
+		 * share quarantine scan move it to the failed list, a 423 or a network
+		 * error stops the replay and keeps the rest.
 		 *
 		 * @return {Promise<{synced: number, stopped: boolean}>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out

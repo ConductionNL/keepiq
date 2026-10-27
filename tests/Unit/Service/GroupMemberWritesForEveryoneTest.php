@@ -444,6 +444,30 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame([], $this->written);
 	}
 
+	public function testTheOwnersSyncNamingACopyTwiceIsRefused(): void {
+		try {
+			$this->sync()->syncUpdate('src', [['secretId' => 'c-dan', 'key' => 'NEW'], ['secretId' => 'c-dan', 'key' => 'OTHER']], '', 'alice');
+			$this->fail('The owner named a copy twice');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('An entry is named twice', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
+	public function testADelegatesSyncNamingACopyTwiceIsRefused(): void {
+		$this->delegates[] = 'carol';
+
+		try {
+			$this->sync()->syncUpdate('src', [['secretId' => 'c-dan', 'key' => 'NEW'], ['secretId' => 'c-dan', 'key' => 'OTHER']], '', 'carol');
+			$this->fail('A delegate named a copy twice');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('An entry is named twice', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->written);
+	}
+
 	public function testAGroupMembersSyncLeavesTheCopyOfAHolderWithoutAVaultKeyUntouched(): void {
 		$this->keyless = ['dan'];
 		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan']];
@@ -533,10 +557,6 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$context = $this->context()->writeContext('c-dan', 'dan');
 		$this->assertSame('write', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
-
-		// An approval would change nothing: Dan already holds a copy.
-		$groupShares->approveGroupMemberShare('gs-admin', 'dan', 'c-dan-2', 'alice');
-		$this->assertCount(2, $this->targets);
 	}
 
 	public function testANewMemberWithoutACopyIsStillAskedToApprove(): void {

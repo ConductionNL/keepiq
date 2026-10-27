@@ -4,8 +4,9 @@
  *
  * Pinia store for user-to-user share targets.
  *
- * The store wraps `/api/v1/secrets/{secretId}/shares` (list + create) and
- * `/api/v1/shares/{id}` (revoke). It exposes a small helper for browser-side
+ * The store wraps `/api/v1/secrets/{secretId}/shares` (list) and
+ * `/api/v1/shares/{id}` (revoke). Shares are created through the
+ * register-batch flow, not this store. It exposes a small helper for browser-side
  * RSA encryption so callers can pass a plaintext snapshot and a recipient
  * certificate without re-implementing the envelope; the helper imports the
  * recipient's public key and encrypts each field via `rsaEncrypt`.
@@ -349,61 +350,6 @@ export const useShareStore = defineStore('share', {
 		},
 
 		/**
-		 * Record a share target.
-		 *
-		 * Expects the caller to have already PUT the recipient's encrypted
-		 * Secret copy through `useSecretStore`; this call only registers the
-		 * link.
-		 *
-		 * @param {string}      secretId          The source secret ID.
-		 * @param {string}      targetUserId      The recipient Nextcloud UID.
-		 * @param {string}      recipientSecretId The recipient's Secret copy ID.
-		 * @param {string|null} groupShareId      Optional group-share linkage.
-		 * @return {Promise<object>}
-		 */
-		async createShare(
-			secretId,
-			targetUserId,
-			recipientSecretId,
-			groupShareId = null,
-		) {
-			this.loading = true
-			this.error = null
-			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`)
-			const body = { targetUserId, recipientSecretId, groupShareId }
-			try {
-				let response
-				try {
-					response = await axios.post(url, body)
-				} catch (refusal) {
-					// A share to someone the user does not share with yet needs a
-					// vault-key proof (keepiq#818); a known recipient does not, so
-					// ask for the password only when the server says so.
-					if (refusal?.response?.data?.error !== 'key_proof_required') {
-						throw refusal
-					}
-					const { headers } = await sessionKeyProofHeaders({
-						purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
-						reason: t(
-							'keepiq',
-							'You are sharing with someone new. Enter your master password to confirm.',
-						),
-						boundValues: [secretId, targetUserId],
-					})
-					response = await axios.post(url, body, { headers })
-				}
-				this.shares.push(response.data)
-				return response.data
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message || e?.message || 'Failed to share'
-				throw e
-			} finally {
-				this.loading = false
-			}
-		},
-
-		/**
 		 * The write context of a secret for the current user
 		 * (folder-permission-grades §4).
 		 *
@@ -478,38 +424,6 @@ export const useShareStore = defineStore('share', {
 					: [],
 				masterPassword: proof.masterPassword,
 			}
-		},
-
-		/**
-		 * Create a batch of recipient share targets (group-share expansion).
-		 *
-		 * The caller supplies the already-encrypted Secret copies (one per
-		 * member); this method records them and returns the server response
-		 * for each.
-		 *
-		 * @param {string} secretId          The source secret ID.
-		 * @param {Array<{targetUserId: string, recipientSecretId: string}>} recipients Recipient copies.
-		 * @param {string} groupShareId      The group-share linkage ID.
-		 * @return {Promise<Array<object>>}
-		 *
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-with-group-static-expansion
-		 */
-		async createBatchShares(secretId, recipients, groupShareId) {
-			const created = []
-			for (const r of recipients) {
-				// Sequential POST keeps the UI feedback predictable on slow
-				// networks; total recipient count for a group is bounded by
-				// the Nextcloud group size which is small in practice.
-
-				const row = await this.createShare(
-					secretId,
-					r.targetUserId,
-					r.recipientSecretId,
-					groupShareId,
-				)
-				created.push(row)
-			}
-			return created
 		},
 
 		/**

@@ -3,13 +3,12 @@
 /**
  * Keepiq Share Service
  *
- * The user-to-user secret-share lifecycle: createShare (owner/delegate
- * authorization + recipient-suite precondition), createBatchShares (group
- * expansion) and getSharesForSecret (owner/delegate-only view).
+ * The user-to-user secret-share lifecycle: updateRestriction (owner/delegate
+ * authorization) and listSharesForSecret (owner/delegate-only view).
  *
- * The three surfaces that used to live here alongside them have their own
- * classes now: bulk registration of pre-encrypted rows
- * (DirectShareRegistrar), the multi-recipient re-encryption fan-out
+ * The surfaces that do the heavy lifting have their own classes now: bulk
+ * registration of pre-encrypted rows where the server mints each recipient
+ * copy (DirectShareRegistrar), the multi-recipient re-encryption fan-out
  * (ShareSyncService) and revocation with its delete cascade
  * (ShareRevocationService). Their public entry points are re-exported
  * below so ShareController and SecretService keep one seam.
@@ -30,14 +29,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
-use Ramsey\Uuid\Uuid;
 use Throwable;
 
 /**
@@ -50,15 +49,13 @@ use Throwable;
  * surface stays in one place.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Pre-existing suppression,
- *   narrowed but not yet retired. The four mappers it used to thread through
- *   are gone: authorization moved to ShareAuthorizationService, the bulk path
- *   to DirectShareRegistrar, the fan-out to ShareSyncService and the delete
- *   cascade to ShareRevocationService, which took the value from 22 to 14.
- *   Eleven of those fourteen are what createShare/createBatchShares/
- *   listSharesForSecret genuinely need; the last three are the collaborators
- *   whose entry points this class re-exports so ShareController and
- *   SecretService keep one seam. Retiring the tag means repointing those two
- *   callers, which is outside this change.
+ *   narrowed but not yet retired. Authorization moved to
+ *   ShareAuthorizationService, the bulk path to DirectShareRegistrar, the
+ *   fan-out to ShareSyncService and the delete cascade to
+ *   ShareRevocationService; the remaining collaborators are what
+ *   updateRestriction/listSharesForSecret genuinely need plus the ones whose
+ *   entry points this class re-exports so ShareController and SecretService
+ *   keep one seam.
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
  *   operation; the use-only change added the restriction update.
@@ -66,39 +63,29 @@ use Throwable;
 class ShareService {
 
 	/**
-	 * The share audit trail.
-	 *
-	 * @var ShareAuditTrail
-	 */
-	private ShareAuditTrail $auditTrail;
-
-	/**
 	 * Constructor for ShareService.
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
-	 * @param IDBConnection $db The DB connection (batch transaction)
-	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param DirectShareRegistrar $directRegistrar The bulk direct-share registrar
 	 * @param ShareSyncService $syncService The multi-recipient sync service
 	 * @param ShareRevocationService $revocationService The revocation + cascade service
-	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
+	 * @param IDBConnection|null $db Makes a restriction change all-or-nothing
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private ShareTargetMapper $mapper,
-		private IDBConnection $db,
-		private NotificationService $notificationService,
 		private ShareAuthorizationService $auth,
 		private DirectShareRegistrar $directRegistrar,
 		private ShareSyncService $syncService,
 		private ShareRevocationService $revocationService,
-		?ShareAuditTrail $auditTrail = null,
 		private ?ShareRestrictionResolver $restrictions = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
+		private ?IDBConnection $db = null,
 	) {
-		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
 
 	/**
@@ -130,173 +117,12 @@ class ShareService {
 	}//end recipientCertificates()
 
 	/**
-	 * Create a single share target record.
-	 *
-	 * Authorization: $userId must be the Secret owner OR an active
-	 * delegate. Precondition: the recipient must have an active
-	 * EncryptionSuite (the browser-encrypted blob is useless otherwise).
-	 * The recipient's encrypted Secret copy must already exist; the
-	 * browser persists it through the SecretController before this call.
-	 *
-	 * @param string $sourceSecretId The owner's source secret ID
-	 * @param string $targetUserId The recipient's Nextcloud user ID
-	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
-	 * @param string|null $groupShareId Optional group-share linkage
-	 * @param string $userId The Nextcloud user ID creating the share
-	 * @param ShareRestriction|null $restriction Use-only and end date of a direct share
-	 *
-	 * @return ShareTarget
-	 *
-	 * @throws InvalidArgumentException When validation fails
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#3.2
-	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
-	 */
-	public function createShare(
-		string $sourceSecretId,
-		string $targetUserId,
-		string $recipientSecretId,
-		?string $groupShareId,
-		string $userId,
-		?ShareRestriction $restriction = null,
-	): ShareTarget {
-		if ($sourceSecretId === '') {
-			throw new InvalidArgumentException(message: 'sourceSecretId is required');
-		}
-
-		if ($targetUserId === '') {
-			throw new InvalidArgumentException(message: 'targetUserId is required');
-		}
-
-		if ($recipientSecretId === '') {
-			throw new InvalidArgumentException(message: 'recipientSecretId is required');
-		}
-
-		$source = $this->auth->loadSecret(secretId: $sourceSecretId);
-
-		if ($targetUserId === $source->getOwnerId()) {
-			throw new InvalidArgumentException(message: 'Cannot share a secret with its owner');
-		}
-
-		if ($targetUserId === $userId) {
-			throw new InvalidArgumentException(message: 'Cannot share a secret with yourself');
-		}
-
-		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
-		$source->assertOnwardShareable();
-		$this->auth->assertRecipientHasActiveSuite(targetUserId: $targetUserId);
-
-		// Enforce one-share-per-(source,recipient) invariant.
-		try {
-			$this->mapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceSecretId,
-				targetUserId: $targetUserId
-			);
-			throw new InvalidArgumentException(message: 'Secret is already shared with this user');
-		} catch (DoesNotExistException) {
-			// No existing row — proceed.
-		}
-
-		$entity = new ShareTarget();
-		$entity->setId(Uuid::uuid4()->toString());
-		$entity->setSourceSecretId($sourceSecretId);
-		$entity->setTargetUserId($targetUserId);
-		$entity->setSecretId($recipientSecretId);
-		$entity->setGroupShareId($groupShareId);
-		$entity->setCreatedBy($userId);
-		$entity->setCreatedAt(new DateTime());
-		if ($restriction !== null && $groupShareId === null) {
-			$entity->setUseOnly($restriction->useOnly);
-			$entity->setExpiresAt($restriction->expiresAt);
-		}
-
-		$persisted = $this->mapper->insert($entity);
-		$this->restrictions?->resolveTarget(target: $persisted);
-
-		// Fire-and-forget notification to the recipient. The user
-		// preference + opt-out check happens inside NotificationService.
-		$this->notificationService->notify(
-			subject: 'secret_shared',
-			recipientId: $targetUserId,
-			params: [
-				'secretId' => $sourceSecretId,
-				'secretName' => $source->getName(),
-				'sharedBy' => $userId,
-			],
-			objectType: 'secret',
-			objectId: $sourceSecretId,
-		);
-
-		$this->auditTrail->recordShareGranted(
-			userId: $userId,
-			shareId: $persisted->getId(),
-			secretName: $source->getName(),
-			recipientId: $targetUserId,
-		);
-
-		return $persisted;
-	}//end createShare()
-
-	/**
-	 * Create a batch of recipient share targets for a group expansion.
-	 *
-	 * Each member-row blob is expected to carry `{targetUserId,
-	 * recipientSecretId}` — the caller (controller) has already created the
-	 * recipient Secret rows in the browser and POSTed them. The entire batch
-	 * shares one `$groupShareId` so revocation/leave handling can cascade.
-	 *
-	 * The rows arrive verbatim from an untrusted `#[NoAdminRequired]` request
-	 * body, so the shape is deliberately typed as loose `mixed` here — the
-	 * per-row guard below is the real validation and must not be removed on
-	 * the strength of a docblock promise.
-	 *
-	 * @param string $sourceSecretId The owner's source secret ID
-	 * @param array<int,array<string,mixed>> $shares The per-recipient batch
-	 * @param string $groupShareId The GroupShare ID for cascade
-	 * @param string $userId The initiator
-	 *
-	 * @return ShareTarget[]
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#3.6
-	 */
-	public function createBatchShares(
-		string $sourceSecretId,
-		array $shares,
-		string $groupShareId,
-		string $userId,
-	): array {
-		$created = [];
-		$this->db->beginTransaction();
-		try {
-			foreach ($shares as $row) {
-				$targetUserId = (string)($row['targetUserId'] ?? '');
-				$recipientSecretId = (string)($row['recipientSecretId'] ?? '');
-				if ($targetUserId === '' || $recipientSecretId === '') {
-					continue;
-				}
-
-				$created[] = $this->createShare(
-					sourceSecretId: $sourceSecretId,
-					targetUserId: $targetUserId,
-					recipientSecretId: $recipientSecretId,
-					groupShareId: $groupShareId,
-					userId: $userId,
-				);
-			}
-
-			$this->db->commit();
-		} catch (Throwable $exception) {
-			$this->db->rollBack();
-			throw $exception;
-		}//end try
-
-		return $created;
-	}//end createBatchShares()
-
-	/**
 	 * Change the use-only flag and end date of a direct share (owner or
 	 * delegate only), then recompute the recipient's copy. A share that
 	 * came from a group share or a team folder is changed there instead.
+	 * A delegate may not change a share made to themselves, nor any share
+	 * while their own copy may not be shared onward, so a restricted grant
+	 * can never be lifted into a full one (GHSA-m5p9-6pw7-pf3g).
 	 *
 	 * @param string $shareId The share-target row ID
 	 * @param ShareRestriction $restriction The new use-only flag and end date
@@ -304,9 +130,12 @@ class ShareService {
 	 *
 	 * @return ShareTarget
 	 *
-	 * @throws InvalidArgumentException When not found, not authorized or not a direct share
+	 * @throws InvalidArgumentException When not found, not authorized, not a direct share, or the delegate's own grant
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is a read-only copy from another organisation
+	 * @throws ConflictException When the pending quarantine scan holds the row back
 	 *
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	public function updateRestriction(string $shareId, ShareRestriction $restriction, string $userId): ShareTarget {
 		try {
@@ -321,10 +150,32 @@ class ShareService {
 			throw new InvalidArgumentException(message: 'Change this share on its group share or team folder');
 		}
 
-		$entity->setUseOnly($restriction->useOnly);
-		$entity->setExpiresAt($restriction->expiresAt);
-		$updated = $this->mapper->update($entity);
-		$this->restrictions?->resolveTarget(target: $updated);
+		if ($entity->getTargetUserId() === $userId) {
+			throw new InvalidArgumentException(message: 'You cannot change a share made to you');
+		}
+
+		$this->auth->assertMayShareOnward(source: $source, userId: $userId);
+		// As a revoke is refused (GHSA-m5p9-6pw7-pf3g): the row would take the
+		// new restriction while its copy kept the old one. Judged before the
+		// transaction, so a quarantine this makes is not rolled back.
+		$this->quarantineScan?->assertNotHeldBack(row: $entity, verb: 'changed');
+
+		$this->db?->beginTransaction();
+		try {
+			$entity->setUseOnly($restriction->useOnly);
+			$entity->setExpiresAt($restriction->expiresAt);
+			$updated = $this->mapper->update($entity);
+			// Judging the row again can fail where it just succeeded, which
+			// rolls the change back.
+			$this->restrictions?->resolveTargetsOrRefuse(
+				targets: [$updated],
+				refusal: 'This share waits for the share quarantine scan and cannot be changed yet'
+			);
+			$this->db?->commit();
+		} catch (Throwable $exception) {
+			$this->db?->rollBack();
+			throw $exception;
+		}
 
 		return $updated;
 	}//end updateRestriction()
@@ -379,6 +230,7 @@ class ShareService {
 	 *
 	 * @throws InvalidArgumentException When the row does not exist or
 	 *                                  the caller is not authorized.
+	 * @throws \OCA\Keepiq\Exception\ConflictException When the row is quarantined, or the pending scan holds it back
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
@@ -444,4 +296,21 @@ class ShareService {
 	public function deleteAllForSecret(string $sourceSecretId): void {
 		$this->revocationService->deleteAllForSecret(sourceSecretId: $sourceSecretId);
 	}//end deleteAllForSecret()
+
+	/**
+	 * End every share of a secret at its owner's request (the secret is
+	 * trashed), refused before anything changes while the pending quarantine
+	 * scan cannot judge one of its rows.
+	 *
+	 * @param string $sourceSecretId The source secret ID
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of its rows
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	public function revokeAllForSecret(string $sourceSecretId): void {
+		$this->revocationService->revokeAllForSecret(sourceSecretId: $sourceSecretId);
+	}//end revokeAllForSecret()
 }//end class

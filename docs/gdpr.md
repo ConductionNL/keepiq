@@ -52,7 +52,7 @@ browser from two halves:
 - **Server metadata** (`GET /api/v1/gdpr/metadata`, session user only):
   encryption-suite records (certificate, status, audit fields — the encrypted
   private-key blob is **excluded**, with the exclusion documented inside the
-  package), shares given/received, delegations, link-share metadata (no
+  package), shares given/received (each flagged `quarantined`, quarantined share rows included), delegations, link-share metadata (no
   snapshots; the links the user holds and, flagged `handedOver`, the links they made that team offboarding handed to someone else), secret requests, user settings, and per secret the user's
   favourite star, tags and last-used time (`organisation`).
 - **Client vault**: the decrypted secrets + folder structure.

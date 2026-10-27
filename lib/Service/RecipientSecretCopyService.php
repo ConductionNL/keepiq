@@ -33,7 +33,9 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -46,6 +48,7 @@ class RecipientSecretCopyService {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (recipient suite)
 	 * @param SecretTypeService $typeService The secret-type resolver (copy typing)
+	 * @param LoggerInterface|null $logger The logger (skipped cross-user deletes)
 	 *
 	 * @return void
 	 *
@@ -55,6 +58,7 @@ class RecipientSecretCopyService {
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private SecretTypeService $typeService,
+		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
 
@@ -121,20 +125,32 @@ class RecipientSecretCopyService {
 
 	/**
 	 * Delete a recipient's encrypted Secret copy (best-effort — a missing
-	 * copy is already gone).
+	 * copy is already gone). Defence in depth: a copy not genuinely held by
+	 * the share's target (a poisoned or drifted `secret_id`) is kept, so
+	 * revoking a team-folder share can never delete another user's secret.
 	 *
-	 * @param string $secretId The recipient copy's secret ID
+	 * @param ShareTarget $share The share row whose copy is being removed
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
-	public function deleteById(string $secretId): void {
+	public function deleteByShare(ShareTarget $share): void {
 		try {
-			$copy = $this->secretMapper->findById($secretId);
-			$this->secretMapper->delete($copy);
+			$copy = $this->secretMapper->findById($share->getSecretId());
 		} catch (DoesNotExistException) {
 			// Already gone.
+			return;
 		}
-	}//end deleteById()
+
+		if ($share->isHeldByTarget(copy: $copy) === false) {
+			$this->logger?->warning(
+				'Kept a secret not held by the revoked team-folder share target',
+				['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
+			);
+			return;
+		}
+
+		$this->secretMapper->delete($copy);
+	}//end deleteByShare()
 }//end class

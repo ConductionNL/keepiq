@@ -171,9 +171,13 @@ class UseOnlyServerRefusalTest extends TestCase {
 		$this->copy->setAccessExpiresAt(new DateTime('+1 day'));
 		$groupShares = $this->createMock(GroupShareMapper::class);
 		$groupShares->expects($this->never())->method('insert');
+		// Bob holds the row and it is no one's copy, so the restriction is what
+		// stops the group share.
+		$shareTargets = $this->createMock(ShareTargetMapper::class);
+		$shareTargets->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('not a copy'));
 		$service = new GroupShareService(
 			mapper: $groupShares,
-			shareTargetMapper: $this->createMock(ShareTargetMapper::class),
+			shareTargetMapper: $shareTargets,
 			bulkGrantMapper: $this->createMock(BulkGrantShareTargetMapper::class),
 			secretMapper: $this->secrets,
 			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),

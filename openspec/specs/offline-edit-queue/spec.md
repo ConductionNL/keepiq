@@ -50,7 +50,7 @@ When the browser is online and the vault is unlocked, the web app MUST replay qu
 
 ### Requirement: Concurrent server changes are never overwritten silently
 
-`PUT /api/v1/secrets/{id}` and `DELETE /api/v1/secrets/{id}` MUST accept an optional `baseUpdatedAt`; when it is present and differs from the stored `updatedAt`, the server MUST change nothing and answer `409 Conflict` with the current row. On a 409 the web app MUST stop that entry and let the user keep their offline version or the server version.
+`PUT /api/v1/secrets/{id}` and `DELETE /api/v1/secrets/{id}` MUST accept an optional `baseUpdatedAt`; when it is present and differs from the stored `updatedAt`, the server MUST change nothing and answer `409 Conflict` with the current row. On such a conflict the web app MUST stop that entry and let the user keep their offline version or the server version. A 409 with `error: share_scan_pending` (user-sharing) is not a conflict: the entry moves to the failed list with the server's message and a Try again action, and the replay goes on with the next entry.
 
 #### Scenario: The secret changed online meanwhile
 

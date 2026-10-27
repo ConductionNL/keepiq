@@ -23,6 +23,8 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
@@ -32,8 +34,12 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareGrantReader;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IGroupManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -94,6 +100,31 @@ class LinkShareServiceTest extends TestCase {
 				return $row;
 			}
 		);
+		// A user's own copy of a source: the copies of it whose row they own.
+		$this->shareTargets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceSecretId, string $targetUserId): ShareTarget {
+				$own = array_keys(array_filter(
+					$this->copies,
+					fn (string $source, string $copyId): bool => $source === $sourceSecretId
+						&& ($this->secretRows[$copyId] ?? null)?->getOwnerId() === $targetUserId,
+					ARRAY_FILTER_USE_BOTH
+				));
+				if (count($own) > 1) {
+					throw new MultipleObjectsReturnedException('two copies');
+				}
+
+				if ($own === []) {
+					throw new DoesNotExistException('no copy');
+				}
+
+				$row = new ShareTarget();
+				$row->setSourceSecretId($sourceSecretId);
+				$row->setTargetUserId($targetUserId);
+				$row->setSecretId((string)$own[0]);
+				$row->setExpiresAt($this->rowEndsAt[$own[0]] ?? null);
+				return $row;
+			}
+		);
 
 		$this->service = new LinkShareService(
 			mapper: $this->mapper,
@@ -128,6 +159,13 @@ class LinkShareServiceTest extends TestCase {
 	 * @var array<string,string>
 	 */
 	private array $copies = [];
+
+	/**
+	 * The end date of a copy's direct share row: copy id => end date.
+	 *
+	 * @var array<string,DateTime>
+	 */
+	private array $rowEndsAt = [];
 
 	/**
 	 * The mocked secret mapper.
@@ -211,6 +249,167 @@ class LinkShareServiceTest extends TestCase {
 
 		$this->assertSame('bob', $this->createAs(secretId: 'copy-bob', userId: 'bob')->getCreatedBy());
 	}//end testADelegateMayCreateALinkShareFromTheirCopy()
+
+	/**
+	 * A delegate who names the SOURCE is judged on their own copy: a use-only
+	 * copy may not leave as a link, whichever id the delegate names.
+	 *
+	 * @return void
+	 */
+	public function testADelegateNamingTheSourceIsJudgedOnTheirOwnRestrictedCopy(): void {
+		$copy = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$copy->setUseOnly(true);
+		$this->secretRows['copy-bob'] = $copy;
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'bob');
+	}//end testADelegateNamingTheSourceIsJudgedOnTheirOwnRestrictedCopy()
+
+	/**
+	 * A delegate naming another recipient's copy of the same source does not
+	 * reach the source through it, as on register-batch: only the delegate's
+	 * own copy resolves, so the link row never hangs on someone else's secret.
+	 *
+	 * @return void
+	 */
+	public function testADelegateMayNotShareFromAnotherRecipientsCopy(): void {
+		$this->secretRows['copy-dave'] = $this->secret(id: 'copy-dave', ownerId: 'dave');
+		$this->secretRows['copy-carol'] = $this->secret(id: 'copy-carol', ownerId: 'carol');
+		$this->copies['copy-dave'] = 'secret-1';
+		$this->copies['copy-carol'] = 'secret-1';
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(DoesNotExistException::class);
+		$this->createAs(secretId: 'copy-carol', userId: 'dave');
+	}//end testADelegateMayNotShareFromAnotherRecipientsCopy()
+
+	/**
+	 * An active delegate who holds no copy of the source (it was revoked or it
+	 * expired) has no grant left to share from: refused.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithNoCopyIsRefused(): void {
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'dave');
+	}//end testADelegateWithNoCopyIsRefused()
+
+	/**
+	 * A delegate with two copies of the source has no single grant to judge:
+	 * refused.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithTwoCopiesIsRefused(): void {
+		$this->secretRows['copy-dave-1'] = $this->secret(id: 'copy-dave-1', ownerId: 'dave');
+		$this->secretRows['copy-dave-2'] = $this->secret(id: 'copy-dave-2', ownerId: 'dave');
+		$this->copies['copy-dave-1'] = 'secret-1';
+		$this->copies['copy-dave-2'] = 'secret-1';
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'dave');
+	}//end testADelegateWithTwoCopiesIsRefused()
+
+	/**
+	 * A link share service whose authorization judges a delegate by the grants
+	 * reaching their copy: secret-1 is shared use-only and permanently with
+	 * the group `team`, which bob is in.
+	 *
+	 * @return LinkShareService
+	 */
+	private function serviceJudgingGrants(): LinkShareService {
+		$useOnly = new GroupShare();
+		$useOnly->setId('gs-team');
+		$useOnly->setSecretId('secret-1');
+		$useOnly->setGroupId('team');
+		$useOnly->setUseOnly(true);
+		$groupShares = $this->createMock(GroupShareMapper::class);
+		$groupShares->method('findBySecret')->willReturn([$useOnly]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'bob' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		return new LinkShareService(
+			mapper: $this->mapper,
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			shareAuth: new ShareAuthorizationService(
+				secretMapper: $this->secrets,
+				delegationMapper: $this->delegations,
+				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+				shareTargetMapper: $this->shareTargets,
+				grants: new ShareGrantReader(
+					secretMapper: $this->secrets,
+					groupShareMapper: $groupShares,
+					teamFolders: $teamFolders,
+					groupManager: $groups,
+				),
+			),
+		);
+	}//end serviceJudgingGrants()
+
+	/**
+	 * A delegate needs one grant unrestricted on its own (GHSA-m5p9-6pw7-pf3g):
+	 * bob's full direct share ends tomorrow and his group's share is use-only
+	 * and permanent. His copy combines them into full and permanent, but
+	 * neither grant is, so he may not make a link from it.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused(): void {
+		$this->secretRows['copy-bob'] = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->rowEndsAt['copy-bob'] = new DateTime('+1 day');
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$this->serviceJudgingGrants()->create(
+			secretId: 'copy-bob',
+			encryptedSnapshot: 'the-blob',
+			salt: 'the-salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 1,
+			expiresAt: null,
+			userId: 'bob'
+		);
+	}//end testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused()
+
+	/**
+	 * The same delegate with a permanent full direct share has a grant
+	 * unrestricted on its own, so the use-only group share does not stop them.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithOneUnrestrictedGrantMayCreateALink(): void {
+		$this->secretRows['copy-bob'] = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$link = $this->serviceJudgingGrants()->create(
+			secretId: 'copy-bob',
+			encryptedSnapshot: 'the-blob',
+			salt: 'the-salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 1,
+			expiresAt: null,
+			userId: 'bob'
+		);
+
+		$this->assertSame('bob', $link->getCreatedBy());
+	}//end testADelegateWithOneUnrestrictedGrantMayCreateALink()
 
 	/**
 	 * A plain recipient owns their copy row, but the copy's source is not

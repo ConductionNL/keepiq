@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
@@ -26,13 +27,18 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroup;
 use OCP\IGroupManager;
@@ -119,6 +125,20 @@ class GroupShareServiceTest extends TestCase {
 	private bool $membersOnly = false;
 
 	/**
+	 * Whether the source secret under test is itself a received copy.
+	 *
+	 * @var boolean
+	 */
+	private bool $sourceIsReceivedCopy = false;
+
+	/**
+	 * Share rows of received copies, by copy id.
+	 *
+	 * @var array<string,ShareTarget>
+	 */
+	private array $copyRows = [];
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -137,6 +157,22 @@ class GroupShareServiceTest extends TestCase {
 		$this->shareManager->method('allowGroupSharing')->willReturnCallback(fn (): bool => $this->groupSharingAllowed);
 		$this->shareManager->method('shareWithGroupMembersOnly')->willReturnCallback(fn (): bool => $this->membersOnly);
 		$this->revocationService = $this->createMock(originalClassName: ShareRevocationService::class);
+
+		// By default a source is an original: the reverse copy lookup finds no
+		// row. A test that shares a received copy flips the flag.
+		$this->shareTargetMapper->method('findByRecipientSecret')->willReturnCallback(
+			function (string $recipientSecretId): ShareTarget {
+				if (isset($this->copyRows[$recipientSecretId]) === true) {
+					return $this->copyRows[$recipientSecretId];
+				}
+
+				if ($this->sourceIsReceivedCopy === true) {
+					return new ShareTarget();
+				}
+
+				throw new DoesNotExistException('none');
+			}
+		);
 
 		$this->service = new GroupShareService(
 			mapper: $this->mapper,
@@ -324,6 +360,233 @@ class GroupShareServiceTest extends TestCase {
 	}//end testCreateGroupShareRejectsNonOwner()
 
 	/**
+	 * An active delegate of the secret may create a group share, just as the
+	 * owner can. This matches register-batch (DirectShareRegistrarTest), so the
+	 * two share-create paths agree on the delegate outcome.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareAllowsAnActiveDelegate(): void {
+		$this->delegateDaveWithCopy();
+
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$this->mapper->method('findBySecretAndGroup')->willThrowException(new DoesNotExistException('no'));
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$result = $this->service->createGroupShare(
+			secretId: 'src-1',
+			groupId: 'engineering',
+			userId: 'dave'
+		);
+
+		$this->assertSame('engineering', $result['groupShare']->getGroupId());
+	}//end testCreateGroupShareAllowsAnActiveDelegate()
+
+	/**
+	 * Dave holds an active delegation on alice's src-1 and one unrestricted
+	 * copy of it, dave-copy. The service checks both through its real
+	 * authorization rules.
+	 *
+	 * @param int $copies How many share rows dave holds for src-1 (0, 1 or 2)
+	 *
+	 * @return void
+	 */
+	private function delegateDaveWithCopy(int $copies = 1): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$copy   = $this->makeOwnerSecret('dave-copy', 'dave');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'dave-copy' ? $copy : $source)
+		);
+		$this->delegationMapper->method('findActiveBySecretAndUser')
+			->willReturnCallback(static function (string $secretId, string $userId) {
+				if ($secretId === 'src-1' && $userId === 'dave') {
+					return new SecretDelegation();
+				}
+
+				throw new DoesNotExistException('no');
+			});
+
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setTargetUserId('dave');
+		$row->setSecretId('dave-copy');
+		$this->copyRows['dave-copy'] = $row;
+		$lookup = $this->shareTargetMapper->method('findBySourceSecretAndTargetUser');
+		if ($copies === 1) {
+			$lookup->willReturn($row);
+		} elseif ($copies === 0) {
+			$lookup->willThrowException(new DoesNotExistException('no'));
+		} else {
+			$lookup->willThrowException(new \OCP\AppFramework\Db\MultipleObjectsReturnedException('two'));
+		}
+	}//end delegateDaveWithCopy()
+
+	/**
+	 * A reachable group with no members, and no existing group share.
+	 *
+	 * @return void
+	 */
+	private function emptyGroup(): void {
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$this->mapper->method('findBySecretAndGroup')->willThrowException(new DoesNotExistException('no'));
+	}//end emptyGroup()
+
+	/**
+	 * A delegate's client names their own copy; the group share hangs on its
+	 * source, where the owner sees it, and the member copies it fans out to
+	 * are then registered against that source.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareFromADelegatesOwnCopyHangsOnTheSource(): void {
+		$this->delegateDaveWithCopy();
+		$this->emptyGroup();
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$result = $this->service->createGroupShare(secretId: 'dave-copy', groupId: 'engineering', userId: 'dave');
+
+		$this->assertSame('src-1', $result['groupShare']->getSecretId());
+	}//end testCreateGroupShareFromADelegatesOwnCopyHangsOnTheSource()
+
+	/**
+	 * An active delegate whose copy is gone (revoked or expired) is refused:
+	 * no copy means the grant ended.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesADelegateWithNoCopy(): void {
+		$this->delegateDaveWithCopy(copies: 0);
+		$this->emptyGroup();
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave');
+	}//end testCreateGroupShareRefusesADelegateWithNoCopy()
+
+	/**
+	 * An active delegate with two rows for (source, delegate) is refused.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesADelegateWithTwoCopies(): void {
+		$this->delegateDaveWithCopy(copies: 2);
+		$this->emptyGroup();
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave');
+	}//end testCreateGroupShareRefusesADelegateWithTwoCopies()
+
+	/**
+	 * A delegate whose own copy of the source is use-only (restricted) may not
+	 * mint full group copies. isOwnerOrDelegate is the service's real check (a
+	 * genuine active delegation), and the delegate's copy is a real use-only
+	 * fixture — without the guard the share would be created.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesADelegateWithARestrictedCopy(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+
+		$restrictedCopy = new Secret();
+		$restrictedCopy->setId('dave-copy');
+		$restrictedCopy->setOwnerType('user');
+		$restrictedCopy->setOwnerId('dave');
+		$restrictedCopy->setUseOnly(true);
+
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'dave-copy' ? $restrictedCopy : $source)
+		);
+		$this->delegationMapper->method('findActiveBySecretAndUser')->willReturn(new SecretDelegation());
+
+		$daveTarget = new ShareTarget();
+		$daveTarget->setSecretId('dave-copy');
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn($daveTarget);
+
+		// A reachable group so the refusal, not a missing group, stops the share.
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$this->mapper->method('findBySecretAndGroup')->willThrowException(new DoesNotExistException('no'));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave');
+	}//end testCreateGroupShareRefusesADelegateWithARestrictedCopy()
+
+	/**
+	 * Without an authorization service wired, the service's own one still
+	 * judges a delegate's grants with its grant reader: dave's full
+	 * direct share ends tomorrow and the group share he is in is use-only, so
+	 * neither grant may mint full group copies.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareJudgesADelegatesGrantsWithoutAWiredAuthorization(): void {
+		$this->delegateDaveWithCopy();
+		$this->copyRows['dave-copy']->setExpiresAt(new DateTime('+1 day'));
+		$this->emptyGroup();
+		$useOnly = new GroupShare();
+		$useOnly->setId('gs-team');
+		$useOnly->setSecretId('src-1');
+		$useOnly->setGroupId('team');
+		$useOnly->setUseOnly(true);
+		$this->mapper->method('findBySecret')->willReturn([$useOnly]);
+		$this->groupManager->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'dave' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+		$this->mapper->expects($this->never())->method('insert');
+
+		$service = new GroupShareService(
+			mapper: $this->mapper,
+			shareTargetMapper: $this->shareTargetMapper,
+			bulkGrantMapper: $this->bulkGrantMapper,
+			secretMapper: $this->secretMapper,
+			suiteMapper: $this->suiteMapper,
+			delegationMapper: $this->delegationMapper,
+			groupManager: $this->groupManager,
+			notificationService: $this->notificationService,
+			logger: $this->createMock(LoggerInterface::class),
+			shareManager: $this->shareManager,
+			revocationService: $this->revocationService,
+			grants: new ShareGrantReader(
+				secretMapper: $this->secretMapper,
+				groupShareMapper: $this->mapper,
+				teamFolders: $teamFolders,
+				groupManager: $this->groupManager,
+			),
+		);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave');
+	}//end testCreateGroupShareJudgesADelegatesGrantsWithoutAWiredAuthorization()
+
+	/**
+	 * A received copy may never be a group-share source: a recipient cannot
+	 * re-share a secret shared with them, even though they own the copy.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesAReceivedCopyAsSource(): void {
+		$this->sourceIsReceivedCopy = true;
+		$this->secretMapper->method('findById')->willReturn($this->makeOwnerSecret('copy-1', 'bob'));
+
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$this->mapper->method('findBySecretAndGroup')->willThrowException(new DoesNotExistException('no'));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createGroupShare(secretId: 'copy-1', groupId: 'engineering', userId: 'bob');
+	}//end testCreateGroupShareRefusesAReceivedCopyAsSource()
+
+	/**
 	 * Test createGroupShare rejects when the group is missing.
 	 *
 	 * @return void
@@ -371,6 +634,46 @@ class GroupShareServiceTest extends TestCase {
 	}//end testCreateGroupShareIsIdempotent()
 
 	/**
+	 * A delegate in the group may not change the restriction of a group share
+	 * that reaches them, as a delegate may not change their own grant
+	 * (GHSA-m5p9-6pw7-pf3g). Outside the group, or sharing again unchanged,
+	 * they may.
+	 *
+	 * @return void
+	 */
+	public function testADelegateCannotChangeTheRestrictionOfAGroupShareThatReachesThem(): void {
+		$this->delegateDaveWithCopy();
+		$existing = new GroupShare();
+		$existing->setId('gs-1');
+		$existing->setSecretId('src-1');
+		$existing->setGroupId('engineering');
+		$existing->setUseOnly(true);
+		$this->mapper->method('findBySecretAndGroup')->willReturn($existing);
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$inGroup = true;
+		$this->groupManager->method('isInGroup')->willReturnCallback(static function () use (&$inGroup): bool {
+			return $inGroup;
+		});
+		$this->bulkGrantMapper->method('findByGroupShare')->willReturn([]);
+		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave', restriction: new ShareRestriction(useOnly: true));
+		try {
+			$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave', restriction: new ShareRestriction(useOnly: false));
+			$this->fail('dave lifted a group share that reaches him');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame('You cannot change a group share that reaches you', $exception->getMessage());
+			$this->assertTrue($existing->getUseOnly());
+		}
+
+		$inGroup = false;
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'engineering', userId: 'dave', restriction: new ShareRestriction(useOnly: false));
+		$this->assertFalse($existing->getUseOnly());
+	}//end testADelegateCannotChangeTheRestrictionOfAGroupShareThatReachesThem()
+
+	/**
 	 * Test revokeGroupShare cascade-deletes the ShareTargets and the row.
 	 *
 	 * @return void
@@ -409,6 +712,43 @@ class GroupShareServiceTest extends TestCase {
 
 		$this->assertSame(['st-bob:alice', 'st-carol:alice'], $revoked);
 	}//end testRevokeGroupShareCascades()
+
+	/**
+	 * A row found quarantined when its member's share is revoked does not
+	 * stop the group share's revoke: the other members are still revoked, and
+	 * the row goes with the group share while its copy is kept.
+	 *
+	 * @return void
+	 */
+	public function testRevokeGroupShareGoesOnPastAQuarantinedRow(): void {
+		$this->secretMapper->method('findById')->willReturn($this->makeOwnerSecret('src-1', 'alice'));
+		$entity = new GroupShare();
+		$entity->setId('gs-1');
+		$entity->setSecretId('src-1');
+		$this->mapper->method('findById')->willReturn($entity);
+		$suspect = new ShareTarget();
+		$suspect->setId('st-suspect');
+		$member = new ShareTarget();
+		$member->setId('st-carol');
+		$this->bulkGrantMapper->method('findByGroupShare')->willReturn([$suspect, $member]);
+
+		$revoked = [];
+		$this->revocationService->method('revokeShare')->willReturnCallback(
+			static function (string $shareId) use (&$revoked): void {
+				if ($shareId === 'st-suspect') {
+					throw new ConflictException('This share is quarantined for an administrator to review');
+				}
+
+				$revoked[] = $shareId;
+			}
+		);
+		$this->bulkGrantMapper->expects($this->once())->method('deleteByGroupShare')->with('gs-1');
+		$this->mapper->expects($this->once())->method('delete')->with($entity);
+
+		$this->service->revokeGroupShare(groupShareId: 'gs-1', userId: 'alice');
+
+		$this->assertSame(['st-carol'], $revoked);
+	}//end testRevokeGroupShareGoesOnPastAQuarantinedRow()
 
 	/**
 	 * Test getGroupSharesForSecret returns rows to the owner.
@@ -479,33 +819,19 @@ class GroupShareServiceTest extends TestCase {
 	}//end testHandleNewGroupMemberNotifiesEachOwner()
 
 	/**
-	 * Test approveGroupMemberShare persists a ShareTarget for the new member.
+	 * The client-supplied-id group-member approval surface is retired
+	 * (GHSA-m5p9-6pw7-pf3g): a new member's copy is registered through the
+	 * bulk register-batch path, which mints it server-side, so approval can no
+	 * longer be handed a `recipientSecretId`.
 	 *
 	 * @return void
 	 */
-	public function testApproveGroupMemberShareCreatesShareTarget(): void {
-		$secret = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($secret);
-
-		$gs = new GroupShare();
-		$gs->setId('gs-1');
-		$gs->setSecretId('src-1');
-		$this->mapper->method('findById')->willReturn($gs);
-
-		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
-			->willThrowException(new DoesNotExistException('no'));
-		$this->shareTargetMapper->expects($this->once())->method('insert');
-		$this->notificationService->expects($this->once())
-			->method('notify')
-			->with('secret_shared', 'bob');
-
-		$this->service->approveGroupMemberShare(
-			groupShareId: 'gs-1',
-			newMemberId: 'bob',
-			recipientSecretId: 'copy-bob',
-			userId: 'alice'
+	public function testApproveGroupMemberShareIsRetired(): void {
+		$this->assertFalse(
+			method_exists(GroupShareService::class, 'approveGroupMemberShare'),
+			'approveGroupMemberShare must be retired so recipientSecretId can never be client-supplied'
 		);
-	}//end testApproveGroupMemberShareCreatesShareTarget()
+	}//end testApproveGroupMemberShareIsRetired()
 
 	/**
 	 * Test handleMemberLeave revokes only group-derived shares for the
@@ -533,8 +859,7 @@ class GroupShareServiceTest extends TestCase {
 		$this->bulkGrantMapper->method('findByGroupShare')
 			->willReturn([$bobTarget, $aliceTarget]);
 
-		$copy = new Secret();
-		$copy->setId('copy-bob');
+		$copy = $this->makeOwnerSecret('copy-bob', 'bob');
 		$this->secretMapper->method('findById')->willReturn($copy);
 		$this->secretMapper->expects($this->once())->method('delete');
 		$this->shareTargetMapper->expects($this->once())
@@ -544,6 +869,39 @@ class GroupShareServiceTest extends TestCase {
 		$count = $this->service->handleMemberLeave(userId: 'bob', groupId: 'engineering');
 		$this->assertSame(1, $count);
 	}//end testHandleMemberLeaveRevokesGroupDerivedOnly()
+
+	/**
+	 * Defence in depth (GHSA-m5p9-6pw7-pf3g): when a departing member's share
+	 * row points at a secret the member does NOT own (a poisoned or drifted
+	 * `secret_id`), the secret is left untouched while the share row still
+	 * goes, so a leave can never delete another user's secret.
+	 *
+	 * @return void
+	 */
+	public function testHandleMemberLeaveKeepsACopyNotHeldByTheMember(): void {
+		$gs = new GroupShare();
+		$gs->setId('gs-1');
+		$gs->setSecretId('src-1');
+		$this->mapper->method('findByGroup')->willReturn([$gs]);
+
+		$bobTarget = new ShareTarget();
+		$bobTarget->setId('st-1');
+		$bobTarget->setTargetUserId('bob');
+		$bobTarget->setSecretId('victim-secret');
+		$bobTarget->setGroupShareId('gs-1');
+		$this->bulkGrantMapper->method('findByGroupShare')->willReturn([$bobTarget]);
+
+		// The linked secret is owned by someone else entirely.
+		$victim = $this->makeOwnerSecret('victim-secret', 'carol');
+		$this->secretMapper->method('findById')->willReturn($victim);
+		$this->secretMapper->expects($this->never())->method('delete');
+		$this->shareTargetMapper->expects($this->once())
+			->method('delete')
+			->with($bobTarget);
+
+		$count = $this->service->handleMemberLeave(userId: 'bob', groupId: 'engineering');
+		$this->assertSame(1, $count);
+	}//end testHandleMemberLeaveKeepsACopyNotHeldByTheMember()
 
 	/**
 	 * Test getGroupMembers returns the UID list.

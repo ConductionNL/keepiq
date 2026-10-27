@@ -162,8 +162,6 @@ class UserSharingIntegrationTest extends TestCase {
 
 		$service = new ShareService(
 			mapper: $shareTargetMapper,
-			db: $db,
-			notificationService: $notificationService,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $shareTargetMapper,

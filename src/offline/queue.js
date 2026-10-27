@@ -220,6 +220,9 @@ export function replayOrder(entries) {
  */
 export function classifyReplayError(error) {
 	const status = error?.response?.status
+	// Not a version conflict: the server waits for the share quarantine scan,
+	// which can take longer than the user should be kept from the rest.
+	if (error?.response?.data?.error === 'share_scan_pending') return 'failed'
 	if (status === 409) return 'conflict'
 	if (isRefusal(error) || status === 404) return 'failed'
 	return 'retry'

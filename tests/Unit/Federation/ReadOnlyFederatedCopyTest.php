@@ -157,8 +157,6 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 
 		$service = new ShareService(
 			mapper: $this->targets,
-			db: $db,
-			notificationService: $notifications,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $this->targets,
@@ -229,19 +227,13 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 	}
 
 	/**
-	 * POST /api/v1/secrets/{id}/shares, .../shares/batch and the bulk
-	 * register: Bob cannot share it onward with a user.
+	 * POST /api/v1/shares/register-batch (the only share-create surface): Bob
+	 * cannot share it onward with a user.
 	 *
 	 * @return void
 	 */
 	public function testSharingOnwardIsForbidden(): void {
 		$controller = $this->shareController();
-
-		$this->assertSame(Http::STATUS_FORBIDDEN, $controller->create('copy', 'carla', 'copy-c')->getStatus());
-		$this->assertSame(
-			Http::STATUS_FORBIDDEN,
-			$controller->createBatch('copy', [['targetUserId' => 'carla', 'recipientSecretId' => 'copy-c']], 'gs-1')->getStatus()
-		);
 
 		$batch = $controller->registerBatch(
 			[['sourceSecretId' => 'copy', 'targetUserId' => 'carla', 'encryptedKey' => 'CIPHER']]

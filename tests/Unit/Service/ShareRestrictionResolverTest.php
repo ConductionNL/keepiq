@@ -192,6 +192,24 @@ class ShareRestrictionResolverTest extends TestCase {
 	}
 
 	/**
+	 * Defence in depth (GHSA-m5p9-6pw7-pf3g): a share row whose copy is NOT
+	 * held by its target (the copy belongs to another user) is left untouched —
+	 * resolveTarget returns false and writes nothing, so resolving a
+	 * restriction can never rewrite another user's secret.
+	 *
+	 * @return void
+	 */
+	public function testACopyNotHeldByItsTargetIsLeftUntouched(): void {
+		$this->secrets->expects($this->never())->method('update');
+
+		// The copy is owned by bob (setUp), but this row's target is mallory.
+		$target = $this->directTarget(true, new DateTime('2099-01-01T00:00:00Z'));
+		$target->setTargetUserId('mallory');
+
+		$this->assertFalse($this->resolver->resolveTarget($target));
+	}
+
+	/**
 	 * A write membership carrying the flag never makes a copy use-only.
 	 *
 	 * @return void
