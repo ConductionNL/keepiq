@@ -19,6 +19,7 @@ import { acceptedFrom, senderPage } from '@/src/background/sender'
 import { CLIPBOARD_ALARM, clearClipboard } from '@/src/clipboard'
 import { rebuildMenus, registerMenus } from '@/src/menus'
 import { POPUP_PORT, POPUP_REQUEST_KINDS, type ContentToBackground, type FillRequest, type InlineListToBackground, type NotificationToBackground, type PopupToBackground } from '@/src/messages'
+import { refreshToolbar, registerToolbarListeners } from '@/src/toolbar-icon'
 import { SYNC_ALARM } from '@/src/vault/sync'
 import { enforce, onIdleStateChanged, onPopupClosed, onPopupOpened, syncAlarm, TIMEOUT_ALARM } from '@/src/vault/timeout'
 
@@ -26,6 +27,8 @@ import { enforce, onIdleStateChanged, onPopupClosed, onPopupOpened, syncAlarm, T
 const MENU_CHANGES = new Set(['accounts.add', 'accounts.reauthenticate', 'accounts.switch', 'vault.unlock', 'account.settings.set', 'fill.request'])
 /** Popup kinds that change the active account, which closes every inline list and drops every capture; locks and logouts do so by broadcast. */
 const ACCOUNT_CHANGES = new Set(['accounts.add', 'accounts.switch'])
+/** Popup kinds that can change the active account's status, failed unlocks too (they may hold the key briefly); locks and logouts arrive by broadcast. */
+const TOOLBAR_CHANGES = new Set(['accounts.add', 'accounts.reauthenticate', 'accounts.switch', 'vault.unlock'])
 
 /** Tab, frame and URL from `sender`, which `senderPage` checked; never from the message. */
 function onPageReady(msg: Extract<ContentToBackground, { kind: 'page_ready' }>, sender: Browser.runtime.MessageSender): void {
@@ -81,6 +84,7 @@ export default defineBackground(() => {
 		if (page !== 'popup') return
 		const rebuild = <T>(reply: T): T => {
 			if (MENU_CHANGES.has(kind)) void rebuildMenus()
+			if (TOOLBAR_CHANGES.has(kind)) refreshToolbar('state')
 			if (ACCOUNT_CHANGES.has(kind)) {
 				void closeAllSessions()
 				dropAllCaptures()
@@ -103,6 +107,7 @@ export default defineBackground(() => {
 	registerInlineSessions()
 	registerCaptureQueue()
 	registerDefaultManager()
+	registerToolbarListeners()
 
 	browser.commands.onCommand.addListener((command, tab) => {
 		if (command === 'focus_notification_bar' && tab?.id !== undefined) focusBar(tab.id)

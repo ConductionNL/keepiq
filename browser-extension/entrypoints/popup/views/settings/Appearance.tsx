@@ -44,6 +44,11 @@ export function Appearance() {
 				<OptionCheckbox label={i18n.t('settings.compactMode')} checked={settings.compactMode} onChange={(compactMode) => void update({ compactMode })} />
 				<OptionCheckbox label={i18n.t('settings.showAnimations')} checked={settings.showAnimations} onChange={(showAnimations) => void update({ showAnimations })} />
 				<OptionCheckbox label={i18n.t('settings.quickCopy')} checked={settings.quickCopy} onChange={(quickCopy) => void update({ quickCopy })} />
+				<OptionCheckbox
+					label={i18n.t('settings.showBadgeCounter')}
+					checked={settings.showBadgeCounter}
+					onChange={(showBadgeCounter) => void update({ showBadgeCounter })}
+				/>
 				<div className="field" role="group" aria-labelledby={`${id}-language`}>
 					<span className="field__label" id={`${id}-language`}>{i18n.t('settings.language')}</span>
 					<p>{browserLanguage()}</p>

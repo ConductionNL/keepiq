@@ -22,6 +22,7 @@ function renderView(options: Parameters<typeof fakeBackground>[0] = {}) {
 
 const checkbox = (name: string) => screen.findByRole<HTMLInputElement>('checkbox', { name })
 const root = () => document.documentElement.classList
+const BADGE = 'Show number of login autofill suggestions on extension icon'
 
 describe('Appearance', () => {
 	it('lists Theme first, then the entries with their stored values', async () => {
@@ -29,8 +30,22 @@ describe('Appearance', () => {
 		expect((await checkbox('Compact mode')).checked).toBe(false)
 		expect((await checkbox('Show animations')).checked).toBe(true)
 		expect((await checkbox('Show quick copy actions on vault')).checked).toBe(false)
+		expect((await checkbox(BADGE)).checked).toBe(true)
 		const labels = [...document.querySelectorAll('.field__label, .check')].map((element) => element.textContent)
-		expect(labels.slice(0, 4)).toEqual(['Theme', 'Compact mode', 'Show animations', 'Show quick copy actions on vault'])
+		expect(labels.slice(0, 5)).toEqual(['Theme', 'Compact mode', 'Show animations', 'Show quick copy actions on vault', BADGE])
+	})
+
+	it('stores the badge counter', async () => {
+		const { sent, user } = renderView({ settings: { showBadgeCounter: false } })
+		expect((await checkbox(BADGE)).checked).toBe(false)
+		await user.click(await checkbox(BADGE))
+		await waitFor(() => expect(sentOf(sent, 'settings.set')).toEqual([{ kind: 'settings.set', patch: { showBadgeCounter: true } }]))
+	})
+
+	it('names the badge counter in Dutch', async () => {
+		setLocale('nl')
+		renderView()
+		expect((await checkbox('Aantal voorgestelde logins tonen op het extensiepictogram')).checked).toBe(true)
 	})
 
 	it('tightens the popup at once in compact mode', async () => {
@@ -55,7 +70,7 @@ describe('Appearance', () => {
 	it('reads the settings again once the background answers after a failed first read', async () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {})
 		let reads = 0
-		renderView({ replies: { 'settings.get': () => (++reads <= mounts() ? undefined : { theme: 'system', compactMode: true, showAnimations: true, quickCopy: true }) } })
+		renderView({ replies: { 'settings.get': () => (++reads <= mounts() ? undefined : { theme: 'system', compactMode: true, showAnimations: true, quickCopy: true, showBadgeCounter: true }) } })
 		expect((await checkbox('Compact mode')).checked).toBe(true)
 	})
 

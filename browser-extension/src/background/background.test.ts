@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import background from '@/entrypoints/background'
 import { dropAllCaptures } from '@/src/autofill/capture-queue'
@@ -41,8 +41,15 @@ let onConnect: ReturnType<typeof fakeEvent<(port: unknown) => void>>
 let onPermissionsAdded: ReturnType<typeof fakeEvent<(added: { permissions?: string[] }) => void>>
 let menus: ReturnType<typeof installMenuFakes>
 let messageListener: (message: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
+let setIcon: MockInstance<typeof browser.action.setIcon>
 
 const fetchMock = vi.fn<typeof fetch>()
+
+/**
+ * Waits out the toolbar's coalesced paint (100 ms); each calls `enforce()`, which would otherwise lock under a
+ * mocked clock or act on the next test's storage. Real time, as fake timers stall this file's other waits.
+ */
+const toolbarIdle = () => new Promise<void>((resolve) => setTimeout(resolve, 150))
 
 beforeEach(() => {
 	fakeBrowser.reset()
@@ -56,10 +63,14 @@ beforeEach(() => {
 	onPermissionsAdded = fakeEvent()
 	Object.assign(browser.permissions, { onAdded: onPermissionsAdded })
 	menus = installMenuFakes()
+	setIcon = vi.spyOn(browser.action, 'setIcon').mockImplementation(async () => {})
+	vi.spyOn(browser.runtime, 'getManifest').mockReturnValue({ name: 'Keepiq' } as never)
 	const addListener = vi.spyOn(browser.runtime.onMessage, 'addListener')
 	background.main()
 	messageListener = addListener.mock.calls[0]![0] as never
 })
+
+afterEach(toolbarIdle)
 
 /** The kinds the popup's code sends through `request`, read from its source. */
 function popupRequestKinds(): string[] {
@@ -406,10 +417,26 @@ describe('background entrypoint', () => {
 		})
 	})
 
+	it('repaints the toolbar icon after any popup unlock, and after the timeout locks', async () => {
+		const icon = (folder: string) => ({ path: { 16: `/icon/${folder}/16.png`, 32: `/icon/${folder}/32.png` } })
+		const account = await storedAccount()
+		await vi.waitFor(() => expect(setIcon).toHaveBeenLastCalledWith(icon('toolbar-locked')))
+		// A key no storage event announces; the failed unlock's reply alone must repaint.
+		await putKey(account.id, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		await deliver({ kind: 'vault.unlock', accountId: account.id, method: { type: 'masterPassword', masterPassword: envelope.wrongPassword } }, popupSender)
+		await vi.waitFor(() => expect(setIcon).toHaveBeenLastCalledWith(icon('toolbar')))
+		await browser.storage.local.set({ [`settings.${account.id}`]: { vaultTimeout: 1, vaultTimeoutAction: 'lock' } })
+		await toolbarIdle()
+		vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2 * 60_000)
+		await fakeBrowser.alarms.onAlarm.trigger({ name: TIMEOUT_ALARM, scheduledTime: Date.now(), persistAcrossSessions: false })
+		await vi.waitFor(() => expect(setIcon).toHaveBeenLastCalledWith(icon('toolbar-locked')))
+	})
+
 	it('locks on the timeout alarm', async () => {
 		const account = await storedAccount()
 		await deliver({ kind: 'vault.unlock', accountId: account.id, method: { type: 'masterPassword', masterPassword: envelope.password } }, popupSender)
 		await browser.storage.local.set({ [`settings.${account.id}`]: { vaultTimeout: 1, vaultTimeoutAction: 'lock' } })
+		await toolbarIdle()
 		vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2 * 60_000)
 		await fakeBrowser.alarms.onAlarm.trigger({ name: TIMEOUT_ALARM, scheduledTime: Date.now(), persistAcrossSessions: false })
 		await vi.waitFor(async () => expect(await hasKey(account.id)).toBe(false))
