@@ -235,6 +235,7 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Autofill on page load,** off by default, and **Default autofill setting for login items**, see [Filling in logins](#filling-in-logins).
   - **Default URI match detection:** **Base domain** by default, or **Host**, **Starts with**, **Exact**, **Regular expression** or **Never**.
   - **Show autofill suggestions on form fields** turns the list under login fields on or off; **Enable context menu options** the right-click menu.
+  - **Make Keepiq your default password manager,** Chrome only, turns off Chrome's own password saving and address autofill, so its dropdown no longer covers Keepiq's list. Chrome asks for permission to change its settings; turning it off gives them back.
   - **Autofill keyboard shortcut** shows the keys, with **Change**.
   - **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default.
 - **Notifications:** **Ask to add login**, **Ask to update existing login**, and **Excluded domains**, the sites the save bar never asks on. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.

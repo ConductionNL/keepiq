@@ -230,6 +230,27 @@ describe('settings', () => {
 	})
 })
 
+describe('default password manager', () => {
+	beforeEach(() => {
+		vi.spyOn(browser.permissions, 'contains').mockImplementation(async () => false)
+	})
+
+	it('answers its state while locked, without counting the read as interaction', async () => {
+		await lock(accountId)
+		const before = await browser.storage.session.get('lastInteractionAt')
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		expect(await send({ kind: 'defaultManager.get' })).toBe('off')
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+		expect(await send({ kind: 'defaultManager.enable' })).toBe('off')
+	})
+
+	it('gives the permission back on disable', async () => {
+		const remove = vi.spyOn(browser.permissions, 'remove').mockImplementation(async () => true)
+		expect(await send({ kind: 'defaultManager.disable' })).toBe('off')
+		expect(remove).toHaveBeenCalledWith({ permissions: ['privacy'] })
+	})
+})
+
 describe('account settings', () => {
 	afterEach(() => {
 		Object.assign(browser, { commands: undefined })

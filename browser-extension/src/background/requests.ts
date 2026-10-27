@@ -1,6 +1,7 @@
 import { readAccountPolicy } from '@/src/accounts/policy'
 import { AUTOFILL_FEATURES, clampTimeout, readSettings } from '@/src/accounts/settings'
 import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, updateSettings, type AccountRecord } from '@/src/accounts/store'
+import { disableDefaultManager, enableDefaultManager, readDefaultManager } from '@/src/autofill/default-manager'
 import { candidatesFor } from '@/src/autofill/matcher'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
@@ -162,6 +163,12 @@ async function perform(message: Exclude<HandledRequest, GeneratorRequest>): Prom
 			return readGlobalSettings()
 		case 'settings.set':
 			return updateGlobalSettings(message.patch)
+		case 'defaultManager.get':
+			return readDefaultManager()
+		case 'defaultManager.enable':
+			return enableDefaultManager()
+		case 'defaultManager.disable':
+			return disableDefaultManager()
 		case 'account.settings.get':
 		case 'account.settings.set':
 		case 'pin.set':
@@ -310,7 +317,7 @@ async function performAccountSettings(message: AccountSettingsRequest): Promise<
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
 function isInteraction(message: Exclude<HandledRequest, GeneratorRequest>): boolean {
 	// Every popup reads it on open, which `vault.status` already counts.
-	if (message.kind === 'settings.get' || message.kind === 'account.settings.get') return false
+	if (message.kind === 'settings.get' || message.kind === 'account.settings.get' || message.kind === 'defaultManager.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
 	if (message.kind === 'item.decrypt') return message.passive !== true
 	return true

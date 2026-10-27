@@ -48,6 +48,8 @@ export default defineConfig({
 		const nameSuffix = mode === 'production' ? '' : ' (DEV)'
 		// Each Keepiq server is granted at add time, from the popup (ADR-003).
 		const serverOrigins = ['https://*/*', 'http://*/*']
+		// Only to turn off Chrome's own password manager (ext-default-password-manager); Firefox's cannot hide its dropdowns.
+		const optionalApis = browser === 'firefox' ? [] : ['privacy']
 		return {
 			name: `Keepiq${nameSuffix}`,
 			description: '__MSG_extensionDescription__',
@@ -83,8 +85,8 @@ export default defineConfig({
 			// The save bar and the inline list, framed into pages. WXT writes MV2's string form for Firefox.
 			web_accessible_resources: [{ resources: ['notification.html', 'inline-list.html'], matches: ['*://*/*'] }],
 			...(manifestVersion === 3
-				? { optional_host_permissions: serverOrigins }
-				: { optional_permissions: serverOrigins }),
+				? { optional_host_permissions: serverOrigins, ...(optionalApis.length > 0 && { optional_permissions: optionalApis }) }
+				: { optional_permissions: [...serverOrigins, ...optionalApis] }),
 			action: {
 				default_title: `Keepiq${nameSuffix}`,
 			},

@@ -410,6 +410,9 @@ settings:
   uriRegex: Regular expression
   uriRegexNote: Regular expressions are an advanced option and can break matching
   inlineSuggestions: Show autofill suggestions on form fields
+  defaultPasswordManager: Make Keepiq your default password manager
+  defaultPasswordManagerHint: Turns off the browser's own password saving and address autofill, so its suggestions don't cover Keepiq's.
+  defaultPasswordManagerManaged: Your organisation or another extension manages this browser setting.
   contextMenu: Enable context menu options
   shortcut: Autofill keyboard shortcut
   shortcutNotSet: Not set

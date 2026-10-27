@@ -409,6 +409,9 @@ settings:
   uriRegex: Reguliere expressie
   uriRegexNote: Reguliere expressies zijn een geavanceerde optie en kunnen het herkennen van websites verstoren
   inlineSuggestions: Invulsuggesties tonen in formuliervelden
+  defaultPasswordManager: Maak Keepiq je standaard wachtwoordbeheerder
+  defaultPasswordManagerHint: Zet het opslaan van wachtwoorden en het invullen van adressen in de browser uit, zodat de suggesties ervan die van Keepiq niet bedekken.
+  defaultPasswordManagerManaged: Je organisatie of een andere extensie beheert deze browserinstelling.
   contextMenu: Opties in het contextmenu tonen
   shortcut: Sneltoets voor automatisch invullen
   shortcutNotSet: Niet ingesteld

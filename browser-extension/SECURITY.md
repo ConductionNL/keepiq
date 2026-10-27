@@ -58,6 +58,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - Requests go from the background only, with Basic auth on an app password and `credentials: 'omit'`, so browser cookies are never sent.
 - Server URLs must be `https`. Plain `http` is allowed only for `localhost`, `127.0.0.1` and `.test` hosts, for development.
 - Host access is requested per server, when you add an account. The extension holds no other host permissions.
+- On Chrome, `privacy` is requested only when you turn on "Make Keepiq your default password manager", and given back when you turn it off.
 
 ## Revocation
 

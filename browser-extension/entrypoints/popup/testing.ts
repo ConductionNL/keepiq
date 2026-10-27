@@ -3,7 +3,7 @@ import { vi } from 'vitest'
 import { AUTOFILL_FEATURES, clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
 import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type {
-	AccountSettingsSnapshot, AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
+	AccountSettingsSnapshot, AccountSummary, DecryptField, DefaultManagerState, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
 } from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
@@ -94,6 +94,8 @@ interface FakeBackground {
 	send?: { sends?: SendRow[]; passwordProtection?: boolean }
 	/** The active account's settings; `set` and the PIN requests change them. */
 	accountSettings?: Partial<Omit<AccountSettingsSnapshot, 'values'>> & { values?: Partial<AccountSettings> }
+	/** The browser's own password manager as the background reads it; `enable` and `disable` change it. */
+	defaultManager?: DefaultManagerState
 }
 
 export function accountSettingsSnapshot(overrides: FakeBackground['accountSettings'] = {}): AccountSettingsSnapshot {
@@ -123,6 +125,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 	let history = options.generator?.history ?? []
 	let sends = options.send?.sends ?? []
 	let accountSettings = accountSettingsSnapshot(options.accountSettings)
+	let defaultManager = options.defaultManager ?? 'off'
 	let created = 0
 	const snapshot = () => (typeof options.snapshot === 'function' ? options.snapshot() : options.snapshot) ?? snapshotReply()
 	const reply = vi.fn(async (message: {
@@ -142,6 +145,9 @@ export function fakeBackground(options: FakeBackground = {}) {
 			}
 			case 'pin.set': return (accountSettings = { ...accountSettings, pin: true }, { ok: true })
 			case 'pin.remove': return (accountSettings = { ...accountSettings, pin: false }, null)
+			case 'defaultManager.get': return defaultManager
+			case 'defaultManager.enable': return defaultManager === 'off' ? (defaultManager = 'on') : defaultManager
+			case 'defaultManager.disable': return (defaultManager = 'off')
 			// The background reads the default type from the account's settings.
 			case 'vault.snapshot': {
 				const current = snapshot()

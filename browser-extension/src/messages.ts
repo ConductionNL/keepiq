@@ -524,11 +524,29 @@ export type PopupRequest =
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
 	| { kind: 'settings.get' }
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
+	| DefaultManagerRequest
 	| FillRequest
 	| AccountSettingsRequest
 	| VaultWrite
 	| GeneratorRequest
 	| SendRequest
+
+/**
+ * Chrome's own password saving and address autofill (ext-default-password-manager), not per account. `enable` is
+ * sent once the popup holds the `privacy` permission; `disable` clears both and gives the permission back.
+ */
+export type DefaultManagerRequest =
+	| { kind: 'defaultManager.get' }
+	| { kind: 'defaultManager.enable' }
+	| { kind: 'defaultManager.disable' }
+
+/**
+ * `on`: both settings are off under this extension's control. `off`: not, or the permission is not held, as the
+ * settings cannot be read without it. `managed`: policy or another extension controls either. `managedOn`: as
+ * `managed`, while this extension still controls the other, which `disable` gives back. `unsupported`: the browser
+ * has no address autofill setting.
+ */
+export type DefaultManagerState = 'on' | 'off' | 'managed' | 'managedOn' | 'unsupported'
 
 /**
  * Each names the account the popup showed, so a write never lands in another account's vault
@@ -644,6 +662,9 @@ export interface PopupReplies {
 	'popup.lastTab.set': null
 	'settings.get': GlobalSettings
 	'settings.set': GlobalSettings
+	'defaultManager.get': DefaultManagerState
+	'defaultManager.enable': DefaultManagerState
+	'defaultManager.disable': DefaultManagerState
 	'fill.request': FillResult
 	/** `null` for an unknown account. */
 	'account.settings.get': AccountSettingsSnapshot | null
@@ -679,7 +700,7 @@ export interface PopupReplies {
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
 	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
-	'settings.get', 'settings.set', 'fill.request', 'account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
+	'settings.get', 'settings.set', 'defaultManager.get', 'defaultManager.enable', 'defaultManager.disable', 'fill.request', 'account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
 	'send.list', 'send.create', 'send.delete',

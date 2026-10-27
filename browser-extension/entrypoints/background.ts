@@ -8,6 +8,7 @@ import type { Browser } from 'wxt/browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
 import { markLoggedOut } from '@/src/accounts/store'
 import { captureSubmitted, dropAllCaptures, focusBar, handleNotification, registerCaptureQueue, reshow, showPending } from '@/src/autofill/capture-queue'
+import { registerDefaultManager } from '@/src/autofill/default-manager'
 import { handleFillRequest } from '@/src/autofill/fill'
 import { forgetTab, recordFrame } from '@/src/autofill/frames'
 import { closeAllSessions, closedByHost, handleInlineList, openSession, registerInlineSessions } from '@/src/autofill/inline-session'
@@ -101,6 +102,7 @@ export default defineBackground(() => {
 	registerMenus()
 	registerInlineSessions()
 	registerCaptureQueue()
+	registerDefaultManager()
 
 	browser.commands.onCommand.addListener((command, tab) => {
 		if (command === 'focus_notification_bar' && tab?.id !== undefined) focusBar(tab.id)

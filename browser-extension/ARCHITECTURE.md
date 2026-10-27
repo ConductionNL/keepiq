@@ -63,6 +63,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `inline-host.ts` and `notification-host.ts` (content script): place, guard and close the list and the bar.
   - `visibility.ts` (content script): the visibility guard's checks.
   - `visibility-tracker.ts` (list and bar pages): Chrome's IntersectionObserver v2 check.
+  - `default-manager.ts`: takes and returns control of Chrome's password manager and address autofill (`openspec/changes/ext-default-password-manager/`).
 - `src/menus.ts`: the "Keepiq" context menu, built and handled in the background.
 - `src/last-used.ts`: when each item was last filled.
 - `src/messages.ts`: every message type, in one place.
@@ -96,6 +97,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
 | Popup → background, fill | `fill.request` | `FillResult`, or `needsInsecureConfirm` to ask first |
+| Popup → background, default password manager | `defaultManager.get`, `defaultManager.enable`, `defaultManager.disable` | `DefaultManagerState`; `undefined` when the background failed |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard`, `offscreen.writeClipboard` | Whether it wrote |
 | Content → background | `page_ready` (`passwordField`: the top frame has a login form, for fill on page load), `inline.closed`, `capture.submitted`, `capture.reshow` | None |

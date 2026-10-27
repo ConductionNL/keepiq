@@ -38,6 +38,7 @@ async function deliver(message: unknown, sender: object): Promise<unknown> {
 }
 
 let onConnect: ReturnType<typeof fakeEvent<(port: unknown) => void>>
+let onPermissionsAdded: ReturnType<typeof fakeEvent<(added: { permissions?: string[] }) => void>>
 let menus: ReturnType<typeof installMenuFakes>
 let messageListener: (message: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
 
@@ -52,6 +53,8 @@ beforeEach(() => {
 	onConnect = fakeEvent()
 	Object.assign(browser.runtime, { onConnect })
 	Object.assign(browser, { idle: { onStateChanged: fakeEvent() } })
+	onPermissionsAdded = fakeEvent()
+	Object.assign(browser.permissions, { onAdded: onPermissionsAdded })
 	menus = installMenuFakes()
 	const addListener = vi.spyOn(browser.runtime.onMessage, 'addListener')
 	background.main()
@@ -106,11 +109,32 @@ describe('background entrypoint', () => {
 		expect(kinds).toEqual(expect.arrayContaining(['vault.snapshot', 'item.fetch', 'item.update']))
 		// A popout that opened would leave the next test expecting its window.
 		vi.spyOn(browser.windows, 'create').mockRejectedValue(new Error('no window'))
+		// The fake browser has no permissions; without `privacy` the default manager only reads `off`.
+		vi.spyOn(browser.permissions, 'contains').mockImplementation(async () => false)
+		vi.spyOn(browser.permissions, 'remove').mockImplementation(async () => true)
 		for (const kind of kinds) {
 			expect(POPUP_REQUEST_KINDS.has(kind), kind).toBe(true)
 			// What the account router answers a kind it does not know.
 			expect(await deliver({ kind, accountId: 'nobody', id: 'i1' }, popupSender), kind).not.toEqual({ ok: false, code: 'unknown' })
 		}
+	})
+
+	it('turns the default password manager on from the grant, with the popup gone before it resolved', async () => {
+		const setting = () => {
+			let ours = false
+			return {
+				get: async () => (ours ? { value: false, levelOfControl: 'controlled_by_this_extension' } : { value: true, levelOfControl: 'controllable_by_this_extension' }),
+				set: vi.fn(async () => void (ours = true)),
+			}
+		}
+		const services = { passwordSavingEnabled: setting(), autofillAddressEnabled: setting() }
+		Object.assign(browser, { privacy: { services } })
+		vi.spyOn(browser.permissions, 'contains').mockImplementation(async () => true)
+		onPermissionsAdded.trigger({ permissions: ['privacy'] })
+		// The reopened popup only reads.
+		expect(await deliver({ kind: 'defaultManager.get', id: 'i1' }, popupSender)).toBe('on')
+		expect(services.passwordSavingEnabled.set).toHaveBeenCalledExactlyOnceWith({ value: false })
+		expect(services.autofillAddressEnabled.set).toHaveBeenCalledExactlyOnceWith({ value: false })
 	})
 
 	it('ignores account messages from a content script', async () => {
