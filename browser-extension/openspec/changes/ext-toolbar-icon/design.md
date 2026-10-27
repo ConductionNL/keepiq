@@ -4,7 +4,7 @@ By the time this change lands, the earlier changes provide:
 - account status (Unlocked, Locked, Logged out) and the lock, unlock, logout and switch hooks (ext-accounts-and-unlock);
 - the per-account snapshot in `storage.local` under `vault:<accountId>` (ext-vault-browse);
 - the global Appearance record and the URI match default (ext-settings);
-- `candidatesFor()` in `src/autofill/matcher.ts` and the `tabs` permission (ext-autofill).
+- `candidatesFor()` in `src/autofill/matcher.ts` (ext-autofill) and the `tabs` permission (ext-vault-browse).
 
 `src/browser-action.ts` already resolves `action` against `browserAction`. The only icon art today is the coloured set in `public/icon/`, rendered from the Keepiq app icon `img/app-store.svg`.
 
@@ -29,7 +29,7 @@ By the time this change lands, the earlier changes provide:
   Each holds `16.png` and `32.png`. `setIcon({ path: { 16, 32 } })` works the same in the MV3 worker and the MV2 background page. Bitwarden ships static variants too. The alternative was greying and stamping a lock with `OffscreenCanvas` at runtime. It was rejected because it adds work on every worker wake and the art can't be reviewed as files. The manifest `icons` (48, 96, 128) stay the coloured set, since the extensions page and the store show those.
 - **`action.default_icon` is the logged-out set.** The browser paints it before the background runs. A fresh install has no account, and after a restart every account is locked, so the startup listener swaps it to the lock almost at once. Starting coloured would briefly claim the vault is unlocked.
 - **State icon is global, badge and count tooltip are per tab.** `setIcon` and the state title are set without `tabId`. `setBadgeText` and the count title are set with `tabId`, which Chrome resets on navigation. That reset is why the badge is recomputed on `tabs.onUpdated`.
-- **Count through `candidatesFor()`.** `src/toolbar-icon.ts` calls ext-autofill's `candidatesFor(tab.url, snapshotItems, rule, lastUsed)` and takes `.length`. It passes an empty last-used map, because order doesn't matter for a count. The alternative was a separate counter. It was rejected because the badge would drift from the suggestions list the first time a rule changes.
+- **Count through `candidatesFor()`.** `src/toolbar-icon.ts` calls ext-autofill's `candidatesFor(tab.url, { secrets, types }, rule, lastUsed)` and takes `.length`. It passes an empty last-used map, because order doesn't matter for a count. The alternative was a separate counter. It was rejected because the badge would drift from the suggestions list the first time a rule changes.
 - **One entry point: `refreshToolbar(scope)`.** `scope` is `'state'` (icon, global title, clear or recompute badges) or a tab id. Calls are coalesced per scope with a 100 ms timer, because `tabs.onUpdated` fires several times per load. Callers:
   - the ext-accounts-and-unlock hooks for unlock, lock, logout and switch, which trigger `'state'`;
   - `storage.onChanged` on `local` for `vault:<activeAccountId>`, `activeAccountId`, the active account's settings record and the Appearance record;
