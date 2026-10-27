@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import {
-	INLINE_ROW_PX, THEMES,
+	INLINE_GAP_PX, INLINE_INSET_PX, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
 	type ContentToInlineList, type InlineListToBackground, type InlineRow, type InlineStateReply, type PickInput,
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
@@ -50,7 +50,7 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Reco
 function globeIcon(): SVGSVGElement {
 	const ns = 'http://www.w3.org/2000/svg'
 	const svg = document.createElementNS(ns, 'svg')
-	for (const [name, value] of Object.entries({ class: 'row__icon', width: '18', height: '18', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'aria-hidden': 'true' })) {
+	for (const [name, value] of Object.entries({ class: 'row__icon', width: '32', height: '32', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'aria-hidden': 'true' })) {
 		svg.setAttribute(name, value)
 	}
 	const circle = document.createElementNS(ns, 'circle')
@@ -63,6 +63,8 @@ function globeIcon(): SVGSVGElement {
 	return svg
 }
 
+const SIZES = { '--row': INLINE_ROW_PX, '--gap': INLINE_GAP_PX, '--inset': INLINE_INSET_PX, '--radius': INLINE_RADIUS_PX }
+
 /**
  * The inline list page (design.md § Inline list). It learns its key only from its parent's `postMessage`,
  * never from its URL, and hears from the background only in replies. Returns a teardown.
@@ -72,7 +74,7 @@ export function startInlineList(): () => void {
 	const status = document.querySelector('[role="status"]')!
 	document.documentElement.lang = i18n.t('language')
 	document.title = i18n.t('inlineList.frameTitle')
-	document.documentElement.style.setProperty('--row', `${INLINE_ROW_PX}px`)
+	for (const [name, px] of Object.entries(SIZES)) document.documentElement.style.setProperty(name, `${px}px`)
 	applyTheme(mirroredTheme())
 
 	let stopped = false
@@ -84,10 +86,12 @@ export function startInlineList(): () => void {
 	let press: { target: Element; input: PickInput } | null = null
 	/** Set while a pick is pending, and for good once the background answered it, as it then closes the list. */
 	let pickLocked = false
-	let question: { row: InlineRow; cancel: HTMLButtonElement; fill: HTMLButtonElement } | null = null
+	let question: { row: InlineRow; text: HTMLElement; cancel: HTMLButtonElement; fill: HTMLButtonElement } | null = null
 	let entry: HTMLElement | null = null
 	const rowsByElement = new Map<Element, InlineRow>()
 	let announceTimer: ReturnType<typeof setTimeout> | undefined
+	/** The height last asked of the host; the first render always asks, in case the vault changed since the open. */
+	let requested: number | null = null
 	const visibility = trackVisibility(root)
 
 	const restartGuard = () => {
@@ -95,6 +99,24 @@ export function startInlineList(): () => void {
 	}
 	const settled = (input: PickInput) => input.at - guardSince >= GUARD_MS
 	const notify = (message: InlineListToBackground) => void send(message)
+
+	/** Through the background: a `postMessage` to the parent would reach the page. */
+	function fit() {
+		const content = root.firstElementChild
+		if (!key || !content) return
+		const height = content.getAttribute('role') === 'listbox'
+			? inlineHeight(content.childElementCount)
+			: inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
+		if (height !== null && height !== requested) {
+			requested = height
+			notify({ kind: 'inline.resize', key, height })
+		}
+		// Where the frame has no room for the whole question, its warning must still scroll into view from the keyboard.
+		if (question) {
+			if (root.scrollHeight > root.clientHeight) question.text.tabIndex = 0
+			else question.text.removeAttribute('tabindex')
+		}
+	}
 
 	function keyInput(target: Element): PickInput {
 		const rect = target.getBoundingClientRect()
@@ -132,7 +154,7 @@ export function startInlineList(): () => void {
 			})
 			unlock.setAttribute('aria-describedby', 'locked-text')
 			entry = unlock
-			root.replaceChildren(element('div', { class: 'message' }, element('p', { id: 'locked-text' }, i18n.t('inlineList.locked')), unlock))
+			root.replaceChildren(element('div', { class: 'message message--locked' }, element('p', { id: 'locked-text' }, i18n.t('inlineList.locked')), unlock))
 		} else if (rows.length === 0) {
 			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, i18n.t('inlineList.noMatch', { host }))
 			root.replaceChildren(entry)
@@ -161,6 +183,7 @@ export function startInlineList(): () => void {
 		state = reply
 		applyTheme(reply.theme)
 		render(reply)
+		fit()
 		announce(reply.state === 'locked' ? i18n.t('inlineList.status.locked')
 			: reply.rows.length === 0 ? i18n.t('inlineList.status.noMatch', { host: reply.host })
 				: i18n.t('inlineList.status.count', reply.rows.length))
@@ -187,8 +210,9 @@ export function startInlineList(): () => void {
 	function showNotVisible() {
 		question = null
 		rowsByElement.clear()
-		entry = element('p', { class: 'message', tabindex: '-1' }, i18n.t('inlineList.notVisible'))
+		entry = element('p', { class: 'message message--notice', tabindex: '-1' }, i18n.t('inlineList.notVisible'))
 		root.replaceChildren(entry)
+		fit()
 		entry.focus()
 	}
 
@@ -200,9 +224,8 @@ export function startInlineList(): () => void {
 		cancel.addEventListener('click', cancelQuestion)
 		root.replaceChildren(element('div', { class: 'question', role: 'alertdialog', 'aria-labelledby': 'question-title', 'aria-describedby': 'question-text' },
 			title, text, element('div', { class: 'question__actions' }, cancel, fill)))
-		// In a two-row list the warning is clipped and must still scroll from the keyboard.
-		if (text.scrollHeight > text.clientHeight) text.tabIndex = 0
-		question = { row, cancel, fill }
+		question = { row, text, cancel, fill }
+		fit()
 		restartGuard()
 		cancel.focus()
 	}
@@ -212,6 +235,7 @@ export function startInlineList(): () => void {
 		const { id } = question.row
 		question = null
 		renderRows(state.rows, state.host)
+		fit()
 		restartGuard()
 		const option = [...rowsByElement].find(([, row]) => row.id === id)?.[0] as HTMLElement | undefined
 		option?.focus()
@@ -331,6 +355,8 @@ export function startInlineList(): () => void {
 
 	window.addEventListener('message', onMessage)
 	window.addEventListener('blur', onBlur)
+	// The host's width or height changed: text may wrap differently.
+	window.addEventListener('resize', fit)
 	window.addEventListener('storage', followMirror)
 	document.addEventListener('keydown', onKeydown)
 	document.addEventListener('pointerdown', onPointerdown)
@@ -344,6 +370,7 @@ export function startInlineList(): () => void {
 		visibility.stop()
 		window.removeEventListener('message', onMessage)
 		window.removeEventListener('blur', onBlur)
+		window.removeEventListener('resize', fit)
 		window.removeEventListener('storage', followMirror)
 		document.removeEventListener('keydown', onKeydown)
 		document.removeEventListener('pointerdown', onPointerdown)

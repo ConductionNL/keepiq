@@ -168,17 +168,17 @@ Logins are filled in frames of a page too, but only in frames from the login's o
 
 ## Saving logins
 
-After you sign in, sign up or change a password on a website, a bar at the top of the page asks whether to save it:
+After you sign in, sign up or change a password on a website, a card in the top-right corner of the page asks whether to save it:
 
 - **Save login for *site* to Keepiq?** Pick a **Folder** and choose **Save**. The login is named after the site and saved as a **Login**.
 - **Update password for *login*?** You signed in with a different password than Keepiq has. **Update** saves the new one, for everyone the login is shared with too.
 - **Never for this site** stops asking on this site; the site is added to **Excluded domains** in [Settings](#settings). **Close** asks nothing more for this sign-in.
 
-The bar shows only while the vault is unlocked, and only after you signed in yourself; a site can't make it appear. It waits up to 5 minutes for your answer, and goes when you leave the site.
+The card shows only while the vault is unlocked, and only after you signed in yourself; a site can't make it appear. It waits up to 5 minutes for your answer, and goes when you leave the site. When it covers the field you're typing in, it moves to the bottom-right corner.
 
-To reach the bar with the keyboard, press `Alt+Shift+K` (`Cmd+Shift+K` on a Mac). In a small window it starts as a single row and grows when you move into it or choose its **Show options** arrow.
+To reach the card with the keyboard, press `Alt+Shift+K` (`Cmd+Shift+K` on a Mac). In a small window it starts as a single row and grows when you move into it or choose its **Show options** arrow.
 
-When the page hides, covers or alters the bar, it refuses with **Keepiq can't do this here because this page changes how it is shown. Close this and add the login from the Keepiq button in the toolbar.** Choose **Close**, then **New** in the extension. The same limits as for the list apply in Firefox.
+When the page hides, covers or alters the card, it refuses with **Keepiq can't do this here because this page changes how it is shown. Close this and add the login from the Keepiq button in the toolbar.** Choose **Close**, then **New** in the extension. The same limits as for the list apply in Firefox.
 
 Turn the questions off with **Ask to add login** and **Ask to update existing login** in [Settings](#settings).
 

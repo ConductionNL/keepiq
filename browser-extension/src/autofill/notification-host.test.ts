@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 // @vitest-environment-options {"settings":{"navigation":{"disableChildFrameNavigation":true}}}
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BAR_COMPACT_HEIGHT_PX, BAR_MEDIUM_HEIGHT_PX, BAR_NARROW_HEIGHT_PX, BAR_WIDE_HEIGHT_PX, type PickInput } from '@/src/messages'
+import {
+	BAR_COMPACT_HEIGHT_PX, BAR_HEIGHT_PX, BAR_INSET_PX, BAR_NARROW_HEIGHT_PX, BAR_RADIUS_PX, BAR_WIDTH_PX, barHostHeight, type PickInput,
+} from '@/src/messages'
 import { createNotificationHost, type NotificationHost } from './notification-host'
 import { GUARD_MS } from './visibility'
 
@@ -19,6 +21,8 @@ const press = (x = 10, y = 10): PickInput => ({ kind: 'pointer', at: now, x, y }
 const load = (frame = frames.at(-1)!) => frame.dispatchEvent(new Event('load'))
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 const styleOf = () => hosts()[0]!.getAttribute('style')!
+/** The card's left edge in the default 1000 px viewport. */
+const LEFT = 1000 - BAR_INSET_PX - BAR_WIDTH_PX
 /** Animation frames run only when a test steps them. */
 let rafs: FrameRequestCallback[]
 const nextFrame = () => rafs.splice(0).forEach((callback) => callback(now))
@@ -75,7 +79,7 @@ afterEach(() => {
 })
 
 describe('showing', () => {
-	it('shows notification.html in a closed shadow root, fixed full width at the top, focusing nothing', async () => {
+	it('shows notification.html in a closed shadow root, a card fixed in the top-right corner, focusing nothing', async () => {
 		const active = document.activeElement
 		show()
 		await flush()
@@ -84,18 +88,33 @@ describe('showing', () => {
 		expect(element!.shadowRoot).toBeNull()
 		expect(frames[0]!.src).toBe(browser.runtime.getURL('/notification.html' as '/popup.html'))
 		expect(frames[0]!.title).toBe('Keepiq notification')
-		for (const rule of ['position: fixed', 'top: 0px', 'left: 0px', 'width: 1000px', `height: ${BAR_WIDE_HEIGHT_PX}px`, 'z-index: 2147483647']) {
+		for (const rule of [
+			'position: fixed', `top: ${BAR_INSET_PX}px`, `left: ${LEFT}px`, `width: ${BAR_WIDTH_PX}px`, `height: ${BAR_HEIGHT_PX}px`,
+			`border-radius: ${BAR_RADIUS_PX}px`, 'overflow: clip', 'z-index: 2147483647',
+		]) {
 			expect(styleOf()).toContain(`${rule} !important;`)
 		}
+		expect(styleOf()).toMatch(/box-shadow: [^;]+ !important;/)
 		expect(document.activeElement).toBe(active)
 	})
 
-	it.each([[1200, BAR_WIDE_HEIGHT_PX], [900, BAR_WIDE_HEIGHT_PX], [899, BAR_MEDIUM_HEIGHT_PX], [420, BAR_MEDIUM_HEIGHT_PX], [419, BAR_NARROW_HEIGHT_PX]])(
-		'is %i px wide and so %i px tall, whatever the bar shows', (width, height) => {
-			setWidth(width)
+	it.each([[1200, 400, BAR_HEIGHT_PX], [424, 400, BAR_HEIGHT_PX], [423, 399, BAR_NARROW_HEIGHT_PX], [320, 296, BAR_NARROW_HEIGHT_PX]])(
+		'in a %i px wide viewport is %i × %i px, whatever the bar shows', (viewport, width, height) => {
+			setWidth(viewport)
 			show()
-			expect(styleOf()).toContain(`height: ${height}px !important;`)
+			for (const rule of [`left: ${viewport - BAR_INSET_PX - width}px`, `width: ${width}px`, `height: ${height}px`]) {
+				expect(styleOf()).toContain(`${rule} !important;`)
+			}
 		})
+
+	it('follows the viewport when it resizes, telling the bar', async () => {
+		show()
+		await flush()
+		setWidth(320)
+		nextFrame()
+		expect(styleOf()).toContain(`left: ${BAR_INSET_PX}px !important; width: 296px !important; height: ${BAR_NARROW_HEIGHT_PX}px !important;`)
+		expect(posted.at(-1)).toEqual({ kind: 'capture.moved', key: KEY })
+	})
 
 	it('posts the key to its own frame after it loads, at the extension origin only', async () => {
 		const post = vi.fn()
@@ -224,9 +243,26 @@ describe('capture.verify', () => {
 	it('refuses another key, a press outside the bar, or a malformed one', () => {
 		now += GUARD_MS + 1
 		expect(verify(press(), 'b'.repeat(32))).toBe(false)
-		expect(verify(press(10, BAR_WIDE_HEIGHT_PX))).toBe(false)
+		expect(verify(press(10, BAR_HEIGHT_PX))).toBe(false)
+		expect(verify(press(BAR_WIDTH_PX, 10))).toBe(false)
 		expect(verify(press(-1, 10))).toBe(false)
 		expect(host.handle({ kind: 'capture.verify', key: KEY, input: { kind: 'pointer', at: now } as never })).toBe(false)
+	})
+
+	it('hit tests the press at the card\'s place in the page, in either corner', async () => {
+		now += GUARD_MS + 1
+		expect(verify(press(30, 40))).toBe(true)
+		expect(document.elementFromPoint).toHaveBeenLastCalledWith(LEFT + 30, BAR_INSET_PX + 40)
+		// The page left of the card is not the host.
+		vi.mocked(document.elementFromPoint).mockImplementation((x) => x >= LEFT ? hosts()[0]! : document.body)
+		expect(verify(press(30, 40))).toBe(true)
+		document.body.innerHTML = '<input id="f">'
+		const field = document.querySelector('#f') as HTMLInputElement
+		field.getBoundingClientRect = () => ({ top: 20, bottom: 40, left: 700, right: 800, width: 100, height: 20, x: 700, y: 20, toJSON: () => ({}) })
+		field.focus()
+		now += GUARD_MS + 1
+		expect(verify(press(30, 40))).toBe(true)
+		expect(document.elementFromPoint).toHaveBeenLastCalledWith(LEFT + 30, 800 - BAR_INSET_PX - BAR_HEIGHT_PX + 40)
 	})
 
 	it('refuses a press whose point reaches something the page put over the bar', () => {
@@ -248,7 +284,7 @@ describe('capture.verify', () => {
 		now += GUARD_MS + 1
 		document.body.innerHTML = '<input id="f">'
 		const field = document.querySelector('#f') as HTMLInputElement
-		field.getBoundingClientRect = () => ({ top: 10, bottom: 30, left: 0, right: 100, width: 100, height: 20, x: 0, y: 10, toJSON: () => ({}) })
+		field.getBoundingClientRect = () => ({ top: 10, bottom: 30, left: 700, right: 800, width: 100, height: 20, x: 700, y: 10, toJSON: () => ({}) })
 		field.focus()
 		expect(verify(press())).toBe(false)
 		now += GUARD_MS + 1
@@ -263,13 +299,26 @@ describe('capture.verify', () => {
 		expect(verify(press())).toBe(false)
 		expect(hosts()).toHaveLength(0)
 	})
+
+	it('refuses while the host is drawn away from its corner', () => {
+		now += GUARD_MS + 1
+		const rect = vi.mocked(Element.prototype.getBoundingClientRect).getMockImplementation()!
+		vi.mocked(Element.prototype.getBoundingClientRect).mockImplementation(function (this: Element) {
+			const box = rect.call(this)
+			return this === hosts()[0] ? { ...box, left: 0, x: 0, right: box.width } : box
+		})
+		expect(verify(press())).toBe(false)
+		expect(hosts()).toHaveLength(1)
+	})
 })
 
 describe('focus', () => {
-	const BOTTOM = `top: ${800 - BAR_WIDE_HEIGHT_PX}px !important;`
-	const field = (id: string, top: number, height = 20) => {
+	const TOP = `top: ${BAR_INSET_PX}px !important;`
+	const BOTTOM = `top: ${800 - BAR_INSET_PX - BAR_HEIGHT_PX}px !important;`
+	/** Under the card's column unless placed elsewhere. */
+	const field = (id: string, top: number, height = 20, left = 700, width = 100) => {
 		const element = document.querySelector(`#${id}`) as HTMLInputElement
-		element.getBoundingClientRect = () => ({ top, bottom: top + height, left: 0, right: 100, width: 100, height, x: 0, y: top, toJSON: () => ({}) })
+		element.getBoundingClientRect = () => ({ top, bottom: top + height, left, right: left + width, width, height, x: left, y: top, toJSON: () => ({}) })
 		return element
 	}
 
@@ -282,6 +331,23 @@ describe('focus', () => {
 		expect(posted.at(-1)).toEqual({ kind: 'capture.moved', key: KEY })
 	})
 
+	it.each([['left of it', 0, LEFT], ['right of it', 1000 - BAR_INSET_PX, BAR_INSET_PX]])('stays for a focused element at its height but %s', async (_where, left, width) => {
+		document.body.innerHTML = '<input id="f">'
+		show()
+		await flush()
+		field('f', 10, 20, left, width).focus()
+		nextFrame()
+		expect(styleOf()).toContain(TOP)
+	})
+
+	it('moves for an element reaching just under its left edge', async () => {
+		document.body.innerHTML = '<input id="f">'
+		show()
+		await flush()
+		field('f', 10, 20, 0, LEFT + 1).focus()
+		expect(styleOf()).toContain(BOTTOM)
+	})
+
 	it('stays where it is while focus moves elsewhere, and moves back only for an element under it', async () => {
 		document.body.innerHTML = '<input id="top"><input id="mid"><input id="low">'
 		show()
@@ -291,7 +357,7 @@ describe('focus', () => {
 		field('top', 10).focus()
 		expect(styleOf()).toContain(BOTTOM)
 		field('low', 760).focus()
-		expect(styleOf()).toContain('top: 0px !important;')
+		expect(styleOf()).toContain(TOP)
 	})
 
 	it('does not move for an element under both places, such as a tall one', async () => {
@@ -299,7 +365,7 @@ describe('focus', () => {
 		show()
 		await flush()
 		field('f', 0, 800).focus()
-		expect(styleOf()).toContain('top: 0px !important;')
+		expect(styleOf()).toContain(TOP)
 	})
 
 	it('moves on the next frame when the focused element scrolls under it, with no focus event', async () => {
@@ -307,7 +373,7 @@ describe('focus', () => {
 		show()
 		await flush()
 		field('f', 400).focus()
-		expect(styleOf()).toContain('top: 0px !important;')
+		expect(styleOf()).toContain(TOP)
 		field('f', 20)
 		nextFrame()
 		expect(styleOf()).toContain(BOTTOM)
@@ -345,12 +411,29 @@ describe('focus', () => {
 describe('a short viewport', () => {
 	const trustedFocusIn = (element: Element) => element.dispatchEvent(Object.defineProperty(new FocusEvent('focusin', { bubbles: true, composed: true }), 'isTrusted', { value: true }))
 
-	it.each([[1000, 150, BAR_COMPACT_HEIGHT_PX], [1000, 192, BAR_WIDE_HEIGHT_PX], [400, 300, BAR_COMPACT_HEIGHT_PX], [400, 400, BAR_NARROW_HEIGHT_PX]])(
-		'at %i × %i px is %i px tall, at most a third of it unless compact', (width, height, expected) => {
-			setWidth(width, height)
-			show()
-			expect(styleOf()).toContain(`height: ${expected}px !important;`)
-		})
+	/** What the card grows to in the 1000 × 150 viewport below: the room between the insets, as the full card is taller. */
+	const GROWN = barHostHeight(1000, 150, true)
+
+	it.each([
+		[1000, 150, BAR_COMPACT_HEIGHT_PX], [1000, 2 * BAR_HEIGHT_PX - 1, BAR_COMPACT_HEIGHT_PX],
+		[1000, 2 * BAR_HEIGHT_PX, BAR_HEIGHT_PX], [1000, 2 * BAR_HEIGHT_PX + 1, BAR_HEIGHT_PX],
+		[400, 2 * BAR_NARROW_HEIGHT_PX - 1, BAR_COMPACT_HEIGHT_PX], [400, 2 * BAR_NARROW_HEIGHT_PX, BAR_NARROW_HEIGHT_PX],
+		[400, 2 * BAR_NARROW_HEIGHT_PX + 1, BAR_NARROW_HEIGHT_PX],
+		// A 1366 × 768 laptop at 125%, and 400% of a 1280 × 640 viewport.
+		[1093, 614, BAR_HEIGHT_PX], [320, 160, BAR_COMPACT_HEIGHT_PX],
+	])('at %i × %i px is %i px tall, at most half of it unless compact', (width, height, expected) => {
+		setWidth(width, height)
+		show()
+		expect(styleOf()).toContain(`height: ${expected}px !important;`)
+	})
+
+	it.each([[1000, 150, 150 - 2 * BAR_INSET_PX], [1000, 300, BAR_HEIGHT_PX]])('expanded at %i × %i px is %i px tall, within the viewport', async (width, height, expected) => {
+		setWidth(width, height)
+		show()
+		await flush()
+		host.handle({ kind: 'capture.expand', key: KEY })
+		expect(styleOf()).toContain(`top: ${BAR_INSET_PX}px !important; left: ${LEFT}px !important; width: ${BAR_WIDTH_PX}px !important; height: ${expected}px !important;`)
+	})
 
 	/** Focus in the bar's frame, which the page's document sees as its host; an attribute on the host would close it as tampering. */
 	const focusBar = () => vi.spyOn(document, 'activeElement', 'get').mockReturnValue(hosts()[0]!)
@@ -363,10 +446,10 @@ describe('a short viewport', () => {
 		host.handle({ kind: 'capture.expand', key: 'b'.repeat(32) })
 		expect(styleOf()).toContain(`height: ${BAR_COMPACT_HEIGHT_PX}px !important;`)
 		host.handle({ kind: 'capture.expand', key: KEY })
-		expect(styleOf()).toContain(`height: ${BAR_WIDE_HEIGHT_PX}px !important;`)
+		expect(styleOf()).toContain(`height: ${GROWN}px !important;`)
 		expect(posted.at(-1)).toEqual({ kind: 'capture.moved', key: KEY })
 		nextFrame()
-		expect(styleOf()).toContain(`height: ${BAR_WIDE_HEIGHT_PX}px !important;`)
+		expect(styleOf()).toContain(`height: ${GROWN}px !important;`)
 	})
 
 	it('shrinks at once when focus moves to the page', async () => {
@@ -388,7 +471,7 @@ describe('a short viewport', () => {
 		const inBar = focusBar()
 		host.handle({ kind: 'capture.expand', key: KEY })
 		inBar.mockRestore()
-		expect(styleOf()).toContain(`height: ${BAR_WIDE_HEIGHT_PX}px !important;`)
+		expect(styleOf()).toContain(`height: ${GROWN}px !important;`)
 		nextFrame()
 		expect(styleOf()).toContain(`height: ${BAR_COMPACT_HEIGHT_PX}px !important;`)
 	})
@@ -400,7 +483,7 @@ describe('a short viewport', () => {
 		hosts()[0]!.dispatchEvent(new FocusEvent('focusin', { bubbles: true, composed: true }))
 		expect(styleOf()).toContain(`height: ${BAR_COMPACT_HEIGHT_PX}px !important;`)
 		trustedFocusIn(hosts()[0]!)
-		expect(styleOf()).toContain(`height: ${BAR_WIDE_HEIGHT_PX}px !important;`)
+		expect(styleOf()).toContain(`height: ${GROWN}px !important;`)
 	})
 
 	it('refuses a press within 500 ms of growing', async () => {

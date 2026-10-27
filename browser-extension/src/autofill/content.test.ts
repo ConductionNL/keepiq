@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 // Here, not beside the entrypoint: WXT reads every top-level file in entrypoints/ as one.
 import content from '@/entrypoints/content'
+import { inlineHeight } from '@/src/messages'
 
 type Listener = (msg: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
 
@@ -111,7 +112,7 @@ describe('content script', () => {
 		it('opens on a field focused before it started, and fills that form with the list’s key', async () => {
 			vi.mocked(browser.runtime.sendMessage).mockImplementation(async (message: unknown) => {
 				sent.push(message)
-				return ((message as { kind: string }).kind === 'inline.open' ? { key: KEY } : undefined) as never
+				return ((message as { kind: string }).kind === 'inline.open' ? { key: KEY, height: inlineHeight(1) } : undefined) as never
 			})
 			// happy-dom loads the frame as about:blank and throws on the targetOrigin, where a browser drops the message.
 			vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue(null)
@@ -121,6 +122,10 @@ describe('content script', () => {
 			await vi.waitFor(() => expect(sent).toContainEqual({ kind: 'inline.open' }))
 			await vi.waitFor(() => expect(ask(fill())).toEqual({ filled: 'both' }))
 			expect((document.querySelector('#p') as HTMLInputElement).value).toBe('hunter2')
+			const host = [...document.documentElement.children].find((element) => element.localName === 'div')!
+			expect(host.getAttribute('style')).toContain(`height: ${inlineHeight(1)}px !important;`)
+			ask({ kind: 'inline.resize', key: KEY, height: 130 })
+			expect(host.getAttribute('style')).toContain('height: 130px !important;')
 			ask({ kind: 'inline.close', key: KEY, refocus: false })
 			expect(sent).toContainEqual({ kind: 'inline.closed', key: KEY })
 		})

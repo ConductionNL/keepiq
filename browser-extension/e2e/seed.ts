@@ -18,8 +18,21 @@ export interface FakeStorage {
 /** Three nested folders, so the bar's folder choice shows the long path "Werk / Klanten / Gemeente Amsterdam Stadsdeel Nieuw-West". */
 export const LONG_FOLDER = ['Werk', 'Klanten', 'Gemeente Amsterdam Stadsdeel Nieuw-West']
 
+/**
+ * The seeded login's name and username, for the update card; a `null` username saves the login without one. `https`:
+ * its URL on `https:`, so the http test site asks before filling it.
+ */
+export interface LoginItem {
+	name?: string
+	username?: string | null
+	https?: boolean
+}
+
 /** The login matches `site`; `matches` adds more matching logins after it. Locked leaves out the private key, as a lock does. */
-export async function fakeStorage(site: string, unlocked: boolean, { longFolder = false, matches = 1 } = {}): Promise<FakeStorage> {
+export async function fakeStorage(
+	site: string, unlocked: boolean, { longFolder = false, matches = 1, loginItem = {} as LoginItem } = {},
+): Promise<FakeStorage> {
+	const { name = 'Test site', username = LOGIN.username, https = false } = loginItem
 	const now = new Date().toISOString()
 	const account: AccountRecord = {
 		id: 'e2e', serverUrl: 'https://keepiq.invalid', uid: 'tester', loginName: 'tester', displayName: 'Tester',
@@ -29,8 +42,8 @@ export async function fakeStorage(site: string, unlocked: boolean, { longFolder 
 		suite: { id: suiteRow.id, unlockKeyEpoch: suiteRow.unlockKeyEpoch },
 		secrets: [
 			secretRow({
-				name: 'Test site', url: site, ownerId: account.uid, createdAt: now, updatedAt: now,
-				login: await encrypt(LOGIN.username), key: await encrypt(LOGIN.password),
+				name, url: https ? site.replace(/^http:/, 'https:') : site, ownerId: account.uid, createdAt: now, updatedAt: now,
+				login: username === null ? null : await encrypt(username), key: await encrypt(LOGIN.password),
 			}),
 			...await Promise.all(Array.from({ length: matches - 1 }, async (_, i) => secretRow({
 				id: `s${i + 2}`, name: `Test site ${i + 2}`, url: site, ownerId: account.uid, createdAt: now, updatedAt: now,

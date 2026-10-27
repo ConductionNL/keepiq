@@ -102,7 +102,7 @@ For an unlocked vault the list SHALL show every login item matching the URL of t
 - **THEN** five rows are visible and the others are reached by scrolling or the arrow keys
 
 ### Requirement: No-match and locked states
-The extension SHALL open the list on a qualifying field whether or not a login matches, at a size that depends only on the field's place in its frame and is the same in every state, so neither its presence nor its size tells the page whether or how many logins match. With an unlocked vault and no match, it shows "No logins for <host>" and no action. With a locked vault it shows "Unlock Keepiq to see your logins" and an "Unlock" button that opens the popup on the unlock view, or the pop-out window where the popup cannot be opened, and then closes the list; nothing is matched or decrypted while locked. After unlocking, the next focus of the field shows the logins.
+The extension SHALL open the list on a qualifying field whether or not a login matches, so its presence does not tell the page whether a login matches. Its height fits what it shows (Position), so the page can read from it how many logins match, up to five; that is accepted, as the count is of no use to a site. With an unlocked vault and no match, it shows "No logins for <host>" and no action. With a locked vault it shows "Unlock Keepiq to see your logins" and an "Unlock" button that opens the popup on the unlock view, or the pop-out window where the popup cannot be opened, and then closes the list; nothing is matched or decrypted while locked. After unlocking, the next focus of the field shows the logins.
 
 #### Scenario: No match
 - **GIVEN** an unlocked vault with no login for `nothing.test`
@@ -114,10 +114,10 @@ The extension SHALL open the list on a qualifying field whether or not a login m
 - **WHEN** the user focuses the username field
 - **THEN** the list reads "Unlock Keepiq to see your logins" with an "Unlock" button and no rows
 
-#### Scenario: Same size in every state
-- **GIVEN** the same login page layout on a site with no matching login, one with one, and one with twelve, and the vault locked, then unlocked
+#### Scenario: Height follows the matches
+- **GIVEN** the same login page layout on a site with no matching login, one with one, one with three and one with twelve, and the vault locked, then unlocked
 - **WHEN** the list opens on each
-- **THEN** the host element in the page has the same size every time
+- **THEN** the list is one row tall when locked, without a match and with one, three rows with three, and five rows with twelve, the rest scrolling
 
 #### Scenario: Unlock from the list
 - **GIVEN** the locked list
@@ -229,7 +229,7 @@ The list SHALL close on Escape, on Tab in the field, when focus moves anywhere b
 - **THEN** the list is closed until the field is focused or clicked again
 
 ### Requirement: The list sits beneath the field and follows it
-The extension SHALL place the list directly below the field, left edges aligned, at least as wide as the field and 240 CSS px, and at most the frame's viewport width minus 16 px. Its height is five rows, or the larger free side of the field within the frame's viewport when that is smaller, fixed when it opens. When less than 240 px of width or fewer than two rows fit, the list does not open. When there is less room below the field than the list needs and more above, it is placed above instead. It stays inside the viewport of the field's frame, above the page's own content, and follows the field when the page or an inner container scrolls, the window resizes or the page zooms. When the field is inside a modal dialog, found across shadow roots, the list is placed inside that dialog, since everything outside it is inert. Where the browser has the popover API, a script-trapped modal (`role="dialog"` with `aria-modal="true"`, as Radix, MUI, Headless UI or react-focus-lock build it) counts the same way, so its focus trap keeps focus in the list; without the popover API the list stays outside it.
+The extension SHALL place the list 4 CSS px below the field, left edges aligned, at least as wide as the field and 240 CSS px, and at most the frame's viewport width minus 16 px. Its height fits its contents: one row per matching login up to five, one row for the locked and no-match messages, and the height the insecure-site question or a refusal needs, at most five rows; it is capped by the larger free side of the field within the frame's viewport, and what does not fit scrolls. The height is set when the list opens and changes only when the list's contents do, which counts as a move for the visibility guard. When less than 240 px of width or less than one row fits, the list does not open. When there is less room below the field than the list needs and more above, it is placed above instead. It stays inside the viewport of the field's frame, above the page's own content, and follows the field when the page or an inner container scrolls, the window resizes or the page zooms. When the field is inside a modal dialog, found across shadow roots, the list is placed inside that dialog, since everything outside it is inert. Where the browser has the popover API, a script-trapped modal (`role="dialog"` with `aria-modal="true"`, as Radix, MUI, Headless UI or react-focus-lock build it) counts the same way, so its focus trap keeps focus in the list; without the popover API the list stays outside it.
 
 #### Scenario: Field near the bottom
 - **GIVEN** a password field 80 px above the bottom of the viewport
@@ -237,7 +237,7 @@ The extension SHALL place the list directly below the field, left edges aligned,
 - **THEN** it is placed above the field without covering it
 
 #### Scenario: Small iframe
-- **GIVEN** a login iframe 120 px tall whose username field leaves room for one row above and one below
+- **GIVEN** a login iframe whose username field leaves less than one row of room above and below
 - **WHEN** the field gets focus
 - **THEN** no list opens, whatever the vault holds
 
@@ -287,7 +287,7 @@ The content script runs in every frame. Each frame that offers a list SHALL host
 - **THEN** no list opens, so no click on the masked area can pick a login
 
 ### Requirement: The page can neither read the list nor pick from it
-The list SHALL be an extension page (`inline-list.html`) in an iframe inside a closed shadow root that the content script inserts. No message to the content script carries a row, name, username or row count; of the list's contents the content script learns nothing but a random session key. The background MUST accept the list's messages only from `inline-list.html` in the session's tab, from the first list frame that presented the session's key, with that key, and MUST refuse popup messages from the list page and list messages from any other page. The list page MUST ignore messages posted by the page. The list's session holds no plaintext, lives in `storage.session` (background memory on Firefox below 115), and is cleared when the list closes, the next list opens in the tab, the tab closes or loads a new page, the vault locks, the account logs out or the active account changes, and on browser restart.
+The list SHALL be an extension page (`inline-list.html`) in an iframe inside a closed shadow root that the content script inserts. No message to the content script carries a row, name, username or item id; of the list's contents the content script learns nothing but a random session key and the list's height, which the page can read from the host anyway. The background MUST accept the list's messages only from `inline-list.html` in the session's tab, from the first list frame that presented the session's key, with that key, and MUST refuse popup messages from the list page and list messages from any other page. The list page MUST ignore messages posted by the page. The list's session holds no plaintext, lives in `storage.session` (background memory on Firefox below 115), and is cleared when the list closes, the next list opens in the tab, the tab closes or loads a new page, the vault locks, the account logs out or the active account changes, and on browser restart.
 
 #### Scenario: Page frames the list page itself
 - **GIVEN** a page that embeds `inline-list.html` in its own iframe
@@ -307,7 +307,7 @@ The list SHALL be an extension page (`inline-list.html`) in an iframe inside a c
 #### Scenario: What the content script receives
 - **GIVEN** the list open with two matching logins
 - **WHEN** the messages the content script received are inspected
-- **THEN** none contains a name, username, item id or row count
+- **THEN** none contains a name, username or item id
 
 ### Requirement: Picks the user could not see are refused
 The extension SHALL refuse a pick unless the list stayed visible from 500 ms before the user's press until the pick. A pick by pointer, Enter or Space within 500 ms of the list being shown, moved or changing its content MUST be ignored. Before decrypting, the background MUST ask the hosting content script to confirm that, throughout that time, the list's host stayed in place at its own size with its own styling, was itself not transparent, filtered, blended, transformed, scaled, rotated, zoomed, clipped, masked or hidden, and neither was any ancestor frame or element above that frame, a plain translation of those excepted; and that, checked when the pick arrives, nothing else is hit at the point pressed, in its own document and in every ancestor document; on a refusal it decrypts nothing. Elements above the host in its own document count too where the browser lacks the popover API (Firefox below 125); where the host is a showing popover they do not, since it is drawn and clickable whatever their opacity, filter, transform, mask or visibility, except on Firefox for a `filter` on the page root, which reaches its top layer and is refused; and what can still hide it (`display: none`, `content-visibility: hidden`, an inherited `zoom`, `inert`, an overlay) changes its size or what is hit. Any change to the host or its popover state by page script closes the list, also when the page stops the popover's events first. Down in the field moves focus into the list only after the field has held focus for 500 ms, or right after the user clicked or tabbed into it, a Tab the page cancelled not counting; a held-down Down never moves into the list; and when focus leaves the list, no row keeps focus, so a page that focuses the list's window cannot direct a key press at a row.

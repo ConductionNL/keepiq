@@ -2,10 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-	BAR_MEDIUM_MIN_WIDTH_PX, BAR_WIDE_MIN_WIDTH_PX,
-	type CaptureStateReply, type NotificationToBackground, type WriteErrorCode, type WriteResult,
-} from '@/src/messages'
+import { BAR_RADIUS_PX, type CaptureStateReply, type NotificationToBackground, type WriteErrorCode, type WriteResult } from '@/src/messages'
 import { setLocale } from '@/src/testing/i18n'
 import { startNotificationBar } from './bar'
 
@@ -193,12 +190,14 @@ describe('key hand-off', () => {
 })
 
 describe('add mode', () => {
-	it('asks to save for the host, with a labelled folder choice defaulting to No folder, Save, Never for this site and Close', async () => {
+	it('asks to save for the host, with a labelled folder choice defaulting to No folder, Never for this site, Save and Close', async () => {
 		await open()
 		expect(title()!.textContent).toBe('Save login for login.example.test to Keepiq?')
 		expect([...select()!.options].map((o) => o.textContent)).toEqual(['No folder', 'Work', 'Home'])
 		expect(select()!.selectedOptions[0]!.textContent).toBe('No folder')
-		expect(buttonNames()).toEqual(['Save', 'Never for this site', 'Close'])
+		expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
+		expect(button('Save').className).toBe('btn btn--primary')
+		expect(button('Never for this site').className).toBe('btn btn--secondary')
 		expect(bar().querySelector('input')).toBeNull()
 	})
 
@@ -257,6 +256,81 @@ describe('update mode', () => {
 		await open(update())
 		await click(button('Update'), 7, 8)
 		expect(decisions()).toEqual([{ kind: 'capture.update', key: KEY, input: { kind: 'pointer', at: 1_000_500, x: 7, y: 8 } }])
+	})
+
+	describe('item row', () => {
+		const row = () => bar().querySelector<HTMLElement>('.bar__item')
+		const lines = () => [...row()!.querySelectorAll('.bar__item-text > span')].map((line) => [line.className, line.textContent])
+		/** The stylesheet hides the row then (stylesheet tests). */
+		const gaveWay = () => bar().classList.contains('bar--long-question')
+
+		it('shows the item under the question, its username under its name, after an icon, hidden from screen readers', async () => {
+			await open(update())
+			expect(row()!.getAttribute('aria-hidden')).toBe('true')
+			expect(gaveWay()).toBe(false)
+			expect(row()!.querySelector('.bar__item-icon > svg')).toBeTruthy()
+			expect(lines()).toEqual([['bar__item-name', 'Example mail'], ['bar__item-user', 'alice']])
+			expect([...bar().children].map((child) => child.getAttribute('class'))).toEqual(['logo', 'bar__text', 'bar__item', 'bar__buttons', 'icon-btn bar__expand', 'icon-btn bar__close'])
+		})
+
+		it('shows the name alone for an item without a username', async () => {
+			await open(update({ username: undefined }))
+			expect(lines()).toEqual([['bar__item-name', 'Example mail']])
+		})
+
+		it('loads no icon from anywhere', async () => {
+			await open(update())
+			expect(row()!.querySelectorAll('img, image, use, [href], [src]')).toHaveLength(0)
+		})
+
+		it('is not in add mode', async () => {
+			await open()
+			expect(row()).toBeNull()
+		})
+
+		it('stays beside an error', async () => {
+			await open(update())
+			writeReply = failure('offline')
+			await click(button('Update'))
+			expect(error()!.hidden).toBe(false)
+			expect(row()).toBeTruthy()
+		})
+
+		it('gives its room to a question that needs it, and takes it back once the question fits', async () => {
+			let questionLines = 4
+			// Four lines fit only without the row.
+			vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
+				return this.classList.contains('bar__text') ? questionLines * 20 : 0
+			})
+			vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
+				return this.classList.contains('bar__text') ? (gaveWay() ? 82 : 40) : 0
+			})
+			const text = () => bar().querySelector<HTMLElement>('.bar__text')!
+			await open(update())
+			expect(gaveWay()).toBe(true)
+			expect(text().hasAttribute('tabindex')).toBe(false)
+			questionLines = 2
+			window.dispatchEvent(new Event('resize'))
+			expect(gaveWay()).toBe(false)
+			questionLines = 6
+			window.dispatchEvent(new Event('resize'))
+			expect(gaveWay()).toBe(true)
+			expect(text().tabIndex).toBe(0)
+		})
+
+		it('takes its room back for an error that fits beside it', async () => {
+			vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
+				return this.classList.contains('bar__text') ? (error()!.hidden ? 60 : 36) : 0
+			})
+			vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
+				return this.classList.contains('bar__text') ? 40 : 0
+			})
+			await open(update())
+			expect(gaveWay()).toBe(true)
+			writeReply = failure('offline')
+			await click(button('Update'))
+			expect(gaveWay()).toBe(false)
+		})
 	})
 })
 
@@ -627,8 +701,9 @@ describe('errors', () => {
 		it('says so and offers Save with the folder choice instead, focus on Save', async () => {
 			await gone()
 			expect(error()!.textContent).toBe('This login no longer exists. Save it as a new login?')
-			expect(buttonNames()).toEqual(['Save', 'Never for this site', 'Close'])
+			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
 			expect(select()).toBeTruthy()
+			expect(bar().querySelector('.bar__item')).toBeNull()
 			expect(document.activeElement).toBe(button('Save'))
 		})
 
@@ -649,7 +724,7 @@ describe('errors', () => {
 			writeReply = failure('not_found')
 			await click(button('Save'))
 			expect(error()!.textContent).toBe('This folder no longer exists')
-			expect(buttonNames()).toEqual(['Save', 'Never for this site', 'Close'])
+			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
 		})
 	})
 })
@@ -694,7 +769,7 @@ describe('accessibility', () => {
 		await open()
 		// The expand control is `display: none` outside compact mode (stylesheet tests).
 		const tabbable = [...bar().querySelectorAll<HTMLElement>('button:not(.bar__expand), select, [tabindex]')].filter((el) => el.tabIndex >= 0)
-		expect(tabbable.map((el) => el.tagName === 'SELECT' ? 'select' : el.getAttribute('aria-label') ?? el.textContent)).toEqual(['select', 'Save', 'Never for this site', 'Close'])
+		expect(tabbable.map((el) => el.tagName === 'SELECT' ? 'select' : el.getAttribute('aria-label') ?? el.textContent)).toEqual(['select', 'Never for this site', 'Save', 'Close'])
 		expect(buttons().every((b) => b.type === 'button')).toBe(true)
 	})
 })
@@ -832,7 +907,7 @@ describe('Dutch', () => {
 		expect(title()!.textContent).toBe('Login voor login.example.test opslaan in Keepiq?')
 		expect(document.querySelector('label')!.textContent).toBe('Map')
 		expect(select()!.options[0]!.textContent).toBe('Geen map')
-		expect(buttonNames()).toEqual(['Opslaan', 'Nooit voor deze site', 'Sluiten'])
+		expect(buttonNames()).toEqual(['Nooit voor deze site', 'Opslaan', 'Sluiten'])
 	})
 
 	it.each<[Partial<CaptureStateReply>, string]>([
@@ -887,30 +962,54 @@ describe('stylesheet', () => {
 		expect(overlays.map(([, selector]) => selector!.trim())).toEqual([])
 	})
 
-	it('switches layout exactly where the host switches height', () => {
-		expect(STYLES).toContain(`@media (max-width: ${BAR_WIDE_MIN_WIDTH_PX - 1}px)`)
-		expect(STYLES).toContain(`@media (max-width: ${BAR_MEDIUM_MIN_WIDTH_PX - 1}px)`)
-		expect([...STYLES.matchAll(/@media \(max-width: (\d+)px\)/g)].map(([, width]) => Number(width))).toEqual([BAR_WIDE_MIN_WIDTH_PX - 1, BAR_MEDIUM_MIN_WIDTH_PX - 1])
+	it('has one layout for every card width, which the grid fits', () => {
+		expect(STYLES).not.toMatch(/@media[^{]*width/)
 	})
 
-	it('lets the folder select give way before the question', () => {
-		expect(rule('.bar')).toMatch(/grid-template-columns: auto minmax\(0, max-content\) minmax\(min-content, 1fr\) auto auto/)
-		expect(Number(/min-width: (\d+)px/.exec(rule('.select'))![1])).toBeLessThan(96)
+	it('gives the question the room the folder or the item row and the buttons leave, the same in both modes', () => {
+		expect(rule('.bar')).toMatch(/grid-template-rows: minmax\(0, max-content\) auto auto;/)
+		expect(rule('.bar')).toMatch(/'logo text close'\s*'detail detail detail'\s*'buttons buttons buttons'/)
+		expect(rule('.bar__folder')).toMatch(/grid-area: detail;/)
+		expect(rule('.bar__item')).toMatch(/grid-area: detail;/)
+		const height = (selector: string) => /(?:^|\s)height: (\d+)px/.exec(rule(selector))![1]
+		expect(height('.bar__item')).toBe(height('.select'))
+		// A question too long to share the room leaves out the row and its gap.
+		expect(rule('.bar.bar--long-question')).toMatch(/grid-template-rows: minmax\(0, max-content\) auto;\s*grid-template-areas:\s*'logo text close'\s*'buttons buttons buttons';/)
+		expect(rule('.bar--long-question .bar__item')).toMatch(/display: none/)
 	})
 
-	it('gives the saved message and the notice one row over the full height, in every layout', () => {
-		const single = rule('.bar.bar--saved,\n.bar.bar--notice')
-		expect(single).toMatch(/grid-template-rows: minmax\(0, 1fr\);/)
-		expect(single).toMatch(/grid-template-areas: 'logo text close';/)
-		// Two classes outrank each layout's `.bar`, wherever that comes in the file.
-		const full = rules().filter(([, selector]) => /\.bar--(saved|notice)/.test(selector!) && !selector!.includes('is-compact'))
-		expect(full.map(([, selector]) => selector!.trim())).toEqual(['.bar.bar--saved,\n.bar.bar--notice'])
+	it('pins the question and Close to the top, and splits what a short question leaves between the gaps', () => {
+		expect(rule('.bar')).toMatch(/align-items: start;/)
+		expect(rule('.bar')).toMatch(/align-content: space-between;/)
+		// The logo no taller than the question's first line, which sets the row's height for a short question.
+		expect(rule('.bar__title')).toMatch(/line-height: 20px;/)
+		expect(rule('.logo')).toMatch(/margin-block: -2px;/)
 	})
 
-	it('shows the expand control only compact, where it hides the folder and buttons and puts the question on one line', () => {
+	it('lines the item\'s name up with the question, and cuts a long name or username off with an ellipsis', () => {
+		const logoWidth = /width: '(\d+)'/.exec(readFileSync(resolve('entrypoints/notification/bar.ts'), 'utf8').split('function logo')[1]!)![1]
+		expect(rule('.bar__item-icon')).toContain(`width: ${logoWidth}px;`)
+		expect(rule('.bar__item')).toMatch(/gap: 10px;/)
+		expect(rule('.bar')).toMatch(/column-gap: 10px;/)
+		expect(rule('.bar__item')).toMatch(/min-width: 0;/)
+		expect(rule('.bar__item-text')).toMatch(/min-width: 0;/)
+		const line = rule('.bar__item-name,\n.bar__item-user')
+		expect(line).toMatch(/overflow-x: clip;/)
+		expect(line).toMatch(/white-space: nowrap;/)
+		expect(line).toMatch(/text-overflow: ellipsis;/)
+		expect(STYLES).toMatch(/\n\.bar__item-user \{[^}]*color: var\(--fg-muted\)/)
+	})
+
+	it('gives the notice one row from the top, and the saved message one row in the middle', () => {
+		expect(rule('.bar.bar--notice')).toMatch(/grid-template-rows: minmax\(0, max-content\);\s*grid-template-areas: 'logo text close';\s*align-content: start;/)
+		expect(rule('.bar.bar--saved')).toMatch(/grid-template-rows: minmax\(0, 1fr\);\s*grid-template-areas: 'logo text';/)
+		expect(rule('.bar.bar--saved')).toMatch(/align-items: center;/)
+	})
+
+	it('shows the expand control only compact, where it hides the folder, the item row and the buttons and puts the question on one line', () => {
 		expect(rule('.bar__expand')).toMatch(/display: none/)
 		expect(rule(':root.is-compact .bar__expand')).toMatch(/display: inline-flex/)
-		expect(rule(':root.is-compact :is(.bar__folder, .bar__buttons)')).toMatch(/display: none/)
+		expect(rule(':root.is-compact :is(.bar__folder, .bar__item, .bar__buttons)')).toMatch(/display: none/)
 		const line = rule(':root.is-compact :is(.bar__title, .bar__error, .bar__notice)')
 		expect(line).toMatch(/white-space: nowrap/)
 		expect(line).toMatch(/text-overflow: ellipsis/)
@@ -924,8 +1023,11 @@ describe('stylesheet', () => {
 		expect(STYLES.lastIndexOf('@media')).toBeLessThan(STYLES.indexOf('is-compact'))
 	})
 
-	it('draws its edges in --fg-muted', () => {
-		expect(rule('.bar')).toMatch(/border-block: 1px solid var\(--fg-muted\)/)
+	it('draws its edge in --fg-muted, round as the host clips it, while the bar still loads', () => {
+		const body = rules().find(([, selector]) => selector!.trim() === 'body')![2]!
+		expect(body).toMatch(/border: 1px solid var\(--fg-muted\)/)
+		expect(body).toContain(`border-radius: ${BAR_RADIUS_PX}px;`)
+		expect(body).toMatch(/box-sizing: border-box/)
 	})
 
 	it('shows a busy button in its own box', () => {
@@ -946,7 +1048,21 @@ describe('stylesheet', () => {
 	it('shows focus on every control', () => {
 		expect(STYLES).toMatch(/:focus-visible\s*\{[^}]*outline: 2px solid var\(--accent\)/)
 		expect(STYLES).toMatch(/\.select:focus-within\s*\{[^}]*outline: 2px solid var\(--accent\)/)
-		expect(STYLES).toMatch(/\.bar__notice:focus\s*\{[^}]*outline: 2px solid var\(--accent\)/)
+	})
+
+	it.each<[string, () => unknown]>([
+		['saved', () => (writeReply = OK)],
+		['notice', () => (writeReply = { refused: 'not_visible' })],
+	])('draws no ring on the %s message the script focuses, also after a key press', async (_name, reply) => {
+		// Above `:focus-visible` in specificity, so a key press before the focus cannot bring the ring back.
+		expect(rule('.bar__text[tabindex="-1"]:focus')).toMatch(/outline: none/)
+		expect(STYLES).not.toMatch(/\.bar__(saved|notice)[^{]*\{[^}]*outline/)
+		await open()
+		reply()
+		button('Save').focus()
+		key(button('Save'), 'Enter')
+		await flush()
+		expect(document.activeElement!.matches('.bar__text[tabindex="-1"]:focus')).toBe(true)
 	})
 
 	it('fills the frame the host sizes', () => {

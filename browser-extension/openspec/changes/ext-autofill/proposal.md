@@ -54,7 +54,7 @@ The product promise is "Fill in logins on any site, and save new ones as you go"
 - The inline list renders in the frame that holds the field, not in the top frame, because top-frame placement needs frame offsets from `webNavigation`, a permission this change does not add.
 - On Chrome and Firefox alike the inline list shows only in the top frame and in subframes whose ancestors are all same-origin, because the extension cannot check a cross-origin ancestor's visibility, and a mask on one hides the list from Chrome's visibility report too. Bitwarden shows it in cross-origin frames.
 - A pick refused because the page changes how the list is shown keeps the list open with an explanation instead of closing it, since some assistive styling (a zoom extension, or a dark-mode filter without the popover API) refuses every pick.
-- The inline list has one fixed height in every state, so the page cannot count the matches by its size.
+- The inline list fits up to five rows; the page can count the matches by its size, which is accepted as useless to a site.
 - The inline list offers no "New item" and shows only logins (no cards, identities or passkeys), which are later changes.
 - The inline list asks the insecure-page question inside the list, not through a page `confirm()`.
 

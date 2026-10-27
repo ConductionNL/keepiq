@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { INLINE_ROW_PX, type InlineListToBackground, type InlinePickReply, type InlineStateReply } from '@/src/messages'
+import { INLINE_MIN_HEIGHT_PX, INLINE_ROW_PX, inlineHeight, type InlineListToBackground, type InlinePickReply, type InlineStateReply } from '@/src/messages'
 import { setLocale } from '@/src/testing/i18n'
 import { startInlineList } from './list'
 
@@ -115,7 +115,7 @@ describe('key hand-off', () => {
 		expect(options()).toHaveLength(0)
 		post({ kind: 'inline.init', key: KEY })
 		await flush()
-		expect(kinds()).toEqual(['inline.state', 'inline.state'])
+		expect(kinds()).toEqual(['inline.state', 'inline.state', 'inline.resize'])
 		expect(options()).toHaveLength(3)
 	})
 
@@ -124,7 +124,7 @@ describe('key hand-off', () => {
 		post({ kind: 'inline.init', key: 'another' })
 		post({ kind: 'inline.init', key: KEY })
 		await flush()
-		expect(kinds()).toEqual(['inline.state'])
+		expect(kinds()).toEqual(['inline.state', 'inline.resize'])
 	})
 
 	it('keeps the first accepted key when a later one is accepted too', async () => {
@@ -201,23 +201,41 @@ describe('contents', () => {
 		expect(described?.textContent).toBe('Unlock Keepiq to see your logins')
 	})
 
-	it('is the same size in every state: it fills the frame and never tells its parent anything', async () => {
+	it('asks the host, through the background, for the height of what it shows, and never tells its parent anything', async () => {
 		const postToParent = vi.spyOn(window.parent, 'postMessage')
-		const sizes: string[] = []
-		for (const reply of [unlocked(), unlocked(ROWS.slice(0, 1)), unlocked(Array.from({ length: 12 }, (_, i) => ({ id: `${i}`, name: `n${i}`, username: null }))), noMatch(), locked()]) {
+		const twelve = unlocked(Array.from({ length: 12 }, (_, i) => ({ id: `${i}`, name: `n${i}`, username: null })))
+		const asked: unknown[] = []
+		for (const reply of [unlocked(ROWS.slice(0, 1)), unlocked(), twelve, noMatch(), locked()]) {
 			await open(reply)
-			sizes.push([document.documentElement, document.body, document.querySelector('#list')!].map((el) => (el as HTMLElement).style.cssText).join('|'))
+			asked.push(sent.filter((m) => m.kind === 'inline.resize'))
+			sent = []
 			stop()
 		}
-		expect(new Set(sizes).size).toBe(1)
+		// happy-dom lays nothing out, so a message measures as no taller than one row.
+		expect(asked).toEqual([60, 160, 260, 60, 60].map((height) => [{ kind: 'inline.resize', key: KEY, height }]))
 		expect(postToParent).not.toHaveBeenCalled()
 		expect(STYLES).toMatch(/html,\s*body\s*\{[^}]*height: 100%/)
 	})
 
-	it('sizes rows by the shared row height', async () => {
+	it('asks for the height its message measures, and again only when that changes', async () => {
+		const measured = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+			return { height: this.classList.contains('message') ? 70.4 : 0 } as DOMRect
+		})
+		await open(locked())
+		expect(sent.filter((m) => m.kind === 'inline.resize')).toEqual([{ kind: 'inline.resize', key: KEY, height: 83 }])
+		window.dispatchEvent(new Event('resize'))
+		expect(sent.filter((m) => m.kind === 'inline.resize')).toHaveLength(1)
+		measured.mockImplementation(() => ({ height: 120 }) as DOMRect)
+		window.dispatchEvent(new Event('resize'))
+		expect(sent.filter((m) => m.kind === 'inline.resize').at(-1)).toEqual({ kind: 'inline.resize', key: KEY, height: 132 })
+	})
+
+	it('sizes rows by the shared sizes', async () => {
 		await open()
-		expect(document.documentElement.style.getPropertyValue('--row')).toBe(`${INLINE_ROW_PX}px`)
+		const style = document.documentElement.style
+		expect(['--row', '--gap', '--inset', '--radius'].map((name) => style.getPropertyValue(name))).toEqual([`${INLINE_ROW_PX}px`, '2px', '6px', '10px'])
 		expect(STYLES).toMatch(/\.row\s*\{[^}]*height: var\(--row\)/)
+		expect(STYLES).toMatch(/\.listbox\s*\{[^}]*gap: var\(--gap\)/)
 	})
 
 	it('sets its language and title from the catalog', async () => {
@@ -449,7 +467,7 @@ describe('pick guard', () => {
 		await open()
 		click(row(0))
 		await flush()
-		expect(kinds()).toEqual(['inline.state', 'inline.pick'])
+		expect(kinds()).toEqual(['inline.state', 'inline.resize', 'inline.pick'])
 	})
 })
 
@@ -542,6 +560,29 @@ describe('insecure question', () => {
 		click(row(1))
 		await flush()
 		expect(picks()).toHaveLength(1)
+	})
+
+	it('asks for the question\'s height, and for the rows\' again after Cancel', async () => {
+		await ask()
+		const asked = () => sent.flatMap((m) => (m.kind === 'inline.resize' ? [m.height] : []))
+		expect(asked()).toEqual([inlineHeight(3), INLINE_MIN_HEIGHT_PX])
+		button('Cancel').click()
+		expect(asked()).toEqual([inlineHeight(3), INLINE_MIN_HEIGHT_PX, inlineHeight(3)])
+	})
+
+	it('lets the keyboard reach a warning the frame has no room for', async () => {
+		await ask()
+		const list = document.getElementById('list')!
+		vi.spyOn(list, 'scrollHeight', 'get').mockReturnValue(200)
+		const clientHeight = vi.spyOn(list, 'clientHeight', 'get').mockReturnValue(120)
+		window.dispatchEvent(new Event('resize'))
+		const text = document.getElementById('question-text')!
+		expect(text.getAttribute('tabindex')).toBe('0')
+		key(button('Cancel'), 'Tab', { shiftKey: true })
+		expect(document.activeElement).toBe(text)
+		clientHeight.mockReturnValue(200)
+		window.dispatchEvent(new Event('resize'))
+		expect(text.hasAttribute('tabindex')).toBe(false)
 	})
 
 	it('keeps Tab between its buttons', async () => {
@@ -652,18 +693,19 @@ describe('stylesheet', () => {
 		}
 	})
 
-	it('lets a message scroll and wrap long host names', () => {
+	it('wraps long host names, lets a message grow, and scrolls what the host has no room for', () => {
 		const message = /\.message\s*\{([^}]*)\}/.exec(STYLES)![1]
-		expect(message).toMatch(/justify-content: safe center/)
-		expect(message).toMatch(/overflow-y: auto/)
+		expect(message).toMatch(/min-height: var\(--row\)/)
+		expect(message).not.toMatch(/(^|[^-])height:/)
 		expect(message).toMatch(/overflow-wrap: anywhere/)
+		expect(/\.list\s*\{([^}]*)\}/.exec(STYLES)![1]).toMatch(/overflow-y: auto/)
 	})
 
-	it('draws its edge as the list\'s own outline, in a colour of at least 3:1, taking no room from the rows', () => {
-		const list = /\.list\s*\{([^}]*)\}/.exec(STYLES)![1]
-		expect(list).toMatch(/outline: 1px solid var\(--fg-muted\)/)
-		expect(list).toMatch(/outline-offset: -1px/)
-		expect(list).not.toMatch(/border|padding/)
+	it('draws its edge on the body in a colour of at least 3:1, as the first pixel of the inset', () => {
+		const body = /\}\s*body\s*\{([^}]*)\}/.exec(STYLES.replace(/\/\*[\s\S]*?\*\//g, ''))![1]
+		expect(body).toMatch(/border: 1px solid var\(--fg-muted\)/)
+		expect(body).toMatch(/border-radius: var\(--radius\)/)
+		expect(/\.list\s*\{([^}]*)\}/.exec(STYLES)![1]).toMatch(/padding: calc\(var\(--inset\) - 1px\)/)
 	})
 
 	it('paints nothing over the list, which would make Chrome report it never visible', () => {
@@ -776,7 +818,10 @@ describe('visibility on Chrome', () => {
 			expect(listbox()).toBeNull()
 			expect(document.activeElement).toBe(message(REFUSED))
 			expect(postToParent).not.toHaveBeenCalled()
-			expect(kinds()).toEqual(['inline.state'])
+			expect(sent.filter((m) => m.kind !== 'inline.state')).toEqual([
+				{ kind: 'inline.resize', key: KEY, height: inlineHeight(3) },
+				{ kind: 'inline.resize', key: KEY, height: INLINE_MIN_HEIGHT_PX },
+			])
 		})
 
 		it('for a click, and for Fill in the insecure question', async () => {

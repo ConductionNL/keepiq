@@ -4,7 +4,7 @@
  */
 import { i18n } from '#i18n'
 import {
-	INLINE_MAX_ROWS, INLINE_MIN_ROWS, INLINE_MIN_WIDTH_PX, INLINE_ROW_PX,
+	INLINE_MIN_HEIGHT_PX, INLINE_MIN_WIDTH_PX, INLINE_RADIUS_PX, inlineClampHeight,
 	type BackgroundToContent, type ContentToBackground, type ContentToInlineList, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement, type OpenList } from './execute'
@@ -17,6 +17,8 @@ export { GUARD_MS }
 export const READY_TIMEOUT_MS = 3000
 /** Half the 16 px the list keeps clear of the viewport's sides. */
 const EDGE_PX = 8
+/** Between the field and the list. */
+const OFFSET_PX = 4
 const TOLERANCE_PX = 0.5
 
 export interface InlineHostOptions {
@@ -44,7 +46,8 @@ interface Open {
 	parent: Element
 	popover: boolean
 	observer: MutationObserver
-	rows: number
+	/** The height the background or the list asked for; `box.height` is that, or less where the frame has less room. */
+	wanted: number
 	box: Box
 	loads: number
 	ready: boolean
@@ -82,22 +85,24 @@ function viewport(): { width: number; height: number } {
 	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
 }
 
-/** Below the field when it fits there, else above; `rows` is fixed once the list is open. */
-export function placement(field: Element, rows: number | null): (Box & { rows: number }) | null {
+/**
+ * Below the field when `height` fits there, else above. `fit`, when the list opens or asks for a height: shrink to the
+ * larger free side, down to one row. Otherwise the height is fixed, and a side that cannot hold it is no place.
+ */
+export function placement(field: Element, height: number, fit = false): Box | null {
 	const rect = field.getBoundingClientRect()
 	const view = viewport()
 	if (rect.width === 0 && rect.height === 0) return null
 	if (rect.bottom <= 0 || rect.top >= view.height || rect.right <= 0 || rect.left >= view.width) return null
 	const width = Math.min(Math.max(rect.width, INLINE_MIN_WIDTH_PX), view.width - 2 * EDGE_PX)
 	if (width < INLINE_MIN_WIDTH_PX) return null
-	const below = view.height - rect.bottom
-	const above = rect.top
-	const fixed = rows ?? Math.min(INLINE_MAX_ROWS, Math.floor(Math.max(below, above) / INLINE_ROW_PX))
-	if (fixed < INLINE_MIN_ROWS) return null
-	const height = fixed * INLINE_ROW_PX
-	const top = below >= height ? rect.bottom : above >= height ? rect.top - height : null
+	const below = view.height - rect.bottom - OFFSET_PX
+	const above = rect.top - OFFSET_PX
+	const fitted = fit ? Math.min(height, Math.floor(Math.max(below, above))) : height
+	if (fitted < INLINE_MIN_HEIGHT_PX) return null
+	const top = below >= fitted ? rect.bottom + OFFSET_PX : above >= fitted ? rect.top - OFFSET_PX - fitted : null
 	if (top === null) return null
-	return { top, left: Math.max(0, Math.min(rect.left, view.width - EDGE_PX - width)), width, height, rows: fixed }
+	return { top, left: Math.max(0, Math.min(rect.left, view.width - EDGE_PX - width)), width, height: fitted }
 }
 
 const isInput = (target: EventTarget | null | undefined): target is HTMLInputElement => target instanceof HTMLInputElement
@@ -164,10 +169,12 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		}
 	}
 
+	/** The shadow paints outside the host's box and takes no clicks, so the host is exactly the list. */
 	function style(list: Open, box: Box): void {
 		list.host.style({
 			'position': 'fixed', 'top': `${box.top}px`, 'left': `${box.left}px`, 'width': `${box.width}px`, 'height': `${box.height}px`,
 			'margin': '0', 'padding': '0', 'border': '0', 'display': 'block', 'overflow': 'clip', 'z-index': '2147483647',
+			'border-radius': `${INLINE_RADIUS_PX}px`, 'box-shadow': '0 6px 20px rgba(0, 0, 0, 0.16), 0 1px 4px rgba(0, 0, 0, 0.12)',
 			'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto', 'background': 'transparent', 'color-scheme': 'normal',
 			'transform': 'none', 'scale': 'none', 'rotate': 'none', 'translate': 'none', 'zoom': '1',
 			'filter': 'none', 'mix-blend-mode': 'normal', 'clip-path': 'none', 'mask': 'none',
@@ -225,10 +232,20 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		const list = open
 		if (!list) return
 		list.frame = requestAnimationFrame(tick)
-		const box = fieldShown(list.field) ? placement(list.field, list.rows) : null
+		const box = fieldShown(list.field) ? placement(list.field, list.box.height) : null
 		if (!box) return close()
 		if (!sameBox(box, list.box)) move(list, box)
 		if (open === list) sample(list)
+	}
+
+	/** Content that needs another height, such as the insecure question; a move like any other for the guard. */
+	function resize(list: Open, height: unknown): void {
+		const wanted = inlineClampHeight(height)
+		if (wanted === null || wanted === list.wanted) return
+		list.wanted = wanted
+		const box = fieldShown(list.field) ? placement(list.field, wanted, true) : null
+		if (!box) return close()
+		if (!sameBox(box, list.box)) move(list, box)
 	}
 
 	function watchIntersection(list: Open): void {
@@ -242,12 +259,12 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		list.intersection.observe(list.host.element)
 	}
 
-	function show(field: HTMLInputElement, key: string, box: Box & { rows: number }): void {
+	function show(field: HTMLInputElement, key: string, wanted: number, box: Box): void {
 		const host = createFrameHost('/inline-list.html', i18n.t('inlineList.frameTitle'))
 		const popover = typeof host.element.showPopover === 'function'
 		const list: Open = {
 			key, field, host, parent: modalOf(field, popover) ?? document.documentElement, popover,
-			rows: box.rows, box, loads: 0, ready: false, frame: 0, lastNotVisibleAt: Date.now(),
+			wanted, box, loads: 0, ready: false, frame: 0, lastNotVisibleAt: Date.now(),
 			observer: new MutationObserver(onMutations),
 		}
 		open = list
@@ -288,18 +305,20 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		if (how === 'focus' && field.value !== '') return
 		if (!isQualifying(field)) return
 		close()
-		if (!placement(field, null)) return
+		// Whatever the list will show, it needs room for one row.
+		if (!placement(field, INLINE_MIN_HEIGHT_PX)) return
 		const token = {}
 		pending = { field, token }
 		void request({ kind: 'inline.open' }).then((reply) => {
-			const key = (reply as { key?: unknown } | null)?.key
+			const { key, height } = (reply ?? {}) as { key?: unknown; height?: unknown }
 			if (typeof key !== 'string') {
 				if (pending?.token === token) pending = null
 				return
 			}
-			const box = pending?.token === token && deepActiveElement() === field && fieldShown(field) ? placement(field, null) : null
+			const wanted = inlineClampHeight(height)
+			const box = wanted !== null && pending?.token === token && deepActiveElement() === field && fieldShown(field) ? placement(field, wanted, true) : null
 			if (pending?.token === token) pending = null
-			if (box) show(field, key, box)
+			if (box && wanted !== null) show(field, key, wanted, box)
 			else send({ kind: 'inline.closed', key })
 		})
 	}
@@ -431,6 +450,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 				clearTimeout(list.readyTimer)
 			} else if (message.kind === 'inline.refocus') refocusField(list.field)
 			else if (message.kind === 'inline.close') close(message.refocus === true)
+			else if (message.kind === 'inline.resize') resize(list, message.height)
 			return undefined
 		},
 	}

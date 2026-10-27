@@ -84,7 +84,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 
 - **Isolated:** each is an extension page in an iframe inside a closed shadow root; the page can neither read it nor restyle it, and any change the content script didn't make closes it.
 - **Key handshake:** the content script posts a random key to its own iframe at the extension origin; the background answers only the first frame of that page, tab and frame to present it, so a copy the page frames itself gets nothing.
-- **What the page learns:** the content script never gets names or usernames; the list has one fixed height whatever matches, and the bar's height depends on the window only.
+- **What the page learns:** the content script never gets names or usernames; the list's height shows how many logins match, up to five, which is accepted as useless to a site, and the save card's size depends on the window only.
 - **Visibility guard:** a pick, Save, Update or Never counts only when the list or bar stayed untouched and on top for the 500 ms before the press, and is what the press point hits. Otherwise it is refused, and the list or bar says so.
 - **Frames:** no inline list in a frame with a cross-origin ancestor, on either browser, since the extension couldn't check that ancestor's styling.
 - **Chrome** adds IntersectionObserver v2, which also sees overlays that let clicks through.

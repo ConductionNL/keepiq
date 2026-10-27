@@ -63,7 +63,7 @@ test('a bar the page covers does not act on a click through the cover', async ({
 		document.body.append(cover)
 		cover.showPopover()
 	})
-	const save = bar.locator('.bar__buttons button').first()
+	const save = bar.locator('.bar__buttons .btn--primary')
 	const box = (await save.boundingBox())!
 	const notVisible = barText('notVisible')
 	await expect(async () => {

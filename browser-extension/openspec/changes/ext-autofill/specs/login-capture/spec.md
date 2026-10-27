@@ -60,7 +60,7 @@ The extension SHALL keep a captured credential in background memory keyed by tab
 - **THEN** the credential is dropped
 
 ### Requirement: Save bar for a new login
-When no item matching the page holds the captured username, and "Ask to add login" is on, and the page's base domain is not excluded, the extension SHALL show a notification bar at the top of the page, offering a folder choice under a visible "Folder" label, "Save", "Never for this site" and a close button, after the Keepiq logo, which is decorative. It is shown after the navigation that follows the submit completes, or, for a submit that does not navigate (a single-page app), about 300 ms after the submit. The bar is rendered in an extension page inside an iframe hosted by the content script, so page scripts cannot read or alter it. Its height depends only on the width of the top frame's viewport (64 CSS px from 900 px wide, 96 px from 420 px, 128 px below), or is compact in a short viewport (Keyboard and screen reader access to the bar), never on its mode or text.
+When no item matching the page holds the captured username, and "Ask to add login" is on, and the page's base domain is not excluded, the extension SHALL show a notification card in the top-right corner of the page, offering a folder choice under a visible "Folder" label, "Never for this site", "Save" and a close button, after the Keepiq logo, which is decorative. It is shown after the navigation that follows the submit completes, or, for a submit that does not navigate (a single-page app), about 300 ms after the submit. The bar is rendered in an extension page inside an iframe hosted by the content script, so page scripts cannot read or alter it. The card sits 12 CSS px from the top and right edges and is 400 px wide, or the viewport width minus 24 px when narrower. Its size depends only on the top frame's viewport (148 px tall, 168 px below a 424 px wide viewport), or is compact in a short viewport (Keyboard and screen reader access to the bar), never on its mode or text; a question or error longer than the card holds scrolls inside it.
 
 #### Scenario: New login on a site with no items
 - **GIVEN** the setting on and no item for the site
@@ -106,7 +106,7 @@ The extension SHALL, on "Never for this site", append the page's base domain to 
 - **AND** the item is still offered in "Autofill suggestions"
 
 ### Requirement: Update bar for a changed password
-When exactly one matching item holds the captured username and its decrypted `key` differs from the captured password, and "Ask to update existing login" is on, the extension SHALL show an update bar with "Update" and a close button. It asks "Update password for {name} ({username})?" (nl "Wachtwoord van {name} ({username}) bijwerken?"), with the item's name and username; without a username on the item the parenthesised part is left out. When the submitting frame's host differs from the top frame's host at the submit, the question ends "on {host}" (nl "op {host}") with the submitting frame's host. A password change form is matched by the item whose password was filled or captured earlier on that tab, or by the single matching item. No update is offered for a use-only or read-only copy, which may not be changed.
+When exactly one matching item holds the captured username and its decrypted `key` differs from the captured password, and "Ask to update existing login" is on, the extension SHALL show an update card with "Update" and a close button. It asks "Update password for {name} ({username})?" (nl "Wachtwoord van {name} ({username}) bijwerken?"), with the item's name and username; without a username on the item the parenthesised part is left out. Under the question, a row shows the item's name with its username below it, or the name alone, after a generic login icon; it is hidden from screen readers, as it repeats the question, and gives way to a question too long to fit beside it. When the submitting frame's host differs from the top frame's host at the submit, the question ends "on {host}" (nl "op {host}") with the submitting frame's host. A password change form is matched by the item whose password was filled or captured earlier on that tab, or by the single matching item. No update is offered for a use-only or read-only copy, which may not be changed.
 
 #### Scenario: Different password for a known username
 - **GIVEN** an item "GitHub" for the site with username `alice` and "Ask to update existing login" on
@@ -178,7 +178,7 @@ The extension SHALL apply the inline list's visibility guard (`inline-list` spec
 - **THEN** the bar is closed and nothing is saved
 
 ### Requirement: Keyboard and screen reader access to the bar
-The bar SHALL be a region labelled "Keepiq notification" (nl "Keepiq-melding") whose question is announced through a status region when it appears, followed by "Press {shortcut} to answer." while the `focus_notification_bar` command has a shortcut, and it MUST never take focus when shown. That command, suggested as Alt+Shift+K (macOS Command+Shift+K), moves focus to the bar's first control while a bar is showing. Escape in the bar acts as Close. When the bar goes while focus is in it, focus returns to the page element that had it before. When the page's focused element sits under the bar, also after scrolling with focus kept, the bar moves to the other edge of the viewport (WCAG 2.4.11), and it stays there until focus lands on an element under it again. Where the bar's height would cover more than a third of the viewport (as at 400% zoom), it is one compact row of 40 CSS px with an expand control, an arrow button named "Show options" (nl "Opties tonen") that takes focus first and grows the bar when pressed; it grows to its full height while focus is in it, shrinking when focus leaves; its height follows only the viewport and the user's focus, never what it says. A modal dialog the page opens after the bar takes the bar inside it, so the bar stays usable. After a save or update the bar stays while focus or the pointer is in it, and closes once they leave.
+The bar SHALL be a region labelled "Keepiq notification" (nl "Keepiq-melding") whose question is announced through a status region when it appears, followed by "Press {shortcut} to answer." while the `focus_notification_bar` command has a shortcut, and it MUST never take focus when shown. That command, suggested as Alt+Shift+K (macOS Command+Shift+K), moves focus to the bar's first control while a bar is showing. Escape in the bar acts as Close. When the bar goes while focus is in it, focus returns to the page element that had it before. When the page's focused element sits under the card, overlapping it both vertically and horizontally, also after scrolling with focus kept, the card moves between the top-right and bottom-right corner of the viewport (WCAG 2.4.11), and it stays there until focus lands on an element under it again. Where the card's height would cover more than half of the viewport (as at 400% zoom), it is one compact row of 40 CSS px with an expand control, an arrow button named "Show options" (nl "Opties tonen") that takes focus first and grows the card when pressed; it grows to its full height, at most the viewport height minus 24 px, while focus is in it, shrinking when focus leaves; its height follows only the viewport and the user's focus, never what it says. A modal dialog the page opens after the bar takes the bar inside it, so the bar stays usable. After a save or update the bar stays while focus or the pointer is in it, and closes once they leave.
 
 #### Scenario: Bar appears
 - **GIVEN** a screen reader user who submitted a new login
@@ -200,12 +200,17 @@ The bar SHALL be a region labelled "Keepiq notification" (nl "Keepiq-melding") w
 - **GIVEN** a viewport 160 CSS px tall, as at 400% zoom
 - **WHEN** the bar appears
 - **THEN** it is 40 CSS px tall
-- **AND** it grows to its full height while focus is in it, and shrinks back when focus moves to the page
+- **AND** it grows to 136 CSS px while focus is in it, and shrinks back when focus moves to the page
 
 #### Scenario: Scrolled under the bar
-- **GIVEN** a bar at the top and a focused field below it
-- **WHEN** the user scrolls so the field is under the bar, focus staying in it
-- **THEN** the bar moves to the bottom
+- **GIVEN** a card in the top-right corner and a focused field below it
+- **WHEN** the user scrolls so the field is under the card, focus staying in it
+- **THEN** the card moves to the bottom-right corner
+
+#### Scenario: Field beside the card
+- **GIVEN** a card in the top-right corner
+- **WHEN** focus moves to a field at the same height, left of the card
+- **THEN** the card stays where it is
 
 #### Scenario: Focus elsewhere does not flip the bar
 - **GIVEN** a bar moved to the bottom for a field it covered at the top
@@ -223,9 +228,9 @@ The bar SHALL be a region labelled "Keepiq notification" (nl "Keepiq-melding") w
 - **THEN** the bar closes, the capture is dropped, and focus returns to that field
 
 #### Scenario: Focused field under the bar
-- **GIVEN** a bar at the top of the page
-- **WHEN** focus moves to a field the bar covers
-- **THEN** the bar moves to the bottom of the viewport
+- **GIVEN** a card in the top-right corner
+- **WHEN** focus moves to a field the card covers
+- **THEN** the card moves to the bottom-right corner
 
 ### Requirement: Bar follows the tab and dismisses on leaving the site
 The extension SHALL show the bar in the top frame of the tab where the submit happened, never in a subframe, re-inject it when that tab navigates within the same base domain while the capture is pending, and dismiss it when the tab navigates to another base domain or the user closes it. A submit in a subframe is checked, excluded and saved under the subframe's own URL, and the bar follows the top frame's base domain at the time of the submit. A page that starts loading within the 300 ms after the submit shows no bar until the next page completes.

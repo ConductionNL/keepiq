@@ -56,8 +56,9 @@ Bitwarden's inline autofill menu, reduced to the login list. Matching and decryp
 - Listeners are capture-phase `focusin`, `pointerdown`, `click`, `input` and `keydown` on `document`.
 - Any focus of an empty qualifying field opens the list, script focus and `autofocus` included; so does a trusted click in a qualifying field.
 - At start the content script checks `document.activeElement`, through open shadow roots, for a field focused before `document_idle`.
-- The content script sends `inline.open`; the background answers `{ key }`, or `null` without a logged-in account, with `inlineSuggestions` off, or for a non-`http(s)` `sender.url`.
-- The height is five rows, or less in a small frame (§ Position), and the same in every state, so the content script sizes and positions the host without waiting for the list.
+- The content script sends `inline.open`; the background answers `{ key, height }`, or `null` without a logged-in account, with `inlineSuggestions` off, or for a non-`http(s)` `sender.url`.
+- `height` is `inlineHeight` of the matches the background counts without decrypting, one row when locked, so the host opens at its size without waiting for the list.
+- Text the background can't measure, such as a message that wraps, the question or a refusal, makes the list page send `inline.resize`; the background clamps it with `inlineClampHeight` and forwards it to the host.
 
 ### Session
 
@@ -98,11 +99,11 @@ Bitwarden's inline autofill menu, reduced to the login list. Matching and decryp
 
 ### Position
 
-- Below the field, left edges aligned, at least the field's width and 240 CSS px, at most the frame's viewport width minus 16 px; when less than 240 px fits, the list does not open.
-- Height: five rows, or the larger free side of the field within the frame's viewport when that is smaller, fixed when the list opens; when fewer than two rows fit, the list does not open.
+- 4 px below the field, left edges aligned, at least the field's width and 240 CSS px, at most the frame's viewport width minus 16 px; when less than 240 px fits, the list does not open.
+- Height: the list's contents, one to five rows, capped by the larger free side of the field within the frame's viewport; when less than one row fits, the list does not open. The check runs before the background is asked, so whether a list opens never depends on the vault.
 - On the side with more room when there is less room below than the list's height; never over the field. When neither side fits it any more, the list closes.
 - Repositioned in each `requestAnimationFrame` sample while open, which follows scrolling, `resize`, `visualViewport` changes and layout shifts alike.
-- Each change of position posts `inline.moved` with the key to the list page.
+- Each change of position or height posts `inline.moved` with the key to the list page.
 - Closed when the field is removed, hidden or fully out of the viewport.
 
 ### Keyboard
@@ -168,12 +169,12 @@ Bitwarden's inline autofill menu, reduced to the login list. Matching and decryp
 The save and update bar reuses the inline list's host and guard; matching, decryption and the password stay in the background.
 
 - **Key.** Each show issues a random 128-bit key with `capture.show`; the host posts it as `capture.init` to its own frame at the extension origin after the frame's `load`, and a second `load` closes the bar. The background binds the first frame presenting a key in `capture.state` and answers nothing else; up to four recent keys stay valid, for a bar a slower page load still shows.
-- **Host.** A `popover="manual"` in the top layer where the popover API exists, inside the modal dialog or `aria-modal` container around focus; else fixed at max `z-index` on `<html>`. Full width at the top, `top`/`left` only, the style attribute written whole as in § Host.
+- **Host.** A `popover="manual"` in the top layer where the popover API exists, inside the modal dialog or `aria-modal` container around focus; else fixed at max `z-index` on `<html>`. A card 12 px in from the top-right corner, `top`/`left` only, with its radius and shadow in the style attribute written whole as in § Host. The host box is exactly the card, so no transparent area takes the page's clicks.
 - **Guard.** As § Visibility guard, through `src/autofill/visibility.ts`: a `MutationObserver` and toggle events close the bar on a change the host did not make; every animation frame samples it with `drawnUntouched()`; `capture.verify` answers whether the bar was visible for the 500 ms before the press and is what the press point hits. Save, Update and Never go through it; Close does not.
-- **Height.** By the top frame's viewport alone (`barHostHeight` in `src/messages.ts`), so neither the mode nor the text shows in the page's layout: 64, 96 or 128 px by width, and `BAR_COMPACT_HEIGHT_PX` (40) where that would cover more than a third of the viewport height.
-- **Expand.** A compact bar grows to its full height while focus is in it: on a trusted `focusin` of the host, or the bar's `capture.expand` relayed by the background; it shrinks on the next `focusin` outside or animation frame without focus, since focus leaving for nothing focusable sends the host no event. Every resize posts `capture.moved`.
+- **Size.** By the top frame's viewport alone (`barWidth` and `barHostHeight` in `src/messages.ts`), so neither the mode nor the text shows in the page's layout: 400 px wide or the viewport minus the insets, 148 px tall or 168 px when narrow, sized for a two-line question (three when narrow) with longer text scrolling, and `BAR_COMPACT_HEIGHT_PX` (40) where that would cover more than half of the viewport height.
+- **Expand.** A compact card grows to its full height, capped at the viewport minus the insets, while focus is in it: on a trusted `focusin` of the host, or the bar's `capture.expand` relayed by the background; it shrinks on the next `focusin` outside or animation frame without focus, since focus leaving for nothing focusable sends the host no event. Every resize posts `capture.moved`.
 - **Shortcut.** `focus_notification_bar` suggests Alt+Shift+K (macOS Command+Shift+K): every Ctrl+Shift letter is taken by Chrome, Firefox, IBus or Bitwarden, Chrome's Alt+Shift uses only A, I, N and T, and neither browser binds Command+Shift+K; `capture.state` names the assigned key for the bar to announce.
-- **Focus.** The host never takes focus. The command → `capture.focus` → the frame is focused and gets `capture.focus`. A hide while focus is in the bar returns it to the page element that last had it; the hide after a save waits for focus and pointer to leave. Each animation frame and `focusin` check the page's focused element: under the bar, the host moves to the other edge, unless the element is under that too; it does not move back until focus is on an element under it again.
+- **Focus.** The host never takes focus. The command → `capture.focus` → the frame is focused and gets `capture.focus`. A hide while focus is in the bar returns it to the page element that last had it; the hide after a save waits for focus and pointer to leave. Each animation frame and `focusin` check the page's focused element: when it overlaps the card on both axes, the host moves to the other right-hand corner, unless the element is under that too; it does not move back until focus is on an element under it again.
 - **Modals.** Each animation frame looks for a `:modal` or `aria-modal` ancestor of focus that the host is not in, and for the host's modal having closed; the host moves with `moveBefore`, which keeps the frame's document, disconnecting its observer around the move. Without `moveBefore` the host closes and sends `capture.reshow`, and the background shows a new bar with a new key.
 
 ## Module layout
@@ -229,7 +230,7 @@ type FillExecute = { kind: 'fill.execute'; username: string | null; password: st
 type FillExecuteReply = { filled: 'both' | 'username' | 'password' | 'none' }
 
 /** Content script → background. Frame and URL come from sender. */
-type InlineOpen = { kind: 'inline.open' }   // request/response, reply: { key: string } | null
+type InlineOpen = { kind: 'inline.open' }   // request/response, reply: { key: string; height: number } | null
 type InlineClosed = { kind: 'inline.closed'; key: string }   // fire-and-forget; the key, so a late close never drops a newer session
 
 /** Content script → its own list iframe, by postMessage to the extension origin. */
@@ -249,15 +250,17 @@ type InlinePickReply = { filled: 'both' | 'username' | 'password' | 'none' } | {
 type InlineRefocus = { kind: 'inline.refocus'; key: string }   // fire-and-forget
 type InlineClose = { kind: 'inline.close'; key: string; refocus: boolean }   // fire-and-forget
 type InlineUnlock = { kind: 'inline.unlock'; key: string }   // fire-and-forget
+type InlineResize = { kind: 'inline.resize'; key: string; height: number }   // fire-and-forget; what its contents need
 
 /** Background → the frame hosting the list. `key`: the session's, so a message for a list since closed cannot reach the next. */
 type InlineReady = { kind: 'inline.ready'; key: string }   // fire-and-forget
 type InlineVerify = { kind: 'inline.verify'; key: string; input: PickInput }   // request/response, reply: boolean
 type InlineRefocusHost = { kind: 'inline.refocus'; key: string }   // fire-and-forget
 type InlineCloseHost = { kind: 'inline.close'; key: string; refocus: boolean }   // fire-and-forget
+type InlineResizeHost = { kind: 'inline.resize'; key: string; height: number }   // fire-and-forget; clamped by `inlineClampHeight`
 
-/** Shared by host and list page: the iframe is rows × 44 px tall, 2 to 5 rows, at least 240 px wide. */
-const INLINE_ROW_PX = 44, INLINE_MAX_ROWS = 5, INLINE_MIN_ROWS = 2, INLINE_MIN_WIDTH_PX = 240
+/** Shared by host and list page: `inlineHeight(rows)` is 1 to 5 rows of 48 px, 2 px apart, inside a 6 px inset; at least 240 px wide. */
+const INLINE_ROW_PX = 48, INLINE_GAP_PX = 2, INLINE_INSET_PX = 6, INLINE_MAX_ROWS = 5, INLINE_MIN_WIDTH_PX = 240, INLINE_RADIUS_PX = 10
 
 /** Content script → background. Fire-and-forget. URL comes from sender.url. */
 type CaptureSubmitted = { kind: 'capture.submitted'; username: string | null; password: string; changed: boolean }
@@ -284,16 +287,16 @@ type CaptureUpdate = { kind: 'capture.update'; key: string; input: PickInput }  
 type CaptureDismiss = { kind: 'capture.dismiss'; key: string; never: boolean; input?: PickInput }   // reply: CaptureRefused | null; `input` with `never`
 type CaptureExpand = { kind: 'capture.expand'; key: string }   // reply: null; the compact bar got focus or a press
 
-/** The bar's height by the top frame's viewport width alone: 64 px from 900 px, 96 px from 420 px, 128 px below. */
-const BAR_WIDE_HEIGHT_PX = 64, BAR_MEDIUM_HEIGHT_PX = 96, BAR_NARROW_HEIGHT_PX = 128, BAR_WIDE_MIN_WIDTH_PX = 900, BAR_MEDIUM_MIN_WIDTH_PX = 420
-/** Above a third of the viewport height, the host is compact until the user expands it: `barHostHeight(width, height, expanded)`. */
-const BAR_COMPACT_HEIGHT_PX = 40, BAR_MAX_VIEWPORT_SHARE = 1 / 3
+/** The card's box by the top frame's viewport alone: `barWidth(width)`, and 148 px tall, 168 px once the viewport narrows it. */
+const BAR_INSET_PX = 12, BAR_WIDTH_PX = 400, BAR_HEIGHT_PX = 148, BAR_NARROW_HEIGHT_PX = 168, BAR_RADIUS_PX = 12
+/** Above half of the viewport height, the host is compact until the user expands it: `barHostHeight(width, height, expanded)`. */
+const BAR_COMPACT_HEIGHT_PX = 40, BAR_MAX_VIEWPORT_SHARE = 1 / 2
 
 /** Background → offscreen document (Chrome only). Request/response, reply: boolean. */
 type OffscreenWriteClipboard = { kind: 'offscreen.writeClipboard'; text: string }
 ```
 
-`ContentToBackground` gains `InlineOpen`, `InlineClosed`, `CaptureSubmitted` and `CaptureReshow`, and `page_ready` gains `passwordField` (the top frame has a login form with one, for fill on page load); new unions `BackgroundToContent` (`FillConfirmInsecure`, `FillExecute`, the four host-bound `inline.*` and the five `capture.*`), `ContentToInlineList`, `ContentToNotification`, `InlineListToBackground` and `NotificationToBackground`; `PopupRequest` gains `FillRequest`; the existing `BackgroundToOffscreen` gains `OffscreenWriteClipboard`. Every listener keeps the `unknown` cast at the boundary.
+`ContentToBackground` gains `InlineOpen`, `InlineClosed`, `CaptureSubmitted` and `CaptureReshow`, and `page_ready` gains `passwordField` (the top frame has a login form with one, for fill on page load); new unions `BackgroundToContent` (`FillConfirmInsecure`, `FillExecute`, the five host-bound `inline.*` and the five `capture.*`), `ContentToInlineList`, `ContentToNotification`, `InlineListToBackground` and `NotificationToBackground`; `PopupRequest` gains `FillRequest`; the existing `BackgroundToOffscreen` gains `OffscreenWriteClipboard`. Every listener keeps the `unknown` cast at the boundary.
 
 ## Risks / Trade-offs
 
@@ -316,7 +319,8 @@ type OffscreenWriteClipboard = { kind: 'offscreen.writeClipboard'; text: string 
 - [Page script focuses a login field to open the list] → The list shows nothing the page can read, and keyboard and pointer picks are guarded.
 - [Page CSP blocks the extension iframe] → The host removes itself; fill from the popup, menu and shortcut still works.
 - [A formless login whose only submit button is icon-only] → Its anchor becomes the document root, so its submit search may pick an unrelated keyword button; Enter in the password field still captures it.
-- [Small login iframe] → The list shrinks to the larger free side down to two rows, and does not open below that; fill from the popup, menu and shortcut still works.
+- [Small login iframe] → The list shrinks to the larger free side down to one row, and does not open below that; fill from the popup, menu and shortcut still works.
+- [The page reads the list's height] → Accepted: it learns how many logins match, up to five, which is of no use to a site; names and usernames stay in the list page.
 
 ## Open Questions
 

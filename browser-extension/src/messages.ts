@@ -48,8 +48,11 @@ export type FillExecuteReply = { filled: FillOutcome }
 
 /** Request/response. */
 export type InlineOpen = { kind: 'inline.open' }
-/** `null`: no list, for no logged-in account, `inlineSuggestions` off or a page that is not http(s). */
-export type InlineOpenReply = { key: string } | null
+/**
+ * `null`: no list, for no logged-in account, `inlineSuggestions` off or a page that is not http(s). `height`: the
+ * list's, by `inlineHeight`, which the page can read from the host anyway.
+ */
+export type InlineOpenReply = { key: string; height: number } | null
 /** Fire-and-forget. `key`: the closed list's, so it never drops a newer session. */
 export type InlineClosed = { kind: 'inline.closed'; key: string }
 
@@ -60,13 +63,31 @@ export type ContentToInlineList =
 	| { kind: 'inline.moved'; key: string }
 
 /**
- * The list's size, shared by the host and the list page: the iframe is `rows × INLINE_ROW_PX` tall, `rows` from
- * `INLINE_MIN_ROWS` to `INLINE_MAX_ROWS`, in every state, and at least `INLINE_MIN_WIDTH_PX` wide.
+ * The list's size, shared by the background, the host and the list page. It is as tall as what it shows: its rows up
+ * to `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, or one row for the locked and no-match messages, with `INLINE_INSET_PX`
+ * of edge and padding above and below. Content that needs more asks for it with `inline.resize`, up to
+ * `INLINE_MAX_HEIGHT_PX`. At least `INLINE_MIN_WIDTH_PX` wide.
  */
-export const INLINE_ROW_PX = 44
+export const INLINE_ROW_PX = 48
+export const INLINE_GAP_PX = 2
+export const INLINE_INSET_PX = 6
 export const INLINE_MAX_ROWS = 5
-export const INLINE_MIN_ROWS = 2
 export const INLINE_MIN_WIDTH_PX = 240
+/** The list's corners, which the host clips the frame to. */
+export const INLINE_RADIUS_PX = 10
+
+export const inlineHeight = (rows: number) => {
+	const shown = Math.min(Math.max(Math.floor(rows), 1), INLINE_MAX_ROWS)
+	return 2 * INLINE_INSET_PX + shown * INLINE_ROW_PX + (shown - 1) * INLINE_GAP_PX
+}
+
+/** One row: with less room on both sides of the field, the list does not open. */
+export const INLINE_MIN_HEIGHT_PX = inlineHeight(1)
+export const INLINE_MAX_HEIGHT_PX = inlineHeight(INLINE_MAX_ROWS)
+
+/** A height the list asked for, within the list's bounds; `null` for anything but a number. */
+export const inlineClampHeight = (height: unknown): number | null =>
+	typeof height === 'number' && Number.isFinite(height) ? Math.min(Math.max(Math.ceil(height), INLINE_MIN_HEIGHT_PX), INLINE_MAX_HEIGHT_PX) : null
 
 export interface InlineRow {
 	id: string
@@ -86,10 +107,12 @@ export interface PickInput {
 export type InlineListToBackground =
 	| { kind: 'inline.state'; key: string }
 	| { kind: 'inline.pick'; key: string; itemId: string; input: PickInput; confirmedInsecure?: boolean }
-	/** These three are fire-and-forget. */
+	/** These four are fire-and-forget. */
 	| { kind: 'inline.refocus'; key: string }
 	| { kind: 'inline.close'; key: string; refocus: boolean }
 	| { kind: 'inline.unlock'; key: string }
+	/** `height`: what the list's content needs, for the background to pass on to the host. */
+	| { kind: 'inline.resize'; key: string; height: number }
 
 /** `null`: refused, for a wrong key, tab or frame. `host`: of the field's frame. */
 export type InlineStateReply = { state: 'locked' | 'unlocked'; host: string; rows: InlineRow[]; theme: Theme } | null
@@ -100,7 +123,7 @@ export type InlineStateReply = { state: 'locked' | 'unlocked'; host: string; row
 export type InlinePickReply = { filled: FillOutcome } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | null
 
 export const INLINE_LIST_KINDS = kindSet<InlineListToBackground['kind']>({
-	'inline.state': true, 'inline.pick': true, 'inline.refocus': true, 'inline.close': true, 'inline.unlock': true,
+	'inline.state': true, 'inline.pick': true, 'inline.refocus': true, 'inline.close': true, 'inline.unlock': true, 'inline.resize': true,
 })
 
 /** Fire-and-forget. URL comes from `sender.url`. `changed`: from a password change group. */
@@ -111,7 +134,7 @@ export type ContentToNotification =
 	| { kind: 'capture.init'; key: string }
 	/** The `focus_notification_bar` command: focus the first control. */
 	| { kind: 'capture.focus'; key: string }
-	/** The host moved between top and bottom or changed height: the bar restarts its 500 ms guard. */
+	/** The host moved between top and bottom or changed size: the bar restarts its 500 ms guard. */
 	| { kind: 'capture.moved'; key: string }
 
 /**
@@ -156,26 +179,34 @@ export interface NotificationReplies {
 }
 
 /**
- * The bar's height, by the top frame's viewport width alone: never by its mode or text, which would tell the page
- * whether the username is saved. `WIDE` from `BAR_WIDE_MIN_WIDTH_PX` up, `MEDIUM` from `BAR_MEDIUM_MIN_WIDTH_PX`, `NARROW` below.
+ * The bar is a card `BAR_INSET_PX` in from the right edge and the top or bottom of the top frame's viewport. Its size
+ * follows that viewport alone, never its mode or text, which would tell the page whether the username is saved. It
+ * fits a question of two lines at its full width, three once the viewport narrows it, above the folder or item row and
+ * the buttons; longer text scrolls.
  */
-export const BAR_WIDE_HEIGHT_PX = 64
-export const BAR_MEDIUM_HEIGHT_PX = 96
-export const BAR_NARROW_HEIGHT_PX = 128
-export const BAR_WIDE_MIN_WIDTH_PX = 900
-export const BAR_MEDIUM_MIN_WIDTH_PX = 420
+export const BAR_INSET_PX = 12
+export const BAR_WIDTH_PX = 400
+export const BAR_HEIGHT_PX = 148
+export const BAR_NARROW_HEIGHT_PX = 168
+/** The card's corners, which the host clips the frame to. */
+export const BAR_RADIUS_PX = 12
 
-export const barHeight = (viewportWidth: number) =>
-	viewportWidth >= BAR_WIDE_MIN_WIDTH_PX ? BAR_WIDE_HEIGHT_PX : viewportWidth >= BAR_MEDIUM_MIN_WIDTH_PX ? BAR_MEDIUM_HEIGHT_PX : BAR_NARROW_HEIGHT_PX
+export const barWidth = (viewportWidth: number) => Math.max(0, Math.min(BAR_WIDTH_PX, viewportWidth - 2 * BAR_INSET_PX))
+
+export const barHeight = (viewportWidth: number) => barWidth(viewportWidth) < BAR_WIDTH_PX ? BAR_NARROW_HEIGHT_PX : BAR_HEIGHT_PX
 
 /** One row, for a viewport too short for `barHeight` (high zoom): the bar takes at most this share of it until the user expands it. */
 export const BAR_COMPACT_HEIGHT_PX = 40
-export const BAR_MAX_VIEWPORT_SHARE = 1 / 3
+export const BAR_MAX_VIEWPORT_SHARE = 1 / 2
 
-/** The host's height: compact while `barHeight` would cover more than a third of the viewport, unless the user expanded it. */
+/**
+ * The host's height: compact while `barHeight` would cover more than half of the viewport, unless the user expanded
+ * it; expanded, no taller than the viewport leaves between the insets, with the question scrolling.
+ */
 export const barHostHeight = (viewportWidth: number, viewportHeight: number, expanded: boolean) => {
 	const full = barHeight(viewportWidth)
-	return !expanded && full > viewportHeight * BAR_MAX_VIEWPORT_SHARE ? BAR_COMPACT_HEIGHT_PX : full
+	if (full <= viewportHeight * BAR_MAX_VIEWPORT_SHARE) return full
+	return expanded ? Math.max(BAR_COMPACT_HEIGHT_PX, Math.min(full, viewportHeight - 2 * BAR_INSET_PX)) : BAR_COMPACT_HEIGHT_PX
 }
 
 export const NOTIFICATION_KINDS = kindSet<NotificationToBackground['kind']>({
@@ -196,6 +227,8 @@ export type BackgroundToContent =
 	| { kind: 'inline.verify'; key: string; input: PickInput }
 	| { kind: 'inline.refocus'; key: string }
 	| { kind: 'inline.close'; key: string; refocus: boolean }
+	/** `height`: the list's request, clamped by `inlineClampHeight`. */
+	| { kind: 'inline.resize'; key: string; height: number }
 	/**
 	 * To the top frame only (`frameId: 0`). `capture.verify` replies `boolean`, the others are fire-and-forget.
 	 * `key`: the bar's, posted to its frame as `capture.init`. `done`: after a save or update, so the host waits for

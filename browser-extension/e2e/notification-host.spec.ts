@@ -1,9 +1,9 @@
 /**
- * The save bar's host in real Chromium (spec `login-capture`, Keyboard and screen reader access): its compact height in
- * a short viewport, as at 400% zoom, and its move into a modal dialog the page opens after it.
+ * The save bar's host in real Chromium (spec `login-capture`, Keyboard and screen reader access): its corner, its
+ * compact height in a short viewport, as at 400% zoom, and its move into a modal dialog the page opens after it.
  */
-import { BAR_COMPACT_HEIGHT_PX, BAR_WIDE_HEIGHT_PX } from '@/src/messages'
-import { expect, test } from './fixtures'
+import { BAR_COMPACT_HEIGHT_PX, BAR_INSET_PX, barHeight, barHostHeight, barWidth } from '@/src/messages'
+import { expect, holds, test } from './fixtures'
 import type { Frame, Page } from '@playwright/test'
 
 const bars = (page: Page): Frame[] =>
@@ -20,17 +20,55 @@ async function userSubmits(page: Page): Promise<Frame> {
 }
 
 const frameHeight = (bar: Frame) => bar.evaluate(() => window.innerHeight)
+const hostRect = (page: Page) => page.evaluate(() => {
+	const { top, left, width, height } = document.querySelector('div[popover]')!.getBoundingClientRect()
+	return { top, left, width, height }
+})
+
+test('the card sits in the top-right corner, and a click just outside it reaches the page', async ({ page }) => {
+	await userSubmits(page)
+	const width = barWidth(1200)
+	await expect.poll(() => hostRect(page)).toEqual({ top: BAR_INSET_PX, left: 1200 - BAR_INSET_PX - width, width, height: barHeight(1200) })
+	await page.evaluate(() => document.addEventListener('click', (event) => Object.assign(window, { pageClick: [event.clientX, event.clientY] })))
+	// On the shadow, left of the card.
+	const x = 1200 - BAR_INSET_PX - width - 4
+	await page.mouse.click(x, 60)
+	expect(await page.evaluate(() => (window as unknown as { pageClick?: number[] }).pageClick)).toEqual([x, 60])
+})
+
+test('the card moves to the bottom for a focused field under it, but not for one beside it', async ({ page }) => {
+	await userSubmits(page)
+	await page.evaluate(() => {
+		for (const [id, side] of [['beside', 'left'], ['under', 'right']]) {
+			const field = Object.assign(document.createElement('input'), { id })
+			field.style.cssText = `position: fixed; top: 40px; ${side}: 40px; width: 120px`
+			document.body.append(field)
+		}
+	})
+	await page.locator('#beside').focus()
+	await holds(async () => (await hostRect(page)).top === BAR_INSET_PX, 500)
+	await page.locator('#under').focus()
+	await expect.poll(() => hostRect(page).then(({ top }) => top)).toBe(900 - BAR_INSET_PX - barHeight(1200))
+})
+
+for (const [height, expected] of [[2 * barHeight(1200) - 1, BAR_COMPACT_HEIGHT_PX], [2 * barHeight(1200), barHeight(1200)]] as Array<[number, number]>) {
+	test(`in a 1200 × ${height} viewport the card is ${expected} px tall, compact only above half of it`, async ({ page }) => {
+		await page.setViewportSize({ width: 1200, height })
+		const bar = await userSubmits(page)
+		await expect.poll(() => frameHeight(bar)).toBe(expected)
+	})
+}
 
 test('in a short viewport the bar is compact, grows while the user is in it, and shrinks after', async ({ page }) => {
-	// About what 400% zoom leaves of a laptop screen: 64 px would be more than a third of it.
+	// About what 400% zoom leaves of a laptop screen: the full card would be more than half of it.
 	await page.setViewportSize({ width: 1200, height: 160 })
 	const bar = await userSubmits(page)
 	await expect.poll(() => frameHeight(bar)).toBe(BAR_COMPACT_HEIGHT_PX)
 	await expect(bar.locator('#bar')).toBeVisible()
-	// A click in the bar gives it focus, which grows it; one landing while the bar still loads is retried.
+	// A click on the card's question gives it focus, which grows it; one landing while the bar still loads is retried.
 	const grow = () => expect(async () => {
-		await page.mouse.click(600, 20)
-		await expect.poll(() => frameHeight(bar), { timeout: 1000 }).toBe(BAR_WIDE_HEIGHT_PX)
+		await page.mouse.click(1000, BAR_INSET_PX + BAR_COMPACT_HEIGHT_PX / 2)
+		await expect.poll(() => frameHeight(bar), { timeout: 1000 }).toBe(barHostHeight(1200, 160, true))
 	}).toPass()
 	await grow()
 	// Focus leaving for nothing focusable sends the host no `focusout`.

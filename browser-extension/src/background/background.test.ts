@@ -5,7 +5,7 @@ import background from '@/entrypoints/background'
 import { dropAllCaptures } from '@/src/autofill/capture-queue'
 import { addAccount, listAccounts } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
-import { POPUP_PORT, POPUP_REQUEST_KINDS, type Result } from '@/src/messages'
+import { inlineHeight, POPUP_PORT, POPUP_REQUEST_KINDS, type Result } from '@/src/messages'
 import { installMenuFakes } from '@/src/testing/menus'
 import { encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
@@ -339,12 +339,15 @@ describe('background entrypoint', () => {
 			})
 
 			it('opens a session for a content script, answers the list page and fills on its pick', async () => {
-				const { key } = await deliver({ kind: 'inline.open' }, top) as { key: string }
+				const opened = await deliver({ kind: 'inline.open' }, top) as { key: string }
+				expect(opened).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+				const { key } = opened
 				expect(await deliver({ kind: 'inline.state', key }, listSender)).toMatchObject({ state: 'unlocked', rows: [{ id: 'i1', username: 'alice' }] })
 				expect(await deliver({ kind: 'inline.refocus', key }, listSender)).toBeUndefined()
+				expect(await deliver({ kind: 'inline.resize', key, height: 130 }, listSender)).toBeUndefined()
 				const input = { kind: 'pointer', at: 1, x: 5, y: 5 }
 				expect(await deliver({ kind: 'inline.pick', key, itemId: 'i1', input }, listSender)).toEqual({ filled: 'both' })
-				expect(toTab.map(({ message }) => message.kind)).toEqual(['inline.ready', 'inline.refocus', 'inline.verify', 'fill.execute', 'inline.close'])
+				expect(toTab.map(({ message }) => message.kind)).toEqual(['inline.ready', 'inline.refocus', 'inline.resize', 'inline.verify', 'fill.execute', 'inline.close'])
 				// A pick changes last used, which orders the context menu.
 				await vi.waitFor(() => expect(menus.entries.map((e) => e.id)).toContain('autofill:i1'))
 			})

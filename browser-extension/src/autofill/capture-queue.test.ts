@@ -214,7 +214,11 @@ describe('capture.submitted', () => {
 	it('offers to update the one item with this username, naming the item and its username', async () => {
 		await vault([await item('a', 'alice', 'old'), await item('b', 'bob', 'old')])
 		await submit(submitted('alice', 'hunter2'))
-		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a', username: 'alice', host: 'example.test' })
+		const reply = await state()
+		expect(reply).toMatchObject({ mode: 'update', itemName: 'Item a', username: 'alice', host: 'example.test' })
+		// The name and username, as the question and the item row show them; never the password, old or new.
+		expect(Object.keys(reply as object).filter((name) => name !== 'shortcut').sort()).toEqual(['folders', 'host', 'itemName', 'mode', 'theme', 'username'])
+		expect(JSON.stringify(reply)).not.toMatch(/hunter2|"old"/)
 	})
 
 	it('names no username for an item without one', async () => {
@@ -223,6 +227,7 @@ describe('capture.submitted', () => {
 		const reply = await state()
 		expect(reply).toMatchObject({ mode: 'update', itemName: 'Item a' })
 		expect(reply).not.toHaveProperty('username')
+		expect(Object.keys(reply as object).filter((name) => name !== 'shortcut').sort()).toEqual(['folders', 'host', 'itemName', 'mode', 'theme'])
 	})
 
 	it('drops a changed password while "Ask to update existing login" is off, and still offers a new login', async () => {

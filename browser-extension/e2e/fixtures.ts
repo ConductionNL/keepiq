@@ -1,21 +1,22 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { chromium, expect, test as base, type Frame, type Locator, type Page } from '@playwright/test'
-import { fakeStorage, LOGIN, type FakeStorage } from './seed'
+import { fakeStorage, LOGIN, type FakeStorage, type LoginItem } from './seed'
 
 const EXTENSION = fileURLToPath(new URL('../.output/chrome-mv3', import.meta.url))
 
 /**
  * The built extension in headless Chromium, with a fresh profile and the fake account per test. `lang: 'nl'` picks
  * the Dutch catalog through `--lang`; `longFolder` adds the nested folders of `LONG_FOLDER`; `matches` is the
- * number of logins for the test site.
+ * number of logins for the test site; `loginItem` renames the first, drops its username or puts it on `https:`.
  */
-export const test = base.extend<{ vault: 'unlocked' | 'locked'; lang: 'en' | 'nl'; longFolder: boolean; matches: number }>({
+export const test = base.extend<{ vault: 'unlocked' | 'locked'; lang: 'en' | 'nl'; longFolder: boolean; matches: number; loginItem: LoginItem }>({
 	vault: ['unlocked', { option: true }],
 	lang: ['en', { option: true }],
 	longFolder: [false, { option: true }],
 	matches: [1, { option: true }],
-	context: async ({ vault, lang, longFolder, matches, baseURL }, use) => {
+	loginItem: [{}, { option: true }],
+	context: async ({ vault, lang, longFolder, matches, loginItem, baseURL }, use) => {
 		const context = await chromium.launchPersistentContext('', {
 			channel: 'chromium',
 			headless: true,
@@ -36,7 +37,7 @@ export const test = base.extend<{ vault: 'unlocked' | 'locked'; lang: 'en' | 'nl
 			const { storage } = (globalThis as unknown as { chrome: { storage: Record<'local' | 'session', { set(items: object): Promise<void> }> } }).chrome
 			await storage.local.set(local)
 			await storage.session.set(session)
-		}, await fakeStorage(new URL(baseURL!).origin, vault === 'unlocked', { longFolder, matches }))
+		}, await fakeStorage(new URL(baseURL!).origin, vault === 'unlocked', { longFolder, matches, loginItem }))
 		await use(context)
 		await context.close()
 	},

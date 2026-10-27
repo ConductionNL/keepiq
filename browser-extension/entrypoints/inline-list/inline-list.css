@@ -1,4 +1,7 @@
-/* The popup's tokens (popup.css), only those the list uses; `--row` comes from `INLINE_ROW_PX`. No animation, by spec. */
+/*
+ * The popup's tokens (popup.css), only those the list uses. `--row`, `--gap`, `--inset` and `--radius` come from
+ * `src/messages.ts`, whose `inlineHeight` the host sizes the list by. No animation, by spec.
+ */
 :root {
 	color-scheme: light dark;
 	--surface: #ffffff;
@@ -56,6 +59,16 @@ body {
 	line-height: 1.45;
 }
 
+/*
+ * The edge, in `--fg-muted` for 3:1 against the page, on the body so it shows while the list loads; it is the first
+ * pixel of `--inset`. The host clips the frame to the same radius and draws the shadow.
+ */
+body {
+	box-sizing: border-box;
+	border: 1px solid var(--fg-muted);
+	border-radius: var(--radius);
+}
+
 p {
 	margin: 0;
 }
@@ -69,19 +82,20 @@ p {
 	white-space: nowrap;
 }
 
-/*
- * The edge is the list's own inset outline: it takes no room, so rows × `--row` fill the frame, and `--fg-muted` keeps 3:1.
- * Anything painted over `#list` instead, such as a fixed `::after`, makes IntersectionObserver v2 refuse every pick.
- */
+/* Content the host has no room for scrolls here. Anything painted over `#list`, such as a fixed `::after`, makes IntersectionObserver v2 refuse every pick. */
 .list {
+	box-sizing: border-box;
 	height: 100%;
+	padding: calc(var(--inset) - 1px);
 	overflow-y: auto;
 	overscroll-behavior: contain;
-	outline: 1px solid var(--fg-muted);
-	outline-offset: -1px;
+	scrollbar-width: thin;
 }
 
 .listbox {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -89,11 +103,13 @@ p {
 
 .row {
 	box-sizing: border-box;
+	flex: none;
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	height: var(--row);
-	padding: 0 12px;
+	padding: 0 10px 0 8px;
+	border-radius: calc(var(--radius) - var(--inset) + 2px);
 	cursor: pointer;
 }
 
@@ -108,14 +124,24 @@ p {
 /* `:focus`, not `:focus-visible`: focus arrives by script from the field's Down key. */
 .row:focus,
 .message:focus,
-.btn:focus {
+.question__text:focus {
 	outline: 2px solid var(--accent);
 	outline-offset: -2px;
 }
 
 .row__icon {
 	flex: none;
+	box-sizing: border-box;
+	width: 32px;
+	height: 32px;
+	padding: 7px;
+	border-radius: 8px;
+	background: var(--accent-soft);
 	color: var(--accent);
+}
+
+.row:focus .row__icon {
+	background: var(--surface);
 }
 
 .row__text {
@@ -135,24 +161,25 @@ p {
 .row__name {
 	font-size: 14px;
 	font-weight: 600;
+	line-height: 1.3;
 }
 
 .row__user {
 	font-size: 12px;
+	line-height: 1.35;
 	color: var(--fg-muted);
 }
 
-/* Fits two rows, the smallest list; larger text scrolls from its top rather than being cut off there. */
+/* At least one row, so a message is as tall as a single login; longer text makes the list ask for more. */
 .message {
 	box-sizing: border-box;
-	height: 100%;
+	min-height: var(--row);
 	display: flex;
-	flex-direction: column;
 	align-items: center;
-	justify-content: safe center;
-	gap: 6px;
-	padding: 8px 12px;
-	overflow-y: auto;
+	justify-content: center;
+	gap: 12px;
+	padding: 4px 12px;
+	border-radius: calc(var(--radius) - var(--inset) + 2px);
 	overflow-wrap: anywhere;
 	text-align: center;
 }
@@ -161,11 +188,33 @@ p {
 	color: var(--fg-muted);
 }
 
+/* Unlock beside the text, or below it at the end where the text would get too narrow. */
+.message--locked {
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	row-gap: 8px;
+	overflow-wrap: break-word;
+	text-align: start;
+}
+
+.message--locked p {
+	flex: 1 1 110px;
+}
+
+.message--notice {
+	justify-content: flex-start;
+	padding-block: 8px;
+	text-align: start;
+}
+
 .btn {
-	min-height: 28px;
-	padding: 0 14px;
+	box-sizing: border-box;
+	flex: none;
+	height: 32px;
+	padding: 0 16px;
 	font: inherit;
 	font-weight: 600;
+	white-space: nowrap;
 	border: 1px solid transparent;
 	border-radius: 999px;
 	cursor: pointer;
@@ -191,34 +240,30 @@ p {
 }
 
 .btn:focus {
+	outline: 2px solid var(--accent);
 	outline-offset: 2px;
 }
 
-/* The question and its buttons fit two rows; only the warning below the question can be clipped, and then scrolls. */
+/* Inset by the focus ring's 4 px, which the list would clip. */
 .question {
-	box-sizing: border-box;
-	height: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	padding: 6px 12px;
+	padding: 8px 12px;
 }
 
 .question__title {
-	flex: none;
 	font-weight: 600;
 }
 
 .question__text {
-	flex: 1;
-	min-height: 0;
-	overflow-y: auto;
 	font-size: 12px;
+	color: var(--fg-muted);
 }
 
 .question__actions {
-	flex: none;
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
+	margin-top: 8px;
 }

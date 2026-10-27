@@ -2,7 +2,7 @@
 // @vitest-environment-options {"settings":{"navigation":{"disableChildFrameNavigation":true}}}
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { INLINE_ROW_PX, type ContentToBackground, type PickInput } from '@/src/messages'
+import { INLINE_MAX_HEIGHT_PX, INLINE_MIN_HEIGHT_PX, inlineClampHeight, inlineHeight, type ContentToBackground, type PickInput } from '@/src/messages'
 import { executeFill } from './execute'
 import type { FrameHost } from './frame-host'
 import { createInlineHost, GUARD_MS, READY_TIMEOUT_MS, sameOriginAncestors, type InlineHost, type InlineHostOptions } from './inline-host'
@@ -26,6 +26,7 @@ vi.mock('./frame-host', async (importOriginal) => {
 })
 
 const KEY = 'a'.repeat(32)
+const FIVE_ROWS = inlineHeight(5)
 const LOGIN = `
 	<form id="first"><input id="u" name="username"><input id="p" type="password"><button>Log in</button></form>
 	<form id="second"><input id="u2" name="username"><input id="p2" type="password"><button>Log in</button></form>`
@@ -139,7 +140,7 @@ beforeEach(() => {
 	hit = null
 	trusted = true
 	sent = []
-	request = vi.fn(async () => ({ key: KEY }))
+	request = vi.fn(async () => ({ key: KEY, height: FIVE_ROWS }))
 	installPopover()
 	vi.spyOn(window, 'innerWidth', 'get').mockImplementation(() => viewport.width)
 	vi.spyOn(window, 'innerHeight', 'get').mockImplementation(() => viewport.height)
@@ -176,7 +177,7 @@ describe('opening', () => {
 		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open' })
 		expect(host().element.parentNode).toBe(document.documentElement)
 		expect(host().element.getAttribute('popover')).toBe('manual')
-		expect(hostBox()).toEqual({ top: 130, left: 100, width: 240, height: 5 * INLINE_ROW_PX })
+		expect(hostBox()).toEqual({ top: 134, left: 100, width: 240, height: FIVE_ROWS })
 		expect(document.activeElement).toBe($('#u'))
 	})
 
@@ -187,7 +188,7 @@ describe('opening', () => {
 		inline.start()
 		await settle()
 		expect(isOpen()).toBe(true)
-		expect(hostBox().top).toBe(170)
+		expect(hostBox().top).toBe(174)
 	})
 
 	it('opens on any focus of the empty field, script focus included, but not for one the page only claims', async () => {
@@ -259,7 +260,7 @@ describe('opening', () => {
 		start()
 		$('#u').focus()
 		$('#u').blur()
-		answer({ key: KEY })
+		answer({ key: KEY, height: FIVE_ROWS })
 		await settle()
 		expect(hosts).toEqual([])
 		expect(sent).toEqual([{ kind: 'inline.closed', key: KEY }])
@@ -271,19 +272,42 @@ describe('opening', () => {
 		start()
 		$('#u').focus()
 		$<HTMLButtonElement>('button').focus()
-		answer({ key: KEY })
+		answer({ key: KEY, height: FIVE_ROWS })
 		await settle()
 		expect(hosts).toEqual([])
 		expect(sent).toContainEqual({ kind: 'inline.closed', key: KEY })
 	})
+
+	it.each([{ key: KEY }, { key: KEY, height: '260' }, { key: KEY, height: Number.NaN }])('opens nothing for a reply without a usable height, telling the background: %o', async (reply) => {
+		request.mockResolvedValue(reply)
+		start()
+		$('#u').focus()
+		await settle()
+		expect(hosts).toEqual([])
+		expect(sent).toEqual([{ kind: 'inline.closed', key: KEY }])
+	})
 })
 
 describe('size and position', () => {
+	it('sizes the list by what it shows: up to five rows, and one row for a message', () => {
+		expect([1, 3, 5, 7].map(inlineHeight)).toEqual([60, 160, 260, 260])
+		expect(inlineHeight(0)).toBe(inlineHeight(1))
+		expect([INLINE_MIN_HEIGHT_PX, INLINE_MAX_HEIGHT_PX]).toEqual([60, 260])
+		expect([inlineClampHeight(10), inlineClampHeight(130.2), inlineClampHeight(900), inlineClampHeight('130'), inlineClampHeight(Number.POSITIVE_INFINITY)]).toEqual([60, 131, 260, null, null])
+	})
+
+	it.each([1, 3, 5, 7])('is as tall as the background said for %i rows', async (rows) => {
+		request.mockResolvedValue({ key: KEY, height: inlineHeight(rows) })
+		start()
+		await openOn('#u')
+		expect(hostBox()).toEqual({ top: 134, left: 100, width: 240, height: inlineHeight(rows) })
+	})
+
 	it('is placed above a field near the bottom, never over it', async () => {
 		rects.set('u', { top: 658, left: 100, width: 200, height: 30 })
 		start()
 		await openOn('#u')
-		expect(hostBox()).toEqual({ top: 658 - 5 * INLINE_ROW_PX, left: 100, width: 240, height: 5 * INLINE_ROW_PX })
+		expect(hostBox()).toEqual({ top: 658 - 4 - FIVE_ROWS, left: 100, width: 240, height: FIVE_ROWS })
 	})
 
 	it('shrinks to the larger free side in a small frame, and is as wide as a wide field', async () => {
@@ -291,10 +315,18 @@ describe('size and position', () => {
 		rects.set('u', { top: 20, left: 10, width: 500, height: 30 })
 		start()
 		await openOn('#u')
-		expect(hostBox()).toEqual({ top: 50, left: 10, width: 500, height: 3 * INLINE_ROW_PX })
+		expect(hostBox()).toEqual({ top: 54, left: 10, width: 500, height: 146 })
 	})
 
-	it('opens nothing in a frame too small for two rows, whatever the vault holds', async () => {
+	it('opens a list of a single row where only one row fits, whatever it holds', async () => {
+		viewport = { width: 400, height: 140 }
+		rects.set('u', { top: 45, left: 10, width: 200, height: 30 })
+		start()
+		await openOn('#u')
+		expect(hostBox()).toMatchObject({ top: 79, height: 61 })
+	})
+
+	it('opens nothing in a frame too small for one row, whatever the vault holds', async () => {
 		viewport = { width: 400, height: 120 }
 		rects.set('u', { top: 45, left: 10, width: 200, height: 30 })
 		start()
@@ -312,13 +344,16 @@ describe('size and position', () => {
 		expect(request).not.toHaveBeenCalled()
 	})
 
-	it('keeps its height in every state and whatever the frame does after it opened', async () => {
+	it('keeps its height whatever the frame does after it opened', async () => {
+		viewport = { width: 1024, height: 200 }
+		rects.set('u', { top: 20, left: 100, width: 200, height: 30 })
 		start()
 		await openOn('#u')
 		const { height } = hostBox()
+		viewport = { width: 1024, height: 768 }
 		rects.set('u', { top: 300, left: 100, width: 200, height: 30 })
 		vi.advanceTimersByTime(20)
-		expect(hostBox()).toMatchObject({ top: 330, height })
+		expect(hostBox()).toMatchObject({ top: 334, height })
 	})
 
 	it('follows the field and tells the list it moved', async () => {
@@ -326,7 +361,7 @@ describe('size and position', () => {
 		await openOn('#u')
 		rects.set('u', { top: 80, left: 120, width: 200, height: 30 })
 		vi.advanceTimersByTime(20)
-		expect(hostBox()).toMatchObject({ top: 110, left: 120 })
+		expect(hostBox()).toMatchObject({ top: 114, left: 120 })
 		expect(posted()).toEqual([{ kind: 'inline.init', key: KEY }, { kind: 'inline.moved', key: KEY }])
 		expect(isOpen()).toBe(true)
 	})
@@ -341,7 +376,7 @@ describe('size and position', () => {
 		await openOn('#u2')
 		vi.advanceTimersByTime(20)
 		expect(isOpen()).toBe(true)
-		// Five rows were fixed at opening; 190 px below and 200 px above hold neither.
+		// Five rows were fixed at opening; 186 px below and 196 px above hold neither.
 		rects.set('u2', { top: 200, left: 100, width: 200, height: 30 })
 		viewport = { width: 1024, height: 420 }
 		vi.advanceTimersByTime(20)
@@ -362,6 +397,15 @@ describe('size and position', () => {
 		expect(isOpen()).toBe(false)
 	})
 
+	it('draws its rounded corners and shadow on the host, whose box is exactly the list', async () => {
+		start()
+		await openOn('#u')
+		expect(host().written).toContain('border-radius: 10px !important;')
+		expect(host().written).toMatch(/box-shadow: [^;]+ !important;/)
+		expect(host().written).toContain('overflow: clip !important;')
+		expect(host().written).toContain('background: transparent !important;')
+	})
+
 	it('falls back to a fixed host with the highest z-index where popovers are missing', async () => {
 		const proto = HTMLElement.prototype as unknown as Record<string, unknown>
 		delete proto.showPopover
@@ -372,6 +416,63 @@ describe('size and position', () => {
 		expect(host().written).toContain('position: fixed !important;')
 		expect(host().written).toContain('transform: none !important;')
 		expect(host().written).not.toMatch(/translate\(|scale\(/)
+	})
+})
+
+describe('inline.resize', () => {
+	const resize = (height: unknown, key = KEY) => inline.handle({ kind: 'inline.resize', key, height } as never)
+
+	it('grows for content that needs it, as a move: the list hears inline.moved and a pick within 500 ms is refused', async () => {
+		request.mockResolvedValue({ key: KEY, height: inlineHeight(1) })
+		start()
+		await openOn('#u')
+		shown()
+		expect(verify()).toBe(true)
+		resize(130)
+		expect(hostBox()).toEqual({ top: 134, left: 100, width: 240, height: 130 })
+		expect(posted()).toEqual([{ kind: 'inline.init', key: KEY }, { kind: 'inline.moved', key: KEY }])
+		expect(verify()).toBe(false)
+		vi.advanceTimersByTime(GUARD_MS - 50)
+		expect(verify()).toBe(false)
+		shown()
+		expect(verify()).toBe(true)
+		expect(isOpen()).toBe(true)
+	})
+
+	it('goes above the field when only that side has room, and back below when it shrinks', async () => {
+		rects.set('u', { top: 500, left: 100, width: 200, height: 30 })
+		request.mockResolvedValue({ key: KEY, height: inlineHeight(1) })
+		start()
+		await openOn('#u')
+		expect(hostBox()).toMatchObject({ top: 534, height: 60 })
+		resize(260)
+		expect(hostBox()).toMatchObject({ top: 500 - 4 - 260, height: 260 })
+		resize(60)
+		expect(hostBox()).toMatchObject({ top: 534, height: 60 })
+	})
+
+	it('grows no further than the larger free side', async () => {
+		viewport = { width: 1024, height: 250 }
+		rects.set('u', { top: 20, left: 100, width: 200, height: 30 })
+		request.mockResolvedValue({ key: KEY, height: inlineHeight(1) })
+		start()
+		await openOn('#u')
+		resize(260)
+		expect(hostBox()).toMatchObject({ top: 54, height: 196 })
+	})
+
+	it('ignores one for another key or without a number, and clamps one out of bounds', async () => {
+		start()
+		await openOn('#u')
+		resize(100, 'b'.repeat(32))
+		resize('100')
+		resize(Number.NaN)
+		expect(hostBox().height).toBe(FIVE_ROWS)
+		expect(posted()).toEqual([{ kind: 'inline.init', key: KEY }])
+		resize(9999)
+		expect(hostBox().height).toBe(FIVE_ROWS)
+		resize(1)
+		expect(hostBox().height).toBe(INLINE_MIN_HEIGHT_PX)
 	})
 })
 
@@ -717,7 +818,7 @@ describe('visibility guard', () => {
 		await openOn('#u')
 		shown()
 		expect(verify()).toBe(true)
-		expect(document.elementFromPoint).toHaveBeenLastCalledWith(120, 150)
+		expect(document.elementFromPoint).toHaveBeenLastCalledWith(120, 154)
 	})
 
 	it('refuses the second click of a double-click on the field, landing as the list appears', async () => {
@@ -862,7 +963,7 @@ describe('visibility guard', () => {
 	it('refuses a pick when the drawn rect differs from the one set, as a zoom or transform makes it', async () => {
 		start()
 		await openOn('#u')
-		hostScale = 1.002
+		hostScale = 1.0015
 		shown()
 		expect(verify()).toBe(true)
 		hostScale = 1.25
@@ -1099,7 +1200,7 @@ describe('visibility guard', () => {
 			})
 			shown()
 			expect(verify()).toBe(false)
-			expect(calls).toEqual([[120, 150], [150, 160]])
+			expect(calls).toEqual([[120, 154], [150, 164]])
 		})
 
 		it('checks a frame inside a shadow root through its host', async () => {

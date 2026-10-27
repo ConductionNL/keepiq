@@ -10,7 +10,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 | `entrypoints/popup/` | Toolbar popup, or a pop-out window (`?popout=1&tabId=`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
 | `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one credential a fill sends, hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
 | `entrypoints/inline-list/` | Extension page in an iframe under a login field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
-| `entrypoints/notification/` | Extension page in an iframe at the top of the page | The save and update bar, vanilla DOM. Never gets the password. |
+| `entrypoints/notification/` | Extension page in an iframe, a card in the top-right corner of the page | The save and update card, vanilla DOM. Never gets the password. |
 | `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created and closed per use. |
 
 ## Modules
@@ -99,11 +99,11 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard`, `offscreen.writeClipboard` | Whether it wrote |
 | Content → background | `page_ready` (`passwordField`: the top frame has a login form, for fill on page load), `inline.closed`, `capture.submitted`, `capture.reshow` | None |
-| Content → background, inline list | `inline.open` | `{ key }`, or `null` for no list |
+| Content → background, inline list | `inline.open` | `{ key, height }`, or `null` for no list |
 | Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `inline.verify`, `capture.verify` | `boolean`; `FillExecuteReply` for `fill.execute` |
-| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `capture.show`, `capture.hide`, `capture.focus`, `capture.expand` | None |
+| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.show`, `capture.hide`, `capture.focus`, `capture.expand` | None |
 | Content → its list or bar iframe, by `postMessage` to the extension origin | `inline.init`, `inline.focus`, `inline.moved`, `capture.init`, `capture.focus`, `capture.moved` | None |
-| Inline list → background | `inline.state`, `inline.pick`; `inline.refocus`, `inline.close`, `inline.unlock` | `InlineStateReply`, `InlinePickReply`; none for the last three |
+| Inline list → background | `inline.state`, `inline.pick`; `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, `InlinePickReply`; none for the last four |
 | Save bar → background | `capture.state`, `capture.save`, `capture.update`, `capture.dismiss`, `capture.expand` | `NotificationReplies` |
 
 - **Routing by sender page.** `src/background/sender.ts` tells the popup, the list and the bar apart by `sender.url` path, and a content script by its tab and frame; each gets only its own kind set in `src/messages.ts`.

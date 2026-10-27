@@ -23,7 +23,7 @@ const senders = {
 
 // Written out, so a kind moved to the wrong set fails here instead of passing through the same constant.
 const CONTENT = ['page_ready', 'inline.open', 'inline.closed', 'capture.submitted', 'capture.reshow']
-const LIST = ['inline.state', 'inline.pick', 'inline.refocus', 'inline.close', 'inline.unlock']
+const LIST = ['inline.state', 'inline.pick', 'inline.refocus', 'inline.close', 'inline.unlock', 'inline.resize']
 const BAR = ['capture.state', 'capture.save', 'capture.update', 'capture.dismiss', 'capture.expand']
 const POPUP = [...POPUP_REQUEST_KINDS, ...POPUP_MESSAGE_KINDS]
 const ALL = [...new Set([

@@ -8,7 +8,10 @@ import { accountStatus, getAccount, getActiveAccountId } from '@/src/accounts/st
 import { onBroadcast } from '@/src/background/broadcast'
 import { popout } from '@/src/background/requests'
 import { rsaDecrypt } from '@/src/crypto'
-import type { BackgroundToContent, InlineClosed, InlineListToBackground, InlineOpenReply, InlinePickReply, InlineRow, InlineStateReply, PickInput } from '@/src/messages'
+import {
+	inlineClampHeight, inlineHeight,
+	type BackgroundToContent, type InlineClosed, type InlineListToBackground, type InlineOpenReply, type InlinePickReply, type InlineRow, type InlineStateReply, type PickInput,
+} from '@/src/messages'
 import { createKeyedQueue } from '@/src/queue'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, sessionValues } from '@/src/vault/key-store'
@@ -59,7 +62,10 @@ function newKey(): string {
 
 const isWeb = (url: string) => /^https?:\/\//i.test(url)
 
-/** `inline.open` from a content script, routed by sender page. Showing the list is no interaction, so no `touch()`. */
+/**
+ * `inline.open` from a content script, routed by sender page. Showing the list is no interaction, so no `touch()`.
+ * The height counts the matches without decrypting any; `inline.state` decides again what the list shows.
+ */
 export async function openSession(sender: Browser.runtime.MessageSender): Promise<InlineOpenReply> {
 	const tabId = sender.tab?.id
 	const frameId = sender.frameId
@@ -69,8 +75,10 @@ export async function openSession(sender: Browser.runtime.MessageSender): Promis
 	if (!isWeb(frameUrl)) return null
 	const accountId = await getActiveAccountId()
 	const account = accountId ? await getAccount(accountId) : undefined
-	if (!account || await accountStatus(account) === 'logged_out') return null
+	const status = account ? await accountStatus(account) : 'logged_out'
+	if (!account || status === 'logged_out') return null
 	if (!(await readSettings(account.id)).inlineSuggestions) return null
+	const height = inlineHeight(status === 'unlocked' ? (await matchingLogins(account.id, frameUrl)).rows.length : 1)
 	const session: InlineSession = { key: newKey(), accountId: account.id, frameId, frameUrl, listFrameId: null, itemIds: [], openedAt: Date.now() }
 	// Another frame's open may have written its session since the drop above; its list closes too.
 	await queued(String(tabId), async () => {
@@ -78,7 +86,7 @@ export async function openSession(sender: Browser.runtime.MessageSender): Promis
 		await write(tabId, session)
 		if (previous) void toHost(tabId, previous, { kind: 'inline.close', key: previous.key, refocus: false })
 	})
-	return { key: session.key }
+	return { key: session.key, height }
 }
 
 /** `inline.closed` from the hosting frame. */
@@ -191,6 +199,11 @@ export async function handleInlineList(message: InlineListToBackground, sender: 
 			await drop(tabId, { key: session.key })
 			await popout(tabId).catch((error: unknown) => console.error('[keepiq] inline unlock', error))
 			return undefined
+		case 'inline.resize': {
+			const height = inlineClampHeight(message.height)
+			if (height !== null) void toHost(tabId, session, { kind: 'inline.resize', key: session.key, height })
+			return undefined
+		}
 	}
 }
 

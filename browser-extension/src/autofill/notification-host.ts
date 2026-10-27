@@ -4,7 +4,10 @@
  * only once `capture.verify` confirms it. It never gets the password, only the key it posts to its own frame.
  */
 import { i18n } from '#i18n'
-import { barHostHeight, type BackgroundToContent, type ContentToBackground, type ContentToNotification, type PickInput } from '@/src/messages'
+import {
+	BAR_INSET_PX, BAR_RADIUS_PX, barHostHeight, barWidth,
+	type BackgroundToContent, type ContentToBackground, type ContentToNotification, type PickInput,
+} from '@/src/messages'
 import { deepActiveElement } from './execute'
 import { createFrameHost, type FrameHost } from './frame-host'
 import { drawnUntouched, GUARD_MS, hits, modalOf } from './visibility'
@@ -13,6 +16,7 @@ const TOLERANCE_PX = 0.5
 
 interface Box {
 	top: number
+	left: number
 	width: number
 	height: number
 }
@@ -94,16 +98,24 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 
 	const placeBox = (bottom: boolean, expanded: boolean): Box => {
 		const view = viewport()
+		const width = barWidth(view.width)
 		const height = barHostHeight(view.width, view.height, expanded)
-		return { top: bottom ? Math.max(0, view.height - height) : 0, width: view.width, height }
+		return {
+			top: bottom ? Math.max(0, view.height - BAR_INSET_PX - height) : BAR_INSET_PX,
+			left: Math.max(0, view.width - BAR_INSET_PX - width),
+			width,
+			height,
+		}
 	}
-	const sameBox = (a: Box, b: Box) => a.top === b.top && a.width === b.width && a.height === b.height
+	const sameBox = (a: Box, b: Box) => a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height
 
+	/** The shadow paints outside the host's box and takes no clicks, so the host is exactly the card. */
 	function style(current: Bar): void {
-		const { top, width, height } = current.box
+		const { top, left, width, height } = current.box
 		current.host.style({
-			'position': 'fixed', 'top': `${top}px`, 'left': '0px', 'width': `${width}px`, 'height': `${height}px`,
+			'position': 'fixed', 'top': `${top}px`, 'left': `${left}px`, 'width': `${width}px`, 'height': `${height}px`,
 			'margin': '0', 'padding': '0', 'border': '0', 'display': 'block', 'overflow': 'clip', 'z-index': '2147483647',
+			'border-radius': `${BAR_RADIUS_PX}px`, 'box-shadow': '0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.12)',
 			'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto', 'background': 'transparent', 'color-scheme': 'normal',
 			'transform': 'none', 'scale': 'none', 'rotate': 'none', 'translate': 'none', 'zoom': '1',
 			'filter': 'none', 'mix-blend-mode': 'normal', 'clip-path': 'none', 'mask': 'none',
@@ -147,12 +159,12 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 
 	/**
 	 * WCAG 2.4.11: the page's focused element is never hidden under the bar. It moves only when that element is under
-	 * where the bar is now and would not be under the other side too, so it never flips back and forth.
+	 * where the bar is now and would not be under the other corner too, so it never flips back and forth.
 	 */
 	function avoid(current: Bar, element: Element): void {
 		const rect = element.getBoundingClientRect()
 		if (rect.width === 0 && rect.height === 0) return
-		const under = (box: Box) => rect.bottom > box.top && rect.top < box.top + box.height
+		const under = (box: Box) => rect.bottom > box.top && rect.top < box.top + box.height && rect.right > box.left && rect.left < box.left + box.width
 		if (under(current.box) && !under(placeBox(!current.bottom, current.expanded))) move(current, !current.bottom)
 	}
 
@@ -200,8 +212,8 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 			return false
 		}
 		const rect = element.getBoundingClientRect()
-		const { top, width, height } = current.box
-		if (Math.abs(rect.top - top) > TOLERANCE_PX || Math.abs(rect.left) > TOLERANCE_PX
+		const { top, left, width, height } = current.box
+		if (Math.abs(rect.top - top) > TOLERANCE_PX || Math.abs(rect.left - left) > TOLERANCE_PX
 			|| Math.abs(rect.width - width) > TOLERANCE_PX || Math.abs(rect.height - height) > TOLERANCE_PX) return false
 		return drawnUntouched(element, current.popover, firefox)
 	}
@@ -300,9 +312,9 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 		if (bar !== current) return false
 		const at = Math.min(input.at, Date.now())
 		if (current.lastNotVisibleAt >= at - GUARD_MS) return false
-		const { top, width, height } = current.box
+		const { top, left, width, height } = current.box
 		if (input.x < 0 || input.y < 0 || input.x >= width || input.y >= height) return false
-		return hits(current.host.element, input.x, top + input.y)
+		return hits(current.host.element, left + input.x, top + input.y)
 	}
 
 	function focus(): void {

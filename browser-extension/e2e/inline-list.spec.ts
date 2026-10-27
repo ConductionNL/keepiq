@@ -3,13 +3,15 @@
  * Chrome's occlusion report (IntersectionObserver v2) only exists in a real browser.
  */
 import {
-	clickField, expect, holds, inlineListText, keyboardPickFills, listFrame, listOpen, listText, mouseClickCaught, mouseClicksDropped, mousePickFills,
-	mousePickRefused, openPage, test,
+	clickField, expect, FILLED, holds, inlineListText, keyboardPickFills, listFrame, listOpen, listText, mouseClickCaught, mouseClicksDropped, mousePickFills,
+	mousePickRefused, openPage, test, values,
 } from './fixtures'
 import type { Page } from '@playwright/test'
+import { inlineHeight } from '@/src/messages'
 
 const guardField = (page: Page) => page.locator('h2:text("Guard cases") ~ form input[name=username]').first()
 const frameField = (page: Page, frame: string) => page.frameLocator(frame).locator('input[name=username]')
+const hostHeight = (page: Page) => page.evaluate(() => document.querySelector(':root > div[popover]')?.getBoundingClientRect().height ?? null)
 
 test('a mouse pick in the top frame fills', async ({ page }) => {
 	await openPage(page)
@@ -123,6 +125,52 @@ test.describe('with twelve matching logins', () => {
 	})
 })
 
+for (const matches of [1, 3, 7]) {
+	test.describe(`with ${matches} matching logins`, () => {
+		test.use({ matches })
+
+		test('is as tall as its rows, five at most, from the moment it opens', async ({ page }) => {
+			await openPage(page)
+			await clickField(page, guardField(page))
+			await expect.poll(() => hostHeight(page)).not.toBeNull()
+			expect(await hostHeight(page)).toBe(inlineHeight(matches))
+			await expect.poll(async () => await listFrame(page)?.locator('[role=option]').count() ?? 0).toBe(matches)
+			await holds(async () => await hostHeight(page) === inlineHeight(matches), 500)
+		})
+	})
+}
+
+test.describe('on an http page with an https login', () => {
+	test.use({ loginItem: { https: true } })
+
+	test('grows for the insecure question, shows all of it, and fills once the guard has seen it', async ({ page }) => {
+		await openPage(page)
+		const field = guardField(page)
+		await clickField(page, field)
+		await expect.poll(() => listOpen(page)).toBe(true)
+		const frame = listFrame(page)!
+		await expect(async () => {
+			if (await frame.locator('[role=alertdialog]').count() === 0) {
+				const row = (await frame.locator('[role=option]').first().boundingBox({ timeout: 1000 }))!
+				await page.mouse.click(row.x + row.width / 2, row.y + row.height / 2)
+			}
+			await expect(frame.locator('[role=alertdialog]')).toHaveCount(1, { timeout: 1000 })
+		}).toPass()
+		await expect.poll(() => hostHeight(page)).toBeGreaterThan(inlineHeight(1))
+		await expect.poll(() => frame.evaluate(() => {
+			const list = document.getElementById('list')!
+			return list.scrollHeight <= list.clientHeight
+		})).toBe(true)
+		await expect(async () => {
+			if ((await values(field))[0] === '') {
+				const fill = (await frame.locator('button.btn--primary').boundingBox({ timeout: 1000 }))!
+				await page.mouse.click(fill.x + fill.width / 2, fill.y + fill.height / 2)
+			}
+			await expect.poll(() => values(field), { timeout: 1000 }).toEqual(FILLED)
+		}).toPass()
+	})
+})
+
 async function clickMessageKeepsList(page: Page, message: string) {
 	await expect.poll(() => listText(page)).toContain(message)
 	const box = (await listFrame(page)!.locator('p').first().boundingBox())!
@@ -136,6 +184,7 @@ test('a click on the no-match message leaves the list open', async ({ page, base
 	await openPage(page, other.href)
 	await clickField(page, guardField(page))
 	await clickMessageKeepsList(page, inlineListText('noMatch').replace('{host}', '127.0.0.1'))
+	expect(await hostHeight(page)).toBe(inlineHeight(1))
 })
 
 test.describe('locked', () => {
@@ -145,5 +194,6 @@ test.describe('locked', () => {
 		await openPage(page)
 		await clickField(page, guardField(page))
 		await clickMessageKeepsList(page, inlineListText('locked'))
+		expect(await hostHeight(page)).toBe(inlineHeight(1))
 	})
 })

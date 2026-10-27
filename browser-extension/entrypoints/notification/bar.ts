@@ -146,6 +146,7 @@ export function startNotificationBar(): () => void {
 	let error: HTMLElement | null = null
 	let primary: HTMLButtonElement | null = null
 	let folder: HTMLSelectElement | null = null
+	let item: HTMLElement | null = null
 	/** The host's one-row height for a short viewport (`barHostHeight`). */
 	let compact = false
 	let expandSent = false
@@ -169,6 +170,11 @@ export function startNotificationBar(): () => void {
 	/** Lets a clipped question or error scroll from the keyboard. */
 	function scrollable() {
 		if (!text || text.classList.contains('bar__saved')) return
+		// The item row only repeats the question, so it gives way to a question that needs its room.
+		if (item) {
+			bar.classList.remove('bar--long-question')
+			bar.classList.toggle('bar--long-question', text.scrollHeight > text.clientHeight)
+		}
 		if (text.scrollHeight > text.clientHeight) text.tabIndex = 0
 		else if (!text.classList.contains('bar__notice')) text.removeAttribute('tabindex')
 	}
@@ -195,11 +201,24 @@ export function startNotificationBar(): () => void {
 			element('div', { class: 'select' }, folder, svg({ class: 'select__chevron', width: '16', height: '16', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]])))
 	}
 
+	/** Hidden from screen readers, as the question already names the item and its username. */
+	function itemRow(name: string, username: string | undefined) {
+		const lines = [element('span', { class: 'bar__item-name' }, name)]
+		if (username) lines.push(element('span', { class: 'bar__item-user' }, username))
+		return element('div', { 'class': 'bar__item', 'aria-hidden': 'true' },
+			element('span', { class: 'bar__item-icon' }, svg({ width: '20', height: '20', viewBox: '0 0 24 24', ...stroke }, [
+				['circle', { cx: '7.5', cy: '15.5', r: '5.5' }],
+				['path', { d: 'm21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3' }],
+			])),
+			element('span', { class: 'bar__item-text' }, ...lines))
+	}
+
 	function render(mode: Mode, failure?: string) {
 		const current = { ...state!, mode }
 		bar.className = 'bar'
 		guarded.clear()
 		folder = null
+		item = null
 		title = element('p', { class: 'bar__title', id: 'bar-title' }, questionText(current))
 		error = element('p', { class: 'bar__error', id: 'bar-error' })
 		error.hidden = true
@@ -208,11 +227,13 @@ export function startNotificationBar(): () => void {
 		const parts: Node[] = [logo(), text]
 		if (mode === 'add') {
 			primary = guardedButton(i18n.t('notificationBar.save'), 'primary', (target, input) => void decide(target, 'add', input))
-			buttons.append(primary, guardedButton(i18n.t('notificationBar.never'), 'secondary', (_target, input) => void dismiss(true, input)))
+			buttons.append(guardedButton(i18n.t('notificationBar.never'), 'secondary', (_target, input) => void dismiss(true, input)), primary)
 			parts.push(folderChoice(current.folders))
 		} else {
 			primary = guardedButton(i18n.t('notificationBar.update'), 'primary', (target, input) => void decide(target, 'update', input))
 			buttons.append(primary)
+			item = itemRow(current.itemName!, current.username)
+			parts.push(item)
 		}
 		// Shown only compact; the question stays whole in the DOM, so screen readers get all of it.
 		const more = element('button', { 'type': 'button', 'class': 'icon-btn bar__expand', 'aria-label': i18n.t('notificationBar.expand'), 'aria-expanded': 'false' },
@@ -243,6 +264,7 @@ export function startNotificationBar(): () => void {
 		guarded.clear()
 		primary = null
 		folder = null
+		item = null
 		bar.className = 'bar bar--saved'
 		bar.replaceChildren(logo(), text)
 		// Focus would otherwise fall to the body; once moved, it reads the message out itself.
@@ -258,6 +280,7 @@ export function startNotificationBar(): () => void {
 		guarded.clear()
 		primary = null
 		folder = null
+		item = null
 		text = element('p', { class: 'bar__text bar__notice', tabindex: '-1' }, i18n.t('notificationBar.notVisible'))
 		bar.className = 'bar bar--notice'
 		bar.replaceChildren(logo(), text, closeButton())

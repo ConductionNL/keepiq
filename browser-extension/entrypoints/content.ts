@@ -63,7 +63,7 @@ export default defineContentScript({
 				sendResponse(window.confirm(host ? i18n.t('pageFill.insecure', { host }) : i18n.t('pageFill.insecureNoHost')))
 			} else if (m?.kind === 'fill.execute') sendResponse(executeFill(m, inline.openList()))
 			else if (m?.kind === 'inline.verify') sendResponse(inline.handle(m) === true)
-			else if (m?.kind === 'inline.ready' || m?.kind === 'inline.refocus' || m?.kind === 'inline.close') inline.handle(m)
+			else if (m?.kind === 'inline.ready' || m?.kind === 'inline.refocus' || m?.kind === 'inline.close' || m?.kind === 'inline.resize') inline.handle(m)
 			else if (m?.kind === 'capture.verify') sendResponse(bar?.handle(m) === true)
 			else if (m?.kind === 'capture.show' || m?.kind === 'capture.hide' || m?.kind === 'capture.focus' || m?.kind === 'capture.expand') bar?.handle(m)
 		})

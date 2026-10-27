@@ -4,7 +4,7 @@ import type { OpenSecretRow } from '@/src/api/types'
 import { addAccount, markLoggedOut, setActive } from '@/src/accounts/store'
 import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
 import { lastUsedKey } from '@/src/last-used'
-import type { BackgroundToContent, InlineListToBackground, PickInput } from '@/src/messages'
+import { inlineHeight, type BackgroundToContent, type InlineListToBackground, type PickInput } from '@/src/messages'
 import { encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { putKey } from '@/src/vault/key-store'
@@ -93,9 +93,23 @@ describe('inline.open', () => {
 		expect((await openSession(content()))!.key).not.toBe(first!.key)
 	})
 
-	it('opens on a locked vault, deciding nothing from the vault', async () => {
+	it('opens on a locked vault at one row, the locked message, reading nothing from the vault', async () => {
+		await twoLogins()
 		await lock(accountId)
-		expect(await openSession(content())).toEqual({ key: expect.any(String) })
+		expect(await openSession(content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+	})
+
+	it.each([1, 3, 5, 7])('sizes the list for %i matching logins, decrypting nothing', async (count) => {
+		await vault(await Promise.all(Array.from({ length: count }, (_, i) => login({ id: `item${i}`, name: `Item ${i}` }))))
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await openSession(content())).toEqual({ key: expect.any(String), height: inlineHeight(count) })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+	})
+
+	it('sizes the no-match message as one row', async () => {
+		await twoLogins()
+		pageUrl = 'https://nothing.test/login'
+		expect(await openSession(content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
 	})
 
 	it('opens nothing without a logged-in account', async () => {
@@ -338,6 +352,30 @@ describe('the list page’s other messages', () => {
 		expect(sent.map(({ message }) => message)).toEqual([{ kind: 'inline.close', key, refocus: false }])
 	})
 
+	it('forwards inline.resize to the host with the key and a height within the list\'s bounds', async () => {
+		const { key } = await openWithState()
+		sent = []
+		expect(await list({ kind: 'inline.resize', key, height: 130.4 })).toBeUndefined()
+		await list({ kind: 'inline.resize', key, height: 5000 })
+		await list({ kind: 'inline.resize', key, height: '130' as never })
+		await list({ kind: 'inline.resize', key, height: Number.NaN })
+		expect(sent).toEqual([
+			{ tabId: TAB, message: { kind: 'inline.resize', key, height: 131 }, frameId: 0 },
+			{ tabId: TAB, message: { kind: 'inline.resize', key, height: inlineHeight(5) }, frameId: 0 },
+		])
+	})
+
+	it('takes inline.resize only from the bound list frame', async () => {
+		const { key } = (await openSession(content()))!
+		sent = []
+		await list({ kind: 'inline.resize', key, height: 130 })
+		expect(sent).toEqual([])
+		await list({ kind: 'inline.state', key })
+		sent = []
+		await list({ kind: 'inline.resize', key, height: 130 }, listPage({ frameId: LIST_FRAME + 1 }))
+		expect(sent).toEqual([])
+	})
+
 	it('ignores every kind with a wrong key', async () => {
 		const { key } = await openWithState()
 		sent = []
@@ -345,6 +383,7 @@ describe('the list page’s other messages', () => {
 		await list({ kind: 'inline.refocus', key: wrong })
 		await list({ kind: 'inline.close', key: wrong, refocus: true })
 		await list({ kind: 'inline.unlock', key: wrong })
+		await list({ kind: 'inline.resize', key: wrong, height: 130 })
 		expect(sent).toEqual([])
 		expect(JSON.parse((await stored())!)).toMatchObject({ key })
 	})
@@ -434,18 +473,22 @@ describe('dropping the session', () => {
 	})
 })
 
-it('sends a content script no name, username, item id or row count, and plaintext only in the one fill', async () => {
+it('sends a content script no name, username or item id, only a height, and plaintext only in the one fill', async () => {
 	await twoLogins()
-	const { key } = await openWithState()
+	const opened = await openSession(content())
+	const { key } = opened!
+	await list({ kind: 'inline.state', key })
 	await list({ kind: 'inline.refocus', key })
+	await list({ kind: 'inline.resize', key, height: 130 })
 	await list({ kind: 'inline.pick', key, itemId: 'work', input: { ...input, kind: 'key' } })
 	await openWithState()
 	await list({ kind: 'inline.close', key: (await openWithState()).key, refocus: false })
+	expect(opened).toEqual({ key, height: inlineHeight(2) })
 	const toContent = sent.filter(({ message }) => message.kind !== 'fill.execute').map(({ message }) => JSON.stringify(message))
 	expect(toContent.length).toBeGreaterThan(5)
-	for (const message of toContent) {
-		for (const secret of ['Work', 'Personal', 'alice', 'work', 'personal', '"rows"', 'count']) expect(message).not.toContain(secret)
-		expect(Object.keys(JSON.parse(message) as object).sort()).toEqual(expect.arrayContaining(['key', 'kind']))
+	for (const message of [JSON.stringify(opened), ...toContent]) {
+		for (const secret of ['Work', 'Personal', 'alice', 'work', 'personal', '"rows"', 'count', 'name', 'itemId']) expect(message).not.toContain(secret)
+		expect(Object.keys(JSON.parse(message) as object).every((field) => ['key', 'kind', 'height', 'refocus', 'input'].includes(field))).toBe(true)
 	}
 	expect(sent.filter(({ message }) => message.kind === 'fill.execute')).toHaveLength(1)
 	const session = (await stored()) ?? ''

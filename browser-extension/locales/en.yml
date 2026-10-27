@@ -629,7 +629,7 @@ notificationBar:
     loginGone: This login no longer exists. Save it as a new login?
     locked: Keepiq is locked. Unlock it from the Keepiq button in the toolbar, then try again.
     notResponding: Keepiq is not responding. Try again.
-    # Shorter than their `writeErrors` namesakes, to fit the bar's three lines.
+    # Shorter than their `writeErrors` namesakes, so they fit the full-width card without scrolling.
     accountChanged: You switched accounts, so nothing was saved.
     keyMismatch: Keepiq's key does not match your vault. Nothing was saved; tell your administrator.
     staleSource: The original of this shared login changed. Nothing was saved; try again.
