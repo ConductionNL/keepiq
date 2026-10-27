@@ -1,6 +1,6 @@
 import { getConfig } from '@testing-library/react'
 import { vi } from 'vitest'
-import { clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
+import { AUTOFILL_FEATURES, clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
 import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type {
 	AccountSettingsSnapshot, AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
@@ -100,7 +100,7 @@ export function accountSettingsSnapshot(overrides: FakeBackground['accountSettin
 	const values = { ...DEFAULT_SETTINGS, ...overrides.values }
 	const maxIdleMinutes = overrides.maxIdleMinutes ?? null
 	return {
-		accountId: 'a1', effectiveTimeout: clampTimeout(values.vaultTimeout, maxIdleMinutes), exportDisabled: false, pin: false, autofillFeatures: [], shortcut: null,
+		accountId: 'a1', effectiveTimeout: clampTimeout(values.vaultTimeout, maxIdleMinutes), exportDisabled: false, pin: false, autofillFeatures: [...AUTOFILL_FEATURES], shortcut: null,
 		serverUrl: 'https://cloud.example.org', webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/', keepiqVersion: '0.3.12',
 		...overrides, maxIdleMinutes, values,
 	}

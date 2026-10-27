@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Inline list</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main class="wide">
+		<a class="back" href="/">All test pages</a>
+		<h1>Inline list</h1>
+		<p class="tests">Where the list of matching logins opens beneath a field, and where it must not. Each section says what should happen.</p>
+
+		<h2>Autofocus</h2>
+		<p class="tests">The username field has <code>autofocus</code>: the list opens beneath it as the page loads, focus staying in the field.</p>
+		<form method="post" action="/inline-list">
+			<label>Username <input name="username" type="text" autofocus></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+
+		<h2>Sign up</h2>
+		<p class="tests">A sign-up form: no list on the username, the password or the confirmation.</p>
+		<form method="post" action="/inline-list">
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<label>Confirm password <input name="password_confirm" type="password"></label>
+			<button type="submit">Create account</button>
+		</form>
+
+		<h2>Disabled and read-only</h2>
+		<p class="tests">The username is disabled and the password read-only: neither opens the list.</p>
+		<form method="post" action="/inline-list">
+			<label>Username <input name="username" type="text" disabled></label>
+			<label>Password <input name="password" type="password" readonly></label>
+			<button type="submit">Sign in</button>
+		</form>
+
+		<h2>Scrolling container</h2>
+		<p class="tests">Scroll the box a little with the list open: the list follows the field. Scroll the field fully out of the box: the list closes.</p>
+		<div class="scroller">
+			<p class="filler">Scroll down to the form.</p>
+			<form method="post" action="/inline-list">
+				<label>Username <input name="username" type="text"></label>
+				<label>Password <input name="password" type="password"></label>
+				<button type="submit">Sign in</button>
+			</form>
+			<p class="filler">Scroll on to move the form out of view.</p>
+		</div>
+
+		<h2>Same-origin iframe</h2>
+		<p class="tests">On this origin, like every frame above it: the list opens inside the frame on Chrome and Firefox, and a pick fills only the frame.</p>
+		<iframe id="same-origin" title="Login form on the same origin"></iframe>
+
+		<h2>Same-site iframe</h2>
+		<p class="tests">On port <code id="same-site-port">8101</code> of <code>localhost</code>, which the test site also serves: the same site but another origin, so no list opens, on Chrome or Firefox.</p>
+		<iframe id="same-site" title="Login form on the same site"></iframe>
+
+		<h2>Cross-site iframe</h2>
+		<p class="tests">On <code id="cross-host">127.0.0.1</code>, another origin: no list opens, not even the "no logins" one, on Chrome or Firefox, with or without the mask. <a id="reverse" href="http://127.0.0.1:8100/inline-list.html#cross-site">Open this page on 127.0.0.1</a> to frame the <code>localhost</code> login from another origin instead.</p>
+		<p><button type="button" id="mask-cross" aria-pressed="false">Mask the frame</button></p>
+		<div id="cross-wrap">
+			<iframe id="cross-site" title="Login form on another site"></iframe>
+		</div>
+
+		<h2>Too-small iframe</h2>
+		<p class="tests">120 px tall, with room for one row above and one below the field: no list opens, whatever the vault holds.</p>
+		<iframe id="small" class="small" title="Login form in a small frame"></iframe>
+
+		<h2>Double-click</h2>
+		<p class="tests">Double-click the box: the first click focuses the username, so the list appears under the second click, which must be ignored.</p>
+		<form method="post" action="/inline-list">
+			<label>Username <input id="dblclick-username" name="username" type="text"></label>
+			<div class="target" id="dblclick-target">Double-click here</div>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+
+		<h2>Guard cases</h2>
+		<p class="tests">Press a button, then focus a login field (the one below for the first eight, the frame for the last four). The page tampers with the list once it opens. Clear the field between tries.</p>
+		<form method="post" action="/inline-list">
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+		<p class="status" id="guard-status" role="status"></p>
+		<ul class="pages">
+			<li><button type="button" data-attack="rootOpacity">Opacity 0 on &lt;html&gt;</button><span>The page is invisible for 5 s, but the list sits in the top layer, so a pick fills on Chrome and Firefox 125 and later; on Firefox below 125 nothing is filled and the list stays open, showing "Keepiq can't fill here".</span></li>
+			<li><button type="button" data-attack="blurDecoy">Opacity 0, restored on blur</button><span>The page is invisible until the field loses focus, but the list sits in the top layer, so a pick fills on Chrome and Firefox 125 and later; Firefox below 125 refuses it.</span></li>
+			<li><button type="button" data-attack="overlay">Click-through overlay</button><span>A <code>pointer-events: none</code> box covers the list, so on Chrome a click through it shows "Keepiq can't fill here" instead of filling, while Firefox does not catch this.</span></li>
+			<li><button type="button" data-attack="popover">hidePopover() on the host</button><span>After 1 s the page hides and re-shows the list's host: the list closes.</span></li>
+			<li><button type="button" data-attack="styleAttribute">Style attribute on the host</button><span>After 1 s the page sets an outline on the host: the list closes.</span></li>
+			<li><button type="button" data-attack="stylesheet">Page stylesheet on the host</button><span>Its <code>!important</code> rules leave the host as it is, but the <code>::after</code> it draws over the list takes the click, so the list closes and nothing fills, without a message.</span></li>
+			<li><button type="button" data-attack="rootTransform">Transform on &lt;html&gt;</button><span>The page root is scaled, which leaves the top-layer list as it is, so a pick fills on Chrome and Firefox 125 and later; Firefox below 125 refuses it.</span></li>
+			<li><button type="button" data-attack="rootZoom">Zoom on &lt;html&gt;</button><span>The page root is zoomed, which resizes the list, so a pick is refused on every browser.</span></li>
+			<li><button type="button" data-attack="frameOpacity">Transparent ancestor of the frame</button><span>The frame's wrapper is invisible for 5 s, during which Chrome never delivers a click to the list, so nothing fills and the rows stay without a message, and only a click within 500 ms after the wrapper is restored shows "Keepiq can't fill here".</span></li>
+			<li><button type="button" data-attack="frameTransform">Transformed ancestor of the frame</button><span>The frame's wrapper is rotated, which the list inside the frame cannot escape, so a pick is refused on every browser, and on Chrome shows "Keepiq can't fill here".</span></li>
+			<li><button type="button" data-attack="frameTranslate">Translate the frame's container</button><span>The frame's wrapper is only moved with <code>transform: translate(...)</code>, so a pick fills on every browser.</span></li>
+			<li><button type="button" data-attack="frameMask">Masked ancestor of the frame</button><span>The frame's wrapper gets <code>mask-image: linear-gradient(transparent, transparent)</code> for 5 s. Click where a row is: the pick is refused.</span></li>
+		</ul>
+		<div id="guard-wrap">
+			<iframe id="guard-frame" title="Login form for the guard cases"></iframe>
+		</div>
+
+		<h2>Assistive styling</h2>
+		<p class="tests">Inverts the page with a filter on <code>&lt;html&gt;</code>, as Dark Reader's filter mode does: on Chrome the top-layer list keeps its own colours and a pick fills, while on Firefox, any version, the filter reaches the list too and a pick shows "Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar." instead.</p>
+		<p><button type="button" id="invert" aria-pressed="false">Invert the page</button></p>
+		<form method="post" action="/inline-list">
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+
+		<div class="spacer"></div>
+		<h2>Bottom of a long page</h2>
+		<p class="tests">Scroll to the end: the password field sits close to the bottom of the window, so its list opens above it without covering it.</p>
+		<form method="post" action="/inline-list">
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+	</main>
+	<script>
+		const port = Number(location.port) || 80
+		for (const id of ['same-origin', 'small', 'guard-frame']) document.getElementById(id).src = '/frame-login.html'
+		const otherHost = location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1'
+		document.getElementById('same-site').src = `http://${location.hostname}:${port + 1}/frame-login.html`
+		document.getElementById('same-site-port').textContent = port + 1
+		document.getElementById('cross-site').src = `http://${otherHost}:${port}/frame-login.html`
+		document.getElementById('cross-host').textContent = otherHost
+		const reverse = document.getElementById('reverse')
+		reverse.href = `http://${otherHost}:${port}/inline-list.html#cross-site`
+		reverse.textContent = `Open this page on ${otherHost}`
+		reverse.nextElementSibling.textContent = location.hostname
+
+		const toggle = (id, element, property, value) => {
+			const button = document.getElementById(id)
+			button.addEventListener('click', () => {
+				const on = button.getAttribute('aria-pressed') !== 'true'
+				button.setAttribute('aria-pressed', String(on))
+				if (on) element.style.setProperty(property, value)
+				else element.style.removeProperty(property)
+			})
+		}
+		toggle('mask-cross', document.getElementById('cross-wrap'), 'mask-image', 'linear-gradient(transparent, transparent)')
+		toggle('invert', document.documentElement, 'filter', 'invert(1) hue-rotate(180deg)')
+
+		document.getElementById('dblclick-target').addEventListener('click', (event) => {
+			if (event.detail === 1) document.getElementById('dblclick-username').focus()
+		})
+
+		const root = document.documentElement
+		const wrap = document.getElementById('guard-wrap')
+		const report = document.getElementById('guard-status')
+		const later = (run) => {
+			const timer = setTimeout(run, 1000)
+			return () => clearTimeout(timer)
+		}
+		const setFor = (element, property, value, ms) => {
+			element.style.setProperty(property, value)
+			const timer = ms && setTimeout(() => element.style.removeProperty(property), ms)
+			return () => {
+				clearTimeout(timer)
+				element.style.removeProperty(property)
+			}
+		}
+
+		// Each takes the list's host and returns what undoes it once the list closes.
+		const attacks = {
+			rootOpacity: () => setFor(root, 'opacity', '0', 5000),
+			blurDecoy: () => {
+				const undo = setFor(root, 'opacity', '0', 15000)
+				document.activeElement?.addEventListener('blur', undo, { once: true })
+				return undo
+			},
+			overlay: (host) => {
+				const rect = host.getBoundingClientRect()
+				const overlay = document.createElement('div')
+				overlay.className = 'overlay'
+				overlay.textContent = 'Click here for a prize'
+				Object.assign(overlay.style, { top: `${rect.top}px`, left: `${rect.left}px`, width: `${rect.width}px`, height: `${rect.height}px` })
+				if (overlay.showPopover) overlay.popover = 'manual'
+				document.body.append(overlay)
+				overlay.showPopover?.()
+				return () => overlay.remove()
+			},
+			popover: (host) => later(() => {
+				if (!host.hidePopover) {
+					report.textContent = 'This browser has no popover API: nothing to test.'
+					return
+				}
+				host.hidePopover()
+				if (host.isConnected) host.showPopover()
+			}),
+			styleAttribute: (host) => later(() => host.style.setProperty('outline', '4px solid red')),
+			stylesheet: () => {
+				const sheet = document.createElement('style')
+				sheet.textContent = 'html > div { opacity: 0 !important; transform: scale(0.5) !important; }'
+					+ ' html > div::after { content: ""; position: absolute; inset: 0; background: #fff; }'
+				document.head.append(sheet)
+				return () => sheet.remove()
+			},
+			rootTransform: () => setFor(root, 'transform', 'scale(1.05)'),
+			rootZoom: () => setFor(root, 'zoom', '1.1'),
+			frameOpacity: () => setFor(wrap, 'opacity', '0', 5000),
+			frameTransform: () => setFor(wrap, 'transform', 'rotate(2deg)'),
+			frameTranslate: () => setFor(wrap, 'transform', 'translate(40px, 12px)'),
+			frameMask: () => setFor(wrap, 'mask-image', 'linear-gradient(transparent, transparent)', 5000),
+		}
+
+		let watcher = null
+		for (const button of document.querySelectorAll('[data-attack]')) {
+			button.addEventListener('click', () => {
+				const name = button.dataset.attack
+				const doc = name.startsWith('frame') ? document.getElementById('guard-frame').contentDocument : document
+				watcher?.disconnect()
+				report.textContent = `Armed:${button.textContent}. Focus a login field ${doc === document ? 'on this page' : 'in the frame below'}.`
+				// The list's host is the `div` the content script appends to `<html>`.
+				watcher = new MutationObserver((records) => {
+					const host = records.flatMap((record) => [...record.addedNodes]).find((node) => node.localName === 'div')
+					if (!host) return
+					watcher.disconnect()
+					const undo = attacks[name](host)
+					report.textContent = `Ran: ${button.textContent}.`
+					const gone = new MutationObserver(() => {
+						if (host.isConnected) return
+						gone.disconnect()
+						undo?.()
+						report.textContent = `Ran: ${button.textContent}. The list closed.`
+					})
+					gone.observe(doc.documentElement, { childList: true })
+				})
+				watcher.observe(doc.documentElement, { childList: true })
+			})
+		}
+	</script>
+</body>
+</html>

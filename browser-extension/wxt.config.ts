@@ -66,7 +66,22 @@ export default defineConfig({
 				// document on Chrome and from the background page on Firefox.
 				'clipboardWrite',
 				...(browser === 'firefox' ? [] : ['offscreen']),
+				// Firefox reads it as an alias of `menus`.
+				'contextMenus',
 			],
+			commands: {
+				autofill_login: {
+					suggested_key: { default: 'Ctrl+Shift+L', mac: 'Command+Shift+L' },
+					description: '__MSG_commandAutofillLogin__',
+				},
+				// Why this key: design.md § Notification bar.
+				focus_notification_bar: {
+					suggested_key: { default: 'Alt+Shift+K', mac: 'Command+Shift+K' },
+					description: '__MSG_commandFocusNotificationBar__',
+				},
+			},
+			// The save bar and the inline list, framed into pages. WXT writes MV2's string form for Firefox.
+			web_accessible_resources: [{ resources: ['notification.html', 'inline-list.html'], matches: ['*://*/*'] }],
 			...(manifestVersion === 3
 				? { optional_host_permissions: serverOrigins }
 				: { optional_permissions: serverOrigins }),

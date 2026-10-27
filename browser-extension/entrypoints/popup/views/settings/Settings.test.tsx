@@ -53,7 +53,7 @@ describe('Settings', () => {
 	})
 
 	it('returns from Excluded domains to Notifications', async () => {
-		fakeBackground({ accountSettings: { autofillFeatures: ['savePrompts'] } })
+		fakeBackground()
 		const user = await openSettings()
 		await user.click(screen.getByRole('button', { name: 'Notifications' }))
 		await user.click(await screen.findByRole('button', { name: 'Excluded domains' }))

@@ -54,3 +54,28 @@ jobs:
             browser-extension/.output/chrome-mv3/
             browser-extension/.output/firefox-mv2/
           retention-days: 14
+
+  e2e:
+    runs-on: ubuntu-latest
+    # A build and the inline list in headless Chromium; Playwright cannot load extensions into Firefox.
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: browser-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: browser-extension/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npx wxt prepare
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension-e2e
+          path: browser-extension/test-results/
+          retention-days: 14

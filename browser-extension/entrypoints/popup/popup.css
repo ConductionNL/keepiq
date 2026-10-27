@@ -760,6 +760,11 @@ a {
 	margin-right: auto;
 }
 
+/* Edit and Fill side by side. */
+.detail-actions > .btn:has(+ .btn) {
+	margin-right: 8px;
+}
+
 /* As tall as Edit, with a glyph to match its weight. */
 .detail-actions .icon-btn {
 	width: 40px;
@@ -1047,7 +1052,15 @@ a {
 .item__actions {
 	position: relative;
 	display: flex;
+	align-items: center;
 	flex: none;
+}
+
+.item__fill {
+	height: 28px;
+	margin-right: 4px;
+	padding: 0 12px;
+	font-size: 13px;
 }
 
 .icon-btn:disabled {

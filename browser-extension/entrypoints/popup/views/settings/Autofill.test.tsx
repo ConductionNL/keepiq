@@ -2,7 +2,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AutofillFeature } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../../shell-context'
 import { fakeBackground, fakeClipboard, sentOf } from '../../testing'
 import { Autofill } from './Autofill'
@@ -11,8 +10,6 @@ afterEach(() => {
 	cleanup()
 	vi.unstubAllEnvs()
 })
-
-const ALL: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts']
 
 function renderView(options: Parameters<typeof fakeBackground>[0] = {}) {
 	const sent = fakeBackground(options)
@@ -28,8 +25,8 @@ const patches = (sent: ReturnType<typeof fakeBackground>) => sentOf(sent, 'accou
 const loaded = () => screen.findByRole('checkbox', { name: 'Autofill on page load' })
 
 describe('Autofill', () => {
-	it('shows every entry as coming later, with its stored value, until ext-autofill delivers it', async () => {
-		const { sent, user } = renderView({ accountSettings: { values: { contextMenu: false } } })
+	it('shows an entry whose behaviour is not delivered as coming later, with its stored value', async () => {
+		const { sent, user } = renderView({ accountSettings: { autofillFeatures: [], values: { contextMenu: false } } })
 		await loaded()
 		for (const name of ['Autofill on page load', 'Show autofill suggestions on form fields', 'Enable context menu options']) {
 			expect(checkbox(name).getAttribute('aria-disabled')).toBe('true')
@@ -45,8 +42,20 @@ describe('Autofill', () => {
 		expect(screen.queryByText('Show identities as suggestions')).toBeNull()
 	})
 
+	it('enables every entry and stores its change, now that ext-autofill delivered them', async () => {
+		const { sent, user } = renderView({ accountSettings: { values: { contextMenu: false } } })
+		await loaded()
+		expect(screen.queryByText('Coming later')).toBeNull()
+		for (const name of ['Autofill on page load', 'Show autofill suggestions on form fields', 'Enable context menu options']) {
+			expect(checkbox(name).getAttribute('aria-disabled')).toBeNull()
+		}
+		expect(select('Default URI match detection').disabled).toBe(false)
+		await user.click(checkbox('Enable context menu options'))
+		await waitFor(() => expect(patches(sent)).toEqual([{ contextMenu: true }]))
+	})
+
 	it('warns under Autofill on page load once on, and enables the default setting', async () => {
-		const { sent, user } = renderView({ accountSettings: { autofillFeatures: ALL } })
+		const { sent, user } = renderView()
 		await loaded()
 		expect(select('Default autofill setting for login items').disabled).toBe(true)
 		await user.click(checkbox('Autofill on page load'))
@@ -57,7 +66,7 @@ describe('Autofill', () => {
 	})
 
 	it('notes that a regular expression can break matching', async () => {
-		const { sent, user } = renderView({ accountSettings: { autofillFeatures: ALL } })
+		const { sent, user } = renderView()
 		await loaded()
 		expect([...select('Default URI match detection').options].map((option) => option.textContent)).toEqual(['Base domain', 'Host', 'Starts with', 'Exact', 'Regular expression', 'Never'])
 		await user.selectOptions(select('Default URI match detection'), 'Regular expression')

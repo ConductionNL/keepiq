@@ -13,6 +13,7 @@ import { TypeFilterChips } from '../components/TypeFilterChips'
 import type { CurrentTab } from '../hooks/useCurrentTab'
 import { blockedText } from '../errors'
 import { loginKey, useLazyLogins } from '../hooks/useDecryptedFields'
+import { useFill } from '../hooks/useFill'
 import { language } from '../i18n'
 import { relativeTime } from '../relative-time'
 
@@ -43,10 +44,15 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 		typeIds: typeName === null ? null : new Set(types.filter((type) => type.name === typeName).map((type) => type.id)),
 	}), [search, folder, typeName, types])
 	const shown = useMemo(() => filterItems(sorted, filter), [sorted, filter])
+	// The background's order (last used, then name), not re-sorted. It sends no blocked row; one that slips through is not filled.
 	const suggestions = useMemo(() => {
-		const ids = new Set(snapshot.suggestionIds)
-		return sorted.filter((item) => ids.has(item.id))
-	}, [sorted, snapshot.suggestionIds])
+		const byId = new Map((items ?? []).map((item) => [item.id, item]))
+		return snapshot.suggestionIds.flatMap((id) => {
+			const item = byId.get(id)
+			return item && !item.blocked ? [item] : []
+		})
+	}, [items, snapshot.suggestionIds])
+	const { fill, dialog } = useFill(tab)
 	const rendered = useMemo(() => [shown, suggestions], [shown, suggestions])
 	const logins = useLazyLogins(list, rendered)
 
@@ -108,8 +114,9 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 					{i18n.t('vault.allBlocked')} {sorted[0]?.blockedReason && <>{blockedText(sorted[0].blockedReason)} </>}{webApp}
 				</Banner>
 			)}
-			{!firstSync && tab.host && <Suggestions host={tab.host} items={suggestions} types={typesById} logins={logins} onOpen={onOpen} />}
+			{!firstSync && <Suggestions host={tab.host} items={suggestions} types={typesById} logins={logins} onOpen={onOpen} onFill={fill} />}
 			{body}
+			{dialog}
 		</div>
 	)
 }

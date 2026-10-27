@@ -1,0 +1,224 @@
+/* The popup's tokens (popup.css), only those the list uses; `--row` comes from `INLINE_ROW_PX`. No animation, by spec. */
+:root {
+	color-scheme: light dark;
+	--surface: #ffffff;
+	--surface-hover: #eef1f6;
+	--fg: #1a2130;
+	--fg-muted: #5b6577;
+	--border-strong: #c5ccd8;
+	--accent: #21468b;
+	--accent-hover: #1a386f;
+	--accent-fg: #ffffff;
+	--accent-soft: #e6edf9;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--surface: #1e222a;
+		--surface-hover: #272c36;
+		--fg: #e8ebf0;
+		--fg-muted: #9aa3b3;
+		--border-strong: #444c5b;
+		--accent: #7fa3ec;
+		--accent-hover: #9ab7f1;
+		--accent-fg: #0c1730;
+		--accent-soft: #1d2840;
+	}
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--surface: #1e222a;
+	--surface-hover: #272c36;
+	--fg: #e8ebf0;
+	--fg-muted: #9aa3b3;
+	--border-strong: #444c5b;
+	--accent: #7fa3ec;
+	--accent-hover: #9ab7f1;
+	--accent-fg: #0c1730;
+	--accent-soft: #1d2840;
+}
+
+html,
+body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	background: var(--surface);
+	color: var(--fg);
+	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+p {
+	margin: 0;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/*
+ * The edge is the list's own inset outline: it takes no room, so rows × `--row` fill the frame, and `--fg-muted` keeps 3:1.
+ * Anything painted over `#list` instead, such as a fixed `::after`, makes IntersectionObserver v2 refuse every pick.
+ */
+.list {
+	height: 100%;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	outline: 1px solid var(--fg-muted);
+	outline-offset: -1px;
+}
+
+.listbox {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.row {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: var(--row);
+	padding: 0 12px;
+	cursor: pointer;
+}
+
+.row:hover {
+	background: var(--surface-hover);
+}
+
+.row:focus {
+	background: var(--accent-soft);
+}
+
+/* `:focus`, not `:focus-visible`: focus arrives by script from the field's Down key. */
+.row:focus,
+.message:focus,
+.btn:focus {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+.row__icon {
+	flex: none;
+	color: var(--accent);
+}
+
+.row__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.row__name,
+.row__user {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.row__name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.row__user {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+/* Fits two rows, the smallest list; larger text scrolls from its top rather than being cut off there. */
+.message {
+	box-sizing: border-box;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: safe center;
+	gap: 6px;
+	padding: 8px 12px;
+	overflow-y: auto;
+	overflow-wrap: anywhere;
+	text-align: center;
+}
+
+.message--muted {
+	color: var(--fg-muted);
+}
+
+.btn {
+	min-height: 28px;
+	padding: 0 14px;
+	font: inherit;
+	font-weight: 600;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	cursor: pointer;
+}
+
+.btn--primary {
+	background: var(--accent);
+	color: var(--accent-fg);
+}
+
+.btn--primary:hover {
+	background: var(--accent-hover);
+}
+
+.btn--secondary {
+	background: var(--surface);
+	border-color: var(--border-strong);
+	color: var(--fg);
+}
+
+.btn--secondary:hover {
+	background: var(--surface-hover);
+}
+
+.btn:focus {
+	outline-offset: 2px;
+}
+
+/* The question and its buttons fit two rows; only the warning below the question can be clipped, and then scrolls. */
+.question {
+	box-sizing: border-box;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 6px 12px;
+}
+
+.question__title {
+	flex: none;
+	font-weight: 600;
+}
+
+.question__text {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	font-size: 12px;
+}
+
+.question__actions {
+	flex: none;
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

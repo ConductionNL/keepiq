@@ -7,7 +7,7 @@ import { CLIPBOARD_ALARM } from '@/src/clipboard'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
 import { writePolicy } from '@/src/generator/store'
-import type { PopupReplies, PopupRequest } from '@/src/messages'
+import type { PopupReplies } from '@/src/messages'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { editOpenedKey, hasKey, neverLockKey, putKey, sessionValues } from '@/src/vault/key-store'
@@ -16,11 +16,11 @@ import { writeSnapshot } from '@/src/vault/store'
 import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
 import { lock } from '@/src/vault/unlock'
-import { handlePopupRequest, readLastTab } from './requests'
+import { handlePopupRequest, readLastTab, type HandledRequest } from './requests'
 
 const fetchMock = vi.fn<typeof fetch>()
 
-function send<K extends PopupRequest['kind']>(message: Extract<PopupRequest, { kind: K }>): Promise<PopupReplies[K]> {
+function send<K extends HandledRequest['kind']>(message: Extract<HandledRequest, { kind: K }>): Promise<PopupReplies[K]> {
 	return handlePopupRequest(message) as Promise<PopupReplies[K]>
 }
 
@@ -61,7 +61,7 @@ describe('vault.snapshot', () => {
 		])
 		const reply = await send({ kind: 'vault.snapshot', tabUrl: 'https://www.example.co.uk/' })
 		if (reply.state !== 'unlocked') throw new Error(reply.state)
-		expect(reply.suggestionIds).toEqual(['a', 'c'])
+		expect(reply.suggestionIds).toEqual(['a'])
 		expect(reply.items?.map((item) => [item.id, item.hasLogin, item.blocked, item.useOnly])).toEqual([['a', true, false, false], ['b', false, false, true], ['c', false, true, false]])
 		expect(reply.items?.[2]).toMatchObject({ blockedReason: 'suite_revoked' })
 		expect(reply.folders).toEqual([{ id: 'f1', name: 'Work', parentId: null }])
@@ -70,6 +70,20 @@ describe('vault.snapshot', () => {
 		for (const item of reply.items!) expect(Object.keys(item)).not.toEqual(expect.arrayContaining([expect.stringMatching(/^(key|login|additionalFields)$/)]))
 		expect(JSON.stringify(reply)).not.toContain(login)
 		expect(JSON.stringify(reply)).not.toContain('ciphertext')
+	})
+
+	it('orders the suggestions by last used, then name, under the account’s match rule', async () => {
+		await snapshot([
+			secretRow({ id: 'work', name: 'Work', url: 'https://example.test/' }),
+			secretRow({ id: 'personal', name: 'Personal', url: 'https://login.example.test/' }),
+			secretRow({ id: 'note', name: 'Note', url: 'https://example.test/', typeId: 't-note' }),
+		])
+		const ids = async () => (await send({ kind: 'vault.snapshot', tabUrl: 'https://example.test/login' }) as { suggestionIds: string[] }).suggestionIds
+		expect(await ids()).toEqual(['personal', 'work'])
+		await browser.storage.local.set({ [`lastUsed.${accountId}`]: { work: 1 } })
+		expect(await ids()).toEqual(['work', 'personal'])
+		await writeSettings(accountId, { uriMatch: 'host' })
+		expect(await ids()).toEqual(['work'])
 	})
 
 	it('starts a first sync and says so when there is no snapshot', async () => {
@@ -232,7 +246,7 @@ describe('account settings', () => {
 			maxIdleMinutes: null,
 			exportDisabled: false,
 			pin: false,
-			autofillFeatures: [],
+			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'],
 			shortcut: null,
 			serverUrl: 'https://cloud.example.org',
 			webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',

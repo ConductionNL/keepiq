@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login submitted by script</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Login submitted by script</h1>
+		<p class="tests">A page probing the vault: it fills a login and submits it itself a second after loading, with <code>requestSubmit()</code>, or with <code>click()</code> on its button when the URL ends in <code>?how=click</code>. No save or update bar may follow. Don't touch the page while it counts down.</p>
+		<form method="post" action="/login">
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+	</main>
+	<script>
+		setTimeout(() => {
+			document.querySelector('input[name=username]').value = 'probe@example.test'
+			document.querySelector('input[name=password]').value = 'a-guess'
+			if (new URLSearchParams(location.search).get('how') === 'click') document.querySelector('button').click()
+			else document.querySelector('form').requestSubmit()
+		}, 1000)
+	</script>
+</body>
+</html>

@@ -41,8 +41,8 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 	defaultItemType: 'login',
 }
 
-/** What ext-autofill has delivered; empty until it lands. */
-export const AUTOFILL_FEATURES: AutofillFeature[] = []
+/** The delivered `AutofillFeature`s, sent to Settings in the snapshot. */
+export const AUTOFILL_FEATURES: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts']
 
 export const settingsKey = (accountId: string) => `settings.${accountId}`
 
@@ -94,6 +94,19 @@ const queued = createQueue()
 export function writeSettings(accountId: string, patch: Partial<AccountSettings>): Promise<void> {
 	return queued(async () => {
 		await browser.storage.local.set({ [settingsKey(accountId)]: { ...await readStored(accountId), ...pickValid(VALIDATORS, patch) } })
+	})
+}
+
+/**
+ * The save bar's "Never for this site": read and written in the same queue as every other patch, so a popup edit
+ * at the same moment is not lost. The excluded list has no bearing on the "Never" key, so no `updateSettings`.
+ */
+export function addExcludedDomain(accountId: string, domain: string): Promise<void> {
+	return queued(async () => {
+		const stored = await readStored(accountId)
+		const current = pickValid(VALIDATORS, stored).excludedDomains ?? []
+		if (current.includes(domain)) return
+		await browser.storage.local.set({ [settingsKey(accountId)]: { ...stored, ...pickValid(VALIDATORS, { excludedDomains: [...current, domain] }) } })
 	})
 }
 

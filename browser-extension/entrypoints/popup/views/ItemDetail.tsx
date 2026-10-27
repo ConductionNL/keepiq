@@ -4,7 +4,7 @@ import { USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta
 import { typeIcon } from '@/src/vault/icons'
 import { folderPath, launchUrl } from '@/src/vault/list'
 import { cardBrand, cardLast4, parseObject, parsePayload, text } from '@/src/vault/payloads'
-import { IconButton } from '../components/Button'
+import { Button, IconButton } from '../components/Button'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Icon, type IconName } from '../components/Icon'
 import { itemActions } from '../components/ItemCard'
@@ -15,7 +15,9 @@ import { PageFooter } from '../components/PageFooter'
 import { ShareSaveNote } from '../components/ShareSaveNote'
 import { TotpCode } from '../components/TotpCode'
 import { blockedText } from '../errors'
+import type { CurrentTab } from '../hooks/useCurrentTab'
 import { useDecryptedFields } from '../hooks/useDecryptedFields'
+import { useFill } from '../hooks/useFill'
 import { request } from '../hooks/useMessage'
 import { language } from '../i18n'
 import { useShell } from '../shell-context'
@@ -27,6 +29,8 @@ interface Props {
 	webAppUrl: string
 	/** What the last save of this item left to others; held by Shell. */
 	shareSave?: Note
+	/** The active tab, set when the item is one of its Autofill suggestions; offers Fill. */
+	fillTab?: CurrentTab
 }
 
 /** Types with their own section instead of Login credentials. */
@@ -208,7 +212,8 @@ function ActionButton({ action, className, icon }: { action: MenuItem; className
 	)
 }
 
-export function ItemDetail({ item, type, folders, webAppUrl, shareSave }: Props) {
+export function ItemDetail({ item, type, folders, webAppUrl, shareSave, fillTab }: Props) {
+	const { fill, dialog } = useFill(fillTab)
 	// The version the user opened; a later one arrived by sync.
 	const [openedVersion] = useState(item.updatedAt)
 	const dates: Array<[string, string]> = [[i18n.t('detail.created'), item.createdAt], [i18n.t('detail.updated'), item.updatedAt]]
@@ -262,10 +267,12 @@ export function ItemDetail({ item, type, folders, webAppUrl, shareSave }: Props)
 			<PageFooter>
 				<div className="detail-actions">
 					<ActionButton action={actions.edit} className="btn btn--primary" />
+					{fillTab && !item.blocked && <Button variant="secondary" onClick={() => fill(item.id)}>{i18n.t('item.fill')}</Button>}
 					<Menu label={i18n.t('item.moreMenu', { name: item.name })} icon="more" above items={[actions.clone, actions.move, ...(actions.send ? [actions.send] : [])]} />
 					<ActionButton action={actions.remove} className="icon-btn icon-btn--danger" icon="trash" />
 				</div>
 			</PageFooter>
+			{dialog}
 		</div>
 	)
 }

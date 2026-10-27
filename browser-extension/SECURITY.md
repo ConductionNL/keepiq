@@ -34,13 +34,18 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | Link of a send without a password | Popup memory, from creation | Closing the popup, lock, timeout, account switch |
 | Link of a password send | Popup memory with the list; holds no secret, the background rebuilds it from the token the server lists | Closing the popup, lock, timeout, account switch |
 | The list of sends | Popup memory, fetched per popup session | Closing the popup, lock, timeout, account switch |
+| The credential of a fill | Background memory for the fill; the page's fields once filled | The fill's end; the content script drops it after writing the fields |
+| When each item was last filled (`lastUsed.<id>`), no other history | `storage.local` | Logout, account removal |
+| Inline list session: a random key, the tab, frame and frame URL, the offered item ids; no plaintext | `storage.session`, like the private key | The list closing, the next list in the tab, tab close or navigation, lock, timeout, logout, account switch, browser restart, extension reload |
+| Names and usernames in the inline list | The list page's memory while shown | The list closing |
+| A submitted login waiting for Save or Update, password included | Background memory only, never storage | The answer, 5 minutes, tab close, leaving the site, lock, timeout, logout, account switch, an MV3 worker restart |
 
-- Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. The settings screen (`ext-settings`) will warn about it when you pick it.
+- Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. Settings warns about it when you pick it.
 - `storage.session` keeps its default access level, so content scripts cannot read it.
 
 ## Locking
 
-- The vault locks after 15 minutes without interaction by default. The other options are Immediately (when the last popup closes), On system lock, On browser restart, Never and a custom number of minutes. The background supports them all; the screen to pick them comes with `ext-settings`.
+- The vault locks after 15 minutes without interaction by default. The other options are Immediately (when the last popup closes), On system lock, On browser restart, Never and a custom number of minutes, picked in Settings.
 - The timeout action is Lock (the key goes) or Log out (the app password goes too).
 - The timeout is enforced on a once-a-minute alarm and again before every popup request. A sleeping service worker can't serve a vault that should already be locked.
 - A timeout can fire up to a minute late, or later while the worker sleeps and the popup stays closed. Nothing can use the vault in that time without going through the check.
@@ -66,11 +71,27 @@ There is no remote wipe, so these checks stand in for it:
 
 ## Pages and messages
 
-- The background answers popup messages only from the extension's own pages. Messages from content scripts are ignored, apart from the page-ready signal.
-- Content scripts hold no vault state and never see the key. URL matching and decryption stay in the background. The planned autofill will hand a page exactly one credential, after you picked it.
+- The background answers each sender only its own message kinds (`src/background/sender.ts`): popup kinds only from `/popup.html`, the save bar's only from `/notification.html`, the inline list's only from `/inline-list.html`, and from content scripts only the page-ready signal, opening and closing the list, a submitted login, and a request to show the bar again.
+- Tab, frame and URL come from the browser's `sender`, never from the message.
+- Content scripts hold no vault state and never see the key. URL matching and decryption stay in the background. A fill hands the page exactly one credential, after you picked it, and only to frames whose address matches the item.
 - Content scripts run on every page, as in Bitwarden. That is safe only because of the rule above ([ADR-001](openspec/architecture/adr-001-bitwarden-parity.md), ADR-002).
 - The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never. Of a use-only copy it gets only the login; the background refuses its value and additional fields.
-- No remote code is loaded, and the popup renders no HTML from vault data.
+- No remote code is loaded, and no extension page renders HTML from vault data.
+
+## In-page UI
+
+The inline list and the save bar show inside web pages. The reasoning is in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts), the details in `openspec/changes/ext-autofill/design.md`.
+
+- **Isolated:** each is an extension page in an iframe inside a closed shadow root; the page can neither read it nor restyle it, and any change the content script didn't make closes it.
+- **Key handshake:** the content script posts a random key to its own iframe at the extension origin; the background answers only the first frame of that page, tab and frame to present it, so a copy the page frames itself gets nothing.
+- **What the page learns:** the content script never gets names or usernames; the list has one fixed height whatever matches, and the bar's height depends on the window only.
+- **Visibility guard:** a pick, Save, Update or Never counts only when the list or bar stayed untouched and on top for the 500 ms before the press, and is what the press point hits. Otherwise it is refused, and the list or bar says so.
+- **Frames:** no inline list in a frame with a cross-origin ancestor, on either browser, since the extension couldn't check that ancestor's styling.
+- **Chrome** adds IntersectionObserver v2, which also sees overlays that let clicks through.
+- **Firefox** has no such report, so the guard samples every frame and is best effort: an overlay that lets clicks through, or a style changed only between samples, goes unnoticed. A `filter` on `<html>`, such as "Invert the page" or Dark Reader's filter mode, refuses every pick there.
+- **Assistive styling:** a zoom extension's `zoom` on `<html>` refuses every pick on both browsers.
+- **Trusted submissions:** a login is offered for saving only after a trusted submit with user activation, at most once per activation, since whether a bar appears tells the page whether that login is saved.
+- **The bar never gets the password,** which stays in background memory until you answer.
 
 ## Saving
 
@@ -91,9 +112,10 @@ There is no remote wipe, so these checks stand in for it:
 
 ## Clipboard
 
-- Copy happens in the popup, under your click.
-- The background overwrites the clipboard when a clear delay runs out: through an offscreen document on Chrome, and from the background page on Firefox.
-- The delay is 30 seconds by default, and every copy replaces the pending clear. `ext-settings` will let you change it per account, or set it to Never.
+- Copy happens in the popup, under your click, or from the context menu, where the background writes it.
+- The background writes and clears the clipboard through an offscreen document on Chrome, and from the background page on Firefox.
+- On Chrome the background reaches the offscreen document with a runtime message, so `offscreen.writeClipboard` and the copied value reach every open extension view; only the offscreen document acts on it.
+- The delay is 30 seconds by default, and every copy replaces the pending clear. Settings changes it per account, or sets it to Never.
 - The clear is unconditional: anything you copy in those 30 seconds is cleared too. Checking first would need the `clipboardRead` permission and its install warning.
 
 ## Known limits

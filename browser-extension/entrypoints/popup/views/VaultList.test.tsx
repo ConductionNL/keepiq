@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DecryptedItem } from '@/src/messages'
 import type { CurrentTab } from '../hooks/useCurrentTab'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { everythingVisible, fakeBackground, fakeClipboard, itemMeta, sentKinds, snapshotReply, types, type UnlockedSnapshot } from '../testing'
+import { everythingVisible, fakeBackground, fakeClipboard, itemMeta, sentKinds, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
 import { VaultList } from './VaultList'
 
 afterEach(cleanup)
@@ -13,19 +13,27 @@ beforeEach(everythingVisible)
 
 const githubTab: CurrentTab = { id: 7, windowId: 1, url: 'https://github.com/login', host: 'github.com' }
 
-function renderList(snapshot: UnlockedSnapshot, options: { tab?: CurrentTab; decrypted?: Record<string, DecryptedItem> } = {}) {
-	const sent = fakeBackground({ snapshot, decrypted: options.decrypted })
+interface ListOptions {
+	tab?: CurrentTab
+	decrypted?: Record<string, DecryptedItem>
+	replies?: Record<string, unknown>
+	unanswered?: string[]
+}
+
+function renderList(snapshot: UnlockedSnapshot, options: ListOptions = {}) {
+	const sent = fakeBackground({ snapshot, decrypted: options.decrypted, replies: options.replies, unanswered: options.unanswered })
 	const toast = vi.fn()
 	const launch = vi.fn()
 	const onOpen = vi.fn()
 	const syncNow = vi.fn()
+	const refreshState = vi.fn()
 	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	render(
-		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast, launch, items }}>
+		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast, launch, items, refreshState }}>
 			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} syncNow={syncNow} onOpen={onOpen} />
 		</ShellContext.Provider>,
 	)
-	return { sent, toast, launch, onOpen, syncNow, items }
+	return { sent, toast, launch, onOpen, syncNow, items, refreshState }
 }
 
 /** Names of the item cards in the main list, in order. */
@@ -136,11 +144,169 @@ describe('autofill suggestions', () => {
 		expect(screen.getByText('No items for nothing.test')).toBeTruthy()
 	})
 
-	it('shows a blocked match with its badge and no copy', () => {
+	it('does not list a blocked match, which stays in the main list with its badge', () => {
 		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false, blockedReason: 'suite_revoked' })], suggestionIds: ['1'] }), { tab: githubTab })
 		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
-		expect(within(section).getByText('Blocked')).toBeTruthy()
-		expect((within(section).getByRole('button', { name: 'Copy, GitHub' }) as HTMLButtonElement).disabled).toBe(true)
+		expect(within(section).queryAllByRole('listitem')).toHaveLength(0)
+		expect(within(section).getByText('No items for github.com')).toBeTruthy()
+		expect(listed()).toEqual(['GitHub'])
+		expect(within(screen.getByRole('region', { name: 'Items' })).getByText('Blocked')).toBeTruthy()
+	})
+
+	it('keeps the background’s order, last used first, instead of sorting by name', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: 'a', name: 'Amazon' }), itemMeta({ id: 'z', name: 'Zebra' })], suggestionIds: ['z', 'a'] }), { tab: githubTab })
+		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
+		expect(within(section).getAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)).toEqual(['Zebra', 'Amazon'])
+		expect(listed()).toEqual(['Amazon', 'Zebra'])
+	})
+
+	it('says autofill is not available on a page that is not http(s), offering no item', () => {
+		renderList(snapshotReply({ suggestionIds: ['i1'] }), { tab: { id: 1, windowId: 1, url: 'chrome://newtab/', host: null } })
+		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
+		expect(within(section).getByText('Autofill is not available on this page')).toBeTruthy()
+		expect(within(section).queryAllByRole('listitem')).toHaveLength(0)
+		expect(screen.queryByRole('button', { name: 'Fill GitHub' })).toBeNull()
+	})
+})
+
+describe('filling from the suggestions', () => {
+	const snapshot = () => snapshotReply({ items: [itemMeta({ id: '1', name: 'GitHub' })], suggestionIds: ['1'] })
+	const suggestions = () => screen.getByRole('region', { name: 'Autofill suggestions' })
+	const closeSpy = () => vi.spyOn(window, 'close').mockImplementation(() => {})
+
+	it('fills username and password on a card click and closes the popup', async () => {
+		const close = closeSpy()
+		const { sent, onOpen } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': { filled: 'both' } } })
+		await userEvent.setup().click(within(suggestions()).getByText('GitHub'))
+		expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: '1', tabId: 7 }])
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(onOpen).not.toHaveBeenCalled()
+	})
+
+	it('fills from the card’s Fill button, and still views the item from More', async () => {
+		const close = closeSpy()
+		const { sent, onOpen } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': { filled: 'both' } } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(sentOf(sent, 'fill.request')).toHaveLength(1)
+		await user.click(within(suggestions()).getByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'View' }))
+		expect(onOpen).toHaveBeenCalledWith('1')
+	})
+
+	it('offers Fill in the suggestions only, so a main list card still opens the item', async () => {
+		const { sent, onOpen } = renderList(snapshot(), { tab: githubTab })
+		const main = screen.getByRole('region', { name: 'Items' })
+		expect(within(main).queryByRole('button', { name: 'Fill GitHub' })).toBeNull()
+		await userEvent.setup().click(within(main).getByText('GitHub'))
+		expect(onOpen).toHaveBeenCalledWith('1')
+		expect(sentOf(sent, 'fill.request')).toHaveLength(0)
+	})
+
+	it('stays open and says so when the page has no login form', async () => {
+		const close = closeSpy()
+		const { toast } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': { filled: 'none' } } })
+		await userEvent.setup().click(within(suggestions()).getByText('GitHub'))
+		await vi.waitFor(() => expect(toast).toHaveBeenCalledWith('Unable to autofill on this page. Copy and paste instead.'))
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('re-reads the state when the fill gets no answer, so a vault locked meanwhile shows Unlock', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		const close = closeSpy()
+		const { toast, refreshState } = renderList(snapshot(), { tab: githubTab, unanswered: ['fill.request'] })
+		await userEvent.setup().click(within(suggestions()).getByText('GitHub'))
+		await vi.waitFor(() => expect(refreshState).toHaveBeenCalled())
+		expect(toast).toHaveBeenCalledWith('Unable to autofill on this page. Copy and paste instead.')
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('never fills a blocked row even if one arrives', async () => {
+		const { sent, onOpen } = renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false })], suggestionIds: ['1'] }), { tab: githubTab })
+		expect(screen.queryByRole('button', { name: 'Fill GitHub' })).toBeNull()
+		await userEvent.setup().click(screen.getByText('GitHub'))
+		expect(onOpen).toHaveBeenCalledWith('1')
+		expect(sentOf(sent, 'fill.request')).toHaveLength(0)
+	})
+
+	it('tells a screen reader that the card click fills', () => {
+		renderList(snapshot(), { tab: githubTab })
+		const fill = within(suggestions()).getByRole('button', { name: 'Fill GitHub' })
+		const main = within(suggestions()).getByText('GitHub').closest('button')!
+		expect(fill.id).toBeTruthy()
+		expect(main.getAttribute('aria-describedby')).toBe(fill.id)
+		expect(main.getAttribute('aria-label')).toBeNull()
+		const listCard = within(screen.getByRole('region', { name: 'Items' })).getByText('GitHub').closest('button')!
+		expect(listCard.getAttribute('aria-describedby')).toBeNull()
+	})
+
+	it('sends one fill for two quick clicks', async () => {
+		const close = closeSpy()
+		let answer: (reply: unknown) => void = () => {}
+		const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': () => new Promise((resolve) => (answer = resolve)) } })
+		const user = userEvent.setup()
+		const fill = within(suggestions()).getByRole('button', { name: 'Fill GitHub' })
+		await user.click(fill)
+		await user.click(fill)
+		expect(sentOf(sent, 'fill.request')).toHaveLength(1)
+		answer({ filled: 'both' })
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+	})
+
+	it('closes the popup when only the username was filled, as on a username-first step', async () => {
+		const close = closeSpy()
+		const { toast } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': { filled: 'username' } } })
+		await userEvent.setup().click(within(suggestions()).getByText('GitHub'))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(toast).not.toHaveBeenCalled()
+	})
+
+	describe('on an insecure page', () => {
+		const insecure = (message: { confirmedInsecure?: boolean }) => (message.confirmedInsecure ? { filled: 'both' } : { filled: 'none', needsInsecureConfirm: true })
+
+		it('asks first, with focus on Cancel, and declining sends nothing more', async () => {
+			const close = closeSpy()
+			const { sent, toast } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': insecure } })
+			const user = userEvent.setup()
+			const fill = within(suggestions()).getByRole('button', { name: 'Fill GitHub' })
+			await user.click(fill)
+			const dialog = await screen.findByRole('dialog', { name: 'Do you still wish to fill this login?' })
+			expect(dialog.getAttribute('aria-describedby')).toBeTruthy()
+			expect(document.getElementById(dialog.getAttribute('aria-describedby')!)!.textContent).toContain('This is an unsecured HTTP page')
+			expect(document.activeElement).toBe(within(dialog).getByRole('button', { name: 'Cancel' }))
+			await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+			expect(screen.queryByRole('dialog')).toBeNull()
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: '1', tabId: 7 }])
+			expect(toast).not.toHaveBeenCalled()
+			expect(close).not.toHaveBeenCalled()
+			expect(document.activeElement).toBe(fill)
+		})
+
+		it('cancels on Escape and sends nothing more', async () => {
+			const close = closeSpy()
+			const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': insecure } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByText('GitHub'))
+			await screen.findByRole('dialog')
+			await user.keyboard('{Escape}')
+			expect(screen.queryByRole('dialog')).toBeNull()
+			expect(sentOf(sent, 'fill.request')).toHaveLength(1)
+			expect(close).not.toHaveBeenCalled()
+		})
+
+		it('fills after the user accepts, saying so to the background', async () => {
+			const close = closeSpy()
+			const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': insecure } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByText('GitHub'))
+			await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Fill' }))
+			await vi.waitFor(() => expect(close).toHaveBeenCalled())
+			expect(sentOf(sent, 'fill.request')).toEqual([
+				{ kind: 'fill.request', itemId: '1', tabId: 7 },
+				{ kind: 'fill.request', itemId: '1', tabId: 7, confirmedInsecure: true },
+			])
+		})
 	})
 })
 

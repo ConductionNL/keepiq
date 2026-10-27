@@ -27,7 +27,7 @@ function clipboardLabel(ms: number): string {
 	return ms < 60_000 ? i18n.t('settings.clipboardSeconds', ms / 1000) : i18n.t('settings.timeoutMinutes', ms / 60_000)
 }
 
-/** Bitwarden's Settings → Autofill; ext-autofill delivers the behaviour, so until then the entries only keep their values. */
+/** Bitwarden's Settings → Autofill; an entry whose behaviour is not delivered only keeps its value. */
 export function Autofill() {
 	const { snapshot, failed, update } = useAccountSettings()
 	if (!snapshot) return failed ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : <Loading />

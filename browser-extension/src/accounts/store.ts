@@ -2,6 +2,7 @@ import { MAX_ACCOUNTS, type AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
 import { clearPolicy, generatorOptionsKey, generatorPolicyKey } from '@/src/generator/store'
+import { forgetLastUsed } from '@/src/last-used'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { forgetPin } from '@/src/vault/pin'
 import { clearSnapshot } from '@/src/vault/store'
@@ -138,6 +139,7 @@ async function isActive(accountId: string): Promise<boolean> {
 export async function markLoggedOut(accountId: string, revoked = false): Promise<void> {
 	await updateAccount(accountId, { appPassword: null, revoked })
 	await clearKey(accountId)
+	await forgetLastUsed(accountId)
 	await forgetPin(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove(suiteKey(accountId))
@@ -148,6 +150,7 @@ export async function markLoggedOut(accountId: string, revoked = false): Promise
 /** `clearKey` takes the generator history with the key. */
 async function purge(accountId: string): Promise<void> {
 	await clearKey(accountId)
+	await forgetLastUsed(accountId)
 	await forgetPin(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove([

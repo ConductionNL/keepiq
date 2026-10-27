@@ -1,6 +1,7 @@
 import { readAccountPolicy } from '@/src/accounts/policy'
 import { AUTOFILL_FEATURES, clampTimeout, readSettings } from '@/src/accounts/settings'
 import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, updateSettings, type AccountRecord } from '@/src/accounts/store'
+import { candidatesFor } from '@/src/autofill/matcher'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
 import { addHistory, clearHistory, listHistory } from '@/src/generator/history'
@@ -8,12 +9,12 @@ import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
 	USE_ONLY_FIELDS, type AccountSettingsRequest, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
-	type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite,
+	type FillRequest, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite,
 } from '@/src/messages'
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
+import { readLastUsed } from '@/src/last-used'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
-import { suggestionIds } from '@/src/vault/match'
 import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
 import { readSnapshot, toItemMeta } from '@/src/vault/store'
 import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
@@ -64,7 +65,7 @@ async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<Va
 		items,
 		folders: cached?.folders.map(({ id, name, parentId }) => ({ id, name, parentId })) ?? [],
 		types: cached?.types.map(({ id, name, label }) => ({ id, name, label: typeof label === 'string' && label ? label : name })) ?? [],
-		suggestionIds: suggestionIds(items ?? [], tabUrl),
+		suggestionIds: cached ? candidatesFor(tabUrl, cached, (await readSettings(account.id)).uriMatch, await readLastUsed(account.id)).map((row) => row.id) : [],
 		sync: await syncStatus(account.id),
 		webAppUrl: webAppUrl(account),
 		defaultSecretType: await defaultSecretType(account.id, cached),
@@ -119,7 +120,8 @@ async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promi
 	return ids.length === 1 && failure ? { ok: false, error: failure } : { ok: true, items }
 }
 
-async function popout(tabId: number | undefined): Promise<null> {
+/** Bitwarden's popout: the popup in its own window, for the tab it came from. */
+export async function popout(tabId: number | undefined): Promise<null> {
 	const query = new URLSearchParams({ popout: '1' })
 	if (tabId !== undefined) query.set('tabId', String(tabId))
 	// The toolbar popup closes before the window connects; that gap is not "popup closed".
@@ -133,7 +135,10 @@ async function popout(tabId: number | undefined): Promise<null> {
 	return null
 }
 
-async function perform(message: Exclude<PopupRequest, GeneratorRequest>): Promise<PopupReplies[PopupRequest['kind']]> {
+/** `fill.request` goes to the fill orchestrator instead. */
+export type HandledRequest = Exclude<PopupRequest, FillRequest>
+
+async function perform(message: Exclude<HandledRequest, GeneratorRequest>): Promise<PopupReplies[PopupRequest['kind']]> {
 	switch (message.kind) {
 		case 'vault.sync': {
 			const account = await activeUnlocked()
@@ -171,7 +176,7 @@ async function perform(message: Exclude<PopupRequest, GeneratorRequest>): Promis
 	}
 }
 
-const isGeneratorRequest = (message: PopupRequest): message is GeneratorRequest => message.kind.startsWith('generator.')
+const isGeneratorRequest = (message: HandledRequest): message is GeneratorRequest => message.kind.startsWith('generator.')
 
 /**
  * The active account when the message names it, locked too for the lock screen's generator.
@@ -303,7 +308,7 @@ async function performAccountSettings(message: AccountSettingsRequest): Promise<
 }
 
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
-function isInteraction(message: Exclude<PopupRequest, GeneratorRequest>): boolean {
+function isInteraction(message: Exclude<HandledRequest, GeneratorRequest>): boolean {
 	// Every popup reads it on open, which `vault.status` already counts.
 	if (message.kind === 'settings.get' || message.kind === 'account.settings.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
@@ -312,7 +317,7 @@ function isInteraction(message: Exclude<PopupRequest, GeneratorRequest>): boolea
 }
 
 /** Like account messages, the timeout is enforced first so a sleeping worker can't serve a vault that should be locked. */
-export async function handlePopupRequest(message: PopupRequest): Promise<unknown> {
+export async function handlePopupRequest(message: HandledRequest): Promise<unknown> {
 	try {
 		await enforce()
 		if (isGeneratorRequest(message)) {

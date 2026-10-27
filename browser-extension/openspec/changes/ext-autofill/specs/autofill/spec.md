@@ -19,7 +19,7 @@ The extension SHALL decide which vault items match a page in the background, usi
 - **THEN** the row is excluded from every fill surface
 
 ### Requirement: Match rule is the global default from settings
-The extension SHALL apply the "URI match detection" default from settings to every item, with the options Base domain, Host, Starts with, Exact, Regular expression and Never, and Base domain as the shipped default. Base domain MUST be public suffix aware. A `url` that is not a valid regular expression MUST never match under the Regular expression rule. There is no per-item override (Keepiq has one `url` per item).
+The extension SHALL apply the "Default URI match detection" setting to every item, with the options Base domain, Host, Starts with, Exact, Regular expression and Never, and Base domain as the shipped default. Base domain MUST be public suffix aware. A `url` that is not a valid regular expression MUST never match under the Regular expression rule. There is no per-item override (Keepiq has one `url` per item).
 
 #### Scenario: Base domain ignores subdomains but respects the public suffix
 - **GIVEN** the default rule and an item with url `https://accounts.example.co.uk/login`
@@ -44,7 +44,7 @@ The extension SHALL apply the "URI match detection" default from settings to eve
 - **THEN** the item does not match and no error is shown
 
 ### Requirement: Fill from the popup suggestions section
-The extension SHALL fill the active tab when the user clicks a card in the popup's "Autofill suggestions" section or the Fill button on a matching item's detail view. The background MUST decrypt `login` and `key` for that one item, send exactly one `{username, password}` to the content script, and drop the plaintext once the content script has replied. The popup closes after a successful fill. Fill requires an unlocked vault.
+The extension SHALL fill the active tab when the user clicks a card in the popup's "Autofill suggestions" section or its Fill button, or the Fill button on a matching item's detail view. The background MUST decrypt `login` and `key` for that one item, send exactly one `{username, password}` to the content script, and drop the plaintext once the content script has replied. The popup closes after a fill that filled at least one field; a popped-out window stays open. Fill requires an unlocked vault.
 
 #### Scenario: Card click fills username and password
 - **GIVEN** an unlocked vault, a page with a login form, and one matching item
@@ -58,13 +58,19 @@ The extension SHALL fill the active tab when the user clicks a card in the popup
 - **WHEN** the user fills from the popup
 - **THEN** the popup stays open and shows "Unable to autofill on this page. Copy and paste instead."
 
+#### Scenario: Popped-out window stays open
+- **GIVEN** the popup popped out into its own window, a page with a login form, and one matching item
+- **WHEN** the user fills from the popped-out window
+- **THEN** the fields are filled
+- **AND** the popped-out window stays open
+
 #### Scenario: Locked vault
 - **GIVEN** a locked vault
 - **WHEN** the user opens the popup
 - **THEN** the unlock view is shown and no fill surface is offered
 
 ### Requirement: Fill covers the top frame and matching subframes only
-The extension SHALL deliver the credential to the top frame and to subframes whose own URL matches the item under the active match rule. Frames whose URL does not match MUST NOT receive the credential. Frame URLs come from `sender.url` and `sender.frameId` of each frame's content script, never from page content.
+The extension SHALL deliver the credential to the top frame and to subframes whose own URL matches the item under the active match rule. Frames whose URL does not match MUST NOT receive the credential. Frame URLs come from `sender.url` and `sender.frameId` of each frame's `page_ready`, never from page content, recorded per tab in background memory and forgotten when the tab starts loading a new page. Without a record (the worker restarted), only the top frame receives the credential, after the background has checked that the tab's URL matches. Each content script MUST fill nothing when its own origin differs from the origin the background matched.
 
 #### Scenario: Login form inside a same-site iframe
 - **GIVEN** a page on `https://example.test/` embedding a login form in an iframe on `https://login.example.test/` and an item matching under Base domain
@@ -76,8 +82,13 @@ The extension SHALL deliver the credential to the top frame and to subframes who
 - **WHEN** the user fills an item for `example.test`
 - **THEN** the iframe receives no message containing the credential
 
+#### Scenario: Frame navigated after it registered
+- **GIVEN** a recorded same-site iframe that has since navigated to `https://other.test/`
+- **WHEN** the user fills an item for `example.test`
+- **THEN** the content script in that frame fills nothing
+
 ### Requirement: Insecure page warning
-The extension SHALL warn before filling an item whose `url` is `https:` into a page served over `http:`. From the popup the warning is a confirmation in the popup; from the context menu, the shortcut or page load the background MUST ask the top frame's content script for confirmation before sending the credential. Declining cancels the fill and nothing is sent.
+The extension SHALL warn before filling an item whose `url` is `https:` or a bare host into a page served over `http:`. From the popup the warning is a confirmation in the popup; from the context menu, the shortcut or page load the background MUST ask the top frame's content script for confirmation before sending the credential. Declining cancels the fill and nothing is sent. The popup's dialog is titled "Do you still wish to fill this login?" with the warning "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page."; the page's `confirm()` reads the same warning ending "…secure (HTTPS) page, <host>.", then "Do you still wish to fill this login?", without ", <host>" when the item names none.
 
 #### Scenario: User declines
 - **GIVEN** an item with url `https://example.test/` and the page `http://example.test/login`
@@ -90,7 +101,7 @@ The extension SHALL warn before filling an item whose `url` is `https:` into a p
 - **THEN** the fill proceeds
 
 ### Requirement: Field detection in the content script
-The content script SHALL locate username and password fields by input type, `autocomplete` values (`username`, `current-password`, `email`), and name, id, placeholder and label heuristics, traversing open shadow roots. Hidden fields (`type=hidden`, not rendered, zero size, `aria-hidden="true"`) MUST be ignored. A form with only a username field, or only a password field, is filled partially. Fields are never submitted by the extension.
+The content script SHALL classify fields as username, current password, new password (a confirm field included), one-time code or other by weighing signals together: input type, `autocomplete` tokens (`username`, `email`, `current-password`, `new-password`, `one-time-code` and the other WHATWG tokens such as `cc-*`, `tel` and `name`), name, id, placeholder and label, the group's shape (field count, a second or confirm password field) and its submit button's text, traversing open shadow roots. A group is a `<form>`, fields in open shadow roots under it included. Without a `<form>`, each visible password field's anchor is its nearest ancestor, across shadow hosts, holding a keyword button (login, next or sign-up), or the document when none does; password fields with the same anchor form one group, every other field belongs to the deepest anchor containing it, and the username and submit button are searched only within the group. A group without a password field is anchored the same way on the focused field. In every group, `<form>` groups included, the username and submit button are searched only within the group: the username is the closest visible text or email field before the password field in DOM order, or a `tel` field with username evidence (a `username` or `tel` token, or a name or label meaning username, login or phone) when the group has a login or next keyword or a current password, skipping, without a `<form>`, a field whose nearest ancestor holding a subscribe or sign-up button does not contain the password field; the submit button is a `<form>`'s default submit button when its text is a keyword, and otherwise the closest keyword button after the password field, or after the anchoring field. An `autocomplete` token tips the classification but never decides it alone, so strong other evidence can outweigh it. It SHALL classify each group, with or without a `<form>`, as a login (a current password; or a username-only step, which needs username evidence, a `username` or `email` token or a label or name meaning username, login or email, and no sign-up or subscribe keyword, while a login, next or continue keyword counts in its favour; without a `<form>` it also needs such a keyword or a `username` or `email` token), a password change (a current and a new password, with or without a username, or a new password and its confirmation without a username), a sign-up (a username and a new password, usually confirmed, without a current password) or other. `autocomplete="off"` on a field or its form, and equivalents such as `false` or an unknown token, MUST be ignored and never block filling, the inline list, the context menu, the shortcut, fill on page load or login capture. A field classified as a one-time code MUST never receive a username or password. Hidden fields (`type=hidden`, not rendered, zero size, `aria-hidden="true"`), disabled fields and read-only fields MUST be ignored. A group with only a username field, or only a password field, is filled partially. Fields are never submitted by the extension.
 
 #### Scenario: Multi-step login with username only
 - **GIVEN** a page showing only an email field with `autocomplete="username"`
@@ -107,8 +118,38 @@ The content script SHALL locate username and password fields by input type, `aut
 - **WHEN** the user fills
 - **THEN** the fields are found and filled
 
+#### Scenario: Login form with autocomplete off
+- **GIVEN** a login form with `autocomplete="off"` on the form and on both fields
+- **WHEN** the user fills
+- **THEN** the username and password fields are filled
+
+#### Scenario: Login without a form
+- **GIVEN** a username and a password field and a `type="button"` "Sign in" button with no `<form>` around them
+- **WHEN** the user fills
+- **THEN** the group is classified as a login and both fields are filled
+
+#### Scenario: Formless username-only step
+- **GIVEN** no `<form>`, an email field labelled "Email address" and a "Next" button
+- **WHEN** the user fills
+- **THEN** the email field is filled and the password is discarded
+
+#### Scenario: Newsletter form
+- **GIVEN** a form with only an "Email" field and a "Subscribe" button
+- **WHEN** the fields are classified
+- **THEN** the form is not a login and nothing in it is filled
+
+#### Scenario: Login password mislabelled new-password
+- **GIVEN** a form with a username field, one password field marked `autocomplete="new-password"` and a "Log in" button
+- **WHEN** the user fills
+- **THEN** the field is classified as the current password and both fields are filled
+
+#### Scenario: One-time code field
+- **GIVEN** a second login step with a text field named `code`, `inputmode="numeric"`, `maxlength="6"` and `autocomplete="one-time-code"`
+- **WHEN** the user fills
+- **THEN** the field is classified as a one-time code and receives neither the username nor the password
+
 ### Requirement: Context menu on editable fields
-The extension SHALL add a "Keepiq" context menu on editable fields with the entries Autofill (a submenu of items matching the current tab, at most 10, then "Open Keepiq"), Copy username, Copy password, and Generate password and copy. Copy username and Copy password use the matching items as a submenu when more than one matches. When no item matches, the Autofill entry reads "No matching logins". The menu MUST be rebuilt on tab activation, on tab URL change and on vault change. When the vault is locked, the menu shows a single "Unlock vault" entry that opens the popup. The menu is hidden when the "Show context menu" setting is off.
+The extension SHALL add a "Keepiq" context menu on editable fields with the entries Autofill (a submenu of items matching the current tab, at most 10, then "Open Keepiq"), Copy username, Copy password, and Generate password and copy. Copy username and Copy password use the matching items as a submenu when more than one matches, at most 10, and are disabled when none has a username, or none but use-only copies match, respectively. A separator precedes "Open Keepiq". When no item matches, the Autofill entry reads "No matching logins". The menu MUST be rebuilt on tab activation, on tab URL change and on vault change. When the vault is locked, the menu shows a single "Unlock vault" entry that opens the popup. The menu is hidden when the "Enable context menu options" setting is off, when no account is added and when the active account is logged out.
 
 #### Scenario: Pick an item from the submenu
 - **GIVEN** an unlocked vault and two items matching the tab
@@ -138,14 +179,20 @@ The extension SHALL copy the decrypted username or password, or a freshly genera
 - **GIVEN** an unlocked vault
 - **WHEN** the user picks Generate password and copy
 - **THEN** a password generated with the saved generator options is on the clipboard
+- **AND** it is recorded in the generator history, as `ext-generator` specifies
 
 ### Requirement: Keyboard shortcut fills the last used login
-The extension SHALL declare a manifest command bound to `Ctrl+Shift+L` (`Cmd+Shift+L` on macOS) that fills the active tab with the matching item most recently used on that site, or the single matching item when none has been used. When no item matches or the vault is locked, the command opens the popup instead.
+The extension SHALL declare a manifest command bound to `Ctrl+Shift+L` (`Cmd+Shift+L` on macOS) that fills the active tab with the matching item most recently used on that site, or the single matching item when none has been used. When no item matches, several match and none of them was used before, or the vault is locked, the command opens the popup instead.
 
 #### Scenario: Several matches, one used before
 - **GIVEN** three matching items of which one was filled earlier
 - **WHEN** the user presses the shortcut
 - **THEN** the previously used item is filled
+
+#### Scenario: Several matches, none used before
+- **GIVEN** two matching items, neither filled before
+- **WHEN** the user presses the shortcut
+- **THEN** nothing is filled and the popup opens
 
 #### Scenario: No match
 - **GIVEN** no item matches the tab
@@ -153,7 +200,7 @@ The extension SHALL declare a manifest command bound to `Ctrl+Shift+L` (`Cmd+Shi
 - **THEN** the popup opens
 
 ### Requirement: Last used is recorded locally
-The extension SHALL record the time of each successful fill per item id in `storage.local`, scoped to the account, cleared on logout and account removal. It orders "Autofill suggestions" and the context menu by last used then name and selects the shortcut and page-load candidate.
+The extension SHALL record the time of each successful fill per item id in `storage.local`, scoped to the account, cleared on logout and account removal. It orders "Autofill suggestions", the inline list and the context menu by last used then name and selects the shortcut and page-load candidate.
 
 #### Scenario: Order after a fill
 - **GIVEN** items "Work" and "Personal" both matching the tab, neither used
@@ -161,10 +208,15 @@ The extension SHALL record the time of each successful fill per item id in `stor
 - **THEN** "Personal" is listed first
 
 ### Requirement: Fill on page load is opt-in and unambiguous
-The extension SHALL fill on page load only when the "Autofill on page load" setting is on, the vault is unlocked, the top frame reports a password field, and exactly one item matches or one of the matching items was used before on that site. Otherwise nothing is filled and no prompt is shown. The setting ships off.
+The extension SHALL fill on page load only when the "Autofill on page load" setting is on, the "Default autofill setting for login items" is "Autofill on page load if enabled" (Keepiq has no per-item setting, so Never applies to every item), the vault is unlocked, the top frame reports a password field, and exactly one item matches or one of the matching items was used before on that site. Otherwise nothing is filled and no prompt is shown. The setting ships off.
 
 #### Scenario: Setting off
 - **GIVEN** the setting off and one matching item
+- **WHEN** a login page loads
+- **THEN** nothing is filled
+
+#### Scenario: Default autofill setting is Never
+- **GIVEN** "Autofill on page load" on, "Default autofill setting for login items" set to Never, and one matching item
 - **WHEN** a login page loads
 - **THEN** nothing is filled
 
@@ -174,7 +226,7 @@ The extension SHALL fill on page load only when the "Autofill on page load" sett
 - **THEN** nothing is filled
 
 ### Requirement: Content script holds no vault state
-The content script MUST receive vault data only as the single `{username, password}` of one fill after an explicit user action or a permitted page-load fill, and MUST clear those values from memory after writing them into the fields. The background MUST verify `sender.tab`, `sender.frameId` and `sender.url` on every message from a content script and ignore messages whose sender does not correspond to the tab being served.
+The content script MUST receive vault data only as the single `{username, password}` of one fill after an explicit user action or a permitted page-load fill, and MUST clear those values from memory after writing them into the fields. It never receives the inline list's rows (see `inline-list`). The background MUST verify `sender.tab`, `sender.frameId` and `sender.url` on every message from a content script and ignore messages whose sender does not correspond to the tab being served.
 
 #### Scenario: Forged request from page context
 - **GIVEN** page script that posts a message shaped like `fill.request`

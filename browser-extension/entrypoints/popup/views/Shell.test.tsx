@@ -48,11 +48,12 @@ describe('Shell', () => {
 		expect((await title()).textContent).toBe('Send')
 	})
 
-	it('shows no suggestions on a browser page', async () => {
+	it('says autofill is not available on a browser page, offering no item', async () => {
 		fakeBackground({ tabUrl: 'chrome://newtab/', snapshot: snapshotReply({ suggestionIds: ['i1'] }) })
 		render(<App />)
-		await screen.findByRole('searchbox')
-		expect(screen.queryByRole('heading', { name: 'Autofill suggestions' })).toBeNull()
+		const section = await screen.findByRole('region', { name: 'Autofill suggestions' })
+		expect(within(section).getByText('Autofill is not available on this page')).toBeTruthy()
+		expect(within(section).queryAllByRole('listitem')).toHaveLength(0)
 	})
 
 	it('has no tab bar while locked or logged out', async () => {
@@ -60,6 +61,43 @@ describe('Shell', () => {
 		render(<App />)
 		expect((await title()).textContent).toBe('Unlock')
 		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+	})
+
+	it('offers no fill surface while locked', async () => {
+		const sent = fakeBackground({ state: popupState({ screen: 'unlock' }), snapshot: snapshotReply({ suggestionIds: ['i1'] }) })
+		render(<App />)
+		expect((await title()).textContent).toBe('Unlock')
+		expect(screen.queryByRole('region', { name: 'Autofill suggestions' })).toBeNull()
+		expect(screen.queryByRole('button', { name: /^Fill/ })).toBeNull()
+		expect(sentKinds(sent)).not.toContain('fill.request')
+	})
+
+	it('offers Fill on the detail of a suggested item only, for the tab the popup belongs to', async () => {
+		const sent = fakeBackground({
+			snapshot: snapshotReply({ items: [itemMeta({ id: 'i1', name: 'GitHub' }), itemMeta({ id: 'i2', name: 'Bank', url: 'bank.test' })], suggestionIds: ['i1'] }),
+			replies: { 'fill.request': { filled: 'both' } },
+		})
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		render(<App />)
+		const user = userEvent.setup()
+		const items = async () => screen.findByRole('region', { name: 'Items' })
+		await user.click(within(await items()).getByRole('button', { name: /^Bank/ }))
+		expect((await title()).textContent).toBe('View item')
+		expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(within(await items()).getByRole('button', { name: /^GitHub/ }))
+		await user.click(await screen.findByRole('button', { name: 'Fill' }))
+		expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'i1', tabId: 7 }])
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+	})
+
+	it('shows the toast in its live region when a fill finds no login form', async () => {
+		fakeBackground({ snapshot: snapshotReply({ suggestionIds: ['i1'] }), replies: { 'fill.request': { filled: 'none' } } })
+		render(<App />)
+		const section = await screen.findByRole('region', { name: 'Autofill suggestions' })
+		await userEvent.setup().click(within(section).getByRole('button', { name: 'Fill GitHub' }))
+		const status = await screen.findByText('Unable to autofill on this page. Copy and paste instead.')
+		expect(status.closest('[role="status"]')).toBeTruthy()
 	})
 
 	it('pops out with the tab it came from and closes itself', async () => {

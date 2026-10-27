@@ -2,6 +2,8 @@
 # The BCP 47 tag of this catalog, for dates, numbers and `<html lang>`.
 language: en
 extensionDescription: Keepiq for your browser. Fill in logins, passkeys and one-time codes from your Nextcloud vault, end-to-end encrypted.
+commandAutofillLogin: Autofill the last used login
+commandFocusNotificationBar: Go to the Keepiq save bar
 
 errors:
   insecureUrl: Use https for this server
@@ -115,6 +117,8 @@ vault:
   allBlocked: All items are blocked.
   suggestions: Autofill suggestions
   noSuggestions: No items for {host}
+  autofillUnavailable: Autofill is not available on this page
+  fillFailed: Unable to autofill on this page. Copy and paste instead.
   openFailed: Could not open the website
   popoutFailed: Could not open a new window
 
@@ -139,6 +143,10 @@ filters:
 item:
   blocked: Blocked
   launch: Launch {name}
+  fill: Fill
+  fillName: Fill {name}
+  insecureTitle: Do you still wish to fill this login?
+  insecureWarning: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page."
   copyMenu: Copy, {name}
   moreMenu: More, {name}
   copyUsername: Copy username
@@ -557,3 +565,74 @@ send:
     n: Copy this link now. It is shown only until you close this window, and the content burns after $1 views.
   passwordNote: Share the access password separately from the link. After 5 wrong attempts the send is deleted.
   done: Done
+
+# Shown in the web page by the content script.
+pageFill:
+  insecure: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page, {host}.\n\nDo you still wish to fill this login?"
+  insecureNoHost: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page.\n\nDo you still wish to fill this login?"
+
+# The "Keepiq" right-click menu on editable fields.
+contextMenu:
+  root: Keepiq
+  autofill: Autofill
+  noMatches: No matching logins
+  openKeepiq: Open Keepiq
+  copyUsername: Copy username
+  copyPassword: Copy password
+  generatePassword: Generate password and copy
+  unlock: Unlock vault
+
+# The list of logins beneath a login field in the web page.
+inlineList:
+  frameTitle: Keepiq logins
+  label: Keepiq logins for {host}
+  row: "{name}, {username}"
+  noMatch: No logins for {host}
+  locked: Unlock Keepiq to see your logins
+  unlock: Unlock
+  insecureQuestion: Fill on this insecure site?
+  insecureDetail: This site is not secure. Anyone on the network could read what is filled in.
+  fill: Fill
+  notVisible: Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar.
+  status:
+    count:
+      1: 1 Keepiq login. Press Down Arrow to choose.
+      n: $1 Keepiq logins. Press Down Arrow to choose.
+    noMatch: No Keepiq logins for {host}
+    locked: Keepiq is locked. Press Down Arrow to unlock.
+
+# The save and update bar at the top of the web page.
+notificationBar:
+  label: Keepiq notification
+  saveQuestion: Save login for {host} to Keepiq?
+  updateQuestion: Update password for {name}?
+  updateQuestionUser: Update password for {name} ({username})?
+  updateQuestionHost: Update password for {name} on {host}?
+  updateQuestionUserHost: Update password for {name} ({username}) on {host}?
+  folder: Folder
+  noFolder: No folder
+  save: Save
+  never: Never for this site
+  update: Update
+  close: Close
+  expand: Show options
+  shortcutHint: Press {shortcut} to answer.
+  saving: Saving…
+  updating: Updating…
+  saved: Login saved
+  updated: Password updated
+  notVisible: Keepiq can't do this here because this page changes how it is shown. Close this and add the login from the Keepiq button in the toolbar.
+  errors:
+    writeLocked: The vault is temporarily locked for changes. Try again later.
+    unverified: Edit this login in the Keepiq popup or web app to change its password.
+    viewOnly: This login is shared with you to view only, so its password can't be updated here.
+    loginGone: This login no longer exists. Save it as a new login?
+    locked: Keepiq is locked. Unlock it from the Keepiq button in the toolbar, then try again.
+    notResponding: Keepiq is not responding. Try again.
+    # Shorter than their `writeErrors` namesakes, to fit the bar's three lines.
+    accountChanged: You switched accounts, so nothing was saved.
+    keyMismatch: Keepiq's key does not match your vault. Nothing was saved; tell your administrator.
+    staleSource: The original of this shared login changed. Nothing was saved; try again.
+    incomplete: The people this login is shared with kept changing. Nothing was saved; try again.
+    badCertificate: A recipient's encryption key could not be read. Nothing was saved.
+    keepiqOutdated: Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq {version} or later.
