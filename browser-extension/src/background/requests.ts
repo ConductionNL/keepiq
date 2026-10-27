@@ -5,7 +5,7 @@ import { disableDefaultManager, enableDefaultManager, readDefaultManager } from 
 import { candidatesFor } from '@/src/autofill/matcher'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
-import { addHistory, clearHistory, listHistory } from '@/src/generator/history'
+import { addHistory, clearHistory, openHistory, sealHistory } from '@/src/generator/history'
 import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
@@ -194,21 +194,29 @@ async function generatorTarget(message: GeneratorRequest): Promise<{ account: Ac
 	return active && active.account.id === message.accountId && active.status !== 'logged_out' ? active : null
 }
 
-async function performGenerator(message: GeneratorRequest, account: AccountRecord | null, epoch: number): Promise<PopupReplies[GeneratorRequest['kind']]> {
+async function performGenerator(message: GeneratorRequest, target: { account: AccountRecord; status: AccountStatus } | null, epoch: number): Promise<PopupReplies[GeneratorRequest['kind']]> {
+	const account = target?.account ?? null
+	// The lock keeps the history from whoever walks up to the browser (ADR-002): a locked account only adds to it, sealed.
+	const reader = target?.status === 'unlocked' ? target.account : null
 	switch (message.kind) {
 		case 'generator.context':
 			return account ? { options: await readOptions(account.id), policy: await readPolicy(account.id), accountEmail: account.email } : null
 		case 'generator.saveOptions':
 			return account ? saveOptions(account.id, message.options) : null
 		case 'generator.history.list':
-			return account ? listHistory(account.id) : []
+			return reader ? openHistory(reader.id, epoch) : []
 		case 'generator.history.add': {
 			const { value, kind } = message.entry ?? {}
-			if (!account || typeof value !== 'string' || !value || !GENERATOR_KINDS.includes(kind)) return account ? listHistory(account.id) : []
-			return addHistory(account.id, { value, kind }, epoch)
+			if (!account || typeof value !== 'string' || !value || !GENERATOR_KINDS.includes(kind)) return reader ? openHistory(reader.id, epoch) : []
+			if (!reader) {
+				await sealHistory(account.id, { value, kind }, epoch)
+				return []
+			}
+			await openHistory(reader.id, epoch)
+			return addHistory(reader.id, { value, kind }, epoch)
 		}
 		case 'generator.history.clear':
-			if (account) await clearHistory(account.id)
+			if (reader) await clearHistory(reader.id)
 			return null
 	}
 }
@@ -333,7 +341,7 @@ export async function handlePopupRequest(message: HandledRequest): Promise<unkno
 			const target = await generatorTarget(message)
 			// Context is read on open. The lock screen's generator must not keep another account's vault from timing out.
 			if (message.kind !== 'generator.context' && target?.status === 'unlocked') await touch()
-			return await performGenerator(message, target?.account ?? null, epoch)
+			return await performGenerator(message, target, epoch)
 		}
 		// Copy from the lock screen's generator must not keep another account's vault from timing out either.
 		if (message.kind === 'clipboard.copied' ? await activeUnlocked() : isInteraction(message)) await touch()

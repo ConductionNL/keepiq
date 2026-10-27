@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Ez a titok sok partnerszervezettel van megosztva, ezért a mentés kivárja a lekérdezési korlátot, majd folytatódik. Hagyja nyitva ezt az ablakot.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Túl sok lekérdezés a partnerszervezetek felé. Semmi sem lett mentve; próbálja újra egy perc múlva.",
         "This version cannot be restored to this secret. Nothing was saved.": "Ez a verzió nem állítható vissza ehhez a titokhoz. Semmi sem lett mentve.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Csak megtekintésre osztották meg Önnel. A módosításhoz kérjen szerkesztési jogot a tulajdonostól.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Csak megtekintésre osztották meg Önnel. Semmi sem lett mentve; a módosításhoz kérjen szerkesztési jogot a tulajdonostól.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Egy partnerszervezet, amellyel ez a titok meg van osztva, nem érhető el ({partners}). Végezze el újra a módosítást online, ahol nélkülük is mentheti.",
         "Save without them": "Mentés nélkülük",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Mentve. A partnerszervezeteknél lévő címzettek akkor kapják meg ezt a módosítást, amikor a tulajdonos legközelebb menti ezt a titkot.",

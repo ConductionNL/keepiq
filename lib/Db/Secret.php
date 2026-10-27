@@ -113,6 +113,14 @@ class Secret extends Entity implements JsonSerializable {
 	public const READ_ONLY_REFUSAL = 'A copy from another organisation is read-only';
 
 	/**
+	 * What a value change of a copy answers when its holder may not write
+	 * the source (keepiq#1287).
+	 *
+	 * @var string
+	 */
+	public const VIEW_ONLY_REFUSAL = 'Shared with you to view only. Ask its owner for edit rights to change it.';
+
+	/**
 	 * What the holder of a read-only copy may still change: where it is filed
 	 * (sharing-federated-recipients task 3.5). `baseUpdatedAt` only names the
 	 * version an offline move was made from.

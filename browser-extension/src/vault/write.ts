@@ -2,8 +2,9 @@
 import { ApiError, createClient, type Client } from '@/src/api/client'
 import type { CachedSuite, FolderRow, OpenSecretRow, SecretRow } from '@/src/api/types'
 import { getAccount, getActiveAccountId, suiteKey, type AccountRecord } from '@/src/accounts/store'
-import { importPublicKey, rsaDecrypt, rsaEncrypt, toBase64 } from '@/src/crypto'
+import { rsaDecrypt, rsaEncrypt } from '@/src/crypto'
 import type { EditableItem, FolderChildren, FolderDeletePlan, ItemDraft, ItemPatch, ShareSaveNote, WriteResult } from '@/src/messages'
+import { provenKey } from './certificate'
 import { fieldTexts, shownInFull } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
@@ -37,11 +38,7 @@ async function context(expected: string | undefined): Promise<Context> {
 /** Certificates already proven to belong to the account's private key, per account. */
 const publicKeys = new Map<string, Promise<CryptoKey>>()
 
-/**
- * The cached suite's certificate, once it proved to match the unlocked private key. Sync takes the
- * certificate from the server, so a compromised server could swap in its own; only the private key,
- * which only the master password opens, cannot be swapped.
- */
+/** The cached suite's certificate, once it proved to match the unlocked private key (`certificate.ts`). */
 async function publicKey({ account, client, privateKey }: Context): Promise<CryptoKey> {
 	const suite = (await browser.storage.local.get(suiteKey(account.id)))[suiteKey(account.id)] as CachedSuite | undefined
 	if (!suite) throw new WriteFailure({ code: 'locked' })
@@ -63,10 +60,8 @@ async function publicKey({ account, client, privateKey }: Context): Promise<Cryp
 }
 
 async function matchingKey(certificate: string, privateKey: CryptoKey): Promise<CryptoKey> {
-	const key = await importPublicKey(certificate)
-	const probe = toBase64(crypto.getRandomValues(new Uint8Array(32)))
-	const opened = await rsaDecrypt(await rsaEncrypt(probe, key), privateKey).catch(() => null)
-	if (opened !== probe) {
+	const key = await provenKey(certificate, privateKey)
+	if (!key) {
 		console.error('[keepiq] the suite certificate does not match the unlocked key; refusing to encrypt to it')
 		throw new WriteFailure({ code: 'key_mismatch' })
 	}

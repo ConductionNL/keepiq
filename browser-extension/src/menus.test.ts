@@ -7,14 +7,15 @@ import { forgetTab } from '@/src/autofill/frames'
 import { broadcast } from '@/src/background/broadcast'
 import { CLIPBOARD_ALARM } from '@/src/clipboard'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
-import { listHistory } from '@/src/generator/history'
+import { listHistory, sealHistory } from '@/src/generator/history'
 import { saveOptions } from '@/src/generator/store'
 import { defaultOptions } from '@/src/generator/options'
 import { lastUsedKey } from '@/src/last-used'
 import { installMenuFakes } from '@/src/testing/menus'
 import { encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { putKey } from '@/src/vault/key-store'
+import { provenCertificateKey } from '@/src/vault/certificate'
+import { generatorSealedKey, putKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import { lock } from '@/src/vault/unlock'
 import { MENU_LIMIT, rebuildMenus, registerMenus } from './menus'
@@ -248,6 +249,16 @@ describe('the context menu', () => {
 			expect(clipboard[0]).toHaveLength(33)
 			expect((await listHistory(accountId))[0]).toMatchObject({ value: clipboard[0], kind: 'password' })
 			expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeDefined()
+		})
+
+		it('generate moves what the lock screen sealed into the history first, like the popup', async () => {
+			await browser.storage.local.set({ [provenCertificateKey(accountId)]: suiteRow.certificate })
+			await lock(accountId)
+			await sealHistory(accountId, { value: 'locked', kind: 'password' })
+			await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+			menus.click('generate', tab())
+			await vi.waitFor(async () => expect((await listHistory(accountId)).map((e) => e.value)).toEqual([clipboard[0], 'locked']))
+			expect(await browser.storage.session.get(generatorSealedKey(accountId))).toEqual({})
 		})
 
 		it('do nothing with an item while locked', async () => {

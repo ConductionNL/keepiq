@@ -4,18 +4,20 @@ import { patchAccountPolicy } from '@/src/accounts/policy'
 import { addAccount, folderNoticeKey, markLoggedOut, removeAccount, updateAccount } from '@/src/accounts/store'
 import { DEFAULT_SETTINGS, readSettings, settingsKey, writeSettings } from '@/src/accounts/settings'
 import { CLIPBOARD_ALARM } from '@/src/clipboard'
-import { pemToPkcs8, toBase64 } from '@/src/crypto'
+import { importPublicKey, pemToPkcs8, rsaEncrypt, toBase64 } from '@/src/crypto'
+import { addHistory } from '@/src/generator/history'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
 import { writePolicy } from '@/src/generator/store'
 import type { PopupReplies } from '@/src/messages'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { editOpenedKey, hasKey, neverLockKey, putKey, sessionValues } from '@/src/vault/key-store'
+import { provenCertificateKey } from '@/src/vault/certificate'
+import { editOpenedKey, generatorHistoryKey, generatorSealedKey, hasKey, neverLockKey, putKey, sessionValues } from '@/src/vault/key-store'
 import { hasPin, hasSeal } from '@/src/vault/pin'
 import { writeSnapshot } from '@/src/vault/store'
 import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
-import { lock } from '@/src/vault/unlock'
+import { blockUnlock, checkSuite, lock, lockAll } from '@/src/vault/unlock'
 import { handlePopupRequest, readLastTab, type HandledRequest } from './requests'
 
 const fetchMock = vi.fn<typeof fetch>()
@@ -532,6 +534,177 @@ describe('generator', () => {
 		expect(await send({ kind: 'generator.history.list', accountId })).toEqual([])
 	})
 
+	describe('while locked', () => {
+		const unlockAgain = () => putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		const sealed = async (id = accountId) => (await browser.storage.session.get(generatorSealedKey(id)))[generatorSealedKey(id)] as string | undefined
+		const add = (value: string, id = accountId) => send({ kind: 'generator.history.add', accountId: id, entry: { value, kind: 'password' } })
+		const listed = async () => (await send({ kind: 'generator.history.list', accountId })).map((entry) => entry.value)
+
+		// What an unlock leaves; the tests put the key in place without one.
+		beforeEach(async () => {
+			await browser.storage.local.set({ [provenCertificateKey(accountId)]: suiteRow.certificate })
+		})
+
+		it('records but shows nothing and does not clear, until the unlock', async () => {
+			await lock(accountId)
+			expect(await add('one')).toEqual([])
+			expect(await send({ kind: 'generator.history.add', accountId, entry: { value: 'two', kind: 'username' } })).toEqual([])
+			expect(await add('')).toEqual([])
+			expect(await send({ kind: 'generator.history.list', accountId })).toEqual([])
+			expect(await send({ kind: 'generator.history.clear', accountId })).toBeNull()
+			await unlockAgain()
+			expect(await listed()).toEqual(['two', 'one'])
+		})
+
+		it('stores the value only sealed, never in plaintext', async () => {
+			await lock(accountId)
+			await add('Locked-S3cret')
+			const everything = JSON.stringify([await browser.storage.session.get(null), await browser.storage.local.get(null)])
+			expect(everything).not.toContain('Locked-S3cret')
+			expect(JSON.parse((await sealed())!)).toHaveLength(1)
+		})
+
+		it('merges the sealed values into the history by time on the first list after the unlock, and removes them', async () => {
+			await lock(accountId)
+			await add('locked')
+			await unlockAgain()
+			await addHistory(accountId, { value: 'older', kind: 'password' }, undefined, new Date('2000-01-01T00:00:00Z'))
+			await addHistory(accountId, { value: 'newer', kind: 'password' }, undefined, new Date('2999-01-01T00:00:00Z'))
+			expect(await listed()).toEqual(['newer', 'locked', 'older'])
+			expect(await sealed()).toBeUndefined()
+			expect(await listed()).toEqual(['newer', 'locked', 'older'])
+		})
+
+		it('opens the sealed values on the first add after the unlock too', async () => {
+			await lock(accountId)
+			await add('locked')
+			await unlockAgain()
+			expect((await add('after')).map((entry) => entry.value)).toEqual(['after', 'locked'])
+			expect(await sealed()).toBeUndefined()
+		})
+
+		it('drops a sealed value that does not open and lists the rest', async () => {
+			await lock(accountId)
+			await add('good')
+			const notAnEntry = await rsaEncrypt('{"value":1}', await importPublicKey(suiteRow.certificate))
+			await sessionValues.set({ [generatorSealedKey(accountId)]: JSON.stringify(['garbage', 42, notAnEntry, ...JSON.parse((await sealed())!)]) })
+			await unlockAgain()
+			expect(await listed()).toEqual(['good'])
+		})
+
+		it('keeps the sealed values through Lock all and a suite recheck, and drops them at the lock after the unlock', async () => {
+			await lock(accountId)
+			await add('kept')
+			await lockAll()
+			// The master password changed in the web app: a new suite epoch, the same key pair.
+			expect(await checkSuite(accountId, { ...suiteRow, unlockKeyEpoch: 2 })).toBe(true)
+			await unlockAgain()
+			expect(await listed()).toEqual(['kept'])
+
+			await lock(accountId)
+			await add('dropped')
+			await unlockAgain()
+			await lock(accountId)
+			expect(await sealed()).toBeUndefined()
+			await unlockAgain()
+			expect(await listed()).toEqual([])
+		})
+
+		it('keeps what was sealed when the sync after the unlock finds the master password changed', async () => {
+			await lock(accountId)
+			await add('signed-up-with')
+			// The old master password still opens the stale cached suite.
+			await unlockAgain()
+			// The same key pair under a new epoch.
+			expect(await checkSuite(accountId, { ...suiteRow, unlockKeyEpoch: 2 })).toBe(true)
+			await unlockAgain()
+			expect(await listed()).toEqual(['signed-up-with'])
+		})
+
+		it('keeps two lock screen adds that arrive at once', async () => {
+			await lock(accountId)
+			// Slow reads, as the browser's are, so the two adds overlap.
+			const get = browser.storage.session.get.bind(browser.storage.session)
+			vi.spyOn(browser.storage.session, 'get').mockImplementation(async (keys) => {
+				const values = await get(keys)
+				await new Promise((resolve) => setTimeout(resolve, 5))
+				return values
+			})
+			await Promise.all([add('one'), add('two')])
+			await unlockAgain()
+			expect((await listed()).sort()).toEqual(['one', 'two'])
+		})
+
+		it.each([
+			['a logout', (id: string) => markLoggedOut(id)],
+			['the account removal', (id: string) => removeAccount(id)],
+			['the two-factor block', (id: string) => blockUnlock(id)],
+		])('removes the sealed values on %s', async (_, end) => {
+			await lock(accountId)
+			await add('gone')
+			await end(accountId)
+			expect(await sealed()).toBeUndefined()
+		})
+
+		it('clears the sealed values with the history after the unlock', async () => {
+			await lock(accountId)
+			await add('cleared')
+			await unlockAgain()
+			expect(await send({ kind: 'generator.history.clear', accountId })).toBeNull()
+			expect(await sealed()).toBeUndefined()
+			expect(await listed()).toEqual([])
+		})
+
+		it('records nothing without a proven certificate', async () => {
+			await lock(accountId)
+			await browser.storage.local.remove(provenCertificateKey(accountId))
+			expect(await add('lost')).toEqual([])
+			expect(await sealed()).toBeUndefined()
+		})
+
+		it('lists no plaintext history found while locked', async () => {
+			await lock(accountId)
+			await sessionValues.set({ [generatorHistoryKey(accountId)]: JSON.stringify([{ value: 'planted', kind: 'password', createdAt: new Date().toISOString() }]) })
+			expect(await send({ kind: 'generator.history.list', accountId })).toEqual([])
+			expect(await add('')).toEqual([])
+		})
+
+		it('seals nothing for an add that a logout overtakes, at any point', async () => {
+			await lock(accountId)
+			const hits: number[] = []
+			for (let ticks = 0; ticks < 300; ticks++) {
+				await updateAccount(accountId, { appPassword: 'pw', revoked: false })
+				await browser.storage.local.set({ [provenCertificateKey(accountId)]: suiteRow.certificate })
+				const request = add('sealed')
+				const logout = (async () => {
+					for (let i = 0; i < ticks; i++) await Promise.resolve()
+					await markLoggedOut(accountId)
+				})()
+				await Promise.all([request, logout])
+				if (await sealed() !== undefined) hits.push(ticks)
+			}
+			expect(hits).toEqual([])
+		})
+
+		it('writes no history for a merge that a lock overtakes, at any point', async () => {
+			const hits: number[] = []
+			for (let ticks = 0; ticks < 200; ticks++) {
+				await lock(accountId)
+				await add('locked')
+				await unlockAgain()
+				const list = send({ kind: 'generator.history.list', accountId })
+				const locked = (async () => {
+					for (let i = 0; i < ticks; i++) await Promise.resolve()
+					await lock(accountId)
+				})()
+				await Promise.all([list, locked])
+				const left = JSON.stringify(await browser.storage.session.get([generatorHistoryKey(accountId), generatorSealedKey(accountId)]))
+				if (left !== '{}') hits.push(ticks)
+			}
+			expect(hits).toEqual([])
+		})
+	})
+
 	it('ignores an entry that is not a generated value', async () => {
 		await send({ kind: 'generator.history.add', accountId, entry: { value: '', kind: 'password' } })
 		await send({ kind: 'generator.history.add', accountId, entry: { value: 'x', kind: 'pin' as never } })
@@ -588,6 +761,8 @@ describe('generator', () => {
 		await send({ kind: 'generator.history.add', accountId: locked, entry: { value: 'three', kind: 'password' } })
 		expect(await interaction()).toEqual(before)
 		expect(await hasKey(accountId)).toBe(true)
+		// The unlocked account is not the active one, so its history is not listed either.
+		expect(await send({ kind: 'generator.history.list', accountId })).toEqual([])
 	})
 
 	it('counts Copy as interaction only while the active account is unlocked', async () => {

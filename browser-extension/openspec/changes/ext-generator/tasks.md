@@ -10,7 +10,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
 
 - [x] 2.1 Port `randomInt(min, max)` and an unbiased `shuffle` to `src/generator/random.ts`, with `random.test.ts`.
   - Over 1 000 000 draws in 7776 buckets, no bucket is empty and none exceeds twice the mean.
-  - No `Math.random` under `src/`.
+  - No `Math.random` under `src/` or `entrypoints/`.
 - [x] 2.2 Port the charset password path of `../src/generator/generator.js` to `src/generator/password.ts`, with `password.test.ts`, and add `src/generator/vectors.test.ts` running `../tests/vectors/generator/cases.json` through `../tests/vectors/seeded-random.mjs`.
   - The regex cases are skipped by name, with the reason.
   - Property tests over 1000 passwords per option set: exact length, minimums met, no disabled class, no ambiguous character when avoided, no positional bias.
@@ -34,6 +34,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
   - A request for another account than the active one, or for a logged-out one, gets `null` (context, saveOptions, clear) or `[]` (list, add) and writes nothing.
   - `generator.context` is not an interaction; the others are only while the named active account is unlocked, and `clipboard.copied` only while the active account is unlocked.
   - An add reads the session epoch when it arrives, so a lock or logout while it waits writes nothing.
+  - While the active account is locked, the history arms follow design.md, History while locked.
 
 ## 4. Generator UI (WP3)
 
@@ -55,7 +56,7 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
   - Move the placeholder test in `Shell.test.tsx` to Send.
 - [x] 5.2 Give `TextField` an optional `action`, and add the Password and Username generate buttons to the `credential` form kind in `ItemForm.tsx`, with cases in `components.test.tsx` and `ItemForm.test.tsx`.
   - No button on a multiline secret.
-- [x] 5.3 Add a `'generator'` panel to `App.tsx` with a `ShellContext.Provider`, a `Toast` host, a History sub-page and the Header's back, opened by a "Generate a password" link in `Unlock.tsx`, with cases in `App.test.tsx` and `Unlock.test.tsx`.
+- [x] 5.3 Add a `'generator'` panel to `App.tsx` with a `ShellContext.Provider`, a `Toast` host and the Header's back, without History, opened by a "Generate a password" link in `Unlock.tsx`, with cases in `App.test.tsx` and `Unlock.test.tsx`.
   - Focus moves into the generator, and back to the link on return.
 
 ## 6. Records (WP5)
@@ -66,11 +67,11 @@ Every new module, component, hook and view gets a `*.test.ts(x)` next to it. Pop
 
 - [x] 7.1 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`.
   - `grep -rn "chrome\." src/ entrypoints/` matches only comments.
-  - `grep -rn "Math.random" src/` matches nothing.
+  - `grep -rn "Math.random" src/ entrypoints/` matches nothing outside tests.
 - [ ] 7.2 Load `.output/chrome-mv3/` and `.output/firefox-mv2/manifest.json` and walk the spec's scenarios in both browsers. Include:
   - a pop-out;
   - the locked generator with the network off;
   - a test policy with passphrases turned off;
   - pick mode on a `login` and a `database` item;
-  - history clearing on lock;
+  - history clearing on lock, no History on the lock screen, and a value generated while locked showing after the unlock;
   - options surviving a popup close and an account switch.

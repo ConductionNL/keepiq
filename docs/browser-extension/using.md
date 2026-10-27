@@ -196,7 +196,7 @@ The History button lists the last 50 values you regenerated, copied or used, or 
 
 While adding or editing an item, the button next to **Password** or **Username** opens the generator; **Use this password** or **Use this username** puts the value in the form.
 
-The generator also works while the vault is locked and while you're offline: choose **Generate a password** on the lock screen.
+The generator also works while the vault is locked and while you're offline: choose **Generate a password** on the lock screen. It has no History there. What you generate there shows in the history once you unlock and use the generator, unless the vault locks first. Before the first unlock after you add the account or log in, nothing is kept.
 
 ## Send
 

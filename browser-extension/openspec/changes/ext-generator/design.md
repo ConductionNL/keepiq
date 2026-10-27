@@ -12,7 +12,7 @@ The policy is served by `SettingsController::getPolicy` at `GET /api/settings/po
 
 - The same output as Keepiq's shared generator for the same random source, proven by the shared vectors.
 - Bitwarden's Generator layout and flows (ADR-001).
-- Options per account, session history, pick mode for the item form and the organisation policy, all usable while locked and offline.
+- Options per account, session history, pick mode for the item form and the organisation policy, all usable offline; generation and options also while locked.
 
 **Non-Goals:**
 
@@ -36,7 +36,7 @@ The policy is served by `SettingsController::getPolicy` at `GET /api/settings/po
   - The generated value is React state in `Generator` and is dropped on unmount.
   - Options, history, the cached policy and the account email reach components only through `useGeneratorOptions` and `useGeneratorHistory`, the only senders of `generator.*` requests.
   - A round trip per slider tick would only add latency.
-- **Unbiased randomness.** `randomInt(min, max)` in `src/generator/random.ts` uses rejection sampling over `crypto.getRandomValues`, with the web module's signature, so the vectors' seeded source plugs in. There is no `Math.random` under `src/`.
+- **Unbiased randomness.** `randomInt(min, max)` in `src/generator/random.ts` uses rejection sampling over `crypto.getRandomValues`, with the web module's signature, so the vectors' seeded source plugs in. There is no `Math.random` under `src/` or `entrypoints/`.
 - **Failures are codes.** The port returns a code for each of the web module's `GeneratorError` messages. The popup words `needs_email`, `needs_domain`, `no_website`, `passphrase_off` and `wordlist_unavailable`; the rest (length, empty set, no kind, word count) can't follow from `sanitize`d and `effective` options, so `generate` throws on them as a bug. The background sends no text (ext-i18n).
 - **Wordlist as a static resource.**
   - `public/wordlist/eff-large.txt` is generated from `../src/generator/eff-large-wordlist.js`, and a test checks the two are equal.
@@ -57,9 +57,14 @@ The policy is served by `SettingsController::getPolicy` at `GET /api/settings/po
 - **History over `sessionValues`.**
   - JSON under `generatorHistory.<id>`, 50 newest first, through one promise queue.
   - `clearKey` removes it with the key, which covers lock, timeout, logout and removal. Browser restart and extension reload clear session storage.
-  - `clearKey` bumps a per-account `sessionEpoch`; an add whose request arrived before it drops its write, so a lock or logout during an add does not bring the history back.
+  - `clearKey` bumps a per-account `sessionEpoch`; an add or merge whose request arrived before it drops its write, so a lock or logout meanwhile does not bring the history back.
   - Below Firefox 115, `sessionValues` is background memory.
   - Generated values are plaintext secrets, so never `storage.local`.
+- **History while locked.** The lock keeps a walk-up user from reading generated values (ADR-002).
+  - `list` and `add` return no entries; `clear` does nothing.
+  - A locked add is sealed under `generatorSealed.<id>` to the certificate proven at the last unlock; without one, nothing is recorded.
+  - The first unlocked `list` or `add` opens the sealed values and merges them.
+  - `clearKey` drops them when a key was held, and always at logout, removal and the two-factor block. Lock all on a locked account, a suite change and the unlock's own suite-race undo keep them.
 - **When history records.**
   - It records on Regenerate, Copy, "Use this …", and a switch to another sub-tab with a value shown.
   - It never records on an option change, so slider drags don't flood it.
@@ -81,7 +86,7 @@ The policy is served by `SettingsController::getPolicy` at `GET /api/settings/po
 - **Locked generator in `App.tsx`.**
   - A `'generator'` panel next to `'switcher'` and `'add_account'`, opened from a link in `Unlock.tsx`, with the Header's back and no tab bar.
   - It is wrapped in a `ShellContext.Provider` with a real `toast` and `accountId`, plus a `Toast` host, so Copy confirms as in the shell.
-  - Its History is a sub-page of the panel: Back returns to the generator, then to Unlock.
+  - It has no History (see History while locked).
   - Focus moves into the generator on open, and back to the "Generate a password" link on return.
   - No pick mode.
 - **Copy through `useClipboard`.** It writes the clipboard, shows "{what} copied" and sends `clipboard.copied`. The background then schedules the clear from `clearClipboardMs` (`src/clipboard.ts`).
@@ -162,13 +167,13 @@ export interface GeneratorContext {
 export type GeneratorRequest = { accountId: string } & (
 	| { kind: 'generator.context' }                                                       // -> GeneratorContext | null
 	| { kind: 'generator.saveOptions'; options: GeneratorOptions }                        // -> GeneratorOptions (sanitised) | null
-	| { kind: 'generator.history.list' }                                                  // -> GeneratorHistoryEntry[]
-	| { kind: 'generator.history.add'; entry: Omit<GeneratorHistoryEntry, 'createdAt'> } // -> GeneratorHistoryEntry[]
-	| { kind: 'generator.history.clear' }                                                 // -> null
+	| { kind: 'generator.history.list' }                                                  // -> GeneratorHistoryEntry[], [] while locked
+	| { kind: 'generator.history.add'; entry: Omit<GeneratorHistoryEntry, 'createdAt'> } // -> GeneratorHistoryEntry[], [] while locked
+	| { kind: 'generator.history.clear' }                                                 // -> null, a no-op while locked
 )
 ```
 
-- The arms answer for the active account, locked or unlocked, when the message names it. Another or a logged-out account gets `null` for context, saveOptions and clear, and `[]` for list and add, and nothing is written.
+- The arms answer for the active account when the message names it; while it is locked, the history arms answer as above. Another or a logged-out account gets `null` for context, saveOptions and clear, and `[]` for list and add, and nothing is written.
 - `generator.context` is read on open and never counts as interaction, like `settings.get`. The others count only while the active account is unlocked and the message names it, and `clipboard.copied` (Copy) only while the active account is unlocked, so the lock screen's generator does not keep another account's vault from timing out.
 - `generator.history.add` reads the account's session epoch when the request arrives, so a lock or logout while it waits keeps it from writing.
 
@@ -178,10 +183,10 @@ export type GeneratorRequest = { accountId: string } & (
 - **A policy floor above 128.** It is capped at 128 in `policy.ts`, since the server accepts any floor of 8 or more.
 - **Website name leaks the tab's host into stored options.** The hostname is never stored; only the sub-mode is.
 - **The wordlist fetch fails.** Passphrase and Random word show "Wordlist unavailable"; passwords and emails keep working.
-- **History is plaintext in session storage, readable while locked.** It is session memory like the key and is cleared with it. Values generated while locked stay until the next `clearKey` or browser restart (SECURITY.md, Known limits).
+- **A key pair replaced before the unlock.** Values sealed to the old certificate fail to open and are dropped.
 - **A component reaches past the hooks.** Only `wordlist.ts` calls a browser API outside the hooks; review checks the ADR-004 boundary.
 
 ## Open Questions
 
-- Should history survive lock, encrypted under the public key, as Bitwarden's vault-held history does? Current answer: no, session only.
+- Should the history survive a lock after an unlock, sealed like values generated while locked, as Bitwarden's vault-held history does? Current answer: no, a lock clears it.
 - Should the website name strip a leading `www.`? Current answer: no, as Bitwarden.

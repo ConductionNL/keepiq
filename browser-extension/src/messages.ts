@@ -686,7 +686,7 @@ export interface PopupReplies {
 	'generator.context': GeneratorContext | null
 	/** The options as stored after sanitising; `null` when refused. */
 	'generator.saveOptions': GeneratorOptions | null
-	/** Newest first. */
+	/** Newest first. Both answer `[]` while locked, though `add` still records the value, sealed. */
 	'generator.history.list': GeneratorHistoryEntry[]
 	'generator.history.add': GeneratorHistoryEntry[]
 	'generator.history.clear': null

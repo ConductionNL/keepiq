@@ -48,7 +48,7 @@ While a list of logins is open under a login field, the browser keeps a random k
 
 A user name and password you just submitted on a website stay in memory only, for the save bar, until you answer it, leave the site or lock the vault, and at most 5 minutes.
 
-The last 50 values you regenerated, copied or used, or left on a sub-tab, in the browser's session storage, which lives in memory. They are not encrypted. They go when the vault locks, when you log out, when the browser closes, or when you clear the history.
+The last 50 values you regenerated, copied or used, or left on a sub-tab, in the browser's session storage, which lives in memory. They are not encrypted, and the extension shows them only while the vault is unlocked. They go when the vault locks, when you log out, when the browser closes, or when you clear the history. Values you generate on the lock screen are kept encrypted until you unlock, and only then show in the history.
 
 An item you are adding or editing stays in memory only, and is gone when you save, leave the form or close the extension.
 

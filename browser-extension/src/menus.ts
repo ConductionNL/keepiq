@@ -12,7 +12,7 @@ import { openPopupOrPopout } from '@/src/browser-action'
 import { writeFromBackground } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
 import { generate } from '@/src/generator/generate'
-import { addHistory } from '@/src/generator/history'
+import { addHistory, openHistory } from '@/src/generator/history'
 import { readOptions, readPolicy } from '@/src/generator/store'
 import { getKey, sessionEpoch } from '@/src/vault/key-store'
 import { enforce, touch } from '@/src/vault/timeout'
@@ -103,7 +103,10 @@ async function generateAndCopy(accountId: string): Promise<void> {
 	const result = await generate('password', await readOptions(accountId), await readPolicy(accountId), { website: null, accountEmail: null })
 	if (!result.ok) return
 	// In the history like the popup's, so a password copied into a sign-up that then fails is not lost.
-	if (await writeFromBackground(result.value, (await readSettings(accountId)).clearClipboardMs)) await addHistory(accountId, { value: result.value, kind: 'password' }, epoch)
+	if (!(await writeFromBackground(result.value, (await readSettings(accountId)).clearClipboardMs))) return
+	// As for the popup's add, what the lock screen sealed moves into the history first.
+	await openHistory(accountId, epoch)
+	await addHistory(accountId, { value: result.value, kind: 'password' }, epoch)
 }
 
 async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<void> {

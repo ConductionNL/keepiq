@@ -4,6 +4,8 @@ OC.L10N.register(
         "This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.": "Dit geheim is gedeeld met veel partnerorganisaties, dus het opslaan wacht op de opzoeklimiet en gaat daarna verder. Houd dit venster open.",
         "Too many partner lookups. Nothing was saved; try again in a minute.": "Te veel opzoekingen bij partnerorganisaties. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
         "This version cannot be restored to this secret. Nothing was saved.": "Deze versie kan niet worden hersteld voor dit geheim. Er is niets opgeslagen.",
+        "Shared with you to view only. Ask its owner for edit rights to change it.": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkingsrechten om het te wijzigen.",
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Met je gedeeld om alleen te bekijken. Er is niets opgeslagen; vraag de eigenaar om bewerkingsrechten om het te wijzigen.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Een partnerorganisatie waarmee dit geheim gedeeld is, is niet bereikbaar ({partners}). Voer de wijziging online opnieuw uit; daar kun je opslaan zonder hen.",
         "Save without them": "Opslaan zonder hen",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar dit geheim opnieuw opslaat.",

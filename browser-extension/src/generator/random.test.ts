@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 import { randomInt, shuffle } from './random'
 
@@ -61,8 +62,9 @@ describe('the source tree', () => {
 			const path = join(dir, name)
 			return statSync(path).isDirectory() ? files(path) : [path]
 		})
-		const root = new URL('..', import.meta.url).pathname
-		const offenders = files(root).filter((path) => !path.endsWith('.test.ts') && readFileSync(path, 'utf8').includes('Math.random'))
+		const root = fileURLToPath(new URL('../..', import.meta.url))
+		const offenders = ['src', 'entrypoints'].flatMap((dir) => files(join(root, dir)))
+			.filter((path) => !/\.test\.tsx?$/.test(path) && readFileSync(path, 'utf8').includes('Math.random'))
 		expect(offenders).toEqual([])
 	})
 })
