@@ -42,6 +42,6 @@ None. The theme is a local preference; the web app's theme is Nextcloud's and is
 
 ## Impact
 
-- New: `src/settings/global.ts`, `entrypoints/popup/theme.ts`, `entrypoints/popup/hooks/useTheme.ts`, `entrypoints/popup/hooks/useSettings.ts`, `entrypoints/popup/views/settings/{Settings,SettingsIndex,Appearance}.tsx`, `entrypoints/popup/components/Select.tsx`, with their tests.
+- New: `src/settings/global.ts`, `entrypoints/popup/theme.ts`, `entrypoints/popup/hooks/useSettings.ts` (`SettingsProvider`), `entrypoints/popup/views/settings/{Settings,SettingsIndex,Appearance}.tsx`, `entrypoints/popup/components/Select.tsx`, with their tests.
 - Edited: `src/messages.ts`, `src/background/requests.ts`, `entrypoints/popup/{main.tsx,App.tsx,popup.css}`, `views/Shell.tsx`, `components/Icon.tsx`, `testing.ts`, `locales/en.yml`, `locales/nl.yml`, `ARCHITECTURE.md`, `openspec/README.md`, ext-settings' proposal, spec, design and tasks, and `../docs/browser-extension/using.md`.
 - No new permissions.

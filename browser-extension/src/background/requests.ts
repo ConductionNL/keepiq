@@ -1,18 +1,25 @@
-import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, type AccountRecord } from '@/src/accounts/store'
+import { readAccountPolicy } from '@/src/accounts/policy'
+import { AUTOFILL_FEATURES, clampTimeout, readSettings } from '@/src/accounts/settings'
+import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, updateSettings, type AccountRecord } from '@/src/accounts/store'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
 import { addHistory, clearHistory, openHistory, sealHistory } from '@/src/generator/history'
 import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
-import { USE_ONLY_FIELDS, type AccountStatus, type DecryptReply, type DecryptedItem, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite } from '@/src/messages'
+import {
+	USE_ONLY_FIELDS, type AccountSettingsRequest, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
+	type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite,
+} from '@/src/messages'
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { suggestionIds } from '@/src/vault/match'
+import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
 import { readSnapshot, toItemMeta } from '@/src/vault/store'
 import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
 import { isStale, sync, syncStatus } from '@/src/vault/sync'
 import { cancelPopout, enforce, expectPopout, touch } from '@/src/vault/timeout'
+import { enablePin } from '@/src/vault/unlock'
 import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, itemEditable, renameFolder, updateItem } from '@/src/vault/write'
 
 const TABS: readonly PopupTab[] = ['vault', 'generator', 'send', 'settings']
@@ -34,6 +41,14 @@ async function activeUnlocked(): Promise<AccountRecord | null> {
 	return active?.status === 'unlocked' ? active.account : null
 }
 
+const webAppUrl = (account: AccountRecord) => `${account.serverUrl}/index.php/apps/keepiq/`
+
+/** The extension's Default item type, when the account's cached types hold it; passkeys are never made from New. */
+async function defaultSecretType(accountId: string, cached: VaultSnapshot | undefined): Promise<string | null> {
+	const { defaultItemType } = await readSettings(accountId)
+	return defaultItemType !== 'passkey' && cached?.types.some((type) => type.name === defaultItemType) ? defaultItemType : null
+}
+
 async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<VaultSnapshotReply> {
 	const active = await activeAccount()
 	if (active?.status !== 'unlocked') return { state: active?.status === 'locked' ? 'locked' : 'logged_out' }
@@ -51,8 +66,8 @@ async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<Va
 		types: cached?.types.map(({ id, name, label }) => ({ id, name, label: typeof label === 'string' && label ? label : name })) ?? [],
 		suggestionIds: suggestionIds(items ?? [], tabUrl),
 		sync: await syncStatus(account.id),
-		webAppUrl: `${account.serverUrl}/index.php/apps/keepiq/`,
-		defaultSecretType: cached?.defaultSecretType ?? null,
+		webAppUrl: webAppUrl(account),
+		defaultSecretType: await defaultSecretType(account.id, cached),
 		folderNoticeDismissed: (await browser.storage.local.get(folderNoticeKey(account.id)))[folderNoticeKey(account.id)] === true,
 	}
 }
@@ -130,7 +145,7 @@ async function perform(message: Exclude<PopupRequest, GeneratorRequest>): Promis
 			return decrypt(message.ids, message.fields)
 		case 'clipboard.copied': {
 			const accountId = await getActiveAccountId()
-			if (accountId) await scheduleClipboardClear(accountId)
+			if (accountId) await scheduleClipboardClear((await readSettings(accountId)).clearClipboardMs)
 			return null
 		}
 		case 'popup.popout':
@@ -142,6 +157,11 @@ async function perform(message: Exclude<PopupRequest, GeneratorRequest>): Promis
 			return readGlobalSettings()
 		case 'settings.set':
 			return updateGlobalSettings(message.patch)
+		case 'account.settings.get':
+		case 'account.settings.set':
+		case 'pin.set':
+		case 'pin.remove':
+			return performAccountSettings(message)
 		case 'send.list':
 		case 'send.create':
 		case 'send.delete':
@@ -238,10 +258,62 @@ async function performSend(message: SendRequest): Promise<PopupReplies[SendReque
 	}
 }
 
+/** `null` when the manifest declares no `autofill_login` (ext-autofill does) or the user removed its shortcut. */
+async function autofillShortcut(): Promise<string | null> {
+	try {
+		return (await browser.commands.getAll()).find((command) => command.name === 'autofill_login')?.shortcut || null
+	} catch {
+		return null
+	}
+}
+
+async function accountSettings(accountId: string): Promise<AccountSettingsSnapshot | null> {
+	const account = await getAccount(accountId)
+	if (!account) return null
+	const values = await readSettings(accountId)
+	const policy = await readAccountPolicy(accountId)
+	return {
+		accountId,
+		values,
+		effectiveTimeout: clampTimeout(values.vaultTimeout, policy.maxIdleMinutes),
+		maxIdleMinutes: policy.maxIdleMinutes,
+		exportDisabled: policy.exportDisabled,
+		pin: await hasPin(accountId) || await hasSeal(accountId),
+		autofillFeatures: [...AUTOFILL_FEATURES],
+		shortcut: await autofillShortcut(),
+		serverUrl: account.serverUrl,
+		webAppUrl: webAppUrl(account),
+		keepiqVersion: account.keepiqVersion ?? null,
+	}
+}
+
+/** Unlike writes, these act on the account they name whether or not it is active. */
+async function performAccountSettings(message: AccountSettingsRequest): Promise<PopupReplies[AccountSettingsRequest['kind']]> {
+	const { accountId } = message
+	switch (message.kind) {
+		case 'account.settings.get':
+			return typeof accountId === 'string' ? accountSettings(accountId) : null
+		case 'account.settings.set': {
+			const account = typeof accountId === 'string' ? await getAccount(accountId) : undefined
+			if (!account) return null
+			// Settings are out of reach while locked, and Never set then would put the key on disk at the next unlock.
+			if (await accountStatus(account) !== 'unlocked') return 'locked'
+			// `writeSettings` drops what fails validation.
+			await updateSettings(accountId, message.patch)
+			return accountSettings(accountId)
+		}
+		case 'pin.set':
+			return enablePin(accountId, message.pin, message.masterPassword)
+		case 'pin.remove':
+			if (typeof accountId === 'string') await forgetPin(accountId)
+			return null
+	}
+}
+
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
 function isInteraction(message: Exclude<PopupRequest, GeneratorRequest>): boolean {
 	// Every popup reads it on open, which `vault.status` already counts.
-	if (message.kind === 'settings.get') return false
+	if (message.kind === 'settings.get' || message.kind === 'account.settings.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
 	if (message.kind === 'item.decrypt') return message.passive !== true
 	return true

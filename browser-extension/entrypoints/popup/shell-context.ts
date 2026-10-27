@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { ItemMeta } from '@/src/messages'
+import type { ItemMeta, VaultSnapshotReply } from '@/src/messages'
 
 /** Shell runs these, so the list's More menu and item detail open the same form and dialogs. */
 export interface ItemActions {
@@ -24,7 +24,8 @@ export interface ShellContextValue {
 	footer: HTMLElement | null
 	/** The last request found the server unreachable, so writes wait. */
 	offline: boolean
-	syncNow: () => void
+	/** Resolves with the vault snapshot read after the sync. */
+	syncNow: () => Promise<VaultSnapshotReply | undefined>
 	items: ItemActions
 	/** An open form's dirty check; Shell asks before Back, Pop out or the account switcher drops a dirty form. */
 	setLeaveGuard: (isDirty: (() => boolean) | null) => void
@@ -37,7 +38,7 @@ export type GenerateTarget = 'password' | 'username'
 const noop = () => {}
 
 export const DEFAULT_SHELL: ShellContextValue = {
-	accountId: 'a1', refreshState: noop, toast: noop, launch: noop, footer: null, offline: false, syncNow: noop,
+	accountId: 'a1', refreshState: noop, toast: noop, launch: noop, footer: null, offline: false, syncNow: async () => undefined,
 	items: { add: noop, edit: noop, clone: noop, move: noop, remove: noop, send: noop }, setLeaveGuard: noop, generate: noop,
 }
 

@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
-import { addAccount, getAccount, markLoggedOut } from '@/src/accounts/store'
+import { accountPolicyKey, patchAccountPolicy, readAccountPolicy } from '@/src/accounts/policy'
+import { effectiveSettings, writeSettings } from '@/src/accounts/settings'
+import { addAccount, getAccount, markLoggedOut, removeAccount, updateSettings } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { clearPolicy, readPolicy, writePolicy } from '@/src/generator/store'
 import { blockedRow, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { hasKey, putKey } from './key-store'
+import { hasKey, neverLockKey, putKey } from './key-store'
 import { checkedAt, markChecked, readSnapshot, writeSnapshot } from './store'
 import { isStale, refreshPolicy, sync, syncStatus } from './sync'
 import { unlock } from './unlock'
@@ -61,12 +63,13 @@ function cached(overrides: Partial<VaultSnapshot> = {}): VaultSnapshot {
 }
 
 describe('full sync', () => {
-	it('takes the whole vault from the manifest, beside the user settings and the policy', async () => {
-		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/user': () => json({ default_secret_type: 'note' }) })
+	it('takes the whole vault from the manifest, beside the two policies and never the user settings', async () => {
+		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		const status = await sync(accountId)
-		expect(paths()).toEqual(['/api/settings/policy', '/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
+		expect(paths()).toEqual(['/api/settings/policy', '/api/v1/extension/policy', '/api/v1/offline/manifest', '/api/health'])
 		const snapshot = await readSnapshot(accountId)
-		expect(snapshot).toMatchObject({ secrets: rows, folders: [folderRow()], total: 2, newestUpdatedAt: '2026-04-01T10:00:00+00:00', defaultSecretType: 'note' })
+		expect(snapshot).toMatchObject({ secrets: rows, folders: [folderRow()], total: 2, newestUpdatedAt: '2026-04-01T10:00:00+00:00' })
+		expect(snapshot).not.toHaveProperty('defaultSecretType')
 		expect(status).toEqual({ syncing: false, syncedAt: snapshot!.syncedAt, offline: false, lastError: null })
 		expect(await isStale(accountId)).toBe(false)
 	})
@@ -78,12 +81,6 @@ describe('full sync', () => {
 		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		await sync(accountId)
 		expect((await getAccount(accountId))?.keepiqVersion).toBe('0.3.13')
-	})
-
-	it('keeps no default type when the user settings fail', async () => {
-		server({ '/api/v1/offline/manifest': () => json(manifest), '/api/settings/user': () => json({ message: 'Down' }, 503) })
-		expect(await sync(accountId)).toMatchObject({ offline: false, lastError: null })
-		expect(await readSnapshot(accountId)).toMatchObject({ defaultSecretType: null })
 	})
 
 	it.each([
@@ -140,7 +137,7 @@ describe('full sync', () => {
 
 describe('change probe', () => {
 	const probe = (total: number, updatedAt: string) => () => json({ items: [secretRow({ updatedAt })], total, page: 1, limit: 1 })
-	const probeRequests = ['/api/settings/policy', '/api/v1/secrets?sort=updated_at&direction=desc&limit=1', '/api/v1/suites']
+	const probeRequests = ['/api/settings/policy', '/api/v1/extension/policy', '/api/v1/secrets?sort=updated_at&direction=desc&limit=1', '/api/v1/suites']
 	const suites = () => json([suiteRow])
 
 	it('costs the probe and the suite list when nothing changed', async () => {
@@ -202,7 +199,7 @@ describe('change probe', () => {
 		await writeSnapshot(accountId, cached())
 		server({ '/api/v1/offline/manifest': () => json(manifest) })
 		await sync(accountId, 'full')
-		expect(paths()).toEqual(['/api/settings/policy', '/api/settings/user', '/api/v1/offline/manifest', '/api/health'])
+		expect(paths()).toEqual(['/api/settings/policy', '/api/v1/extension/policy', '/api/v1/offline/manifest', '/api/health'])
 	})
 })
 
@@ -567,6 +564,124 @@ describe('generator policy', () => {
 		await sync(accountId)
 		expect(loggedOut).toBe(true)
 		expect(await readPolicy(accountId)).toBeNull()
+	})
+})
+
+describe('organisation policy', () => {
+	const extension = (maxIdleMinutes: unknown) => () => json({ maxIdleMinutes })
+	const vault = { '/api/v1/offline/manifest': () => json(manifest) }
+
+	it('stores the idle maximum on sync', async () => {
+		server({ ...vault, '/api/v1/extension/policy': extension(30) })
+		await sync(accountId)
+		expect(await readAccountPolicy(accountId)).toEqual({ maxIdleMinutes: 30, exportDisabled: false })
+	})
+
+	it('stores a maximum Keepiq may add later', async () => {
+		server({ ...vault, '/api/v1/extension/policy': extension(120) })
+		await sync(accountId)
+		expect((await readAccountPolicy(accountId)).maxIdleMinutes).toBe(120)
+	})
+
+	it('stores the idle maximum and the export switch after a login', async () => {
+		server({ '/api/v1/extension/policy': extension(15), '/api/settings/policy': () => json({ policy_enabled: false, vault_export_disabled: true }) })
+		await refreshPolicy(accountId)
+		expect(await readAccountPolicy(accountId)).toEqual({ maxIdleMinutes: 15, exportDisabled: true })
+	})
+
+	it.each([
+		['a 503', () => json({ message: 'Down' }, 503)],
+		['a network error', () => Promise.reject(new TypeError('Failed to fetch'))],
+		['an HTML 404', () => new Response('<html></html>', { status: 404 })],
+		['a maximum of 0', extension(0)],
+		['a maximum of "abc"', extension('abc')],
+		['a maximum of 2.5', extension(2.5)],
+		['no maximum', () => json({})],
+	])('keeps the stored maximum on %s', async (_, answer) => {
+		await patchAccountPolicy(accountId, { maxIdleMinutes: 30 })
+		server({ ...vault, '/api/v1/extension/policy': answer })
+		await sync(accountId)
+		expect((await readAccountPolicy(accountId)).maxIdleMinutes).toBe(30)
+	})
+
+	it('keeps the stored maximum and clamps with it while offline', async () => {
+		await patchAccountPolicy(accountId, { maxIdleMinutes: 30 })
+		await writeSettings(accountId, { vaultTimeout: 240 })
+		fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+		expect(await sync(accountId)).toMatchObject({ offline: true })
+		expect((await effectiveSettings(accountId)).vaultTimeout).toBe(30)
+	})
+
+	it('reads the export switch whatever policy_enabled says', async () => {
+		server({ ...vault, '/api/settings/policy': () => json({ policy_enabled: false, vault_export_disabled: true }) })
+		await sync(accountId)
+		expect((await readAccountPolicy(accountId)).exportDisabled).toBe(true)
+		server({ ...vault, '/api/settings/policy': () => json({ policy_enabled: true, vault_export_disabled: false }) })
+		await sync(accountId)
+		expect((await readAccountPolicy(accountId)).exportDisabled).toBe(false)
+	})
+
+	it.each([
+		['missing', { policy_enabled: false }],
+		['not a boolean', { policy_enabled: false, vault_export_disabled: 'yes' }],
+	])('keeps the stored export switch when it is %s', async (_, body) => {
+		await patchAccountPolicy(accountId, { exportDisabled: true })
+		server({ ...vault, '/api/settings/policy': () => json(body) })
+		await sync(accountId)
+		expect((await readAccountPolicy(accountId)).exportDisabled).toBe(true)
+	})
+
+	it('writes nothing for an account logged out during the fetch', async () => {
+		let release!: () => void
+		const gate = new Promise<void>((resolve) => (release = resolve))
+		server({ ...vault, '/api/v1/extension/policy': async () => { await gate; return json({ maxIdleMinutes: 30 }) } })
+		const running = sync(accountId)
+		await vi.waitFor(() => expect(paths()).toContain('/api/v1/extension/policy'))
+		await markLoggedOut(accountId)
+		release()
+		await running
+		expect(await browser.storage.local.get(accountPolicyKey(accountId))).toEqual({})
+	})
+
+	it('leaves nothing behind for an account removed as sync writes it', async () => {
+		server({ ...vault, '/api/v1/extension/policy': extension(30) })
+		const set = browser.storage.local.set.bind(browser.storage.local)
+		let removed = false
+		vi.spyOn(browser.storage.local, 'set').mockImplementation(async (values) => {
+			if (!removed && Object.keys(values).some((key) => key.startsWith('accountPolicy.'))) {
+				removed = true
+				await removeAccount(accountId)
+			}
+			return set(values)
+		})
+		await sync(accountId)
+		expect(removed).toBe(true)
+		expect(await browser.storage.local.get(accountPolicyKey(accountId))).toEqual({})
+	})
+
+	it('keeps what it wrote for an account logged out as sync writes it, as a logout keeps the policy', async () => {
+		server({ ...vault, '/api/v1/extension/policy': extension(30) })
+		const set = browser.storage.local.set.bind(browser.storage.local)
+		let loggedOut = false
+		vi.spyOn(browser.storage.local, 'set').mockImplementation(async (values) => {
+			if (!loggedOut && Object.keys(values).some((key) => key.startsWith('accountPolicy.'))) {
+				loggedOut = true
+				await markLoggedOut(accountId)
+			}
+			return set(values)
+		})
+		await sync(accountId)
+		expect(loggedOut).toBe(true)
+		expect((await readAccountPolicy(accountId)).maxIdleMinutes).toBe(30)
+	})
+
+	it('deletes the Never key from disk at once when a maximum arrives', async () => {
+		await updateSettings(accountId, { vaultTimeout: 'never' })
+		expect((await browser.storage.local.get(neverLockKey(accountId)))[neverLockKey(accountId)]).toBe(toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		server({ ...vault, '/api/v1/extension/policy': extension(240) })
+		await sync(accountId)
+		expect(await browser.storage.local.get(neverLockKey(accountId))).toEqual({})
+		expect(await hasKey(accountId)).toBe(true)
 	})
 })
 

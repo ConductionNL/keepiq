@@ -27,6 +27,34 @@
 	--ring: rgb(33 70 139 / 0.3);
 	--radius: 8px;
 	--shadow: 0 4px 16px rgb(16 24 40 / 0.14);
+	/* Spacing that Compact mode tightens (`theme.ts` sets the class). */
+	--body-pad: 20px 16px;
+	--stack-gap: 16px;
+	--control-height: 40px;
+	--row-pad-y: 12px;
+	--item-pad-y: 9px;
+	--card-pad: 14px;
+}
+
+:root.compact {
+	--body-pad: 12px 12px;
+	--stack-gap: 10px;
+	--control-height: 34px;
+	--row-pad-y: 8px;
+	--item-pad-y: 5px;
+	--card-pad: 10px;
+}
+
+/* Show animations off: as under reduced motion, the spinner keeps turning slowly so loading still reads as loading. */
+:root.no-animations *,
+:root.no-animations *::before,
+:root.no-animations *::after {
+	transition: none !important;
+	animation: none !important;
+}
+
+:root.no-animations :is(.spinner, .menu__item[aria-busy='true'] > .icon:first-child) {
+	animation: spin 2s linear infinite !important;
 }
 
 /* Dark follows the system unless the Theme setting pins one with `data-theme` (`theme.ts`). */
@@ -192,13 +220,13 @@ a {
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	padding: 20px 16px;
+	padding: var(--body-pad);
 }
 
 .stack {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: var(--stack-gap);
 }
 
 .loading {
@@ -269,7 +297,7 @@ a {
 .field__box {
 	display: flex;
 	align-items: center;
-	height: 40px;
+	height: var(--control-height);
 	padding: 0 4px 0 12px;
 	background: var(--surface);
 	border: 1px solid var(--border-strong);
@@ -322,7 +350,7 @@ a {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	height: 40px;
+	height: var(--control-height);
 	padding: 0 18px;
 	font: inherit;
 	font-size: 14px;
@@ -436,8 +464,14 @@ a {
 	}
 }
 
+/* A row's own icon turns while its work runs, e.g. Sync now. */
+.menu__item[aria-busy='true'] > .icon:first-child {
+	animation: spin 0.7s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.spinner {
+	.spinner,
+	.menu__item[aria-busy='true'] > .icon:first-child {
 		animation-duration: 2s;
 	}
 }
@@ -598,7 +632,7 @@ a {
 	align-items: center;
 	gap: 12px;
 	width: 100%;
-	padding: 12px 14px;
+	padding: var(--row-pad-y) 14px;
 	font: inherit;
 	font-size: 14px;
 	font-weight: 500;
@@ -617,9 +651,18 @@ a {
 	background: var(--surface-hover);
 }
 
+/*
+ * Fades the icon and the name's own element only, so a reason line under the name keeps its contrast (WCAG AA).
+ * A name that is bare text gets the muted colour, so it never looks enabled.
+ */
 .menu__item:is(:disabled, [aria-disabled='true']) {
-	opacity: 0.45;
+	color: var(--fg-muted);
 	cursor: not-allowed;
+}
+
+.menu__item:is(:disabled, [aria-disabled='true']) > .icon,
+.menu__item:is(:disabled, [aria-disabled='true']) > .menu__label > :not(.menu__hint) {
+	opacity: 0.45;
 }
 
 /* Pushes a trailing chevron to the row's edge. */
@@ -768,7 +811,7 @@ a {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	height: 38px;
+	height: calc(var(--control-height) - 2px);
 	padding: 0 4px 0 12px;
 	color: var(--fg-muted);
 	background: var(--surface);
@@ -939,7 +982,7 @@ a {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 9px 6px 9px 12px;
+	padding: var(--item-pad-y) 6px var(--item-pad-y) 12px;
 	font: inherit;
 	text-align: left;
 	color: inherit;
@@ -1265,8 +1308,8 @@ a {
 .form-card {
 	display: flex;
 	flex-direction: column;
-	gap: 14px;
-	padding: 14px;
+	gap: var(--card-pad);
+	padding: var(--card-pad);
 	overflow: visible;
 }
 
@@ -1819,7 +1862,7 @@ a {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 9px 6px 9px 12px;
+	padding: var(--item-pad-y) 6px var(--item-pad-y) 12px;
 }
 
 /* A send's label and dates are its only identity, so they wrap rather than lose their end. */
@@ -1845,4 +1888,94 @@ a {
 .item__sub.send-row__expired {
 	font-weight: 600;
 	color: var(--danger);
+}
+
+/* Settings */
+
+a.menu__item {
+	box-sizing: border-box;
+	text-decoration: none;
+}
+
+/* A row's last sync or reason, under its label and inside its button, so the whole row is the hitbox. */
+.menu__hint {
+	display: block;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--fg-muted);
+}
+
+/* Indented to the label past the icon. */
+.menu__error {
+	padding: 0 14px var(--row-pad-y) 44px;
+}
+
+.custom-timeout {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.custom-timeout__fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.custom-timeout .btn {
+	align-self: flex-start;
+}
+
+.shortcut {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.shortcut kbd {
+	padding: 2px 6px;
+	font: inherit;
+	font-family: ui-monospace, monospace;
+	background: var(--surface-hover);
+	border: 1px solid var(--border-strong);
+	border-radius: 4px;
+}
+
+.shortcut__steps {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.domain-form {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.domain-form .field {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Lines up with the input under its label. */
+.domain-form .btn {
+	margin-top: 24px;
+}
+
+.domain-row {
+	display: flex;
+	align-items: center;
+	padding: 4px 6px 4px 14px;
+}
+
+.domain-row__name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.about {
+	gap: 4px;
 }

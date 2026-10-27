@@ -7,6 +7,7 @@
 import { importPrivateKey } from '@/src/crypto'
 import { fromBase64 } from '@/src/crypto/base64'
 import { effectiveSettings } from '@/src/accounts/settings'
+import { createKeyedQueue } from '@/src/queue'
 import { forgetVerifiedPartners } from './verified-partners'
 
 const sessionKey = (accountId: string) => `privateKeyPkcs8.${accountId}`
@@ -108,17 +109,18 @@ export async function clearKey(accountId: string, { sealed }: { sealed?: 'drop' 
 	if ((sealed ?? (held ? 'drop' : 'keep')) === 'drop') await session.remove([generatorSealedKey(accountId)])
 }
 
-/** Writes or deletes the on-disk copy to match the account's timeout. */
-export async function syncNeverLockKey(accountId: string): Promise<void> {
-	const epoch = sessionEpoch(accountId)
-	const bytes = await session.get(sessionKey(accountId))
-	if (bytes !== undefined && (await effectiveSettings(accountId)).vaultTimeout === 'never') {
-		// A lock since the read removed the copy; writing would bring it back.
-		if (sessionEpoch(accountId) !== epoch) return
-		await browser.storage.local.set({ [neverLockKey(accountId)]: bytes })
-	} else {
-		await browser.storage.local.remove(neverLockKey(accountId))
-	}
+const neverLockQueue = createKeyedQueue()
+
+/** Writes or deletes the on-disk copy to match the account's timeout, one at a time per account. */
+export function syncNeverLockKey(accountId: string): Promise<void> {
+	return neverLockQueue(accountId, async () => {
+		const epoch = sessionEpoch(accountId)
+		const bytes = await session.get(sessionKey(accountId))
+		const never = bytes !== undefined && (await effectiveSettings(accountId)).vaultTimeout === 'never'
+		// A lock meanwhile already took the copy off disk; writing these bytes would put it back.
+		if (never && sessionEpoch(accountId) === epoch) await browser.storage.local.set({ [neverLockKey(accountId)]: bytes })
+		else await browser.storage.local.remove(neverLockKey(accountId))
+	})
 }
 
 /** Session values that are not keys, through the same backend. */

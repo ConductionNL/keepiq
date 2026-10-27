@@ -1,7 +1,7 @@
 import { PASSWORD_LENGTH, sanitize, type GeneratorOptions, type GeneratorPolicy } from './options'
-import { createQueue } from './queue'
+import { createQueue } from '@/src/queue'
 
-/** Apart from `settings.<id>`, which `writeSettings` replaces whole. Kept on logout. */
+/** Apart from `settings.<id>`, so a generator save never races a settings write. Kept on logout. */
 export const generatorOptionsKey = (accountId: string) => `generatorOptions.${accountId}`
 /** The last policy a sync read; cleared on logout so a re-login starts from the server's. */
 export const generatorPolicyKey = (accountId: string) => `generatorPolicy.${accountId}`

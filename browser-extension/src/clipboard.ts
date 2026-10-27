@@ -3,11 +3,9 @@
  * background, which needs a document: an offscreen one on Chrome MV3, the
  * persistent background page itself on Firefox MV2.
  */
-import { settingsKey } from '@/src/accounts/settings'
 import type { BackgroundToOffscreen } from '@/src/messages'
 
 export const CLIPBOARD_ALARM = 'clipboard-clear'
-const DEFAULT_CLEAR_CLIPBOARD_MS = 30_000
 const OFFSCREEN_PATH = '/offscreen.html'
 
 /** Popup only. Rejects when the browser refuses the write. */
@@ -15,20 +13,11 @@ export function copyText(text: string): Promise<void> {
 	return navigator.clipboard.writeText(text)
 }
 
-/** A stored `0` means never; a missing or invalid delay reads as the default. */
-async function clearDelayMs(accountId: string): Promise<number | null> {
-	const key = settingsKey(accountId)
-	const stored = (await browser.storage.local.get(key))[key] as { clearClipboardMs?: unknown } | undefined
-	const ms = stored?.clearClipboardMs
-	if (typeof ms !== 'number' || !Number.isFinite(ms) || ms < 0) return DEFAULT_CLEAR_CLIPBOARD_MS
-	return ms === 0 ? null : ms
-}
-
-export async function scheduleClipboardClear(accountId: string, now = Date.now()): Promise<void> {
-	const ms = await clearDelayMs(accountId)
+/** `ms` is the account's `clearClipboardMs`, read by the caller so the popup and offscreen bundles stay free of the settings code. */
+export async function scheduleClipboardClear(ms: number, now = Date.now()): Promise<void> {
 	// A clear left by an earlier copy would wipe this one, also when this one is never cleared.
 	await browser.alarms.clear(CLIPBOARD_ALARM)
-	if (ms !== null) await browser.alarms.create(CLIPBOARD_ALARM, { when: now + ms })
+	if (ms !== 0) await browser.alarms.create(CLIPBOARD_ALARM, { when: now + ms })
 }
 
 /** Replaces the clipboard with an empty string; needs a document allowed to write it. */

@@ -167,7 +167,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => showToast(i18n.t('vault.openFailed'))),
 		footer,
 		offline: snapshot?.sync.offline ?? false,
-		syncNow: () => void syncNow(),
+		syncNow,
 		items,
 		setLeaveGuard: (guard: (() => boolean) | null) => {
 			leaveGuard.current = guard
@@ -282,7 +282,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 				)
 				: <Loading />
 	} else if (current === 'settings') {
-		content = <Settings section={section} onOpen={setSection} snapshot={snapshot} />
+		content = <Settings section={section} onOpen={setSection} account={active} snapshot={snapshot} snapshotFailed={failed} reload={() => void reload()} />
 	} else if (current === 'generator') {
 		content = history ? <GeneratorHistory /> : <Generator onOpenHistory={() => setHistory(true)} />
 	} else {

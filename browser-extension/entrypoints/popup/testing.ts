@@ -1,8 +1,9 @@
 import { getConfig } from '@testing-library/react'
 import { vi } from 'vitest'
+import { clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
 import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type {
-	AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
+	AccountSettingsSnapshot, AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
 } from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
@@ -15,6 +16,8 @@ export function account(overrides: Partial<AccountSummary> = {}): AccountSummary
 		avatarDataUrl: null,
 		status: 'locked',
 		active: true,
+		pin: false,
+		pinAfterRestart: false,
 		...overrides,
 	}
 }
@@ -83,11 +86,24 @@ interface FakeBackground {
 	tabUrl?: string
 	/** Kinds the background fails on, which reaches the popup as no reply. */
 	unanswered?: string[]
-	settings?: GlobalSettings
+	/** Over the defaults. */
+	settings?: Partial<GlobalSettings>
 	/** The generator's stored state; options and history change with the requests. */
 	generator?: { options?: GeneratorOptions; policy?: GeneratorPolicy | null; accountEmail?: string | null; history?: GeneratorHistoryEntry[] }
 	/** The server's sends; create and delete change them. */
 	send?: { sends?: SendRow[]; passwordProtection?: boolean }
+	/** The active account's settings; `set` and the PIN requests change them. */
+	accountSettings?: Partial<Omit<AccountSettingsSnapshot, 'values'>> & { values?: Partial<AccountSettings> }
+}
+
+export function accountSettingsSnapshot(overrides: FakeBackground['accountSettings'] = {}): AccountSettingsSnapshot {
+	const values = { ...DEFAULT_SETTINGS, ...overrides.values }
+	const maxIdleMinutes = overrides.maxIdleMinutes ?? null
+	return {
+		accountId: 'a1', effectiveTimeout: clampTimeout(values.vaultTimeout, maxIdleMinutes), exportDisabled: false, pin: false, autofillFeatures: [], shortcut: null,
+		serverUrl: 'https://cloud.example.org', webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/', keepiqVersion: '0.3.12',
+		...overrides, maxIdleMinutes, values,
+	}
 }
 
 export function sendRow(overrides: Partial<SendRow> = {}): SendRow {
@@ -102,10 +118,11 @@ const sendBase = 'https://cloud.example.org/index.php/apps/keepiq/public/send/'
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
-	let settings: GlobalSettings = options.settings ?? { theme: 'system' }
+	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, ...options.settings }
 	let generatorOptions = options.generator?.options ?? defaultOptions()
 	let history = options.generator?.history ?? []
 	let sends = options.send?.sends ?? []
+	let accountSettings = accountSettingsSnapshot(options.accountSettings)
 	let created = 0
 	const snapshot = () => (typeof options.snapshot === 'function' ? options.snapshot() : options.snapshot) ?? snapshotReply()
 	const reply = vi.fn(async (message: {
@@ -118,7 +135,19 @@ export function fakeBackground(options: FakeBackground = {}) {
 		switch (message.kind) {
 			case 'settings.get': return settings
 			case 'settings.set': return (settings = { ...settings, ...message.patch })
-			case 'vault.snapshot': return snapshot()
+			case 'account.settings.get': return accountSettings
+			case 'account.settings.set': {
+				const values = { ...accountSettings.values, ...message.patch as Partial<AccountSettings> }
+				return (accountSettings = { ...accountSettings, values, effectiveTimeout: clampTimeout(values.vaultTimeout, accountSettings.maxIdleMinutes) })
+			}
+			case 'pin.set': return (accountSettings = { ...accountSettings, pin: true }, { ok: true })
+			case 'pin.remove': return (accountSettings = { ...accountSettings, pin: false }, null)
+			// The background reads the default type from the account's settings.
+			case 'vault.snapshot': {
+				const current = snapshot()
+				const defaultItemType = accountSettings.values.defaultItemType
+				return current.state === 'unlocked' && current.defaultSecretType === null && defaultItemType !== 'login' ? { ...current, defaultSecretType: defaultItemType } : current
+			}
 			case 'vault.sync': return (snapshot() as UnlockedSnapshot).sync ?? snapshotReply().sync
 			case 'item.fetch': {
 				const item = options.items?.[message.id!]
@@ -168,6 +197,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 	})
 	vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(reply as never)
 	vi.spyOn(browser.tabs, 'query').mockResolvedValue([{ id: 7, windowId: 3, url: options.tabUrl ?? 'https://github.com/login' }] as never)
+	vi.spyOn(browser.runtime, 'getManifest').mockReturnValue({ version: '0.0.1' } as never)
 	return reply
 }
 

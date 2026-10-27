@@ -11,7 +11,7 @@ Keepiq opens your Keepiq vault in your browser. Your vault lives on your organis
 The extension talks to your own Nextcloud, and to nobody else. It sends your server:
 
 - your Nextcloud user name and app password, with every request, to sign in;
-- requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault, your Keepiq preferences, of which it uses the default item type, and your organisation's password policy, which the generator follows;
+- requests for your profile (name, email address and picture), your encrypted vault key, your encrypted vault, and your organisation's policies: the password policy the generator follows, whether vault export is turned off for you, and the longest the vault may stay unlocked while idle. It does not read your Keepiq preferences;
 - a request for the Keepiq version your server runs, to check the extension supports it;
 - the items and folders you add, change or delete. An item's secrets, user name, notes and additional fields are encrypted in the browser first; its name, web address, type and folder go as you typed them, as Keepiq stores them. Folder names are not encrypted.
 - when you open an item, a check whether you may edit it, which names the item;
@@ -28,13 +28,15 @@ Per account: the server address and its Keepiq version, your Nextcloud user name
 
 A copy of your vault as the server stores it, so you can open it offline. It holds your encrypted secrets and the names, web addresses and folders of your items, which Keepiq keeps unencrypted. The copy goes when you log out of the account, when your vault key changes in Keepiq, and when your organisation's two-factor policy stops this login from opening the vault.
 
-While the vault is unlocked, the browser keeps your vault key in its session storage, which lives in memory and is cleared when the browser closes. The **Never** lock option, which comes with the settings screen, is the one exception: it stores the key on disk so the vault stays open after a restart, and it warns you about that before you pick it.
+While the vault is unlocked, the browser keeps your vault key in its session storage, which lives in memory and is cleared when the browser closes. The **Never** lock option is the one exception: it stores the key on disk so the vault stays open after a restart, and it warns you about that before you pick it. Your organisation's lock maximum rules it out, and the key leaves the disk as soon as the extension reads that maximum.
+
+When you set a PIN, the browser keeps your vault key encrypted under that PIN in its session storage, with the number of wrong PINs entered, also while the vault is locked. That copy goes when the browser closes. On disk the extension keeps only your PIN, encrypted under a key that only your unlocked vault key gives, so it can bring the PIN back after you enter your master password once following a restart. Both go when you turn the PIN off, log out or enter five wrong PINs, and when your vault key changes or your organisation's two-factor policy stops this login from opening the vault.
 
 Your master password and your decrypted secrets are never stored. Decrypted values stay in memory while you look at them and are gone when you close the item or the extension.
 
-Your theme choice, for every account. It stays when you log out.
+Your theme and appearance choices, for every account. They stay when you log out.
 
-Per account, your default item type from Keepiq, with the vault copy, and whether you dismissed the notice that folder names are not encrypted, until you remove the account.
+Per account, your organisation's lock maximum and whether it turned vault export off, and whether you dismissed the notice that folder names are not encrypted, until you remove the account. The lock maximum stays when your app password stops working or the timeout logs you out, so logging in again never lifts it.
 
 Per account, your generator options, until you remove the account, and your organisation's password policy, until you log out.
 
@@ -50,7 +52,7 @@ When you are halfway through adding an account, the extension remembers the serv
 
 - **The address of your current tab,** to suggest the items for that site, and for the site name in a generated email address when you choose it. It stays in the extension.
 - **The pages you visit:** the extension's page script runs on every site, so that filling in logins can work there. Today it only tells the extension a page has loaded. It never receives your vault, and when autofill arrives it gets one login, after you chose it.
-- **Whether your computer is locked,** for the **On system lock** lock option, which comes with the settings screen.
+- **Whether your computer is locked,** for the **On system lock** lock option.
 - **Your browser's language,** to show the extension in it. It stays in the extension.
 - **Whether your browser is set to light or dark,** for the **System default** theme. It stays in the extension.
 
@@ -64,7 +66,7 @@ When you are halfway through adding an account, the extension remembers the serv
 | Tabs | Reads the current tab's address for suggestions, and opens an item's website in a new tab. |
 | Alarms | Locks the vault on time and checks for changes every 15 minutes. |
 | Idle | Locks the vault when your computer locks, if you choose that. |
-| Clipboard write | Clears a copied password after 30 seconds. The settings screen, when it comes, lets you change the delay or turn it off. |
+| Clipboard write | Clears a copied password after 30 seconds, or after the delay you choose in the settings. |
 | Offscreen document (Chrome) | Chrome needs a hidden page to clear the clipboard. |
 
 ## What the extension does not do

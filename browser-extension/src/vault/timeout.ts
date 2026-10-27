@@ -29,10 +29,13 @@ export async function enforce(now = Date.now()): Promise<void> {
 	const last = Number(await sessionValues.get(LAST_INTERACTION))
 	let expired = false
 	for (const { account, settings } of await unlockedAccounts()) {
-		if (typeof settings.vaultTimeout !== 'number') continue
+		// The event options also lock at the organisation maximum, so a pop-out kept open or a system never locked can't outlast it.
+		const minutes = typeof settings.vaultTimeout === 'number' ? settings.vaultTimeout
+			: settings.vaultTimeout === 'onSystemLock' || settings.vaultTimeout === 'immediately' ? settings.maxIdleMinutes : null
+		if (minutes === null) continue
 		// Unlocking is an interaction too, and it is all a restored "Never" key had.
 		const since = Math.max(Number.isFinite(last) ? last : 0, Number(await sessionValues.get(unlockedAtKey(account.id))) || 0)
-		if (now - since >= settings.vaultTimeout * 60_000) {
+		if (now - since >= minutes * 60_000) {
 			await expire(account.id, settings.vaultTimeoutAction)
 			expired = true
 		}

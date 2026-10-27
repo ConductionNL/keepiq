@@ -7,7 +7,7 @@ import { tabLabel } from './components/TabBar'
 import { Toast } from './components/Toast'
 import { useBackgroundMessage } from './hooks/useBackgroundMessage'
 import { usePopupState } from './hooks/usePopupState'
-import { useTheme } from './hooks/useTheme'
+import { SettingsProvider } from './hooks/useSettings'
 import { useToast } from './hooks/useToast'
 import { DEFAULT_SHELL, ShellContext } from './shell-context'
 import { AccountSwitcher } from './views/AccountSwitcher'
@@ -20,9 +20,13 @@ import { Unlock } from './views/Unlock'
 /** Panels the popup opens on top of the background's screen. */
 type Panel = 'switcher' | 'add_account' | 'generator' | null
 
+/** The stored theme and appearance apply to every screen, the ones before an account is chosen included. */
 export default function App() {
+	return <SettingsProvider><Popup /></SettingsProvider>
+}
+
+function Popup() {
 	const { state, error, dispatch } = usePopupState()
-	useTheme()
 	const [panel, setPanel] = useState<Panel>(null)
 	/** Unlock was left for the generator, so focus returns to its link. */
 	const [fromGenerator, setFromGenerator] = useState(false)

@@ -66,6 +66,11 @@ describe('adding', () => {
 		expect(screen.queryByLabelText('Username')).toBeNull()
 	})
 
+	it('starts as a login when the default type is one the cached types lack', () => {
+		renderForm({ snapshot: snapshotReply({ defaultSecretType: 'wifi' }) })
+		expect((screen.getByLabelText('Type') as HTMLSelectElement).value).toBe('t-login')
+	})
+
 	it('refuses a missing name without a request', async () => {
 		const { sent, user } = renderForm()
 		await user.click(save())

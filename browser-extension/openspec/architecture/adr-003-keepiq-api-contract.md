@@ -36,15 +36,15 @@ All paths relative to the base URL. All require the Basic auth above unless mark
 | Types | `GET /api/v1/secret-types` | Types are rows, resolve `typeId` from here. |
 | Sends | `POST/GET /api/v1/sends`, `DELETE /api/v1/sends/{id}` | Since 0.1.4, and the path-form recipient link since 0.3.0, so no gate. See payload below. `DELETE` of an unknown or foreign id is a JSON 404. |
 | Public send access | `GET /api/v1/public/sends/{token}`, `POST …/access`, `POST …/confirm`, `POST …/failure` | Public, rate limited 15/min. The extension only needs the create side; the web app renders the recipient page. |
-| User settings | `GET/PUT /api/settings/user` | `session_timeout` (`session`, `10min`, `30min` or empty for admin default), notification toggles, `default_secret_type`, `offline_cache_optin`. |
-| Policy | `GET /api/settings/policy` | Read-only org password policy, a flat object (`SettingsController::getPolicy`, `#[NoAdminRequired]`). The generator reads `policy_enabled` (default false), `generator_min_length` (8 or more, default 12; the extension caps it at 128) and `generator_require_upper`, `_lower`, `_digit` and `_symbol`, all since Keepiq 0.1.4, and `generator_allow_passphrase` (default true) since 0.3.8. Both are older than the minimum, so nothing is gated. |
+| Policy | `GET /api/settings/policy` | Read-only org password policy, a flat object (`SettingsController::getPolicy`, `#[NoAdminRequired]`). The generator reads `policy_enabled` (default false), `generator_min_length` (8 or more, default 12; the extension caps it at 128) and `generator_require_upper`, `_lower`, `_digit` and `_symbol`, all since Keepiq 0.1.4, and `generator_allow_passphrase` (default true) since 0.3.8. Settings reads `vault_export_disabled`, a boolean for the calling user whatever `policy_enabled` says, since 0.3.8. All are older than the minimum, so nothing is gated. |
+| Extension policy | `GET /api/v1/extension/policy` | `{maxIdleMinutes}`, the admin's idle lock maximum (`extension_max_idle_minutes`): one of 1, 5, 15, 30, 60 or 240, and 240 when the admin set none (`AdminSettingsService::extensionMaxIdleMinutes`). The extension accepts any positive whole number, so a new choice needs no extension release. Plain controller, `#[NoAdminRequired]`, `#[NoCSRFRequired]`. Since 0.3.8, older than the minimum, so not gated. |
 | Server generator | `POST /api/v1/generate-key` | `{length, includeSpecialCharacters, excludedCharacters, regex}` returns `{generatedKey}`. Not used by the extension: it ports the web app's client-side generator (`src/generator/`), so it generates while locked and offline. |
 
 Error bodies are `{"message": "<text>"}`. Status codes: 400 invalid input, 401 bad credentials, 403 or 428 refused (see Refusals), 404 missing, 423 vault write-locked during a key migration (retry later, do not treat as an auth failure).
 
 Out of reach for an app-password client: suite rotation, revocation and compromise recovery need a vault-key proof signed with the raw private key, and admin force-revoke needs Nextcloud password confirmation. The extension links to the web app for these.
 
-Routes under `/api/v1/extension/*` belong to the in-tree reference extension in the Keepiq repo and are not used by this project.
+Of the routes under `/api/v1/extension/*`, the extension uses only `policy`. `GET/PUT /api/settings/user` is not used: the extension keeps its own default item type, and the web app owns the other preferences.
 
 ## Secret shape
 
@@ -117,6 +117,8 @@ With a password, `"hasPassword": true` adds `"wrappedKey"` and `"argon2idSalt"`;
 
 ## Server-side settings that affect the client
 
-- Admin `default_session_timeout` is one of `session`, `10min`, `30min` and is only a suggested default. The lock is client-enforced; the server has no session to kill.
+- Admin `default_session_timeout` is one of `session`, `10min`, `30min` and is the web app's default only. The lock is client-enforced; the server has no session to kill.
+- Admin `extension_max_idle_minutes` caps the extension's idle lock, read through the extension policy route above (ADR-002).
+- Admin `vault_export_disabled`, per group, turns off export in the web app; the extension's Export link follows it.
 - Admin `offline_cache_enabled` gates the manifest endpoint with a refusal. Per-user `offline_cache_optin` exists too. When the manifest is unavailable the client falls back to paginated listing.
 - Admin `min_password_length` and `min_password_score` apply to master password changes, which the extension does not perform.

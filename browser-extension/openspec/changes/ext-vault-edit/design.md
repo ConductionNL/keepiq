@@ -39,7 +39,7 @@ ext-vault-browse leaves the vault read-only: sync fills `storage.local` with cip
 - **Clone is fetch plus create in the popup.** No server clone exists (ADR-003); the popup fresh-fetches, prefills the add form and calls `item.create`. Passkeys are excluded because the clone would duplicate a credential the RP only knows once.
 - **Folder delete follows Keepiq's three modes.** Empty: plain `DELETE`. Non-empty leaf: `?cascade=delete|move`. With subfolders: a `DELETE` with the resolution body (`FolderController::destroy` reads `subfolders` and `directSecrets` from the body). The manager reads `GET /children` before every delete and picks the mode from it, never from the cache, which holds only live items while a cascade also destroys archived and trashed ones; a 409 means something landed since, and reads them again.
 - **After every successful write, run the ext-vault-browse sync instead of merging the response row.** ADR-002 says sync runs after every local write and the manifest replaces the snapshot atomically; merging one row would need a second code path for the same state.
-- **`default_secret_type` is fetched with `GET /api/settings/user` during a full sync and kept in the snapshot.** It is cleared with the snapshot; ext-settings' server mirror replaces it. A failed read keeps `null`, which means `login`.
+- **The default type is the extension's Default item type.** ext-settings stores it per account in `settings.<accountId>`, and the snapshot reply carries it as `defaultSecretType` when the cached types hold it, else `null`, which means `login`. Keepiq's `GET /api/settings/user` is not read.
 - **Confirm and resolution dialogs are the `ConfirmDialog` React component, never `window.confirm`.** Firefox closes an extension popup when a native dialog opens; an in-popup component behaves the same in both browsers. The folder picker is a dialog too, so the form under it keeps its state without a page stack.
 - **Item actions live in Shell.** The list's More menu and item detail open the same form, picker and delete dialog through the shell context, so both behave the same.
 - **The popup is React per ADR-004.** Views compose components, components read state and trigger writes only through hooks that wrap the typed messages; no component imports `src/api` or `src/crypto`, so the encryption boundary stays in the background. Draft state, dirty tracking and validation live in `useItemDraft`, which calls `src/vault/fields.ts` (pure logic, allowed).
@@ -50,7 +50,7 @@ ext-vault-browse leaves the vault read-only: sync fills `storage.local` with cip
 
 - `src/vault/fields.ts` (new): reserved names, the 255, 4096 and 65536 caps, per-type form fields, card and identity serialize and parse, TOTP seed validation and URI rewrite, form values to draft, draft diff, validation as codes.
 - `src/vault/write.ts` (new): encrypt a draft or patch with the cached suite certificate via `src/crypto/`, call the API client for secrets and folders, map failures to `VaultWriteError`, record the outcome, sync.
-- `src/vault/sync.ts` (edit): `recordOutcome` for writes, `syncAfterWrite`, and `default_secret_type` read during a full sync.
+- `src/vault/sync.ts` (edit): `recordOutcome` for writes and `syncAfterWrite`.
 - `src/messages.ts` (edit): the write requests below, and `defaultSecretType` and `folderNoticeDismissed` on the unlocked snapshot reply.
 - `src/background/requests.ts` (edit): the write arms, through the existing `PopupRequest` path.
 - `entrypoints/popup/views/ItemForm.tsx` (new): add, edit and clone page; edit and clone fetch first.
@@ -150,7 +150,7 @@ Browser differences: the URL prefill reuses `useCurrentTab` from ext-vault-brows
 - [Notes in `additionalFields.notes` collide with a user's own custom field named `notes`] → The editor refuses that name; older items with such a member show it as Notes.
 - [Composite JSON drifts from the web app's serializer] → `fields.ts` copies the member lists verbatim from `cardIdentity.js` and a task pins them in a round-trip check.
 - [A draft with a password is lost when the popup closes] → The unsaved-changes guard covers in-popup navigation; persistence would put plaintext in storage, which ADR-002 forbids.
-- [`default_secret_type` names a type the cached `secret-types` do not contain] → Fall back to `login`.
+- [The Default item type names a type the cached `secret-types` do not contain] → Fall back to `login`.
 - [MV3 worker restarts mid-write] → Each arm is a single `fetch` after encrypt; the popup shows the network error and the next sync tells the truth.
 
 ## Open Questions

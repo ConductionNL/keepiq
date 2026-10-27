@@ -2,7 +2,7 @@ import { importPublicKey, rsaDecrypt, rsaEncrypt } from '@/src/crypto'
 import { readProvenCertificate } from '@/src/vault/certificate'
 import { generatorHistoryKey, generatorSealedKey, getKey, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { GENERATOR_KINDS, HISTORY_LIMIT, type GeneratorHistoryEntry } from './options'
-import { createQueue } from './queue'
+import { createQueue } from '@/src/queue'
 
 const isEntry = (value: unknown): value is GeneratorHistoryEntry => {
 	const entry = value as Partial<GeneratorHistoryEntry> | null

@@ -84,13 +84,6 @@ export interface OfflineManifest {
 	syncedAt: string
 }
 
-export interface UserSettings {
-	session_timeout: 'session' | '10min' | '30min' | ''
-	default_secret_type: string
-	offline_cache_optin: boolean
-	[toggle: string]: unknown
-}
-
 /** `ocs.data` of `GET /ocs/v2.php/cloud/user`. */
 export interface NextcloudUser {
 	id: string

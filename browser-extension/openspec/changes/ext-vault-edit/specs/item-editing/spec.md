@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Add item form
-The extension SHALL offer a primary "New" button with a plus icon in the header of the Vault tab's list, left of the pop-out button as in Bitwarden, that opens an add-item form with a Type select, a required Name and the fields of the chosen type, as in Bitwarden's "Add item". The Type select MUST list the cached `secret-types` rows except `passkey`, which only a passkey ceremony creates, and default to the user's `default_secret_type` when cached, else `login`. For the `login` type the form MUST show Username, Password (masked, with a reveal button; ext-generator adds the generate button), Website URL, Folder (default "No folder"), Additional fields and Notes. A multi-line secret, such as an `ssh_key`, a `certificate` or a password holding a line break, MUST stay masked until the user presses Show, and stay multi-line once it holds a line break, also after the type changes; an edit MUST keep its CRLF or CR line breaks when it used one style throughout. Every other type except `passkey` MUST show Username when the edited item has a login, as the Keepiq web app does, and keep it while the form is open; cleared, it is saved as `null`. The draft lives in popup memory only and is cleared when the popup closes.
+The extension SHALL offer a primary "New" button with a plus icon in the header of the Vault tab's list, left of the pop-out button as in Bitwarden, that opens an add-item form with a Type select, a required Name and the fields of the chosen type, as in Bitwarden's "Add item". The Type select MUST list the cached `secret-types` rows except `passkey`, which only a passkey ceremony creates, and default to the account's Default item type from the extension's settings (ext-settings) when the cached types hold it, else `login`. For the `login` type the form MUST show Username, Password (masked, with a reveal button; ext-generator adds the generate button), Website URL, Folder (default "No folder"), Additional fields and Notes. A multi-line secret, such as an `ssh_key`, a `certificate` or a password holding a line break, MUST stay masked until the user presses Show, and stay multi-line once it holds a line break, also after the type changes; an edit MUST keep its CRLF or CR line breaks when it used one style throughout. Every other type except `passkey` MUST show Username when the edited item has a login, as the Keepiq web app does, and keep it while the form is open; cleared, it is saved as `null`. The draft lives in popup memory only and is cleared when the popup closes.
 
 #### Scenario: Opening the form from a tab
 - **GIVEN** the vault is unlocked and the user opened the popup on a tab whose URL is `https://example.com/login`
@@ -14,8 +14,8 @@ The extension SHALL offer a primary "New" button with a plus icon in the header 
 - **WHEN** the user presses New
 - **THEN** Website URL MUST read `https://app.example.com/callback`, since the URL is stored unencrypted
 
-#### Scenario: Default type from user settings
-- **GIVEN** the cached user settings carry `default_secret_type` = `note`
+#### Scenario: Default type from the extension's settings
+- **GIVEN** the account's Default item type is `note` and the cached types hold `note`
 - **WHEN** the add-item form opens
 - **THEN** Type MUST be preselected to `note` and the form MUST show the `note` fields
 
