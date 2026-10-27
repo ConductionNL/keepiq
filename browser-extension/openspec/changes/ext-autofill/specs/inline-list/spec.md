@@ -102,7 +102,7 @@ For an unlocked vault the list SHALL show every login item matching the URL of t
 - **THEN** five rows are visible and the others are reached by scrolling or the arrow keys
 
 ### Requirement: No-match and locked states
-The extension SHALL open the list on a qualifying field whether or not a login matches, so its presence does not tell the page whether a login matches. Its height fits what it shows (Position), so the page can read from it how many logins match, up to five; that is accepted, as the count is of no use to a site. With an unlocked vault and no match, it shows "No logins for <host>" and no action. With a locked vault it shows "Unlock Keepiq to see your logins" and an "Unlock" button that opens the popup on the unlock view, or the pop-out window where the popup cannot be opened, and then closes the list; nothing is matched or decrypted while locked. After unlocking, the next focus of the field shows the logins.
+The extension SHALL open the list on a qualifying field whether or not a login matches, so its presence does not tell the page whether a login matches. Its height fits what it shows (Position). The locked and no-match messages are one row tall, as one match, whatever they say and in every language, so one row does not tell a locked vault, no match and one match apart; two to five rows tell the page that many logins match (five for more), and so that the vault is unlocked, which is accepted as of no use to a site. With an unlocked vault and no match, it shows "No logins for <host>" and no action. With a locked vault it shows "Keepiq is locked" (nl "Keepiq is vergrendeld") and beside it an "Unlock" button (nl "Ontgrendelen"), described by that text, which fit one row at the list's minimum width without scrolling. The button opens the popup on the unlock view, or the pop-out window where the popup cannot be opened, and then closes the list; nothing is matched or decrypted while locked. After unlocking, the next focus of the field shows the logins.
 
 #### Scenario: No match
 - **GIVEN** an unlocked vault with no login for `nothing.test`
@@ -112,12 +112,13 @@ The extension SHALL open the list on a qualifying field whether or not a login m
 #### Scenario: Locked vault
 - **GIVEN** a locked vault with a login for the site
 - **WHEN** the user focuses the username field
-- **THEN** the list reads "Unlock Keepiq to see your logins" with an "Unlock" button and no rows
+- **THEN** the list reads "Keepiq is locked" with an "Unlock" button and no rows
 
 #### Scenario: Height follows the matches
 - **GIVEN** the same login page layout on a site with no matching login, one with one, one with three and one with twelve, and the vault locked, then unlocked
 - **WHEN** the list opens on each
 - **THEN** the list is one row tall when locked, without a match and with one, three rows with three, and five rows with twelve, the rest scrolling
+- **AND** the locked list is one row with its Unlock button in view, in English and in Dutch at the minimum width alike
 
 #### Scenario: Unlock from the list
 - **GIVEN** the locked list
@@ -229,7 +230,7 @@ The list SHALL close on Escape, on Tab in the field, when focus moves anywhere b
 - **THEN** the list is closed until the field is focused or clicked again
 
 ### Requirement: The list sits beneath the field and follows it
-The extension SHALL place the list 4 CSS px below the field, left edges aligned, at least as wide as the field and 240 CSS px, and at most the frame's viewport width minus 16 px. Its height fits its contents: one row per matching login up to five, one row for the locked and no-match messages, and the height the insecure-site question or a refusal needs, at most five rows; it is capped by the larger free side of the field within the frame's viewport, and what does not fit scrolls. The height is set when the list opens and changes only when the list's contents do, which counts as a move for the visibility guard. When less than 240 px of width or less than one row fits, the list does not open. When there is less room below the field than the list needs and more above, it is placed above instead. It stays inside the viewport of the field's frame, above the page's own content, and follows the field when the page or an inner container scrolls, the window resizes or the page zooms. When the field is inside a modal dialog, found across shadow roots, the list is placed inside that dialog, since everything outside it is inert. Where the browser has the popover API, a script-trapped modal (`role="dialog"` with `aria-modal="true"`, as Radix, MUI, Headless UI or react-focus-lock build it) counts the same way, so its focus trap keeps focus in the list; without the popover API the list stays outside it.
+The extension SHALL place the list 4 CSS px below the field, left edges aligned, at least as wide as the field and 240 CSS px, and at most the frame's viewport width minus 16 px. Its height fits its contents: one row per matching login up to five, one row for the locked and no-match messages, whose text scrolls where it needs more, and the height the insecure-site question or a refusal needs, at most five rows; it is capped by the larger free side of the field within the frame's viewport, and what does not fit scrolls. The height is set when the list opens and changes only when the list's contents do, which counts as a move for the visibility guard. When less than 240 px of width or less than one row fits, the list does not open. When there is less room below the field than the list needs and more above, it is placed above instead. It stays inside the viewport of the field's frame, above the page's own content, and follows the field when the page or an inner container scrolls, the window resizes or the page zooms. When the field is inside a modal dialog, found across shadow roots, the list is placed inside that dialog, since everything outside it is inert. Where the browser has the popover API, a script-trapped modal (`role="dialog"` with `aria-modal="true"`, as Radix, MUI, Headless UI or react-focus-lock build it) counts the same way, so its focus trap keeps focus in the list; without the popover API the list stays outside it.
 
 #### Scenario: Field near the bottom
 - **GIVEN** a password field 80 px above the bottom of the viewport

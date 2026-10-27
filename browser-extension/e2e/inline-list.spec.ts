@@ -7,7 +7,7 @@ import {
 	mousePickRefused, openPage, test, values,
 } from './fixtures'
 import type { Page } from '@playwright/test'
-import { inlineHeight } from '@/src/messages'
+import { INLINE_MIN_WIDTH_PX, inlineHeight } from '@/src/messages'
 
 const guardField = (page: Page) => page.locator('h2:text("Guard cases") ~ form input[name=username]').first()
 const frameField = (page: Page, frame: string) => page.frameLocator(frame).locator('input[name=username]')
@@ -195,5 +195,59 @@ test.describe('locked', () => {
 		await clickField(page, guardField(page))
 		await clickMessageKeepsList(page, inlineListText('locked'))
 		expect(await hostHeight(page)).toBe(inlineHeight(1))
+	})
+})
+
+/** The list opened at its minimum width, on the narrowed guard field, after the page's `attack` if one is given. */
+async function openNarrow(page: Page, attack?: string) {
+	await openPage(page)
+	if (attack) await page.click(`button[data-attack=${attack}]`)
+	const field = guardField(page)
+	await field.evaluate((input) => {
+		input.style.width = '100px'
+	})
+	await clickField(page, field)
+	await expect.poll(() => listOpen(page)).toBe(true)
+}
+
+const hostWidth = (page: Page) => page.evaluate(() => document.querySelector(':root > div[popover]')!.getBoundingClientRect().width)
+const scrolls = (page: Page) => listFrame(page)!.evaluate(() => {
+	const list = document.getElementById('list')!
+	return list.scrollHeight > list.clientHeight
+})
+
+for (const lang of ['en', 'nl'] as const) {
+	test.describe(`locked, in ${lang === 'en' ? 'English' : 'Dutch'}, at the minimum width`, () => {
+		test.use({ vault: 'locked', lang })
+
+		test('the locked card is one row, as one match, with Unlock beside its text and nothing to scroll', async ({ page }) => {
+			await openNarrow(page)
+			const frame = listFrame(page)!
+			await expect(frame.locator('.message--locked button')).toHaveCount(1)
+			expect(await hostHeight(page)).toBe(inlineHeight(1))
+			expect(await hostWidth(page)).toBe(INLINE_MIN_WIDTH_PX)
+			expect(await scrolls(page)).toBe(false)
+			const [text, button] = await Promise.all([frame.locator('#locked-text').boundingBox(), frame.locator('.message--locked button').boundingBox()])
+			expect(button!.x).toBeGreaterThanOrEqual(text!.x + text!.width)
+		})
+	})
+}
+
+test.describe('in Dutch, at the minimum width', () => {
+	test.use({ lang: 'nl' })
+
+	test('the not-visible notice grows to show all of its text', async ({ page }) => {
+		await openNarrow(page, 'overlay')
+		const frame = listFrame(page)!
+		await expect(async () => {
+			if (await frame.locator('.message--notice').count() === 0) {
+				const row = (await frame.locator('[role=option]').first().boundingBox({ timeout: 1000 }))!
+				await page.mouse.click(row.x + row.width / 2, row.y + row.height / 2)
+			}
+			await expect(frame.locator('.message--notice')).toHaveCount(1, { timeout: 1000 })
+		}).toPass()
+		await expect.poll(() => hostHeight(page)).toBeGreaterThan(inlineHeight(1))
+		await expect.poll(() => scrolls(page)).toBe(false)
+		expect(await hostWidth(page)).toBe(INLINE_MIN_WIDTH_PX)
 	})
 })

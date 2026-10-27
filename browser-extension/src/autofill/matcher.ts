@@ -21,15 +21,32 @@ function matchesRegex(pattern: string, page: string): boolean {
 	}
 }
 
-/** Bitwarden's URI match detection, with one global rule since a Keepiq item has one url. */
+const REGEX_SYNTAX = /[\^$*+()[\]{}|\\]/
+/** Up to and including an IPv6 host's brackets, after any scheme and userinfo. */
+const IPV6_HOST = /^((?:[a-z][a-z\d+.-]*:\/\/)?(?:[^/?#@[]*@)?)\[[\da-f]*:[\da-f:.]*\]/i
+
+/**
+ * Default deny: only regex syntax before the query or fragment, where `+` and the like are ordinary, makes an item url
+ * a pattern; so does a `?` in its scheme (`https?://`).
+ */
+function isPattern(url: string): boolean {
+	if (/^[a-z][a-z\d+-]*\?[a-z\d+-]*:\/\//i.test(url)) return true
+	return REGEX_SYNTAX.test(url.split(/[?#]/, 1)[0]!.replace(IPV6_HOST, '$1'))
+}
+
+/**
+ * Bitwarden's URI match detection, with one global rule since a Keepiq item has one url. Under `regex` any other url
+ * is ordinary and never runs as a pattern: unanchored, `https://bank.com` would match `https://bank.com.evil.net/`.
+ */
 export function matches(itemUrl: string | null, rawPageUrl: string, rule: UriMatch): boolean {
-	const pattern = itemUrl?.trim()
+	const url = itemUrl?.trim()
 	const page = pageUrl(rawPageUrl)
-	if (!pattern || !page) return false
-	if (rule === 'regex') return matchesRegex(pattern, page.href)
-	const item = webUrl(pattern)
+	if (!url || !page) return false
+	if (rule === 'regex' && isPattern(url)) return matchesRegex(url, page.href)
+	const item = webUrl(url)
 	if (!item) return false
 	switch (rule) {
+		case 'regex':
 		case 'baseDomain': return baseDomain(item.href) === baseDomain(page.href)
 		case 'host': return item.host === page.host
 		case 'startsWith': return page.href.startsWith(item.href)

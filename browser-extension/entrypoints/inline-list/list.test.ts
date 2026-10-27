@@ -190,7 +190,7 @@ describe('contents', () => {
 	it('shows the locked message with Unlock and no listbox', async () => {
 		await open(locked())
 		expect(listbox()).toBeNull()
-		expect(document.querySelector('#list')!.textContent).toContain('Unlock Keepiq to see your logins')
+		expect(document.querySelector('#list')!.textContent).toContain('Keepiq is locked')
 		expect(unlockButton()).toBeTruthy()
 		expect(options()).toHaveLength(0)
 	})
@@ -198,7 +198,7 @@ describe('contents', () => {
 	it('describes Unlock by the locked message', async () => {
 		await open(locked())
 		const described = document.getElementById(unlockButton().getAttribute('aria-describedby') ?? '')
-		expect(described?.textContent).toBe('Unlock Keepiq to see your logins')
+		expect(described?.textContent).toBe('Keepiq is locked')
 	})
 
 	it('asks the host, through the background, for the height of what it shows, and never tells its parent anything', async () => {
@@ -211,23 +211,20 @@ describe('contents', () => {
 			sent = []
 			stop()
 		}
-		// happy-dom lays nothing out, so a message measures as no taller than one row.
 		expect(asked).toEqual([60, 160, 260, 60, 60].map((height) => [{ kind: 'inline.resize', key: KEY, height }]))
 		expect(postToParent).not.toHaveBeenCalled()
 		expect(STYLES).toMatch(/html,\s*body\s*\{[^}]*height: 100%/)
 	})
 
-	it('asks for the height its message measures, and again only when that changes', async () => {
+	it.each([['locked', locked], ['no-match', noMatch]])('asks for one row when %s, as for one match, however tall its text measures', async (_state, reply) => {
 		const measured = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
 			return { height: this.classList.contains('message') ? 70.4 : 0 } as DOMRect
 		})
-		await open(locked())
-		expect(sent.filter((m) => m.kind === 'inline.resize')).toEqual([{ kind: 'inline.resize', key: KEY, height: 83 }])
+		await open(reply())
+		expect(sent.filter((m) => m.kind === 'inline.resize')).toEqual([{ kind: 'inline.resize', key: KEY, height: INLINE_MIN_HEIGHT_PX }])
+		measured.mockImplementation(() => ({ height: 200 }) as DOMRect)
 		window.dispatchEvent(new Event('resize'))
 		expect(sent.filter((m) => m.kind === 'inline.resize')).toHaveLength(1)
-		measured.mockImplementation(() => ({ height: 120 }) as DOMRect)
-		window.dispatchEvent(new Event('resize'))
-		expect(sent.filter((m) => m.kind === 'inline.resize').at(-1)).toEqual({ kind: 'inline.resize', key: KEY, height: 132 })
 	})
 
 	it('sizes rows by the shared sizes', async () => {
@@ -570,6 +567,21 @@ describe('insecure question', () => {
 		expect(asked()).toEqual([inlineHeight(3), INLINE_MIN_HEIGHT_PX, inlineHeight(3)])
 	})
 
+	it('asks for the height the question measures, and again only when that changes', async () => {
+		const measured = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+			return { height: this.classList.contains('question') ? 70.4 : 0 } as DOMRect
+		})
+		await ask()
+		const asked = () => sent.flatMap((m) => (m.kind === 'inline.resize' ? [m.height] : []))
+		expect(asked().at(-1)).toBe(83)
+		const count = asked().length
+		window.dispatchEvent(new Event('resize'))
+		expect(asked()).toHaveLength(count)
+		measured.mockImplementation(() => ({ height: 120 }) as DOMRect)
+		window.dispatchEvent(new Event('resize'))
+		expect(asked().at(-1)).toBe(132)
+	})
+
 	it('lets the keyboard reach a warning the frame has no room for', async () => {
 		await ask()
 		const list = document.getElementById('list')!
@@ -645,7 +657,7 @@ describe('refused as not visible', () => {
 describe('a click on a message', () => {
 	// Closing on some states and not others would tell the page, after a user's click, whether logins match.
 	it('leaves the list open on the no-match, locked and refusal messages', async () => {
-		for (const [reply, text] of [[noMatch, 'No logins for nothing.test'], [locked, 'Unlock Keepiq to see your logins']] as const) {
+		for (const [reply, text] of [[noMatch, 'No logins for nothing.test'], [locked, 'Keepiq is locked']] as const) {
 			await open(reply())
 			click(message(text))
 			await flush()
@@ -693,7 +705,7 @@ describe('stylesheet', () => {
 		}
 	})
 
-	it('wraps long host names, lets a message grow, and scrolls what the host has no room for', () => {
+	it('wraps long host names, makes a message at least one row, and scrolls what the host has no room for', () => {
 		const message = /\.message\s*\{([^}]*)\}/.exec(STYLES)![1]
 		expect(message).toMatch(/min-height: var\(--row\)/)
 		expect(message).not.toMatch(/(^|[^-])height:/)
@@ -822,6 +834,17 @@ describe('visibility on Chrome', () => {
 				{ kind: 'inline.resize', key: KEY, height: inlineHeight(3) },
 				{ kind: 'inline.resize', key: KEY, height: INLINE_MIN_HEIGHT_PX },
 			])
+		})
+
+		it('asks for the height the explanation measures, as only a pick shows it', async () => {
+			vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+				return { height: this.classList.contains('message--notice') ? 110.2 : 0 } as DOMRect
+			})
+			await open()
+			post({ kind: 'inline.focus', key: KEY })
+			key(row(0), 'Enter')
+			await flush()
+			expect(sent.filter((m) => m.kind === 'inline.resize').at(-1)).toEqual({ kind: 'inline.resize', key: KEY, height: 123 })
 		})
 
 		it('for a click, and for Fill in the insecure question', async () => {

@@ -288,14 +288,17 @@ describe('background entrypoint', () => {
 					return undefined as never
 				})
 				expect(await deliver({ kind: 'capture.submitted', username: 'bob', password: 'n3w-pass', changed: false }, top)).toBeUndefined()
-				await vi.waitFor(() => expect(toTab).toEqual([{ message: { kind: 'capture.show', key: expect.stringMatching(/^[0-9a-f]{32}$/) }, frameId: 0 }]))
-				key = (toTab[0]!.message as unknown as { key: string }).key
+				await vi.waitFor(() => expect(toTab).toEqual([{
+					message: { kind: 'capture.show', key: expect.stringMatching(/^[0-9a-f]{32}$/), capture: expect.stringMatching(/^[0-9a-f]{32}$/) }, frameId: 0,
+				}]))
+				;({ key, capture } = toTab[0]!.message as unknown as { key: string; capture: string })
 			})
 
 			// The queue lives in module memory, which outlives each test's background.
 			afterEach(() => dropAllCaptures())
 
 			let key: string
+			let capture: string
 			const input = () => ({ kind: 'pointer', at: Date.now(), x: 5, y: 5 })
 
 			it('answers the bar page about the capture of its tab, with the key its host posted', async () => {
@@ -336,13 +339,13 @@ describe('background entrypoint', () => {
 			it('shows the pending bar again, with a new key, when the top frame announces itself', async () => {
 				await deliver({ kind: 'page_ready', url: tab.url, passwordField: false }, top)
 				await vi.waitFor(() => expect(toTab).toHaveLength(2))
-				expect(toTab[1]).toEqual({ message: { kind: 'capture.show', key: expect.not.stringMatching(key) }, frameId: 0 })
+				expect(toTab[1]).toEqual({ message: { kind: 'capture.show', key: expect.not.stringMatching(key), capture }, frameId: 0 })
 			})
 
 			it('shows the bar again with a new key on the top frame\'s capture.reshow, as fire-and-forget', async () => {
 				expect(await deliver({ kind: 'capture.reshow' }, top)).toBeUndefined()
 				await vi.waitFor(() => expect(toTab).toHaveLength(2))
-				expect(toTab[1]).toEqual({ message: { kind: 'capture.show', key: expect.not.stringMatching(key) }, frameId: 0 })
+				expect(toTab[1]).toEqual({ message: { kind: 'capture.show', key: expect.not.stringMatching(key), capture }, frameId: 0 })
 				expect(await deliver({ kind: 'capture.reshow' }, barSender)).toBeUndefined()
 			})
 

@@ -60,7 +60,7 @@ The extension SHALL keep a captured credential in background memory keyed by tab
 - **THEN** the credential is dropped
 
 ### Requirement: Save bar for a new login
-When no item matching the page holds the captured username, and "Ask to add login" is on, and the page's base domain is not excluded, the extension SHALL show a notification card in the top-right corner of the page, offering a folder choice under a visible "Folder" label, "Never for this site", "Save" and a close button, after the Keepiq logo, which is decorative. It is shown after the navigation that follows the submit completes, or, for a submit that does not navigate (a single-page app), about 300 ms after the submit. The bar is rendered in an extension page inside an iframe hosted by the content script, so page scripts cannot read or alter it. The card sits 12 CSS px from the top and right edges and is 400 px wide, or the viewport width minus 24 px when narrower. Its size depends only on the top frame's viewport (148 px tall, 168 px below a 424 px wide viewport), or is compact in a short viewport (Keyboard and screen reader access to the bar), never on its mode or text; a question or error longer than the card holds scrolls inside it.
+The save and update lookup asks what the vault holds, not what fills: the "Default URI match detection" rule governs filling only. No bar is shown when some login holds the captured username and password and matches the submitting frame's URL by base domain or under the user's rule (under Never, by base domain alone), except that a password change form compares only against the login it names (Update bar for a changed password) when it names one; a host with no public suffix, such as `localhost`, an intranet name or an IP address, is its own base domain, whatever its port. Usernames are compared exactly, without folding case. When the captured login is neither saved already nor offered as an update (Update bar for a changed password), and "Ask to add login" is on, and the page's base domain is not excluded, the extension SHALL show a notification card in the top-right corner of the page, offering a folder choice under a visible "Folder" label, "Never for this site", "Save" and a close button, after the Keepiq logo, which is decorative. It is shown after the navigation that follows the submit completes, or, for a submit that does not navigate (a single-page app), about 300 ms after the submit. The bar is rendered in an extension page inside an iframe hosted by the content script, so page scripts cannot read or alter it. The card sits 12 CSS px from the top and right edges and is 400 px wide, or the viewport width minus 24 px when narrower. Its size depends only on the top frame's viewport (148 px tall, 168 px below a 424 px wide viewport), or is compact in a short viewport (Keyboard and screen reader access to the bar), never on its mode or text; a question or error longer than the card holds scrolls inside it.
 
 #### Scenario: New login on a site with no items
 - **GIVEN** the setting on and no item for the site
@@ -76,6 +76,16 @@ When no item matching the page holds the captured username, and "Ask to add logi
 - **GIVEN** an item matching the page whose decrypted `login` equals the captured username and whose `key` equals the captured password
 - **WHEN** the user submits
 - **THEN** no bar is shown
+
+#### Scenario: Saved from the bar, under Exact or Never
+- **GIVEN** the rule Exact and a login saved from the bar as `https://site.test`, or the rule Never and a login for `site.test`
+- **WHEN** the user submits the same username and password on `https://site.test/login`
+- **THEN** no bar is shown, though under Exact the login does not fill on that page
+
+#### Scenario: Hosts without a public suffix
+- **GIVEN** a login for `http://localhost:8080/` with username `u`
+- **WHEN** the user submits `u` with the same password on `http://localhost:9090/login`, then with a new one
+- **THEN** no bar is shown the first time, and the second time the save bar is
 
 #### Scenario: Ask to add is off
 - **GIVEN** "Ask to add login" off
@@ -106,7 +116,7 @@ The extension SHALL, on "Never for this site", append the page's base domain to 
 - **AND** the item is still offered in "Autofill suggestions"
 
 ### Requirement: Update bar for a changed password
-When exactly one matching item holds the captured username and its decrypted `key` differs from the captured password, and "Ask to update existing login" is on, the extension SHALL show an update card with "Update" and a close button. It asks "Update password for {name} ({username})?" (nl "Wachtwoord van {name} ({username}) bijwerken?"), with the item's name and username; without a username on the item the parenthesised part is left out. Under the question, a row shows the item's name with its username below it, or the name alone, after a generic login icon; it is hidden from screen readers, as it repeats the question, and gives way to a question too long to fit beside it. When the submitting frame's host differs from the top frame's host at the submit, the question ends "on {host}" (nl "op {host}") with the submitting frame's host. A password change form is matched by the item whose password was filled or captured earlier on that tab, or by the single matching item. No update is offered for a use-only or read-only copy, which may not be changed.
+When exactly one editable login holds the captured username with a different password and its normalised URL (`webUrl(url).href`) is a prefix of the submitting frame's URL that ends at a path boundary (the frame's URL ends there or goes on with `/`, `?` or `#`, so `/jira` is no prefix of `/jira-test`), whatever the user's rule, Never included, and "Ask to update existing login" is on, the extension SHALL show an update card with "Update" and a close button. It asks "Update password for {name} ({username})?" (nl "Wachtwoord van {name} ({username}) bijwerken?"), with the item's name and username; without a username on the item the parenthesised part is left out. Under the question, a row shows the item's name with its username below it, or the name alone, after a generic login icon; it is hidden from screen readers, as it repeats the question, and gives way to a question too long to fit beside it. When the submitting frame's host differs from the top frame's host at the submit, the question ends "on {host}" (nl "op {host}") with the submitting frame's host. With none such, or two or more, the save bar is offered instead, so a new password on a sibling app under the same base domain never overwrites another app's login. A password change form is matched by the item whose password was filled or captured earlier on that tab, else by the single login whose URL is such a prefix, else, with none such, by the single login on the frame's host (not a sibling subdomain), since a settings page rarely sits under the login page's path; with a username, only editable logins holding it count, and with none every login counts, editable or not, so a change of a read-only team login's password is never offered to another login on the site. With a username and still no single match, the save bar is shown, and without one nothing is. A change form that names a login this way shows nothing only when that login holds the new password already, so a password reused from another login with the same username is still offered as a change. No update is offered for a use-only or read-only copy, which may not be changed; where that is the only login to update, the save bar is shown instead, with that login's username for a form without one, so the new password is not lost.
 
 #### Scenario: Different password for a known username
 - **GIVEN** an item "GitHub" for the site with username `alice` and "Ask to update existing login" on
@@ -123,13 +133,58 @@ When exactly one matching item holds the captured username and its decrypted `ke
 - **WHEN** the user submits `alice` with a new password
 - **THEN** the form is reported as a password change and a bar offers to update that item's password
 
+#### Scenario: Change-password form on another path
+- **GIVEN** an item for `https://github.com/login` with username `alice`, and nothing filled or captured on the tab
+- **WHEN** the user submits a new password for `alice` in a change form on `https://github.com/settings/security`
+- **THEN** a bar offers to update that item's password
+
+#### Scenario: Saved URL ends mid-segment
+- **GIVEN** a login with username `u` for `https://corp.example.com/jira`
+- **WHEN** the user submits `u` with a new password on `https://corp.example.com/jira-test/login`
+- **THEN** the save bar is shown, not the update bar
+
+#### Scenario: Only a read-only copy holds the username
+- **GIVEN** a read-only or use-only copy for the site with username `alice`, and no other login with it
+- **WHEN** the user submits `alice` with a new password, in a login or a change form
+- **THEN** the save bar is shown
+
+#### Scenario: Change form without a username beside a read-only team login
+- **GIVEN** an editable login and a read-only team login for `https://x.com`, and nothing filled or captured on the tab
+- **WHEN** the user submits a new password in a change form without a username on `https://x.com/settings`
+- **THEN** no bar is shown, and the editable login is not offered for update
+
+#### Scenario: Change form without a username for a use-only login
+- **GIVEN** a use-only login with username `team` that the tab filled, or the only login for the site
+- **WHEN** the user submits a new password in a change form without a username, and clicks Save
+- **THEN** the new login has username `team` and the new password
+
+#### Scenario: Change form reusing another login's password
+- **GIVEN** two logins for the site with username `alice`, the tab having filled the first, and the second holding password `p`
+- **WHEN** the user submits `alice` with the new password `p` in a change form
+- **THEN** the bar offers to update the first login's password
+
 #### Scenario: Several items with the same username
-- **GIVEN** two matching items both with username `alice`
+- **GIVEN** two editable items for `site.test` both with username `alice`
 - **WHEN** the user submits a new password
-- **THEN** no update bar is shown
+- **THEN** no update bar is shown, and the save bar is
+
+#### Scenario: Sibling app under the same base domain
+- **GIVEN** a login for `app1.corp.example.com` with username `u`
+- **WHEN** the user submits `u` with a new password on `app2.corp.example.com`
+- **THEN** the save bar is shown, not the update bar
+
+#### Scenario: Saved URL is no prefix of the page
+- **GIVEN** a login with username `u` for `https://example.com/app1`, or for `https://site.test`
+- **WHEN** the user submits `u` with a new password on `https://example.com/app2/login`, or on `http://site.test/login`
+- **THEN** the save bar is shown
+
+#### Scenario: Saved URL is a prefix of the page
+- **GIVEN** a login "Site" for `https://site.test` with username `u`
+- **WHEN** the user submits `u` with a new password on `https://site.test/login`
+- **THEN** the bar reads "Update password for Site (u)?"
 
 ### Requirement: Update writes only the key
-The extension SHALL, on "Update", save through `updateItem`: re-fetch the item with `GET /api/v1/secrets/{id}`, encrypt the captured password, and save a patch of only `key` with `baseUpdatedAt` through share-save, which reaches every other copy as `ext-share-sync` specifies, then sync. While it saves, the bar shows a busy state and, after one second, announces "Updating…". Other fields are left untouched. With no edit form behind the save, an item with partner shares fails with `unverified` and nothing is saved, and a view-only copy fails with `view_only`, which the bar words as the item being shared with the user to view only. When the item is gone, by a 404 or because a sync dropped it before the bar loaded, the capture becomes a new login.
+The extension SHALL, on "Update", save through `updateItem`: re-fetch the item with `GET /api/v1/secrets/{id}`, encrypt the captured password, and save a patch of only `key` with `baseUpdatedAt` through share-save, which reaches every other copy as `ext-share-sync` specifies, then sync. While it saves, the bar shows a busy state and, after one second, announces "Updating…". Other fields are left untouched. With no edit form behind the save, an item with partner shares fails with `unverified` and nothing is saved, and a view-only copy fails with `view_only`, which the bar words as the item being shared with the user to view only. When the item is gone, by a 404 or because a sync dropped it before the bar loaded, the capture becomes a new login, with the item's username where the form had none.
 
 #### Scenario: Successful update
 - **GIVEN** an update bar
@@ -157,12 +212,33 @@ The background MUST accept `capture.state`, `capture.save`, `capture.update` and
 - **THEN** it is ignored and nothing is written
 
 ### Requirement: The bar acts only for its own frame, with its key
-Each time the background shows the bar it SHALL issue a random 128-bit key with `capture.show`; the content script posts it to its own bar iframe with the extension origin as `targetOrigin`, and every bar message carries it. The background MUST bind the first bar frame that presents a key in `capture.state`, and answer every other frame, and any message without an issued key, with nothing. The bar page reads nothing from its URL. A copy of the bar page the page frames itself therefore gets no state and can save, update or exclude nothing.
+Each time the background shows the bar it SHALL issue a random 128-bit key with `capture.show`; the content script posts it to its own bar iframe with the extension origin as `targetOrigin`, and every bar message carries it. The background MUST bind the first bar frame that presents a key in `capture.state`, and answer every other frame, and any message without an issued key, with nothing. The bar page reads nothing from its URL. A copy of the bar page the page frames itself therefore gets no state and can save, update or exclude nothing. A newer capture on the tab that needs a bar closes the older capture's bar, or its "Login saved" or "Password updated" confirmation, at once, and its own bar replaces any bar of another capture still on screen, so the bar on screen always acts on the current capture; showing the same capture again keeps its bar and key, however often and however many shows are in flight, and the host answers each show with the key its bar holds. The background keeps that key valid only when it issued it for this capture, and otherwise hides that bar and shows a new one with a fresh key, so a bar back from the back/forward cache whose key was dropped since is replaced by one that acts.
+
+#### Scenario: Route changes in a single-page app
+- **GIVEN** a save bar on a single-page app
+- **WHEN** the page changes its route with `history.pushState` five times or more
+- **THEN** the same bar stays, and its Save, Close and a lock of the vault still act on it
+
+#### Scenario: Burst of route changes with no bar on screen
+- **GIVEN** a pending capture whose bar is not on screen, as after the page removed it
+- **WHEN** the page changes its route five times or more in one burst
+- **THEN** one bar is shown, and its Save and Close act on the capture
+
+#### Scenario: Back to a page whose bar key was dropped
+- **GIVEN** a save bar on a page, and four page loads since that each showed a bar
+- **WHEN** the user goes back and the browser restores the first page from its back/forward cache
+- **THEN** its bar is replaced by one with a fresh key, whose Save and Close act on the capture
 
 #### Scenario: Page frames the bar page itself
 - **GIVEN** a pending capture and the bar shown
 - **WHEN** the page frames `notification.html` itself and that copy asks for the state or sends Save
 - **THEN** the background answers it with nothing and writes nothing
+
+#### Scenario: Second submit while the bar shows
+- **GIVEN** a single-page login whose save bar shows for a first submit, or reads "Login saved" after Save
+- **WHEN** the user submits again with another login that also needs a bar
+- **THEN** that bar closes and a new bar for the second login replaces it
+- **AND** Save in the new bar saves the second login
 
 ### Requirement: The bar's buttons act only while it is plainly visible
 The extension SHALL apply the inline list's visibility guard (`inline-list` spec, design.md § Visibility guard) to the bar: the host is a popover in the top layer where the browser has the popover API, placed inside the modal dialog or `aria-modal` container the page is in; it closes on any change to the host it did not make and when it stops being `:popover-open`; it is sampled every animation frame with the same untouched checks, the Firefox `<html>` filter exception included. Save, Update and "Never for this site" MUST act only after the background asks the host with `capture.verify` and the host confirms that the bar was visible for the 500 ms before the press and is what the press point hits. The bar page also refuses a press within 500 ms of being shown or moved and, on Chrome, while IntersectionObserver v2 reports it covered. A refused press does nothing, keeps the capture, and the bar says "Keepiq can't do this here because this page changes how it is shown. Close this and add the login from the Keepiq button in the toolbar." (nl "Keepiq kan dit hier niet doen, omdat deze pagina aanpast hoe ze wordt weergegeven. Sluit dit en voeg de login toe via Keepiq in de werkbalk."), since the popup cannot answer a pending capture; the notice replaces the question and controls, leaving only Close, and takes focus. Close needs no guard.

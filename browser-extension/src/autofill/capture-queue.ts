@@ -10,16 +10,18 @@ import type { OpenSecretRow } from '@/src/api/types'
 import { onBroadcast } from '@/src/background/broadcast'
 import { rsaDecrypt } from '@/src/crypto'
 import type {
-	BackgroundToContent, CaptureRefused, CaptureStateReply, CaptureSubmitted, NotificationReplies, NotificationToBackground, PickInput, WriteResult,
+	BackgroundToContent, CaptureRefused, CaptureStateReply, CaptureSubmitted, NotificationReplies, NotificationToBackground, PickInput, UriMatch, WriteResult,
 } from '@/src/messages'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, hasKey } from '@/src/vault/key-store'
 import { flattenFolders, folderPath } from '@/src/vault/list'
 import { baseDomain } from '@/src/vault/match'
 import { readSnapshot } from '@/src/vault/store'
+import { webUrl } from '@/src/vault/url'
 import { enforce, touch } from '@/src/vault/timeout'
 import { createItem, run, updateItem } from '@/src/vault/write'
-import { activeUnlockedId, matchingLogins } from './fill'
+import { activeUnlockedId } from './fill'
+import { candidatesFor } from './matcher'
 import { forgetAllItems, forgetItem, rememberedItem, rememberItem } from './tab-items'
 
 export const CAPTURE_LIFESPAN_MS = 5 * 60_000
@@ -27,10 +29,12 @@ export const CAPTURE_LIFESPAN_MS = 5 * 60_000
 export const SAVED_CLOSE_MS = 3000
 /** A submit that navigates starts loading within this; one that does not (a single-page app) shows the bar after it. */
 export const SHOW_DELAY_MS = 300
-/** Keys of earlier shows stay valid for the bar a slower page load still shows; older ones are dropped. */
+/** Keys of earlier shows stay valid for the bar a slower page load still shows; a show that makes a new bar keeps this many, its own included. */
 const MAX_KEYS = 4
 
 interface Capture {
+	/** Sent with every show, so the host replaces a bar of an earlier capture. */
+	id: string
 	accountId: string
 	/** The submitting frame's URL, from `sender`: the item is matched, excluded and saved under it. */
 	frameUrl: string
@@ -44,7 +48,7 @@ interface Capture {
 	itemId?: string
 	/** The item's own username, for the update question. */
 	itemUsername?: string
-	/** Each show's key and the bar frame that first presented it. */
+	/** Each show's key and the bar frame that first presented it, oldest first; a kept bar's key moves to newest. */
 	keys: Map<string, number | null>
 	/** The tab started loading after the submit, so the bar waits for `complete`. */
 	navigated: boolean
@@ -54,7 +58,8 @@ interface Capture {
 	writing?: Promise<WriteResult<null> | CaptureRefused>
 }
 
-type Decision = { mode: 'add' } | { mode: 'update'; itemId: string; itemUsername?: string } | null
+/** `username`: a change form's login's, for a form without one. */
+type Decision = { mode: 'add'; username?: string } | { mode: 'update'; itemId: string; itemUsername?: string } | null
 
 const pending = new Map<number, Capture>()
 /** A saved or updated capture's bound keys, so its bar's Close still closes it before the background does. */
@@ -108,34 +113,67 @@ async function open(ciphertext: string | null, key: CryptoKey): Promise<string |
 	}
 }
 
-/** Add, update or nothing, from the decrypted `login` and `key` of the items matching the submitting frame. */
-async function decide(accountId: string, tabId: number, frameUrl: string, report: CaptureSubmitted): Promise<Decision> {
+/** The frame's logins in the vault: on its base domain, or under the user's rule where that reaches further. */
+async function siteLogins(accountId: string, frameUrl: string, rule: UriMatch): Promise<OpenSecretRow[]> {
+	const vault = await readSnapshot(accountId)
+	if (!vault) return []
+	const found = new Set([...candidatesFor(frameUrl, vault, 'baseDomain', {}), ...candidatesFor(frameUrl, vault, rule, {})])
+	return [...found].filter((row): row is OpenSecretRow => !row.blocked)
+}
+
+/** Whether the login's normalised url is a prefix of the frame's that ends at a path boundary, so `/jira` is not under `/jira-test`. */
+function under(itemUrl: string | null, frame: URL): boolean {
+	const prefix = webUrl(itemUrl)?.href
+	if (!prefix || !frame.href.startsWith(prefix)) return false
+	return /[/?#]$/.test(prefix) || /^[/?#]?$/.test(frame.href.charAt(prefix.length))
+}
+
+/**
+ * Add, update or nothing (design.md § Capture queue). What the vault already holds counts on the base domain, but an
+ * update only for the one editable login whose url is a prefix of the frame's, so a sibling app's password is never
+ * overwritten; a change form, which may sit on another path, falls back to the frame's host. A password that no login
+ * can take is offered as a new login rather than lost.
+ */
+async function decide(accountId: string, tabId: number, frameUrl: string, report: CaptureSubmitted, rule: UriMatch): Promise<Decision> {
 	const key = await getKey(accountId)
 	if (!key) return null
-	const { rows } = await matchingLogins(accountId, frameUrl)
+	const frame = new URL(frameUrl)
+	const rows = await siteLogins(accountId, frameUrl, rule)
 	const logins = await Promise.all(rows.map((row) => open(row.login, key)))
 	const loginOf = (row: OpenSecretRow) => logins[rows.indexOf(row)]
 	// An empty username and none are the same.
 	const holders = rows.filter((row) => loginOf(row) !== undefined && (loginOf(row) ?? '') === (report.username ?? ''))
+	const editable = (row: OpenSecretRow) => !row.useOnly && !row.readOnly
+	const only = (candidates: OpenSecretRow[], counts: (row: OpenSecretRow) => boolean) => {
+		const prefixed = candidates.filter((row) => under(row.url, frame))
+		const pool = (prefixed.length > 0 || !report.changed ? prefixed : candidates.filter((row) => webUrl(row.url)?.host === frame.host)).filter(counts)
+		return pool.length === 1 ? pool[0] : undefined
+	}
+	const remembered = (candidates: OpenSecretRow[]) => (report.changed ? candidates.find((row) => row.id === rememberedItem(tabId)) : undefined)
 	let target: OpenSecretRow | undefined
-	if (report.changed) {
-		// A change form names its item by the username, else by what this tab filled or captured, else by being the only match.
-		const candidates = report.username ? holders : rows
-		target = candidates.find((row) => row.id === rememberedItem(tabId)) ?? (candidates.length === 1 ? candidates[0] : undefined)
-		if (!target) return report.username && holders.length === 0 ? { mode: 'add' } : null
+	if (report.changed && !report.username) {
+		// Named by what this tab filled or captured, else by being the only login, editable or not, so a team login's change never lands on another.
+		target = remembered(rows) ?? only(rows, () => true)
+		if (!target) return null
+		if ((await open(target.key, key)) === report.password) {
+			rememberItem(tabId, target.id)
+			return null
+		}
 	} else {
-		if (holders.length === 0) return { mode: 'add' }
-		// Several items with this username: which one changed is unknown.
-		if (holders.length > 1) return null
-		target = holders[0]!
+		target = remembered(holders) ?? only(holders, editable)
+		// A change form's own login decides, so a password reused from another login is still a change.
+		const compared = report.changed && target ? [target] : holders
+		const passwords = await Promise.all(compared.map((row) => open(row.key, key)))
+		const saved = compared.find((_, i) => passwords[i] === report.password)
+		if (saved) {
+			rememberItem(tabId, saved.id)
+			return null
+		}
+		if (!target) return { mode: 'add' }
 	}
-	if ((await open(target.key, key)) === report.password) {
-		rememberItem(tabId, target.id)
-		return null
-	}
-	// `updateItem` refuses these, so a bar could only fail.
-	if (target.useOnly || target.readOnly) return null
 	const itemUsername = loginOf(target)
+	// `updateItem` refuses these, so the password is offered as a new login for the same username instead.
+	if (!editable(target)) return itemUsername ? { mode: 'add', username: itemUsername } : { mode: 'add' }
 	return itemUsername ? { mode: 'update', itemId: target.id, itemUsername } : { mode: 'update', itemId: target.id }
 }
 
@@ -163,18 +201,19 @@ export async function captureSubmitted(message: CaptureSubmitted, sender: Browse
 		if (!domain || !tabDomain) return null
 		const settings = await readSettings(accountId)
 		if (settings.excludedDomains.includes(domain) || (!settings.askToAdd && !settings.askToUpdate)) return null
-		const decision = await decide(accountId, tabId, frameUrl, message)
+		const decision = await decide(accountId, tabId, frameUrl, message, settings.uriMatch)
 		if (!decision || !(decision.mode === 'add' ? settings.askToAdd : settings.askToUpdate)) return null
 		return { accountId, domain, tabDomain, tabHost: new URL(tabUrl!).host, decision }
 	})()
 	if (newest.get(tabId) !== submit) return
-	// A newer submit replaces the older capture, also when it needs no bar.
-	drop(tabId, !decided)
+	// A newer submit replaces the older capture, whose bar would answer for a capture that is gone.
+	drop(tabId)
 	// A lock while deciding must not leave a capture behind.
 	if (!decided || !(await hasKey(decided.accountId)) || newest.get(tabId) !== submit) return
+	hide(tabId, closing.get(tabId) ?? [])
 	closing.delete(tabId)
 	const entry: Capture = {
-		accountId: decided.accountId, frameUrl, baseDomain: decided.domain, tabBaseDomain: decided.tabDomain, tabHost: decided.tabHost,
+		id: newKey(), accountId: decided.accountId, frameUrl, baseDomain: decided.domain, tabBaseDomain: decided.tabDomain, tabHost: decided.tabHost,
 		username: username || null, password, ...decided.decision, keys: new Map(), navigated: false, expiresAt: Date.now() + CAPTURE_LIFESPAN_MS,
 		timer: setTimeout(() => {
 			if (pending.get(tabId) === entry) drop(tabId)
@@ -194,10 +233,28 @@ export async function showPending(tabId: number): Promise<void> {
 	const tab = await browser.tabs.get(tabId).catch(() => undefined)
 	if (pending.get(tabId) !== entry || tab?.status !== 'complete' || !tab.url) return
 	if (baseDomain(tab.url) !== entry.tabBaseDomain) return drop(tabId)
-	const key = newKey()
-	entry.keys.set(key, null)
-	for (const old of [...entry.keys.keys()].slice(0, -MAX_KEYS)) entry.keys.delete(old)
-	await toTop(tabId, { kind: 'capture.show', key })
+	for (let attempt = 0; attempt < 2 && pending.get(tabId) === entry; attempt++) {
+		const key = newKey()
+		entry.keys.set(key, null)
+		const held: unknown = await toTop(tabId, { kind: 'capture.show', key, capture: entry.id })
+		// A new bar, or no answer, as when the page has no content script yet.
+		if (held === key || typeof held !== 'string') return dropOlder(entry, key)
+		entry.keys.delete(key)
+		if (entry.keys.has(held)) {
+			const frameId = entry.keys.get(held)!
+			entry.keys.delete(held)
+			entry.keys.set(held, frameId)
+			return
+		}
+		// A bar holding no key this capture issued, as one back from the back/forward cache, is replaced.
+		await toTop(tabId, { kind: 'capture.hide', key: held })
+	}
+}
+
+/** Only keys older than the show's own, so a reply never drops its bar's key, nor one a show still in flight brings. */
+function dropOlder(entry: Capture, key: string): void {
+	const keys = [...entry.keys.keys()]
+	for (const old of keys.slice(0, Math.max(0, keys.indexOf(key) - (MAX_KEYS - 1)))) entry.keys.delete(old)
 }
 
 /** The `focus_notification_bar` command. */
@@ -233,17 +290,19 @@ async function barShortcut(): Promise<string> {
 
 function toAdd(entry: Capture): void {
 	entry.mode = 'add'
+	// A change form without a username saves the new login under the gone item's.
+	entry.username ??= entry.itemUsername ?? null
 	delete entry.itemId
 	delete entry.itemUsername
 }
 
-/** The bar shows its confirmation, then the background closes it, unless a newer capture shows by then. */
+/** The bar shows its confirmation, then the background closes it; a newer capture that needs a bar closes it at once. */
 function finish(tabId: number, entry: Capture, itemId: string, key: string): void {
 	rememberItem(tabId, itemId)
 	if (pending.get(tabId) === entry) drop(tabId, false)
 	closing.set(tabId, new Set([key]))
 	setTimeout(() => {
-		if (pending.has(tabId) || !closing.get(tabId)?.has(key)) return
+		if (!closing.get(tabId)?.has(key)) return
 		closing.delete(tabId)
 		hide(tabId, [key], true)
 	}, SAVED_CLOSE_MS)

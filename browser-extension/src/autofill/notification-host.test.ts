@@ -15,7 +15,8 @@ let frames: HTMLIFrameElement[]
 let host: NotificationHost
 let now: number
 
-const show = (key = KEY) => host.handle({ kind: 'capture.show', key })
+const CAPTURE = 'c'.repeat(32)
+const show = (key = KEY, capture = CAPTURE) => host.handle({ kind: 'capture.show', key, capture })
 const verify = (input: PickInput, key = KEY) => host.handle({ kind: 'capture.verify', key, input })
 const press = (x = 10, y = 10): PickInput => ({ kind: 'pointer', at: now, x, y })
 const load = (frame = frames.at(-1)!) => frame.dispatchEvent(new Event('load'))
@@ -134,16 +135,51 @@ describe('showing', () => {
 		expect(hosts()).toHaveLength(0)
 	})
 
-	it('shows one bar for any number of shows, keeping its key, and a new one after the page removed it', async () => {
+	it('replaces the bar for a show of another capture, with a new frame that gets only the new key', async () => {
 		show()
-		show('b'.repeat(32))
+		await flush()
+		const first = hosts()[0]!
+		const other = 'b'.repeat(32)
+		show(other, 'e'.repeat(32))
+		expect(first.isConnected).toBe(false)
+		expect(hosts()).toHaveLength(1)
+		await flush()
+		expect(frames).toHaveLength(2)
+		expect(posted).toEqual([{ kind: 'capture.init', key: KEY }, { kind: 'capture.init', key: other }])
+		expect(verify(press(), KEY)).toBe(false)
+		host.handle({ kind: 'capture.hide', key: KEY })
+		expect(hosts()).toHaveLength(1)
+		host.handle({ kind: 'capture.hide', key: other })
+		expect(hosts()).toHaveLength(0)
+	})
+
+	it('replaces a saved bar still waiting for the pointer to leave, for a show of another capture', async () => {
+		show()
+		await flush()
+		const first = hosts()[0]!
+		first.dispatchEvent(new Event('mouseenter'))
+		host.handle({ kind: 'capture.hide', key: KEY, done: true })
+		expect(first.isConnected).toBe(true)
+		show('b'.repeat(32), 'e'.repeat(32))
+		expect(first.isConnected).toBe(false)
+		expect(hosts()).toHaveLength(1)
+	})
+
+	it('shows one bar for any number of shows of one capture, answering the key it holds, and a new one after the page removed it', async () => {
+		expect(show()).toBe(KEY)
+		for (let i = 0; i < 6; i++) expect(show('b'.repeat(32))).toBe(KEY)
 		expect(hosts()).toHaveLength(1)
 		await flush()
 		expect(posted).toEqual([{ kind: 'capture.init', key: KEY }])
 		hosts()[0]!.remove()
 		await flush()
-		show('b'.repeat(32))
+		expect(show('b'.repeat(32))).toBe('b'.repeat(32))
 		expect(hosts()).toHaveLength(1)
+	})
+
+	it('answers the new key for a show of another capture', () => {
+		show()
+		expect(show('b'.repeat(32), 'e'.repeat(32))).toBe('b'.repeat(32))
 	})
 
 	it('hides only for its own key', () => {

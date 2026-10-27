@@ -23,6 +23,7 @@ interface Box {
 
 interface Bar {
 	key: string
+	capture: string
 	host: FrameHost
 	/** `<html>`, or the modal the page is in, outside which everything is inert. */
 	parent: Element
@@ -50,8 +51,8 @@ export interface NotificationHostOptions {
 type CaptureMessage = Extract<BackgroundToContent, { kind: `capture.${string}` }>
 
 export interface NotificationHost {
-	/** `capture.verify` answers a boolean; the other kinds answer nothing. */
-	handle(message: CaptureMessage): boolean | undefined
+	/** `capture.verify` answers a boolean, `capture.show` the key its bar holds; the other kinds answer nothing. */
+	handle(message: CaptureMessage): boolean | string | undefined
 }
 
 const isPickInput = (input: unknown): input is PickInput => {
@@ -244,13 +245,17 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 		if (bar === current && current.doneWaiting && !current.pointerInside && !focusInBar(current)) close()
 	}
 
-	function show(key: string): void {
-		if (bar?.host.element.isConnected) return
+	/**
+	 * The background shows a capture again on every tab load that completes, so that keeps the bar and its key. Answers
+	 * the key the bar holds, which the background keeps valid and checks it issued.
+	 */
+	function show(key: string, capture: string): string {
+		if (bar?.host.element.isConnected && bar.capture === capture) return bar.key
 		close()
 		const host = createFrameHost('/notification.html', i18n.t('notificationBar.label'))
 		const popover = typeof host.element.showPopover === 'function'
 		const current: Bar = {
-			key, host, parent: (popover ? modalParent() : null) ?? document.documentElement, popover,
+			key, capture, host, parent: (popover ? modalParent() : null) ?? document.documentElement, popover,
 			observer: new MutationObserver(onMutations), box: placeBox(false, false), bottom: false, expanded: false, loads: 0, frame: 0,
 			lastNotVisibleAt: Date.now(), pointerInside: false, doneWaiting: false,
 		}
@@ -292,6 +297,7 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 		current.observer.observe(host.element, { attributes: true })
 		current.observer.observe(current.parent, { childList: true })
 		current.frame = requestAnimationFrame(tick)
+		return key
 	}
 
 	function hide(key: string, done: boolean): void {
@@ -351,8 +357,7 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 		handle(message) {
 			switch (message.kind) {
 				case 'capture.show':
-					if (typeof message.key === 'string') show(message.key)
-					return undefined
+					return typeof message.key === 'string' && typeof message.capture === 'string' ? show(message.key, message.capture) : undefined
 				case 'capture.hide':
 					hide(message.key, message.done === true)
 					return undefined

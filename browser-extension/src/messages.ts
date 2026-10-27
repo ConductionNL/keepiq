@@ -63,10 +63,11 @@ export type ContentToInlineList =
 	| { kind: 'inline.moved'; key: string }
 
 /**
- * The list's size, shared by the background, the host and the list page. It is as tall as what it shows: its rows up
- * to `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, or one row for the locked and no-match messages, with `INLINE_INSET_PX`
- * of edge and padding above and below. Content that needs more asks for it with `inline.resize`, up to
- * `INLINE_MAX_HEIGHT_PX`. At least `INLINE_MIN_WIDTH_PX` wide.
+ * The list's size, shared by the background, the host and the list page. It is as tall as its rows, up to
+ * `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, with `INLINE_INSET_PX` of edge and padding above and below; the locked
+ * and no-match messages are one row, as one match. The insecure-site question and the not-visible notice, shown only
+ * after a pick, ask for what they need with `inline.resize`, up to `INLINE_MAX_HEIGHT_PX`. At least
+ * `INLINE_MIN_WIDTH_PX` wide.
  */
 export const INLINE_ROW_PX = 48
 export const INLINE_GAP_PX = 2
@@ -230,11 +231,13 @@ export type BackgroundToContent =
 	/** `height`: the list's request, clamped by `inlineClampHeight`. */
 	| { kind: 'inline.resize'; key: string; height: number }
 	/**
-	 * To the top frame only (`frameId: 0`). `capture.verify` replies `boolean`, the others are fire-and-forget.
-	 * `key`: the bar's, posted to its frame as `capture.init`. `done`: after a save or update, so the host waits for
-	 * focus and pointer to leave the bar.
+	 * To the top frame only (`frameId: 0`). `capture.verify` replies `boolean`, `capture.show` the key its bar holds,
+	 * the others are fire-and-forget. `key`: the bar's, posted to its frame as `capture.init`. `capture`: the capture's
+	 * id, so a show for another capture replaces the bar and one for the same capture keeps it, with its own key, which
+	 * the background hides and shows anew unless it issued that key for this capture. `done`: after a save or update,
+	 * so the host waits for focus and pointer to leave the bar.
 	 */
-	| { kind: 'capture.show'; key: string }
+	| { kind: 'capture.show'; key: string; capture: string }
 	| { kind: 'capture.hide'; key: string; done?: true }
 	| { kind: 'capture.verify'; key: string; input: PickInput }
 	/** The `focus_notification_bar` command. */

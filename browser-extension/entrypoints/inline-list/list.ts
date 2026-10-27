@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import {
-	INLINE_GAP_PX, INLINE_INSET_PX, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
+	INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MIN_HEIGHT_PX, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
 	type ContentToInlineList, type InlineListToBackground, type InlineRow, type InlineStateReply, type PickInput,
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
@@ -104,9 +104,10 @@ export function startInlineList(): () => void {
 	function fit() {
 		const content = root.firstElementChild
 		if (!key || !content) return
-		const height = content.getAttribute('role') === 'listbox'
-			? inlineHeight(content.childElementCount)
-			: inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
+		// Locked and no match stay one row whatever their text, so the frame never tells them from one match.
+		const height = content.getAttribute('role') === 'listbox' ? inlineHeight(content.childElementCount)
+			: content.matches('.message--locked, .message--muted') ? INLINE_MIN_HEIGHT_PX
+				: inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
 		if (height !== null && height !== requested) {
 			requested = height
 			notify({ kind: 'inline.resize', key, height })

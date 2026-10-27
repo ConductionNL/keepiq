@@ -65,7 +65,8 @@ export default defineContentScript({
 			else if (m?.kind === 'inline.verify') sendResponse(inline.handle(m) === true)
 			else if (m?.kind === 'inline.ready' || m?.kind === 'inline.refocus' || m?.kind === 'inline.close' || m?.kind === 'inline.resize') inline.handle(m)
 			else if (m?.kind === 'capture.verify') sendResponse(bar?.handle(m) === true)
-			else if (m?.kind === 'capture.show' || m?.kind === 'capture.hide' || m?.kind === 'capture.focus' || m?.kind === 'capture.expand') bar?.handle(m)
+			else if (m?.kind === 'capture.show') sendResponse(bar?.handle(m))
+			else if (m?.kind === 'capture.hide' || m?.kind === 'capture.focus' || m?.kind === 'capture.expand') bar?.handle(m)
 		})
 
 		const announce = () => {

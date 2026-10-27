@@ -587,7 +587,7 @@ inlineList:
   label: Keepiq-logins voor {host}
   row: "{name}, {username}"
   noMatch: Geen logins voor {host}
-  locked: Ontgrendel Keepiq om je logins te zien
+  locked: Keepiq is vergrendeld
   unlock: Ontgrendelen
   insecureQuestion: Toch invullen op deze onbeveiligde site?
   insecureDetail: Deze site is niet beveiligd. Iedereen op het netwerk kan lezen wat er wordt ingevuld.

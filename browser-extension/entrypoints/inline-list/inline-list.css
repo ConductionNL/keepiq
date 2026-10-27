@@ -170,7 +170,7 @@ p {
 	color: var(--fg-muted);
 }
 
-/* At least one row, so a message is as tall as a single login; longer text makes the list ask for more. */
+/* At least one row. The locked and no-match frames stay one row tall, so their longer text scrolls; the notice makes the list ask for more. */
 .message {
 	box-sizing: border-box;
 	min-height: var(--row);
@@ -188,17 +188,21 @@ p {
 	color: var(--fg-muted);
 }
 
-/* Unlock beside the text, or below it at the end where the text would get too narrow. */
+/* Unlock beside the text, so the card fits one row at the minimum width in every locale. */
 .message--locked {
-	flex-wrap: wrap;
-	justify-content: flex-end;
-	row-gap: 8px;
+	gap: 8px;
+	padding-inline: 6px;
 	overflow-wrap: break-word;
 	text-align: start;
 }
 
 .message--locked p {
-	flex: 1 1 110px;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.message--locked .btn {
+	padding-inline: 10px;
 }
 
 .message--notice {

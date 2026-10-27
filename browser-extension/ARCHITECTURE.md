@@ -102,8 +102,8 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Background → offscreen | `offscreen.clearClipboard`, `offscreen.writeClipboard` | Whether it wrote |
 | Content → background | `page_ready` (`passwordField`: the top frame has a login form, for fill on page load), `inline.closed`, `capture.submitted`, `capture.reshow` | None |
 | Content → background, inline list | `inline.open` | `{ key, height }`, or `null` for no list |
-| Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `inline.verify`, `capture.verify` | `boolean`; `FillExecuteReply` for `fill.execute` |
-| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.show`, `capture.hide`, `capture.focus`, `capture.expand` | None |
+| Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `inline.verify`, `capture.verify`, `capture.show` | `boolean`; `FillExecuteReply` for `fill.execute`; the key the host's bar holds for `capture.show` |
+| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand` | None |
 | Content → its list or bar iframe, by `postMessage` to the extension origin | `inline.init`, `inline.focus`, `inline.moved`, `capture.init`, `capture.focus`, `capture.moved` | None |
 | Inline list → background | `inline.state`, `inline.pick`; `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, `InlinePickReply`; none for the last four |
 | Save bar → background | `capture.state`, `capture.save`, `capture.update`, `capture.dismiss`, `capture.expand` | `NotificationReplies` |

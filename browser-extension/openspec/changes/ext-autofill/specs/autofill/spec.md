@@ -19,7 +19,7 @@ The extension SHALL decide which vault items match a page in the background, usi
 - **THEN** the row is excluded from every fill surface
 
 ### Requirement: Match rule is the global default from settings
-The extension SHALL apply the "Default URI match detection" setting to every item, with the options Base domain, Host, Starts with, Exact, Regular expression and Never, and Base domain as the shipped default. Base domain MUST be public suffix aware. A `url` that is not a valid regular expression MUST never match under the Regular expression rule. There is no per-item override (Keepiq has one `url` per item).
+The extension SHALL apply the "Default URI match detection" setting to every item, with the options Base domain, Host, Starts with, Exact, Regular expression and Never, and Base domain as the shipped default. Base domain MUST be public suffix aware. A `url` that is not a valid regular expression MUST never match under the Regular expression rule. Under the Regular expression rule a `url` is ordinary unless it contains regex syntax: one of the characters `^ $ * + ( ) [ ] { } | \` before its first `?` or `#` (an IPv6 host's brackets aside, an escaped `\?` counting), or a `?` in its scheme (`https?://`); a `.`, or anything in the query or fragment, does not make it a pattern. Only a `url` with that syntax is tested as a case-insensitive regular expression against the page URL. An ordinary `url` MUST never be tested as a pattern, whatever its scheme: a web URL matches by Base domain, and any other `url` (`ftp://`, `ssh://`, `androidapp://`, `mailto:`) matches no page, as under every other rule. There is no per-item override (Keepiq has one `url` per item).
 
 #### Scenario: Base domain ignores subdomains but respects the public suffix
 - **GIVEN** the default rule and an item with url `https://accounts.example.co.uk/login`
@@ -42,6 +42,25 @@ The extension SHALL apply the "Default URI match detection" setting to every ite
 - **GIVEN** the Regular expression rule and an item whose url is `https://[`
 - **WHEN** matching runs on any page
 - **THEN** the item does not match and no error is shown
+
+#### Scenario: Ordinary URL under the Regular expression rule
+- **GIVEN** the Regular expression rule and an item whose url is `https://bank.com`
+- **WHEN** the page is `https://bank.com.evil.net/` or `https://evil.net/?r=https://bank.com`
+- **THEN** the item does not match
+- **AND** it matches the page `https://login.bank.com/x`, and an item whose url is `bank.com` does not match `https://bankxcom.net/`
+- **AND** an item whose url is `^https://([a-z]+\.)?bank\.com/` matches `https://login.bank.com/x` as a pattern
+
+#### Scenario: Syntax in the query, an IPv6 host, or a ? in the scheme
+- **GIVEN** the Regular expression rule
+- **WHEN** an item's url is `https://login.example.com/oauth?scope=openid+profile`, or `https://[::1]:8080/`
+- **THEN** it matches by base domain, so the first does not match `https://evil.net/https://login.example.com/oauthscope=openidprofile`
+- **AND** an item whose url is `https?://bank.com/login` is tested as a pattern and matches `http://bank.com/login`
+
+#### Scenario: A url that is no web URL under the Regular expression rule
+- **GIVEN** the Regular expression rule and an item whose url is `ftp://files.bank.com`, `ssh://git.bank.com` or `androidapp://com.bank.app`
+- **WHEN** the page is `https://evil.net/login?ftp://files.bank.com`, or any other page
+- **THEN** the item does not match
+- **AND** with autofill on page load on, no page gets it filled
 
 ### Requirement: Fill from the popup suggestions section
 The extension SHALL fill the active tab when the user clicks a card in the popup's "Autofill suggestions" section or its Fill button, or the Fill button on a matching item's detail view. The background MUST decrypt `login` and `key` for that one item, send exactly one `{username, password}` to the content script, and drop the plaintext once the content script has replied. The popup closes after a fill that filled at least one field; a popped-out window stays open. Fill requires an unlocked vault.

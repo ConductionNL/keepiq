@@ -135,6 +135,7 @@ describe('content script', () => {
 		const bars = () => [...document.documentElement.children].filter((element) => element.localName === 'div')
 
 		const KEY = 'b'.repeat(32)
+		const CAPTURE = 'd'.repeat(32)
 		const trusted = <E extends Event>(event: E): E => Object.defineProperty(event, 'isTrusted', { value: true })
 
 		it('reports a login the user submitted, and not one a script submitted', () => {
@@ -152,7 +153,9 @@ describe('content script', () => {
 
 		it('shows, verifies and hides the bar in the top frame, by its key', () => {
 			start()
-			ask({ kind: 'capture.show', key: KEY })
+			expect(ask({ kind: 'capture.show', key: KEY, capture: CAPTURE })).toBe(KEY)
+			// The same capture again keeps the bar, and answers its key, so the background drops the unused one.
+			expect(ask({ kind: 'capture.show', key: 'e'.repeat(32), capture: CAPTURE })).toBe(KEY)
 			expect(bars()).toHaveLength(1)
 			// Not loaded yet, so no press counts.
 			expect(ask({ kind: 'capture.verify', key: KEY, input: { kind: 'pointer', at: Date.now(), x: 1, y: 1 } })).toBe(false)
@@ -165,14 +168,14 @@ describe('content script', () => {
 		it('never hosts the bar in a subframe', () => {
 			vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
 			start()
-			ask({ kind: 'capture.show', key: KEY })
+			ask({ kind: 'capture.show', key: KEY, capture: CAPTURE })
 			expect(bars()).toHaveLength(0)
 			expect(ask({ kind: 'capture.verify', key: KEY, input: { kind: 'pointer', at: Date.now(), x: 1, y: 1 } })).toBe(false)
 		})
 
 		it('ignores capture.show from anything but its own extension', () => {
 			start()
-			ask({ kind: 'capture.show', key: KEY }, { id: 'other-extension' })
+			ask({ kind: 'capture.show', key: KEY, capture: CAPTURE }, { id: 'other-extension' })
 			expect(bars()).toHaveLength(0)
 		})
 	})

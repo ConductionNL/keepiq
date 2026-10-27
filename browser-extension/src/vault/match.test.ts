@@ -9,6 +9,8 @@ describe('baseDomain', () => {
 		['github.com', 'github.com'],
 		['http://192.168.1.10/admin', '192.168.1.10'],
 		['http://localhost:8100/', 'localhost'],
+		['http://intranet/login', 'intranet'],
+		['http://[::1]:8080/', '[::1]'],
 		['https://alice.github.io', 'alice.github.io'],
 	])('%s → %s', (url, domain) => {
 		expect(baseDomain(url)).toBe(domain)

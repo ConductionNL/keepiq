@@ -15,7 +15,7 @@ import {
 	CAPTURE_LIFESPAN_MS, captureSubmitted, dropAllCaptures, focusBar, handleNotification, registerCaptureQueue, reshow, SAVED_CLOSE_MS, SHOW_DELAY_MS, showPending,
 } from './capture-queue'
 import { fill, matchingLogins } from './fill'
-import { forgetItem, rememberedItem, rememberItem } from './tab-items'
+import { rememberedItem, rememberItem } from './tab-items'
 
 vi.mock('@/src/vault/write', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/vault/write')>()
@@ -37,6 +37,14 @@ let secrets: OpenSecretRow[]
 let routes: Record<string, (sent: Sent) => Response>
 /** What the host's visibility guard answers `capture.verify`. */
 let visible: boolean
+/** The host's bar in the top frame, which a `capture.show` of its capture keeps while this is on. */
+let hostBar: { key: string; capture: string } | null
+/** Off, every show lands on a fresh page load, so the host makes a new bar. */
+let keepsBar: boolean
+/** Overrides the host's answer to `capture.show`. */
+let showReply: ((message: { key: string; capture: string }) => unknown) | undefined
+/** Holds the host's answers to `capture.show` until it resolves; the host has acted by then. */
+let showGate: Promise<void> | undefined
 
 const content = (overrides: object = {}) => ({ id: browser.runtime.id, url: tab.url, tab: { id: TAB, url: tab.url }, frameId: 0, ...overrides }) as never
 const bar = (overrides: object = {}) => ({ id: browser.runtime.id, url: browser.runtime.getURL('/notification.html' as '/popup.html'), tab: { id: TAB }, frameId: BAR_FRAME, ...overrides }) as never
@@ -45,7 +53,8 @@ const press = (): PickInput => ({ kind: 'pointer', at: Date.now(), x: 10, y: 10 
 
 /** The key of the newest `capture.show` to the tab. */
 let lastShownKey: string
-const shownKey = () => lastShownKey
+/** The key the host's bar holds and posted to its frame, else that of the newest show. */
+const shownKey = () => hostBar?.key ?? lastShownKey
 type Unkeyed = NotificationToBackground extends infer M ? M extends unknown ? Omit<M, 'key'> : never : never
 /** A message from the bar page, with the key its host posted to it unless one is given. */
 const ask = (message: Unkeyed & { key?: string }, sender = bar()) =>
@@ -111,12 +120,28 @@ beforeEach(async () => {
 	lastShownKey = 'none'
 	routes = {}
 	visible = true
+	hostBar = null
+	keepsBar = false
+	showReply = undefined
+	showGate = undefined
 	vi.spyOn(browser.tabs, 'get').mockImplementation(async () => ({ ...tab }) as never)
 	vi.spyOn(browser.tabs, 'query').mockImplementation(async () => [{ ...tab, active: true }] as never)
 	vi.spyOn(browser.tabs, 'sendMessage').mockImplementation(async (_tabId: number, message: unknown, options?: { frameId?: number }) => {
 		toContent.push({ message: structuredClone(message) as BackgroundToContent, frameId: options?.frameId })
 		const kind = (message as BackgroundToContent).kind
-		if (kind === 'capture.show') lastShownKey = (message as { key: string }).key
+		if (kind === 'capture.show') {
+			const show = message as { key: string; capture: string }
+			lastShownKey = show.key
+			let reply: unknown
+			if (showReply) reply = showReply(show)
+			else {
+				if (!keepsBar || hostBar?.capture !== show.capture) hostBar = { key: show.key, capture: show.capture }
+				reply = hostBar.key
+			}
+			await showGate
+			return reply as never
+		}
+		if (kind === 'capture.hide' && hostBar?.key === (message as { key: string }).key) hostBar = null
 		if (kind === 'capture.verify') return visible as never
 		return kind === 'fill.execute' ? { filled: 'both' } as never : undefined as never
 	})
@@ -137,9 +162,10 @@ beforeEach(async () => {
 	registerCaptureQueue()
 })
 
-afterEach(() => {
+afterEach(async () => {
 	dropAllCaptures()
-	for (const id of [TAB, 8]) forgetItem(id)
+	// Also forgets a saved bar's close, which a later test's submit would otherwise hide.
+	for (const id of [TAB, 8]) await fakeBrowser.tabs.onRemoved.trigger(id, { windowId: 1, isWindowClosing: false })
 	vi.useRealTimers()
 })
 
@@ -239,10 +265,10 @@ describe('capture.submitted', () => {
 		expect(await state()).toMatchObject({ mode: 'add' })
 	})
 
-	it('shows nothing when several items hold the username', async () => {
+	it('offers a new login when several items hold the username, since which one changed is unknown', async () => {
 		await vault([await item('a', 'alice', 'one'), await item('b', 'alice', 'two')])
 		await submit(submitted('alice', 'hunter2'))
-		expect(kinds()).toEqual([])
+		expect(await state()).toMatchObject({ mode: 'add' })
 	})
 
 	it('compares only items matching the submitting frame', async () => {
@@ -251,11 +277,16 @@ describe('capture.submitted', () => {
 		expect(await state()).toMatchObject({ mode: 'add' })
 	})
 
-	it('offers no update for a use-only or read-only copy, which may not be changed', async () => {
-		await vault([await item('a', 'alice', 'old', { useOnly: true }), await item('b', 'bob', 'old', { readOnly: true })])
+	it.each([['use-only', { useOnly: true }], ['read-only', { readOnly: true }]])('offers a new login, not an update, for a new password on a %s copy, which may not be changed', async (_, copy) => {
+		await vault([await item('a', 'alice', 'old', copy)])
 		await submit(submitted('alice', 'hunter2'))
-		await submit(submitted('bob', 'hunter2'))
-		expect(kinds()).toEqual([])
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	it('updates the one editable login beside a read-only copy under the frame', async () => {
+		await vault([await item('a', 'alice', 'old', { readOnly: true }), await item('b', 'alice', 'old')])
+		await submit(submitted('alice', 'hunter2'))
+		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item b' })
 	})
 
 	it('lets a newer submit replace an older capture, also when it needs no bar', async () => {
@@ -266,6 +297,135 @@ describe('capture.submitted', () => {
 		await submit(submitted('alice', 'hunter2'))
 		expect(await state()).toBeNull()
 		expect(toContent.at(-1)).toEqual({ message: { kind: 'capture.hide', key }, frameId: 0 })
+	})
+
+	it('closes the bar of an older capture when a newer submit needs a bar too, and shows the new capture in a bar that acts on it', async () => {
+		await submit(submitted('alice', 'typo'))
+		expect(await state()).toMatchObject({ mode: 'add' })
+		const first = toContent.at(-1)!.message as { key: string; capture: string }
+		toContent = []
+		await captureSubmitted(submitted('alice', 'hunter2'), content())
+		await ticks()
+		expect(toContent).toEqual([{ message: { kind: 'capture.hide', key: first.key }, frameId: 0 }])
+		await settle()
+		const second = toContent.at(-1)!.message as { kind: string; key: string; capture: string }
+		expect(second).toMatchObject({ kind: 'capture.show' })
+		expect(second.key).not.toBe(first.key)
+		expect(second.capture).not.toBe(first.capture)
+		expect(await ask({ kind: 'capture.state', key: first.key })).toBeNull()
+		const newBar = bar({ frameId: BAR_FRAME + 1 })
+		expect(await state(newBar)).toMatchObject({ mode: 'add' })
+		routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+		expect(await ask({ kind: 'capture.save', folderId: null, input: press() }, newBar)).toEqual({ ok: true, value: null })
+		expect(await decrypt(bodyOf('POST /api/v1/secrets')!.key)).toBe('hunter2')
+	})
+
+	it('closes the "Login saved" bar at once when a newer submit needs a bar, and shows the new capture', async () => {
+		await submit(submitted('alice', 'hunter2'))
+		await state()
+		routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+		expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: true, value: null })
+		const savedKey = shownKey()
+		toContent = []
+		await submit(submitted('bob', 's3cret'))
+		expect(toContent[0]).toEqual({ message: { kind: 'capture.hide', key: savedKey }, frameId: 0 })
+		expect(kinds()).toEqual([['capture.hide', 0], ['capture.show', 0]])
+		const newBar = bar({ frameId: BAR_FRAME + 1 })
+		expect(await state(newBar)).toMatchObject({ mode: 'add' })
+		vi.advanceTimersByTime(SAVED_CLOSE_MS)
+		expect(kinds()).toEqual([['capture.hide', 0], ['capture.show', 0]])
+		expect(await ask({ kind: 'capture.save', folderId: null, input: press() }, newBar)).toEqual({ ok: true, value: null })
+	})
+})
+
+describe('the save or update lookup, whatever the fill rule', () => {
+	/** A submit from the top frame of a tab on `url`. */
+	async function submitOn(url: string, username: string, password: string) {
+		tab.url = url
+		await submit(submitted(username, password))
+	}
+
+	it('offers a new login, not an update, for a new password on a sibling app under the same base domain', async () => {
+		await vault([await item('a', 'u', 'old', { url: 'https://app1.corp.example.com/' })])
+		await submitOn('https://app2.corp.example.com/login', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	it('shows nothing under Exact for a login saved from the bar, submitted again on the login page', async () => {
+		await settings({ uriMatch: 'exact' })
+		await vault([await item('a', 'u', 'pw', { url: 'https://site.test' })])
+		await submitOn('https://site.test/login', 'u', 'pw')
+		expect(kinds()).toEqual([])
+	})
+
+	it('shows nothing under Never for the same username and password on the site', async () => {
+		await settings({ uriMatch: 'never' })
+		await vault([await item('a', 'u', 'pw', { url: 'https://site.test/' })])
+		await submitOn('https://login.site.test/sign-in', 'u', 'pw')
+		expect(kinds()).toEqual([])
+	})
+
+	it('offers a new login for a new password on a path the saved url is no prefix of', async () => {
+		await vault([await item('a', 'u', 'old', { url: 'https://example.com/app1' })])
+		await submitOn('https://example.com/app2/login', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	it('offers a new login for a new password on http for a login saved on https', async () => {
+		await vault([await item('a', 'u', 'old', { url: 'https://site.test' })])
+		await submitOn('http://site.test/login', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	it('offers to update the login whose url is a prefix of the frame\'s', async () => {
+		await vault([await item('a', 'u', 'old', { url: 'https://site.test' })])
+		await submitOn('https://site.test/login', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a', username: 'u' })
+	})
+
+	it('offers a new login when two editable logins on the site hold the username', async () => {
+		await vault([await item('a', 'u', 'one', { url: 'https://site.test/' }), await item('b', 'u', 'two', { url: 'https://site.test/' })])
+		await submitOn('https://site.test/login', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	it('compares usernames exactly, without folding case', async () => {
+		await vault([await item('a', 'Alice', 'pw', { url: 'https://site.test/' })])
+		await submitOn('https://site.test/login', 'alice', 'pw')
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	it.each([
+		['http://localhost:8080/', 'http://localhost:9090/login'],
+		['http://intranet:8080/', 'http://intranet:9090/login'],
+	])('treats %s as the whole host: same credentials on %s are saved, a new password there is a new login', async (saved, page) => {
+		await vault([await item('a', 'u', 'pw', { url: saved })])
+		await submitOn(page, 'u', 'pw')
+		expect(kinds()).toEqual([])
+		await submitOn(page, 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'add' })
+		await submitOn(`${saved}login`, 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a' })
+	})
+
+	it.each([
+		['https://corp.example.com/jira', 'https://corp.example.com/jira-test/login', 'add'],
+		['https://corp.example.com/jira', 'https://corp.example.com/jira/login', 'update'],
+		['https://corp.example.com/jira', 'https://corp.example.com/jira', 'update'],
+		['https://corp.example.com/jira', 'https://corp.example.com/jira?next=1', 'update'],
+		['https://corp.example.com/jira', 'https://corp.example.com/jira#login', 'update'],
+		['https://corp.example.com/jira/', 'https://corp.example.com/jira/login', 'update'],
+		['https://corp.example.com', 'https://corp.example.com/login', 'update'],
+	])('takes a login for %s as under %s only at a path boundary', async (saved, page, mode) => {
+		await vault([await item('a', 'u', 'old', { url: saved })])
+		await submitOn(page, 'u', 'new')
+		expect(await state()).toMatchObject({ mode })
+	})
+
+	it('treats another IP address as another site', async () => {
+		await vault([await item('a', 'u', 'pw', { url: 'http://10.0.0.5/' })])
+		await submitOn('http://10.0.0.6/login', 'u', 'pw')
+		expect(await state()).toMatchObject({ mode: 'add' })
 	})
 })
 
@@ -419,6 +579,145 @@ describe('the bar key', () => {
 		expect(shownKey()).not.toBe(first)
 		expect(await ask({ kind: 'capture.state', key: first })).not.toBeNull()
 	})
+
+	it('drops the oldest keys once more than four shows each made a new bar', async () => {
+		const first = shownKey()
+		for (let i = 0; i < 4; i++) await showPending(TAB)
+		expect(await ask({ kind: 'capture.state', key: first })).toBeNull()
+		expect(await state()).not.toBeNull()
+	})
+
+	describe('on a bar the host keeps through many shows of its capture, as a single-page app\'s route changes bring', () => {
+		let first: string
+
+		beforeEach(async () => {
+			first = shownKey()
+			keepsBar = true
+			for (let i = 0; i < 6; i++) {
+				await fakeBrowser.tabs.onUpdated.trigger(TAB, { status: 'complete' }, { ...tab } as never)
+				await ticks()
+			}
+			expect(kinds().filter(([kind]) => kind === 'capture.show')).toHaveLength(7)
+			// Bound only now, so the key also survived while its frame was still loading.
+			expect(await ask({ kind: 'capture.state', key: first })).toMatchObject({ mode: 'add' })
+		})
+
+		it('saves from it', async () => {
+			routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+			expect(await ask({ kind: 'capture.save', key: first, folderId: null, input: press() })).toEqual({ ok: true, value: null })
+			expect(await decrypt(bodyOf('POST /api/v1/secrets')!.key)).toBe('hunter2')
+		})
+
+		it('closes it', async () => {
+			expect(await ask({ kind: 'capture.dismiss', key: first, never: false })).toBeNull()
+			expect(toContent.at(-1)).toEqual({ message: { kind: 'capture.hide', key: first }, frameId: 0 })
+			expect(await ask({ kind: 'capture.state', key: first })).toBeNull()
+		})
+
+		it('hides it on a lock', async () => {
+			await lock(accountId)
+			await vi.waitFor(() => expect(toContent).toContainEqual({ message: { kind: 'capture.hide', key: first }, frameId: 0 }))
+		})
+
+		it('hides only keys a bar may hold', () => {
+			dropAllCaptures()
+			expect(toContent.filter(({ message }) => message.kind === 'capture.hide')).toEqual([{ message: { kind: 'capture.hide', key: first }, frameId: 0 }])
+		})
+	})
+
+	describe('on a burst of shows sent before the first answer, with no bar on screen', () => {
+		beforeEach(async () => {
+			// The host closed the bar, as when the page removed it.
+			hostBar = null
+			keepsBar = true
+			let release!: () => void
+			showGate = new Promise((resolve) => (release = resolve))
+			toContent = []
+			for (let i = 0; i < 6; i++) void fakeBrowser.tabs.onUpdated.trigger(TAB, { status: 'complete' }, { ...tab } as never)
+			await vi.waitFor(() => expect(kinds()).toEqual(Array.from({ length: 6 }, () => ['capture.show', 0])))
+			expect(shownKey()).toBe((toContent[0]!.message as { key: string }).key)
+			release()
+			await ticks()
+			expect(await state()).toMatchObject({ mode: 'add' })
+		})
+
+		it('saves from the bar the first show made', async () => {
+			routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+			expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: true, value: null })
+			expect(await decrypt(bodyOf('POST /api/v1/secrets')!.key)).toBe('hunter2')
+		})
+
+		it('closes it', async () => {
+			const key = shownKey()
+			expect(await ask({ kind: 'capture.dismiss', never: false })).toBeNull()
+			expect(toContent.at(-1)).toEqual({ message: { kind: 'capture.hide', key }, frameId: 0 })
+		})
+
+		it('keeps none of the unused keys', async () => {
+			for (const { message } of toContent.slice(1)) expect(await ask({ kind: 'capture.state', key: (message as { key: string }).key })).toBeNull()
+		})
+	})
+
+	it('replaces a bar back from the back/forward cache whose key was dropped since, with one that acts', async () => {
+		const restored = { ...hostBar! }
+		// Four page loads, each with a bar of its own.
+		for (let i = 0; i < 4; i++) await showPending(TAB)
+		expect(await ask({ kind: 'capture.state', key: restored.key })).toBeNull()
+		hostBar = restored
+		keepsBar = true
+		toContent = []
+		await showPending(TAB)
+		const unused = (toContent[0]!.message as { key: string }).key
+		expect(toContent.slice(1)).toEqual([
+			{ message: { kind: 'capture.hide', key: restored.key }, frameId: 0 },
+			{ message: { kind: 'capture.show', key: shownKey(), capture: restored.capture }, frameId: 0 },
+		])
+		expect(shownKey()).not.toBe(unused)
+		expect(await ask({ kind: 'capture.state', key: unused })).toBeNull()
+		expect(await state()).toMatchObject({ mode: 'add' })
+		routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+		expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: true, value: null })
+	})
+
+	it.each([
+		['a key no show issued', async () => 'f'.repeat(32)],
+		['the key of an earlier capture', async () => {
+			const earlier = shownKey()
+			await submit(submitted('bob', 's3cret'))
+			return earlier
+		}],
+		['the key of a saved bar', async () => {
+			await state()
+			routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+			await ask({ kind: 'capture.save', folderId: null, input: press() })
+			const saved = shownKey()
+			await submit(submitted('bob', 's3cret'))
+			return saved
+		}],
+	])('keeps nothing alive for an answer naming %s, and stops after one more show', async (_, named) => {
+		const claimed = await named()
+		const current = shownKey()
+		showReply = () => claimed
+		toContent = []
+		await showPending(TAB)
+		expect(kinds()).toEqual([['capture.show', 0], ['capture.hide', 0], ['capture.show', 0], ['capture.hide', 0]])
+		expect(toContent.filter(({ message }) => message.kind === 'capture.hide').map(({ message }) => message)).toEqual([
+			{ kind: 'capture.hide', key: claimed }, { kind: 'capture.hide', key: claimed },
+		])
+		for (const key of [claimed, ...toContent.filter(({ message }) => message.kind === 'capture.show').map(({ message }) => (message as { key: string }).key)]) {
+			expect(await ask({ kind: 'capture.state', key })).toBeNull()
+		}
+		// The bar the background did show still acts.
+		expect(await ask({ kind: 'capture.state', key: current })).not.toBeNull()
+	})
+
+	it('changes nothing for the worse on a show without an answer, as on a page without the content script yet', async () => {
+		const first = shownKey()
+		showReply = () => undefined
+		await showPending(TAB)
+		expect(await ask({ kind: 'capture.state', key: first })).not.toBeNull()
+		expect(await ask({ kind: 'capture.state', key: lastShownKey }, bar({ frameId: BAR_FRAME + 1 }))).not.toBeNull()
+	})
 })
 
 describe('lifetime', () => {
@@ -493,6 +792,117 @@ describe('password change forms', () => {
 		await vault([await item('a', 'alice', 'old')])
 		await submit(submitted('bob', 'n3w', true))
 		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	describe('on another path than the login\'s, with nothing remembered for the tab', () => {
+		beforeEach(() => {
+			tab.url = 'https://github.com/settings/security'
+		})
+
+		it.each([['with', 'alice'], ['without', null]])('updates the one login on the frame\'s host, %s a username', async (_, username) => {
+			await vault([await item('a', 'alice', 'old', { url: 'https://github.com/login' })])
+			await submit(submitted(username, 'n3w', true))
+			expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a', username: 'alice' })
+		})
+
+		it('does not reach a login on a sibling subdomain, and offers a new login for the username instead', async () => {
+			await vault([await item('a', 'alice', 'old', { url: 'https://gist.github.com/login' })])
+			await submit(submitted('alice', 'n3w', true))
+			expect(await state()).toMatchObject({ mode: 'add' })
+			await submit(submitted(null, 'n3w', true))
+			expect(kinds().at(-1)).toEqual(['capture.hide', 0])
+			expect(await state()).toBeNull()
+		})
+
+		it('offers a new login when two logins on the host hold the username, and nothing without a username', async () => {
+			await vault([await item('a', 'alice', 'one', { url: 'https://github.com/login' }), await item('b', 'alice', 'two', { url: 'https://github.com/session' })])
+			await submit(submitted('alice', 'n3w', true))
+			expect(await state()).toMatchObject({ mode: 'add' })
+			await submit(submitted(null, 'n3w', true))
+			expect(await state()).toBeNull()
+		})
+
+		it('shows nothing for a new password the login already holds', async () => {
+			await vault([await item('a', 'alice', 'n3w', { url: 'https://github.com/login' })])
+			await submit(submitted('alice', 'n3w', true))
+			await submit(submitted(null, 'n3w', true))
+			expect(kinds()).toEqual([])
+		})
+	})
+
+	it.each([['use-only', { useOnly: true }], ['read-only', { readOnly: true }]])('offers a new login for a %s copy, which may not be changed', async (_, copy) => {
+		await vault([await item('a', 'alice', 'old', copy)])
+		await submit(submitted('alice', 'n3w', true))
+		expect(await state()).toMatchObject({ mode: 'add' })
+		await fill({ itemId: 'a', tabId: TAB, ask: 'reply' })
+		await submit(submitted(null, 'n3w', true))
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
+	describe('without a username', () => {
+		const saveFromBar = async () => {
+			routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
+			expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: true, value: null })
+			const body = bodyOf('POST /api/v1/secrets')!
+			return { login: await decrypt(body.login), key: await decrypt(body.key) }
+		}
+
+		it('offers nothing beside a read-only team login, rather than the other login on the site', async () => {
+			await vault([await item('a', 'alice', 'old'), await item('t', 'team', 'shared', { readOnly: true })])
+			await submit(submitted(null, 'n3w', true))
+			expect(kinds()).toEqual([])
+		})
+
+		it.each([['use-only', { useOnly: true }], ['read-only', { readOnly: true }]])('saves a new password for the only login, a %s one, under its username', async (_, copy) => {
+			await vault([await item('t', 'team', 'shared', copy)])
+			await submit(submitted(null, 'n3w', true))
+			expect(await state()).toMatchObject({ mode: 'add' })
+			expect(await saveFromBar()).toEqual({ login: 'team', key: 'n3w' })
+		})
+
+		it('saves a new password for the use-only login this tab filled under its username', async () => {
+			await vault([await item('a', 'alice', 'old'), await item('t', 'team', 'shared', { useOnly: true })])
+			await fill({ itemId: 't', tabId: TAB, ask: 'reply' })
+			await submit(submitted(null, 'n3w', true))
+			expect(await state()).toMatchObject({ mode: 'add' })
+			expect(await saveFromBar()).toEqual({ login: 'team', key: 'n3w' })
+		})
+
+		it('saves the new login under the username of a login deleted since', async () => {
+			await vault([await item('a', 'alice', 'old')])
+			await submit(submitted(null, 'n3w', true))
+			expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a' })
+			await vault([])
+			expect(await state()).toMatchObject({ mode: 'add' })
+			expect(await saveFromBar()).toEqual({ login: 'alice', key: 'n3w' })
+		})
+	})
+
+	describe('with a username, deciding by its own login before the others holding it', () => {
+		it('offers to update the login this tab filled, for a password another login with the username holds', async () => {
+			await vault([await item('a', 'alice', 'old'), await item('b', 'alice', 'reused')])
+			await fill({ itemId: 'a', tabId: TAB, ask: 'reply' })
+			await submit(submitted('alice', 'reused', true))
+			expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a', username: 'alice' })
+		})
+
+		it('offers to update the one login under the frame, for a password a login elsewhere on the site holds', async () => {
+			await vault([await item('a', 'alice', 'old'), await item('b', 'alice', 'reused', { url: 'https://other.example.test/' })])
+			await submit(submitted('alice', 'reused', true))
+			expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a' })
+		})
+
+		it('shows nothing when its own login holds the password already', async () => {
+			await vault([await item('a', 'alice', 'reused'), await item('b', 'alice', 'other', { url: 'https://other.example.test/' })])
+			await submit(submitted('alice', 'reused', true))
+			expect(kinds()).toEqual([])
+		})
+
+		it('without a login of its own, shows nothing when any login with the username holds the password', async () => {
+			await vault([await item('a', 'alice', 'one'), await item('b', 'alice', 'reused')])
+			await submit(submitted('alice', 'reused', true))
+			expect(kinds()).toEqual([])
+		})
 	})
 })
 
