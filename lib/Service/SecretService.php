@@ -255,6 +255,8 @@ class SecretService {
 	 * @return Secret
 	 *
 	 * @throws InvalidArgumentException When required fields are missing or invalid
+	 * @throws NotFoundException When the named folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or a vault policy refuses the write
 	 * @throws SuiteBlockedException When the user has no active suite
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 *

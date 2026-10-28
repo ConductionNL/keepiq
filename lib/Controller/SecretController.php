@@ -292,7 +292,11 @@ class SecretController extends OCSController {
 	 *
 	 * @return \OCA\Keepiq\Db\Secret
 	 *
-	 * @throws InvalidArgumentException When an application-owned secret is sent a totp or passkeys value
+	 * @throws InvalidArgumentException When an application-owned secret is sent a totp or passkeys value, or a field is missing
+	 * @throws NotFoundException When the named folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or a vault policy refuses the write
+	 * @throws SuiteBlockedException When the owner has no active suite
+	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 */
 	private function createOwnedSecret(
 		?string $ownerType,
