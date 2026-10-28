@@ -241,7 +241,6 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $suites,
 			teamFolderService: $teamFolders,
 			shareTargetMapper: $targets,
 			groupShareMapper: $groupShares,

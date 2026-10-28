@@ -654,7 +654,6 @@ class GroupShareService {
 		return ($this->auth ?? new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $this->delegationMapper,
-			suiteMapper: $this->suiteMapper,
 			shareTargetMapper: $this->shareTargetMapper,
 			groupShareMapper: $this->mapper,
 			groupManager: $this->groupManager,

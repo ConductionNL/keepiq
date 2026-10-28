@@ -160,7 +160,6 @@ class ShareServiceTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $this->delegationMapper,
-			suiteMapper: $this->suiteMapper,
 			teamFolderService: $teamFolderService,
 		);
 
@@ -1182,7 +1181,6 @@ class ShareServiceTest extends TestCase {
 			auth: new ShareAuthorizationService(
 				secretMapper: $this->secretMapper,
 				delegationMapper: $this->delegationMapper,
-				suiteMapper: $this->suiteMapper,
 				shareTargetMapper: $this->mapper,
 				grants: $grants,
 			),

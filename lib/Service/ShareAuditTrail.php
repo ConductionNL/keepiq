@@ -87,40 +87,6 @@ class ShareAuditTrail {
 	}//end recordBulkShareGranted()
 
 	/**
-	 * Record a single share grant, where the audited object is the
-	 * SHARE TARGET row.
-	 *
-	 * @param string $userId The sharing owner or delegate
-	 * @param string $shareId The persisted share-target row ID
-	 * @param string $secretName The source secret's name
-	 * @param string $recipientId The recipient Nextcloud user ID
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 */
-	public function recordShareGranted(
-		string $userId,
-		string $shareId,
-		string $secretName,
-		string $recipientId,
-	): void {
-		$this->dispatch(
-			event: $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SHARE_GRANTED,
-				objectType: 'share',
-				objectId: $shareId,
-				objectName: $secretName,
-				metadata: [
-					'recipientType' => 'user',
-					'recipientId' => $recipientId,
-				],
-			)
-		);
-	}//end recordShareGranted()
-
-	/**
 	 * Record a share revocation.
 	 *
 	 * @param string $userId The revoking owner or delegate
