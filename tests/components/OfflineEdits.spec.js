@@ -247,9 +247,9 @@ describe('the sync panel', () => {
 		expect(offline.retryEntry).toHaveBeenCalledWith('e1')
 		await wrapper.find('[data-testid="offline-sync-retry-e3"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e3')
-		expect(
-			wrapper.find('[data-testid="offline-sync-reason-e4"]').text(),
-		).toBe('This share waits for the share quarantine scan')
+		expect(wrapper.find('[data-testid="offline-sync-reason-e4"]').text()).toBe(
+			'This share waits for the share quarantine scan',
+		)
 		await wrapper.find('[data-testid="offline-sync-retry-e4"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e4')
 	})

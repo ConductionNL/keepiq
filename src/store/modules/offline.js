@@ -117,7 +117,10 @@ function failureOf(e) {
 		return { code: 'refused', reason: e.response.data?.error ?? '' }
 	}
 	if (e?.response?.data?.error === 'share_scan_pending') {
-		return { code: 'share_scan_pending', message: e.response.data.message ?? null }
+		return {
+			code: 'share_scan_pending',
+			message: e.response.data.message ?? null,
+		}
 	}
 	if (shareSaveErrorText(e) !== null) {
 		return { code: 'not_allowed' }
