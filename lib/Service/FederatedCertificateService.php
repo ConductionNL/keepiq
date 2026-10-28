@@ -265,6 +265,11 @@ class FederatedCertificateService {
 		$this->partnerMapper->update($partner);
 
 		$was = ($valueFields->advertised(advertised: json_decode((string)$previous, true)) ?? []);
+		// Absent and [] are distinct on the row but the same list: no change to audit or warn about.
+		if ($was === $fields) {
+			return $fields;
+		}
+
 		$dropped = array_values(array_diff($was, $fields));
 		if ($dropped !== []) {
 			$this->logger->warning(

@@ -257,6 +257,31 @@ class FederationLookupTest extends TestCase {
 		$this->assertSame(['totp', 'passkeys'], $partner->jsonSerialize()['valueFields']);
 	}
 
+	/**
+	 * A partner moving from no `valueFields` to `[]` writes the row, since absent and empty stay distinct there, but
+	 * the list it stores did not change, so nothing is audited. A later real change is audited once.
+	 */
+	public function testAnAbsentToEmptyValueFieldsAnswerIsNotAudited(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$controller = $this->controller([$partner]);
+		$this->ocm->method('requestRemoteOcmEndpoint')->willReturnOnConsecutiveCalls(
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'valueFields' => []]),
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'valueFields' => ['totp']]),
+		);
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertSame(['[]'], $this->partnerUpdates);
+		$this->assertSame([], $this->audits);
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertSame(['[]', '["totp"]'], $this->partnerUpdates);
+		$this->assertCount(1, $this->audits);
+		$this->assertSame(
+			['partnerId' => $partner->getId(), 'from' => [], 'to' => ['totp']],
+			$this->audits[0]->getMetadata()
+		);
+	}
+
 	public function testAFailedLookupRecordsNothing(): void {
 		$partner = $this->partner('cloud.partner.example', true, false);
 		$partner->setValueFields('["totp","passkeys"]');
