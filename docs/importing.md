@@ -12,11 +12,12 @@ Open the import wizard from the **Import** button in the vault toolbar.
 
 | Source | What to export | Notes |
 | --- | --- | --- |
-| **Generic CSV** | Any CSV with a header row | Columns are auto-detected (`name/title`, `url/uri`, `username/login`, `password/pass`, `notes`, `folder/group`) and you can remap any column before importing. |
-| **Bitwarden** | *Tools → Export vault* → `.json` or `.csv` | Login items are imported with their username, password, URL, notes, and TOTP seed; folders and collections become Keepiq folders. Cards, identities, and secure notes are not imported (they appear in the rejected list). |
-| **KeePass 2.x** | *File → Export → KeePass XML (2.x)* | Group nesting becomes the folder hierarchy; custom string fields become additional fields; the entry `History` is ignored. |
+| **Generic CSV** | Any CSV with a header row | Columns are auto-detected (`name/title`, `url/uri`, `username/login`, `password/pass`, `notes`, `folder/group`, `totp/otp`) and you can remap any column before importing. A `totp` column (Authenticator key) goes on the login's one-time code; a value that is not an `otpauth://totp/` link or base32 secret stays an additional field. Keepiq's own CSV export writes this column; it has no column for passkeys, so they are not in a CSV. |
+| **Bitwarden** | *Tools → Export vault* → `.json` or `.csv` | Login items are imported with their username, password, URL and notes; the one-time code (TOTP seed) and passkeys stay on the login, not as separate items. Folders and collections become Keepiq folders. From a JSON export, cards and identities import as Card and Identity items, without their folder; a card without a number, or an identity with no name, email, phone or SSN, appears in the rejected list. Secure notes and other item types in a JSON export appear in the rejected list; in a CSV export, rows of type `note` import as notes. |
+| **KeePass 2.x** | *File → Export → KeePass XML (2.x)* | Group nesting becomes the folder hierarchy; a one-time code (`otp` or `TimeOtp-Secret-Base32`) goes on the entry's login; other custom string fields become additional fields; the entry `History` is ignored. |
 | **Nextcloud Passwords** | *Settings → Backup → Export* (format "Predefined JSON") | Recommended path: it preserves folders, custom fields, and notes. CSV from the Passwords app also works via the generic CSV path. |
-| **Keepiq backup** | A `.doriath-backup` file | Restore an encrypted Keepiq backup with its passphrase. |
+| **FIDO Credential Exchange (CXF)** | A `.cxf` or `.json` export from a manager that supports CXF 1.0 | Each CXF item becomes one secret. A TOTP or passkey in an item goes on that item's login (or on its note or key when it has no login; an item with only a TOTP or passkeys becomes a login with an empty password). A TOTP with an algorithm or digit count Keepiq cannot generate, a second different TOTP and an incomplete passkey appear in the rejected list. Keepiq's own CXF export writes a login's one-time code and passkeys in that login's item. |
+| **Keepiq backup** | A `.doriath-backup` file | Restore an encrypted Keepiq backup with its passphrase, including each login's one-time code and passkeys. |
 
 ### KDBX is not supported
 
@@ -60,3 +61,5 @@ whitespace-insensitive) **and** the same URL (scheme- and trailing-slash
 insensitive). This uses only the plaintext list metadata, so detection never
 decrypts your existing vault. Re-importing the same file therefore skips
 everything by default — safe to retry.
+
+Because detection does not look inside your existing secrets, a skipped duplicate is skipped even when the imported row brings a one-time code or passkeys that the existing login lacks. The duplicates list marks such rows with the one-time code and passkey icons; choose **import as copy** for them, or add the code to the existing login by hand.

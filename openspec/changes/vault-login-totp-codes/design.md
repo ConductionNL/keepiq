@@ -45,9 +45,11 @@
 
 **D11. A client-side version gate.** `valueFieldsSupported()` compares the `appVersion` initial state with `TOTP_PASSKEYS_FIELDS_SINCE` (placeholder `0.3.12`, kept in step with the backend's `Application::TOTP_PASSKEYS_FIELDS_SINCE` until the release is cut). An `-unstable` build and a missing version pass. The web app is served by its own server, so the gate only guards a mixed deploy; it hides the entry field and the passkey Delete action.
 
-**D12. Additional fields named `totp` or `otp` are left alone.** The Bitwarden import has written a login's seed into the additional fields as `totp`. Those fields are no longer read as the seed and keep showing as ordinary fields; moving them into the `totp` field belongs to the guided move of keepiq#1328.
+**D12. Additional fields named `totp` or `otp` are left alone.** Vaults can hold a login whose additional fields carry a seed as `totp`, from an import made before D14. Those fields are not read as the seed and keep showing as ordinary fields; moving them into the `totp` field belongs to the guided move of keepiq#1328.
 
-**D13. The list marker reads presence only.** `LoginExtrasMarkers.vue` checks whether a row's `totp` or `passkeys` holds ciphertext, decrypts nothing, and gives each icon a text alternative. It shows in the list, card and table views.
+**D13. The list marker reads presence only.** `LoginExtrasMarkers.vue` checks whether a row's `totp` or `passkeys` holds ciphertext, decrypts nothing, and gives each icon a text alternative. It shows in the list, card and table views, and on the import preview rows.
+
+**D14. Import and export keep the code and passkeys on the login (keepiq#1327).** The parsers put a seed and passkeys straight on the row as `totp` and `passkeys` through `src/import/loginValueFields.js`, and the import commit encrypts them like `key`, sending each only when set. A seed goes on `totp` only when `authenticatorKeyError` accepts it, normalised with `normaliseAuthenticatorKey` as the create dialog does; parameters held one by one (CXF 1.0, KeePass `TimeOtp-*`) go through `authenticatorKeyFromParts`, which keeps a bare secret for the defaults without an issuer or account and builds an otpauth URI otherwise, and refuses what the code generator cannot use. Passkeys become the canonical JSON array. Edge rules: the first seed of an entry wins, an identical one is folded in, and a different or unusable one is rejected (CXF) or kept as an additional field (Bitwarden, CSV, KeePass), so nothing is lost in silence; a passkey with the credential id, RP id and key of one already on the row is folded in, one with another key is rejected; an incomplete passkey is rejected on a row of its own while its login imports. A CXF item's credentials are all read first; its code and passkeys then go on its first accepted login, else its first accepted other row, else a new login with an empty password named after the item (else the first passkey's RP id), with that RP id as its URL; never on a rejected row. A CXF export writes them as CXF 1.0 credentials of the secret's own item, so re-import attaches them again; a standalone Authenticator or Passkey item still exports as an item of its own and comes back as a login. `serializeVault` writes both fields when set, so the encrypted backup and the GDPR package carry them, and the backup restore reads them back. The plaintext CSV writes the seed in a `totp` column and leaves passkeys out.
 
 ## Security and zero-knowledge
 
@@ -63,7 +65,6 @@ Both fields are RSA-encrypted in the browser with the holder's public key, using
 
 - **Clone and print.** Neither feature exists in the web app; carrying the fields belongs to `vault-item-clone-preview-and-print`.
 - **Passkey type filter finding logins with passkeys.** The server cannot see inside the ciphertext, so the filter needs a backend query design.
-- **Import and export.** Carrying the new fields and no longer creating `(TOTP)` and `(passkey)` items belongs to keepiq#1327.
 - **Guided move of existing standalone items**, and of additional fields named `totp` or `otp`, onto their login belongs to keepiq#1328.
 - **Android** belongs to keepiq#1329; the browser extension adopts the fields in its own changes.
 

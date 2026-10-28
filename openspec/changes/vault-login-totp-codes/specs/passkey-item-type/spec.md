@@ -26,3 +26,13 @@ Passkey items created before logins carried passkeys MUST keep showing, editing,
 - **GIVEN** a vault with a standalone passkey item for `example.com`
 - **WHEN** the user filters the vault by the Passkey type and opens the item
 - **THEN** the item MUST be listed and shown with its site and metadata, as before
+
+## MODIFIED Requirements
+
+### Requirement: Creation via API and Bitwarden import
+The system MUST allow passkey creation through the existing secret CRUD API and MUST put Bitwarden `login.fido2Credentials[]` entries on the `passkeys` field of their login during import, in the canonical schema and encrypted in the browser, without creating `passkey`-typed secrets; a Bitwarden entry lacking credential id, RP id, or private key MUST be rejected, not partially created, while its login still imports.
+
+#### Scenario: Bitwarden passkey imports client-side
+- GIVEN a Bitwarden JSON export with a `fido2Credentials` entry
+- WHEN the user imports it
+- THEN the entry's login MUST be created with the credential in its `passkeys` field, encrypted client-side, with no plaintext credential sent to the server and no separate passkey item

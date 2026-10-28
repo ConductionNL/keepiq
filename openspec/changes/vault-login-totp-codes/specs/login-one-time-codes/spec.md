@@ -219,3 +219,81 @@ The web app MUST offer the Authenticator key field and the passkey Delete action
 - **GIVEN** a web app whose `appVersion` initial state names a release before the one that stores the fields
 - **WHEN** the user opens the create dialog for a login
 - **THEN** no Authenticator key field is shown
+
+### Requirement: Import and export keep a login's code and passkeys on it
+
+An import MUST put a one-time code and passkeys found with a login on that login's own `totp` and `passkeys` fields, encrypted in the browser like the other value fields, and MUST NOT create separate `(TOTP)` or `(passkey)` items. A seed MUST go on `totp` only when the TOTP parser reads it, an `otpauth://totp/` URI or a base32 secret, normalised as the create dialog stores an entered key; any other value (a Steam code, an HOTP URI, junk) MUST stay an additional field in Bitwarden, CSV and KeePass imports, and MUST be rejected with a reason in a CXF import. Seed parameters given one by one (CXF 1.0 `secret`, `period`, `digits`, `algorithm`; KeePass `TimeOtp-Secret-Base32`, `TimeOtp-Period`, `TimeOtp-Length`, `TimeOtp-Algorithm`) MUST be stored as the bare base32 secret when period, digits and algorithm are 30, 6 and SHA1 and no issuer or account is given, and as an otpauth URI carrying them otherwise, so the code display keeps its issuer and account; KeePass parameter strings folded into the seed MUST NOT also stay additional fields. A CXF TOTP with an algorithm or digit count the code generator cannot use MUST be rejected with a reason, never stored as a wrong code; KeePass strings of such a seed stay additional fields. Passkeys MUST be stored as a JSON array in the canonical credential schema. A row without a code or passkeys MUST send neither field.
+
+Bitwarden's `login.totp` and `login.fido2Credentials[]` and KeePass's `otp` and `TimeOtp-*` strings MUST go to the entry's login; a different second KeePass seed MUST stay an additional field. A Bitwarden login without a URI that brings passkeys MUST take the first passkey's RP id as its URL. In a CXF item, whatever the order of its credentials, a TOTP or passkey credential MUST go on the item's first accepted login, else on its first accepted other row (a note or key), else on a new login with an empty password named after the item. A code or passkey MUST NOT go on a rejected row: when the item's login is rejected for its own reason (such as a missing name), they go on the new login instead. The first seed of an item MUST win: an identical one is the same code, and a different one MUST land in the rejected list with a reason. A passkey with the credential id, RP id and private key of one already on the row MUST be folded in; one with the same credential id and RP id but another private key MUST land in the rejected list with a reason. A passkey entry without a credential id, RP id or key material MUST be rejected with a reason while its login still imports. CXF passkeys MUST be read from `username` (CXF 1.0) or `userName` (earlier Keepiq exports). The import preview and the duplicates list MUST mark a row that brings a code or passkeys.
+
+A CXF export MUST write a login's code and passkeys as credentials of that login's own CXF item, in the CXF 1.0 shape (TOTP: base32 `secret`, `period`, `digits`, lower-case `algorithm`, and `username` and `issuer` when the URI names them; passkey: `username`), so that a re-import gives the same login back with the same code, and MUST report a stored code or passkey it cannot export in the unmapped-item list, the counter and transports loss once per secret. Standalone Authenticator and Passkey items MUST keep exporting as items of their own; on re-import they come back as logins. The encrypted backup and the GDPR package MUST carry both fields when they are set, and a backup restore MUST put them back on the login. The plaintext CSV export MUST write a login's seed in a `totp` column that the generic CSV import maps back; it has no column for passkeys and leaves them out, which `docs/importing.md` and `docs/gdpr.md` state.
+
+Known limitations, not changed here:
+
+- Duplicate detection still matches on name and URL only, so under the default "skip" an imported row with a code or passkeys is skipped when a vault login with the same name and URL lacks them; the duplicates list marks such rows so the user can import them as copies.
+- The password policy check runs on the password only; a row whose password is below the policy is rejected with its code and passkeys, under the policy's reason.
+- A CXF export drops a passkey's `algorithm`, `createdAt`, `counter` and `transports`, and a login's notes, as before; a CXF import gives a passkey Keepiq's defaults for them.
+- A CXF round trip keeps a seed's secret, parameters, issuer and account, but not the exact text of its otpauth URI (parameter order, other query parameters).
+
+#### Scenario: A Bitwarden login with a code and a passkey
+
+- **GIVEN** a Bitwarden JSON export with a login that has a `totp` and one complete `fido2Credentials` entry
+- **WHEN** the user imports it
+- **THEN** one login is created whose encrypted `totp` holds the seed and whose encrypted `passkeys` holds the credential
+- **AND** no `(TOTP)` or `(passkey)` item is created
+
+#### Scenario: A KeePassXC entry with a code
+
+- **GIVEN** a KeePass XML export with an entry whose `otp` string holds an otpauth URI
+- **WHEN** the user imports it
+- **THEN** the entry's login holds that URI in its `totp` field and the URI is not among its additional fields
+
+#### Scenario: A CXF item with only a TOTP
+
+- **GIVEN** a CXF item whose only credential is a TOTP
+- **WHEN** the user imports it
+- **THEN** a login with the item's title, an empty password and that seed in `totp` is created
+
+#### Scenario: A CXF item with two different TOTPs
+
+- **GIVEN** a CXF item with a login and two TOTP credentials with different seeds
+- **WHEN** the user imports it
+- **THEN** the login holds the first seed
+- **AND** the second appears in the rejected list with a reason
+
+#### Scenario: A CXF round trip
+
+- **GIVEN** a login with a password, a seed and two passkeys
+- **WHEN** the user exports it as CXF and imports the file again
+- **THEN** one login comes back with the same password, seed and passkeys
+
+#### Scenario: A backup restore
+
+- **GIVEN** an encrypted backup of a login with a seed and passkeys
+- **WHEN** the user restores it
+- **THEN** the restored login holds the same seed and passkeys
+
+#### Scenario: A Steam code in a Bitwarden login
+
+- **GIVEN** a Bitwarden login whose `totp` is `steam://` followed by a secret
+- **WHEN** the user imports it
+- **THEN** the login has no `totp` value and the Steam code is kept as an additional field named `totp`
+
+#### Scenario: A CXF TOTP with an unknown algorithm
+
+- **GIVEN** a CXF item with a login and a TOTP whose `algorithm` is not `sha1`, `sha256` or `sha512`
+- **WHEN** the user imports it
+- **THEN** the login is imported without a code
+- **AND** the TOTP appears in the rejected list with a reason
+
+#### Scenario: A CXF note carrying a code
+
+- **GIVEN** a CXF item holding a note and a TOTP
+- **WHEN** the user imports it
+- **THEN** one note is created that holds the seed in `totp`
+
+#### Scenario: A CSV round trip of a code
+
+- **GIVEN** a login with a seed
+- **WHEN** the user exports a plaintext CSV and imports it as a generic CSV
+- **THEN** the `totp` column is mapped to the Authenticator key and the login holds the same seed

@@ -12,6 +12,7 @@
  */
 
 import { BACKUP_FORMAT, decryptBackup } from '../export/backup.js'
+import { BLOB_FIELDS } from '../utils/valueFields.js'
 import { registerParser } from './parserRegistry.js'
 
 /**
@@ -24,16 +25,24 @@ function toRows(payload) {
 	const secrets = (payload && payload.secrets) || []
 	// Number every row: duplicate choices, preview keys and rejected-row
 	// reports are all keyed by sourceRow (keepiq#749).
-	return secrets.map((s, index) => ({
-		sourceRow: index + 1,
-		name: s.name ?? '',
-		url: s.url ?? null,
-		login: s.login ?? null,
-		password: s.password ?? null,
-		additionalFields: s.additionalFields ?? null,
-		folder: s.folder ?? '',
-		type: s.type ?? 'login',
-	}))
+	return secrets.map((s, index) => {
+		const row = {
+			sourceRow: index + 1,
+			name: s.name ?? '',
+			url: s.url ?? null,
+			login: s.login ?? null,
+			password: s.password ?? null,
+			additionalFields: s.additionalFields ?? null,
+			folder: s.folder ?? '',
+			type: s.type ?? 'login',
+		}
+		for (const field of BLOB_FIELDS) {
+			if (typeof s[field] === 'string' && s[field] !== '') {
+				row[field] = s[field]
+			}
+		}
+		return row
+	})
 }
 
 /**

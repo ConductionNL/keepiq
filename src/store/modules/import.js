@@ -10,11 +10,12 @@
  * guard as the link-share + export stores) — and reset() releases them when the
  * wizard closes.
  *
- * Commit encrypts every sensitive field (key/login/additionalFields) in the
- * browser with the owner's active EncryptionSuite public certificate, using the
- * SAME WebCrypto path as Create Secret (importPublicKey + rsaEncrypt — no new
- * crypto code), then POSTs ciphertext-only payloads in chunks. The server never
- * sees plaintext (ADR-003 / encryption-suites E2E guarantee).
+ * Commit encrypts every sensitive field (key, login, additionalFields, totp,
+ * passkeys) in the browser with the owner's active EncryptionSuite public
+ * certificate, using the SAME WebCrypto path as Create Secret (importPublicKey
+ * + rsaEncrypt — no new crypto code), then POSTs ciphertext-only payloads in
+ * chunks. The server never sees plaintext (ADR-003 / encryption-suites E2E
+ * guarantee).
  */
 
 import axios from '@nextcloud/axios'
@@ -24,6 +25,7 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
 import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
+import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
@@ -197,9 +199,7 @@ export const useImportStore = defineStore('import', {
 					this.sourceText = null
 				}
 				this.format = format
-				this.rows = this.expandTotpRows(
-					parsed.filter((r) => !r.errors || r.errors.length === 0),
-				)
+				this.rows = parsed.filter((r) => !r.errors || r.errors.length === 0)
 				this.rejected = parsed
 					.filter((r) => r.errors && r.errors.length > 0)
 					.map((r) => ({
@@ -213,53 +213,6 @@ export const useImportStore = defineStore('import', {
 			} finally {
 				this.loading = false
 			}
-		},
-
-		/**
-		 * Split a TOTP/otp seed carried on an imported login row into its own
-		 * `totp`-typed secret so migrating users keep working authenticator codes
-		 * (add-totp-secrets D6). Bitwarden and KeePass parsers stash the seed in
-		 * `additionalFields.totp`; this routes that seed into the `password`
-		 * field (which becomes the encrypted `key` at commit) of a new `totp` row
-		 * and strips it from the login row's additional fields. The seed is
-		 * encrypted in the browser at commit like every other field — plaintext
-		 * never reaches the server.
-		 *
-		 * @param {Array<object>} rows The accepted normalized rows.
-		 * @return {Array<object>} The rows plus any extracted `totp` rows.
-		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
-		 */
-		expandTotpRows(rows) {
-			const out = []
-			let nextSourceRow = rows.reduce(
-				(max, r) => Math.max(max, r.sourceRow || 0),
-				0,
-			)
-			for (const row of rows) {
-				const seed = row.additionalFields && row.additionalFields.totp
-				if (typeof seed === 'string' && seed.trim() !== '') {
-					// Remove the seed from the login row's additional fields.
-					const rest = { ...row.additionalFields }
-					delete rest.totp
-					row.additionalFields = Object.keys(rest).length > 0 ? rest : null
-					nextSourceRow += 1
-					out.push(row)
-					out.push({
-						sourceRow: nextSourceRow,
-						name: `${row.name} (TOTP)`,
-						url: row.url ?? null,
-						login: row.login ?? null,
-						password: seed,
-						additionalFields: null,
-						folder: row.folder ?? '',
-						type: 'totp',
-						errors: [],
-					})
-				} else {
-					out.push(row)
-				}
-			}
-			return out
 		},
 
 		/**
@@ -330,6 +283,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
 		 */
 		async encryptRow(row, publicKey, asCopy, typeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
@@ -357,6 +311,13 @@ export const useImportStore = defineStore('import', {
 						: JSON.stringify(row.additionalFields)
 				if (json && json !== '{}' && json !== 'null') {
 					item.additionalFields = await rsaEncrypt(json, publicKey)
+				}
+			}
+			// A login's code and passkeys, sent only when the row has them: an
+			// encrypted empty string would read as a value.
+			for (const field of BLOB_FIELDS) {
+				if (typeof row[field] === 'string' && row[field] !== '') {
+					item[field] = await rsaEncrypt(row[field], publicKey)
 				}
 			}
 			return item
