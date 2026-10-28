@@ -940,7 +940,7 @@ class MigrationWorkService {
 	 *
 	 * @throws FieldsNotReencryptedException When a stored field has no re-encrypted counterpart
 	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	private function requireStoredFieldsReencrypted(Secret|SecretVersion $record, ?string $totp, ?string $passkeys): void {
 		$checks = [
@@ -971,7 +971,7 @@ class MigrationWorkService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	private function applyOptionalFields(Secret|SecretVersion $record, ?string $totp, ?string $passkeys): void {
 		if ($totp !== null && $totp !== '') {
