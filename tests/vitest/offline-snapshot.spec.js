@@ -101,6 +101,35 @@ describe('offline snapshot', () => {
 		expect(vault.secrets[1].sourceUpdatedAt).toBeNull()
 	})
 
+	it("keeps a login's seed and passkeys ciphertext as-is, null when the row has none (keepiq#1326)", async () => {
+		const key = await makeKey()
+		const manifest = {
+			...MANIFEST,
+			secrets: [
+				{
+					...MANIFEST.secrets[0],
+					totp: 'RSA-CIPHERTEXT-TOTP',
+					passkeys: 'RSA-CIPHERTEXT-PASSKEYS',
+				},
+				{ ...MANIFEST.secrets[0], id: 'plain-login' },
+			],
+		}
+		const snapshot = await encryptSnapshot(key, manifest)
+		expect(snapshot.secrets[0]).toMatchObject({
+			totp: 'RSA-CIPHERTEXT-TOTP',
+			passkeys: 'RSA-CIPHERTEXT-PASSKEYS',
+		})
+
+		const vault = await decryptSnapshot(key, snapshot)
+
+		expect(vault.secrets[0]).toMatchObject({
+			totp: 'RSA-CIPHERTEXT-TOTP',
+			passkeys: 'RSA-CIPHERTEXT-PASSKEYS',
+		})
+		expect(vault.secrets[1].totp).toBeNull()
+		expect(vault.secrets[1].passkeys).toBeNull()
+	})
+
 	it('does not open the metadata with the wrong key', async () => {
 		const key = await makeKey()
 		const other = await makeKey()

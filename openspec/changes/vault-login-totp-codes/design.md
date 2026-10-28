@@ -1,50 +1,76 @@
-# Design: one-time codes from a seed kept on a login
+# Design: one-time codes and passkeys on a login
 
 ## Context
 
-At development `4c214a9d`:
-
-- `src/totp/totp.js` parses an `otpauth://totp/` URI or bare base32 secret and computes an RFC 6238 code with WebCrypto, entirely in memory (`:1-17`, defaults at `:20`).
-- `src/components/TotpDisplay.vue` renders a code from a `seed` prop; `src/components/SecretDetailSidebar.vue:213-228` mounts it only when `isTotp` (`:1243-1249`, the secret's type name is `totp`).
-- The login's decrypted additional fields render as a plain key/value list at `SecretDetailSidebar.vue:560-580`.
-- `src/import/parsers/bitwarden.js:32` maps the CSV column `login_totp` to `additional:totp` and `:70-71` copies `item.login.totp` to `additional.totp` for JSON imports.
-- `src/cxf/cxf.js:163-176` turns a CXF `totp` credential into a separate `totp` row with `url: null`, so it can never match a site.
-- `browser-extension/src/background/service-worker.js:137-145` fills an OTP field after a login fill using `totpCodeForHost()`, which (`:155-180`) finds a separate `totp`-typed secret matched by host and decrypts its seed in the worker.
-- The additional fields are one RSA-encrypted JSON blob (`lib/Db/Secret.php` `additionalFields`), so a new key inside it needs no server change.
+- keepiq#1325 gave a secret two more encrypted value fields, `totp` and `passkeys`, carried by CRUD, share-save, sharing, federation, versions, suite migration and backups on the server. Each is null when it holds no value, `''` when explicitly not set, and RSA ciphertext otherwise. A federated partner advertises which of them it stores; the server refuses a value a partner cannot store with 409 `partner_upgrade_required`.
+- `src/totp/totp.js` parses an `otpauth://totp/` URI or bare base32 secret and computes an RFC 6238 code with WebCrypto, in memory. `src/components/TotpDisplay.vue` renders a code from a `seed` prop.
+- `src/components/PasskeyDisplay.vue` renders one credential in the canonical schema of the `passkey-item-type` spec, with a gated reveal of the private key for standalone items.
+- Every share path builds a recipient copy from one plain snapshot, now in `src/services/recipientCopy.js`.
 
 ## Goals / Non-Goals
 
 **Goals**
-- A login that carries a seed shows a live code, in the web app and at fill time in the extension.
-- Existing imported seeds light up without a re-import.
+- A login holds a seed and passkeys, shows the live code and the passkeys, and keeps them through edit, share, version restore, ownership transfer, offline editing and suite migration.
+- A use-only recipient can copy the code but never sees the seed or a private key.
+- The web app no longer creates Authenticator or Passkey items; existing ones work unchanged.
 
 **Non-Goals**
 - HOTP (counter-based) codes. `totp.js` stays TOTP only.
-- Moving existing Authenticator items onto their logins. Both sources keep working; the user can copy a seed into a login by hand.
+- The browser extension and the Android app; they adopt the fields in their own changes.
+- Anything listed under Deferred below.
 
 ## Decisions
 
-**D1. The seed is a reserved key inside the encrypted additional fields.** Key `totp`, the name the Bitwarden import already writes. Alternative: a new encrypted column `totp`. Rejected: a new column needs a migration, a new re-encryption path in suite migration and share sync, and a new place for the zero-knowledge guarantee to break, while the additional fields blob already has all three.
+**D1. The seed and passkeys live in their own encrypted fields.** `totp` holds the seed, `passkeys` a JSON array of credential objects in the canonical passkey schema. This reverses the earlier design of a reserved `totp` key inside the additional fields: a field the server knows exists lets share-save, federation gating, versions and the list marker work on it without decrypting, while its content stays ciphertext.
 
-**D2. Reserved means handled, not hidden from the user.** `AdditionalFieldsEditor.vue` does not list `totp` as a free field; the dialog shows it as the Authenticator key field. Other keys are unchanged. Lower-case `otp` and `otpauth` keys found on existing items are read as the seed too, and saved back under `totp` on the next edit.
+**D2. No encrypted empty string.** The web app sends `''` to clear a field and null on a copy that has no value, and never encrypts an empty string (`BLOB_FIELDS` in `src/utils/valueFields.js`). An untouched field is left out of the patch.
 
-**D3. The login's own seed wins in the extension.** At fill time the worker uses the filled login's seed when present and falls back to `totpCodeForHost()`. Alternative: always the host lookup. Rejected: two logins on one host with different seeds would get the wrong code.
+**D3. The seed is write-only after saving.** `AuthenticatorKeyField.vue` never loads a saved seed into the form; it shows that a key is saved and offers Replace (enter a new one) and Remove (send `''`). The sidebar, the Additional fields box and the version details view never render it. A key is validated by the same parser that later generates codes, so a key that saves always yields a code.
 
-**D4. QR scanning stays in the browser.** The Authenticator key field accepts a QR image from a file picker and decodes it client-side with a small, audited QR decoder added as an npm dependency. No image is uploaded.
+**D4. QR images are read in the browser.** `src/totp/qrImage.js` refuses an image over 10 MB before reading it, then draws the picked image to a canvas, scaled to at most 1600 px on its longest side, and decodes it with `jsqr` 1.4.0, imported lazily into its own chunk. No image or decoded text leaves the browser, and only a parseable `otpauth://totp/` URI is accepted, so a QR code for a website or a payment is never saved as a key.
+
+**D5. Passkeys are listed, not edited.** Passkeys come from a provider or an import, never typed in. `PasskeyList.vue` shows each through `PasskeyDisplay` with the private key row left out, in every mode. Delete sits behind `PasskeyDeleteDialog.vue` and saves every other entry exactly as stored, or `''` when none remain (`src/passkey/loginPasskeys.js`).
+
+**D6. Entry on logins, display wherever a value is.** Entering a key is offered only for the Login type. The read-only code and passkey rows show, in a box of their own in the sidebar, for any type whose row holds a value, so a value set by another client or a future import on another type is never hidden. On such a row the edit dialog shows that a key is saved and offers Remove only.
+
+**D6a. Focus follows the change.** After Replace, Remove or keeping the saved key, focus moves to the control that took the chosen one's place. After a passkey Delete, focus moves to the passkey list, or when none remain to the Edit button, else the detail itself. Vault rows in the list and card views name their markers in the row's accessible name.
+
+**D7. Use-only copies show the code.** The code is what a use-only holder needs to sign in, so it shows and copies; the seed and the private keys are never rendered in any mode, which is what makes this safe. View-only, read-only and federated read-only copies follow the login's existing rules: no Delete, no edit.
+
+**D8. Link shares leave both fields out.** A link recipient decrypts the whole shared value in the browser, so a seed or a passkey in a link payload would hand out the second factor and the private keys. The link payload stays `key`, `login` and `additionalFields`.
+
+**D9. Federation follows the partner's advertisement.** A partner that does not advertise a field gets null for it when the patch sets no value. Setting a value, or newly sharing a login that already holds one, to such a partner is refused before anything is sent, and the server's 409 `partner_upgrade_required` maps to the same readable message naming the release the partner needs.
+
+**D10. No new Authenticator or Passkey items.** `NOT_CREATABLE_TYPE_NAMES` in `src/utils/secretTypes.js` removes `totp` and `passkey` from the create dialog and the default item type setting; a saved default of either falls back to Login. Existing items keep showing, editing, sharing and filtering.
+
+**D11. A client-side version gate.** `valueFieldsSupported()` compares the `appVersion` initial state with `TOTP_PASSKEYS_FIELDS_SINCE` (placeholder `0.3.12`, kept in step with the backend's `Application::TOTP_PASSKEYS_FIELDS_SINCE` until the release is cut). An `-unstable` build and a missing version pass. The web app is served by its own server, so the gate only guards a mixed deploy; it hides the entry field and the passkey Delete action.
+
+**D12. Additional fields named `totp` or `otp` are left alone.** The Bitwarden import has written a login's seed into the additional fields as `totp`. Those fields are no longer read as the seed and keep showing as ordinary fields; moving them into the `totp` field belongs to the guided move of keepiq#1328.
+
+**D13. The list marker reads presence only.** `LoginExtrasMarkers.vue` checks whether a row's `totp` or `passkeys` holds ciphertext, decrypts nothing, and gives each icon a text alternative. It shows in the list, card and table views.
 
 ## Security and zero-knowledge
 
-The seed is stored only inside the RSA-encrypted `additional_fields` blob, decrypted only in the browser or the extension service worker, and dropped on lock, the same contract as `src/totp/totp.js` and the `extension-totp-autofill` spec ("Honest invalid seed, discard on lock, seed never persisted"). The server sees no new field. An invalid seed shows the existing invalid-seed state and never a guessed code.
+Both fields are RSA-encrypted in the browser with the holder's public key, using the existing chunked RSA encryption, and decrypted only in the browser. The seed, its derived key and the code are never sent to the server or kept in browser storage, and are dropped on lock, the same contract as the Authenticator item. Password health decrypts only `key`, so seeds and passkeys are never scored, reuse-matched or breach-checked. No login passkey private key is ever rendered, and link shares carry neither field.
 
 ## Risks / Trade-offs
 
-- Keeping the password and the second factor in one item puts both factors behind the vault key. That is the user's choice and the reason the Authenticator item stays available; the field help text says it.
-- A reserved key could collide with a user's own field named `totp` holding something else. The invalid-seed state makes that visible instead of silent.
+- Keeping the password and the second factor in one item puts both behind the vault key. That is the user's choice, as in every competitor.
+- A seed that is write-only in the UI cannot be read back to set up a second authenticator app. Replace covers the usual case of re-enrolling with a new seed from the site.
+- The version gate uses a placeholder release number until the release is cut; a wrong number would hide the field on a server that has it, or show it on one that does not.
+
+## Deferred
+
+- **Clone and print.** Neither feature exists in the web app; carrying the fields belongs to `vault-item-clone-preview-and-print`.
+- **Passkey type filter finding logins with passkeys.** The server cannot see inside the ciphertext, so the filter needs a backend query design.
+- **Import and export.** Carrying the new fields and no longer creating `(TOTP)` and `(passkey)` items belongs to keepiq#1327.
+- **Guided move of existing standalone items**, and of additional fields named `totp` or `otp`, onto their login belongs to keepiq#1328.
+- **Android** belongs to keepiq#1329; the browser extension adopts the fields in its own changes.
 
 ## Seed data
 
-Keepiq owns its tables (keepiq ADR-001) and has no OpenRegister register. The dev fixture set gains one login for `example.com` with a test seed (a published RFC 6238 test vector, not a real account) so the code row and the extension fill can be exercised.
+Keepiq owns its tables (keepiq ADR-001) and has no OpenRegister register. No fixture change is needed: tests build their own logins with a published RFC 6238 test vector.
 
 ## Migration
 
-None. No column, no route, no `<version>` bump for data. The frontend reads existing blobs as they are.
+None in the web app. The columns and their migration come from keepiq#1325; existing secrets read as having no seed and no passkeys.

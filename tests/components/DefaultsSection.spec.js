@@ -78,6 +78,19 @@ describe('DefaultsSection', () => {
 		expect(labels).toEqual(['Default item type', 'Default view'])
 	})
 
+	it('leaves out Authenticator and Passkey, and shows such a saved default as Login', async () => {
+		useSecretTypeStore().types = [
+			{ id: 'type-login', name: 'login', label: 'Login' },
+			{ id: 'type-totp', name: 'totp', label: 'Authenticator' },
+			{ id: 'type-passkey', name: 'passkey', label: 'Passkey' },
+		]
+		prefs.defaultSecretType = 'passkey'
+		const wrapper = await mountSection()
+
+		expect(wrapper.vm.typeOptions.map((o) => o.value)).toEqual(['login'])
+		expect(wrapper.vm.selectedType).toBe('login')
+	})
+
 	it('saves the picked default type', async () => {
 		const wrapper = await mountSection()
 

@@ -171,6 +171,8 @@ export default {
 						key: plain.key ?? '',
 						login: plain.login ?? '',
 						additionalFields: plain.additionalFields ?? null,
+						totp: plain.totp ?? '',
+						passkeys: plain.passkeys ?? '',
 					})
 					await secretStore.deleteSecret(finding.id)
 				}

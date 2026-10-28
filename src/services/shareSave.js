@@ -24,15 +24,18 @@ import { importSpkiPublicKey } from '../crypto/rsa.js'
 import {
 	CloudIdMismatchError,
 	fingerprintHex,
+	partnerStores,
+	partnerUpgradeText,
 	useFederatedShareStore,
 } from '../store/modules/federatedShare.js'
 import { onVaultLock, useSessionStore } from '../store/modules/session.js'
 import { useShareStore } from '../store/modules/share.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
+import { BLOB_FIELDS } from '../utils/valueFields.js'
 
 /** The encrypted value fields of a secret. */
-export const VALUE_FIELDS = ['key', 'login', 'additionalFields']
+export const VALUE_FIELDS = ['key', 'login', 'additionalFields', ...BLOB_FIELDS]
 
 /**
  * The server's bound per call, for copies+skipped and for federated+suspend
@@ -140,8 +143,10 @@ function partnerGone(error) {
  * `code` is `incomplete` (the share list kept changing), `stale` (the row moved
  * on before the partner value was built), `partner_lookup_limit` (the partner
  * lookup limit held for longer than the save waits), `view_only` (the caller's
- * copy has no write grade) or `partner_unreachable` (`partners` names them,
- * each with its `reason`).
+ * copy has no write grade), `partner_unreachable` (`partners` names them,
+ * each with its `reason`) or `partner_upgrade_required` (`partners` names the
+ * ones whose Keepiq cannot store a one-time code or passkeys the change gives
+ * the login).
  */
 export class ShareSaveError extends Error {
 	/**
@@ -161,9 +166,9 @@ export class ShareSaveError extends Error {
 /**
  * Encrypt the changed value fields for one holder: a cleared field stays
  * `null` and an absent one stays absent, so a sparse edit never clears what it
- * did not touch (keepiq#1253).
+ * did not touch (keepiq#1253). A cleared `totp` or `passkeys` is sent as `''`.
  *
- * @param {object} plainDiff Changed fields as strings, `null` for cleared.
+ * @param {object} plainDiff Changed fields as strings, `null` for cleared (`''` too for `totp` and `passkeys`).
  * @param {string} certificate The holder's PEM certificate.
  * @return {Promise<object>}
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
@@ -172,13 +177,16 @@ export async function encryptSparse(plainDiff, certificate) {
 	const publicKey = await importPublicKey(certificate)
 	const out = {}
 	for (const field of VALUE_FIELDS) {
-		if (plainDiff[field] === undefined) {
+		const value = plainDiff[field]
+		if (value === undefined) {
+			continue
+		}
+		if (BLOB_FIELDS.includes(field)) {
+			out[field] = value ? await rsaEncrypt(String(value), publicKey) : ''
 			continue
 		}
 		out[field] =
-			plainDiff[field] === null
-				? null
-				: await rsaEncrypt(String(plainDiff[field]), publicKey)
+			value === null ? null : await rsaEncrypt(String(value), publicKey)
 	}
 	return out
 }
@@ -188,7 +196,7 @@ export async function encryptSparse(plainDiff, certificate) {
  * request-filled fields, so they match the row's own ciphertext.
  *
  * @param {object} row A secret row with ciphertext.
- * @return {Promise<object>} `{ key, login, additionalFields }`, `null` where empty.
+ * @return {Promise<object>} `{ key, login, additionalFields, totp, passkeys }`, `null` where empty.
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 export async function plainOf(row) {
@@ -270,9 +278,9 @@ function idsOf(list, key) {
  * @param {object} options.patch The own-row patch, value fields encrypted for the caller.
  * @param {string} options.baseUpdatedAt The `{id}` version the edit was made from.
  * @param {string|null} [options.sourceBaseUpdatedAt] The source version the edit was made from, on the copy-editor path; without one, the source version when this save starts.
- * @param {() => Promise<object>} [options.loadFull] Resolves `{key, login, additionalFields, updatedAt}` of `{id}` in plain.
+ * @param {() => Promise<object>} [options.loadFull] Resolves `{key, login, additionalFields, totp, passkeys, updatedAt}` of `{id}` in plain.
  * @param {Iterable<string>} [options.withoutUnreachable] The partner shares (ids) the user agreed to suspend when they cannot be reached; any other unreachable one stops the save.
- * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry all three value fields.
+ * @param {string} [options.restoredFrom] The version (uuid) this save restores, sent with the patch; the patch and `plainDiff` must then carry `key`, `login` and `additionalFields`, and `totp` and `passkeys` when the version holds them.
  * @param {(ms: number) => void} [options.onWait] Called when the save starts waiting on the partner lookup limit.
  * @return {Promise<object>} The 200 body; `secret` is the saved row.
  * @throws {ShareSaveError|Error} Nothing was written. An error the share-save
@@ -366,6 +374,8 @@ export async function saveShared({
 	const suspend = new Map()
 	const certificates = new Map()
 	let partnerValue = null
+	/** The row's value before the change, read with the partner value. */
+	let storedValue = null
 	let stage = { id: null, sent: new Set() }
 
 	const envelope = () => ({
@@ -433,6 +443,7 @@ export async function saveShared({
 		for (const field of VALUE_FIELDS) {
 			value[field] = full[field] ?? null
 		}
+		storedValue = value
 		return { ...value, ...plainDiff }
 	}
 
@@ -444,6 +455,7 @@ export async function saveShared({
 			(r) => !federated.has(r.shareId) && !suspend.has(r.shareId),
 		)
 		const unreachable = []
+		const tooOld = []
 		for (const share of todo) {
 			let recipient
 			try {
@@ -466,11 +478,29 @@ export async function saveShared({
 				continue
 			}
 			partnerValue ??= await wholeValue()
+			// Giving the login a field it did not hold, which a partner cannot
+			// store, stops the save. Any other change, a replaced seed or a
+			// deleted passkey included, reaches that partner with the field
+			// null, as it never held one.
+			if (
+				BLOB_FIELDS.some(
+					(field) =>
+						plainDiff[field]
+						&& !storedValue[field]
+						&& !partnerStores(recipient, field),
+				)
+			) {
+				tooOld.push(share)
+				continue
+			}
 			federated.set(share.shareId, {
 				shareId: share.shareId,
 				certFingerprint: fingerprintHex(recipient.fingerprint),
-				...(await encryptWhole(partnerValue, recipient.spki)),
+				...(await encryptWhole(partnerValue, recipient)),
 			})
+		}
+		if (tooOld.length > 0) {
+			throw new ShareSaveError('partner_upgrade_required', tooOld)
 		}
 		// Only the shares the user was shown and agreed to are suspended; one
 		// that fails only now stops the save again, naming each share this
@@ -590,7 +620,12 @@ export async function saveShared({
 		}
 		return result
 	} catch (e) {
-		if (epoch === lockEpoch) {
+		// A partner refused as too old is looked up afresh, so a save right
+		// after it upgraded reads the value fields it now advertises.
+		const tooOld =
+			e?.code === 'partner_upgrade_required'
+			|| e?.response?.data?.error === 'partner_upgrade_required'
+		if (epoch === lockEpoch && !tooOld) {
 			for (const [shareId, kept] of verifiedNow) {
 				verifiedPartners.set(shareId, kept)
 			}
@@ -602,18 +637,23 @@ export async function saveShared({
 /**
  * Encrypt a partner share's whole value to the key of the certificate that
  * was verified, never to the lookup answer's text; the key is always sent.
+ * A `totp` or `passkeys` goes only to a partner that advertised it stores
+ * that field, and is null otherwise.
  *
- * @param {object} value `{ key, login, additionalFields }` in plain.
- * @param {Uint8Array} spki The verified certificate's SubjectPublicKeyInfo.
+ * @param {object} value `{ key, login, additionalFields, totp, passkeys }` in plain.
+ * @param {{spki: Uint8Array, valueFields?: Array<string>}} recipient The verified lookup answer.
  * @return {Promise<object>}
  */
-async function encryptWhole(value, spki) {
-	const publicKey = await importSpkiPublicKey(spki)
+async function encryptWhole(value, recipient) {
+	const publicKey = await importSpkiPublicKey(recipient.spki)
 	const out = { key: await rsaEncrypt(String(value.key ?? ''), publicKey) }
-	for (const field of ['login', 'additionalFields']) {
-		out[field] = value[field]
-			? await rsaEncrypt(String(value[field]), publicKey)
-			: null
+	for (const field of ['login', 'additionalFields', ...BLOB_FIELDS]) {
+		const allowed =
+			!BLOB_FIELDS.includes(field) || partnerStores(recipient, field)
+		out[field] =
+			value[field] && allowed
+				? await rsaEncrypt(String(value[field]), publicKey)
+				: null
 	}
 	return out
 }
@@ -647,6 +687,7 @@ export async function notifyOwnerOnly(result) {
  * @return {string|null}
  * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
  * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 export function shareSaveErrorText(error) {
 	const data = error?.response?.data
@@ -686,6 +727,10 @@ export function shareSaveErrorText(error) {
 			'keepiq',
 			'Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.',
 		)
+	}
+	const tooOld = partnerUpgradeText(error)
+	if (tooOld !== null) {
+		return tooOld
 	}
 	if (code === 'partner_unreachable') {
 		return t(

@@ -117,6 +117,8 @@ describe('teamFolder.autoConfirm', () => {
 						encryptedKey: 'RSA(CERT-KIM)',
 						encryptedLogin: 'RSA-LOGIN(CERT-KIM)',
 						encryptedAdditionalFields: null,
+						encryptedTotp: null,
+						encryptedPasskeys: null,
 					},
 				],
 			},

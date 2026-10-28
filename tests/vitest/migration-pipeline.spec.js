@@ -162,6 +162,7 @@ describe('reEncryptSecretFields', () => {
 			key: await sealUnderOldSuite('only-a-key'),
 			login: null,
 			additionalFields: '',
+			totp: '',
 		}
 
 		const out = await reEncryptSecretFields(record, keys)
@@ -169,6 +170,24 @@ describe('reEncryptSecretFields', () => {
 		expect(await rsaDecrypt(out.key, keys.newPrivateKey)).toBe('only-a-key')
 		expect(out.login).toBeNull()
 		expect(out.additionalFields).toBeNull()
+		expect(out.totp).toBeNull()
+		expect(out.passkeys).toBeNull()
+	})
+
+	it('re-encrypts a login seed and passkeys, which the server refuses to leave behind (keepiq#1326)', async () => {
+		const passkeys = '[{"credentialId":"c1","rpId":"bank.example"}]'
+		const record = {
+			key: await sealUnderOldSuite('pw'),
+			totp: await sealUnderOldSuite('JBSWY3DPEHPK3PXP'),
+			passkeys: await sealUnderOldSuite(passkeys),
+		}
+
+		const out = await reEncryptSecretFields(record, keys)
+
+		expect(await rsaDecrypt(out.totp, keys.newPrivateKey)).toBe(
+			'JBSWY3DPEHPK3PXP',
+		)
+		expect(await rsaDecrypt(out.passkeys, keys.newPrivateKey)).toBe(passkeys)
 	})
 })
 

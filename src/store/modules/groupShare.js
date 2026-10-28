@@ -6,6 +6,7 @@
 import axios from '@nextcloud/axios'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
 
@@ -174,15 +175,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		async encryptForMembers(secretId, groupShareId, members) {
 			const shareStore = useShareStore()
 			const plain = await useSecretStore().fetchSecret(secretId)
-			const snapshot = {
-				key: plain?.key ?? '',
-				login: plain?.login ?? '',
-				additionalFields:
-					typeof plain?.additionalFields === 'object'
-					&& plain.additionalFields !== null
-						? JSON.stringify(plain.additionalFields)
-						: (plain?.additionalFields ?? ''),
-			}
+			const snapshot = recipientFields(plain)
 
 			const rows = []
 			for (const member of members) {
@@ -193,9 +186,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 				rows.push({
 					sourceSecretId: secretId,
 					targetUserId: member.userId,
-					encryptedKey: blob.key ?? '',
-					encryptedLogin: blob.login ?? null,
-					encryptedAdditionalFields: blob.additionalFields ?? null,
+					...copyCiphertext(blob),
 					groupShareId,
 				})
 			}

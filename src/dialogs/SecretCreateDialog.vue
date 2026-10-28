@@ -117,6 +117,12 @@
 				@update:open="generatorOpen = $event"
 				@generated="onGenerated" />
 
+			<AuthenticatorKeyField
+				v-if="showAuthenticator"
+				v-model:value="totpInput"
+				mode="replace"
+				:disabled="saving" />
+
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
 			<TypedFieldsForm
@@ -207,6 +213,7 @@ import {
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -228,13 +235,18 @@ import {
 	resolveDefaultTypeId,
 	useUserPreferencesStore,
 } from '../store/modules/userPreferences.js'
+import {
+	authenticatorKeyError,
+	normaliseAuthenticatorKey,
+} from '../totp/authenticatorKey.js'
 import { membersToObject } from '../utils/additionalFields.js'
-import { secretTypeLabel } from '../utils/secretTypes.js'
+import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
 import {
 	mergeTypedValues,
 	missingRequired,
 	typedFieldsOf,
 } from '../utils/typedFields.js'
+import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
  * Every folder id at or below the given roots.
@@ -268,6 +280,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
 		SecretTagsField,
@@ -305,6 +318,8 @@ export default {
 			value: '',
 			url: '',
 			login: '',
+			/** The authenticator key being entered on a login. */
+			totpInput: '',
 			additionalFields: [],
 			tags: [],
 			typedValues: {},
@@ -342,16 +357,56 @@ export default {
 		},
 
 		/**
-		 * The seeded secret types as select options, labels translated.
+		 * The types new secrets may be created as, as select options with
+		 * translated labels. Authenticator and Passkey are left out: a login
+		 * carries its own one-time code and passkeys.
 		 *
 		 * @return {Array<{value: string, label: string}>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		typeOptions() {
-			return useSecretTypeStore().types.map((type) => ({
-				value: type.id,
-				label: secretTypeLabel(type),
-			}))
+			return useSecretTypeStore()
+				.types.filter(isCreatableType)
+				.map((type) => ({
+					value: type.id,
+					label: secretTypeLabel(type),
+				}))
+		},
+
+		/**
+		 * Whether the login's authenticator key can be entered: on a login,
+		 * when the server stores the field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		showAuthenticator() {
+			return this.selectedTypeName === 'login' && valueFieldsSupported()
+		},
+
+		/**
+		 * Why the entered authenticator key blocks the save, '' when it does not.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpError() {
+			return this.showAuthenticator
+				? authenticatorKeyError(this.totpInput)
+				: ''
+		},
+
+		/**
+		 * The authenticator key to save with the login, '' for none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpToSave() {
+			return this.showAuthenticator
+				? normaliseAuthenticatorKey(this.totpInput)
+				: ''
 		},
 
 		/**
@@ -465,6 +520,9 @@ export default {
 				return false
 			}
 			if (!this.selectedFolderId && !this.contributeTo) {
+				return false
+			}
+			if (this.totpError !== '') {
 				return false
 			}
 			if (this.isCard) {
@@ -659,6 +717,7 @@ export default {
 							...(Object.keys(this.additionalBlob()).length > 0
 								? { additionalFields: this.additionalBlob() }
 								: {}),
+							...(this.totpToSave ? { totp: this.totpToSave } : {}),
 						},
 					)
 					this.$emit('saved', result.secret)
@@ -680,6 +739,8 @@ export default {
 					...(Object.keys(this.additionalBlob()).length > 0
 						? { additionalFields: this.additionalBlob() }
 						: {}),
+					// Only when entered, like the additional fields above.
+					...(this.totpToSave ? { totp: this.totpToSave } : {}),
 				})
 				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
 				if (this.tags.length > 0 && created?.id) {

@@ -11,6 +11,10 @@ import {
 } from '../../crypto/federatedCertificate.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 import { importSpkiPublicKey } from '../../crypto/rsa.js'
+import {
+	BLOB_FIELDS,
+	TOTP_PASSKEYS_FIELDS_SINCE,
+} from '../../utils/valueFields.js'
 import { useShareStore } from './share.js'
 
 /**
@@ -19,7 +23,90 @@ import { useShareStore } from './share.js'
  *
  * @type {string[]}
  */
-const ENCRYPTED_FIELDS = ['key', 'login', 'additionalFields']
+const ENCRYPTED_FIELDS = ['key', 'login', 'additionalFields', ...BLOB_FIELDS]
+
+/** The refusal of a value field a partner's Keepiq is too old to store. */
+const PARTNER_UPGRADE_REQUIRED = 'partner_upgrade_required'
+
+/**
+ * A new share of a login with a one-time code or passkeys to a partner whose
+ * Keepiq cannot store them; nothing was shared.
+ */
+export class PartnerUpgradeRequiredError extends Error {
+	/**
+	 * @param {string} [requiredVersion] The Keepiq version the partner needs.
+	 * @param {{cause?: Error}} [options] The refusal this one stands for.
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	constructor(requiredVersion = TOTP_PASSKEYS_FIELDS_SINCE, options = undefined) {
+		super(
+			t(
+				'keepiq',
+				'Nothing was shared: their organisation runs an older Keepiq that cannot store one-time codes or passkeys. It needs Keepiq {version} or later; until then, share a login without them.',
+				{ version: requiredVersion },
+			),
+			options,
+		)
+		this.name = 'PartnerUpgradeRequiredError'
+		this.code = PARTNER_UPGRADE_REQUIRED
+		this.requiredVersion = requiredVersion
+	}
+}
+
+/**
+ * Whether a partner advertised it stores a value field beyond `key`, `login`
+ * and `additionalFields`.
+ *
+ * @param {{valueFields?: Array<string>}} recipient From lookup().
+ * @param {string} field `totp` or `passkeys`.
+ * @return {boolean}
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ */
+export function partnerStores(recipient, field) {
+	return (
+		Array.isArray(recipient?.valueFields)
+		&& recipient.valueFields.includes(field)
+	)
+}
+
+/**
+ * The text for a value field refused because a partner's Keepiq is too old:
+ * a new share refused here, a share save stopped in this browser (`partners`
+ * names them) or the server's 409 `partner_upgrade_required`. Null for any
+ * other error.
+ *
+ * @param {Error|object} error The thrown error.
+ * @return {string|null}
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ */
+export function partnerUpgradeText(error) {
+	if (error instanceof PartnerUpgradeRequiredError) {
+		return error.message
+	}
+	const data = error?.response?.data
+	if (
+		error?.code !== PARTNER_UPGRADE_REQUIRED
+		&& data?.error !== PARTNER_UPGRADE_REQUIRED
+	) {
+		return null
+	}
+	const version = data?.requiredVersion || TOTP_PASSKEYS_FIELDS_SINCE
+	const partners = (Array.isArray(error.partners) ? error.partners : [])
+		.map((share) => share.recipientCloudId)
+		.filter(Boolean)
+	if (partners.length > 0) {
+		return t(
+			'keepiq',
+			'Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys ({partners}). It needs Keepiq {version} or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them.',
+			{ partners: partners.join(', '), version },
+		)
+	}
+	return t(
+		'keepiq',
+		'Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys. It needs Keepiq {version} or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them.',
+		{ version },
+	)
+}
 
 /**
  * A lookup answer for another account than the one asked for, so its
@@ -101,6 +188,24 @@ async function encryptForVerified(secret, recipient) {
 }
 
 /**
+ * The server's 409 `partner_upgrade_required` as a PartnerUpgradeRequiredError;
+ * any other error as it is.
+ *
+ * @param {Error|object} error The share request's error.
+ * @return {Error|object}
+ */
+function upgradeRefusal(error) {
+	const data = error?.response?.data
+	if (data?.error !== PARTNER_UPGRADE_REQUIRED) {
+		return error
+	}
+	return new PartnerUpgradeRequiredError(
+		data.requiredVersion || TOTP_PASSKEYS_FIELDS_SINCE,
+		{ cause: error },
+	)
+}
+
+/**
  * Sharing a secret with a user of a partner organisation
  * (sharing-federated-recipients D3, D4). The owner's server fetches the
  * recipient's certificate from the partner; this browser verifies it
@@ -141,8 +246,12 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * pinned partner root or names someone else, or with the server's
 		 * refusal. The certificate text is not returned: only the verified key is.
 		 *
+		 * The answer's `valueFields` lists the value fields beyond `key`,
+		 * `login` and `additionalFields` the partner stores; none when it
+		 * names none.
+		 *
 		 * @param {string} cloudId What the owner typed.
-		 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>} `cloudId` as the server resolved it.
+		 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array, valueFields: Array<string>}>} `cloudId` as the server resolved it.
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-verified-remote-certificate
 		 */
 		async lookup(cloudId) {
@@ -162,7 +271,10 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				partnerRootFingerprint: answer.partnerRootFingerprint,
 				cloudId: answer.cloudId,
 			})
-			return { cloudId: answer.cloudId, fingerprint, spki }
+			const valueFields = Array.isArray(answer.valueFields)
+				? answer.valueFields.filter((field) => BLOB_FIELDS.includes(field))
+				: []
+			return { cloudId: answer.cloudId, fingerprint, spki, valueFields }
 		},
 
 		/**
@@ -199,13 +311,27 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		/**
 		 * Encrypt a secret for a verified recipient and send the ciphertext.
 		 *
+		 * A login with a one-time code or passkeys is refused with a
+		 * PartnerUpgradeRequiredError, before anything is sent, when the
+		 * partner did not advertise it stores them.
+		 *
 		 * @param {string} secretId The owner's secret.
-		 * @param {object} secret The decrypted secret (key, login, additionalFields).
-		 * @param {{cloudId: string, fingerprint: string, spki: Uint8Array}} recipient From lookup().
+		 * @param {object} secret The decrypted secret (key, login, additionalFields, totp, passkeys).
+		 * @param {{cloudId: string, fingerprint: string, spki: Uint8Array, valueFields?: Array<string>}} recipient From lookup().
 		 * @return {Promise<object>} The federated share.
+		 * @throws {PartnerUpgradeRequiredError} The partner cannot store a field the login holds.
 		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 		 */
 		async share(secretId, secret, recipient) {
+			// The server would take the field as null, so the partner's copy
+			// would quietly lack it.
+			if (
+				BLOB_FIELDS.some(
+					(field) => secret?.[field] && !partnerStores(recipient, field),
+				)
+			) {
+				throw new PartnerUpgradeRequiredError()
+			}
 			const encrypted = await encryptForVerified(secret, recipient)
 			const url = generateUrl(
 				`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
@@ -216,6 +342,8 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				key: encrypted.key ?? '',
 				login: encrypted.login ?? null,
 				additionalFields: encrypted.additionalFields ?? null,
+				totp: encrypted.totp ?? null,
+				passkeys: encrypted.passkeys ?? null,
 			}
 			try {
 				return (await axios.post(url, body)).data
@@ -223,7 +351,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				// Every recipient at another organisation is a new party, so the
 				// server asks for the vault key proof (keepiq#818).
 				if (refusal?.response?.data?.error !== 'key_proof_required') {
-					throw refusal
+					throw upgradeRefusal(refusal)
 				}
 				const { headers } = await sessionKeyProofHeaders({
 					purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
@@ -233,7 +361,11 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 					),
 					boundValues: [secretId, recipient.cloudId],
 				})
-				return (await axios.post(url, body, { headers })).data
+				try {
+					return (await axios.post(url, body, { headers })).data
+				} catch (e) {
+					throw upgradeRefusal(e)
+				}
 			}
 		},
 	},

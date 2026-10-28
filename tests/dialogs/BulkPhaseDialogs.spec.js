@@ -277,3 +277,59 @@ describe('BulkShareDialog: the vault-key proof', () => {
 		expect(wrapper.vm.ran).toBe(false)
 	})
 })
+
+describe("BulkShareDialog: a login's seed and passkeys (keepiq#1326)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		vi.spyOn(useShareStore(), 'encryptForRecipient').mockImplementation(
+			async (snapshot, cert) =>
+				Object.fromEntries(
+					Object.entries(snapshot)
+						.filter(([, value]) => value !== '')
+						.map(([field, value]) => [field, `enc(${value},${cert})`]),
+				),
+		)
+	})
+
+	/**
+	 * Share one secret with Bob and return the registered row.
+	 *
+	 * @param {object} plain The decrypted secret.
+	 * @return {Promise<object>}
+	 */
+	async function shareOne(plain) {
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue(plain)
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { items: [{ status: 'created' }] },
+		})
+		const wrapper = mountDialog(BulkShareDialog)
+		await wrapper.setData({
+			targetUserId: 'bob',
+			certificate: 'PEM-BOB',
+			runPassword: 'pw',
+		})
+		await wrapper.vm.shareOne('s1')
+		return post.mock.calls[0][1].shares[0]
+	}
+
+	it("carries them into the recipient's copy", async () => {
+		const row = await shareOne({
+			key: 'pw',
+			totp: 'JBSWY3DPEHPK3PXP',
+			passkeys: '[{"credentialId":"c1"}]',
+		})
+
+		expect(row).toMatchObject({
+			encryptedTotp: 'enc(JBSWY3DPEHPK3PXP,PEM-BOB)',
+			encryptedPasskeys: 'enc([{"credentialId":"c1"}],PEM-BOB)',
+		})
+	})
+
+	it('sends null for a login without them', async () => {
+		const row = await shareOne({ key: 'pw', totp: '', passkeys: '' })
+
+		expect(row.encryptedTotp).toBeNull()
+		expect(row.encryptedPasskeys).toBeNull()
+	})
+})

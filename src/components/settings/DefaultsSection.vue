@@ -20,7 +20,7 @@
 		</p>
 		<div class="defaults-section__field">
 			<NcSelect
-				:modelValue="prefs.defaultSecretType"
+				:modelValue="selectedType"
 				:options="typeOptions"
 				:inputLabel="t('keepiq', 'Default item type')"
 				label="label"
@@ -48,8 +48,15 @@ import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { NcSelect } from '@nextcloud/vue'
 import { useSecretTypeStore } from '../../store/modules/secretType.js'
-import { useUserPreferencesStore } from '../../store/modules/userPreferences.js'
-import { secretTypeLabel } from '../../utils/secretTypes.js'
+import {
+	FALLBACK_TYPE,
+	useUserPreferencesStore,
+} from '../../store/modules/userPreferences.js'
+import {
+	isCreatableType,
+	NOT_CREATABLE_TYPE_NAMES,
+	secretTypeLabel,
+} from '../../utils/secretTypes.js'
 
 export default {
 	name: 'DefaultsSection',
@@ -67,16 +74,33 @@ export default {
 		},
 
 		/**
-		 * Every secret type, by name, labelled in the user's language.
+		 * Every type new items may be created as, by name, labelled in the
+		 * user's language.
 		 *
 		 * @return {Array<{value: string, label: string}>} The options.
 		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		typeOptions() {
-			return useSecretTypeStore().types.map((type) => ({
-				value: type.name,
-				label: secretTypeLabel(type),
-			}))
+			return useSecretTypeStore()
+				.types.filter(isCreatableType)
+				.map((type) => ({
+					value: type.name,
+					label: secretTypeLabel(type),
+				}))
+		},
+
+		/**
+		 * The saved default as the select shows it: a saved type new items
+		 * are not created as reads as Login, which is what the create dialog
+		 * opens with.
+		 *
+		 * @return {string} A type name.
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 */
+		selectedType() {
+			const saved = this.prefs.defaultSecretType
+			return NOT_CREATABLE_TYPE_NAMES.includes(saved) ? FALLBACK_TYPE : saved
 		},
 
 		/**

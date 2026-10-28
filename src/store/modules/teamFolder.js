@@ -19,6 +19,7 @@ import axios from '@nextcloud/axios'
 import { translatePlural as n } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
 import { useAttachmentStore } from './attachment.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
@@ -36,24 +37,6 @@ export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
  * @type {ReturnType<typeof setInterval>|null}
  */
 let autoConfirmTimer = null
-
-/**
- * Turn decrypted secret fields into the shape encryptForRecipient takes.
- *
- * @param {object} plain The decrypted secret.
- * @return {{key: string, login: string, additionalFields: string}}
- */
-function recipientFields(plain) {
-	return {
-		key: plain.key ?? '',
-		login: plain.login ?? '',
-		additionalFields:
-			typeof plain.additionalFields === 'object'
-			&& plain.additionalFields !== null
-				? JSON.stringify(plain.additionalFields)
-				: (plain.additionalFields ?? ''),
-	}
-}
 
 export const useTeamFolderStore = defineStore('teamFolder', {
 	state: () => ({
@@ -407,15 +390,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						// returns the PLAINTEXT secret — do not decrypt twice.
 
 						const plain = await secretStore.fetchSecret(readId)
-						plaintextCache[pair.secretId] = {
-							key: plain.key ?? '',
-							login: plain.login ?? '',
-							additionalFields:
-								typeof plain.additionalFields === 'object'
-								&& plain.additionalFields !== null
-									? JSON.stringify(plain.additionalFields)
-									: (plain.additionalFields ?? ''),
-						}
+						plaintextCache[pair.secretId] = recipientFields(plain)
 					}
 
 					const blob = await shareStore.encryptForRecipient(
@@ -425,9 +400,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					chunk.push({
 						sourceSecretId: pair.secretId,
 						targetUserId: pair.userId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
+						...copyCiphertext(blob),
 					})
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
@@ -549,9 +522,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					chunk.push({
 						sourceSecretId: pair.secretId,
 						targetUserId: pair.userId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
+						...copyCiphertext(blob),
 					})
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
