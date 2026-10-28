@@ -1,5 +1,7 @@
 # ADR-003: Keepiq API contract the extension builds against
 
+> Note (added in Keepiq, not part of the snapshot): the live contract is `browser-extension/openspec/architecture/adr-003-keepiq-api-contract.md`.
+
 **Status**: accepted
 
 **Date**: 2026-09-22
@@ -25,7 +27,7 @@ All paths relative to the base URL. All require the Basic auth above unless mark
 | Suites | `GET /api/v1/suites` | Returns a bare JSON array. Pick `status === 'active'`. Row carries `certificate` (X.509 PEM), `privateKey` (AES envelope, base64), `unlockKeyEpoch`. |
 | List secrets | `GET /api/v1/secrets` | Query: `folderId`, `search`, `sort` (`name`, `url`, `created_at`, `updated_at`), `direction`, `page` (1-based), `limit` (default 50, max 100), `typeId`. Envelope `{items,total,page,limit}`. When `search` is set the other filters are ignored. |
 | Full snapshot | `GET /api/v1/offline/manifest` | `{suite, secrets, folders, types, syncedAt}`. Unpaginated. 403 when the admin disabled offline caching, 404 when no active suite. `syncedAt` is a server timestamp, not a cursor. Rows never use the blocked shape here. |
-| Secret CRUD | `GET/PUT/DELETE /api/v1/secrets/{id}`, `POST /api/v1/secrets` | Create takes `name` (required), `key` (required ciphertext), `url`, `typeId`, `folderId`, `login`, `additionalFields`; returns 201 with the row. `PUT` is a sparse patch: only fields present in the body change. A JSON `null` counts as left out (Nextcloud's `getParam`), so it changes nothing; `''` clears a field (`key` cannot be cleared). Last write wins. Delete returns `{"status":"deleted"}`. |
+| Secret CRUD | `GET/PUT/DELETE /api/v1/secrets/{id}`, `POST /api/v1/secrets` | Create takes `name` (required), `key` (required ciphertext), `url`, `typeId`, `folderId`, `login`, `additionalFields`; returns 201 with the row. `PUT` is a sparse patch: only fields present in the body change, `null` clears a field. Last write wins. Delete returns `{"status":"deleted"}`. |
 | Folders | `GET/POST /api/v1/folders`, `GET /api/v1/folders/{id}/children`, `PUT/DELETE /api/v1/folders/{id}` | Delete takes `?cascade=delete|move`. |
 | Types | `GET /api/v1/secret-types` | Types are rows, resolve `typeId` from here. |
 | Sends | `POST/GET /api/v1/sends`, `DELETE /api/v1/sends/{id}` | See payload below. |
