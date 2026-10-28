@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
@@ -164,7 +163,6 @@ class DirectShareRegistrarTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $delegationMapper,
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 			shareTargetMapper: $this->mapper,
 			grants: $grants,
 		);

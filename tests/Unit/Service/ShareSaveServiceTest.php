@@ -407,7 +407,6 @@ class ShareSaveServiceTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $delegations,
-			suiteMapper: $this->suites,
 			shareTargetMapper: $this->targets,
 			groupShareMapper: $groupShares,
 			groupManager: $groups,

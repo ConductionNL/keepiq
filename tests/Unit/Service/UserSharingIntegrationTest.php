@@ -152,7 +152,6 @@ class UserSharingIntegrationTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $secretMapper,
 			delegationMapper: $delegationMapper,
-			suiteMapper: $suiteMapper,
 		);
 
 		$copyFactory = new RecipientSecretCopyFactory(

@@ -642,12 +642,13 @@ describe('replay', () => {
 		expect(stored.size).toBe(1)
 	})
 
-	it('a write the share quarantine scan holds back fails with the server\'s words, and the queue goes on', async () => {
+	it("a write the share quarantine scan holds back fails with the server's words, and the queue goes on", async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { name: 'A' })
 		await secrets.createSecret({ name: 'B', key: 'v' })
 		goOnline()
-		const message = 'This share waits for the share quarantine scan and cannot be changed yet; ask an administrator to check that background jobs run'
+		const message =
+			'This share waits for the share quarantine scan and cannot be changed yet; ask an administrator to check that background jobs run'
 		vi.spyOn(axios, 'put').mockRejectedValueOnce(
 			httpError(409, { error: 'share_scan_pending', message }),
 		)
