@@ -560,9 +560,9 @@ Known limitation, stated rather than implied: an EXPIRED request remains `pendin
 - [ ] Users can create, rename, and delete their own (user-scoped) types
 - [ ] Admins can create, rename, and delete global types
 - [ ] Deleting a custom type reassigns its secrets to the `login` system type
-- [ ] URL, folder, login, and additional fields are optional
+- [ ] URL, folder, login, additional fields, TOTP seed, and passkeys are optional
 - [ ] Name, url, and folder_id are stored and returned in plain text
-- [ ] Key, login, and additional fields are stored encrypted and returned decrypted when master password is in session
+- [ ] Key, login, additional fields, TOTP seed, and passkeys are stored encrypted and returned decrypted when master password is in session
 - [ ] The app UI requires the master password to be in session before any secrets are accessible
 - [ ] The API returns only name, url, and folder_id when no AES key is in session (API-level contract)
 - [ ] Folders can be created, renamed, moved, and deleted
