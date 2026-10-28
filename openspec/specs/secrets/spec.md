@@ -83,7 +83,7 @@ The system MUST allow an authenticated user to create a secret with at minimum a
 
 #### Scenario: Create with all fields
 - GIVEN a user has an active EncryptionSuite and their master password is in session
-- WHEN they submit a secret with name, url, folder, key, login, and additional fields
+- WHEN they submit a secret with name, url, folder, key, login, additional fields, a TOTP seed, and passkeys
 - THEN all fields except name, url, and folder_id MUST be stored encrypted
 
 #### Scenario: Create in a folder

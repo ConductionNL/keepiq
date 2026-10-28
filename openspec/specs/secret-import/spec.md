@@ -4,14 +4,14 @@
 TBD - created by archiving change secret-import. Update Purpose after archive.
 ## Requirements
 ### Requirement: Client-Side Parsing and E2E Guarantee
-The system MUST parse import files entirely in the browser. The plaintext content of an import file MUST NEVER be transmitted to the server. Before any data is persisted, every sensitive field (key, login, additional_fields) MUST be encrypted in the browser with the owner's active EncryptionSuite public certificate, using the same WebCrypto encryption path as Create Secret. This preserves the encryption-suites spec guarantees: the server stores and receives only encrypted blobs, and no plaintext secret value ever exists server-side.
+The system MUST parse import files entirely in the browser. The plaintext content of an import file MUST NEVER be transmitted to the server. Before any data is persisted, every sensitive field (key, login, additional_fields, totp, passkeys) MUST be encrypted in the browser with the owner's active EncryptionSuite public certificate, using the same WebCrypto encryption path as Create Secret. This preserves the encryption-suites spec guarantees: the server stores and receives only encrypted blobs, and no plaintext secret value ever exists server-side.
 
 An import MUST only be possible while the vault is unlocked (the owner's CryptoKey is in the browser session per the encryption-suites Session Mechanism requirement). Parsed plaintext rows MUST be held only in JavaScript memory — never written to `localStorage`, `sessionStorage`, or IndexedDB — and MUST be discarded when the import wizard closes.
 
 #### Scenario: Plaintext never sent to server
 @e2e exclude Covered by the import-store vitest plaintext-never-in-request-body assertion + the ImportService envelope-validation PHPUnit; a Playwright DOM check cannot prove ciphertext-only payloads.
 - **WHEN** a user imports a file containing plaintext credentials
-- **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, and additional_fields
+- **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, additional_fields, totp, and passkeys
 - **AND** the plaintext-permitted fields in any request MUST be limited to name, url, type, and folder path — the same fields the secrets spec stores unencrypted
 
 #### Scenario: Import requires unlocked vault
