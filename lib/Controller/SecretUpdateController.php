@@ -73,10 +73,11 @@ class SecretUpdateController extends OCSController {
 
 	/**
 	 * Update a secret. Only the fields present in the request change: `name`,
-	 * `url`, `typeId`, `folderId`, the ciphertext `key`, `login` and
-	 * `additionalFields`, plus `mergedPending` (request-filled blobs the client
-	 * merged, keepiq#750) and `baseUpdatedAt` (the version an offline edit was
-	 * made from).
+	 * `url`, `typeId`, `folderId`, the ciphertext `key`, `login`, `additionalFields`,
+	 * `totp` and `passkeys`, plus `mergedPending` (request-filled blobs the client merged, keepiq#750)
+	 * and `baseUpdatedAt` (the version an offline edit was made from).
+	 * A field the request leaves out keeps its stored value, and an empty string clears it.
+	 * A JSON null counts as left out, as Nextcloud's getParam() reads it.
 	 *
 	 * @param string $id The secret ID
 	 *
@@ -151,8 +152,8 @@ class SecretUpdateController extends OCSController {
 
 	/**
 	 * The changes the request carries: each updatable field that is present
-	 * (an explicit null clears it), and the merge count and base version when
-	 * given.
+	 * (an empty string clears it; getParam() reads a JSON null as absent), and
+	 * the merge count and base version when given.
 	 *
 	 * @return array<string,mixed>
 	 *

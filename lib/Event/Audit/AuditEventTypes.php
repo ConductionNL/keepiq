@@ -259,6 +259,8 @@ final class AuditEventTypes {
 		'password',
 		'value',
 		'additionalFields',
+		'totp',
+		'passkeys',
 		'ciphertext',
 		'payload',
 	];

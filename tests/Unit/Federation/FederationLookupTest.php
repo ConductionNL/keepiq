@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Federation;
 
 use OCA\Keepiq\Controller\FederationController;
+use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
 use OCA\Keepiq\Service\FederationPartnerService;
@@ -71,6 +73,11 @@ class FederationLookupTest extends TestCase {
 
 	private LoggerInterface&MockObject $logger;
 
+	private FederationPartnerMapper&MockObject $partnerTable;
+
+	/** @var array<int,?string> The `valueFields` of every partner row written */
+	private array $partnerUpdates = [];
+
 	/**
 	 * The controller over the given partners.
 	 *
@@ -83,8 +90,15 @@ class FederationLookupTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
+		$this->partnerTable = $this->partnerMapper($partners);
+		$this->partnerTable->method('update')->willReturnCallback(
+			function (FederationPartner $partner): FederationPartner {
+				$this->partnerUpdates[] = $partner->getValueFields();
+				return $partner;
+			}
+		);
 		$service = new FederatedCertificateService(
-			new FederationPartnerService($this->partnerMapper($partners), $this->createMock(IClientService::class), $config),
+			new FederationPartnerService($this->partnerTable, $this->createMock(IClientService::class), $config),
 			new FederationRootService($this->caMapper()),
 			$this->createMock(ShareService::class),
 			$this->cloudIdManager(),
@@ -92,6 +106,7 @@ class FederationLookupTest extends TestCase {
 			$config,
 			$this->ocm,
 			$this->logger,
+			$this->partnerTable,
 		);
 		$session = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
@@ -141,9 +156,75 @@ class FederationLookupTest extends TestCase {
 				'certificate' => 'BOB',
 				'chain' => ['INT', 'ROOT'],
 				'partnerRootFingerprint' => str_repeat('ab', 32),
+				'valueFields' => [],
 			],
 			$response->getData()
 		);
+	}
+
+	/**
+	 * The lookup records the value fields the partner advertised, so a share it cannot hold is refused later,
+	 * and names them to the browser, which picks the payload for that partner. Unknown names are dropped.
+	 */
+	public function testRecordsTheValueFieldsAPartnerAdvertises(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$controller = $this->controller([$partner]);
+		$this->ocm->method('requestRemoteOcmEndpoint')->willReturn(
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'valueFields' => ['passkeys', 'future', 'totp']])
+		);
+
+		$response = $controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['cloudId', 'certificate', 'chain', 'partnerRootFingerprint', 'valueFields'], array_keys($response->getData()));
+		$this->assertSame(['totp', 'passkeys'], $response->getData()['valueFields']);
+		$this->assertSame('["totp","passkeys"]', $partner->getValueFields());
+		$this->assertSame(['["totp","passkeys"]'], $this->partnerUpdates);
+
+		// The same advertisement again writes nothing.
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertCount(1, $this->partnerUpdates);
+	}
+
+	/**
+	 * An older Keepiq advertises nothing: a partner that did before is recorded as holding none of the new fields,
+	 * and one that never did is not written at all.
+	 */
+	public function testAPartnerThatAdvertisesNothingIsRecordedAsOld(): void {
+		$downgraded = $this->partner('cloud.partner.example', true, false);
+		$downgraded->setValueFields('["totp","passkeys"]');
+		$controller = $this->controller([$downgraded]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
+
+		$response = $controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame([], $response->getData()['valueFields']);
+		$this->assertNull($downgraded->getValueFields());
+		$this->assertSame([null], $this->partnerUpdates);
+
+		$this->partnerUpdates = [];
+		$old = $this->partner('cloud.partner.example', true, false);
+		$controller = $this->controller([$old]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertNull($old->getValueFields());
+		$this->assertSame([], $this->partnerUpdates);
+	}
+
+	public function testAFailedLookupRecordsNothing(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$partner->setValueFields('["totp","passkeys"]');
+		$controller = $this->controller([$partner]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(404, ['message' => 'Unknown recipient']));
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertSame('["totp","passkeys"]', $partner->getValueFields());
+		$this->assertSame([], $this->partnerUpdates);
 	}
 
 	public function testSendsNothingToAnInstanceThatIsNoPartner(): void {

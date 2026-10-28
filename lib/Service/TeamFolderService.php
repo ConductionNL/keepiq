@@ -450,7 +450,8 @@ class TeamFolderService {
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param array<int,array<string,mixed>> $shares Rows of sourceSecretId, targetUserId,
 	 *                                               encryptedKey, encryptedLogin,
-	 *                                               encryptedAdditionalFields
+	 *                                               encryptedAdditionalFields, encryptedTotp,
+	 *                                               encryptedPasskeys
 	 * @param string $userId The caller (the owner or a manager)
 	 *
 	 * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}

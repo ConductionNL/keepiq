@@ -144,6 +144,8 @@ class OfflineControllerTest extends TestCase {
 		$secret->setOwnerType('user');
 		$secret->setOwnerId('alice');
 		$secret->setKey('RSA-CIPHERTEXT');
+		$secret->setTotp('TOTP-CIPHERTEXT');
+		$secret->setPasskeys('PASSKEYS-CIPHERTEXT');
 		$this->secretMapper->expects($this->once())->method('findByOwner')
 			->with('user', 'alice')->willReturn([$secret]);
 
@@ -162,6 +164,8 @@ class OfflineControllerTest extends TestCase {
 		$this->assertSame('ENVELOPE-BLOB', $data['suite']['privateKey']);
 		$this->assertCount(1, $data['secrets']);
 		$this->assertSame('RSA-CIPHERTEXT', $data['secrets'][0]['key']);
+		$this->assertSame('TOTP-CIPHERTEXT', $data['secrets'][0]['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $data['secrets'][0]['passkeys']);
 		$this->assertCount(1, $data['folders']);
 		$this->assertArrayHasKey('syncedAt', $data);
 	}//end testManifestReturnsOwnerScopedCiphertextSnapshot()

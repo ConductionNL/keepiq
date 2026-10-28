@@ -52,13 +52,17 @@ class SecretUpdateControllerTest extends TestCase {
 	 *
 	 * @param array<string,mixed> $params The request parameters
 	 * @param SecretService|null $service A service to use instead of the mock
+	 * @param bool $nextcloudNull Whether getParam() reads a null as absent, as Nextcloud's Request does
 	 *
 	 * @return SecretUpdateController
 	 */
-	private function controller(array $params, ?SecretService $service = null): SecretUpdateController {
+	private function controller(array $params, ?SecretService $service = null, bool $nextcloudNull = false): SecretUpdateController {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParam')->willReturnCallback(
-			static fn (string $name, $default = null) => array_key_exists($name, $params) ? $params[$name] : $default
+			static fn (string $name, $default = null) => match (true) {
+				$nextcloudNull === true => $params[$name] ?? $default,
+				default => array_key_exists($name, $params) ? $params[$name] : $default,
+			}
 		);
 		$this->secretService = $this->createMock(SecretService::class);
 		$user = $this->createMock(IUser::class);
@@ -96,6 +100,27 @@ class SecretUpdateControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
 	}//end testForwardsOnlyThePresentFields()
+
+	/**
+	 * With Nextcloud's getParam(), which reads a JSON null as absent, a null
+	 * totp or passkeys leaves the stored value untouched like a left-out one,
+	 * and an empty string is what clears it.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyTotpOrPasskeysClearsAndANullOneIsLeftOut(): void {
+		$controller = $this->controller(['totp' => 'TOTP-CIPHER', 'passkeys' => ''], nextcloudNull: true);
+		$this->secretService->expects($this->once())->method('update')
+			->with('s-1', ['totp' => 'TOTP-CIPHER', 'passkeys' => ''], 'alice')
+			->willReturn($this->secret());
+		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
+
+		$controller = $this->controller(['key' => 'NEW-CIPHER', 'totp' => null, 'passkeys' => null], nextcloudNull: true);
+		$this->secretService->expects($this->once())->method('update')
+			->with('s-1', ['key' => 'NEW-CIPHER'], 'alice')
+			->willReturn($this->secret());
+		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
+	}//end testAnEmptyTotpOrPasskeysClearsAndANullOneIsLeftOut()
 
 	/**
 	 * A stale base answers 409 with the current row at once; the update is

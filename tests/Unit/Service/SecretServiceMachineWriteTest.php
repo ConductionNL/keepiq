@@ -481,6 +481,29 @@ class SecretServiceMachineWriteTest extends TestCase {
 	}//end testUpdateByApplicationNoContentChangeIsNotVersioned()
 
 	/**
+	 * An in-process caller that passes `totp` or `passkeys` gets neither name into the audit.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationAuditNamesNeitherTotpNorPasskeys(): void {
+		$audits = [];
+		$snapshots = [];
+		$service = $this->recordingService($audits, $snapshots);
+		$this->mapper->method('findById')->willReturn($this->appSecret('s1', 'app-1'));
+
+		$service->updateByApplication(
+			id: 's1',
+			data: ['name' => 'token', 'totp' => 'TOTP-CIPHER', 'login' => 'bot', 'passkeys' => 'PASSKEYS-CIPHER'],
+			applicationId: 'app-1'
+		);
+
+		$this->assertSame(['name', 'login'], $audits[0]->getMetadata()['changedFields']);
+		$entry = json_encode([$audits[0]->getObjectName(), $audits[0]->getMetadata()]);
+		$this->assertStringNotContainsString('totp', $entry);
+		$this->assertStringNotContainsString('passkeys', $entry);
+	}//end testUpdateByApplicationAuditNamesNeitherTotpNorPasskeys()
+
+	/**
 	 * A refused field leaves the row unwritten: validation happens before
 	 * the update, so a half-applied write cannot reach the database.
 	 *

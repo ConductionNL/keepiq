@@ -87,7 +87,8 @@ class TeamFolderShareService {
 	 * @param TeamFolder $teamFolder The team folder being fanned out
 	 * @param array<int,array<string,mixed>> $shares Rows of sourceSecretId, targetUserId,
 	 *                                               encryptedKey, encryptedLogin,
-	 *                                               encryptedAdditionalFields
+	 *                                               encryptedAdditionalFields, encryptedTotp,
+	 *                                               encryptedPasskeys
 	 * @param array<string,bool> $subtreeSecretIds The secret ids inside the folder subtree
 	 * @param string $userId The caller (the folder owner)
 	 *
@@ -328,6 +329,8 @@ class TeamFolderShareService {
 			encryptedKey: $encryptedKey,
 			encryptedLogin: $this->nullableString(value: $row['encryptedLogin'] ?? null),
 			encryptedExtras: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
+			encryptedTotp: $this->nullableString(value: $row['encryptedTotp'] ?? null),
+			encryptedPasskeys: $this->nullableString(value: $row['encryptedPasskeys'] ?? null),
 		);
 		if ($copy === null) {
 			// Recipient without an active suite — skipped silently.

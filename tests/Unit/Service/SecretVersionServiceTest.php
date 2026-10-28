@@ -124,11 +124,16 @@ class SecretVersionServiceTest extends TestCase {
 			}
 		);
 
-		$version = $this->service->snapshot(preUpdate: $this->ownedSecret(), actorType: 'user', actorId: 'alice');
+		$head = $this->ownedSecret();
+		$head->setTotp('HEAD_TOTP_CIPHERTEXT');
+		$head->setPasskeys('HEAD_PASSKEYS_CIPHERTEXT');
+		$version = $this->service->snapshot(preUpdate: $head, actorType: 'user', actorId: 'alice');
 
 		$this->assertSame(3, $version->getVersionNumber());
 		$this->assertSame('HEAD_CIPHERTEXT', $inserted->getKey());
 		$this->assertSame('HEAD_LOGIN_CIPHERTEXT', $inserted->getLogin());
+		$this->assertSame('HEAD_TOTP_CIPHERTEXT', $inserted->getTotp());
+		$this->assertSame('HEAD_PASSKEYS_CIPHERTEXT', $inserted->getPasskeys());
 		$this->assertSame('suite-1', $inserted->getEncryptionSuiteId());
 		$this->assertSame('user', $inserted->getActorType());
 	}//end testSnapshotCopiesCiphertextVerbatim()
@@ -228,15 +233,101 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testRestoreSnapshotsHeadThenSetsFields()
 
 	/**
+	 * A version holding totp and passkeys ciphertext restores both onto the head.
+	 *
+	 * @return void
+	 */
+	public function testARestoreSetsTheVersionsTotpAndPasskeys(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+		$head->setTotp('HEAD_TOTP');
+		$head->setPasskeys('HEAD_PASSKEYS');
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('OLD_TOTP', $restored->getTotp());
+		$this->assertSame('OLD_PASSKEYS', $restored->getPasskeys());
+	}//end testARestoreSetsTheVersionsTotpAndPasskeys()
+
+	/**
+	 * A version made before totp and passkeys existed holds null for both;
+	 * restoring it keeps the head's values instead of clearing them.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAVersionWithoutTotpOrPasskeysKeepsTheHeads(): void {
+		$head = $this->restorableHead();
+		$head->setTotp('HEAD_TOTP');
+		$head->setPasskeys('HEAD_PASSKEYS');
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('OLD_CIPHERTEXT', $restored->getKey());
+		$this->assertSame('HEAD_TOTP', $restored->getTotp());
+		$this->assertSame('HEAD_PASSKEYS', $restored->getPasskeys());
+	}//end testARestoreOfAVersionWithoutTotpOrPasskeysKeepsTheHeads()
+
+	/**
+	 * A version holding an empty string for totp or passkeys holds no value either.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAVersionWithEmptyTotpOrPasskeysKeepsTheHeads(): void {
+		$head = $this->restorableHead(totp: '', passkeys: '');
+		$head->setTotp('HEAD_TOTP');
+		$head->setPasskeys('HEAD_PASSKEYS');
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('HEAD_TOTP', $restored->getTotp());
+		$this->assertSame('HEAD_PASSKEYS', $restored->getPasskeys());
+	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysKeepsTheHeads()
+
+	/**
+	 * A change of only totp or passkeys is a revision, and a row holding only
+	 * those values still counts as holding a value.
+	 *
+	 * @return void
+	 */
+	public function testATotpOrPasskeysChangeIsARevision(): void {
+		$before = new Secret();
+		$before->setId('sec-1');
+		$before->setTotp('TOTP');
+		foreach (['setTotp' => 'NEW_TOTP', 'setPasskeys' => 'NEW_PASSKEYS'] as $setter => $value) {
+			$after = clone $before;
+			$after->$setter($value);
+			$this->assertTrue($this->service->fieldsChanged(before: $before, after: $after));
+		}
+
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$after = clone $before;
+		$after->setPasskeys('NEW_PASSKEYS');
+		$this->assertNotNull(
+			$this->service->snapshotIfChanged(preUpdate: $before, after: $after, actorType: 'user', actorId: 'alice')
+		);
+		$this->assertFalse($this->service->fieldsChanged(before: $before, after: clone $before));
+	}//end testATotpOrPasskeysChangeIsARevision()
+
+	/**
 	 * A head at 10:00:05 with version v-1 of it to restore.
+	 *
+	 * @param string|null $totp The version's totp ciphertext
+	 * @param string|null $passkeys The version's passkeys ciphertext
 	 *
 	 * @return Secret The head
 	 */
-	private function restorableHead(): Secret {
+	private function restorableHead(?string $totp = null, ?string $passkeys = null): Secret {
 		$version = new SecretVersion();
 		$version->setId('v-1');
 		$version->setSecretId('sec-1');
 		$version->setKey('OLD_CIPHERTEXT');
+		$version->setTotp($totp);
+		$version->setPasskeys($passkeys);
 		$version->setEncryptionSuiteId('suite-1');
 		$this->mapper->method('findById')->willReturn($version);
 
@@ -263,7 +354,7 @@ class SecretVersionServiceTest extends TestCase {
 		$head = $this->restorableHead();
 		$guard = $this->createMock(ViewOnlyCopyGuard::class);
 		$guard->expects($this->once())->method('assertMayChangeValue')
-			->with($head, ['key', 'login', 'additionalFields'], 'alice')
+			->with($head, ['key', 'login', 'additionalFields', 'totp', 'passkeys'], 'alice')
 			->willThrowException(new ViewOnlyCopyException());
 		$service = new SecretVersionService(
 			mapper: $this->mapper,

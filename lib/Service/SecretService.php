@@ -123,7 +123,7 @@ class SecretService {
 	 *
 	 * @var string[]
 	 */
-	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'];
+	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'];
 
 	/**
 	 * The suite statuses that block access to encrypted fields.
@@ -306,6 +306,8 @@ class SecretService {
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
+		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
 		$secret->setEncryptionSuiteId($suite->getId());
 		$secret->setOwnerType('user');
 		$secret->setOwnerId($userId);
@@ -641,7 +643,8 @@ class SecretService {
 		$secret->setUpdatedAt($now);
 		$this->mapper->update($secret);
 
-		$changedFields = array_keys($data);
+		// This surface does not carry them; their names never reach the audit.
+		$changedFields = array_values(array_diff(array_keys($data), ['totp', 'passkeys']));
 		if ($keyChanged === true) {
 			$changedFields = ['key'];
 		}
@@ -1010,13 +1013,21 @@ class SecretService {
 			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
+		if (array_key_exists('totp', $data) === true) {
+			$secret->setTotp($this->nullableString(value: $data['totp']));
+		}
+
+		if (array_key_exists('passkeys', $data) === true) {
+			$secret->setPasskeys($this->nullableString(value: $data['passkeys']));
+		}
+
 		$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $base, savedAt: $savedAt);
 
 		// Recipients at partner organisations follow a new name or URL
 		// (sharing-federated-recipients 4.5). A new value reaches them through
 		// the share-save, which notifies them itself.
 		if ($this->federatedShares !== null
-			&& array_intersect(['key', 'login', 'additionalFields'], array_keys($data)) === []
+			&& array_intersect(Secret::VALUE_FIELDS, array_keys($data)) === []
 			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
 		) {
 			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $userId);
@@ -1553,6 +1564,8 @@ class SecretService {
 			'key' => $secret->getKey(),
 			'login' => $secret->getLogin(),
 			'additionalFields' => $secret->getAdditionalFields(),
+			'totp' => $secret->getTotp(),
+			'passkeys' => $secret->getPasskeys(),
 		];
 
 		$changed = [];

@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -469,6 +470,8 @@ class MigrationWorkService {
 				'key' => $secret->getKey(),
 				'login' => $secret->getLogin(),
 				'additionalFields' => $secret->getAdditionalFields(),
+				'totp' => $secret->getTotp(),
+				'passkeys' => $secret->getPasskeys(),
 			];
 		}
 
@@ -557,6 +560,8 @@ class MigrationWorkService {
 						'key' => $version->getKey(),
 						'login' => $version->getLogin(),
 						'additionalFields' => $version->getAdditionalFields(),
+						'totp' => $version->getTotp(),
+						'passkeys' => $version->getPasskeys(),
 					];
 					continue;
 				}
@@ -580,11 +585,14 @@ class MigrationWorkService {
 	 * @param string $key The new key ciphertext
 	 * @param string|null $login The new login ciphertext
 	 * @param string|null $additionalFields The new additional-fields ciphertext
+	 * @param string|null $totp The new TOTP ciphertext, null when not sent
+	 * @param string|null $passkeys The new passkeys ciphertext, null when not sent
 	 *
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the row is not this migration's to touch
+	 * @throws FieldsNotReencryptedException When a stored value field was not re-encrypted
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
@@ -595,6 +603,8 @@ class MigrationWorkService {
 		string $key,
 		?string $login,
 		?string $additionalFields,
+		?string $totp = null,
+		?string $passkeys = null,
 	): Secret {
 		$secret = $this->requireOwnedSecretOnOldSuite(
 			migration: $migration,
@@ -602,11 +612,14 @@ class MigrationWorkService {
 			secretId: $secretId
 		);
 
+		$this->requireStoredFieldsReencrypted(record: $secret, totp: $totp, passkeys: $passkeys);
+
 		$this->db->beginTransaction();
 		try {
 			$secret->setKey($key);
 			$secret->setLogin($login);
 			$secret->setAdditionalFields($additionalFields);
+			$this->applyOptionalFields(record: $secret, totp: $totp, passkeys: $passkeys);
 			$secret->setEncryptionSuiteId($migration->getNewSuiteId());
 
 			// The migration re-seals the SAME value under a new key; it does
@@ -645,11 +658,14 @@ class MigrationWorkService {
 	 * @param string $key The new key ciphertext
 	 * @param string|null $login The new login ciphertext
 	 * @param string|null $additionalFields The new additional-fields ciphertext
+	 * @param string|null $totp The new TOTP ciphertext, null when not sent
+	 * @param string|null $passkeys The new passkeys ciphertext, null when not sent
 	 *
 	 * @return SecretVersion
 	 *
 	 * @throws NotFoundException When the version or its secret does not exist
 	 * @throws ForbiddenException When the row is not this migration's to touch
+	 * @throws FieldsNotReencryptedException When a stored value field was not re-encrypted
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
@@ -660,6 +676,8 @@ class MigrationWorkService {
 		string $key,
 		?string $login,
 		?string $additionalFields,
+		?string $totp = null,
+		?string $passkeys = null,
 	): SecretVersion {
 		$version = $this->requireOwnedVersionOnOldSuite(
 			migration: $migration,
@@ -667,11 +685,14 @@ class MigrationWorkService {
 			versionId: $versionId
 		);
 
+		$this->requireStoredFieldsReencrypted(record: $version, totp: $totp, passkeys: $passkeys);
+
 		$this->db->beginTransaction();
 		try {
 			$version->setKey($key);
 			$version->setLogin($login);
 			$version->setAdditionalFields($additionalFields);
+			$this->applyOptionalFields(record: $version, totp: $totp, passkeys: $passkeys);
 			$version->setEncryptionSuiteId($migration->getNewSuiteId());
 
 			$updated = $this->versionMapper->update($version);
@@ -903,6 +924,64 @@ class MigrationWorkService {
 
 		return $dropped;
 	}//end dropVersionsBeyondWindow()
+
+	/**
+	 * Refuse a commit that leaves a stored optional value field behind.
+	 *
+	 * The record is re-pointed to the new suite as a whole, so a field the client did not send would stay readable only under the revoked key.
+	 * A not-sent field is fine when the record holds no value for it, which is what keeps clients that predate these fields working.
+	 * An empty string counts as not sent.
+	 *
+	 * @param Secret|SecretVersion $record The record about to be committed
+	 * @param string|null $totp The TOTP ciphertext from the commit, null when not sent
+	 * @param string|null $passkeys The passkeys ciphertext from the commit, null when not sent
+	 *
+	 * @return void
+	 *
+	 * @throws FieldsNotReencryptedException When a stored field has no re-encrypted counterpart
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	private function requireStoredFieldsReencrypted(Secret|SecretVersion $record, ?string $totp, ?string $passkeys): void {
+		$checks = [
+			'totp' => [$record->getTotp(), $totp],
+			'passkeys' => [$record->getPasskeys(), $passkeys],
+		];
+
+		$missing = [];
+		foreach ($checks as $field => [$stored, $sent]) {
+			if ($stored !== null && $stored !== '' && ($sent === null || $sent === '')) {
+				$missing[] = $field;
+			}
+		}
+
+		if ($missing !== []) {
+			throw (new FieldsNotReencryptedException(
+				message: 'Stored value fields were not re-encrypted: ' . implode(', ', $missing)
+			))->withFields($missing);
+		}
+	}//end requireStoredFieldsReencrypted()
+
+	/**
+	 * Write the optional value fields the commit carried; leave the others as stored. An empty string counts as not sent.
+	 *
+	 * @param Secret|SecretVersion $record The record being committed
+	 * @param string|null $totp The TOTP ciphertext from the commit, null when not sent
+	 * @param string|null $passkeys The passkeys ciphertext from the commit, null when not sent
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	private function applyOptionalFields(Secret|SecretVersion $record, ?string $totp, ?string $passkeys): void {
+		if ($totp !== null && $totp !== '') {
+			$record->setTotp($totp);
+		}
+
+		if ($passkeys !== null && $passkeys !== '') {
+			$record->setPasskeys($passkeys);
+		}
+	}//end applyOptionalFields()
 
 	/**
 	 * Raise `possibly_compromised_at`, idempotently.

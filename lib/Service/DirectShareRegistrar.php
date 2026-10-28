@@ -103,7 +103,7 @@ class DirectShareRegistrar {
 	 *
 	 * @param string $userId The sharing owner
 	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey,
-	 *   encryptedLogin?, encryptedAdditionalFields?, groupShareId?, useOnly?, expiresAt?}
+	 *   encryptedLogin?, encryptedAdditionalFields?, encryptedTotp?, encryptedPasskeys?, groupShareId?, useOnly?, expiresAt?}
 	 *
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *
@@ -314,6 +314,8 @@ class DirectShareRegistrar {
 				encryptedKey: $encryptedKey,
 				encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
 				encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+				encryptedTotp: $this->optionalString(value: ($row['encryptedTotp'] ?? null)),
+				encryptedPasskeys: $this->optionalString(value: ($row['encryptedPasskeys'] ?? null)),
 			);
 			if ($copy === null) {
 				$this->connection?->rollBack();

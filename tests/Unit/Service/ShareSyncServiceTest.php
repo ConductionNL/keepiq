@@ -161,6 +161,38 @@ class ShareSyncServiceTest extends TestCase {
 	}
 
 	/**
+	 * The TOTP seed and passkeys are written like the other value fields:
+	 * a sent value is set, a null one cleared, an absent one left as it is.
+	 *
+	 * @return void
+	 */
+	public function testTheTotpAndPasskeysAreWrittenOnlyWhenSent(): void {
+		$source = $this->secret('src-1', 'alice');
+		$source->setTotp('OLD-T');
+		$source->setPasskeys('OLD-P');
+		$copy = $this->secret('copy-held', 'bob');
+		$copy->setTotp('OLD-T-BOB');
+		$copy->setPasskeys('OLD-P-BOB');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-held', $copy]]);
+		$this->mapper->method('findBySourceSecret')->willReturn([$this->row('copy-held', 'bob')]);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		$this->sync->writeCopyBlobs(
+			source: $source,
+			updates: [
+				['secretId' => 'src-1', 'key' => 'K'],
+				['secretId' => 'copy-held', 'totp' => 'T-BOB', 'passkeys' => null],
+			],
+			allowedIds: ['src-1' => true, 'copy-held' => true],
+			savedAt: new DateTime('2026-10-21T00:00:00+00:00'),
+			writerId: 'alice'
+		);
+
+		$this->assertSame(['OLD-T', 'OLD-P'], [$source->getTotp(), $source->getPasskeys()]);
+		$this->assertSame(['T-BOB', null], [$copy->getTotp(), $copy->getPasskeys()]);
+	}
+
+	/**
 	 * A copy named by the update but already deleted is silently skipped.
 	 *
 	 * @return void

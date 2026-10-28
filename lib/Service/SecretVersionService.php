@@ -105,6 +105,8 @@ class SecretVersionService {
 		$version->setKey($preUpdate->getKey());
 		$version->setLogin($preUpdate->getLogin());
 		$version->setAdditionalFields($preUpdate->getAdditionalFields());
+		$version->setTotp($preUpdate->getTotp());
+		$version->setPasskeys($preUpdate->getPasskeys());
 		$version->setEncryptionSuiteId($preUpdate->getEncryptionSuiteId());
 		$version->setActorType($actorType);
 		$version->setActorId($actorId);
@@ -132,7 +134,9 @@ class SecretVersionService {
 	public function snapshotIfChanged(Secret $preUpdate, Secret $after, string $actorType, string $actorId): ?SecretVersion {
 		$hadValues = (string)$preUpdate->getKey() !== ''
 			|| (string)$preUpdate->getLogin() !== ''
-			|| (string)$preUpdate->getAdditionalFields() !== '';
+			|| (string)$preUpdate->getAdditionalFields() !== ''
+			|| (string)$preUpdate->getTotp() !== ''
+			|| (string)$preUpdate->getPasskeys() !== '';
 		if ($hadValues === false || $this->fieldsChanged(before: $preUpdate, after: $after) === false) {
 			return null;
 		}
@@ -159,7 +163,9 @@ class SecretVersionService {
 			|| $before->getTypeId() !== $after->getTypeId()
 			|| $before->getKey() !== $after->getKey()
 			|| $before->getLogin() !== $after->getLogin()
-			|| $before->getAdditionalFields() !== $after->getAdditionalFields();
+			|| $before->getAdditionalFields() !== $after->getAdditionalFields()
+			|| $before->getTotp() !== $after->getTotp()
+			|| $before->getPasskeys() !== $after->getPasskeys();
 	}//end fieldsChanged()
 
 	/**
@@ -273,6 +279,15 @@ class SecretVersionService {
 		$secret->setKey($version->getKey());
 		$secret->setLogin($version->getLogin());
 		$secret->setAdditionalFields($version->getAdditionalFields());
+		// A version made before these fields existed holds null (or an empty string); the head keeps its values.
+		if (in_array($version->getTotp(), [null, ''], true) === false) {
+			$secret->setTotp($version->getTotp());
+		}
+
+		if (in_array($version->getPasskeys(), [null, ''], true) === false) {
+			$secret->setPasskeys($version->getPasskeys());
+		}
+
 		$secret->setKeyUpdatedAt(new DateTime());
 		$secret->setUpdatedAt($savedAt);
 		$this->secretMapper->update($secret);

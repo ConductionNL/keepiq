@@ -126,7 +126,8 @@ class ShareSyncService {
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
 	 *                                                      secretId, key, login,
-	 *                                                      additionalFields, updatedAtCheck
+	 *                                                      additionalFields, totp, passkeys,
+	 *                                                      updatedAtCheck
 	 * @param string $expectedUpdatedAt The owner-side expected ISO timestamp for optimistic locking
 	 * @param string $userId The requesting user
 	 *
@@ -508,22 +509,21 @@ class ShareSyncService {
 			$copy->setKey((string)$update['key']);
 		}
 
+		// An absent field stays as it is; a null one is cleared.
 		if (array_key_exists('login', $update) === true) {
-			$login = null;
-			if ($update['login'] !== null) {
-				$login = (string)$update['login'];
-			}
-
-			$copy->setLogin($login);
+			$copy->setLogin($this->nullableBlob(value: $update['login']));
 		}
 
 		if (array_key_exists('additionalFields', $update) === true) {
-			$additionalFields = null;
-			if ($update['additionalFields'] !== null) {
-				$additionalFields = (string)$update['additionalFields'];
-			}
+			$copy->setAdditionalFields($this->nullableBlob(value: $update['additionalFields']));
+		}
 
-			$copy->setAdditionalFields($additionalFields);
+		if (array_key_exists('totp', $update) === true) {
+			$copy->setTotp($this->nullableBlob(value: $update['totp']));
+		}
+
+		if (array_key_exists('passkeys', $update) === true) {
+			$copy->setPasskeys($this->nullableBlob(value: $update['passkeys']));
 		}
 
 		$copy->setUpdatedAt(clone $savedAt);
@@ -535,4 +535,19 @@ class ShareSyncService {
 			$copy->setPossiblyCompromisedAt(null);
 		}
 	}//end applyRecipientBlob()
+
+	/**
+	 * A blob as a string, or null when it is null.
+	 *
+	 * @param mixed $value The blob
+	 *
+	 * @return string|null
+	 */
+	private function nullableBlob(mixed $value): ?string {
+		if ($value === null) {
+			return null;
+		}
+
+		return (string)$value;
+	}//end nullableBlob()
 }//end class

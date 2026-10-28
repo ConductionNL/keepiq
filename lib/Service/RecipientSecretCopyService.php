@@ -71,6 +71,8 @@ class RecipientSecretCopyService {
 	 * @param string $encryptedKey The RSA-encrypted key blob
 	 * @param string|null $encryptedLogin The RSA-encrypted login blob
 	 * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
+	 * @param string|null $encryptedTotp The RSA-encrypted TOTP seed blob
+	 * @param string|null $encryptedPasskeys The RSA-encrypted passkeys blob
 	 *
 	 * @return Secret|null Null when the source is gone or the recipient has no active suite
 	 *
@@ -82,6 +84,8 @@ class RecipientSecretCopyService {
 		string $encryptedKey,
 		?string $encryptedLogin,
 		?string $encryptedExtras,
+		?string $encryptedTotp = null,
+		?string $encryptedPasskeys = null,
 	): ?Secret {
 		try {
 			$source = $this->secretMapper->findById($sourceSecretId);
@@ -112,6 +116,8 @@ class RecipientSecretCopyService {
 		$copy->setKey($encryptedKey);
 		$copy->setLogin($encryptedLogin);
 		$copy->setAdditionalFields($encryptedExtras);
+		$copy->setTotp($encryptedTotp);
+		$copy->setPasskeys($encryptedPasskeys);
 		$copy->setEncryptionSuiteId($suite->getId());
 		$copy->setOwnerType('user');
 		$copy->setOwnerId($targetUserId);

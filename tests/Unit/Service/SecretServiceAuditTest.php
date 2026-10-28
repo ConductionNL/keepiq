@@ -221,4 +221,47 @@ class SecretServiceAuditTest extends TestCase {
 		$this->assertCount(1, $created);
 		$this->assertSame('alice', array_values($created)[0]->getActorId());
 	}//end testCreateEmitsSecretCreated()
+
+	/**
+	 * Neither totp nor passkeys is named in an audit event, nor does their
+	 * ciphertext reach one, on create or update (keepiq#1325).
+	 *
+	 * @return void
+	 */
+	public function testTotpAndPasskeysNeverReachTheAudit(): void {
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->makeSuite());
+		$this->mapper->method('findById')->willReturn($this->makeSecret());
+
+		$events = [];
+		$this->dispatcher->method('dispatchTyped')->willReturnCallback(
+			function (AuditEvent $event) use (&$events): void {
+				$events[] = $event;
+			}
+		);
+
+		$this->service->create(
+			data: ['name' => 'New', 'key' => 'CIPHER', 'totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'],
+			userId: 'alice',
+		);
+		$this->service->update(
+			id: 's-1',
+			data: ['name' => 'Renamed', 'key' => 'NEW-CIPHER', 'totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'],
+			userId: 'alice',
+		);
+
+		$updated = array_values(
+			array_filter(
+				$events,
+				static fn (AuditEvent $e): bool => $e->getEventType() === AuditEventTypes::SECRET_UPDATED
+			)
+		);
+		$this->assertCount(1, $updated);
+		$this->assertSame(['name', 'key'], $updated[0]->getMetadata()['changedFields']);
+		foreach ($events as $event) {
+			$encoded = json_encode($event->getMetadata());
+			foreach (['totp', 'passkeys', 'TOTP-CIPHER', 'PASSKEYS-CIPHER'] as $banned) {
+				$this->assertStringNotContainsString($banned, (string)$encoded);
+			}
+		}
+	}//end testTotpAndPasskeysNeverReachTheAudit()
 }//end class

@@ -176,7 +176,7 @@ class SecretController extends OCSController {
 	}//end show()
 
 	/**
-	 * Create a secret. The key/login/additionalFields arrive as ciphertext.
+	 * Create a secret. The key, login, additionalFields, totp and passkeys arrive as ciphertext.
 	 *
 	 * @param string $name The plaintext name
 	 * @param string $key The RSA-encrypted key blob (base64)
@@ -187,12 +187,17 @@ class SecretController extends OCSController {
 	 * @param string|null $additionalFields The RSA-encrypted additional fields blob
 	 * @param string|null $ownerType The owner type (null = user; 'application' for app-owned)
 	 * @param string|null $ownerId The owner ID (required when ownerType=application)
+	 * @param string|null $totp The RSA-encrypted TOTP seed blob; refused for an application-owned secret
+	 * @param string|null $passkeys The RSA-encrypted passkeys blob; refused for an application-owned secret
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
+	 *   route's request body, bound by the framework one by one.
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -205,6 +210,8 @@ class SecretController extends OCSController {
 		?string $additionalFields = null,
 		?string $ownerType = null,
 		?string $ownerId = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -225,6 +232,8 @@ class SecretController extends OCSController {
 					'folderId' => $folderId,
 					'login' => $login,
 					'additionalFields' => $additionalFields,
+					'totp' => $totp,
+					'passkeys' => $passkeys,
 				],
 				userId: $userId
 			);
@@ -282,6 +291,8 @@ class SecretController extends OCSController {
 	 * @param string $userId The writing user
 	 *
 	 * @return \OCA\Keepiq\Db\Secret
+	 *
+	 * @throws InvalidArgumentException When an application-owned secret is sent a totp or passkeys value
 	 */
 	private function createOwnedSecret(
 		?string $ownerType,
@@ -290,6 +301,13 @@ class SecretController extends OCSController {
 		string $userId,
 	): \OCA\Keepiq\Db\Secret {
 		if ($ownerType === 'application') {
+			// The application path does not store these fields; refuse rather than drop them.
+			if ($data['totp'] !== null || $data['passkeys'] !== null) {
+				throw new InvalidArgumentException(
+					message: 'totp and passkeys are not supported when ownerType=application'
+				);
+			}
+
 			return $this->secretService->createForApplication(
 				data: $data,
 				applicationId: $ownerId,

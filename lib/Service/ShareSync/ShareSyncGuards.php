@@ -282,15 +282,17 @@ class ShareSyncGuards {
 
 	/**
 	 * Whether an update row carries ciphertext for its copy: a non-empty key,
-	 * or a login or additional fields.
+	 * or any other value field.
 	 *
 	 * @param array<string,string|null> $update The blob row
 	 *
 	 * @return bool
 	 */
 	private function carriesValue(array $update): bool {
-		return (isset($update['key']) === true && $update['key'] !== '')
-			|| array_key_exists('login', $update) === true
-			|| array_key_exists('additionalFields', $update) === true;
+		if (isset($update['key']) === true && $update['key'] !== '') {
+			return true;
+		}
+
+		return array_intersect(array_diff(Secret::VALUE_FIELDS, ['key']), array_keys($update)) !== [];
 	}//end carriesValue()
 }//end class

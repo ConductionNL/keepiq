@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveHistory;
@@ -152,6 +153,11 @@ class ShareSaveService {
 		}
 
 		$request->assertConsistent(entries: $entries);
+		$patch = (array)$request->patch;
+		if ($version !== null) {
+			[$patch, $entries] = $request->restoring(version: $version, entries: $entries);
+		}
+
 		$this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
 
 		$savedAt = $this->savedAt(path: $path, request: $request);
@@ -161,6 +167,7 @@ class ShareSaveService {
 				fn: fn (): array => $this->write(
 					path: $path,
 					request: $request,
+					patch: $patch,
 					entries: $entries,
 					userId: $userId,
 					savedAt: $savedAt,
@@ -271,6 +278,7 @@ class ShareSaveService {
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveRequest $request The request
+	 * @param array<string,mixed> $patch The patch of the row, as a restore leaves it
 	 * @param ShareSaveEntries $entries The lists, staged ones included
 	 * @param string $userId The caller
 	 * @param DateTime $savedAt The version every written row gets
@@ -281,6 +289,7 @@ class ShareSaveService {
 	private function write(
 		ShareSavePath $path,
 		ShareSaveRequest $request,
+		array $patch,
 		ShareSaveEntries $entries,
 		string $userId,
 		DateTime $savedAt,
@@ -299,6 +308,7 @@ class ShareSaveService {
 		);
 		$federatedRows = $this->writePartners(
 			path: $path,
+			patch: $patch,
 			entries: $entries,
 			required: $required['federated'],
 			userId: $userId,
@@ -309,7 +319,7 @@ class ShareSaveService {
 		// snapshot, policy checks and audit are the ones every edit gets.
 		$secret = $this->secrets->update(
 			id: $path->row->getId(),
-			data: (array)$request->patch,
+			data: $patch,
 			userId: $userId,
 			savedAt: $savedAt
 		);
@@ -337,6 +347,7 @@ class ShareSaveService {
 	 * checked again, which now finds them incomplete.
 	 *
 	 * @param ShareSavePath $path The path
+	 * @param array<string,mixed> $patch The patch of the row, which each partner that stores its new fields mirrors
 	 * @param ShareSaveEntries $entries The lists
 	 * @param array<string,FederatedShare> $required The active partner shares, by id
 	 * @param string $userId The caller
@@ -344,10 +355,14 @@ class ShareSaveService {
 	 *
 	 * @return list<FederatedShare> The written shares
 	 *
-	 * @throws NotFoundException When a share went away and the lists still look complete
+	 * @throws NotFoundException When a share or its partner went away and the lists still look complete
+	 * @throws ShareSaveRefusal `partner_upgrade_required` when a partner cannot store a value field it is sent,
+	 *   `copy_fields_mismatch` when an entry does not mirror the patch for a partner that stores the field;
+	 *   the transaction is rolled back with either
 	 */
 	private function writePartners(
 		ShareSavePath $path,
+		array $patch,
 		ShareSaveEntries $entries,
 		array $required,
 		string $userId,
@@ -356,12 +371,23 @@ class ShareSaveService {
 		$written = [];
 		try {
 			foreach ($entries->federated as $share) {
-				$written[] = $this->federatedShares->writeCiphertext(
-					row: $required[$share['shareId']],
-					certFingerprint: $share['certFingerprint'],
-					ciphertext: ['key' => $share['key'], 'login' => $share['login'], 'additionalFields' => $share['additionalFields']],
-					savedAt: $savedAt,
-				);
+				try {
+					$written[] = $this->federatedShares->writeCiphertext(
+						row: $required[$share['shareId']],
+						certFingerprint: $share['certFingerprint'],
+						// An absent new field is left out, so the partner copy keeps its value.
+						ciphertext: array_intersect_key($share, array_flip(Secret::VALUE_FIELDS)),
+						savedAt: $savedAt,
+						patch: $patch,
+					);
+				} catch (PartnerUpgradeRequiredException $tooOld) {
+					throw new ShareSaveRefusal(
+						error: PartnerUpgradeRequiredException::CODE,
+						message: $tooOld->getMessage(),
+						status: Http::STATUS_CONFLICT,
+						details: ['shareId' => $share['shareId'], 'requiredVersion' => $tooOld->getRequiredVersion()],
+					);
+				}
 			}
 
 			foreach ($entries->suspend as $suspend) {

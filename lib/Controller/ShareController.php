@@ -261,7 +261,8 @@ class ShareController extends OCSController {
 	 * (bulk-actions §6.1/§7.1). Idempotent per (secret × recipient); the
 	 * per-item report never aborts on a skipped row.
 	 *
-	 * @param array $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+	 * @param array $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?,
+	 *   encryptedTotp?, encryptedPasskeys?}
 	 *
 	 * @NoAdminRequired
 	 *

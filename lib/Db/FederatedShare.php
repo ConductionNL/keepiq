@@ -48,6 +48,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLogin(?string $login)
  * @method string|null getAdditionalFields()
  * @method void setAdditionalFields(?string $additionalFields)
+ * @method string|null getTotp()
+ * @method void setTotp(?string $totp)
+ * @method string|null getPasskeys()
+ * @method void setPasskeys(?string $passkeys)
  * @method string getSharedSecretHash()
  * @method void setSharedSecretHash(string $sharedSecretHash)
  * @method string getStatus()
@@ -164,6 +168,20 @@ class FederatedShare extends Entity implements JsonSerializable {
 	protected ?string $additionalFields = null;
 
 	/**
+	 * The TOTP seed, encrypted for the recipient.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $totp = null;
+
+	/**
+	 * The passkeys, encrypted for the recipient.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $passkeys = null;
+
+	/**
 	 * Lowercase hex SHA-256 of the share's shared secret; the secret itself is
 	 * never stored on the sending side.
 	 *
@@ -255,6 +273,8 @@ class FederatedShare extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'key', type: 'string');
 		$this->addType(fieldName: 'login', type: 'string');
 		$this->addType(fieldName: 'additionalFields', type: 'string');
+		$this->addType(fieldName: 'totp', type: 'string');
+		$this->addType(fieldName: 'passkeys', type: 'string');
 		$this->addType(fieldName: 'sharedSecretHash', type: 'string');
 		$this->addType(fieldName: 'status', type: 'string');
 		$this->addType(fieldName: 'pendingNotification', type: 'string');

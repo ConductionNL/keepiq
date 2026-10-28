@@ -474,6 +474,8 @@ class SecretServiceTest extends TestCase {
 		$item = $result['items'][0];
 		$this->assertTrue($item['blocked']);
 		$this->assertArrayNotHasKey('key', $item);
+		$this->assertArrayNotHasKey('totp', $item);
+		$this->assertArrayNotHasKey('passkeys', $item);
 		$this->assertArrayHasKey('blockedReason', $item);
 		$this->assertSame('GitHub', $item['name']);
 	}//end testListBlockedSecretOmitsCiphertext()
@@ -484,7 +486,10 @@ class SecretServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testListActiveSecretIncludesCiphertext(): void {
-		$this->mapper->method('findByOwner')->willReturn([$this->makeSecret()]);
+		$secret = $this->makeSecret();
+		$secret->setTotp('TOTP-CIPHERTEXT');
+		$secret->setPasskeys('PASSKEYS-CIPHERTEXT');
+		$this->mapper->method('findByOwner')->willReturn([$secret]);
 		$this->mapper->method('countByOwner')->willReturn(1);
 		$this->suiteMapper->method('findById')->willReturn($this->makeSuite(status: 'active'));
 
@@ -500,6 +505,8 @@ class SecretServiceTest extends TestCase {
 		$item = $result['items'][0];
 		$this->assertFalse($item['blocked']);
 		$this->assertSame('CIPHERTEXT', $item['key']);
+		$this->assertSame('TOTP-CIPHERTEXT', $item['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $item['passkeys']);
 	}//end testListActiveSecretIncludesCiphertext()
 
 	/**
@@ -1276,6 +1283,8 @@ class SecretServiceTest extends TestCase {
 			['name' => 'Renamed', 'key' => 'NEW-CIPHERTEXT'],
 			['login' => null],
 			['additionalFields' => 'EXTRA'],
+			['totp' => 'TOTP-CIPHERTEXT'],
+			['passkeys' => 'PASSKEYS-CIPHERTEXT'],
 		];
 		foreach ($changes as $data) {
 			try {
@@ -1286,7 +1295,7 @@ class SecretServiceTest extends TestCase {
 			}
 		}
 
-		$this->assertSame([['key'], ['login'], ['additionalFields']], $asked);
+		$this->assertSame([['key'], ['login'], ['additionalFields'], ['totp'], ['passkeys']], $asked);
 		$this->assertSame('GitHub', $stored->getName());
 		$this->assertSame('CIPHERTEXT', $stored->getKey());
 	}//end testAValueChangeOfAViewOnlyCopyIsRefusedBeforeAnyWrite()
@@ -1309,7 +1318,7 @@ class SecretServiceTest extends TestCase {
 		$service->update(id: 's-1', data: ['folderId' => 'f-1'], userId: 'alice');
 		$secret = $service->update(
 			id: 's-1',
-			data: ['name' => 'Renamed', 'key' => 'CIPHERTEXT', 'login' => '', 'additionalFields' => null],
+			data: ['name' => 'Renamed', 'key' => 'CIPHERTEXT', 'login' => '', 'additionalFields' => null, 'totp' => null, 'passkeys' => ''],
 			userId: 'alice'
 		);
 
@@ -1317,4 +1326,88 @@ class SecretServiceTest extends TestCase {
 		$this->assertSame('f-1', $secret->getFolderId());
 		$this->assertSame('Renamed', $secret->getName());
 	}//end testAViewOnlyCopyIsStillFiledRenamedAndResentUnchanged()
+
+	/**
+	 * Create stores the totp and passkeys ciphertext as sent, and leaves them
+	 * null when a client does not send them (keepiq#1325).
+	 *
+	 * @return void
+	 */
+	public function testCreateStoresTotpAndPasskeys(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->makeSuite());
+		$this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+
+		$secret = $this->service->create(
+			data: ['name' => 'GitHub', 'key' => 'CIPHERTEXT', 'totp' => 'TOTP-CIPHERTEXT', 'passkeys' => 'PASSKEYS-CIPHERTEXT'],
+			userId: 'alice',
+		);
+		$this->assertSame('TOTP-CIPHERTEXT', $secret->getTotp());
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $secret->getPasskeys());
+		$this->assertSame('TOTP-CIPHERTEXT', $secret->jsonSerialize()['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $secret->jsonSerialize()['passkeys']);
+
+		$legacy = $this->service->create(data: ['name' => 'Old client', 'key' => 'CIPHERTEXT'], userId: 'alice');
+		$this->assertNull($legacy->getTotp());
+		$this->assertNull($legacy->getPasskeys());
+	}//end testCreateStoresTotpAndPasskeys()
+
+	/**
+	 * An update that names totp or passkeys sets them, an explicit null
+	 * clears them, and an update that leaves them out keeps the stored
+	 * values (keepiq#1325).
+	 *
+	 * @return void
+	 */
+	public function testUpdateSetsTotpAndPasskeysAndKeepsThemWhenAbsent(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setTotp('OLD-TOTP');
+		$stored->setPasskeys('OLD-PASSKEYS');
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$secret = $this->service->update(id: 's-1', data: ['name' => 'Renamed', 'key' => 'NEW-CIPHERTEXT'], userId: 'alice');
+		$this->assertSame('OLD-TOTP', $secret->getTotp());
+		$this->assertSame('OLD-PASSKEYS', $secret->getPasskeys());
+
+		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP', 'passkeys' => 'NEW-PASSKEYS'], userId: 'alice');
+		$this->assertSame('NEW-TOTP', $secret->getTotp());
+		$this->assertSame('NEW-PASSKEYS', $secret->getPasskeys());
+
+		$secret = $this->service->update(id: 's-1', data: ['totp' => null, 'passkeys' => ''], userId: 'alice');
+		$this->assertNull($secret->getTotp());
+		$this->assertNull($secret->getPasskeys());
+		$this->assertSame('NEW-CIPHERTEXT', $secret->getKey());
+	}//end testUpdateSetsTotpAndPasskeysAndKeepsThemWhenAbsent()
+
+	/**
+	 * A rename that also carries a new totp or passkeys value does not send
+	 * partner recipients a details notice: the value reaches them through
+	 * the share-save, as for the other value fields.
+	 *
+	 * @return void
+	 */
+	public function testARenameWithANewTotpOrPasskeysSendsNoDetailsNotice(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->mapper->method('findById')->willReturnCallback(fn (): Secret => $this->makeSecret());
+		$federated = $this->createMock(\OCA\Keepiq\Service\FederatedShareService::class);
+		$federated->expects($this->once())->method('detailsChanged')->with('s-1', 'alice');
+		$service = new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			folderOwnership: $this->folderOwnership,
+			federatedShares: $federated,
+		);
+
+		$service->update(id: 's-1', data: ['name' => 'Renamed', 'totp' => 'NEW-TOTP'], userId: 'alice');
+		$service->update(id: 's-1', data: ['name' => 'Renamed', 'passkeys' => 'NEW-PASSKEYS'], userId: 'alice');
+		$service->update(id: 's-1', data: ['name' => 'Renamed'], userId: 'alice');
+	}//end testARenameWithANewTotpOrPasskeysSendsNoDetailsNotice()
 }//end class

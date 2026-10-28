@@ -93,7 +93,8 @@ class ShareService {
 	 * blobs (bulk-actions §6.1/§7.1).
 	 *
 	 * @param string $userId The sharing owner
-	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?,
+	 *   encryptedTotp?, encryptedPasskeys?}
 	 *
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *

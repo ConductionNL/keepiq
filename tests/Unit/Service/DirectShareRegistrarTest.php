@@ -330,6 +330,36 @@ class DirectShareRegistrarTest extends TestCase {
 	}//end testASuccessfulRegistrationCommits()
 
 	/**
+	 * The recipient's TOTP seed and passkeys reach the copy, and a row of an
+	 * older client without them mints a copy without them.
+	 *
+	 * @return void
+	 */
+	public function testTheTotpAndPasskeysOfARowReachTheCopy(): void {
+		$this->secretMapper->method('findById')->willReturn($this->ownerSecret('src-1', 'alice'));
+		$this->mapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$calls = [];
+		$this->copyFactory->method('create')->willReturnCallback(
+			function (Secret $source, string $targetUserId, string $key, ?string $login, ?string $extras, ?string $totp = null, ?string $passkeys = null) use (&$calls): Secret {
+				$calls[] = [$totp, $passkeys];
+				return $this->recipientCopy('copy-'.count($calls), $targetUserId);
+			}
+		);
+
+		$this->registrar()->registerDirectShares(
+			userId: 'alice',
+			shares: [
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'encryptedTotp' => 'T', 'encryptedPasskeys' => 'P'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'carol', 'encryptedKey' => 'K'],
+			]
+		);
+
+		$this->assertSame([['T', 'P'], [null, null]], $calls);
+	}//end testTheTotpAndPasskeysOfARowReachTheCopy()
+
+	/**
 	 * An active delegate of the source, holding one unrestricted copy of it,
 	 * may register the share exactly as the owner can, by naming the source.
 	 *

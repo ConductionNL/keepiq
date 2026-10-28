@@ -146,7 +146,7 @@ class TeamFolderContributionController extends Controller {
 	/**
 	 * A write-grade member saves a new secret into a team folder they do not
 	 * own (admin-vault-policies D5). The body carries the owner ciphertext
-	 * (`key`, `login`, `additionalFields`), metadata and one `copies` row per
+	 * (`key`, `login`, `additionalFields`, `totp`, `passkeys`), metadata and one `copies` row per
 	 * member. The grade is checked in the service before anything is stored;
 	 * a read-grade member or a non-member gets 403.
 	 *
@@ -166,7 +166,7 @@ class TeamFolderContributionController extends Controller {
 		}
 
 		$data = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'copies'] as $field) {
+		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys', 'copies'] as $field) {
 			$data[$field] = $this->request->getParam($field);
 		}
 

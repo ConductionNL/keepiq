@@ -34,9 +34,11 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Alice owns `src`, shared with the `admin` group (Bob's copy `c-bob`) and
@@ -475,6 +477,67 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->assertSame(2, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
 		$this->assertSame(['src', 'c-bob'], $this->written);
 		$this->assertNull($this->rows['c-dan']->getUpdatedAt());
+	}
+
+	public function testAGroupMembersSyncOfOnlyTheTotpAndPasskeysCarriesAValue(): void {
+		$this->rows['c-dan']->setTotp('DAN-OLD-TOTP');
+		$this->rows['c-dan']->setPasskeys('DAN-OLD-PASSKEYS');
+		$updates = [
+			['secretId' => 'src', 'totp' => 'T'],
+			['secretId' => 'c-bob', 'passkeys' => 'P'],
+			['secretId' => 'c-dan', 'totp' => 'T-DAN', 'passkeys' => null],
+		];
+
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
+		$this->assertSame('T-DAN', $this->rows['c-dan']->getTotp());
+		$this->assertNull($this->rows['c-dan']->getPasskeys());
+		$this->assertSame('P', $this->rows['c-bob']->getPasskeys());
+	}
+
+	/**
+	 * @return array<string,array{0:(callable(Secret):mixed)|null,1:class-string<Throwable>|null}>
+	 */
+	public static function sources(): array {
+		return [
+			'writable' => [null, null],
+			'read-only' => [static fn (Secret $src) => $src->setReadOnly(true), ForbiddenException::class],
+			'use-only' => [static fn (Secret $src) => $src->setUseOnly(true), InvalidArgumentException::class],
+		];
+	}
+
+	/**
+	 * The same sync of only the TOTP seed and passkeys is written from a writable source and refused from a
+	 * locked one, so the refusal does not hinge on a legacy field.
+	 *
+	 * @param (callable(Secret):mixed)|null $lock How the source is locked, null when it is not
+	 * @param class-string<Throwable>|null $refusal The refusal, null when the sync is written
+	 */
+	#[DataProvider('sources')]
+	public function testATotpAndPasskeysOnlySyncIsRefusedFromAReadOnlyOrUseOnlySource(?callable $lock, ?string $refusal): void {
+		$this->srcUnderLock = $lock;
+		$updates = [
+			['secretId' => 'src', 'totp' => 'T', 'passkeys' => 'P'],
+			['secretId' => 'c-bob', 'totp' => 'T-BOB', 'passkeys' => 'P-BOB'],
+			['secretId' => 'c-dan', 'totp' => 'T-DAN', 'passkeys' => 'P-DAN'],
+		];
+
+		if ($refusal === null) {
+			$this->assertSame(3, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
+			$this->assertSame(['src', 'c-bob', 'c-dan'], $this->written);
+			$this->assertSame(['T', 'P'], [$this->rows['src']->getTotp(), $this->rows['src']->getPasskeys()]);
+			$this->assertSame(['T-DAN', 'P-DAN'], [$this->rows['c-dan']->getTotp(), $this->rows['c-dan']->getPasskeys()]);
+			return;
+		}
+
+		try {
+			$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+			$this->fail('A locked source had its TOTP seed or passkeys changed');
+		} catch (Throwable $e) {
+			$this->assertInstanceOf($refusal, $e);
+		}
+
+		$this->assertSame([], $this->written);
+		$this->assertNull($this->rows['src']->getTotp());
 	}
 
 	public function testASourceMadeReadOnlyBeforeTheSyncsLockRefusesAGroupMember(): void {

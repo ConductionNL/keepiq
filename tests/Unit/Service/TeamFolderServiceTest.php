@@ -457,6 +457,8 @@ class TeamFolderServiceTest extends TestCase {
 			'sourceSecretId' => 'sec-1',
 			'targetUserId' => 'bob',
 			'encryptedKey' => 'CIPHERTEXT_PLACEHOLDER',
+			'encryptedTotp' => 'TOTP_PLACEHOLDER',
+			'encryptedPasskeys' => 'PASSKEYS_PLACEHOLDER',
 		];
 
 		$result = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
@@ -470,6 +472,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame('tf-1', $insertedTargets[0]->getTeamFolderId());
 		$this->assertCount(1, $insertedCopies);
 		$this->assertSame('bob', $insertedCopies[0]->getOwnerId());
+		$this->assertSame(['TOTP_PLACEHOLDER', 'PASSKEYS_PLACEHOLDER'], [$insertedCopies[0]->getTotp(), $insertedCopies[0]->getPasskeys()]);
 
 		// Retry: the pair now exists → no new rows, count 0.
 		$resultRetry = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');

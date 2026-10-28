@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuditTrail;
@@ -105,7 +106,7 @@ class ShareSaveServiceTest extends TestCase {
 	/** Whether the share with the `admin` group was revoked before the lock */
 	private bool $groupShareRevokedUnderLock = false;
 
-	/** @var array<int,array{id:string,key:?string,updatedAt:?DateTime}> Rows written by the copy fan-out */
+	/** @var array<int,array{id:string,key:?string,updatedAt:?DateTime,totp:?string,passkeys:?string}> Rows written by the copy fan-out */
 	private array $copyWrites = [];
 
 	/** @var array<int,array{id:string,data:array<string,mixed>,savedAt:?DateTime}> */
@@ -113,6 +114,9 @@ class ShareSaveServiceTest extends TestCase {
 
 	/** @var array<string,ShareSaveStage> */
 	private array $chunks = [];
+
+	/** @var list<array<string,mixed>|null> The patch each partner write was given */
+	private array $partnerPatches = [];
 
 	/** @var array<int,string> What happened, in order */
 	private array $log = [];
@@ -261,7 +265,13 @@ class ShareSaveServiceTest extends TestCase {
 		$this->secretMapper->method('update')->willReturnCallback(
 			function (Secret $copy): Secret {
 				$this->log[] = 'copy '.$copy->getId();
-				$this->copyWrites[] = ['id' => $copy->getId(), 'key' => $copy->getKey(), 'updatedAt' => $copy->getUpdatedAt()];
+				$this->copyWrites[] = [
+					'id' => $copy->getId(),
+					'key' => $copy->getKey(),
+					'updatedAt' => $copy->getUpdatedAt(),
+					'totp' => $copy->getTotp(),
+					'passkeys' => $copy->getPasskeys(),
+				];
 				return $copy;
 			}
 		);
@@ -1196,6 +1206,116 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'rollback'], $this->log);
 	}
 
+	/**
+	 * Alice's save of a new TOTP seed and passkeys, for Bob, Carol and Dave.
+	 *
+	 * @return ShareSaveRequest
+	 */
+	private function totpRequest(): ShareSaveRequest {
+		$fields = ['totp' => 'T', 'passkeys' => null];
+
+		return $this->ownerRequest([
+			'patch' => ['key' => 'K-ALICE', 'login' => null] + $fields,
+			'copies' => [
+				['secretId' => 'c-bob', 'key' => 'K-BOB', 'login' => null] + $fields,
+				['secretId' => 'c-carol', 'key' => 'K-CAROL', 'login' => null] + $fields,
+			],
+			'federated' => [[
+				'shareId' => 'fs-1',
+				'certFingerprint' => str_repeat('a', 64),
+				'key' => 'K-DAVE',
+				'login' => null,
+				'additionalFields' => null,
+				'totp' => 'T-DAVE',
+				'passkeys' => null,
+			]],
+		]);
+	}
+
+	/**
+	 * The ciphertext each partner write is sent, for one save.
+	 *
+	 * @param ShareSaveRequest $request The save
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function partnerCiphertext(ShareSaveRequest $request): array {
+		$sent = [];
+		$this->federated = $this->createMock(FederatedShareService::class);
+		$this->federated->method('writeCiphertext')->willReturnCallback(
+			function (FederatedShare $row, string $certFingerprint, array $ciphertext, DateTime $savedAt, ?array $patch = null) use (&$sent): FederatedShare {
+				$sent[] = $ciphertext;
+				$this->partnerPatches[] = $patch;
+				return $row;
+			}
+		);
+
+		$this->service()->save(id: 'src', request: $request, userId: 'alice');
+
+		return $sent;
+	}
+
+	public function testThePartnerIsSentTheNewFieldsTheEntryCarries(): void {
+		$this->assertSame(
+			[['key' => 'K-DAVE', 'login' => null, 'additionalFields' => null, 'totp' => 'T-DAVE', 'passkeys' => null]],
+			$this->partnerCiphertext(request: $this->totpRequest())
+		);
+		// The write checks the entry against the patch for a partner that stores the fields.
+		$this->assertSame([['key' => 'K-ALICE', 'login' => null, 'totp' => 'T', 'passkeys' => null]], $this->partnerPatches);
+	}
+
+	public function testAnOlderClientsPartnerWriteLeavesTheNewFieldsOut(): void {
+		$this->assertSame(
+			[['key' => 'K-DAVE', 'login' => null, 'additionalFields' => null]],
+			$this->partnerCiphertext(request: $this->ownerRequest())
+		);
+	}
+
+	public function testAPartnerTooOldForTheNewFieldsRefusesTheSaveAndRollsBack(): void {
+		$this->federated = $this->createMock(FederatedShareService::class);
+		$this->federated->method('writeCiphertext')->willThrowException(new PartnerUpgradeRequiredException(requiredVersion: '9.9.9'));
+		$this->delivery->expects($this->never())->method('deliver');
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'src', request: $this->totpRequest(), userId: 'alice'));
+
+		$this->assertInstanceOf(ShareSaveRefusal::class, $refusal);
+		$this->assertSame([PartnerUpgradeRequiredException::CODE, 409], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame(
+			['error' => 'partner_upgrade_required', 'shareId' => 'fs-1', 'requiredVersion' => '9.9.9'],
+			array_diff_key($refusal->getBody(), ['message' => true])
+		);
+		$this->assertSame(['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'rollback'], $this->log);
+		$this->assertSame([], $this->rowSaves);
+	}
+
+	public function testAPartnerRefusalKeepsTheStage(): void {
+		$this->federated = $this->createMock(FederatedShareService::class);
+		$this->federated->method('writeCiphertext')->willThrowException(new PartnerUpgradeRequiredException());
+		$stageId = $this->service()->stage(
+			id: 'src',
+			request: new ShareSaveRequest([
+				'baseUpdatedAt' => self::BASE,
+				'stage' => ['final' => false],
+				'copies' => [['secretId' => 'c-bob', 'key' => 'K-BOB', 'login' => null, 'totp' => 'T-BOB', 'passkeys' => null]],
+			]),
+			userId: 'alice'
+		)['stageId'];
+		$final = $this->totpRequest();
+		$body = [
+			'baseUpdatedAt' => self::BASE,
+			'stage' => ['id' => $stageId, 'final' => true],
+			'patch' => $final->patch,
+			'copies' => [$final->entries->copies[1]],
+			'federated' => $final->entries->federated,
+		];
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'src', request: new ShareSaveRequest($body), userId: 'alice'));
+
+		$this->assertSame('partner_upgrade_required', $refusal instanceof ShareSaveRefusal ? $refusal->getError() : null);
+		$this->assertNotContains('drop stage', $this->log);
+		$this->assertCount(1, $this->chunks);
+	}
+
 	public function testAPartnerShareRevokedBeforeItsSuspendMakesTheSaveIncomplete(): void {
 		$this->federated = $this->createMock(FederatedShareService::class);
 		$this->federated->method('suspend')->willReturnCallback(
@@ -1311,5 +1431,83 @@ class ShareSaveServiceTest extends TestCase {
 		}
 
 		$this->assertSame([], $this->log);
+	}
+
+	/**
+	 * Alice's restore of `v-1` whose patch, copies and partner share carry these new fields.
+	 *
+	 * @param array<string,mixed> $fields The `totp` and `passkeys` sent
+	 *
+	 * @return ShareSaveRequest
+	 */
+	private function restoreWith(array $fields): ShareSaveRequest {
+		return $this->ownerRequest([
+			'restoredFrom' => 'v-1',
+			'patch' => ['key' => 'K-OLD', 'login' => null, 'additionalFields' => null] + $fields,
+			'copies' => [
+				['secretId' => 'c-bob', 'key' => 'K-BOB', 'login' => null, 'additionalFields' => null] + $fields,
+				['secretId' => 'c-carol', 'key' => 'K-CAROL', 'login' => null, 'additionalFields' => null] + $fields,
+			],
+			'federated' => [[
+				'shareId' => 'fs-1',
+				'certFingerprint' => str_repeat('a', 64),
+				'key' => 'K-DAVE',
+				'login' => null,
+				'additionalFields' => null,
+			] + $fields],
+		]);
+	}
+
+	/**
+	 * A version made before the fields existed holds none: the head and every copy keep theirs, and the partner
+	 * share keeps the whole value it was sent, so a changed certificate does not clear the partner's.
+	 */
+	public function testARestoreOfAVersionWithoutTheNewFieldsLeavesThemOutOfTheHeadAndCopies(): void {
+		$this->versionHistory->method('getVersion')->willReturn($this->version());
+		$this->rows['c-bob']->setTotp('BOB-TOTP');
+
+		$sent = $this->partnerCiphertext(request: $this->restoreWith(fields: ['totp' => 'T', 'passkeys' => 'P']));
+
+		$this->assertSame(['key' => 'K-OLD', 'login' => null, 'additionalFields' => null], $this->rowSaves[0]['data']);
+		$this->assertSame([['BOB-TOTP', null], [null, null]], array_map(static fn (array $w): array => [$w['totp'], $w['passkeys']], $this->copyWrites));
+		$this->assertSame([['key' => 'K-DAVE', 'login' => null, 'additionalFields' => null, 'totp' => 'T', 'passkeys' => 'P']], $sent);
+		$this->assertSame([['key' => 'K-OLD', 'login' => null, 'additionalFields' => null]], $this->partnerPatches);
+	}
+
+	public function testARestoreThatLeavesOutAFieldTheVersionHoldsIsRefusedBeforeAnythingIsWritten(): void {
+		$version = $this->version();
+		$version->setPasskeys('V-PASSKEYS');
+		$this->versionHistory->method('getVersion')->willReturn($version);
+		$this->versionHistory->expects($this->never())->method('recordRestored');
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'src', request: $this->restoreWith(fields: ['totp' => 'T']), userId: 'alice'));
+
+		$this->assertInstanceOf(ShareSaveRefusal::class, $refusal);
+		$this->assertSame(['invalid_body', 400, 'passkeys'], [$refusal->getError(), $refusal->getStatus(), $refusal->getBody()['field']]);
+		$this->assertSame([], $this->log);
+	}
+
+	public function testARestoreCarryingTheFieldsTheVersionHoldsWritesThemEverywhere(): void {
+		$version = $this->version();
+		$version->setTotp('V-TOTP');
+		$version->setPasskeys('V-PASSKEYS');
+		$this->versionHistory->method('getVersion')->willReturn($version);
+
+		$sent = $this->partnerCiphertext(request: $this->restoreWith(fields: ['totp' => 'T', 'passkeys' => 'P']));
+
+		$this->assertSame(['T', 'P'], [$this->rowSaves[0]['data']['totp'], $this->rowSaves[0]['data']['passkeys']]);
+		$this->assertSame([['T', 'P'], ['T', 'P']], array_map(static fn (array $w): array => [$w['totp'], $w['passkeys']], $this->copyWrites));
+		$this->assertSame(['T', 'P'], [$sent[0]['totp'], $sent[0]['passkeys']]);
+	}
+
+	public function testARestoreFromAnOlderClientOfAVersionWithoutTheNewFieldsWorksAsBefore(): void {
+		$this->versionHistory->method('getVersion')->willReturn($this->version());
+		$request = $this->restoreWith(fields: []);
+
+		$sent = $this->partnerCiphertext(request: $request);
+
+		$this->assertSame($request->patch, $this->rowSaves[0]['data']);
+		$this->assertSame(['K-BOB', 'K-CAROL'], array_column($this->copyWrites, 'key'));
+		$this->assertSame([['key' => 'K-DAVE', 'login' => null, 'additionalFields' => null]], $sent);
 	}
 }
