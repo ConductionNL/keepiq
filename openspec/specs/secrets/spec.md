@@ -179,7 +179,7 @@ The system MUST raise, render and clear the `possibly_compromised_at` flag as se
 
 **Render.** A secret carrying `possibly_compromised_at` MUST be surfaced as a warning that is hard to ignore — visible on the secret itself and in the vault-wide health surface, not only in a report the user must go looking for. The warning MUST say that the stored value should be considered exposed and replaced at its source, and MUST NOT be dismissible in a way that hides it while the flag is still set. The flag is plaintext metadata, not ciphertext, so rendering it requires no decryption and MUST work whether or not the vault is unlocked.
 
-**Clear.** The flag MUST be cleared exactly when the secret's `key` ciphertext is written with a value different from the stored one, whoever writes it. Binding the rule to the write rather than to the writer is deliberate: any future path that replaces the value inherits the clearing without needing its own rule, and no path can replace a value while leaving the warning standing.
+**Clear.** A secret can hold three credentials: `key`, `totp` and `passkeys`, and a compromise exposes all three. The flag MUST be cleared exactly when a write changes one of them and leaves none of the three exposed: each is empty, changed in that write, or changed after the flag was raised, whoever writes it. The server tracks when `totp` and `passkeys` last changed (`totp_updated_at`, `passkeys_updated_at`) as it does `key_updated_at`, so the credentials may be replaced in one save or one after the other. A change of `totp` or `passkeys` does not touch `key_updated_at`, which stays the password's age; only a `suite_compromise` rotation flag counts the latest of the three as proof of rotation (see the rotation-expiry-policies spec, which also lists the known limitations). Restoring a version writes back old ciphertext: its `totp` and `passkeys` keep their change times and replace no exposed value, and a restored `key` counts as replaced only when it differs from the head's. Binding the rule to the write rather than to the writer is deliberate: any future path that replaces a value inherits the clearing without needing its own rule, and no path can replace the last exposed value while leaving the warning standing.
 
 It MUST NOT be cleared by a rename, a folder move, a type change, a metadata edit, a share operation, or by the migration itself. It MUST NOT be cleared by a write that re-submits the ciphertext already stored — a client that echoes the whole record back on every save must not silence the warning without the value having changed. Clearing a source secret's flag MUST propagate to shared copies through the existing sync-on-update path.
 
@@ -217,11 +217,20 @@ Note for implementers: secret-request **fulfilment** is expected to be such a wr
 #### Scenario: Replacing the value clears the flag
 
 @e2e exclude Clearing is asserted on the persisted row and on shared copies after sync-on-update; covered by PHPUnit on the secret-update and share-sync paths.
-- **GIVEN** a secret carrying `possibly_compromised_at`
+- **GIVEN** a secret carrying `possibly_compromised_at` that holds no `totp` or `passkeys`
 - **WHEN** any path writes a `key` ciphertext different from the stored one
 - **THEN** `possibly_compromised_at` MUST be cleared on that secret and on every shared copy of it
 - **WHEN** a write re-submits the ciphertext already stored, alongside a rename
 - **THEN** `possibly_compromised_at` MUST remain set
+
+#### Scenario: A password change leaves the flag while the TOTP seed stays exposed
+
+@e2e exclude Asserted on the persisted row; covered by PHPUnit (SecretServiceTest, ShareSyncServiceTest).
+- **GIVEN** a secret carrying `possibly_compromised_at` that holds a `totp` or `passkeys` value set before the flag
+- **WHEN** a write changes only its `key`
+- **THEN** `possibly_compromised_at` MUST remain set
+- **WHEN** a later write replaces or clears the `totp` and `passkeys` it holds
+- **THEN** `possibly_compromised_at` MUST be cleared
 
 ### Requirement: Secret Types
 Every secret MUST have a type. The type is a UI hint only — it drives how the UI labels and presents fields but does not affect server-side validation or the underlying data model. If no type is specified at creation, the `login` system type MUST be used as default.

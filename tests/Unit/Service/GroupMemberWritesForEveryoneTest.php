@@ -483,15 +483,54 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 		$this->rows['c-dan']->setTotp('DAN-OLD-TOTP');
 		$this->rows['c-dan']->setPasskeys('DAN-OLD-PASSKEYS');
 		$updates = [
-			['secretId' => 'src', 'totp' => 'T'],
-			['secretId' => 'c-bob', 'passkeys' => 'P'],
+			['secretId' => 'src', 'totp' => 'T', 'passkeys' => null],
+			['secretId' => 'c-bob', 'totp' => 'T-BOB', 'passkeys' => null],
 			['secretId' => 'c-dan', 'totp' => 'T-DAN', 'passkeys' => null],
 		];
 
 		$this->assertSame(3, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
 		$this->assertSame('T-DAN', $this->rows['c-dan']->getTotp());
 		$this->assertNull($this->rows['c-dan']->getPasskeys());
-		$this->assertSame('P', $this->rows['c-bob']->getPasskeys());
+		$this->assertSame('T-BOB', $this->rows['c-bob']->getTotp());
+	}
+
+	/**
+	 * A sync that leaves out a TOTP seed the source no longer holds clears it on
+	 * every copy it writes, instead of the copy keeping the removed seed.
+	 *
+	 * @return void
+	 */
+	public function testASyncThatLeavesOutARemovedTotpClearsItOnTheCopies(): void {
+		$this->rows['c-bob']->setTotp('BOB-REMOVED-TOTP');
+		$this->rows['c-dan']->setTotp('DAN-REMOVED-TOTP');
+		$updates = [['secretId' => 'src', 'key' => 'NEW'], ['secretId' => 'c-bob', 'key' => 'NEW'], ['secretId' => 'c-dan', 'key' => 'NEW']];
+
+		$this->assertSame(3, $this->sync()->syncUpdate('src', $updates, self::BASE, 'bob'));
+		$this->assertNull($this->rows['c-bob']->getTotp());
+		$this->assertNull($this->rows['c-dan']->getTotp());
+	}
+
+	/**
+	 * A group member cannot give the source a new TOTP seed while a copy gets
+	 * only another field, or give a copy a value the source does not hold.
+	 *
+	 * @return void
+	 */
+	public function testAGroupMembersSyncWhoseCopiesDoNotFollowTheSourceIsRefused(): void {
+		$shapes = [
+			'copy left out' => [['secretId' => 'src', 'totp' => 'T'], ['secretId' => 'c-bob', 'login' => 'L'], ['secretId' => 'c-dan', 'totp' => 'T-DAN']],
+			'copy only' => [['secretId' => 'src', 'login' => 'L'], ['secretId' => 'c-bob', 'passkeys' => 'P'], ['secretId' => 'c-dan', 'login' => 'L']],
+		];
+		foreach ($shapes as $name => $updates) {
+			try {
+				$this->sync()->syncUpdate('src', $updates, self::BASE, 'bob');
+				$this->fail($name.' was written');
+			} catch (InvalidArgumentException $refused) {
+				$this->assertStringContainsString('the source holds', $refused->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->written);
 	}
 
 	/**

@@ -284,6 +284,29 @@ class TeamFolderContributionServiceTest extends TestCase {
 	}//end testAMemberCopyWithoutTheOwnersTotpOrPasskeysIsRefused()
 
 	/**
+	 * A member copy that carries a TOTP seed or passkeys the owner row does
+	 * not hold would show that member a value the owner does not have:
+	 * refused before anything is stored.
+	 *
+	 * @return void
+	 */
+	public function testAMemberCopyWithATotpOrPasskeysTheOwnerLacksIsRefused(): void {
+		foreach (['encryptedTotp' => 'TOTP-FOR-jack', 'encryptedPasskeys' => 'PASSKEYS-FOR-jack'] as $field => $value) {
+			$attempt = $this->request();
+			$attempt['copies'][1][$field] = $value;
+			try {
+				$this->service->contribute(teamFolderId: 'tf-ops', data: $attempt, userId: 'hank');
+				$this->fail('A member copy with '.$field.' the owner lacks was accepted');
+			} catch (InvalidArgumentException $exception) {
+				$this->assertStringStartsWith('Every member copy must carry', $exception->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->inserted);
+		$this->assertSame([], $this->events);
+	}//end testAMemberCopyWithATotpOrPasskeysTheOwnerLacksIsRefused()
+
+	/**
 	 * Scenario "Read-grade member is refused", and a non-member: nothing stored.
 	 *
 	 * @return void

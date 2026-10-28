@@ -163,9 +163,7 @@ class SecretUpdateController extends OCSController {
 		$data = [];
 		foreach (SecretService::UPDATABLE_FIELDS as $field) {
 			$value = $this->request->getParam($field, '__unset__');
-			if ($value === null) {
-				$data[$field] = null;
-			} else if ($value !== '__unset__') {
+			if ($value !== '__unset__') {
 				$data[$field] = (string)$value;
 			}
 		}

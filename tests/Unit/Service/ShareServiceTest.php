@@ -556,7 +556,8 @@ class ShareServiceTest extends TestCase {
 		$this->assertNull($copy->getLogin());
 		$this->assertSame($at->getTimestamp(), $source->getUpdatedAt()?->getTimestamp());
 		$this->assertSame($at->getTimestamp(), $source->getKeyUpdatedAt()?->getTimestamp());
-		$this->assertNull($copy->getKeyUpdatedAt());
+		// A copy's new key is a rotation of that copy too.
+		$this->assertSame($at->getTimestamp(), $copy->getKeyUpdatedAt()?->getTimestamp());
 	}//end testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion()
 
 	/**

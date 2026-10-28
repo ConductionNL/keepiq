@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\FederatedValueFields;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntryParser;
@@ -279,6 +280,83 @@ class ShareSyncGuards {
 			throw new InvalidArgumentException(message: $refusal->getMessage());
 		}
 	}//end assertNoDuplicates()
+
+	/**
+	 * Make the `totp` and `passkeys` of a /sync follow the source, as
+	 * share-save's copy check does: a row that carries one must match the
+	 * source's after this sync in null-ness, and once any row carries one,
+	 * every row that carries a value must. A row that leaves one out while
+	 * the source holds none gets it cleared, so a copy never keeps a seed the
+	 * owner removed. Rows that carry no value are left as sent.
+	 *
+	 * @param Secret $source The source as read
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 *
+	 * @return array<int,array<string,string|null>> The blobs, with the cleared fields filled in
+	 *
+	 * @throws InvalidArgumentException When a row does not mirror the source
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 */
+	public function mirroredValueFields(Secret $source, array $updates): array {
+		$rows = array_filter($updates, 'is_array');
+		$sourceRow = [];
+		foreach ($rows as $update) {
+			if ((string)($update['secretId'] ?? '') === $source->getId()) {
+				$sourceRow = $update;
+			}
+		}
+
+		$blobs = new FederatedValueFields();
+		$held = ['totp' => $source->getTotp(), 'passkeys' => $source->getPasskeys()];
+		foreach ($held as $field => $stored) {
+			// The source after this sync: its own row's value when it carries one.
+			$sourceHolds = $blobs->blob(value: ($sourceRow + [$field => $stored])[$field]) !== null;
+			$updates = $this->mirrorField(field: $field, sourceHolds: $sourceHolds, rows: $rows, updates: $updates);
+		}
+
+		return $updates;
+	}//end mirroredValueFields()
+
+	/**
+	 * Hold the rows of a /sync to the source's null-ness of one field; see mirroredValueFields().
+	 *
+	 * @param string $field `totp` or `passkeys`
+	 * @param bool $sourceHolds Whether the source holds a value for it after this sync
+	 * @param array<int,array<string,mixed>> $rows The rows that are arrays
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 *
+	 * @return array<int,array<string,string|null>> The blobs, with the field cleared where it is left out and the source holds none
+	 *
+	 * @throws InvalidArgumentException When a row does not mirror the source
+	 */
+	private function mirrorField(string $field, bool $sourceHolds, array $rows, array $updates): array {
+		$blobs = new FederatedValueFields();
+		$carried = array_filter($rows, static fn (array $update): bool => array_key_exists($field, $update)) !== [];
+		foreach ($rows as $index => $update) {
+			if ($this->carriesValue(update: $update) === false) {
+				continue;
+			}
+
+			$present = array_key_exists($field, $update);
+			if ($present === false && $sourceHolds === false) {
+				$updates[$index][$field] = null;
+				continue;
+			}
+
+			if ($present === false && $carried === false) {
+				continue;
+			}
+
+			if (($blobs->blob(value: $update[$field] ?? null) !== null) !== $sourceHolds) {
+				throw new InvalidArgumentException(
+					message: 'Every row must carry the '.$field.' the source holds, and none it does not'
+				);
+			}
+		}
+
+		return $updates;
+	}//end mirrorField()
 
 	/**
 	 * Whether an update row carries ciphertext for its copy: a non-empty key,

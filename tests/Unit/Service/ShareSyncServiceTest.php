@@ -193,6 +193,133 @@ class ShareSyncServiceTest extends TestCase {
 	}
 
 	/**
+	 * An empty totp or passkeys clears the copy to null, as the head stores a
+	 * cleared field, so resending it unchanged is no value change.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyTotpOrPasskeysLeavesTheCopyNull(): void {
+		$source = $this->secret('src-1', 'alice');
+		$copy = $this->secret('copy-held', 'bob');
+		$copy->setTotp('OLD-T-BOB');
+		$copy->setPasskeys('OLD-P-BOB');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-held', $copy]]);
+		$this->mapper->method('findBySourceSecret')->willReturn([$this->row('copy-held', 'bob')]);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		$this->sync->writeCopyBlobs(
+			source: $source,
+			updates: [['secretId' => 'copy-held', 'key' => 'K', 'totp' => '', 'passkeys' => '']],
+			allowedIds: ['copy-held' => true],
+			savedAt: new DateTime('2026-10-21T00:00:00+00:00'),
+			writerId: 'alice'
+		);
+
+		$this->assertNull($copy->getTotp());
+		$this->assertNull($copy->getPasskeys());
+	}
+
+	/**
+	 * On /sync a copy row that leaves out a TOTP the source no longer holds
+	 * clears the copy's seed instead of keeping it; a row whose totp does not
+	 * follow the source's is refused.
+	 *
+	 * @return void
+	 */
+	public function testASyncRowFollowsTheSourcesTotp(): void {
+		$guards = new ShareSyncGuards(
+			targets: $this->mapper,
+			secrets: $this->secretMapper,
+			suites: $this->createMock(\OCA\Keepiq\Db\EncryptionSuiteMapper::class),
+			auth: $this->createMock(ShareAuthorizationService::class),
+		);
+		$source = $this->secret('src-1', 'alice');
+		$copy = $this->secret('copy-held', 'bob');
+		$copy->setTotp('OWNER-REMOVED-THIS');
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-held', $copy]]);
+		$this->mapper->method('findBySourceSecret')->willReturn([$this->row('copy-held', 'bob')]);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		$updates = $guards->mirroredValueFields(source: $source, updates: [['secretId' => 'copy-held', 'key' => 'K', 'login' => 'L']]);
+		$this->sync->writeCopyBlobs(
+			source: $source,
+			updates: $updates,
+			allowedIds: ['copy-held' => true],
+			savedAt: new DateTime('2026-10-21T00:00:00+00:00'),
+			writerId: 'alice'
+		);
+		$this->assertNull($copy->getTotp());
+
+		$source->setTotp('T');
+		$this->expectException(\InvalidArgumentException::class);
+		$guards->mirroredValueFields(source: $source, updates: [['secretId' => 'copy-held', 'key' => 'K', 'totp' => null]]);
+	}
+
+	/**
+	 * A copy whose key and TOTP seed are replaced in separate syncs loses its
+	 * warning with the second, as the head does: the first moved its key age.
+	 *
+	 * @return void
+	 */
+	public function testACopysWarningClearsWhenKeyAndTotpRotateInSeparateSyncs(): void {
+		$source = $this->secret('src-1', 'alice');
+		$copy = $this->secret('copy-held', 'bob');
+		$copy->setKey('OLD-K');
+		$copy->setTotp('OLD-T');
+		$copy->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$copy->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-held', $copy]]);
+		$this->mapper->method('findBySourceSecret')->willReturn([$this->row('copy-held', 'bob')]);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		$write = fn (array $update, string $at) => $this->sync->writeCopyBlobs(
+			source: $source,
+			updates: [['secretId' => 'copy-held'] + $update],
+			allowedIds: ['copy-held' => true],
+			savedAt: new DateTime($at),
+			writerId: 'alice'
+		);
+
+		$write(['key' => 'NEW-K'], '2026-10-21T00:00:00+00:00');
+		$this->assertNotNull($copy->getPossiblyCompromisedAt());
+		$this->assertSame('2026-10-21', $copy->getKeyUpdatedAt()?->format('Y-m-d'));
+
+		$write(['totp' => 'NEW-T'], '2026-10-22T00:00:00+00:00');
+		$this->assertNull($copy->getPossiblyCompromisedAt());
+	}
+
+	/**
+	 * A flagged copy keeps its possibly-compromised warning while a credential
+	 * it holds is left as it was, and loses it once all are rewritten.
+	 *
+	 * @return void
+	 */
+	public function testACopysWarningClearsOnlyWhenNoCredentialIsLeftExposed(): void {
+		$source = $this->secret('src-1', 'alice');
+		$copy = $this->secret('copy-held', 'bob');
+		$copy->setKey('OLD-K');
+		$copy->setTotp('OLD-T');
+		$copy->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-held', $copy]]);
+		$this->mapper->method('findBySourceSecret')->willReturn([$this->row('copy-held', 'bob')]);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		$write = fn (array $update) => $this->sync->writeCopyBlobs(
+			source: $source,
+			updates: [['secretId' => 'copy-held'] + $update],
+			allowedIds: ['copy-held' => true],
+			savedAt: new DateTime('2026-10-21T00:00:00+00:00'),
+			writerId: 'alice'
+		);
+
+		$write(['key' => 'NEW-K', 'login' => 'L']);
+		$this->assertNotNull($copy->getPossiblyCompromisedAt(), 'the TOTP seed is still the exposed one');
+
+		$write(['key' => 'NEWER-K', 'totp' => 'NEW-T']);
+		$this->assertNull($copy->getPossiblyCompromisedAt());
+	}
+
+	/**
 	 * A copy named by the update but already deleted is silently skipped.
 	 *
 	 * @return void

@@ -105,8 +105,10 @@ class SecretVersionService {
 		$version->setKey($preUpdate->getKey());
 		$version->setLogin($preUpdate->getLogin());
 		$version->setAdditionalFields($preUpdate->getAdditionalFields());
-		$version->setTotp($preUpdate->getTotp());
-		$version->setPasskeys($preUpdate->getPasskeys());
+		// `''`, not null, for an empty field: a restore tells "cleared then"
+		// apart from a version made before these fields existed.
+		$version->setTotp($preUpdate->getTotp() ?? '');
+		$version->setPasskeys($preUpdate->getPasskeys() ?? '');
 		$version->setEncryptionSuiteId($preUpdate->getEncryptionSuiteId());
 		$version->setActorType($actorType);
 		$version->setActorId($actorId);
@@ -274,21 +276,36 @@ class SecretVersionService {
 		// Snapshot the current head so the restore itself is undoable.
 		$this->snapshot(preUpdate: $secret, actorType: 'user', actorId: $userId);
 
+		// The key's age moves only when the restore changes it, as an edit's
+		// does: the same ciphertext written back is the same exposed value.
+		if ($version->getKey() !== $secret->getKey()) {
+			$secret->setKeyUpdatedAt(new DateTime());
+		}
+
 		$secret->setName($version->getName());
 		$secret->setUrl($version->getUrl());
 		$secret->setKey($version->getKey());
 		$secret->setLogin($version->getLogin());
 		$secret->setAdditionalFields($version->getAdditionalFields());
-		// A version made before these fields existed holds null (or an empty string); the head keeps its values.
-		if (in_array($version->getTotp(), [null, ''], true) === false) {
+		// A version made before these fields existed holds null and the head
+		// keeps its values; `''` was empty then and clears them. Old ciphertext
+		// is no new value, so their change times stay as they are.
+		if ($version->getTotp() !== null) {
 			$secret->setTotp($version->getTotp());
 		}
 
-		if (in_array($version->getPasskeys(), [null, ''], true) === false) {
+		if ($version->getPasskeys() !== null) {
 			$secret->setPasskeys($version->getPasskeys());
 		}
 
-		$secret->setKeyUpdatedAt(new DateTime());
+		if ($secret->getTotp() === '') {
+			$secret->setTotp(null);
+		}
+
+		if ($secret->getPasskeys() === '') {
+			$secret->setPasskeys(null);
+		}
+
 		$secret->setUpdatedAt($savedAt);
 		$this->secretMapper->update($secret);
 

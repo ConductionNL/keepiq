@@ -34,12 +34,15 @@ namespace OCA\Keepiq\Tests\Unit\Federation;
 use OCA\Keepiq\Controller\FederationController;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IConfig;
@@ -78,6 +81,9 @@ class FederationLookupTest extends TestCase {
 	/** @var array<int,?string> The `valueFields` of every partner row written */
 	private array $partnerUpdates = [];
 
+	/** @var list<AuditEvent> The audit events dispatched */
+	private array $audits = [];
+
 	/**
 	 * The controller over the given partners.
 	 *
@@ -97,6 +103,12 @@ class FederationLookupTest extends TestCase {
 				return $partner;
 			}
 		);
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			function (AuditEvent $event): void {
+				$this->audits[] = $event;
+			}
+		);
 		$service = new FederatedCertificateService(
 			new FederationPartnerService($this->partnerTable, $this->createMock(IClientService::class), $config),
 			new FederationRootService($this->caMapper()),
@@ -107,6 +119,7 @@ class FederationLookupTest extends TestCase {
 			$this->ocm,
 			$this->logger,
 			$this->partnerTable,
+			$dispatcher,
 		);
 		$session = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
@@ -212,6 +225,36 @@ class FederationLookupTest extends TestCase {
 		$controller->recipientCertificate('bob@cloud.partner.example');
 		$this->assertNull($old->getValueFields());
 		$this->assertSame([], $this->partnerUpdates);
+	}
+
+	/**
+	 * A partner that stops advertising the fields it stored is audited once, by field name, and logged as a
+	 * warning; the same answer again changes nothing and audits nothing. The admin list shows what is recorded.
+	 */
+	public function testAChangeOfAPartnersValueFieldsIsAuditedOnce(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$partner->setValueFields('["totp","passkeys"]');
+		$controller = $this->controller([$partner]);
+		$this->logger->expects($this->once())->method('warning')
+			->with($this->stringContains('no longer advertises'), $this->callback(
+				static fn (array $context): bool => $context['fields'] === 'totp, passkeys'
+			));
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertCount(1, $this->audits);
+		$this->assertSame(AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED, $this->audits[0]->getEventType());
+		$this->assertSame(
+			['partnerId' => $partner->getId(), 'from' => ['totp', 'passkeys'], 'to' => []],
+			$this->audits[0]->getMetadata()
+		);
+		$this->assertNull($partner->jsonSerialize()['valueFields']);
+
+		$partner->setValueFields('["totp","passkeys"]');
+		$this->assertSame(['totp', 'passkeys'], $partner->jsonSerialize()['valueFields']);
 	}
 
 	public function testAFailedLookupRecordsNothing(): void {

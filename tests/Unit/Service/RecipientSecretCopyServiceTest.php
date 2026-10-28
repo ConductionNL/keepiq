@@ -138,14 +138,26 @@ class RecipientSecretCopyServiceTest extends TestCase {
 			suiteMapper: $this->activeSuiteMapper(),
 			typeService: $this->createMock(SecretTypeService::class),
 		);
-		$this->secretMapper->method('findById')->willReturn($this->secret('src-1', 'user', 'alice'));
+		$withFields = $this->secret('src-1', 'user', 'alice');
+		$withFields->setTotp('SOURCE-T');
+		$withFields->setPasskeys('SOURCE-P');
+		$plain = $this->secret('src-2', 'user', 'alice');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => $id === 'src-1' ? $withFields : $plain
+		);
 		$this->secretMapper->method('insert')->willReturnArgument(0);
 
 		$copy = $service->create('src-1', 'bob', 'K', 'L', 'F', 'T', 'P');
-		$legacy = $service->create('src-1', 'bob', 'K', null, null);
+		$legacy = $service->create('src-2', 'bob', 'K', null, null);
 
-		$this->assertSame(['K', 'L', 'F', 'T', 'P'], [$copy?->getKey(), $copy?->getLogin(), $copy?->getAdditionalFields(), $copy?->getTotp(), $copy?->getPasskeys()]);
-		$this->assertSame([null, null], [$legacy?->getTotp(), $legacy?->getPasskeys()]);
+		$this->assertInstanceOf(Secret::class, $copy);
+		$this->assertInstanceOf(Secret::class, $legacy);
+		$this->assertSame(['K', 'L', 'F', 'T', 'P'], [$copy->getKey(), $copy->getLogin(), $copy->getAdditionalFields(), $copy->getTotp(), $copy->getPasskeys()]);
+		$this->assertSame([null, null], [$legacy->getTotp(), $legacy->getPasskeys()]);
+
+		// A row without the source's fields, or with ones it does not hold, mints nothing and says why.
+		$this->assertSame('copy_fields_mismatch', $service->create('src-1', 'bob', 'K', null, null));
+		$this->assertSame('copy_fields_mismatch', $service->create('src-2', 'bob', 'K', null, null, 'PLANTED'));
 	}//end testCreateSetsEveryValueFieldOnTheCopy()
 
 	/**

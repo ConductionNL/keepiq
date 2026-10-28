@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
+use OCA\Keepiq\Service\CredentialFields;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
@@ -271,22 +272,138 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOfAVersionWithoutTotpOrPasskeysKeepsTheHeads()
 
 	/**
-	 * A version holding an empty string for totp or passkeys holds no value either.
+	 * A version holding an empty string for totp or passkeys was recorded while
+	 * the field was empty, so restoring it clears the head's: a seed or passkey
+	 * added after it does not survive, and a deliberate removal comes back.
 	 *
 	 * @return void
 	 */
-	public function testARestoreOfAVersionWithEmptyTotpOrPasskeysKeepsTheHeads(): void {
+	public function testARestoreOfAVersionWithEmptyTotpOrPasskeysClearsTheHeads(): void {
 		$head = $this->restorableHead(totp: '', passkeys: '');
-		$head->setTotp('HEAD_TOTP');
-		$head->setPasskeys('HEAD_PASSKEYS');
+		$head->setTotp('PLANTED_TOTP');
+		$head->setPasskeys('PLANTED_PASSKEYS');
 		$this->mapper->method('insert')->willReturnArgument(0);
 		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
-		$this->assertSame('HEAD_TOTP', $restored->getTotp());
-		$this->assertSame('HEAD_PASSKEYS', $restored->getPasskeys());
-	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysKeepsTheHeads()
+		$this->assertNull($restored->getTotp());
+		$this->assertNull($restored->getPasskeys());
+	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysClearsTheHeads()
+
+	/**
+	 * A restore writes back old ciphertext, so the totp and passkeys change
+	 * times stay where they were: an exposed value does not look rotated.
+	 *
+	 * @return void
+	 */
+	public function testARestoreLeavesTheTotpAndPasskeysChangeTimes(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+		$stamp = new DateTime('2026-01-01T00:00:00+00:00');
+		$head->setTotpUpdatedAt(clone $stamp);
+		$head->setPasskeysUpdatedAt(null);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('OLD_TOTP', $restored->getTotp());
+		$this->assertSame($stamp->getTimestamp(), $restored->getTotpUpdatedAt()?->getTimestamp());
+		$this->assertNull($restored->getPasskeysUpdatedAt());
+	}//end testARestoreLeavesTheTotpAndPasskeysChangeTimes()
+
+	/**
+	 * A flagged secret restored to a version keeps its warning when only the
+	 * TOTP changes afterwards: the passkeys written back are still exposed.
+	 *
+	 * @return void
+	 */
+	public function testAFlaggedSecretRestoredThenGivenANewTotpKeepsItsWarning(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+		$head->setKey('CURRENT_KEY');
+		$head->setTotp('CURRENT_TOTP');
+		$head->setPasskeys('CURRENT_PASSKEYS');
+		$exposedSince = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $exposedSince);
+		$head->setTotpUpdatedAt(clone $exposedSince);
+		$head->setPasskeysUpdatedAt(clone $exposedSince);
+		$head->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		// The next save changes only the TOTP, as SecretService::update() applies it.
+		$credentials = new CredentialFields();
+		$after = clone $restored;
+		$after->setTotp('NEW_TOTP');
+		$credentials->stampChanges(after: $after, before: $restored, now: new DateTime());
+		$this->assertFalse($credentials->answersCompromiseWarning(after: $after, before: $restored));
+	}//end testAFlaggedSecretRestoredThenGivenANewTotpKeepsItsWarning()
+
+	/**
+	 * A restore that writes back the head's own key does not move the key's
+	 * age, so a flagged secret whose exposed key stays live keeps its warning
+	 * when only the TOTP changes afterwards. A restore that changes the key
+	 * does move it.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfTheSameKeyLeavesItsAgeAndTheWarning(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP');
+		$head->setKey('OLD_CIPHERTEXT');
+		$head->setTotp('CURRENT_TOTP');
+		$exposedSince = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $exposedSince);
+		$head->setTotpUpdatedAt(clone $exposedSince);
+		$head->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+		$this->assertSame($exposedSince->getTimestamp(), $restored->getKeyUpdatedAt()?->getTimestamp());
+
+		$credentials = new CredentialFields();
+		$after = clone $restored;
+		$after->setTotp('NEW_TOTP');
+		$credentials->stampChanges(after: $after, before: $restored, now: new DateTime());
+		$this->assertFalse($credentials->answersCompromiseWarning(after: $after, before: $restored));
+	}//end testARestoreOfTheSameKeyLeavesItsAgeAndTheWarning()
+
+	/**
+	 * A restore that changes the key moves its age, as an edit does.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAnotherKeyMovesItsAge(): void {
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertGreaterThan(new DateTime('2026-09-02T00:00:00+00:00'), $restored->getKeyUpdatedAt());
+	}//end testARestoreOfAnotherKeyMovesItsAge()
+
+	/**
+	 * A snapshot records an empty totp or passkeys as `''`, never null, so a
+	 * later restore can tell it from a version made before the fields existed.
+	 *
+	 * @return void
+	 */
+	public function testASnapshotRecordsAnEmptyTotpOrPasskeysAsEmpty(): void {
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$preUpdate = new Secret();
+		$preUpdate->setId('sec-1');
+		$preUpdate->setTotp('TOTP');
+
+		$version = $this->service->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: 'alice');
+
+		$this->assertSame('TOTP', $version->getTotp());
+		$this->assertSame('', $version->getPasskeys());
+	}//end testASnapshotRecordsAnEmptyTotpOrPasskeysAsEmpty()
 
 	/**
 	 * A change of only totp or passkeys is a revision, and a row holding only

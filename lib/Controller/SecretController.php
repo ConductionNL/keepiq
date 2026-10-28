@@ -305,13 +305,6 @@ class SecretController extends OCSController {
 		string $userId,
 	): \OCA\Keepiq\Db\Secret {
 		if ($ownerType === 'application') {
-			// The application path does not store these fields; refuse rather than drop them.
-			if ($data['totp'] !== null || $data['passkeys'] !== null) {
-				throw new InvalidArgumentException(
-					message: 'totp and passkeys are not supported when ownerType=application'
-				);
-			}
-
 			return $this->secretService->createForApplication(
 				data: $data,
 				applicationId: $ownerId,

@@ -27,6 +27,7 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\CredentialFields;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
@@ -656,6 +657,141 @@ class SecretServiceTest extends TestCase {
 
 		$this->assertSame($stamp->getTimestamp(), $secret->getPossiblyCompromisedAt()->getTimestamp());
 	}//end testUnchangedKeyPreservesPossiblyCompromised()
+
+	/**
+	 * A flagged login whose TOTP seed or passkeys were exposed with its password
+	 * keeps the warning when only the password changes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testAKeyOnlyChangeKeepsTheWarningWhileTotpOrPasskeysStayExposed(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stamp = new \DateTime('2026-01-01T00:00:00+00:00');
+		$rows = [];
+		foreach (['setTotp', 'setPasskeys'] as $setter) {
+			$old = $this->makeSecret(id: $setter);
+			$old->setKey('OLD-CIPHERTEXT');
+			$old->$setter('EXPOSED-CIPHERTEXT');
+			$old->setPossiblyCompromisedAt(clone $stamp);
+			$rows[$setter] = $old;
+		}
+
+		$this->mapper->method('findById')->willReturnCallback(static fn (string $id): Secret => $rows[$id]);
+
+		foreach (array_keys($rows) as $id) {
+			$secret = $this->service->update(id: $id, data: ['key' => 'REPLACED-CIPHERTEXT'], userId: 'alice');
+			$this->assertNotNull($secret->getPossiblyCompromisedAt(), $id);
+		}
+	}//end testAKeyOnlyChangeKeepsTheWarningWhileTotpOrPasskeysStayExposed()
+
+	/**
+	 * The warning clears once no credential is left exposed, whether the
+	 * credentials are replaced in one save or one after the other, and a
+	 * cleared TOTP counts as replaced.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testTheWarningClearsOnceNoCredentialIsLeftExposed(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$flagged = new \DateTime('2026-01-01T00:00:00+00:00');
+		$after = new \DateTime('2026-01-02T00:00:00+00:00');
+		$cases = [
+			// Both in one save.
+			'together' => [['key' => 'NEW-KEY', 'totp' => 'NEW-TOTP'], null, null],
+			// The password went first; the seed now.
+			'key first' => [['totp' => 'NEW-TOTP'], $after, null],
+			// The seed went first; the password now.
+			'totp first' => [['key' => 'NEW-KEY'], null, $after],
+			// The seed is removed rather than replaced.
+			'totp cleared' => [['key' => 'NEW-KEY', 'totp' => ''], null, null],
+		];
+		$rows = [];
+		foreach ($cases as $id => [, $keyChangedAt, $totpChangedAt]) {
+			$old = $this->makeSecret(id: $id);
+			$old->setKey('OLD-KEY');
+			$old->setTotp('OLD-TOTP');
+			$old->setKeyUpdatedAt($keyChangedAt ?? new \DateTime('2025-12-01T00:00:00+00:00'));
+			$old->setTotpUpdatedAt($totpChangedAt);
+			$old->setPossiblyCompromisedAt(clone $flagged);
+			$rows[$id] = $old;
+		}
+
+		$this->mapper->method('findById')->willReturnCallback(static fn (string $id): Secret => $rows[$id]);
+
+		foreach ($cases as $id => [$data]) {
+			$this->assertNull($this->service->update(id: $id, data: $data, userId: 'alice')->getPossiblyCompromisedAt(), $id);
+		}
+	}//end testTheWarningClearsOnceNoCredentialIsLeftExposed()
+
+	/**
+	 * A share-save restore writes the version's totp and passkeys back: old
+	 * values that replace nothing and keep their change times. The flagged
+	 * secret keeps its warning through the restore and through a following
+	 * TOTP-only change, as the passkeys stay exposed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreReplacesNoExposedTotpOrPasskeys(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$exposedSince = new \DateTime('2026-09-01T00:00:00+00:00');
+		$head = $this->makeSecret();
+		$head->setKey('CURRENT-KEY');
+		$head->setTotp('CURRENT-TOTP');
+		$head->setPasskeys('CURRENT-PASSKEYS');
+		$head->setKeyUpdatedAt(clone $exposedSince);
+		$head->setTotpUpdatedAt(clone $exposedSince);
+		$head->setPasskeysUpdatedAt(clone $exposedSince);
+		$head->setPossiblyCompromisedAt(new \DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturnCallback(
+			static function () use (&$head): Secret {
+				return clone $head;
+			}
+		);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->update(
+			id: 's-1',
+			data: ['key' => 'VERSION-KEY', 'totp' => 'VERSION-TOTP', 'passkeys' => 'VERSION-PASSKEYS'],
+			userId: 'alice',
+			restoring: true
+		);
+		$this->assertNotNull($restored->getPossiblyCompromisedAt());
+		$this->assertSame($exposedSince->getTimestamp(), $restored->getTotpUpdatedAt()?->getTimestamp());
+
+		$head = $restored;
+		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP'], userId: 'alice');
+		$this->assertNotNull($secret->getPossiblyCompromisedAt());
+	}//end testARestoreReplacesNoExposedTotpOrPasskeys()
+
+	/**
+	 * A TOTP-only or passkeys-only change stamps that field's change time, which
+	 * moves the credential change time a rotation proof reads; the key's age is
+	 * left alone, so a password rotation policy still sees the old password.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md
+	 */
+	public function testATotpOrPasskeysChangeStampsItsOwnChangeTime(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$keyAge = new \DateTime('2026-01-01T00:00:00+00:00');
+		$old = $this->makeSecret();
+		$old->setKeyUpdatedAt(clone $keyAge);
+		$this->mapper->method('findById')->willReturn($old);
+
+		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP', 'passkeys' => ''], userId: 'alice');
+
+		$this->assertSame($keyAge->getTimestamp(), $secret->getKeyUpdatedAt()->getTimestamp());
+		$this->assertNotNull($secret->getTotpUpdatedAt());
+		$this->assertNull($secret->getPasskeysUpdatedAt(), 'an unchanged (still empty) field is not stamped');
+		$this->assertGreaterThan($keyAge, (new CredentialFields())->lastChangedAt(secret: $secret));
+	}//end testATotpOrPasskeysChangeStampsItsOwnChangeTime()
 
 	/**
 	 * Renaming a secret (or any non-key edit) MUST NOT reset keyUpdatedAt.

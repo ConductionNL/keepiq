@@ -250,6 +250,70 @@ class RotationPolicyServiceTest extends TestCase {
 	}//end testMarkRotatedClosesOnKeyAdvance()
 
 	/**
+	 * A TOTP-only or passkeys-only rotation is a proven rotation too: the head's
+	 * key did not move, its `totp_updated_at` or `passkeys_updated_at` did.
+	 *
+	 * @return void
+	 */
+	public function testMarkRotatedClosesOnATotpOrPasskeysOnlyAdvance(): void {
+		$frozen = new DateTime('2026-06-01T00:00:00Z');
+		foreach (['setTotpUpdatedAt', 'setPasskeysUpdatedAt'] as $setter) {
+			$flagRow = new RotationFlag();
+			$flagRow->setId('flag-1');
+			$flagRow->setSecretId('sec-1');
+			$flagRow->setStatus('open');
+			$flagRow->setReason('suite_compromise');
+			$flagRow->setKeyUpdatedAtAtFlag(clone $frozen);
+
+			$secret = $this->ownedSecret();
+			$secret->setKeyUpdatedAt(clone $frozen);
+			$secret->$setter(new DateTime('2026-06-02T00:00:00Z'));
+
+			$flagMapper = $this->createMock(RotationFlagMapper::class);
+			$flagMapper->method('findById')->willReturn($flagRow);
+			$flagMapper->expects($this->once())->method('update')->willReturnArgument(0);
+			$secretMapper = $this->createMock(SecretMapper::class);
+			$secretMapper->method('findById')->willReturn($secret);
+
+			$service = new RotationFlagService(flagMapper: $flagMapper, secretMapper: $secretMapper);
+			$this->assertTrue($service->markRotated(flagId: 'flag-1', userId: 'alice')['resolved'], $setter);
+			$this->assertSame('rotated', $flagRow->getStatus());
+		}
+	}//end testMarkRotatedClosesOnATotpOrPasskeysOnlyAdvance()
+
+	/**
+	 * Every reason but a compromise asks for a new password: a TOTP-only or
+	 * passkeys-only change leaves those flags open, and raising one freezes
+	 * the password's age, not a later TOTP change.
+	 *
+	 * @return void
+	 */
+	public function testATotpOnlyAdvanceDoesNotCloseAPasswordFlag(): void {
+		$keyAge = new DateTime('2026-06-01T00:00:00Z');
+		$secret = $this->ownedSecret();
+		$secret->setKeyUpdatedAt(clone $keyAge);
+		$secret->setTotpUpdatedAt(new DateTime('2026-06-05T00:00:00Z'));
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findById')->willReturn($secret);
+
+		foreach (['policy_expiry', 'user_flagged', 'lease_revoked', 'lease_expired'] as $reason) {
+			$flagMapper = $this->createMock(RotationFlagMapper::class);
+			$flagMapper->method('findBySecret')->willThrowException(new DoesNotExistException('none'));
+			$flagMapper->method('insert')->willReturnArgument(0);
+			$service = new RotationFlagService(flagMapper: $flagMapper, secretMapper: $secretMapper);
+
+			$flagRow = $service->flag(secretId: 'sec-1', reason: $reason);
+			$this->assertSame($keyAge->getTimestamp(), $flagRow->getKeyUpdatedAtAtFlag()?->getTimestamp(), $reason);
+
+			$flagMapper->method('findById')->willReturn($flagRow);
+			$flagMapper->expects($this->never())->method('update');
+			$secret->setPasskeysUpdatedAt(new DateTime('2026-06-10T00:00:00Z'));
+			$this->assertFalse($service->markRotated(flagId: (string)$flagRow->getId(), userId: 'alice')['resolved'], $reason);
+			$secret->setPasskeysUpdatedAt(null);
+		}
+	}//end testATotpOnlyAdvanceDoesNotCloseAPasswordFlag()
+
+	/**
 	 * 8.2: batch-flag persists IDs only with reason user_flagged and
 	 * skips secrets the caller does not own.
 	 *

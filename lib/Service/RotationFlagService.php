@@ -6,7 +6,8 @@
  * The rotation-flag lifecycle (rotation-expiry-policies §3): raising the
  * one-open-flag-per-secret row, batch flagging owned secrets, the
  * compromise sweep, and closing a flag either by a PROVEN key_updated_at
- * advance (mark-rotated) or by an owner dismissal. Kept apart from
+ * advance (or, for a compromise flag, a totp or passkeys change; see
+ * CredentialFields::rotationProofAt()) or by an owner dismissal. Kept apart from
  * RotationPolicyService, which owns expiry POLICIES and effective-expiry
  * resolution; the two share no state beyond the secret id.
  *
@@ -87,7 +88,7 @@ class RotationFlagService {
 			$existing->setFlaggedAt(new DateTime());
 			$existing->setFlaggedBy($flaggedBy);
 			$existing->setResolvedAt(null);
-			$existing->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId));
+			$existing->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId, reason: $reason));
 			$existing = $this->flagMapper->update($existing);
 
 			$this->dispatchAudit(
@@ -109,7 +110,7 @@ class RotationFlagService {
 		$flagRow->setStatus('open');
 		$flagRow->setFlaggedAt(new DateTime());
 		$flagRow->setFlaggedBy($flaggedBy);
-		$flagRow->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId));
+		$flagRow->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId, reason: $reason));
 		$flagRow = $this->flagMapper->insert($flagRow);
 
 		$this->dispatchAudit(
@@ -167,8 +168,10 @@ class RotationFlagService {
 	}//end openFlags()
 
 	/**
-	 * Mark a flag rotated — ONLY when the head's `key_updated_at` has
-	 * advanced past the value frozen at flag time (a proven rotation).
+	 * Mark a flag rotated — ONLY when the head's proof time has advanced past
+	 * the value frozen at flag time (a proven rotation): `key_updated_at`, or
+	 * for a compromise flag the latest of it, `totp_updated_at` and
+	 * `passkeys_updated_at` (CredentialFields::rotationProofAt()).
 	 * Otherwise the caller is told to rotate first (re-request path).
 	 *
 	 * @param string $flagId The flag UUID
@@ -183,7 +186,7 @@ class RotationFlagService {
 
 		$head = $this->secretMapper->findById($flagRow->getSecretId());
 		$frozen = $flagRow->getKeyUpdatedAtAtFlag();
-		$current = $head->getKeyUpdatedAt();
+		$current = (new CredentialFields())->rotationProofAt(secret: $head, reason: $flagRow->getReason());
 
 		$advanced = $current !== null && ($frozen === null || $current > $frozen);
 		if ($advanced === false) {
@@ -273,15 +276,17 @@ class RotationFlagService {
 	}//end deleteForSecret()
 
 	/**
-	 * The head's current key_updated_at (null-tolerant).
+	 * The head's current proof time for a flag with this reason
+	 * (null-tolerant), which markRotated() compares against.
 	 *
 	 * @param string $secretId The secret UUID
+	 * @param string $reason The flag's reason
 	 *
 	 * @return DateTime|null
 	 */
-	private function headKeyUpdatedAt(string $secretId): ?DateTime {
+	private function headKeyUpdatedAt(string $secretId, string $reason): ?DateTime {
 		try {
-			return $this->secretMapper->findById($secretId)->getKeyUpdatedAt();
+			return (new CredentialFields())->rotationProofAt(secret: $this->secretMapper->findById($secretId), reason: $reason);
 		} catch (DoesNotExistException) {
 			return null;
 		}

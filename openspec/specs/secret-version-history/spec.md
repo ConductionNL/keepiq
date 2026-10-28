@@ -27,6 +27,14 @@ The system MUST let a user list versions newest-first (metadata only), view a ve
 - WHEN the owner restores `V`
 - THEN the current head MUST first be snapshotted, the head MUST become `V`'s values, and the change MUST propagate to the recipient's copy
 
+#### Scenario: A restore of the TOTP seed and passkeys
+@e2e exclude Asserted on the persisted head and the share-save body; covered by PHPUnit (SecretVersionServiceTest, ShareSaveRequestTest, ShareSaveServiceTest).
+- GIVEN a version records an empty `totp` or `passkeys` as `''` and a version made before the fields existed holds null
+- WHEN the version is restored
+- THEN a null field MUST keep the head's value, a `''` field MUST clear it, and a value MUST set it, on the head and on every copy
+- AND a field whose value is the head's own ciphertext counts as kept, so a client that does not send it is not refused; a different value the patch leaves out MUST be refused with 400 `invalid_body`
+- AND the restore MUST NOT move `totp_updated_at` or `passkeys_updated_at`, and MUST move `key_updated_at` only when the restored key differs from the head's, so written-back old ciphertext never counts as a rotation
+
 #### Scenario: A view-only holder cannot restore
 - GIVEN a secret shared directly with Bob, whose copy has a prior version `V`
 - WHEN Bob sends `POST /api/v1/versions/{id}/restore` for `V`

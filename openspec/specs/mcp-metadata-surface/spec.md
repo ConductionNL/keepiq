@@ -6,12 +6,12 @@ Keepiq offers AI agents three read-only tools over vault metadata through OpenRe
 ## Requirements
 
 ### Requirement: No Tool Ever Returns Secret Material
-No Keepiq MCP tool SHALL return, embed, reference by value, or provide a path to secret material — defined as: the encrypted blobs (`key`, `login`, `additional_fields`) in any form, any plaintext secret value, encryption-suite key material or `encryptionSuiteId`, private-key blobs, attachment content, share/link/lease/emergency tokens or snapshots, export artifacts, or secret-version bodies. No tool SHALL trigger a decrypt, export, share, link, delegation, lease, import, or emergency-access operation. This holds because the server cannot decrypt (encryption-suites spec) AND because Keepiq MUST NOT build a path that would let an agent-reachable process hold key material. Every tool result MUST be built by an allow-list serializer over plaintext metadata; a field not on the allow-list MUST NOT appear even if the underlying entity gains it later.
+No Keepiq MCP tool SHALL return, embed, reference by value, or provide a path to secret material — defined as: the encrypted blobs (`key`, `login`, `additional_fields`, `totp`, `passkeys`) in any form, any plaintext secret value, encryption-suite key material or `encryptionSuiteId`, private-key blobs, attachment content, share/link/lease/emergency tokens or snapshots, export artifacts, or secret-version bodies. No tool SHALL trigger a decrypt, export, share, link, delegation, lease, import, or emergency-access operation. This holds because the server cannot decrypt (encryption-suites spec) AND because Keepiq MUST NOT build a path that would let an agent-reachable process hold key material. Every tool result MUST be built by an allow-list serializer over plaintext metadata; a field not on the allow-list MUST NOT appear even if the underlying entity gains it later.
 
 #### Scenario: A value request is structurally unanswerable
 - **WHEN** an agent asks a Keepiq tool for the password of an entry
 - **THEN** no tool exists that returns a value, and `listEntries` returns the entry's metadata only
-- **AND** the response contains none of `key`, `login`, `additionalFields`, `encryptionSuiteId`
+- **AND** the response contains none of `key`, `login`, `additionalFields`, `totp`, `passkeys`, `encryptionSuiteId`
 @e2e exclude allow-list contract with no UI surface; covered by PHPUnit (tests/unit/Mcp/MetadataAllowListTest.php asserting every result key ∈ allow-list, positive control with a poisoned fixture).
 
 #### Scenario: New entity fields do not leak by default
@@ -53,7 +53,7 @@ The system MUST expose `keepiq.expiryReport` (`#[McpTool(name: 'expiryReport', s
 - **THEN** the tool returns a validation error and no report
 
 ### Requirement: Rotation Status Tool
-The system MUST expose `keepiq.rotationStatus` (`#[McpTool(name: 'rotationStatus', scope: 'read', readOnlyHint: true)]`) returning the invoking user's open rotation flags from `RotationFlagService::openFlags()` — entry `id`/`name`, `reason`, `status`, `flaggedAt`, `keyUpdatedAtAtFlag` — and aggregate counts (open, overdue by policy, compromised). It MUST NOT resolve, dismiss, or create flags; rotation remains a client-side re-encryption plus a human `markRotated` in the app.
+The system MUST expose `keepiq.rotationStatus` (`#[McpTool(name: 'rotationStatus', scope: 'read', readOnlyHint: true)]`) returning the invoking user's open rotation flags from `RotationFlagService::openFlags()` — entry `id`/`name`, `reason`, `status`, `flaggedAt`, `keyUpdatedAtAtFlag` (the rotation proof time frozen at flag time: the password's `key_updated_at`, or for a `suite_compromise` flag the latest change of the password, TOTP seed or passkeys) — and aggregate counts (open, overdue by policy, compromised). It MUST NOT resolve, dismiss, or create flags; rotation remains a client-side re-encryption plus a human `markRotated` in the app.
 
 #### Scenario: "What's overdue for rotation?"
 - **WHEN** an agent invokes `rotationStatus`

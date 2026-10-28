@@ -290,7 +290,8 @@ class TeamFolderContributionService {
 	/**
 	 * The copy rows the server accepts: one per covered, enabled member with
 	 * an active suite, never for the owner, for this new secret only.
-	 * A row must carry the `totp` and `passkeys` the owner row holds, or that member's copy would lack them.
+	 * A row must carry the `totp` and `passkeys` the owner row holds, and none it does not hold,
+	 * or that member's copy would show another value than the owner's.
 	 *
 	 * @param TeamFolder $teamFolder The team folder
 	 * @param Secret $owner The new owner row, not yet stored
@@ -298,14 +299,11 @@ class TeamFolderContributionService {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @throws InvalidArgumentException When a member's row lacks a field the owner row holds
+	 * @throws InvalidArgumentException When a member's row lacks a field the owner row holds, or carries one it does not
 	 *
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	private function memberCopies(TeamFolder $teamFolder, Secret $owner, array $copies): array {
-		$required = array_keys(
-			array_filter(['encryptedTotp' => $owner->getTotp(), 'encryptedPasskeys' => $owner->getPasskeys()], static fn ($v) => $v !== null)
-		);
 		$eligible = [];
 		$candidates = array_values(
 			array_diff(
@@ -323,10 +321,9 @@ class TeamFolderContributionService {
 				continue;
 			}
 
-			foreach ($required as $field) {
-				if (is_string($copy[$field] ?? null) === false || $copy[$field] === '') {
-					throw new InvalidArgumentException('Every member copy must carry the '.$field.' the secret holds');
-				}
+			$carried = ['totp' => ($copy['encryptedTotp'] ?? null), 'passkeys' => ($copy['encryptedPasskeys'] ?? null)];
+			foreach ((new CredentialFields())->notMirrored(source: $owner, copy: $carried) as $field) {
+				throw new InvalidArgumentException('Every member copy must carry the '.$field.' the secret holds, and none it does not');
 			}
 
 			$rows[] = [

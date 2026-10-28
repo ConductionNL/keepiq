@@ -118,6 +118,9 @@ class ShareSaveServiceTest extends TestCase {
 	/** @var list<array<string,mixed>|null> The patch each partner write was given */
 	private array $partnerPatches = [];
 
+	/** @var list<array<string,?string>> The head's kept fields each partner write is held to */
+	private array $partnerKept = [];
+
 	/** @var array<int,string> What happened, in order */
 	private array $log = [];
 
@@ -1243,9 +1246,10 @@ class ShareSaveServiceTest extends TestCase {
 		$sent = [];
 		$this->federated = $this->createMock(FederatedShareService::class);
 		$this->federated->method('writeCiphertext')->willReturnCallback(
-			function (FederatedShare $row, string $certFingerprint, array $ciphertext, DateTime $savedAt, ?array $patch = null) use (&$sent): FederatedShare {
+			function (FederatedShare $row, string $certFingerprint, array $ciphertext, DateTime $savedAt, ?array $patch = null, array $kept = []) use (&$sent): FederatedShare {
 				$sent[] = $ciphertext;
 				$this->partnerPatches[] = $patch;
+				$this->partnerKept[] = $kept;
 				return $row;
 			}
 		);
@@ -1459,12 +1463,13 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * A version made before the fields existed holds none: the head and every copy keep theirs, and the partner
-	 * share keeps the whole value it was sent, so a changed certificate does not clear the partner's.
+	 * A version made before the fields existed holds none: the head and every copy keep theirs. The partner share
+	 * is written as sent, held to the head's own values (FederatedValueFieldsTest refuses one that does not match).
 	 */
 	public function testARestoreOfAVersionWithoutTheNewFieldsLeavesThemOutOfTheHeadAndCopies(): void {
 		$this->versionHistory->method('getVersion')->willReturn($this->version());
 		$this->rows['c-bob']->setTotp('BOB-TOTP');
+		$this->rows['src']->setTotp('HEAD-TOTP');
 
 		$sent = $this->partnerCiphertext(request: $this->restoreWith(fields: ['totp' => 'T', 'passkeys' => 'P']));
 
@@ -1472,6 +1477,30 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame([['BOB-TOTP', null], [null, null]], array_map(static fn (array $w): array => [$w['totp'], $w['passkeys']], $this->copyWrites));
 		$this->assertSame([['key' => 'K-DAVE', 'login' => null, 'additionalFields' => null, 'totp' => 'T', 'passkeys' => 'P']], $sent);
 		$this->assertSame([['key' => 'K-OLD', 'login' => null, 'additionalFields' => null]], $this->partnerPatches);
+		$this->assertSame([['totp' => 'HEAD-TOTP', 'passkeys' => null]], $this->partnerKept);
+	}
+
+	/**
+	 * A version made after the fields existed holds `''` for an empty one: the restore clears a field the head holds
+	 * on the head, every copy and the partner share, also from a client that left it out; one the head does not hold
+	 * is left out of the save.
+	 */
+	public function testARestoreOfAVersionThatHeldTheFieldsEmptyClearsThemEverywhere(): void {
+		$version = $this->version();
+		$version->setTotp('');
+		$version->setPasskeys('');
+		$this->versionHistory->method('getVersion')->willReturn($version);
+		$this->rows['c-bob']->setTotp('BOB-TOTP');
+		$this->rows['src']->setTotp('HEAD-TOTP');
+
+		$sent = $this->partnerCiphertext(request: $this->restoreWith(fields: []));
+
+		$this->assertSame('', $this->rowSaves[0]['data']['totp']);
+		$this->assertArrayNotHasKey('passkeys', $this->rowSaves[0]['data']);
+		$this->assertSame([[null, null], [null, null]], array_map(static fn (array $w): array => [$w['totp'], $w['passkeys']], $this->copyWrites));
+		$this->assertNull($sent[0]['totp']);
+		$this->assertArrayNotHasKey('passkeys', $sent[0]);
+		$this->assertSame([['passkeys' => null]], $this->partnerKept);
 	}
 
 	public function testARestoreThatLeavesOutAFieldTheVersionHoldsIsRefusedBeforeAnythingIsWritten(): void {

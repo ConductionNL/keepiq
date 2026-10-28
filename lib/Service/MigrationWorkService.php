@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\AttachmentGrant;
 use OCA\Keepiq\Db\AttachmentGrantMapper;
@@ -543,6 +544,7 @@ class MigrationWorkService {
 
 		$records = [];
 		$dropCount = 0;
+		$blobs = new FederatedValueFields();
 
 		foreach ($secretIds as $secretId) {
 			// Newest first, so the first $window rows are the ones that stay.
@@ -560,8 +562,10 @@ class MigrationWorkService {
 						'key' => $version->getKey(),
 						'login' => $version->getLogin(),
 						'additionalFields' => $version->getAdditionalFields(),
-						'totp' => $version->getTotp(),
-						'passkeys' => $version->getPasskeys(),
+						// A version stores `''` for a field that was empty; the
+						// list says null for it, as it does for a head.
+						'totp' => $blobs->blob(value: $version->getTotp()),
+						'passkeys' => $blobs->blob(value: $version->getPasskeys()),
 					];
 					continue;
 				}
@@ -593,6 +597,7 @@ class MigrationWorkService {
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the row is not this migration's to touch
 	 * @throws FieldsNotReencryptedException When a stored value field was not re-encrypted
+	 * @throws InvalidArgumentException When a value field the record holds none for is sent one
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
@@ -666,6 +671,7 @@ class MigrationWorkService {
 	 * @throws NotFoundException When the version or its secret does not exist
 	 * @throws ForbiddenException When the row is not this migration's to touch
 	 * @throws FieldsNotReencryptedException When a stored value field was not re-encrypted
+	 * @throws InvalidArgumentException When a value field the record holds none for is sent one
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
@@ -926,11 +932,12 @@ class MigrationWorkService {
 	}//end dropVersionsBeyondWindow()
 
 	/**
-	 * Refuse a commit that leaves a stored optional value field behind.
+	 * Refuse a commit that leaves a stored optional value field behind, or that sends one the record does not hold.
 	 *
 	 * The record is re-pointed to the new suite as a whole, so a field the client did not send would stay readable only under the revoked key.
 	 * A not-sent field is fine when the record holds no value for it, which is what keeps clients that predate these fields working.
-	 * An empty string counts as not sent.
+	 * Re-encrypting an empty field never yields a value, so a sent value for one would be a write past the version history and the audit.
+	 * An empty string counts as not sent, and as no value stored.
 	 *
 	 * @param Secret|SecretVersion $record The record about to be committed
 	 * @param string|null $totp The TOTP ciphertext from the commit, null when not sent
@@ -939,6 +946,7 @@ class MigrationWorkService {
 	 * @return void
 	 *
 	 * @throws FieldsNotReencryptedException When a stored field has no re-encrypted counterpart
+	 * @throws InvalidArgumentException When a field the record holds no value for is sent one
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
@@ -949,10 +957,25 @@ class MigrationWorkService {
 		];
 
 		$missing = [];
+		$unheld = [];
 		foreach ($checks as $field => [$stored, $sent]) {
-			if ($stored !== null && $stored !== '' && ($sent === null || $sent === '')) {
-				$missing[] = $field;
+			$holds = (string)$stored !== '';
+			if ($holds === ((string)$sent !== '')) {
+				continue;
 			}
+
+			if ($holds === true) {
+				$missing[] = $field;
+				continue;
+			}
+
+			$unheld[] = $field;
+		}
+
+		if ($unheld !== []) {
+			throw new InvalidArgumentException(
+				'The record holds no value to re-encrypt for: ' . implode(', ', $unheld)
+			);
 		}
 
 		if ($missing !== []) {

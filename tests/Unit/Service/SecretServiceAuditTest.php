@@ -223,14 +223,15 @@ class SecretServiceAuditTest extends TestCase {
 	}//end testCreateEmitsSecretCreated()
 
 	/**
-	 * Neither totp nor passkeys is named in an audit event, nor does their
-	 * ciphertext reach one, on create or update (keepiq#1325).
+	 * A totp or passkeys change is named in `changedFields`, as a key change
+	 * is, so a swapped second factor is visible in the audit trail; their
+	 * ciphertext never reaches an event, on create or update (keepiq#1325).
 	 *
 	 * @return void
 	 */
 	public function testTotpAndPasskeysNeverReachTheAudit(): void {
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->makeSuite());
-		$this->mapper->method('findById')->willReturn($this->makeSecret());
+		$this->mapper->method('findById')->willReturnCallback(fn (): Secret => $this->makeSecret());
 
 		$events = [];
 		$this->dispatcher->method('dispatchTyped')->willReturnCallback(
@@ -248,6 +249,9 @@ class SecretServiceAuditTest extends TestCase {
 			data: ['name' => 'Renamed', 'key' => 'NEW-CIPHER', 'totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'],
 			userId: 'alice',
 		);
+		$this->service->update(id: 's-1', data: ['totp' => 'OTHER-TOTP-CIPHER'], userId: 'alice');
+		// An empty field the row does not hold either changes nothing and is not named.
+		$this->service->update(id: 's-1', data: ['key' => 'NEW-CIPHER', 'totp' => '', 'passkeys' => ''], userId: 'alice');
 
 		$updated = array_values(
 			array_filter(
@@ -255,11 +259,13 @@ class SecretServiceAuditTest extends TestCase {
 				static fn (AuditEvent $e): bool => $e->getEventType() === AuditEventTypes::SECRET_UPDATED
 			)
 		);
-		$this->assertCount(1, $updated);
-		$this->assertSame(['name', 'key'], $updated[0]->getMetadata()['changedFields']);
+		$this->assertCount(3, $updated);
+		$this->assertSame(['name', 'key', 'totp', 'passkeys'], $updated[0]->getMetadata()['changedFields']);
+		$this->assertSame(['totp'], $updated[1]->getMetadata()['changedFields'], 'a TOTP-only change is not an empty update');
+		$this->assertSame(['key'], $updated[2]->getMetadata()['changedFields']);
 		foreach ($events as $event) {
 			$encoded = json_encode($event->getMetadata());
-			foreach (['totp', 'passkeys', 'TOTP-CIPHER', 'PASSKEYS-CIPHER'] as $banned) {
+			foreach (['TOTP-CIPHER', 'PASSKEYS-CIPHER'] as $banned) {
 				$this->assertStringNotContainsString($banned, (string)$encoded);
 			}
 		}

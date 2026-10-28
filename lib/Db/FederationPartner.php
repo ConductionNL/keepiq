@@ -160,6 +160,11 @@ class FederationPartner extends Entity implements JsonSerializable {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function jsonSerialize(): array {
+		$valueFields = null;
+		if ($this->valueFields !== null) {
+			$valueFields = json_decode($this->valueFields, true);
+		}
+
 		return [
 			'id' => $this->getId(),
 			'baseUrl' => $this->baseUrl,
@@ -169,6 +174,8 @@ class FederationPartner extends Entity implements JsonSerializable {
 			'allowInbound' => $this->allowInbound === true,
 			'addedBy' => $this->addedBy,
 			'addedAt' => $this->addedAt?->format(DATE_ATOM),
+			// What its last lookup answer advertised it stores; null before any.
+			'valueFields' => $valueFields,
 		];
 	}//end jsonSerialize()
 }//end class

@@ -247,8 +247,8 @@ The disposition of each store is fixed as follows. All fields listed as re-encry
 
 | Store | Suite-bound content | Disposition |
 |-------|---------------------|-------------|
-| `keepiq_secrets` | `key`, `login`, `additional_fields` | Re-encrypt under the new suite; re-point `encryption_suite_id` |
-| `keepiq_secret_versions` | `key`, `login`, `additional_fields` (own `encryption_suite_id`) | Re-encrypt the bounded window fixed by the `secret-version-history` spec (head plus the N most recent versions, default 5); drop older versions |
+| `keepiq_secrets` | `key`, `login`, `additional_fields`, `totp`, `passkeys` | Re-encrypt under the new suite; re-point `encryption_suite_id` |
+| `keepiq_secret_versions` | `key`, `login`, `additional_fields`, `totp`, `passkeys` (own `encryption_suite_id`) | Re-encrypt the bounded window fixed by the `secret-version-history` spec (head plus the N most recent versions, default 5); drop older versions |
 | `keepiq_attachment_grants` | `wrapped_file_key` (RSA-wrapped per-file AES key) | Re-wrap the rotating owner's own grants under the new suite. Grants belonging to other recipients MUST NOT be altered |
 | `keepiq_secret_requests` | No ciphertext of its own; `encryption_suite_id` selects the certificate used to encrypt future submissions | Lock for the duration of the migration, then unlock and re-point to the new suite |
 | `keepiq_link_shares` | `encrypted_secret_snapshot` | Revoke (cascade), unchanged from current behaviour |
@@ -257,6 +257,22 @@ The disposition of each store is fixed as follows. All fields listed as re-encry
 Re-encryption of `keepiq_secrets`, `keepiq_secret_versions` and `keepiq_attachment_grants` MUST happen in the browser under the same rules as ordinary migration: the old private key decrypts and the new public key encrypts, both as WebCrypto `CryptoKey` objects, and only ciphertext crosses the wire. Emergency contacts are the one migrated store not produced by decrypt-then-re-encrypt: the browser builds a fresh recovery envelope from the new private key and the grantee's fetched certificate, so no old-key decrypt is involved. Unlike the three re-encrypted stores, emergency contacts MUST NOT gate completion — a contact whose grantee is unreachable can never be re-enveloped, and gating on it would make the write lock inescapable; such contacts are swept into invalidation at completion instead. RSA has a per-chunk plaintext cap (446 bytes at RSA-4096), so every value MUST be re-chunked against the new key rather than having its existing chunk framing reused.
 
 Owner and suite scoping MUST be enforced server-side on every re-encryption write, resolving the acting user through the Nextcloud `OCP\IUserSession` the surrounding controllers already use: a write MUST be refused unless the target row's current `encryption_suite_id` is the migration's `old_suite_id` and the row is owned by the migration's owner.
+
+`totp` and `passkeys` are optional value fields: a record that holds none needs none in its commit, which keeps a client that predates them working on such records. A record re-points to the new suite as a whole, so a commit MUST carry a re-encrypted value for each of the two the record holds, and MUST NOT carry one for a field the record holds none for; `''` counts as none on either side. A record holding either field can therefore only be migrated by a client that re-encrypts both, and that client MUST ship in the same release as the server that stores them: an older client's commit is refused, it reports the refusal as retryable, and the owner stays write-locked until a client that sends the fields resumes the migration.
+
+#### Scenario: A commit that leaves out a stored TOTP seed is refused
+
+@e2e exclude A server-side refusal of a commit body; covered by PHPUnit (MigrationWorkServiceTest, MigrationControllerTest).
+- **GIVEN** a secret on the old suite holds a `totp` value
+- **WHEN** its migration commit omits `totp`, or sends it as `''`
+- **THEN** the commit MUST be refused with 409 `fields_not_reencrypted` naming `totp`, and nothing is written
+
+#### Scenario: A commit cannot add a value the record does not hold
+
+@e2e exclude A server-side refusal of a commit body; covered by PHPUnit (MigrationWorkServiceTest).
+- **GIVEN** a secret or version on the old suite holds no `passkeys` value
+- **WHEN** its migration commit sends a `passkeys` value
+- **THEN** the commit MUST be refused with 400, and nothing is written
 
 #### Scenario: Attachment grants survive the rotation
 
