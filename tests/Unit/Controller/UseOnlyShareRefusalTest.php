@@ -120,7 +120,6 @@ class UseOnlyShareRefusalTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $this->suites,
 		);
 		$groupShares = $this->createMock(GroupShareMapper::class);
 		$groupShares->method('findBySecret')->willReturn([]);

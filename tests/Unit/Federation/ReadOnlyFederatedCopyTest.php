@@ -134,7 +134,6 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $this->suites,
 			shareTargetMapper: $this->targets,
 		);
 	}

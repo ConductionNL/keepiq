@@ -477,7 +477,6 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: new SecretMapper(db: $this->db),
 			delegationMapper: $delegations,
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 			shareTargetMapper: new ShareTargetMapper(db: $this->db),
 		);
 	}//end authorization()

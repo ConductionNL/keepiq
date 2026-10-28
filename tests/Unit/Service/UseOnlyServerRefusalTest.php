@@ -153,7 +153,6 @@ class UseOnlyServerRefusalTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->createMock(SecretDelegationMapper::class),
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				shareTargetMapper: $shareTargets,
 			),
 		);
