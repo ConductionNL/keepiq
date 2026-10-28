@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Utilisateur retiré de %n dossier d'équipe.","Utilisateur retiré de %n dossiers d'équipe."],
         "A restored copy came from a share that has ended. It stays read-only.": "Une copie restaurée provient d’un partage qui a pris fin. Elle reste en lecture seule.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "L’organisation qui a partagé une copie restaurée est injoignable. La copie reste en lecture seule et ne suit pas leurs modifications.",
-        "Recipient at another organisation restored their copy": "Un destinataire d’une autre organisation a restauré sa copie"
+        "Recipient at another organisation restored their copy": "Un destinataire d’une autre organisation a restauré sa copie",
+        "Another organisation changed the fields it stores": "Une autre organisation a modifié les champs qu’elle stocke"
     },
     "nplurals=2; plural=(n > 1);"
 )

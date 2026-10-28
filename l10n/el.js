@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Ο χρήστης αφαιρέθηκε από %n φάκελο ομάδας.","Ο χρήστης αφαιρέθηκε από %n φακέλους ομάδας."],
         "A restored copy came from a share that has ended. It stays read-only.": "Ένα αντίγραφο που επαναφέρθηκε προέρχεται από κοινοποίηση που έληξε. Παραμένει μόνο για ανάγνωση.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Ο οργανισμός που κοινοποίησε ένα αντίγραφο που επαναφέρθηκε δεν ήταν προσβάσιμος. Το αντίγραφο παραμένει μόνο για ανάγνωση και δεν ακολουθεί τις αλλαγές τους.",
-        "Recipient at another organisation restored their copy": "Παραλήπτης σε άλλον οργανισμό επανέφερε το αντίγραφό του"
+        "Recipient at another organisation restored their copy": "Παραλήπτης σε άλλον οργανισμό επανέφερε το αντίγραφό του",
+        "Another organisation changed the fields it stores": "Ένας άλλος οργανισμός άλλαξε τα πεδία που αποθηκεύει"
     },
     "nplurals=2; plural=(n != 1);"
 )

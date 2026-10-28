@@ -78,6 +78,10 @@ export function auditEventLabel(eventType) {
 			'keepiq',
 			'Recipient at another organisation restored their copy',
 		),
+		'federation_partner.value_fields_changed': t(
+			'keepiq',
+			'Another organisation changed the fields it stores',
+		),
 		'request.created': t('keepiq', 'Secret request created'),
 		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
 		'request.re_requested': t('keepiq', 'Secret request re-requested'),
@@ -149,6 +153,7 @@ export function auditEventOptions() {
 		'federated_share.copy_removed',
 		'federated_share.recipient_declined',
 		'federated_share.recipient_resumed',
+		'federation_partner.value_fields_changed',
 		'request.created',
 		'request.fulfilled',
 		'request.re_requested',

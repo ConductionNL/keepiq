@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Fjernet brukeren fra %n teammappe.","Fjernet brukeren fra %n teammapper."],
         "A restored copy came from a share that has ended. It stays read-only.": "En gjenopprettet kopi kom fra en deling som er avsluttet. Den forblir skrivebeskyttet.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organisasjonen som delte en gjenopprettet kopi, kunne ikke nås. Kopien forblir skrivebeskyttet og følger ikke endringene deres.",
-        "Recipient at another organisation restored their copy": "Mottaker i en annen organisasjon gjenopprettet kopien sin"
+        "Recipient at another organisation restored their copy": "Mottaker i en annen organisasjon gjenopprettet kopien sin",
+        "Another organisation changed the fields it stores": "En annen organisasjon har endret feltene den lagrer"
     },
     "nplurals=2; plural=(n != 1);"
 )

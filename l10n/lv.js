@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Lietotājs noņemts no %n komandas mapes.","Lietotājs noņemts no %n komandas mapēm.","Lietotājs noņemts no %n komandas mapēm."],
         "A restored copy came from a share that has ended. It stays read-only.": "Atjaunotā kopija nāk no koplietojuma, kas ir beidzies. Tā paliek tikai lasāma.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizāciju, kas kopīgoja atjaunoto kopiju, neizdevās sasniegt. Kopija paliek tikai lasāma un neseko viņu izmaiņām.",
-        "Recipient at another organisation restored their copy": "Citas organizācijas saņēmējs atjaunoja savu kopiju"
+        "Recipient at another organisation restored their copy": "Citas organizācijas saņēmējs atjaunoja savu kopiju",
+        "Another organisation changed the fields it stores": "Cita organizācija mainīja laukus, ko tā glabā"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["L-utent tneħħa minn %n folder tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim."],
         "A restored copy came from a share that has ended. It stays read-only.": "Kopja rrestawrata ġiet minn qsim li ntemm. Tibqa’ għall-qari biss.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "L-organizzazzjoni li qasmet kopja rrestawrata ma setgħetx tintlaħaq. Il-kopja tibqa’ għall-qari biss u ma ssegwix il-bidliet tagħhom.",
-        "Recipient at another organisation restored their copy": "Riċevitur f’organizzazzjoni oħra rrestawra l-kopja tiegħu"
+        "Recipient at another organisation restored their copy": "Riċevitur f’organizzazzjoni oħra rrestawra l-kopja tiegħu",
+        "Another organisation changed the fields it stores": "Organizzazzjoni oħra biddlet il-kampi li taħżen"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

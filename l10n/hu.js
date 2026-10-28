@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["A felhasználó eltávolítva %n csapatmappából.","A felhasználó eltávolítva %n csapatmappából."],
         "A restored copy came from a share that has ended. It stays read-only.": "Egy visszaállított másolat egy véget ért megosztásból származik. Csak olvasható marad.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "A visszaállított másolatot megosztó szervezet nem érhető el. A másolat csak olvasható marad, és nem követi a változtatásaikat.",
-        "Recipient at another organisation restored their copy": "Egy másik szervezet címzettje visszaállította a másolatát"
+        "Recipient at another organisation restored their copy": "Egy másik szervezet címzettje visszaállította a másolatát",
+        "Another organisation changed the fields it stores": "Egy másik szervezet módosította az általa tárolt mezőket"
     },
     "nplurals=2; plural=(n != 1);"
 )

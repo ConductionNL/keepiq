@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Benutzer aus %n Teamordner entfernt.","Benutzer aus %n Teamordnern entfernt."],
         "A restored copy came from a share that has ended. It stays read-only.": "Eine wiederhergestellte Kopie stammt aus einer beendeten Freigabe. Sie bleibt schreibgeschützt.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Die Organisation, die eine wiederhergestellte Kopie geteilt hat, ist nicht erreichbar. Die Kopie bleibt schreibgeschützt und folgt ihren Änderungen nicht.",
-        "Recipient at another organisation restored their copy": "Empfänger in einer anderen Organisation hat seine Kopie wiederhergestellt"
+        "Recipient at another organisation restored their copy": "Empfänger in einer anderen Organisation hat seine Kopie wiederhergestellt",
+        "Another organisation changed the fields it stores": "Eine andere Organisation hat die Felder geändert, die sie speichert"
     },
     "nplurals=2; plural=(n != 1);"
 )

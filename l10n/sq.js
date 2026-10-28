@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Përdoruesi u hoq nga %n dosje ekipi.","Përdoruesi u hoq nga %n dosje ekipi."],
         "A restored copy came from a share that has ended. It stays read-only.": "Një kopje e rikthyer vjen nga një ndarje që ka përfunduar. Mbetet vetëm për lexim.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizata që ndau një kopje të rikthyer nuk u arrit. Kopja mbetet vetëm për lexim dhe nuk ndjek ndryshimet e tyre.",
-        "Recipient at another organisation restored their copy": "Një marrës nga një organizatë tjetër rikthye kopjen e vet"
+        "Recipient at another organisation restored their copy": "Një marrës nga një organizatë tjetër rikthye kopjen e vet",
+        "Another organisation changed the fields it stores": "Një organizatë tjetër ndryshoi fushat që ruan"
     },
     "nplurals=2; plural=(n != 1);"
 )
