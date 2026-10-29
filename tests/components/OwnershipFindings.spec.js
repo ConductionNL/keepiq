@@ -129,6 +129,21 @@ describe('OwnershipFindings', () => {
 		expect(wrapper.vm.findings).toEqual([])
 	})
 
+	it('an owner move names the secrets the server would not copy to the members', async () => {
+		const wrapper = await mountWith(true)
+		vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({})
+		vi.spyOn(useTeamFolderStore(), 'runFanOut').mockResolvedValue({
+			created: 0,
+			refused: ['Old login'],
+		})
+
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[0]
+		await wrapper.vm.move({ id: 'old-login' })
+
+		// The test t() stub returns the key untranslated, so the names are not substituted.
+		expect(wrapper.vm.error).toContain('one-time code or passkeys')
+	})
+
 	it('a contribution move contributes first and deletes the personal secret after', async () => {
 		const wrapper = await mountWith(true)
 		const order = []

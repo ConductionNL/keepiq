@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "D’athraigh eagraíocht eile na réimsí a stórálann sí",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Tá cód aonuaire nó eochracha rochtana sna rúin seo nach féidir leis an leagan seo de Keepiq a chóipeáil fós, mar sin ní bhfuair na baill nua iad: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Tá cód aonuaire nó eochracha rochtana sa logáil isteach seo freisin, a nochtadh chomh maith. Cuir ceann nua in ionad gach ceann acu agus bain na seanchuid eochracha rochtana in ionad nithe nua a chur leo amháin. Imíonn an rabhadh nuair a bheidh gach ceann acu athsholáthraithe.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Tá cód aonuaire nó eochracha rochtana sa logáil isteach seo nach féidir leis an leagan seo de Keepiq a roinnt fós, mar sin níor roinneadh é."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Tá cód aonuaire nó eochracha rochtana sa logáil isteach seo nach féidir leis an leagan seo de Keepiq a roinnt fós, mar sin níor roinneadh é.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Níor fhaigh ball nua den fhillteán foirne logáil isteach a bhfuil cód aonuaire nó eochracha rochtana ann nach féidir leis an leagan seo de Keepiq a chóipeáil fós."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

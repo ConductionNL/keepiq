@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Otra organización ha cambiado los campos que guarda",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Estos secretos contienen un código de un solo uso o llaves de acceso que esta versión de Keepiq aún no puede copiar, así que los nuevos miembros no los recibieron: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Este inicio de sesión también contiene un código de un solo uso o llaves de acceso, que también quedaron expuestos. Sustituya cada uno de ellos y elimine las llaves de acceso antiguas en lugar de solo añadir nuevas. El aviso desaparece cuando todos estén sustituidos.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Este inicio de sesión contiene un código de un solo uso o llaves de acceso que esta versión de Keepiq aún no puede compartir, por lo que no se compartió."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Este inicio de sesión contiene un código de un solo uso o llaves de acceso que esta versión de Keepiq aún no puede compartir, por lo que no se compartió.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Un nuevo miembro de la carpeta de equipo no recibió un inicio de sesión con un código de un solo uso o llaves de acceso que esta versión de Keepiq aún no puede copiar."
     },
     "nplurals=2; plural=(n != 1);"
 )

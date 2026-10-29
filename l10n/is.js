@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Önnur stofnun breytti reitunum sem hún geymir",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Þessi leyndarmál innihalda einnota kóða eða aðgangslykla sem þessi útgáfa Keepiq getur ekki afritað enn, svo nýju meðlimirnir fengu þau ekki: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Þessi innskráning inniheldur einnig einnota kóða eða aðgangslykla sem urðu einnig berskjaldaðir. Skiptu hverjum þeirra út og fjarlægðu gömlu aðgangslyklana í stað þess að bæta aðeins við nýjum. Viðvörunin hverfur þegar öllu hefur verið skipt út.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Þessi innskráning inniheldur einnota kóða eða aðgangslykla sem þessi útgáfa Keepiq getur ekki deilt enn, svo henni var ekki deilt."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Þessi innskráning inniheldur einnota kóða eða aðgangslykla sem þessi útgáfa Keepiq getur ekki deilt enn, svo henni var ekki deilt.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Nýr meðlimur teymismöppunnar fékk ekki innskráningu með einnota kóða eða aðgangslyklum sem þessi útgáfa Keepiq getur ekki afritað enn."
     },
     "nplurals=2; plural=(n != 1);"
 )

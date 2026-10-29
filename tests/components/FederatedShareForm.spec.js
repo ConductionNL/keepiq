@@ -231,6 +231,26 @@ describe('FederatedShareForm', () => {
 		expect(calls[0][1].recipientCloudId).toBe('bob@Cloud.Partner.Example')
 	})
 
+	it('says why a login with a one-time code or passkeys was not shared', async () => {
+		const { wrapper, post } = await mountWith({
+			certificate: F.bob,
+			chain: [F.intermediateA, F.rootA],
+			partnerRootFingerprint: F.rootAFingerprint,
+		})
+		post.mockImplementation(async () => {
+			throw {
+				response: { status: 400, data: { message: 'copy_fields_mismatch' } },
+			}
+		})
+
+		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
+		await settled(wrapper, ['federated-share-done', 'federated-share-error'])
+
+		const error = wrapper.find('[data-testid="federated-share-error"]').text()
+		expect(error).toContain('one-time code or passkeys')
+		expect(error).not.toContain('Something went wrong')
+	})
+
 	it('says when the organisation is not a partner', async () => {
 		const { wrapper } = await mountWith({
 			reject: { response: { data: { message: 'not_a_partner' } } },

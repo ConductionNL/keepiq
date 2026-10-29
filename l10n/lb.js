@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Eng aner Organisatioun huet d’Felder geännert, déi se späichert",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Dës Geheimnisser enthalen en Eemolege Code oder Passkeys, déi dës Versioun vu Keepiq nach net kopéiere kann, dofir hunn déi nei Memberen se net kritt: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Dëse Login enthält och en Eemolege Code oder Passkeys, déi och exponéiert waren. Ersetzt jidderee vun hinnen a läscht déi al Passkeys, amplaz just nei derbäizesetzen. D’Warnung verschwënnt, wann all ersat sinn.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Dëse Login enthält en Eemolege Code oder Passkeys, déi dës Versioun vu Keepiq nach net deele kann, dofir gouf en net gedeelt."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Dëse Login enthält en Eemolege Code oder Passkeys, déi dës Versioun vu Keepiq nach net deele kann, dofir gouf en net gedeelt.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "En neie Member vum Équipeordner huet e Login mat engem Eemolege Code oder Passkeys net kritt, déi dës Versioun vu Keepiq nach net kopéiere kann."
     },
     "nplurals=2; plural=(n != 1);"
 )

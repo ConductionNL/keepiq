@@ -233,4 +233,32 @@ describe('team-folder roles', () => {
 		expect(result.refused).toEqual(['Wiki'])
 		expect(result.skipped).toEqual([])
 	})
+
+	it('shows the refused secrets after approving one waiting member', async () => {
+		currentUid = 'alice'
+		mockList({
+			owned: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					ownerId: 'alice',
+					grade: 'write',
+				},
+			],
+			memberOf: [],
+		})
+		const wrapper = await mountDialog()
+		vi.spyOn(wrapper.vm.store, 'approveMember').mockResolvedValue({
+			created: 0,
+			cancelled: false,
+			skipped: [],
+			refused: ['Wiki'],
+		})
+		wrapper.vm.refresh = vi.fn().mockResolvedValue()
+
+		await wrapper.vm.onApproveMember('bob')
+
+		expect(wrapper.vm.refusedSecrets).toEqual(['Wiki'])
+	})
 })

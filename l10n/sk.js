@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Iná organizácia zmenila polia, ktoré ukladá",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Tieto tajomstvá obsahujú jednorazový kód alebo prístupové kľúče, ktoré táto verzia Keepiq zatiaľ nevie skopírovať, preto ich noví členovia nedostali: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Toto prihlásenie obsahuje aj jednorazový kód alebo prístupové kľúče, ktoré boli tiež odhalené. Nahraďte každý z nich a staré prístupové kľúče odstráňte, nestačí len pridať nové. Upozornenie zmizne, keď budú všetky nahradené.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Toto prihlásenie obsahuje jednorazový kód alebo prístupové kľúče, ktoré táto verzia Keepiq zatiaľ nevie zdieľať, preto nebolo zdieľané."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Toto prihlásenie obsahuje jednorazový kód alebo prístupové kľúče, ktoré táto verzia Keepiq zatiaľ nevie zdieľať, preto nebolo zdieľané.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Nový člen tímového priečinka nedostal prihlásenie s jednorazovým kódom alebo prístupovými kľúčmi, ktoré táto verzia Keepiq zatiaľ nevie skopírovať."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

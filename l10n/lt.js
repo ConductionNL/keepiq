@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Kita organizacija pakeitė laukus, kuriuos saugo",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Šiuose įrašuose yra vienkartinis kodas arba prieigos raktai, kurių ši Keepiq versija dar negali nukopijuoti, todėl nauji nariai jų negavo: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Šiame prisijungime taip pat yra vienkartinis kodas arba prieigos raktai, kurie taip pat buvo atskleisti. Pakeiskite kiekvieną iš jų ir pašalinkite senus prieigos raktus, o ne tik pridėkite naujų. Įspėjimas dings, kai visi bus pakeisti.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Šiame prisijungime yra vienkartinis kodas arba prieigos raktai, kurių ši Keepiq versija dar negali bendrinti, todėl jis nebuvo bendrinamas."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Šiame prisijungime yra vienkartinis kodas arba prieigos raktai, kurių ši Keepiq versija dar negali bendrinti, todėl jis nebuvo bendrinamas.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Naujas komandos aplanko narys negavo prisijungimo su vienkartiniu kodu arba prieigos raktais, kurių ši Keepiq versija dar negali nukopijuoti."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

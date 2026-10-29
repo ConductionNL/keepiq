@@ -16,7 +16,7 @@
  */
 
 import axios from '@nextcloud/axios'
-import { translatePlural as n } from '@nextcloud/l10n'
+import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { useAttachmentStore } from './attachment.js'
@@ -609,9 +609,21 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async startAutoConfirm() {
 			this.stopAutoConfirm()
+			// A refused pair is retried on every run: say so once per unlock, not every 15 minutes.
+			let refusedNoticed = false
 			const run = async () => {
 				try {
 					const result = await this.autoConfirm()
+					if (result.refused > 0 && refusedNoticed === false) {
+						refusedNoticed = true
+						const { showWarning } = await import('@nextcloud/dialogs')
+						showWarning(
+							t(
+								'keepiq',
+								'A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.',
+							),
+						)
+					}
 					if (result.members > 0) {
 						// One quiet notice per run, never per secret. Loaded on
 						// demand: @nextcloud/dialogs needs a window at import

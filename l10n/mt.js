@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Organizzazzjoni oħra biddlet il-kampi li taħżen",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Dawn is-sigrieti fihom kodiċi ta’ darba jew passkeys li din il-verżjoni ta’ Keepiq ma tistax tikkopja għadha, għalhekk il-membri l-ġodda ma rawhomx: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Dan il-login fih ukoll kodiċi ta’ darba jew passkeys, li wkoll kienu esposti. Ibdel kull wieħed minnhom u neħħi l-passkeys il-qodma minflok ma żżid biss oħrajn ġodda. It-twissija tisparixxi malli jinbidlu kollha.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Dan il-login fih kodiċi ta’ darba jew passkeys li din il-verżjoni ta’ Keepiq ma tistax taqsam għadha, għalhekk ma ġiex maqsum."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Dan il-login fih kodiċi ta’ darba jew passkeys li din il-verżjoni ta’ Keepiq ma tistax taqsam għadha, għalhekk ma ġiex maqsum.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Membru ġdid tal-folder tat-tim ma rċeviex login li fih kodiċi ta’ darba jew passkeys li din il-verżjoni ta’ Keepiq ma tistax tikkopja għadha."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Egy másik szervezet módosította az általa tárolt mezőket",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ezek a titkok egyszer használatos kódot vagy hozzáférési kulcsokat tartalmaznak, amelyeket a Keepiq ezen verziója még nem tud másolni, ezért az új tagok nem kapták meg őket: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ez a bejelentkezés egyszer használatos kódot vagy hozzáférési kulcsokat is tartalmaz, amelyek szintén kitudódtak. Cserélje ki mindegyiket, és távolítsa el a régi hozzáférési kulcsokat ahelyett, hogy csak újakat adna hozzá. A figyelmeztetés akkor tűnik el, ha mindegyik ki van cserélve.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ez a bejelentkezés egyszer használatos kódot vagy hozzáférési kulcsokat tartalmaz, amelyeket a Keepiq ezen verziója még nem tud megosztani, ezért nem lett megosztva."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ez a bejelentkezés egyszer használatos kódot vagy hozzáférési kulcsokat tartalmaz, amelyeket a Keepiq ezen verziója még nem tud megosztani, ezért nem lett megosztva.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "A csapatmappa egy új tagja nem kapott meg egy olyan bejelentkezést, amely egyszer használatos kódot vagy hozzáférési kulcsokat tartalmaz, és amelyet a Keepiq ezen verziója még nem tud másolni."
     },
     "nplurals=2; plural=(n != 1);"
 )

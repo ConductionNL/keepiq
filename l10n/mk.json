@@ -1765,7 +1765,8 @@
         "Another organisation changed the fields it stores": "Друга организација ги промени полињата што ги чува",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Овие тајни содржат еднократен код или клучеви за пристап што оваа верзија на Keepiq сè уште не може да ги копира, па затоа новите членови не ги добија: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Оваа најава содржи и еднократен код или клучеви за пристап, кои исто така беа изложени. Заменете го секој од нив и отстранете ги старите клучеви за пристап наместо само да додавате нови. Предупредувањето исчезнува кога сите ќе бидат заменети.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Оваа најава содржи еднократен код или клучеви за пристап што оваа верзија на Keepiq сè уште не може да ги сподели, па затоа не беше споделена."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Оваа најава содржи еднократен код или клучеви за пристап што оваа верзија на Keepiq сè уште не може да ги сподели, па затоа не беше споделена.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Нов член на тимската папка не доби најава со еднократен код или клучеви за пристап што оваа верзија на Keepiq сè уште не може да ги копира."
     },
     "plurals": null
 }

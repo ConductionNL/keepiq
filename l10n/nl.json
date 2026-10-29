@@ -1770,7 +1770,8 @@
         "Another organisation changed the fields it stores": "Een andere organisatie heeft de velden gewijzigd die ze opslaat",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Deze geheimen bevatten een eenmalige code of passkeys die deze versie van Keepiq nog niet kan kopiëren, dus de nieuwe leden hebben ze niet gekregen: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Deze login bevat ook een eenmalige code of passkeys, die ook zijn blootgesteld. Vervang ze allemaal en verwijder de oude passkeys in plaats van alleen nieuwe toe te voegen. De waarschuwing verdwijnt zodra alles is vervangen.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Deze login bevat een eenmalige code of passkeys die deze versie van Keepiq nog niet kan delen, dus hij is niet gedeeld."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Deze login bevat een eenmalige code of passkeys die deze versie van Keepiq nog niet kan delen, dus hij is niet gedeeld.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Een nieuw lid van de teammap heeft een login met een eenmalige code of passkeys niet gekregen, die deze versie van Keepiq nog niet kan kopiëren."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

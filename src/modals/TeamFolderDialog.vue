@@ -843,8 +843,13 @@ export default {
 		async onApproveMember(memberId) {
 			this.busy = true
 			this.error = null
+			this.refusedSecrets = []
 			try {
-				await this.store.approveMember(this.teamFolder.id, memberId)
+				const result = await this.store.approveMember(
+					this.teamFolder.id,
+					memberId,
+				)
+				this.refusedSecrets = result?.refused ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Teine organisatsioon muutis välju, mida ta talletab",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Need saladused sisaldavad ühekordset koodi või pääsuvõtmeid, mida see Keepiqi versioon ei saa veel kopeerida, seega uued liikmed neid ei saanud: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "See sisselogimine sisaldab ka ühekordset koodi või pääsuvõtmeid, mis said samuti avalikuks. Asendage kõik need ja eemaldage vanad pääsuvõtmed, mitte ainult ei lisa uusi. Hoiatus kaob, kui kõik on asendatud.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "See sisselogimine sisaldab ühekordset koodi või pääsuvõtmeid, mida see Keepiqi versioon ei saa veel jagada, seega seda ei jagatud."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "See sisselogimine sisaldab ühekordset koodi või pääsuvõtmeid, mida see Keepiqi versioon ei saa veel jagada, seega seda ei jagatud.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Meeskonnakausta uus liige ei saanud sisselogimist, mis sisaldab ühekordset koodi või pääsuvõtmeid, mida see Keepiqi versioon ei saa veel kopeerida."
     },
     "nplurals=2; plural=(n != 1);"
 )

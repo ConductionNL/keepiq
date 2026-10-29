@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Druga organizacija je promijenila polja koja pohranjuje",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ove tajne sadrže jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može kopirati, pa ih novi članovi nisu dobili: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ova prijava sadrži i jednokratni kod ili pristupne ključeve koji su također bili izloženi. Zamijenite svaki od njih i uklonite stare pristupne ključeve umjesto da samo dodajete nove. Upozorenje nestaje kada se svi zamijene.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ova prijava sadrži jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može dijeliti, pa nije podijeljena."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ova prijava sadrži jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može dijeliti, pa nije podijeljena.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Novi član timskog foldera nije dobio prijavu s jednokratnim kodom ili pristupnim ključevima koje ova verzija Keepiqa još ne može kopirati."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

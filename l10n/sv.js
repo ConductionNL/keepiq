@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "En annan organisation har ändrat fälten den lagrar",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Dessa hemligheter innehåller en engångskod eller passnycklar som den här versionen av Keepiq ännu inte kan kopiera, så de nya medlemmarna fick dem inte: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Den här inloggningen innehåller också en engångskod eller passnycklar, som också var exponerade. Byt ut var och en av dem och ta bort de gamla passnycklarna i stället för att bara lägga till nya. Varningen försvinner när alla är utbytta.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Den här inloggningen innehåller en engångskod eller passnycklar som den här versionen av Keepiq ännu inte kan dela, så den delades inte."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Den här inloggningen innehåller en engångskod eller passnycklar som den här versionen av Keepiq ännu inte kan dela, så den delades inte.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "En ny medlem i teammappen fick inte en inloggning med en engångskod eller passnycklar som den här versionen av Keepiq ännu inte kan kopiera."
     },
     "nplurals=2; plural=(n != 1);"
 )

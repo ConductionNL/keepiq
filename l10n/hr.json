@@ -1790,7 +1790,8 @@
         "Another organisation changed the fields it stores": "Druga organizacija promijenila je polja koja pohranjuje",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ove tajne sadrže jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može kopirati, pa ih novi članovi nisu dobili: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ova prijava sadrži i jednokratni kod ili pristupne ključeve koji su također bili izloženi. Zamijenite svaki od njih i uklonite stare pristupne ključeve umjesto da samo dodajete nove. Upozorenje nestaje kada se svi zamijene.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ova prijava sadrži jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može dijeliti, pa nije podijeljena."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ova prijava sadrži jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može dijeliti, pa nije podijeljena.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Novi član timske mape nije dobio prijavu s jednokratnim kodom ili pristupnim ključevima koje ova verzija Keepiqa još ne može kopirati."
     },
     "plurals": null
 }

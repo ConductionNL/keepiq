@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Une autre organisation a modifié les champs qu’elle stocke",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ces secrets contiennent un code à usage unique ou des clés d’accès que cette version de Keepiq ne sait pas encore copier, les nouveaux membres ne les ont donc pas reçus : {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Cet identifiant contient aussi un code à usage unique ou des clés d’accès, également exposés. Remplacez chacun d’eux et supprimez les anciennes clés d’accès au lieu d’en ajouter seulement de nouvelles. L’avertissement disparaît quand tout est remplacé.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Cet identifiant contient un code à usage unique ou des clés d’accès que cette version de Keepiq ne sait pas encore partager ; il n’a donc pas été partagé."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Cet identifiant contient un code à usage unique ou des clés d’accès que cette version de Keepiq ne sait pas encore partager ; il n’a donc pas été partagé.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Un nouveau membre du dossier d’équipe n’a pas reçu un identifiant contenant un code à usage unique ou des clés d’accès que cette version de Keepiq ne sait pas encore copier."
     },
     "nplurals=2; plural=(n > 1);"
 )

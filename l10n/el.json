@@ -1765,7 +1765,8 @@
         "Another organisation changed the fields it stores": "Ένας άλλος οργανισμός άλλαξε τα πεδία που αποθηκεύει",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Αυτά τα μυστικά περιέχουν κωδικό μίας χρήσης ή κλειδιά πρόσβασης που αυτή η έκδοση του Keepiq δεν μπορεί ακόμη να αντιγράψει, γι’ αυτό τα νέα μέλη δεν τα έλαβαν: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Αυτή η σύνδεση περιέχει επίσης κωδικό μίας χρήσης ή κλειδιά πρόσβασης, τα οποία επίσης εκτέθηκαν. Αντικαταστήστε καθένα από αυτά και αφαιρέστε τα παλιά κλειδιά πρόσβασης αντί να προσθέτετε μόνο νέα. Η προειδοποίηση εξαφανίζεται όταν αντικατασταθούν όλα.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Αυτή η σύνδεση περιέχει κωδικό μίας χρήσης ή κλειδιά πρόσβασης που αυτή η έκδοση του Keepiq δεν μπορεί ακόμη να μοιραστεί, γι’ αυτό δεν κοινοποιήθηκε."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Αυτή η σύνδεση περιέχει κωδικό μίας χρήσης ή κλειδιά πρόσβασης που αυτή η έκδοση του Keepiq δεν μπορεί ακόμη να μοιραστεί, γι’ αυτό δεν κοινοποιήθηκε.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Ένα νέο μέλος του φακέλου ομάδας δεν έλαβε μια σύνδεση με κωδικό μίας χρήσης ή κλειδιά πρόσβασης που αυτή η έκδοση του Keepiq δεν μπορεί ακόμη να αντιγράψει."
     },
     "plurals": null
 }

@@ -21,7 +21,11 @@ import {
 	useTeamFolderStore,
 } from '../../src/store/modules/teamFolder.js'
 
-vi.mock('@nextcloud/dialogs', () => ({ showSuccess: vi.fn(), showError: vi.fn() }))
+vi.mock('@nextcloud/dialogs', () => ({
+	showSuccess: vi.fn(),
+	showError: vi.fn(),
+	showWarning: vi.fn(),
+}))
 
 const PLAINTEXT = 'hunter2-plaintext'
 
@@ -161,6 +165,23 @@ describe('teamFolder.autoConfirm', () => {
 
 		expect(result.refused).toBe(1)
 		expect(useTeamFolderStore().lastAutoConfirm.refused).toBe(1)
+	})
+
+	it('tells the user once per unlock that a refused pair was left without a copy', async () => {
+		vi.useFakeTimers()
+		const { showWarning } = await import('@nextcloud/dialogs')
+		showWarning.mockClear()
+		const store = useTeamFolderStore()
+		const autoConfirm = vi
+			.spyOn(store, 'autoConfirm')
+			.mockResolvedValue({ enabled: true, created: 0, members: 0, refused: 1 })
+
+		await store.startAutoConfirm()
+		await vi.advanceTimersByTimeAsync(AUTO_CONFIRM_INTERVAL_MS * 2)
+
+		expect(autoConfirm.mock.calls.length).toBeGreaterThan(1)
+		expect(showWarning).toHaveBeenCalledTimes(1)
+		expect(showWarning.mock.calls[0][0]).toContain('one-time code or passkeys')
 	})
 
 	it('the owner decrypts the source itself', async () => {

@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Cita organizācija mainīja laukus, ko tā glabā",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Šie noslēpumi satur vienreizēju kodu vai piekļuves atslēgas, ko šī Keepiq versija vēl nevar kopēt, tāpēc jaunie dalībnieki tos nesaņēma: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Šis pieteikšanās ieraksts satur arī vienreizēju kodu vai piekļuves atslēgas, kas arī tika atklātas. Nomainiet katru no tām un noņemiet vecās piekļuves atslēgas, nevis tikai pievienojiet jaunas. Brīdinājums pazūd, kad visas ir nomainītas.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Šis pieteikšanās ieraksts satur vienreizēju kodu vai piekļuves atslēgas, ko šī Keepiq versija vēl nevar kopīgot, tāpēc tas netika kopīgots."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Šis pieteikšanās ieraksts satur vienreizēju kodu vai piekļuves atslēgas, ko šī Keepiq versija vēl nevar kopīgot, tāpēc tas netika kopīgots.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Jauns komandas mapes dalībnieks nesaņēma pieteikšanās ierakstu ar vienreizēju kodu vai piekļuves atslēgām, ko šī Keepiq versija vēl nevar kopēt."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

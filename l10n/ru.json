@@ -1790,7 +1790,8 @@
         "Another organisation changed the fields it stores": "Другая организация изменила поля, которые она хранит",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Эти секреты содержат одноразовый код или ключи доступа, которые эта версия Keepiq пока не умеет копировать, поэтому новые участники их не получили: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Этот логин также содержит одноразовый код или ключи доступа, которые тоже были раскрыты. Замените каждый из них и удалите старые ключи доступа, а не только добавляйте новые. Предупреждение исчезнет, когда все они будут заменены.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Этот логин содержит одноразовый код или ключи доступа, которыми эта версия Keepiq пока не умеет делиться, поэтому им не поделились."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Этот логин содержит одноразовый код или ключи доступа, которыми эта версия Keepiq пока не умеет делиться, поэтому им не поделились.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Новый участник командной папки не получил логин с одноразовым кодом или ключами доступа, которые эта версия Keepiq пока не умеет копировать."
     },
     "plurals": null
 }

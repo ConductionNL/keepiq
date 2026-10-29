@@ -217,25 +217,13 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				login: encrypted.login ?? null,
 				additionalFields: encrypted.additionalFields ?? null,
 			}
-			// The server refuses a copy that lacks a one-time code or passkeys the
-			// source holds, which this client does not send yet: say so instead of
-			// showing the refusal code.
-			const explain = (refusal) => {
-				if (refusal?.response?.data?.message === 'copy_fields_mismatch') {
-					refusal.response.data.message = t(
-						'keepiq',
-						'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
-					)
-				}
-				return refusal
-			}
 			try {
 				return (await axios.post(url, body)).data
 			} catch (refusal) {
 				// Every recipient at another organisation is a new party, so the
 				// server asks for the vault key proof (keepiq#818).
 				if (refusal?.response?.data?.error !== 'key_proof_required') {
-					throw explain(refusal)
+					throw refusal
 				}
 				const { headers } = await sessionKeyProofHeaders({
 					purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
@@ -245,11 +233,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 					),
 					boundValues: [secretId, recipient.cloudId],
 				})
-				try {
-					return (await axios.post(url, body, { headers })).data
-				} catch (refusal) {
-					throw explain(refusal)
-				}
+				return (await axios.post(url, body, { headers })).data
 			}
 		},
 	},

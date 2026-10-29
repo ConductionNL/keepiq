@@ -1790,7 +1790,8 @@
         "Another organisation changed the fields it stores": "Jiná organizace změnila pole, která ukládá",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Tato tajemství obsahují jednorázový kód nebo přístupové klíče, které tato verze Keepiqu zatím neumí zkopírovat, proto je noví členové nedostali: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Tato přihlašovací položka obsahuje také jednorázový kód nebo přístupové klíče, které byly rovněž odhaleny. Nahraďte každý z nich a staré přístupové klíče odstraňte, nestačí jen přidat nové. Upozornění zmizí, jakmile budou všechny nahrazeny.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Tato přihlašovací položka obsahuje jednorázový kód nebo přístupové klíče, které tato verze Keepiqu zatím neumí sdílet, proto nebyla sdílena."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Tato přihlašovací položka obsahuje jednorázový kód nebo přístupové klíče, které tato verze Keepiqu zatím neumí sdílet, proto nebyla sdílena.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Nový člen týmové složky nedostal přihlašovací položku s jednorázovým kódem nebo přístupovými klíči, které tato verze Keepiqu zatím neumí zkopírovat."
     },
     "plurals": null
 }

@@ -271,7 +271,7 @@
 						)
 					}}
 				</p>
-				<p>
+				<p v-if="!(secret.totp || secret.passkeys)">
 					{{
 						t(
 							'keepiq',
@@ -279,7 +279,7 @@
 						)
 					}}
 				</p>
-				<p v-if="secret.totp || secret.passkeys">
+				<p v-else>
 					{{
 						t(
 							'keepiq',

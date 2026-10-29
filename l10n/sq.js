@@ -1691,7 +1691,8 @@ OC.L10N.register(
         "Another organisation changed the fields it stores": "Një organizatë tjetër ndryshoi fushat që ruan",
         "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Këto sekrete përmbajnë një kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i kopjojë ende, ndaj anëtarët e rinj nuk i morën: {names}",
         "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ky hyrje përmban gjithashtu një kod njëpërdorimësh ose çelësa hyrjeje, që u ekspozuan po ashtu. Zëvendësoni secilin prej tyre dhe hiqni çelësat e vjetër të hyrjes në vend që të shtoni vetëm të rinj. Paralajmërimi zhduket kur të zëvendësohen të gjithë.",
-        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ky hyrje përmban një kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i ndajë ende, ndaj nuk u nda."
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ky hyrje përmban një kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i ndajë ende, ndaj nuk u nda.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Një anëtar i ri i dosjes së ekipit nuk mori një hyrje me kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i kopjojë ende."
     },
     "nplurals=2; plural=(n != 1);"
 )
