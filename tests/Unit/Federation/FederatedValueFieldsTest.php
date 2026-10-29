@@ -441,7 +441,8 @@ class FederatedValueFieldsTest extends TestCase {
 
 	/**
 	 * A field the client did not send stays while the certificate is the same, and goes with a new certificate:
-	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it.
+	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it. The source no
+	 * longer holds the fields the update drops or clears, or the update would not mirror it.
 	 */
 	public function testAnAbsentFieldIsKeptOnlyUnderTheSameCertificate(): void {
 		$this->alice(valueFields: '["totp","passkeys"]');
@@ -451,13 +452,43 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::PASSKEYS, $this->rows[self::SHARE_ID]->getPasskeys());
 
+		$this->source->setPasskeys(null);
 		$this->controller(['passkeys' => null])->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, null, null);
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertNull($this->rows[self::SHARE_ID]->getPasskeys());
 
+		$this->source->setTotp(null);
 		$this->controller()->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'KEY-FOR-NEW-CERT');
 		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::NEW_FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
+	}
+
+	/**
+	 * An update for a partner that stores the fields mirrors the source like a new share does: leaving out a field
+	 * the source holds under a new certificate would drop it from the partner's copy, and carrying one the source
+	 * does not hold would add it. Left out under the same certificate it keeps the stored value, so it is accepted.
+	 * Nothing is written or sent when it is refused.
+	 */
+	public function testAnUpdateThatDoesNotMirrorTheSourceIsRefused(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+		$this->existingShare(totp: self::TOTP, passkeys: self::PASSKEYS);
+
+		$response = $this->controller()->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'KEY-FOR-NEW-CERT');
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'copy_fields_mismatch'], $response->getData());
+
+		$this->source->setPasskeys(null);
+		$carried = $this->controller(['totp' => self::TOTP, 'passkeys' => self::PASSKEYS])
+			->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, self::TOTP, self::PASSKEYS);
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $carried->getStatus());
+
+		$this->assertSame('OLD-KEY', $this->rows[self::SHARE_ID]->getKey());
+		$this->assertSame(self::FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
+		$this->assertSame([], $this->sent);
+		$this->assertSame([], $this->audit);
+
+		$sameCertificate = $this->controller()->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY');
+		$this->assertSame(Http::STATUS_OK, $sameCertificate->getStatus());
 	}
 
 	public function testAnUpdateToANewPartnerReplacesBothFields(): void {

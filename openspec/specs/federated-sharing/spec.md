@@ -59,7 +59,7 @@ The system MUST fetch a federated recipient's certificate only from an outbound 
 
 The owner's browser MUST encrypt the value, login and additional fields, and the `totp` and `passkeys` fields where the partner stores them, for the verified recipient certificate and send only that ciphertext with the plain name and URL. The sending server MUST announce the share over OCM with resource type `keepiq-secret` without the ciphertext. The receiving server MUST store an inbound share as pending and notify the recipient, and only after acceptance MUST pull the ciphertext with the share's shared secret in a signed request and store it as a read-only secret owned by the recipient.
 
-`totp` and `passkeys` are newer than the rest of this exchange, and a partner on an older Keepiq would drop them without a word. Each instance therefore advertises the value fields beyond `key`, `login` and `additionalFields` it stores as `valueFields`: in its certificate lookup answer, which the asking server records on the partner row, and in every pull request it sends. The answer's `valueFields` is not covered by the browser's certificate check, so a change of the recorded list MUST be audited as `federation_partner.value_fields_changed` with the field names only, a dropped field MUST be logged as a warning, and the admin partner list MUST show the recorded list.
+`totp` and `passkeys` are newer than the rest of this exchange, and a partner on an older Keepiq would drop them without a word. Each instance therefore advertises the value fields beyond `key`, `login` and `additionalFields` it stores as `valueFields`: in its certificate lookup answer, which the asking server records on the partner row, and in every pull request it sends. The answer's `valueFields` is not covered by the browser's certificate check, so a change of the recorded list MUST be audited as `federation_partner.value_fields_changed` with the field names only, a dropped field MUST be logged as a warning, and the admin partners API MUST return the recorded list.
 
 #### Scenario: A partner that cannot store a TOTP seed is refused one
 
@@ -73,7 +73,7 @@ The owner's browser MUST encrypt the value, login and additional fields, and the
 
 @e2e exclude A server-side refusal before any write; covered by PHPUnit (FederatedValueFieldsTest).
 - **GIVEN** Alice's login holds a `totp` value and no `passkeys`, and Bob's partner stores both fields
-- **WHEN** Alice shares it with Bob leaving out `totp`, or carrying a `passkeys` value
+- **WHEN** Alice shares it with Bob leaving out `totp`, or carrying a `passkeys` value, or updates the share with a `passkeys` value
 - **THEN** the server MUST answer 400 `copy_fields_mismatch` before anything is written or announced
 - **AND** for a partner that cannot store `totp`, leaving it out or sending null is accepted
 
@@ -91,6 +91,7 @@ The owner's browser MUST encrypt the value, login and additional fields, and the
 - **WHEN** an update for Bob leaves `totp` out
 - **THEN** the share MUST keep its `totp` if the browser encrypted for the certificate the share already had
 - **AND** it MUST clear it if the certificate changed, so nothing stays encrypted for a key Bob no longer holds
+- **AND** if the certificate changed, Alice's login still holds a `totp` value and Bob's partner stores the field, the update MUST be refused with 400 `copy_fields_mismatch` before anything is written, as a new share is
 
 #### Scenario: Bob accepts a shared login
 

@@ -122,21 +122,34 @@ class FederatedValueFields {
 	/**
 	 * Refuse a new partner share whose `totp` or `passkeys` does not mirror its source, as a direct share is refused:
 	 * one it carries that the source does not hold, or one the source holds that it leaves out for a partner that
-	 * stores the field. A partner that cannot store a field gets it as null.
+	 * stores the field. A partner that cannot store a field gets it as null. A field left out of an update under the
+	 * certificate the share already had keeps its stored value (next()), so it is not held against the source.
 	 *
 	 * @param FederationPartner $partner The recipient's partner
 	 * @param Secret $source The secret shared
 	 * @param array<string,mixed> $ciphertext The ciphertext
+	 * @param bool $absentKeepsStored Whether a field absent from `$ciphertext` keeps the share's stored value
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException `copy_fields_mismatch`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Whether a left-out field keeps its stored value is the caller's fact
 	 */
-	public function assertMirrorsSource(FederationPartner $partner, Secret $source, array $ciphertext): void {
+	public function assertMirrorsSource(
+		FederationPartner $partner,
+		Secret $source,
+		array $ciphertext,
+		bool $absentKeepsStored = false,
+	): void {
 		$stores = $this->stores(partner: $partner);
 		foreach ((new CredentialFields())->notMirrored(source: $source, copy: $ciphertext) as $field) {
+			if ($absentKeepsStored === true && array_key_exists($field, $ciphertext) === false) {
+				continue;
+			}
+
 			if ($this->blob(value: $ciphertext[$field] ?? null) !== null || in_array($field, $stores, true) === true) {
 				throw new InvalidArgumentException('copy_fields_mismatch');
 			}

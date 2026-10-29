@@ -215,7 +215,8 @@ class FederatedShareService {
 	 * @return FederatedShare
 	 *
 	 * @throws NotFoundException When it is not the user's live share
-	 * @throws InvalidArgumentException `invalid`
+	 * @throws InvalidArgumentException `invalid`, or `copy_fields_mismatch` when its totp or passkeys does not mirror
+	 *   the source's
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
@@ -224,6 +225,19 @@ class FederatedShareService {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
 		if ($row->getStatus() !== FederatedShare::STATUS_ACTIVE) {
 			throw new NotFoundException(message: 'Share not found');
+		}
+
+		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
+		$partner = $this->partners->find(id: (string)$row->getPartnerId());
+		if ($partner !== null) {
+			// The same checks, in the same order, as a new share of this secret.
+			$this->valueFields->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
+			$this->valueFields->assertMirrorsSource(
+				partner: $partner,
+				source: $this->ownedSecret(secretId: $row->getSourceSecretId(), userId: $userId),
+				ciphertext: $ciphertext,
+				absentKeepsStored: $certFingerprint === $row->getRecipientCertFingerprint()
+			);
 		}
 
 		$row = $this->writeCiphertext(
