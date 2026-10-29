@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.",
         "This version cannot be restored to this secret. Nothing was saved.": "This version cannot be restored to this secret. Nothing was saved.",
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Shared with you to view only. Ask its owner for edit rights to change it.",
-        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.",
+        "Another organisation changed the fields it stores": "Another organisation changed the fields it stores"
     },
     "nplurals=2; plural=(n != 1);"
 )

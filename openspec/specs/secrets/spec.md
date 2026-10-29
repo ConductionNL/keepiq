@@ -83,7 +83,7 @@ The system MUST allow an authenticated user to create a secret with at minimum a
 
 #### Scenario: Create with all fields
 - GIVEN a user has an active EncryptionSuite and their master password is in session
-- WHEN they submit a secret with name, url, folder, key, login, and additional fields
+- WHEN they submit a secret with name, url, folder, key, login, additional fields, a TOTP seed, and passkeys
 - THEN all fields except name, url, and folder_id MUST be stored encrypted
 
 #### Scenario: Create in a folder
@@ -560,9 +560,9 @@ Known limitation, stated rather than implied: an EXPIRED request remains `pendin
 - [ ] Users can create, rename, and delete their own (user-scoped) types
 - [ ] Admins can create, rename, and delete global types
 - [ ] Deleting a custom type reassigns its secrets to the `login` system type
-- [ ] URL, folder, login, and additional fields are optional
+- [ ] URL, folder, login, additional fields, TOTP seed, and passkeys are optional
 - [ ] Name, url, and folder_id are stored and returned in plain text
-- [ ] Key, login, and additional fields are stored encrypted and returned decrypted when master password is in session
+- [ ] Key, login, additional fields, TOTP seed, and passkeys are stored encrypted and returned decrypted when master password is in session
 - [ ] The app UI requires the master password to be in session before any secrets are accessible
 - [ ] The API returns only name, url, and folder_id when no AES key is in session (API-level contract)
 - [ ] Folders can be created, renamed, moved, and deleted

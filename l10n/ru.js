@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Пользователь удалён из %n командной папки.","Пользователь удалён из командных папок: %n.","Пользователь удалён из командных папок: %n."],
         "A restored copy came from a share that has ended. It stays read-only.": "Восстановленная копия получена из общего доступа, который завершён. Она остаётся только для чтения.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не удалось связаться с организацией, которая поделилась восстановленной копией. Копия остаётся только для чтения и не получает их изменения.",
-        "Recipient at another organisation restored their copy": "Получатель из другой организации восстановил свою копию"
+        "Recipient at another organisation restored their copy": "Получатель из другой организации восстановил свою копию",
+        "Another organisation changed the fields it stores": "Другая организация изменила поля, которые она хранит"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

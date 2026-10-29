@@ -1662,7 +1662,8 @@ OC.L10N.register(
         "Removed the user from %n team folders.": "Allontanà l'utilisader da %n ordinaturs da team.",
         "A restored copy came from a share that has ended. It stays read-only.": "Ina copia restaurada deriva d’ina cundivisiun che è terminada. Ella resta mo per leger.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "L’organisaziun che ha cundivì ina copia restaurada n’è betg cuntanschibla. La copia resta mo per leger e na suonda betg lur midadas.",
-        "Recipient at another organisation restored their copy": "In retschavider d’ina autra organisaziun ha restaurà sia copia"
+        "Recipient at another organisation restored their copy": "In retschavider d’ina autra organisaziun ha restaurà sia copia",
+        "Another organisation changed the fields it stores": "In’autra organisaziun ha midà ils champs ch’ella memorisescha"
     },
     "nplurals=1; plural=0;"
 )

@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Baineadh an t-úsáideoir de %n fhillteán foirne.","Baineadh an t-úsáideoir de %n fillteán foirne.","Baineadh an t-úsáideoir de %n fillteán foirne."],
         "A restored copy came from a share that has ended. It stays read-only.": "Tháinig cóip athchóirithe ó chomhroinnt atá críochnaithe. Fanann sí inléite amháin.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Níorbh fhéidir teagmháil a dhéanamh leis an eagraíocht a chomhroinn cóip athchóirithe. Fanann an chóip inléite amháin agus ní leanann sí a n-athruithe.",
-        "Recipient at another organisation restored their copy": "D’athchóirigh faighteoir in eagraíocht eile a chóip"
+        "Recipient at another organisation restored their copy": "D’athchóirigh faighteoir in eagraíocht eile a chóip",
+        "Another organisation changed the fields it stores": "D’athraigh eagraíocht eile na réimsí a stórálann sí"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

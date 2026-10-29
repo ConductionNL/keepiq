@@ -222,7 +222,7 @@ class SecretVersionService {
 	 * @return Secret The updated head
 	 *
 	 * @throws \InvalidArgumentException On not found / not owned / suite blocked / a malformed base
-	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the head is a copy its holder may only view
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the head is a copy its holder may only view, or a read-only copy from another organisation
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the head is a copy whose source cannot be resolved
 	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
 	 *
@@ -232,6 +232,8 @@ class SecretVersionService {
 	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
 		$secret = $this->reload(id: $version->getSecretId());
+		// A read-only copy from another organisation has no share target, so the view-only guard passes it.
+		$secret->assertNotReadOnly();
 		$this->viewOnlyCopies->assertMayChangeValue(
 			row: $secret,
 			fields: ViewOnlyCopyGuard::VALUE_FIELDS,

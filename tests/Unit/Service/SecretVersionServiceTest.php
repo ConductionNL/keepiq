@@ -27,6 +27,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\CredentialFields;
@@ -493,6 +494,27 @@ class SecretVersionServiceTest extends TestCase {
 		$this->expectExceptionMessage(Secret::VIEW_ONLY_REFUSAL);
 		$service->restore(versionId: 'v-1', userId: 'alice');
 	}//end testARestoreOfAViewOnlyCopyIsRefusedUntouched()
+
+	/**
+	 * A read-only copy from another organisation has no share target, so the
+	 * view-only guard lets it pass; the restore is still refused before the
+	 * head is snapshotted or written.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAReadOnlyCopyIsRefusedUntouched(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+		$head->setReadOnly(true);
+		$head->setTotp('HEAD_TOTP');
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->secretMapper->expects($this->never())->method('insert');
+
+		$this->expectException(ForbiddenException::class);
+		$this->expectExceptionMessage(Secret::READ_ONLY_REFUSAL);
+		$this->service->restore(versionId: 'v-1', userId: 'alice');
+	}//end testARestoreOfAReadOnlyCopyIsRefusedUntouched()
 
 	/**
 	 * A restore chosen on an older head changes nothing.

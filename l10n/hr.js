@@ -1687,7 +1687,8 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Korisnik je uklonjen iz %n timske mape.","Korisnik je uklonjen iz %n timskih mapa.","Korisnik je uklonjen iz %n timskih mapa."],
         "A restored copy came from a share that has ended. It stays read-only.": "Vraćena kopija potječe iz dijeljenja koje je završilo. Ostaje samo za čitanje.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizacija koja je podijelila vraćenu kopiju nije dostupna. Kopija ostaje samo za čitanje i ne prati njihove promjene.",
-        "Recipient at another organisation restored their copy": "Primatelj iz druge organizacije vratio je svoju kopiju"
+        "Recipient at another organisation restored their copy": "Primatelj iz druge organizacije vratio je svoju kopiju",
+        "Another organisation changed the fields it stores": "Druga organizacija promijenila je polja koja pohranjuje"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
