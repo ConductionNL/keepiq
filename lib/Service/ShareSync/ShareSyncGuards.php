@@ -27,6 +27,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\FederatedValueFields;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntryParser;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
@@ -39,6 +40,10 @@ use OCA\Keepiq\Service\ShareSyncService;
  * secret is shared with gets all of them on /sync, refused with an
  * InvalidArgumentException.
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads the copies, their
+ *   share rows, their holders' vault keys and the pending quarantine scan's
+ *   verdict on each row, each through its own collaborator.
+ *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSyncGuards {
@@ -49,6 +54,7 @@ class ShareSyncGuards {
 	 * @param SecretMapper $secrets The secrets (the copies' rows)
 	 * @param EncryptionSuiteMapper $suites The suites (vault keys)
 	 * @param ShareAuthorizationService $auth The share authorization service (the source read again)
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -59,6 +65,7 @@ class ShareSyncGuards {
 		private SecretMapper $secrets,
 		private EncryptionSuiteMapper $suites,
 		private ShareAuthorizationService $auth,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 	}//end __construct()
 
@@ -171,18 +178,24 @@ class ShareSyncGuards {
 	/**
 	 * The copies of a source a save for every copy writes, keyed by id: every
 	 * copy whose access has not ended. The ignored ones may be named but are
-	 * not written: their access ended, or their row is gone.
+	 * not written: their access ended, their row is gone, their row's target
+	 * does not hold them, or the pending quarantine scan holds their row back.
+	 * The unjudged ones, also ignored, are those whose row the pending scan
+	 * cannot judge: a caller that may refuse waits for the scan rather than
+	 * leave them behind.
 	 *
 	 * @param Secret $source The source
 	 * @param string|null $leaveOut A copy left out of both lists, as share-save leaves out the caller's own row
 	 *
-	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>}
+	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,unjudged:list<string>}
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function liveCopies(Secret $source, ?string $leaveOut): array {
 		$copies = [];
 		$ignored = [];
+		$unjudged = [];
 		$targets = $this->targets->findBySourceSecret($source->getId());
 		$rows = $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
 		$now = time();
@@ -208,10 +221,21 @@ class ShareSyncGuards {
 				continue;
 			}
 
+			// The pending quarantine scan judges the row first, as a sync does.
+			$held = $this->quarantineScan?->heldBack(row: $target);
+			if ($held !== null) {
+				$ignored[$copyId] = true;
+				if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+					$unjudged[] = $copyId;
+				}
+
+				continue;
+			}
+
 			$copies[$copyId] = ['secretId' => $copyId, 'holder' => 'recipient', 'targetUserId' => $target->getTargetUserId()];
 		}
 
-		return ['copies' => $copies, 'ignored' => $ignored];
+		return ['copies' => $copies, 'ignored' => $ignored, 'unjudged' => $unjudged];
 	}//end liveCopies()
 
 	/**

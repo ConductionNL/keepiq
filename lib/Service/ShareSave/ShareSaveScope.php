@@ -142,15 +142,25 @@ class ShareSaveScope {
 
 		$held = $this->quarantineScan?->heldBack(row: $target);
 		if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
-			throw new ShareSaveRefusal(
-				error: 'share_scan_pending',
-				message: 'This copy waits for the share quarantine scan and cannot be saved yet; ask an administrator to check that background jobs run',
-				status: Http::STATUS_CONFLICT
-			);
+			throw $this->scanPending();
 		}
 
 		return $held === null;
 	}//end leadsToSource()
+
+	/**
+	 * The refusal of a save that reaches a share row the pending quarantine
+	 * scan cannot judge: nothing is written until the scan has judged it.
+	 *
+	 * @return ShareSaveRefusal
+	 */
+	private function scanPending(): ShareSaveRefusal {
+		return new ShareSaveRefusal(
+			error: 'share_scan_pending',
+			message: 'This secret waits for the share quarantine scan and cannot be saved yet; ask an administrator to check that background jobs run',
+			status: Http::STATUS_CONFLICT
+		);
+	}//end scanPending()
 
 	/**
 	 * Check the copy-editor's right to write every copy again, inside the
@@ -248,6 +258,7 @@ class ShareSaveScope {
 	 * @psalm-return Requirement
 	 *
 	 * @throws IncompleteShareSaveException With the current lists
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
@@ -301,7 +312,7 @@ class ShareSaveScope {
 	 *
 	 * @return void
 	 *
-	 * @throws ShareSaveRefusal `too_many_entries` or `too_many_chunks`
+	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, or `share_scan_pending`
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
@@ -328,10 +339,16 @@ class ShareSaveScope {
 	 * @return array
 	 *
 	 * @psalm-return Requirement
+	 *
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
-		['copies' => $copies, 'ignored' => $ignored] = $this->guards->liveCopies(source: $source, leaveOut: $path->row->getId());
+		['copies' => $copies, 'ignored' => $ignored, 'unjudged' => $unjudged] = $this->guards->liveCopies(source: $source, leaveOut: $path->row->getId());
+		if ($unjudged !== []) {
+			throw $this->scanPending();
+		}
+
 		if ($path->isCopyEditor() === true) {
 			$copies = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $copies;
 		}
