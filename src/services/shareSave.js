@@ -716,6 +716,12 @@ export function shareSaveErrorText(error) {
 			'The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.',
 		)
 	}
+	if (code === 'share_scan_pending') {
+		return t(
+			'keepiq',
+			'This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.',
+		)
+	}
 	if (code === 'partner_lookup_limit') {
 		return t(
 			'keepiq',

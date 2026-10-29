@@ -1725,7 +1725,8 @@ OC.L10N.register(
         "This image could not be read.": "Seda pilti ei saanud lugeda.",
         "This image is too large. Choose an image under 10 MB.": "See pilt on liiga suur. Vali alla 10 MB pilt.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "See ei ole autentija võti. Kleebi otpauth://totp/-link või base32-saladus.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "See QR-kood ei sisalda autentija võtit. Kasuta QR-koodi, mida sait näitab kaheastmelise sisselogimise seadistamisel."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "See QR-kood ei sisalda autentija võtit. Kasuta QR-koodi, mida sait näitab kaheastmelise sisselogimise seadistamisel.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "See saladus ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovige hiljem uuesti või paluge administraatoril kontrollida, kas taustatööd töötavad."
     },
     "nplurals=2; plural=(n != 1);"
 )

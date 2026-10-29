@@ -1725,7 +1725,8 @@ OC.L10N.register(
         "This image could not be read.": "Níorbh fhéidir an íomhá seo a léamh.",
         "This image is too large. Choose an image under 10 MB.": "Tá an íomhá seo rómhór. Roghnaigh íomhá faoi bhun 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ní eochair fíordheimhnitheora é seo. Greamaigh nasc otpauth://totp/ nó an rún base32.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Níl eochair fíordheimhnitheora sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Níl eochair fíordheimhnitheora sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tá an rún seo ag fanacht ar sheiceáil ar a chomhroinnt nach bhfuil críochnaithe fós. Níor sábháladh aon rud; bain triail eile as ar ball, nó iarr ar riarthóir a sheiceáil go bhfuil na jabanna cúlra ag rith."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

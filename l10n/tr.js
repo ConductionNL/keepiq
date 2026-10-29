@@ -1725,7 +1725,8 @@ OC.L10N.register(
         "This image could not be read.": "Bu görsel okunamadı.",
         "This image is too large. Choose an image under 10 MB.": "Bu görsel çok büyük. 10 MB'tan küçük bir görsel seçin.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Bu bir kimlik doğrulayıcı anahtarı değil. Bir otpauth://totp/ bağlantısı veya base32 sırrı yapıştırın.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Bu QR kodu bir kimlik doğrulayıcı anahtarı içermiyor. Sitenin iki adımlı girişi kurarken gösterdiği QR kodunu kullanın."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Bu QR kodu bir kimlik doğrulayıcı anahtarı içermiyor. Sitenin iki adımlı girişi kurarken gösterdiği QR kodunu kullanın.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Bu gizli bilgi, paylaşımlarının henüz tamamlanmamış bir denetimini bekliyor. Hiçbir şey kaydedilmedi; daha sonra yeniden deneyin ya da bir yöneticiden arka plan görevlerinin çalıştığını denetlemesini isteyin."
     },
     "nplurals=1; plural=0;"
 )

@@ -466,6 +466,31 @@ describe('saveShared on the owner path', () => {
 		).toContain('original')
 	})
 
+	it('gives a save that waits for the share check its own text', async () => {
+		shareSaveServer({
+			id: 's1',
+			onSave: () => {
+				throw httpError(409, {
+					error: 'share_scan_pending',
+					message: 'server words',
+				})
+			},
+		})
+
+		const error = await saveShared({
+			id: 's1',
+			plainDiff: { key: 'k' },
+			patch: { key: 'K' },
+			baseUpdatedAt: BASE,
+		}).catch((e) => e)
+
+		expect(error.response.status).toBe(409)
+		const text = shareSaveErrorText(error)
+		expect(text).toContain('Nothing was saved')
+		expect(text).toContain('background jobs')
+		expect(text).not.toContain('changed elsewhere')
+	})
+
 	it("gives its own text only to the share save's own refusal", async () => {
 		const shareSaveRefusal = (data) =>
 			Object.assign(httpError(428, data), { fromShareSave: true })
