@@ -121,6 +121,28 @@ class CredentialFields {
 	}//end lastChangedAt()
 
 	/**
+	 * Stamp the change times of a write: those of a restore when it writes back `$restored` credentials, else those of
+	 * a change.
+	 *
+	 * @param Secret $after The row as it will be written
+	 * @param Secret $before The row as loaded
+	 * @param DateTime $now The time of the write
+	 * @param string[] $restored The credentials written back from a version, none for an ordinary write
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function stamp(Secret $after, Secret $before, DateTime $now, array $restored = []): void {
+		if ($restored !== []) {
+			$this->stampRestore(after: $after, before: $before);
+			return;
+		}
+
+		$this->stampChanges(after: $after, before: $before, now: $now);
+	}//end stamp()
+
+	/**
 	 * Stamp `totpUpdatedAt` or `passkeysUpdatedAt` for each of the two fields whose ciphertext differs from `$before`.
 	 *
 	 * @param Secret $after The row as it will be written

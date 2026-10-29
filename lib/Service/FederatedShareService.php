@@ -228,17 +228,14 @@ class FederatedShareService {
 		}
 
 		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
-		$partner = $this->partners->find(id: (string)$row->getPartnerId());
-		if ($partner !== null) {
-			// The same checks, in the same order, as a new share of this secret.
-			$this->valueFields->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
-			$this->valueFields->assertMirrorsSource(
-				partner: $partner,
-				source: $this->ownedSecret(secretId: $row->getSourceSecretId(), userId: $userId),
-				ciphertext: $ciphertext,
-				absentKeepsStored: $certFingerprint === $row->getRecipientCertFingerprint()
-			);
-		}
+		// The same checks, in the same order, as a new share of this secret.
+		$this->valueFields->assertUpdateMirrorsSource(
+			partner: $this->partners->find(id: (string)$row->getPartnerId()),
+			source: $this->ownedSecret(secretId: $row->getSourceSecretId(), userId: $userId),
+			row: $row,
+			ciphertext: $ciphertext,
+			certFingerprint: $certFingerprint
+		);
 
 		$row = $this->writeCiphertext(
 			row: $row,

@@ -1032,10 +1032,9 @@ class SecretService {
 		$restored = [];
 		if ($restoring === true) {
 			$restored = CredentialFields::CREDENTIALS;
-			$credentials->stampRestore(after: $secret, before: $preUpdate);
-		} else {
-			$credentials->stampChanges(after: $secret, before: $preUpdate, now: new DateTime());
 		}
+
+		$credentials->stamp(after: $secret, before: $preUpdate, now: new DateTime(), restored: $restored);
 
 		// The possibly-compromised warning says "replace the exposed values at
 		// their source". A login can hold three credentials, so it clears only

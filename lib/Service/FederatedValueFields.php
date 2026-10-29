@@ -36,6 +36,10 @@ use Psr\Log\LoggerInterface;
  * Which value fields a partner can hold, and what a share stores and serves.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The class holds every rule for the two value fields on a
+ *   partner share (advertise, store, mirror, serve) in one place, one branch per field and per write path; the
+ *   update's mirror check took it past the threshold, and splitting the rules by write path would scatter them.
  */
 class FederatedValueFields {
 	/**
@@ -122,39 +126,68 @@ class FederatedValueFields {
 	/**
 	 * Refuse a new partner share whose `totp` or `passkeys` does not mirror its source, as a direct share is refused:
 	 * one it carries that the source does not hold, or one the source holds that it leaves out for a partner that
-	 * stores the field. A partner that cannot store a field gets it as null. A field left out of an update under the
-	 * certificate the share already had keeps its stored value (next()), so it is not held against the source.
+	 * stores the field. A partner that cannot store a field gets it as null.
 	 *
 	 * @param FederationPartner $partner The recipient's partner
 	 * @param Secret $source The secret shared
 	 * @param array<string,mixed> $ciphertext The ciphertext
-	 * @param bool $absentKeepsStored Whether a field absent from `$ciphertext` keeps the share's stored value
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException `copy_fields_mismatch`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Whether a left-out field keeps its stored value is the caller's fact
 	 */
-	public function assertMirrorsSource(
-		FederationPartner $partner,
-		Secret $source,
-		array $ciphertext,
-		bool $absentKeepsStored = false,
-	): void {
+	public function assertMirrorsSource(FederationPartner $partner, Secret $source, array $ciphertext): void {
 		$stores = $this->stores(partner: $partner);
 		foreach ((new CredentialFields())->notMirrored(source: $source, copy: $ciphertext) as $field) {
-			if ($absentKeepsStored === true && array_key_exists($field, $ciphertext) === false) {
-				continue;
-			}
-
 			if ($this->blob(value: $ciphertext[$field] ?? null) !== null || in_array($field, $stores, true) === true) {
 				throw new InvalidArgumentException('copy_fields_mismatch');
 			}
 		}
 	}//end assertMirrorsSource()
+
+	/**
+	 * Refuse an update of an existing partner share that does not mirror its source, as a new share is refused. A
+	 * field left out keeps the share's stored value under the certificate the share already had (next()), which this
+	 * rule does not judge; left out under a new certificate it is cleared, so it is held against the source.
+	 *
+	 * @param FederationPartner|null $partner The share's partner, null when it is gone
+	 * @param Secret $source The secret shared
+	 * @param FederatedShare $row The share as stored
+	 * @param array<string,mixed> $ciphertext The update's ciphertext
+	 * @param string $certFingerprint The normalised certificate fingerprint the update is encrypted for
+	 *
+	 * @return void
+	 *
+	 * @throws PartnerUpgradeRequiredException
+	 * @throws InvalidArgumentException `copy_fields_mismatch`
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-left-out-field-is-kept-under-the-same-certificate-and-cleared-under-a-new-one
+	 */
+	public function assertUpdateMirrorsSource(
+		?FederationPartner $partner,
+		Secret $source,
+		FederatedShare $row,
+		array $ciphertext,
+		string $certFingerprint,
+	): void {
+		if ($partner === null) {
+			return;
+		}
+
+		$this->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
+		$keeps = $certFingerprint === $row->getRecipientCertFingerprint();
+		$held = [];
+		foreach (['totp' => $source->getTotp(), 'passkeys' => $source->getPasskeys()] as $field => $sourceValue) {
+			$held[$field] = $this->blob(value: $ciphertext[$field] ?? null);
+			if ($keeps === true && array_key_exists($field, $ciphertext) === false) {
+				$held[$field] = $this->blob(value: $sourceValue);
+			}
+		}
+
+		$this->assertMirrorsSource(partner: $partner, source: $source, ciphertext: $held);
+	}//end assertUpdateMirrorsSource()
 
 	/**
 	 * Refuse a write to an existing share that carries a value field its partner has not advertised and,
