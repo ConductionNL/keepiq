@@ -128,14 +128,18 @@ class CredentialFields {
 	 * @param Secret $before The row as loaded
 	 * @param DateTime $now The time of the write
 	 * @param string[] $restored The credentials written back from a version, none for an ordinary write
+	 * @param bool $compromiseFlagOpen Whether the row has an open `suite_compromise` rotation flag
 	 *
 	 * @return void
 	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $compromiseFlagOpen is state of the row read from its rotation
+	 *   flag, passed through to stampRestore(); it selects no second behaviour of this method.
+	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 	 */
-	public function stamp(Secret $after, Secret $before, DateTime $now, array $restored = []): void {
+	public function stamp(Secret $after, Secret $before, DateTime $now, array $restored = [], bool $compromiseFlagOpen = false): void {
 		if ($restored !== []) {
-			$this->stampRestore(after: $after, before: $before, now: $now);
+			$this->stampRestore(after: $after, before: $before, now: $now, compromiseFlagOpen: $compromiseFlagOpen);
 			return;
 		}
 
@@ -169,22 +173,28 @@ class CredentialFields {
 	 * on a flagged row each credential the restore changes has no change time and reads as exposed until it is
 	 * replaced; neither the head's time nor the time of the restore is true of it. A `totp` or `passkeys` change time
 	 * is read by that rule alone, so it is cleared on any row; the key's age also feeds expiry, health and
-	 * compliance, so on a row that is not flagged a changed key gets the time of the restore.
+	 * compliance, so on a row that is not flagged a changed key gets the time of the restore. A row counts as flagged
+	 * while its possibly-compromised warning is set or its `suite_compromise` rotation flag is open: the flag outlives
+	 * the warning, and a restored key with the time of the restore would prove it.
 	 *
 	 * @param Secret $after The row as it will be written
 	 * @param Secret $before The row as loaded
 	 * @param DateTime $now The time of the write
+	 * @param bool $compromiseFlagOpen Whether the row has an open `suite_compromise` rotation flag
 	 *
 	 * @return void
 	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $compromiseFlagOpen is state of the row, read from its rotation
+	 *   flag, as `possiblyCompromisedAt` is read from the row itself; together they say whether the row is flagged.
+	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 	 */
-	public function stampRestore(Secret $after, Secret $before, DateTime $now): void {
+	public function stampRestore(Secret $after, Secret $before, DateTime $now, bool $compromiseFlagOpen = false): void {
 		// The key's age stays a password age for a row that is not flagged, as an edit's is; only a flagged row
 		// needs the restored key to read as exposed.
 		if ((string)$after->getKey() !== (string)$before->getKey()) {
 			$keyChangedAt = clone $now;
-			if ($before->getPossiblyCompromisedAt() !== null) {
+			if ($before->getPossiblyCompromisedAt() !== null || $compromiseFlagOpen === true) {
 				$keyChangedAt = null;
 			}
 

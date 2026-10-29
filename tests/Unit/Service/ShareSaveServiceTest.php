@@ -136,7 +136,7 @@ class ShareSaveServiceTest extends TestCase {
 		$this->audit = $this->createMock(ShareAuditTrail::class);
 		$this->versionHistory = $this->createPartialMock(
 			SecretVersionService::class,
-			['snapshot', 'getVersion', 'recordRestored', 'logRestored']
+			['snapshot', 'getVersion', 'recordRestored', 'logRestored', 'compromiseFlagOpen']
 		);
 		$this->stageMapper = $this->createMock(ShareSaveStageMapper::class);
 		$this->db = $this->createMock(IDBConnection::class);
@@ -271,6 +271,7 @@ class ShareSaveServiceTest extends TestCase {
 				$this->copyWrites[] = [
 					'id' => $copy->getId(),
 					'key' => $copy->getKey(),
+					'keyUpdatedAt' => $copy->getKeyUpdatedAt(),
 					'updatedAt' => $copy->getUpdatedAt(),
 					'totp' => $copy->getTotp(),
 					'passkeys' => $copy->getPasskeys(),
@@ -1500,6 +1501,25 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertNull($sent[0]['totp']);
 		$this->assertArrayNotHasKey('passkeys', $sent[0]);
 		$this->assertSame([['passkeys' => null]], $this->partnerKept);
+	}
+
+	/**
+	 * A copy whose `suite_compromise` flag is still open reads as flagged on a restore even with its warning
+	 * cleared: the old key written back gets no change time. A copy with no such flag gets the time of the restore.
+	 */
+	public function testARestoreLeavesNoKeyAgeOnACopyWithAnOpenCompromiseFlag(): void {
+		$this->versionHistory->method('getVersion')->willReturn($this->version());
+		$this->versionHistory->method('compromiseFlagOpen')->willReturnCallback(static fn (string $id): bool => $id === 'c-bob');
+
+		$this->partnerCiphertext(request: $this->restoreWith(fields: []));
+
+		$ages = [];
+		foreach ($this->copyWrites as $write) {
+			$ages[$write['id']] = $write['keyUpdatedAt'];
+		}
+
+		$this->assertNull($ages['c-bob']);
+		$this->assertNotNull($ages['c-carol']);
 	}
 
 	public function testARestoreThatLeavesOutAFieldTheVersionHoldsIsRefusedBeforeAnythingIsWritten(): void {

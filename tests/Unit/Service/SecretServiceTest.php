@@ -804,6 +804,41 @@ class SecretServiceTest extends TestCase {
 	}//end testARestoreOfAPreCompromiseVersionKeepsTheWarning()
 
 	/**
+	 * A share-save restore on a row whose warning is cleared but whose `suite_compromise` flag is still open writes
+	 * the old key back with no change time, so it cannot prove that flag.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreUnderAnOpenCompromiseFlagLeavesTheKeyNoAge(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$head = $this->makeSecret();
+		$head->setKey('CURRENT-KEY');
+		$head->setKeyUpdatedAt(new \DateTime('2026-10-05T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($head);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot', 'compromiseFlagOpen']);
+		$versionService->method('compromiseFlagOpen')->with('s-1')->willReturn(true);
+
+		$restored = $this->serviceWithVersions($versionService)->update(
+			id: 's-1',
+			data: ['key' => 'PRE-FLAG-KEY'],
+			userId: 'alice',
+			restoring: true
+		);
+
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertFalse(
+			(new CredentialFields())->provesRotation(
+				secret: $restored,
+				reason: 'suite_compromise',
+				frozen: new \DateTime('2026-09-01T00:00:00+00:00')
+			)
+		);
+	}//end testARestoreUnderAnOpenCompromiseFlagLeavesTheKeyNoAge()
+
+	/**
 	 * A share-save restore whose patch carries a TOTP other than the head's, one the
 	 * version need not have held, gets no change time that could read as after the flag.
 	 *
