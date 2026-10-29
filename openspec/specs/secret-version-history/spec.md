@@ -33,7 +33,7 @@ The system MUST let a user list versions newest-first (metadata only), view a ve
 - WHEN the version is restored
 - THEN a null field MUST keep the head's value, a `''` field MUST clear it, and a value MUST set it, on the head and on every copy
 - AND a field whose value is the head's own ciphertext counts as kept, so a client that does not send it is not refused; a different value the patch leaves out MUST be refused with 400 `invalid_body`
-- AND the restore MUST NOT move `totp_updated_at` or `passkeys_updated_at`, and MUST move `key_updated_at` only when the restored key differs from the head's, so written-back old ciphertext never counts as a rotation
+- AND the restore MUST clear `key_updated_at`, `totp_updated_at` or `passkeys_updated_at` of each credential it changes and MUST NOT move any of them, so written-back old ciphertext never counts as a rotation and reads as exposed on a flagged secret
 
 #### Scenario: A view-only holder cannot restore
 - GIVEN a secret shared directly with Bob, whose copy has a prior version `V`

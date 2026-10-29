@@ -728,10 +728,10 @@ class SecretServiceTest extends TestCase {
 	}//end testTheWarningClearsOnceNoCredentialIsLeftExposed()
 
 	/**
-	 * A share-save restore writes the version's totp and passkeys back: old
-	 * values that replace nothing and keep their change times. The flagged
-	 * secret keeps its warning through the restore and through a following
-	 * TOTP-only change, as the passkeys stay exposed.
+	 * A share-save restore writes the version's credentials back: old values
+	 * that replace nothing and have no change time. The flagged secret keeps
+	 * its warning through the restore and through a following TOTP-only
+	 * change, as the key and passkeys stay exposed.
 	 *
 	 * @return void
 	 *
@@ -762,12 +762,68 @@ class SecretServiceTest extends TestCase {
 			restoring: true
 		);
 		$this->assertNotNull($restored->getPossiblyCompromisedAt());
-		$this->assertSame($exposedSince->getTimestamp(), $restored->getTotpUpdatedAt()?->getTimestamp());
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertNull($restored->getTotpUpdatedAt());
+		$this->assertNull($restored->getPasskeysUpdatedAt());
 
 		$head = $restored;
 		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP'], userId: 'alice');
 		$this->assertNotNull($secret->getPossiblyCompromisedAt());
 	}//end testARestoreReplacesNoExposedTotpOrPasskeys()
+
+	/**
+	 * A share-save restore of a version from before the compromise keeps the warning
+	 * on a head whose TOTP was rotated after it was raised: the restored TOTP and key
+	 * are the exposed ones and take no change time from the head.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreOfAPreCompromiseVersionKeepsTheWarning(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$head = $this->makeSecret();
+		$head->setKey('CURRENT-KEY');
+		$head->setTotp('CURRENT-TOTP');
+		$head->setKeyUpdatedAt(new \DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setTotpUpdatedAt(new \DateTime('2026-10-05T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(new \DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($head);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->update(
+			id: 's-1',
+			data: ['key' => 'PRE-FLAG-KEY', 'totp' => 'PRE-FLAG-TOTP'],
+			userId: 'alice',
+			restoring: true
+		);
+
+		$this->assertNotNull($restored->getPossiblyCompromisedAt());
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertNull($restored->getTotpUpdatedAt());
+	}//end testARestoreOfAPreCompromiseVersionKeepsTheWarning()
+
+	/**
+	 * A share-save restore whose patch carries a TOTP other than the head's, one the
+	 * version need not have held, gets no change time that could read as after the flag.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreWithAnotherTotpStampsNoChangeTime(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$head = $this->makeSecret();
+		$head->setTotp('CURRENT-TOTP');
+		$head->setTotpUpdatedAt(new \DateTime('2026-01-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($head);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->update(id: 's-1', data: ['totp' => 'NEVER-HELD'], userId: 'alice', restoring: true);
+
+		$this->assertSame('NEVER-HELD', $restored->getTotp());
+		$this->assertNull($restored->getTotpUpdatedAt());
+	}//end testARestoreWithAnotherTotpStampsNoChangeTime()
 
 	/**
 	 * A TOTP-only or passkeys-only change stamps that field's change time, which

@@ -293,25 +293,65 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysClearsTheHeads()
 
 	/**
-	 * A restore writes back old ciphertext, so the totp and passkeys change
-	 * times stay where they were: an exposed value does not look rotated.
+	 * A restore writes back old ciphertext: the change time of each credential
+	 * it changes is cleared, so it does not look rotated, and one it writes back
+	 * as it was keeps its time.
 	 *
 	 * @return void
 	 */
-	public function testARestoreLeavesTheTotpAndPasskeysChangeTimes(): void {
-		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+	public function testARestoreClearsTheChangeTimeOfWhatItChanges(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'SAME_PASSKEYS');
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setTotp('CURRENT_TOTP');
+		$head->setPasskeys('SAME_PASSKEYS');
 		$stamp = new DateTime('2026-01-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $stamp);
 		$head->setTotpUpdatedAt(clone $stamp);
-		$head->setPasskeysUpdatedAt(null);
+		$head->setPasskeysUpdatedAt(clone $stamp);
 		$this->mapper->method('insert')->willReturnArgument(0);
 		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
 		$this->assertSame('OLD_TOTP', $restored->getTotp());
-		$this->assertSame($stamp->getTimestamp(), $restored->getTotpUpdatedAt()?->getTimestamp());
-		$this->assertNull($restored->getPasskeysUpdatedAt());
-	}//end testARestoreLeavesTheTotpAndPasskeysChangeTimes()
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertNull($restored->getTotpUpdatedAt());
+		$this->assertSame($stamp->getTimestamp(), $restored->getPasskeysUpdatedAt()?->getTimestamp());
+	}//end testARestoreClearsTheChangeTimeOfWhatItChanges()
+
+	/**
+	 * A flagged head whose TOTP was rotated after the flag, restored to a
+	 * version from before it: the restored key and TOTP are the exposed ones,
+	 * so a following passkeys-only change leaves the warning standing, and the
+	 * restore proves no rotation for a compromise flag.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAPreCompromiseVersionLeavesTheWarningAndNoRotationProof(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP');
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setTotp('CURRENT_TOTP');
+		$head->setPasskeys('CURRENT_PASSKEYS');
+		$flaggedAt = new DateTime('2026-10-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setTotpUpdatedAt(new DateTime('2026-10-05T00:00:00+00:00'));
+		$head->setPasskeysUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(clone $flaggedAt);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$credentials = new CredentialFields();
+		$this->assertNotNull($restored->getPossiblyCompromisedAt());
+		$this->assertFalse($credentials->provesRotation(secret: $restored, reason: 'suite_compromise', frozen: $flaggedAt));
+		$this->assertFalse($credentials->provesRotation(secret: $restored, reason: 'user_flagged', frozen: $flaggedAt));
+
+		$after = clone $restored;
+		$after->setPasskeys('NEW_PASSKEYS');
+		$credentials->stampChanges(after: $after, before: $restored, now: new DateTime());
+		$this->assertFalse($credentials->answersCompromiseWarning(after: $after, before: $restored));
+	}//end testARestoreOfAPreCompromiseVersionLeavesTheWarningAndNoRotationProof()
 
 	/**
 	 * A flagged secret restored to a version keeps its warning when only the
@@ -372,11 +412,12 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOfTheSameKeyLeavesItsAgeAndTheWarning()
 
 	/**
-	 * A restore that changes the key moves its age, as an edit does.
+	 * A restore that changes the key does not move its age to the restore: the
+	 * old key has no change time, so it never counts as a rotation.
 	 *
 	 * @return void
 	 */
-	public function testARestoreOfAnotherKeyMovesItsAge(): void {
+	public function testARestoreOfAnotherKeyDoesNotMoveItsAge(): void {
 		$head = $this->restorableHead();
 		$head->setKey('CURRENT_CIPHERTEXT');
 		$head->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
@@ -385,8 +426,8 @@ class SecretVersionServiceTest extends TestCase {
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
-		$this->assertGreaterThan(new DateTime('2026-09-02T00:00:00+00:00'), $restored->getKeyUpdatedAt());
-	}//end testARestoreOfAnotherKeyMovesItsAge()
+		$this->assertNull($restored->getKeyUpdatedAt());
+	}//end testARestoreOfAnotherKeyDoesNotMoveItsAge()
 
 	/**
 	 * A snapshot records an empty totp or passkeys as `''`, never null, so a

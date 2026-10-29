@@ -1026,15 +1026,16 @@ class SecretService {
 			$secret->setPasskeys($this->nullableString(value: $data['passkeys']));
 		}
 
-		// A restore writes back old ciphertext: its totp and passkeys are no
-		// new values, so they keep their change times and replace nothing.
+		// A restore writes back old ciphertext: its credentials are no new
+		// values, so they replace nothing and have no change time.
 		$credentials = new CredentialFields();
 		$restored = [];
 		if ($restoring === true) {
-			$restored = ['totp', 'passkeys'];
+			$restored = CredentialFields::CREDENTIALS;
+			$credentials->stampRestore(after: $secret, before: $preUpdate);
+		} else {
+			$credentials->stampChanges(after: $secret, before: $preUpdate, now: new DateTime());
 		}
-
-		$credentials->stampChanges(after: $secret, before: $preUpdate, now: new DateTime(), except: $restored);
 
 		// The possibly-compromised warning says "replace the exposed values at
 		// their source". A login can hold three credentials, so it clears only

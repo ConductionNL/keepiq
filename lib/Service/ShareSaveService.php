@@ -303,10 +303,10 @@ class ShareSaveService {
 		$path = $this->scope->assertStillWriter(path: $path, userId: $userId);
 		$required = $this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
 
-		// A restore writes back the version's totp and passkeys: old values, not replacements.
+		// A restore writes back the version's credentials: old values, not replacements.
 		$restored = [];
 		if ($version !== null) {
-			$restored = ['totp', 'passkeys'];
+			$restored = CredentialFields::CREDENTIALS;
 		}
 
 		$copies = $this->sync->writeCopyBlobs(

@@ -65,17 +65,24 @@ The system MUST run a background job that dispatches a Nextcloud notification to
 ### Requirement: Proven mark-rotated flow
 The system MUST resolve an open rotation flag to `rotated` only when the secret's `key` ciphertext actually changed since the flag was raised (its `key_updated_at` advanced past the snapshot); a mark-rotated request against an unchanged secret MUST leave the flag open and offer the secret-requests re-request path.
 
-A `suite_compromise` flag is different: the login's TOTP seed and passkeys were exposed with its password, so a change of any of the three proves rotation. Its snapshot and the comparison use the latest of `key_updated_at`, `totp_updated_at` and `passkeys_updated_at`. Every other reason (`user_flagged`, `policy_expiry`, `lease_revoked`, `lease_expired`) asks for a new password and keeps resolving on `key_updated_at` alone, so a TOTP change neither resolves a `policy_expiry` flag nor stops the reminder job from raising it again.
+A `suite_compromise` flag is the exception to that: the login's TOTP seed and passkeys were exposed with its password, so it MUST resolve to `rotated` only once none of the three is left exposed, by the rule the possibly-compromised warning clears by (secrets spec). Its snapshot is the latest of `key_updated_at`, `totp_updated_at` and `passkeys_updated_at`, and each of the three the secret still holds MUST have changed after it. A password-only change, a TOTP-only change and a restore therefore leave the flag open while another credential is still the exposed one. Every other reason (`user_flagged`, `policy_expiry`, `lease_revoked`, `lease_expired`) asks for a new password and keeps resolving on `key_updated_at` alone, so a TOTP change neither resolves a `policy_expiry` flag nor stops the reminder job from raising it again.
 
 Known limitations: `possibly_compromised_at` is a single timestamp and is not moved forward when a later TOTP rotation happens, so the compromise rule judges every credential against the time the secret was first flagged. `passkeys` is one encrypted blob, so adding a passkey changes the blob and counts as replacing the exposed passkeys inside it, even if the exposed ones are still in the list.
 
-#### Scenario: A TOTP change proves rotation of a compromise flag only
+#### Scenario: A compromise flag resolves only once every held credential changed
 
 @e2e exclude Asserted on the flag row; covered by PHPUnit (RotationPolicyServiceTest).
-- **GIVEN** an open `suite_compromise` flag and an open `policy_expiry` flag on secrets whose password did not change
-- **WHEN** only the TOTP seed or passkeys of each changes and the owner marks both rotated
-- **THEN** the `suite_compromise` flag MUST transition to `rotated`
-- **AND** the `policy_expiry` flag MUST stay open
+- **GIVEN** an open `suite_compromise` flag on a login that holds a password and a TOTP seed
+- **WHEN** only the password changes, or only the TOTP seed changes, and the owner marks it rotated
+- **THEN** the flag MUST stay open and the response MUST offer the re-request rotation path
+- **AND** once the other one has changed too, marking it rotated MUST transition the flag to `rotated`
+
+#### Scenario: A TOTP change does not resolve a password flag
+
+@e2e exclude Asserted on the flag row; covered by PHPUnit (RotationPolicyServiceTest).
+- **GIVEN** an open `policy_expiry` flag on a secret whose password did not change
+- **WHEN** only its TOTP seed or passkeys changes and the owner marks it rotated
+- **THEN** the flag MUST stay open
 
 #### Scenario: Rotation confirmed by key change
 - GIVEN an open rotation flag snapshotting the secret's `key_updated_at`

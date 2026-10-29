@@ -250,14 +250,28 @@ class RotationPolicyServiceTest extends TestCase {
 	}//end testMarkRotatedClosesOnKeyAdvance()
 
 	/**
-	 * A TOTP-only or passkeys-only rotation is a proven rotation too: the head's
-	 * key did not move, its `totp_updated_at` or `passkeys_updated_at` did.
+	 * A compromise exposed the password, the TOTP seed and the passkeys together:
+	 * the flag resolves only once every credential the secret holds changed after
+	 * it was raised. A password-only, a TOTP-only or a restored credential, and a
+	 * TOTP or passkeys value with no change time, leave it open.
 	 *
 	 * @return void
 	 */
-	public function testMarkRotatedClosesOnATotpOrPasskeysOnlyAdvance(): void {
+	public function testACompromiseFlagResolvesOnlyOnceEveryHeldCredentialChanged(): void {
 		$frozen = new DateTime('2026-06-01T00:00:00Z');
-		foreach (['setTotpUpdatedAt', 'setPasskeysUpdatedAt'] as $setter) {
+		$before = new DateTime('2026-05-01T00:00:00Z');
+		$after = new DateTime('2026-06-02T00:00:00Z');
+		// [key age, totp, totp age, passkeys, passkeys age, resolves]
+		$cases = [
+			'every credential changed' => [$after, 'TOTP', $after, 'PASSKEYS', $after, true],
+			'password only' => [$after, 'TOTP', $before, 'PASSKEYS', $before, false],
+			'totp only' => [$before, 'TOTP', $after, null, null, false],
+			'password and totp, no passkeys held' => [$after, 'TOTP', $after, null, null, true],
+			'a held value with no change time' => [$after, 'TOTP', null, null, null, false],
+			'only the password is held' => [$after, null, null, null, null, true],
+		];
+
+		foreach ($cases as $label => [$keyAge, $totp, $totpAge, $passkeys, $passkeysAge, $resolves]) {
 			$flagRow = new RotationFlag();
 			$flagRow->setId('flag-1');
 			$flagRow->setSecretId('sec-1');
@@ -266,20 +280,24 @@ class RotationPolicyServiceTest extends TestCase {
 			$flagRow->setKeyUpdatedAtAtFlag(clone $frozen);
 
 			$secret = $this->ownedSecret();
-			$secret->setKeyUpdatedAt(clone $frozen);
-			$secret->$setter(new DateTime('2026-06-02T00:00:00Z'));
+			$secret->setKey('KEY');
+			$secret->setKeyUpdatedAt(clone $keyAge);
+			$secret->setTotp($totp);
+			$secret->setTotpUpdatedAt($totpAge);
+			$secret->setPasskeys($passkeys);
+			$secret->setPasskeysUpdatedAt($passkeysAge);
 
 			$flagMapper = $this->createMock(RotationFlagMapper::class);
 			$flagMapper->method('findById')->willReturn($flagRow);
-			$flagMapper->expects($this->once())->method('update')->willReturnArgument(0);
+			$flagMapper->expects($resolves === true ? $this->once() : $this->never())->method('update')->willReturnArgument(0);
 			$secretMapper = $this->createMock(SecretMapper::class);
 			$secretMapper->method('findById')->willReturn($secret);
 
 			$service = new RotationFlagService(flagMapper: $flagMapper, secretMapper: $secretMapper);
-			$this->assertTrue($service->markRotated(flagId: 'flag-1', userId: 'alice')['resolved'], $setter);
-			$this->assertSame('rotated', $flagRow->getStatus());
+			$this->assertSame($resolves, $service->markRotated(flagId: 'flag-1', userId: 'alice')['resolved'], $label);
+			$this->assertSame($resolves === true ? 'rotated' : 'open', $flagRow->getStatus(), $label);
 		}
-	}//end testMarkRotatedClosesOnATotpOrPasskeysOnlyAdvance()
+	}//end testACompromiseFlagResolvesOnlyOnceEveryHeldCredentialChanged()
 
 	/**
 	 * Every reason but a compromise asks for a new password: a TOTP-only or

@@ -278,20 +278,14 @@ class SecretVersionService {
 		// Snapshot the current head so the restore itself is undoable.
 		$this->snapshot(preUpdate: $secret, actorType: 'user', actorId: $userId);
 
-		// The key's age moves only when the restore changes it, as an edit's
-		// does: the same ciphertext written back is the same exposed value.
-		if ($version->getKey() !== $secret->getKey()) {
-			$secret->setKeyUpdatedAt(new DateTime());
-		}
-
+		$beforeRestore = clone $secret;
 		$secret->setName($version->getName());
 		$secret->setUrl($version->getUrl());
 		$secret->setKey($version->getKey());
 		$secret->setLogin($version->getLogin());
 		$secret->setAdditionalFields($version->getAdditionalFields());
 		// A version made before these fields existed holds null and the head
-		// keeps its values; `''` was empty then and clears them. Old ciphertext
-		// is no new value, so their change times stay as they are.
+		// keeps its values; `''` was empty then and clears them.
 		if ($version->getTotp() !== null) {
 			$secret->setTotp($version->getTotp());
 		}
@@ -307,6 +301,10 @@ class SecretVersionService {
 		if ($secret->getPasskeys() === '') {
 			$secret->setPasskeys(null);
 		}
+
+		// Old ciphertext is no new value: a credential it changes has no
+		// change time, so it reads as exposed and moves no rotation proof.
+		(new CredentialFields())->stampRestore(after: $secret, before: $beforeRestore);
 
 		$secret->setUpdatedAt($savedAt);
 		$this->secretMapper->update($secret);

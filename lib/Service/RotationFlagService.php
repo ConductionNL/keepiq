@@ -168,11 +168,11 @@ class RotationFlagService {
 	}//end openFlags()
 
 	/**
-	 * Mark a flag rotated — ONLY when the head's proof time has advanced past
-	 * the value frozen at flag time (a proven rotation): `key_updated_at`, or
-	 * for a compromise flag the latest of it, `totp_updated_at` and
-	 * `passkeys_updated_at` (CredentialFields::rotationProofAt()).
-	 * Otherwise the caller is told to rotate first (re-request path).
+	 * Mark a flag rotated — ONLY when the head proves it
+	 * (CredentialFields::provesRotation()): `key_updated_at` advanced past the
+	 * value frozen at flag time, or for a compromise flag every credential the
+	 * head holds changed after it. Otherwise the caller is told to rotate first
+	 * (re-request path).
 	 *
 	 * @param string $flagId The flag UUID
 	 * @param string $userId The caller (must own the secret)
@@ -186,10 +186,8 @@ class RotationFlagService {
 
 		$head = $this->secretMapper->findById($flagRow->getSecretId());
 		$frozen = $flagRow->getKeyUpdatedAtAtFlag();
-		$current = (new CredentialFields())->rotationProofAt(secret: $head, reason: $flagRow->getReason());
-
-		$advanced = $current !== null && ($frozen === null || $current > $frozen);
-		if ($advanced === false) {
+		$proven = (new CredentialFields())->provesRotation(secret: $head, reason: $flagRow->getReason(), frozen: $frozen);
+		if ($proven === false) {
 			return [
 				'resolved' => false,
 				'requiresRotation' => true,

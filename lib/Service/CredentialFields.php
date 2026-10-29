@@ -41,8 +41,15 @@ class CredentialFields {
 	public const COMPROMISE_REASONS = ['suite_compromise'];
 
 	/**
-	 * The change time a rotation flag with this reason is proven by: the latest credential change for a compromise,
-	 * `keyUpdatedAt` alone otherwise.
+	 * The three credentials a secret can hold.
+	 *
+	 * @var string[]
+	 */
+	public const CREDENTIALS = ['key', 'totp', 'passkeys'];
+
+	/**
+	 * The change time a rotation flag with this reason is snapshotted at: the latest credential change for a
+	 * compromise, `keyUpdatedAt` alone otherwise.
 	 *
 	 * @param Secret $secret The row
 	 * @param string $reason The flag's reason
@@ -58,6 +65,40 @@ class CredentialFields {
 
 		return $secret->getKeyUpdatedAt();
 	}//end rotationProofAt()
+
+	/**
+	 * Whether the secret now proves the rotation a flag with this reason asks for. `keyUpdatedAt` must have advanced
+	 * past `$frozen` for every reason but a compromise; a compromise exposed all three credentials, so each one the
+	 * secret still holds must have changed after `$frozen`, as the possibly-compromised warning requires.
+	 *
+	 * @param Secret $secret The row
+	 * @param string $reason The flag's reason
+	 * @param DateTime|null $frozen The snapshot taken when the flag was raised
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md
+	 */
+	public function provesRotation(Secret $secret, string $reason, ?DateTime $frozen): bool {
+		if (in_array($reason, self::COMPROMISE_REASONS, true) === false) {
+			$keyAt = $secret->getKeyUpdatedAt();
+
+			return $keyAt !== null && ($frozen === null || $keyAt > $frozen);
+		}
+
+		$credentials = [
+			[$secret->getKey(), $secret->getKeyUpdatedAt()],
+			[$secret->getTotp(), $secret->getTotpUpdatedAt()],
+			[$secret->getPasskeys(), $secret->getPasskeysUpdatedAt()],
+		];
+		foreach ($credentials as [$value, $changedAt]) {
+			if ((string)$value !== '' && ($changedAt === null || ($frozen !== null && $changedAt <= $frozen))) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end provesRotation()
 
 	/**
 	 * When a credential of the row last changed: the latest of `keyUpdatedAt`, `totpUpdatedAt` and `passkeysUpdatedAt`.
@@ -85,14 +126,13 @@ class CredentialFields {
 	 * @param Secret $after The row as it will be written
 	 * @param Secret $before The row as loaded
 	 * @param DateTime $now The time of the write
-	 * @param string[] $except Fields written back from a version, which keep their change time
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 	 */
-	public function stampChanges(Secret $after, Secret $before, DateTime $now, array $except = []): void {
-		$changed = array_diff(['totp', 'passkeys'], $this->unchanged(after: $after, before: $before), $except);
+	public function stampChanges(Secret $after, Secret $before, DateTime $now): void {
+		$changed = array_diff(['totp', 'passkeys'], $this->unchanged(after: $after, before: $before));
 		if (in_array('totp', $changed, true) === true) {
 			$after->setTotpUpdatedAt(clone $now);
 		}
@@ -101,6 +141,33 @@ class CredentialFields {
 			$after->setPasskeysUpdatedAt(clone $now);
 		}
 	}//end stampChanges()
+
+	/**
+	 * Clear the change time of each credential a restore changes. The version's ciphertext is old, and the row
+	 * cannot tell whether it predates a compromise, so a restored value has no change time and reads as exposed until
+	 * it is replaced; neither the head's time nor the time of the restore is true of it.
+	 *
+	 * @param Secret $after The row as it will be written
+	 * @param Secret $before The row as loaded
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function stampRestore(Secret $after, Secret $before): void {
+		if ((string)$after->getKey() !== (string)$before->getKey()) {
+			$after->setKeyUpdatedAt(null);
+		}
+
+		$changed = array_diff(['totp', 'passkeys'], $this->unchanged(after: $after, before: $before));
+		if (in_array('totp', $changed, true) === true) {
+			$after->setTotpUpdatedAt(null);
+		}
+
+		if (in_array('passkeys', $changed, true) === true) {
+			$after->setPasskeysUpdatedAt(null);
+		}
+	}//end stampRestore()
 
 	/**
 	 * Which of `totp` and `passkeys` a write leaves as they were.
@@ -134,7 +201,7 @@ class CredentialFields {
 	 *
 	 * @param Secret $after The row as it will be written
 	 * @param Secret $before The row as loaded
-	 * @param string[] $restored Fields written back from a version: old values, so a change of one replaces nothing
+	 * @param string[] $restored Fields written back from a version: old values: a change of one replaces nothing and leaves it exposed
 	 *
 	 * @return bool
 	 *
