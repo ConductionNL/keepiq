@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Адноўленая копія паходзіць з доступу, які скончыўся. Яна застаецца толькі для чытання.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не ўдалося звязацца з арганізацыяй, якая падзялілася адноўленай копіяй. Копія застаецца толькі для чытання і не атрымлівае іх змены.",
         "Recipient at another organisation restored their copy": "Атрымальнік з іншай арганізацыі аднавіў сваю копію",
-        "Another organisation changed the fields it stores": "Іншая арганізацыя змяніла палі, якія яна захоўвае"
+        "Another organisation changed the fields it stores": "Іншая арганізацыя змяніла палі, якія яна захоўвае",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Гэтыя сакрэты ўтрымліваюць аднаразовы код або ключы доступу, якія гэтая версія Keepiq пакуль не можа скапіяваць, таму новыя ўдзельнікі іх не атрымалі: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Гэты лагін таксама ўтрымлівае аднаразовы код або ключы доступу, якія таксама былі раскрыты. Замяніце кожны з іх і выдаліце старыя ключы доступу, а не толькі дадайце новыя. Папярэджанне знікне, калі ўсе яны будуць заменены.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Гэты лагін утрымлівае аднаразовы код або ключы доступу, якія гэтая версія Keepiq пакуль не можа абагуліць, таму ён не быў абагулены."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

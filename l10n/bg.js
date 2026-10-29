@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Възстановено копие идва от споделяне, което е приключило. То остава само за четене.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Организацията, споделила възстановено копие, не може да бъде достигната. Копието остава само за четене и не следва техните промени.",
         "Recipient at another organisation restored their copy": "Получател от друга организация възстанови своето копие",
-        "Another organisation changed the fields it stores": "Друга организация промени полетата, които съхранява"
+        "Another organisation changed the fields it stores": "Друга организация промени полетата, които съхранява",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Тези тайни съдържат еднократен код или ключове за достъп, които тази версия на Keepiq още не може да копира, затова новите членове не ги получиха: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Този вход съдържа и еднократен код или ключове за достъп, които също са били разкрити. Сменете всеки от тях и премахнете старите ключове за достъп, вместо само да добавяте нови. Предупреждението изчезва, когато всички са сменени.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Този вход съдържа еднократен код или ключове за достъп, които тази версия на Keepiq още не може да споделя, затова не беше споделен."
     },
     "nplurals=2; plural=(n != 1);"
 )

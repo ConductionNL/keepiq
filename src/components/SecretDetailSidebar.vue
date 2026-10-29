@@ -279,6 +279,14 @@
 						)
 					}}
 				</p>
+				<p v-if="secret.totp || secret.passkeys">
+					{{
+						t(
+							'keepiq',
+							'This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 
 			<!-- Input data (Proton-style grouped rows): the credential

@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Taastatud koopia pärineb lõppenud jagamisest. See jääb kirjutuskaitstuks.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Taastatud koopia jaganud organisatsiooniga ei saadud ühendust. Koopia jääb kirjutuskaitstuks ega järgi nende muudatusi.",
         "Recipient at another organisation restored their copy": "Teise organisatsiooni saaja taastas oma koopia",
-        "Another organisation changed the fields it stores": "Teine organisatsioon muutis välju, mida ta talletab"
+        "Another organisation changed the fields it stores": "Teine organisatsioon muutis välju, mida ta talletab",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Need saladused sisaldavad ühekordset koodi või pääsuvõtmeid, mida see Keepiqi versioon ei saa veel kopeerida, seega uued liikmed neid ei saanud: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "See sisselogimine sisaldab ka ühekordset koodi või pääsuvõtmeid, mis said samuti avalikuks. Asendage kõik need ja eemaldage vanad pääsuvõtmed, mitte ainult ei lisa uusi. Hoiatus kaob, kui kõik on asendatud.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "See sisselogimine sisaldab ühekordset koodi või pääsuvõtmeid, mida see Keepiqi versioon ei saa veel jagada, seega seda ei jagatud."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -122,6 +122,7 @@ The system MUST provide an authenticated batch endpoint that accepts arrays of a
 - **WHEN** an item carries `totp` or `passkeys`
 - **THEN** each MUST be stored on the created secret, and `''` or an absent field MUST count as not set
 - **AND** each MUST be a ciphertext as `rsaEncrypt` produces it: base64 of a chunk count followed by that many whole RSA blocks of at least 256 bytes, so a plaintext base32 seed or passkey JSON fails the item
+- **NOTE** this is the server side only: the web import does not send these fields yet and still splits a seed off into a `totp`-typed secret, which keepiq#1327 changes
 
 #### Scenario: Large vault import shows progress
 @e2e exclude Chunking at 50 + progress counters covered by the import-store vitest (120 rows produce three chunks of 50/50/20, committedChunks tracked); a 2,000-row Playwright import is impractical.

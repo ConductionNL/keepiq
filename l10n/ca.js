@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Una còpia restaurada prové d’una compartició que ha acabat. Continua sent només de lectura.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "No s’ha pogut contactar amb l’organització que va compartir una còpia restaurada. La còpia continua sent només de lectura i no segueix els seus canvis.",
         "Recipient at another organisation restored their copy": "Un destinatari d’una altra organització ha restaurat la seva còpia",
-        "Another organisation changed the fields it stores": "Una altra organització ha canviat els camps que desa"
+        "Another organisation changed the fields it stores": "Una altra organització ha canviat els camps que desa",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Aquests secrets contenen un codi d’un sol ús o claus d’accés que aquesta versió de Keepiq encara no pot copiar, així que els membres nous no els han rebut: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Aquest inici de sessió també conté un codi d’un sol ús o claus d’accés, que també van quedar exposats. Substituïu-los tots i elimineu les claus d’accés antigues en lloc de només afegir-ne de noves. L’avís desapareix quan tots estiguin substituïts.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Aquest inici de sessió conté un codi d’un sol ús o claus d’accés que aquesta versió de Keepiq encara no pot compartir, per això no s’ha compartit."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Atjaunotā kopija nāk no koplietojuma, kas ir beidzies. Tā paliek tikai lasāma.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizāciju, kas kopīgoja atjaunoto kopiju, neizdevās sasniegt. Kopija paliek tikai lasāma un neseko viņu izmaiņām.",
         "Recipient at another organisation restored their copy": "Citas organizācijas saņēmējs atjaunoja savu kopiju",
-        "Another organisation changed the fields it stores": "Cita organizācija mainīja laukus, ko tā glabā"
+        "Another organisation changed the fields it stores": "Cita organizācija mainīja laukus, ko tā glabā",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Šie noslēpumi satur vienreizēju kodu vai piekļuves atslēgas, ko šī Keepiq versija vēl nevar kopēt, tāpēc jaunie dalībnieki tos nesaņēma: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Šis pieteikšanās ieraksts satur arī vienreizēju kodu vai piekļuves atslēgas, kas arī tika atklātas. Nomainiet katru no tām un noņemiet vecās piekļuves atslēgas, nevis tikai pievienojiet jaunas. Brīdinājums pazūd, kad visas ir nomainītas.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Šis pieteikšanās ieraksts satur vienreizēju kodu vai piekļuves atslēgas, ko šī Keepiq versija vēl nevar kopīgot, tāpēc tas netika kopīgots."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Przywrócona kopia pochodzi z udostępnienia, które się zakończyło. Pozostaje tylko do odczytu.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Nie udało się połączyć z organizacją, która udostępniła przywróconą kopię. Kopia pozostaje tylko do odczytu i nie śledzi ich zmian.",
         "Recipient at another organisation restored their copy": "Odbiorca z innej organizacji przywrócił swoją kopię",
-        "Another organisation changed the fields it stores": "Inna organizacja zmieniła pola, które przechowuje"
+        "Another organisation changed the fields it stores": "Inna organizacja zmieniła pola, które przechowuje",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Te sekrety zawierają kod jednorazowy lub klucze dostępu, których ta wersja Keepiq nie potrafi jeszcze skopiować, więc nowi członkowie ich nie dostali: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ten login zawiera także kod jednorazowy lub klucze dostępu, które również zostały ujawnione. Wymień każdy z nich i usuń stare klucze dostępu, zamiast tylko dodawać nowe. Ostrzeżenie zniknie, gdy wszystkie zostaną wymienione.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ten login zawiera kod jednorazowy lub klucze dostępu, których ta wersja Keepiq nie potrafi jeszcze udostępnić, więc nie został udostępniony."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

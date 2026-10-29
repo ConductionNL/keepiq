@@ -1762,7 +1762,10 @@
         "A restored copy came from a share that has ended. It stays read-only.": "Egy visszaállított másolat egy véget ért megosztásból származik. Csak olvasható marad.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "A visszaállított másolatot megosztó szervezet nem érhető el. A másolat csak olvasható marad, és nem követi a változtatásaikat.",
         "Recipient at another organisation restored their copy": "Egy másik szervezet címzettje visszaállította a másolatát",
-        "Another organisation changed the fields it stores": "Egy másik szervezet módosította az általa tárolt mezőket"
+        "Another organisation changed the fields it stores": "Egy másik szervezet módosította az általa tárolt mezőket",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ezek a titkok egyszer használatos kódot vagy hozzáférési kulcsokat tartalmaznak, amelyeket a Keepiq ezen verziója még nem tud másolni, ezért az új tagok nem kapták meg őket: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ez a bejelentkezés egyszer használatos kódot vagy hozzáférési kulcsokat is tartalmaz, amelyek szintén kitudódtak. Cserélje ki mindegyiket, és távolítsa el a régi hozzáférési kulcsokat ahelyett, hogy csak újakat adna hozzá. A figyelmeztetés akkor tűnik el, ha mindegyik ki van cserélve.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ez a bejelentkezés egyszer használatos kódot vagy hozzáférési kulcsokat tartalmaz, amelyeket a Keepiq ezen verziója még nem tud megosztani, ezért nem lett megosztva."
     },
     "plurals": null
 }

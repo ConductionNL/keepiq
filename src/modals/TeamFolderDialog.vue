@@ -212,6 +212,18 @@
 						)
 					}}
 				</NcNoteCard>
+				<NcNoteCard
+					v-if="refusedSecrets.length > 0"
+					type="warning"
+					data-testid="team-folder-refused">
+					{{
+						t(
+							'keepiq',
+							'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+							{ names: refusedSecrets.join(', ') },
+						)
+					}}
+				</NcNoteCard>
 
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
 				<div
@@ -377,6 +389,8 @@ export default {
 			newRestriction: { useOnly: false, endDate: '' },
 			/** Folder secrets the last fan-out skipped: this user holds no copy. */
 			skippedSecrets: [],
+			/** Folder secrets the server would not copy: their one-time code or passkeys cannot be copied yet. */
+			refusedSecrets: [],
 			pendingCount: 0,
 			/** Members still waiting for their copies, one Approve button each (keepiq#747). */
 			pendingMembers: [],
@@ -849,9 +863,11 @@ export default {
 		async onRunFanOut() {
 			this.error = null
 			this.skippedSecrets = []
+			this.refusedSecrets = []
 			try {
 				const result = await this.store.runFanOut(this.teamFolder.id)
 				this.skippedSecrets = result?.skipped ?? []
+				this.refusedSecrets = result?.refused ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

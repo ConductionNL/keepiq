@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Endurheimt afrit kom úr deilingu sem er lokið. Það er áfram skrifvarið.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Ekki náðist í fyrirtækið sem deildi endurheimtu afriti. Afritið er áfram skrifvarið og fylgir ekki breytingum þeirra.",
         "Recipient at another organisation restored their copy": "Viðtakandi hjá öðru fyrirtæki endurheimti afritið sitt",
-        "Another organisation changed the fields it stores": "Önnur stofnun breytti reitunum sem hún geymir"
+        "Another organisation changed the fields it stores": "Önnur stofnun breytti reitunum sem hún geymir",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Þessi leyndarmál innihalda einnota kóða eða aðgangslykla sem þessi útgáfa Keepiq getur ekki afritað enn, svo nýju meðlimirnir fengu þau ekki: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Þessi innskráning inniheldur einnig einnota kóða eða aðgangslykla sem urðu einnig berskjaldaðir. Skiptu hverjum þeirra út og fjarlægðu gömlu aðgangslyklana í stað þess að bæta aðeins við nýjum. Viðvörunin hverfur þegar öllu hefur verið skipt út.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Þessi innskráning inniheldur einnota kóða eða aðgangslykla sem þessi útgáfa Keepiq getur ekki deilt enn, svo henni var ekki deilt."
     },
     "nplurals=2; plural=(n != 1);"
 )

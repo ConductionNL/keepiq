@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Враћена копија потиче из дељења које је завршено. Остаје само за читање.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Организација која је поделила враћену копију није доступна. Копија остаје само за читање и не прати њихове измене.",
         "Recipient at another organisation restored their copy": "Прималац из друге организације вратио је своју копију",
-        "Another organisation changed the fields it stores": "Друга организација је променила поља која чува"
+        "Another organisation changed the fields it stores": "Друга организација је променила поља која чува",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ове тајне садрже једнократни код или приступне кључеве које ова верзија Keepiq-а још не може да копира, па их нови чланови нису добили: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ова пријава садржи и једнократни код или приступне кључеве, који су такође били изложени. Замените сваки од њих и уклоните старе приступне кључеве уместо да само додајете нове. Упозорење нестаје када се сви замене.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ова пријава садржи једнократни код или приступне кључеве које ова верзија Keepiq-а још не може да дели, па није подељена."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -124,7 +124,43 @@ describe('teamFolder.autoConfirm', () => {
 		for (const call of [...post.mock.calls, ...get.mock.calls]) {
 			expect(JSON.stringify(call)).not.toContain(PLAINTEXT)
 		}
-		expect(result).toEqual({ enabled: true, created: 1, members: 1 })
+		expect(result).toEqual({
+			enabled: true,
+			created: 1,
+			members: 1,
+			refused: 0,
+		})
+	})
+
+	it('counts the pairs the server refuses for a one-time code or passkeys it would lose', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) =>
+			url.endsWith('/pending-confirmations')
+				? pending({ secretId: 'db-root', userId: 'kim' })
+				: { data: { key: 'CIPHER' } },
+		)
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: {
+				created: 0,
+				rows: [],
+				skipped: [
+					{
+						sourceSecretId: 'db-root',
+						targetUserId: 'kim',
+						reason: 'copy_fields_mismatch',
+					},
+					{
+						sourceSecretId: 'other',
+						targetUserId: 'kim',
+						reason: 'exists',
+					},
+				],
+			},
+		})
+
+		const result = await useTeamFolderStore().autoConfirm()
+
+		expect(result.refused).toBe(1)
+		expect(useTeamFolderStore().lastAutoConfirm.refused).toBe(1)
 	})
 
 	it('the owner decrypts the source itself', async () => {

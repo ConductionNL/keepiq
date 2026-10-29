@@ -1688,7 +1688,10 @@ OC.L10N.register(
         "A restored copy came from a share that has ended. It stays read-only.": "Eng restauréiert Kopie kënnt vun enger Deelung, déi eriwwer ass. Si bleift nëmmen ze liesen.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "D’Organisatioun, déi eng restauréiert Kopie gedeelt huet, ass net z’erreechen. D’Kopie bleift nëmmen ze liesen a follegt hiren Ännerungen net.",
         "Recipient at another organisation restored their copy": "Empfänger vun enger anerer Organisatioun huet seng Kopie restauréiert",
-        "Another organisation changed the fields it stores": "Eng aner Organisatioun huet d’Felder geännert, déi se späichert"
+        "Another organisation changed the fields it stores": "Eng aner Organisatioun huet d’Felder geännert, déi se späichert",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Dës Geheimnisser enthalen en Eemolege Code oder Passkeys, déi dës Versioun vu Keepiq nach net kopéiere kann, dofir hunn déi nei Memberen se net kritt: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Dëse Login enthält och en Eemolege Code oder Passkeys, déi och exponéiert waren. Ersetzt jidderee vun hinnen a läscht déi al Passkeys, amplaz just nei derbäizesetzen. D’Warnung verschwënnt, wann all ersat sinn.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Dëse Login enthält en Eemolege Code oder Passkeys, déi dës Versioun vu Keepiq nach net deele kann, dofir gouf en net gedeelt."
     },
     "nplurals=2; plural=(n != 1);"
 )
