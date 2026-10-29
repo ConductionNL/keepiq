@@ -1761,7 +1761,12 @@
         ],
         "A restored copy came from a share that has ended. It stays read-only.": "Una copia ripristinata proviene da una condivisione terminata. Resta in sola lettura.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Non è stato possibile raggiungere l’organizzazione che ha condiviso una copia ripristinata. La copia resta in sola lettura e non segue le loro modifiche.",
-        "Recipient at another organisation restored their copy": "Un destinatario di un’altra organizzazione ha ripristinato la sua copia"
+        "Recipient at another organisation restored their copy": "Un destinatario di un’altra organizzazione ha ripristinato la sua copia",
+        "Another organisation changed the fields it stores": "Un’altra organizzazione ha modificato i campi che memorizza",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Questi segreti contengono un codice monouso o passkey che questa versione di Keepiq non può ancora copiare, quindi i nuovi membri non li hanno ricevuti: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Questo accesso contiene anche un codice monouso o passkey, anch’essi esposti. Sostituiscili tutti e rimuovi le vecchie passkey invece di aggiungerne solo di nuove. L’avviso scompare quando tutti sono stati sostituiti.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Questo accesso contiene un codice monouso o passkey che questa versione di Keepiq non può ancora condividere, quindi non è stato condiviso.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Un nuovo membro della cartella del team non ha ricevuto un accesso con un codice monouso o passkey che questa versione di Keepiq non può ancora copiare."
     },
     "plurals": null
 }

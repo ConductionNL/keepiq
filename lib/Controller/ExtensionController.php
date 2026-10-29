@@ -132,7 +132,7 @@ class ExtensionController extends Controller {
 				// The extension compares this with its minimum and asks for a
 				// server update instead of failing on a missing route.
 				'serverVersion' => $this->appManager->getAppVersion(Application::APP_ID),
-				'capabilities' => ['match', 'autofill', 'passkey-provider', 'totp'],
+				'capabilities' => ['match', 'autofill', 'passkey-provider', 'totp', 'totp-field', 'passkeys-field'],
 			]
 		);
 	}//end pair()

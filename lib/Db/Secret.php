@@ -51,6 +51,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLogin(?string $login)
  * @method string|null getAdditionalFields()
  * @method void setAdditionalFields(?string $additionalFields)
+ * @method string|null getTotp()
+ * @method void setTotp(?string $totp)
+ * @method string|null getPasskeys()
+ * @method void setPasskeys(?string $passkeys)
  * @method string getEncryptionSuiteId()
  * @method void setEncryptionSuiteId(string $encryptionSuiteId)
  * @method string getOwnerType()
@@ -61,6 +65,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setPossiblyCompromisedAt(?DateTime $possiblyCompromisedAt)
  * @method DateTime|null getKeyUpdatedAt()
  * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
+ * @method DateTime|null getTotpUpdatedAt()
+ * @method void setTotpUpdatedAt(?DateTime $totpUpdatedAt)
+ * @method DateTime|null getPasskeysUpdatedAt()
+ * @method void setPasskeysUpdatedAt(?DateTime $passkeysUpdatedAt)
  * @method DateTime|null getExpiresAt()
  * @method void setExpiresAt(?DateTime $expiresAt)
  * @method string|null getMigrationError()
@@ -130,6 +138,20 @@ class Secret extends Entity implements JsonSerializable {
 	public const FILING_FIELDS = ['folderId', 'baseUpdatedAt'];
 
 	/**
+	 * Every encrypted value field of a secret, by its API name.
+	 *
+	 * @var string[]
+	 */
+	public const VALUE_FIELDS = ['key', 'login', 'additionalFields', 'totp', 'passkeys'];
+
+	/**
+	 * The value fields a partner instance on an older Keepiq can store.
+	 *
+	 * @var string[]
+	 */
+	public const LEGACY_VALUE_FIELDS = ['key', 'login', 'additionalFields'];
+
+	/**
 	 * The plaintext secret name.
 	 *
 	 * @var string
@@ -179,6 +201,20 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?string $additionalFields = null;
 
 	/**
+	 * The RSA-encrypted TOTP seed blob (base64, nullable).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $totp = null;
+
+	/**
+	 * The RSA-encrypted passkeys JSON blob (base64, nullable).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $passkeys = null;
+
+	/**
 	 * The EncryptionSuite used to encrypt this secret.
 	 *
 	 * @var string
@@ -221,6 +257,20 @@ class Secret extends Entity implements JsonSerializable {
 	 * @var DateTime|null
 	 */
 	protected ?DateTime $keyUpdatedAt = null;
+
+	/**
+	 * When the `totp` ciphertext last changed (nullable), kept like `keyUpdatedAt`.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $totpUpdatedAt = null;
+
+	/**
+	 * When the `passkeys` ciphertext last changed (nullable), kept like `keyUpdatedAt`.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $passkeysUpdatedAt = null;
 
 	/**
 	 * Optional per-secret expiry instant (rotation-expiry-policies §2.3).
@@ -391,11 +441,15 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'key', type: 'string');
 		$this->addType(fieldName: 'login', type: 'string');
 		$this->addType(fieldName: 'additionalFields', type: 'string');
+		$this->addType(fieldName: 'totp', type: 'string');
+		$this->addType(fieldName: 'passkeys', type: 'string');
 		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
 		$this->addType(fieldName: 'ownerType', type: 'string');
 		$this->addType(fieldName: 'ownerId', type: 'string');
 		$this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
 		$this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
+		$this->addType(fieldName: 'totpUpdatedAt', type: 'datetime');
+		$this->addType(fieldName: 'passkeysUpdatedAt', type: 'datetime');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 		$this->addType(fieldName: 'migrationError', type: 'string');
 		$this->addType(fieldName: 'tombstonedAt', type: 'datetime');
@@ -436,6 +490,8 @@ class Secret extends Entity implements JsonSerializable {
 		return (string)$this->key === ''
 			&& (string)$this->login === ''
 			&& (string)$this->additionalFields === ''
+			&& (string)$this->totp === ''
+			&& (string)$this->passkeys === ''
 			&& (string)$this->url === '';
 	}//end holdsNoValues()
 
@@ -530,6 +586,8 @@ class Secret extends Entity implements JsonSerializable {
 			'key' => $this->key,
 			'login' => $this->login,
 			'additionalFields' => $this->additionalFields,
+			'totp' => $this->totp,
+			'passkeys' => $this->passkeys,
 			'encryptionSuiteId' => $this->encryptionSuiteId,
 			'ownerType' => $this->ownerType,
 			'ownerId' => $this->ownerId,

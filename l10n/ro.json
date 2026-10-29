@@ -1786,7 +1786,12 @@
         ],
         "A restored copy came from a share that has ended. It stays read-only.": "O copie restaurată provine dintr-o partajare care s-a încheiat. Rămâne doar în citire.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizația care a partajat o copie restaurată nu a putut fi contactată. Copia rămâne doar în citire și nu urmează modificările lor.",
-        "Recipient at another organisation restored their copy": "Un destinatar dintr-o altă organizație și-a restaurat copia"
+        "Recipient at another organisation restored their copy": "Un destinatar dintr-o altă organizație și-a restaurat copia",
+        "Another organisation changed the fields it stores": "O altă organizație a modificat câmpurile pe care le stochează",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Aceste secrete conțin un cod de unică folosință sau chei de acces pe care această versiune de Keepiq nu le poate copia încă, așa că membrii noi nu le-au primit: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Această autentificare conține și un cod de unică folosință sau chei de acces, care au fost de asemenea expuse. Înlocuiți-le pe fiecare și eliminați cheile de acces vechi, în loc să adăugați doar altele noi. Avertismentul dispare când toate sunt înlocuite.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Această autentificare conține un cod de unică folosință sau chei de acces pe care această versiune de Keepiq nu le poate partaja încă, așa că nu a fost partajată.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Un membru nou al dosarului de echipă nu a primit o autentificare cu un cod de unică folosință sau chei de acces pe care această versiune de Keepiq nu le poate copia încă."
     },
     "plurals": null
 }

@@ -21,6 +21,8 @@ namespace OCA\Keepiq\Service\ShareSave;
 
 use DateTime;
 use Exception;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Service\SecretService;
 
 /**
@@ -36,6 +38,20 @@ final class ShareSaveRequest {
 	 * @var int
 	 */
 	public const MAX_ENTRIES = 100;
+
+	/**
+	 * What counts as no `totp` or `passkeys` value, as FederatedValueFields::blob() reads one.
+	 *
+	 * @var list<string|null>
+	 */
+	private const NO_BLOB = [null, ''];
+
+	/**
+	 * Per value field, what counts as no value; a field not named here is empty only when null.
+	 *
+	 * @var array<string,list<string|null>>
+	 */
+	private const NONE = ['totp' => self::NO_BLOB, 'passkeys' => self::NO_BLOB];
 
 	/**
 	 * The `{id}` row's version the edit was made from.
@@ -144,6 +160,8 @@ final class ShareSaveRequest {
 	 * Refuse entries that name a row twice or, next to a patch, carry other
 	 * value fields than the patch: a copy that kept a cleared field would
 	 * show the recipient another value than the editor saved.
+	 * A partner share carries the whole value; whether it must mirror the patch's `totp` and `passkeys`
+	 * depends on its partner, so FederatedValueFields checks that when the share is written.
 	 *
 	 * @param ShareSaveEntries $entries The entries, staged ones included
 	 *
@@ -155,7 +173,7 @@ final class ShareSaveRequest {
 	 */
 	public function assertConsistent(ShareSaveEntries $entries): void {
 		if ($this->patch !== null) {
-			$fields = array_values(array_intersect(ShareSaveEntryParser::VALUE_FIELDS, array_keys($this->patch)));
+			$fields = array_values(array_intersect(Secret::VALUE_FIELDS, array_keys($this->patch)));
 			foreach ($entries->copies as $copy) {
 				if ($this->copyMatchesPatch(copy: $copy, fields: $fields) === false) {
 					throw new ShareSaveRefusal(
@@ -168,6 +186,24 @@ final class ShareSaveRequest {
 
 		$entries->assertNoDuplicates();
 	}//end assertConsistent()
+
+	/**
+	 * The patch and entries a restore of `$version` writes, by the rules of ShareSaveRestore::split().
+	 *
+	 * @param SecretVersion $version The version restored
+	 * @param ShareSaveEntries $entries The entries, staged ones included
+	 * @param Secret $head The row restored, as read
+	 *
+	 * @return array{0:array<string,mixed>,1:ShareSaveEntries,2:array<string,?string>} The patch, the entries,
+	 *   and the head's value of each field left out, which partner shares are held to
+	 *
+	 * @throws ShareSaveRefusal `invalid_body` naming the field the patch gets wrong
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 */
+	public function restoring(SecretVersion $version, ShareSaveEntries $entries, Secret $head): array {
+		return (new ShareSaveRestore())->split(patch: (array)$this->patch, version: $version, entries: $entries, head: $head);
+	}//end restoring()
 
 	/**
 	 * Refuse a call with more than MAX_ENTRIES per list pair, or a chunk
@@ -192,7 +228,7 @@ final class ShareSaveRequest {
 
 	/**
 	 * The version a restore comes from. Only a call that saves may restore,
-	 * and it carries the whole value, so no field of the head survives.
+	 * and it carries `key`, `login` and `additionalFields`; restoring() settles `totp` and `passkeys`.
 	 *
 	 * @param mixed $restoredFrom The `restoredFrom` parameter
 	 *
@@ -209,7 +245,7 @@ final class ShareSaveRequest {
 			throw $this->parser->invalidBody(what: 'restoredFrom');
 		}
 
-		if (array_diff(ShareSaveEntryParser::VALUE_FIELDS, array_keys($this->patch)) !== []) {
+		if (array_diff(Secret::LEGACY_VALUE_FIELDS, array_keys($this->patch)) !== []) {
 			throw $this->parser->invalidBody(what: 'patch: a restore carries key, login and additionalFields');
 		}
 
@@ -226,13 +262,14 @@ final class ShareSaveRequest {
 	 * @return bool
 	 */
 	private function copyMatchesPatch(array $copy, array $fields): bool {
-		$copyFields = array_values(array_intersect(ShareSaveEntryParser::VALUE_FIELDS, array_keys($copy)));
+		$copyFields = array_values(array_intersect(Secret::VALUE_FIELDS, array_keys($copy)));
 		if ($copyFields !== $fields) {
 			return false;
 		}
 
 		foreach ($fields as $field) {
-			if (($copy[$field] === null) !== ($this->patch[$field] === null)) {
+			$none = (self::NONE[$field] ?? [null]);
+			if (in_array($copy[$field], $none, true) !== in_array($this->patch[$field], $none, true)) {
 				return false;
 			}
 		}
@@ -297,7 +334,7 @@ final class ShareSaveRequest {
 			}
 		}
 
-		if (array_intersect(ShareSaveEntryParser::VALUE_FIELDS, array_keys($patch)) === []) {
+		if (array_intersect(Secret::VALUE_FIELDS, array_keys($patch)) === []) {
 			throw new ShareSaveRefusal(error: 'no_value_change', message: 'The patch changes no encrypted field');
 		}
 

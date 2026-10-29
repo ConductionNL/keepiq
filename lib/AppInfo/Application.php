@@ -71,6 +71,14 @@ class Application extends App implements IBootstrap {
 	public const PRE_STABLE_COMPAT_REMOVED_IN = '1.0.0';
 
 	/**
+	 * The first Keepiq release that stores the `totp` and `passkeys` value fields.
+	 * A federation partner older than this cannot hold them, and is refused rather than sent a copy without them.
+	 *
+	 * @var string
+	 */
+	public const TOTP_PASSKEYS_FIELDS_SINCE = '0.3.12';
+
+	/**
 	 * Constructor for the Application class.
 	 *
 	 * @return void

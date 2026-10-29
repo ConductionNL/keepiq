@@ -1662,7 +1662,12 @@ OC.L10N.register(
         "Removed the user from %n team folders.": "Allontanà l'utilisader da %n ordinaturs da team.",
         "A restored copy came from a share that has ended. It stays read-only.": "Ina copia restaurada deriva d’ina cundivisiun che è terminada. Ella resta mo per leger.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "L’organisaziun che ha cundivì ina copia restaurada n’è betg cuntanschibla. La copia resta mo per leger e na suonda betg lur midadas.",
-        "Recipient at another organisation restored their copy": "In retschavider d’ina autra organisaziun ha restaurà sia copia"
+        "Recipient at another organisation restored their copy": "In retschavider d’ina autra organisaziun ha restaurà sia copia",
+        "Another organisation changed the fields it stores": "In’autra organisaziun ha midà ils champs ch’ella memorisescha",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Questas secrets cuntegnan in code per ina giada u clavs d’access che questa versiun da Keepiq na po anc betg copiar, perquai n’han ils novs commembers betg survegnì quellas: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Questa annunzia cuntegna er in code per ina giada u clavs d’access che èn era stads exposads. Substituì mintgina da quellas e allontanai las veglias clavs d’access empè da be agiuntar novas. L’avertiment sparan, cur che tut è substituì.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Questa annunzia cuntegna in code per ina giada u clavs d’access che questa versiun da Keepiq na po anc betg cundivider, perquai n’è ella betg vegnida cundivida.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "In nov commember da la mappa dal team n’ha betg survegnì ina annunzia cun in code per ina giada u clavs d’access che questa versiun da Keepiq na po anc betg copiar."
     },
     "nplurals=1; plural=0;"
 )

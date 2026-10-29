@@ -1687,7 +1687,12 @@ OC.L10N.register(
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.",
         "This version cannot be restored to this secret. Nothing was saved.": "This version cannot be restored to this secret. Nothing was saved.",
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Shared with you to view only. Ask its owner for edit rights to change it.",
-        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+        "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.",
+        "Another organisation changed the fields it stores": "Another organisation changed the fields it stores",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet."
     },
     "nplurals=2; plural=(n != 1);"
 )

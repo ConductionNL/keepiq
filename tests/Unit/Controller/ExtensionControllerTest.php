@@ -33,6 +33,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\Keepiq\Controller\ExtensionController
+ * @uses   \OCA\Keepiq\Db\Secret
  * @uses   \OCA\Keepiq\Service\AdminSettingsService
  * @uses   \OCA\Keepiq\Service\PasswordPolicyService
  */
@@ -101,6 +102,9 @@ class ExtensionControllerTest extends TestCase {
 		$this->assertTrue($data['ok']);
 		$this->assertSame('alice', $data['user']);
 		$this->assertContains('passkey-provider', $data['capabilities']);
+		// Rows carry the totp and passkeys value fields.
+		$this->assertContains('totp-field', $data['capabilities']);
+		$this->assertContains('passkeys-field', $data['capabilities']);
 		// The installed app version, for the extension's version handshake.
 		$this->assertSame('0.3.4-unstable.20261002180000', $data['serverVersion']);
 	}//end testPairSucceeds()
@@ -160,6 +164,27 @@ class ExtensionControllerTest extends TestCase {
 		// Only ciphertext is present; no decrypted value leaks.
 		$this->assertSame('CIPHERTEXT_BLOB', $data['items'][0]['key']);
 	}//end testMatchReturnsBlobRowsForRegistrableDomain()
+
+	/**
+	 * A matched row carries its totp and passkeys ciphertext.
+	 *
+	 * @return void
+	 */
+	public function testMatchRowsCarryTotpAndPasskeys(): void {
+		[$controller, $mapper] = $this->build('alice');
+		$secret = new Secret();
+		$secret->setId('s1');
+		$secret->setName('Example');
+		$secret->setKey('CIPHERTEXT_BLOB');
+		$secret->setTotp('TOTP_BLOB');
+		$secret->setPasskeys('PASSKEYS_BLOB');
+		$mapper->method('searchByNameOrUrl')->willReturn([$secret]);
+
+		$item = $controller->match('example.com')->getData()['items'][0];
+
+		$this->assertSame('TOTP_BLOB', $item['totp']);
+		$this->assertSame('PASSKEYS_BLOB', $item['passkeys']);
+	}//end testMatchRowsCarryTotpAndPasskeys()
 
 	/**
 	 * A full origin (scheme + path) is reduced to the host before matching.

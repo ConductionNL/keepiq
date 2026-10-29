@@ -38,7 +38,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * Builds the owner-scoped offline snapshot.
  *
  * This service reads through the mappers directly and NEVER decrypts: the
- * secret key/login/additionalFields are already ciphertext (ADR-003), and the
+ * secret key/login/additionalFields/totp/passkeys are already ciphertext (ADR-003), and the
  * plaintext name/url metadata is encrypted at rest client-side. It is a bulk
  * cache sync, not an individual reveal, so it emits no `secret.read` audit
  * event.

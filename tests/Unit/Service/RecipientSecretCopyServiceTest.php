@@ -21,10 +21,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretTypeService;
 use PHPUnit\Framework\TestCase;
@@ -123,4 +125,74 @@ class RecipientSecretCopyServiceTest extends TestCase {
 
 		$this->service->deleteByShare($this->share('copy-1', 'bob'));
 	}//end testKeepsACopyNotHeldByItsTarget()
+
+	/**
+	 * Every value field the browser encrypted for the recipient lands on the
+	 * copy; the TOTP seed and passkeys may be left out.
+	 *
+	 * @return void
+	 */
+	public function testCreateSetsEveryValueFieldOnTheCopy(): void {
+		$service = new RecipientSecretCopyService(
+			secretMapper: $this->secretMapper,
+			suiteMapper: $this->activeSuiteMapper(),
+			typeService: $this->createMock(SecretTypeService::class),
+		);
+		$withFields = $this->secret('src-1', 'user', 'alice');
+		$withFields->setTotp('SOURCE-T');
+		$withFields->setPasskeys('SOURCE-P');
+		$plain = $this->secret('src-2', 'user', 'alice');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => $id === 'src-1' ? $withFields : $plain
+		);
+		$this->secretMapper->method('insert')->willReturnArgument(0);
+
+		$copy = $service->create('src-1', 'bob', 'K', 'L', 'F', 'T', 'P');
+		$legacy = $service->create('src-2', 'bob', 'K', null, null);
+
+		$this->assertInstanceOf(Secret::class, $copy);
+		$this->assertInstanceOf(Secret::class, $legacy);
+		$this->assertSame(['K', 'L', 'F', 'T', 'P'], [$copy->getKey(), $copy->getLogin(), $copy->getAdditionalFields(), $copy->getTotp(), $copy->getPasskeys()]);
+		$this->assertSame([null, null], [$legacy->getTotp(), $legacy->getPasskeys()]);
+
+		// A row without the source's fields, or with ones it does not hold, mints nothing and says why.
+		$this->assertSame('copy_fields_mismatch', $service->create('src-1', 'bob', 'K', null, null));
+		$this->assertSame('copy_fields_mismatch', $service->create('src-2', 'bob', 'K', null, null, 'PLANTED'));
+	}//end testCreateSetsEveryValueFieldOnTheCopy()
+
+	/**
+	 * The copy factory sets the same fields from the source it is handed.
+	 *
+	 * @return void
+	 */
+	public function testTheCopyFactorySetsEveryValueFieldOnTheCopy(): void {
+		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->activeSuiteMapper());
+		$this->secretMapper->method('insert')->willReturnArgument(0);
+
+		$copy = $factory->create(
+			source: $this->secret('src-1', 'user', 'alice'),
+			targetUserId: 'bob',
+			encryptedKey: 'K',
+			encryptedLogin: 'L',
+			encryptedExtras: 'F',
+			encryptedTotp: 'T',
+			encryptedPasskeys: 'P',
+		);
+
+		$this->assertSame(['K', 'L', 'F', 'T', 'P'], [$copy?->getKey(), $copy?->getLogin(), $copy?->getAdditionalFields(), $copy?->getTotp(), $copy?->getPasskeys()]);
+	}//end testTheCopyFactorySetsEveryValueFieldOnTheCopy()
+
+	/**
+	 * A suite mapper that finds an active suite for anyone.
+	 *
+	 * @return EncryptionSuiteMapper
+	 */
+	private function activeSuiteMapper(): EncryptionSuiteMapper {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-bob');
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$suites->method('findActiveByOwner')->willReturn($suite);
+
+		return $suites;
+	}//end activeSuiteMapper()
 }//end class

@@ -164,7 +164,7 @@ class FederatedCopyService {
 	 * Write a pulled answer into a copy.
 	 *
 	 * @param Secret $copy The copy
-	 * @param array{name:string,url:?string,key:string,login:?string,additionalFields:?string} $answer The pulled answer
+	 * @param array{name:string,url:?string,key:string,login:?string,additionalFields:?string,totp?:?string,passkeys?:?string} $answer The pulled answer
 	 * @param DateTime $now The time of the pull
 	 *
 	 * @return void
@@ -175,6 +175,8 @@ class FederatedCopyService {
 		$copy->setKey($answer['key']);
 		$copy->setLogin($answer['login']);
 		$copy->setAdditionalFields($answer['additionalFields']);
+		$copy->setTotp($answer['totp'] ?? null);
+		$copy->setPasskeys($answer['passkeys'] ?? null);
 		$copy->setUpdatedAt($now);
 		$copy->setKeyUpdatedAt($now);
 	}//end fill()

@@ -156,13 +156,33 @@ export default {
 					await secretStore.updateSecret(finding.id, {
 						folderId: target.folderId,
 					})
-					await useTeamFolderStore().runFanOut(target.teamFolderId)
+					const result = await useTeamFolderStore().runFanOut(
+						target.teamFolderId,
+					)
+					if (result?.refused?.length > 0) {
+						// The secret moved, but its members did not all get a copy.
+						this.error = this.t(
+							'keepiq',
+							'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+							{ names: result.refused.join(', ') },
+						)
+					}
 				} else {
 					// Someone else's team folder: contribute a copy, and only
 					// then remove the personal one.
 					const raw = await axios.get(
 						generateUrl(`/apps/keepiq/api/v1/secrets/${finding.id}`),
 					)
+					// The contribution carries only key, login and additional
+					// fields, so a one-time code or passkeys would be lost once
+					// the original goes to the trash. Keep the original instead.
+					if (raw.data?.totp || raw.data?.passkeys) {
+						this.error = this.t(
+							'keepiq',
+							'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+						)
+						return
+					}
 					const plain = await secretStore.decryptSecret(raw.data)
 					await secretStore.contributeSecret(target.teamFolderId, {
 						name: plain.name,

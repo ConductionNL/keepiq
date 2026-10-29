@@ -1687,7 +1687,12 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Benutzer aus %n Teamordner entfernt.","Benutzer aus %n Teamordnern entfernt."],
         "A restored copy came from a share that has ended. It stays read-only.": "Eine wiederhergestellte Kopie stammt aus einer beendeten Freigabe. Sie bleibt schreibgeschützt.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Die Organisation, die eine wiederhergestellte Kopie geteilt hat, ist nicht erreichbar. Die Kopie bleibt schreibgeschützt und folgt ihren Änderungen nicht.",
-        "Recipient at another organisation restored their copy": "Empfänger in einer anderen Organisation hat seine Kopie wiederhergestellt"
+        "Recipient at another organisation restored their copy": "Empfänger in einer anderen Organisation hat seine Kopie wiederhergestellt",
+        "Another organisation changed the fields it stores": "Eine andere Organisation hat die Felder geändert, die sie speichert",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Diese Geheimnisse enthalten einen Einmalcode oder Passkeys, die diese Version von Keepiq noch nicht kopieren kann, daher haben die neuen Mitglieder sie nicht erhalten: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Diese Anmeldung enthält außerdem einen Einmalcode oder Passkeys, die ebenfalls offengelegt wurden. Ersetzen Sie jeden davon und entfernen Sie die alten Passkeys, statt nur neue hinzuzufügen. Die Warnung verschwindet, sobald alle ersetzt sind.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Diese Anmeldung enthält einen Einmalcode oder Passkeys, die diese Version von Keepiq noch nicht teilen kann, daher wurde sie nicht geteilt.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Ein neues Mitglied des Teamordners hat eine Anmeldung mit Einmalcode oder Passkeys nicht erhalten, die diese Version von Keepiq noch nicht kopieren kann."
     },
     "nplurals=2; plural=(n != 1);"
 )

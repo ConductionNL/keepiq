@@ -1786,7 +1786,12 @@
         ],
         "A restored copy came from a share that has ended. It stays read-only.": "Восстановленная копия получена из общего доступа, который завершён. Она остаётся только для чтения.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не удалось связаться с организацией, которая поделилась восстановленной копией. Копия остаётся только для чтения и не получает их изменения.",
-        "Recipient at another organisation restored their copy": "Получатель из другой организации восстановил свою копию"
+        "Recipient at another organisation restored their copy": "Получатель из другой организации восстановил свою копию",
+        "Another organisation changed the fields it stores": "Другая организация изменила поля, которые она хранит",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Эти секреты содержат одноразовый код или ключи доступа, которые эта версия Keepiq пока не умеет копировать, поэтому новые участники их не получили: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Этот логин также содержит одноразовый код или ключи доступа, которые тоже были раскрыты. Замените каждый из них и удалите старые ключи доступа, а не только добавляйте новые. Предупреждение исчезнет, когда все они будут заменены.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Этот логин содержит одноразовый код или ключи доступа, которыми эта версия Keepiq пока не умеет делиться, поэтому им не поделились.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Новый участник командной папки не получил логин с одноразовым кодом или ключами доступа, которые эта версия Keepiq пока не умеет копировать."
     },
     "plurals": null
 }

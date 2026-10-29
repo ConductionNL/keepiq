@@ -1761,7 +1761,12 @@
         ],
         "A restored copy came from a share that has ended. It stays read-only.": "En gendannet kopi kom fra en deling, der er ophørt. Den forbliver skrivebeskyttet.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organisationen, der delte en gendannet kopi, kunne ikke nås. Kopien forbliver skrivebeskyttet og følger ikke deres ændringer.",
-        "Recipient at another organisation restored their copy": "Modtager i en anden organisation har gendannet sin kopi"
+        "Recipient at another organisation restored their copy": "Modtager i en anden organisation har gendannet sin kopi",
+        "Another organisation changed the fields it stores": "En anden organisation har ændret de felter, den gemmer",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Disse hemmeligheder indeholder en engangskode eller adgangsnøgler, som denne version af Keepiq endnu ikke kan kopiere, så de nye medlemmer fik dem ikke: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Dette login indeholder også en engangskode eller adgangsnøgler, som også var eksponeret. Udskift dem alle, og fjern de gamle adgangsnøgler i stedet for kun at tilføje nye. Advarslen forsvinder, når alle er udskiftet.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Dette login indeholder en engangskode eller adgangsnøgler, som denne version af Keepiq endnu ikke kan dele, så det blev ikke delt.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Et nyt medlem af teammappen fik ikke et login med en engangskode eller adgangsnøgler, som denne version af Keepiq endnu ikke kan kopiere."
     },
     "plurals": null
 }

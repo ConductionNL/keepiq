@@ -64,6 +64,8 @@ class FederationController extends Controller {
 
 	/**
 	 * Look up a federated recipient's certificate at their partner instance.
+	 * The answer is `{cloudId, certificate, chain, partnerRootFingerprint, valueFields}`, where `valueFields` lists
+	 * the value fields beyond `key`, `login` and `additionalFields` the partner stores, empty for an older Keepiq.
 	 *
 	 * @param string $cloudId The recipient's cloud id
 	 *

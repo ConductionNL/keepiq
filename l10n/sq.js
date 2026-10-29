@@ -1687,7 +1687,12 @@ OC.L10N.register(
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Përdoruesi u hoq nga %n dosje ekipi.","Përdoruesi u hoq nga %n dosje ekipi."],
         "A restored copy came from a share that has ended. It stays read-only.": "Një kopje e rikthyer vjen nga një ndarje që ka përfunduar. Mbetet vetëm për lexim.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizata që ndau një kopje të rikthyer nuk u arrit. Kopja mbetet vetëm për lexim dhe nuk ndjek ndryshimet e tyre.",
-        "Recipient at another organisation restored their copy": "Një marrës nga një organizatë tjetër rikthye kopjen e vet"
+        "Recipient at another organisation restored their copy": "Një marrës nga një organizatë tjetër rikthye kopjen e vet",
+        "Another organisation changed the fields it stores": "Një organizatë tjetër ndryshoi fushat që ruan",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Këto sekrete përmbajnë një kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i kopjojë ende, ndaj anëtarët e rinj nuk i morën: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ky hyrje përmban gjithashtu një kod njëpërdorimësh ose çelësa hyrjeje, që u ekspozuan po ashtu. Zëvendësoni secilin prej tyre dhe hiqni çelësat e vjetër të hyrjes në vend që të shtoni vetëm të rinj. Paralajmërimi zhduket kur të zëvendësohen të gjithë.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ky hyrje përmban një kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i ndajë ende, ndaj nuk u nda.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Një anëtar i ri i dosjes së ekipit nuk mori një hyrje me kod njëpërdorimësh ose çelësa hyrjeje që ky version i Keepiq nuk mund t’i kopjojë ende."
     },
     "nplurals=2; plural=(n != 1);"
 )

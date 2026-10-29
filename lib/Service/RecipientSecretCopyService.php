@@ -71,8 +71,12 @@ class RecipientSecretCopyService {
 	 * @param string $encryptedKey The RSA-encrypted key blob
 	 * @param string|null $encryptedLogin The RSA-encrypted login blob
 	 * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
+	 * @param string|null $encryptedTotp The RSA-encrypted TOTP seed blob
+	 * @param string|null $encryptedPasskeys The RSA-encrypted passkeys blob
 	 *
-	 * @return Secret|null Null when the source is gone or the recipient has no active suite
+	 * @return Secret|string The copy, or why none was minted: `not_found` (the source is gone), `no_suite`
+	 *   (the recipient has no active suite) or `copy_fields_mismatch` (the totp or passkeys sent does not
+	 *   mirror the source's)
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
@@ -82,17 +86,26 @@ class RecipientSecretCopyService {
 		string $encryptedKey,
 		?string $encryptedLogin,
 		?string $encryptedExtras,
-	): ?Secret {
+		?string $encryptedTotp = null,
+		?string $encryptedPasskeys = null,
+	): Secret|string {
 		try {
 			$source = $this->secretMapper->findById($sourceSecretId);
 		} catch (DoesNotExistException) {
-			return null;
+			return 'not_found';
+		}
+
+		// A copy without the source's TOTP seed or passkeys, or with ones it
+		// does not hold, is not minted; the pair stays missing until a row
+		// carries them.
+		if ((new CredentialFields())->notMirrored(source: $source, copy: ['totp' => $encryptedTotp, 'passkeys' => $encryptedPasskeys]) !== []) {
+			return 'copy_fields_mismatch';
 		}
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
 		} catch (DoesNotExistException) {
-			return null;
+			return 'no_suite';
 		}
 
 		try {
@@ -112,6 +125,8 @@ class RecipientSecretCopyService {
 		$copy->setKey($encryptedKey);
 		$copy->setLogin($encryptedLogin);
 		$copy->setAdditionalFields($encryptedExtras);
+		$copy->setTotp($encryptedTotp);
+		$copy->setPasskeys($encryptedPasskeys);
 		$copy->setEncryptionSuiteId($suite->getId());
 		$copy->setOwnerType('user');
 		$copy->setOwnerId($targetUserId);

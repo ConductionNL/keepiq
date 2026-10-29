@@ -328,6 +328,43 @@ class DirectShareRegistrarTest extends TestCase {
 	}//end testASuccessfulRegistrationCommits()
 
 	/**
+	 * The recipient's TOTP seed and passkeys reach the copy. A row that leaves
+	 * out a field the source holds, as an older client's does, or carries one
+	 * it does not hold, mints nothing and is reported as `copy_fields_mismatch`.
+	 *
+	 * @return void
+	 */
+	public function testTheTotpAndPasskeysOfARowReachTheCopy(): void {
+		$source = $this->ownerSecret('src-1', 'alice');
+		$source->setTotp('SOURCE-T');
+		$source->setPasskeys('SOURCE-P');
+		$plain = $this->ownerSecret('src-2', 'alice');
+		$this->secrets(['src-1' => $source, 'src-2' => $plain]);
+		$this->mapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$calls = [];
+		$this->copyFactory->method('create')->willReturnCallback(
+			function (Secret $source, string $targetUserId, string $key, ?string $login, ?string $extras, ?string $totp = null, ?string $passkeys = null) use (&$calls): Secret {
+				$calls[] = [$targetUserId, $totp, $passkeys];
+				return $this->recipientCopy('copy-'.count($calls), $targetUserId);
+			}
+		);
+
+		$report = $this->registrar()->registerDirectShares(
+			userId: 'alice',
+			shares: [
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'encryptedTotp' => 'T', 'encryptedPasskeys' => 'P'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'carol', 'encryptedKey' => 'K', 'encryptedPasskeys' => 'P'],
+				['sourceSecretId' => 'src-2', 'targetUserId' => 'dan', 'encryptedKey' => 'K', 'encryptedTotp' => 'PLANTED'],
+			]
+		);
+
+		$this->assertSame([['bob', 'T', 'P']], $calls);
+		$this->assertSame(['created', 'copy_fields_mismatch', 'copy_fields_mismatch'], array_column($report, 'status'));
+	}//end testTheTotpAndPasskeysOfARowReachTheCopy()
+
+	/**
 	 * An active delegate of the source, holding one unrestricted copy of it,
 	 * may register the share exactly as the owner can, by naming the source.
 	 *

@@ -1766,7 +1766,12 @@
         ],
         "A restored copy came from a share that has ended. It stays read-only.": "Een teruggezette kopie komt uit een deling die is beëindigd. Die blijft alleen-lezen.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "De organisatie die een teruggezette kopie deelde, is niet bereikbaar. De kopie blijft alleen-lezen en volgt hun wijzigingen niet.",
-        "Recipient at another organisation restored their copy": "Ontvanger bij een andere organisatie heeft de kopie teruggezet"
+        "Recipient at another organisation restored their copy": "Ontvanger bij een andere organisatie heeft de kopie teruggezet",
+        "Another organisation changed the fields it stores": "Een andere organisatie heeft de velden gewijzigd die ze opslaat",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Deze geheimen bevatten een eenmalige code of passkeys die deze versie van Keepiq nog niet kan kopiëren, dus de nieuwe leden hebben ze niet gekregen: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Deze login bevat ook een eenmalige code of passkeys, die ook zijn blootgesteld. Vervang ze allemaal en verwijder de oude passkeys in plaats van alleen nieuwe toe te voegen. De waarschuwing verdwijnt zodra alles is vervangen.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Deze login bevat een eenmalige code of passkeys die deze versie van Keepiq nog niet kan delen, dus hij is niet gedeeld.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Een nieuw lid van de teammap heeft een login met een eenmalige code of passkeys niet gekregen, die deze versie van Keepiq nog niet kan kopiëren."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

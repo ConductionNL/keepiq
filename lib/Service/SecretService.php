@@ -123,7 +123,7 @@ class SecretService {
 	 *
 	 * @var string[]
 	 */
-	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'];
+	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'];
 
 	/**
 	 * The suite statuses that block access to encrypted fields.
@@ -255,6 +255,8 @@ class SecretService {
 	 * @return Secret
 	 *
 	 * @throws InvalidArgumentException When required fields are missing or invalid
+	 * @throws NotFoundException When the named folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or a vault policy refuses the write
 	 * @throws SuiteBlockedException When the user has no active suite
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 *
@@ -306,6 +308,8 @@ class SecretService {
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
+		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
 		$secret->setEncryptionSuiteId($suite->getId());
 		$secret->setOwnerType('user');
 		$secret->setOwnerId($userId);
@@ -313,6 +317,7 @@ class SecretService {
 		$secret->setUpdatedAt($now);
 		// Ciphertext age starts at creation; never decrypts (password-health D4).
 		$secret->setKeyUpdatedAt($now);
+		(new CredentialFields())->stampChanges(after: $secret, before: new Secret(), now: $now);
 
 		$this->mapper->insert($secret);
 		$this->logger->info("Keepiq: secret {$secret->getId()} created by {$userId}");
@@ -348,12 +353,13 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws InvalidArgumentException When required fields are missing
+	 * @throws InvalidArgumentException When required fields are missing, or a totp or passkeys value is sent
 	 * @throws SuiteBlockedException When the application has no active suite
 	 *
 	 * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
 	 */
 	public function createForApplication(array $data, string $applicationId, string $writingUserId): Secret {
+		$this->refuseApplicationValueFields(data: $data);
 		if ($applicationId === '') {
 			throw new InvalidArgumentException('applicationId is required');
 		}
@@ -439,7 +445,7 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws InvalidArgumentException When required fields are missing
+	 * @throws InvalidArgumentException When required fields are missing, or a totp or passkeys value is sent
 	 * @throws SuiteBlockedException When the application has no active suite
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) - `$allowUnfilled` is an explicit
@@ -457,6 +463,7 @@ class SecretService {
 		string $applicationId,
 		bool $allowUnfilled = false,
 	): Secret {
+		$this->refuseApplicationValueFields(data: $data);
 		if ($applicationId === '') {
 			throw new InvalidArgumentException('applicationId is required');
 		}
@@ -554,7 +561,7 @@ class SecretService {
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist in this vault
-	 * @throws InvalidArgumentException When a submitted field is invalid
+	 * @throws InvalidArgumentException When a submitted field is invalid, or a totp or passkeys value is sent
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch; every branch is pinned by
@@ -566,6 +573,7 @@ class SecretService {
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
 	public function updateByApplication(string $id, array $data, string $applicationId): Secret {
+		$this->refuseApplicationValueFields(data: $data);
 		try {
 			$secret = $this->mapper->findById($id);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
@@ -626,12 +634,14 @@ class SecretService {
 			if ($key !== $secret->getKey()) {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt($now);
-				// Replacing the value answers the possibly-compromised warning;
-				// metadata-only writes leave it standing. See the owner path in
-				// update() for the full reasoning.
-				$secret->setPossiblyCompromisedAt(null);
 				$keyChanged = true;
 			}
+		}
+
+		// The same rule as the owner path in update().
+		$credentials = new CredentialFields();
+		if ($credentials->answersCompromiseWarning(after: $secret, before: $preUpdate) === true) {
+			$secret->setPossiblyCompromisedAt(null);
 		}
 
 		if ($this->versionService?->fieldsChanged(before: $preUpdate, after: $secret) === true) {
@@ -641,7 +651,8 @@ class SecretService {
 		$secret->setUpdatedAt($now);
 		$this->mapper->update($secret);
 
-		$changedFields = array_keys($data);
+		// An accepted empty totp or passkeys changes nothing and is not named.
+		$changedFields = array_values(array_diff(array_keys($data), $credentials->unchanged(after: $secret, before: $preUpdate)));
 		if ($keyChanged === true) {
 			$changedFields = ['key'];
 		}
@@ -904,6 +915,7 @@ class SecretService {
 	 * @param array<string,mixed> $data The fields to update
 	 * @param string $userId The requesting Nextcloud user ID
 	 * @param DateTime|null $savedAt The new version; a share-save passes the one it already locked in
+	 * @param bool $restoring Whether the data is a version being restored (a share-save restore)
 	 *
 	 * @return Secret
 	 *
@@ -925,8 +937,11 @@ class SecretService {
 	 *   field, in the order the fields are applied; the vault policy check is one
 	 *   line. Splitting the field guards apart would scatter one update over
 	 *   several methods and the class is at its method limit.
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$restoring` only tells the
+	 *   compromise rule that the totp and passkeys written are old values; the
+	 *   write itself is the same.
 	 */
-	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null): Secret {
+	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null, bool $restoring = false): Secret {
 		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
 		$this->viewOnlyCopies->assertMayChangeValue(
 			row: $secret,
@@ -990,13 +1005,6 @@ class SecretService {
 			if ($key !== $secret->getKey()) {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt(new DateTime());
-
-				// The possibly-compromised warning says "replace this exposed value
-				// at its source"; a new value answers it, so it is cleared HERE and
-				// nowhere else: a rename, folder move, type change or metadata edit
-				// leaves the exposed value, and the warning, in place. A resent
-				// unchanged key does not clear it either (same-ciphertext guard).
-				$secret->setPossiblyCompromisedAt(null);
 			}
 		}//end if
 
@@ -1010,22 +1018,60 @@ class SecretService {
 			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
+		if (array_key_exists('totp', $data) === true) {
+			$secret->setTotp($this->nullableString(value: $data['totp']));
+		}
+
+		if (array_key_exists('passkeys', $data) === true) {
+			$secret->setPasskeys($this->nullableString(value: $data['passkeys']));
+		}
+
+		// A restore writes back old ciphertext: its credentials are no new
+		// values, so they replace nothing and have no change time.
+		$credentials = new CredentialFields();
+		$restored = [];
+		$compromiseFlagOpen = false;
+		if ($restoring === true) {
+			$restored = CredentialFields::CREDENTIALS;
+			$compromiseFlagOpen = ($this->versionService?->compromiseFlagOpen(secretId: $secret->getId()) === true);
+		}
+
+		$credentials->stamp(
+			after: $secret,
+			before: $preUpdate,
+			now: new DateTime(),
+			restored: $restored,
+			compromiseFlagOpen: $compromiseFlagOpen
+		);
+
+		// The possibly-compromised warning says "replace the exposed values at
+		// their source". A login can hold three credentials, so it clears only
+		// once none of `key`, `totp` and `passkeys` is left exposed; a rename,
+		// move or other metadata edit, or a resent unchanged ciphertext, never
+		// clears it.
+		if ($credentials->answersCompromiseWarning(after: $secret, before: $preUpdate, restored: $restored) === true) {
+			$secret->setPossiblyCompromisedAt(null);
+		}
+
 		$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $base, savedAt: $savedAt);
 
 		// Recipients at partner organisations follow a new name or URL
 		// (sharing-federated-recipients 4.5). A new value reaches them through
 		// the share-save, which notifies them itself.
 		if ($this->federatedShares !== null
-			&& array_intersect(['key', 'login', 'additionalFields'], array_keys($data)) === []
+			&& array_intersect(Secret::VALUE_FIELDS, array_keys($data)) === []
 			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
 		) {
 			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $userId);
 		}
 
 		$changedFields = array_values(
-			array_intersect(
-				['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields'],
-				array_keys($data)
+			array_diff(
+				array_intersect(
+					['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'],
+					array_keys($data)
+				),
+				$credentials->unchanged(after: $secret, before: $preUpdate)
 			)
 		);
 		$this->dispatchAudit(
@@ -1553,6 +1599,8 @@ class SecretService {
 			'key' => $secret->getKey(),
 			'login' => $secret->getLogin(),
 			'additionalFields' => $secret->getAdditionalFields(),
+			'totp' => $secret->getTotp(),
+			'passkeys' => $secret->getPasskeys(),
 		];
 
 		$changed = [];
@@ -1719,6 +1767,25 @@ class SecretService {
 
 		return $secret;
 	}//end setExpiry()
+
+	/**
+	 * Refuse a `totp` or `passkeys` value on an application-owned write: that
+	 * surface does not store them, and dropping them would answer success for
+	 * a value that was never kept. `''` means "not set" and passes.
+	 *
+	 * @param array<string,mixed> $data The submitted fields
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When either field carries a value
+	 */
+	private function refuseApplicationValueFields(array $data): void {
+		foreach (['totp', 'passkeys'] as $field) {
+			if ($this->nullableString(value: $data[$field] ?? null) !== null) {
+				throw new InvalidArgumentException('totp and passkeys are not supported on an application-owned secret');
+			}
+		}
+	}//end refuseApplicationValueFields()
 
 	/**
 	 * Normalise a value to a non-empty string or null.
