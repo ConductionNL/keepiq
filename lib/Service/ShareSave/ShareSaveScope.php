@@ -24,9 +24,11 @@ use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -52,6 +54,7 @@ class ShareSaveScope {
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
 	 * @param ShareSyncService $sync Who may write for every copy
 	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -63,6 +66,7 @@ class ShareSaveScope {
 		private FederatedShareMapper $federatedShares,
 		private ShareSyncService $sync,
 		private ShareSyncGuards $guards,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 	}//end __construct()
 
@@ -70,7 +74,9 @@ class ShareSaveScope {
 	 * The path of a save of the caller's own row: the owner path, or the
 	 * copy-editor path when it is a recipient copy, which takes the owner,
 	 * a delegate, a write grade on the source or a member of a group it is
-	 * shared with.
+	 * shared with. A share row whose target does not hold the row, or that the
+	 * pending quarantine scan quarantines, leads to no source: the row saves
+	 * as the caller's own.
 	 *
 	 * @param Secret $row The caller's row, already checked to be theirs
 	 * @param string $userId The caller
@@ -79,9 +85,11 @@ class ShareSaveScope {
 	 *
 	 * @throws NotFoundException When the copy's source is gone
 	 * @throws ForbiddenException When the source is a read-only or use-only copy
-	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy
+	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy,
+	 *   `share_scan_pending` for a share row the pending quarantine scan cannot judge
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function resolve(Secret $row, string $userId): ShareSavePath {
 		try {
@@ -90,6 +98,10 @@ class ShareSaveScope {
 			return new ShareSavePath(row: $row, source: $row);
 		} catch (MultipleObjectsReturnedException) {
 			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		if ($this->leadsToSource(row: $row, target: $target) === false) {
+			return new ShareSavePath(row: $row, source: $row);
 		}
 
 		try {
@@ -107,6 +119,38 @@ class ShareSaveScope {
 
 		return new ShareSavePath(row: $row, source: $source, writesOn: $writesOn);
 	}//end resolve()
+
+	/**
+	 * Whether the share row naming the caller's row leads to its source: its
+	 * target holds the row, and the pending quarantine scan does not hold it
+	 * back. A row the scan quarantines leads nowhere, as any quarantined row
+	 * does; one it cannot judge refuses the save until the scan has judged it.
+	 *
+	 * @param Secret $row The caller's row
+	 * @param ShareTarget $target The share row naming it as a copy
+	 *
+	 * @return bool
+	 *
+	 * @throws ShareSaveRefusal `share_scan_pending` for a row the pending scan cannot judge
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	private function leadsToSource(Secret $row, ShareTarget $target): bool {
+		if ($target->isHeldByTarget(copy: $row) === false) {
+			return false;
+		}
+
+		$held = $this->quarantineScan?->heldBack(row: $target);
+		if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+			throw new ShareSaveRefusal(
+				error: 'share_scan_pending',
+				message: 'This copy waits for the share quarantine scan and cannot be saved yet; ask an administrator to check that background jobs run',
+				status: Http::STATUS_CONFLICT
+			);
+		}
+
+		return $held === null;
+	}//end leadsToSource()
 
 	/**
 	 * Check the copy-editor's right to write every copy again, inside the

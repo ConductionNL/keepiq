@@ -26,6 +26,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -45,6 +46,7 @@ class ShareWriteContext {
 	 * @param ShareTargetMapper $targets The share targets (copy to source)
 	 * @param EncryptionSuiteMapper $suites The suites (owner certificate)
 	 * @param ShareAuthorizationService $auth The share authorization service
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -54,6 +56,7 @@ class ShareWriteContext {
 		private ShareTargetMapper $targets,
 		private EncryptionSuiteMapper $suites,
 		private ShareAuthorizationService $auth,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 	}//end __construct()
 
@@ -137,7 +140,10 @@ class ShareWriteContext {
 	 * `write` grade through their copy. Only a caller who reaches the
 	 * source gets an answer: its owner, a delegate, a team-folder member
 	 * with a grade on it, or the holder of a live copy of it. A caller who
-	 * reaches no source through a live row of their own gets ownRowContext().
+	 * reaches no source through a live row of their own gets ownRowContext(),
+	 * and so does one whose share row's target does not hold the row, or that
+	 * the pending quarantine scan cannot judge. A row that scan quarantines is
+	 * no copy, as any quarantined row.
 	 *
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
@@ -148,18 +154,14 @@ class ShareWriteContext {
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function writeContext(string $secretId, string $userId): array {
 		$secret = $this->auth->loadSecret(secretId: $secretId);
 
 		// Pivot a recipient copy back to its source.
-		$source = $secret;
-		try {
-			$shareRow = $this->targets->findByRecipientSecret(recipientSecretId: $secretId);
-			$source = $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
-		} catch (DoesNotExistException) {
-			// Not a copy — the secret is its own source.
-		} catch (MultipleObjectsReturnedException) {
+		$source = $this->sourceOf(secret: $secret);
+		if ($source === null) {
 			return $this->ownRowContext(row: $secret, userId: $userId);
 		}
 
@@ -188,10 +190,53 @@ class ShareWriteContext {
 	}//end writeContext()
 
 	/**
+	 * The source a save of a secret goes to: the secret itself when no live
+	 * share row names it as a copy, or when the pending quarantine scan
+	 * quarantines that row now, as any quarantined row; the row's source when
+	 * the row's target holds the secret and the scan does not hold the row
+	 * back. Null when the row leads to no source: two rows name the secret,
+	 * the row's target does not hold it, or the pending scan cannot judge it.
+	 *
+	 * @param Secret $secret The secret the caller asked about
+	 *
+	 * @return Secret|null
+	 *
+	 * @throws InvalidArgumentException When the row's source does not exist
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	private function sourceOf(Secret $secret): ?Secret {
+		try {
+			$shareRow = $this->targets->findByRecipientSecret(recipientSecretId: $secret->getId());
+		} catch (DoesNotExistException) {
+			// Not a copy — the secret is its own source.
+			return $secret;
+		} catch (MultipleObjectsReturnedException) {
+			return null;
+		}
+
+		if ($shareRow->isHeldByTarget(copy: $secret) === false) {
+			return null;
+		}
+
+		$held = $this->quarantineScan?->heldBack(row: $shareRow);
+		if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
+			return $secret;
+		}
+
+		if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+			return null;
+		}
+
+		return $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
+	}//end sourceOf()
+
+	/**
 	 * The write context of a row whose share rows lead to no source the
-	 * caller stands on: two share rows for one copy or source, or a share row
-	 * keyed to someone else. The holder of a live row still gets `none`, so
-	 * their client saves that row alone. The answer names no source, as the
+	 * caller stands on: two share rows for one copy or source, a share row
+	 * keyed to someone else, or one the pending quarantine scan cannot judge.
+	 * The holder of a live row still gets `none`, so their client saves that
+	 * row alone. The answer names no source, as the
 	 * share row may point at someone else's secret. Anyone else gets the
 	 * answer of an unknown id, and so does the owner of a row that is itself
 	 * shared, as saving it alone would leave its copies behind.
