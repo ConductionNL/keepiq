@@ -173,27 +173,30 @@ describe('OwnershipFindings', () => {
 	it.each([
 		['carries', 'JBSWY3DPEHPK3PXP', '[{"credentialId":"c1"}]'],
 		["passes '' for", '', ''],
-	])("a contribution move %s a login's seed and passkeys (keepiq#1326)", async (_, totp, passkeys) => {
-		const wrapper = await mountWith(true)
-		const secretStore = useSecretStore()
-		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
-			name: 'Bank',
-			typeId: 't',
-			key: 'plain',
-			totp,
-			passkeys,
-		})
-		vi.spyOn(secretStore, 'contributeSecret').mockResolvedValue({})
-		vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
+	])(
+		"a contribution move %s a login's seed and passkeys (keepiq#1326)",
+		async (_, totp, passkeys) => {
+			const wrapper = await mountWith(true)
+			const secretStore = useSecretStore()
+			vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
+				name: 'Bank',
+				typeId: 't',
+				key: 'plain',
+				totp,
+				passkeys,
+			})
+			vi.spyOn(secretStore, 'contributeSecret').mockResolvedValue({})
+			vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
 
-		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
-		await wrapper.vm.move({ id: 'old-login' })
+			wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
+			await wrapper.vm.move({ id: 'old-login' })
 
-		expect(secretStore.contributeSecret).toHaveBeenCalledWith(
-			'tf-ops',
-			expect.objectContaining({ totp, passkeys }),
-		)
-	})
+			expect(secretStore.contributeSecret).toHaveBeenCalledWith(
+				'tf-ops',
+				expect.objectContaining({ totp, passkeys }),
+			)
+		},
+	)
 
 	it('keeps the personal secret when the contribution fails', async () => {
 		const wrapper = await mountWith(true)
