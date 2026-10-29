@@ -46,7 +46,7 @@ When the switch is on, the browser of an authorised confirmer MUST, after the va
 
 ### Requirement: The server accepts a confirmer's row only when it is safe
 
-`POST /api/v1/team-folders/{id}/shares` MUST accept a row from a non-owner only when the caller's effective grade on the folder is `write`, the target user is covered by a membership row and still misses that copy, the source secret is inside the folder subtree, and the caller's own copy of that source is not older than the source's last key change. Otherwise the row MUST be skipped and nothing MUST be stored for it. The server MUST NOT decrypt any submitted blob.
+`POST /api/v1/team-folders/{id}/shares` MUST accept a row from a non-owner only when the caller's effective grade on the folder is `write`, the target user is covered by a membership row and still misses that copy, the source secret is inside the folder subtree, and the caller's own copy of that source is not older than the source's last key change; a source with no key change time, as a restore of a flagged secret leaves it, counts as changed by its last write. Otherwise the row MUST be skipped and nothing MUST be stored for it. The server MUST NOT decrypt any submitted blob.
 
 #### Scenario: Stale copy is refused
 

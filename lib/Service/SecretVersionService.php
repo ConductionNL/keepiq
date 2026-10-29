@@ -302,9 +302,10 @@ class SecretVersionService {
 			$secret->setPasskeys(null);
 		}
 
-		// Old ciphertext is no new value: a credential it changes has no
-		// change time, so it reads as exposed and moves no rotation proof.
-		(new CredentialFields())->stampRestore(after: $secret, before: $beforeRestore);
+		// Old ciphertext is no new value: on a flagged row a credential it
+		// changes has no change time, so it reads as exposed and moves no
+		// rotation proof.
+		(new CredentialFields())->stampRestore(after: $secret, before: $beforeRestore, now: new DateTime());
 
 		$secret->setUpdatedAt($savedAt);
 		$this->secretMapper->update($secret);

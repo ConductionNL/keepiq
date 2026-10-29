@@ -404,6 +404,23 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 	}//end testStaleCopyIsNotOffered()
 
 	/**
+	 * A source whose key a restore changed has no key change time on a flagged row: it counts
+	 * as changed by its last write, so a copy from before the restore is not handed out.
+	 *
+	 * @return void
+	 */
+	public function testACopyFromBeforeARestoreOfTheSourceKeyIsNotOffered(): void {
+		$this->secrets['db-root']->setKeyUpdatedAt(null);
+		$this->secrets['db-root']->setUpdatedAt(new DateTime('2026-09-20'));
+
+		$this->assertSame([], $this->service->pendingConfirmations(userId: 'hank'));
+
+		$this->secrets['copy-hank'] = $this->copy(id: 'copy-hank', owner: 'hank', updatedAt: '2026-09-21');
+
+		$this->assertNotSame([], $this->service->pendingConfirmations(userId: 'hank'));
+	}//end testACopyFromBeforeARestoreOfTheSourceKeyIsNotOffered()
+
+	/**
 	 * An accepted row stores kim's copy, notifies kim and the owner, and
 	 * audits with hank as actor (§2.2, §2.3).
 	 *

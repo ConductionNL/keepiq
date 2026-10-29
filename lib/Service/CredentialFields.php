@@ -135,7 +135,7 @@ class CredentialFields {
 	 */
 	public function stamp(Secret $after, Secret $before, DateTime $now, array $restored = []): void {
 		if ($restored !== []) {
-			$this->stampRestore(after: $after, before: $before);
+			$this->stampRestore(after: $after, before: $before, now: $now);
 			return;
 		}
 
@@ -165,20 +165,30 @@ class CredentialFields {
 	}//end stampChanges()
 
 	/**
-	 * Clear the change time of each credential a restore changes. The version's ciphertext is old, and the row
-	 * cannot tell whether it predates a compromise, so a restored value has no change time and reads as exposed until
-	 * it is replaced; neither the head's time nor the time of the restore is true of it.
+	 * Stamp a restore. The version's ciphertext is old, and the row cannot tell whether it predates a compromise, so
+	 * on a flagged row each credential the restore changes has no change time and reads as exposed until it is
+	 * replaced; neither the head's time nor the time of the restore is true of it. A `totp` or `passkeys` change time
+	 * is read by that rule alone, so it is cleared on any row; the key's age also feeds expiry, health and
+	 * compliance, so on a row that is not flagged a changed key gets the time of the restore.
 	 *
 	 * @param Secret $after The row as it will be written
 	 * @param Secret $before The row as loaded
+	 * @param DateTime $now The time of the write
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 	 */
-	public function stampRestore(Secret $after, Secret $before): void {
+	public function stampRestore(Secret $after, Secret $before, DateTime $now): void {
+		// The key's age stays a password age for a row that is not flagged, as an edit's is; only a flagged row
+		// needs the restored key to read as exposed.
 		if ((string)$after->getKey() !== (string)$before->getKey()) {
-			$after->setKeyUpdatedAt(null);
+			$keyChangedAt = clone $now;
+			if ($before->getPossiblyCompromisedAt() !== null) {
+				$keyChangedAt = null;
+			}
+
+			$after->setKeyUpdatedAt($keyChangedAt);
 		}
 
 		$changed = array_diff(['totp', 'passkeys'], $this->unchanged(after: $after, before: $before));

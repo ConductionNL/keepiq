@@ -293,9 +293,11 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysClearsTheHeads()
 
 	/**
-	 * A restore writes back old ciphertext: the change time of each credential
-	 * it changes is cleared, so it does not look rotated, and one it writes back
-	 * as it was keeps its time.
+	 * A restore writes back old ciphertext: the change time of a TOTP or
+	 * passkeys it changes is cleared, so it does not look rotated, and one it
+	 * writes back as it was keeps its time. The key's age of a row that is not
+	 * flagged moves to the restore, as an edit's does, so expiry, health and
+	 * the compliance bands do not see a two-year-old login as just restored.
 	 *
 	 * @return void
 	 */
@@ -314,7 +316,7 @@ class SecretVersionServiceTest extends TestCase {
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
 		$this->assertSame('OLD_TOTP', $restored->getTotp());
-		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertGreaterThan($stamp, $restored->getKeyUpdatedAt());
 		$this->assertNull($restored->getTotpUpdatedAt());
 		$this->assertSame($stamp->getTimestamp(), $restored->getPasskeysUpdatedAt()?->getTimestamp());
 	}//end testARestoreClearsTheChangeTimeOfWhatItChanges()
@@ -412,22 +414,43 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOfTheSameKeyLeavesItsAgeAndTheWarning()
 
 	/**
-	 * A restore that changes the key does not move its age to the restore: the
-	 * old key has no change time, so it never counts as a rotation.
+	 * A restore that changes the key of a flagged row leaves the old key with
+	 * no change time, so it reads as exposed and never counts as a rotation.
 	 *
 	 * @return void
 	 */
-	public function testARestoreOfAnotherKeyDoesNotMoveItsAge(): void {
+	public function testARestoreOfAnotherKeyOnAFlaggedRowLeavesItNoAge(): void {
 		$head = $this->restorableHead();
 		$head->setKey('CURRENT_CIPHERTEXT');
 		$head->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
 		$this->mapper->method('insert')->willReturnArgument(0);
 		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
 		$this->assertNull($restored->getKeyUpdatedAt());
-	}//end testARestoreOfAnotherKeyDoesNotMoveItsAge()
+	}//end testARestoreOfAnotherKeyOnAFlaggedRowLeavesItNoAge()
+
+	/**
+	 * A restore that changes the key of a row that is not flagged moves the
+	 * key's age to the restore, as before: a long-lived login restored from
+	 * yesterday's version is not suddenly overdue by its creation date.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAnotherKeyOnAnUnflaggedRowMovesItsAge(): void {
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$old = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $old);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertGreaterThan($old, $restored->getKeyUpdatedAt());
+	}//end testARestoreOfAnotherKeyOnAnUnflaggedRowMovesItsAge()
 
 	/**
 	 * A snapshot records an empty totp or passkeys as `''`, never null, so a
