@@ -258,7 +258,14 @@ Re-encryption of `keepiq_secrets`, `keepiq_secret_versions` and `keepiq_attachme
 
 Owner and suite scoping MUST be enforced server-side on every re-encryption write, resolving the acting user through the Nextcloud `OCP\IUserSession` the surrounding controllers already use: a write MUST be refused unless the target row's current `encryption_suite_id` is the migration's `old_suite_id` and the row is owned by the migration's owner.
 
-`totp` and `passkeys` are optional value fields: a record that holds none needs none in its commit, which keeps a client that predates them working on such records. A record re-points to the new suite as a whole, so a commit MUST carry a re-encrypted value for each of the two the record holds, and MUST NOT carry one for a field the record holds none for; `''` counts as none on either side. A record holding either field can therefore only be migrated by a client that re-encrypts both, and that client MUST ship in the same release as the server that stores them: an older client's commit is refused, it halts the migration with the refusal's message instead of retrying the same commit, and the owner stays write-locked until a client that sends the fields resumes the migration.
+`totp` and `passkeys` are optional value fields: a record that holds none needs none in its commit, which keeps a client that predates them working on such records. A record re-points to the new suite as a whole, so a commit MUST carry a re-encrypted value for each of the two the record holds, and MUST NOT carry one for a field the record holds none for; `''` counts as none on either side. A record holding either field can therefore only be migrated by a client that re-encrypts both, and the web client's migration worker does: it re-encrypts and verifies each of them as it does `login`, and sends it in the commit. An older client's commit is refused, it halts the migration with the refusal's message instead of retrying the same commit, and the owner stays write-locked until a client that sends the fields resumes the migration.
+
+#### Scenario: The web client migrates a record that holds a TOTP seed and passkeys
+
+@e2e exclude Asserted on the re-encrypted payload with the migration pipeline; covered by vitest (migration-pipeline).
+- **GIVEN** a secret on the old suite holds a `totp` and a `passkeys` value
+- **WHEN** the web client's migration worker re-encrypts it
+- **THEN** the commit MUST carry each of the two, re-encrypted under the new suite and verified to decrypt back to the original, so the commit is accepted and the owner is not write-locked
 
 #### Scenario: A commit that leaves out a stored TOTP seed is refused
 
