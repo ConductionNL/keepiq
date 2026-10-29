@@ -24,6 +24,12 @@ import SecretShareDialog from '../../src/dialogs/SecretShareDialog.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { echoedCloudId } from '../fixtures/shareSaveServer.js'
 
+// The server declares the release that first stored a login's one-time code and passkeys.
+vi.mock('@nextcloud/initial-state', () => ({
+	loadState: (app, key, fallback) =>
+		key === 'loginValueFields' ? { since: '0.3.12' } : fallback,
+}))
+
 const F = JSON.parse(
 	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
 )
@@ -259,6 +265,68 @@ describe('FederatedShareForm', () => {
 		expect(
 			wrapper.find('[data-testid="federated-share-error"]').text(),
 		).toContain('not one of your partners')
+	})
+
+	describe('a login with a one-time code (keepiq#1326)', () => {
+		const VERIFIED = {
+			certificate: F.bob,
+			chain: [F.intermediateA, F.rootA],
+			partnerRootFingerprint: F.rootAFingerprint,
+		}
+
+		/**
+		 * Share a login holding a seed after the lookup, and read the error.
+		 *
+		 * @param {object} answer The lookup answer.
+		 * @param {object|null} refusal What the share request rejects with.
+		 * @return {Promise<{text: string, post: object}>}
+		 */
+		async function shareSeed(answer, refusal = null) {
+			const { wrapper, post, fetchSecret } = await mountWith(answer)
+			fetchSecret.mockResolvedValue({
+				key: PASSWORD,
+				totp: 'otpauth://totp/Bank:alice?secret=JBSWY3DPEHPK3PXP',
+			})
+			if (refusal) {
+				post.mockRejectedValue(refusal)
+			}
+			await wrapper
+				.find('[data-testid="federated-share-submit"]')
+				.trigger('click')
+			await settled(wrapper, ['federated-share-error'])
+			return {
+				text: wrapper.find('[data-testid="federated-share-error"]').text(),
+				post,
+			}
+		}
+
+		it('says an older partner cannot store it, and sends nothing', async () => {
+			const { text, post } = await shareSeed({ ...VERIFIED, valueFields: [] })
+
+			expect(text).toContain('older Keepiq')
+			expect(text).toContain('0.3.12')
+			expect(shareCalls(post)).toHaveLength(0)
+		})
+
+		it("says so for the server's refusal too, with the version it names", async () => {
+			const { text } = await shareSeed(
+				{ ...VERIFIED, valueFields: ['totp', 'passkeys'] },
+				{
+					response: {
+						status: 409,
+						data: {
+							error: 'partner_upgrade_required',
+							message:
+								'The receiving organisation must upgrade Keepiq',
+							requiredVersion: '0.4.0',
+						},
+					},
+				},
+			)
+
+			expect(text).toContain('older Keepiq')
+			expect(text).toContain('0.4.0')
+		})
 	})
 
 	it('says the certificate could not be verified when the server refused the chain', async () => {

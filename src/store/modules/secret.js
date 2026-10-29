@@ -3,6 +3,7 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
+import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
 import {
 	encryptSparse,
 	notifyOwnerOnly,
@@ -10,6 +11,7 @@ import {
 	VALUE_FIELDS,
 } from '../../services/shareSave.js'
 import { isAccessExpired } from '../../utils/shareRestriction.js'
+import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useOfflineStore } from './offline.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
@@ -376,7 +378,7 @@ export const useSecretStore = defineStore('secret', {
 		 * Fetch a single secret and decrypt its encrypted fields in the browser.
 		 *
 		 * @param {string} id The secret ID.
-		 * @return {Promise<object>} The secret with decrypted key/login/additionalFields.
+		 * @return {Promise<object>} The secret with decrypted key/login/additionalFields/totp/passkeys.
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async fetchSecret(id) {
@@ -459,6 +461,12 @@ export const useSecretStore = defineStore('secret', {
 				} catch {
 					decrypted.additionalFields = json
 				}
+			}
+			// Plain strings, `''` when not set; the passkeys stay JSON text.
+			for (const field of BLOB_FIELDS) {
+				decrypted[field] = secret[field]
+					? await rsaDecrypt(secret[field], session.cryptoKey)
+					: ''
 			}
 			const pending = Array.isArray(secret.pendingAdditionalFields)
 				? secret.pendingAdditionalFields
@@ -608,7 +616,7 @@ export const useSecretStore = defineStore('secret', {
 		 * for every member, this user included. Only ciphertext is sent.
 		 *
 		 * @param {string} teamFolderId The team folder.
-		 * @param {object} data name, url, typeId, key, login, additionalFields (plaintext).
+		 * @param {object} data name, url, typeId, key, login, additionalFields, totp, passkeys (plaintext).
 		 * @return {Promise<object>} The stored owner row and the copy count.
 		 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 		 */
@@ -620,15 +628,7 @@ export const useSecretStore = defineStore('secret', {
 					),
 				)
 			).data
-			const fields = {
-				key: String(data.key ?? ''),
-				login: data.login ? String(data.login) : '',
-				additionalFields: data.additionalFields
-					? typeof data.additionalFields === 'string'
-						? data.additionalFields
-						: JSON.stringify(data.additionalFields)
-					: '',
-			}
+			const fields = recipientFields(data)
 			const shareStore = useShareStore()
 			const owner = await shareStore.encryptForRecipient(
 				fields,
@@ -642,9 +642,7 @@ export const useSecretStore = defineStore('secret', {
 				)
 				copies.push({
 					targetUserId: recipient.userId,
-					encryptedKey: blob.key ?? '',
-					encryptedLogin: blob.login ?? null,
-					encryptedAdditionalFields: blob.additionalFields ?? null,
+					...copyCiphertext(blob),
 				})
 			}
 			const response = await axios.post(
@@ -659,6 +657,8 @@ export const useSecretStore = defineStore('secret', {
 					key: owner.key ?? '',
 					login: owner.login ?? null,
 					additionalFields: owner.additionalFields ?? null,
+					totp: owner.totp ?? null,
+					passkeys: owner.passkeys ?? null,
 					copies,
 				},
 			)
@@ -668,7 +668,7 @@ export const useSecretStore = defineStore('secret', {
 		/**
 		 * Create a secret, encrypting the sensitive fields in the browser first.
 		 *
-		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, ...).
+		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, totp, passkeys, ...).
 		 * @return {Promise<object>} The created secret (server response).
 		 * @spec openspec/specs/secrets/spec.md#requirement-create-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
@@ -709,6 +709,12 @@ export const useSecretStore = defineStore('secret', {
 						: JSON.stringify(data.additionalFields)
 				payload.additionalFields = await rsaEncrypt(json, publicKey)
 			}
+			// Sent only when entered: an encrypted empty string reads as a value.
+			for (const field of BLOB_FIELDS) {
+				if (data[field]) {
+					payload[field] = await rsaEncrypt(String(data[field]), publicKey)
+				}
+			}
 
 			// Offline: the same payload goes into the sealed queue and is
 			// replayed later (offline-edit-queue).
@@ -732,7 +738,7 @@ export const useSecretStore = defineStore('secret', {
 		 * and partner share in the same transaction or nothing at all.
 		 *
 		 * @param {string} id The secret ID.
-		 * @param {object} data The fields to change, with `mergedPending`: the request-filled pending blobs the edited `additionalFields` merged.
+		 * @param {object} data The fields to change, with `mergedPending`: the request-filled pending blobs the edited `additionalFields` merged. `totp` and `passkeys` are plain strings, `''` to remove; left out, they stay as they are.
 		 * @param {object} [options] Options.
 		 * @param {string} [options.baseUpdatedAt] The version the edit was made from.
 		 * @param {string|null} [options.sourceBaseUpdatedAt] On a copy, the source version the edit was made from.
@@ -795,6 +801,12 @@ export const useSecretStore = defineStore('secret', {
 							: typeof data.additionalFields === 'string'
 								? data.additionalFields
 								: JSON.stringify(data.additionalFields)
+				}
+				// `''` (or null) removes one; encryptSparse sends that as is.
+				for (const field of BLOB_FIELDS) {
+					if (data[field] !== undefined) {
+						plainDiff[field] = data[field] ? String(data[field]) : ''
+					}
 				}
 				// The own row and every copy carry the same fields with the same
 				// null-ness, so both come from one plain map.

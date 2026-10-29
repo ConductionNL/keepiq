@@ -683,6 +683,55 @@
 				</div>
 			</div>
 
+			<!-- The secret's own one-time code and passkeys, in a box of their
+			     own so they show whatever the type (an identity hides the
+			     box above). The seed and the private keys are never
+			     rendered, so these rows show on a use-only copy too: its
+			     holder may use the code. -->
+			<div
+				v-if="fieldTotp || fieldPasskeyCount > 0"
+				class="secret-detail__box">
+				<div
+					v-if="fieldTotp"
+					class="secret-detail__row secret-detail__row--block">
+					<span class="secret-detail__row-icon">
+						<ClockOutline :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'One-time code')
+						}}</span>
+						<div class="secret-detail__row-value">
+							<TotpDisplay
+								:seed="fieldTotp"
+								data-testid="secret-detail-login-totp" />
+						</div>
+					</div>
+				</div>
+
+				<div
+					v-if="fieldPasskeyCount > 0"
+					class="secret-detail__row secret-detail__row--block">
+					<span class="secret-detail__row-icon">
+						<Fingerprint :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Passkeys')
+						}}</span>
+						<div class="secret-detail__row-value">
+							<PasskeyList
+								ref="passkeyList"
+								:passkeysJson="fieldPasskeysJson"
+								:canDelete="canChangeValue"
+								:busy="passkeySaving"
+								data-testid="secret-detail-login-passkeys"
+								@delete="onDeletePasskey" />
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<div v-if="hasAdditionalFields && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
@@ -1002,6 +1051,7 @@ import AttachmentPanel from './AttachmentPanel.vue'
 import CopyButton from './CopyButton.vue'
 import HoneyPanel from './HoneyPanel.vue'
 import PasskeyDisplay from './PasskeyDisplay.vue'
+import PasskeyList from './PasskeyList.vue'
 import PasswordField from './PasswordField.vue'
 import RotationPanel from './RotationPanel.vue'
 import SecretActivityTab from './SecretActivityTab.vue'
@@ -1015,6 +1065,8 @@ import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
+import { passkeyEntries } from '../passkey/loginPasskeys.js'
+import { shareSaveErrorText } from '../services/shareSave.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -1023,6 +1075,7 @@ import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
+import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
 /**
@@ -1078,6 +1131,7 @@ export default {
 		DelegationManager,
 		HoneyPanel,
 		PasskeyDisplay,
+		PasskeyList,
 		PasswordField,
 		RotationPanel,
 		SecretActivityTab,
@@ -1118,6 +1172,10 @@ export default {
 			teamWritable: false,
 			/** A copy without a write grade: no edit, restore or new request. */
 			viewOnlyCopy: false,
+			/** The write-context read with the secret on show, or null. */
+			writeContext: null,
+			/** A passkey delete is being saved. */
+			passkeySaving: false,
 			/** Per-field reveal state for the card rows (masked by default). */
 			cardRevealed: { number: false, cvv: false, pin: false },
 			/** Reveal state for the identity's BSN row (masked by default). */
@@ -1581,6 +1639,57 @@ export default {
 		federatedReadOnly() {
 			return this.secret?.readOnly === true
 		},
+
+		/**
+		 * The secret's decrypted `totp` field, for the code row only; '' when
+		 * it has none. Read whatever the type: only a login can be given one
+		 * here, but the server stores it on any secret.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+		 */
+		fieldTotp() {
+			return this.secret?.totp || ''
+		},
+
+		/**
+		 * The secret's decrypted `passkeys` field, whatever the type; '' when
+		 * it has none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		fieldPasskeysJson() {
+			return this.secret?.passkeys || ''
+		},
+
+		/**
+		 * How many passkeys the `passkeys` field lists.
+		 *
+		 * @return {number}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		fieldPasskeyCount() {
+			return passkeyEntries(this.fieldPasskeysJson).length
+		},
+
+		/**
+		 * Whether the holder may change this secret's value from here: the
+		 * same rule as the Edit button, and the server stores the login's
+		 * value fields.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		canChangeValue() {
+			return (
+				(!this.offlineReadOnly || this.offlineEditable)
+				&& !this.useOnly
+				&& !this.federatedReadOnly
+				&& !this.viewOnlyCopy
+				&& valueFieldsSupported()
+			)
+		},
 	},
 
 	watch: {
@@ -1654,6 +1763,7 @@ export default {
 					['write', 'manage'].includes(context?.effectiveGrade)
 					&& context.sourceSecretId !== id
 				this.viewOnlyCopy = isViewOnlyCopy(context, id)
+				this.writeContext = context ?? null
 			} catch (e) {
 				if (id !== this.secretId) {
 					return
@@ -1844,6 +1954,122 @@ export default {
 					this.$emit('close')
 				},
 			})
+		},
+
+		/**
+		 * Save the login's passkeys without the one the user deleted, with
+		 * the base versions the edit dialog sends, then reload the detail.
+		 *
+		 * @param {string} passkeys The remaining passkeys value, '' for none.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		async onDeletePasskey(passkeys) {
+			if (!this.canChangeValue || this.passkeySaving) {
+				return
+			}
+			const id = this.secretId
+			this.passkeySaving = true
+			try {
+				const store = useSecretStore()
+				// A merge write-back that saved moves both versions, so they
+				// are read after it.
+				const writeBack = await store.writeBackSettled(id)
+				await store.updateSecret(
+					id,
+					{ passkeys },
+					{
+						baseUpdatedAt: this.secret.updatedAt,
+						sourceBaseUpdatedAt: this.sourceBaseFor(id, writeBack),
+					},
+				)
+				if (id === this.secretId) {
+					await this.load()
+					await this.$nextTick()
+					this.focusAfterPasskeyDelete()
+				}
+				this.refreshList()
+			} catch (e) {
+				showError(this.passkeyDeleteErrorText(e))
+			} finally {
+				this.passkeySaving = false
+			}
+		},
+
+		/**
+		 * The message for a failed passkey delete. An unreachable partner
+		 * gets its own wording: the shared share-save text offers to save
+		 * without them, which only the edit dialog can do.
+		 *
+		 * @param {Error} e The failure.
+		 * @return {string}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+		 */
+		passkeyDeleteErrorText(e) {
+			if (e?.code === 'partner_unreachable') {
+				return t(
+					'keepiq',
+					'A partner organisation this secret is shared with cannot be reached, so the passkey was not deleted. Try again later.',
+				)
+			}
+			return (
+				shareSaveErrorText(e) || t('keepiq', 'Could not delete the passkey')
+			)
+		},
+
+		/**
+		 * The deleted passkey's row is gone: focus the list when passkeys
+		 * remain, else the Edit button, else the detail itself.
+		 *
+		 * @return {void}
+		 * @spec exclude Focus management after a re-render.
+		 */
+		focusAfterPasskeyDelete() {
+			if (this.$refs.passkeyList) {
+				this.$refs.passkeyList.focus()
+				return
+			}
+			const edit = this.$el?.querySelector?.(
+				'[data-testid="secret-detail-edit"]',
+			)
+			const target = edit?.matches?.('button')
+				? edit
+				: edit?.querySelector?.('button')
+			if (target) {
+				target.focus()
+				return
+			}
+			const card = this.$el?.querySelector?.('.secret-detail__card')
+			if (card) {
+				card.setAttribute('tabindex', '-1')
+				card.focus()
+			}
+		},
+
+		/**
+		 * The source version a change of this copy is based on, as the edit
+		 * dialog reads it: the cached one offline, null for an own secret,
+		 * else the one a saved write-back wrote or the write-context names.
+		 *
+		 * @param {string} id The secret.
+		 * @param {object|null|undefined} writeBack The settled write-back.
+		 * @return {string|null}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		sourceBaseFor(id, writeBack) {
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find(
+					(secret) => secret.id === id,
+				)
+				return cached?.sourceUpdatedAt ?? null
+			}
+			const context = this.writeContext
+			if (context?.sourceSecretId === id) {
+				return null
+			}
+			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
 		},
 
 		/**

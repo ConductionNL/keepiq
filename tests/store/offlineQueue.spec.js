@@ -995,6 +995,82 @@ describe('replay', () => {
 	})
 })
 
+describe('a login seed changed offline (keepiq#1326)', () => {
+	const SEED = 'otpauth://totp/Bank:alice?secret=JBSWY3DPEHPK3PXP'
+
+	it("replays a removal as a literal '' for the row and every copy", async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { totp: '' })
+		goOnline()
+		const log = shareSaveServer({
+			id: 's1',
+			required: [
+				{ secretId: 'copy-bob', holder: 'recipient', targetUserId: 'bob' },
+			],
+			suites: { bob: RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM },
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 1, stopped: false })
+		const final = log.saves.at(-1)
+		expect(final.patch).toEqual({ totp: '' })
+		expect(final.copies).toEqual([{ secretId: 'copy-bob', totp: '' }])
+	})
+
+	it('replays a new seed that every copy can open', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { totp: SEED })
+		goOnline()
+		const log = shareSaveServer({
+			id: 's1',
+			required: [
+				{ secretId: 'copy-bob', holder: 'recipient', targetUserId: 'bob' },
+			],
+			suites: { bob: RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM },
+		})
+
+		await offline.replayQueue()
+
+		const [copy] = log.saves.at(-1).copies
+		const bob = await importPrivateKey(RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM)
+		expect(await rsaDecrypt(copy.totp, bob)).toBe(SEED)
+	})
+
+	it('fails the entry, naming the partner, when it gives the login a seed an older partner cannot store', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { totp: SEED })
+		goOnline()
+		const pub = await importPublicKey(RSA4096_PUBLIC_KEY_SPKI_PEM)
+		const log = shareSaveServer({
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+			rows: {
+				s1: {
+					id: 's1',
+					key: await rsaEncrypt('old', pub),
+					totp: null,
+					updatedAt: BASE,
+				},
+			},
+			lookup: { [BOB]: { ...BOB_VERIFIED, valueFields: [] } },
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 0, stopped: false })
+		expect(log.saves.every((body) => (body.federated ?? []).length === 0)).toBe(
+			true,
+		)
+		const [failed] = offline.failedEntries
+		expect(failed.failure).toMatchObject({
+			code: 'partner_upgrade_required',
+			partners: [BOB],
+		})
+		expect(failureText(failed.failure)).toContain(BOB)
+	})
+})
+
 describe('the text of a refused change', () => {
 	it("shows the share save's own words for a code it knows, and never a code", () => {
 		expect(

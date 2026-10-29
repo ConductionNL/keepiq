@@ -173,16 +173,6 @@ export default {
 					const raw = await axios.get(
 						generateUrl(`/apps/keepiq/api/v1/secrets/${finding.id}`),
 					)
-					// The contribution carries only key, login and additional
-					// fields, so a one-time code or passkeys would be lost once
-					// the original goes to the trash. Keep the original instead.
-					if (raw.data?.totp || raw.data?.passkeys) {
-						this.error = this.t(
-							'keepiq',
-							'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
-						)
-						return
-					}
 					const plain = await secretStore.decryptSecret(raw.data)
 					await secretStore.contributeSecret(target.teamFolderId, {
 						name: plain.name,
@@ -191,6 +181,8 @@ export default {
 						key: plain.key ?? '',
 						login: plain.login ?? '',
 						additionalFields: plain.additionalFields ?? null,
+						totp: plain.totp ?? '',
+						passkeys: plain.passkeys ?? '',
 					})
 					await secretStore.deleteSecret(finding.id)
 				}
