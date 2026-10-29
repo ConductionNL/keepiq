@@ -530,7 +530,13 @@ class ShareSyncService {
 		}
 
 		$credentials = new CredentialFields();
-		$credentials->stamp(after: $copy, before: $before, now: $savedAt, restored: $restored);
+		$credentials->stamp(
+			after: $copy,
+			before: $before,
+			now: $savedAt,
+			restored: $restored,
+			compromiseFlagOpen: $restored !== [] && $this->versionService->compromiseFlagOpen(secretId: $copy->getId())
+		);
 		$copy->setUpdatedAt(clone $savedAt);
 
 		// A copy flagged as possibly compromised (e.g. an EncryptionSuite

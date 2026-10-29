@@ -170,6 +170,69 @@ describe('OwnershipFindings', () => {
 		expect(order).toEqual(['contribute', 'delete'])
 	})
 
+	it('refuses a contribution move of a login with a one-time code and keeps it', async () => {
+		const wrapper = await mountWith(true)
+		const secretStore = useSecretStore()
+		const get = axios.get.getMockImplementation()
+		axios.get.mockImplementation(async (url) =>
+			url.endsWith('/secrets/old-login')
+				? {
+						data: {
+							id: 'old-login',
+							key: 'CIPHER',
+							totp: 'T',
+							passkeys: null,
+						},
+					}
+				: get(url),
+		)
+		const contribute = vi.spyOn(secretStore, 'contributeSecret')
+		const remove = vi.spyOn(secretStore, 'deleteSecret')
+
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
+		await wrapper.vm.move({ id: 'old-login' })
+		await flushPromises()
+
+		expect(contribute).not.toHaveBeenCalled()
+		expect(remove).not.toHaveBeenCalled()
+		expect(wrapper.vm.findings).toHaveLength(1)
+		expect(wrapper.text()).toContain('cannot share yet')
+	})
+
+	it('still moves a login whose one-time code and passkeys are empty', async () => {
+		const wrapper = await mountWith(true)
+		const secretStore = useSecretStore()
+		const get = axios.get.getMockImplementation()
+		axios.get.mockImplementation(async (url) =>
+			url.endsWith('/secrets/old-login')
+				? {
+						data: {
+							id: 'old-login',
+							key: 'CIPHER',
+							totp: null,
+							passkeys: null,
+						},
+					}
+				: get(url),
+		)
+		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
+			name: 'Bank',
+			typeId: 't',
+			key: 'plain',
+		})
+		const contribute = vi
+			.spyOn(secretStore, 'contributeSecret')
+			.mockResolvedValue({})
+		const remove = vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
+
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
+		await wrapper.vm.move({ id: 'old-login' })
+
+		expect(contribute).toHaveBeenCalled()
+		expect(remove).toHaveBeenCalledWith('old-login')
+		expect(wrapper.vm.findings).toHaveLength(0)
+	})
+
 	it('keeps the personal secret when the contribution fails', async () => {
 		const wrapper = await mountWith(true)
 		const secretStore = useSecretStore()

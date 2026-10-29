@@ -23,6 +23,8 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\RotationFlag;
+use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
@@ -31,6 +33,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\CredentialFields;
+use OCA\Keepiq\Service\RotationFlagService;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
@@ -56,6 +59,9 @@ class SecretVersionServiceTest extends TestCase {
 
 	/** @var array<int,string> The transaction calls, in order */
 	private array $transaction = [];
+
+	/** The secret's rotation flag row, none when null */
+	private ?RotationFlag $flag = null;
 
 	/**
 	 * Build the service with fresh mocks.
@@ -87,8 +93,42 @@ class SecretVersionServiceTest extends TestCase {
 			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			eventDispatcher: null,
+			rotationFlags: $this->flagMapper(),
 		);
 	}//end setUp()
+
+	/**
+	 * A rotation flag mapper that holds `$this->flag` for every secret, or none.
+	 *
+	 * @return RotationFlagMapper
+	 */
+	private function flagMapper(): RotationFlagMapper {
+		$flags = $this->createMock(originalClassName: RotationFlagMapper::class);
+		$find = fn (): RotationFlag => $this->flag ?? throw new DoesNotExistException('none');
+		$flags->method('findBySecret')->willReturnCallback($find);
+		$flags->method('findById')->willReturnCallback($find);
+
+		return $flags;
+	}//end flagMapper()
+
+	/**
+	 * An open rotation flag on `sec-1`, raised at 2026-10-01 over credentials last changed at 2026-09-01.
+	 *
+	 * @param string $reason The flag's reason
+	 *
+	 * @return RotationFlag
+	 */
+	private function openFlag(string $reason): RotationFlag {
+		$flag = new RotationFlag();
+		$flag->setId('flag-1');
+		$flag->setSecretId('sec-1');
+		$flag->setReason($reason);
+		$flag->setStatus('open');
+		$flag->setFlaggedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$flag->setKeyUpdatedAtAtFlag(new DateTime('2026-09-01T00:00:00+00:00'));
+
+		return $flag;
+	}//end openFlag()
 
 	/**
 	 * Build an owned Secret with ciphertext fields.
@@ -451,6 +491,61 @@ class SecretVersionServiceTest extends TestCase {
 
 		$this->assertGreaterThan($old, $restored->getKeyUpdatedAt());
 	}//end testARestoreOfAnotherKeyOnAnUnflaggedRowMovesItsAge()
+
+	/**
+	 * The possibly-compromised warning clears once every credential is replaced, but the `suite_compromise` flag
+	 * stays open until the owner marks it rotated. A restore of a version from before the flag in that state writes
+	 * the exposed key back: it gets no change time, so mark-rotated still asks for a rotation.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreUnderAnOpenCompromiseFlagWithTheWarningClearedProvesNoRotation(): void {
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setKeyUpdatedAt(new DateTime('2026-10-05T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(null);
+		$this->flag = $this->openFlag(reason: 'suite_compromise');
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('OLD_CIPHERTEXT', $restored->getKey());
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$flags = new RotationFlagService(flagMapper: $this->flagMapper(), secretMapper: $this->secretMapper);
+		$this->assertSame(
+			['resolved' => false, 'requiresRotation' => true],
+			$flags->markRotated(flagId: 'flag-1', userId: 'alice')
+		);
+	}//end testARestoreUnderAnOpenCompromiseFlagWithTheWarningClearedProvesNoRotation()
+
+	/**
+	 * Only a compromise flag makes a restore read the row as flagged: under an open flag of another reason, or a
+	 * compromise flag already rotated, the restored key gets the time of the restore, as on any unflagged row.
+	 *
+	 * @return void
+	 */
+	public function testARestoreUnderAnotherOrAResolvedFlagMovesTheKeyAge(): void {
+		$resolved = $this->openFlag(reason: 'suite_compromise');
+		$resolved->setStatus('rotated');
+		foreach ([$this->openFlag(reason: 'policy_expiry'), $resolved] as $flag) {
+			$this->flag = $flag;
+			$this->assertFalse($this->service->compromiseFlagOpen(secretId: 'sec-1'));
+		}
+
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$old = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $old);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertGreaterThan($old, $restored->getKeyUpdatedAt());
+	}//end testARestoreUnderAnotherOrAResolvedFlagMovesTheKeyAge()
 
 	/**
 	 * A snapshot records an empty totp or passkeys as `''`, never null, so a

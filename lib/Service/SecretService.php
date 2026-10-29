@@ -1030,11 +1030,19 @@ class SecretService {
 		// values, so they replace nothing and have no change time.
 		$credentials = new CredentialFields();
 		$restored = [];
+		$compromiseFlagOpen = false;
 		if ($restoring === true) {
 			$restored = CredentialFields::CREDENTIALS;
+			$compromiseFlagOpen = ($this->versionService?->compromiseFlagOpen(secretId: $secret->getId()) === true);
 		}
 
-		$credentials->stamp(after: $secret, before: $preUpdate, now: new DateTime(), restored: $restored);
+		$credentials->stamp(
+			after: $secret,
+			before: $preUpdate,
+			now: new DateTime(),
+			restored: $restored,
+			compromiseFlagOpen: $compromiseFlagOpen
+		);
 
 		// The possibly-compromised warning says "replace the exposed values at
 		// their source". A login can hold three credentials, so it clears only
