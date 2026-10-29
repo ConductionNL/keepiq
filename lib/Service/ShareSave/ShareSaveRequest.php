@@ -188,47 +188,21 @@ final class ShareSaveRequest {
 	}//end assertConsistent()
 
 	/**
-	 * The patch and entries a restore of `$version` writes, as SecretVersionService restores the head.
-	 * A `totp` or `passkeys` the version does not hold is left out of the patch and the copies,
-	 * so the head and every copy keep theirs; one the version holds must be in the patch, or the secret would be half restored.
-	 * Partner shares stay as sent: each is a whole value, and a field left out of one is cleared when its certificate changed.
+	 * The patch and entries a restore of `$version` writes, by the rules of ShareSaveRestore::split().
 	 *
 	 * @param SecretVersion $version The version restored
 	 * @param ShareSaveEntries $entries The entries, staged ones included
+	 * @param Secret $head The row restored, as read
 	 *
-	 * @return array{0:array<string,mixed>,1:ShareSaveEntries}
+	 * @return array{0:array<string,mixed>,1:ShareSaveEntries,2:array<string,?string>} The patch, the entries,
+	 *   and the head's value of each field left out, which partner shares are held to
 	 *
-	 * @throws ShareSaveRefusal `invalid_body` naming the field the patch leaves out
+	 * @throws ShareSaveRefusal `invalid_body` naming the field the patch gets wrong
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
-	public function restoring(SecretVersion $version, ShareSaveEntries $entries): array {
-		$patch = (array)$this->patch;
-		$held = ['totp' => $version->getTotp(), 'passkeys' => $version->getPasskeys()];
-		$absent = [];
-		foreach ($held as $field => $value) {
-			if (in_array($value, self::NO_BLOB, true) === true) {
-				$absent[$field] = true;
-			} else if (in_array($patch[$field] ?? null, self::NO_BLOB, true) === true) {
-				throw new ShareSaveRefusal(
-					error: 'invalid_body',
-					message: 'Invalid patch: a restore of this version carries '.$field,
-					details: ['field' => $field]
-				);
-			}
-		}
-
-		$strip = static fn (array $entry): array => array_diff_key($entry, $absent);
-
-		return [
-			$strip($patch),
-			new ShareSaveEntries(
-				copies: array_map($strip, $entries->copies),
-				skipped: $entries->skipped,
-				federated: $entries->federated,
-				suspend: $entries->suspend,
-			),
-		];
+	public function restoring(SecretVersion $version, ShareSaveEntries $entries, Secret $head): array {
+		return (new ShareSaveRestore())->split(patch: (array)$this->patch, version: $version, entries: $entries, head: $head);
 	}//end restoring()
 
 	/**

@@ -23,12 +23,17 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\RotationFlag;
+use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
+use OCA\Keepiq\Service\CredentialFields;
+use OCA\Keepiq\Service\RotationFlagService;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
@@ -54,6 +59,9 @@ class SecretVersionServiceTest extends TestCase {
 
 	/** @var array<int,string> The transaction calls, in order */
 	private array $transaction = [];
+
+	/** The secret's rotation flag row, none when null */
+	private ?RotationFlag $flag = null;
 
 	/**
 	 * Build the service with fresh mocks.
@@ -85,8 +93,42 @@ class SecretVersionServiceTest extends TestCase {
 			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			eventDispatcher: null,
+			rotationFlags: $this->flagMapper(),
 		);
 	}//end setUp()
+
+	/**
+	 * A rotation flag mapper that holds `$this->flag` for every secret, or none.
+	 *
+	 * @return RotationFlagMapper
+	 */
+	private function flagMapper(): RotationFlagMapper {
+		$flags = $this->createMock(originalClassName: RotationFlagMapper::class);
+		$find = fn (): RotationFlag => $this->flag ?? throw new DoesNotExistException('none');
+		$flags->method('findBySecret')->willReturnCallback($find);
+		$flags->method('findById')->willReturnCallback($find);
+
+		return $flags;
+	}//end flagMapper()
+
+	/**
+	 * An open rotation flag on `sec-1`, raised at 2026-10-01 over credentials last changed at 2026-09-01.
+	 *
+	 * @param string $reason The flag's reason
+	 *
+	 * @return RotationFlag
+	 */
+	private function openFlag(string $reason): RotationFlag {
+		$flag = new RotationFlag();
+		$flag->setId('flag-1');
+		$flag->setSecretId('sec-1');
+		$flag->setReason($reason);
+		$flag->setStatus('open');
+		$flag->setFlaggedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$flag->setKeyUpdatedAtAtFlag(new DateTime('2026-09-01T00:00:00+00:00'));
+
+		return $flag;
+	}//end openFlag()
 
 	/**
 	 * Build an owned Secret with ciphertext fields.
@@ -271,22 +313,257 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testARestoreOfAVersionWithoutTotpOrPasskeysKeepsTheHeads()
 
 	/**
-	 * A version holding an empty string for totp or passkeys holds no value either.
+	 * A version holding an empty string for totp or passkeys was recorded while
+	 * the field was empty, so restoring it clears the head's: a seed or passkey
+	 * added after it does not survive, and a deliberate removal comes back.
 	 *
 	 * @return void
 	 */
-	public function testARestoreOfAVersionWithEmptyTotpOrPasskeysKeepsTheHeads(): void {
+	public function testARestoreOfAVersionWithEmptyTotpOrPasskeysClearsTheHeads(): void {
 		$head = $this->restorableHead(totp: '', passkeys: '');
-		$head->setTotp('HEAD_TOTP');
-		$head->setPasskeys('HEAD_PASSKEYS');
+		$head->setTotp('PLANTED_TOTP');
+		$head->setPasskeys('PLANTED_PASSKEYS');
 		$this->mapper->method('insert')->willReturnArgument(0);
 		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
 		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
 
-		$this->assertSame('HEAD_TOTP', $restored->getTotp());
-		$this->assertSame('HEAD_PASSKEYS', $restored->getPasskeys());
-	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysKeepsTheHeads()
+		$this->assertNull($restored->getTotp());
+		$this->assertNull($restored->getPasskeys());
+	}//end testARestoreOfAVersionWithEmptyTotpOrPasskeysClearsTheHeads()
+
+	/**
+	 * A restore writes back old ciphertext: the change time of a TOTP or
+	 * passkeys it changes is cleared, so it does not look rotated, and one it
+	 * writes back as it was keeps its time. The key's age of a row that is not
+	 * flagged moves to the restore, as an edit's does, so expiry, health and
+	 * the compliance bands do not see a two-year-old login as just restored.
+	 *
+	 * @return void
+	 */
+	public function testARestoreClearsTheChangeTimeOfWhatItChanges(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'SAME_PASSKEYS');
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setTotp('CURRENT_TOTP');
+		$head->setPasskeys('SAME_PASSKEYS');
+		$stamp = new DateTime('2026-01-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $stamp);
+		$head->setTotpUpdatedAt(clone $stamp);
+		$head->setPasskeysUpdatedAt(clone $stamp);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('OLD_TOTP', $restored->getTotp());
+		$this->assertGreaterThan($stamp, $restored->getKeyUpdatedAt());
+		$this->assertNull($restored->getTotpUpdatedAt());
+		$this->assertSame($stamp->getTimestamp(), $restored->getPasskeysUpdatedAt()?->getTimestamp());
+	}//end testARestoreClearsTheChangeTimeOfWhatItChanges()
+
+	/**
+	 * A flagged head whose TOTP was rotated after the flag, restored to a
+	 * version from before it: the restored key and TOTP are the exposed ones,
+	 * so a following passkeys-only change leaves the warning standing, and the
+	 * restore proves no rotation for a compromise flag.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAPreCompromiseVersionLeavesTheWarningAndNoRotationProof(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP');
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setTotp('CURRENT_TOTP');
+		$head->setPasskeys('CURRENT_PASSKEYS');
+		$flaggedAt = new DateTime('2026-10-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setTotpUpdatedAt(new DateTime('2026-10-05T00:00:00+00:00'));
+		$head->setPasskeysUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(clone $flaggedAt);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$credentials = new CredentialFields();
+		$this->assertNotNull($restored->getPossiblyCompromisedAt());
+		$this->assertFalse($credentials->provesRotation(secret: $restored, reason: 'suite_compromise', frozen: $flaggedAt));
+		$this->assertFalse($credentials->provesRotation(secret: $restored, reason: 'user_flagged', frozen: $flaggedAt));
+
+		$after = clone $restored;
+		$after->setPasskeys('NEW_PASSKEYS');
+		$credentials->stampChanges(after: $after, before: $restored, now: new DateTime());
+		$this->assertFalse($credentials->answersCompromiseWarning(after: $after, before: $restored));
+	}//end testARestoreOfAPreCompromiseVersionLeavesTheWarningAndNoRotationProof()
+
+	/**
+	 * A flagged secret restored to a version keeps its warning when only the
+	 * TOTP changes afterwards: the passkeys written back are still exposed.
+	 *
+	 * @return void
+	 */
+	public function testAFlaggedSecretRestoredThenGivenANewTotpKeepsItsWarning(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+		$head->setKey('CURRENT_KEY');
+		$head->setTotp('CURRENT_TOTP');
+		$head->setPasskeys('CURRENT_PASSKEYS');
+		$exposedSince = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $exposedSince);
+		$head->setTotpUpdatedAt(clone $exposedSince);
+		$head->setPasskeysUpdatedAt(clone $exposedSince);
+		$head->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		// The next save changes only the TOTP, as SecretService::update() applies it.
+		$credentials = new CredentialFields();
+		$after = clone $restored;
+		$after->setTotp('NEW_TOTP');
+		$credentials->stampChanges(after: $after, before: $restored, now: new DateTime());
+		$this->assertFalse($credentials->answersCompromiseWarning(after: $after, before: $restored));
+	}//end testAFlaggedSecretRestoredThenGivenANewTotpKeepsItsWarning()
+
+	/**
+	 * A restore that writes back the head's own key does not move the key's
+	 * age, so a flagged secret whose exposed key stays live keeps its warning
+	 * when only the TOTP changes afterwards. A restore that changes the key
+	 * does move it.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfTheSameKeyLeavesItsAgeAndTheWarning(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP');
+		$head->setKey('OLD_CIPHERTEXT');
+		$head->setTotp('CURRENT_TOTP');
+		$exposedSince = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $exposedSince);
+		$head->setTotpUpdatedAt(clone $exposedSince);
+		$head->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+		$this->assertSame($exposedSince->getTimestamp(), $restored->getKeyUpdatedAt()?->getTimestamp());
+
+		$credentials = new CredentialFields();
+		$after = clone $restored;
+		$after->setTotp('NEW_TOTP');
+		$credentials->stampChanges(after: $after, before: $restored, now: new DateTime());
+		$this->assertFalse($credentials->answersCompromiseWarning(after: $after, before: $restored));
+	}//end testARestoreOfTheSameKeyLeavesItsAgeAndTheWarning()
+
+	/**
+	 * A restore that changes the key of a flagged row leaves the old key with
+	 * no change time, so it reads as exposed and never counts as a rotation.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAnotherKeyOnAFlaggedRowLeavesItNoAge(): void {
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setKeyUpdatedAt(new DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(new DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertNull($restored->getKeyUpdatedAt());
+	}//end testARestoreOfAnotherKeyOnAFlaggedRowLeavesItNoAge()
+
+	/**
+	 * A restore that changes the key of a row that is not flagged moves the
+	 * key's age to the restore, as before: a long-lived login restored from
+	 * yesterday's version is not suddenly overdue by its creation date.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAnotherKeyOnAnUnflaggedRowMovesItsAge(): void {
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$old = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $old);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertGreaterThan($old, $restored->getKeyUpdatedAt());
+	}//end testARestoreOfAnotherKeyOnAnUnflaggedRowMovesItsAge()
+
+	/**
+	 * The possibly-compromised warning clears once every credential is replaced, but the `suite_compromise` flag
+	 * stays open until the owner marks it rotated. A restore of a version from before the flag in that state writes
+	 * the exposed key back: it gets no change time, so mark-rotated still asks for a rotation.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreUnderAnOpenCompromiseFlagWithTheWarningClearedProvesNoRotation(): void {
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$head->setKeyUpdatedAt(new DateTime('2026-10-05T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(null);
+		$this->flag = $this->openFlag(reason: 'suite_compromise');
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('OLD_CIPHERTEXT', $restored->getKey());
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$flags = new RotationFlagService(flagMapper: $this->flagMapper(), secretMapper: $this->secretMapper);
+		$this->assertSame(
+			['resolved' => false, 'requiresRotation' => true],
+			$flags->markRotated(flagId: 'flag-1', userId: 'alice')
+		);
+	}//end testARestoreUnderAnOpenCompromiseFlagWithTheWarningClearedProvesNoRotation()
+
+	/**
+	 * Only a compromise flag makes a restore read the row as flagged: under an open flag of another reason, or a
+	 * compromise flag already rotated, the restored key gets the time of the restore, as on any unflagged row.
+	 *
+	 * @return void
+	 */
+	public function testARestoreUnderAnotherOrAResolvedFlagMovesTheKeyAge(): void {
+		$resolved = $this->openFlag(reason: 'suite_compromise');
+		$resolved->setStatus('rotated');
+		foreach ([$this->openFlag(reason: 'policy_expiry'), $resolved] as $flag) {
+			$this->flag = $flag;
+			$this->assertFalse($this->service->compromiseFlagOpen(secretId: 'sec-1'));
+		}
+
+		$head = $this->restorableHead();
+		$head->setKey('CURRENT_CIPHERTEXT');
+		$old = new DateTime('2026-09-01T00:00:00+00:00');
+		$head->setKeyUpdatedAt(clone $old);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertGreaterThan($old, $restored->getKeyUpdatedAt());
+	}//end testARestoreUnderAnotherOrAResolvedFlagMovesTheKeyAge()
+
+	/**
+	 * A snapshot records an empty totp or passkeys as `''`, never null, so a
+	 * later restore can tell it from a version made before the fields existed.
+	 *
+	 * @return void
+	 */
+	public function testASnapshotRecordsAnEmptyTotpOrPasskeysAsEmpty(): void {
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$preUpdate = new Secret();
+		$preUpdate->setId('sec-1');
+		$preUpdate->setTotp('TOTP');
+
+		$version = $this->service->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: 'alice');
+
+		$this->assertSame('TOTP', $version->getTotp());
+		$this->assertSame('', $version->getPasskeys());
+	}//end testASnapshotRecordsAnEmptyTotpOrPasskeysAsEmpty()
 
 	/**
 	 * A change of only totp or passkeys is a revision, and a row holding only
@@ -376,6 +653,27 @@ class SecretVersionServiceTest extends TestCase {
 		$this->expectExceptionMessage(Secret::VIEW_ONLY_REFUSAL);
 		$service->restore(versionId: 'v-1', userId: 'alice');
 	}//end testARestoreOfAViewOnlyCopyIsRefusedUntouched()
+
+	/**
+	 * A read-only copy from another organisation has no share target, so the
+	 * view-only guard lets it pass; the restore is still refused before the
+	 * head is snapshotted or written.
+	 *
+	 * @return void
+	 */
+	public function testARestoreOfAReadOnlyCopyIsRefusedUntouched(): void {
+		$head = $this->restorableHead(totp: 'OLD_TOTP', passkeys: 'OLD_PASSKEYS');
+		$head->setReadOnly(true);
+		$head->setTotp('HEAD_TOTP');
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->secretMapper->expects($this->never())->method('insert');
+
+		$this->expectException(ForbiddenException::class);
+		$this->expectExceptionMessage(Secret::READ_ONLY_REFUSAL);
+		$this->service->restore(versionId: 'v-1', userId: 'alice');
+	}//end testARestoreOfAReadOnlyCopyIsRefusedUntouched()
 
 	/**
 	 * A restore chosen on an older head changes nothing.

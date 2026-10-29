@@ -37,6 +37,9 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
 use OCP\IUserManager;
@@ -88,10 +91,14 @@ class FederatedCertificateService {
 	 * @param IOCMDiscoveryService $ocmDiscovery Signed OCM requests to partners
 	 * @param LoggerInterface $logger Warnings about a partner's answer
 	 * @param FederationPartnerMapper $partnerMapper Records the value fields a partner advertises
+	 * @param IEventDispatcher|null $eventDispatcher Audits a change of those value fields
+	 * @param AuditEventFactory $auditEvents Builds the audit events
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; no behaviour.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list, one collaborator per concern.
 	 */
 	public function __construct(
 		private FederationPartnerService $partners,
@@ -103,6 +110,8 @@ class FederatedCertificateService {
 		private IOCMDiscoveryService $ocmDiscovery,
 		private LoggerInterface $logger,
 		private FederationPartnerMapper $partnerMapper,
+		private ?IEventDispatcher $eventDispatcher = null,
+		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -233,21 +242,52 @@ class FederatedCertificateService {
 
 	/**
 	 * Store the value fields a partner advertised in its lookup answer, so a share to it can be refused when it cannot hold them.
+	 * The answer's `valueFields` is not covered by the browser's certificate check, so a change is audited by field
+	 * name, and one that drops a field the partner stored is logged as a warning.
 	 *
 	 * @param FederationPartner $partner The partner that answered
 	 * @param mixed $advertised Its `valueFields`, absent on an older Keepiq
 	 *
 	 * @return list<string> The recorded fields, empty when it advertised none
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	private function recordValueFields(FederationPartner $partner, mixed $advertised): array {
 		$valueFields = new FederatedValueFields();
 		$recorded = $valueFields->toRecord(advertised: $advertised);
-		if ($recorded !== $partner->getValueFields()) {
-			$partner->setValueFields($recorded);
-			$this->partnerMapper->update($partner);
+		$fields = ($valueFields->advertised(advertised: $advertised) ?? []);
+		$previous = $partner->getValueFields();
+		if ($recorded === $previous) {
+			return $fields;
 		}
 
-		return ($valueFields->advertised(advertised: $advertised) ?? []);
+		$partner->setValueFields($recorded);
+		$this->partnerMapper->update($partner);
+
+		$was = ($valueFields->advertised(advertised: json_decode((string)$previous, true)) ?? []);
+		// Absent and [] are distinct on the row but the same list: no change to audit or warn about.
+		if ($was === $fields) {
+			return $fields;
+		}
+
+		$dropped = array_values(array_diff($was, $fields));
+		if ($dropped !== []) {
+			$this->logger->warning(
+				'Keepiq: partner {partner} no longer advertises it stores {fields}; shares carrying them are refused until it does',
+				['partner' => $partner->getBaseUrl(), 'fields' => implode(', ', $dropped)]
+			);
+		}
+
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forSystem(
+				eventType: AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED,
+				objectType: 'federation_partner',
+				objectId: $partner->getId(),
+				metadata: ['partnerId' => $partner->getId(), 'from' => $was, 'to' => $fields],
+			)
+		);
+
+		return $fields;
 	}//end recordValueFields()
 
 	/**

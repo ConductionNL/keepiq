@@ -22,7 +22,6 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\LinkShare;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
@@ -133,7 +132,6 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				shareTargetMapper: $this->shareTargets,
 			),
 		);
@@ -346,7 +344,6 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				shareTargetMapper: $this->shareTargets,
 				grants: new ShareGrantReader(
 					secretMapper: $this->secrets,
@@ -453,7 +450,6 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $secrets,
 				delegationMapper: $this->delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				shareTargetMapper: $this->shareTargets,
 			),
 		);

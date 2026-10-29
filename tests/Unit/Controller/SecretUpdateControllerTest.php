@@ -52,17 +52,14 @@ class SecretUpdateControllerTest extends TestCase {
 	 *
 	 * @param array<string,mixed> $params The request parameters
 	 * @param SecretService|null $service A service to use instead of the mock
-	 * @param bool $nextcloudNull Whether getParam() reads a null as absent, as Nextcloud's Request does
 	 *
 	 * @return SecretUpdateController
 	 */
-	private function controller(array $params, ?SecretService $service = null, bool $nextcloudNull = false): SecretUpdateController {
+	private function controller(array $params, ?SecretService $service = null): SecretUpdateController {
 		$request = $this->createMock(IRequest::class);
+		// As Nextcloud's Request: a JSON null reads as absent.
 		$request->method('getParam')->willReturnCallback(
-			static fn (string $name, $default = null) => match (true) {
-				$nextcloudNull === true => $params[$name] ?? $default,
-				default => array_key_exists($name, $params) ? $params[$name] : $default,
-			}
+			static fn (string $name, $default = null) => $params[$name] ?? $default
 		);
 		$this->secretService = $this->createMock(SecretService::class);
 		$user = $this->createMock(IUser::class);
@@ -87,15 +84,15 @@ class SecretUpdateControllerTest extends TestCase {
 	}//end secret()
 
 	/**
-	 * Only present fields are forwarded; an explicit null clears; the merge
-	 * count is an int.
+	 * Only present fields are forwarded; a null one counts as absent and an
+	 * empty one clears; the merge count is an int.
 	 *
 	 * @return void
 	 */
 	public function testForwardsOnlyThePresentFields(): void {
-		$controller = $this->controller(['name' => 'New', 'login' => null, 'mergedPending' => '2']);
+		$controller = $this->controller(['name' => 'New', 'url' => null, 'login' => '', 'mergedPending' => '2']);
 		$this->secretService->expects($this->once())->method('update')
-			->with('s-1', ['name' => 'New', 'login' => null, 'mergedPending' => 2], 'alice')
+			->with('s-1', ['name' => 'New', 'login' => '', 'mergedPending' => 2], 'alice')
 			->willReturn($this->secret());
 
 		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
@@ -109,13 +106,13 @@ class SecretUpdateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnEmptyTotpOrPasskeysClearsAndANullOneIsLeftOut(): void {
-		$controller = $this->controller(['totp' => 'TOTP-CIPHER', 'passkeys' => ''], nextcloudNull: true);
+		$controller = $this->controller(['totp' => 'TOTP-CIPHER', 'passkeys' => '']);
 		$this->secretService->expects($this->once())->method('update')
 			->with('s-1', ['totp' => 'TOTP-CIPHER', 'passkeys' => ''], 'alice')
 			->willReturn($this->secret());
 		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
 
-		$controller = $this->controller(['key' => 'NEW-CIPHER', 'totp' => null, 'passkeys' => null], nextcloudNull: true);
+		$controller = $this->controller(['key' => 'NEW-CIPHER', 'totp' => null, 'passkeys' => null]);
 		$this->secretService->expects($this->once())->method('update')
 			->with('s-1', ['key' => 'NEW-CIPHER'], 'alice')
 			->willReturn($this->secret());

@@ -188,7 +188,11 @@ class TeamFolderContributionControllerTest extends TestCase {
 				$secret = new Secret();
 				$secret->setId('s9');
 				$secret->setOwnerId('iris');
-				return ['secret' => $secret, 'copies' => 2];
+				return [
+					'secret' => $secret,
+					'copies' => 2,
+					'skipped' => [['sourceSecretId' => 's9', 'targetUserId' => 'jack', 'reason' => 'copy_fields_mismatch']],
+				];
 			}
 		);
 
@@ -196,6 +200,7 @@ class TeamFolderContributionControllerTest extends TestCase {
 		$this->assertSame(201, $ok->getStatus());
 		$this->assertSame('iris', $ok->getData()['secret']['ownerId']);
 		$this->assertSame(2, $ok->getData()['copies']);
+		$this->assertSame('copy_fields_mismatch', $ok->getData()['skipped'][0]['reason']);
 		$this->assertSame(403, $this->controller('jack')->contribute(id: 'tf-ops')->getStatus());
 		$this->assertSame(404, $this->controller('hank')->contribute(id: 'missing')->getStatus());
 		$this->assertSame(400, $this->controller('empty')->contribute(id: 'tf-ops')->getStatus());

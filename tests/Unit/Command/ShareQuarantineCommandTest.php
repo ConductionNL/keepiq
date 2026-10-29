@@ -24,7 +24,6 @@ namespace OCA\Keepiq\Tests\Unit\Command;
 
 use DateTime;
 use OCA\Keepiq\Command\ShareQuarantine;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
@@ -175,7 +174,6 @@ class ShareQuarantineCommandTest extends TestCase {
 			auth: new ShareAuthorizationService(
 				secretMapper: new SecretMapper(db: $this->db),
 				delegationMapper: $delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 				shareTargetMapper: $mapper,
 			),
 			directRegistrar: $this->createMock(DirectShareRegistrar::class),

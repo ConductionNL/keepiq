@@ -454,13 +454,14 @@ class ApplicationSecretsController extends ApplicationApiController {
 
 	/**
 	 * Collect the plaintext-safe metadata + ciphertext fields a write
-	 * request may carry. The server treats every field opaquely.
+	 * request may carry. The server treats every field opaquely. `totp` and
+	 * `passkeys` are passed on only so SecretService refuses them with a 400.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private function writePayload(): array {
 		$payload = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'] as $field) {
+		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'] as $field) {
 			$value = $this->request->getParam($field);
 			if ($value !== null) {
 				$payload[$field] = $value;

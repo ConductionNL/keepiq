@@ -454,7 +454,11 @@ class TeamFolderService {
 	 *                                               encryptedPasskeys
 	 * @param string $userId The caller (the owner or a manager)
 	 *
-	 * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
+	 * @return array{
+	 *   created: int,
+	 *   rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>,
+	 *   skipped: list<array{sourceSecretId: string, targetUserId: string, reason: string}>
+	 * }
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized
 	 *

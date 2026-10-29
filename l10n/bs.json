@@ -1787,6 +1787,11 @@
         "A restored copy came from a share that has ended. It stays read-only.": "Vraćena kopija potječe iz dijeljenja koje je završeno. Ostaje samo za čitanje.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizacija koja je podijelila vraćenu kopiju nije dostupna. Kopija ostaje samo za čitanje i ne prati njihove izmjene.",
         "Recipient at another organisation restored their copy": "Primalac iz druge organizacije vratio je svoju kopiju",
+        "Another organisation changed the fields it stores": "Druga organizacija je promijenila polja koja pohranjuje",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Ove tajne sadrže jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može kopirati, pa ih novi članovi nisu dobili: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Ova prijava sadrži i jednokratni kod ili pristupne ključeve koji su također bili izloženi. Zamijenite svaki od njih i uklonite stare pristupne ključeve umjesto da samo dodajete nove. Upozorenje nestaje kada se svi zamijene.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Ova prijava sadrži jednokratni kod ili pristupne ključeve koje ova verzija Keepiqa još ne može dijeliti, pa nije podijeljena.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Novi član timskog foldera nije dobio prijavu s jednokratnim kodom ili pristupnim ključevima koje ova verzija Keepiqa još ne može kopirati.",
         "_%n passkey_::_%n passkeys_": [
             "%n pristupni ključ",
             "%n pristupna ključa",

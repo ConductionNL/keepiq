@@ -82,7 +82,9 @@ class TeamFolderShareService {
 	 * retried or duplicated chunk never double-shares.
 	 *
 	 * In the returned array, `created` is the number of fan-out shares created
-	 * (skips excluded) and `rows` describes each one.
+	 * (skips excluded), `rows` describes each one and `skipped` names every row
+	 * not created with its reason (see createFanOutShare()), so a client can tell
+	 * a pair it must fix from one that is done.
 	 *
 	 * @param TeamFolder $teamFolder The team folder being fanned out
 	 * @param array<int,array<string,mixed>> $shares Rows of sourceSecretId, targetUserId,
@@ -92,7 +94,11 @@ class TeamFolderShareService {
 	 * @param array<string,bool> $subtreeSecretIds The secret ids inside the folder subtree
 	 * @param string $userId The caller (the folder owner)
 	 *
-	 * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
+	 * @return array{
+	 *   created: int,
+	 *   rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>,
+	 *   skipped: list<array{sourceSecretId: string, targetUserId: string, reason: string}>
+	 * }
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
@@ -103,6 +109,7 @@ class TeamFolderShareService {
 		string $userId,
 	): array {
 		$createdRows = [];
+		$skipped = [];
 		$newRecipients = [];
 
 		$this->db->beginTransaction();
@@ -114,7 +121,12 @@ class TeamFolderShareService {
 					subtreeSecretIds: $subtreeSecretIds,
 					userId: $userId
 				);
-				if ($createdRow === null) {
+				if (is_string($createdRow) === true) {
+					$skipped[] = [
+						'sourceSecretId' => (string)($row['sourceSecretId'] ?? ''),
+						'targetUserId' => (string)($row['targetUserId'] ?? ''),
+						'reason' => $createdRow,
+					];
 					continue;
 				}
 
@@ -145,6 +157,7 @@ class TeamFolderShareService {
 		return [
 			'created' => count($createdRows),
 			'rows' => $createdRows,
+			'skipped' => $skipped,
 		];
 	}//end registerFanOutShares()
 
@@ -277,17 +290,18 @@ class TeamFolderShareService {
 	/**
 	 * Materialise one fan-out share row, or report a skip.
 	 *
-	 * A row is skipped (null) when it is incomplete, when the source secret
-	 * is outside this folder's subtree, when the target is the folder owner,
-	 * when the share already exists, or when the recipient has no active
-	 * encryption suite.
+	 * A row is skipped, with the reason returned, when it is incomplete
+	 * (`incomplete`), when the source secret is outside this folder's subtree
+	 * or the target is the folder owner (`not_in_folder`), when the share
+	 * already exists (`exists`), or when no copy was minted (the reasons of
+	 * RecipientSecretCopyService::create()).
 	 *
 	 * @param TeamFolder $teamFolder The team folder being fanned out
 	 * @param array<string,mixed> $row One {sourceSecretId, targetUserId, encryptedKey, ...} row
 	 * @param array<string,bool> $subtreeSecretIds The secret ids inside the folder subtree
 	 * @param string $userId The caller (the folder owner)
 	 *
-	 * @return array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}|null
+	 * @return array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}|string The created row, or the skip reason
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
@@ -296,13 +310,13 @@ class TeamFolderShareService {
 		array $row,
 		array $subtreeSecretIds,
 		string $userId,
-	): ?array {
+	): array|string {
 		$sourceSecretId = (string)($row['sourceSecretId'] ?? '');
 		$targetUserId = (string)($row['targetUserId'] ?? '');
 		$encryptedKey = (string)($row['encryptedKey'] ?? '');
 
 		if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
-			return null;
+			return 'incomplete';
 		}
 
 		// Only secrets inside this team folder's subtree may carry
@@ -310,7 +324,7 @@ class TeamFolderShareService {
 		if (isset($subtreeSecretIds[$sourceSecretId]) === false
 			|| $targetUserId === $teamFolder->getOwnerId()
 		) {
-			return null;
+			return 'not_in_folder';
 		}
 
 		try {
@@ -318,7 +332,7 @@ class TeamFolderShareService {
 				sourceSecretId: $sourceSecretId,
 				targetUserId: $targetUserId
 			);
-			return null;
+			return 'exists';
 		} catch (DoesNotExistException) {
 			// No existing share — create below.
 		}
@@ -332,9 +346,9 @@ class TeamFolderShareService {
 			encryptedTotp: $this->nullableString(value: $row['encryptedTotp'] ?? null),
 			encryptedPasskeys: $this->nullableString(value: $row['encryptedPasskeys'] ?? null),
 		);
-		if ($copy === null) {
-			// Recipient without an active suite — skipped silently.
-			return null;
+		if (is_string($copy) === true) {
+			// Skipped, so missingPairs() still lists the pair.
+			return $copy;
 		}
 
 		$entity = new ShareTarget();

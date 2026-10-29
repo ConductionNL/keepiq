@@ -292,7 +292,11 @@ class SecretController extends OCSController {
 	 *
 	 * @return \OCA\Keepiq\Db\Secret
 	 *
-	 * @throws InvalidArgumentException When an application-owned secret is sent a totp or passkeys value
+	 * @throws InvalidArgumentException When an application-owned secret is sent a totp or passkeys value, or a field is missing
+	 * @throws NotFoundException When the named folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or a vault policy refuses the write
+	 * @throws SuiteBlockedException When the owner has no active suite
+	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 */
 	private function createOwnedSecret(
 		?string $ownerType,
@@ -301,13 +305,6 @@ class SecretController extends OCSController {
 		string $userId,
 	): \OCA\Keepiq\Db\Secret {
 		if ($ownerType === 'application') {
-			// The application path does not store these fields; refuse rather than drop them.
-			if ($data['totp'] !== null || $data['passkeys'] !== null) {
-				throw new InvalidArgumentException(
-					message: 'totp and passkeys are not supported when ownerType=application'
-				);
-			}
-
 			return $this->secretService->createForApplication(
 				data: $data,
 				applicationId: $ownerId,

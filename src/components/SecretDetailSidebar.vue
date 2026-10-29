@@ -271,11 +271,19 @@
 						)
 					}}
 				</p>
-				<p>
+				<p v-if="!(secret.totp || secret.passkeys)">
 					{{
 						t(
 							'keepiq',
 							'Change it at its source, then save the new value here. Saving a new value clears this warning.',
+						)
+					}}
+				</p>
+				<p v-else>
+					{{
+						t(
+							'keepiq',
+							'This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.',
 						)
 					}}
 				</p>

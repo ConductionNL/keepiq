@@ -135,9 +135,11 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 * the head after any merge write-back, so that one is not mistaken for
 		 * a concurrent change.
 		 *
-		 * A `totp` or `passkeys` the version does not hold (one saved before
-		 * the field existed) is left out, so the row and every copy keep
-		 * theirs, and partner shares get the head's.
+		 * A `totp` or `passkeys` the version holds is restored, and one it
+		 * records as empty (`''`) is cleared on the row and every copy. One it
+		 * does not record at all (`null`, a version saved before the field
+		 * existed) is left out, so the row and every copy keep theirs, and
+		 * partner shares get the head's.
 		 *
 		 * @param {string} versionId The version id.
 		 * @param {string} secretId The owning secret id.
@@ -158,9 +160,17 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				).data
 				const plain = await plainOf(version)
 				const plainDiff = { ...plain, key: plain.key ?? '' }
-				const kept = BLOB_FIELDS.filter((field) => !plain[field])
-				for (const field of kept) {
-					delete plainDiff[field]
+				for (const field of BLOB_FIELDS) {
+					if (plain[field]) {
+						continue
+					}
+					if (version[field] === '') {
+						// Saved empty: the login had none then, so the restore
+						// takes it away.
+						plainDiff[field] = ''
+					} else {
+						delete plainDiff[field]
+					}
 				}
 				const result = await saveShared({
 					id: secretId,

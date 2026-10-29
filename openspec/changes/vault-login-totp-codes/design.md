@@ -43,7 +43,7 @@
 
 **D10. No new Authenticator or Passkey items.** `NOT_CREATABLE_TYPE_NAMES` in `src/utils/secretTypes.js` removes `totp` and `passkey` from the create dialog and the default item type setting; a saved default of either falls back to Login. Existing items keep showing, editing, sharing and filtering.
 
-**D11. A client-side version gate.** `valueFieldsSupported()` compares the `appVersion` initial state with `TOTP_PASSKEYS_FIELDS_SINCE` (placeholder `0.3.12`, kept in step with the backend's `Application::TOTP_PASSKEYS_FIELDS_SINCE` until the release is cut). An `-unstable` build and a missing version pass. The web app is served by its own server, so the gate only guards a mixed deploy; it hides the entry field and the passkey Delete action.
+**D11. The server declares the fields.** `DashboardController::page()` provides the `loginValueFields` initial state, `{since}`, with the backend's `Application::TOTP_PASSKEYS_FIELDS_SINCE`. `valueFieldsSupported()` is true when it is present, and `valueFieldsSince()` supplies the release named when a partner must upgrade, so the web app keeps no version number to hold in step. A page without the state (a mixed deploy) hides the entry field and the passkey Delete action.
 
 **D12. Additional fields named `totp` or `otp` are left alone.** The Bitwarden import has written a login's seed into the additional fields as `totp`. Those fields are no longer read as the seed and keep showing as ordinary fields; moving them into the `totp` field belongs to the guided move of keepiq#1328.
 
@@ -57,7 +57,7 @@ Both fields are RSA-encrypted in the browser with the holder's public key, using
 
 - Keeping the password and the second factor in one item puts both behind the vault key. That is the user's choice, as in every competitor.
 - A seed that is write-only in the UI cannot be read back to set up a second authenticator app. Replace covers the usual case of re-enrolling with a new seed from the site.
-- The version gate uses a placeholder release number until the release is cut; a wrong number would hide the field on a server that has it, or show it on one that does not.
+- `Application::TOTP_PASSKEYS_FIELDS_SINCE` is a placeholder until the release is cut; the web app follows it, so only that one constant needs updating.
 
 ## Deferred
 

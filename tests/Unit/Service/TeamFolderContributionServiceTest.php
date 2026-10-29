@@ -215,6 +215,7 @@ class TeamFolderContributionServiceTest extends TestCase {
 		$this->assertSame('folder-ops', $owner->getFolderId());
 		$this->assertSame('RSA-FOR-IRIS', $owner->getKey());
 		$this->assertSame(2, $result['copies']);
+		$this->assertSame([], $result['skipped']);
 		$copies = array_slice($this->inserted, 1);
 		$this->assertSame(['hank', 'jack'], array_map(static fn ($c) => $c->getOwnerId(), $copies));
 		$this->assertSame(['RSA-FOR-hank', 'RSA-FOR-jack'], array_map(static fn ($c) => $c->getKey(), $copies));
@@ -282,6 +283,29 @@ class TeamFolderContributionServiceTest extends TestCase {
 		$this->assertSame([], $this->inserted);
 		$this->assertSame([], $this->events);
 	}//end testAMemberCopyWithoutTheOwnersTotpOrPasskeysIsRefused()
+
+	/**
+	 * A member copy that carries a TOTP seed or passkeys the owner row does
+	 * not hold would show that member a value the owner does not have:
+	 * refused before anything is stored.
+	 *
+	 * @return void
+	 */
+	public function testAMemberCopyWithATotpOrPasskeysTheOwnerLacksIsRefused(): void {
+		foreach (['encryptedTotp' => 'TOTP-FOR-jack', 'encryptedPasskeys' => 'PASSKEYS-FOR-jack'] as $field => $value) {
+			$attempt = $this->request();
+			$attempt['copies'][1][$field] = $value;
+			try {
+				$this->service->contribute(teamFolderId: 'tf-ops', data: $attempt, userId: 'hank');
+				$this->fail('A member copy with '.$field.' the owner lacks was accepted');
+			} catch (InvalidArgumentException $exception) {
+				$this->assertStringStartsWith('Every member copy must carry', $exception->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->inserted);
+		$this->assertSame([], $this->events);
+	}//end testAMemberCopyWithATotpOrPasskeysTheOwnerLacksIsRefused()
 
 	/**
 	 * Scenario "Read-grade member is refused", and a non-member: nothing stored.

@@ -30,7 +30,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
@@ -55,7 +54,6 @@ class ShareAuthorizationService {
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookups)
 	 * @param SecretDelegationMapper $delegationMapper The Delegation mapper (delegate authorization)
-	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (recipient precondition)
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (write-grade resolution)
 	 * @param ShareTargetMapper|null $shareTargetMapper Resolves a received copy to its source (keepiq#214)
 	 * @param GroupShareMapper|null $groupShareMapper The group shares of a source
@@ -69,7 +67,6 @@ class ShareAuthorizationService {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private SecretDelegationMapper $delegationMapper,
-		private EncryptionSuiteMapper $suiteMapper,
 		private ?TeamFolderService $teamFolderService = null,
 		private ?ShareTargetMapper $shareTargetMapper = null,
 		private ?GroupShareMapper $groupShareMapper = null,
@@ -388,29 +385,4 @@ class ShareAuthorizationService {
 
 		return false;
 	}//end isInSharedGroup()
-
-	/**
-	 * Verify the recipient has an active EncryptionSuite (without it, no
-	 * one can decrypt the share-target row's encrypted Secret copy).
-	 *
-	 * @param string $targetUserId The recipient Nextcloud user ID
-	 *
-	 * @return void
-	 *
-	 * @throws InvalidArgumentException When the recipient has no active suite
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 */
-	public function assertRecipientHasActiveSuite(string $targetUserId): void {
-		try {
-			$this->suiteMapper->findActiveByOwner(
-				ownerType: 'user',
-				ownerId: $targetUserId
-			);
-		} catch (DoesNotExistException) {
-			throw new InvalidArgumentException(
-				message: 'Recipient has no active encryption suite'
-			);
-		}
-	}//end assertRecipientHasActiveSuite()
 }//end class

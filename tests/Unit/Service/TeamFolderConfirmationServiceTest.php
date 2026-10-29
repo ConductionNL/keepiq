@@ -404,6 +404,23 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 	}//end testStaleCopyIsNotOffered()
 
 	/**
+	 * A source whose key a restore changed has no key change time on a flagged row: it counts
+	 * as changed by its last write, so a copy from before the restore is not handed out.
+	 *
+	 * @return void
+	 */
+	public function testACopyFromBeforeARestoreOfTheSourceKeyIsNotOffered(): void {
+		$this->secrets['db-root']->setKeyUpdatedAt(null);
+		$this->secrets['db-root']->setUpdatedAt(new DateTime('2026-09-20'));
+
+		$this->assertSame([], $this->service->pendingConfirmations(userId: 'hank'));
+
+		$this->secrets['copy-hank'] = $this->copy(id: 'copy-hank', owner: 'hank', updatedAt: '2026-09-21');
+
+		$this->assertNotSame([], $this->service->pendingConfirmations(userId: 'hank'));
+	}//end testACopyFromBeforeARestoreOfTheSourceKeyIsNotOffered()
+
+	/**
 	 * An accepted row stores kim's copy, notifies kim and the owner, and
 	 * audits with hank as actor (§2.2, §2.3).
 	 *
@@ -437,7 +454,10 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 	public function testUnsafeRowsAreSkipped(): void {
 		// Scenario "Uncovered user is refused": lee is in no membership row.
 		$this->enabled['lee'] = true;
-		$this->assertSame(0, $this->service->registerShares('tf-ops', [$this->row(target: 'lee')], 'hank')['created']);
+		$refused = $this->service->registerShares('tf-ops', [$this->row(target: 'lee')], 'hank');
+		$this->assertSame(0, $refused['created']);
+		$this->assertSame('lee', $refused['skipped'][0]['targetUserId']);
+		$this->assertSame('not_eligible', $refused['skipped'][0]['reason']);
 
 		// A read member cannot hand a copy on.
 		$this->assertSame(0, $this->service->registerShares('tf-ops', [$this->row(target: 'kim')], 'jack')['created']);

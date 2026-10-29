@@ -33,7 +33,6 @@ import {
 	useFederatedShareStore,
 } from '../../src/store/modules/federatedShare.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
-import { TOTP_PASSKEYS_FIELDS_SINCE } from '../../src/utils/valueFields.js'
 import {
 	echoedCloudId,
 	httpError,
@@ -45,6 +44,14 @@ import {
 	RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM,
 	RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM,
 } from '../vitest/fixtures/rsa-fixtures.js'
+
+/** The release the server declares as the first to store a seed and passkeys. */
+const SINCE = '0.3.12'
+
+vi.mock('@nextcloud/initial-state', () => ({
+	loadState: (app, key, fallback) =>
+		key === 'loginValueFields' ? { since: '0.3.12' } : fallback,
+}))
 
 const F = JSON.parse(
 	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
@@ -202,7 +209,7 @@ describe('a share save reaching a partner', () => {
 		)
 		const text = shareSaveErrorText(result)
 		expect(text).toContain(BOB)
-		expect(text).toContain(TOTP_PASSKEYS_FIELDS_SINCE)
+		expect(text).toContain(SINCE)
 	})
 
 	it('stops the save for passkeys the login gains too', async () => {
@@ -247,7 +254,9 @@ describe('a share save reaching a partner', () => {
 			OLDER,
 			{ totp: SEED },
 			{
-				plainDiff: { totp: 'otpauth://totp/Bank:alice?secret=NEWSEEDNEWSEED22' },
+				plainDiff: {
+					totp: 'otpauth://totp/Bank:alice?secret=NEWSEEDNEWSEED22',
+				},
 				patch: { totp: 'OWN' },
 			},
 		)
@@ -369,7 +378,7 @@ describe('a new federated share', () => {
 		const { shares, result } = await share(OLDER, { totp: SEED })
 
 		expect(result).toBeInstanceOf(PartnerUpgradeRequiredError)
-		expect(result.requiredVersion).toBe(TOTP_PASSKEYS_FIELDS_SINCE)
+		expect(result.requiredVersion).toBe(SINCE)
 		expect(shares).toEqual([])
 		expect(partnerUpgradeText(result)).toContain('Nothing was shared')
 	})
