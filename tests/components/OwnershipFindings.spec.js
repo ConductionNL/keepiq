@@ -176,7 +176,14 @@ describe('OwnershipFindings', () => {
 		const get = axios.get.getMockImplementation()
 		axios.get.mockImplementation(async (url) =>
 			url.endsWith('/secrets/old-login')
-				? { data: { id: 'old-login', key: 'CIPHER', totp: 'T', passkeys: null } }
+				? {
+						data: {
+							id: 'old-login',
+							key: 'CIPHER',
+							totp: 'T',
+							passkeys: null,
+						},
+					}
 				: get(url),
 		)
 		const contribute = vi.spyOn(secretStore, 'contributeSecret')
@@ -198,7 +205,14 @@ describe('OwnershipFindings', () => {
 		const get = axios.get.getMockImplementation()
 		axios.get.mockImplementation(async (url) =>
 			url.endsWith('/secrets/old-login')
-				? { data: { id: 'old-login', key: 'CIPHER', totp: null, passkeys: null } }
+				? {
+						data: {
+							id: 'old-login',
+							key: 'CIPHER',
+							totp: null,
+							passkeys: null,
+						},
+					}
 				: get(url),
 		)
 		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
