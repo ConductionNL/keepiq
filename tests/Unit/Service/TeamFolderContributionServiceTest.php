@@ -215,6 +215,7 @@ class TeamFolderContributionServiceTest extends TestCase {
 		$this->assertSame('folder-ops', $owner->getFolderId());
 		$this->assertSame('RSA-FOR-IRIS', $owner->getKey());
 		$this->assertSame(2, $result['copies']);
+		$this->assertSame([], $result['skipped']);
 		$copies = array_slice($this->inserted, 1);
 		$this->assertSame(['hank', 'jack'], array_map(static fn ($c) => $c->getOwnerId(), $copies));
 		$this->assertSame(['RSA-FOR-hank', 'RSA-FOR-jack'], array_map(static fn ($c) => $c->getKey(), $copies));

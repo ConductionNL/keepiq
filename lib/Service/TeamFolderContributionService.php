@@ -94,7 +94,8 @@ class TeamFolderContributionService {
 	 *                                  copies (rows per member)
 	 * @param string $userId The contributing member
 	 *
-	 * @return array{secret:Secret,copies:int}
+	 * @return array{secret:Secret,copies:int,skipped:list<array{sourceSecretId:string,targetUserId:string,reason:string}>}
+	 *   The member copies written, and those the fan-out skipped with the reason
 	 *
 	 * @throws NotFoundException When the team folder or target folder is unknown
 	 * @throws ForbiddenException When the caller holds no write grade there
@@ -172,7 +173,7 @@ class TeamFolderContributionService {
 			)
 		);
 
-		return ['secret' => $secret, 'copies' => $result['created']];
+		return ['secret' => $secret, 'copies' => $result['created'], 'skipped' => $result['skipped']];
 	}//end contribute()
 
 	/**
