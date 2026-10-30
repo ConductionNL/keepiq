@@ -31,7 +31,7 @@ use OCA\Keepiq\Db\ShareTarget;
 /**
  * The judged state of a share row lookup.
  *
- * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+ * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
 final class ShareRowVerdict {
 
@@ -98,7 +98,7 @@ final class ShareRowVerdict {
 	 *
 	 * @return ShareTarget|null
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function trustedRow(): ?ShareTarget {
 		if ($this->state === self::TRUSTED) {
@@ -116,7 +116,7 @@ final class ShareRowVerdict {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function countsAsCopy(): bool {
 		return in_array($this->state, [self::TRUSTED, self::AMBIGUOUS, self::FOREIGN, self::UNJUDGED], true);

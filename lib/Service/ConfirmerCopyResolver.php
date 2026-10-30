@@ -66,7 +66,7 @@ class ConfirmerCopyResolver {
 	 * @return string|null
 	 *
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function currentWriteCopy(string $sourceId, string $confirmerId): ?string {
 		try {

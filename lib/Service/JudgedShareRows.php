@@ -30,7 +30,7 @@ use OCA\Keepiq\Db\ShareTarget;
 /**
  * A list of share rows with the pending scan's verdict on each.
  *
- * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+ * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
 final class JudgedShareRows {
 
@@ -63,7 +63,7 @@ final class JudgedShareRows {
 	 *
 	 * @return list<ShareTarget>
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function all(): array {
 		return $this->rows;
@@ -77,7 +77,7 @@ final class JudgedShareRows {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function verdict(ShareTarget $row): ?string {
 		$id = (string)$row->getId();
@@ -97,7 +97,7 @@ final class JudgedShareRows {
 	 *
 	 * @return list<ShareTarget>
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function notHeldBack(): array {
 		return array_values(array_filter($this->rows, fn (ShareTarget $row): bool => $this->verdict(row: $row) === null));
@@ -108,7 +108,7 @@ final class JudgedShareRows {
 	 *
 	 * @return list<ShareTarget>
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function heldBack(): array {
 		return array_values(array_filter($this->rows, fn (ShareTarget $row): bool => $this->verdict(row: $row) !== null));

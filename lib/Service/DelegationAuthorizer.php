@@ -166,7 +166,7 @@ class DelegationAuthorizer {
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge that row
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function requirePreExistingShare(string $secretId, string $userId): void {
 		$verdict = $this->rowJudge->forPair(sourceId: $secretId, targetUserId: $userId);

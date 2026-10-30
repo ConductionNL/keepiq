@@ -153,7 +153,7 @@ class ShareWriteContext {
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function writeContext(string $secretId, string $userId): array {
 		$secret = $this->auth->loadSecret(secretId: $secretId);
@@ -208,7 +208,7 @@ class ShareWriteContext {
 	 *
 	 * @throws InvalidArgumentException When the row's source does not exist
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function sourceOf(Secret $secret, ShareRowVerdict $verdict): ?Secret {
 		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {
@@ -246,7 +246,7 @@ class ShareWriteContext {
 	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function ownRowContext(Secret $row, string $userId, bool $unjudged): array {
 		$ends = $row->getAccessExpiresAt();

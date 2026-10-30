@@ -239,7 +239,7 @@ class TeamFolderShareService {
 	 *
 	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertRevocable(string $teamFolderId, ?string $targetUserId = null): void {
 		$rows = $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId);
@@ -263,7 +263,7 @@ class TeamFolderShareService {
 	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeForTeamFolder(string $teamFolderId): int {
 		return $this->revokeOrRefuse(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: null));
@@ -283,7 +283,7 @@ class TeamFolderShareService {
 	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeForMember(string $teamFolderId, string $targetUserId): int {
 		return $this->revokeOrRefuse(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId));
@@ -302,7 +302,7 @@ class TeamFolderShareService {
 	 * @return int Rows revoked
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.2
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function releaseForMember(string $teamFolderId, string $targetUserId): int {
 		return $this->release(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId));
@@ -318,7 +318,7 @@ class TeamFolderShareService {
 	 * @return int Number of derived shares revoked
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeTeamSharesForUser(string $targetUserId): int {
 		$rows = $this->rowJudge->rowsOfTarget(targetUserId: $targetUserId);

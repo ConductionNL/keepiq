@@ -40,7 +40,7 @@ use RecursiveIteratorIterator;
 /**
  * Source-level guard on the share-row finders.
  *
- * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+ * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
 class ShareRowLookupsAreJudgedTest extends TestCase {
 

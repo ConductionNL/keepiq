@@ -138,7 +138,7 @@ class ShareSyncService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function syncUpdate(
 		string $secretId,
@@ -459,7 +459,7 @@ class ShareSyncService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function mayWriteCopy(Secret $source, Secret $copy, ?ShareTarget $shareRow, JudgedShareRows $judged): bool {
 		if ($shareRow !== null && $shareRow->isHeldByTarget(copy: $copy) === true && $judged->verdict(row: $shareRow) === null) {

@@ -87,7 +87,7 @@ class ShareSaveScope {
 	 *   `share_scan_pending` for a share row the pending quarantine scan cannot judge
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function resolve(Secret $row, string $userId): ShareSavePath {
 		$verdict = $this->rowJudge->forCopy(copy: $row);

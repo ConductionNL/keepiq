@@ -188,7 +188,7 @@ class OrgOwnershipGuard {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
 		$state = $this->rowJudge->forCopy(copy: $secret)->state;

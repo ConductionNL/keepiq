@@ -274,7 +274,7 @@ class ShareAuthorizationService {
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the caller's share row
 	 *
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertMayShareOnward(Secret $source, string $userId): void {
 		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
@@ -321,7 +321,7 @@ class ShareAuthorizationService {
 	 *
 	 * @throws InvalidArgumentException When the copy's source cannot be loaded, or its share row cannot be followed
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function sourceOf(Secret $copy, ShareRowVerdict $verdict): Secret {
 		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {

@@ -95,7 +95,7 @@ trait MarksCompromisedSecrets {
 	 * @return Secret
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function resolveTarget(Secret $secret, ?bool &$failed = null, ?bool &$unjudged = null): Secret {
 		try {

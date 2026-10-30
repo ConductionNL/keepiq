@@ -122,7 +122,7 @@ class UseOnlyUseRecorder {
 	 *
 	 * @throws NotFoundException When no share row, or more than one, names the copy
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function usedSecretOf(Secret $copy): string {
 		$verdict = $this->rowJudge->forCopy(copy: $copy);

@@ -44,7 +44,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 /**
  * Judged lookups of share rows.
  *
- * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+ * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
 class ShareRowJudge {
 	/**
@@ -76,7 +76,7 @@ class ShareRowJudge {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function verdict(ShareTarget $row): ?string {
 		if ($row->getQuarantinedAt() !== null) {
@@ -98,7 +98,7 @@ class ShareRowJudge {
 	 *
 	 * @return ShareRowVerdict
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function forCopy(Secret $copy): ShareRowVerdict {
 		try {
@@ -120,7 +120,7 @@ class ShareRowJudge {
 	 *
 	 * @return ShareRowVerdict
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function forCopyId(string $copyId): ShareRowVerdict {
 		$copy = $this->loadCopy(copyId: $copyId);
@@ -140,7 +140,7 @@ class ShareRowJudge {
 	 *
 	 * @return ShareRowVerdict
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function forPair(string $sourceId, string $targetUserId): ShareRowVerdict {
 		try {
@@ -168,7 +168,7 @@ class ShareRowJudge {
 	 *
 	 * @return JudgedShareRows
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function rowsOfSource(string $sourceId): JudgedShareRows {
 		return $this->judgeRows(rows: $this->targets->findBySourceSecret($sourceId));
@@ -181,7 +181,7 @@ class ShareRowJudge {
 	 *
 	 * @return JudgedShareRows
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function rowsOfTarget(string $targetUserId): JudgedShareRows {
 		return $this->judgeRows(rows: $this->targets->findByTargetUser($targetUserId));
@@ -195,7 +195,7 @@ class ShareRowJudge {
 	 *
 	 * @return JudgedShareRows
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function judgeRows(array $rows): JudgedShareRows {
 		return new JudgedShareRows(rows: array_values($rows), judge: fn (ShareTarget $row): ?string => $this->verdict(row: $row));
@@ -209,7 +209,7 @@ class ShareRowJudge {
 	 *
 	 * @return ShareScanPendingException
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function scanPending(string $refusal): ShareScanPendingException {
 		return new ShareScanPendingException(message: $refusal.'; ask an administrator to check that background jobs run');

@@ -135,7 +135,7 @@ class ShareSyncGuards {
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertGroupWrite(
 		ShareSyncService $sync,
@@ -199,7 +199,7 @@ class ShareSyncGuards {
 	 *
 	 * @return JudgedShareRows
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function judgedRowsOf(Secret $source): JudgedShareRows {
 		return $this->rowJudge->rowsOfSource(sourceId: $source->getId());
@@ -224,7 +224,7 @@ class ShareSyncGuards {
 	 *
 	 * @throws ShareScanPendingException When a copy the sync reaches has a row the scan cannot judge
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertCopiesJudged(Secret $source, array $updates, ?string $writesOn, JudgedShareRows $judged): void {
 		$unjudged = $this->liveCopies(source: $source, leaveOut: null, judged: $judged)['unjudged'];
@@ -254,7 +254,7 @@ class ShareSyncGuards {
 	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,unjudged:list<string>}
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function liveCopies(Secret $source, ?string $leaveOut, ?JudgedShareRows $judged = null): array {
 		$copies = [];

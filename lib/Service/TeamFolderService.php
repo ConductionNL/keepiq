@@ -158,7 +158,7 @@ class TeamFolderService {
 	 * @throws ShareScanPendingException When a share row of the folder waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function unshareFolder(string $teamFolderId, string $userId): int {
 		$teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
@@ -347,7 +347,7 @@ class TeamFolderService {
 	 * @throws ShareScanPendingException When a row it would revoke waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function removeMember(string $teamFolderId, string $membershipId, string $userId): int {
 		$membership = $this->membershipToRemove(teamFolderId: $teamFolderId, membershipId: $membershipId, userId: $userId);
@@ -387,7 +387,7 @@ class TeamFolderService {
 	 * @throws InvalidArgumentException On not found / not authorized
 	 *
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function expireMember(string $teamFolderId, string $membershipId, string $ownerId): int {
 		return $this->dropMembership(
@@ -814,7 +814,7 @@ class TeamFolderService {
 	 * @return array<int,array{id:string,name:string,copyId:string|null}>
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function withCallerCopies(array $refs, TeamFolder $teamFolder, string $userId): array {
 		$isOwner = ($teamFolder->getOwnerId() === $userId);

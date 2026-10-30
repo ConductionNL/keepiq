@@ -82,7 +82,7 @@ class ViewOnlyCopyGuard {
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the copy
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertMayChangeValue(Secret $row, array $fields, string $userId): void {
 		if (array_intersect(self::VALUE_FIELDS, $fields) === []) {

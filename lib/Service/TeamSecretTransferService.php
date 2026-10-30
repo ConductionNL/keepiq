@@ -74,7 +74,7 @@ class TeamSecretTransferService {
 	 * @return array{transferred:int,linksTransferred:int,skipped:array<int,string>} What was handed over and skipped
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function transfer(string $leavingUserId, string $successorUserId, string $adminId): array {
 		$transferred = 0;
