@@ -80,6 +80,13 @@ Until this requirement, the only writers were the write-for-application dialog,
 import, and an external recipient filling a secret request — so obtaining one on
 your own secret meant asking a stranger to submit it.
 
+On a copy shared with the user to view only (user-sharing, "View-Only Copies"), the detail view MUST NOT offer Edit and MUST say "Shared with you to view only. Ask its owner for edit rights to change it."; when the edit dialog learns from the write-context that the copy is view-only, it MUST show the same note and keep Save disabled. Offline the copy's grade is not known, so Edit stays available there and the replay refuses the change (offline-edit-queue).
+
+#### Scenario: A view-only copy offers no Edit
+- **GIVEN** a secret shared directly with the user
+- **WHEN** the user opens their copy online
+- **THEN** the detail view MUST NOT show Edit and MUST say that it is shared with them to view only
+
 #### Scenario: Edit a secret's value
 - **WHEN** the user edits a secret, changes the value, and saves
 - **THEN** the browser MUST RSA-encrypt the new value and PUT it

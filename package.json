@@ -4,7 +4,6 @@
   "license": "EUPL-1.2",
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
-    "build:extension": "node browser-extension/build.mjs",
     "check:l10n-js": "node scripts/build-l10n-js.js --check",
     "check:manifest": "node tests/validate-manifest.js",
     "check:schema-l10n": "node scripts/check-schema-l10n.js",
@@ -24,8 +23,7 @@
     "test:l10n:write": "node tests/l10n/check-l10n.js --write",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
-    "watch:extension": "node browser-extension/build.mjs --watch"
+    "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
@@ -52,9 +50,10 @@
     "argon2-browser": "^1.18.0",
     "buffer": "^6.0.3",
     "dexie": "^4.4.6",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "events": "^3.3.0",
     "gridstack": "^12.6.0",
+    "jsqr": "1.4.0",
     "marked": "^12.0.0",
     "path-browserify": "^1.0.1",
     "pinia": "^3.0.3",

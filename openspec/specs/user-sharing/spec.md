@@ -9,9 +9,9 @@
 
 @e2e exclude No user-sharing UI is built in v0.1; all sharing scenarios require the encrypted secret CRUD surface (itself unbuilt) — covered by integration tests, not Playwright UI flows.
 
-A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when either party updates the secret, the change is written back to all copies.
+A user can share a secret with another Nextcloud user or with a Nextcloud user group. Because encryption is asymmetric, sharing works by creating an encrypted copy of the secret using the recipient's public certificate. Both the original and all shared copies stay in sync: when the owner, a delegate or a recipient who holds a write grade on it updates the secret, the change is written back to all copies. Any other recipient's copy is view-only.
 
-Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding them. When members leave a group, their group-derived shares are automatically revoked. Direct shares are always independent of group membership.
+Group sharing expands statically to individual shares at share time. When new members join a group, the owner is notified and asked to approve adding those who don't hold a copy yet. When members leave a group, their group-derived shares are automatically revoked. A direct share is never created or removed by a change in group membership. What its holder may do with their copy does follow membership, though: a holder who is in a group the secret is shared with in full saves for everyone, also when they joined that group after their copy was made. The owner is then told, with nothing to approve (see `sharing-group`).
 
 ## Data Model
 
@@ -22,11 +22,11 @@ Group sharing expands statically to individual shares at share time. When new me
 | `id` | UUID | No | Primary key |
 | `source_secret_id` | FK | No | The original secret being shared |
 | `target_user_id` | string | No | Nextcloud user ID of the recipient |
-| `secret_id` | FK | No | The encrypted copy in the recipient's vault |
+| `secret_id` | FK | No | The encrypted copy in the recipient's vault — server-minted, owned by the recipient, and unique across shares |
 | `group_share_id` | FK | No | Nullable — set if this share was created from a GroupShare; null for direct shares |
 | `created_at` | datetime | No | |
 
-The recipient's copy is itself a full `Secret` row, encrypted with the recipient's EncryptionSuite. The `SecretShare` links the two.
+The recipient's copy is itself a full `Secret` row, encrypted with the recipient's EncryptionSuite. The `SecretShare` links the two. The copy is minted by the server when the share is registered — its owner is always the recipient — so `secret_id` is never a client-supplied value, and a unique index on the column keeps any two shares from pointing at the same copy.
 
 A `group_share_id` allows the system to identify which shares originated from a group share, enabling automatic revocation when a user leaves the group and targeted notifications when a new member joins.
 
@@ -60,7 +60,9 @@ Tracks ownership delegation of a secret. Multiple active delegations per secret 
 ## Requirements
 
 ### Requirement: Share a Secret
-The system MUST allow a user to share a secret they own with another Nextcloud user who has an active EncryptionSuite.
+The system MUST allow a user to share a secret they own with another Nextcloud user who has an active EncryptionSuite. The secret's owner or an ACTIVE delegate of it (SecretDelegation) MAY create the share; no one else can. `register-batch` and group-share create apply the same owner-or-delegate check, so a delegate can create both a direct share and a group share, and a plain recipient can create neither. Delegation does not widen who may share: only an active delegate qualifies.
+
+Both paths share only an ORIGINAL secret as the source. A received copy — a secret that is itself some share target's recipient secret — MUST be refused as a source, which enforces at creation the "Recipients MUST NOT be able to share a secret directly" rule below: a recipient who owns their copy still cannot re-share it. The one exception is a caller who holds the copy and is an active delegate of its source: the copy resolves to the source, and every minted row hangs on the source. A delegate shares with the owner's authority but keeps their own copy's limits, whether they name their copy or the source: when that copy is use-only, expiring or read-only, or when they hold no copy of the source (revoked or expired) or more than one, the direct, group and link paths MUST refuse, so a restricted or ended grant can never mint a full, unrestricted copy. A delegate other than the owner needs at least one grant on the copy that is on its own neither use-only nor expiring; grants are not combined for this, so a full grant that ends plus a permanent use-only one cannot mint a full copy, and a grant past its end date counts for nothing even before the expiry job removes it. The same rules guard changing a restriction: a delegate whose own copy may not be shared onward MUST NOT change any share's restriction (`PATCH /shares/{id}`), and a delegate MUST NOT change a share made to themselves or the restriction of a group share that reaches them. On the link path a delegate may name only their own copy; another recipient's copy is not found. This creation-time refusal covers `register-batch`, group shares and link shares; federation and the team-folder fan-out do not apply it yet, so a plain recipient can still send their full copy out through either (a follow-up).
 
 #### Scenario: Share with valid recipient
 - GIVEN user A owns a secret and user B has an active EncryptionSuite
@@ -68,38 +70,55 @@ The system MUST allow a user to share a secret they own with another Nextcloud u
 - THEN the system MUST create an encrypted copy of the secret in user B's vault using user B's public certificate
 - AND create a SecretShare linking the original to the copy
 
+#### Scenario: Active delegate creates a share
+- GIVEN user A owns a secret and user D holds an active delegation on it
+- WHEN user D registers a direct share or a group share of the secret
+- THEN the system MUST create the share exactly as it would for the owner, minting each recipient's copy server-side
+- AND when D names their own received copy of the secret, the share MUST be created on A's secret, so the minted row's source is A's secret
+- AND a user who is neither the owner nor an active delegate MUST be refused on both paths
+
+#### Scenario: A recipient may not re-share their copy
+- GIVEN user B holds a shared copy of A's secret and is neither the owner nor an active delegate
+- WHEN B uses that copy as the source of a direct share or a group share
+- THEN both paths MUST refuse it, because a received copy is never a share source
+
+#### Scenario: A delegate's restricted copy cannot mint a full copy
+- GIVEN user D holds an active delegation on A's secret but D's own copy of it is use-only, expiring or read-only, or D holds no copy of it, or two, or none of the grants reaching D's copy is unrestricted on its own (for example a full share that ends plus a permanent use-only group share)
+- WHEN D creates a direct share, a group share or a link share of the secret
+- THEN all three paths MUST refuse the share as restricted, so a restricted or ended grant cannot mint a full copy
+
+#### Scenario: A delegate cannot lift a restriction to escape their own
+- GIVEN user D holds an active delegation on A's secret and a use-only copy of it, and user B holds a use-only share of it
+- WHEN D changes the restriction of their own share, or of B's share, through `PATCH /shares/{id}`
+- THEN both changes MUST be refused and both copies MUST stay use-only
+- AND when D's copy is full, D MAY change B's restriction but still MUST NOT change their own
+
 #### Scenario: Share with user without EncryptionSuite
 - GIVEN user B has never opened Keepiq and has no EncryptionSuite
 - WHEN user A attempts to share a secret with user B
 - THEN the system MUST return an error indicating the recipient has no encryption suite
 
+#### Scenario: A copy must carry the source's TOTP seed and passkeys
+@e2e exclude A server-side refusal of a register-batch row; covered by PHPUnit (DirectShareRegistrarTest).
+- GIVEN user A's secret holds a `totp` value and no `passkeys`
+- WHEN a direct share or a group share row for user B leaves out `encryptedTotp`, or carries an `encryptedPasskeys`
+- THEN that row MUST be reported with status `copy_fields_mismatch` and no copy or share row is written
+- AND the other rows of the batch are handled as usual, as with any other per-row status
+
 ### Requirement: Sharing With A New Party Requires A Verified Key Proof
 A session alone MUST NOT be able to add a new party who then receives a secret and every later value of it through sync (keepiq#818). The risky sharing shapes MUST carry a verified vault-key proof (a signature with the caller's active suite key over a single-use, purpose-bound challenge), enforced by `#[VaultKeyProofRequired]` and VaultKeyProofMiddleware:
 
-- `POST /api/v1/secrets/{secretId}/shares` (purpose `share-new-recipient`, bound to `secretId` and `targetUserId`), unless the caller already holds a DIRECT share (no group share, no team folder) of any secret with that recipient. Group and team folder rows do not count, because they are created without a proof.
-- `POST /api/v1/shares/register-batch` (purpose `share-register-batch`), on every call.
+- `POST /api/v1/shares/register-batch` (purpose `share-register-batch`), on every call. This is the only route that creates a user-to-user share: it mints the recipient's copy server-side, so there is no per-recipient exemption — every share carries a proof.
 - `POST /api/v1/secrets/{secretId}/delegations` (purpose `delegation-create`, bound to `secretId` and `delegatedTo`) and `POST /api/v1/secrets/{secretId}/delegations/handover` (purpose `delegation-handover`, bound to `secretId`).
 
-A missing or invalid proof MUST be refused with `428` and `error: key_proof_required` before the share or delegation is written (not `403`: Nextcloud's OCS layer turns a `403` of an OCS controller into an HTTP `200` envelope, so a refused first share read as a success), and audited as `KEY_PROOF_REFUSED`. The exemption MUST fail closed: when it cannot decide, a proof is required. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
-
-#### Scenario: A share to a new recipient without a proof is refused
-@e2e exclude Needs two vault users and a stolen-session request without proof headers; covered by PHPUnit SharingKeyProofGuardTest through the real middleware and controller.
-- GIVEN user A has no direct share with user M
-- WHEN a request on A's session shares a secret with M without a vault-key proof
-- THEN the request MUST be refused with `428` and `error: key_proof_required`
-- AND no share target MUST be written
-
-#### Scenario: A share to a known recipient needs no proof
-@e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on the share store.
-- GIVEN user A already holds a direct share with user B
-- WHEN A shares another secret with B
-- THEN the share MUST be created without a vault-key proof
+A missing or invalid proof MUST be refused with `428` and `error: key_proof_required` before the share or delegation is written (not `403`: Nextcloud's OCS layer turns a `403` of an OCS controller into an HTTP `200` envelope, so a refused first share read as a success), and audited as `KEY_PROOF_REFUSED`. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
 
 #### Scenario: Batch registration and delegations always need a proof
 @e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on BulkShareDialog and the delegation store.
 - GIVEN any user with an unlocked vault
 - WHEN they register a batch of shares, create a delegation or take over a secret as vault admin without a vault-key proof
 - THEN the request MUST be refused with `428` and `error: key_proof_required`
+- AND no share target or delegation MUST be written
 
 ### Requirement: Recipient Shareability Lookup
 Sharing requires the recipient's public certificate, so a client MUST be able to
@@ -191,7 +210,7 @@ The marks MUST come from an endpoint that takes the search term and the user ids
 - WHEN it reaches the endpoint
 - THEN the system MUST refuse it with 400
 ### Requirement: Sync on Update
-When either party updates a shared secret, the change MUST be propagated to all copies.
+When the owner, a delegate, or a recipient who holds a write grade on it updates a shared secret, the change MUST be propagated to all copies. Any other recipient's copy is view-only (see "View-Only Copies"). A sync names the source secret; one that names a received copy MUST be refused, and so MUST a sync that names the same entry twice, whoever writes.
 
 #### Scenario: Owner updates shared secret
 - GIVEN a secret is shared with one or more users
@@ -199,9 +218,32 @@ When either party updates a shared secret, the change MUST be propagated to all 
 - THEN the system MUST re-encrypt the updated value for each recipient and write it to their copy
 
 #### Scenario: Recipient updates shared secret
-- GIVEN a secret has been shared with user B
+@e2e tests/e2e/workflows/share-save.spec.ts
+- GIVEN a secret has been shared with user B, who holds a write grade on it: a `write` or `manage` team-folder grade, or membership of a group the secret is shared with in full (not use-only)
 - WHEN user B updates their copy of the secret
 - THEN the system MUST re-encrypt the updated value for the original owner and all other recipients
+- AND a recipient without a write grade MUST NOT be able to change the value of their copy (see "View-Only Copies")
+
+### Requirement: View-Only Copies
+A received copy is view-only for its holder unless they may write its source: as its owner or a delegate, with an effective `write` or `manage` grade on a team folder that holds it, or as a member of a group the source is shared with through a full group share that has not expired (see `sharing-group`). A team-folder Viewer (`read`), a recipient of a direct share only, and a member of a group whose share is use-only or expired hold view-only copies. The system MUST refuse a change of the value, login or additional fields of a view-only copy and change nothing, whether it comes through `PUT /api/v1/secrets/{id}`, `POST /api/v1/versions/{id}/restore`, `PUT /api/v1/secrets/{id}/sync` or a fill of a secret request for that copy. A field sent with the value already stored is not a change. The update and the restore MUST answer HTTP 428 with `code` and `error` set to `view_only` and the message "Shared with you to view only. Ask its owner for edit rights to change it." A sync starts from the source, so a sync that names any received copy MUST answer 428 with `error` `forbidden`, whatever the holder's grade. A change of any other field, such as the folder, MUST still save. A suite migration re-seals the copy under its holder's new key with values encrypted in their browser; the server can't tell a re-seal from a new value, so it doesn't check it.
+
+The web app MUST read the copy's write-context to tell a view-only copy apart. On a view-only copy it MUST NOT offer Edit, a version restore or asking for new values, MUST say "Shared with you to view only. Ask its owner for edit rights to change it.", and MUST keep moving it to a folder, starring, archiving, tagging and deleting it. Its edit dialog MUST NOT save, so the web app offers no way to change its name or URL either, as on a read-only copy from another organisation. A share-save of a view-only copy MUST be refused in the browser before anything is sent.
+
+#### Scenario: A direct-share recipient cannot change the value
+- GIVEN a secret Alice shared directly with Bob
+- WHEN Bob sends `PUT /api/v1/secrets/{id}` for his copy with a new value
+- THEN the system MUST answer 428 with `error` `view_only` and leave Bob's copy, Alice's secret and every other copy unchanged
+
+#### Scenario: A view-only holder still files their copy
+- GIVEN a secret Alice shared directly with Bob, and a folder of Bob's
+- WHEN Bob moves his copy to that folder and archives it
+- THEN the system MUST store the new folder and the archive, and the value MUST stay as Alice saved it
+
+#### Scenario: A team-folder Viewer sees no Edit
+- GIVEN user V holds a `read` grade on a team folder containing secret S
+- WHEN V opens their copy of S
+- THEN the detail view MUST NOT show Edit, Restore or "Ask for new values"
+- AND it MUST say that the secret is shared with V to view only
 
 ### Requirement: Share with Group (Static Expansion)
 The system MUST allow a secret owner to share a secret with a Nextcloud user group. At the moment of sharing, the system MUST create an individual SecretShare (with `group_share_id` set) for each current member of the group who has an active EncryptionSuite. A GroupShare record MUST be created to track the relationship.
@@ -215,7 +257,7 @@ Members without an active EncryptionSuite are skipped at expansion time. No erro
 - AND a GroupShare record MUST be created for the secret-group pair
 
 ### Requirement: New Group Member — Owner Notification
-When a new user joins a Nextcloud group that has a GroupShare for one or more secrets, the secret owner MUST be notified for each affected secret and asked to approve adding the new member.
+When a new user joins a Nextcloud group that has a GroupShare for one or more secrets, the secret owner MUST be notified for each affected secret and asked to approve adding the new member, unless the new member already holds a copy of that secret (see below).
 
 This follows the same pattern as the share request mechanism: the owner approves or denies; the system acts on their decision.
 
@@ -225,6 +267,34 @@ Notification content:
 
 On approval: a new SecretShare is created for X (with `group_share_id` set), and X is notified of the new share.
 On denial: no share is created. The GroupShare remains active for future members.
+
+A user who already holds a copy of the secret when they join, for example through a direct share, gets no second share and the owner is not asked to approve anything. When joining lets their copy save for everyone, as `sharing-group` requires from the moment they are in the group, the owner MUST instead get the `group_member_gained_write` notification, without Approve or Deny: "*{X}* joined the group *{G}* and can now change *{secret}* for everyone it is shared with. Revoke their share to stop this." It follows the owner's `notify_security` setting, not `notify_group_shares`. When joining gives them nothing, for example because the group share or their copy is use-only, or when they already save for everyone as a delegate or through a team-folder write grade, the owner MUST NOT be notified. A team-folder write grade that comes through the group just joined counts as already granting too. Another group's share MUST NOT count as already granting, even a full, live one, so when one directory sync or a nested group adds the holder to several shared groups at once, the owner MUST be notified for each of them unless an exemption above applies.
+
+#### Scenario: A copy holder who joins a shared group can now change the secret
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testACopyHolderWhoJoinsASharedGroupLaterSavesForEveryone.
+
+- GIVEN group G has a full GroupShare for a secret owned by A, and A shared the secret directly with X
+- WHEN user X joins group G
+- THEN A MUST receive a `group_member_gained_write` notification saying X can now change the secret for everyone, with no actions
+- AND no second SecretShare MUST be created for X
+
+#### Scenario: A copy holder who already saves through another group joins a second shared group
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testACopyHolderWhoAlreadySavesThroughAnotherGroupTellsTheOwner and ::testACopyHolderAddedToTwoSharedGroupsInOneSyncTellsTheOwnerForEach.
+
+- GIVEN groups G and H both have a full GroupShare for a secret owned by A, and X holds a copy and is in group H
+- WHEN user X joins group G
+- THEN A MUST receive a `group_member_gained_write` notification for group G
+
+#### Scenario: A team-folder writer or delegate who holds a copy joins a shared group
+
+@e2e exclude Needs a group membership change on the test instance after the share; covered by PHPUnit GroupMemberWritesForEveryoneTest::testATeamFolderWriterWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing, ::testADelegateWithACopyWhoJoinsASharedGroupTellsTheOwnerNothing and ::testATeamFolderReaderWithACopyWhoJoinsASharedGroupTellsTheOwner.
+
+- GIVEN group G has a full GroupShare for a secret owned by A, and X holds a copy and is a delegate of A or holds a team-folder write grade on the secret
+- WHEN user X joins group G
+- THEN A MUST NOT receive a notification
+- AND when X holds only a team-folder read grade instead, A MUST receive the `group_member_gained_write` notification
 
 #### Scenario: New member joins group
 - GIVEN group G has a GroupShare for a secret owned by A
@@ -236,7 +306,7 @@ On denial: no share is created. The GroupShare remains active for future members
 ### Requirement: Member Leaves Group — Auto-Revocation
 When a user leaves a Nextcloud group, all SecretShares for that user originating from a GroupShare for that group MUST be automatically revoked (deleted), along with the encrypted copies in the user's vault.
 
-Direct shares (where `group_share_id` is null) are unaffected — leaving a group does not remove access granted independently of the group.
+Direct shares (where `group_share_id` is null) are not removed: leaving a group does not remove access granted independently of the group, though the holder loses the right to save for everyone that the group gave them (see `sharing-group`).
 
 #### Scenario: Member leaves group
 - GIVEN user Y has a SecretShare for secret S with `group_share_id` referencing GroupShare for group G
@@ -414,8 +484,93 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 #### Scenario: Revoke share
 - GIVEN a share exists between user A and user B
 - WHEN user A revokes the share
-- THEN the recipient's Secret copy MUST be deleted
-- AND the SecretShare record MUST be removed
+- THEN the recipient's Secret copy MUST be deleted when it is owned by the share's target
+- AND a linked copy that is not owned by the target MUST be left untouched, as a defence-in-depth guard against a mis-linked share
+- AND the SecretShare record MUST be removed in either case
+
+#### Scenario: Revoking a quarantined share is an explicit error
+- GIVEN a share row the GHSA-m5p9 scan quarantined
+- WHEN its source's owner or an active delegate revokes it
+- THEN the system MUST answer `409` with `error: share_quarantined` and touch neither the row nor its copy
+- AND anyone else MUST get the same not-found answer as for a missing share
+
+### Requirement: Planted Share Rows Are Quarantined
+Before GHSA-m5p9-6pw7-pf3g was fixed, a client could link a share row to any secret id, including a secret the target already owned. Rows planted that way MUST be quarantined; the scan never deletes a row or a secret. A quarantined row keeps `quarantined_at` and a `quarantine_reason`, and no runtime lookup in `ShareTargetMapper` or `BulkGrantShareTargetMapper` returns it, so it cannot read, write, delete, sync, delegate or alert through its copy. Only the admin tooling, the scan, the revoke refusal, the GDPR export and backups read quarantined rows.
+
+The scan considers only rows whose copy was created in an earlier second than the row or has a `secret.created` audit entry, and quarantines such a row on the first of three signals that holds, checked in this order:
+- its copy was the source of a share to anyone, created no later than the row, found in `share_targets` or in a `share.granted` audit entry naming the copy as its object (register-batch grants): the attacker learned the copy's id because it was shared with them or an accomplice, and a server-minted copy cannot have been a share source before its row;
+- its copy has a `secret.created` audit entry (object type `secret`), so it was created as a secret of its own, which no server-minted copy is. This applies whatever the timing, so it catches a row planted in the same second as its copy, for example on a secret the attacker contributed to a team folder;
+- its copy was created more than 5 seconds before the row. Every first-party client mints a copy in the same request as its row, which takes well under a second, so the window only absorbs a second boundary or a slow request. A row it catches by mistake comes from a legacy two-step API client, and an admin releases it.
+
+The scan runs once from the upgrade migration and then from the `ShareQuarantineScanJob` background job until one full pass completes. Completion is recorded per scan generation: `share_quarantine_scan_generation` holds the current generation and `share_quarantine_scan_completed` the generation whose pass completed, and the scan is complete only while the two match. A failed pass, or a pass during which the scan was reopened, MUST record nothing and log the reason, so the job retries every 15 minutes and skips rows already quarantined; the upgrade itself MUST NOT fail because of the scan. While the scan is pending, the admin overview MUST show a setup-check warning that planted rows are not quarantined yet and can still be used against other users' secrets. While it is pending, every path that deletes or changes a share row's copy (revoke, the cascade from deleting its source, a group revoke, a member leaving the group, sync, a restriction change and the account-deletion tombstone) MUST first judge a candidate row on the spot, as the scan would. A row a signal catches is quarantined and audited there, and from then on behaves as any quarantined row; so does a row found quarantined when it is judged, even when it was quarantined after the caller loaded it. A candidate no signal catches is handled normally. Judging runs in its own transaction, or a savepoint inside the caller's, so a failed judging query never aborts the caller's operation. When judging fails, the failure is logged as an error and the row's copy MUST NOT be deleted, written, restricted or tombstoned. An owner's request that would touch it answers `409` with `error: share_scan_pending` and changes nothing: revoking the row, changing its restriction, changing its group share's restriction by sharing again, revoking its group share, and deleting (trashing) its source. These requests judge every row before they change anything and run the rest in one transaction, so a judging that fails partway rolls the whole request back; the quarantines the up-front judging made are kept. Only a member leaving the group and a delete nobody can refuse (the trash purge job, request-placeholder cleanup, rolling back a failed request) remove an unjudged row and keep its copy, which then has no share row. A share minted in the same request (`register-batch`, the team-folder fan-out) is never judged: its copy takes its restriction inside the mint transaction, so a use-only or expiring share never gets a full copy. A restriction change of an existing row that cannot be refused (the expiry job, a team-folder membership change) skips a row it cannot judge and sets `share_quarantine_scan_resolve_pending`; once the scan completes, `ShareQuarantineScanJob` resolves every live copy's restriction again and clears the key only after that succeeds and only when no other skip was recorded meanwhile, so a failed or interrupted run leaves it set for the next one. A restore whose archive holds share rows MUST reopen the scan in a new generation before it writes them and MUST run the scan directly after the tables are written, before the attachment blobs and while maintenance mode is still on; a scan that does not complete MUST NOT fail the restore and stays pending for the job. A released row keeps its reason and is never quarantined again.
+
+An admin manages quarantined rows with `occ keepiq:share-quarantine list|release <id> [--force]|drop <id> [--clear-restrictions]`. `list` shows who holds each copy, the copy's use-only flag and access end date and the row's own end date, since a planted row may have written those restrictions onto the target's own secret. `release` restores the row as a live share and MUST be refused while a live share for the same source and target exists. Without `--force` it MUST only release a row whose copy is gone or is held by the row's creator, as every legacy two-step copy was; a copy held by anyone else may be that person's own secret, which a released row would make look like a received copy again. It MUST also be refused unless `--force` is passed for a row quarantined because its copy was shared before the row, for a row whose copy belongs to the recipient (whatever the reason, since revoking the released share would delete it), for a row whose copy is the source of a live share, which a share copy may no longer be, and for a row whose share, linked group share or copy carries an access end date, because the expiry job revokes an ended share and deletes its copy; the refusal lists every reason at once, with the earliest end date. `drop` removes the row and keeps its copy; with `--clear-restrictions` it also clears the copy's `use_only` and `access_expires_at` when the row's recipient holds the copy. A legitimately shared use-only copy looks the same, so on a row quarantined by mistake this leaves the recipient a full copy nobody can revoke. Each quarantine is audited as `share.quarantined`, with the system as actor and the row's source, recipient, copy, reason and the copy's restrictions, and forwarded to the SIEM sinks; each release as `share.quarantine_released`, recording whether it was forced; each drop as `share.quarantine_dropped`, recording whether the copy's restrictions were cleared. A cascade that removes rows by source, target or group share removes quarantined rows too, without touching their copies, and the account-deletion report counts the received rows it removes, quarantined ones included.
+
+#### Scenario: A planted row is inert after the upgrade
+- GIVEN a quarantined row `{source: S_a, target: victim, secret: V}` where V is the victim's own secret
+- WHEN the owner of S_a revokes, syncs, delegates or flags S_a as honey, or the victim edits, reads or shares V
+- THEN V MUST be neither deleted nor written through the row, the victim's edits MUST NOT reach S_a, no alert MUST be raised on S_a, and the victim MUST be able to share V as an original
+
+#### Scenario: A failed scan is retried
+- GIVEN the quarantine scan throws during the upgrade
+- WHEN the next cron run executes `ShareQuarantineScanJob`
+- THEN the scan MUST run again over the rows not yet quarantined and record completion only after a full pass
+
+#### Scenario: A planted row is judged on the spot while the scan is pending
+- GIVEN the quarantine scan has not completed, and a planted row `{source: S_a, target: victim, secret: V}` that a signal catches
+- WHEN S_a's owner revokes the row, deletes S_a, saves it or changes its restriction, the victim leaves the row's group, or S_a's owner deletes their account
+- THEN the row MUST be quarantined and audited as `share.quarantined` on the spot, and V MUST be neither deleted, written, restricted nor tombstoned
+- AND the revoke and a restriction change of the row (`PATCH /shares/{id}`) MUST answer `409` with `error: share_quarantined`
+- AND a restriction change of the row's group share by sharing again MUST go on without the quarantined row, leaving V untouched
+- AND a sync that names V a second time MUST be refused, so V is never written
+
+#### Scenario: A legitimate row is handled normally while the scan is pending
+- GIVEN the quarantine scan has not completed, and a share whose copy was minted in the second before its row, with no signal against it
+- WHEN its source's owner revokes the share or deletes the source
+- THEN the share MUST be revoked and the copy deleted as usual, and nothing MUST be quarantined
+
+#### Scenario: A row the pending scan cannot judge is held back
+- GIVEN the quarantine scan has not completed and judging a candidate row fails
+- WHEN its source's owner revokes it, changes its restriction, changes or revokes its group share, or trashes the source
+- THEN the system MUST answer `409` with `error: share_scan_pending` and change nothing
+- AND when the member leaves the row's group, or the trash purge job deletes the source, the row MUST be removed and its copy kept
+
+#### Scenario: A use-only share minted while judging fails is still use-only
+- GIVEN the quarantine scan has not completed and judging fails
+- WHEN the owner shares a secret use-only through `register-batch`, or a team-folder fan-out mints a copy for a use-only membership
+- THEN the recipient's copy MUST be use-only when the request commits
+
+#### Scenario: Releasing a row caught on the strong signal needs --force
+- GIVEN a row quarantined because its copy was shared before the row
+- WHEN an admin runs `occ keepiq:share-quarantine release <id>` without `--force`
+- THEN the release MUST be refused, the row MUST stay quarantined and nothing MUST be audited
+- AND with `--force` the row MUST be released and the audit entry MUST record `forced: true`
+
+#### Scenario: A restore sets the scan pending again
+- GIVEN the quarantine scan has completed
+- WHEN an admin restores an archive that holds share rows
+- THEN the completion key MUST be cleared before the rows are written and the scan MUST run directly after them, while maintenance mode is still on, also when replacing the attachment blobs fails afterwards
+
+#### Scenario: Releasing a row whose copy anyone but its creator holds needs --force
+- GIVEN a quarantined row whose copy belongs to its recipient, to a third party, or is the source of a live share, whatever its quarantine reason
+- WHEN an admin releases it without `--force`
+- THEN the release MUST be refused, because the copy may be the holder's own secret, which the released row would delete or link to the attacker's source
+- AND a legacy row whose copy is still held by the row's creator, or whose copy is gone, with no other reason, MUST release without `--force`
+
+#### Scenario: A same-second plant on a secret of its own is quarantined
+- GIVEN member A contributed secret T to a team folder owned by B, and a row `{source: S_a, target: B, secret: T}` was created in the same second
+- WHEN the quarantine scan runs
+- THEN the row MUST be quarantined, on the first signal that holds: a member's copy minted from T in that second makes it the first, T's `secret.created` audit entry the second
+
+#### Scenario: A release that would let the expiry job delete the copy needs --force
+- GIVEN a quarantined row whose share, linked group share or copy carries an access end date
+- WHEN an admin releases it without `--force`
+- THEN the release MUST be refused with a message that names the date and points at `drop --clear-restrictions`
+
+#### Scenario: Dropping a planted row can clear the restrictions it wrote
+- GIVEN a quarantined row whose recipient holds the copy, and the copy is use-only or has an access end date
+- WHEN an admin runs `occ keepiq:share-quarantine drop <id> --clear-restrictions`
+- THEN the row MUST be removed, the copy MUST be kept with `use_only` and `access_expires_at` cleared, and the drop audit MUST record that the restrictions were cleared
 
 ## User Stories
 
@@ -423,7 +578,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - As a user, I want changes I make to a shared secret to be visible to my colleagues immediately
 - As a user, I want to revoke a share when a colleague leaves the team
 - As a user, I want to share a secret with an entire team group so that all current members get access at once
-- As a user, I want to be notified when a new member joins a group I shared a secret with, so that I can decide whether to extend access
+- As a user, I want to be notified when a new member joins a group I shared a secret with, so that I can decide whether to give them a copy
 - As a user, I want shares derived from a group to be automatically cleaned up when a member leaves the group
 - As an administrator, I want to take over management of a secret shared with me so that I can handle sharing when the owner is unavailable
 - As a user, I want to delegate ownership of my secret to a trusted colleague so they can manage sharing on my behalf
@@ -435,7 +590,8 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] The recipient receives an encrypted copy in their own vault
 - [ ] The copy is encrypted with the recipient's public certificate — the sender cannot read it after sharing
 - [ ] The recipient receives a Nextcloud notification when a secret is shared with them
-- [ ] Updates by either party propagate to all copies of the shared secret
+- [ ] Updates by the owner, a delegate or a recipient who holds a write grade on it propagate to all copies of the shared secret
+- [ ] A recipient without a write grade cannot change the value of their copy
 - [ ] The original owner can revoke a share at any time
 - [ ] Revoking a share deletes the recipient's copy
 - [ ] Sharing fails with a clear error if the recipient has no EncryptionSuite
@@ -452,7 +608,7 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - [ ] Each group-derived SecretShare references its GroupShare via `group_share_id`
 - [ ] When a new user joins a group, the secret owner receives a notification and must approve before the share is created
 - [ ] When a user leaves a group, all their group-derived SecretShares are automatically revoked
-- [ ] Direct shares (group_share_id = null) are unaffected by group membership changes
+- [ ] Direct shares (group_share_id = null) are not removed by group membership changes
 - [ ] The owner can revoke a GroupShare, cascade-deleting all derived SecretShares
 - [ ] A vault administrator can create a delegation for any secret already shared with them (no owner consent required)
 - [ ] A secret owner can create a delegation for their own secret to any user who already holds a share

@@ -36,11 +36,159 @@ import {
 	sealEntry,
 } from '../../offline/queue.js'
 import { decryptSnapshot, encryptSnapshot } from '../../offline/snapshot.js'
-import { isRefusal } from '../../utils/refusal.js'
+import {
+	notifyOwnerOnly,
+	saveShared,
+	ShareSaveError,
+	shareSaveErrorText,
+	VALUE_FIELDS,
+} from '../../services/shareSave.js'
+import { isRefusal, REFUSAL_STATUS } from '../../utils/refusal.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
 /** The fields whose change fans out to recipients. */
-const SENSITIVE = ['key', 'login', 'additionalFields']
+const SENSITIVE = VALUE_FIELDS
+
+/**
+ * How a replay error settles its entry. A queued entry has no "save without
+ * them", so an unreachable partner, a partner lookup limit that outlasted the
+ * wait or a malformed share save fails the entry instead of holding up every
+ * later one. So does a copy without a write grade, which no retry can save.
+ *
+ * @param {Error|object} e The error.
+ * @return {string} conflict, failed or retry.
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ */
+function replayKind(e) {
+	if (e instanceof ShareSaveError) {
+		return (
+			{
+				stale: 'conflict',
+				partner_unreachable: 'failed',
+				partner_lookup_limit: 'failed',
+				view_only: 'failed',
+				partner_upgrade_required: 'failed',
+			}[e.code] ?? 'retry'
+		)
+	}
+	if (
+		e?.fromShareSave === true
+		&& (e.response?.status === 400
+			|| e.response?.data?.error === 'partner_upgrade_required')
+	) {
+		return 'failed'
+	}
+	return classifyReplayError(e)
+}
+
+/**
+ * The source version keeping a change after a 409 replays on: the one a
+ * share save of a copy names with its `stale` or `stale_source` answer. Null
+ * for an own secret and any other 409; the replay then keeps the source
+ * version the edit was made from.
+ *
+ * @param {object} [answer] The 409's body.
+ * @return {string|null}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+ */
+function conflictSource(answer) {
+	return answer?.error === 'stale' || answer?.error === 'stale_source'
+		? (answer.sourceUpdatedAt ?? null)
+		: null
+}
+
+/**
+ * Why a replayed entry failed, as a code with its details, so it is stored
+ * with the entry and translated only when shown.
+ *
+ * @param {Error|object} e The error.
+ * @return {object} `{ code, partners?, reason?, message? }`.
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ */
+function failureOf(e) {
+	if (e instanceof ShareSaveError && e.code === 'partner_unreachable') {
+		return {
+			code: 'partner_unreachable',
+			partners: e.partners.map((p) => p.recipientCloudId),
+		}
+	}
+	if (
+		e instanceof ShareSaveError
+		&& ['partner_lookup_limit', 'view_only'].includes(e.code)
+	) {
+		return { code: e.code }
+	}
+	if (
+		e?.code === 'partner_upgrade_required'
+		|| e?.response?.data?.error === 'partner_upgrade_required'
+	) {
+		return {
+			code: 'partner_upgrade_required',
+			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
+			requiredVersion: e.response?.data?.requiredVersion ?? null,
+		}
+	}
+	if (e?.fromShareSave === true && e.response?.status === 400) {
+		return { code: 'refused', reason: e.response.data?.error ?? '' }
+	}
+	if (e?.response?.data?.error === 'share_scan_pending') {
+		return {
+			code: 'share_scan_pending',
+			message: e.response.data.message ?? null,
+		}
+	}
+	if (shareSaveErrorText(e) !== null) {
+		return { code: 'not_allowed' }
+	}
+	// The server's own words, already in the user's language.
+	return { code: 'server', message: e?.response?.data?.message ?? null }
+}
+
+/**
+ * The text the failed list shows for a stored failure.
+ *
+ * @param {object|undefined} failure The entry's `failure`.
+ * @return {string|null}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ */
+export function failureText(failure) {
+	switch (failure?.code) {
+		case 'partner_unreachable':
+			return t(
+				'keepiq',
+				'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
+				{ partners: failure.partners.join(', ') },
+			)
+		case 'partner_lookup_limit':
+		case 'view_only':
+			return shareSaveErrorText(new ShareSaveError(failure.code))
+		case 'partner_upgrade_required':
+			return shareSaveErrorText({
+				code: failure.code,
+				partners: (failure.partners ?? []).map((recipientCloudId) => ({
+					recipientCloudId,
+				})),
+				response: { data: { requiredVersion: failure.requiredVersion } },
+			})
+		case 'refused':
+			// The server's code stays stored with the entry; the list shows
+			// words, never the code.
+			return (
+				shareSaveErrorText({
+					fromShareSave: true,
+					response: { status: 400, data: { error: failure.reason } },
+				}) ?? t('keepiq', 'Failed to save secret')
+			)
+		case 'not_allowed':
+			return shareSaveErrorText({
+				fromShareSave: true,
+				response: { status: REFUSAL_STATUS, data: { error: 'not_allowed' } },
+			})
+		default:
+			return failure?.message ?? null
+	}
+}
 
 let lockHookRegistered = false
 
@@ -62,7 +210,7 @@ export const useOfflineStore = defineStore('offline', {
 		entries: [],
 		/** @type {Array<object>} Stored entries sealed under another suite, waiting for the previous password. */
 		foreignEntries: [],
-		/** @type {Object<string, object>} entryId → the server row a 409 returned (memory only). */
+		/** @type {Object<string, object|null>} entryId → the server row a 409 returned, shown in the conflict dialog (memory only). */
 		conflicts: {},
 		/** @type {boolean} Whether a replay is running. */
 		replaying: false,
@@ -279,7 +427,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * holds what an online save would send: own-certificate ciphertext and
 		 * the index fields. It is sealed before it is stored.
 		 *
-		 * @param {object} change { op, secretId, body, baseUpdatedAt }
+		 * @param {object} change { op, secretId, body, baseUpdatedAt, sourceBaseUpdatedAt }
 		 * @return {Promise<object>} The kept entry, or null when it cancelled out.
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
@@ -300,6 +448,7 @@ export const useOfflineStore = defineStore('offline', {
 				op: change.op,
 				secretId: change.secretId,
 				baseUpdatedAt: change.baseUpdatedAt ?? null,
+				sourceBaseUpdatedAt: change.sourceBaseUpdatedAt ?? null,
 				suiteId: session.suiteId,
 				status: 'queued',
 				body: change.body || {},
@@ -335,10 +484,10 @@ export const useOfflineStore = defineStore('offline', {
 
 		/**
 		 * Decrypt a queued body's sensitive fields with the private key, for
-		 * the recipient fan-out, the conflict dialog and copying.
+		 * the share save, the conflict dialog and copying.
 		 *
 		 * @param {object} body The entry body (ciphertext).
-		 * @return {Promise<object>} { key, login, additionalFields } in plain, only those present.
+		 * @return {Promise<object>} { key, login, additionalFields, totp, passkeys } in plain, only those present.
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
 		 */
 		async plaintextOf(body) {
@@ -361,8 +510,9 @@ export const useOfflineStore = defineStore('offline', {
 		/**
 		 * Replay the queue oldest first through the online paths (D2, D5).
 		 * Runs only online with the vault unlocked online. A 409 stops that
-		 * entry for the user's choice, 403 and 404 move it to the failed
-		 * list, a 423 or a network error stops the replay and keeps the rest.
+		 * entry for the user's choice, 403, 404 and a 409 that waits for the
+		 * share quarantine scan move it to the failed list, a 423 or a network
+		 * error stops the replay and keeps the rest.
 		 *
 		 * @return {Promise<{synced: number, stopped: boolean}>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
@@ -407,98 +557,148 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {object} entry The opened entry.
 		 * @return {Promise<string>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async replayOne(entry) {
 			const base = `/apps/keepiq/api/v1/secrets`
-			let saved = null
-			if (entry.status !== 'sync') {
-				try {
-					if (entry.op === 'create') {
-						saved = (await axios.post(generateUrl(base), entry.body))
-							.data
-					} else if (entry.op === 'update') {
-						saved = (
-							await axios.put(
-								generateUrl(`${base}/${entry.secretId}`),
-								{
-									...entry.body,
-									baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
-								},
-							)
-						).data
-					} else {
-						await axios.delete(
-							generateUrl(`${base}/${entry.secretId}`),
-							{
-								params: entry.baseUpdatedAt
-									? { baseUpdatedAt: entry.baseUpdatedAt }
-									: {},
-							},
-						)
-					}
-				} catch (e) {
-					const kind = classifyReplayError(e)
-					if (kind === 'conflict') {
-						this.conflicts = {
-							...this.conflicts,
-							[entry.entryId]: e.response?.data?.current ?? null,
-						}
-						await this.setStatus(entry, 'conflict')
-						return 'conflict'
-					}
-					if (kind === 'failed') {
-						await this.setStatus(entry, 'failed')
-						return 'failed'
-					}
-					return 'retry'
+			try {
+				if (entry.status === 'sync') {
+					return await this.replayPendingSync(entry)
 				}
-			}
-
-			// The recipients, fetched now (D2): only for an update that changed
-			// a value.
-			if (
-				entry.op === 'update'
-				&& SENSITIVE.some((f) => entry.body[f] !== undefined)
-			) {
-				try {
-					await this.fanOut(entry, saved?.updatedAt ?? null)
-				} catch (e) {
-					// The owner row is saved; retry only the recipient step.
-					await this.setStatus(entry, 'sync')
-					return classifyReplayError(e) === 'failed' ? 'failed' : 'retry'
+				if (entry.op === 'create') {
+					await axios.post(generateUrl(base), entry.body)
+				} else if (
+					entry.op === 'update'
+					&& SENSITIVE.some((f) => entry.body[f] !== undefined)
+				) {
+					// Every copy and partner share is encrypted for the holders
+					// of this moment (D2), in the same transaction as the row.
+					await this.shareSave(
+						entry,
+						entry.baseUpdatedAt,
+						entry.body,
+						entry.sourceBaseUpdatedAt ?? null,
+					)
+				} else if (entry.op === 'update') {
+					await axios.put(generateUrl(`${base}/${entry.secretId}`), {
+						...entry.body,
+						baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
+					})
+				} else {
+					await axios.delete(generateUrl(`${base}/${entry.secretId}`), {
+						params: entry.baseUpdatedAt
+							? { baseUpdatedAt: entry.baseUpdatedAt }
+							: {},
+					})
 				}
+			} catch (e) {
+				const kind = replayKind(e)
+				if (kind === 'conflict') {
+					const answer = e.response?.data
+					this.conflicts = {
+						...this.conflicts,
+						[entry.entryId]: answer?.current ?? null,
+					}
+					// Stored with the entry, so keeping the change replays on
+					// this 409's versions, also after a reload.
+					await this.setStatus(
+						{
+							...entry,
+							conflictUpdatedAt: answer?.current?.updatedAt ?? null,
+							conflictSourceUpdatedAt: conflictSource(answer),
+						},
+						'conflict',
+					)
+					return 'conflict'
+				}
+				if (kind === 'failed') {
+					await this.setStatus(entry, 'failed', failureOf(e))
+					return 'failed'
+				}
+				return 'retry'
 			}
 			await this.drop(entry)
 			return 'done'
 		},
 
 		/**
-		 * Run the normal sync-on-update fan-out for a replayed update, with
-		 * the recipient list and certificates fetched at this moment.
+		 * Save a queued value change through the share save.
 		 *
 		 * @param {object} entry The opened entry.
-		 * @param {string|null} updatedAt The owner row's new updatedAt.
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
+		 * @param {string|null} baseUpdatedAt The version the change was made from.
+		 * @param {object} [patch] The own-row patch; the queued body by default.
+		 * @param {string|null} [sourceBaseUpdatedAt] Through a copy, the source version the change was made from; null takes the source version of replay time.
+		 * @return {Promise<object>} The share-save answer.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
-		async fanOut(entry, updatedAt) {
-			const plaintext = await this.plaintextOf(entry.body)
-			const { useShareStore } = await import('./share.js')
-			const shares = useShareStore()
-			// Never reuse a share list loaded for another view.
-			shares.reset()
-			await shares.syncUpdate(entry.secretId, plaintext, updatedAt)
-			await shares.syncAsTeamWriter(entry.secretId, plaintext)
+		async shareSave(
+			entry,
+			baseUpdatedAt,
+			patch = entry.body,
+			sourceBaseUpdatedAt = null,
+		) {
+			const result = await saveShared({
+				id: entry.secretId,
+				plainDiff: await this.plaintextOf(patch),
+				patch,
+				baseUpdatedAt,
+				sourceBaseUpdatedAt,
+			})
+			await notifyOwnerOnly(result)
+			return result
 		},
 
 		/**
-		 * Store a new status for an entry, resealed.
+		 * Finish an entry stored with status `sync`: its row was saved, the
+		 * recipient step was not. When the row still holds the queued value, it
+		 * is saved again with every copy; when it moved on, the newer save
+		 * takes over and the entry is dropped.
 		 *
-		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @param {object} entry The opened entry.
+		 * @return {Promise<string>} done.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
-		async setStatus(entry, status) {
+		async replayPendingSync(entry) {
+			const row = (
+				await axios.get(
+					generateUrl(`/apps/keepiq/api/v1/secrets/${entry.secretId}`),
+				)
+			).data
+			// A `totp` or `passkeys` cleared with `''` is stored as null.
+			const unchanged = SENSITIVE.every(
+				(f) =>
+					entry.body[f] === undefined
+					|| (entry.body[f] || null) === (row[f] || null),
+			)
+			if (unchanged) {
+				// The row already merged those request-filled fields; naming
+				// the count again would drop ones that arrived since.
+				const patch = { ...entry.body }
+				delete patch.mergedPending
+				await this.shareSave(entry, row.updatedAt, patch)
+			}
+			await this.drop(entry)
+			return 'done'
+		},
+
+		/**
+		 * Store a new status for an entry, resealed, with why it failed.
+		 *
+		 * @param {object} entry The opened entry.
+		 * @param {string} status The new status.
+		 * @param {object} [failure] Why it failed; any other status clears it.
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 */
+		async setStatus(entry, status, failure) {
 			const session = useSessionStore()
-			const updated = { ...entry, status }
+			// A `sync` entry's row is already saved: replaying it as a plain
+			// update from its old base would be a false conflict.
+			if (status === 'failed' && entry.status === 'sync') {
+				failure = { ...failure, resumeAs: 'sync' }
+			}
+			const updated = { ...entry, status, failure }
 			await putQueueEntry(await sealEntry(updated, session.certificate))
 			this.entries = this.entries.map((e) =>
 				e.entryId === entry.entryId ? updated : e,
@@ -526,6 +726,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {'mine'|'server'} choice The user's choice.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async resolveConflict(entryId, choice) {
 			const entry = this.entries.find((e) => e.entryId === entryId)
@@ -534,10 +735,20 @@ export const useOfflineStore = defineStore('offline', {
 				await this.drop(entry)
 				return
 			}
-			const current = this.conflicts[entryId]
+			// Read from the entry, not the 409 held in memory, so a reload
+			// changes nothing. Keeping mine overrides only the versions the 409
+			// left: a row or source that moves again before the replay is
+			// refused again. A version the 409 gave none of keeps the entry's.
 			const updated = {
 				...entry,
-				baseUpdatedAt: current?.updatedAt ?? null,
+				baseUpdatedAt:
+					entry.conflictUpdatedAt ?? entry.baseUpdatedAt ?? null,
+				sourceBaseUpdatedAt:
+					entry.conflictSourceUpdatedAt
+					?? entry.sourceBaseUpdatedAt
+					?? null,
+				conflictUpdatedAt: null,
+				conflictSourceUpdatedAt: null,
 				status: 'queued',
 			}
 			const session = useSessionStore()
@@ -558,6 +769,22 @@ export const useOfflineStore = defineStore('offline', {
 		async discardEntry(entryId) {
 			const entry = this.entries.find((e) => e.entryId === entryId)
 			if (entry) await this.drop(entry)
+		},
+
+		/**
+		 * Queue a failed entry again, in the status it failed from, and
+		 * replay, for a failure that can pass on its own, such as a partner
+		 * that could not be reached.
+		 *
+		 * @param {string} entryId The entry.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
+		async retryEntry(entryId) {
+			const entry = this.entries.find((e) => e.entryId === entryId)
+			if (!entry) return
+			await this.setStatus(entry, entry.failure?.resumeAs ?? 'queued')
+			await this.replayQueue()
 		},
 
 		/**

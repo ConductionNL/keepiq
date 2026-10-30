@@ -23,6 +23,9 @@ export function auditEventLabel(eventType) {
 		'folder.deleted_cascade': t('keepiq', 'Folder deleted with contents'),
 		'share.granted': t('keepiq', 'Share granted'),
 		'share.revoked': t('keepiq', 'Share revoked'),
+		'share.quarantined': t('keepiq', 'Share quarantined'),
+		'share.quarantine_released': t('keepiq', 'Quarantined share released'),
+		'share.quarantine_dropped': t('keepiq', 'Quarantined share dropped'),
 		'share.delegated': t('keepiq', 'Ownership delegated'),
 		'share.delegation_reclaimed': t('keepiq', 'Delegation reclaimed'),
 		'link_share.created': t('keepiq', 'Link share created'),
@@ -41,7 +44,7 @@ export function auditEventLabel(eventType) {
 		),
 		'federated_share.suspended': t(
 			'keepiq',
-			'Share with another organisation paused',
+			'Sharing with another organisation stopped',
 		),
 		'federated_share.failed': t(
 			'keepiq',
@@ -74,6 +77,10 @@ export function auditEventLabel(eventType) {
 		'federated_share.recipient_resumed': t(
 			'keepiq',
 			'Recipient at another organisation restored their copy',
+		),
+		'federation_partner.value_fields_changed': t(
+			'keepiq',
+			'Another organisation changed the fields it stores',
 		),
 		'request.created': t('keepiq', 'Secret request created'),
 		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
@@ -124,6 +131,9 @@ export function auditEventOptions() {
 		'folder.deleted_cascade',
 		'share.granted',
 		'share.revoked',
+		'share.quarantined',
+		'share.quarantine_released',
+		'share.quarantine_dropped',
 		'share.delegated',
 		'share.delegation_reclaimed',
 		'link_share.created',
@@ -143,6 +153,7 @@ export function auditEventOptions() {
 		'federated_share.copy_removed',
 		'federated_share.recipient_declined',
 		'federated_share.recipient_resumed',
+		'federation_partner.value_fields_changed',
 		'request.created',
 		'request.fulfilled',
 		'request.re_requested',

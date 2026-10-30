@@ -27,8 +27,10 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
@@ -41,6 +43,7 @@ use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\TeamFolderAuditor;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
@@ -81,6 +84,10 @@ class TeamFolderServiceTest extends TestCase {
 
 	private SecretMapper&MockObject $secretMapper;
 
+	private FederatedShareMapper&MockObject $federatedShareMapper;
+
+	private LinkShareMapper&MockObject $linkShareMapper;
+
 	private ShareTargetMapper&MockObject $shareTargetMapper;
 
 	private BulkGrantShareTargetMapper&MockObject $bulkGrantMapper;
@@ -115,6 +122,8 @@ class TeamFolderServiceTest extends TestCase {
 		$this->memberMapper = $this->createMock(originalClassName: TeamFolderMemberMapper::class);
 		$this->folderMapper = $this->createMock(originalClassName: FolderMapper::class);
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+		$this->federatedShareMapper = $this->createMock(originalClassName: FederatedShareMapper::class);
+		$this->linkShareMapper = $this->createMock(originalClassName: LinkShareMapper::class);
 		$this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
 		$this->bulkGrantMapper = $this->createMock(
 			originalClassName: BulkGrantShareTargetMapper::class
@@ -167,7 +176,12 @@ class TeamFolderServiceTest extends TestCase {
 					memberships: $memberships,
 					shareTargetMapper: $this->shareTargetMapper,
 					delegationMapper: $this->delegationMapper,
-					secretMapper: $this->secretMapper,
+					ownerTransfer: new SecretOwnerTransferService(
+						db: $this->createMock(originalClassName: IDBConnection::class),
+						secretMapper: $this->secretMapper,
+						federatedShares: $this->federatedShareMapper,
+						linkShares: $this->linkShareMapper,
+					),
 				),
 				areas: $this->areaAuthorizer(groupManager: $this->groupManager),
 				logger: $this->createMock(originalClassName: LoggerInterface::class),
@@ -401,6 +415,8 @@ class TeamFolderServiceTest extends TestCase {
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
 		$source->setTypeId('type-login');
+		$source->setTotp('SOURCE-TOTP');
+		$source->setPasskeys('SOURCE-PASSKEYS');
 		$this->secretMapper->method('findByOwner')->willReturn([$source]);
 		$this->secretMapper->method('findById')->willReturn($source);
 
@@ -443,6 +459,8 @@ class TeamFolderServiceTest extends TestCase {
 			'sourceSecretId' => 'sec-1',
 			'targetUserId' => 'bob',
 			'encryptedKey' => 'CIPHERTEXT_PLACEHOLDER',
+			'encryptedTotp' => 'TOTP_PLACEHOLDER',
+			'encryptedPasskeys' => 'PASSKEYS_PLACEHOLDER',
 		];
 
 		$result = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
@@ -456,13 +474,57 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame('tf-1', $insertedTargets[0]->getTeamFolderId());
 		$this->assertCount(1, $insertedCopies);
 		$this->assertSame('bob', $insertedCopies[0]->getOwnerId());
+		$this->assertSame(['TOTP_PLACEHOLDER', 'PASSKEYS_PLACEHOLDER'], [$insertedCopies[0]->getTotp(), $insertedCopies[0]->getPasskeys()]);
 
 		// Retry: the pair now exists → no new rows, count 0.
 		$resultRetry = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
 		$this->assertSame(0, $resultRetry['created']);
 		$this->assertSame([], $resultRetry['rows']);
+		$this->assertSame([['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'exists']], $resultRetry['skipped']);
 		$this->assertCount(1, $insertedTargets);
 	}//end testRegisterFanOutSharesIdempotent()
+
+	/**
+	 * A fan-out row that leaves out the TOTP seed or passkeys the source holds,
+	 * or carries ones it does not, mints no copy, so the pair stays missing.
+	 *
+	 * @return void
+	 */
+	public function testAFanOutRowThatDoesNotMirrorTheSourcesTotpOrPasskeysIsSkipped(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
+
+		$source = new Secret();
+		$source->setId('sec-1');
+		$source->setOwnerType('user');
+		$source->setOwnerId('alice');
+		$source->setTotp('SOURCE-TOTP');
+		$this->secretMapper->method('findByOwner')->willReturn([$source]);
+		$this->secretMapper->method('findById')->willReturn($source);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn(new EncryptionSuite());
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willThrowException(new DoesNotExistException(''));
+		$this->secretMapper->expects($this->never())->method('insert');
+		$this->shareTargetMapper->expects($this->never())->method('insert');
+
+		$rows = [
+			['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K'],
+			['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'encryptedKey' => 'K', 'encryptedTotp' => 'T', 'encryptedPasskeys' => 'P'],
+		];
+		$rows[] = ['sourceSecretId' => 'sec-1', 'targetUserId' => 'dan'];
+		$result = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: $rows, userId: 'alice');
+
+		$this->assertSame(0, $result['created']);
+		$this->assertSame([], $result['rows']);
+		// Each skipped row comes back with its reason, so the client can stop retrying it.
+		$this->assertSame(
+			[
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'copy_fields_mismatch'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'reason' => 'copy_fields_mismatch'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'dan', 'reason' => 'incomplete'],
+			],
+			$result['skipped']
+		);
+	}//end testAFanOutRowThatDoesNotMirrorTheSourcesTotpOrPasskeysIsSkipped()
 
 	/**
 	 * removeMember revokes only the derived copies of users no longer
@@ -618,11 +680,20 @@ class TeamFolderServiceTest extends TestCase {
 		$secretA = new Secret();
 		$secretA->setId('sec-a');
 		$secretA->setName('A');
+		$secretA->setOwnerId('dave');
 		$secretB = new Secret();
 		$secretB->setId('sec-b');
 		$secretB->setName('B');
 		$this->secretMapper->method('findByOwner')->willReturn([$secretA, $secretB]);
-		$this->secretMapper->method('findById')->willThrowException(new DoesNotExistException(''));
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($secretA): Secret {
+				if ($id === 'sec-a') {
+					return $secretA;
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
 
 		// Successor holds a copy of sec-a only.
 		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
@@ -647,6 +718,20 @@ class TeamFolderServiceTest extends TestCase {
 		$this->secretMapper->method('reassignOwner')->willReturnCallback(
 			static function (string $secretId, string $newOwnerId) use (&$reassigned): void {
 				$reassigned[] = [$secretId, $newOwnerId];
+			}
+		);
+		$partnerSharesReassigned = [];
+		$this->federatedShareMapper->method('reassignOwner')->willReturnCallback(
+			static function (string $sourceSecretId, string $ownerId) use (&$partnerSharesReassigned): int {
+				$partnerSharesReassigned[] = [$sourceSecretId, $ownerId];
+				return 1;
+			}
+		);
+		$linkSharesReassigned = [];
+		$this->linkShareMapper->method('reassignCreator')->willReturnCallback(
+			static function (string $secretId, string $fromUserId, string $toUserId) use (&$linkSharesReassigned): int {
+				$linkSharesReassigned[] = [$secretId, $fromUserId, $toUserId];
+				return 1;
 			}
 		);
 
@@ -680,6 +765,10 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertTrue($insertedDelegations[0]->getIsPermanent());
 		$this->assertSame('bob', $insertedDelegations[0]->getDelegatedTo());
 		$this->assertSame([['sec-a', 'bob']], $reassigned);
+		$this->assertSame([['sec-a', 'bob']], $partnerSharesReassigned);
+		$this->assertSame([['sec-a', 'dave', 'bob']], $linkSharesReassigned);
+		// The audit records how many of the leaver's links the successor now holds.
+		$this->assertSame(1, $this->auditEvents[0]->getMetadata()['linkSharesTransferredCount']);
 	}//end testOffboardRevokesAndTransfers()
 
 	/**

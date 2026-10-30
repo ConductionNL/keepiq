@@ -105,24 +105,187 @@ class FederatedShareMapper extends QBMapper {
 	}//end findByPartner()
 
 	/**
-	 * Shares with a notification due for another delivery attempt.
+	 * Hand every share of one source secret to the secret's new owner. The
+	 * share's version stays as it is: its ciphertext did not change.
 	 *
-	 * @param DateTime $now   The current time
-	 * @param int      $limit The most rows to return
+	 * @param string $sourceSecretId The secret that changed owner
+	 * @param string $ownerId        The new owner
+	 *
+	 * @return int The rows handed over
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 */
+	public function reassignOwner(string $sourceSecretId, string $ownerId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('owner_id', $qb->createNamedParameter($ownerId))
+			->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)))
+			->andWhere($qb->expr()->neq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end reassignOwner()
+
+	/**
+	 * Shares with a notification due for another delivery attempt. A share
+	 * that is no longer active is announced nothing but its end: a suspended,
+	 * declined or failed one is left out unless `$ending` is pending on it.
+	 *
+	 * @param DateTime $now    The current time
+	 * @param int      $limit  The most rows to return
+	 * @param string   $ending The notification that ends a share (SHARE_UNSHARED)
 	 *
 	 * @return FederatedShare[]
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
-	public function findDueNotifications(DateTime $now, int $limit): array {
+	public function findDueNotifications(DateTime $now, int $limit, string $ending): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
 			->where($qb->expr()->isNotNull('pending_notification'))
 			->andWhere($qb->expr()->lte('next_notify_at', $qb->createNamedParameter($now, IQueryBuilder::PARAM_DATETIME_MUTABLE)))
+			->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('status', $qb->createNamedParameter(FederatedShare::STATUS_ACTIVE)),
+					$qb->expr()->eq('pending_notification', $qb->createNamedParameter($ending))
+				)
+			)
 			->orderBy('next_notify_at', 'ASC')
 			->setMaxResults($limit);
 
 		return $this->findEntities(query: $qb);
 	}//end findDueNotifications()
+
+	/**
+	 * Write a share's changed fields only while it is still active, so a
+	 * revoke or suspend that landed meanwhile is never overwritten.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 *
+	 * @return int The rows matched: 0 when the share is no longer active
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function updateIfActive(FederatedShare $share): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(FederatedShare::STATUS_ACTIVE)));
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfActive()
+
+	/**
+	 * Write a share's changed fields only while it still has the status it
+	 * was read with and `$ending` is not pending on it, so a revoke that
+	 * landed meanwhile, and its pending unshare, are never overwritten.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 * @param string $status The status it was read with
+	 * @param string $ending The notification that ends a share (SHARE_UNSHARED)
+	 *
+	 * @return int The rows matched: 0 when the share changed meanwhile
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+	 */
+	public function updateIfStatus(FederatedShare $share, string $status, string $ending): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)))
+			->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->isNull('pending_notification'),
+					$qb->expr()->neq('pending_notification', $qb->createNamedParameter($ending))
+				)
+			);
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfStatus()
+
+	/**
+	 * Write the outcome of a delivery attempt only while the row still holds
+	 * the notification, status and version the attempt started from, so it
+	 * never clears or replaces a notification queued meanwhile.
+	 *
+	 * @param FederatedShare $share The share with the outcome set
+	 * @param string $pending The notification that was attempted
+	 * @param string $status The status the attempt started from
+	 * @param DateTime|null $updatedAt The version the attempt started from
+	 *
+	 * @return int The rows matched: 0 when something else was queued meanwhile
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function updateIfUnchanged(FederatedShare $share, string $pending, string $status, ?DateTime $updatedAt): int {
+		$qb = $this->changes(share: $share);
+		$qb->andWhere($qb->expr()->eq('pending_notification', $qb->createNamedParameter($pending)))
+			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)));
+		$version = $qb->expr()->isNull('updated_at');
+		if ($updatedAt !== null) {
+			$version = $qb->expr()->eq('updated_at', $qb->createNamedParameter($updatedAt, IQueryBuilder::PARAM_DATETIME_MUTABLE));
+		}
+
+		$qb->andWhere($version);
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfUnchanged()
+
+	/**
+	 * Delete a share only while the notification is still pending on it.
+	 *
+	 * @param FederatedShare $share The share
+	 * @param string $pending The notification that was delivered
+	 *
+	 * @return int The rows deleted
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 */
+	public function deleteIfPending(FederatedShare $share, string $pending): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
+			->andWhere($qb->expr()->eq('pending_notification', $qb->createNamedParameter($pending)));
+
+		return $qb->executeStatement();
+	}//end deleteIfPending()
+
+	/**
+	 * An UPDATE of the share's changed fields, for its row.
+	 *
+	 * @param FederatedShare $share The share with its changes set
+	 *
+	 * @return IQueryBuilder
+	 */
+	private function changes(FederatedShare $share): IQueryBuilder {
+		$fields = $share->getUpdatedFields();
+		unset($fields['id']);
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName());
+		foreach (array_keys($fields) as $property) {
+			$getter = 'get'.ucfirst($property);
+			$qb->set(
+				$share->propertyToColumn($property),
+				$qb->createNamedParameter(
+					$share->$getter(),
+					$this->getParameterTypeForProperty(entity: $share, property: $property)
+				)
+			);
+		}
+
+		return $qb->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())));
+	}//end changes()
+
+	/**
+	 * Run a conditional update and forget the written changes, so a later
+	 * write of the same entity cannot send an older ciphertext again.
+	 *
+	 * @param IQueryBuilder $qb The update
+	 * @param FederatedShare $share The share it writes
+	 *
+	 * @return int The rows matched
+	 */
+	private function run(IQueryBuilder $qb, FederatedShare $share): int {
+		$rows = $qb->executeStatement();
+		$share->resetUpdatedFields();
+
+		return $rows;
+	}//end run()
 }//end class

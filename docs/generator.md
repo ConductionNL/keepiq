@@ -23,13 +23,13 @@ Choose **Passphrase** in the generator. A passphrase is a row of random words, s
 - **Capitalise each word** starts every word with a capital.
 - **Include a number** adds one digit to one word.
 
-The words come from a list of 7,776 words. The Electronic Frontier Foundation (EFF) published it for passphrases. Each word adds about 13 bits of randomness, so five words give about 64 bits.
+The words come from a list of 7,776 words. The Electronic Frontier Foundation (EFF) published it for passphrases. Keepiq leaves out its four words with a hyphen, such as `t-shirt`, so a passphrase with hyphens always splits back into the same words. Each word adds about 13 bits of randomness, so five words give about 64 bits.
 
 ## When your organisation sets a password policy
 
 Your administrator can set a minimum length and the kinds of characters a generated value must contain. The generator follows the policy by itself:
 
-- A password gets at least the minimum length and every required kind of character.
+- A password gets at least the minimum length and every required kind of character. A minimum length above 128 counts as 128, the longest password the generator makes.
 - A passphrase gets extra words until it is long enough. It gets capitals, a digit or a symbol between the words when the policy asks for them.
 - A pattern that cannot meet the policy is refused, with the reason.
 

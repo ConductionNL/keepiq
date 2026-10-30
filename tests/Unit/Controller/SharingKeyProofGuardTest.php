@@ -169,67 +169,6 @@ class SharingKeyProofGuardTest extends TestCase {
 	}//end params()
 
 	/**
-	 * A direct share to a recipient alice has never shared with is refused
-	 * without a proof, and nothing is shared.
-	 *
-	 * @return void
-	 */
-	public function testAShareToANewRecipientWithoutAProofIsRefused(): void {
-		$this->params(['secretId' => 'sec-1', 'targetUserId' => 'mallory']);
-		$this->shareTargets->method('hasDirectShareBetween')->with('alice', 'mallory')->willReturn(false);
-		$this->shareService->expects($this->never())->method('createShare');
-
-		$response = $this->dispatch(
-			$this->shareController(),
-			'create',
-			['secretId' => 'sec-1', 'targetUserId' => 'mallory', 'recipientSecretId' => 'copy-1']
-		);
-
-		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
-		$this->assertSame('key_proof_required', $response->getData()['error']);
-	}//end testAShareToANewRecipientWithoutAProofIsRefused()
-
-	/**
-	 * A direct share to a recipient alice already shares with directly needs
-	 * no proof: ordinary sharing keeps working on a session.
-	 *
-	 * @return void
-	 */
-	public function testAShareToAKnownRecipientNeedsNoProof(): void {
-		$this->params(['secretId' => 'sec-2', 'targetUserId' => 'bob']);
-		$this->shareTargets->method('hasDirectShareBetween')->with('alice', 'bob')->willReturn(true);
-		$row = new ShareTarget();
-		$this->shareService->expects($this->once())->method('createShare')->willReturn($row);
-
-		$response = $this->dispatch(
-			$this->shareController(),
-			'create',
-			['secretId' => 'sec-2', 'targetUserId' => 'bob', 'recipientSecretId' => 'copy-2']
-		);
-
-		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
-	}//end testAShareToAKnownRecipientNeedsNoProof()
-
-	/**
-	 * A failing recipient lookup does not waive the proof.
-	 *
-	 * @return void
-	 */
-	public function testAFailingRecipientLookupStillNeedsAProof(): void {
-		$this->params(['secretId' => 'sec-1', 'targetUserId' => 'bob']);
-		$this->shareTargets->method('hasDirectShareBetween')->willThrowException(new \RuntimeException('db down'));
-		$this->shareService->expects($this->never())->method('createShare');
-
-		$response = $this->dispatch(
-			$this->shareController(),
-			'create',
-			['secretId' => 'sec-1', 'targetUserId' => 'bob', 'recipientSecretId' => 'copy-1']
-		);
-
-		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
-	}//end testAFailingRecipientLookupStillNeedsAProof()
-
-	/**
 	 * A batch registration is refused without a proof, even to known recipients.
 	 *
 	 * @return void

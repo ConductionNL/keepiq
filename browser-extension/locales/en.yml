@@ -1,0 +1,650 @@
+# The source catalog. Every key here must exist in every other catalog; locales.test.ts checks it.
+# The BCP 47 tag of this catalog, for dates, numbers and `<html lang>`.
+language: en
+extensionDescription: Keepiq for your browser. Fill in logins, passkeys and one-time codes from your Nextcloud vault, end-to-end encrypted.
+commandAutofillLogin: Autofill the last used login
+commandFocusNotificationBar: Go to the Keepiq save bar
+
+errors:
+  insecureUrl: Use https for this server
+  invalidUrl: Enter a valid server URL
+  permissionDenied: Keepiq needs permission to reach {host}
+  unreachable: Could not reach {host}
+  notNextcloud: "{host} does not look like a Nextcloud server"
+  serverError: "{host} is unavailable right now, try again later"
+  unauthorized: Wrong username or app password
+  keepiqMissing: Keepiq is not installed on {host}
+  keepiqOutdated: Keepiq on {host} is too old for this extension, which needs version {version} or later. Ask your administrator to update Keepiq.
+  noActiveSuite: Open the Keepiq web app once and set a master password, then try again
+  unlockBlocked: Your organisation requires two-factor login. Set up a second factor in Nextcloud Settings, Security, then try again
+  duplicate: This account is already added
+  limitReached: Maximum of {count} accounts reached
+  invalidMasterPassword: Invalid master password
+  keyUnreadable: Your vault key in Keepiq could not be read, so this browser can't unlock it. Tell your Keepiq administrator.
+  offlineNoCache: You are offline and this vault has not been synced yet
+  sessionRevoked: Session revoked, please log in again
+  writeLocked: Your vault cannot be changed right now, try again later
+  notResponding: Keepiq is not responding. Reload the extension and reopen this popup.
+  invalidPin:
+    1: Wrong PIN, 1 attempt left
+    n: Wrong PIN, $1 attempts left
+  wrongPin: Wrong PIN
+  pinForgotten: PIN forgotten after too many attempts
+  pinKeyChanged: Your vault key changed. Unlock with your master password.
+  pinTooShort: Use at least {count} characters
+  unknown: Something went wrong
+
+notices:
+  keyChanged: Your vault key changed in Keepiq. Unlock with your current master password.
+
+common:
+  accountOnHost: "{name} on {host}"
+  loading: Loading…
+  back: Back
+  cancel: Cancel
+  logOut: Log out
+  appPassword: App password
+  addAccount: Add account
+  openWebApp: Open the Keepiq web app
+  justNow: just now
+
+titles:
+  accounts: Accounts
+  logInAgain: Log in again
+  unlock: Unlock
+  viewItem: View item
+  newItem: New item
+  editItem: Edit item
+  newSend: New send
+  sendCreated: Send created
+
+tabs:
+  label: Main
+  vault: Vault
+  generator: Generator
+  send: Send
+  settings: Settings
+
+header:
+  popout: Pop out
+  accounts: Accounts, signed in as {name}
+  new: New
+
+unlock:
+  masterPassword: Master password
+  submit: Unlock
+  pin: PIN
+  useMasterPassword: Use master password
+
+logInAgain:
+  submit: Log in
+
+addAccount:
+  serverUrl: Server URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Username
+  hint: Create one under Nextcloud Settings, Security. Never enter your Nextcloud login password here.
+  hintWithLink: "Create one under Nextcloud Settings, Security: {link}. Never enter your Nextcloud login password here."
+  securityLink: open security settings
+
+accounts:
+  active: (active)
+  unlocked: Unlocked
+  locked: Locked
+  loggedOut: Logged out
+  lock: Lock {account}
+  logOut: Log out of {account}
+  lockAll: Lock all
+  logOutAll: Log out all
+  logOutAllQuestion: Log out of every account?
+  logOutAllDetail: Every account is removed from this browser. You will need each app password again.
+  logOutQuestion: Log out of {account}?
+  logOutDetail: The account is removed from this browser. You will need an app password to add it again.
+
+vault:
+  loadFailed: Could not load your vault
+  tryAgain: Try again
+  syncing: Syncing your vault
+  empty: No items in your vault
+  noMatch: No items match
+  searchCovers: Search covers names and websites.
+  clearFilters: Clear filters
+  items: Items
+  tooMany: Showing the first {count}, refine your search
+  offline: Offline. Last synced {time}
+  syncNow: Sync now
+  busy: Server busy, retrying later
+  allBlocked: All items are blocked.
+  suggestions: Autofill suggestions
+  noSuggestions: No items for {host}
+  autofillUnavailable: Autofill is not available on this page
+  fillFailed: Unable to autofill on this page. Copy and paste instead.
+  openFailed: Could not open the website
+  popoutFailed: Could not open a new window
+
+filters:
+  search: Search
+  searchLabel: Search vault
+  clearSearch: Clear search
+  folder: Folder
+  allItems: All items
+  noFolder: No folder
+  type: Type
+  all: All
+  more: More
+  moreTypes: More types
+  login: Login
+  card: Card
+  identity: Identity
+  note: Note
+  totp: TOTP
+  passkey: Passkey
+
+item:
+  blocked: Blocked
+  launch: Launch {name}
+  fill: Fill
+  fillName: Fill {name}
+  insecureTitle: Do you still wish to fill this login?
+  insecureWarning: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page."
+  copyMenu: Copy, {name}
+  moreMenu: More, {name}
+  copyUsername: Copy username
+  copyPassword: Copy password
+  copyCode: Copy verification code
+  view: View
+  edit: Edit
+  clone: Clone
+  move: Move to folder
+  delete: Delete
+  send: Send
+  cloneName: "{name} - Clone"
+  passkeyNoClone: Passkeys cannot be cloned
+  useOnly: Shared with you for signing in only
+  readOnly: Shared from another organisation, so it can only be moved
+  viewOnly: Shared with you to view only. Ask its owner for edit rights to change it.
+  expiringNoClone: Your access ends {date}, so it cannot be cloned
+  expiringNoSend: Your access ends {date}, so it cannot be sent
+  saved: Item saved
+  deleted: Item moved to the trash
+  moved: Moved to {folder}
+  deleteTitle: Delete item
+  deleteConfirm: Move {name} to the trash? It stops being shared, also after a restore from the trash in the Keepiq web app.
+  gone: This item no longer exists
+
+form:
+  itemDetails: Item details
+  type: Type
+  name: Name
+  folder: Folder
+  chooseFolder: Choose a folder, now {folder}
+  website: Website URL
+  autofillOptions: Autofill options
+  additionalOptions: Additional options
+  authenticator: Authenticator
+  note: Note
+  secret: Secret
+  advanced: Advanced
+  algorithm: Algorithm
+  digits: Digits
+  period: Period in seconds
+  addField: Add field
+  fieldName: Field name
+  fieldValue: Value
+  removeField: Remove {name}
+  removeUnnamed: Remove field
+  save: Save
+  passkeyReadOnly: Passkey credentials can only be changed in the Keepiq web app
+  offline: You are offline. Changes need a connection to Keepiq.
+  unsavedTitle: Unsaved changes
+  unsaved: You have unsaved changes. Discard them?
+  discard: Discard
+  keepEditing: Keep editing
+
+fieldErrors:
+  required: Name is required
+  tooLong: At most {max} characters
+  tooLongBytes: Too long (max {max} bytes)
+  reserved: This name is reserved
+  duplicate: A field with this name already exists
+  invalidTotp: Not a valid authenticator secret
+  slash: Folder names cannot contain slashes
+
+writeErrors:
+  writeLocked: Vault is temporarily locked for a key migration, try again later
+  forbidden: Keepiq does not allow this change. The Keepiq web app shows why.
+  policy: Your organisation's policy does not allow this change
+  accountChanged: You switched to another account meanwhile, so nothing was saved. Switch back to save it.
+  keepClash: A folder named {name} already exists one level up. Choose Move items to parent or Delete for it, or rename one of them first.
+  keepClashAfter: A folder you chose to keep has the same name as one a level up, so nothing was deleted. Check the choices again.
+  invalid: Keepiq refused this change
+  stale: This item was changed elsewhere. Go back and edit it again to see the latest version.
+  itemGone: This item no longer exists
+  folderGone: This folder no longer exists
+  duplicateFolder: A folder with this name already exists here
+  folderChanged: This folder changed. Check the choices again.
+  offline: Could not reach the server
+  serverError: Keepiq is unavailable right now, try again later
+  unreadable: Could not read this item, so it cannot be edited here
+  restricted: This item was shared with you with limits, so it cannot be changed or copied here
+  unmatched: Keepiq sent a version of this item that your vault does not hold, so it was not opened.
+  keyMismatch: Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.
+  staleSource: The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.
+  incomplete: The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.
+  badCertificate: Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.
+  unverified: This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.
+  partnerUnreachable: "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+  partnerLookupLimit: Too many partner lookups. Nothing was saved; try again in a minute.
+  federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
+  keepiqOutdated: Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version {version} or later.
+  partnerClock: The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.
+  sendInvalid: Keepiq did not accept this send. Nothing was sent; check the fields and try again.
+  sendOffline: Could not reach the server, nothing was sent
+  argon2Unavailable: Password protection is not available in this browser
+
+shareSave:
+  saveWithout: Save without them
+  ownerOnly: Saved. Recipients at partner organisations get this change when the owner next saves it.
+  suspended: Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.
+  paused: Sharing with {cloudIds} is paused until you share this item with them again.
+
+folders:
+  add: Add folder
+  newFolder: New folder
+  rename: Rename
+  renameTitle: Rename folder
+  delete: Delete
+  more: More, {name}
+  name: Folder name
+  empty: No folders yet
+  notice: Folder names are not encrypted
+  dismiss: Dismiss
+  current: Current folder
+  pickTitle: Choose folder
+  moveTitle: Move to folder
+  saved: Folder saved
+  deleted: Folder deleted
+  deleteTitle: Delete folder
+  deleteConfirm: Delete {name}? This cannot be undone.
+  cascade:
+    1: Delete {name} and its 1 item, or move it to {parent}?
+    n: Delete {name} and its $1 items, or move them to {parent}?
+  countsAll: Archived and trashed items count too.
+  deleteItems: Delete items too
+  moveItems: Move items to parent
+  items:
+    1: 1 item
+    n: $1 items
+  subfolders:
+    1: 1 subfolder
+    n: $1 subfolders
+  directRow: Items in {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Delete
+  actionMove: Move items to parent
+  actionKeep: Keep
+  directMove: Move to parent
+
+clipboard:
+  copied: "{what} copied"
+  failed: Could not copy
+
+field:
+  show: Show {field}
+  hide: Hide {field}
+  copy: Copy {field}
+
+blocked:
+  generic: This item is blocked.
+  suiteMissing: Its encryption key no longer exists.
+  suiteRevoked: Its encryption key was revoked.
+  suiteCompromised: Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.
+  migrationFailed: It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.
+
+detail:
+  item: Item
+  decrypting: Decrypting…
+  decryptFailed: Could not decrypt this item
+  unreadablePasskey: Could not read this passkey
+  unreadableFields: Could not read additional fields
+  loginCredentials: Login credentials
+  username: Username
+  password: Password
+  authenticatorKey: Authenticator key
+  website: Website
+  additionalFields: Additional fields
+  notes: Notes
+  history: Item history
+  created: Created
+  updated: Updated
+  expires: Expires
+  cardDetails: Card details
+  number: Number
+  numberWithBrand: Number · {brand}
+  cardNumber: Card number
+  cardholder: Cardholder
+  expiry: Expiry
+  cvv: CVV
+  pin: PIN
+  identity: Identity
+  firstName: First name
+  lastName: Last name
+  address: Address
+  phone: Phone
+  email: Email
+  bsn: BSN
+  passkey: Passkey
+  relyingParty: Relying party
+  passkeyUser: User name
+  passkeyUnsupported: Signing in with this passkey is not yet supported in the extension
+  useOnly: Its owner doesn't let you view or copy this.
+
+totp:
+  code: Verification code
+  invalid: Invalid authenticator key
+  changesIn:
+    1: Changes in 1 second
+    n: Changes in $1 seconds
+
+settings:
+  accountSecurity: Account security
+  autofill: Autofill
+  notifications: Notifications
+  vault: Vault
+  appearance: Appearance
+  about: About
+  folders: Folders
+  theme: Theme
+  themeSystem: System default
+  themeLight: Light
+  themeDark: Dark
+  comingLater: Coming later
+  setByOrganisation: Set by your organisation
+  turnedOffByOrganisation: Turned off by your organisation
+  never: Never
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Unlock with PIN
+  pinTurnOn: Turn on
+  masterPasswordRequired: Enter your master password
+  pinAgain: Confirm PIN
+  pinMismatch: PINs don't match
+  pinAdvice: Don't reuse a PIN from your phone or bank.
+  pinAfterRestart: After a browser restart you enter your master password once; then your PIN works again.
+  biometrics: Unlock with biometrics
+  notAvailableYet: Not available yet
+  vaultTimeout: Vault timeout
+  timeoutImmediately: Immediately
+  timeoutMinutes:
+    1: 1 minute
+    n: $1 minutes
+  timeoutHours:
+    1: 1 hour
+    n: $1 hours
+  timeoutOnSystemLock: On system lock
+  timeoutOnSystemLockCapped: On system lock, or after {duration} idle (set by your organisation)
+  timeoutOnRestart: On browser restart
+  timeoutCustom: Custom
+  hours: Hours
+  minutes: Minutes
+  customAtLeastOne: Enter at least one minute
+  customWhole: Enter whole hours and minutes
+  customAtMost: Your organisation allows at most {duration}
+  neverTitle: Keep the vault unlocked?
+  neverWarning: Your vault stays unlocked until you lock it by hand. The key that opens it is written to this browser profile's disk, where anyone who can read the profile can read it.
+  neverConfirm: Keep unlocked
+  timeoutAction: Timeout action
+  actionLock: Lock
+  actionLogOutNote: When the timeout ends you are logged out and need the app password again
+  lockNow: Lock now
+  changeMasterPassword: Change master password
+  autofillOnPageLoad: Autofill on page load
+  autofillOnPageLoadWarning: Compromised or untrusted websites can exploit autofill on page load
+  defaultAutofill: Default autofill setting for login items
+  defaultAutofillOnPageLoad: Autofill on page load if enabled
+  uriMatch: Default URI match detection
+  uriBaseDomain: Base domain
+  uriHost: Host
+  uriStartsWith: Starts with
+  uriExact: Exact
+  uriRegex: Regular expression
+  uriRegexNote: Regular expressions are an advanced option and can break matching
+  inlineSuggestions: Show autofill suggestions on form fields
+  defaultPasswordManager: Make Keepiq your default password manager
+  defaultPasswordManagerHint: Turns off the browser's own password saving and address autofill, so its suggestions don't cover Keepiq's.
+  defaultPasswordManagerManaged: Your organisation or another extension manages this browser setting.
+  contextMenu: Enable context menu options
+  shortcut: Autofill keyboard shortcut
+  shortcutNotSet: Not set
+  shortcutChange: Change
+  shortcutFirefox: Open about:addons, choose the gear menu, then Manage Extension Shortcuts
+  clearClipboard: Clear clipboard
+  clipboardSeconds:
+    1: 1 second
+    n: $1 seconds
+  askToAdd: Ask to add login
+  askToUpdate: Ask to update existing login
+  excludedDomains: Excluded domains
+  addCurrentSite: Add current site
+  domain: Domain
+  addDomain: Add
+  domainEmpty: Enter a domain
+  domainUnreadable: Enter a domain such as example.org
+  domainDuplicate: Already excluded
+  removeDomain: Remove {domain}
+  webTitle: Keepiq on the web
+  webText: Keepiq's own notifications, import and export, and your master password are managed in Keepiq on Nextcloud, under Personal settings.
+  openKeepiq: Open Keepiq
+  lastSync: "Last sync: {time}"
+  lastSyncNever: "Last sync: Never"
+  syncOffline: Sync failed, you are offline
+  syncFailed: Sync failed, try again later
+  importItems: Import items
+  exportVault: Export vault
+  defaultItemType: Default item type in this extension
+  compactMode: Compact mode
+  showAnimations: Show animations
+  quickCopy: Show quick copy actions on vault
+  showBadgeCounter: Show number of login autofill suggestions on extension icon
+  language: Language
+  languageFollows: Follows your browser
+  version: Version {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq version unknown
+  help: Help
+  reportBug: Report a bug
+  contactSupport: Contact support
+  privacyPolicy: Privacy policy
+  webApp: Keepiq web app
+  rate: Rate the extension
+
+generator:
+  kinds: What to generate
+  password: Password
+  passphrase: Passphrase
+  username: Username
+  length: Length
+  lengthValue: Length in characters
+  uppercase: Uppercase (A-Z)
+  lowercase: Lowercase (a-z)
+  digits: Numbers (0-9)
+  special: Special characters, such as !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Character types
+  lastClassOn: At least one type stays on
+  minNumbers: Minimum numbers
+  minSpecial: Minimum special
+  avoidAmbiguous: Avoid ambiguous characters
+  lockedByPolicy: Set by your organisation
+  passphraseOff: Turned off by your organisation
+  words: Number of words
+  separator: Word separator
+  capitalizeWords: Capitalize
+  capitalize: Capitalize
+  includeNumber: Include number
+  usernameType: Type
+  typeWord: Random word
+  typePlus: Plus addressed email
+  typeCatchall: Catch-all email
+  email: Email
+  emailPlaceholder: name@example.com
+  domain: Domain
+  domainPlaceholder: example.com
+  basedOn: Based on
+  random: Random
+  websiteName: Website name
+  noWebsite: No website detected
+  needsEmail: Enter an email address
+  needsDomain: Enter a domain
+  wordlistUnavailable: Wordlist unavailable
+  regenerate: Regenerate
+  usePassword: Use this password
+  useUsername: Use this username
+  history: Generator history
+  historyMeta: "{kind}, {time}"
+  historyEmpty: No generated values yet
+  clearHistory: Clear
+  clearHistoryTitle: Clear the generator history?
+  clearHistoryText: This removes every value in the list from this browser.
+  generatePasswordLink: Generate a password
+  generatePassword: Generate password
+  generateUsername: Generate username
+
+send:
+  new: New send
+  empty: No sends yet
+  emptyText: Share text or a login through a link that deletes itself.
+  loadFailed: Could not load your sends
+  retry: Retry
+  labelText: "Text send, {time}"
+  labelCredential: "Credential send, {time}"
+  viewsLeft:
+    1: "{left} of 1 view left"
+    n: "{left} of $1 views left"
+  expires: "Expires {date}"
+  neverExpires: Never expires
+  expired: Expired
+  passwordBadge: Password
+  link: Link
+  copyLink: Copy link
+  copyLinkOf: "Copy link, {name}"
+  linkGone: Link no longer available
+  remove: Remove
+  removeOf: "Remove, {name}"
+  removeTitle: Remove send
+  removeConfirm: Remove this send? Anyone with the link loses access.
+  removed: Send removed
+  contentSection: Content
+  optionsSection: Options
+  type: Type
+  text: Text
+  credential: Credential
+  content: Text to share
+  maxViews: Max views
+  maxViewsRange: "Between 1 and {max}"
+  expiry: Expiry
+  expiry1h: 1 hour
+  expiry1d: 1 day
+  expiry2d: 2 days
+  expiry3d: 3 days
+  expiry7d: 7 days
+  expiry30d: 30 days
+  expiryCustom: Custom
+  customHours: Hours
+  customHoursMin: At least 1 hour
+  customHoursMax: At most 720 hours (30 days)
+  accessPassword: Access password
+  accessPasswordHint: Optional. The recipient needs it to open the send.
+  create: Create
+  protecting: Protecting with password…
+  offline: Sends need a connection to your Keepiq server
+  prefillFailed: Could not read this login
+  ready: Your send is ready
+  shownOnce:
+    1: Copy this link now. It is shown only until you close this window, and the content burns after 1 view.
+    n: Copy this link now. It is shown only until you close this window, and the content burns after $1 views.
+  passwordNote: Share the access password separately from the link. After 5 wrong attempts the send is deleted.
+  done: Done
+
+# Shown in the web page by the content script.
+pageFill:
+  insecure: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page, {host}.\n\nDo you still wish to fill this login?"
+  insecureNoHost: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page.\n\nDo you still wish to fill this login?"
+
+# The "Keepiq" right-click menu on editable fields.
+contextMenu:
+  root: Keepiq
+  autofill: Autofill
+  noMatches: No matching logins
+  openKeepiq: Open Keepiq
+  copyUsername: Copy username
+  copyPassword: Copy password
+  generatePassword: Generate password and copy
+  unlock: Unlock vault
+
+# The toolbar icon's tooltip; {name} is the extension's name.
+toolbar:
+  locked: "{name}: Locked"
+  loggedOut: "{name}: Logged out"
+  count:
+    1: "{name}: 1 login for this site"
+    n: "{name}: $1 logins for this site"
+
+# The list of logins beneath a login field in the web page.
+inlineList:
+  frameTitle: Keepiq logins
+  label: Keepiq logins for {host}
+  row: "{name}, {username}"
+  noMatch: No logins for {host}
+  locked: Keepiq is locked
+  unlock: Unlock
+  insecureQuestion: Fill on this insecure site?
+  insecureDetail: This site is not secure. Anyone on the network could read what is filled in.
+  fill: Fill
+  notVisible: Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar.
+  status:
+    count:
+      1: 1 Keepiq login. Press Down Arrow to choose.
+      n: $1 Keepiq logins. Press Down Arrow to choose.
+    noMatch: No Keepiq logins for {host}
+    locked: Keepiq is locked. Press Down Arrow to unlock.
+
+# The save and update bar at the top of the web page.
+notificationBar:
+  label: Keepiq notification
+  saveQuestion: Save login for {host} to Keepiq?
+  updateQuestion: Update password for {name}?
+  updateQuestionUser: Update password for {name} ({username})?
+  updateQuestionHost: Update password for {name} on {host}?
+  updateQuestionUserHost: Update password for {name} ({username}) on {host}?
+  folder: Folder
+  noFolder: No folder
+  save: Save
+  never: Never for this site
+  update: Update
+  close: Close
+  expand: Show options
+  shortcutHint: Press {shortcut} to answer.
+  saving: Saving…
+  updating: Updating…
+  saved: Login saved
+  updated: Password updated
+  notVisible: Keepiq can't do this here because this page changes how it is shown. Close this and add the login from the Keepiq button in the toolbar.
+  errors:
+    writeLocked: The vault is temporarily locked for changes. Try again later.
+    unverified: Edit this login in the Keepiq popup or web app to change its password.
+    viewOnly: This login is shared with you to view only, so its password can't be updated here.
+    loginGone: This login no longer exists. Save it as a new login?
+    locked: Keepiq is locked. Unlock it from the Keepiq button in the toolbar, then try again.
+    notResponding: Keepiq is not responding. Try again.
+    # Shorter than their `writeErrors` namesakes, so they fit the full-width card without scrolling.
+    accountChanged: You switched accounts, so nothing was saved.
+    keyMismatch: Keepiq's key does not match your vault. Nothing was saved; tell your administrator.
+    staleSource: The original of this shared login changed. Nothing was saved; try again.
+    incomplete: The people this login is shared with kept changing. Nothing was saved; try again.
+    badCertificate: A recipient's encryption key could not be read. Nothing was saved.
+    keepiqOutdated: Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq {version} or later.

@@ -25,6 +25,14 @@ The system MUST allow a folder's owner — and only the owner — to share an ow
 - WHEN they attempt to change its membership
 - THEN the system MUST reject the request with a 403/forbidden response
 
+#### Scenario: The fan-out reports every row it skips
+@e2e exclude The response shape of the fan-out write; covered by PHPUnit (TeamFolderServiceTest, TeamFolderConfirmationServiceTest).
+- GIVEN a fan-out call whose rows include one that cannot be written
+- WHEN the server registers the rows
+- THEN the response MUST keep `created` and `rows` and add `skipped`, one `{sourceSecretId, targetUserId, reason}` per row not written, so a client can stop retrying it
+- AND `reason` MUST be one of `incomplete` (a required field is missing), `not_in_folder` (the source is outside the folder or the target is its owner), `exists` (the share is already there), `not_found` (the source is gone), `no_suite` (the recipient has no active suite), `copy_fields_mismatch` (the row's `encryptedTotp` or `encryptedPasskeys` does not mirror the source's: one the source holds is left out, or one it does not hold is carried) or `not_eligible` (a confirmer's row that fails the confirmer's checks)
+- AND a skipped pair stays in the reconcile's missing pairs
+
 ### Requirement: Inherited access on add, revoked on removal
 The system MUST auto-share a secret to a team folder's current recipients when it is placed in the folder and MUST auto-revoke the folder-derived copies when it is removed or deleted. Fan-out writes MUST be idempotent.
 
@@ -61,13 +69,23 @@ The team folder owner MUST be able to approve one waiting member at a time (keep
 - AND C MUST still be listed as waiting
 
 ### Requirement: Admin offboarding
-The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism.
+The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism. The link shares the leaver holds on a transferred secret pass to the successor with it, in the same transaction; link shares a delegate created stay with that delegate. The system MUST keep the leaver as the maker of a handed-over link share, so a compromise revoke of the leaver still revokes it and one of the successor does not.
 
 #### Scenario: Offboarding revokes and transfers
 - GIVEN a leaving user U who holds derived shares and owns team secrets, and successor S
 - WHEN an administrator runs the offboarding action
 - THEN every derived share held by U MUST be revoked
 - AND each team secret owned by U MUST be transferred to S via a permanent delegation
+
+#### Scenario: The leaver's link shares pass to the successor
+- GIVEN a team secret owned by U with a link share U created and a link share delegate D created
+- WHEN an administrator offboards U with successor S
+- THEN S MUST be able to list and revoke the link share U created
+- AND U MUST no longer be able to list or revoke it
+- AND the link share D created MUST stay with D
+- AND both links MUST keep working for their recipients
+- AND a compromise revoke of U MUST revoke the link share U created
+- AND a compromise revoke of S MUST NOT revoke it
 
 ### Requirement: Auditable without exposing secret material
 The system MUST dispatch typed events for share, unshare, member add, member remove, and offboarding carrying only identifiers — never key material or secret plaintext.
@@ -79,7 +97,7 @@ The system MUST dispatch typed events for share, unshare, member add, member rem
 
 ### Requirement: Offboarding removes the leaver's direct team folder memberships
 
-The admin offboarding action (`POST /api/v1/team-folders/offboard`) MUST, after revoking derived shares and transferring owned team secrets, delete every direct `user` membership row of the leaving user in every team folder. It MUST NOT delete a group membership row. The response MUST report the number of removed rows as `membershipsRemoved` and MUST list each group row that still covers the leaver as `stillCoveredByGroups`. The `TEAM_FOLDER_OFFBOARDED` audit event MUST carry the removed row count and the covering group ids, and no key material.
+The admin offboarding action (`POST /api/v1/team-folders/offboard`) MUST, after revoking derived shares and transferring owned team secrets, delete every direct `user` membership row of the leaving user in every team folder. It MUST NOT delete a group membership row. The response MUST report the number of removed rows as `membershipsRemoved` and MUST list each group row that still covers the leaver as `stillCoveredByGroups`. The `TEAM_FOLDER_OFFBOARDED` audit event MUST carry the removed row count, the covering group ids and the number of link shares handed to the successor, and no key material.
 
 #### Scenario: Direct membership rows are removed
 
@@ -133,6 +151,6 @@ The team folder reconcile (`GET /api/v1/team-folders/{id}/reconcile`) MUST exclu
 ## Notes
 
 - Introduces `keepiq_team_folders` and `keepiq_team_folder_members` tables plus a nullable `team_folder_id` provenance column on the existing share table (parallel to `group_share_id`).
-- Reuses `ShareService::createBatchShares`/`revokeShare`/`syncUpdate`, `GroupShareService` group-expansion/propagation, and `DelegationService::createDelegation`/`makePermanent` — no new crypto.
+- Reuses the server-side recipient-copy minting (`DirectShareRegistrar`/`RecipientSecretCopyFactory`), `revokeShare`/`syncUpdate`, `GroupShareService` group-expansion/propagation, and `DelegationService::createDelegation`/`makePermanent` — no new crypto.
 - Related ADRs: ADR-001 (own tables), ADR-003 (per-recipient RSA, write-without-read, zero-knowledge).
 - Out of scope for v1: shared symmetric folder key, folder co-ownership, per-secret read/write permission grades, subfolder membership narrowing.

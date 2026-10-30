@@ -29,6 +29,7 @@ use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
@@ -77,6 +78,8 @@ class FederatedShareController extends Controller {
 	 * @param string $key The value, encrypted for the recipient
 	 * @param string|null $login The login, encrypted for the recipient
 	 * @param string|null $additionalFields The additional fields, encrypted for the recipient
+	 * @param string|null $totp The TOTP seed, encrypted for the recipient
+	 * @param string|null $passkeys The passkeys, encrypted for the recipient
 	 *
 	 * @NoAdminRequired
 	 *
@@ -94,6 +97,8 @@ class FederatedShareController extends Controller {
 		string $key = '',
 		?string $login = null,
 		?string $additionalFields = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -106,10 +111,18 @@ class FederatedShareController extends Controller {
 				userId: $user->getUID(),
 				recipientCloudId: $recipientCloudId,
 				certFingerprint: $certFingerprint,
-				ciphertext: ['key' => $key, 'login' => $login, 'additionalFields' => $additionalFields],
+				ciphertext: [
+					'key' => $key,
+					'login' => $login,
+					'additionalFields' => $additionalFields,
+					'totp' => $totp,
+					'passkeys' => $passkeys,
+				],
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		} catch (PartnerUpgradeRequiredException $exception) {
+			return $this->upgradeRequired(exception: $exception, shareId: null);
 		} catch (RuntimeException $exception) {
 			return $this->refusal(exception: $exception);
 		}
@@ -153,6 +166,10 @@ class FederatedShareController extends Controller {
 	 * @param string $key The value, encrypted for the recipient
 	 * @param string|null $login The login, encrypted for the recipient
 	 * @param string|null $additionalFields The additional fields, encrypted for the recipient
+	 * @param string|null $totp The TOTP seed, encrypted for the recipient; when not sent at all, the stored one is kept
+	 *   while the certificate fingerprint is unchanged and cleared when it changed
+	 * @param string|null $passkeys The passkeys, encrypted for the recipient; when not sent at all, the stored ones are kept
+	 *   while the certificate fingerprint is unchanged and cleared when it changed
 	 *
 	 * @NoAdminRequired
 	 *
@@ -167,10 +184,22 @@ class FederatedShareController extends Controller {
 		string $key = '',
 		?string $login = null,
 		?string $additionalFields = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$ciphertext = ['key' => $key, 'login' => $login, 'additionalFields' => $additionalFields];
+		// An older client does not send these; the service tells that apart from a null that clears one.
+		$sent = $this->request->getParams();
+		if (array_key_exists('totp', $sent) === true) {
+			$ciphertext['totp'] = $totp;
+		}
+		if (array_key_exists('passkeys', $sent) === true) {
+			$ciphertext['passkeys'] = $passkeys;
 		}
 
 		try {
@@ -178,10 +207,12 @@ class FederatedShareController extends Controller {
 				shareId: $id,
 				userId: $user->getUID(),
 				certFingerprint: $certFingerprint,
-				ciphertext: ['key' => $key, 'login' => $login, 'additionalFields' => $additionalFields],
+				ciphertext: $ciphertext,
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		} catch (PartnerUpgradeRequiredException $exception) {
+			return $this->upgradeRequired(exception: $exception, shareId: $id);
 		} catch (RuntimeException $exception) {
 			return $this->refusal(exception: $exception);
 		}
@@ -264,4 +295,25 @@ class FederatedShareController extends Controller {
 
 		return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
 	}//end refusal()
+
+	/**
+	 * The refusal of a share or update the recipient's instance is too old to hold.
+	 *
+	 * @param PartnerUpgradeRequiredException $exception The refusal
+	 * @param string|null $shareId The federated share, null on a new share
+	 *
+	 * @return JSONResponse
+	 */
+	private function upgradeRequired(PartnerUpgradeRequiredException $exception, ?string $shareId): JSONResponse {
+		$data = [
+			'error' => PartnerUpgradeRequiredException::CODE,
+			'message' => $exception->getMessage(),
+			'requiredVersion' => $exception->getRequiredVersion(),
+		];
+		if ($shareId !== null) {
+			$data['shareId'] = $shareId;
+		}
+
+		return new JSONResponse(data: $data, statusCode: Http::STATUS_CONFLICT);
+	}//end upgradeRequired()
 }//end class

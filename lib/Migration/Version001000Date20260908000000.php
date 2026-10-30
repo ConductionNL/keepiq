@@ -854,6 +854,10 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['created_by', Types::STRING, ['notnull' => true, 'length' => 64]],
 				['created_at', Types::DATETIME, ['notnull' => true]],
 				['team_folder_id', Types::STRING, ['notnull' => false, 'length' => 36]],
+				// GHSA-m5p9-6pw7-pf3g: a quarantined row (quarantined_at set) is
+				// skipped by every runtime path; clearing it restores the row.
+				['quarantined_at', Types::DATETIME, ['notnull' => false]],
+				['quarantine_reason', Types::STRING, ['notnull' => false, 'length' => 255]],
 			],
 			'primary' => ['id'],
 			'indexes' => [
@@ -864,6 +868,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		'share_save_stages' => Version001013Date20261013120000::TABLE,
 		'siem_queue' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

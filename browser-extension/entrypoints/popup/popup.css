@@ -1,0 +1,1994 @@
+/*
+ * `color-scheme: light dark` makes the browser paint its own chrome (scrollbars,
+ * form controls, the popup frame) to match. No webfonts: a popup that waits on a
+ * network request flashes unstyled.
+ */
+:root {
+	color-scheme: light dark;
+	--bg: #f2f4f7;
+	--surface: #ffffff;
+	--surface-hover: #eef1f6;
+	--fg: #1a2130;
+	--fg-muted: #5b6577;
+	--border: #e0e4eb;
+	--border-strong: #c5ccd8;
+	--accent: #21468b;
+	--accent-hover: #1a386f;
+	--accent-fg: #ffffff;
+	--accent-soft: #e6edf9;
+	--logo: #21468b;
+	--danger: #c4291c;
+	--danger-hover: #a52216;
+	--danger-fg: #ffffff;
+	--danger-soft: #fdecea;
+	--warning-fg: #7a4b00;
+	--warning-soft: #fff3d9;
+	--ok: #1f8a3f;
+	--ring: rgb(33 70 139 / 0.3);
+	--radius: 8px;
+	--shadow: 0 4px 16px rgb(16 24 40 / 0.14);
+	/* Spacing that Compact mode tightens (`theme.ts` sets the class). */
+	--body-pad: 20px 16px;
+	--stack-gap: 16px;
+	--control-height: 40px;
+	--row-pad-y: 12px;
+	--item-pad-y: 9px;
+	--card-pad: 14px;
+}
+
+:root.compact {
+	--body-pad: 12px 12px;
+	--stack-gap: 10px;
+	--control-height: 34px;
+	--row-pad-y: 8px;
+	--item-pad-y: 5px;
+	--card-pad: 10px;
+}
+
+/* Show animations off: as under reduced motion, the spinner keeps turning slowly so loading still reads as loading. */
+:root.no-animations *,
+:root.no-animations *::before,
+:root.no-animations *::after {
+	transition: none !important;
+	animation: none !important;
+}
+
+:root.no-animations :is(.spinner, .menu__item[aria-busy='true'] > .icon:first-child) {
+	animation: spin 2s linear infinite !important;
+}
+
+/* Dark follows the system unless the Theme setting pins one with `data-theme` (`theme.ts`). */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--bg: #14171c;
+		--surface: #1e222a;
+		--surface-hover: #272c36;
+		--fg: #e8ebf0;
+		--fg-muted: #9aa3b3;
+		--border: #2d333e;
+		--border-strong: #444c5b;
+		--accent: #7fa3ec;
+		--accent-hover: #9ab7f1;
+		--accent-fg: #0c1730;
+		--accent-soft: #1d2840;
+		--logo: #3b67bd;
+		--danger: #ff8b7f;
+		--danger-hover: #ffa69c;
+		--danger-fg: #2a0c09;
+		--danger-soft: #37201e;
+		--warning-fg: #f2cd83;
+		--warning-soft: #33291a;
+		--ok: #5fcd7f;
+		--ring: rgb(127 163 236 / 0.35);
+		--shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+	}
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--bg: #14171c;
+	--surface: #1e222a;
+	--surface-hover: #272c36;
+	--fg: #e8ebf0;
+	--fg-muted: #9aa3b3;
+	--border: #2d333e;
+	--border-strong: #444c5b;
+	--accent: #7fa3ec;
+	--accent-hover: #9ab7f1;
+	--accent-fg: #0c1730;
+	--accent-soft: #1d2840;
+	--logo: #3b67bd;
+	--danger: #ff8b7f;
+	--danger-hover: #ffa69c;
+	--danger-fg: #2a0c09;
+	--danger-soft: #37201e;
+	--warning-fg: #f2cd83;
+	--warning-soft: #33291a;
+	--ok: #5fcd7f;
+	--ring: rgb(127 163 236 / 0.35);
+	--shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: var(--accent);
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.icon {
+	flex: none;
+}
+
+/* Shell. A popup has no viewport of its own; without a size it collapses to its content. */
+
+.popup {
+	position: relative;
+	width: 380px;
+	height: 600px;
+	display: flex;
+	flex-direction: column;
+}
+
+/* `display: flex` above would otherwise win over the attribute. */
+.popup[hidden] {
+	display: none;
+}
+
+/* A popped-out window is sized by the browser; fill it. */
+.popup--popout {
+	width: 100%;
+	height: 100vh;
+}
+
+.header {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 52px;
+	padding: 0 12px 0 16px;
+	background: var(--surface);
+	border-bottom: 1px solid var(--border);
+}
+
+.header:has(> .icon-btn:first-child) {
+	padding-left: 8px;
+}
+
+.header__title {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.logo {
+	flex: none;
+	color: var(--logo);
+}
+
+.header__avatar {
+	display: flex;
+	padding: 0;
+	border: 0;
+	background: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: box-shadow 0.15s ease;
+}
+
+.header__avatar:hover {
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.popup__body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--body-pad);
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--stack-gap);
+}
+
+.loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 48px 0;
+	color: var(--fg-muted);
+}
+
+.hint {
+	margin: 8px 4px 0;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+/* Identity at the top of a screen. */
+
+.identity {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 8px 0 4px;
+}
+
+.identity__name {
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.identity__host {
+	color: var(--fg-muted);
+}
+
+/* Avatar */
+
+.avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.avatar--initials {
+	background: var(--accent);
+	color: var(--accent-fg);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+/* Fields */
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.field__label {
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.field__box {
+	display: flex;
+	align-items: center;
+	height: var(--control-height);
+	padding: 0 4px 0 12px;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field__box:focus-within {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.field__box:has([aria-invalid='true']) {
+	border-color: var(--danger);
+}
+
+.field__input {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	font: inherit;
+	font-size: 14px;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	outline: none;
+}
+
+.field__input::placeholder {
+	color: var(--fg-muted);
+	opacity: 0.7;
+}
+
+.field__hint {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.field__error {
+	font-size: 12px;
+	color: var(--danger);
+}
+
+/* Buttons */
+
+.btn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: var(--control-height);
+	padding: 0 18px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--primary {
+	background: var(--accent);
+	color: var(--accent-fg);
+}
+
+.btn--primary:hover:not(:disabled) {
+	background: var(--accent-hover);
+}
+
+.btn--secondary {
+	background: var(--surface);
+	border-color: var(--border-strong);
+	color: var(--fg);
+}
+
+.btn--secondary:hover:not(:disabled) {
+	background: var(--surface-hover);
+}
+
+.btn--danger {
+	background: var(--danger);
+	color: var(--danger-fg);
+}
+
+.btn--danger:hover:not(:disabled) {
+	background: var(--danger-hover);
+}
+
+.btn--link {
+	align-self: center;
+	height: auto;
+	padding: 6px 10px;
+	background: none;
+	color: var(--accent);
+	font-weight: 500;
+}
+
+.btn--link:hover:not(:disabled) {
+	text-decoration: underline;
+}
+
+.btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.btn[aria-busy='true'] {
+	cursor: progress;
+}
+
+.icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	color: var(--fg-muted);
+	background: none;
+	border: 0;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.icon-btn:hover {
+	color: var(--fg);
+	background: var(--surface-hover);
+}
+
+.icon-btn--danger,
+.icon-btn--danger:hover {
+	color: var(--danger);
+}
+
+.icon-btn--danger:hover:not([aria-disabled='true']) {
+	background: var(--danger-soft);
+}
+
+.icon-btn[aria-disabled='true'] {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.icon-btn[aria-disabled='true']:hover {
+	background: none;
+}
+
+.spinner {
+	width: 14px;
+	height: 14px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* A row's own icon turns while its work runs, e.g. Sync now. */
+.menu__item[aria-busy='true'] > .icon:first-child {
+	animation: spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.spinner,
+	.menu__item[aria-busy='true'] > .icon:first-child {
+		animation-duration: 2s;
+	}
+}
+
+/* Banners and confirmations */
+
+.banner {
+	display: flex;
+	gap: 8px;
+	padding: 10px 12px;
+	border-radius: var(--radius);
+}
+
+.banner .icon {
+	margin-top: 2px;
+}
+
+.banner--error {
+	background: var(--danger-soft);
+	color: var(--danger);
+}
+
+.banner--warning {
+	background: var(--warning-soft);
+	color: var(--warning-fg);
+}
+
+.confirm {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px;
+	background: var(--danger-soft);
+	border-radius: 10px;
+}
+
+.confirm__question {
+	font-weight: 600;
+}
+
+.confirm__detail {
+	color: var(--fg-muted);
+	font-size: 12.5px;
+}
+
+.confirm__actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.confirm__actions .btn {
+	flex: 1;
+	height: 34px;
+	font-size: 13px;
+}
+
+/* Lists */
+
+.card {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.card > li + li {
+	border-top: 1px solid var(--border);
+}
+
+.accounts__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.accounts__select {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 8px 10px 12px;
+	font: inherit;
+	text-align: left;
+	color: inherit;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+.accounts__select:hover {
+	background: var(--surface-hover);
+}
+
+.accounts__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.accounts__name,
+.accounts__host {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.accounts__name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.accounts__host {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.accounts__check {
+	display: flex;
+	color: var(--accent);
+}
+
+.accounts__actions {
+	display: flex;
+	gap: 2px;
+	padding-right: 8px;
+}
+
+.accounts__row > .confirm {
+	flex-basis: 100%;
+	margin: 0 12px 12px;
+}
+
+.status {
+	font-size: 11.5px;
+	font-weight: 500;
+}
+
+.status--unlocked {
+	color: var(--ok);
+}
+
+.status--locked {
+	color: var(--fg-muted);
+}
+
+.status--logged_out {
+	color: var(--danger);
+}
+
+.menu__item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: var(--row-pad-y) 14px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	text-align: left;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+.menu__item .icon {
+	color: var(--fg-muted);
+}
+
+.menu__item:hover:not(:disabled, [aria-disabled='true']) {
+	background: var(--surface-hover);
+}
+
+/*
+ * Fades the icon and the name's own element only, so a reason line under the name keeps its contrast (WCAG AA).
+ * A name that is bare text gets the muted colour, so it never looks enabled.
+ */
+.menu__item:is(:disabled, [aria-disabled='true']) {
+	color: var(--fg-muted);
+	cursor: not-allowed;
+}
+
+.menu__item:is(:disabled, [aria-disabled='true']) > .icon,
+.menu__item:is(:disabled, [aria-disabled='true']) > .menu__label > :not(.menu__hint) {
+	opacity: 0.45;
+}
+
+/* Pushes a trailing chevron to the row's edge. */
+.menu__label {
+	flex: 1;
+}
+
+.menu__item--danger,
+.menu__item--danger .icon {
+	color: var(--danger);
+}
+
+.menu > li > .confirm {
+	margin: 10px;
+}
+
+/* Inset rings stay visible where `overflow: hidden` on a card would clip an outline. */
+.card :is(.accounts__select, .menu__item):focus-visible {
+	outline-offset: -2px;
+}
+
+/* Tab bar */
+
+.tabbar {
+	flex: none;
+	display: flex;
+	background: var(--surface);
+	border-top: 1px solid var(--border);
+}
+
+.tabbar__tab {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 8px 0 7px;
+	font: inherit;
+	font-size: 11.5px;
+	font-weight: 500;
+	color: var(--fg-muted);
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+.tabbar__tab:hover {
+	color: var(--fg);
+}
+
+.tabbar__tab[aria-current='page'] {
+	color: var(--accent);
+	font-weight: 600;
+}
+
+.tabbar__tab:focus-visible {
+	outline-offset: -2px;
+}
+
+/* A page's own actions, in place of the tab bar. A page without any shows no bar. */
+
+.popup__footer {
+	flex: none;
+	display: flex;
+	gap: 8px;
+	padding: 12px 16px;
+	background: var(--surface);
+	border-top: 1px solid var(--border);
+}
+
+.popup__footer:empty {
+	display: none;
+}
+
+.popup__footer > .btn {
+	flex: 1;
+}
+
+/* A single action at its own width at the start, like the item detail's Edit, not stretched as above. */
+.footer-actions {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
+/* The item detail's: Edit at the start, More and Delete at the end, as in Bitwarden. */
+.detail-actions {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.detail-actions > .btn {
+	margin-right: auto;
+}
+
+/* Edit and Fill side by side. */
+.detail-actions > .btn:has(+ .btn) {
+	margin-right: 8px;
+}
+
+/* As tall as Edit, with a glyph to match its weight. */
+.detail-actions .icon-btn {
+	width: 40px;
+	height: 40px;
+}
+
+.detail-actions .icon-btn .icon {
+	width: 20px;
+	height: 20px;
+}
+
+/* Toast, above whichever bar is at the bottom */
+
+.popup__bottom {
+	position: relative;
+	flex: none;
+}
+
+.toast {
+	position: absolute;
+	left: 16px;
+	right: 16px;
+	bottom: calc(100% + 16px);
+	display: flex;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.toast__message {
+	padding: 8px 14px;
+	font-weight: 500;
+	color: var(--surface);
+	background: var(--fg);
+	border-radius: 999px;
+	box-shadow: var(--shadow);
+}
+
+/* Filters */
+
+.filters {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.search,
+.select {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: calc(var(--control-height) - 2px);
+	padding: 0 4px 0 12px;
+	color: var(--fg-muted);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+}
+
+.search:focus-within,
+.select:focus-within {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.search__input,
+.select__input {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	font: inherit;
+	font-size: 14px;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	outline: none;
+}
+
+.search__input::-webkit-search-cancel-button {
+	appearance: none;
+}
+
+.select {
+	padding-right: 10px;
+}
+
+.select__input {
+	appearance: none;
+	cursor: pointer;
+}
+
+/* The native option list doesn't inherit the select's transparent background. */
+.select__input option {
+	color: var(--fg);
+	background: var(--surface);
+}
+
+/* The chevron sits over the select's right edge and lets clicks through. */
+.select > .icon:last-child {
+	position: absolute;
+	right: 10px;
+	pointer-events: none;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chip {
+	height: 28px;
+	padding: 0 11px;
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 500;
+	color: var(--fg);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+	cursor: pointer;
+}
+
+.chip:hover:not(:disabled) {
+	background: var(--surface-hover);
+}
+
+.chip[aria-pressed='true'] {
+	color: var(--accent-fg);
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+.chip[aria-pressed='true']:hover:not(:disabled) {
+	background: var(--accent-hover);
+	border-color: var(--accent-hover);
+}
+
+.chip:disabled,
+.search__input:disabled,
+.select__input:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Sections and item rows */
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.section__title {
+	margin: 0 4px;
+	font-size: 13.5px;
+	font-weight: 600;
+}
+
+.section__empty {
+	padding: 12px 14px;
+	color: var(--fg-muted);
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+}
+
+/* No `overflow: hidden` like `.card`: the row menus must reach past the list. */
+.items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+}
+
+.item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	padding-right: 6px;
+}
+
+.item + .item {
+	border-top: 1px solid var(--border);
+}
+
+.item:first-child,
+.item:first-child .item__main::after {
+	border-top-left-radius: 11px;
+	border-top-right-radius: 11px;
+}
+
+.item:last-child,
+.item:last-child .item__main::after {
+	border-bottom-left-radius: 11px;
+	border-bottom-right-radius: 11px;
+}
+
+/*
+ * The open button covers the whole row, under the action buttons, so the row
+ * highlights and opens everywhere but on an action. The actions get no z-index:
+ * a stacking context there would trap their menus under the next row.
+ */
+.item__main::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+
+.item:has(.item__main:hover) {
+	background: var(--surface-hover);
+}
+
+.item__main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: var(--item-pad-y) 6px var(--item-pad-y) 12px;
+	font: inherit;
+	text-align: left;
+	color: inherit;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+.item__main:focus-visible {
+	outline: none;
+}
+
+.item__main:focus-visible::after {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+.item__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 32px;
+	height: 32px;
+	color: var(--accent);
+	background: var(--accent-soft);
+	border-radius: var(--radius);
+}
+
+.item__icon--large {
+	width: 44px;
+	height: 44px;
+	border-radius: 10px;
+}
+
+.item__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.item__name,
+.item__sub {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.item__name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.item__sub {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.item__actions {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: none;
+}
+
+.item__fill {
+	height: 28px;
+	margin-right: 4px;
+	padding: 0 12px;
+	font-size: 13px;
+}
+
+.icon-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.icon-btn:disabled:hover {
+	color: var(--fg-muted);
+	background: none;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 2px;
+	padding: 1px 7px;
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--danger);
+	background: var(--danger-soft);
+	border-radius: 999px;
+}
+
+.badge--accent {
+	color: var(--accent);
+	background: var(--accent-soft);
+}
+
+/* Menus */
+
+.menu-anchor {
+	position: relative;
+}
+
+.popover {
+	position: absolute;
+	top: calc(100% + 4px);
+	right: 0;
+	z-index: 10;
+	min-width: 180px;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	box-shadow: var(--shadow);
+}
+
+.popover--up {
+	top: auto;
+	bottom: calc(100% + 4px);
+}
+
+.chips .popover {
+	right: auto;
+	left: 0;
+}
+
+.popover__item {
+	display: block;
+	width: 100%;
+	padding: 8px 10px;
+	font: inherit;
+	text-align: left;
+	color: var(--fg);
+	white-space: nowrap;
+	background: none;
+	border: 0;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.popover__item:hover,
+.popover__item:focus-visible {
+	background: var(--surface-hover);
+	outline: none;
+}
+
+.popover__item[aria-disabled='true'] {
+	color: var(--fg-muted);
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* Empty states */
+
+.empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding: 36px 16px;
+	text-align: center;
+}
+
+.empty__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 52px;
+	height: 52px;
+	color: var(--accent);
+	background: var(--accent-soft);
+	border-radius: 50%;
+}
+
+.empty__title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.empty__text {
+	color: var(--fg-muted);
+}
+
+.banner .btn--link {
+	margin-left: auto;
+	padding: 0 4px;
+	height: auto;
+	align-self: center;
+	color: inherit;
+	text-decoration: underline;
+}
+
+/* Item detail */
+
+.detail-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.detail-head__text {
+	min-width: 0;
+}
+
+.detail-head__name {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.detail-head__meta {
+	color: var(--fg-muted);
+}
+
+.fields {
+	overflow: visible;
+}
+
+.field-row {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin: 0;
+	padding: 8px 8px 8px 14px;
+}
+
+.fields > .field-row + .field-row {
+	border-top: 1px solid var(--border);
+}
+
+.field-row__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.field-row__label {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.field-row__value {
+	margin: 0;
+	font-size: 14px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.field-row__value--mono,
+.totp,
+.gen-value {
+	font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.field-row__error {
+	color: var(--danger);
+}
+
+.field-row__note {
+	font-size: 12.5px;
+	color: var(--fg-muted);
+}
+
+.notes {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.meta .field-row {
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 14px;
+}
+
+.meta dd {
+	margin: 0;
+	font-size: 13px;
+	text-align: right;
+}
+
+.totp {
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+}
+
+/* A ring that empties as the period runs out. */
+.totp__countdown {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 28px;
+	height: 28px;
+	margin-right: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--accent);
+	background:
+		radial-gradient(var(--surface) 58%, transparent 60%),
+		conic-gradient(var(--accent) calc(var(--progress) * 360deg), var(--border) 0);
+	border-radius: 50%;
+}
+
+.btn[aria-disabled='true'] {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+/* Fits the header, like Bitwarden's New button. */
+.btn--small {
+	height: 32px;
+	padding: 0 14px 0 10px;
+	gap: 4px;
+	font-size: 13px;
+}
+
+/* Item form */
+
+.form-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--card-pad);
+	padding: var(--card-pad);
+	overflow: visible;
+}
+
+.field__input--area {
+	height: auto;
+	min-height: 80px;
+	padding: 9px 12px;
+	line-height: 1.45;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	resize: vertical;
+}
+
+.field__input--area:focus {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.field__input--area[aria-invalid='true'] {
+	border-color: var(--danger);
+}
+
+.field__input--mono {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 12.5px;
+}
+
+.field__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+/* Keeps the row as tall as a bare label. */
+.field__head .icon-btn {
+	margin: -8px -4px -8px 0;
+}
+
+.field__masked {
+	display: flex;
+	align-items: center;
+	color: var(--fg-muted);
+}
+
+.picker-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 8px 0 12px;
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	color: var(--fg);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.picker-field:focus-visible {
+	border-color: var(--accent);
+	outline: none;
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.picker-field .icon {
+	color: var(--fg-muted);
+}
+
+.picker-field__value {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.custom-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.custom-fields > .btn--link {
+	align-self: flex-start;
+	padding-left: 0;
+}
+
+.custom-field {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+	align-self: stretch;
+}
+
+.custom-field + .custom-field {
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.custom-field__inputs {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Lines the remove button up with the first input, not its label. */
+.custom-field > .icon-btn {
+	margin-top: 26px;
+}
+
+.advanced {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.advanced > summary {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--accent);
+	cursor: pointer;
+}
+
+.advanced[open] > summary {
+	margin-bottom: 12px;
+}
+
+/* Dialogs */
+
+.dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	background: rgb(16 24 40 / 0.45);
+}
+
+.dialog {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	width: 100%;
+	max-height: 100%;
+	padding: 18px 16px 16px;
+	overflow-y: auto;
+	background: var(--surface);
+	border-radius: 14px;
+	box-shadow: var(--shadow);
+}
+
+.dialog__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.dialog__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	font-size: 14px;
+}
+
+.dialog__body p {
+	margin: 0;
+}
+
+.dialog__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dialog__actions .btn {
+	flex: 1 1 auto;
+}
+
+.resolution {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* Folders */
+
+/* Row menus must reach past the card. */
+.card--menus {
+	overflow: visible;
+}
+
+.folder-tree {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.folder-tree__row {
+	padding-left: calc(var(--depth, 0) * 16px);
+}
+
+.picker {
+	display: flex;
+	flex-direction: column;
+	margin: 0 -8px;
+}
+
+.picker__choice {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 9px 8px;
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.picker__choice:hover:not(:disabled) {
+	background: var(--surface-hover);
+}
+
+.picker__choice:focus-visible {
+	outline: none;
+	box-shadow: inset 0 0 0 2px var(--ring);
+}
+
+.picker__choice .icon {
+	color: var(--fg-muted);
+}
+
+.picker__choice[aria-current='true'] {
+	font-weight: 600;
+}
+
+.picker__choice--new,
+.picker__choice--new .icon {
+	color: var(--accent);
+}
+
+.picker__label {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picker__current .icon {
+	color: var(--accent);
+}
+
+.folder-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 6px 6px 12px;
+}
+
+.folder-row > .icon {
+	color: var(--fg-muted);
+}
+
+.folder-row__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 14px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card .folder-tree__row + .folder-tree__row {
+	border-top: 1px solid var(--border);
+}
+
+/* Generator */
+
+.sub-tabs {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+/*
+ * The selected segment is a primary button inside a secondary one: same pill, fill and weight.
+ * One pill slides under the tabs; `SubTabs` sets `--index` and `--count`.
+ */
+.segmented {
+	position: relative;
+	isolation: isolate;
+	display: flex;
+	padding: 2px;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+}
+
+.segmented__pill {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	left: 2px;
+	width: calc((100% - 4px) / var(--count));
+	background: var(--accent);
+	border-radius: 999px;
+	transform: translateX(calc(var(--index) * 100%));
+}
+
+.segmented--sliding .segmented__pill {
+	transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.segmented__tab {
+	position: relative;
+	flex: 1 1 0;
+	min-width: 0;
+	height: 32px;
+	padding: 0 4px;
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 500;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	border-radius: 999px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.segmented--sliding .segmented__tab {
+	transition: color 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* After the rules above, which it must override at the same specificity. */
+@media (prefers-reduced-motion: reduce) {
+	.segmented--sliding :is(.segmented__pill, .segmented__tab) {
+		transition: none;
+	}
+}
+
+/* A divider between two unselected tabs only, painted under the pill so it slides over them. */
+.segmented__tab + .segmented__tab:not([aria-selected='true'])::before {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	top: 8px;
+	bottom: 8px;
+	left: 0;
+	width: 1px;
+	background: var(--border);
+}
+
+.segmented__tab[aria-selected='true'] + .segmented__tab::before,
+.segmented__tab:hover:not([aria-disabled='true'])::before,
+.segmented__tab:hover:not([aria-disabled='true']) + .segmented__tab::before {
+	display: none;
+}
+
+/* Under the pill too, so a hovered tab never covers it as it slides past. */
+.segmented__tab::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0;
+	border-radius: inherit;
+	transition: background-color 0.15s ease;
+}
+
+.segmented__tab:hover:not([aria-selected='true'], [aria-disabled='true'])::after {
+	background: var(--surface-hover);
+}
+
+.segmented__tab[aria-selected='true'] {
+	font-weight: 600;
+	color: var(--accent-fg);
+	cursor: default;
+}
+
+.segmented__tab[aria-disabled='true'] {
+	color: var(--fg-muted);
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.generated__box {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	min-height: 56px;
+	padding: 8px 6px 8px 14px;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+}
+
+.generated__value {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	font-size: 16px;
+}
+
+.generated__failure {
+	font-size: 13.5px;
+	color: var(--fg-muted);
+}
+
+.gen-value {
+	overflow-wrap: anywhere;
+}
+
+.gen-digit {
+	color: var(--accent);
+}
+
+.gen-symbol {
+	color: var(--danger);
+}
+
+.slider {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.slider__range {
+	flex: 1;
+	min-width: 0;
+	accent-color: var(--accent);
+}
+
+.number-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.number-field__label {
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.number-field__input {
+	box-sizing: border-box;
+	width: 100%;
+	height: 40px;
+	padding: 0 12px;
+	font: inherit;
+	font-size: 14px;
+	color: var(--fg);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+}
+
+.number-field__input:focus {
+	border-color: var(--accent);
+	outline: none;
+	box-shadow: 0 0 0 3px var(--ring);
+}
+
+.number-field__input:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.slider .number-field__input {
+	width: 64px;
+	padding: 0 8px;
+}
+
+/* Two inputs side by side, each half the card. */
+.field-pair {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 12px;
+}
+
+.check-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+}
+
+.check {
+	display: inline-flex;
+	align-self: flex-start;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.check__input {
+	width: 15px;
+	height: 15px;
+	margin: 0;
+	accent-color: var(--accent);
+}
+
+.check:has(.check__input:is(:disabled, [aria-disabled='true'])) {
+	color: var(--fg-muted);
+	cursor: not-allowed;
+}
+
+.check__input:is(:disabled, [aria-disabled='true']) {
+	opacity: 0.5;
+}
+
+.radio-group {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+/* A fieldset's legend ignores the flex gap, so it gets the same space itself. */
+.radio-group > legend {
+	margin-bottom: 6px;
+	padding: 0;
+}
+
+/* Send */
+
+/* The form card's own gap, for the fields under the type tabs. */
+.stack--tight {
+	gap: 14px;
+}
+
+.send-row__main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: var(--item-pad-y) 6px var(--item-pad-y) 12px;
+}
+
+/* A send's label and dates are its only identity, so they wrap rather than lose their end. */
+.send-row .item__name,
+.send-row .item__sub {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.send-row__tags {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 2px 8px;
+}
+
+.send-row__note {
+	margin-top: 2px;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.item__sub.send-row__expired {
+	font-weight: 600;
+	color: var(--danger);
+}
+
+/* Settings */
+
+a.menu__item {
+	box-sizing: border-box;
+	text-decoration: none;
+}
+
+/* A row's last sync or reason, under its label and inside its button, so the whole row is the hitbox. */
+.menu__hint {
+	display: block;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--fg-muted);
+}
+
+/* Indented to the label past the icon. */
+.menu__error {
+	padding: 0 14px var(--row-pad-y) 44px;
+}
+
+.custom-timeout {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.custom-timeout__fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.custom-timeout .btn {
+	align-self: flex-start;
+}
+
+.shortcut {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.shortcut kbd {
+	padding: 2px 6px;
+	font: inherit;
+	font-family: ui-monospace, monospace;
+	background: var(--surface-hover);
+	border: 1px solid var(--border-strong);
+	border-radius: 4px;
+}
+
+.shortcut__steps {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.domain-form {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.domain-form .field {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Lines up with the input under its label. */
+.domain-form .btn {
+	margin-top: 24px;
+}
+
+.domain-row {
+	display: flex;
+	align-items: center;
+	padding: 4px 6px 4px 14px;
+}
+
+.domain-row__name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.about {
+	gap: 4px;
+}

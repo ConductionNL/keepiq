@@ -85,6 +85,30 @@ describe('coalescing', () => {
 		expect(result.body).toEqual({ name: 'C', key: 'k2' })
 	})
 
+	it('keeps the first source version recorded in an update chain', () => {
+		const withSource = (entry, source) => ({
+			...entry,
+			sourceBaseUpdatedAt: source,
+		})
+		const second = withSource(upd({ key: 'k2' }, 'base-2', '2'), 'source-2')
+		const third = withSource(upd({ key: 'k3' }, 'base-3', '3'), 'source-3')
+
+		const recorded = withSource(upd({ key: 'k1' }, 'base-1', '1'), 'source-1')
+		expect(coalesce(coalesce(recorded, second), third).sourceBaseUpdatedAt).toBe(
+			'source-1',
+		)
+		// The first change recorded none: a later one's is kept, rather
+		// than leaving the replay to the source of its own moment.
+		const unrecorded = withSource(upd({ name: 'A' }, 'base-1', '1'), null)
+		expect(
+			coalesce(coalesce(unrecorded, second), third).sourceBaseUpdatedAt,
+		).toBe('source-2')
+		expect(
+			coalesce(unrecorded, withSource(upd({ key: 'k2' }, 'base-2', '2'), null))
+				.sourceBaseUpdatedAt,
+		).toBeNull()
+	})
+
 	it('keeps a create followed by updates as one create', () => {
 		const create = {
 			entryId: 'c',
@@ -154,5 +178,13 @@ describe('the offline view and replay helpers', () => {
 		expect(classifyReplayError({ response: { status: 404 } })).toBe('failed')
 		expect(classifyReplayError({ response: { status: 423 } })).toBe('retry')
 		expect(classifyReplayError(new Error('Network Error'))).toBe('retry')
+	})
+
+	it('fails a write the share quarantine scan holds back, so it does not block the rest', () => {
+		expect(
+			classifyReplayError({
+				response: { status: 409, data: { error: 'share_scan_pending' } },
+			}),
+		).toBe('failed')
 	})
 })

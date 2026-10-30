@@ -160,7 +160,7 @@ struct AccountsView: View {
                         Button(L("cd_settings"), action: onSettings).accessibilityIdentifier("settings")
                     }
                 }
-                Section(L("settings_clipboard")) {
+                Section(titled: L("settings_clipboard")) {
                     Picker(L("settings_clipboard"), selection: $clearSeconds) {
                         ForEach(SensitiveClipboard.companion.CLEAR_CHOICES.map { Int(truncating: $0) }, id: \.self) { seconds in
                             Text(clipboardLabel(seconds)).tag(seconds)

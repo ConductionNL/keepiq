@@ -1,0 +1,52 @@
+{
+	"name": "@conduction/keepiq-extension",
+	"version": "0.0.1",
+	"private": true,
+	"description": "Keepiq for your browser. Fill in logins, passkeys and one-time codes from your Nextcloud vault, end-to-end encrypted.",
+	"type": "module",
+	"scripts": {
+		"build": "wxt build",
+		"build:firefox": "wxt build -b firefox",
+		"dev": "wxt",
+		"dev:firefox": "wxt -b firefox",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"postinstall": "wxt prepare",
+		"render-icons": "bash scripts/render-icons.sh",
+		"test-site": "node scripts/test-site.ts",
+		"typecheck": "tsc --noEmit",
+		"zip": "wxt zip",
+		"zip:firefox": "wxt zip -b firefox",
+		"test": "vitest run",
+		"test:e2e": "playwright test"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@playwright/test": "1.64.1",
+		"@testing-library/dom": "10.4.2",
+		"@testing-library/react": "16.3.3",
+		"@testing-library/user-event": "14.6.7",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"@wxt-dev/module-react": "1.2.2",
+		"eslint": "^10.8.1",
+		"eslint-plugin-react-hooks": "7.1.1",
+		"globals": "^17.11.0",
+		"happy-dom": "20.14.5",
+		"typescript": "^5.9.0",
+		"typescript-eslint": "^8.67.0",
+		"vitest": "5.0.3",
+		"web-ext": "10.7.0",
+		"wxt": "^0.21.4"
+	},
+	"dependencies": {
+		"@wxt-dev/i18n": "0.2.7",
+		"hash-wasm": "4.12.0",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"tldts": "7.4.15"
+	},
+	"overrides": {
+		"shell-quote": "^1.11.0"
+	}
+}

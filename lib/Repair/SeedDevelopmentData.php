@@ -79,9 +79,6 @@ class SeedDevelopmentData implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_pkey_export populates $privateKeyPem
-	 *   via by-reference output param — PHPMD cannot trace by-ref semantics.
-	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
 	 */
 	public function run(IOutput $output): void {
@@ -103,6 +100,26 @@ class SeedDevelopmentData implements IRepairStep {
 			return;
 		}
 
+		$this->mintSuite(userId: self::DEV_USER_ID, masterPassword: self::DEV_MASTER_PASSWORD, output: $output);
+	}//end run()
+
+	/**
+	 * Create an active EncryptionSuite for a user: a fresh RSA key pair, the
+	 * public key signed by the CA, the private key encrypted with the master
+	 * password. The caller decides whether the user may get one.
+	 *
+	 * @param string  $userId         The owner of the new suite
+	 * @param string  $masterPassword The password that unlocks it
+	 * @param IOutput $output         The output interface for progress reporting
+	 *
+	 * @return EncryptionSuite|null The suite, or null when no key or certificate could be made
+	 *
+	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_pkey_export populates $privateKeyPem
+	 *   via by-reference output param — PHPMD cannot trace by-ref semantics.
+	 *
+	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
+	 */
+	public function mintSuite(string $userId, string $masterPassword, IOutput $output): ?EncryptionSuite {
 		// Generate RSA key pair.
 		$keyPair = openssl_pkey_new(
 			options: [
@@ -113,7 +130,7 @@ class SeedDevelopmentData implements IRepairStep {
 
 		if ($keyPair === false) {
 			$output->warning('Failed to generate RSA key pair for dev seed');
-			return;
+			return null;
 		}
 
 		openssl_pkey_export(key: $keyPair, output: $privateKeyPem);
@@ -124,25 +141,25 @@ class SeedDevelopmentData implements IRepairStep {
 		try {
 			$certificate = $this->caService->signPublicKey(
 				publicKeyPem: $publicKeyPem,
-				commonName: self::DEV_USER_ID,
+				commonName: $userId,
 				privateKeyPem: $privateKeyPem
 			);
 		} catch (Exception $e) {
 			$output->warning('CA not available for dev seed: ' . $e->getMessage());
-			return;
+			return null;
 		}
 
-		// Encrypt the private key with the dev master password.
+		// Encrypt the private key with the master password.
 		$encryptedPrivateKey = $this->encryptService->encryptPrivateKey(
 			pem: $privateKeyPem,
-			password: self::DEV_MASTER_PASSWORD
+			password: $masterPassword
 		);
 
 		// Create the EncryptionSuite.
 		$suite = new EncryptionSuite();
 		$suite->setId(Uuid::uuid4()->toString());
 		$suite->setOwnerType('user');
-		$suite->setOwnerId(self::DEV_USER_ID);
+		$suite->setOwnerId($userId);
 		$suite->setCertificate($certificate);
 		$suite->setPrivateKey($encryptedPrivateKey);
 		$suite->setStatus('active');
@@ -150,7 +167,9 @@ class SeedDevelopmentData implements IRepairStep {
 
 		$this->suiteMapper->insert($suite);
 
-		$output->info('Dev EncryptionSuite created for user: ' . self::DEV_USER_ID);
-		$this->logger->info('Keepiq dev seed: EncryptionSuite created with master password: ' . self::DEV_MASTER_PASSWORD);
-	}//end run()
+		$output->info('Dev EncryptionSuite created for user: ' . $userId);
+		$this->logger->info('Keepiq dev seed: EncryptionSuite created for user: ' . $userId);
+
+		return $suite;
+	}//end mintSuite()
 }//end class

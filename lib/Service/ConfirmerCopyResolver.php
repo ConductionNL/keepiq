@@ -94,7 +94,8 @@ class ConfirmerCopyResolver {
 	}//end currentWriteCopy()
 
 	/**
-	 * Whether a copy is at least as new as the source's last key change.
+	 * Whether a copy is at least as new as the source's last key change. A source with no key change time, one a
+	 * restore left without it, counts as changed by its last write.
 	 *
 	 * @param Secret $source The source secret
 	 * @param Secret $copy The confirmer's copy
@@ -104,7 +105,7 @@ class ConfirmerCopyResolver {
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function copyIsCurrent(Secret $source, Secret $copy): bool {
-		$keyChangedAt = $source->getKeyUpdatedAt();
+		$keyChangedAt = $source->getKeyUpdatedAt() ?? $source->getUpdatedAt();
 		if ($keyChangedAt === null) {
 			return true;
 		}

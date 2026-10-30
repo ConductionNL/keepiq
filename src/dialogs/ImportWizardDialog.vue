@@ -99,7 +99,10 @@
 					</thead>
 					<tbody>
 						<tr v-for="row in previewRows" :key="row.sourceRow">
-							<td>{{ row.name }}</td>
+							<td>
+								{{ row.name }}
+								<LoginExtrasMarkers :secret="row" />
+							</td>
 							<td>{{ row.url }}</td>
 							<td>
 								{{ mask(row.login, row.sourceRow + '-login') }}
@@ -204,7 +207,10 @@
 						</thead>
 						<tbody>
 							<tr v-for="dup in store.duplicates" :key="dup.sourceRow">
-								<td>{{ dup.name }}</td>
+								<td>
+									{{ dup.name }}
+									<LoginExtrasMarkers :secret="dup" />
+								</td>
 								<td>{{ dup.url }}</td>
 								<td>
 									<NcSelect
@@ -345,6 +351,7 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import ColumnMapping from '../components/import/ColumnMapping.vue'
+import LoginExtrasMarkers from '../components/LoginExtrasMarkers.vue'
 import { isKdbx } from '../import/model.js'
 import { listParsers } from '../import/parserRegistry.js'
 import { useImportStore } from '../store/modules/import.js'
@@ -360,6 +367,7 @@ export default {
 
 	components: {
 		ColumnMapping,
+		LoginExtrasMarkers,
 		NcButton,
 		NcCheckboxRadioSwitch,
 		NcDialog,

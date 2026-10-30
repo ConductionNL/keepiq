@@ -183,8 +183,7 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       enable-newman: true
-      # Keepiq needs no other app (ADR-006); standalone.yml proves that on an
-      # instance with Keepiq alone. OpenRegister is installed HERE so this
+      # Keepiq needs no other app (ADR-006). OpenRegister is installed HERE so this
       # suite covers the integrations that need it: the Flows pages and the
       # MCP tools, which appear only when OpenRegister is enabled.
       #

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Mislabelled login</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Mislabelled login</h1>
+		<p class="tests">The password is marked <code>new-password</code>, but beside a username and "Log in" it is a login: fill, the inline list and the save bar treat it as the current password.</p>
+		<form method="post" action="/mislabelled-login">
+			<label>Username <input name="username" type="text" autocomplete="username"></label>
+			<label>Password <input name="password" type="password" autocomplete="new-password"></label>
+			<button type="submit">Log in</button>
+		</form>
+	</main>
+</body>
+</html>

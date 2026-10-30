@@ -36,7 +36,7 @@ SPDX-FileCopyrightText = "2026 Conduction B.V. <info@conduction.nl>"
 SPDX-License-Identifier = "EUPL-1.2"
 
 [[annotations]]
-path = "src/generator/eff-large-wordlist.js"
+path = ["src/generator/eff-large-wordlist.js", "browser-extension/public/wordlist/eff-large.txt"]
 precedence = "override"
 SPDX-FileCopyrightText = "2016 Electronic Frontier Foundation"
 SPDX-License-Identifier = "CC-BY-3.0-US"

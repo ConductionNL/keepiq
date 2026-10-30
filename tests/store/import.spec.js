@@ -384,46 +384,137 @@ describe('useImportStore', () => {
 		}
 	})
 
-	it('splits an imported TOTP seed into its own totp-typed row (add-totp-secrets D6)', () => {
+	it('imports a Bitwarden login with its code and passkeys as one encrypted item (keepiq#1327)', async () => {
+		const privateKey = await unlockSession()
+		let posted = null
+		vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+			posted = body
+			return {
+				data: {
+					results: body.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: `s${i}`,
+					})),
+					foldersCreated: [],
+				},
+			}
+		})
+
 		const store = useImportStore()
-		const rows = [
-			{
-				sourceRow: 1,
-				name: 'GitHub',
-				url: 'https://github.com',
-				login: 'alice',
-				password: 'pw',
-				additionalFields: { totp: 'JBSWY3DPEHPK3PXP', notes: 'n' },
-				folder: 'Work',
-				errors: [],
-			},
-			{
-				sourceRow: 2,
-				name: 'Plain',
-				url: null,
-				login: null,
-				password: 'x',
-				additionalFields: null,
-				folder: '',
-				errors: [],
-			},
-		]
-		const out = store.expandTotpRows(rows)
+		await store.parseFile(
+			JSON.stringify({
+				items: [
+					{
+						type: 1,
+						name: 'GitHub',
+						notes: 'n',
+						login: {
+							username: 'alice',
+							password: 'pw',
+							uri: 'https://github.com',
+							totp: 'JBSWY3DPEHPK3PXP',
+							fido2Credentials: [
+								{
+									credentialId: 'CRED',
+									rpId: 'github.com',
+									keyValue: 'PASSKEY_PRIVATE',
+								},
+							],
+						},
+					},
+					{
+						type: 1,
+						name: 'Plain',
+						login: { username: 'bob', password: 'x' },
+					},
+				],
+			}),
+			'bitwarden',
+		)
 
-		// Original login row keeps its non-totp additional fields, loses the seed.
-		const login = out.find((r) => r.name === 'GitHub')
-		expect(login.additionalFields).toEqual({ notes: 'n' })
+		// One row per entry: no `(TOTP)` or `(passkey)` rows.
+		expect(store.rows.map((row) => row.name)).toEqual(['GitHub', 'Plain'])
+		expect(store.rows.every((row) => row.type === 'login')).toBe(true)
 
-		// A new totp row carries the seed as its password (→ encrypted key).
-		const totp = out.find((r) => r.type === 'totp')
-		expect(totp).toBeTruthy()
-		expect(totp.name).toBe('GitHub (TOTP)')
-		expect(totp.password).toBe('JBSWY3DPEHPK3PXP')
-		expect(totp.folder).toBe('Work')
+		await store.commit()
+		expect(posted.items).toHaveLength(2)
+		const [github, plain] = posted.items
+		// Neither the seed nor the private key is ever plaintext on the wire.
+		expect(JSON.stringify(posted)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(posted)).not.toContain('PASSKEY_PRIVATE')
+		expect(await rsaDecrypt(github.totp, privateKey)).toBe('JBSWY3DPEHPK3PXP')
+		const passkeys = JSON.parse(await rsaDecrypt(github.passkeys, privateKey))
+		expect(passkeys).toHaveLength(1)
+		expect(passkeys[0].privateKey).toBe('PASSKEY_PRIVATE')
+		expect(
+			JSON.parse(await rsaDecrypt(github.additionalFields, privateKey)),
+		).toEqual({
+			notes: 'n',
+		})
+		// A login without them sends neither field, not an encrypted ''.
+		expect('totp' in plain).toBe(false)
+		expect('passkeys' in plain).toBe(false)
+	})
 
-		// The untouched row passes through unchanged.
-		expect(out.some((r) => r.name === 'Plain')).toBe(true)
-		expect(out).toHaveLength(3)
+	it("restores a login's code and passkeys from a backup", async () => {
+		const privateKey = await unlockSession()
+		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+		const posted = []
+		vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+			posted.push(...body.items)
+			return {
+				data: {
+					results: body.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: `r${i}`,
+					})),
+					foldersCreated: [],
+				},
+			}
+		})
+		const passkeys = JSON.stringify([
+			{ credentialId: 'CRED', rpId: 'bank.example', privateKey: 'PK' },
+		])
+		const payload = serializeVault(
+			[
+				{
+					name: 'Bank',
+					key: 'pw',
+					login: 'alice',
+					totp: 'JBSWY3DPEHPK3PXP',
+					passkeys,
+					folderId: null,
+					type: 'login',
+				},
+				{
+					name: 'Plain',
+					key: 'x',
+					login: null,
+					totp: '',
+					passkeys: '',
+					folderId: null,
+					type: 'login',
+				},
+			],
+			[],
+		)
+		const envelope = await encryptBackup(payload, 'restore-pass')
+
+		const store = useImportStore()
+		await store.parseFile(JSON.stringify(envelope), 'doriath-backup', {
+			passphrase: 'restore-pass',
+		})
+		await store.commit()
+
+		const byName = Object.fromEntries(posted.map((item) => [item.name, item]))
+		expect(await rsaDecrypt(byName.Bank.totp, privateKey)).toBe(
+			'JBSWY3DPEHPK3PXP',
+		)
+		expect(await rsaDecrypt(byName.Bank.passkeys, privateKey)).toBe(passkeys)
+		expect('totp' in byName.Plain).toBe(false)
+		expect('passkeys' in byName.Plain).toBe(false)
 	})
 
 	it('stamps the resolved totp type id on committed totp items, seed stays ciphertext', async () => {
@@ -453,7 +544,7 @@ describe('useImportStore', () => {
 		store.rows = [
 			{
 				sourceRow: 1,
-				name: 'GH (TOTP)',
+				name: 'GH authenticator',
 				url: null,
 				login: null,
 				password: 'JBSWY3DPEHPK3PXP',

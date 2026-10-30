@@ -42,11 +42,14 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Db\TTransactional;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
@@ -66,6 +69,8 @@ use Throwable;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)     The public surface is the
  *   secret lifecycle itself (user CRUD + application-vault seam + search);
  *   splitting it would scatter the own-vault scoping invariants.
+ * @SuppressWarnings(PHPMD.TooManyMethods)           loadForUpdate() is update()'s
+ *   own pre-check, public so a share-save refuses exactly what update() refuses.
  * @SuppressWarnings(PHPMD.ExcessiveParameterList)   Constructor DI list; the
  *   trailing optional dependencies keep pre-audit call sites compiling.
  * @SuppressWarnings(PHPMD.LongVariable)             $secretDelegationMapper
@@ -73,6 +78,8 @@ use Throwable;
  *   sharing-graph cascade.
  */
 class SecretService {
+	use TTransactional;
+
 	/**
 	 * The default page size.
 	 *
@@ -111,6 +118,14 @@ class SecretService {
 	public const MAX_LIMIT = 100;
 
 	/**
+	 * The fields a client may change through update(); `mergedPending` and
+	 * `baseUpdatedAt` ride along but are not fields of the row.
+	 *
+	 * @var string[]
+	 */
+	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'];
+
+	/**
 	 * The suite statuses that block access to encrypted fields.
 	 *
 	 * @var string[]
@@ -126,6 +141,8 @@ class SecretService {
 	 * @param MigrationService $migrationService The migration (write-lock) service
 	 * @param LinkShareService $linkShareService The link share service (cascade delete)
 	 * @param LoggerInterface $logger The logger interface
+	 * @param IDBConnection $db The transaction an update's version lock runs in
+	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a value change of a copy its holder may not write
 	 * @param SecretRequestService|null $secretRequestService The secret-request service
 	 * @param ShareService|null $shareService The share service
 	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper
@@ -153,6 +170,8 @@ class SecretService {
 		private MigrationService $migrationService,
 		private LinkShareService $linkShareService,
 		private LoggerInterface $logger,
+		private IDBConnection $db,
+		private ViewOnlyCopyGuard $viewOnlyCopies,
 		private ?SecretRequestService $secretRequestService = null,
 		private ?ShareService $shareService = null,
 		private ?GroupShareMapper $groupShareMapper = null,
@@ -236,6 +255,8 @@ class SecretService {
 	 * @return Secret
 	 *
 	 * @throws InvalidArgumentException When required fields are missing or invalid
+	 * @throws NotFoundException When the named folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or a vault policy refuses the write
 	 * @throws SuiteBlockedException When the user has no active suite
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 *
@@ -287,6 +308,8 @@ class SecretService {
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
+		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
 		$secret->setEncryptionSuiteId($suite->getId());
 		$secret->setOwnerType('user');
 		$secret->setOwnerId($userId);
@@ -294,6 +317,7 @@ class SecretService {
 		$secret->setUpdatedAt($now);
 		// Ciphertext age starts at creation; never decrypts (password-health D4).
 		$secret->setKeyUpdatedAt($now);
+		(new CredentialFields())->stampChanges(after: $secret, before: new Secret(), now: $now);
 
 		$this->mapper->insert($secret);
 		$this->logger->info("Keepiq: secret {$secret->getId()} created by {$userId}");
@@ -329,12 +353,13 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws InvalidArgumentException When required fields are missing
+	 * @throws InvalidArgumentException When required fields are missing, or a totp or passkeys value is sent
 	 * @throws SuiteBlockedException When the application has no active suite
 	 *
 	 * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
 	 */
 	public function createForApplication(array $data, string $applicationId, string $writingUserId): Secret {
+		$this->refuseApplicationValueFields(data: $data);
 		if ($applicationId === '') {
 			throw new InvalidArgumentException('applicationId is required');
 		}
@@ -420,7 +445,7 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws InvalidArgumentException When required fields are missing
+	 * @throws InvalidArgumentException When required fields are missing, or a totp or passkeys value is sent
 	 * @throws SuiteBlockedException When the application has no active suite
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) - `$allowUnfilled` is an explicit
@@ -438,6 +463,7 @@ class SecretService {
 		string $applicationId,
 		bool $allowUnfilled = false,
 	): Secret {
+		$this->refuseApplicationValueFields(data: $data);
 		if ($applicationId === '') {
 			throw new InvalidArgumentException('applicationId is required');
 		}
@@ -535,7 +561,7 @@ class SecretService {
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist in this vault
-	 * @throws InvalidArgumentException When a submitted field is invalid
+	 * @throws InvalidArgumentException When a submitted field is invalid, or a totp or passkeys value is sent
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch; every branch is pinned by
@@ -547,6 +573,7 @@ class SecretService {
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
 	public function updateByApplication(string $id, array $data, string $applicationId): Secret {
+		$this->refuseApplicationValueFields(data: $data);
 		try {
 			$secret = $this->mapper->findById($id);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
@@ -607,22 +634,25 @@ class SecretService {
 			if ($key !== $secret->getKey()) {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt($now);
-				// Replacing the value answers the possibly-compromised warning;
-				// metadata-only writes leave it standing. See the owner path in
-				// update() for the full reasoning.
-				$secret->setPossiblyCompromisedAt(null);
 				$keyChanged = true;
 			}
 		}
 
-		if ($this->versionService !== null && $this->fieldsChanged(before: $preUpdate, after: $secret) === true) {
+		// The same rule as the owner path in update().
+		$credentials = new CredentialFields();
+		if ($credentials->answersCompromiseWarning(after: $secret, before: $preUpdate) === true) {
+			$secret->setPossiblyCompromisedAt(null);
+		}
+
+		if ($this->versionService?->fieldsChanged(before: $preUpdate, after: $secret) === true) {
 			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'application', actorId: $applicationId);
 		}
 
 		$secret->setUpdatedAt($now);
 		$this->mapper->update($secret);
 
-		$changedFields = array_keys($data);
+		// An accepted empty totp or passkeys changes nothing and is not named.
+		$changedFields = array_values(array_diff(array_keys($data), $credentials->unchanged(after: $secret, before: $preUpdate)));
 		if ($keyChanged === true) {
 			$changedFields = ['key'];
 		}
@@ -884,14 +914,16 @@ class SecretService {
 	 * @param string $id The secret ID
 	 * @param array<string,mixed> $data The fields to update
 	 * @param string $userId The requesting Nextcloud user ID
+	 * @param DateTime|null $savedAt The new version; a share-save passes the one it already locked in
+	 * @param bool $restoring Whether the data is a version being restored (a share-save restore)
 	 *
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws ForbiddenException When the secret belongs to another user, or its value changes on a copy its holder may only view
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
-	 * @throws \OCA\Keepiq\Exception\StaleWriteException When `baseUpdatedAt` names an older version
+	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.
@@ -900,15 +932,30 @@ class SecretService {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
 	 *   field, in the order the fields are applied; the vault policy check is one
 	 *   line. Splitting the field guards apart would scatter one update over
 	 *   several methods and the class is at its method limit.
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$restoring` only tells the
+	 *   compromise rule that the totp and passkeys written are old values; the
+	 *   write itself is the same.
 	 */
-	public function update(string $id, array $data, string $userId): Secret {
-		$this->assertNotWriteLocked(userId: $userId);
+	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null, bool $restoring = false): Secret {
+		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
+		$this->viewOnlyCopies->assertMayChangeValue(
+			row: $secret,
+			fields: $this->changedValueFields(secret: $secret, data: $data),
+			userId: $userId
+		);
 
-		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: array_keys($data));
+		// The write is locked against the version just read, whether or not
+		// the client named one; the check below compares a named one. A
+		// share-save locked its own version already.
+		$base = null;
+		if ($savedAt === null) {
+			$base = $secret->getUpdatedAt();
+		}
 
 		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
@@ -958,13 +1005,6 @@ class SecretService {
 			if ($key !== $secret->getKey()) {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt(new DateTime());
-
-				// The possibly-compromised warning says "replace this exposed value
-				// at its source"; a new value answers it, so it is cleared HERE and
-				// nowhere else: a rename, folder move, type change or metadata edit
-				// leaves the exposed value, and the warning, in place. A resent
-				// unchanged key does not clear it either (same-ciphertext guard).
-				$secret->setPossiblyCompromisedAt(null);
 			}
 		}//end if
 
@@ -978,27 +1018,60 @@ class SecretService {
 			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
-		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
-			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
+		if (array_key_exists('totp', $data) === true) {
+			$secret->setTotp($this->nullableString(value: $data['totp']));
 		}
 
-		$secret->setUpdatedAt(new DateTime());
-		$this->mapper->update($secret);
+		if (array_key_exists('passkeys', $data) === true) {
+			$secret->setPasskeys($this->nullableString(value: $data['passkeys']));
+		}
+
+		// A restore writes back old ciphertext: its credentials are no new
+		// values, so they replace nothing and have no change time.
+		$credentials = new CredentialFields();
+		$restored = [];
+		$compromiseFlagOpen = false;
+		if ($restoring === true) {
+			$restored = CredentialFields::CREDENTIALS;
+			$compromiseFlagOpen = ($this->versionService?->compromiseFlagOpen(secretId: $secret->getId()) === true);
+		}
+
+		$credentials->stamp(
+			after: $secret,
+			before: $preUpdate,
+			now: new DateTime(),
+			restored: $restored,
+			compromiseFlagOpen: $compromiseFlagOpen
+		);
+
+		// The possibly-compromised warning says "replace the exposed values at
+		// their source". A login can hold three credentials, so it clears only
+		// once none of `key`, `totp` and `passkeys` is left exposed; a rename,
+		// move or other metadata edit, or a resent unchanged ciphertext, never
+		// clears it.
+		if ($credentials->answersCompromiseWarning(after: $secret, before: $preUpdate, restored: $restored) === true) {
+			$secret->setPossiblyCompromisedAt(null);
+		}
+
+		$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $base, savedAt: $savedAt);
 
 		// Recipients at partner organisations follow a new name or URL
 		// (sharing-federated-recipients 4.5). A new value reaches them through
-		// the browser's sync, which sends its own notification.
+		// the share-save, which notifies them itself.
 		if ($this->federatedShares !== null
-			&& array_intersect(['key', 'login', 'additionalFields'], array_keys($data)) === []
+			&& array_intersect(Secret::VALUE_FIELDS, array_keys($data)) === []
 			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
 		) {
 			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $userId);
 		}
 
 		$changedFields = array_values(
-			array_intersect(
-				['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields'],
-				array_keys($data)
+			array_diff(
+				array_intersect(
+					['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'],
+					array_keys($data)
+				),
+				$credentials->unchanged(after: $secret, before: $preUpdate)
 			)
 		);
 		$this->dispatchAudit(
@@ -1014,6 +1087,49 @@ class SecretService {
 
 		return $secret;
 	}//end update()
+
+	/**
+	 * Snapshot the head and write the updated row. Without a version from a
+	 * share-save the row gets now, but always after its stored version, since
+	 * the column and the stale check count whole seconds. The row is moved off
+	 * the version it was read at by a compare-and-set in the same transaction,
+	 * as a share-save does, so a save that commits after the read refuses this
+	 * update instead of being overwritten by it.
+	 *
+	 * @param Secret $secret The row with the update applied
+	 * @param Secret $preUpdate The row as loaded
+	 * @param string $userId The requesting Nextcloud user ID
+	 * @param DateTime|null $base The version the update was read at; null skips the lock, which a share-save holds already
+	 * @param DateTime|null $savedAt The version a share-save locked in
+	 *
+	 * @return void
+	 *
+	 * @throws StaleWriteException When the row moved on from `$base` after it was read
+	 * @throws NotFoundException When the row was deleted after it was read
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	private function store(Secret $secret, Secret $preUpdate, string $userId, ?DateTime $base, ?DateTime $savedAt): void {
+		$savedAt ??= new DateTime('@'.max(time(), ($preUpdate->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
+		$write = function () use ($secret, $preUpdate, $userId, $base, $savedAt): void {
+			if ($base !== null && $this->mapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
+				throw new StaleWriteException(current: $this->loadOwned(id: $secret->getId(), userId: $userId));
+			}
+
+			$this->versionService?->snapshotIfChanged(preUpdate: $preUpdate, after: $secret, actorType: 'user', actorId: $userId);
+
+			$secret->setUpdatedAt($savedAt);
+			$this->mapper->update($secret);
+		};
+
+		if ($base === null) {
+			$write();
+			return;
+		}
+
+		$this->atomic(fn: $write, db: $this->db);
+	}//end store()
 
 	/**
 	 * Delete a secret owned by the user, cascading to its link shares.
@@ -1447,6 +1563,66 @@ class SecretService {
 	}//end loadOwned()
 
 	/**
+	 * The user's own row, refused as update() refuses it: a write lock, a
+	 * missing or ended copy, another user's row, a use-only or read-only copy.
+	 *
+	 * @param string $id The secret ID
+	 * @param string[] $fields The fields the edit changes
+	 * @param string $userId The requesting Nextcloud user ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws WriteLockedException When a compromise-recovery migration is in progress
+	 * @throws NotFoundException When the secret does not exist or its access ended
+	 * @throws ForbiddenException When the row is not the user's or the copy may not be edited
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function loadForUpdate(string $id, array $fields, string $userId): Secret {
+		$this->assertNotWriteLocked(userId: $userId);
+
+		return $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: $fields);
+	}//end loadForUpdate()
+
+	/**
+	 * The value fields an update writes with a value other than the stored
+	 * one, compared as update() stores them. Resending the stored ciphertext
+	 * changes nothing, so it does not count.
+	 *
+	 * @param Secret $secret The row as loaded
+	 * @param array<string,mixed> $data The update data
+	 *
+	 * @return string[]
+	 */
+	private function changedValueFields(Secret $secret, array $data): array {
+		$stored = [
+			'key' => $secret->getKey(),
+			'login' => $secret->getLogin(),
+			'additionalFields' => $secret->getAdditionalFields(),
+			'totp' => $secret->getTotp(),
+			'passkeys' => $secret->getPasskeys(),
+		];
+
+		$changed = [];
+		foreach ($stored as $field => $value) {
+			if (array_key_exists($field, $data) === false) {
+				continue;
+			}
+
+			$new = $this->nullableString(value: $data[$field]);
+			if ($field === 'key') {
+				$new = (string)$data[$field];
+			}
+
+			if ($new !== $value) {
+				$changed[] = $field;
+			}
+		}
+
+		return $changed;
+	}//end changedValueFields()
+
+	/**
 	 * Assert the user has an active encryption suite, or block.
 	 *
 	 * Public probe used by the batch-import commit (ImportService) so a whole
@@ -1545,6 +1721,11 @@ class SecretService {
 	 * Set or clear a secret's per-secret expiry (rotation-expiry-policies
 	 * §2.3) — owner-only; NEVER touches ciphertext or `key_updated_at`.
 	 *
+	 * The row is moved off the version it was read at, as an update is, so
+	 * its new version always follows the stored one. The expiry is not part
+	 * of the value, so a save that lands between the read and the write is
+	 * kept and the expiry is set once more on the row as it is now.
+	 *
 	 * @param string $id The secret UUID
 	 * @param DateTime|null $expiresAt The expiry instant (null = clear)
 	 * @param string $userId The caller (must own the secret)
@@ -1553,15 +1734,25 @@ class SecretService {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws StaleWriteException When the row moved on twice during the write
 	 *
 	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	public function setExpiry(string $id, ?DateTime $expiresAt, string $userId): Secret {
-		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$write = function (Secret $secret) use ($expiresAt, $userId): Secret {
+			$preUpdate = clone $secret;
+			$secret->setExpiresAt($expiresAt);
+			$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $preUpdate->getUpdatedAt(), savedAt: null);
 
-		$secret->setExpiresAt($expiresAt);
-		$secret->setUpdatedAt(new DateTime());
-		$this->mapper->update($secret);
+			return $secret;
+		};
+
+		try {
+			$secret = $write($this->loadOwned(id: $id, userId: $userId));
+		} catch (StaleWriteException $e) {
+			$secret = $write($e->getCurrent());
+		}
 
 		$this->dispatchAudit(
 			event: $this->auditEvents->forUser(
@@ -1578,70 +1769,23 @@ class SecretService {
 	}//end setExpiry()
 
 	/**
-	 * Whether this update should be recorded in version history.
+	 * Refuse a `totp` or `passkeys` value on an application-owned write: that
+	 * surface does not store them, and dropping them would answer success for
+	 * a value that was never kept. `''` means "not set" and passes.
 	 *
-	 * A placeholder's FIRST fill is not a revision: there is no earlier value to
-	 * return to, so the snapshot would be a version row saying "nothing" in the
-	 * history panel. `fieldsChanged()` is true in that case (empty -> value),
-	 * which is why emptiness has to be asked separately.
+	 * @param array<string,mixed> $data The submitted fields
 	 *
-	 * @param Secret $before The pre-update row
-	 * @param Secret $after The row about to be written
+	 * @return void
 	 *
-	 * @return bool True when a version row is warranted.
-	 *
-	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @throws InvalidArgumentException When either field carries a value
 	 */
-	private function shouldSnapshot(Secret $before, Secret $after): bool {
-		if ($this->versionService === null) {
-			return false;
+	private function refuseApplicationValueFields(array $data): void {
+		foreach (['totp', 'passkeys'] as $field) {
+			if ($this->nullableString(value: $data[$field] ?? null) !== null) {
+				throw new InvalidArgumentException('totp and passkeys are not supported on an application-owned secret');
+			}
 		}
-
-		if ($this->hadNoValues(secret: $before) === true) {
-			return false;
-		}
-
-		return $this->fieldsChanged(before: $before, after: $after);
-	}//end shouldSnapshot()
-
-	/**
-	 * Whether this row held no values at all — an unfilled request placeholder.
-	 *
-	 * Used to skip the version snapshot on a placeholder's first fill. Checked on
-	 * the value columns only: `name`, `url`, folder and type are metadata the
-	 * requester set when asking, so a placeholder legitimately has them.
-	 *
-	 * @param Secret $secret The pre-update row
-	 *
-	 * @return bool True when the row carried no value.
-	 *
-	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
-	 */
-	private function hadNoValues(Secret $secret): bool {
-		return (string)$secret->getKey() === ''
-			&& (string)$secret->getLogin() === ''
-			&& (string)$secret->getAdditionalFields() === '';
-	}//end hadNoValues()
-
-	/**
-	 * Whether any versionable field differs between two states of a
-	 * secret row (secret-version-history §2.2). Pure string comparison —
-	 * ciphertext blobs are opaque; no decryption anywhere.
-	 *
-	 * @param Secret $before The pre-mutation clone
-	 * @param Secret $after The mutated row
-	 *
-	 * @return bool
-	 */
-	private function fieldsChanged(Secret $before, Secret $after): bool {
-		return $before->getName() !== $after->getName()
-			|| $before->getUrl() !== $after->getUrl()
-			|| $before->getFolderId() !== $after->getFolderId()
-			|| $before->getTypeId() !== $after->getTypeId()
-			|| $before->getKey() !== $after->getKey()
-			|| $before->getLogin() !== $after->getLogin()
-			|| $before->getAdditionalFields() !== $after->getAdditionalFields();
-	}//end fieldsChanged()
+	}//end refuseApplicationValueFields()
 
 	/**
 	 * Normalise a value to a non-empty string or null.

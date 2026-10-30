@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use InvalidArgumentException;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
@@ -214,6 +215,7 @@ class TeamFolderContributionServiceTest extends TestCase {
 		$this->assertSame('folder-ops', $owner->getFolderId());
 		$this->assertSame('RSA-FOR-IRIS', $owner->getKey());
 		$this->assertSame(2, $result['copies']);
+		$this->assertSame([], $result['skipped']);
 		$copies = array_slice($this->inserted, 1);
 		$this->assertSame(['hank', 'jack'], array_map(static fn ($c) => $c->getOwnerId(), $copies));
 		$this->assertSame(['RSA-FOR-hank', 'RSA-FOR-jack'], array_map(static fn ($c) => $c->getKey(), $copies));
@@ -222,6 +224,88 @@ class TeamFolderContributionServiceTest extends TestCase {
 		$this->assertSame(AuditEventTypes::SECRET_CREATED, $this->events[0]->getEventType());
 		$this->assertSame('hank', $this->events[0]->getActorId());
 	}//end testWriteMemberContributes()
+
+	/**
+	 * The TOTP seed and passkeys land on the owner row and on each member's
+	 * copy; an older client that leaves them out stores none.
+	 *
+	 * @return void
+	 */
+	public function testTheTotpAndPasskeysReachTheOwnerRowAndEveryCopy(): void {
+		$data = $this->request();
+		$data['totp'] = 'TOTP-FOR-IRIS';
+		$data['passkeys'] = 'PASSKEYS-FOR-IRIS';
+		$data['copies'][0] += ['encryptedTotp' => 'TOTP-FOR-hank', 'encryptedPasskeys' => 'PASSKEYS-FOR-hank'];
+		$data['copies'][1] += ['encryptedTotp' => 'TOTP-FOR-jack', 'encryptedPasskeys' => 'PASSKEYS-FOR-jack'];
+
+		$this->service->contribute(teamFolderId: 'tf-ops', data: $data, userId: 'hank');
+
+		$this->assertSame(
+			[
+				['TOTP-FOR-IRIS', 'PASSKEYS-FOR-IRIS'],
+				['TOTP-FOR-hank', 'PASSKEYS-FOR-hank'],
+				['TOTP-FOR-jack', 'PASSKEYS-FOR-jack'],
+			],
+			array_map(static fn ($s): array => [$s->getTotp(), $s->getPasskeys()], $this->inserted)
+		);
+
+		$this->inserted = [];
+		$this->service->contribute(teamFolderId: 'tf-ops', data: $this->request(), userId: 'hank');
+		$this->assertSame(
+			[[null, null], [null, null], [null, null]],
+			array_map(static fn ($s): array => [$s->getTotp(), $s->getPasskeys()], $this->inserted)
+		);
+	}//end testTheTotpAndPasskeysReachTheOwnerRowAndEveryCopy()
+
+	/**
+	 * A member copy without a field the owner row holds would leave that member without it:
+	 * refused before anything is stored.
+	 *
+	 * @return void
+	 */
+	public function testAMemberCopyWithoutTheOwnersTotpOrPasskeysIsRefused(): void {
+		$data = $this->request();
+		$data['totp'] = 'TOTP-FOR-IRIS';
+		$data['passkeys'] = 'PASSKEYS-FOR-IRIS';
+		$data['copies'][0] += ['encryptedTotp' => 'TOTP-FOR-hank', 'encryptedPasskeys' => 'PASSKEYS-FOR-hank'];
+
+		foreach ([[], ['encryptedTotp' => 'TOTP-FOR-jack', 'encryptedPasskeys' => null], ['encryptedTotp' => '']] as $jack) {
+			$attempt = $data;
+			$attempt['copies'][1] += $jack;
+			try {
+				$this->service->contribute(teamFolderId: 'tf-ops', data: $attempt, userId: 'hank');
+				$this->fail('A member copy without the owner\'s fields was accepted');
+			} catch (InvalidArgumentException $exception) {
+				$this->assertStringStartsWith('Every member copy must carry', $exception->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->inserted);
+		$this->assertSame([], $this->events);
+	}//end testAMemberCopyWithoutTheOwnersTotpOrPasskeysIsRefused()
+
+	/**
+	 * A member copy that carries a TOTP seed or passkeys the owner row does
+	 * not hold would show that member a value the owner does not have:
+	 * refused before anything is stored.
+	 *
+	 * @return void
+	 */
+	public function testAMemberCopyWithATotpOrPasskeysTheOwnerLacksIsRefused(): void {
+		foreach (['encryptedTotp' => 'TOTP-FOR-jack', 'encryptedPasskeys' => 'PASSKEYS-FOR-jack'] as $field => $value) {
+			$attempt = $this->request();
+			$attempt['copies'][1][$field] = $value;
+			try {
+				$this->service->contribute(teamFolderId: 'tf-ops', data: $attempt, userId: 'hank');
+				$this->fail('A member copy with '.$field.' the owner lacks was accepted');
+			} catch (InvalidArgumentException $exception) {
+				$this->assertStringStartsWith('Every member copy must carry', $exception->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->inserted);
+		$this->assertSame([], $this->events);
+	}//end testAMemberCopyWithATotpOrPasskeysTheOwnerLacksIsRefused()
 
 	/**
 	 * Scenario "Read-grade member is refused", and a non-member: nothing stored.

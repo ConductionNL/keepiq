@@ -128,13 +128,13 @@ class TeamFolderConfirmationService {
 	 * fan-out, which checks the manage grade and the subtree itself
 	 * (sharing-team-folder-manager-role D2). Anyone else needs the switch on,
 	 * and every row is checked before anything is stored; rows that fail a
-	 * check are skipped, so the pair stays pending.
+	 * check are skipped as `not_eligible`, so the pair stays pending.
 	 *
 	 * @param string $teamFolderId The team folder
 	 * @param array<int,array<string,mixed>> $rows The browser-encrypted rows
 	 * @param string $userId The caller
 	 *
-	 * @return array{created:int,rows:array<int,array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}>}
+	 * @return array{created:int,rows:array<int,array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}>,skipped:list<array{sourceSecretId:string,targetUserId:string,reason:string}>}
 	 *
 	 * @throws InvalidArgumentException When the folder is missing or the caller may not confirm
 	 *
@@ -157,14 +157,22 @@ class TeamFolderConfirmationService {
 		$eligible = $this->eligibleTargets(teamFolder: $teamFolder, confirmerId: $userId);
 
 		$accepted = [];
+		$unsafe = [];
 		foreach ($rows as $row) {
 			if ($this->rowIsSafe(row: $row, subtreeIds: $subtreeIds, eligible: $eligible, confirmerId: $userId) === true) {
 				$accepted[] = $row;
+				continue;
 			}
+
+			$unsafe[] = [
+				'sourceSecretId' => (string)($row['sourceSecretId'] ?? ''),
+				'targetUserId' => (string)($row['targetUserId'] ?? ''),
+				'reason' => 'not_eligible',
+			];
 		}
 
 		if ($accepted === []) {
-			return ['created' => 0, 'rows' => []];
+			return ['created' => 0, 'rows' => [], 'skipped' => $unsafe];
 		}
 
 		$result = $this->shares->registerFanOutShares(
@@ -173,6 +181,7 @@ class TeamFolderConfirmationService {
 			subtreeSecretIds: $subtreeIds,
 			userId: $userId
 		);
+		$result['skipped'] = array_merge($unsafe, $result['skipped']);
 
 		if ($result['created'] > 0) {
 			$this->announce(teamFolder: $teamFolder, confirmerId: $userId, rows: $result['rows']);

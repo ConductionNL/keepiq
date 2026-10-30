@@ -4,10 +4,10 @@
  * Keepiq Share Sync Service
  *
  * The multi-recipient re-encryption fan-out of the share lifecycle
- * (implement-user-sharing §3.4, folder-permission-grades §2.3): the write
- * context a client needs to prepare a sync, the optimistic-lock check,
- * the membership guard that confines a sync to the source row and its
- * ACTUAL recipient copies, and the transactional blob write itself.
+ * (implement-user-sharing §3.4, folder-permission-grades §2.3): who may
+ * write a source for every copy, the optimistic-lock check, the membership
+ * guard that confines a sync to the source row and its ACTUAL recipient
+ * copies, and the transactional blob write itself.
  *
  * Extracted from ShareService — the fan-out is a distinct transaction
  * with its own authorization seam (a write-grade team member may sync a
@@ -31,19 +31,44 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
-use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
-use Throwable;
+use Psr\Log\LoggerInterface;
 
 /**
  * Pushes an updated encrypted blob to every recipient of a secret.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A sync authorizes, locks, versions, audits and writes every copy in
+ *   one transaction, tells a source from a received copy, and asks the pending share quarantine scan before each copy
+ *   write (GHSA-m5p9-6pw7-pf3g).
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: each is one collaborator of that transaction.
  */
 class ShareSyncService {
+	use TTransactional;
+
+	/**
+	 * How the audit names a write on a team-folder grade.
+	 */
+	public const TEAM_WRITE = 'team-write sync';
+
+	/**
+	 * How the audit names a write by a member of a group the secret is shared with.
+	 */
+	public const GROUP_WRITE = 'group-write sync';
+
+	/**
+	 * How the audit names a write by a delegate.
+	 */
+	public const DELEGATE_WRITE = 'delegate sync';
 
 	/**
 	 * The share audit trail.
@@ -57,10 +82,14 @@ class ShareSyncService {
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
 	 * @param SecretMapper $secretMapper The Secret mapper (recipient copies)
-	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (owner certificate)
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
+	 * @param SecretVersionService $versionService The version history (snapshot of a source written by anyone but its owner)
+	 * @param ShareSyncGuards $guards The checks a write for every copy passes
+	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param LoggerInterface|null $logger The logger (skipped cross-user copy writes)
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -69,10 +98,14 @@ class ShareSyncService {
 	public function __construct(
 		private ShareTargetMapper $mapper,
 		private SecretMapper $secretMapper,
-		private EncryptionSuiteMapper $suiteMapper,
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
+		private SecretVersionService $versionService,
+		private ShareSyncGuards $guards,
+		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
+		private ?LoggerInterface $logger = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -82,24 +115,31 @@ class ShareSyncService {
 	 *
 	 * The browser supplies one blob per recipient (the source secret's
 	 * new value re-encrypted under each recipient's public key). The
-	 * server validates the caller is the owner or an active delegate,
+	 * server validates the caller may write the source (resolveSyncWriter()),
 	 * applies an optimistic-locking check via the source Secret's
-	 * `updatedAt`, writes every recipient copy in a single transaction,
-	 * and clears `possiblyCompromisedAt` from any copy where it was set.
+	 * `updatedAt`, moves that version and writes every recipient copy in a
+	 * single transaction, and clears `possiblyCompromisedAt` from any copy
+	 * where it was set. A sync by anyone but the owner is audited on the
+	 * source in that transaction. No row may be named twice. A member of a
+	 * group the secret is shared with gets share-save's guards (ShareSyncGuards).
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
 	 *                                                      secretId, key, login,
-	 *                                                      additionalFields, updatedAtCheck
+	 *                                                      additionalFields, totp, passkeys,
+	 *                                                      updatedAtCheck
 	 * @param string $expectedUpdatedAt The owner-side expected ISO timestamp for optimistic locking
 	 * @param string $userId The requesting user
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
+	 * @throws ForbiddenException When the secret is a read-only copy or a received copy
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 	 */
 	public function syncUpdate(
 		string $secretId,
@@ -108,121 +148,146 @@ class ShareSyncService {
 		string $userId,
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
-		// A copy from another organisation is never written by its holder
-		// (sharing-federated-recipients task 3.4).
-		$source->assertNotReadOnly();
-		if ($source->getUseOnly() === true) {
-			// A use-only copy is never written by its holder (D4).
-			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
-		}
+		$this->guards->assertWritable(source: $source);
+		$this->assertNotACopy(secret: $source);
 
-		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
+		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
+		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
+		$this->guards->assertNoDuplicates(updates: $updates);
+		$updates = $this->guards->mirroredValueFields(source: $source, updates: $updates);
+
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
-		$updated = $this->applySyncUpdates(
-			source: $source,
-			updates: $updates,
-			allowedIds: $this->collectSyncTargets(source: $source)
+		// The source is locked against the version just read, which is the
+		// one the caller named when it named one.
+		$base = $source->getUpdatedAt();
+
+		// After the stored version even within the same second, as a share-save stamps.
+		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
+		$allowedIds = $this->collectSyncTargets(source: $source);
+		return $this->atomic(
+			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
+				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
+				if ($writesOn === self::GROUP_WRITE) {
+					[$writesOn, $allowedIds] = $this->guards->assertGroupWrite(sync: $this, source: $source, updates: $updates, userId: $userId);
+				}
+
+				$updated = $this->writeCopyBlobs(
+					source: $source,
+					updates: $updates,
+					allowedIds: $allowedIds,
+					savedAt: $savedAt,
+					writerId: $userId
+				);
+				if ($updated > 0) {
+					$this->recordNonOwnerSync(source: $source, userId: $userId, writesOn: $writesOn);
+				}
+
+				return $updated;
+			},
+			db: $this->db
 		);
-
-		// A non-owner write is attributed to the writer (§3.3) —
-		// identifiers only, never key material.
-		if ($isWriter === true && $updated > 0) {
-			$this->auditTrail->recordTeamWriteSync(
-				userId: $userId,
-				secretId: $source->getId(),
-				secretName: $source->getName(),
-			);
-		}
-
-		return $updated;
 	}//end syncUpdate()
 
 	/**
-	 * The write context of a secret for the current user
-	 * (folder-permission-grades §4): resolves a recipient copy back to
-	 * its source and reports the caller's effective grade plus the
-	 * owner-row material a write-grade member needs to run the
-	 * re-encrypt fan-out (the owner's certificate is public key
-	 * material).
+	 * Refuse a sync that starts from a received copy. A copy is owned by its
+	 * holder, so the owner check would pass and the sync would write that copy
+	 * alone, whether or not the holder may write its source.
+	 *
+	 * @param Secret $secret The secret the sync names
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When the secret is a received copy
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 */
+	private function assertNotACopy(Secret $secret): void {
+		try {
+			$this->mapper->findByRecipientSecret(recipientSecretId: $secret->getId());
+		} catch (DoesNotExistException) {
+			return;
+		} catch (MultipleObjectsReturnedException) {
+			// More than one share row: still a copy.
+		}
+
+		throw new ForbiddenException(message: 'A sync starts from the source secret, not from a copy');
+	}//end assertNotACopy()
+
+	/**
+	 * Attribute a sync by anyone but the owner to the writer on the source
+	 * (§3.3), as a share-save through a copy is: a team writer as
+	 * `team-write sync`, a group member as `group-write sync`, a delegate as
+	 * `delegate sync`. Identifiers only, never key material.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param string $userId The requesting user
+	 * @param string|null $writesOn What resolveSyncWriter() found
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	private function recordNonOwnerSync(Secret $source, string $userId, ?string $writesOn): void {
+		$changedFields = $writesOn;
+		if ($changedFields === null) {
+			if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
+				return;
+			}
+
+			$changedFields = self::DELEGATE_WRITE;
+		}
+
+		$this->auditTrail->recordTeamWriteSync(
+			userId: $userId,
+			secretId: $source->getId(),
+			secretName: $source->getName(),
+			changedFields: $changedFields,
+		);
+	}//end recordNonOwnerSync()
+
+	/**
+	 * The write context of a secret for the current user, as
+	 * ShareWriteContext::writeContext() answers it.
 	 *
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
 	 *
-	 * @return array{sourceSecretId:string, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
+	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
-	 * @throws InvalidArgumentException When the secret does not exist
+	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function writeContext(string $secretId, string $userId): array {
-		$secret = $this->auth->loadSecret(secretId: $secretId);
-
-		// Pivot a recipient copy back to its source.
-		$source = $secret;
-		try {
-			$shareRow = $this->mapper->findByRecipientSecret(recipientSecretId: $secretId);
-			$source = $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
-		} catch (DoesNotExistException) {
-			// Not a copy — the secret is its own source.
-		}
-
-		$grade = 'none';
-		$isOwner = ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true);
-		if ($isOwner === true) {
-			$grade = 'owner';
-		}
-
-		if ($isOwner === false) {
-			$resolved = $this->auth->resolveGrade(secret: $source, userId: $userId);
-			if ($resolved !== null) {
-				$grade = $resolved;
-			}
-		}
-
-		$ownerCertificate = null;
-		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
-			try {
-				$ownerCertificate = $this->suiteMapper
-					->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
-					->getCertificate();
-			} catch (DoesNotExistException) {
-				// Owner without an active suite — fan-out skips the source row.
-			}
-		}
-
-		return [
-			'sourceSecretId' => $source->getId(),
-			'effectiveGrade' => $grade,
-			'ownerCertificate' => $ownerCertificate,
-			'sourceUpdatedAt' => $source->getUpdatedAt()?->format(DateTime::ATOM),
-		];
+		return $this->contexts->writeContext(secretId: $secretId, userId: $userId);
 	}//end writeContext()
 
 	/**
 	 * Authorization seam for a sync (folder-permission-grades §2.3): the
-	 * owner and active delegates as before, OR a member holding a `write`
-	 * grade on an ancestor team folder. Everyone else keeps the existing
-	 * rejection.
+	 * owner and active delegates, a member holding a `write` or `manage` grade
+	 * on an ancestor team folder, or a member of a group the source is shared with
+	 * who holds a copy of it they may change. Everyone else is refused.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param string $userId The requesting user
 	 *
-	 * @return bool True when the caller writes as a team-folder member rather than the owner.
+	 * @return string|null How the audit names the write (TEAM_WRITE or GROUP_WRITE); null for the owner or a delegate.
 	 *
 	 * @throws InvalidArgumentException When the caller may not write the secret
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
-	private function resolveSyncWriter(Secret $source, string $userId): bool {
-		if ($this->auth->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
-			return false;
+	public function resolveSyncWriter(Secret $source, string $userId): ?string {
+		$standing = $this->contexts->standingOn(source: $source, userId: $userId);
+		if ($this->contexts->writesForEveryone(standing: $standing) === true) {
+			return $standing['writesOn'];
 		}
 
-		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
-			$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
-		}
-
-		return true;
+		throw new InvalidArgumentException(message: 'Not authorized to manage shares of this secret');
 	}//end resolveSyncWriter()
 
 	/**
@@ -250,6 +315,33 @@ class ShareSyncService {
 	}//end assertSyncSourceUnchanged()
 
 	/**
+	 * Move the source off the version it was read at, inside the sync's
+	 * transaction, as a share-save does: a save that commits after the read
+	 * refuses the sync here instead of having its copies overwritten.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param DateTime|null $base The version the source was read at; null (no version stored) skips the lock
+	 * @param DateTime $savedAt The version every written row gets
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the source moved on since the read
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	private function lockSource(Secret $source, ?DateTime $base, DateTime $savedAt): void {
+		if ($base === null) {
+			return;
+		}
+
+		if ($this->secretMapper->advanceVersion(id: $source->getId(), base: $base, savedAt: $savedAt) === 0) {
+			throw new InvalidArgumentException(
+				message: 'Source secret has changed since the sync was prepared'
+			);
+		}
+	}//end lockSource()
+
+	/**
 	 * Membership guard: a sync may only touch the source row itself and its
 	 * ACTUAL recipient copies. Without this, any authorized caller could
 	 * pass arbitrary secret ids and corrupt foreign ciphertext (pre-existing
@@ -269,92 +361,204 @@ class ShareSyncService {
 	}//end collectSyncTargets()
 
 	/**
-	 * Write every permitted recipient blob in a single transaction.
+	 * Write every permitted recipient blob. Opens no transaction: the caller
+	 * runs it inside its own, so it commits with the rest of the save. When
+	 * anyone but the owner writes the source, or the writer writes a copy of
+	 * their own, its state before the write is kept as a version
+	 * (keepVersion()).
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
+	 * @param DateTime $savedAt The version every written row gets
+	 * @param string $writerId The caller
+	 * @param string[] $restored The fields a restore writes back from a version, which replace no exposed value
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
-	 * @throws Throwable When the transaction fails; the write is rolled back first.
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
 	 */
-	private function applySyncUpdates(Secret $source, array $updates, array $allowedIds): int {
+	public function writeCopyBlobs(
+		Secret $source,
+		array $updates,
+		array $allowedIds,
+		DateTime $savedAt,
+		string $writerId,
+		array $restored = [],
+	): int {
+		// Defence in depth: the share row that owns each recipient copy, so a
+		// copy whose row does not genuinely belong to its target (a poisoned or
+		// drifted `secret_id`) is skipped rather than overwritten, and so is the
+		// copy of a row the pending quarantine scan holds back. The source row
+		// itself carries no share row and is always writable.
+		$shareRows = $this->shareRowsByCopy(source: $source);
+
 		$updated = 0;
-		$this->db->beginTransaction();
-		try {
-			foreach ($updates as $update) {
-				$recipientSecretId = (string)($update['secretId'] ?? '');
-				if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
-					continue;
-				}
+		foreach ($updates as $update) {
+			$recipientSecretId = (string)($update['secretId'] ?? '');
+			if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
+				continue;
+			}
 
-				try {
-					$copy = $this->secretMapper->findById($recipientSecretId);
-				} catch (DoesNotExistException) {
-					continue;
-				}
+			try {
+				$copy = $this->secretMapper->findById($recipientSecretId);
+			} catch (DoesNotExistException) {
+				continue;
+			}
 
-				$this->applyRecipientBlob(copy: $copy, update: $update);
+			if ($recipientSecretId !== $source->getId()
+				&& $this->mayWriteCopy(source: $source, copy: $copy, shareRow: ($shareRows[$recipientSecretId] ?? null)) === false
+			) {
+				continue;
+			}
 
-				// A key rewrite of the SOURCE row is a real rotation —
-				// advance keyUpdatedAt so rotation proofs stay honest
-				// (folder-permission-grades §2.3).
-				if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
-					$copy->setKeyUpdatedAt(new DateTime());
-				}
-
-				$this->secretMapper->update($copy);
-				++$updated;
-			}//end foreach
-
-			$this->db->commit();
-		} catch (Throwable $exception) {
-			$this->db->rollBack();
-			throw $exception;
-		}//end try
+			$preUpdate = clone $copy;
+			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt, restored: $restored);
+			$this->keepVersion(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
+			$this->secretMapper->update($copy);
+			++$updated;
+		}//end foreach
 
 		return $updated;
-	}//end applySyncUpdates()
+	}//end writeCopyBlobs()
+
+	/**
+	 * The live share rows of a source, keyed by the copy each names.
+	 *
+	 * @param Secret $source The source secret being synced
+	 *
+	 * @return array<string,ShareTarget>
+	 */
+	private function shareRowsByCopy(Secret $source): array {
+		$shareRows = [];
+		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+			$shareRows[$shareRow->getSecretId()] = $shareRow;
+		}
+
+		return $shareRows;
+	}//end shareRowsByCopy()
+
+	/**
+	 * Whether a sync may write a recipient copy: its share row's target holds
+	 * it, and the pending quarantine scan does not hold the row back.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param Secret $copy The recipient copy
+	 * @param ShareTarget|null $shareRow The share row naming the copy, or null when none does
+	 *
+	 * @return bool
+	 */
+	private function mayWriteCopy(Secret $source, Secret $copy, ?ShareTarget $shareRow): bool {
+		if ($shareRow !== null
+			&& ($this->quarantineScan?->mayTouchCopy(row: $shareRow, copy: $copy) ?? $shareRow->isHeldByTarget(copy: $copy)) === true
+		) {
+			return true;
+		}
+
+		$this->logger?->warning(
+			'Skipped a sync write to a copy its share target does not hold, or the pending quarantine scan holds back',
+			['app' => 'keepiq', 'secretId' => $copy->getId(), 'sourceSecretId' => $source->getId()]
+		);
+		return false;
+	}//end mayWriteCopy()
+
+	/**
+	 * Keep a written row's state before the write as a version, with the
+	 * writer as its actor, for the source written by anyone but its owner (a
+	 * delegate, a team-folder writer or a member of a group it is shared with)
+	 * and for a copy of the writer's own, as share-save keeps the caller's
+	 * row, under the rule of SecretVersionService::snapshotIfChanged(), as on
+	 * any update. Other holders' copies are not kept: a recipient's
+	 * history is their own, and the owner's update keeps none of them either.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param Secret $preUpdate The row as read under the lock
+	 * @param Secret $after The row with the write applied
+	 * @param string $writerId The caller
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
+	 */
+	private function keepVersion(Secret $source, Secret $preUpdate, Secret $after, string $writerId): void {
+		// The source unless the writer owns it, a copy only when they do.
+		$writersOwn = $preUpdate->getOwnerType() === 'user' && $preUpdate->getOwnerId() === $writerId;
+		if (($preUpdate->getId() === $source->getId()) !== $writersOwn) {
+			$this->versionService->snapshotIfChanged(preUpdate: $preUpdate, after: $after, actorType: 'user', actorId: $writerId);
+		}
+	}//end keepVersion()
 
 	/**
 	 * Copy one re-encrypted blob onto a recipient's Secret row.
 	 *
 	 * @param Secret $copy The recipient copy to mutate
 	 * @param array<string,string|null> $update The blob row for this recipient
+	 * @param DateTime $savedAt The copy's new version
+	 * @param string[] $restored The fields a restore writes back from a version
 	 *
 	 * @return void
 	 */
-	private function applyRecipientBlob(Secret $copy, array $update): void {
-		if (isset($update['key']) === true) {
+	private function applyRecipientBlob(Secret $copy, array $update, DateTime $savedAt, array $restored): void {
+		$before = clone $copy;
+		// A new key is a real rotation, on the source row and on a copy alike:
+		// keyUpdatedAt moves so rotation proofs and the compromise rule see it
+		// (folder-permission-grades §2.3).
+		if (isset($update['key']) === true && (string)$update['key'] !== $copy->getKey()) {
 			$copy->setKey((string)$update['key']);
+			$copy->setKeyUpdatedAt(clone $savedAt);
 		}
 
+		// An absent field stays as it is; a null one is cleared.
 		if (array_key_exists('login', $update) === true) {
-			$login = null;
-			if ($update['login'] !== null) {
-				$login = (string)$update['login'];
-			}
-
-			$copy->setLogin($login);
+			$copy->setLogin($this->nullableBlob(value: $update['login']));
 		}
 
 		if (array_key_exists('additionalFields', $update) === true) {
-			$additionalFields = null;
-			if ($update['additionalFields'] !== null) {
-				$additionalFields = (string)$update['additionalFields'];
-			}
-
-			$copy->setAdditionalFields($additionalFields);
+			$copy->setAdditionalFields($this->nullableBlob(value: $update['additionalFields']));
 		}
 
-		$copy->setUpdatedAt(new DateTime());
+		// For these two `''` means "not set" and is stored as null, as on the head.
+		$blobs = new FederatedValueFields();
+		if (array_key_exists('totp', $update) === true) {
+			$copy->setTotp($blobs->blob(value: $update['totp']));
+		}
 
-		// If the copy was previously flagged as possibly compromised
-		// (e.g. EncryptionSuite migration mid-air), the freshly
-		// re-encrypted blob clears that warning for the recipient.
-		if ($copy->getPossiblyCompromisedAt() !== null) {
+		if (array_key_exists('passkeys', $update) === true) {
+			$copy->setPasskeys($blobs->blob(value: $update['passkeys']));
+		}
+
+		$credentials = new CredentialFields();
+		$credentials->stamp(
+			after: $copy,
+			before: $before,
+			now: $savedAt,
+			restored: $restored,
+			compromiseFlagOpen: $restored !== [] && $this->versionService->compromiseFlagOpen(secretId: $copy->getId())
+		);
+		$copy->setUpdatedAt(clone $savedAt);
+
+		// A copy flagged as possibly compromised (e.g. an EncryptionSuite
+		// migration mid-air) is cleared by the same rule as the head: once
+		// none of its key, totp and passkeys is left exposed.
+		if ($credentials->answersCompromiseWarning(after: $copy, before: $before, restored: $restored) === true) {
 			$copy->setPossiblyCompromisedAt(null);
 		}
 	}//end applyRecipientBlob()
+
+	/**
+	 * A blob as a string, or null when it is null.
+	 *
+	 * @param mixed $value The blob
+	 *
+	 * @return string|null
+	 */
+	private function nullableBlob(mixed $value): ?string {
+		if ($value === null) {
+			return null;
+		}
+
+		return (string)$value;
+	}//end nullableBlob()
 }//end class

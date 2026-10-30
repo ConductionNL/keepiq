@@ -832,6 +832,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 								error: result.error,
 							}
 						} catch (e) {
+							// A commit that leaves a stored `totp` or `passkeys`
+							// behind is refused, and resending the same payload is
+							// refused again: stop with the server's reason instead of
+							// retrying it. Nothing was written, so it stays resumable.
+							if (
+								e?.response?.data?.error === 'fields_not_reencrypted'
+							) {
+								return {
+									outcome: 'halt',
+									result,
+									error: e.response.data.message,
+								}
+							}
+
 							// The commit itself never landed (network, guard
 							// rejection), so nothing was written and the row is
 							// simply still outstanding. Retryable by definition.

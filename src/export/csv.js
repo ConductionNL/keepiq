@@ -5,8 +5,9 @@
  * Plaintext CSV export + parse (secret-export-gdpr D2, tasks §5.3).
  *
  * Produces the obvious plaintext columns
- * (`name,url,login,password,notes,folder,type`) with RFC 4180 quoting, in a
- * layout the secret-import generic CSV auto-detection round-trips. This module
+ * (`name,url,login,password,notes,folder,type,totp`) with RFC 4180 quoting, in
+ * a layout the secret-import generic CSV auto-detection round-trips. A
+ * login's passkeys have no column and are left out. This module
  * is pure string transformation — the SECURITY gating (warning acknowledgement
  * + master-password re-auth) lives in the export store/dialog, never here.
  *
@@ -22,6 +23,7 @@ export const CSV_COLUMNS = [
 	'notes',
 	'folder',
 	'type',
+	'totp',
 ]
 
 /**
@@ -81,6 +83,7 @@ export function generateCsv(secrets) {
 			notesOf(secret),
 			secret.folder,
 			secret.type,
+			secret.totp,
 		]
 		lines.push(row.map(quoteField).join(','))
 	}

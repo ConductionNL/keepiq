@@ -33,7 +33,15 @@ final class BackupTableRegistry {
 	public const PREFIX = 'keepiq_';
 
 	/**
-	 * Every Keepiq table, unprefixed, in a stable order.
+	 * Tables a backup leaves out and a restore leaves alone: short-lived
+	 * working state that is worthless once restored.
+	 *
+	 * @var string[]
+	 */
+	public const NOT_BACKED_UP = ['share_save_stages'];
+
+	/**
+	 * Every other Keepiq table, unprefixed, in a stable order.
 	 *
 	 * @var string[]
 	 */

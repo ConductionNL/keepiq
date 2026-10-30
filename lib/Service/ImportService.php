@@ -12,8 +12,8 @@
  *     normal UI uses — no duplicated persistence logic),
  *   - returns per-index results so one invalid item never fails its neighbours.
  *
- * The server never receives plaintext secret values: key/login/additionalFields
- * arrive as RSA ciphertext envelopes and are stored verbatim (ADR-003). Ownership
+ * The server never receives plaintext secret values: key/login/additionalFields/
+ * totp/passkeys arrive as RSA ciphertext envelopes and are stored verbatim (ADR-003). Ownership
  * is derived exclusively from the caller-supplied session user id — no owner
  * field is accepted from the request (ADR-005, IDOR-safe by construction).
  *
@@ -69,6 +69,13 @@ class ImportService {
 	 * @var int
 	 */
 	public const MAX_BLOB_LENGTH = 65536;
+
+	/**
+	 * The smallest RSA block a ciphertext chunk can be, in bytes (RSA-2048).
+	 *
+	 * @var int
+	 */
+	public const MIN_RSA_BLOCK = 256;
 
 	/**
 	 * Constructor for ImportService.
@@ -145,6 +152,8 @@ class ImportService {
 						// D6); null resolves to the `login` default. The type is
 						// a UI hint only — the seed is ciphertext in `key`.
 						'typeId' => ($item['typeId'] ?? null),
+						'totp' => ($item['totp'] ?? null),
+						'passkeys' => ($item['passkeys'] ?? null),
 					],
 					$userId
 				);
@@ -181,8 +190,8 @@ class ImportService {
 	/**
 	 * Validate one encrypted item's metadata + ciphertext envelope shape.
 	 *
-	 * Rejects plaintext-shaped sensitive fields: key/login/additionalFields MUST
-	 * look like an envelope, never plaintext. A missing/oversized name, an
+	 * Rejects plaintext-shaped sensitive fields: key/login/additionalFields/totp/
+	 * passkeys MUST look like an envelope, never plaintext. A missing/oversized name, an
 	 * oversized url, or an oversized blob is rejected.
 	 *
 	 * @param array<string,mixed> $item The encrypted item
@@ -214,6 +223,19 @@ class ImportService {
 			throw new InvalidArgumentException('Missing encrypted key');
 		}
 
+		$this->assertEncryptedFields(item: $item);
+	}//end validateItem()
+
+	/**
+	 * Assert every sensitive field the item carries is a ciphertext envelope.
+	 *
+	 * @param array<string,mixed> $item The encrypted item
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a field is not a ciphertext envelope
+	 */
+	private function assertEncryptedFields(array $item): void {
 		foreach (['key', 'login', 'additionalFields'] as $field) {
 			// The isset() check is already false for a null value, so a
 			// separate null comparison is redundant.
@@ -223,7 +245,43 @@ class ImportService {
 
 			$this->assertCiphertext(field: $field, value: (string)$item[$field]);
 		}
-	}//end validateItem()
+
+		// `''` means "not set" for these two, as SecretService::create stores it.
+		foreach (['totp', 'passkeys'] as $field) {
+			if (isset($item[$field]) === false || $item[$field] === '') {
+				continue;
+			}
+
+			$this->assertCiphertext(field: $field, value: (string)$item[$field]);
+			$this->assertRsaChunks(field: $field, value: (string)$item[$field]);
+		}
+	}//end assertEncryptedFields()
+
+	/**
+	 * Assert a value has the shape `rsaEncrypt()` gives every field: base64 of
+	 * a big-endian chunk count followed by that many whole RSA blocks. A TOTP
+	 * seed is itself base32 and passes the charset check above, so these two
+	 * fields need the stricter test.
+	 *
+	 * @param string $field The field name (for the error message)
+	 * @param string $value The candidate ciphertext blob
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the value is not chunked RSA ciphertext
+	 */
+	private function assertRsaChunks(string $field, string $value): void {
+		$raw = base64_decode($value, true);
+		if ($raw === false || strlen($raw) < 4 + self::MIN_RSA_BLOCK) {
+			throw new InvalidArgumentException($field . ' is not a valid ciphertext envelope');
+		}
+
+		$chunks = (int)unpack('N', substr($raw, 0, 4))[1];
+		$body = strlen($raw) - 4;
+		if ($chunks < 1 || $body % $chunks !== 0 || intdiv($body, $chunks) < self::MIN_RSA_BLOCK) {
+			throw new InvalidArgumentException($field . ' is not a valid ciphertext envelope');
+		}
+	}//end assertRsaChunks()
 
 	/**
 	 * Assert a sensitive field is an encrypted envelope, not plaintext.

@@ -237,7 +237,7 @@ export const useHealthStore = defineStore('health', {
 					url: secret.url ?? null,
 					folderPath: secret.folderId ?? null,
 					value,
-					keyUpdatedAt: secret.keyUpdatedAt ?? secret.updatedAt ?? null,
+					keyUpdatedAt: secret.keyUpdatedAt ?? secret.createdAt ?? null,
 					possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
 				})
 			}

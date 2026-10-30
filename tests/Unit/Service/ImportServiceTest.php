@@ -40,6 +40,18 @@ class ImportServiceTest extends TestCase {
 	private const CIPHER = 'QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVowMTIzNDU2Nzg5';
 
 	/**
+	 * A real `rsaEncrypt()` ciphertext from the shared crypto vectors, case `$index`.
+	 *
+	 * @param int $index The case
+	 *
+	 * @return string
+	 */
+	private static function rsaCiphertext(int $index): string {
+		$vectors = json_decode((string)file_get_contents(__DIR__ . '/../../vectors/crypto/fields.json'), true);
+		return $vectors['cases'][$index]['ciphertext'];
+	}//end rsaCiphertext()
+
+	/**
 	 * Build a Secret stub with an id.
 	 *
 	 * @param string $id The id
@@ -217,6 +229,73 @@ class ImportServiceTest extends TestCase {
 		$this->assertSame('failed', $result['results'][0]['status']);
 		$this->assertStringContainsStringIgnoringCase('ciphertext', $result['results'][0]['error']);
 	}//end testPlaintextSensitiveFieldRejected()
+
+	/**
+	 * An item's totp and passkeys reach the create call; an absent field and a
+	 * literal '' both arrive as "not set".
+	 *
+	 * @return void
+	 */
+	public function testTotpAndPasskeysReachTheCreatedSecret(): void {
+		$secretService = $this->createMock(SecretService::class);
+		$folderService = $this->createMock(FolderService::class);
+		$folderService->method('listForUser')->willReturn([]);
+		$secretService->method('assertActiveSuite');
+
+		$sent = [];
+		$secretService->method('create')->willReturnCallback(
+			function (array $data, string $userId) use (&$sent): Secret {
+				$sent[] = $data;
+				return $this->secret('s-' . $data['name']);
+			}
+		);
+
+		$service = new ImportService($secretService, $folderService, $this->createMock(LoggerInterface::class));
+
+		$withBoth = $this->item('Both') + ['totp' => self::rsaCiphertext(0), 'passkeys' => self::rsaCiphertext(1)];
+		$cleared  = $this->item('Cleared') + ['totp' => '', 'passkeys' => ''];
+		$result   = $service->commitChunk([$withBoth, $this->item('Neither'), $cleared], 'alice');
+
+		$this->assertSame(['created', 'created', 'created'], array_column($result['results'], 'status'));
+		$this->assertSame(self::rsaCiphertext(0), $sent[0]['totp']);
+		$this->assertSame(self::rsaCiphertext(1), $sent[0]['passkeys']);
+		$this->assertNull($sent[1]['totp']);
+		$this->assertNull($sent[1]['passkeys']);
+		$this->assertSame('', $sent[2]['totp']);
+		$this->assertSame('', $sent[2]['passkeys']);
+	}//end testTotpAndPasskeysReachTheCreatedSecret()
+
+	/**
+	 * A plaintext-shaped totp or passkeys fails the item, and nothing is created.
+	 *
+	 * @return void
+	 */
+	public function testPlaintextTotpOrPasskeysRejected(): void {
+		$secretService = $this->createMock(SecretService::class);
+		$folderService = $this->createMock(FolderService::class);
+		$folderService->method('listForUser')->willReturn([]);
+		$secretService->method('assertActiveSuite');
+		$secretService->expects($this->never())->method('create');
+
+		$service = new ImportService($secretService, $folderService, $this->createMock(LoggerInterface::class));
+
+		// A bare base32 seed and base64 that is no RSA chunk list pass the
+		// charset check the older fields get, and are still refused.
+		$plaintext = [
+			['totp' => 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP'],
+			['totp' => 'JBSWY3DPEHPK3PXP'],
+			['totp' => str_repeat('JBSWY3DPEHPK3PXP', 30)],
+			['passkeys' => '[{"id":"x"}]'],
+			['passkeys' => base64_encode(str_repeat('{"credentialId":"oKGio6SlpqeoqaqrrK2urw"}', 10))],
+		];
+		$items = array_map(fn (array $field): array => $this->item('X') + $field, $plaintext);
+		$result = $service->commitChunk($items, 'alice');
+
+		foreach ($plaintext as $index => $field) {
+			$this->assertSame('failed', $result['results'][$index]['status'], (string)json_encode($field));
+			$this->assertStringContainsString((string)array_key_first($field), $result['results'][$index]['error']);
+		}
+	}//end testPlaintextTotpOrPasskeysRejected()
 
 	/**
 	 * Folder paths are ensured idempotently: an existing folder is reused, a

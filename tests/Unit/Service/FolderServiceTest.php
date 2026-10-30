@@ -35,7 +35,9 @@ use OCA\Keepiq\Service\FolderService;
 use OCA\Keepiq\Service\FolderTreeService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -59,6 +61,11 @@ class FolderServiceTest extends TestCase {
 	private $secretMapper;
 
 	/**
+	 * @var IDBConnection
+	 */
+	private $db;
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -66,6 +73,7 @@ class FolderServiceTest extends TestCase {
 	protected function setUp(): void {
 		$this->mapper = $this->createMock(FolderMapper::class);
 		$this->secretMapper = $this->createMock(SecretMapper::class);
+		$this->db = $this->createMock(IDBConnection::class);
 		$logger = $this->createMock(LoggerInterface::class);
 
 		$nameGuard = new FolderNameGuard(mapper: $this->mapper);
@@ -90,6 +98,7 @@ class FolderServiceTest extends TestCase {
 					childData: $childData,
 					nameGuard: $nameGuard,
 				),
+				db: $this->db,
 				logger: $logger,
 				eventDispatcher: null,
 			),
@@ -566,4 +575,154 @@ class FolderServiceTest extends TestCase {
 			userId: 'alice',
 		);
 	}//end testDeleteKeepDuplicateNameRejected()
+
+	/**
+	 * Expect a delete to write nothing at all.
+	 *
+	 * @return void
+	 */
+	private function expectNoWrites(): void {
+		$this->db->expects($this->never())->method('beginTransaction');
+		$this->secretMapper->expects($this->never())->method('deleteByFolderId');
+		$this->secretMapper->expects($this->never())->method('updateFolderForSecrets');
+		$this->mapper->expects($this->never())->method('update');
+		$this->mapper->expects($this->never())->method('delete');
+	}//end expectNoWrites()
+
+	/**
+	 * A kept subfolder's name clash refuses the delete before the direct secrets are purged.
+	 *
+	 * @return void
+	 */
+	public function testDeleteKeepDuplicateNameWritesNothing(): void {
+		$parent = $this->makeFolder(id: 'f-1', parentId: null);
+		$sub = $this->makeFolder(id: 'sub', parentId: 'f-1');
+
+		$this->mapper->method('findById')->willReturn($parent);
+		$this->mapper->method('findChildren')->willReturn([$sub]);
+		$this->secretMapper->method('countByFolder')->willReturn(1);
+		$this->mapper->method('existsInParent')->willReturn(true);
+		$this->expectNoWrites();
+
+		$this->expectException(DuplicateFolderNameException::class);
+
+		$this->service->delete(
+			id: 'f-1',
+			cascade: null,
+			resolution: ['directSecrets' => 'delete', 'subfolders' => ['sub' => 'keep']],
+			userId: 'alice',
+		);
+	}//end testDeleteKeepDuplicateNameWritesNothing()
+
+	/**
+	 * An unknown action for a later subfolder refuses the delete before an earlier one runs.
+	 *
+	 * @return void
+	 */
+	public function testDeleteUnknownActionWritesNothing(): void {
+		$this->mapper->method('findById')->willReturn($this->makeFolder(id: 'f-1'));
+		$this->mapper->method('findChildren')->willReturn(
+			[
+				$this->makeFolder(id: 'a', parentId: 'f-1'),
+				$this->makeFolder(id: 'b', parentId: 'f-1'),
+			]
+		);
+		$this->secretMapper->method('countByFolder')->willReturn(1);
+		$this->mapper->expects($this->never())->method('getSubtreeIds');
+		$this->expectNoWrites();
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessageMatches('/Unknown subfolder action/');
+
+		$this->service->delete(
+			id: 'f-1',
+			cascade: null,
+			resolution: ['directSecrets' => 'delete', 'subfolders' => ['a' => 'delete', 'b' => ['keep']]],
+			userId: 'alice',
+		);
+	}//end testDeleteUnknownActionWritesNothing()
+
+	/**
+	 * A kept subfolder named like the deleted folder only meets that folder, so it is not a clash.
+	 *
+	 * @return void
+	 */
+	public function testDeleteKeepSubfolderNamedLikeDeletedFolder(): void {
+		$parent = $this->makeFolder(id: 'f-1', parentId: 'root');
+		$parent->setName('Work');
+		$sub = $this->makeFolder(id: 'sub', parentId: 'f-1');
+		$sub->setName('Work');
+
+		$this->mapper->method('findById')->willReturn($parent);
+		$this->mapper->method('findChildren')->willReturn([$sub]);
+		$this->secretMapper->method('countByFolder')->willReturn(0);
+		$this->mapper->expects($this->never())->method('existsInParent');
+		$this->mapper->expects($this->once())->method('update')->with($sub);
+
+		$this->service->delete(
+			id: 'f-1',
+			cascade: null,
+			resolution: ['directSecrets' => 'move', 'subfolders' => ['sub' => 'keep']],
+			userId: 'alice',
+		);
+
+		$this->assertSame('root', $sub->getParentId());
+	}//end testDeleteKeepSubfolderNamedLikeDeletedFolder()
+
+	/**
+	 * A resolution delete commits its writes in one transaction.
+	 *
+	 * @return void
+	 */
+	public function testDeleteWithResolutionCommitsOnce(): void {
+		$sub = $this->makeFolder(id: 'sub', parentId: 'f-1');
+		$this->mapper->method('findById')->willReturn($this->makeFolder(id: 'f-1'));
+		$this->mapper->method('findChildren')->willReturn([$sub]);
+		$this->secretMapper->method('countByFolder')->willReturn(1);
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('commit');
+		$this->db->expects($this->never())->method('rollBack');
+
+		$this->service->delete(
+			id: 'f-1',
+			cascade: null,
+			resolution: ['directSecrets' => 'move', 'subfolders' => ['sub' => 'keep']],
+			userId: 'alice',
+		);
+	}//end testDeleteWithResolutionCommitsOnce()
+
+	/**
+	 * A write that fails halfway rolls back what came before it and is rethrown.
+	 *
+	 * @return void
+	 */
+	public function testDeleteRollsBackFailedWrite(): void {
+		$this->mapper->method('findById')->willReturn($this->makeFolder(id: 'f-1'));
+		$this->mapper->method('findChildren')->willReturn([]);
+		$this->secretMapper->method('countByFolder')->willReturn(2);
+		$this->secretMapper->expects($this->once())->method('deleteByFolderId');
+		$this->mapper->method('delete')->willThrowException(new RuntimeException('db gone'));
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->never())->method('commit');
+		$this->db->expects($this->once())->method('rollBack');
+
+		$this->expectException(RuntimeException::class);
+
+		$this->service->delete(id: 'f-1', cascade: 'delete', resolution: null, userId: 'alice');
+	}//end testDeleteRollsBackFailedWrite()
+
+	/**
+	 * A leaf delete without a cascade mode is refused before a transaction starts.
+	 *
+	 * @return void
+	 */
+	public function testDeleteLeafWithoutCascadeWritesNothing(): void {
+		$this->mapper->method('findById')->willReturn($this->makeFolder());
+		$this->mapper->method('findChildren')->willReturn([]);
+		$this->secretMapper->method('countByFolder')->willReturn(3);
+		$this->expectNoWrites();
+
+		$this->expectException(ConflictException::class);
+		$this->service->delete(id: 'f-1', cascade: 'bogus', resolution: null, userId: 'alice');
+	}//end testDeleteLeafWithoutCascadeWritesNothing()
 }//end class

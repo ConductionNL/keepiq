@@ -62,4 +62,28 @@ describe('serializeVault', () => {
 			'Work/Cloud',
 		])
 	})
+
+	it("carries a login's code and passkeys, and writes neither when unset (keepiq#1327)", () => {
+		const passkeys = JSON.stringify([
+			{ credentialId: 'C', rpId: 'bank.example', privateKey: 'PK' },
+		])
+		const payload = serializeVault(
+			[
+				{
+					name: 'Bank',
+					key: 'pw',
+					totp: 'JBSWY3DPEHPK3PXP',
+					passkeys,
+					folderId: null,
+				},
+				{ name: 'Plain', key: 'x', totp: '', passkeys: '', folderId: null },
+			],
+			[],
+		)
+		const [bank, plain] = payload.secrets
+		expect(bank.totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(bank.passkeys).toBe(passkeys)
+		expect('totp' in plain).toBe(false)
+		expect('passkeys' in plain).toBe(false)
+	})
 })

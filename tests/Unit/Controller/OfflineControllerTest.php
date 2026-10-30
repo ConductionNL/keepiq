@@ -27,6 +27,8 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\OfflineManifestService;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -49,6 +51,8 @@ class OfflineControllerTest extends TestCase {
 	private FolderMapper&MockObject $folderMapper;
 
 	private SecretTypeMapper&MockObject $typeMapper;
+
+	private ShareTargetMapper&MockObject $shareTargets;
 
 	private IAppConfig&MockObject $appConfig;
 
@@ -77,6 +81,7 @@ class OfflineControllerTest extends TestCase {
 		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$this->folderMapper = $this->createMock(originalClassName: FolderMapper::class);
 		$this->typeMapper = $this->createMock(originalClassName: SecretTypeMapper::class);
+		$this->shareTargets = $this->createMock(originalClassName: ShareTargetMapper::class);
 		$this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
 		$this->userSession = $this->createMock(originalClassName: IUserSession::class);
 
@@ -92,6 +97,7 @@ class OfflineControllerTest extends TestCase {
 				folderMapper: $this->folderMapper,
 				typeMapper: $this->typeMapper,
 				twoFactor: $this->twoFactorGate(),
+				shareTargets: $this->shareTargets,
 			),
 			appConfig: $this->appConfig,
 			userSession: $this->userSession,
@@ -138,6 +144,8 @@ class OfflineControllerTest extends TestCase {
 		$secret->setOwnerType('user');
 		$secret->setOwnerId('alice');
 		$secret->setKey('RSA-CIPHERTEXT');
+		$secret->setTotp('TOTP-CIPHERTEXT');
+		$secret->setPasskeys('PASSKEYS-CIPHERTEXT');
 		$this->secretMapper->expects($this->once())->method('findByOwner')
 			->with('user', 'alice')->willReturn([$secret]);
 
@@ -156,6 +164,8 @@ class OfflineControllerTest extends TestCase {
 		$this->assertSame('ENVELOPE-BLOB', $data['suite']['privateKey']);
 		$this->assertCount(1, $data['secrets']);
 		$this->assertSame('RSA-CIPHERTEXT', $data['secrets'][0]['key']);
+		$this->assertSame('TOTP-CIPHERTEXT', $data['secrets'][0]['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $data['secrets'][0]['passkeys']);
 		$this->assertCount(1, $data['folders']);
 		$this->assertArrayHasKey('syncedAt', $data);
 	}//end testManifestReturnsOwnerScopedCiphertextSnapshot()
@@ -188,6 +198,7 @@ class OfflineControllerTest extends TestCase {
 					folderMapper: $this->folderMapper,
 					typeMapper: $this->typeMapper,
 					twoFactor: $this->twoFactorGate(),
+					shareTargets: $this->shareTargets,
 				),
 				appConfig: $appConfig,
 				userSession: $this->userSession,
@@ -196,6 +207,59 @@ class OfflineControllerTest extends TestCase {
 			$this->assertSame($expected, $controller->manifest()->getData()['offlineEditsEnabled']);
 		}
 	}//end testManifestCarriesTheOfflineEditsRule()
+
+	/**
+	 * A copy's row carries its source's version, written as the row's own,
+	 * so an edit made offline can name it; a row that is not a copy, or
+	 * whose source is gone, carries null. Nothing else of the source shows.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+	 */
+	public function testManifestCarriesEachCopysSourceVersion(): void {
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+		$this->folderMapper->method('findByOwner')->willReturn([]);
+		$this->typeMapper->method('findAvailableForUser')->willReturn([]);
+
+		$rows = [];
+		foreach (['own', 'c-bob', 'c-gone'] as $id) {
+			$row = new Secret();
+			$row->setId($id);
+			$row->setOwnerType('user');
+			$row->setOwnerId('alice');
+			$row->setUpdatedAt(new \DateTime('2026-10-01T09:00:00+00:00'));
+			$rows[] = $row;
+		}
+
+		$source = new Secret();
+		$source->setId('src-bob');
+		$source->setOwnerId('bob');
+		$source->setKey('BOBS-CIPHERTEXT');
+		$source->setUpdatedAt(new \DateTime('2026-10-01T10:00:05+00:00'));
+		$this->secretMapper->method('findByOwner')->willReturn($rows);
+		$this->secretMapper->expects($this->once())->method('findByIds')
+			->with(['src-bob', 'src-gone'])->willReturn(['src-bob' => $source]);
+		$targets = [];
+		foreach (['c-bob' => 'src-bob', 'c-gone' => 'src-gone'] as $copyId => $sourceId) {
+			$target = new ShareTarget();
+			$target->setSecretId($copyId);
+			$target->setSourceSecretId($sourceId);
+			$targets[] = $target;
+		}
+
+		$this->shareTargets->expects($this->once())->method('findByTargetUser')->with('alice')->willReturn($targets);
+
+		$secrets = array_column($this->controller->manifest()->getData()['secrets'], null, 'id');
+
+		$this->assertNull($secrets['own']['sourceUpdatedAt']);
+		$this->assertSame($source->getUpdatedAt()?->format('c'), $secrets['c-bob']['sourceUpdatedAt']);
+		$this->assertNull($secrets['c-gone']['sourceUpdatedAt']);
+		$this->assertStringNotContainsString('BOBS-CIPHERTEXT', (string)json_encode($secrets));
+	}//end testManifestCarriesEachCopysSourceVersion()
 
 	/**
 	 * A REAL TwoFactorGate whose policy applies when $twoFactorBlocks is

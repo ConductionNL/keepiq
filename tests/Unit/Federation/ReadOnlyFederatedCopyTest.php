@@ -50,8 +50,12 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderQueryService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -130,7 +134,6 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $this->suites,
 			shareTargetMapper: $this->targets,
 		);
 	}
@@ -153,8 +156,6 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 
 		$service = new ShareService(
 			mapper: $this->targets,
-			db: $db,
-			notificationService: $notifications,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $this->targets,
@@ -167,9 +168,11 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			syncService: new ShareSyncService(
 				mapper: $this->targets,
 				secretMapper: $this->secrets,
-				suiteMapper: $this->suites,
 				db: $db,
 				auth: $auth,
+				versionService: $this->createMock(SecretVersionService::class),
+				guards: new ShareSyncGuards(targets: $this->targets, secrets: $this->secrets, suites: $this->suites, auth: $auth),
+				contexts: new ShareWriteContext(targets: $this->targets, suites: $this->suites, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->targets,
@@ -201,6 +204,8 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$response = (new SecretUpdateController($request, $service, $this->session()))->update('copy');
@@ -221,19 +226,13 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 	}
 
 	/**
-	 * POST /api/v1/secrets/{id}/shares, .../shares/batch and the bulk
-	 * register: Bob cannot share it onward with a user.
+	 * POST /api/v1/shares/register-batch (the only share-create surface): Bob
+	 * cannot share it onward with a user.
 	 *
 	 * @return void
 	 */
 	public function testSharingOnwardIsForbidden(): void {
 		$controller = $this->shareController();
-
-		$this->assertSame(Http::STATUS_FORBIDDEN, $controller->create('copy', 'carla', 'copy-c')->getStatus());
-		$this->assertSame(
-			Http::STATUS_FORBIDDEN,
-			$controller->createBatch('copy', [['targetUserId' => 'carla', 'recipientSecretId' => 'copy-c']], 'gs-1')->getStatus()
-		);
 
 		$batch = $controller->registerBatch(
 			[['sourceSecretId' => 'copy', 'targetUserId' => 'carla', 'encryptedKey' => 'CIPHER']]

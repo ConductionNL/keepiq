@@ -156,7 +156,17 @@ export default {
 					await secretStore.updateSecret(finding.id, {
 						folderId: target.folderId,
 					})
-					await useTeamFolderStore().runFanOut(target.teamFolderId)
+					const result = await useTeamFolderStore().runFanOut(
+						target.teamFolderId,
+					)
+					if (result?.refused?.length > 0) {
+						// The secret moved, but its members did not all get a copy.
+						this.error = this.t(
+							'keepiq',
+							'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+							{ names: result.refused.join(', ') },
+						)
+					}
 				} else {
 					// Someone else's team folder: contribute a copy, and only
 					// then remove the personal one.
@@ -171,6 +181,8 @@ export default {
 						key: plain.key ?? '',
 						login: plain.login ?? '',
 						additionalFields: plain.additionalFields ?? null,
+						totp: plain.totp ?? '',
+						passkeys: plain.passkeys ?? '',
 					})
 					await secretStore.deleteSecret(finding.id)
 				}

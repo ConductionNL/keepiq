@@ -196,6 +196,42 @@ describe('migration driver loop — termination', () => {
 		expect(post).not.toHaveBeenCalled()
 	})
 
+	it('halts, rather than retrying, when the server refuses a commit for leaving stored fields behind', async () => {
+		nextResults = [
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				ok: true,
+				payload: { key: 'NEW_CIPHERTEXT' },
+			},
+		]
+
+		vi.spyOn(axios, 'get').mockResolvedValue(workPage(1))
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: {
+				status: 409,
+				data: {
+					error: 'fields_not_reencrypted',
+					message: 'Stored value fields were not re-encrypted: totp',
+					fields: ['totp'],
+				},
+			},
+		})
+
+		const store = useEncryptionSuiteStore()
+
+		await expect(
+			store.runMigration({
+				migrationId: 'migration-1',
+				oldEncryptedPrivateKey: 'wrapped',
+				oldPassword: 'previous',
+				newPublicKeyPem:
+					'-----BEGIN PUBLIC KEY-----x-----END PUBLIC KEY-----',
+				newPrivateKey: KEYS.newPrivateKey,
+			}),
+		).rejects.toThrow(/were not re-encrypted: totp/i)
+	})
+
 	it('stops when the server reports no work left', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: {

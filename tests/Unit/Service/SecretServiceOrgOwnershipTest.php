@@ -46,6 +46,7 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\VaultPolicyService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -139,6 +140,8 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			migrationService: $migrationService,
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			auditEvents: new AuditEventFactory(),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
 			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper),

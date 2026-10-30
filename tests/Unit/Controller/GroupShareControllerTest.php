@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\GroupShareController;
 use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\GroupShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -149,97 +150,60 @@ class GroupShareControllerTest extends TestCase {
 	}//end testCreateForAGroupOutOfReachIs400()
 
 	/**
-	 * Approving must forward the URL's group-share id, the new member, the
-	 * recipient's encrypted copy and the SESSION user as the approver.
+	 * A restriction change the pending share quarantine scan cannot judge a
+	 * row of answers 409 with the error code a revoke gets.
 	 *
 	 * @return void
 	 */
-	public function testApproveNewMemberForwardsAllThreeIdentifiersAndTheSessionApprover(): void {
+	public function testCreateThatWaitsForTheQuarantineScanIs409(): void {
 		$this->signIn('alice');
+		$this->groupShareService->method('createGroupShare')
+			->willThrowException(new ShareScanPendingException('A share of this group waits for the share quarantine scan'));
 
-		$this->groupShareService->expects($this->once())
-			->method('approveGroupMemberShare')
-			->with(
-				'gs-0000-4000-8000-000000000001',
-				'bob',
-				'sec-0000-4000-8000-000000000009',
-				'alice'
-			);
+		$response = $this->controller()->create(secretId: 'sec-1', groupId: 'finance', useOnly: true);
 
-		$response = $this->controller()->approveNewMember(
-			id: 'gs-0000-4000-8000-000000000001',
-			newMemberId: 'bob',
-			recipientSecretId: 'sec-0000-4000-8000-000000000009'
-		);
-
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 		$this->assertSame(
-			Http::STATUS_OK,
-			$response->getStatus(),
-			'a completed approval answers 200'
+			['error' => 'share_scan_pending', 'message' => 'A share of this group waits for the share quarantine scan'],
+			$response->getData()
 		);
-		$this->assertSame(
-			['status' => 'approved'],
-			$response->getData(),
-			'the client dismisses the notification on the approved status'
-		);
-	}//end testApproveNewMemberForwardsAllThreeIdentifiersAndTheSessionApprover()
+	}//end testCreateThatWaitsForTheQuarantineScanIs409()
 
 	/**
-	 * An anonymous caller must not be able to approve a member's access.
+	 * A group-share revoke the pending share quarantine scan cannot judge a
+	 * row of answers 409 with the error code a single revoke gets.
 	 *
 	 * @return void
 	 */
-	public function testApproveNewMemberByAnAnonymousCallerIs401AndApprovesNothing(): void {
-		$this->signIn(null);
+	public function testDestroyThatWaitsForTheQuarantineScanIs409(): void {
+		$this->signIn('alice');
+		$this->groupShareService->method('revokeGroupShare')
+			->willThrowException(new ShareScanPendingException('A share of this group waits for the share quarantine scan'));
 
-		$this->groupShareService->expects($this->never())->method('approveGroupMemberShare');
+		$response = $this->controller()->destroy(id: 'gs-1');
 
-		$response = $this->controller()->approveNewMember(
-			id: 'gs-0000-4000-8000-000000000001',
-			newMemberId: 'bob',
-			recipientSecretId: 'sec-0000-4000-8000-000000000009'
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(
+			['error' => 'share_scan_pending', 'message' => 'A share of this group waits for the share quarantine scan'],
+			$response->getData()
 		);
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
-	}//end testApproveNewMemberByAnAnonymousCallerIs401AndApprovesNothing()
+	}//end testDestroyThatWaitsForTheQuarantineScanIs409()
 
 	/**
-	 * A refused approval (unknown share, wrong sharer, mismatched copy) must
-	 * surface as 400 with the service's own reason.
+	 * The client-supplied-id group-member approval endpoint is retired
+	 * (GHSA-m5p9-6pw7-pf3g): POST /group-shares/{id}/approve-new-member no
+	 * longer exists, so approval can never be handed a `recipientSecretId`. A
+	 * new member's copy is registered through register-batch, which mints it
+	 * server-side; only the inert deny endpoint remains.
 	 *
 	 * @return void
 	 */
-	public function testApproveNewMemberRefusalAnswers400WithTheServiceMessage(): void {
-		$this->signIn('mallory');
-
-		$this->groupShareService->expects($this->once())
-			->method('approveGroupMemberShare')
-			->with(
-				'gs-0000-4000-8000-000000000001',
-				'bob',
-				'sec-0000-4000-8000-000000000009',
-				'mallory'
-			)
-			->willThrowException(new InvalidArgumentException('Group share not found'));
-
-		$response = $this->controller()->approveNewMember(
-			id: 'gs-0000-4000-8000-000000000001',
-			newMemberId: 'bob',
-			recipientSecretId: 'sec-0000-4000-8000-000000000009'
+	public function testApproveNewMemberEndpointIsRetired(): void {
+		$this->assertFalse(
+			method_exists(GroupShareController::class, 'approveNewMember'),
+			'groupShare#approveNewMember must be retired'
 		);
-
-		$this->assertSame(
-			Http::STATUS_BAD_REQUEST,
-			$response->getStatus(),
-			'a refused approval must not be reported as approved'
-		);
-		$this->assertSame(
-			['message' => 'Group share not found'],
-			$response->getData(),
-			'the caller must be told why the approval was refused'
-		);
-	}//end testApproveNewMemberRefusalAnswers400WithTheServiceMessage()
+	}//end testApproveNewMemberEndpointIsRetired()
 
 	/**
 	 * Denying is specified as a server-side no-op: it answers the denied

@@ -31,8 +31,8 @@ browser. Neither sends plaintext, a passphrase, or a derived key to the server.
 
 ### Plaintext CSV
 
-- Columns: `name,url,login,password,notes,folder,type` (RFC 4180), round-trippable
-  through the generic CSV import.
+- Columns: `name,url,login,password,notes,folder,type,totp` (RFC 4180), round-trippable
+  through the generic CSV import. `totp` holds a login's one-time code; a login's passkeys have no column and are not in the CSV.
 - **Gated twice**: an explicit "this file is unencrypted, delete it after use"
   warning that must be acknowledged, then **fresh master-password re-entry**
   even on an unlocked session. Re-entry is verified client-side by decrypting
@@ -52,8 +52,8 @@ browser from two halves:
 - **Server metadata** (`GET /api/v1/gdpr/metadata`, session user only):
   encryption-suite records (certificate, status, audit fields — the encrypted
   private-key blob is **excluded**, with the exclusion documented inside the
-  package), shares given/received, delegations, link-share metadata (no
-  snapshots), secret requests, user settings, and per secret the user's
+  package), shares given/received (each flagged `quarantined`, quarantined share rows included), delegations, link-share metadata (no
+  snapshots; the links the user holds and, flagged `handedOver`, the links they made that team offboarding handed to someone else), secret requests, user settings, and per secret the user's
   favourite star, tags and last-used time (`organisation`).
 - **Client vault**: the decrypted secrets + folder structure.
 
@@ -80,6 +80,7 @@ Two triggers run the same ordered, idempotent cascade
   delegation transfers to the delegate: the delegation becomes permanent and
   the delegate becomes owner. Delegation is Keepiq's existing, explicit
   successor mechanism; deletion respects it rather than silently picking an heir.
+  The link shares the deleted user holds on such a secret are deleted, not passed to the delegate.
 - **Granted shares — detach with tombstone.** Each recipient's copy is already a
   full secret encrypted under the recipient's own suite. The share link is
   deleted (sync severed) and the copy is marked `tombstoned_at` +
@@ -92,7 +93,9 @@ Two triggers run the same ordered, idempotent cascade
 
 Link shares, secret requests, own secrets and folders, encryption suites
 (including the encrypted private keys) and their migration records, and user
-settings are all removed. Every step is idempotent and keyed by user ID, so an
+settings are all removed.
+Link shares the user made that team offboarding handed to someone else stay with whoever holds them; the user's ID on them is replaced by a deleted-account marker that is not a valid Nextcloud user ID, so the holder's compromise revoke still leaves them.
+Every step is idempotent and keyed by user ID, so an
 interrupted cascade can be safely re-run; the completion event is emitted only
 on a finished run.
 
