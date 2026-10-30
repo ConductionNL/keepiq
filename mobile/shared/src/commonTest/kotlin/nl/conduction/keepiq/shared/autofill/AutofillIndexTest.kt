@@ -61,6 +61,35 @@ class AutofillIndexTest {
     }
 
     @Test
+    fun aLoginsOwnCodeIsACodeCandidate() {
+        val index = AutofillIndex.of(
+            state(
+                row("plain", "Mail", "https://mail.example"),
+                row("withCode", "Mail with code", "https://mail.example").copy(totp = "seed-ct"),
+                row("emptyCode", "Mail without code", "https://mail.example").copy(totp = ""),
+            ),
+        )
+        assertEquals(listOf("withCode"), index.candidates(AutofillTarget.Web("mail.example"), totp = true).map { it.id })
+        val entry = index.entries.single { it.id == "withCode" }
+        assertTrue(entry.hasCode)
+        assertEquals("seed-ct", entry.seed)
+        // A standalone Authenticator item keeps its seed in key.
+        assertEquals("key-code", AutofillIndex.of(vault).entries.single { it.id == "code" }.seed)
+    }
+
+    @Test
+    fun theIndexRoundTripsTheNewFields() {
+        val index = AutofillIndex.of(
+            state(row("l", "Mail", "https://mail.example").copy(totp = "t-ct", passkeys = "p-ct", readOnly = true)),
+        )
+        val back = AutofillIndex.fromJson(index.toJson()).entries.single()
+        assertEquals("t-ct", back.totp)
+        assertEquals("p-ct", back.passkeys)
+        assertTrue(back.readOnly)
+        assertTrue(back.hasPasskeys)
+    }
+
+    @Test
     fun aWebsiteGetsTheExtensionsSiteMatch() {
         val index = AutofillIndex.of(vault)
         assertEquals(listOf("sub", "web"), index.candidates(AutofillTarget.Web("login.example.com")).map { it.id })
