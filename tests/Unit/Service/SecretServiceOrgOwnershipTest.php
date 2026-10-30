@@ -149,7 +149,17 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 
 		$shareTargetMapper = $this->createMock(\OCA\Keepiq\Db\ShareTargetMapper::class);
 		$shareTargetMapper->method('findByRecipientSecret')->willReturnCallback(
-			static fn (string $id) => ($id === 'copy-from-iris' ? new \OCA\Keepiq\Db\ShareTarget() : throw new DoesNotExistException(''))
+			static function (string $id): \OCA\Keepiq\Db\ShareTarget {
+				if ($id !== 'copy-from-iris') {
+					throw new DoesNotExistException('');
+				}
+
+				// A real row: gina, its target, holds the copy it names.
+				$row = new \OCA\Keepiq\Db\ShareTarget();
+				$row->setTargetUserId('gina');
+				$row->setSecretId('copy-from-iris');
+				return $row;
+			}
 		);
 		$this->findingsGuard = new OrgOwnershipGuard(
 			policies: $policies,
@@ -295,6 +305,8 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 		foreach ([['old-login', 'type-login', 'private'], ['team-login', 'type-login', 'sub'], ['visa', 'type-card', 'private'], ['copy-from-iris', 'type-login', null]] as [$id, $type, $folder]) {
 			$secret = new Secret();
 			$secret->setId($id);
+			$secret->setOwnerType('user');
+			$secret->setOwnerId('gina');
 			$secret->setName($id);
 			$secret->setTypeId($type);
 			$secret->setFolderId($folder);

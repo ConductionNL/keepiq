@@ -36,6 +36,13 @@ use Throwable;
 class ShareExpiryService {
 
 	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
+
+	/**
 	 * Constructor for ShareExpiryService.
 	 *
 	 * @param SecretMapper             $secretMapper The secret mapper (copies)
@@ -43,6 +50,7 @@ class ShareExpiryService {
 	 * @param ShareRestrictionResolver $restrictions The restriction resolver
 	 * @param ExpiredGrantRemover      $remover      Removes expired grants through their own paths
 	 * @param NotificationService      $notifications The notification dispatcher
+	 * @param ShareRowJudge|null       $rowJudge     Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -54,7 +62,9 @@ class ShareExpiryService {
 		private ShareRestrictionResolver $restrictions,
 		private ExpiredGrantRemover $remover,
 		private NotificationService $notifications,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -97,12 +107,14 @@ class ShareExpiryService {
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function expire(DateTime $now): int {
-		// Remember who held what before the removals delete the copies.
+		// Remember who held what before the removals delete the copies. Only a
+		// trusted share row names a copy's source: the owner of a source a
+		// held-back row names is not told about its holder.
 		$ended = [];
 		foreach ($this->secretMapper->findAccessEndingBetween(null, $now) as $copy) {
 			$ended[$copy->getId()] = [
 				'copy' => $copy,
-				'target' => $this->targetOf(copyId: $copy->getId()),
+				'target' => $this->rowJudge->forCopy(copy: $copy)->trustedRow(),
 			];
 		}
 
@@ -204,19 +216,4 @@ class ShareExpiryService {
 			objectId: $source->getId(),
 		);
 	}//end notifyEnded()
-
-	/**
-	 * The share row of a copy, or null when it has none.
-	 *
-	 * @param string $copyId The copy
-	 *
-	 * @return ShareTarget|null
-	 */
-	private function targetOf(string $copyId): ?ShareTarget {
-		try {
-			return $this->targetMapper->findByRecipientSecret(recipientSecretId: $copyId);
-		} catch (DoesNotExistException) {
-			return null;
-		}
-	}//end targetOf()
 }//end class

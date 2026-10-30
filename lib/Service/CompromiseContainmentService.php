@@ -56,29 +56,39 @@ class CompromiseContainmentService {
 	use MarksCompromisedSecrets;
 
 	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param SecretMapper           $secretMapper           Blast-radius lookup and stamp
-	 * @param ShareTargetMapper      $shareTargetMapper      Resolves shared sources and outbound copies
+	 * @param ShareTargetMapper      $shareTargetMapper      Resolves shared sources and outbound copies, through the judge
 	 * @param EmergencyContactMapper $contactMapper Finds grantors exposed through the revoked key
 	 * @param NotificationService    $notificationService    Warns the affected users
 	 * @param MigrationService       $migrationService       Revokes the owner's link shares and passkeys
 	 * @param IProvider              $tokenProvider          Ends the owner's sessions and app passwords
 	 * @param LoggerInterface        $logger                 The logger
 	 * @param RotationPolicyService|null $rotationService    Raises the suite_compromise rotation flags
+	 * @param ShareRowJudge|null     $rowJudge               Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ShareTargetMapper $shareTargetMapper,
+		ShareTargetMapper $shareTargetMapper,
 		private EmergencyContactMapper $contactMapper,
 		private NotificationService $notificationService,
 		private MigrationService $migrationService,
 		private IProvider $tokenProvider,
 		private LoggerInterface $logger,
 		private ?RotationPolicyService $rotationService = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -217,7 +227,9 @@ class CompromiseContainmentService {
 	 * Collect the copies other users hold of one of the revoked user's secrets.
 	 *
 	 * Those recipients are the only people left who can act on the value, and
-	 * nothing else tells them (keepiq#872).
+	 * nothing else tells them (keepiq#872). A row the pending quarantine scan
+	 * holds back, or whose target does not hold its copy, is left out: its
+	 * copy may be its holder's own secret.
 	 *
 	 * @param CompromiseBlastRadius $radius The radius being collected
 	 * @param Secret                $secret The revoked user's own secret
@@ -226,14 +238,16 @@ class CompromiseContainmentService {
 	 */
 	private function collectOutbound(CompromiseBlastRadius $radius, Secret $secret): void {
 		try {
-			foreach ($this->shareTargetMapper->findBySourceSecret($secret->getId()) as $shareTarget) {
+			foreach ($this->rowJudge->rowsOfSource(sourceId: $secret->getId())->trusted() as $shareTarget) {
 				$recipientId = $shareTarget->getTargetUserId();
 				if ($recipientId === '' || $recipientId === $secret->getOwnerId()) {
 					continue;
 				}
 
 				$copy = $this->secretMapper->findById($shareTarget->getSecretId());
-				$radius->addOutbound(recipientId: $recipientId, copy: $copy);
+				if ($shareTarget->isHeldByTarget(copy: $copy) === true) {
+					$radius->addOutbound(recipientId: $recipientId, copy: $copy);
+				}
 			}
 		} catch (Throwable $exception) {
 			$radius->addFailure();

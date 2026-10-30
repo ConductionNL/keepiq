@@ -36,6 +36,14 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * Refuses a covered secret outside the user's own team folders.
  */
 class OrgOwnershipGuard {
+
+	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge|null
+	 */
+	private ?ShareRowJudge $rowJudge;
+
 	/**
 	 * The code the API returns with the refusal.
 	 */
@@ -48,7 +56,9 @@ class OrgOwnershipGuard {
 	 * @param TeamFolderQueryService $teamFolders The ancestor team folder walk
 	 * @param SecretTypeMapper $typeMapper Resolves a type id to its name
 	 * @param SecretMapper|null $secretMapper The user's own secrets, for the findings list
-	 * @param ShareTargetMapper|null $shareTargetMapper Tells a received copy from an own secret
+	 * @param ShareTargetMapper|null $shareTargetMapper Tells a received copy from an own secret, through the judge
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper, with no
+	 *   pending scan
 	 *
 	 * @return void
 	 *
@@ -59,8 +69,13 @@ class OrgOwnershipGuard {
 		private TeamFolderQueryService $teamFolders,
 		private SecretTypeMapper $typeMapper,
 		private ?SecretMapper $secretMapper = null,
-		private ?ShareTargetMapper $shareTargetMapper = null,
+		?ShareTargetMapper $shareTargetMapper = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = $rowJudge;
+		if ($rowJudge === null && $shareTargetMapper !== null) {
+			$this->rowJudge = new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper);
+		}
 	}//end __construct()
 
 	/**
@@ -141,7 +156,7 @@ class OrgOwnershipGuard {
 			$typeId = (string)$secret->getTypeId();
 			if (in_array($this->typeName(typeId: $typeId), $types, true) === false
 				|| $this->inOwnTeamFolder(userId: $userId, folderId: $secret->getFolderId()) === true
-				|| $this->isReceivedCopy(secretId: (string)$secret->getId()) === true
+				|| $this->isReceivedCopy(secret: $secret) === true
 			) {
 				continue;
 			}
@@ -180,20 +195,20 @@ class OrgOwnershipGuard {
 	}//end inOwnTeamFolder()
 
 	/**
-	 * Whether a secret row is a copy someone shared with the user.
+	 * Whether a secret row is a copy someone shared with the user: a trusted
+	 * share row names it (ShareRowJudge), or two rows do. A secret a held-back
+	 * row names is the user's own and is judged as one.
 	 *
-	 * @param string $secretId The secret
+	 * @param Secret $secret The secret
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	private function isReceivedCopy(string $secretId): bool {
-		try {
-			$this->shareTargetMapper?->findByRecipientSecret(recipientSecretId: $secretId);
-		} catch (DoesNotExistException) {
-			return false;
-		}
+	private function isReceivedCopy(Secret $secret): bool {
+		$state = $this->rowJudge?->forCopy(copy: $secret)->state;
 
-		return $this->shareTargetMapper !== null;
+		return $state === ShareRowVerdict::TRUSTED || $state === ShareRowVerdict::AMBIGUOUS;
 	}//end isReceivedCopy()
 
 	/**

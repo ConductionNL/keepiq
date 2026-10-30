@@ -80,6 +80,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 
 		$shareTarget = new ShareTarget();
 		$shareTarget->setSourceSecretId('src-1');
+		$shareTarget->setTargetUserId('bob');
 		$shareTarget->setSecretId('copy-1');
 		$shareTargetMapper->method('findByRecipientSecret')->willReturn($shareTarget);
 
@@ -155,6 +156,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 
 		$shareTarget = new ShareTarget();
 		$shareTarget->setSourceSecretId('src-1');
+		$shareTarget->setTargetUserId('bob');
 		$shareTarget->setSecretId('copy-1');
 		$shareTargetMapper->method('findByRecipientSecret')->willReturn($shareTarget);
 		$secretMapper->method('findById')->willThrowException(new DoesNotExistException('source gone'));

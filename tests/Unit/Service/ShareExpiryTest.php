@@ -179,6 +179,7 @@ class ShareExpiryTest extends TestCase {
 		$copy = new Secret();
 		$copy->setId('copy');
 		$copy->setName('Payroll portal');
+		$copy->setOwnerType('user');
 		$copy->setOwnerId('carla');
 		$copy->setUseOnly(false);
 		$copy->setAccessExpiresAt(new DateTime('2026-10-02T11:00:00Z'));
@@ -216,6 +217,7 @@ class ShareExpiryTest extends TestCase {
 		$copy = new Secret();
 		$copy->setId('copy');
 		$copy->setName('Payroll portal');
+		$copy->setOwnerType('user');
 		$copy->setOwnerId('carla');
 		$copy->setAccessExpiresAt(new DateTime('2026-10-03T11:00:00Z'));
 		$from = new DateTime('2026-10-02T12:00:00Z');

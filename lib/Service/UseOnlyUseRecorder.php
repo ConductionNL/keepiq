@@ -37,12 +37,20 @@ use OCP\EventDispatcher\IEventDispatcher;
 class UseOnlyUseRecorder {
 
 	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
+
+	/**
 	 * Constructor for UseOnlyUseRecorder.
 	 *
 	 * @param SecretMapper      $secretMapper      The secret mapper
-	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (copy to source)
+	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (copy to source), read only through the judge
 	 * @param IEventDispatcher  $eventDispatcher   The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents       The audit-event factory
+	 * @param ShareRowJudge|null $rowJudge         Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -50,10 +58,12 @@ class UseOnlyUseRecorder {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ShareTargetMapper $shareTargetMapper,
+		ShareTargetMapper $shareTargetMapper,
 		private IEventDispatcher $eventDispatcher,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -74,11 +84,19 @@ class UseOnlyUseRecorder {
 	 */
 	public function recordUse(string $copyId, string $userId): void {
 		try {
-			$copy   = $this->secretMapper->findById($copyId);
-			$target = $this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $copyId);
+			$copy = $this->secretMapper->findById($copyId);
 		} catch (DoesNotExistException) {
 			throw new NotFoundException(message: 'Secret not found');
 		}
+
+		$verdict = $this->rowJudge->forCopy(copy: $copy);
+		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::AMBIGUOUS) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		// Only a trusted row names the source the use is recorded on; a use of
+		// a secret a held-back row names is recorded on that secret itself.
+		$target = $verdict->trustedRow();
 
 		$accessEnds = $copy->getAccessExpiresAt();
 		if ($copy->getOwnerType() !== 'user'
@@ -91,9 +109,10 @@ class UseOnlyUseRecorder {
 
 		$this->secretMapper->markUsed($copyId, $userId, new DateTime());
 
+		$sourceId   = ($target?->getSourceSecretId() ?? $copyId);
 		$sourceName = $copy->getName();
 		try {
-			$sourceName = $this->secretMapper->findById($target->getSourceSecretId())->getName();
+			$sourceName = $this->secretMapper->findById($sourceId)->getName();
 		} catch (DoesNotExistException) {
 			// Source gone; the copy's own name is the same plaintext metadata.
 		}
@@ -103,7 +122,7 @@ class UseOnlyUseRecorder {
 				actorId: $userId,
 				eventType: AuditEventTypes::SECRET_USED,
 				objectType: 'secret',
-				objectId: $target->getSourceSecretId(),
+				objectId: $sourceId,
 				objectName: $sourceName,
 				metadata: ['copyId' => $copyId],
 			)

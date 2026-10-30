@@ -58,6 +58,7 @@ use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
@@ -274,6 +275,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			shareTargetMapper: new ShareTargetMapper(db: $this->db),
 			request: $this->createMock(IRequest::class),
 			logger: $this->createMock(LoggerInterface::class),
+			rowJudge: new ShareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db)),
 		);
 
 		$listener->handle(
