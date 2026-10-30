@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\ShareTarget;
 
 /**
@@ -121,4 +122,20 @@ final class ShareRowVerdict {
 	public function countsAsCopy(): bool {
 		return in_array($this->state, [self::TRUSTED, self::AMBIGUOUS, self::FOREIGN, self::UNJUDGED], true);
 	}//end countsAsCopy()
+
+	/**
+	 * Whether the pending scan cannot judge the row naming a secret the user
+	 * holds: that holder is told the request waits for the scan, where anyone
+	 * else gets the refusal of a copy.
+	 *
+	 * @param Secret $secret The secret the row names
+	 * @param string $userId The caller
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function awaitsTheScanFor(Secret $secret, string $userId): bool {
+		return $this->state === self::UNJUDGED && $secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId;
+	}//end awaitsTheScanFor()
 }//end class

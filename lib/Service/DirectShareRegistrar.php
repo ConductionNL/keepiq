@@ -439,6 +439,7 @@ class DirectShareRegistrar {
 	 * @return string|null
 	 *
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function refusalFor(?Secret $source, ?ShareRestriction $restriction, string $userId, array $row): ?string {
 		if ($source === null) {

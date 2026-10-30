@@ -148,7 +148,7 @@ class ShareSyncService {
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
 		$this->guards->assertWritable(source: $source);
-		$this->assertNotACopy(secret: $source);
+		$this->assertNotACopy(secret: $source, userId: $userId);
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
@@ -210,21 +210,32 @@ class ShareSyncService {
 	 * Refuse a sync that starts from a received copy. A copy is owned by its
 	 * holder, so the owner check would pass and the sync would write that copy
 	 * alone, whether or not the holder may write its source. A secret named
-	 * only by a row the pending quarantine scan quarantines is no copy.
+	 * only by a row the pending quarantine scan quarantines is no copy; one
+	 * whose row the scan cannot judge waits for it, and its holder is told so.
 	 *
 	 * @param Secret $secret The secret the sync names
+	 * @param string $userId The requesting user
 	 *
 	 * @return void
 	 *
 	 * @throws ForbiddenException When the secret is a received copy
+	 * @throws ShareScanPendingException When the caller holds the secret and the pending scan cannot judge the row naming it
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function assertNotACopy(Secret $secret): void {
+	private function assertNotACopy(Secret $secret, string $userId): void {
 		// A row the pending scan cannot judge still counts as a copy, until it
 		// has judged it; a row it quarantines does not.
-		if ($this->rowJudge->forCopy(copy: $secret)->countsAsCopy() === false) {
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		if ($verdict->countsAsCopy() === false) {
 			return;
+		}
+
+		// The secret's own holder is told the sync waits for the scan, as on
+		// every other onward path; anyone else keeps the copy refusal.
+		if ($verdict->awaitsTheScanFor(secret: $secret, userId: $userId) === true) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be synced yet');
 		}
 
 		throw new ForbiddenException(message: 'A sync starts from the source secret, not from a copy');

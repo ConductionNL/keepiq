@@ -198,7 +198,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 
 		$this->assertNotContains($this->registrarRefusal(verdict: $verdict), ['not_shareable', 'share_scan_pending']);
 		$this->assertFalse($this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)));
-		$this->syncStartsFrom(verdict: $verdict);
+		$this->syncStartsFrom(verdict: $verdict, userId: 'bob');
 		$this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob');
 		$this->viewOnlyGuard(verdict: $verdict, standing: false)->assertMayChangeValue(row: $this->secrets['V'], fields: ['key'], userId: 'bob');
 		$this->addToAssertionCount(3);
@@ -259,16 +259,24 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 
 	/**
 	 * A sync from V is refused as a sync from a copy unless the scan
-	 * quarantines V's row.
+	 * quarantines V's row. While the scan cannot judge the row, V's holder is
+	 * told the sync waits for it; anyone else keeps the copy refusal.
 	 *
 	 * @return void
 	 */
 	public function testASyncFromVIsRefusedOnlyWhileItsRowIsACopy(): void {
-		$this->syncStartsFrom(verdict: ShareQuarantineScanner::HELD_QUARANTINED);
+		$this->syncStartsFrom(verdict: ShareQuarantineScanner::HELD_QUARANTINED, userId: 'bob');
 
-		foreach ([ShareQuarantineScanner::HELD_UNJUDGED, null] as $verdict) {
+		try {
+			$this->syncStartsFrom(verdict: ShareQuarantineScanner::HELD_UNJUDGED, userId: 'bob');
+			$this->fail("The holder's sync must wait for the scan");
+		} catch (ShareScanPendingException) {
+			$this->addToAssertionCount(1);
+		}
+
+		foreach ([[ShareQuarantineScanner::HELD_UNJUDGED, 'mallory'], [null, 'bob']] as [$verdict, $userId]) {
 			try {
-				$this->syncStartsFrom(verdict: $verdict);
+				$this->syncStartsFrom(verdict: $verdict, userId: $userId);
 				$this->fail('A sync from a copy must be refused');
 			} catch (ForbiddenException) {
 				$this->addToAssertionCount(1);
@@ -463,10 +471,11 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	 * Run the sync's check that it starts from a source, not a copy, on V.
 	 *
 	 * @param string|null $verdict The scan's verdict on the row
+	 * @param string      $userId  The user syncing
 	 *
 	 * @return void
 	 */
-	private function syncStartsFrom(?string $verdict): void {
+	private function syncStartsFrom(?string $verdict, string $userId): void {
 		$sync = new ShareSyncService(
 			secretMapper: $this->secretMapper(),
 			db: $this->createMock(IDBConnection::class),
@@ -476,6 +485,6 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 			contexts: $this->createMock(ShareWriteContext::class),
 			rowJudge: $this->judge(verdict: $verdict),
 		);
-		(new ReflectionMethod($sync, 'assertNotACopy'))->invoke($sync, $this->secrets['V']);
+		(new ReflectionMethod($sync, 'assertNotACopy'))->invoke($sync, $this->secrets['V'], $userId);
 	}//end syncStartsFrom()
 }//end class
