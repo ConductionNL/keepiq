@@ -46,12 +46,14 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for DirectShareRegistrar.
  */
 class DirectShareRegistrarTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * @var ShareTargetMapper&\PHPUnit\Framework\MockObject\MockObject
@@ -163,7 +165,7 @@ class DirectShareRegistrarTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $delegationMapper,
-			shareTargetMapper: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			grants: $grants,
 		);
 	}//end realAuthorization()
@@ -243,6 +245,7 @@ class DirectShareRegistrarTest extends TestCase {
 			groupShareMapper: $groupShareMapper,
 			authorization: $authorization,
 			connection: $this->connection,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 		);
 	}//end registrar()
 

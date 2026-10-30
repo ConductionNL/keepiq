@@ -84,9 +84,6 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			'findBySourceSecret' => 'the account-deletion report counts rows; the cascade it reports judges them',
 			'findByTargetUser' => 'the account-deletion report counts rows; the cascade it reports judges them',
 		],
-		'Service/ShareAuthorizationService.php' => [
-			'findBySourceSecretAndTargetUser' => 'assertMayShareOnward refuses a delegate without one live copy; it only refuses',
-		],
 		'Service/DirectShareRegistrar.php' => [
 			'findBySourceSecretAndTargetUser' => 'register-batch idempotency: an existing row only answers `exists`',
 		],

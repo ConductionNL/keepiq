@@ -80,7 +80,6 @@ class HoneyTripwireListenerTest extends TestCase {
 		$this->listener = new HoneyTripwireListener(
 			honeyService: $this->honeyService,
 			linkShareMapper: $this->linkShareMapper,
-			shareTargetMapper: $this->shareTargetMapper,
 			request: $request,
 			logger: new NullLogger(),
 			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $secrets, scanner: $this->scanner),

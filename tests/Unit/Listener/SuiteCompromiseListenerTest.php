@@ -31,6 +31,7 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -39,6 +40,8 @@ use RuntimeException;
  * Tests for SuiteCompromiseListener.
  */
 class SuiteCompromiseListenerTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	/**
 	 * Test the listener notifies the source owner for a flagged recipient
 	 * copy.
@@ -52,7 +55,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$rotationService = $this->createMock(RotationPolicyService::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $this->createMock(LoggerInterface::class),
 			rotationService: $rotationService
@@ -141,7 +144,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $logger
 		);
@@ -186,7 +189,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $logger
 		);
@@ -224,7 +227,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $logger
 		);
@@ -270,7 +273,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $logger
 		);
@@ -297,7 +300,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$notificationService = $this->createMock(NotificationService::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $this->createMock(LoggerInterface::class)
 		);
@@ -361,7 +364,7 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$notificationService = $this->createMock(NotificationService::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			notificationService: $notificationService,
 			logger: $this->createMock(LoggerInterface::class)
 		);

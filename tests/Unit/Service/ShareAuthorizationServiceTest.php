@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
  */
 class ShareAuthorizationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * A secret held by bob, as a copy or a source.
@@ -65,20 +67,19 @@ class ShareAuthorizationServiceTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $secrets,
 			delegationMapper: $this->createMock(originalClassName: SecretDelegationMapper::class),
-			shareTargetMapper: $targets,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
 		);
 	}//end service()
 
 	/**
-	 * Without a share-target mapper no copy can be judged, so a re-share is refused.
+	 * A secret no share row names is its owner's own, so its owner may share it onward.
 	 *
 	 * @return void
 	 */
-	public function testReshareIsRefusedWithoutAShareTargetMapper(): void {
-		$this->expectException(exception: DoesNotExistException::class);
-
+	public function testASecretNoShareRowNamesMayBeResharedByItsOwner(): void {
 		$this->service(targets: null)->assertMayReshare(secretId: 's1', userId: 'bob');
-	}//end testReshareIsRefusedWithoutAShareTargetMapper()
+		$this->addToAssertionCount(1);
+	}//end testASecretNoShareRowNamesMayBeResharedByItsOwner()
 
 	/**
 	 * Without a share-target mapper the named secret is its own share source.

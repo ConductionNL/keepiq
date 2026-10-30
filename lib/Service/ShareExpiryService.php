@@ -36,21 +36,14 @@ use Throwable;
 class ShareExpiryService {
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for ShareExpiryService.
 	 *
 	 * @param SecretMapper             $secretMapper The secret mapper (copies)
 	 * @param ShareTargetMapper        $targetMapper The share-target mapper
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param ShareRestrictionResolver $restrictions The restriction resolver
 	 * @param ExpiredGrantRemover      $remover      Removes expired grants through their own paths
 	 * @param NotificationService      $notifications The notification dispatcher
-	 * @param ShareRowJudge|null       $rowJudge     Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -59,12 +52,11 @@ class ShareExpiryService {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private ShareTargetMapper $targetMapper,
+		private ShareRowJudge $rowJudge,
 		private ShareRestrictionResolver $restrictions,
 		private ExpiredGrantRemover $remover,
 		private NotificationService $notifications,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**

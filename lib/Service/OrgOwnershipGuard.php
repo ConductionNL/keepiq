@@ -28,7 +28,6 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\PolicyViolationException;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -36,13 +35,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * Refuses a covered secret outside the user's own team folders.
  */
 class OrgOwnershipGuard {
-
-	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge|null
-	 */
-	private ?ShareRowJudge $rowJudge;
 
 	/**
 	 * The code the API returns with the refusal.
@@ -55,10 +47,8 @@ class OrgOwnershipGuard {
 	 * @param VaultPolicyService $policies The vault policies
 	 * @param TeamFolderQueryService $teamFolders The ancestor team folder walk
 	 * @param SecretTypeMapper $typeMapper Resolves a type id to its name
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper|null $secretMapper The user's own secrets, for the findings list
-	 * @param ShareTargetMapper|null $shareTargetMapper Tells a received copy from an own secret, through the judge
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper, with no
-	 *   pending scan
 	 *
 	 * @return void
 	 *
@@ -68,14 +58,9 @@ class OrgOwnershipGuard {
 		private VaultPolicyService $policies,
 		private TeamFolderQueryService $teamFolders,
 		private SecretTypeMapper $typeMapper,
+		private ShareRowJudge $rowJudge,
 		private ?SecretMapper $secretMapper = null,
-		?ShareTargetMapper $shareTargetMapper = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = $rowJudge;
-		if ($rowJudge === null && $shareTargetMapper !== null) {
-			$this->rowJudge = new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper);
-		}
 	}//end __construct()
 
 	/**
@@ -206,7 +191,7 @@ class OrgOwnershipGuard {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
-		$state = $this->rowJudge?->forCopy(copy: $secret)->state;
+		$state = $this->rowJudge->forCopy(copy: $secret)->state;
 
 		return $state === ShareRowVerdict::TRUSTED || $state === ShareRowVerdict::AMBIGUOUS;
 	}//end isReceivedCopy()

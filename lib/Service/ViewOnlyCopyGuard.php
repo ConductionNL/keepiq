@@ -25,7 +25,6 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
@@ -47,31 +46,21 @@ class ViewOnlyCopyGuard {
 	public const VALUE_FIELDS = Secret::VALUE_FIELDS;
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets, read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets
 	 * @param ShareWriteContext $contexts The holder's standing on the source
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
 		private ShareWriteContext $contexts,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targets, secrets: $secrets));
 	}//end __construct()
 
 	/**

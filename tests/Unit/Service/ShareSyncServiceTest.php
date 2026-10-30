@@ -17,6 +17,7 @@ use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
  */
 class ShareSyncServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var ShareTargetMapper&MockObject */
 	private ShareTargetMapper $mapper;
@@ -39,7 +41,7 @@ class ShareSyncServiceTest extends TestCase {
 		$this->mapper       = $this->createMock(ShareTargetMapper::class);
 		$this->secretMapper = $this->createMock(SecretMapper::class);
 		$this->sync         = new ShareSyncService(
-			mapper: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			secretMapper: $this->secretMapper,
 			db: $this->createMock(IDBConnection::class),
 			auth: $this->createMock(ShareAuthorizationService::class),
@@ -228,7 +230,7 @@ class ShareSyncServiceTest extends TestCase {
 	 */
 	public function testASyncRowFollowsTheSourcesTotp(): void {
 		$guards = new ShareSyncGuards(
-			targets: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			secrets: $this->secretMapper,
 			suites: $this->createMock(\OCA\Keepiq\Db\EncryptionSuiteMapper::class),
 			auth: $this->createMock(ShareAuthorizationService::class),

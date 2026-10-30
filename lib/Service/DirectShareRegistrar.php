@@ -39,6 +39,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception as DbException;
 use OCP\IDBConnection;
@@ -64,16 +65,10 @@ class DirectShareRegistrar {
 	private ShareAuditTrail $auditTrail;
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for DirectShareRegistrar.
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookups)
 	 * @param RecipientSecretCopyFactory $copyFactory The recipient-copy factory
 	 * @param NotificationService $notificationService The notification dispatcher
@@ -82,7 +77,6 @@ class DirectShareRegistrar {
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 * @param ShareAuthorizationService|null $authorization Owner-or-delegate check on the source secret
 	 * @param IDBConnection|null $connection Wraps the copy mint and link insert in one transaction
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -93,6 +87,7 @@ class DirectShareRegistrar {
 	 */
 	public function __construct(
 		private ShareTargetMapper $mapper,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secretMapper,
 		private RecipientSecretCopyFactory $copyFactory,
 		private NotificationService $notificationService,
@@ -101,10 +96,8 @@ class DirectShareRegistrar {
 		private ?ShareRestrictionResolver $restrictions = null,
 		private ?ShareAuthorizationService $authorization = null,
 		private ?IDBConnection $connection = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $mapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -520,7 +513,8 @@ class DirectShareRegistrar {
 
 		try {
 			$this->authorization->assertMayShareOnward(source: $source, userId: $userId);
-		} catch (InvalidArgumentException|ForbiddenException) {
+		} catch (InvalidArgumentException|ForbiddenException|ShareScanPendingException) {
+			// A copy the pending quarantine scan cannot judge is refused as restricted until it has.
 			return true;
 		}
 

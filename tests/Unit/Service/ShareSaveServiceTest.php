@@ -60,6 +60,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
@@ -69,6 +70,8 @@ use Throwable;
  * Dave at a partner instance (`fs-1`).
  */
 class ShareSaveServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	private const BASE = '2026-10-01T10:00:00+00:00';
 	private const BOB_BASE = '2026-10-01T09:00:00+00:00';
 
@@ -308,22 +311,20 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	private function service(?ShareAuthorizationService $auth = null, ?ShareQuarantineScanner $scanner = null): ShareSaveService {
-		$judge = new ShareRowJudge(targets: $this->targets, secrets: $this->secretMapper, scanner: $scanner);
+		$judge = new ShareRowJudge(targets: $this->targets, secrets: $this->secretMapper, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class)));
 		$guards = new ShareSyncGuards(
-			targets: $this->targets,
 			secrets: $this->secretMapper,
 			suites: $this->suites,
 			auth: ($auth ?? $this->auth),
 			rowJudge: $judge,
 		);
 		$sync = new ShareSyncService(
-			mapper: $this->targets,
 			secretMapper: $this->secretMapper,
 			db: $this->db,
 			auth: ($auth ?? $this->auth),
 			versionService: $this->versionHistory,
 			guards: $guards,
-			contexts: new ShareWriteContext(targets: $this->targets, suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
+			contexts: new ShareWriteContext( suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
 			rowJudge: $judge,
 		);
 
@@ -335,7 +336,6 @@ class ShareSaveServiceTest extends TestCase {
 			delivery: $this->delivery,
 			history: new ShareSaveHistory(versions: $this->versionHistory, auditTrail: $this->audit),
 			scope: new ShareSaveScope(
-				targets: $this->targets,
 				secrets: $this->secretMapper,
 				federatedShares: $this->federatedMapper,
 				sync: $sync,
@@ -427,7 +427,7 @@ class ShareSaveServiceTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $delegations,
-			shareTargetMapper: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secretMapper),
 			groupShareMapper: $groupShares,
 			groupManager: $groups,
 		);

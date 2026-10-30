@@ -27,7 +27,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Db\LinkShareMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -44,34 +43,24 @@ use Throwable;
  * @implements IEventListener<AuditEvent>
  */
 class HoneyTripwireListener implements IEventListener {
-
-	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
 	/**
 	 * Constructor for HoneyTripwireListener.
 	 *
 	 * @param HoneyTripwireService $honeyService The honey tripwire service
 	 * @param LinkShareMapper $linkShareMapper Link → secret resolution
-	 * @param ShareTargetMapper $shareTargetMapper Copy → source resolution, read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param IRequest $request IP/user-agent source
 	 * @param LoggerInterface $logger The logger
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan and trusts no copy
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private HoneyTripwireService $honeyService,
 		private LinkShareMapper $linkShareMapper,
-		ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private IRequest $request,
 		private LoggerInterface $logger,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper));
 	}//end __construct()
 
 	/**

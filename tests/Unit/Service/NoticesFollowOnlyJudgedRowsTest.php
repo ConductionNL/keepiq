@@ -34,6 +34,7 @@ use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\CompromiseContainmentService;
 use OCA\Keepiq\Service\ExpiredGrantRemover;
 use OCA\Keepiq\Service\MigrationService;
@@ -104,8 +105,8 @@ class NoticesFollowOnlyJudgedRowsTest extends TestCase {
 
 	/**
 	 * A compromise of Bob's suite warns about V itself, not S_a, and warns
-	 * the people Bob shared V with; a compromise of Alice's suite warns
-	 * nobody about V.
+	 * the people Bob shared V with, also when the scan cannot judge the row;
+	 * a compromise of Alice's suite warns nobody about V.
 	 *
 	 * @param string $verdict The scan's verdict on `{S_a, bob, V}`
 	 *
@@ -117,11 +118,10 @@ class NoticesFollowOnlyJudgedRowsTest extends TestCase {
 
 		$radius = $containment->collect(suiteIds: ['suite-b']);
 		$this->assertSame('V', $radius->getSealed()[0]['target']->getId());
-		if ($verdict === ShareQuarantineScanner::HELD_QUARANTINED) {
-			$this->assertSame(['carol'], array_column($radius->getOutbound(), 'recipientId'));
-		} else {
-			$this->assertSame(1, $radius->getFailures());
-		}
+		// The people Bob shared V with are warned either way; a row the scan
+		// cannot judge is also counted, since its source's owner may be missed.
+		$this->assertSame(['carol'], array_column($radius->getOutbound(), 'recipientId'));
+		$this->assertSame(($verdict === ShareQuarantineScanner::HELD_UNJUDGED ? 1 : 0), $radius->getFailures());
 
 		$this->assertSame([], $containment->collect(suiteIds: ['suite-a'])->getOutbound());
 	}//end testACompromiseDoesNotPivotThroughAHeldBackRow()
@@ -150,6 +150,27 @@ class NoticesFollowOnlyJudgedRowsTest extends TestCase {
 	public function testAUseThroughAHeldBackRowIsRecordedOnTheSecretItself(string $verdict): void {
 		$this->assertSame('V', $this->recordedUseOf(verdict: $verdict));
 	}//end testAUseThroughAHeldBackRowIsRecordedOnTheSecretItself()
+
+	/**
+	 * A use refused because the caller does not hold the secret judges no
+	 * share row, so it quarantines and audits nothing.
+	 *
+	 * @return void
+	 */
+	public function testAUseByAnotherUserJudgesNoRow(): void {
+		$this->secrets['V']->setUseOnly(true);
+		$secrets = $this->secretMapper();
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->expects($this->never())->method('heldBack');
+		$recorder = new UseOnlyUseRecorder(
+			secretMapper: $secrets,
+			rowJudge: new ShareRowJudge(targets: $this->targets(), secrets: $secrets, scanner: $scanner),
+			eventDispatcher: $this->createMock(IEventDispatcher::class),
+		);
+
+		$this->expectException(NotFoundException::class);
+		$recorder->recordUse(copyId: 'V', userId: 'mallory');
+	}//end testAUseByAnotherUserJudgesNoRow()
 
 	/**
 	 * A use of a legitimate use-only copy is recorded on its source, as before.
@@ -312,7 +333,6 @@ class NoticesFollowOnlyJudgedRowsTest extends TestCase {
 
 		return new CompromiseContainmentService(
 			secretMapper: $secrets,
-			shareTargetMapper: $this->targets(),
 			contactMapper: $contacts,
 			notificationService: $this->createMock(NotificationService::class),
 			migrationService: $this->createMock(MigrationService::class),
@@ -342,7 +362,6 @@ class NoticesFollowOnlyJudgedRowsTest extends TestCase {
 
 		(new UseOnlyUseRecorder(
 			secretMapper: $secrets,
-			shareTargetMapper: $this->targets(),
 			eventDispatcher: $dispatcher,
 			rowJudge: $this->judge(verdict: $verdict, secrets: $secrets),
 		))->recordUse(copyId: 'V', userId: 'bob');
@@ -411,7 +430,6 @@ class NoticesFollowOnlyJudgedRowsTest extends TestCase {
 			teamFolders: $this->createMock(TeamFolderQueryService::class),
 			typeMapper: $types,
 			secretMapper: $secrets,
-			shareTargetMapper: $this->targets(),
 			rowJudge: $this->judge(verdict: $verdict, secrets: $secrets),
 		);
 

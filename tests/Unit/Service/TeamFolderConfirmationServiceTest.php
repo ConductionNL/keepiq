@@ -57,6 +57,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -65,6 +66,7 @@ use PHPUnit\Framework\TestCase;
  * the folder; hank and jack hold copies, kim waits.
  */
 class TeamFolderConfirmationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	private bool $switchOn = true;
 
@@ -257,6 +259,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			),
 			notificationService: $notificationService,
 			db: $this->createMock(IDBConnection::class),
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper),
 		);
 		$this->teamFolders = $this->createMock(TeamFolderService::class);
 
@@ -276,7 +279,11 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			shares: $shares,
 			copies: new \OCA\Keepiq\Service\ConfirmerCopyResolver(
 				queries: $queries,
-				rowJudge: new \OCA\Keepiq\Service\ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
+				rowJudge: new \OCA\Keepiq\Service\ShareRowJudge(
+					targets: $shareTargetMapper,
+					secrets: $secretMapper,
+					scanner: $this->createMock(\OCA\Keepiq\Service\ShareQuarantineScanner::class)
+				),
 				secretMapper: $secretMapper,
 			),
 			notificationService: $notificationService,

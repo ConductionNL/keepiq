@@ -22,7 +22,6 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
@@ -38,20 +37,12 @@ use OCP\EventDispatcher\IEventDispatcher;
 class UseOnlyUseRecorder {
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for UseOnlyUseRecorder.
 	 *
 	 * @param SecretMapper      $secretMapper      The secret mapper
-	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (copy to source), read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param IEventDispatcher  $eventDispatcher   The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents       The audit-event factory
-	 * @param ShareRowJudge|null $rowJudge         Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -59,12 +50,10 @@ class UseOnlyUseRecorder {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private IEventDispatcher $eventDispatcher,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -90,8 +79,6 @@ class UseOnlyUseRecorder {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		$sourceId = $this->usedSecretOf(copy: $copy);
-
 		$accessEnds = $copy->getAccessExpiresAt();
 		if ($copy->getOwnerType() !== 'user'
 			|| $copy->getOwnerId() !== $userId
@@ -101,6 +88,8 @@ class UseOnlyUseRecorder {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
+		// Only now, for the caller's own live use-only row, is its share row judged.
+		$sourceId = $this->usedSecretOf(copy: $copy);
 		$this->secretMapper->markUsed($copyId, $userId, new DateTime());
 
 		$sourceName = $copy->getName();

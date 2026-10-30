@@ -19,6 +19,7 @@ use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-1.2
  */
 class ManagerWritesLikeAnEditorTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	private function sync(string $grade, ?SecretVersionService $versions = null): ShareSyncService {
 		return $this->wire(grade: $grade, versions: $versions)[0];
@@ -60,16 +62,17 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 			secretMapper: $secrets,
 			delegationMapper: $delegations,
 			teamFolderService: $teamFolders,
+			rowJudge: $this->shareRowJudge(secrets: $secrets),
 		);
 
-		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth);
+		$contexts = new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $targets), suites: $suites, auth: $auth);
 		$sync = new ShareSyncService(
-			mapper: $targets,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
 			secretMapper: $secrets,
 			db: $this->createMock(IDBConnection::class),
 			auth: $auth,
 			versionService: ($versions ?? $this->createMock(SecretVersionService::class)),
-			guards: new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth),
+			guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets), secrets: $secrets, suites: $suites, auth: $auth),
 			contexts: $contexts,
 		);
 

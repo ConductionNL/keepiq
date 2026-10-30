@@ -54,6 +54,7 @@ use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Service\TeamFolderShareService;
 use OCA\Keepiq\Service\TeamSecretTransferService;
 use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
@@ -75,6 +76,7 @@ use Psr\Log\LoggerInterface;
  */
 class TeamFolderServiceTest extends TestCase {
 	use AdminAreaFixture;
+	use ShareRowJudgeFixture;
 
 
 	private TeamFolderService $service;
@@ -157,6 +159,7 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper),
 		);
 
 		$this->service = new TeamFolderService(
@@ -1429,6 +1432,7 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper),
 		);
 
 		return new TeamFolderService(
@@ -1448,7 +1452,7 @@ class TeamFolderServiceTest extends TestCase {
 			audit: ($audit ?? new TeamFolderAuditor(eventDispatcher: null)),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: $scanner),
+			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class))),
 		);
 	}//end serviceWithShareTargets()
 }//end class

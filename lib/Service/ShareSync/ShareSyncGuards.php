@@ -23,7 +23,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\FederatedValueFields;
@@ -51,33 +50,23 @@ use OCA\Keepiq\Service\ShareSyncService;
 class ShareSyncGuards {
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets, read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets (the copies' rows)
 	 * @param EncryptionSuiteMapper $suites The suites (vault keys)
 	 * @param ShareAuthorizationService $auth The share authorization service (the source read again)
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
 		private EncryptionSuiteMapper $suites,
 		private ShareAuthorizationService $auth,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targets, secrets: $secrets));
 	}//end __construct()
 
 	/**

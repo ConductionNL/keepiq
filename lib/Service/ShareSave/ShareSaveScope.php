@@ -24,7 +24,6 @@ use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\ShareRowJudge;
@@ -48,35 +47,25 @@ use OCP\AppFramework\Http;
 class ShareSaveScope {
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets, read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
 	 * @param ShareSyncService $sync Who may write for every copy
 	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
 		private FederatedShareMapper $federatedShares,
 		private ShareSyncService $sync,
 		private ShareSyncGuards $guards,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targets, secrets: $secrets));
 	}//end __construct()
 
 	/**

@@ -48,22 +48,15 @@ use Throwable;
 class TeamFolderShareService {
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for TeamFolderShareService.
 	 *
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (per-row reads/writes)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param BulkGrantShareTargetMapper $bulkGrantMapper The share-target mapper keyed on the grant (cascade)
 	 * @param RecipientSecretCopyService $copies The recipient-copy service
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -71,14 +64,13 @@ class TeamFolderShareService {
 	 */
 	public function __construct(
 		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private BulkGrantShareTargetMapper $bulkGrantMapper,
 		private RecipientSecretCopyService $copies,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
 		private ?ShareRestrictionResolver $restrictions = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper));
 	}//end __construct()
 
 	/**

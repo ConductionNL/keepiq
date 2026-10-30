@@ -17,6 +17,7 @@ use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,6 +28,7 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSaveScopeTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var ShareTargetMapper&MockObject */
 	private ShareTargetMapper $targets;
@@ -48,14 +50,14 @@ class ShareSaveScopeTest extends TestCase {
 		// A real ShareSyncGuards so liveCopies() runs the defence-in-depth guard
 		// (GHSA-m5p9-6pw7-pf3g) against the mocked targets and secrets.
 		$guards = new ShareSyncGuards(
-			targets: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
 			suites: $this->createMock(EncryptionSuiteMapper::class),
 			auth: $this->createMock(ShareAuthorizationService::class),
 		);
 
 		$this->scope = new ShareSaveScope(
-			targets: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
 			federatedShares: $this->federated,
 			sync: $this->createMock(ShareSyncService::class),

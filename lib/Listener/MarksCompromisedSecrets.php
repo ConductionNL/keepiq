@@ -89,17 +89,19 @@ trait MarksCompromisedSecrets {
 	 * tally, so there it is only logged.
 	 *
 	 * @param Secret    $secret The Secret sealed under the affected suite
-	 * @param bool|null $failed Set to true when the lookup failed
+	 * @param bool|null $failed   Set to true when the lookup failed
+	 * @param bool|null $unjudged Set to true when the pending quarantine scan cannot judge its share row
 	 *
 	 * @return Secret
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	private function resolveTarget(Secret $secret, ?bool &$failed = null): Secret {
+	private function resolveTarget(Secret $secret, ?bool &$failed = null, ?bool &$unjudged = null): Secret {
 		try {
 			$verdict = $this->rowJudge->forCopy(copy: $secret);
-			if ($verdict->state === ShareRowVerdict::AMBIGUOUS || $verdict->state === ShareRowVerdict::UNJUDGED) {
+			$unjudged = ($verdict->state === ShareRowVerdict::UNJUDGED);
+			if ($verdict->state === ShareRowVerdict::AMBIGUOUS || $unjudged === true) {
 				throw new RuntimeException(message: 'its share row cannot be followed ('.$verdict->state.')');
 			}
 

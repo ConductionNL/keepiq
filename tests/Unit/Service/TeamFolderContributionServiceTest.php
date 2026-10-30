@@ -51,12 +51,14 @@ use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Team folder Ops (owner iris): hank write, jack read; lee is no member.
  */
 class TeamFolderContributionServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var array<int,Secret> */
 	private array $inserted = [];
@@ -176,6 +178,7 @@ class TeamFolderContributionServiceTest extends TestCase {
 				),
 				notificationService: $this->createMock(NotificationService::class),
 				db: $this->createMock(IDBConnection::class),
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper),
 			),
 			secretMapper: $secretMapper,
 			suiteMapper: $suiteMapper,

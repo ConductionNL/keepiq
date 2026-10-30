@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
@@ -45,33 +44,23 @@ class SuiteCompromiseListener implements IEventListener {
 	use MarksCompromisedSecrets;
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (lookup recipient copies)
-	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (resolve owners), read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
 	 * @param RotationPolicyService|null $rotationService The rotation service (auto-flag)
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private NotificationService $notificationService,
 		private LoggerInterface $logger,
 		private ?RotationPolicyService $rotationService = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**

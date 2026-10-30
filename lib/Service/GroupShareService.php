@@ -65,18 +65,12 @@ use Throwable;
  *   grant (GHSA-m5p9-6pw7-pf3g).
  */
 class GroupShareService {
-
-	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
 	/**
 	 * Constructor for GroupShareService.
 	 *
 	 * @param GroupShareMapper $mapper The group-share mapper
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (per-row reads/writes)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param BulkGrantShareTargetMapper $bulkGrantMapper The share-target mapper keyed on the grant (cascade)
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (member-eligibility filter)
@@ -92,13 +86,13 @@ class GroupShareService {
 	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy, when no authorization service is wired
 	 * @param IDBConnection|null $db Makes a restriction change and a revoke all-or-nothing
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper and the scan
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private GroupShareMapper $mapper,
 		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private BulkGrantShareTargetMapper $bulkGrantMapper,
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
@@ -114,9 +108,7 @@ class GroupShareService {
 		private ?ShareQuarantineScanner $quarantineScan = null,
 		private ?ShareGrantReader $grants = null,
 		private ?IDBConnection $db = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper, scanner: $quarantineScan));
 	}//end __construct()
 
 	/**
@@ -663,7 +655,6 @@ class GroupShareService {
 		return ($this->auth ?? new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $this->delegationMapper,
-			shareTargetMapper: $this->shareTargetMapper,
 			groupShareMapper: $this->mapper,
 			groupManager: $this->groupManager,
 			grants: $this->grants,

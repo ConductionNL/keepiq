@@ -36,7 +36,6 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Listener\MarksCompromisedSecrets;
 use OCP\Authentication\Token\IProvider;
 use Psr\Log\LoggerInterface;
@@ -56,39 +55,29 @@ class CompromiseContainmentService {
 	use MarksCompromisedSecrets;
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param SecretMapper           $secretMapper           Blast-radius lookup and stamp
-	 * @param ShareTargetMapper      $shareTargetMapper      Resolves shared sources and outbound copies, through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param EmergencyContactMapper $contactMapper Finds grantors exposed through the revoked key
 	 * @param NotificationService    $notificationService    Warns the affected users
 	 * @param MigrationService       $migrationService       Revokes the owner's link shares and passkeys
 	 * @param IProvider              $tokenProvider          Ends the owner's sessions and app passwords
 	 * @param LoggerInterface        $logger                 The logger
 	 * @param RotationPolicyService|null $rotationService    Raises the suite_compromise rotation flags
-	 * @param ShareRowJudge|null     $rowJudge               Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private EmergencyContactMapper $contactMapper,
 		private NotificationService $notificationService,
 		private MigrationService $migrationService,
 		private IProvider $tokenProvider,
 		private LoggerInterface $logger,
 		private ?RotationPolicyService $rotationService = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -208,8 +197,9 @@ class CompromiseContainmentService {
 		}
 
 		foreach ($secrets as $secret) {
-			$failed = false;
-			$target = $this->resolveTarget(secret: $secret, failed: $failed);
+			$failed   = false;
+			$unjudged = false;
+			$target   = $this->resolveTarget(secret: $secret, failed: $failed, unjudged: $unjudged);
 			if ($failed === true) {
 				$radius->addFailure();
 			}
@@ -217,7 +207,9 @@ class CompromiseContainmentService {
 			$radius->addSealed(secret: $secret, target: $target);
 			// After a failed lookup $secret may be a copy, and its outbound
 			// lookup would fail on the same cause: one failure, counted once.
-			if ($target === $secret && $failed === false) {
+			// A row the pending scan cannot judge is no such cause: the people
+			// $secret was shared with are still warned.
+			if ($target === $secret && ($failed === false || $unjudged === true)) {
 				$this->collectOutbound(radius: $radius, secret: $secret);
 			}
 		}

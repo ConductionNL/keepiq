@@ -23,7 +23,6 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareAuthorizationService;
@@ -43,31 +42,21 @@ use OCP\AppFramework\Db\DoesNotExistException;
 class ShareWriteContext {
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets, read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param EncryptionSuiteMapper $suites The suites (owner certificate)
 	 * @param ShareAuthorizationService $auth The share authorization service
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private EncryptionSuiteMapper $suites,
 		private ShareAuthorizationService $auth,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targets));
 	}//end __construct()
 
 	/**

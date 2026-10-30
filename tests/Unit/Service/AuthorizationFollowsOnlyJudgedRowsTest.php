@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DirectShareRegistrar;
@@ -150,6 +151,35 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 		$this->delegations(verdict: null)->requirePreExistingShare(secretId: 'S_a', userId: 'bob');
 		$this->addToAssertionCount(1);
 	}//end testALegitimateRowIsAShareToDelegateGradeAndReRootOn()
+
+	/**
+	 * Sharing S_a onward as its delegate needs Bob's own copy through a
+	 * trusted row: through a row the scan quarantines Bob holds no copy, and
+	 * through one it cannot judge the share waits for the scan.
+	 *
+	 * @return void
+	 */
+	public function testOnwardSharingNeedsATrustedOwnRow(): void {
+		try {
+			$this->authorization(verdict: ShareQuarantineScanner::HELD_QUARANTINED)->assertMayShareOnward(source: $this->secrets['S_a'], userId: 'bob');
+			$this->fail('A quarantined row is no copy to share from');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame('You hold no single copy of this secret to share it from', $exception->getMessage());
+		}
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->authorization(verdict: ShareQuarantineScanner::HELD_UNJUDGED)->assertMayShareOnward(source: $this->secrets['S_a'], userId: 'bob');
+	}//end testOnwardSharingNeedsATrustedOwnRow()
+
+	/**
+	 * Bob's legitimate copy lets him share S_a onward as its delegate, as before.
+	 *
+	 * @return void
+	 */
+	public function testOnwardSharingThroughALegitimateRowIsAllowed(): void {
+		$this->authorization(verdict: null)->assertMayShareOnward(source: $this->secrets['S_a'], userId: 'bob');
+		$this->addToAssertionCount(1);
+	}//end testOnwardSharingThroughALegitimateRowIsAllowed()
 
 	/**
 	 * A row the scan quarantines on the spot does not make V a copy: Bob may
@@ -300,7 +330,6 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper(),
 			delegationMapper: $delegations,
-			shareTargetMapper: $this->targets(),
 			groupShareMapper: $groupShares,
 			groupManager: $groupManager,
 			rowJudge: $this->judge(verdict: $verdict),
@@ -317,7 +346,6 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	private function delegations(?string $verdict): DelegationAuthorizer {
 		return new DelegationAuthorizer(
 			secretMapper: $this->secretMapper(),
-			shareTargetMapper: $this->targets(),
 			rowJudge: $this->judge(verdict: $verdict),
 		);
 	}//end delegations()
@@ -377,7 +405,6 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 		$contexts->method('writesForEveryone')->willReturn($standing);
 
 		return new ViewOnlyCopyGuard(
-			targets: $this->targets(),
 			secrets: $this->secretMapper(),
 			contexts: $contexts,
 			rowJudge: $this->judge(verdict: $verdict),
@@ -404,7 +431,6 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	 */
 	private function syncStartsFrom(?string $verdict): void {
 		$sync = new ShareSyncService(
-			mapper: $this->targets(),
 			secretMapper: $this->secretMapper(),
 			db: $this->createMock(IDBConnection::class),
 			auth: $this->createMock(ShareAuthorizationService::class),

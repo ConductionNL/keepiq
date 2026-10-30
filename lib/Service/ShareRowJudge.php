@@ -50,9 +50,9 @@ class ShareRowJudge {
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper           $targets The live share rows
-	 * @param SecretMapper|null           $secrets Loads the copy a pair or a copy id names; without it no such copy is trusted
-	 * @param ShareQuarantineScanner|null $scanner The pending scan; without it no row is held back
+	 * @param ShareTargetMapper      $targets The live share rows
+	 * @param SecretMapper           $secrets Loads the copy a pair or a copy id names
+	 * @param ShareQuarantineScanner $scanner The pending scan
 	 *
 	 * @return void
 	 *
@@ -60,8 +60,8 @@ class ShareRowJudge {
 	 */
 	public function __construct(
 		private ShareTargetMapper $targets,
-		private ?SecretMapper $secrets = null,
-		private ?ShareQuarantineScanner $scanner = null,
+		private SecretMapper $secrets,
+		private ShareQuarantineScanner $scanner,
 	) {
 	}//end __construct()
 
@@ -77,7 +77,7 @@ class ShareRowJudge {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function verdict(ShareTarget $row): ?string {
-		return $this->scanner?->heldBack(row: $row);
+		return $this->scanner->heldBack(row: $row);
 	}//end verdict()
 
 
@@ -233,17 +233,13 @@ class ShareRowJudge {
 	}//end judgeRow()
 
 	/**
-	 * A secret by id, or null when it does not exist or no secret mapper is wired.
+	 * A secret by id, or null when it does not exist.
 	 *
 	 * @param string $copyId The secret
 	 *
 	 * @return Secret|null
 	 */
 	private function loadCopy(string $copyId): ?Secret {
-		if ($this->secrets === null) {
-			return null;
-		}
-
 		try {
 			return $this->secrets->findById($copyId);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {

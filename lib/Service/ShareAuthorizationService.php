@@ -34,8 +34,8 @@ use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IGroupManager;
@@ -51,24 +51,15 @@ use OCP\IGroupManager;
 class ShareAuthorizationService {
 
 	/**
-	 * The judged share rows, or null when no share-target mapper is wired.
-	 *
-	 * @var ShareRowJudge|null
-	 */
-	private ?ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for ShareAuthorizationService.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookups)
 	 * @param SecretDelegationMapper $delegationMapper The Delegation mapper (delegate authorization)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (write-grade resolution)
-	 * @param ShareTargetMapper|null $shareTargetMapper Resolves a received copy to its source (keepiq#214)
 	 * @param GroupShareMapper|null $groupShareMapper The group shares of a source
 	 * @param IGroupManager|null $groupManager Whether a copy holder is in one of their groups
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper, with no
-	 *   pending scan
 	 *
 	 * @return void
 	 *
@@ -77,17 +68,12 @@ class ShareAuthorizationService {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private SecretDelegationMapper $delegationMapper,
+		private ShareRowJudge $rowJudge,
 		private ?TeamFolderService $teamFolderService = null,
-		private ?ShareTargetMapper $shareTargetMapper = null,
 		private ?GroupShareMapper $groupShareMapper = null,
 		private ?IGroupManager $groupManager = null,
 		private ?ShareGrantReader $grants = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = $rowJudge;
-		if ($rowJudge === null && $shareTargetMapper !== null) {
-			$this->rowJudge = new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper);
-		}
 	}//end __construct()
 
 	/**
@@ -161,9 +147,8 @@ class ShareAuthorizationService {
 	 * A received copy is owned by its recipient, so a copy is judged by its
 	 * SOURCE secret: a plain recipient fails, a delegate passes, and a copy
 	 * someone else holds is not found. A missing secret and a foreign one get
-	 * the same DoesNotExistException. Fails closed when the share-target mapper
-	 * is not wired. A delegate is judged on their own copy whether they name it
-	 * or the source (assertMayShareOnward()).
+	 * the same DoesNotExistException. A delegate is judged on their own copy
+	 * whether they name it or the source (assertMayShareOnward()).
 	 *
 	 * @param string $secretId The secret (source or received copy) id
 	 * @param string $userId   The acting user
@@ -173,15 +158,12 @@ class ShareAuthorizationService {
 	 * @throws DoesNotExistException When the user may not re-share the secret
 	 * @throws InvalidArgumentException When the copy is use-only or expiring, or a delegate holds no single copy
 	 * @throws ForbiddenException When the copy is a read-only copy from another organisation
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the delegate's share row
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertMayReshare(string $secretId, string $userId): void {
-		if ($this->shareTargetMapper === null) {
-			throw new DoesNotExistException('Secret not found');
-		}
-
 		try {
 			$copy   = $this->loadSecret(secretId: $secretId);
 			$source = $this->sourceOf(copy: $copy);
@@ -219,7 +201,7 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	public function resolveShareSource(Secret $secret, string $userId): Secret {
-		$row = $this->rowJudge?->forCopy(copy: $secret)->trustedRow();
+		$row = $this->rowJudge->forCopy(copy: $secret)->trustedRow();
 		if ($row === null) {
 			return $secret;
 		}
@@ -258,22 +240,27 @@ class ShareAuthorizationService {
 	 *
 	 * @throws InvalidArgumentException When the caller holds no single copy, or it is use-only or expiring
 	 * @throws ForbiddenException When the caller's copy is a read-only copy from another organisation
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the caller's share row
 	 *
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function assertMayShareOnward(Secret $source, string $userId): void {
 		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
 			return;
 		}
 
-		$target = null;
+		// Only a trusted share row (ShareRowJudge) is the caller's copy: a row the
+		// pending quarantine scan quarantines is none, and one it cannot judge waits.
+		$verdict = $this->rowJudge->forPair(sourceId: $source->getId(), targetUserId: $userId);
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->rowJudge->scanPending(refusal: 'Your copy of this secret waits for the share quarantine scan, so it cannot be shared onward yet');
+		}
+
+		$target = $verdict->trustedRow();
 		$copy   = null;
-		if ($this->shareTargetMapper !== null) {
+		if ($target !== null) {
 			try {
-				$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-					sourceSecretId: $source->getId(),
-					targetUserId: $userId
-				);
 				$copy = $this->secretMapper->findById($target->getSecretId());
 			} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 				$copy = null;
@@ -305,10 +292,6 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function sourceOf(Secret $copy): Secret {
-		if ($this->rowJudge === null) {
-			throw new InvalidArgumentException(message: 'No share-target mapper');
-		}
-
 		$verdict = $this->rowJudge->forCopy(copy: $copy);
 		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {
 			return $copy;
@@ -353,7 +336,7 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function copyGrade(Secret $source, string $userId): ?string {
-		$target = $this->rowJudge?->forPair(sourceId: $source->getId(), targetUserId: $userId)->trustedRow();
+		$target = $this->rowJudge->forPair(sourceId: $source->getId(), targetUserId: $userId)->trustedRow();
 		if ($target === null) {
 			return null;
 		}

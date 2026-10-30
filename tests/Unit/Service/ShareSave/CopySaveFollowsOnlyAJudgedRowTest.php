@@ -49,6 +49,7 @@ use OCP\AppFramework\Http;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -56,6 +57,7 @@ use PHPUnit\Framework\TestCase;
  * `{S_a, bob, V}` names Bob's own secret V as his copy.
  */
 class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * The secrets by id.
@@ -231,7 +233,7 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $secrets,
 			delegationMapper: $delegations,
-			shareTargetMapper: $targets,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
 			groupShareMapper: $groupShares,
 			groupManager: $groupManager,
 		);
@@ -284,11 +286,10 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		$secrets  = $this->secretMapper();
 		$suites   = $this->suites();
 		$auth     = $this->authorization(targets: $targets, secrets: $secrets);
-		$judge    = new ShareRowJudge(targets: $targets, secrets: $secrets, scanner: $scanner);
-		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth, rowJudge: $judge);
-		$guards   = new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth, rowJudge: $judge);
+		$judge    = new ShareRowJudge(targets: $targets, secrets: $secrets, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class)));
+		$contexts = new ShareWriteContext( suites: $suites, auth: $auth, rowJudge: $judge);
+		$guards   = new ShareSyncGuards( secrets: $secrets, suites: $suites, auth: $auth, rowJudge: $judge);
 		$sync     = new ShareSyncService(
-			mapper: $targets,
 			secretMapper: $secrets,
 			db: $this->createMock(IDBConnection::class),
 			auth: $auth,
@@ -303,7 +304,6 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		return [
 			$contexts,
 			new ShareSaveScope(
-				targets: $targets,
 				secrets: $secrets,
 				federatedShares: $federated,
 				sync: $sync,

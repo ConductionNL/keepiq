@@ -28,6 +28,7 @@ use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DelegationService;
 use OCP\EventDispatcher\Event;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -35,6 +36,8 @@ use Psr\Log\LoggerInterface;
  * Tests for EncryptionSuiteRevokedListener.
  */
 class EncryptionSuiteRevokedListenerTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	/**
 	 * Test the listener sweeps share targets and promotes delegations
 	 * for a user-owned suite.
@@ -130,7 +133,7 @@ class EncryptionSuiteRevokedListenerTest extends TestCase {
 		$delegations = $this->createMock(SecretDelegationMapper::class);
 		$service = new DelegationService(
 			mapper: $delegations,
-			authorizer: new DelegationAuthorizer(secretMapper: $this->createMock(SecretMapper::class)),
+			authorizer: new DelegationAuthorizer(secretMapper: $this->createMock(SecretMapper::class), rowJudge: $this->shareRowJudge(secrets: $this->createMock(SecretMapper::class))),
 		);
 		$listener = new EncryptionSuiteRevokedListener(
 			shareTargetMapper: $shareTargets,

@@ -34,7 +34,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -78,16 +77,9 @@ class ShareSyncService {
 	private ShareAuditTrail $auditTrail;
 
 	/**
-	 * The judged share rows.
-	 *
-	 * @var ShareRowJudge
-	 */
-	private ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for ShareSyncService.
 	 *
-	 * @param ShareTargetMapper $mapper The share targets, read only through the judge
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secretMapper The Secret mapper (recipient copies)
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
@@ -96,14 +88,13 @@ class ShareSyncService {
 	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user copy writes)
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; the sync behaviour carries the spec anchors.
 	 */
 	public function __construct(
-		ShareTargetMapper $mapper,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secretMapper,
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
@@ -112,10 +103,8 @@ class ShareSyncService {
 		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
 		private ?LoggerInterface $logger = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
-		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $mapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**

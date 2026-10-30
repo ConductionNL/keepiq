@@ -33,12 +33,15 @@ use OCA\Keepiq\Service\DelegationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for DelegationService.
  */
 class DelegationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use AdminAreaFixture;
 
 	/**
@@ -51,7 +54,7 @@ class DelegationServiceTest extends TestCase {
 		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$service = new DelegationService(
 			mapper: $mapper,
-			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
+			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		return [$service, $mapper, $secretMapper];
@@ -262,7 +265,7 @@ class DelegationServiceTest extends TestCase {
 			mapper: $mapper,
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
-				shareTargetMapper: $shareTargetMapper,
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 				areas: $this->areaAuthorizer(groupManager: $groupManager, delegated: $delegated),
 			),
 		);

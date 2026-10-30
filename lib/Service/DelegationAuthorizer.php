@@ -29,7 +29,6 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -39,20 +38,11 @@ use OCP\AppFramework\Db\DoesNotExistException;
 class DelegationAuthorizer {
 
 	/**
-	 * The judged share rows, or null when no share-target mapper is wired.
-	 *
-	 * @var ShareRowJudge|null
-	 */
-	private ?ShareRowJudge $rowJudge;
-
-	/**
 	 * Constructor for DelegationAuthorizer.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)
-	 * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param AdminAreaAuthorizer|null $areas The People area check (admin path)
-	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper, with no
-	 *   pending scan
 	 *
 	 * @return void
 	 *
@@ -60,14 +50,9 @@ class DelegationAuthorizer {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		?ShareTargetMapper $shareTargetMapper = null,
+		private ShareRowJudge $rowJudge,
 		private ?AdminAreaAuthorizer $areas = null,
-		?ShareRowJudge $rowJudge = null,
 	) {
-		$this->rowJudge = $rowJudge;
-		if ($rowJudge === null && $shareTargetMapper !== null) {
-			$this->rowJudge = new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper);
-		}
 
 	}//end __construct()
 
@@ -169,27 +154,19 @@ class DelegationAuthorizer {
 	/**
 	 * Assert that $userId already holds a share of $secretId through a
 	 * trusted share row (ShareRowJudge): a row the pending quarantine scan
-	 * holds back is no share. No-op when the share-target mapper is not wired
-	 * (preserves backward compat with existing constructors that pre-date the
-	 * §17.1 hardening).
+	 * holds back is no share.
 	 *
 	 * @param string $secretId The source Secret ID
 	 * @param string $userId The candidate recipient
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When the share-target mapper is
-	 *                                  wired but no share row exists for
-	 *                                  (sourceSecret, user).
+	 * @throws InvalidArgumentException When no trusted share row exists for (sourceSecret, user).
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function requirePreExistingShare(string $secretId, string $userId): void {
-		if ($this->rowJudge === null) {
-			return;
-		}
-
 		if ($this->rowJudge->forPair(sourceId: $secretId, targetUserId: $userId)->trustedRow() === null) {
 			throw new InvalidArgumentException(
 				message: 'Delegation requires the recipient to already hold a share of the secret'

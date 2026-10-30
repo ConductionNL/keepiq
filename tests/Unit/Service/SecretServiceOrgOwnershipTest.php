@@ -50,6 +50,7 @@ use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -58,6 +59,7 @@ use Psr\Log\LoggerInterface;
  * owns) with a child Team/Sub.
  */
 class SecretServiceOrgOwnershipTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	private bool $policyOn = true;
 
@@ -144,7 +146,7 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			auditEvents: new AuditEventFactory(),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
-			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper),
+			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper, rowJudge: $this->shareRowJudge()),
 		);
 
 		$shareTargetMapper = $this->createMock(\OCA\Keepiq\Db\ShareTargetMapper::class);
@@ -166,7 +168,7 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			teamFolders: $queries,
 			typeMapper: $typeMapper,
 			secretMapper: $this->mapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $this->mapper),
 		);
 	}//end setUp()
 
