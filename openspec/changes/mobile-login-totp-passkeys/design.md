@@ -16,7 +16,7 @@
 
 **Non-Goals**
 - Servers without the fields. The app is used by internal testers only, so it requires them, as the browser extension does.
-- The iOS screens. iOS gets what the shared core gives it.
+- The iOS screens, which follow in keepiq#1353. iOS gets what the shared core gives it, and its edit view opens an item with `openForEdit` (D4).
 - Share-save in the mobile apps, and scanning a QR code for the key. Both get their own issue.
 
 ## Decisions

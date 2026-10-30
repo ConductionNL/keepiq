@@ -48,7 +48,7 @@ In the Android app, the edit screen of a login MUST offer an Authenticator key f
 - **THEN** the update carries neither `totp` nor `passkeys`, and both are unchanged
 
 ### Requirement: No new Authenticator or Passkey items
-The Android app MUST NOT offer the Authenticator or Passkey type for a new item (the iOS screens of this capability follow in a separate change; until then iOS gets from this change only what the shared core gives it, and its edit view opens an item without decrypting a login's saved key). Existing Authenticator and Passkey items MUST keep opening, showing, filling and, for an Authenticator item, editing as before.
+The Android app MUST NOT offer the Authenticator or Passkey type for a new item (the iOS screens of this capability follow in keepiq#1353; until then iOS gets from this change only what the shared core gives it, and its edit view opens an item without decrypting a login's saved key). Existing Authenticator and Passkey items MUST keep opening, showing, filling and, for an Authenticator item, editing as before.
 
 #### Scenario: Creating an item
 - **GIVEN** an unlocked vault
