@@ -155,7 +155,8 @@ class HoneyTripwireListenerTest extends TestCase {
 			->willReturnCallback(static function (string $secretId, string $accessorType, ?string $accessorId, string $channel) use (&$calls): bool {
 				$calls[] = [$secretId, $channel];
 
-				return true;
+				// The copy itself is not flagged, so the read reaches its share row.
+				return ($secretId === 'source-1');
 			});
 
 		$this->listener->handle(
