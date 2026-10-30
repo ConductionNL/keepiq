@@ -1,6 +1,6 @@
 ---
 kind: code
-depends_on: [ext-vault-browse, ext-vault-edit, ext-share-sync, ext-settings, ext-autofill]
+depends_on: [ext-vault-browse, ext-vault-edit, ext-share-sync, ext-settings, ext-autofill, ext-totp-capture]
 chain:
   - ext-accounts-and-unlock
   - ext-vault-browse
@@ -13,6 +13,8 @@ chain:
   - ext-settings
   - ext-autofill
   - ext-toolbar-icon
+  - ext-totp-autofill
+  - ext-totp-capture
   - ext-passkey-provider
 ---
 
