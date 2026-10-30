@@ -64,6 +64,7 @@ use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
@@ -635,7 +636,11 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			versionService: $this->createMock(SecretVersionService::class),
 			guards: $this->createMock(ShareSyncGuards::class),
 			contexts: $this->createMock(ShareWriteContext::class),
-			quarantineScan: $this->scanner(pending: $pending),
+			rowJudge: new ShareRowJudge(
+				targets: new ShareTargetMapper(db: $this->db),
+				secrets: new SecretMapper(db: $this->db),
+				scanner: $this->scanner(pending: $pending)
+			),
 		);
 
 		$sync->writeCopyBlobs(
@@ -808,7 +813,11 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			versionService: $this->createMock(SecretVersionService::class),
 			guards: $this->createMock(ShareSyncGuards::class),
 			contexts: $this->createMock(ShareWriteContext::class),
-			quarantineScan: $this->scanner(pending: true),
+			rowJudge: new ShareRowJudge(
+				targets: new ShareTargetMapper(db: $this->db),
+				secrets: new SecretMapper(db: $this->db),
+				scanner: $this->scanner(pending: true)
+			),
 		);
 
 		$updated = $sync->writeCopyBlobs(

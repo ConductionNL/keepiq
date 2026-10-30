@@ -46,6 +46,7 @@ use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareSave\ShareSaveHistory;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSave\IncompleteShareSaveException;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
@@ -307,12 +308,13 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	private function service(?ShareAuthorizationService $auth = null, ?ShareQuarantineScanner $scanner = null): ShareSaveService {
+		$judge = new ShareRowJudge(targets: $this->targets, secrets: $this->secretMapper, scanner: $scanner);
 		$guards = new ShareSyncGuards(
 			targets: $this->targets,
 			secrets: $this->secretMapper,
 			suites: $this->suites,
 			auth: ($auth ?? $this->auth),
-			quarantineScan: $scanner,
+			rowJudge: $judge,
 		);
 		$sync = new ShareSyncService(
 			mapper: $this->targets,
@@ -321,8 +323,8 @@ class ShareSaveServiceTest extends TestCase {
 			auth: ($auth ?? $this->auth),
 			versionService: $this->versionHistory,
 			guards: $guards,
-			contexts: new ShareWriteContext(targets: $this->targets, suites: $this->suites, auth: ($auth ?? $this->auth), quarantineScan: $scanner),
-			quarantineScan: $scanner,
+			contexts: new ShareWriteContext(targets: $this->targets, suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
+			rowJudge: $judge,
 		);
 
 		return new ShareSaveService(
@@ -338,7 +340,7 @@ class ShareSaveServiceTest extends TestCase {
 				federatedShares: $this->federatedMapper,
 				sync: $sync,
 				guards: $guards,
-				quarantineScan: $scanner,
+				rowJudge: $judge,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
 			db: $this->db,

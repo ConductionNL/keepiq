@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service\ShareSave;
 
+use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShareMapper;
@@ -33,9 +34,11 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -101,17 +104,18 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 	}//end secret()
 
 	/**
-	 * Add a live share row of S_a.
+	 * Add a live share row, of S_a unless another source is named.
 	 *
 	 * @param string $target The row's target
 	 * @param string $copyId The copy it names
+	 * @param string $source The row's source
 	 *
 	 * @return ShareTarget
 	 */
-	private function row(string $target, string $copyId): ShareTarget {
+	private function row(string $target, string $copyId, string $source = 'S_a'): ShareTarget {
 		$row = new ShareTarget();
 		$row->setId('row-'.$copyId);
-		$row->setSourceSecretId('S_a');
+		$row->setSourceSecretId($source);
 		$row->setTargetUserId($target);
 		$row->setSecretId($copyId);
 		$this->rows[] = $row;
@@ -252,19 +256,37 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 	}//end scanner()
 
 	/**
-	 * The write context and the share-save scope on the same collaborators.
+	 * A scanner whose heldBack() answers per row id, and null for any other row.
+	 *
+	 * @param array<string,string> $verdicts The verdicts by row id
+	 *
+	 * @return ShareQuarantineScanner
+	 */
+	private function scannerFor(array $verdicts): ShareQuarantineScanner {
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturnCallback(
+			static fn (ShareTarget $row): ?string => ($verdicts[(string)$row->getId()] ?? null)
+		);
+
+		return $scanner;
+	}//end scannerFor()
+
+	/**
+	 * The write context, the share-save scope, the guards and the sync on the
+	 * same collaborators.
 	 *
 	 * @param ShareQuarantineScanner|null $scanner The scanner
 	 *
-	 * @return array{0:ShareWriteContext,1:ShareSaveScope}
+	 * @return array{0:ShareWriteContext,1:ShareSaveScope,2:ShareSyncGuards,3:ShareSyncService}
 	 */
 	private function services(?ShareQuarantineScanner $scanner): array {
 		$targets  = $this->targets();
 		$secrets  = $this->secretMapper();
 		$suites   = $this->suites();
 		$auth     = $this->authorization(targets: $targets, secrets: $secrets);
-		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth, quarantineScan: $scanner);
-		$guards   = new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth);
+		$judge    = new ShareRowJudge(targets: $targets, secrets: $secrets, scanner: $scanner);
+		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth, rowJudge: $judge);
+		$guards   = new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth, rowJudge: $judge);
 		$sync     = new ShareSyncService(
 			mapper: $targets,
 			secretMapper: $secrets,
@@ -273,7 +295,7 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 			versionService: $this->createMock(SecretVersionService::class),
 			guards: $guards,
 			contexts: $contexts,
-			quarantineScan: $scanner,
+			rowJudge: $judge,
 		);
 		$federated = $this->createMock(FederatedShareMapper::class);
 		$federated->method('findBySourceSecret')->willReturn([]);
@@ -286,8 +308,10 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 				federatedShares: $federated,
 				sync: $sync,
 				guards: $guards,
-				quarantineScan: $scanner,
+				rowJudge: $judge,
 			),
+			$guards,
+			$sync,
 		];
 	}//end services()
 
@@ -401,4 +425,125 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		$this->assertSame('S_a', $path->source->getId());
 		$this->assertSame(ShareSyncService::GROUP_WRITE, $path->writesOn);
 	}//end testALegitimateCopyStillSavesForEveryone()
+
+	/**
+	 * While the pending scan cannot judge the row naming V, and V is itself
+	 * shared, Bob's write context of V tells him it waits for the scan, as
+	 * share-save does, rather than answering as an unknown id.
+	 *
+	 * @return void
+	 */
+	public function testAnUnjudgedRowOnASharedSecretAnswersScanPending(): void {
+		$this->secret(id: 'C_c', ownerId: 'carol');
+		$this->row(target: 'bob', copyId: 'V');
+		$this->row(target: 'carol', copyId: 'C_c', source: 'V');
+		[$contexts] = $this->services(scanner: $this->scannerFor(verdicts: ['row-V' => ShareQuarantineScanner::HELD_UNJUDGED]));
+
+		$this->expectException(ShareScanPendingException::class);
+		$contexts->writeContext(secretId: 'V', userId: 'bob');
+	}//end testAnUnjudgedRowOnASharedSecretAnswersScanPending()
+
+	/**
+	 * A shared V whose row the pending scan quarantines on the spot is Bob's
+	 * own source; one whose row its target does not hold still answers as an
+	 * unknown id, as before.
+	 *
+	 * @return void
+	 */
+	public function testASharedSecretWithAQuarantinedOrForeignRowAnswersAsBefore(): void {
+		$this->secret(id: 'C_c', ownerId: 'carol');
+		$this->row(target: 'bob', copyId: 'V');
+		$this->row(target: 'carol', copyId: 'C_c', source: 'V');
+		[$contexts] = $this->services(scanner: $this->scannerFor(verdicts: ['row-V' => ShareQuarantineScanner::HELD_QUARANTINED]));
+
+		$context = $contexts->writeContext(secretId: 'V', userId: 'bob');
+		$this->assertSame('V', $context['sourceSecretId']);
+		$this->assertSame('owner', $context['effectiveGrade']);
+
+		$this->rows[0]->setTargetUserId('someone-else');
+		$this->expectException(InvalidArgumentException::class);
+		$contexts->writeContext(secretId: 'V', userId: 'bob');
+	}//end testASharedSecretWithAQuarantinedOrForeignRowAnswersAsBefore()
+
+	/**
+	 * A group member's /sync of S_a that reaches a copy whose row the pending
+	 * scan cannot judge waits for the scan, as share-save does, so that copy
+	 * is not left on the old value.
+	 *
+	 * @return void
+	 */
+	public function testAGroupSyncWaitsForAnUnjudgedCopy(): void {
+		$this->secret(id: 'C_r', ownerId: 'recipient');
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'recipient', copyId: 'C_r');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , $guards, $sync] = $this->services(scanner: $this->scannerFor(verdicts: ['row-C_x' => ShareQuarantineScanner::HELD_UNJUDGED]));
+
+		$this->expectException(ShareScanPendingException::class);
+		$guards->assertGroupWrite(sync: $sync, source: $this->secrets['S_a'], updates: $this->groupUpdates(), userId: 'recipient');
+	}//end testAGroupSyncWaitsForAnUnjudgedCopy()
+
+	/**
+	 * A group member's /sync of S_a whose copies the scan clears writes the
+	 * source and every copy, as before.
+	 *
+	 * @return void
+	 */
+	public function testAGroupSyncOfClearedCopiesWritesEveryCopy(): void {
+		$this->secret(id: 'C_r', ownerId: 'recipient');
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'recipient', copyId: 'C_r');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , $guards, $sync] = $this->services(scanner: $this->scannerFor(verdicts: []));
+
+		[$writesOn, $ids] = $guards->assertGroupWrite(sync: $sync, source: $this->secrets['S_a'], updates: $this->groupUpdates(), userId: 'recipient');
+
+		$this->assertSame(ShareSyncService::GROUP_WRITE, $writesOn);
+		$this->assertSame(['S_a' => true, 'C_r' => true, 'C_x' => true], $ids);
+	}//end testAGroupSyncOfClearedCopiesWritesEveryCopy()
+
+	/**
+	 * The owner's /sync of S_a that names a copy whose row the pending scan
+	 * cannot judge waits for the scan and writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testAnOwnerSyncNamingAnUnjudgedCopyWaitsForTheScan(): void {
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , , $sync] = $this->services(scanner: $this->scannerFor(verdicts: ['row-C_x' => ShareQuarantineScanner::HELD_UNJUDGED]));
+
+		$this->expectException(ShareScanPendingException::class);
+		$sync->syncUpdate(secretId: 'S_a', updates: [['secretId' => 'C_x', 'key' => 'k-x']], expectedUpdatedAt: '', userId: 'alice');
+	}//end testAnOwnerSyncNamingAnUnjudgedCopyWaitsForTheScan()
+
+	/**
+	 * Copies the scan clears, or that a sync does not name, do not hold the
+	 * owner's sync back.
+	 *
+	 * @return void
+	 */
+	public function testAnOwnerSyncOfClearedCopiesIsNotHeldBack(): void {
+		$this->secret(id: 'C_r', ownerId: 'recipient');
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'recipient', copyId: 'C_r');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , $guards] = $this->services(scanner: $this->scannerFor(verdicts: ['row-C_x' => ShareQuarantineScanner::HELD_UNJUDGED]));
+
+		$guards->assertNamedCopiesJudged(source: $this->secrets['S_a'], updates: [['secretId' => 'C_r', 'key' => 'k-r']]);
+		$this->addToAssertionCount(1);
+	}//end testAnOwnerSyncOfClearedCopiesIsNotHeldBack()
+
+	/**
+	 * A group-write body naming S_a and both copies.
+	 *
+	 * @return list<array<string,string>>
+	 */
+	private function groupUpdates(): array {
+		return [
+			['secretId' => 'S_a', 'key' => 'k-a'],
+			['secretId' => 'C_r', 'key' => 'k-r'],
+			['secretId' => 'C_x', 'key' => 'k-x'],
+		];
+	}//end groupUpdates()
 }//end class

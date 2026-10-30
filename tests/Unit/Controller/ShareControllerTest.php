@@ -188,6 +188,22 @@ class ShareControllerTest extends TestCase {
 	}//end testSyncAnswers409WhenTheSourceMovedUnderTheCaller()
 
 	/**
+	 * A sync that reaches a copy whose share row the pending quarantine scan
+	 * cannot judge answers 409 with its own error code, as share-save does.
+	 *
+	 * @return void
+	 */
+	public function testSyncAnswersScanPendingWithItsOwnCode(): void {
+		$this->shareService->method('syncUpdate')
+			->willThrowException(new ShareScanPendingException('This secret waits for the share quarantine scan'));
+
+		$response = $this->controller('alice')->sync(secretId: 'secret-1', updates: []);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_scan_pending', $response->getData()['error']);
+	}//end testSyncAnswersScanPendingWithItsOwnCode()
+
+	/**
 	 * Revoking a quarantined share (GHSA-m5p9-6pw7-pf3g) is an explicit 409
 	 * with its own error code, never a success the owner would read as "access
 	 * revoked".
@@ -454,6 +470,22 @@ class ShareControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 		$this->assertSame(['message' => 'Not found'], $response->getData());
 	}//end testWriteContextAnswers404ForAnUnresolvableSecret()
+
+	/**
+	 * A write context that waits for the pending quarantine scan answers 409
+	 * with the code share-save answers, not the 404 of an unknown id.
+	 *
+	 * @return void
+	 */
+	public function testWriteContextAnswersScanPendingWithItsOwnCode(): void {
+		$this->shareService->method('writeContext')
+			->willThrowException(new ShareScanPendingException('This secret waits for the share quarantine scan'));
+
+		$response = $this->controller('alice')->writeContext(id: 'secret-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_scan_pending', $response->getData()['error']);
+	}//end testWriteContextAnswersScanPendingWithItsOwnCode()
 
 	/**
 	 * An anonymous caller learns nothing about a secret's write context.
