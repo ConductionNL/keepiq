@@ -434,4 +434,35 @@ class VaultRepositoryTest {
         assertNull(ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REMOVE), null)["totp"])
         assertNull(ItemCodec.validate(draft, null)["totp"])
     }
+
+    @Test
+    fun deletingAPasskeyKeepsTheOthersFromTheFreshRow() = runTest {
+        repo.refresh(SyncTrigger.START)
+        mailRow = mailRowWith(passkeysOf("a"))
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        // Another client added "b" since the phone opened the login.
+        mailRow = mailRowWith(passkeysOf("a", "b"))
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertEquals("PUT" to "/api/v1/secrets/s4", requests.first { it.first == "PUT" })
+        val body = bodies.single()
+        assertEquals(setOf("passkeys"), body.keys)
+        assertEquals(listOf("b"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+    }
+
+    @Test
+    fun deletingTheLastPasskeySendsAnEmptyString() = runTest {
+        repo.refresh(SyncTrigger.START)
+        mailRow = mailRowWith(passkeysOf("a"))
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""))), bodies.single())
+    }
+
+    @Test
+    fun aUseOnlyOrReadOnlyCopyCannotDeleteAPasskey() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
+        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "c"))
+        assertTrue(requests.none { it.first == "PUT" })
+    }
 }

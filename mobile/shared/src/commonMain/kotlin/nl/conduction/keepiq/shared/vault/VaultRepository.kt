@@ -225,6 +225,19 @@ class VaultRepository(
         WriteResult.Saved(item.row.id)
     }
 
+    /**
+     * Deletes one passkey from [item]'s `passkeys` (mobile-login-totp-passkeys
+     * D7). The item is read fresh, so a passkey added elsewhere since it
+     * was opened is kept.
+     */
+    suspend fun deletePasskey(item: DecryptedItem, credentialId: String): WriteResult = write {
+        if (item.row.useOnly || item.row.readOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
+        val fresh = api.getSecret(item.row.id)?.let { VaultRow.from(it) } ?: return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
+        val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
+        api.updateSecret(item.row.id, ItemCodec.passkeysBody(LoginPasskeys.without(stored, credentialId), keys))
+        WriteResult.Saved(item.row.id)
+    }
+
     /** Moves an item to another folder: only its folder changes (the extension's vault-move). */
     suspend fun move(id: String, folderId: String?): WriteResult = write {
         api.updateSecret(id, JsonObject(mapOf("folderId" to (folderId?.let { JsonPrimitive(it) } ?: kotlinx.serialization.json.JsonNull))))
