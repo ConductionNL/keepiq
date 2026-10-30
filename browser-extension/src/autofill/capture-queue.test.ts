@@ -422,6 +422,24 @@ describe('the save or update lookup, whatever the fill rule', () => {
 		expect(await state()).toMatchObject({ mode })
 	})
 
+	it.each([
+		['https://site.test/', 'https://login.site.test/sign-in', 'update'],
+		['site.test', 'https://accounts.site.test/sign-in', 'update'],
+		['https://site.test/app', 'https://login.site.test/sign-in', 'add'],
+		['https://site.test/', 'http://login.site.test/sign-in', 'add'],
+		['https://app1.site.test/', 'https://app2.site.test/sign-in', 'add'],
+	])('takes a login for %s as the parent of %s only for a bare host', async (saved, page, mode) => {
+		await vault([await item('a', 'u', 'old', { url: saved })])
+		await submitOn(page, 'u', 'new')
+		expect(await state()).toMatchObject({ mode })
+	})
+
+	it('prefers a login for the frame\'s own host over one for its parent host', async () => {
+		await vault([await item('a', 'u', 'one', { url: 'https://site.test/' }), await item('b', 'u', 'two', { url: 'https://login.site.test/' })])
+		await submitOn('https://login.site.test/sign-in', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item b' })
+	})
+
 	it('treats another IP address as another site', async () => {
 		await vault([await item('a', 'u', 'pw', { url: 'http://10.0.0.5/' })])
 		await submitOn('http://10.0.0.6/login', 'u', 'pw')

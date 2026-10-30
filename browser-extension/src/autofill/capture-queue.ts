@@ -128,11 +128,18 @@ function under(itemUrl: string | null, frame: URL): boolean {
 	return /[/?#]$/.test(prefix) || /^[/?#]?$/.test(frame.href.charAt(prefix.length))
 }
 
+/** Whether the login is for a bare host the frame's is a subdomain of, so its `login.` page updates it; a sibling subdomain is not. */
+function onParentHost(itemUrl: string | null, frame: URL): boolean {
+	const item = webUrl(itemUrl)
+	if (!item || item.href !== `${item.origin}/` || item.protocol !== frame.protocol || item.port !== frame.port) return false
+	return frame.hostname.endsWith(`.${item.hostname}`)
+}
+
 /**
  * Add, update or nothing (design.md § Capture queue). What the vault already holds counts on the base domain, but an
- * update only for the one editable login whose url is a prefix of the frame's, so a sibling app's password is never
- * overwritten; a change form, which may sit on another path, falls back to the frame's host. A password that no login
- * can take is offered as a new login rather than lost.
+ * update only for the one editable login whose url is a prefix of the frame's, else that is a bare parent host of it, so
+ * a sibling app's password is never overwritten; a change form, which may sit on another path, first falls back to the
+ * frame's host. A password that no login can take is offered as a new login rather than lost.
  */
 async function decide(accountId: string, tabId: number, frameUrl: string, report: CaptureSubmitted, rule: UriMatch): Promise<Decision> {
 	const key = await getKey(accountId)
@@ -145,8 +152,13 @@ async function decide(accountId: string, tabId: number, frameUrl: string, report
 	const holders = rows.filter((row) => loginOf(row) !== undefined && (loginOf(row) ?? '') === (report.username ?? ''))
 	const editable = (row: OpenSecretRow) => !row.useOnly && !row.readOnly
 	const only = (candidates: OpenSecretRow[], counts: (row: OpenSecretRow) => boolean) => {
-		const prefixed = candidates.filter((row) => under(row.url, frame))
-		const pool = (prefixed.length > 0 || !report.changed ? prefixed : candidates.filter((row) => webUrl(row.url)?.host === frame.host)).filter(counts)
+		// The nearest tier with a login decides, so a login for the frame's own host wins over one for its parent.
+		const tiers = [
+			(row: OpenSecretRow) => under(row.url, frame),
+			...(report.changed ? [(row: OpenSecretRow) => webUrl(row.url)?.host === frame.host] : []),
+			(row: OpenSecretRow) => onParentHost(row.url, frame),
+		]
+		const pool = (tiers.map((tier) => candidates.filter(tier)).find((rows) => rows.length > 0) ?? []).filter(counts)
 		return pool.length === 1 ? pool[0] : undefined
 	}
 	const remembered = (candidates: OpenSecretRow[]) => (report.changed ? candidates.find((row) => row.id === rememberedItem(tabId)) : undefined)
