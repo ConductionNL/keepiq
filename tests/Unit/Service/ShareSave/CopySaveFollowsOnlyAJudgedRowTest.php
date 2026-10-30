@@ -50,6 +50,7 @@ use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -164,7 +165,28 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 	}//end targets()
 
 	/**
-	 * The secret mapper over the secrets; it never writes.
+	 * Whether the secret mapper may write; a test that writes sets it.
+	 *
+	 * @var bool
+	 */
+	private bool $mayWrite = false;
+
+	/**
+	 * The ids of the secrets written, when the mapper may write.
+	 *
+	 * @var list<string>
+	 */
+	private array $written = [];
+
+	/**
+	 * The database connection the sync's transaction runs on.
+	 *
+	 * @var IDBConnection&MockObject
+	 */
+	private IDBConnection&MockObject $db;
+
+	/**
+	 * The secret mapper over the secrets; it never writes unless the test allows it.
 	 *
 	 * @return SecretMapper
 	 */
@@ -182,7 +204,16 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		$mapper->method('findByIds')->willReturnCallback(
 			fn (array $ids): array => array_intersect_key($this->secrets, array_flip($ids))
 		);
-		$mapper->expects($this->never())->method('update');
+		if ($this->mayWrite === false) {
+			$mapper->expects($this->never())->method('update');
+		}
+
+		$mapper->method('update')->willReturnCallback(
+			function (Secret $secret): Secret {
+				$this->written[] = $secret->getId();
+				return $secret;
+			}
+		);
 
 		return $mapper;
 	}//end secretMapper()
@@ -282,16 +313,17 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 	 * @return array{0:ShareWriteContext,1:ShareSaveScope,2:ShareSyncGuards,3:ShareSyncService}
 	 */
 	private function services(?ShareQuarantineScanner $scanner): array {
+		$this->db = $this->createMock(IDBConnection::class);
 		$targets  = $this->targets();
 		$secrets  = $this->secretMapper();
 		$suites   = $this->suites();
 		$auth     = $this->authorization(targets: $targets, secrets: $secrets);
 		$judge    = new ShareRowJudge(targets: $targets, secrets: $secrets, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class)));
-		$contexts = new ShareWriteContext( suites: $suites, auth: $auth, rowJudge: $judge);
-		$guards   = new ShareSyncGuards( secrets: $secrets, suites: $suites, auth: $auth, rowJudge: $judge);
+		$contexts = new ShareWriteContext(suites: $suites, auth: $auth, rowJudge: $judge);
+		$guards   = new ShareSyncGuards(secrets: $secrets, suites: $suites, auth: $auth, rowJudge: $judge);
 		$sync     = new ShareSyncService(
 			secretMapper: $secrets,
-			db: $this->createMock(IDBConnection::class),
+			db: $this->db,
 			auth: $auth,
 			versionService: $this->createMock(SecretVersionService::class),
 			guards: $guards,
@@ -534,9 +566,61 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		$this->row(target: 'xavier', copyId: 'C_x');
 		[, , $guards] = $this->services(scanner: $this->scannerFor(verdicts: ['row-C_x' => ShareQuarantineScanner::HELD_UNJUDGED]));
 
-		$guards->assertNamedCopiesJudged(source: $this->secrets['S_a'], updates: [['secretId' => 'C_r', 'key' => 'k-r']]);
+		$guards->assertCopiesJudged(
+			source: $this->secrets['S_a'],
+			updates: [['secretId' => 'C_r', 'key' => 'k-r']],
+			writesOn: null,
+			judged: $guards->judgedRowsOf(source: $this->secrets['S_a'])
+		);
 		$this->addToAssertionCount(1);
 	}//end testAnOwnerSyncOfClearedCopiesIsNotHeldBack()
+
+	/**
+	 * A sync judges each row once: a row the scan clears when the sync is
+	 * checked is written, even when asking the scan again would find it
+	 * unjudged, so no copy is silently left on its old value.
+	 *
+	 * @return void
+	 */
+	public function testASyncWritesWhatItsCheckJudged(): void {
+		$this->mayWrite = true;
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->expects($this->once())->method('heldBack')
+			->willReturnOnConsecutiveCalls(null, ShareQuarantineScanner::HELD_UNJUDGED);
+		[, , , $sync] = $this->services(scanner: $scanner);
+
+		$this->assertSame(1, $sync->syncUpdate(secretId: 'S_a', updates: [['secretId' => 'C_x', 'key' => 'k-x']], expectedUpdatedAt: '', userId: 'alice'));
+		$this->assertSame(['C_x'], $this->written);
+	}//end testASyncWritesWhatItsCheckJudged()
+
+	/**
+	 * A sync refused for a row the scan cannot judge is refused before its
+	 * transaction opens, so a quarantine the same judging made on another row
+	 * is not rolled back.
+	 *
+	 * @return void
+	 */
+	public function testARefusedSyncKeepsTheQuarantinesItsCheckMade(): void {
+		$this->secret(id: 'C_q', ownerId: 'quinn');
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'quinn', copyId: 'C_q');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , , $sync] = $this->services(scanner: $this->scannerFor(verdicts: [
+			'row-C_q' => ShareQuarantineScanner::HELD_QUARANTINED,
+			'row-C_x' => ShareQuarantineScanner::HELD_UNJUDGED,
+		]));
+		$this->db->expects($this->never())->method('beginTransaction');
+
+		$this->expectException(ShareScanPendingException::class);
+		$sync->syncUpdate(
+			secretId: 'S_a',
+			updates: [['secretId' => 'C_q', 'key' => 'k-q'], ['secretId' => 'C_x', 'key' => 'k-x']],
+			expectedUpdatedAt: '',
+			userId: 'alice'
+		);
+	}//end testARefusedSyncKeepsTheQuarantinesItsCheckMade()
 
 	/**
 	 * A group-write body naming S_a and both copies.

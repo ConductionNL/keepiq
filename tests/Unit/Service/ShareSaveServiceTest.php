@@ -324,7 +324,7 @@ class ShareSaveServiceTest extends TestCase {
 			auth: ($auth ?? $this->auth),
 			versionService: $this->versionHistory,
 			guards: $guards,
-			contexts: new ShareWriteContext( suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
+			contexts: new ShareWriteContext(suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
 			rowJudge: $judge,
 		);
 

@@ -163,16 +163,24 @@ class ShareSyncService {
 
 		// After the stored version even within the same second, as a share-save stamps.
 		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
-		$allowedIds = $this->collectSyncTargets(source: $source);
+		// Every row is judged once, before the transaction, as the owner's
+		// requests are: a quarantine the judging makes is kept when a row it
+		// cannot judge refuses the sync, and the writes read the same
+		// verdicts, so a copy is never skipped on a second, different answer.
+		$judged = $this->guards->judgedRowsOf(source: $source);
+		$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+		$allowedIds = $this->collectSyncTargets(source: $source, judged: $judged);
 		return $this->atomic(
-			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
+			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId, $judged): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
-				if ($writesOn !== self::GROUP_WRITE) {
-					$this->guards->assertNamedCopiesJudged(source: $source, updates: $updates);
-				}
-
 				if ($writesOn === self::GROUP_WRITE) {
-					[$writesOn, $allowedIds] = $this->guards->assertGroupWrite(sync: $this, source: $source, updates: $updates, userId: $userId);
+					[$writesOn, $allowedIds] = $this->guards->assertGroupWrite(
+						sync: $this,
+						source: $source,
+						updates: $updates,
+						userId: $userId,
+						judged: $judged
+					);
 				}
 
 				$updated = $this->writeCopyBlobs(
@@ -180,7 +188,8 @@ class ShareSyncService {
 					updates: $updates,
 					allowedIds: $allowedIds,
 					savedAt: $savedAt,
-					writerId: $userId
+					writerId: $userId,
+					judged: $judged
 				);
 				if ($updated > 0) {
 					$this->recordNonOwnerSync(source: $source, userId: $userId, writesOn: $writesOn);
@@ -350,12 +359,13 @@ class ShareSyncService {
 	 * defect fixed with folder-permission-grades §2.3).
 	 *
 	 * @param Secret $source The source secret being synced
+	 * @param JudgedShareRows $judged The source's rows, judged once for the sync
 	 *
 	 * @return array<string,bool> The secret ids this sync may write, keyed by id.
 	 */
-	private function collectSyncTargets(Secret $source): array {
+	private function collectSyncTargets(Secret $source, JudgedShareRows $judged): array {
 		$allowedIds = [$source->getId() => true];
-		foreach ($this->rowJudge->rowsOfSource(sourceId: $source->getId())->all() as $shareRow) {
+		foreach ($judged->all() as $shareRow) {
 			// Only a superset: writeCopyBlobs() judges each row it writes.
 			$allowedIds[$shareRow->getSecretId()] = true;
 		}
@@ -376,6 +386,7 @@ class ShareSyncService {
 	 * @param DateTime $savedAt The version every written row gets
 	 * @param string $writerId The caller
 	 * @param string[] $restored The fields a restore writes back from a version, which replace no exposed value
+	 * @param JudgedShareRows|null $judged The source's rows already judged for this request, or null to read them
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
@@ -390,13 +401,14 @@ class ShareSyncService {
 		DateTime $savedAt,
 		string $writerId,
 		array $restored = [],
+		?JudgedShareRows $judged = null,
 	): int {
 		// Defence in depth: the share row that owns each recipient copy, so a
 		// copy whose row does not genuinely belong to its target (a poisoned or
 		// drifted `secret_id`) is skipped rather than overwritten, and so is the
 		// copy of a row the pending quarantine scan holds back. The source row
 		// itself carries no share row and is always writable.
-		$judged = $this->rowJudge->rowsOfSource(sourceId: $source->getId());
+		$judged ??= $this->rowJudge->rowsOfSource(sourceId: $source->getId());
 		$shareRows = [];
 		foreach ($judged->all() as $shareRow) {
 			$shareRows[$shareRow->getSecretId()] = $shareRow;

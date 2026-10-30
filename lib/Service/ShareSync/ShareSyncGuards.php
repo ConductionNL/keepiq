@@ -26,6 +26,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\FederatedValueFields;
+use OCA\Keepiq\Service\JudgedShareRows;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRowJudge;
@@ -125,6 +126,7 @@ class ShareSyncGuards {
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param string $userId The requesting user
+	 * @param JudgedShareRows|null $judged The source's rows already judged for this sync, or null to read them
 	 *
 	 * @return array{0:string|null,1:array<string,bool>} How the audit names the write now, and the ids to write
 	 *
@@ -135,7 +137,13 @@ class ShareSyncGuards {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	public function assertGroupWrite(ShareSyncService $sync, Secret $source, array $updates, string $userId): array {
+	public function assertGroupWrite(
+		ShareSyncService $sync,
+		Secret $source,
+		array $updates,
+		string $userId,
+		?JudgedShareRows $judged = null,
+	): array {
 		// Read again, as share-save's assertStillWriter() does: becoming a
 		// read-only or use-only copy does not move the version the lock checks.
 		$current = $this->auth->loadSecret(secretId: $source->getId());
@@ -144,7 +152,7 @@ class ShareSyncGuards {
 		$writesOn = $sync->resolveSyncWriter(source: $current, userId: $userId);
 		$this->assertBody(updates: $updates);
 
-		$live = $this->liveCopies(source: $source, leaveOut: null);
+		$live = $this->liveCopies(source: $source, leaveOut: null, judged: $judged);
 		// As share-save: a copy whose row the pending scan cannot judge is
 		// neither written nor left behind on the old value.
 		if ($live['unjudged'] !== []) {
@@ -184,27 +192,51 @@ class ShareSyncGuards {
 	}//end assertGroupWrite()
 
 	/**
-	 * Refuse a sync by the owner, a delegate or a team-folder writer that
-	 * names a copy whose row the pending quarantine scan cannot judge, as
-	 * share-save refuses it: the copy is neither written nor left behind on
-	 * the old value. A copy whose row the scan quarantines is skipped by the
-	 * write, as any copy that is not the row's.
+	 * The share rows of a source, judged once for a whole sync: the check
+	 * before the transaction and the writes inside it read the same verdicts.
 	 *
 	 * @param Secret $source The source secret being synced
-	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 *
-	 * @return void
-	 *
-	 * @throws ShareScanPendingException When a named copy's row cannot be judged
+	 * @return JudgedShareRows
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	public function assertNamedCopiesJudged(Secret $source, array $updates): void {
-		$named = array_map(static fn (array $update): string => (string)($update['secretId'] ?? ''), $updates);
-		if (array_intersect($named, $this->liveCopies(source: $source, leaveOut: null)['unjudged']) !== []) {
+	public function judgedRowsOf(Secret $source): JudgedShareRows {
+		return $this->rowJudge->rowsOfSource(sourceId: $source->getId());
+	}//end judgedRowsOf()
+
+	/**
+	 * Refuse a sync that would reach a copy whose row the pending quarantine
+	 * scan cannot judge, as share-save refuses it: the copy is neither
+	 * written nor left behind on the old value. A group member writes every
+	 * live copy, so any such copy refuses; the owner, a delegate or a
+	 * team-folder writer writes the copies they name, so a named one does.
+	 * Run before the sync's transaction, so a quarantine the judging makes is
+	 * kept when the sync is refused. A copy whose row the scan quarantines is
+	 * skipped by the write, as any copy that is not the row's.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 * @param string|null $writesOn How the caller writes (ShareSyncService::GROUP_WRITE for a group member)
+	 * @param JudgedShareRows $judged The source's rows, judged once for the sync
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When a copy the sync reaches has a row the scan cannot judge
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	public function assertCopiesJudged(Secret $source, array $updates, ?string $writesOn, JudgedShareRows $judged): void {
+		$unjudged = $this->liveCopies(source: $source, leaveOut: null, judged: $judged)['unjudged'];
+		if ($writesOn !== ShareSyncService::GROUP_WRITE) {
+			$named = array_map(static fn (array $update): string => (string)($update['secretId'] ?? ''), $updates);
+			$unjudged = array_intersect($named, $unjudged);
+		}
+
+		if ($unjudged !== []) {
 			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be saved yet');
 		}
-	}//end assertNamedCopiesJudged()
+	}//end assertCopiesJudged()
 
 	/**
 	 * The copies of a source a save for every copy writes, keyed by id: every
@@ -217,17 +249,18 @@ class ShareSyncGuards {
 	 *
 	 * @param Secret $source The source
 	 * @param string|null $leaveOut A copy left out of both lists, as share-save leaves out the caller's own row
+	 * @param JudgedShareRows|null $judged The source's rows already judged for this request, or null to read them
 	 *
 	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,unjudged:list<string>}
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	public function liveCopies(Secret $source, ?string $leaveOut): array {
+	public function liveCopies(Secret $source, ?string $leaveOut, ?JudgedShareRows $judged = null): array {
 		$copies = [];
 		$ignored = [];
 		$unjudged = [];
-		$judged = $this->rowJudge->rowsOfSource(sourceId: $source->getId());
+		$judged ??= $this->rowJudge->rowsOfSource(sourceId: $source->getId());
 		$targets = $judged->all();
 		$rows = $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
 		$now = time();
