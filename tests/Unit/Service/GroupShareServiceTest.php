@@ -189,7 +189,8 @@ class GroupShareServiceTest extends TestCase {
 			shareManager: $this->shareManager,
 			revocationService: $this->revocationService
 		,
-			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper)
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
+			quarantineScan: $this->clearedQuarantineScan()
 		);
 	}//end setUp()
 
@@ -564,6 +565,7 @@ class GroupShareServiceTest extends TestCase {
 				groupManager: $this->groupManager,
 			),
 			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);

@@ -70,8 +70,8 @@ class ShareService {
 	 * @param DirectShareRegistrar $directRegistrar The bulk direct-share registrar
 	 * @param ShareSyncService $syncService The multi-recipient sync service
 	 * @param ShareRevocationService $revocationService The revocation + cascade service
+	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param IDBConnection|null $db Makes a restriction change all-or-nothing
 	 *
 	 * @return void
@@ -82,8 +82,8 @@ class ShareService {
 		private DirectShareRegistrar $directRegistrar,
 		private ShareSyncService $syncService,
 		private ShareRevocationService $revocationService,
+		private ShareQuarantineScanner $quarantineScan,
 		private ?ShareRestrictionResolver $restrictions = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 		private ?IDBConnection $db = null,
 	) {
 	}//end __construct()
@@ -159,7 +159,7 @@ class ShareService {
 		// As a revoke is refused (GHSA-m5p9-6pw7-pf3g): the row would take the
 		// new restriction while its copy kept the old one. Judged before the
 		// transaction, so a quarantine this makes is not rolled back.
-		$this->quarantineScan?->assertNotHeldBack(row: $entity, verb: 'changed');
+		$this->quarantineScan->assertNotHeldBack(row: $entity, verb: 'changed');
 
 		$this->db?->beginTransaction();
 		try {

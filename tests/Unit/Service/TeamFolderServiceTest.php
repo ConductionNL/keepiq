@@ -215,6 +215,7 @@ class TeamFolderServiceTest extends TestCase {
 			audit: new TeamFolderAuditor(eventDispatcher: null),
 			notificationService: $this->notificationService,
 			db: $this->db,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: $this->scanner),
 		);
 	}//end setUp()
 

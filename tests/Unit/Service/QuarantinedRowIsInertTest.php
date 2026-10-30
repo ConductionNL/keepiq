@@ -381,6 +381,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->authorization(),
 			quarantined: new QuarantinedShareTargetMapper(db: $this->db),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		if ($quarantined === false) {
@@ -421,6 +422,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			db: $this->db,
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->authorization(),
+			quarantineScan: $this->clearedQuarantineScan(),
 		))->deleteAllForSecret(sourceSecretId: $this->sourceA->getId());
 
 		if ($quarantined === false) {

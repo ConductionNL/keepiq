@@ -65,8 +65,8 @@ class ShareRestrictionResolver {
 	 * @param GroupShareMapper       $groupShareMapper  The group-share mapper
 	 * @param TeamFolderQueryService $teamFolders       The team-folder read side (covering memberships)
 	 * @param IGroupManager          $groupManager      The Nextcloud group manager
+	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param LoggerInterface|null   $logger            The logger (skipped cross-user copies)
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareGrantReader|null  $grants            The grant reader (one built on the mappers above when null)
 	 *
 	 * @return void
@@ -79,8 +79,8 @@ class ShareRestrictionResolver {
 		GroupShareMapper $groupShareMapper,
 		TeamFolderQueryService $teamFolders,
 		IGroupManager $groupManager,
+		private ShareQuarantineScanner $quarantineScan,
 		private ?LoggerInterface $logger = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 		?ShareGrantReader $grants = null,
 	) {
 		$this->grants = ($grants ?? new ShareGrantReader(
@@ -122,14 +122,14 @@ class ShareRestrictionResolver {
 		// The copy of a row the pending quarantine scan holds back is left
 		// untouched too. One it cannot judge is resolved again once the scan
 		// completes, so a skipped change of its restriction is not lost.
-		$held = $this->quarantineScan?->heldBack(row: $target);
+		$held = $this->quarantineScan->heldBack(row: $target);
 		if ($held !== null) {
 			$this->logger?->warning(
 				'Skipped a restriction resolve for a copy the pending quarantine scan holds back',
 				['app' => 'keepiq', 'shareId' => $target->getId(), 'secretId' => $target->getSecretId()]
 			);
 			if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
-				$this->quarantineScan?->holdBackResolve();
+				$this->quarantineScan->holdBackResolve();
 			}
 
 			return false;
@@ -178,7 +178,7 @@ class ShareRestrictionResolver {
 		$written = 0;
 		foreach ($targets as $target) {
 			$copy = $this->heldCopy(target: $target);
-			if ($copy === null || $this->quarantineScan?->refuseUnjudged(row: $target, refusal: $refusal) === true) {
+			if ($copy === null || $this->quarantineScan->refuseUnjudged(row: $target, refusal: $refusal) === true) {
 				continue;
 			}
 

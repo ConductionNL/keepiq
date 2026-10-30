@@ -80,10 +80,10 @@ class GroupShareService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IShareManager $shareManager Nextcloud's share settings (group sharing on, own groups only)
 	 * @param ShareRevocationService $revocationService Revokes one member's share and deletes its copy
+	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 * @param ShareAuthorizationService|null $auth Whether a new member's existing copy now saves for everyone
 	 * @param ShareWriteContext|null $contexts Whether a new member already saves for everyone other than through a group share
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy, when no authorization service is wired
 	 * @param IDBConnection|null $db Makes a restriction change and a revoke all-or-nothing
 	 *
@@ -102,10 +102,10 @@ class GroupShareService {
 		private LoggerInterface $logger,
 		private IShareManager $shareManager,
 		private ShareRevocationService $revocationService,
+		private ShareQuarantineScanner $quarantineScan,
 		private ?ShareRestrictionResolver $restrictions = null,
 		private ?ShareAuthorizationService $auth = null,
 		private ?ShareWriteContext $contexts = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 		private ?ShareGrantReader $grants = null,
 		private ?IDBConnection $db = null,
 	) {
@@ -279,7 +279,7 @@ class GroupShareService {
 		// below and keeps its copy.
 		$live = [];
 		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShareId) as $target) {
-			if ($this->quarantineScan?->refuseUnjudged(
+			if ($this->quarantineScan->refuseUnjudged(
 				row: $target,
 				refusal: 'A share of this group waits for the share quarantine scan, so the group share cannot be revoked yet'
 			) !== true
@@ -483,7 +483,7 @@ class GroupShareService {
 			return true;
 		}
 
-		$held = $this->quarantineScan?->heldBack(row: $row);
+		$held = $this->quarantineScan->heldBack(row: $row);
 		if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
 			$this->logger->warning('Kept the departing member\'s share row and copy the pending quarantine scan quarantined', $context);
 			return false;
@@ -596,7 +596,7 @@ class GroupShareService {
 		// Judged before the transaction, so a quarantine this makes is not
 		// rolled back with a refused change.
 		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShare->getId()) as $row) {
-			$this->quarantineScan?->refuseUnjudged(row: $row, refusal: $refusal);
+			$this->quarantineScan->refuseUnjudged(row: $row, refusal: $refusal);
 		}
 
 		$this->db?->beginTransaction();

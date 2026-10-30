@@ -860,6 +860,7 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			auth: $auth,
 			contexts: $contexts,
 			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}
 

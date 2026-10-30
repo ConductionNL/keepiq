@@ -116,7 +116,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			'findById' => [1, 'restriction change of one row: ShareQuarantineScanner::assertNotHeldBack() judges it first'],
 		],
 		'Service/AccountShareCleanupService.php' => [
-			'findBySourceSecret' => [1, 'account deletion: ShareQuarantineScanner::mayTouchCopy() judges each row before its copy is touched'],
+			'findBySourceSecret' => [1, 'account deletion: each row is judged (isHeldByTarget, heldBack) before its copy is touched'],
 		],
 		'Service/ShareRevocationService.php' => [
 			'findBySourceSecret' => [2, 'revoke-all and cascade: each row is judged (refuseUnjudged/heldBack) before its copy is deleted'],

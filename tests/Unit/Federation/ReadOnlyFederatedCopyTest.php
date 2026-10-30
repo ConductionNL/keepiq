@@ -152,6 +152,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			groupShareMapper: $groupShares,
 			teamFolders: $teamFolders,
 			groupManager: $this->createMock(IGroupManager::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 		$notifications = $this->createMock(NotificationService::class);
 		$db = $this->createMock(IDBConnection::class);
@@ -183,8 +184,10 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 				db: $db,
 				logger: $this->createMock(LoggerInterface::class),
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
 			restrictions: $resolver,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return new ShareController($this->createMock(IRequest::class), $service, $this->session());
@@ -264,6 +267,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
 			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$response = (new GroupShareController($this->createMock(IRequest::class), $service, $this->session()))

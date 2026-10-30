@@ -134,6 +134,7 @@ class UseOnlyShareRefusalTest extends TestCase {
 			groupShareMapper: $groupShares,
 			teamFolders: $teamFolders,
 			groupManager: $this->createMock(IGroupManager::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 		$notifications = $this->createMock(NotificationService::class);
 		$db = $this->createMock(IDBConnection::class);
@@ -165,8 +166,10 @@ class UseOnlyShareRefusalTest extends TestCase {
 				db: $db,
 				logger: $this->createMock(LoggerInterface::class),
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
 			restrictions: $resolver,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return new ShareController($this->createMock(IRequest::class), $service, $this->session($uid));

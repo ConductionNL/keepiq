@@ -69,6 +69,15 @@ trait ShareRowJudgeFixture {
 	}//end shareRowJudge()
 
 	/**
+	 * A pending quarantine scan that holds no row back, as once it has completed.
+	 *
+	 * @return ShareQuarantineScanner
+	 */
+	protected function clearedQuarantineScan(): ShareQuarantineScanner {
+		return $this->createMock(ShareQuarantineScanner::class);
+	}//end clearedQuarantineScan()
+
+	/**
 	 * A judge under which every user holds a trusted copy of every source,
 	 * for tests about what happens after that check: the row of (S, U) names
 	 * the copy `copy-of-U`, which U holds.

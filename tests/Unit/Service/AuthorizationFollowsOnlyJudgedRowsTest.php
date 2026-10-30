@@ -57,6 +57,7 @@ use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
@@ -67,6 +68,8 @@ use ReflectionMethod;
  * copy of it.
  */
 class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 
 	/**
 	 * The secrets by id.
@@ -388,6 +391,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
 			rowJudge: $this->judge(verdict: $verdict),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}//end groupShares()
 

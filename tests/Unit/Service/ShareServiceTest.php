@@ -198,7 +198,9 @@ class ShareServiceTest extends TestCase {
 				db: $this->db,
 				logger: $logger,
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}//end wireService()
 
@@ -1191,6 +1193,7 @@ class ShareServiceTest extends TestCase {
 			directRegistrar: $this->createMock(DirectShareRegistrar::class),
 			syncService: $this->createMock(ShareSyncService::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}//end delegateScenario()
 

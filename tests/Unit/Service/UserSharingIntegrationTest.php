@@ -188,7 +188,9 @@ class UserSharingIntegrationTest extends TestCase {
 				db: $db,
 				logger: $logger,
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return [$service, $shareTargetMapper, $secretMapper, $suiteMapper, $delegationMapper, $notificationService, $db];

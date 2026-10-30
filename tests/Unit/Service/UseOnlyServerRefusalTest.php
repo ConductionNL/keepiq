@@ -189,6 +189,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
 			rowJudge: $this->shareRowJudge(targets: $shareTargets, secrets: $this->secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);

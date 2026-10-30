@@ -182,6 +182,7 @@ class ShareQuarantineCommandTest extends TestCase {
 			directRegistrar: $this->createMock(DirectShareRegistrar::class),
 			syncService: $this->createMock(ShareSyncService::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return array_map(

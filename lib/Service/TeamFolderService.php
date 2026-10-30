@@ -79,8 +79,8 @@ class TeamFolderService {
 	 * @param TeamFolderAuditor $audit The team-folder auditor
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param ShareRowJudge $rowJudge Judged share rows (the caller's copies, the copies to recompute)
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
-	 * @param ShareRowJudge|null $rowJudge Judged share rows (the caller's copies, the copies to recompute)
 	 *
 	 * @return void
 	 *
@@ -99,8 +99,8 @@ class TeamFolderService {
 		private TeamFolderAuditor $audit,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private ShareRowJudge $rowJudge,
 		private ?ShareRestrictionResolver $restrictions = null,
-		private ?ShareRowJudge $rowJudge = null,
 	) {
 	}//end __construct()
 
@@ -819,10 +819,8 @@ class TeamFolderService {
 	private function withCallerCopies(array $refs, TeamFolder $teamFolder, string $userId): array {
 		$isOwner = ($teamFolder->getOwnerId() === $userId);
 		foreach ($refs as $index => $ref) {
-			$copyId = null;
-			if ($isOwner === true) {
-				$copyId = $ref['id'];
-			} elseif ($this->rowJudge !== null) {
+			$copyId = $ref['id'];
+			if ($isOwner === false) {
 				$copyId = $this->rowJudge->forPair(sourceId: $ref['id'], targetUserId: $userId)->trustedRow()?->getSecretId();
 			}
 
@@ -920,7 +918,7 @@ class TeamFolderService {
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	private function resolveCopiesOf(TeamFolderMember $membership): void {
-		if ($this->restrictions === null || $this->rowJudge === null) {
+		if ($this->restrictions === null) {
 			return;
 		}
 
