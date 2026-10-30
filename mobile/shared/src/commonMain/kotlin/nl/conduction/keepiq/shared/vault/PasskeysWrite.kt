@@ -3,11 +3,23 @@
 
 package nl.conduction.keepiq.shared.vault
 
+import kotlinx.coroutines.CancellationException
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.api.KeepiqApiException
 
 /** The login was not there when it was read fresh. */
 class LoginGoneException : IllegalStateException("The login is gone")
+
+/**
+ * The fresh read of a login never reached the server: a transport failure,
+ * or a [KeepiqApiException] with status 0, before any answer. Status 0, as
+ * WriteProblem reads it, so a write still shows as offline.
+ */
+class ServerUnreachableException(cause: Throwable) : KeepiqApiException(0, "Cannot reach the server") {
+    init {
+        initCause(cause)
+    }
+}
 
 /**
  * The read-modify-write of a login's `passkeys` (mobile-login-totp-passkeys
@@ -29,12 +41,24 @@ object PasskeysWrite {
     /**
      * Reads login [id] fresh and writes what [change] makes of its
      * decrypted `passkeys` (`""` for none). Throws [LoginGoneException] when
-     * the login is not there.
+     * the login is not there, and [ServerUnreachableException] only when the
+     * fresh read got no answer at all.
      */
     suspend fun <T> rewrite(api: KeepiqApi, keys: VaultKeys, id: String, change: (fresh: VaultRow, stored: String) -> Change<T>): T {
         var attempt = 0
         while (true) {
-            val fresh = api.getSecret(id)?.let { VaultRow.from(it) } ?: throw LoginGoneException()
+            val row = try {
+                api.getSecret(id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: KeepiqApiException) {
+                if (e.status == 0) throw ServerUnreachableException(e)
+                throw e
+            } catch (e: Exception) {
+                // KeepiqApi turns every answer into JSON or a KeepiqApiException: anything else is the transport.
+                throw ServerUnreachableException(e)
+            }
+            val fresh = row?.let { VaultRow.from(it) } ?: throw LoginGoneException()
             val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
             val next = change(fresh, stored)
             val passkeys = next.passkeys ?: return next.result

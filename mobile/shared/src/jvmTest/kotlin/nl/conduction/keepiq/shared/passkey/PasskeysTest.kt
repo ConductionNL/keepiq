@@ -39,6 +39,7 @@ import nl.conduction.keepiq.shared.vectors.str
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -223,7 +224,7 @@ class PasskeysTest {
         val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record, counted)))
         val (zero, four) = Passkeys.candidates(index, "login.example.nl", keys)
         assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
-        assertFailsWith<java.io.IOException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertFailsWith<nl.conduction.keepiq.shared.vault.ServerUnreachableException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
         assertTrue(bodies.isEmpty())
     }
 
@@ -577,5 +578,16 @@ class PasskeysTest {
         val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
         assertEquals(403, e.status)
         assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
+    }
+
+    @Test
+    fun aFreshValueThatCannotBeDecryptedFailsTheSignInAtCounterZero() = runTest {
+        val (record, _) = made("login.example.nl", 0)
+        // The server answered; its `passkeys` is not ciphertext this phone can open.
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"not ciphertext","updatedAt":"$UPDATED_AT"}"""
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val e = assertFails { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertFalse(e is nl.conduction.keepiq.shared.vault.ServerUnreachableException)
+        assertEquals(listOf("GET" to "/api/v1/secrets/l1"), requests)
     }
 }

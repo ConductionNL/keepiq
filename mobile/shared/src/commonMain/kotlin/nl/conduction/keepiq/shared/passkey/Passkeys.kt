@@ -7,7 +7,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.api.KeepiqApi
-import nl.conduction.keepiq.shared.api.KeepiqApiException
 import nl.conduction.keepiq.shared.autofill.AppLink
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
@@ -21,6 +20,7 @@ import nl.conduction.keepiq.shared.vault.ItemParts
 import nl.conduction.keepiq.shared.vault.LoginGoneException
 import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.PasskeysWrite
+import nl.conduction.keepiq.shared.vault.ServerUnreachableException
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import nl.conduction.keepiq.shared.vault.VaultRow
 
@@ -101,9 +101,11 @@ object Passkeys {
      * and a passkey deleted elsewhere refuses with [PasskeyGoneException],
      * whatever its counter. The counter goes back with the row's `updatedAt`
      * as `baseUpdatedAt`; when the login changed in between, it is read and
-     * signed once more (PasskeysWrite). When the server cannot be reached, a
-     * passkey whose counter is zero signs from the index as before, since it
-     * writes nothing back; one with a counter fails, as its write-back would.
+     * signed once more (PasskeysWrite). One exception to reading fresh: when
+     * the fresh read gets no answer at all ([ServerUnreachableException]), a
+     * passkey whose counter is zero signs from the index, since it writes
+     * nothing back; one with a counter fails, as its write-back would. Any
+     * other failure, such as a value that cannot be decrypted, fails.
      */
     private suspend fun signOnLogin(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
         var fetched = false
@@ -121,10 +123,9 @@ object Passkeys {
             throw e
         } catch (e: LoginGoneException) {
             throw PasskeyGoneException()
-        } catch (e: Exception) {
-            // A KeepiqApiException with a status is the server's answer; anything else never reached it.
-            val unreachable = e !is KeepiqApiException || e.status == 0
-            if (!fetched && unreachable && choice.credential.counter == 0L) WebAuthn.getAssertion(clientData, rpId, choice.credential) else throw e
+        } catch (e: ServerUnreachableException) {
+            // Only a fresh read that got no answer at all; a decrypt or parse failure after an answer fails the sign-in.
+            if (!fetched && choice.credential.counter == 0L) WebAuthn.getAssertion(clientData, rpId, choice.credential) else throw e
         }
     }
 
