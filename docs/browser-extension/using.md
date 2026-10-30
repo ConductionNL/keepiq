@@ -16,7 +16,7 @@ It is not in the Chrome Web Store or on Firefox Add-ons yet. Until it is, you bu
    - **Chrome:** open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the `.output/chrome-mv3` folder.
    - **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on…** and pick `.output/firefox-mv2/manifest.json`. Firefox removes a temporary add-on when it restarts.
 
-Pin the Keepiq icon to the toolbar so it is one click away.
+Pin the Keepiq icon to the toolbar so it is one click away. The icon shows your active account at a glance: grey when it is logged out, with a lock when it is locked, and in colour when it is unlocked. While unlocked, a number on the icon says how many of your logins match the page you are on; hover the icon to read the state in words.
 
 ## Adding an account
 
@@ -246,7 +246,7 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Default item type in this extension:** the type **New** starts with, **Login** by default.
 - **Appearance:**
   - **Theme:** **System default** follows your browser's light or dark setting; **Light** or **Dark** picks one.
-  - **Compact mode** tightens the spacing. Turning off **Show animations** stops transitions, and turning off **Show quick copy actions on vault** hides the copy buttons on the vault list.
+  - **Compact mode** tightens the spacing. Turning off **Show animations** stops transitions, and turning off **Show quick copy actions on vault** hides the copy buttons on the vault list. Turning off **Show number of login autofill suggestions on extension icon** removes the number from the toolbar icon; the icon still shows whether you are locked.
   - **Language** shows your browser's language, see [Language](#language).
 - **About:** the extension's version, your server and its Keepiq version, and links to help, bug reports, support, the privacy policy and the Keepiq web app.
 

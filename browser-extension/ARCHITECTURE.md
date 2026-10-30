@@ -6,7 +6,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 
 | Entrypoint | Runs as | Job |
 | --- | --- | --- |
-| `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer. Routes messages, alarms, idle and popup ports. |
+| `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer, and the toolbar icon. Routes messages, alarms, idle and popup ports. |
 | `entrypoints/popup/` | Toolbar popup, or a pop-out window (`?popout=1&tabId=`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
 | `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one credential a fill sends, hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
 | `entrypoints/inline-list/` | Extension page in an iframe under a login field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
@@ -80,6 +80,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `api.ts`: the send routes.
   - `handlers.ts`: the `send.*` requests.
 - `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2; `openPopupOrPopout()` falls back to a pop-out window.
+- `src/toolbar-icon.ts`: the only code that sets the toolbar icon, badge and tooltip. The icon follows the active account's state; the badge counts `candidatesFor()` for each window's active tab while unlocked (`openspec/changes/ext-toolbar-icon/`).
 - `entrypoints/popup/`, settings:
   - `views/settings/`: one view per Settings section; `timeout.ts` holds the timeout options and durations, `domains.ts` the excluded-domain rules.
   - `hooks/useSettings.ts`: `SettingsProvider` in `<App />` reads the global settings once and applies and mirrors the theme and appearance on every screen.
@@ -120,7 +121,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `accounts` | local | Account records, app passwords included |
 | `activeAccountId` | local | The active account; heals itself when it points nowhere |
 | `settings.<id>` | local | Every account-scoped setting: vault timeout and action, clipboard delay, autofill and notification entries, excluded domains, default item type; kept through a logout |
-| `settings.global` | local | Theme, compact mode, animations and quick copy; survives logout |
+| `settings.global` | local | Theme, compact mode, animations, quick copy and the badge counter; survives logout |
 | `accountPolicy.<id>` | local | The organisation's idle maximum and export switch, from the last successful read; kept through a logout |
 | `keepiq.theme` | popup `localStorage` | A mirror of the theme for the first frame, never read by the background |
 | `keepiq.appearance` | popup `localStorage` | A mirror of compact mode and animations for the first frame, never read by the background |
@@ -151,6 +152,7 @@ Background memory only, lost on an MV3 worker restart:
 - **Captures** (`capture-queue.ts`): one pending save or update per tab, password included, for 5 minutes; dropped on tab close, leaving the site, lock, logout and account switch.
 - **Tab items** (`tab-items.ts`): the item each tab last filled or captured; forgotten on tab close, lock and account switch.
 - **Frame registry** (`frames.ts`): each tab's frame ids and URLs from `page_ready`; forgotten when the tab loads or closes.
+- **Badge counts** (`toolbar-icon.ts`): never stored, recomputed from the snapshot for each window's active tab; other tabs show none until activated.
 
 ## Flows
 
@@ -215,6 +217,7 @@ The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-0
 
 - **Lock** clears the key.
 - **Log out** marks the account first, then purges. A sync or unlock that is still running sees the mark and undoes its own writes.
+- Both end in the `vault.locked` broadcast, on which the toolbar empties the badge on every tab.
 - **Account-list changes** queue through `mutateAccounts`, so none of them works on a stale read.
 
 ## Translations

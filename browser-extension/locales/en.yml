@@ -445,6 +445,7 @@ settings:
   compactMode: Compact mode
   showAnimations: Show animations
   quickCopy: Show quick copy actions on vault
+  showBadgeCounter: Show number of login autofill suggestions on extension icon
   language: Language
   languageFollows: Follows your browser
   version: Version {version}
@@ -584,6 +585,14 @@ contextMenu:
   copyPassword: Copy password
   generatePassword: Generate password and copy
   unlock: Unlock vault
+
+# The toolbar icon's tooltip; {name} is the extension's name.
+toolbar:
+  locked: "{name}: Locked"
+  loggedOut: "{name}: Logged out"
+  count:
+    1: "{name}: 1 login for this site"
+    n: "{name}: $1 logins for this site"
 
 # The list of logins beneath a login field in the web page.
 inlineList:

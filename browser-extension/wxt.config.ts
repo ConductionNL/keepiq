@@ -87,8 +87,11 @@ export default defineConfig({
 			...(manifestVersion === 3
 				? { optional_host_permissions: serverOrigins, ...(optionalApis.length > 0 && { optional_permissions: optionalApis }) }
 				: { optional_permissions: [...serverOrigins, ...optionalApis] }),
-			action: {
+			// MV2 gets `browser_action` by name: WXT drops `action` there once the popup has made one.
+			[manifestVersion === 3 ? 'action' : 'browser_action']: {
 				default_title: `Keepiq${nameSuffix}`,
+				// Painted before the background runs, so it must not claim an unlocked vault (src/toolbar-icon.ts).
+				default_icon: { 16: 'icon/toolbar-logged-out/16.png', 32: 'icon/toolbar-logged-out/32.png' },
 			},
 			// Argon2id for send passwords is WebAssembly. Dev builds get this from WXT, production
 			// only from here; WXT turns the object into MV2's string.

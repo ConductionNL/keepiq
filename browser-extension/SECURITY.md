@@ -39,6 +39,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | When each item was last filled (`lastUsed.<id>`), no other history | `storage.local` | Logout, account removal |
 | Inline list session: a random key, the tab, frame and frame URL, the offered item ids; no plaintext | `storage.session`, like the private key | The list closing, the next list in the tab, tab close or navigation, lock, timeout, logout, account switch, browser restart, extension reload |
 | Names and usernames in the inline list | The list page's memory while shown | The list closing |
+| How many logins match each tab, shown on the toolbar badge while unlocked | Never stored; the browser holds the painted badge per tab | Lock, timeout, logout, switching to an account that isn't unlocked, turning the counter off, the tab navigating, browser restart, extension reload |
 | A submitted login waiting for Save or Update, password included | Background memory only, never storage | The answer, 5 minutes, tab close, leaving the site, lock, timeout, logout, account switch, an MV3 worker restart |
 
 - Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. Settings warns about it when you pick it.
@@ -51,6 +52,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - The timeout is enforced on a once-a-minute alarm and again before every popup request. A sleeping service worker can't serve a vault that should already be locked.
 - A timeout can fire up to a minute late, or later while the worker sleeps and the popup stays closed. Nothing can use the vault in that time without going through the check.
 - A browser restart always locks, whatever the setting, except under "Never".
+- A lock or logout empties the toolbar badge on every tab. A locked vault never shows a count, though the snapshot's plaintext URLs could produce one.
 
 ## Server and network
 

@@ -120,7 +120,7 @@ const sendBase = 'https://cloud.example.org/index.php/apps/keepiq/public/send/'
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
-	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, ...options.settings }
+	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, showBadgeCounter: true, ...options.settings }
 	let generatorOptions = options.generator?.options ?? defaultOptions()
 	let history = options.generator?.history ?? []
 	let sends = options.send?.sends ?? []

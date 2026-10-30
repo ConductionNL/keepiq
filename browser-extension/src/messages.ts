@@ -348,6 +348,8 @@ export interface GlobalSettings {
 	showAnimations: boolean
 	/** Copy actions on the vault list's cards; the item detail keeps its own. */
 	quickCopy: boolean
+	/** The login count on the toolbar icon's badge. */
+	showBadgeCounter: boolean
 }
 
 export interface SyncStatus {

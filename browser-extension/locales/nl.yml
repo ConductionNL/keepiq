@@ -444,6 +444,7 @@ settings:
   compactMode: Compacte weergave
   showAnimations: Animaties tonen
   quickCopy: Snelle kopieeracties tonen in de kluis
+  showBadgeCounter: Aantal voorgestelde logins tonen op het extensiepictogram
   language: Taal
   languageFollows: Volgt je browser
   version: Versie {version}
@@ -581,6 +582,13 @@ contextMenu:
   copyPassword: Wachtwoord kopiëren
   generatePassword: Wachtwoord genereren en kopiëren
   unlock: Kluis ontgrendelen
+
+toolbar:
+  locked: "{name}: vergrendeld"
+  loggedOut: "{name}: uitgelogd"
+  count:
+    1: "{name}: 1 login voor deze site"
+    n: "{name}: $1 logins voor deze site"
 
 inlineList:
   frameTitle: Keepiq-logins
