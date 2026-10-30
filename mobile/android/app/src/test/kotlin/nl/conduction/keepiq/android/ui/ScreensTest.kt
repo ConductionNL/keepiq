@@ -50,6 +50,8 @@ import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.TypeField
 import nl.conduction.keepiq.shared.vault.VaultRow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.time.ZoneOffset
@@ -601,8 +603,8 @@ class ScreensTest {
         showEdit("l2")
         compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
         // The form opened the login (its password was decrypted) but not its own `totp`.
-        assert("geheim" in vault.keys.decrypted) { vault.keys.decrypted }
-        assert(seed !in vault.keys.decrypted) { "the edit screen decrypted the saved key" }
+        assertTrue("the form opened the login: ${vault.keys.decrypted}", "geheim" in vault.keys.decrypted)
+        assertFalse("the edit screen decrypted the saved key", seed in vault.keys.decrypted)
     }
 
     @Test
