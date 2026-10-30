@@ -168,6 +168,11 @@ class KeepiqClient(
                     "Ask your administrator to update Keepiq.",
             )
         }
+        if (!response.capabilities.containsAll(REQUIRED_CAPABILITIES)) {
+            throw PairingException(
+                "This server runs a Keepiq version without one-time codes and passkeys on a login. Ask your administrator to update Keepiq.",
+            )
+        }
         return try {
             accounts.add(server, loginName, appPassword, response.serverVersion)
         } catch (e: AccountLimitException) {
@@ -324,6 +329,9 @@ class KeepiqClient(
     companion object {
         /** The pair response's `apiVersion` values this app speaks. */
         val SUPPORTED_API_VERSIONS: Set<Int> = setOf(1)
+
+        /** The pair response's capabilities this app needs: a login's own code and passkeys (mobile-login-totp-passkeys D1). */
+        val REQUIRED_CAPABILITIES: Set<String> = setOf("totp-field", "passkeys-field")
 
         /** What went wrong when pairing (browser-extension/src/background/router.js pairingProblem). */
         fun pairingProblem(status: Int): String = when {

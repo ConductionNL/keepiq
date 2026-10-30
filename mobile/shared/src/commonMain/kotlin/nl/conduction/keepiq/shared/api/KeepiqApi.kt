@@ -260,13 +260,21 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
 }
 
 /** The answer of POST /api/v1/extension/pair. */
-data class PairResponse(val ok: Boolean, val user: String?, val apiVersion: Int?, val serverVersion: String?) {
+data class PairResponse(
+    val ok: Boolean,
+    val user: String?,
+    val apiVersion: Int?,
+    val serverVersion: String?,
+    /** What the server can do (ExtensionController::pair), such as `totp-field`. */
+    val capabilities: List<String> = emptyList(),
+) {
     companion object {
         fun from(obj: JsonObject): PairResponse = PairResponse(
             ok = (obj["ok"] as? JsonPrimitive)?.contentOrNull == "true",
             user = obj.string("user"),
             apiVersion = (obj["apiVersion"] as? JsonPrimitive)?.intOrNull,
             serverVersion = obj.string("serverVersion"),
+            capabilities = (obj["capabilities"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull } ?: emptyList(),
         )
     }
 }

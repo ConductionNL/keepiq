@@ -22,7 +22,9 @@
 			"match",
 			"autofill",
 			"passkey-provider",
-			"totp"
+			"totp",
+			"totp-field",
+			"passkeys-field"
 		]
 	},
 	"suites": [
