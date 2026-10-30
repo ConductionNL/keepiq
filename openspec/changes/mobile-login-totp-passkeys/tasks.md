@@ -27,6 +27,10 @@
 - [x] 4.2 File an issue for scanning a QR code for the Authenticator key in the Android app. Filed as keepiq#1348.
 - [ ] 4.3 File an issue for the iOS screens: a login's code and passkeys on the detail screen, the Authenticator key field, and leaving the Authenticator type out of a new item (the `mobile-vault` requirements of this change are met on Android only).
 
+## 5. Archive order
+
+- [ ] 5.1 Archive only after `clients-mobile-apps` is archived. The five capabilities this change modifies (`mobile-pairing-and-unlock`, `mobile-shared-core`, `mobile-vault`, `mobile-system-autofill`, `mobile-passkey-provider`) exist only in that change until then, so archiving this one first fails on its MODIFIED deltas. Check: `ls openspec/specs | grep '^mobile-'` lists all five before `/opsx-archive mobile-login-totp-passkeys`.
+
 ## Acceptance criteria
 
 - A login holding a code and passkeys shows the live code and each passkey's added date on the phone, and keeps both through sync, offline reading and edits.

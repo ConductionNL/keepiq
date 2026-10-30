@@ -52,3 +52,16 @@ A passkey on a login the user may not change (a use-only or read-only copy) is o
 - **GIVEN** a phone on Android 13
 - **WHEN** the user opens the passkey settings in the app
 - **THEN** the app explains that passkeys need Android 14, while passwords and codes still fill
+
+### Requirement: Same signing rules as the browser extension
+New passkeys MUST be ES256 on P-256 with an all-zero AAGUID, `none` attestation and a 16-byte random credential id. An assertion MUST sign with flags UP and UV and a DER signature. A non-zero counter MUST go up by one and be written back: for a standalone Passkey item to the item's `key`, for a passkey on a login to that credential in the login's `passkeys`, counted from the login as the server holds it. A request for another algorithm MUST return the platform's "not available" result so another provider can answer.
+
+#### Scenario: Counter goes up
+- **GIVEN** a stored passkey with counter 4
+- **WHEN** the user signs in with it
+- **THEN** the assertion carries counter 5 and the passkey stores 5, in the item's `key` for a Passkey item or on that credential of the login's `passkeys`
+
+#### Scenario: Unsupported algorithm
+- **GIVEN** a site that only accepts RS256
+- **WHEN** it asks to create a passkey
+- **THEN** Keepiq declines and the system offers another provider
