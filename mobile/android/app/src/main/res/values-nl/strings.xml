@@ -115,6 +115,10 @@
     <string name="cd_replace_totp_key">Verificatiesleutel vervangen</string>
     <string name="cd_remove_totp_key">Verificatiesleutel weghalen</string>
     <string name="cd_keep_totp_key">Opgeslagen verificatiesleutel houden</string>
+    <string name="edit_totp_extra_saved">Extra verificatiesleutel opgeslagen</string>
+    <string name="edit_totp_extra_removed">De extra sleutel wordt verwijderd als je opslaat.</string>
+    <string name="cd_remove_totp_extra_key">Extra verificatiesleutel weghalen</string>
+    <string name="cd_keep_totp_extra_key">Opgeslagen extra verificatiesleutel houden</string>
     <string name="edit_add_field">Veld toevoegen</string>
     <string name="edit_field_name">Veldnaam</string>
     <string name="edit_field_value">Veldwaarde</string>

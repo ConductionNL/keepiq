@@ -375,7 +375,8 @@ class ScreensTest {
     @Test
     fun anotherTypeWithAKeyOffersRemoveOnly() {
         showKeyField(ItemDraft(kind = FormKind.NOTE, typeId = "2", hasSavedKey = true), removeOnly = true)
-        compose.onNodeWithText("Authenticator key saved").assertExists()
+        compose.onNodeWithText("Extra authenticator key saved").assertExists()
+        compose.onNodeWithContentDescription("Remove extra authenticator key").assertExists()
         compose.onNodeWithText("Replace").assertDoesNotExist()
         compose.onNodeWithText("Remove").performClick()
         compose.onNodeWithText("Keep saved key").performClick()
@@ -451,9 +452,14 @@ class ScreensTest {
     fun anAuthenticatorItemWithItsOwnKeyOffersRemoveOnly() {
         vault.put("t1", FakeVault.row("t1", "Code", "3", key = "JBSWY3DPEHPK3PXP", totp = "GEZDGNBVGY3TQOJQ"))
         showEdit("t1")
-        compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
+        compose.onNodeWithText("Extra authenticator key saved").performScrollTo().assertExists()
         compose.onNodeWithText("Remove").assertExists()
         compose.onNodeWithText("Replace").assertDoesNotExist()
+        // The item's own seed field and the extra key's Remove cannot be taken for the same key.
+        compose.onNodeWithText("Authenticator secret or otpauth link").assertExists()
+        compose.onNodeWithContentDescription("Remove extra authenticator key").assertExists()
+        compose.onNodeWithText("Authenticator key saved").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Remove authenticator key").assertDoesNotExist()
     }
 
     private fun showDetail(id: String, keyboard: Boolean = false) {
@@ -506,7 +512,7 @@ class ScreensTest {
     fun anotherTypeWithASavedKeyOffersRemoveOnlyOnTheEditScreen() {
         vault.put("n1", FakeVault.row("n1", "Notitie", "2", key = "tekst", totp = "JBSWY3DPEHPK3PXP"))
         showEdit("n1")
-        compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
+        compose.onNodeWithText("Extra authenticator key saved").performScrollTo().assertExists()
         compose.onNodeWithText("Remove").assertExists()
         compose.onNodeWithText("Replace").assertDoesNotExist()
         compose.onNodeWithText(keyLabel).assertDoesNotExist()
@@ -516,7 +522,7 @@ class ScreensTest {
     fun anotherTypeWithoutAKeyShowsNoKeyField() {
         vault.put("n2", FakeVault.row("n2", "Notitie", "2", key = "tekst"))
         showEdit("n2")
-        compose.onNodeWithText("Authenticator key saved").assertDoesNotExist()
+        compose.onNodeWithText("Extra authenticator key saved").assertDoesNotExist()
         compose.onNodeWithText(keyLabel).assertDoesNotExist()
     }
 

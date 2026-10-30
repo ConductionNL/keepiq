@@ -90,7 +90,12 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
         } else {
             // Announced when it changes: after Remove, focus lands on Keep and this line says what Remove did.
             Text(
-                stringResource(if (draft.keyEdit == KeyEdit.REMOVE) R.string.edit_totp_removed else R.string.edit_totp_saved),
+                stringResource(
+                    when {
+                        draft.keyEdit == KeyEdit.REMOVE -> if (removeOnly) R.string.edit_totp_extra_removed else R.string.edit_totp_removed
+                        else -> if (removeOnly) R.string.edit_totp_extra_saved else R.string.edit_totp_saved
+                    },
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
@@ -98,8 +103,10 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
         if (draft.hasSavedKey) {
             // Each button names the field it acts on, as Show, Copy and Remove do elsewhere.
             val replaceCd = stringResource(R.string.cd_replace_totp_key)
-            val removeCd = stringResource(R.string.cd_remove_totp_key)
-            val keepCd = stringResource(R.string.cd_keep_totp_key)
+            // Remove only is the field of another type's own `totp`: on an Authenticator item it sits next to
+            // the item's seed, so it is named as an extra key, as the detail screen names its code.
+            val removeCd = stringResource(if (removeOnly) R.string.cd_remove_totp_extra_key else R.string.cd_remove_totp_key)
+            val keepCd = stringResource(if (removeOnly) R.string.cd_keep_totp_extra_key else R.string.cd_keep_totp_key)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (draft.keyEdit == KeyEdit.KEEP) {
                     if (!removeOnly) {
