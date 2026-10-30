@@ -91,7 +91,8 @@ class SystemAutofillTest {
         val appUrl = AppLink(testPackage, setOf(print)).toUrl()
         val lookAlikeUrl = AppLink(testPackage, setOf("00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF")).toUrl()
         val webId = create(api, keys, "login", "Test server", "https://10.0.2.2:8443", "webuser", "web-secret-1")
-        val appId = create(api, keys, "login", "Test app", appUrl, "appuser", "app-secret-1")
+        // The app's login carries its own seed (mobile-login-totp-passkeys D10); "Test code" is a standalone Authenticator item.
+        val appId = create(api, keys, "login", "Test app", appUrl, "appuser", "app-secret-1", totp = seed)
         val lookAlikeId = create(api, keys, "login", "Look-alike", lookAlikeUrl, "wrongcert", "look-alike-1")
         val codeId = create(api, keys, "totp", "Test code", appUrl, "", seed)
 
@@ -124,9 +125,10 @@ class SystemAutofillTest {
         waitFor(By.textContains("user=appuser password=12"))
         E2e.shot("autofill-04-filled-after-unlock")
 
-        // 4.3: the code on the next step.
+        // 4.3: the code on the next step, from the login's own seed and from the Authenticator item.
         device.findObject(By.res(testPackage, "submit")).click()
-        waitFor(By.textStartsWith("Code from Test code")).click()
+        waitFor(By.textStartsWith("Code from Test code"))
+        waitFor(By.textStartsWith("Code from Test app")).click()
         val statusText = waitForStatus { it.substringAfter("code=").length == 6 }
         val code = statusText.substringAfter("code=")
         val now = System.currentTimeMillis()
@@ -215,9 +217,9 @@ class SystemAutofillTest {
         }
     }
 
-    private fun create(api: KeepiqApi, keys: RsaVaultKeys, type: String, name: String, url: String, login: String, secret: String): String = runBlocking {
+    private fun create(api: KeepiqApi, keys: RsaVaultKeys, type: String, name: String, url: String, login: String, secret: String, totp: String? = null): String = runBlocking {
         val typeId = api.listTypes().first { (it["name"] as? JsonPrimitive)?.contentOrNull == type }["id"]!!.let { (it as JsonPrimitive).content }
-        val saved = api.createSecret(ItemCodec.createBody(ItemParts(name, url, null, login, secret, null), typeId, keys))
+        val saved = api.createSecret(ItemCodec.createBody(ItemParts(name, url, null, login, secret, null, totp = totp), typeId, keys))
         (saved!!["id"] as JsonPrimitive).content
     }
 
