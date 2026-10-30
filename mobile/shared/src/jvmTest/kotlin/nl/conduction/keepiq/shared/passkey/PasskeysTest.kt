@@ -599,4 +599,17 @@ class PasskeysTest {
         assertEquals(listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
         assertEquals(listOf(r.record), sentPasskeys())
     }
+
+    @Test
+    fun aUseOnlyLoginsCountedPasskeyIsRefusedAndAnUncountedOneSigns() = runTest {
+        refusePut = true
+        val (counted, _) = made("login.example.nl", 4)
+        val (uncounted, _) = made("login.example.nl", 0)
+        freshLoginWith(counted, uncounted)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", counted, uncounted, useOnly = true)))
+        val (four, zero) = Passkeys.candidates(index, "login.example.nl", keys)
+        val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals(403, e.status)
+        assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
+    }
 }

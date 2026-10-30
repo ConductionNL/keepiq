@@ -23,7 +23,7 @@ A passkey on a login the user may not change (a use-only or read-only copy) is o
 - **AND** a non-zero counter is stored on that passkey of the login, and its other passkeys are unchanged
 
 #### Scenario: A counted passkey on a read-only login
-- **GIVEN** a login shared read-only whose `passkeys` holds a passkey with a counter of 4
+- **GIVEN** a login shared read-only or use-only whose `passkeys` holds a passkey with a counter of 4
 - **WHEN** the user picks that passkey in the passkey sheet and unlocks
 - **THEN** the server refuses the counter write and the sign-in fails
 
