@@ -100,6 +100,14 @@ internal fun PasskeyDeleteDialog(account: String?, onConfirm: () -> Unit, onDism
  * time with an offset such as `+01:00` is read as an offset date-time.
  */
 internal fun passkeyAdded(createdAt: String, locale: Locale, zone: ZoneId): String? = runCatching {
-    val instant = runCatching { Instant.parse(createdAt) }.getOrElse { java.time.OffsetDateTime.parse(createdAt).toInstant() }
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(zone).format(instant)
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(zone).format(createdInstant(createdAt))
 }.getOrNull()
+
+/**
+ * [createdAt] as an instant: [primary] first (Instant.parse, which takes
+ * only `Z` below Android 14), else as an offset date-time. [primary] is a
+ * parameter so a JVM test, whose Instant.parse takes offsets, can reach the
+ * fallback.
+ */
+internal fun createdInstant(createdAt: String, primary: (String) -> Instant = Instant::parse): Instant =
+    runCatching { primary(createdAt) }.getOrElse { java.time.OffsetDateTime.parse(createdAt).toInstant() }

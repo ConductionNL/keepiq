@@ -640,4 +640,12 @@ class ScreensTest {
         compose.onNodeWithText("Move").performScrollTo().performClick()
         compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
     }
+
+    @Test
+    fun anOffsetDateIsReadWhereInstantParseTakesOnlyZ() {
+        // As Instant.parse behaves below Android 14: it refuses an offset, so only the fallback can read it.
+        val zOnly: (String) -> java.time.Instant = { if (it.endsWith("Z")) java.time.Instant.parse(it) else throw java.time.format.DateTimeParseException("offset", it, 0) }
+        assertEquals(java.time.Instant.parse("2026-03-12T09:00:00Z"), createdInstant("2026-03-12T10:00:00+01:00", zOnly))
+        assertEquals(java.time.Instant.parse("2026-03-12T10:00:00Z"), createdInstant("2026-03-12T10:00:00.000Z", zOnly))
+    }
 }
