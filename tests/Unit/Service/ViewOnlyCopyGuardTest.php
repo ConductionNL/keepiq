@@ -115,6 +115,8 @@ class ViewOnlyCopyGuardTest extends TestCase {
 			'a Viewer changes the key' => ['read', 'key'],
 			'a direct recipient changes the login' => [null, 'login'],
 			'a Viewer changes the extra fields' => ['read', 'additionalFields'],
+			'a Viewer changes the TOTP seed' => ['read', 'totp'],
+			'a direct recipient changes the passkeys' => [null, 'passkeys'],
 		];
 	}//end viewOnlyChanges()
 
@@ -310,7 +312,6 @@ class ViewOnlyCopyGuardTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $this->delegations,
-			suiteMapper: $suites,
 			teamFolderService: $this->teamFolders,
 			shareTargetMapper: $this->targets,
 			groupShareMapper: $groupShares,

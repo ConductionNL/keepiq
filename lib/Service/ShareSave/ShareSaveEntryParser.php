@@ -19,24 +19,20 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service\ShareSave;
 
+use OCA\Keepiq\Db\Secret;
+
 /**
  * Parses the four lists of a share-save body and the objects in it:
  *
- * - copies: `{secretId, key?, login?, additionalFields?}`, sparse;
+ * - copies: `{secretId, key?, login?, additionalFields?, totp?, passkeys?}`, sparse;
  * - skipped: `{secretId, reason:'no_vault_key'}`;
- * - federated: `{shareId, certFingerprint, key, login, additionalFields}`, whole value;
+ * - federated: `{shareId, certFingerprint, key, login, additionalFields, totp?, passkeys?}`, whole value,
+ *   where an older client leaves out the fields it does not know;
  * - suspend: `{shareId, reason}`.
  *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 final class ShareSaveEntryParser {
-	/**
-	 * The encrypted value fields.
-	 *
-	 * @var string[]
-	 */
-	public const VALUE_FIELDS = ['key', 'login', 'additionalFields'];
-
 	/**
 	 * The four lists of a body; an absent list is empty.
 	 *
@@ -124,7 +120,7 @@ final class ShareSaveEntryParser {
 	 * @throws ShareSaveRefusal `invalid_body` or `invalid_key`
 	 */
 	private function parseCopy(mixed $entry): array {
-		$copy = $this->entry(entry: $entry, required: ['secretId'], optional: self::VALUE_FIELDS);
+		$copy = $this->entry(entry: $entry, required: ['secretId'], optional: Secret::VALUE_FIELDS);
 		$this->assertId(value: $copy['secretId'], what: 'copies.secretId');
 		$this->assertCiphertextTypes(entry: $copy, what: 'copies');
 		$this->assertKeyNotEmpty(entry: $copy);
@@ -161,7 +157,11 @@ final class ShareSaveEntryParser {
 	 * @throws ShareSaveRefusal `invalid_body`, `invalid_fingerprint` or `invalid_key`
 	 */
 	private function parseFederated(mixed $entry): array {
-		$share = $this->entry(entry: $entry, required: ['shareId', 'certFingerprint', ...self::VALUE_FIELDS], optional: []);
+		$share = $this->entry(
+			entry: $entry,
+			required: ['shareId', 'certFingerprint', ...Secret::LEGACY_VALUE_FIELDS],
+			optional: array_values(array_diff(Secret::VALUE_FIELDS, Secret::LEGACY_VALUE_FIELDS))
+		);
 		$this->assertId(value: $share['shareId'], what: 'federated.shareId');
 		$this->assertCiphertextTypes(entry: $share, what: 'federated');
 		if (is_string($share['certFingerprint']) === false) {
@@ -243,7 +243,7 @@ final class ShareSaveEntryParser {
 	 * @throws ShareSaveRefusal `invalid_body`
 	 */
 	private function assertCiphertextTypes(array $entry, string $what): void {
-		foreach (self::VALUE_FIELDS as $field) {
+		foreach (Secret::VALUE_FIELDS as $field) {
 			if (array_key_exists($field, $entry) === false) {
 				continue;
 			}

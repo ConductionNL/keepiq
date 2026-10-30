@@ -174,6 +174,37 @@ describe('useHealthStore', () => {
 		expect(store.findings.some((f) => f.id === 't')).toBe(false)
 	})
 
+	it("never decrypts a login's totp seed or passkeys, only its key (keepiq#1326)", async () => {
+		const session = useSessionStore()
+		session.cryptoKey = { fake: true }
+		const { rsaDecrypt } = await import('../../src/crypto/index.js')
+		rsaDecrypt.mockClear()
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				items: [
+					{
+						id: 'a',
+						name: 'Bank',
+						key: 'enc:password',
+						totp: 'enc:JBSWY3DPEHPK3PXP',
+						passkeys: 'enc:[{"credentialId":"c1"}]',
+						blocked: false,
+					},
+				],
+			},
+		})
+
+		const rows = await useHealthStore().loadDecryptedRows(session)
+
+		expect(rsaDecrypt.mock.calls.map(([cipher]) => cipher)).toEqual([
+			'enc:password',
+		])
+		expect(rows).toHaveLength(1)
+		expect(rows[0].value).toBe('password')
+		expect(JSON.stringify(rows)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(rows)).not.toContain('credentialId')
+	})
+
 	it('analyses every secret, not only the first page of 100 (keepiq#745)', async () => {
 		const session = useSessionStore()
 		session.cryptoKey = { fake: true }

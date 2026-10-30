@@ -52,6 +52,11 @@ final class AuditEventTypes {
 	public const SHARE_REVOKED = 'share.revoked';
 	public const SHARE_DELEGATED = 'share.delegated';
 	public const SHARE_DELEGATION_RECLAIMED = 'share.delegation_reclaimed';
+	// The scan quarantined a planted share row (GHSA-m5p9-6pw7-pf3g), and an
+	// administrator released or dropped one with occ keepiq:share-quarantine.
+	public const SHARE_QUARANTINED = 'share.quarantined';
+	public const SHARE_QUARANTINE_RELEASED = 'share.quarantine_released';
+	public const SHARE_QUARANTINE_DROPPED = 'share.quarantine_dropped';
 
 	// Link share.
 	public const LINK_SHARE_CREATED = 'link_share.created';
@@ -240,6 +245,8 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_RECIPIENT_DECLINED = 'federated_share.recipient_declined';
 	// The owner's side of a recipient restoring a declined copy from the trash.
 	public const FEDERATED_SHARE_RECIPIENT_RESUMED = 'federated_share.recipient_resumed';
+	// A partner's lookup answer advertised other value fields than recorded (keepiq#1325).
+	public const FEDERATION_PARTNER_VALUE_FIELDS_CHANGED = 'federation_partner.value_fields_changed';
 
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
@@ -254,6 +261,8 @@ final class AuditEventTypes {
 		'password',
 		'value',
 		'additionalFields',
+		'totp',
+		'passkeys',
 		'ciphertext',
 		'payload',
 	];
@@ -285,6 +294,9 @@ final class AuditEventTypes {
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
 		self::SHARE_DELEGATED => ['delegatedTo', 'isPermanent'],
 		self::SHARE_DELEGATION_RECLAIMED => ['delegatedTo'],
+		self::SHARE_QUARANTINED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'copyUseOnly', 'copyAccessEndsAt'],
+		self::SHARE_QUARANTINE_RELEASED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'forced'],
+		self::SHARE_QUARANTINE_DROPPED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'restrictionsCleared'],
 		self::LINK_SHARE_CREATED => ['hasPassword', 'expiresAt'],
 		self::LINK_SHARE_ACCESSED => [],
 		self::LINK_SHARE_ACCESS_FAILED => ['reason'],
@@ -415,6 +427,8 @@ final class AuditEventTypes {
 		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'kept'],
 		self::FEDERATED_SHARE_RECIPIENT_RESUMED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		// Field names only, never a value.
+		self::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED => ['partnerId', 'from', 'to'],
 	];
 
 	/**

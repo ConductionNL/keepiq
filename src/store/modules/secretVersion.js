@@ -23,8 +23,31 @@ import {
 	saveShared,
 	shareSaveErrorText,
 } from '../../services/shareSave.js'
+import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useSecretStore } from './secret.js'
 import { useSessionStore } from './session.js'
+
+/**
+ * Some value fields of the head row in plain, `null` where not set.
+ *
+ * @param {string} secretId The secret.
+ * @param {Array<string>} fields The fields.
+ * @return {Promise<object>}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+ */
+async function headValue(secretId, fields) {
+	const session = useSessionStore()
+	const row = (
+		await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}`))
+	).data
+	const out = {}
+	for (const field of fields) {
+		out[field] = row?.[field]
+			? await rsaDecrypt(row[field], session.cryptoKey)
+			: null
+	}
+	return out
+}
 
 export const useSecretVersionStore = defineStore('secretVersion', {
 	state: () => ({
@@ -97,6 +120,12 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 					version.additionalFields = null
 				}
 			}
+			// As a head read gives them: plain strings, `''` when not set.
+			for (const field of BLOB_FIELDS) {
+				version[field] = version[field]
+					? await rsaDecrypt(version[field], session.cryptoKey)
+					: ''
+			}
 			return version
 		},
 
@@ -105,6 +134,12 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 * holder in one share save, which records the restore. It is based on
 		 * the head after any merge write-back, so that one is not mistaken for
 		 * a concurrent change.
+		 *
+		 * A `totp` or `passkeys` the version holds is restored, and one it
+		 * records as empty (`''`) is cleared on the row and every copy. One it
+		 * does not record at all (`null`, a version saved before the field
+		 * existed) is left out, so the row and every copy keep theirs, and
+		 * partner shares get the head's.
 		 *
 		 * @param {string} versionId The version id.
 		 * @param {string} secretId The owning secret id.
@@ -125,6 +160,18 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				).data
 				const plain = await plainOf(version)
 				const plainDiff = { ...plain, key: plain.key ?? '' }
+				for (const field of BLOB_FIELDS) {
+					if (plain[field]) {
+						continue
+					}
+					if (version[field] === '') {
+						// Saved empty: the login had none then, so the restore
+						// takes it away.
+						plainDiff[field] = ''
+					} else {
+						delete plainDiff[field]
+					}
+				}
 				const result = await saveShared({
 					id: secretId,
 					plainDiff,
@@ -137,9 +184,13 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 						)),
 					},
 					baseUpdatedAt,
-					// The version is the whole value; the server checks the base.
+					// The version is the whole value; `totp` and `passkeys` are
+					// the head's, which the share save keeps where the version
+					// leaves them out and checks a partner can store where the
+					// version gives the login one. The server checks the base.
 					loadFull: async () => ({
 						...plainDiff,
+						...(await headValue(secretId, BLOB_FIELDS)),
 						updatedAt: baseUpdatedAt,
 					}),
 					restoredFrom: versionId,

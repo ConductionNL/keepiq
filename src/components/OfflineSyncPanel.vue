@@ -52,9 +52,11 @@
 					</span>
 					<NcButton
 						v-if="
-							['partner_unreachable', 'partner_lookup_limit'].includes(
-								entry.failure?.code,
-							)
+							[
+								'partner_unreachable',
+								'partner_lookup_limit',
+								'share_scan_pending',
+							].includes(entry.failure?.code)
 						"
 						variant="secondary"
 						:data-testid="`offline-sync-retry-${entry.entryId}`"

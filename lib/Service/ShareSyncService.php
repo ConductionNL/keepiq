@@ -33,6 +33,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -41,13 +42,15 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 
 /**
  * Pushes an updated encrypted blob to every recipient of a secret.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 14 against a threshold of 13:
- * telling a source from a received copy takes both outcomes of the share-row
- * lookup and a refusal of its own.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A sync authorizes, locks, versions, audits and writes every copy in
+ *   one transaction, tells a source from a received copy, and asks the pending share quarantine scan before each copy
+ *   write (GHSA-m5p9-6pw7-pf3g).
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: each is one collaborator of that transaction.
  */
 class ShareSyncService {
 	use TTransactional;
@@ -85,6 +88,8 @@ class ShareSyncService {
 	 * @param ShareSyncGuards $guards The checks a write for every copy passes
 	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param LoggerInterface|null $logger The logger (skipped cross-user copy writes)
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -99,6 +104,8 @@ class ShareSyncService {
 		private ShareSyncGuards $guards,
 		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
+		private ?LoggerInterface $logger = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -113,13 +120,14 @@ class ShareSyncService {
 	 * `updatedAt`, moves that version and writes every recipient copy in a
 	 * single transaction, and clears `possiblyCompromisedAt` from any copy
 	 * where it was set. A sync by anyone but the owner is audited on the
-	 * source in that transaction. A member of a group the secret is shared
-	 * with gets share-save's guards (ShareSyncGuards).
+	 * source in that transaction. No row may be named twice. A member of a
+	 * group the secret is shared with gets share-save's guards (ShareSyncGuards).
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs; each row has
 	 *                                                      secretId, key, login,
-	 *                                                      additionalFields, updatedAtCheck
+	 *                                                      additionalFields, totp, passkeys,
+	 *                                                      updatedAtCheck
 	 * @param string $expectedUpdatedAt The owner-side expected ISO timestamp for optimistic locking
 	 * @param string $userId The requesting user
 	 *
@@ -145,6 +153,8 @@ class ShareSyncService {
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
+		$this->guards->assertNoDuplicates(updates: $updates);
+		$updates = $this->guards->mirroredValueFields(source: $source, updates: $updates);
 
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
@@ -362,6 +372,7 @@ class ShareSyncService {
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
 	 * @param DateTime $savedAt The version every written row gets
 	 * @param string $writerId The caller
+	 * @param string[] $restored The fields a restore writes back from a version, which replace no exposed value
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
@@ -375,7 +386,15 @@ class ShareSyncService {
 		array $allowedIds,
 		DateTime $savedAt,
 		string $writerId,
+		array $restored = [],
 	): int {
+		// Defence in depth: the share row that owns each recipient copy, so a
+		// copy whose row does not genuinely belong to its target (a poisoned or
+		// drifted `secret_id`) is skipped rather than overwritten, and so is the
+		// copy of a row the pending quarantine scan holds back. The source row
+		// itself carries no share row and is always writable.
+		$shareRows = $this->shareRowsByCopy(source: $source);
+
 		$updated = 0;
 		foreach ($updates as $update) {
 			$recipientSecretId = (string)($update['secretId'] ?? '');
@@ -389,23 +408,61 @@ class ShareSyncService {
 				continue;
 			}
 
-			$preUpdate = clone $copy;
-			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt);
-			$this->keepVersion(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
-
-			// A key rewrite of the SOURCE row is a real rotation —
-			// advance keyUpdatedAt so rotation proofs stay honest
-			// (folder-permission-grades §2.3).
-			if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
-				$copy->setKeyUpdatedAt(clone $savedAt);
+			if ($recipientSecretId !== $source->getId()
+				&& $this->mayWriteCopy(source: $source, copy: $copy, shareRow: ($shareRows[$recipientSecretId] ?? null)) === false
+			) {
+				continue;
 			}
 
+			$preUpdate = clone $copy;
+			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt, restored: $restored);
+			$this->keepVersion(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
 			$this->secretMapper->update($copy);
 			++$updated;
 		}//end foreach
 
 		return $updated;
 	}//end writeCopyBlobs()
+
+	/**
+	 * The live share rows of a source, keyed by the copy each names.
+	 *
+	 * @param Secret $source The source secret being synced
+	 *
+	 * @return array<string,ShareTarget>
+	 */
+	private function shareRowsByCopy(Secret $source): array {
+		$shareRows = [];
+		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+			$shareRows[$shareRow->getSecretId()] = $shareRow;
+		}
+
+		return $shareRows;
+	}//end shareRowsByCopy()
+
+	/**
+	 * Whether a sync may write a recipient copy: its share row's target holds
+	 * it, and the pending quarantine scan does not hold the row back.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param Secret $copy The recipient copy
+	 * @param ShareTarget|null $shareRow The share row naming the copy, or null when none does
+	 *
+	 * @return bool
+	 */
+	private function mayWriteCopy(Secret $source, Secret $copy, ?ShareTarget $shareRow): bool {
+		if ($shareRow !== null
+			&& ($this->quarantineScan?->mayTouchCopy(row: $shareRow, copy: $copy) ?? $shareRow->isHeldByTarget(copy: $copy)) === true
+		) {
+			return true;
+		}
+
+		$this->logger?->warning(
+			'Skipped a sync write to a copy its share target does not hold, or the pending quarantine scan holds back',
+			['app' => 'keepiq', 'secretId' => $copy->getId(), 'sourceSecretId' => $source->getId()]
+		);
+		return false;
+	}//end mayWriteCopy()
 
 	/**
 	 * Keep a written row's state before the write as a version, with the
@@ -439,39 +496,69 @@ class ShareSyncService {
 	 * @param Secret $copy The recipient copy to mutate
 	 * @param array<string,string|null> $update The blob row for this recipient
 	 * @param DateTime $savedAt The copy's new version
+	 * @param string[] $restored The fields a restore writes back from a version
 	 *
 	 * @return void
 	 */
-	private function applyRecipientBlob(Secret $copy, array $update, DateTime $savedAt): void {
-		if (isset($update['key']) === true) {
+	private function applyRecipientBlob(Secret $copy, array $update, DateTime $savedAt, array $restored): void {
+		$before = clone $copy;
+		// A new key is a real rotation, on the source row and on a copy alike:
+		// keyUpdatedAt moves so rotation proofs and the compromise rule see it
+		// (folder-permission-grades §2.3).
+		if (isset($update['key']) === true && (string)$update['key'] !== $copy->getKey()) {
 			$copy->setKey((string)$update['key']);
+			$copy->setKeyUpdatedAt(clone $savedAt);
 		}
 
+		// An absent field stays as it is; a null one is cleared.
 		if (array_key_exists('login', $update) === true) {
-			$login = null;
-			if ($update['login'] !== null) {
-				$login = (string)$update['login'];
-			}
-
-			$copy->setLogin($login);
+			$copy->setLogin($this->nullableBlob(value: $update['login']));
 		}
 
 		if (array_key_exists('additionalFields', $update) === true) {
-			$additionalFields = null;
-			if ($update['additionalFields'] !== null) {
-				$additionalFields = (string)$update['additionalFields'];
-			}
-
-			$copy->setAdditionalFields($additionalFields);
+			$copy->setAdditionalFields($this->nullableBlob(value: $update['additionalFields']));
 		}
 
+		// For these two `''` means "not set" and is stored as null, as on the head.
+		$blobs = new FederatedValueFields();
+		if (array_key_exists('totp', $update) === true) {
+			$copy->setTotp($blobs->blob(value: $update['totp']));
+		}
+
+		if (array_key_exists('passkeys', $update) === true) {
+			$copy->setPasskeys($blobs->blob(value: $update['passkeys']));
+		}
+
+		$credentials = new CredentialFields();
+		$credentials->stamp(
+			after: $copy,
+			before: $before,
+			now: $savedAt,
+			restored: $restored,
+			compromiseFlagOpen: $restored !== [] && $this->versionService->compromiseFlagOpen(secretId: $copy->getId())
+		);
 		$copy->setUpdatedAt(clone $savedAt);
 
-		// If the copy was previously flagged as possibly compromised
-		// (e.g. EncryptionSuite migration mid-air), the freshly
-		// re-encrypted blob clears that warning for the recipient.
-		if ($copy->getPossiblyCompromisedAt() !== null) {
+		// A copy flagged as possibly compromised (e.g. an EncryptionSuite
+		// migration mid-air) is cleared by the same rule as the head: once
+		// none of its key, totp and passkeys is left exposed.
+		if ($credentials->answersCompromiseWarning(after: $copy, before: $before, restored: $restored) === true) {
 			$copy->setPossiblyCompromisedAt(null);
 		}
 	}//end applyRecipientBlob()
+
+	/**
+	 * A blob as a string, or null when it is null.
+	 *
+	 * @param mixed $value The blob
+	 *
+	 * @return string|null
+	 */
+	private function nullableBlob(mixed $value): ?string {
+		if ($value === null) {
+			return null;
+		}
+
+		return (string)$value;
+	}//end nullableBlob()
 }//end class

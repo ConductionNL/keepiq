@@ -43,7 +43,7 @@ The system MUST allow a user to create a link share for a secret they own, or ma
 - AND the password MUST NOT be stored or recoverable server-side
 
 ### Requirement: Who May Create A Link Share
-A public link widens the audience beyond what the owner chose, so only the secret's owner, or a recipient whose share permits re-sharing, MUST be able to create a link share for it (keepiq#214). On development a share permits re-sharing when its recipient is an active delegate of the secret (delegation grants share management rights). A use-only recipient MUST NEVER create a link share. A received copy is owned by its recipient, so `LinkShareService::create()` MUST judge a copy by its source secret. Everyone else MUST be refused with `404`, the same answer as a missing secret.
+A public link widens the audience beyond what the owner chose, so only the secret's owner, or a recipient whose share permits re-sharing, MUST be able to create a link share for it (keepiq#214). On development a share permits re-sharing when its recipient is an active delegate of the secret (delegation grants share management rights). A use-only recipient MUST NEVER create a link share. A received copy is owned by its recipient, so `LinkShareService::create()` MUST judge a copy by its source secret. A delegate is judged on their own copy whether they name it or the source, and with no copy or two they MUST be refused. Everyone else MUST be refused with `404`, the same answer as a missing secret.
 
 #### Scenario: The owner creates a link share
 @e2e exclude Covered by PHPUnit LinkShareServiceTest and LinkShareControllerTest.

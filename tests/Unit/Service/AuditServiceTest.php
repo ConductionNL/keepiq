@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Db\AuditEntry;
 use OCA\Keepiq\Db\AuditEntryMapper;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\AuditForbiddenMetadataException;
@@ -192,6 +193,39 @@ class AuditServiceTest extends TestCase {
 			$this->assertTrue($threw, "Forbidden key '{$forbidden}' must be rejected");
 		}
 	}//end testRecordRejectsEveryForbiddenKey()
+
+	/**
+	 * Every encrypted value field of a secret, `totp` and `passkeys` included, is a forbidden key, top-level or nested.
+	 *
+	 * @return void
+	 */
+	public function testEveryValueFieldIsForbidden(): void {
+		foreach (Secret::VALUE_FIELDS as $field) {
+			$this->assertContains($field, AuditEventTypes::FORBIDDEN_KEYS);
+		}
+
+		foreach (['totp', 'passkeys'] as $field) {
+			foreach ([[$field => 'leak'], ['changedFields' => ['nested' => [$field => 'leak']]]] as $metadata) {
+				$event = AuditEvent::forUser(
+					actorId: 'alice',
+					eventType: AuditEventTypes::SECRET_UPDATED,
+					objectType: 'secret',
+					objectId: 'sec-1',
+					objectName: 'X',
+					metadata: $metadata,
+				);
+
+				$threw = false;
+				try {
+					$this->service->record($event);
+				} catch (AuditForbiddenMetadataException) {
+					$threw = true;
+				}
+
+				$this->assertTrue($threw, "Value field '{$field}' must be rejected in " . json_encode($metadata));
+			}
+		}
+	}//end testEveryValueFieldIsForbidden()
 
 	/**
 	 * record() rejects a forbidden key nested inside a metadata array.

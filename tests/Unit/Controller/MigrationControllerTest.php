@@ -23,7 +23,9 @@ use DateTime;
 use OCA\Keepiq\Controller\MigrationController;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
@@ -556,6 +558,88 @@ class MigrationControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testReEncryptGrantReportsMissingRecord()
+
+	/**
+	 * Test the TOTP and passkeys ciphertexts reach the secret and version commits.
+	 *
+	 * @return void
+	 */
+	public function testReEncryptPassesTotpAndPasskeysThrough(): void {
+		$this->arrangeOwnMigration();
+
+		$secret = new Secret();
+		$secret->setId('secret-1');
+		$secret->setEncryptionSuiteId('suite-2');
+
+		$version = new SecretVersion();
+		$version->setId('version-1');
+		$version->setSecretId('secret-1');
+		$version->setEncryptionSuiteId('suite-2');
+
+		$this->workService->expects($this->once())
+			->method('commitSecret')
+			->with(
+				$this->anything(),
+				'testuser',
+				'secret-1',
+				'NEW-KEY',
+				null,
+				null,
+				'NEW-TOTP',
+				'NEW-PASSKEYS'
+			)
+			->willReturn($secret);
+		$this->workService->expects($this->once())
+			->method('commitVersion')
+			->with(
+				$this->anything(),
+				'testuser',
+				'version-1',
+				'NEW-KEY',
+				null,
+				null,
+				'NEW-TOTP',
+				'NEW-PASSKEYS'
+			)
+			->willReturn($version);
+
+		$secretResponse = $this->controller->reEncryptSecret(
+			'migr-1',
+			'secret-1',
+			key: 'NEW-KEY',
+			totp: 'NEW-TOTP',
+			passkeys: 'NEW-PASSKEYS'
+		);
+		$versionResponse = $this->controller->reEncryptVersion(
+			'migr-1',
+			'version-1',
+			key: 'NEW-KEY',
+			totp: 'NEW-TOTP',
+			passkeys: 'NEW-PASSKEYS'
+		);
+
+		$this->assertSame(Http::STATUS_OK, $secretResponse->getStatus());
+		$this->assertSame(Http::STATUS_OK, $versionResponse->getStatus());
+	}//end testReEncryptPassesTotpAndPasskeysThrough()
+
+	/**
+	 * Test an omitted stored field is surfaced as a coded 409 naming the fields.
+	 *
+	 * @return void
+	 */
+	public function testReEncryptMapsFieldsNotReencryptedTo409(): void {
+		$this->arrangeOwnMigration();
+		$this->workService->method('commitVersion')->willThrowException(
+			(new FieldsNotReencryptedException('Stored value fields were not re-encrypted: totp'))->withFields(['totp'])
+		);
+
+		$response = $this->controller->reEncryptVersion('migr-1', 'version-1', key: 'NEW');
+		$data = $response->getData();
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('fields_not_reencrypted', $data['error']);
+		$this->assertSame(['totp'], $data['fields']);
+	}//end testReEncryptMapsFieldsNotReencryptedTo409()
 
 	/**
 	 * A re-point delegates to the envelope service with the migration's owner and

@@ -28,9 +28,9 @@ use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ForbiddenException;
-use OCA\Keepiq\Service\KnownShareRecipientExemption;
-use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\VaultKeyProofService;
@@ -46,6 +46,8 @@ use OCP\IUserSession;
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
  *   operation; the use-only change added the restriction update.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A revoke of a quarantined
+ *   share (GHSA-m5p9-6pw7-pf3g) gets its own 409, which takes its own exception.
  */
 class ShareController extends OCSController {
 	/**
@@ -109,78 +111,6 @@ class ShareController extends OCSController {
 		);
 	}//end index()
 
-	// The attributes sit above the docblock: the spec-coverage gate reads the
-	// docblock directly above a declaration, and stops at a multi-line attribute.
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['secretId', 'targetUserId'],
-		purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
-		exemption: KnownShareRecipientExemption::class
-	)]
-	/**
-	 * Create a share target.
-	 *
-	 * The browser performs the recipient-side RSA encryption and persists
-	 * the recipient's Secret copy through the SecretController; this
-	 * endpoint records the share-target row that links the two.
-	 *
-	 * @param string $secretId The source secret ID
-	 * @param string $targetUserId The recipient Nextcloud user ID
-	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
-	 * @param string|null $groupShareId Optional group-share linkage
-	 * @param bool $useOnly Whether the recipient may only use the value (direct shares)
-	 * @param string|null $expiresAt When the recipient's access ends (ISO 8601, direct shares)
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-9.1
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
-	 *   field the server stores, not a mode switch.
-	 */
-	public function create(
-		string $secretId,
-		string $targetUserId,
-		string $recipientSecretId,
-		?string $groupShareId = null,
-		bool $useOnly = false,
-		?string $expiresAt = null,
-	): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$share = $this->shareService->createShare(
-				sourceSecretId: $secretId,
-				targetUserId: $targetUserId,
-				recipientSecretId: $recipientSecretId,
-				groupShareId: $groupShareId,
-				userId: $user->getUID(),
-				restriction: (new ShareRestrictionRules())->fromRequest(
-					useOnly: $useOnly,
-					expiresAt: $expiresAt,
-					now: new DateTime('now', new DateTimeZone('UTC'))
-				)
-			);
-		} catch (ForbiddenException $e) {
-			// A copy from another organisation (sharing-federated-recipients task 3.4).
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		return new JSONResponse(data: $share->jsonSerialize(), statusCode: Http::STATUS_CREATED);
-	}//end create()
-
 	/**
 	 * Change the use-only flag and end date of a direct share. Owner or
 	 * delegate only; the recipient is refused, because the source is not
@@ -222,6 +152,19 @@ class ShareController extends OCSController {
 				restriction: $restriction,
 				userId: $user->getUID()
 			);
+		} catch (ForbiddenException $e) {
+			// A delegate's copy from another organisation.
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (ShareScanPendingException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		} catch (ConflictException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_quarantined', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		}
@@ -249,6 +192,16 @@ class ShareController extends OCSController {
 
 		try {
 			$this->shareService->revokeShare(shareId: $id, userId: $user->getUID());
+		} catch (ShareScanPendingException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		} catch (ConflictException $e) {
+			return new JSONResponse(
+				data: ['error' => 'share_quarantined', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -258,53 +211,6 @@ class ShareController extends OCSController {
 
 		return new JSONResponse(data: ['status' => 'deleted']);
 	}//end destroy()
-
-	/**
-	 * Create a batch of share targets — the group-share expansion path.
-	 *
-	 * @param string $secretId The source secret ID
-	 * @param array $shares The per-recipient batch (each {targetUserId, recipientSecretId})
-	 * @param string $groupShareId The GroupShare ID
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.1
-	 */
-	#[NoAdminRequired]
-	public function createBatch(
-		string $secretId,
-		array $shares,
-		string $groupShareId,
-	): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$created = $this->shareService->createBatchShares(
-				sourceSecretId: $secretId,
-				shares: $shares,
-				groupShareId: $groupShareId,
-				userId: $user->getUID()
-			);
-		} catch (ForbiddenException $exception) {
-			// A copy from another organisation (sharing-federated-recipients task 3.4).
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		return new JSONResponse(
-			data: array_map(static fn ($row) => $row->jsonSerialize(), $created),
-			statusCode: Http::STATUS_CREATED
-		);
-	}//end createBatch()
 
 	/**
 	 * Push an updated encrypted blob to every recipient.
@@ -355,7 +261,8 @@ class ShareController extends OCSController {
 	 * (bulk-actions §6.1/§7.1). Idempotent per (secret × recipient); the
 	 * per-item report never aborts on a skipped row.
 	 *
-	 * @param array $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+	 * @param array $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?,
+	 *   encryptedTotp?, encryptedPasskeys?}
 	 *
 	 * @NoAdminRequired
 	 *

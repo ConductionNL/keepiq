@@ -114,6 +114,7 @@ class McpSurfaceTest extends TestCase {
 		$row = [
 			'id' => 's1', 'name' => 'staging db', 'url' => 'https://db', 'typeId' => 't', 'folderId' => null,
 			'key' => 'CIPHER-KEY', 'login' => 'CIPHER-LOGIN', 'additionalFields' => 'CIPHER-EXTRA',
+			'totp' => 'CIPHER-TOTP', 'passkeys' => 'CIPHER-PASSKEYS',
 			'encryptionSuiteId' => 'suite-1', 'brandNewColumn' => 'x', 'nested' => ['id' => 1],
 		];
 		$projected = (new MetadataAllowList())->project(row: $row, type: 'entry');
@@ -124,10 +125,19 @@ class McpSurfaceTest extends TestCase {
 		// check pass something it must refuse, so the check is not vacuous.
 		$this->assertFalse(self::onlyAllowed([$row], MetadataAllowList::KEYS['entry']));
 		foreach (MetadataAllowList::KEYS as $type => $keys) {
-			foreach (['key', 'login', 'additionalFields', 'encryptionSuiteId', 'value', 'password', 'privateKey'] as $banned) {
+			foreach ([...Secret::VALUE_FIELDS, 'encryptionSuiteId', 'value', 'password', 'privateKey'] as $banned) {
 				$this->assertNotContains($banned, $keys, $type . ' allows ' . $banned);
 			}
 		}
+
+		// A real secret row, every value field set, projects to no value field.
+		$secret = new Secret();
+		$secret->setId('s2');
+		$secret->setKey('CIPHER-KEY');
+		$secret->setTotp('CIPHER-TOTP');
+		$secret->setPasskeys('CIPHER-PASSKEYS');
+		$entry = (new MetadataAllowList())->project(row: $secret->jsonSerialize(), type: 'entry');
+		$this->assertSame([], array_intersect(Secret::VALUE_FIELDS, array_keys($entry)));
 
 		$this->expectException(InvalidArgumentException::class);
 		(new MetadataAllowList())->project(row: [], type: 'unknown');

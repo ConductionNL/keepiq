@@ -27,6 +27,9 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\ShareController;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -117,105 +120,18 @@ class ShareControllerTest extends TestCase {
 	}//end shareTarget()
 
 	/**
-	 * POST /api/v1/secrets/{secretId}/shares/batch must forward the URL's
-	 * secret id, the submitted per-recipient rows and the group-share id,
-	 * bound to the session UID, and answer 201 with every created row.
+	 * The client-supplied-id share-create endpoints are retired
+	 * (GHSA-m5p9-6pw7-pf3g): neither POST /secrets/{id}/shares nor
+	 * POST /secrets/{id}/shares/batch exists, so a caller can no longer hand
+	 * the server a `recipientSecretId`. Shares are created only through
+	 * register-batch, which mints each recipient copy server-side.
 	 *
 	 * @return void
 	 */
-	public function testCreateBatchForwardsTheWholeBatchAndReturnsTheCreatedRows(): void {
-		$shares = [
-			[
-				'targetUserId' => 'bob',
-				'recipientSecretId' => 'copy-bob',
-			],
-			[
-				'targetUserId' => 'carol',
-				'recipientSecretId' => 'copy-carol',
-			],
-		];
-
-		$created = [
-			$this->shareTarget(
-				[
-					'id' => 'st-1',
-					'targetUserId' => 'bob',
-				]
-			),
-			$this->shareTarget(
-				[
-					'id' => 'st-2',
-					'targetUserId' => 'carol',
-				]
-			),
-		];
-
-		// The ITEM: the batch reaches the service with the request's own arguments.
-		$this->shareService->expects($this->once())
-			->method('createBatchShares')
-			->with('secret-1', $shares, 'group-9', 'alice')
-			->willReturn($created);
-
-		$response = $this->controller('alice')->createBatch(
-			secretId: 'secret-1',
-			shares: $shares,
-			groupShareId: 'group-9'
-		);
-
-		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
-		$this->assertSame(
-			[
-				[
-					'id' => 'st-1',
-					'targetUserId' => 'bob',
-				],
-				[
-					'id' => 'st-2',
-					'targetUserId' => 'carol',
-				],
-			],
-			$response->getData(),
-			'createBatch() must return the rows the service actually created'
-		);
-	}//end testCreateBatchForwardsTheWholeBatchAndReturnsTheCreatedRows()
-
-	/**
-	 * An anonymous caller is refused with 401 and never reaches the service.
-	 *
-	 * @return void
-	 */
-	public function testCreateBatchRejectsAnAnonymousCallerBeforeTheService(): void {
-		$this->shareService->expects($this->never())->method('createBatchShares');
-
-		$response = $this->controller(null)->createBatch(
-			secretId: 'secret-1',
-			shares: [['targetUserId' => 'bob']],
-			groupShareId: 'group-9'
-		);
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
-	}//end testCreateBatchRejectsAnAnonymousCallerBeforeTheService()
-
-	/**
-	 * A batch the service refuses answers 400 carrying the refusal reason,
-	 * not a partial-success envelope.
-	 *
-	 * @return void
-	 */
-	public function testCreateBatchSurfacesARefusedBatchAs400(): void {
-		$this->shareService->method('createBatchShares')
-			->willThrowException(new InvalidArgumentException('recipientSecretId is required'));
-
-		$response = $this->controller('alice')->createBatch(
-			secretId: 'secret-1',
-			shares: [['targetUserId' => 'bob']],
-			groupShareId: 'group-9'
-		);
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(['message' => 'recipientSecretId is required'], $response->getData());
-	}//end testCreateBatchSurfacesARefusedBatchAs400()
+	public function testClientSuppliedIdShareCreateEndpointsAreRetired(): void {
+		$this->assertFalse(method_exists(ShareController::class, 'create'), 'share#create must be retired');
+		$this->assertFalse(method_exists(ShareController::class, 'createBatch'), 'share#createBatch must be retired');
+	}//end testClientSuppliedIdShareCreateEndpointsAreRetired()
 
 	/**
 	 * POST /api/v1/secrets/{secretId}/sync must forward the per-recipient
@@ -270,6 +186,87 @@ class ShareControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 		$this->assertSame(['message' => 'Secret changed since it was loaded'], $response->getData());
 	}//end testSyncAnswers409WhenTheSourceMovedUnderTheCaller()
+
+	/**
+	 * Revoking a quarantined share (GHSA-m5p9-6pw7-pf3g) is an explicit 409
+	 * with its own error code, never a success the owner would read as "access
+	 * revoked".
+	 *
+	 * @return void
+	 */
+	public function testRevokingAQuarantinedShareAnswers409(): void {
+		$this->shareService->expects($this->once())->method('revokeShare')
+			->with('st-1', 'alice')
+			->willThrowException(new ConflictException('This share is quarantined'));
+
+		$response = $this->controller('alice')->destroy(id: 'st-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_quarantined', 'message' => 'This share is quarantined'], $response->getData());
+	}//end testRevokingAQuarantinedShareAnswers409()
+
+	/**
+	 * A share the pending quarantine scan could not judge answers 409 with an
+	 * error code of its own, as it is not quarantined.
+	 *
+	 * @return void
+	 */
+	public function testRevokingAShareTheScanCannotJudgeAnswers409WithItsOwnCode(): void {
+		$this->shareService->method('revokeShare')
+			->willThrowException(new ShareScanPendingException('This share waits for the share quarantine scan'));
+
+		$response = $this->controller('alice')->destroy(id: 'st-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_scan_pending', 'message' => 'This share waits for the share quarantine scan'], $response->getData());
+	}//end testRevokingAShareTheScanCannotJudgeAnswers409WithItsOwnCode()
+
+	/**
+	 * Restricting a share the pending quarantine scan quarantines on the spot
+	 * answers 409 as a revoke does.
+	 *
+	 * @return void
+	 */
+	public function testRestrictingAQuarantinedShareAnswers409(): void {
+		$this->shareService->method('updateRestriction')
+			->willThrowException(new ConflictException('This share is quarantined'));
+
+		$response = $this->controller('alice')->update(id: 'st-1', useOnly: true);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_quarantined', 'message' => 'This share is quarantined'], $response->getData());
+	}//end testRestrictingAQuarantinedShareAnswers409()
+
+	/**
+	 * Restricting a share the pending quarantine scan cannot judge answers 409
+	 * with the error code of its own.
+	 *
+	 * @return void
+	 */
+	public function testRestrictingAShareTheScanCannotJudgeAnswers409WithItsOwnCode(): void {
+		$this->shareService->method('updateRestriction')
+			->willThrowException(new ShareScanPendingException('This share waits for the share quarantine scan'));
+
+		$response = $this->controller('alice')->update(id: 'st-1', useOnly: true);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'share_scan_pending', 'message' => 'This share waits for the share quarantine scan'], $response->getData());
+	}//end testRestrictingAShareTheScanCannotJudgeAnswers409WithItsOwnCode()
+
+	/**
+	 * A delegate whose own copy is a read-only copy from another organisation
+	 * is refused a restriction change with 403, not a server error.
+	 *
+	 * @return void
+	 */
+	public function testARestrictionChangeOnAReadOnlyCopyAnswers403(): void {
+		$this->shareService->method('updateRestriction')
+			->willThrowException(new ForbiddenException('A copy from another organisation cannot be shared onward'));
+
+		$response = $this->controller('dave')->update(id: 'st-1', useOnly: false);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testARestrictionChangeOnAReadOnlyCopyAnswers403()
 
 	/**
 	 * An anonymous caller may not push blobs at other users' copies.

@@ -164,6 +164,8 @@ class RotationControllerTest extends TestCase {
 			name: 'Production database',
 			expiresAt: new DateTime('2027-03-01T12:00:00+00:00')
 		);
+		$stored->setTotp('TOTP-CIPHERTEXT');
+		$stored->setPasskeys('PASSKEYS-CIPHERTEXT');
 
 		$this->secretService->expects($this->once())
 			->method('setExpiry')
@@ -197,6 +199,8 @@ class RotationControllerTest extends TestCase {
 			$data['secret']['expiresAt'],
 			'the stored expiry must be the submitted instant'
 		);
+		$this->assertSame('TOTP-CIPHERTEXT', $data['secret']['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $data['secret']['passkeys']);
 		$this->assertSame(
 			'2027-02-01T00:00:00+00:00',
 			$data['effectiveExpiry'],

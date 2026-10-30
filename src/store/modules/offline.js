@@ -41,12 +41,13 @@ import {
 	saveShared,
 	ShareSaveError,
 	shareSaveErrorText,
+	VALUE_FIELDS,
 } from '../../services/shareSave.js'
 import { isRefusal, REFUSAL_STATUS } from '../../utils/refusal.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
 /** The fields whose change fans out to recipients. */
-const SENSITIVE = ['key', 'login', 'additionalFields']
+const SENSITIVE = VALUE_FIELDS
 
 /**
  * How a replay error settles its entry. A queued entry has no "save without
@@ -67,10 +68,15 @@ function replayKind(e) {
 				partner_unreachable: 'failed',
 				partner_lookup_limit: 'failed',
 				view_only: 'failed',
+				partner_upgrade_required: 'failed',
 			}[e.code] ?? 'retry'
 		)
 	}
-	if (e?.fromShareSave === true && e.response?.status === 400) {
+	if (
+		e?.fromShareSave === true
+		&& (e.response?.status === 400
+			|| e.response?.data?.error === 'partner_upgrade_required')
+	) {
 		return 'failed'
 	}
 	return classifyReplayError(e)
@@ -113,8 +119,24 @@ function failureOf(e) {
 	) {
 		return { code: e.code }
 	}
+	if (
+		e?.code === 'partner_upgrade_required'
+		|| e?.response?.data?.error === 'partner_upgrade_required'
+	) {
+		return {
+			code: 'partner_upgrade_required',
+			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
+			requiredVersion: e.response?.data?.requiredVersion ?? null,
+		}
+	}
 	if (e?.fromShareSave === true && e.response?.status === 400) {
 		return { code: 'refused', reason: e.response.data?.error ?? '' }
+	}
+	if (e?.response?.data?.error === 'share_scan_pending') {
+		return {
+			code: 'share_scan_pending',
+			message: e.response.data.message ?? null,
+		}
 	}
 	if (shareSaveErrorText(e) !== null) {
 		return { code: 'not_allowed' }
@@ -141,6 +163,14 @@ export function failureText(failure) {
 		case 'partner_lookup_limit':
 		case 'view_only':
 			return shareSaveErrorText(new ShareSaveError(failure.code))
+		case 'partner_upgrade_required':
+			return shareSaveErrorText({
+				code: failure.code,
+				partners: (failure.partners ?? []).map((recipientCloudId) => ({
+					recipientCloudId,
+				})),
+				response: { data: { requiredVersion: failure.requiredVersion } },
+			})
 		case 'refused':
 			// The server's code stays stored with the entry; the list shows
 			// words, never the code.
@@ -457,7 +487,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * the share save, the conflict dialog and copying.
 		 *
 		 * @param {object} body The entry body (ciphertext).
-		 * @return {Promise<object>} { key, login, additionalFields } in plain, only those present.
+		 * @return {Promise<object>} { key, login, additionalFields, totp, passkeys } in plain, only those present.
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
 		 */
 		async plaintextOf(body) {
@@ -480,8 +510,9 @@ export const useOfflineStore = defineStore('offline', {
 		/**
 		 * Replay the queue oldest first through the online paths (D2, D5).
 		 * Runs only online with the vault unlocked online. A 409 stops that
-		 * entry for the user's choice, 403 and 404 move it to the failed
-		 * list, a 423 or a network error stops the replay and keeps the rest.
+		 * entry for the user's choice, 403, 404 and a 409 that waits for the
+		 * share quarantine scan move it to the failed list, a 423 or a network
+		 * error stops the replay and keeps the rest.
 		 *
 		 * @return {Promise<{synced: number, stopped: boolean}>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
@@ -633,10 +664,11 @@ export const useOfflineStore = defineStore('offline', {
 					generateUrl(`/apps/keepiq/api/v1/secrets/${entry.secretId}`),
 				)
 			).data
+			// A `totp` or `passkeys` cleared with `''` is stored as null.
 			const unchanged = SENSITIVE.every(
 				(f) =>
 					entry.body[f] === undefined
-					|| (entry.body[f] ?? null) === (row[f] ?? null),
+					|| (entry.body[f] || null) === (row[f] || null),
 			)
 			if (unchanged) {
 				// The row already merged those request-filled fields; naming

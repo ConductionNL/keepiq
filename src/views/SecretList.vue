@@ -523,6 +523,7 @@
 						<span class="secret-list-view__name-cell-text">{{
 							row.name
 						}}</span>
+						<LoginExtrasMarkers :secret="row" />
 						<VaultIndicator :vault="rowVault(row)" />
 					</span>
 				</template>
@@ -594,6 +595,7 @@ import Safe from 'vue-material-design-icons/Safe.vue'
 import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import LoginExtrasMarkers from '../components/LoginExtrasMarkers.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import SecretTypeIcon from '../components/SecretTypeIcon.vue'
 import StrengthBadge from '../components/StrengthBadge.vue'
@@ -684,6 +686,7 @@ export default {
 		BulkTagDialog,
 		TagOutline,
 		KeyVariant,
+		LoginExtrasMarkers,
 		SecretListItem,
 		SecretTypeIcon,
 		StrengthBadge,

@@ -180,7 +180,7 @@ describe('the sync panel', () => {
 		expect(offline.discardEntry).toHaveBeenCalledWith('e2')
 	})
 
-	it('shows the stored reason, and offers "Try again" only for a partner failure that can pass', async () => {
+	it('shows the stored reason, and offers "Try again" only for a failure that can pass', async () => {
 		const offline = useOfflineStore()
 		offline.entries = [
 			{
@@ -206,6 +206,17 @@ describe('the sync panel', () => {
 				status: 'failed',
 				body: { name: 'Gateway' },
 				failure: { code: 'partner_lookup_limit' },
+			},
+			{
+				entryId: 'e4',
+				op: 'update',
+				secretId: 's4',
+				status: 'failed',
+				body: { name: 'Firewall' },
+				failure: {
+					code: 'share_scan_pending',
+					message: 'This share waits for the share quarantine scan',
+				},
 			},
 		]
 		offline.retryEntry = vi.fn()
@@ -236,6 +247,11 @@ describe('the sync panel', () => {
 		expect(offline.retryEntry).toHaveBeenCalledWith('e1')
 		await wrapper.find('[data-testid="offline-sync-retry-e3"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e3')
+		expect(wrapper.find('[data-testid="offline-sync-reason-e4"]').text()).toBe(
+			'This share waits for the share quarantine scan',
+		)
+		await wrapper.find('[data-testid="offline-sync-retry-e4"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e4')
 	})
 })
 

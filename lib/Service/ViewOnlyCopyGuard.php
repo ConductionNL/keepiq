@@ -44,7 +44,7 @@ class ViewOnlyCopyGuard {
 	 *
 	 * @var string[]
 	 */
-	public const VALUE_FIELDS = ['key', 'login', 'additionalFields'];
+	public const VALUE_FIELDS = Secret::VALUE_FIELDS;
 
 	/**
 	 * Constructor.

@@ -109,12 +109,82 @@ describe('useGroupShareStore', () => {
 			encryptedKey: 'enc(hunter2,PEM-BOB)',
 			encryptedLogin: null,
 			encryptedAdditionalFields: null,
+			encryptedTotp: null,
+			encryptedPasskeys: null,
 			groupShareId: 'gs-1',
 		})
 		// bob and carol received it; dave failed at registration and the
 		// server skipped one member without a suite.
-		expect(result).toEqual({ received: 2, skipped: 2 })
+		expect(result).toEqual({ received: 2, skipped: 2, refused: 0 })
 		expect(store.groupShares).toEqual([{ id: 'gs-1', groupId: 'finance' }])
+	})
+
+	it("encrypts a login's seed and passkeys into each member's copy (keepiq#1326)", async () => {
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			key: 'hunter2',
+			login: '',
+			additionalFields: null,
+			totp: 'JBSWY3DPEHPK3PXP',
+			passkeys: '[{"credentialId":"c1"}]',
+		})
+		const encrypt = vi
+			.spyOn(useShareStore(), 'encryptForRecipient')
+			.mockImplementation(async (snapshot, cert) =>
+				Object.fromEntries(
+					Object.entries(snapshot)
+						.filter(([, value]) => value !== '')
+						.map(([field, value]) => [field, `enc(${value},${cert})`]),
+				),
+			)
+
+		const [row] = await useGroupShareStore().encryptForMembers('s-1', 'gs-1', [
+			{ userId: 'bob', certificate: 'PEM-BOB' },
+		])
+
+		expect(encrypt.mock.calls[0][0]).toMatchObject({
+			totp: 'JBSWY3DPEHPK3PXP',
+			passkeys: '[{"credentialId":"c1"}]',
+		})
+		expect(row).toMatchObject({
+			encryptedKey: 'enc(hunter2,PEM-BOB)',
+			encryptedLogin: null,
+			encryptedTotp: 'enc(JBSWY3DPEHPK3PXP,PEM-BOB)',
+			encryptedPasskeys: 'enc([{"credentialId":"c1"}],PEM-BOB)',
+		})
+	})
+
+	it('counts the members refused for a one-time code or passkeys apart from those without a suite', async () => {
+		vi.spyOn(axios, 'post')
+			.mockResolvedValueOnce({
+				data: {
+					groupShare: { id: 'gs-1', groupId: 'finance' },
+					members: [
+						{ userId: 'bob', certificate: 'PEM-BOB' },
+						{ userId: 'carol', certificate: 'PEM-CAROL' },
+					],
+					skipped: 0,
+				},
+			})
+			.mockResolvedValueOnce({
+				data: {
+					items: [
+						{ targetUserId: 'bob', status: 'copy_fields_mismatch' },
+						{ targetUserId: 'carol', status: 'no_suite' },
+					],
+				},
+			})
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			key: 'hunter2',
+			login: 'alice',
+			additionalFields: {},
+		})
+		vi.spyOn(useShareStore(), 'encryptForRecipient').mockResolvedValue({
+			key: 'enc',
+		})
+
+		const result = await useGroupShareStore().shareWithGroup('s-1', 'finance')
+
+		expect(result).toEqual({ received: 0, skipped: 1, refused: 1 })
 	})
 
 	it('revokes a group share and drops it from the list', async () => {

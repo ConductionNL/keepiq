@@ -201,7 +201,7 @@ class FederatedShareAcceptTest extends TestCase {
 			'keepiq',
 			'https://cloud.city.example',
 			'keepiq/shares/' . self::SHARE_ID,
-			['sharedSecret' => self::SHARED_SECRET, 'sender' => 'bob@cloud.here.example'],
+			['sharedSecret' => self::SHARED_SECRET, 'sender' => 'bob@cloud.here.example', 'valueFields' => ['totp', 'passkeys']],
 			'post',
 		);
 

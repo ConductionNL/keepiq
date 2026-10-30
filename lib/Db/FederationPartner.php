@@ -45,6 +45,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setAddedBy(string $addedBy)
  * @method DateTime|null getAddedAt()
  * @method void setAddedAt(DateTime $addedAt)
+ * @method string|null getValueFields()
+ * @method void setValueFields(?string $valueFields)
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
@@ -99,6 +101,14 @@ class FederationPartner extends Entity implements JsonSerializable {
 	protected ?DateTime $addedAt = null;
 
 	/**
+	 * The value fields the partner advertises it can store, as a JSON array
+	 * of field names; null when it has not advertised any.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $valueFields = null;
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -139,6 +149,7 @@ class FederationPartner extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'allowInbound', type: 'boolean');
 		$this->addType(fieldName: 'addedBy', type: 'string');
 		$this->addType(fieldName: 'addedAt', type: 'datetime');
+		$this->addType(fieldName: 'valueFields', type: 'string');
 	}//end __construct()
 
 	/**
@@ -149,6 +160,11 @@ class FederationPartner extends Entity implements JsonSerializable {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function jsonSerialize(): array {
+		$valueFields = null;
+		if ($this->valueFields !== null) {
+			$valueFields = json_decode($this->valueFields, true);
+		}
+
 		return [
 			'id' => $this->getId(),
 			'baseUrl' => $this->baseUrl,
@@ -158,6 +174,8 @@ class FederationPartner extends Entity implements JsonSerializable {
 			'allowInbound' => $this->allowInbound === true,
 			'addedBy' => $this->addedBy,
 			'addedAt' => $this->addedAt?->format(DATE_ATOM),
+			// What its last lookup answer advertised it stores; null before any.
+			'valueFields' => $valueFields,
 		];
 	}//end jsonSerialize()
 }//end class

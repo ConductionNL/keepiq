@@ -15,6 +15,7 @@
  * - `lookup()` is the owner-facing side: it asks an outbound partner through
  *   Nextcloud's signed OCM request and returns the certificate, the chain and
  *   the pinned root fingerprint for the owner's browser to verify.
+ *   It records the value fields the partner advertised, so a share it cannot hold is refused.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -34,6 +35,11 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
 use OCP\IUserManager;
@@ -84,10 +90,15 @@ class FederatedCertificateService {
 	 * @param IConfig $config User preferences
 	 * @param IOCMDiscoveryService $ocmDiscovery Signed OCM requests to partners
 	 * @param LoggerInterface $logger Warnings about a partner's answer
+	 * @param FederationPartnerMapper $partnerMapper Records the value fields a partner advertises
+	 * @param IEventDispatcher|null $eventDispatcher Audits a change of those value fields
+	 * @param AuditEventFactory $auditEvents Builds the audit events
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; no behaviour.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list, one collaborator per concern.
 	 */
 	public function __construct(
 		private FederationPartnerService $partners,
@@ -98,6 +109,9 @@ class FederatedCertificateService {
 		private IConfig $config,
 		private IOCMDiscoveryService $ocmDiscovery,
 		private LoggerInterface $logger,
+		private FederationPartnerMapper $partnerMapper,
+		private ?IEventDispatcher $eventDispatcher = null,
+		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -107,7 +121,7 @@ class FederatedCertificateService {
 	 * @param string|null $signer The verified signer (OCMEndpointRequestEvent::getRemote()), null when unsigned
 	 * @param array<array-key,mixed> $payload The request payload, `{cloudId}`
 	 *
-	 * @return array{cloudId:string,certificate:string,chain:array<int,string>}|null
+	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,valueFields:string[]}|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
@@ -136,6 +150,7 @@ class FederatedCertificateService {
 			'cloudId' => (string)$payload['cloudId'],
 			'certificate' => $certificate,
 			'chain' => $chain,
+			'valueFields' => FederatedValueFields::VALUE_FIELDS,
 		];
 	}//end answer()
 
@@ -165,10 +180,13 @@ class FederatedCertificateService {
 	/**
 	 * Ask an outbound partner for a recipient's certificate.
 	 *
+	 * The answer names the value fields beyond `key`, `login` and `additionalFields` the partner stores,
+	 * so the browser leaves out a `totp` or `passkeys` value it cannot hold.
+	 *
 	 * @param string $cloudId The recipient's cloud id, `bob@cloud.partner.example`
 	 * @param string $userId The owner asking; their cloud id goes along as `sender`
 	 *
-	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string}
+	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string,valueFields:list<string>}
 	 *
 	 * @throws InvalidArgumentException `not_a_partner` or `unknown_recipient`
 	 * @throws RuntimeException `federation_unavailable`, `partner_unreachable` or `bad_chain`
@@ -218,8 +236,59 @@ class FederatedCertificateService {
 			'certificate' => $answer['certificate'],
 			'chain' => $answer['chain'],
 			'partnerRootFingerprint' => $partner->getRootFingerprint(),
+			'valueFields' => $this->recordValueFields(partner: $partner, advertised: $body['valueFields'] ?? null),
 		];
 	}//end lookup()
+
+	/**
+	 * Store the value fields a partner advertised in its lookup answer, so a share to it can be refused when it cannot hold them.
+	 * The answer's `valueFields` is not covered by the browser's certificate check, so a change is audited by field
+	 * name, and one that drops a field the partner stored is logged as a warning.
+	 *
+	 * @param FederationPartner $partner The partner that answered
+	 * @param mixed $advertised Its `valueFields`, absent on an older Keepiq
+	 *
+	 * @return list<string> The recorded fields, empty when it advertised none
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	private function recordValueFields(FederationPartner $partner, mixed $advertised): array {
+		$valueFields = new FederatedValueFields();
+		$recorded = $valueFields->toRecord(advertised: $advertised);
+		$fields = ($valueFields->advertised(advertised: $advertised) ?? []);
+		$previous = $partner->getValueFields();
+		if ($recorded === $previous) {
+			return $fields;
+		}
+
+		$partner->setValueFields($recorded);
+		$this->partnerMapper->update($partner);
+
+		$was = ($valueFields->advertised(advertised: json_decode((string)$previous, true)) ?? []);
+		// Absent and [] are distinct on the row but the same list: no change to audit or warn about.
+		if ($was === $fields) {
+			return $fields;
+		}
+
+		$dropped = array_values(array_diff($was, $fields));
+		if ($dropped !== []) {
+			$this->logger->warning(
+				'Keepiq: partner {partner} no longer advertises it stores {fields}; shares carrying them are refused until it does',
+				['partner' => $partner->getBaseUrl(), 'fields' => implode(', ', $dropped)]
+			);
+		}
+
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forSystem(
+				eventType: AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED,
+				objectType: 'federation_partner',
+				objectId: $partner->getId(),
+				metadata: ['partnerId' => $partner->getId(), 'from' => $was, 'to' => $fields],
+			)
+		);
+
+		return $fields;
+	}//end recordValueFields()
 
 	/**
 	 * Check a partner's lookup answer.
