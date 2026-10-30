@@ -7,6 +7,8 @@ A new passkey MUST be saved onto a login, never as a standalone Passkey item. It
 
 A counter written back for a passkey on a login MUST fetch the login fresh and change only that credential's counter.
 
+A passkey on a login the user may not change (a use-only or read-only copy) is offered like any other, but its counter cannot be written back: once that counter is above zero, signing with it MUST fail, because a failed write-back fails the sign-in. With a counter of zero it signs, since nothing is written.
+
 #### Scenario: Sign in with a passkey made in the browser extension
 - **GIVEN** a passkey for `example.com` created with the Keepiq browser extension
 - **WHEN** the user signs in to `example.com` on the phone and picks Keepiq in the passkey sheet
@@ -17,6 +19,11 @@ A counter written back for a passkey on a login MUST fetch the login fresh and c
 - **WHEN** the user signs in to `example.com` on the phone and picks that passkey
 - **THEN** the site accepts the signature
 - **AND** a non-zero counter is stored on that passkey of the login, and its other passkeys are unchanged
+
+#### Scenario: A counted passkey on a read-only login
+- **GIVEN** a login shared read-only whose `passkeys` holds a passkey with a counter of 4
+- **WHEN** the user picks that passkey in the passkey sheet and unlocks
+- **THEN** the server refuses the counter write and the sign-in fails
 
 #### Scenario: Create a passkey for an account the vault has a login for
 - **GIVEN** Keepiq as the passkey provider and one login for `example.com` with user name `alice`

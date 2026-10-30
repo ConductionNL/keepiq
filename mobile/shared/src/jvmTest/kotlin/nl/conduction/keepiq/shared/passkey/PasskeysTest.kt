@@ -74,6 +74,9 @@ class PasskeysTest {
 
     /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
     private var staleWrites = 0
+
+    /** The server refuses every PUT, as it does on a copy the user may not change. */
+    private var refusePut = false
     private var afterStale: () -> Unit = {}
     /** What GET /api/v1/secrets/l1 answers with instead of the login, when set. */
     private var freshStatus: HttpStatusCode? = null
@@ -87,6 +90,9 @@ class PasskeysTest {
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
         if (offline) throw java.io.IOException("no network")
+        if (request.method == HttpMethod.Put && refusePut) {
+            return@MockEngine respond("""{"error":"read_only","message":"You can only read this item."}""", HttpStatusCode.Forbidden, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         if (request.method == HttpMethod.Put && staleWrites > 0) {
             staleWrites--
             afterStale()
@@ -557,5 +563,19 @@ class PasskeysTest {
         val zeroChoice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", zero))), "login.example.nl", keys).single()
         assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, zeroChoice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
         assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aReadOnlyLoginsCountedPasskeyIsRefusedAndAnUncountedOneSigns() = runTest {
+        refusePut = true
+        val (counted, _) = made("login.example.nl", 4)
+        val (uncounted, _) = made("login.example.nl", 0)
+        freshLoginWith(counted, uncounted)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", counted, uncounted, readOnly = true)))
+        val (four, zero) = Passkeys.candidates(index, "login.example.nl", keys)
+        // Offered in the sheet, as the spec says; the counter cannot be written back, so the sign-in fails.
+        val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals(403, e.status)
+        assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
     }
 }
