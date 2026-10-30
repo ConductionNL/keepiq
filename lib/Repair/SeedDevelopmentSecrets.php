@@ -205,7 +205,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	 *
 	 * @return int The number of secrets created; 0 when the system types are not seeded yet
 	 *
-	 * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md#requirement-a-demo-vault-holds-only-demo-secrets
+	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-holds-only-demo-secrets
 	 */
 	public function seedSecrets(string $ownerId, EncryptionSuite $suite, array $folderNames, array $secrets): int {
 		$typeIds = $this->resolveTypeIds();
