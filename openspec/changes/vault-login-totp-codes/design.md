@@ -45,7 +45,7 @@
 
 **D11. The server declares the fields.** `DashboardController::page()` provides the `loginValueFields` initial state, `{since}`, with the backend's `Application::TOTP_PASSKEYS_FIELDS_SINCE`. `valueFieldsSupported()` is true when it is present, and `valueFieldsSince()` supplies the release named when a partner must upgrade, so the web app keeps no version number to hold in step. A page without the state (a mixed deploy) hides the entry field and the passkey Delete action.
 
-**D12. Additional fields named `totp` or `otp` are left alone.** Vaults can hold a login whose additional fields carry a seed as `totp`, from an import made before D14. Those fields are not read as the seed and keep showing as ordinary fields; moving them into the `totp` field belongs to the guided move of keepiq#1328.
+**D12. Nothing already in a vault is moved.** Vaults can hold standalone Authenticator and Passkey items, and logins whose additional fields carry a seed as `totp` or `otp` from an import made before D14. Neither is moved onto a login's own fields, automatically or through a guided move: the app has no users beyond internal testers yet, so such a migration is not worth building (keepiq#1328). The items keep working (D10), and the additional fields are not read as the seed and keep showing as ordinary fields.
 
 **D13. The list marker reads presence only.** `LoginExtrasMarkers.vue` checks whether a row's `totp` or `passkeys` holds ciphertext, decrypts nothing, and gives each icon a text alternative. It shows in the list, card and table views, and on the import preview rows.
 
@@ -65,7 +65,6 @@ Both fields are RSA-encrypted in the browser with the holder's public key, using
 
 - **Clone and print.** Neither feature exists in the web app; carrying the fields belongs to `vault-item-clone-preview-and-print`.
 - **Passkey type filter finding logins with passkeys.** The server cannot see inside the ciphertext, so the filter needs a backend query design.
-- **Guided move of existing standalone items**, and of additional fields named `totp` or `otp`, onto their login belongs to keepiq#1328.
 - **Android** belongs to keepiq#1329; the browser extension adopts the fields in its own changes.
 
 ## Seed data

@@ -47,7 +47,7 @@
 
 - [ ] 7.1 Clone and print carry both fields. Deferred: neither feature exists yet; belongs to `vault-item-clone-preview-and-print`.
 - [ ] 7.2 The Passkey type filter also finds logins with passkeys. Deferred: the server cannot see inside the ciphertext; needs a backend query design.
-- [ ] 7.3 Guided move of standalone Authenticator and Passkey items, and of additional fields named `totp` or `otp`, onto their login. Deferred to keepiq#1328.
+- [ ] 7.3 Guided move of standalone Authenticator and Passkey items, and of additional fields named `totp` or `otp`, onto their login. Dropped in keepiq#1328: only internal testers hold such items, so they stay as they are (D12).
 - [ ] 7.4 Android reads and writes both fields. Deferred to keepiq#1329.
 
 ## Acceptance criteria
