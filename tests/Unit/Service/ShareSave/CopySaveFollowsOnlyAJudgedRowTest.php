@@ -623,6 +623,64 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 	}//end testARefusedSyncKeepsTheQuarantinesItsCheckMade()
 
 	/**
+	 * A sync reads the source's rows again under its lock: a share registered
+	 * after the check before the transaction is still written, not silently
+	 * left on its old value.
+	 *
+	 * @return void
+	 */
+	public function testASyncWritesACopyRegisteredBeforeItsLock(): void {
+		$this->mayWrite = true;
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->secret(id: 'C_y', ownerId: 'yara');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , , $sync] = $this->services(scanner: $this->scannerFor(verdicts: []));
+		$this->db->method('beginTransaction')->willReturnCallback(function (): void {
+			$this->row(target: 'yara', copyId: 'C_y');
+		});
+
+		$updated = $sync->syncUpdate(
+			secretId: 'S_a',
+			updates: [['secretId' => 'C_x', 'key' => 'k-x'], ['secretId' => 'C_y', 'key' => 'k-y']],
+			expectedUpdatedAt: '',
+			userId: 'alice'
+		);
+
+		$this->assertSame(2, $updated);
+		$this->assertSame(['C_x', 'C_y'], $this->written);
+	}//end testASyncWritesACopyRegisteredBeforeItsLock()
+
+	/**
+	 * A share registered before the lock whose row the scan cannot judge makes
+	 * the sync wait, inside its transaction, and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testASyncWaitsForAnUnjudgedRowRegisteredBeforeItsLock(): void {
+		$this->mayWrite = true;
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->secret(id: 'C_y', ownerId: 'yara');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , , $sync] = $this->services(scanner: $this->scannerFor(verdicts: ['row-C_y' => ShareQuarantineScanner::HELD_UNJUDGED]));
+		$this->db->method('beginTransaction')->willReturnCallback(function (): void {
+			$this->row(target: 'yara', copyId: 'C_y');
+		});
+		$this->db->expects($this->never())->method('commit');
+
+		try {
+			$sync->syncUpdate(
+				secretId: 'S_a',
+				updates: [['secretId' => 'C_x', 'key' => 'k-x'], ['secretId' => 'C_y', 'key' => 'k-y']],
+				expectedUpdatedAt: '',
+				userId: 'alice'
+			);
+			$this->fail('The sync did not wait for the unjudged row');
+		} catch (ShareScanPendingException) {
+			$this->assertSame([], $this->written);
+		}
+	}//end testASyncWaitsForAnUnjudgedRowRegisteredBeforeItsLock()
+
+	/**
 	 * A group-write body naming S_a and both copies.
 	 *
 	 * @return list<array<string,string>>

@@ -194,15 +194,18 @@ class ShareSyncGuards {
 	/**
 	 * The share rows of a source, judged once for a whole sync: the check
 	 * before the transaction and the writes inside it read the same verdicts.
+	 * Under the source's lock the rows are read again with those verdicts
+	 * carried over, so a share registered in between is still seen and judged.
 	 *
-	 * @param Secret $source The source secret being synced
+	 * @param Secret               $source The source secret being synced
+	 * @param JudgedShareRows|null $before The rows this sync judged before its lock, if any
 	 *
 	 * @return JudgedShareRows
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	public function judgedRowsOf(Secret $source): JudgedShareRows {
-		return $this->rowJudge->rowsOfSource(sourceId: $source->getId());
+	public function judgedRowsOf(Secret $source, ?JudgedShareRows $before=null): JudgedShareRows {
+		return $this->rowJudge->rowsOfSource(sourceId: $source->getId(), before: $before);
 	}//end judgedRowsOf()
 
 	/**

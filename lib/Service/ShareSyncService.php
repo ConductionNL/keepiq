@@ -169,10 +169,15 @@ class ShareSyncService {
 		// verdicts, so a copy is never skipped on a second, different answer.
 		$judged = $this->guards->judgedRowsOf(source: $source);
 		$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
-		$allowedIds = $this->collectSyncTargets(source: $source, judged: $judged);
 		return $this->atomic(
-			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId, $judged): int {
+			fn: function () use ($source, $updates, $base, $savedAt, $writesOn, $userId, $judged): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
+				// Read the rows again under the lock: a share registered since
+				// the check above is seen, and judged; a row already judged
+				// keeps its verdict.
+				$judged = $this->guards->judgedRowsOf(source: $source, before: $judged);
+				$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+				$allowedIds = $this->collectSyncTargets(source: $source, judged: $judged);
 				if ($writesOn === self::GROUP_WRITE) {
 					[$writesOn, $allowedIds] = $this->guards->assertGroupWrite(
 						sync: $this,

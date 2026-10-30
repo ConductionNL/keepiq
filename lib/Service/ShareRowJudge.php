@@ -162,16 +162,23 @@ class ShareRowJudge {
 
 
 	/**
-	 * The live share rows of a source, each judged when the caller asks.
+	 * The live share rows of a source, each judged when the caller asks. Given
+	 * the rows this request read before, the verdicts already made carry over.
 	 *
-	 * @param string $sourceId The source secret
+	 * @param string               $sourceId The source secret
+	 * @param JudgedShareRows|null $before   The rows this request judged before, if any
 	 *
 	 * @return JudgedShareRows
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	public function rowsOfSource(string $sourceId): JudgedShareRows {
-		return $this->judgeRows(rows: $this->targets->findBySourceSecret($sourceId));
+	public function rowsOfSource(string $sourceId, ?JudgedShareRows $before=null): JudgedShareRows {
+		$rows = $this->targets->findBySourceSecret($sourceId);
+		if ($before !== null) {
+			return $before->reread(rows: $rows);
+		}
+
+		return $this->judgeRows(rows: $rows);
 	}//end rowsOfSource()
 
 	/**

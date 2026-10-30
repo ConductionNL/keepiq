@@ -58,6 +58,30 @@ final class JudgedShareRows {
 	}//end __construct()
 
 	/**
+	 * The same source's rows read again, with every verdict already made for
+	 * a row that is still there carried over: only a row that appeared since
+	 * is judged anew, so a re-read under a lock never answers differently for
+	 * a row this request already judged.
+	 *
+	 * @param list<ShareTarget> $rows The rows as read now
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function reread(array $rows): self {
+		$again = new self(rows: array_values($rows), judge: $this->judge);
+		foreach ($again->rows as $row) {
+			$id = (string)$row->getId();
+			if (array_key_exists($id, $this->verdicts) === true) {
+				$again->verdicts[$id] = $this->verdicts[$id];
+			}
+		}
+
+		return $again;
+	}//end reread()
+
+	/**
 	 * Every live row, judged or not. A caller that follows a row to its copy
 	 * or its source asks verdict() first.
 	 *
