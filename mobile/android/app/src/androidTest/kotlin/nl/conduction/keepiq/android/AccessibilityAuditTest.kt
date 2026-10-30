@@ -151,7 +151,7 @@ class AccessibilityAuditTest {
         compose.waitForText("anna · added March 12, 2026", 60_000)
         audit("item detail, login code and passkeys")
         compose.onNodeWithContentDescription("Delete passkey for anna").performScrollTo().performClick()
-        compose.waitForText("Delete this passkey?")
+        compose.waitForText("Delete the passkey for anna?")
         audit("passkey delete dialog")
         compose.onNodeWithText("Cancel").performClick()
         compose.onNodeWithText("Back").performClick()

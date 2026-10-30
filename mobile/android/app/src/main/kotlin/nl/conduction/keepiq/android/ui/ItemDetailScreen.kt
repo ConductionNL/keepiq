@@ -117,6 +117,7 @@ fun ItemDetailScreen(
     }
     deleting?.let { pk ->
         PasskeyDeleteDialog(
+            account = pk.userName,
             onConfirm = {
                 deleting = null
                 val index = item.passkeys.indexOf(pk)

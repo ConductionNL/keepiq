@@ -89,6 +89,7 @@
     <string name="cd_delete_passkey">Passkey verwijderen</string>
     <string name="cd_delete_passkey_for">Passkey voor %1$s verwijderen</string>
     <string name="passkey_delete_title">Deze passkey verwijderen?</string>
+    <string name="passkey_delete_title_for">De passkey voor %1$s verwijderen?</string>
     <string name="passkey_delete_body">Je kunt er niet meer mee inloggen op deze site. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="detail_extra_fields">Extra velden</string>
     <string name="detail_fields_error">De extra velden zijn niet te lezen.</string>

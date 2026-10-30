@@ -230,11 +230,17 @@ class ScreensTest {
     @Test
     fun theDeleteDialogAsksFirst() {
         val calls = mutableListOf<String>()
-        compose.setContent { MaterialTheme { PasskeyDeleteDialog(onConfirm = { calls += "yes" }, onDismiss = { calls += "no" }) } }
+        compose.setContent { MaterialTheme { PasskeyDeleteDialog(account = null, onConfirm = { calls += "yes" }, onDismiss = { calls += "no" }) } }
         compose.onNodeWithText("Delete this passkey?").assertExists()
         compose.onNodeWithText("Cancel").performClick()
         compose.onNodeWithText("Delete").performClick()
         assertEquals(listOf("no", "yes"), calls)
+    }
+
+    @Test
+    fun theDeleteDialogNamesTheAccount() {
+        compose.setContent { MaterialTheme { PasskeyDeleteDialog(account = "alice-work", onConfirm = {}, onDismiss = {}) } }
+        compose.onNodeWithText("Delete the passkey for alice-work?").assertExists()
     }
 
     @Test

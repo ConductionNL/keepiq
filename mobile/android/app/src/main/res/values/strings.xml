@@ -91,6 +91,7 @@
     <string name="cd_delete_passkey">Delete passkey</string>
     <string name="cd_delete_passkey_for">Delete passkey for %1$s</string>
     <string name="passkey_delete_title">Delete this passkey?</string>
+    <string name="passkey_delete_title_for">Delete the passkey for %1$s?</string>
     <string name="passkey_delete_body">You can no longer sign in to this site with it. This cannot be undone.</string>
     <string name="detail_extra_fields">Additional fields</string>
     <string name="detail_fields_error">Could not read the additional fields.</string>

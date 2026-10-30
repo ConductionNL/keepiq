@@ -78,12 +78,16 @@ internal fun PasskeyRows(
     }
 }
 
-/** Asks before a passkey is deleted: the site no longer accepts it afterwards. */
+/**
+ * Asks before a passkey is deleted: the site no longer accepts it
+ * afterwards. Names the [account] the passkey is for, when it has one, so
+ * the user can tell which of a login's passkeys goes.
+ */
 @Composable
-internal fun PasskeyDeleteDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+internal fun PasskeyDeleteDialog(account: String?, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.passkey_delete_title)) },
+        title = { Text(account?.let { stringResource(R.string.passkey_delete_title_for, it) } ?: stringResource(R.string.passkey_delete_title)) },
         text = { Text(stringResource(R.string.passkey_delete_body)) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_delete)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
