@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 
-/** A login's `passkeys` holds something other than an array: it is never rewritten (web D5). */
+/** A login's `passkeys` holds something other than an array: it is never rewritten (as withoutPasskey in src/passkey/loginPasskeys.js). */
 class UnreadablePasskeysException : IllegalStateException("The passkeys of this login cannot be read.")
 
 /**
