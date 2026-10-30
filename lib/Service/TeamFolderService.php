@@ -41,7 +41,6 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
@@ -79,7 +78,7 @@ class TeamFolderService {
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
-	 * @param ShareTargetMapper|null $shareTargets The share-target mapper (copies to recompute)
+	 * @param ShareRowJudge|null $rowJudge Judged share rows (the caller's copies, the copies to recompute)
 	 *
 	 * @return void
 	 *
@@ -99,7 +98,7 @@ class TeamFolderService {
 		private NotificationService $notificationService,
 		private IDBConnection $db,
 		private ?ShareRestrictionResolver $restrictions = null,
-		private ?ShareTargetMapper $shareTargets = null,
+		private ?ShareRowJudge $rowJudge = null,
 	) {
 	}//end __construct()
 
@@ -682,7 +681,9 @@ class TeamFolderService {
 	 * Tell a manager's browser which of its own recipient copies to decrypt
 	 * for each folder secret (sharing-team-folder-manager-role D3): each ref
 	 * gains `copyId`, the caller's copy, or null when the caller holds none
-	 * (that secret is then skipped and stays missing for the owner). The
+	 * or their share row of it is not trusted (ShareRowJudge), so a secret
+	 * a held-back row names is never decrypted for others (that secret is
+	 * then skipped and stays missing for the owner). The
 	 * owner's refs carry their own id, since the owner decrypts the source.
 	 *
 	 * @param array<int,array{id:string,name:string}> $refs The subtree secret refs
@@ -692,6 +693,7 @@ class TeamFolderService {
 	 * @return array<int,array{id:string,name:string,copyId:string|null}>
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function withCallerCopies(array $refs, TeamFolder $teamFolder, string $userId): array {
 		$isOwner = ($teamFolder->getOwnerId() === $userId);
@@ -699,14 +701,8 @@ class TeamFolderService {
 			$copyId = null;
 			if ($isOwner === true) {
 				$copyId = $ref['id'];
-			} elseif ($this->shareTargets !== null) {
-				try {
-					$copyId = $this->shareTargets
-						->findBySourceSecretAndTargetUser(sourceSecretId: $ref['id'], targetUserId: $userId)
-						->getSecretId();
-				} catch (DoesNotExistException) {
-					$copyId = null;
-				}
+			} elseif ($this->rowJudge !== null) {
+				$copyId = $this->rowJudge->forPair(sourceId: $ref['id'], targetUserId: $userId)->trustedRow()?->getSecretId();
 			}
 
 			$refs[$index]['copyId'] = $copyId;
@@ -803,7 +799,7 @@ class TeamFolderService {
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	private function resolveCopiesOf(TeamFolderMember $membership): void {
-		if ($this->restrictions === null || $this->shareTargets === null) {
+		if ($this->restrictions === null || $this->rowJudge === null) {
 			return;
 		}
 
@@ -812,7 +808,8 @@ class TeamFolderService {
 			memberId: $membership->getMemberId()
 		);
 		foreach ($users as $coveredUserId) {
-			$this->restrictions->resolveTargets(targets: $this->shareTargets->findByTargetUser($coveredUserId));
+			// The resolve leaves out every row the pending scan holds back.
+			$this->restrictions->resolveTargets(targets: $this->rowJudge->rowsOfTarget(targetUserId: $coveredUserId)->all());
 		}
 	}//end resolveCopiesOf()
 

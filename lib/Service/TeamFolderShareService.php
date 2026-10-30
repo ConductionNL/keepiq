@@ -46,6 +46,14 @@ use Throwable;
  *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
+
+	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
+
 	/**
 	 * Constructor for TeamFolderShareService.
 	 *
@@ -55,6 +63,7 @@ class TeamFolderShareService {
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -67,7 +76,9 @@ class TeamFolderShareService {
 		private NotificationService $notificationService,
 		private IDBConnection $db,
 		private ?ShareRestrictionResolver $restrictions = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper));
 	}//end __construct()
 
 	/**
@@ -231,8 +242,9 @@ class TeamFolderShareService {
 	 */
 	public function revokeForTeamFolder(string $teamFolderId): int {
 		$revoked = 0;
-		foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $row) {
-			$this->revokeRow(row: $row);
+		$judged = $this->rowJudge->judgeRows(rows: $this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId));
+		foreach ($judged->all() as $row) {
+			$this->revokeRow(row: $row, held: $judged->verdict(row: $row));
 			++$revoked;
 		}
 
@@ -252,11 +264,11 @@ class TeamFolderShareService {
 	 */
 	public function revokeForMember(string $teamFolderId, string $targetUserId): int {
 		$revoked = 0;
-		foreach ($this->bulkGrantMapper->findByTeamFolderAndTargetUser(
-			teamFolderId: $teamFolderId,
-			targetUserId: $targetUserId
-		) as $row) {
-			$this->revokeRow(row: $row);
+		$judged = $this->rowJudge->judgeRows(
+			rows: $this->bulkGrantMapper->findByTeamFolderAndTargetUser(teamFolderId: $teamFolderId, targetUserId: $targetUserId)
+		);
+		foreach ($judged->all() as $row) {
+			$this->revokeRow(row: $row, held: $judged->verdict(row: $row));
 			++$revoked;
 		}
 
@@ -275,12 +287,13 @@ class TeamFolderShareService {
 	 */
 	public function revokeTeamSharesForUser(string $targetUserId): int {
 		$revoked = 0;
-		foreach ($this->shareTargetMapper->findByTargetUser(targetUserId: $targetUserId) as $row) {
+		$judged = $this->rowJudge->rowsOfTarget(targetUserId: $targetUserId);
+		foreach ($judged->all() as $row) {
 			if ($row->getTeamFolderId() === null || $row->getTeamFolderId() === '') {
 				continue;
 			}
 
-			$this->revokeRow(row: $row);
+			$this->revokeRow(row: $row, held: $judged->verdict(row: $row));
 			++$revoked;
 		}
 
@@ -373,16 +386,23 @@ class TeamFolderShareService {
 
 	/**
 	 * Revoke one ShareTarget row: the recipient's Secret copy goes first,
-	 * then the provenance row itself.
+	 * then the provenance row itself. A row the pending quarantine scan holds
+	 * back, quarantined or unjudged, is removed and its copy kept: that copy
+	 * may be its holder's own secret.
 	 *
 	 * @param ShareTarget $row The share-target row
+	 * @param string|null $held The pending scan's verdict on the row (ShareRowJudge)
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	private function revokeRow(ShareTarget $row): void {
-		$this->copies->deleteByShare(share: $row);
+	private function revokeRow(ShareTarget $row, ?string $held): void {
+		if ($held === null) {
+			$this->copies->deleteByShare(share: $row);
+		}
+
 		$this->shareTargetMapper->delete($row);
 	}//end revokeRow()
 

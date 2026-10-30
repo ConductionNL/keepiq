@@ -19,12 +19,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
-use OCA\Keepiq\Event\Audit\AuditEvent;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShareMapper;
@@ -41,10 +38,14 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\TeamFolderAuditor;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\TeamFolderOffboardingService;
@@ -52,6 +53,7 @@ use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Service\TeamFolderShareService;
 use OCA\Keepiq\Service\TeamSecretTransferService;
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
@@ -59,6 +61,7 @@ use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -1281,6 +1284,54 @@ class TeamFolderServiceTest extends TestCase {
 	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-2.3
 	 */
 	public function testAManagerReconcilesFromItsOwnCopies(): void {
+		$this->managerHoldsACopyOfTheFirstSecret();
+
+		$secrets = $this->serviceWithShareTargets()->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
+		$this->assertSame('olga-copy-1', $secrets[0]['copyId']);
+		$this->assertNull($secrets[1]['copyId'], 'a secret the manager holds no copy of is reported, not faked');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->reconcile(teamFolderId: 'tf-1', userId: 'ed');
+	}//end testAManagerReconcilesFromItsOwnCopies()
+
+	/**
+	 * While the quarantine scan is pending, a manager's share row that the
+	 * scan quarantines on the spot, or cannot judge, names no copy: the
+	 * manager's browser never decrypts that secret for the other members.
+	 *
+	 * @param string $verdict The scan's verdict on the row
+	 *
+	 * @return void
+	 */
+	#[DataProvider('heldBackVerdicts')]
+	public function testAManagersHeldBackRowNamesNoCopy(string $verdict): void {
+		$this->managerHoldsACopyOfTheFirstSecret();
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($verdict);
+
+		$secrets = $this->serviceWithShareTargets(scanner: $scanner)->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
+		$this->assertNull($secrets[0]['copyId']);
+	}//end testAManagersHeldBackRowNamesNoCopy()
+
+	/**
+	 * The pending scan's verdicts that hold a row back.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function heldBackVerdicts(): array {
+		return [
+			'quarantined on the spot' => [ShareQuarantineScanner::HELD_QUARANTINED],
+			'cannot be judged' => [ShareQuarantineScanner::HELD_UNJUDGED],
+		];
+	}//end heldBackVerdicts()
+
+	/**
+	 * A managed folder of two secrets, of which the manager olga holds her
+	 * own copy of the first.
+	 *
+	 * @return void
+	 */
+	private function managerHoldsACopyOfTheFirstSecret(): void {
 		$this->managedFolder();
 		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
 		$one = new Secret();
@@ -1290,10 +1341,25 @@ class TeamFolderServiceTest extends TestCase {
 		$two->setId('sec-2');
 		$two->setName('Mail');
 		$this->secretMapper->method('findByOwner')->willReturn([$one, $two]);
+		$copy = new Secret();
+		$copy->setId('olga-copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('olga');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($copy): Secret {
+				if ($id === 'olga-copy-1') {
+					return $copy;
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
 		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
 			static function (string $sourceSecretId, string $targetUserId) {
 				if ($sourceSecretId === 'sec-1' && $targetUserId === 'olga') {
 					$row = new ShareTarget();
+					$row->setId('row-1');
+					$row->setTargetUserId('olga');
 					$row->setSecretId('olga-copy-1');
 					return $row;
 				}
@@ -1302,14 +1368,7 @@ class TeamFolderServiceTest extends TestCase {
 			}
 		);
 		$this->userManager->method('userExists')->willReturn(true);
-
-		$secrets = $this->serviceWithShareTargets()->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
-		$this->assertSame('olga-copy-1', $secrets[0]['copyId']);
-		$this->assertNull($secrets[1]['copyId'], 'a secret the manager holds no copy of is reported, not faked');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->service->reconcile(teamFolderId: 'tf-1', userId: 'ed');
-	}//end testAManagerReconcilesFromItsOwnCopies()
+	}//end managerHoldsACopyOfTheFirstSecret()
 
 	/**
 	 * Member added by a manager is audited with the manager as actor.
@@ -1346,11 +1405,12 @@ class TeamFolderServiceTest extends TestCase {
 	 * The service as setUp() builds it, with the share-target mapper and an
 	 * optional auditor wired in.
 	 *
-	 * @param TeamFolderAuditor|null $audit The auditor
+	 * @param TeamFolderAuditor|null      $audit   The auditor
+	 * @param ShareQuarantineScanner|null $scanner The pending quarantine scan
 	 *
 	 * @return TeamFolderService
 	 */
-	private function serviceWithShareTargets(?TeamFolderAuditor $audit = null): TeamFolderService {
+	private function serviceWithShareTargets(?TeamFolderAuditor $audit = null, ?ShareQuarantineScanner $scanner = null): TeamFolderService {
 		$memberships = new TeamFolderMembershipResolver(
 			memberMapper: $this->memberMapper,
 			folderMapper: $this->folderMapper,
@@ -1388,7 +1448,7 @@ class TeamFolderServiceTest extends TestCase {
 			audit: ($audit ?? new TeamFolderAuditor(eventDispatcher: null)),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-			shareTargets: $this->shareTargetMapper,
+			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: $scanner),
 		);
 	}//end serviceWithShareTargets()
 }//end class

@@ -215,6 +215,8 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 				}
 
 				$row = new ShareTarget();
+				$row->setId($sourceSecretId . '|' . $targetUserId);
+				$row->setTargetUserId($targetUserId);
 				$row->setSecretId($copyId);
 				return $row;
 			}
@@ -274,7 +276,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			shares: $shares,
 			copies: new \OCA\Keepiq\Service\ConfirmerCopyResolver(
 				queries: $queries,
-				shareTargetMapper: $shareTargetMapper,
+				rowJudge: new \OCA\Keepiq\Service\ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 				secretMapper: $secretMapper,
 			),
 			notificationService: $notificationService,
