@@ -12,9 +12,73 @@
  */
 
 import { translate as t } from '@nextcloud/l10n'
-import { parseOtpauth } from './totp.js'
+import { parseOtpauth, TOTP_DEFAULTS } from './totp.js'
 
 const OTPAUTH_SCHEME = /^otpauth:\/\//i
+
+/**
+ * The key to store for TOTP parameters held one by one, as CXF and KeePass
+ * hold them: the bare base32 secret when period, digits and algorithm are
+ * the defaults (30, 6, SHA1) and there is no issuer or account, else an
+ * `otpauth://totp/` link carrying them, so the code display keeps its label.
+ *
+ * @param {object} parts The parameters.
+ * @param {string} parts.secret The base32 secret.
+ * @param {number|string|null} [parts.period] The time step in seconds.
+ * @param {number|string|null} [parts.digits] The code length.
+ * @param {string|null} [parts.algorithm] `sha1`, `SHA-256`, `HMAC-SHA-512` and the like.
+ * @param {string|null} [parts.issuer] The issuer, for the link's label.
+ * @param {string|null} [parts.account] The account name, for the link's label.
+ * @return {string} The key, '' when there is no secret.
+ * @throws {Error} When the code generator cannot use these parameters.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+export function authenticatorKeyFromParts(parts) {
+	const secret = String(parts.secret ?? '')
+		.replace(/\s+/g, '')
+		.toUpperCase()
+	if (secret === '') {
+		return ''
+	}
+	const given = (value, fallback) =>
+		value === null || value === undefined || value === '' ? fallback : value
+	const period = Number(given(parts.period, TOTP_DEFAULTS.period))
+	const digits = Number(given(parts.digits, TOTP_DEFAULTS.digits))
+	const algorithm = String(given(parts.algorithm, TOTP_DEFAULTS.algorithm))
+		.toUpperCase()
+		.replace(/^HMAC-/, '')
+		.replaceAll('-', '')
+	const issuer = String(parts.issuer ?? '')
+	const label = [issuer, String(parts.account ?? '')]
+		.filter((part) => part !== '')
+		.join(':')
+	if (
+		period === TOTP_DEFAULTS.period
+		&& digits === TOTP_DEFAULTS.digits
+		&& algorithm === TOTP_DEFAULTS.algorithm
+		&& label === ''
+	) {
+		parseOtpauth(secret)
+		return secret
+	}
+	const params = new URLSearchParams({
+		secret,
+		period: String(period),
+		digits: String(digits),
+		algorithm,
+	})
+	if (issuer !== '') {
+		params.set('issuer', issuer)
+	}
+	const key = `otpauth://totp/${encodeURIComponent(label)}?${params}`
+	const parsed = parseOtpauth(key)
+	if (parsed.period !== period || parsed.digits !== digits) {
+		throw new Error(
+			`Unsupported TOTP parameters: ${digits} digits every ${period} seconds`,
+		)
+	}
+	return key
+}
 
 /**
  * The key as it is stored: a link trimmed, a bare secret without its spacing

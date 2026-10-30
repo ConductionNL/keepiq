@@ -8,7 +8,7 @@ kind: code
 
 Keepiq shows a live one-time code only on a separate Authenticator item (a secret of type `totp` whose encrypted `key` is the seed) and keeps a passkey only as a separate Passkey item. A user who wants both on their bank login keeps three items side by side and has to keep them in step by hand, and every client has to guess which belong together. Bitwarden, 1Password, Keeper and Passbolt all keep the code and the passkeys on the login.
 
-keepiq#1324 decided that a one-time code and passkeys belong to the login, as two new encrypted fields on the secret, `totp` and `passkeys`, next to `key`, `login` and `additionalFields`. keepiq#1325 added those fields to the backend. This change is keepiq#1326, the web app half: entering, showing, sharing and versioning them.
+keepiq#1324 decided that a one-time code and passkeys belong to the login, as two new encrypted fields on the secret, `totp` and `passkeys`, next to `key`, `login` and `additionalFields`. keepiq#1325 added those fields to the backend. This change is keepiq#1326, the web app half: entering, showing, sharing and versioning them, and keepiq#1327: importing and exporting them with the login.
 
 An earlier version of this change kept the seed under a reserved `totp` key inside the encrypted additional fields. That design is superseded: a field of its own lets share-save, federation, version history and the vault list handle the seed without guessing at a key inside a blob, while the server still sees only ciphertext.
 
@@ -38,6 +38,7 @@ No demand row. Four competitors rate it yes and it is in the core area (vault).
 - **Every path carries both fields**: share-save, direct, group and team-folder shares, ownership transfer, version history and restore, the offline cache and queue, and encryption suite migration. Federated partners receive them only when they advertise that they store them; link shares never carry them.
 - **No new Authenticator or Passkey items.** The create dialog and the default item type setting no longer offer those types; existing items keep working.
 - **A vault list marker** on rows with a code or passkeys.
+- **Import and export keep them on the login.** Bitwarden, KeePass and CXF imports put a code and passkeys on the login they belong to instead of creating `<name> (TOTP)` and `<name> (passkey)` items; a CXF export writes them in the login's own item; the encrypted backup and the GDPR package carry both fields and a restore reads them back.
 
 ## Capabilities
 
@@ -48,12 +49,14 @@ No demand row. Four competitors rate it yes and it is in the core area (vault).
 ### Modified Capabilities
 
 - `use-only-shares`: a use-only copy may show a current code and list passkey metadata, and must not reveal the seed or any passkey private key.
-- `passkey-item-type`: new passkeys live on the login; the standalone type is no longer creatable from the web app, and existing items keep working.
+- `passkey-item-type`: new passkeys live on the login; the standalone type is no longer creatable from the web app, and existing items keep working. A Bitwarden import puts passkeys on their login.
+- `secret-import`: Bitwarden and KeePass imports put a seed and passkeys on the login's own fields.
+- `cxf-import-export`: a CXF item's TOTP and passkeys go on its login, and a login's code and passkeys export in its own item.
 
 ## Impact
 
-- **Backend**: none in this change. The `totp` and `passkeys` columns, routes, federation advertisement and the 409 `partner_upgrade_required` refusal come from keepiq#1325.
-- **Frontend**: new `AuthenticatorKeyField.vue`, `PasskeyList.vue`, `LoginExtrasMarkers.vue`, `PasskeyDeleteDialog.vue`, `src/totp/authenticatorKey.js`, `src/totp/qrImage.js`, `src/passkey/loginPasskeys.js`, `src/utils/valueFields.js`, `src/services/recipientCopy.js`; changes to the create, edit and version details dialogs, the detail sidebar, the vault list, the secret, version, share, team-folder, federation, offline and preferences stores, share-save and the suite migration pipeline.
+- **Backend**: none in this change. The `totp` and `passkeys` columns, routes, federation advertisement and the 409 `partner_upgrade_required` refusal come from keepiq#1325. The batch import endpoint passes both fields on to the secret it creates since fdca23d5 (task 6.6).
+- **Frontend**: new `AuthenticatorKeyField.vue`, `PasskeyList.vue`, `LoginExtrasMarkers.vue`, `PasskeyDeleteDialog.vue`, `src/totp/authenticatorKey.js`, `src/totp/qrImage.js`, `src/passkey/loginPasskeys.js`, `src/utils/valueFields.js`, `src/services/recipientCopy.js`; changes to the create, edit and version details dialogs, the detail sidebar, the vault list, the secret, version, share, team-folder, federation, offline and preferences stores, share-save and the suite migration pipeline. For import and export: new `src/import/loginValueFields.js`; changes to the Bitwarden, KeePass, CSV and CXF parsers, the CXF export, the vault serializer, the backup parser, the import store and the import wizard preview.
 - **Dependency**: `jsqr` 1.4.0, loaded in its own chunk on first use.
 - **Security**: the seed and passkeys are encrypted and decrypted only in the browser. The seed is write-only in the UI after saving and no login passkey private key is ever rendered. Link shares leave both fields out because a link recipient decrypts the whole shared value.
 - **Browser extension and Android**: not in this change. The upcoming extension changes `ext-totp-autofill` and `ext-passkey-provider` and keepiq#1329 adopt the fields.

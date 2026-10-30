@@ -16,6 +16,7 @@
  */
 
 import { isUseOnly } from '../utils/shareRestriction.js'
+import { BLOB_FIELDS } from '../utils/valueFields.js'
 
 /** The serialized payload format identifier. */
 export const PAYLOAD_FORMAT = 'keepiq-vault'
@@ -93,7 +94,7 @@ function collectSubtree(folders, rootIds) {
  * Serialize decrypted secrets + folders into the versioned export payload.
  *
  * @param {Array<object>} secrets Decrypted secrets (name, url, login, key,
- *   additionalFields, type, folderId).
+ *   additionalFields, totp, passkeys, type, folderId).
  * @param {Array<object>} folders Folder rows ({ id, name, parentId }).
  * @param {object} [scope] Scope selector.
  * @param {string} [scope.mode] 'vault' (default) or 'folders'.
@@ -121,7 +122,7 @@ export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 				continue
 			}
 		}
-		includedSecrets.push({
+		const entry = {
 			name: secret.name ?? '',
 			url: secret.url ?? null,
 			type: secret.type ?? secret.typeId ?? 'login',
@@ -130,7 +131,14 @@ export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 			additionalFields: secret.additionalFields ?? null,
 			folder:
 				secret.folderId != null ? (pathMap.get(secret.folderId) ?? '') : '',
-		})
+		}
+		// A login's own code and passkeys, written only when it has them.
+		for (const field of BLOB_FIELDS) {
+			if (typeof secret[field] === 'string' && secret[field] !== '') {
+				entry[field] = secret[field]
+			}
+		}
+		includedSecrets.push(entry)
 	}
 
 	const includedFolders = []
