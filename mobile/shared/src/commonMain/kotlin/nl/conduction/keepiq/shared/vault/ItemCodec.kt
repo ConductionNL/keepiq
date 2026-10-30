@@ -239,7 +239,8 @@ object ItemCodec {
         }
         val login = keys.decryptField(row.login)
         val hasSavedKey = !row.totp.isNullOrEmpty()
-        val totpSeed = if (hasSavedKey) keys.decryptField(row.totp) else ""
+        // A field that cannot be decrypted shows as unreadable; the rest of the item still opens.
+        val totpSeed = if (hasSavedKey) runCatching { keys.decryptField(row.totp) }.getOrDefault("") else ""
         if (row.useOnly) {
             val code = if (kind == FormKind.TOTP) keys.decryptField(row.key) else ""
             return DecryptedItem(row, typeName, type, login, code, null, false, null, fromCache, totpSeed, hasSavedKey)
@@ -256,11 +257,11 @@ object ItemCodec {
             val parsed = runCatching { Json.parseToJsonElement(keys.decryptField(row.additionalFields)) }.getOrNull()
             if (parsed is JsonObject) fields = parsed else fieldsError = true
         }
-        val passkeysText = if (!row.passkeys.isNullOrEmpty()) keys.decryptField(row.passkeys) else ""
-        val passkeys = LoginPasskeys.credentials(passkeysText).map { PasskeySummary.of(it) }
+        val passkeysText = if (!row.passkeys.isNullOrEmpty()) runCatching { keys.decryptField(row.passkeys) }.getOrNull() else ""
+        val passkeys = LoginPasskeys.credentials(passkeysText ?: "").map { PasskeySummary.of(it) }
         return DecryptedItem(
             row, typeName, type, login, secret, fields, fieldsError, passkey, fromCache,
-            totpSeed, hasSavedKey, passkeys, passkeysError = passkeysText.isNotEmpty() && passkeys.isEmpty(),
+            totpSeed, hasSavedKey, passkeys, passkeysError = passkeysText == null || (passkeysText.isNotEmpty() && passkeys.isEmpty()),
         )
     }
 

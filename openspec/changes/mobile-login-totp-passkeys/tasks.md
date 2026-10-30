@@ -3,7 +3,7 @@
 ## 1. Shared core
 
 - [x] 1.1 Read `capabilities` in `PairResponse` and refuse pairing without `totp-field` and `passkeys-field` (D1). Verify: `KeepiqClientTest`. Done: `KeepiqClientTest.pairingRefusesAServerWithoutLoginFields`.
-- [x] 1.2 Carry `totp` and `passkeys` as ciphertext in `VaultRow`, `StoredSecret` and `Vault.sq`, with the migration `1.sqm` that adds the columns and clears the sync state (D2, D3). Verify: `VaultSyncTest`, the store tests on both platforms. Done: `VaultStoreTest.aLoginsCodeAndPasskeysReadBackAsCiphertext` and `aStoreFromBeforeTheFieldsMigratesAndSyncsInFull` on jvm; the iOS store runs in CI.
+- [x] 1.2 Carry `totp` and `passkeys` as ciphertext in `VaultRow`, `StoredSecret` and `Vault.sq`, with the migration `1.sqm` that adds the columns and resets the freshness check (D2, D3). Verify: `VaultSyncTest`, the store tests on both platforms. Done: `VaultStoreTest.aLoginsCodeAndPasskeysReadBackAsCiphertext` and `aStoreFromBeforeTheFieldsMigratesAndSyncsInFull` on jvm; the iOS store runs in CI.
 - [x] 1.3 Open `totp` and `passkeys` in `ItemCodec.open`, with the use-only rule (D4). Verify: `VaultRepositoryTest`. Done: `VaultRepositoryTest.opensALoginsCodeAndPasskeys`, `aUseOnlyCopyOpensItsCodeButNoPasskeys`.
 - [x] 1.4 Send `totp` and `passkeys` in the create and update bodies only when set or changed, `''` to clear, never an encrypted empty string (D5). Verify: `VaultRepositoryTest`. Done: `VaultRepositoryTest` (`anEditThatKeepsTheKeySendsNeitherField`, `replacingTheKeySendsItEncrypted`, `removingTheKeySendsAnEmptyString`, `aNewLoginSendsItsKeyOnlyWhenSet`), `LoginPasskeysTest`.
 

@@ -25,6 +25,9 @@ import nl.conduction.keepiq.shared.vault.VaultRow
  * a Passkey item, or with [onLogin] one credential of a login's `passkeys`.
  */
 class PasskeyChoice(val itemId: String, val name: String, val credential: PasskeyCredential, val onLogin: Boolean = false) {
+    /** Tells apart the passkeys of one login: what the platform's choice carries back. */
+    val id: String get() = itemId + "|" + credential.credentialId
+
     /** What the platform shows: the user name, else the display name, else the item name. */
     val label: String get() = credential.userName.ifEmpty { credential.userDisplayName }.ifEmpty { name }
 
@@ -141,9 +144,9 @@ object Passkeys {
 
     /**
      * The login a new passkey for [userName] goes onto: the only same-site
-     * login, not linked to an app, that the user may change and whose user
-     * name equals [userName] trimmed and ignoring case. Null for none, for
-     * several, or for a blank [userName].
+     * login, not linked to an app, that the user may change, whose passkeys
+     * can be read, and whose user name equals [userName] trimmed and ignoring
+     * case. Null for none, for several, or for a blank [userName].
      */
     internal fun matchingLogin(index: AutofillIndex, rpId: String, userName: String, keys: VaultKeys): AutofillEntry? {
         val wanted = userName.trim()
@@ -152,7 +155,8 @@ object Passkeys {
         return index.entries.filter { e ->
             e.isLogin && !e.useOnly && !e.readOnly && AppLink.parse(e.url) == null &&
                 SiteMatch.registrableDomain(SiteMatch.hostOf(e.url ?: "")) == site &&
-                runCatching { keys.decryptField(e.login).trim() }.getOrNull().equals(wanted, ignoreCase = true)
+                runCatching { keys.decryptField(e.login).trim() }.getOrNull().equals(wanted, ignoreCase = true) &&
+                runCatching { e.passkeys.isNullOrEmpty() || LoginPasskeys.readable(keys.decryptField(e.passkeys)) }.getOrDefault(false)
         }.singleOrNull()
     }
 

@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -323,5 +324,11 @@ class ScreensTest {
         compose.onNodeWithText("Remove").performClick()
         compose.onNodeWithText("Keep saved key").performClick()
         compose.onNodeWithText("Remove").assertIsFocused()
+    }
+
+    @Test
+    fun theKeyFieldKeepsTheKeyboardFromLearningTheKey() {
+        assertEquals(KeyboardType.Password, AUTHENTICATOR_KEY_KEYBOARD.keyboardType)
+        assertEquals(false, AUTHENTICATOR_KEY_KEYBOARD.autoCorrectEnabled)
     }
 }

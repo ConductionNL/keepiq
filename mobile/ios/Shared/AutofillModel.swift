@@ -288,7 +288,8 @@ final class AutofillModel: ObservableObject {
             let json = AutofillFiles.shared.read(accountId: accountId, site: ApplePasskeys.shared.siteKey(rpId: rpId)) ?? "[]"
             let allow = credentialId.map { [$0.base64EncodedString()] } ?? allowed.map { $0.base64EncodedString() }
             passkeyChoices = ApplePasskeys.shared.choices(siteJson: json, rpId: rpId, keys: keys, allowed: allow)
-            passkeyRows = passkeyChoices.map { PasskeyRow(id: $0.itemId, name: $0.name, user: $0.label) }
+            // A login can hold several passkeys: the row id names the passkey, not only its item.
+            passkeyRows = passkeyChoices.map { PasskeyRow(id: $0.id, name: $0.name, user: $0.label) }
             if passkeyChoices.count == 1 { sign(passkeyChoices[0]) }
         case .registration(let rpId, let userName, let userHandle, let hash, let algorithms):
             register(accountId: accountId, keys: keys, rpId: rpId, userName: userName, userHandle: userHandle, hash: hash, algorithms: algorithms)
@@ -296,7 +297,7 @@ final class AutofillModel: ObservableObject {
     }
 
     func choosePasskey(_ row: PasskeyRow) {
-        guard let choice = passkeyChoices.first(where: { $0.itemId == row.id }) else { return }
+        guard let choice = passkeyChoices.first(where: { $0.id == row.id }) else { return }
         sign(choice)
     }
 

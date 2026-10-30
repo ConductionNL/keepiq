@@ -4,11 +4,13 @@
 package nl.conduction.keepiq.shared.passkey
 
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.AutofillSites
 import nl.conduction.keepiq.shared.crypto.ClientData
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
+import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.VaultKeys
 
 /**
@@ -40,18 +42,24 @@ class AppleRegistration(val credentialId: String, val attestationObject: String,
  * the page, so both arrive here already verified.
  */
 object ApplePasskeys {
-    /** The passkeys of the index, for the identity store. Decrypts each passkey item once. */
+    /** The passkeys of the index, on Passkey items and on logins, for the identity store. Decrypts each item once. */
     fun identities(accountId: String, index: AutofillIndex, keys: VaultKeys): List<PasskeyIdentity> =
-        index.entries.filter { it.isPasskey }.mapNotNull { e ->
-            val record = runCatching { PasskeyCredential.parse(keys.decryptField(e.key)) { "" } }.getOrNull() ?: return@mapNotNull null
-            PasskeyIdentity(
-                rpId = record.rpId,
-                userName = record.userName.ifEmpty { record.userDisplayName }.ifEmpty { e.name },
-                credentialId = base64(Encoding.fromBase64Url(record.credentialId)),
-                userHandle = record.userHandle.takeIf { it.isNotEmpty() }?.let { base64(Encoding.fromBase64Url(it)) } ?: "",
-                recordIdentifier = AutofillSites.recordIdentifier(accountId, e.id),
-            )
+        index.entries.filter { it.isPasskey || it.hasPasskeys }.flatMap { e ->
+            val records = if (e.isPasskey) {
+                listOfNotNull(runCatching { PasskeyCredential.parse(keys.decryptField(e.key)) { "" } }.getOrNull())
+            } else {
+                runCatching { LoginPasskeys.credentials(keys.decryptField(e.passkeys)) }.getOrDefault(emptyList())
+            }
+            records.map { record -> identity(accountId, e, record) }
         }
+
+    private fun identity(accountId: String, e: AutofillEntry, record: PasskeyCredential) = PasskeyIdentity(
+        rpId = record.rpId,
+        userName = record.userName.ifEmpty { record.userDisplayName }.ifEmpty { e.name },
+        credentialId = base64(Encoding.fromBase64Url(record.credentialId)),
+        userHandle = record.userHandle.takeIf { it.isNotEmpty() }?.let { base64(Encoding.fromBase64Url(it)) } ?: "",
+        recordIdentifier = AutofillSites.recordIdentifier(accountId, e.id),
+    )
 
     /** The passkeys for [rpId] in one site file; [allowed] narrows them to those credential ids (base64). */
     fun choices(siteJson: String, rpId: String, keys: VaultKeys, allowed: List<String>): List<PasskeyChoice> =

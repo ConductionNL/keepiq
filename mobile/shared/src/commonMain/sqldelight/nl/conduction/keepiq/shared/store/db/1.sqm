@@ -1,5 +1,6 @@
--- A login's own seed and passkeys (mobile-login-totp-passkeys D3). The sync
--- state goes, so the next sync reads the whole vault and fills both columns.
+-- A login's own seed and passkeys (mobile-login-totp-passkeys D3). The
+-- stored vault stays readable offline, but the cheap freshness check can no
+-- longer pass, so the next sync reads the whole vault and fills both columns.
 ALTER TABLE secret ADD COLUMN totp_ciphertext TEXT;
 ALTER TABLE secret ADD COLUMN passkeys_ciphertext TEXT;
-DELETE FROM sync_state;
+UPDATE sync_state SET check_top = NULL, check_total = -1;

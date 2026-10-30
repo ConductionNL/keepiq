@@ -465,4 +465,17 @@ class VaultRepositoryTest {
         assertIs<WriteResult.Refused>(repo.deletePasskey(item, "c"))
         assertTrue(requests.none { it.first == "PUT" })
     }
+
+    @Test
+    fun aFieldThatCannotBeDecryptedKeepsTheRestOfTheItemOpen() = runTest {
+        repo.refresh(SyncTrigger.START)
+        mailRow = """{"id":"s4","name":"Mail","url":"https://mail.example","typeId":"1","key":"${enc("geheim-4")}","login":"${enc("alice")}",
+            "totp":"bm90IGNpcGhlcnRleHQ=","passkeys":"bm90IGNpcGhlcnRleHQ=","useOnly":false,"readOnly":false,"blocked":false}"""
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertEquals("geheim-4", item.secret)
+        assertTrue(item.hasSavedKey)
+        assertNull(item.totp)
+        assertTrue(item.passkeys.isEmpty())
+        assertTrue(item.passkeysError)
+    }
 }

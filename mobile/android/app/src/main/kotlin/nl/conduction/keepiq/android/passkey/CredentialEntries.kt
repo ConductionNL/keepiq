@@ -71,7 +71,7 @@ class CredentialEntries(private val context: Context, private val app: KeepiqApp
                     val rpId = rpIdOf(get.rpId, caller) ?: continue
                     if (!caller.mayUse(rpId, core.identities)) continue
                     for (choice in Passkeys.candidates(index, rpId, keys, get.allowCredentialIds)) {
-                        val intent = CredentialProviderActivity.intent(context, CredentialProviderActivity.MODE_PASSKEY, choice.itemId)
+                        val intent = CredentialProviderActivity.intent(context, CredentialProviderActivity.MODE_PASSKEY, choice.id)
                         out += PublicKeyCredentialEntry.Builder(context, choice.label, pending(intent), option)
                             .setDisplayName(choice.name)
                             .setIcon(icon())

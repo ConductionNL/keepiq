@@ -11,6 +11,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 
+/** A login's `passkeys` holds something other than an array: it is never rewritten (web D5). */
+class UnreadablePasskeysException : IllegalStateException("The passkeys of this login cannot be read.")
+
 /**
  * A login's decrypted `passkeys` field: a JSON array of credentials in the
  * canonical passkey schema (src/passkey/loginPasskeys.js). Changing one
@@ -22,21 +25,27 @@ object LoginPasskeys {
     fun credentials(json: String): List<PasskeyCredential> =
         entries(json).mapNotNull { PasskeyCredential.parse(it.toString()) { "" } }
 
+    /** Whether [json] is empty or an array, so a change keeps what is stored. */
+    fun readable(json: String): Boolean = json.isEmpty() || runCatching { Json.parseToJsonElement(json) }.getOrNull() is JsonArray
+
     /** The array without [credentialId], or `""` when none remain. */
     fun without(json: String, credentialId: String): String =
-        serialize(entries(json).filter { idOf(it) != credentialId })
+        serialize(array(json).filter { idOf(it) != credentialId })
 
     /** The array with [counter] on [credentialId]. */
     fun withCounter(json: String, credentialId: String, counter: Long): String = serialize(
-        entries(json).map { e -> (e as? JsonObject)?.takeIf { idOf(it) == credentialId }?.let { JsonObject(it + ("counter" to JsonPrimitive(counter))) } ?: e },
+        array(json).map { e -> (e as? JsonObject)?.takeIf { idOf(it) == credentialId }?.let { JsonObject(it + ("counter" to JsonPrimitive(counter))) } ?: e },
     )
 
     /** The array with [credential] added; [json] may be `""`. */
     fun appended(json: String, credential: PasskeyCredential): String =
-        serialize(entries(json) + Json.parseToJsonElement(credential.toJson()))
+        serialize(array(json) + Json.parseToJsonElement(credential.toJson()))
 
     private fun entries(json: String): List<JsonElement> =
         if (json.isEmpty()) emptyList() else (runCatching { Json.parseToJsonElement(json) }.getOrNull() as? JsonArray) ?: emptyList()
+
+    /** The entries to change; a value that is not an array refuses, so it is never overwritten. */
+    private fun array(json: String): List<JsonElement> = if (readable(json)) entries(json) else throw UnreadablePasskeysException()
 
     private fun idOf(entry: JsonElement): String? = ((entry as? JsonObject)?.get("credentialId") as? JsonPrimitive)?.contentOrNull
 

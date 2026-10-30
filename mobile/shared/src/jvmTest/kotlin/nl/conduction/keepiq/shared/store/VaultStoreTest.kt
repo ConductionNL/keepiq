@@ -163,7 +163,11 @@ class VaultStoreTest {
         assertEquals("S0VZ", s1.key)
         assertNull(s1.totp)
         assertNull(s1.passkeys)
-        assertNull(store.state())
+        // Still readable offline, but the cheap check can never pass: the next sync reads the whole vault.
+        val state = store.state()!!
+        assertEquals(1000L, state.syncedAtMillis)
+        assertNull(state.checkTop)
+        assertEquals(-1L, state.checkTotal)
     }
 
     private fun obj(json: String) = Json.parseToJsonElement(json).jsonObject

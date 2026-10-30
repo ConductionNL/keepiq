@@ -12,6 +12,8 @@ import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -62,5 +64,16 @@ class LoginPasskeysTest {
     @Test
     fun unreadableArrayGivesNoCredentials() {
         for (text in listOf("", "{", "{}", """[{"rpId":"example.com"}]""")) assertTrue(LoginPasskeys.credentials(text).isEmpty(), text)
+    }
+
+    @Test
+    fun aValueThatIsNotAnArrayIsNeverOverwritten() {
+        val single = credential("a").toJson()
+        assertFalse(LoginPasskeys.readable(single))
+        assertTrue(LoginPasskeys.readable(""))
+        assertTrue(LoginPasskeys.readable(two))
+        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.appended(single, credential("c")) }
+        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.without(single, "a") }
+        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.withCounter("{", "a", 1) }
     }
 }

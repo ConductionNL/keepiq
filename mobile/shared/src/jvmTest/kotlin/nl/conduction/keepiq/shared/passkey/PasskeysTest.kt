@@ -323,4 +323,30 @@ class PasskeysTest {
         assertTrue(Passkeys.rpIdAllowed("localhost", "http://localhost:8080"))
         assertFalse(Passkeys.rpIdAllowed("", "https://login.example.nl"))
     }
+
+    @Test
+    fun twoPasskeysOnALoginAreTwoChoicesEachWithItsOwnId() {
+        val (first, _) = made("login.example.nl", 0)
+        val (second, _) = made("login.example.nl", 0)
+        val choices = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", first, second))), "login.example.nl", keys)
+        assertEquals(2, choices.map { it.id }.toSet().size)
+        assertEquals(second, choices.single { it.id == choices[1].id }.credential)
+    }
+
+    @Test
+    fun aLoginWhosePasskeysAreNotAnArrayIsNeverOverwritten() = runTest {
+        val unreadable = AutofillEntry("l1", "Example", "https://login.example.nl", AutofillEntry.LOGIN, enc("alice@example.nl"), enc("pw"), false, passkeys = enc("""{"credentialId":"x"}"""))
+        Passkeys.create(api, keys, AutofillIndex(listOf(unreadable)), creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+    }
+
+    @Test
+    fun identitiesListEveryPasskeyOnALogin() {
+        val (standalone, _) = made("login.example.nl", 0)
+        val (first, _) = made("login.example.nl", 0)
+        val (second, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(listOf(entry("p1", "login.example.nl", standalone), loginEntry("l1", "https://login.example.nl", "alice@example.nl", first, second)))
+        val ids = ApplePasskeys.identities("acc", index, keys).map { it.credentialId }
+        assertEquals(3, ids.toSet().size)
+    }
 }

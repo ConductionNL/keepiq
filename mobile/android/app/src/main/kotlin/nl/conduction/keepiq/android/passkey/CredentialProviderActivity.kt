@@ -164,8 +164,9 @@ class CredentialProviderActivity : FragmentActivity() {
         val rpId = get.rpId?.takeIf { it.isNotEmpty() } ?: (caller as? CredentialCaller.Browser)?.let { SiteMatch.hostOf(it.origin) } ?: ""
         if (!caller.mayUse(rpId, core.identities)) return getError(NoCredentialException())
         refreshIndex(accountId, keys, always = false)
-        val itemId = intent.getStringExtra(EXTRA_ITEM)
-        val choice = Passkeys.candidates(core.indexOf(accountId), rpId, keys, get.allowCredentialIds).firstOrNull { it.itemId == itemId }
+        // The choice's id names the passkey, not only its item: a login can hold several.
+        val choiceId = intent.getStringExtra(EXTRA_ITEM)
+        val choice = Passkeys.candidates(core.indexOf(accountId), rpId, keys, get.allowCredentialIds).firstOrNull { it.id == choiceId }
             ?: return getError(NoCredentialException())
         val clientData = option.clientDataHash?.let { ClientData.hashed(it) } ?: ClientData.build(ClientData.GET, get.challenge, caller.origin)
         val api = core.api(accountId) ?: return getError(GetCredentialUnknownException("no account"))

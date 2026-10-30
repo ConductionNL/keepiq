@@ -6,6 +6,7 @@ package nl.conduction.keepiq.android.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,11 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import nl.conduction.keepiq.android.R
 import nl.conduction.keepiq.shared.vault.DraftProblem
 import nl.conduction.keepiq.shared.vault.ItemDraft
 import nl.conduction.keepiq.shared.vault.KeyEdit
+
+/** The keyboard for a key: a seed is a second factor, so the keyboard must not learn or suggest it. */
+internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
 
 /**
  * The Authenticator key of an item (mobile-login-totp-passkeys D8). A saved
@@ -45,7 +50,7 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     val label = stringResource(R.string.edit_totp_key)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (!draft.hasSavedKey || draft.keyEdit == KeyEdit.REPLACE) {
-            TextInput(label, draft.newKey, problem, modifier = Modifier.focusRequester(field)) { v ->
+            TextInput(label, draft.newKey, problem, modifier = Modifier.focusRequester(field), keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD) { v ->
                 onChange(draft.copy(newKey = v, keyEdit = if (draft.hasSavedKey || v.isNotBlank()) KeyEdit.REPLACE else KeyEdit.KEEP))
             }
         } else {
