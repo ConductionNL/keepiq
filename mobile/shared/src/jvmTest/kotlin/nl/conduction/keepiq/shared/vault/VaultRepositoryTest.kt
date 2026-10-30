@@ -545,7 +545,9 @@ class VaultRepositoryTest {
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         // Another client wrote one object instead of an array since the phone opened the login.
         mailRow = mailRowWith(credential("a", "alice-a").toJson())
-        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "a", "mail.example"))
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "a", "mail.example"))
+        // The server answered: the phone is not offline.
+        assertEquals(WriteProblemKind.FAILED, refused.problem.kind)
         assertTrue(requests.none { it.first == "PUT" })
     }
 
