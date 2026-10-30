@@ -164,6 +164,7 @@ class SecretRequestService {
 	 * @throws InvalidArgumentException
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the secret's holder may not change it, as with a copy shared with them to view only
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the secret is a copy whose source cannot be resolved, or is gone by the write
+	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
 	 */
@@ -317,6 +318,7 @@ class SecretRequestService {
 	 * @throws InvalidArgumentException With code 409 when the row moved twice during the fill
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the owner may not change the secret, as with a copy shared with them to view only
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the secret is a copy whose source cannot be resolved, or is gone by the write
+	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
