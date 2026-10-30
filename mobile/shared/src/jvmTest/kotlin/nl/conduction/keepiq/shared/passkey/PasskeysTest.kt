@@ -61,10 +61,12 @@ class PasskeysTest {
     /** What GET /api/v1/secrets/l1 answers: the login as the server holds it now. */
     private var freshLogin = "{}"
     private val bodies = mutableListOf<JsonObject>()
+    private var offline = false
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
+        if (offline) throw java.io.IOException("no network")
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"9","name":"passkey","fields":[]}]"""
             path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get -> freshLogin
@@ -122,6 +124,46 @@ class PasskeysTest {
         val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
         Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl")
         assertEquals(listOf(record.credentialId to 5L, added.credentialId to 9L), sentPasskeys().map { it.credentialId to it.counter })
+    }
+
+    @Test
+    fun aLoginSignsFromItsFreshCounterNotTheIndex() = runTest {
+        val (record, spki) = made("login.example.nl", 4)
+        // Signed elsewhere since the index was built: the server holds 9.
+        freshLoginWith(record.copy(counter = 9))
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val hash = ByteArray(32) { 5 }
+        val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(hash), "login.example.nl")
+        assertEquals(10L, assertion.counter)
+        assertContentEquals(Encoding.uint32BigEndian(10), assertion.authenticatorData.copyOfRange(33, 37))
+        assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
+        assertEquals(listOf(10L), sentPasskeys().map { it.counter })
+    }
+
+    @Test
+    fun aPasskeyDeletedFromTheLoginElsewhereRefusesToSign() = runTest {
+        for (counter in listOf(4L, 0L)) {
+            requests.clear()
+            val (record, _) = made("login.example.nl", counter)
+            val (other, _) = made("login.example.nl", 2)
+            freshLoginWith(other)
+            val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+            assertFailsWith<PasskeyGoneException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+            assertEquals(listOf("GET" to "/api/v1/secrets/l1"), requests, "counter $counter")
+            assertTrue(bodies.isEmpty())
+        }
+    }
+
+    @Test
+    fun offlineALoginPasskeyWithoutACounterSignsFromTheIndex() = runTest {
+        val (record, _) = made("login.example.nl", 0)
+        val (counted, _) = made("login.example.nl", 4)
+        offline = true
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record, counted)))
+        val (zero, four) = Passkeys.candidates(index, "login.example.nl", keys)
+        assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
+        assertFailsWith<java.io.IOException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(bodies.isEmpty())
     }
 
     @Test

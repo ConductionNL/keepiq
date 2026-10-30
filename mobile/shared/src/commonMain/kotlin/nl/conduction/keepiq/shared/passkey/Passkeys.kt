@@ -3,9 +3,11 @@
 
 package nl.conduction.keepiq.shared.passkey
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.KeepiqApiException
 import nl.conduction.keepiq.shared.autofill.AppLink
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
@@ -34,6 +36,9 @@ class PasskeyChoice(val itemId: String, val name: String, val credential: Passke
     override fun toString(): String = "PasskeyChoice(id=$itemId)"
 }
 
+/** The passkey chosen from the index is no longer on its login as the server holds it now. */
+class PasskeyGoneException : IllegalStateException("This passkey is no longer in your vault.")
+
 /** The site already has one of the passkeys the request excludes (WebAuthn InvalidStateError). */
 class ExcludedCredentialException : IllegalStateException("A passkey for this account is already in your vault.")
 
@@ -46,9 +51,10 @@ class ExcludedCredentialException : IllegalStateException("A passkey for this ac
  *   decrypted record's rpId, which must be equal. An allow list narrows
  *   them to its credential ids.
  * - [sign]: the assertion, and a non-zero counter written back with PUT
- *   (orchestrator.js handleGet); on a login, to that credential of the
- *   login as the server holds it now. A write-back that fails fails the
- *   request, as in the extension.
+ *   (orchestrator.js handleGet). On a login, the credential is read from
+ *   the login as the server holds it now and signs from there, so its
+ *   counter is the stored one plus one and a passkey deleted elsewhere
+ *   refuses. A write-back that fails fails the request, as in the extension.
  * - [create]: a new ES256 passkey saved onto the one matching login, else
  *   onto a new login named rpName or rpId with the rpId as address
  *   (mobile-login-totp-passkeys D12). An excluded credential refuses before
@@ -77,14 +83,42 @@ object Passkeys {
 
     /** Signs for [rpId] with [choice] and writes a non-zero counter back to its item. */
     suspend fun sign(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
+        if (choice.onLogin) return signOnLogin(api, keys, choice, clientData, rpId)
         val assertion = WebAuthn.getAssertion(clientData, rpId, choice.credential)
-        if (assertion.counter > 0 && assertion.counter != choice.credential.counter && choice.onLogin) {
-            val stored = storedPasskeys(api, keys, choice.itemId)
-            api.updateSecret(choice.itemId, ItemCodec.passkeysBody(LoginPasskeys.withCounter(stored, choice.credential.credentialId, assertion.counter), keys))
-        } else if (assertion.counter > 0 && assertion.counter != choice.credential.counter) {
+        if (assertion.counter > 0 && assertion.counter != choice.credential.counter) {
             val updated = choice.credential.copy(counter = assertion.counter)
             val parts = ItemParts(choice.name, rpId, null, "", updated.toJson(), null)
             api.updateSecret(choice.itemId, ItemCodec.updateBody(parts, setOf("key"), keys))
+        }
+        return assertion
+    }
+
+    /**
+     * A passkey on a login signs from the login as the server holds it now,
+     * never from the index: the counter it sends is the stored one plus one,
+     * and a passkey deleted elsewhere refuses with [PasskeyGoneException],
+     * whatever its counter. When the server cannot be reached, a passkey
+     * whose counter is zero signs from the index as before, since it writes
+     * nothing back; one with a counter fails, as its write-back would.
+     */
+    private suspend fun signOnLogin(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
+        val row = try {
+            api.getSecret(choice.itemId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // A KeepiqApiException with a status is the server's answer; anything else never reached it.
+            val unreachable = e !is KeepiqApiException || e.status == 0
+            if (unreachable && choice.credential.counter == 0L) return WebAuthn.getAssertion(clientData, rpId, choice.credential)
+            throw e
+        }
+        val fresh = row?.let { VaultRow.from(it) } ?: throw PasskeyGoneException()
+        val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
+        val record = LoginPasskeys.credentials(stored).firstOrNull { it.credentialId == choice.credential.credentialId }
+            ?: throw PasskeyGoneException()
+        val assertion = WebAuthn.getAssertion(clientData, rpId, record)
+        if (assertion.counter > 0 && assertion.counter != record.counter) {
+            api.updateSecret(choice.itemId, ItemCodec.passkeysBody(LoginPasskeys.withCounter(stored, record.credentialId, assertion.counter), keys))
         }
         return assertion
     }
