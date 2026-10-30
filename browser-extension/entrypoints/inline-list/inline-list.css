@@ -170,6 +170,33 @@ p {
 	color: var(--fg-muted);
 }
 
+.row__code {
+	flex: none;
+	display: flex;
+	gap: 4px;
+	font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+}
+
+.row__timer {
+	flex: none;
+	min-width: 2ch;
+	font-size: 12px;
+	color: var(--fg-muted);
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.row[aria-disabled='true'] {
+	cursor: default;
+}
+
+.row[aria-disabled='true'] .row__user {
+	font-style: italic;
+}
+
 /* At least one row. The locked and no-match frames stay one row tall, so their longer text scrolls; the notice makes the list ask for more. */
 .message {
 	box-sizing: border-box;

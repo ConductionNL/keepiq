@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login with two-step verification</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Login with two-step verification</h1>
+		<p class="tests">Signing in leads to a code step in the layout picked below, which checks the code against the key on <a href="/totp-setup.html">Two-step setup</a>. Filling here copies the code for pasting on the next page; there the list on the code field, or filling the login again, puts it in.</p>
+		<form method="post" action="/totp-login?next=otp">
+			<label>Username <input name="username" type="text" autocomplete="username"></label>
+			<label>Password <input name="password" type="password" autocomplete="current-password"></label>
+			<fieldset>
+				<legend>Code step</legend>
+				<label class="inline"><input type="radio" name="next" value="otp" checked> One field</label>
+				<label class="inline"><input type="radio" name="next" value="otp-halves"> Two halves of three</label>
+				<label class="inline"><input type="radio" name="next" value="otp-split"> Six boxes</label>
+			</fieldset>
+			<button type="submit">Sign in</button>
+		</form>
+	</main>
+	<script>
+		const form = document.querySelector('form')
+		form.addEventListener('change', () => {
+			form.action = `/totp-login?next=${form.elements.next.value}`
+		})
+	</script>
+</body>
+</html>

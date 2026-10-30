@@ -421,6 +421,8 @@ settings:
   clipboardSeconds:
     1: 1 seconde
     n: $1 seconden
+  autoCopyTotp: TOTP automatisch kopiëren
+  autoCopyTotpHint: Als een login een verificatiecode heeft, wordt die naar je klembord gekopieerd wanneer je de login automatisch invult.
   askToAdd: Vragen om login toe te voegen
   askToUpdate: Vragen om bestaande login bij te werken
   excludedDomains: Uitgesloten domeinen
@@ -580,6 +582,7 @@ contextMenu:
   openKeepiq: Keepiq openen
   copyUsername: Gebruikersnaam kopiëren
   copyPassword: Wachtwoord kopiëren
+  copyCode: Verificatiecode kopiëren
   generatePassword: Wachtwoord genereren en kopiëren
   unlock: Kluis ontgrendelen
 
@@ -607,6 +610,17 @@ inlineList:
       n: $1 Keepiq-logins. Druk op pijl-omlaag om te kiezen.
     noMatch: Geen Keepiq-logins voor {host}
     locked: Keepiq is vergrendeld. Druk op pijl-omlaag om te ontgrendelen.
+  code:
+    frameTitle: Keepiq-verificatiecodes
+    label: Keepiq-verificatiecodes voor {host}
+    noMatch: Geen verificatiecodes voor {host}
+    locked: Ontgrendel Keepiq om je verificatiecodes te zien
+    invalid: Geen geldig authenticatorgeheim
+    status:
+      count:
+        1: 1 Keepiq-verificatiecode. Druk op pijl-omlaag om te kiezen.
+        n: $1 Keepiq-verificatiecodes. Druk op pijl-omlaag om te kiezen.
+      noMatch: Geen Keepiq-verificatiecodes voor {host}
 
 notificationBar:
   label: Keepiq-melding

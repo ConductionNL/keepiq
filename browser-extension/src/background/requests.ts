@@ -103,7 +103,8 @@ async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promi
 			const item: DecryptedItem = {}
 			for (const field of fields) {
 				const ciphertext = row[field]
-				if (typeof ciphertext === 'string') item[field] = await rsaDecrypt(ciphertext, key)
+				// `''` is no value, as for a login without a code.
+				if (typeof ciphertext === 'string' && ciphertext !== '') item[field] = await rsaDecrypt(ciphertext, key)
 			}
 			return [id, item]
 		} catch (error) {

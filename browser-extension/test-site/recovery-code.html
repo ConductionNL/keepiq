@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Recovery code</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Recovery code</h1>
+		<p class="tests">A recovery code field, marked <code>one-time-code</code> as some sites do. It is no authenticator code: no list opens and a fill leaves it empty.</p>
+		<form method="post" action="/otp">
+			<label>Recovery code <input name="recovery_code" type="text" autocomplete="one-time-code" maxlength="10"></label>
+			<button type="submit">Verify</button>
+		</form>
+	</main>
+</body>
+</html>

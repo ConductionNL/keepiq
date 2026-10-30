@@ -1,7 +1,7 @@
 import { i18n } from '#i18n'
 import {
 	INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MIN_HEIGHT_PX, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
-	type ContentToInlineList, type InlineListToBackground, type InlineRow, type InlineStateReply, type PickInput,
+	type ContentToInlineList, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow, type InlineStateReply, type PickInput,
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import { trackVisibility } from '@/src/autofill/visibility-tracker'
@@ -12,15 +12,47 @@ const ANNOUNCE_MS = 250
 
 type State = NonNullable<InlineStateReply>
 
+const isCode = (code: unknown): code is InlineCode => {
+	const c = code as Partial<InlineCode> | null
+	return typeof c === 'object' && c !== null && (c.digits === null || (typeof c.digits === 'string' && /^\d{1,10}$/.test(c.digits)))
+		&& typeof c.period === 'number' && Number.isFinite(c.validUntil)
+}
+
 function isState(reply: unknown): reply is State {
 	const r = reply as Partial<State> | null
 	return typeof r === 'object' && r !== null
 		&& (r.state === 'locked' || r.state === 'unlocked')
+		&& (r.mode === 'login' || r.mode === 'code')
 		&& typeof r.host === 'string'
 		&& THEMES.includes(r.theme as never)
 		&& Array.isArray(r.rows)
-		&& r.rows.every((row) => typeof row?.id === 'string' && typeof row.name === 'string' && (row.username === null || typeof row.username === 'string'))
+		&& r.rows.every((row) => typeof row?.id === 'string' && typeof row.name === 'string' && (row.username === null || typeof row.username === 'string')
+			&& (r.mode === 'code' ? isCode(row.code) : row.code === undefined))
 }
+
+/** The texts that differ between the login list and the code list. */
+function texts(mode: InlineMode) {
+	return mode === 'code'
+		? {
+			frameTitle: () => i18n.t('inlineList.code.frameTitle'),
+			label: (host: string) => i18n.t('inlineList.code.label', { host }),
+			noMatch: (host: string) => i18n.t('inlineList.code.noMatch', { host }),
+			locked: () => i18n.t('inlineList.code.locked'),
+			count: (n: number) => i18n.t('inlineList.code.status.count', n),
+			statusNoMatch: (host: string) => i18n.t('inlineList.code.status.noMatch', { host }),
+		}
+		: {
+			frameTitle: () => i18n.t('inlineList.frameTitle'),
+			label: (host: string) => i18n.t('inlineList.label', { host }),
+			noMatch: (host: string) => i18n.t('inlineList.noMatch', { host }),
+			locked: () => i18n.t('inlineList.locked'),
+			count: (n: number) => i18n.t('inlineList.status.count', n),
+			statusNoMatch: (host: string) => i18n.t('inlineList.status.noMatch', { host }),
+		}
+}
+
+/** Seconds until `validUntil`, as the countdown shows them. */
+const secondsLeft = (validUntil: number, now = Date.now()) => Math.max(0, Math.ceil((validUntil - now) / 1000))
 
 async function send(message: InlineListToBackground): Promise<unknown> {
 	try {
@@ -47,7 +79,8 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Reco
 	return node
 }
 
-function globeIcon(): SVGSVGElement {
+/** A globe for a login, a clock for an authenticator item. */
+function rowIcon(mode: InlineMode): SVGSVGElement {
 	const ns = 'http://www.w3.org/2000/svg'
 	const svg = document.createElementNS(ns, 'svg')
 	for (const [name, value] of Object.entries({ class: 'row__icon', width: '32', height: '32', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'aria-hidden': 'true' })) {
@@ -58,7 +91,7 @@ function globeIcon(): SVGSVGElement {
 	circle.setAttribute('cy', '12')
 	circle.setAttribute('r', '9')
 	const path = document.createElementNS(ns, 'path')
-	path.setAttribute('d', 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18')
+	path.setAttribute('d', mode === 'code' ? 'M12 7v5l3 2' : 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18')
 	svg.append(circle, path)
 	return svg
 }
@@ -93,6 +126,9 @@ export function startInlineList(): () => void {
 	/** The height last asked of the host; the first render always asks, in case the vault changed since the open. */
 	let requested: number | null = null
 	const visibility = trackVisibility(root)
+	/** Code mode: ticks the countdowns and asks for fresh codes once the earliest ends. */
+	let codeTimer: ReturnType<typeof setInterval> | undefined
+	let refreshing = false
 
 	const restartGuard = () => {
 		guardSince = Date.now()
@@ -124,17 +160,29 @@ export function startInlineList(): () => void {
 		return { kind: 'key', at: Date.now(), x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
 	}
 
-	function renderRows(rows: InlineRow[], host: string) {
+	/** The code in two halves and the seconds left, both hidden from assistive technology so they are not re-read every period. */
+	function codeParts(code: InlineCode): HTMLElement[] {
+		if (code.digits === null) return []
+		const half = Math.ceil(code.digits.length / 2)
+		return [
+			element('span', { class: 'row__code', 'aria-hidden': 'true' }, element('span', {}, code.digits.slice(0, half)), element('span', {}, code.digits.slice(half))),
+			element('span', { class: 'row__timer', 'aria-hidden': 'true' }, String(secondsLeft(code.validUntil))),
+		]
+	}
+
+	function renderRows(rows: InlineRow[], host: string, mode: InlineMode) {
 		rowsByElement.clear()
-		const listbox = element('ul', { class: 'listbox', role: 'listbox', 'aria-label': i18n.t('inlineList.label', { host }) })
+		const listbox = element('ul', { class: 'listbox', role: 'listbox', 'aria-label': texts(mode).label(host) })
 		for (const row of rows) {
-			const username = row.username || null
+			const invalid = row.code?.digits === null
+			const username = invalid ? i18n.t('inlineList.code.invalid') : row.username || null
 			const text = element('span', { class: 'row__text' }, element('span', { class: 'row__name' }, row.name))
 			if (username) text.append(element('span', { class: 'row__user' }, username))
 			const option = element('li', {
 				class: 'row', role: 'option', tabindex: '-1', 'aria-selected': 'false',
 				'aria-label': username ? i18n.t('inlineList.row', { name: row.name, username }) : row.name,
-			}, globeIcon(), text)
+				...(invalid && { 'aria-disabled': 'true' }),
+			}, rowIcon(mode), text, ...(row.code ? codeParts(row.code) : []))
 			rowsByElement.set(option, row)
 			listbox.append(option)
 		}
@@ -143,7 +191,48 @@ export function startInlineList(): () => void {
 		root.replaceChildren(listbox)
 	}
 
-	function render({ state: vault, host, rows }: State) {
+	/** One interval for every countdown; the codes themselves only ever come from the background. */
+	function watchCodes() {
+		clearInterval(codeTimer)
+		if (state?.mode !== 'code' || !state.rows.some((row) => row.code?.digits)) return
+		codeTimer = setInterval(() => {
+			const now = Date.now()
+			for (const [option, row] of rowsByElement) {
+				const timer = option.querySelector('.row__timer')
+				if (timer && row.code) timer.textContent = String(secondsLeft(row.code.validUntil, now))
+			}
+			if (!refreshing && state && now >= Math.min(...state.rows.map((row) => (row.code?.digits ? row.code.validUntil : Infinity)))) void refreshCodes()
+		}, 1000)
+	}
+
+	/** Same rows: the codes change in place, so focus and the pick guard stay; other rows: rendered anew, focus kept by id. */
+	async function refreshCodes() {
+		if (!key) return
+		refreshing = true
+		const reply = await send({ kind: 'inline.state', key })
+		refreshing = false
+		if (stopped || question || !isState(reply) || reply.mode !== 'code' || reply.state !== 'unlocked' || !state) return
+		const before = state.rows.map((row) => row.id).join(' ')
+		state = reply
+		if (before === reply.rows.map((row) => row.id).join(' ')) {
+			for (const [option, row] of [...rowsByElement]) {
+				const fresh = reply.rows.find((candidate) => candidate.id === row.id)!
+				rowsByElement.set(option, fresh)
+				option.querySelectorAll('.row__code, .row__timer').forEach((part) => part.remove())
+				option.append(...(fresh.code ? codeParts(fresh.code) : []))
+			}
+		} else {
+			const focused = rowsByElement.get(document.activeElement as Element)?.id
+			if (reply.rows.length) renderRows(reply.rows, reply.host, 'code')
+			else render(reply)
+			fit()
+			const again = [...rowsByElement].find(([, row]) => row.id === focused)?.[0] as HTMLElement | undefined
+			again?.focus()
+		}
+		watchCodes()
+	}
+
+	function render({ state: vault, mode, host, rows }: State) {
 		question = null
 		if (vault === 'locked') {
 			const unlock = element('button', { type: 'button', class: 'btn btn--primary' }, i18n.t('inlineList.unlock'))
@@ -155,12 +244,12 @@ export function startInlineList(): () => void {
 			})
 			unlock.setAttribute('aria-describedby', 'locked-text')
 			entry = unlock
-			root.replaceChildren(element('div', { class: 'message message--locked' }, element('p', { id: 'locked-text' }, i18n.t('inlineList.locked')), unlock))
+			root.replaceChildren(element('div', { class: 'message message--locked' }, element('p', { id: 'locked-text' }, texts(mode).locked()), unlock))
 		} else if (rows.length === 0) {
-			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, i18n.t('inlineList.noMatch', { host }))
+			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, texts(mode).noMatch(host))
 			root.replaceChildren(entry)
 		} else {
-			renderRows(rows, host)
+			renderRows(rows, host, mode)
 		}
 		restartGuard()
 	}
@@ -182,19 +271,21 @@ export function startInlineList(): () => void {
 		if (stopped || key !== null || !isState(reply)) return
 		key = candidate
 		state = reply
+		document.title = texts(reply.mode).frameTitle()
 		applyTheme(reply.theme)
 		render(reply)
 		fit()
+		watchCodes()
 		announce(reply.state === 'locked' ? i18n.t('inlineList.status.locked')
-			: reply.rows.length === 0 ? i18n.t('inlineList.status.noMatch', { host: reply.host })
-				: i18n.t('inlineList.status.count', reply.rows.length))
+			: reply.rows.length === 0 ? texts(reply.mode).statusNoMatch(reply.host)
+				: texts(reply.mode).count(reply.rows.length))
 		if (earlyFocusKey === key) focusEntry()
 		earlyFocusKey = null
 	}
 
 	async function pick(row: InlineRow, input: PickInput, confirmedInsecure = false) {
 		// Too soon after showing or moving stays silent, as a second press works; hidden by the page, it says why.
-		if (!key || pickLocked || !settled(input)) return
+		if (!key || pickLocked || !settled(input) || row.code?.digits === null) return
 		pickLocked = true
 		if (!visibility.allows(input.at)) return showNotVisible()
 		const reply = await send({ kind: 'inline.pick', key, itemId: row.id, input, ...(confirmedInsecure ? { confirmedInsecure } : {}) })
@@ -235,7 +326,7 @@ export function startInlineList(): () => void {
 		if (!question || !state) return
 		const { id } = question.row
 		question = null
-		renderRows(state.rows, state.host)
+		renderRows(state.rows, state.host, state.mode)
 		fit()
 		restartGuard()
 		const option = [...rowsByElement].find(([, row]) => row.id === id)?.[0] as HTMLElement | undefined
@@ -368,6 +459,7 @@ export function startInlineList(): () => void {
 		if (stopped) return
 		stopped = true
 		clearTimeout(announceTimer)
+		clearInterval(codeTimer)
 		visibility.stop()
 		window.removeEventListener('message', onMessage)
 		window.removeEventListener('blur', onBlur)

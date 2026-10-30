@@ -422,6 +422,8 @@ settings:
   clipboardSeconds:
     1: 1 second
     n: $1 seconds
+  autoCopyTotp: Copy TOTP automatically
+  autoCopyTotpHint: If a login has a verification code, copy it to your clipboard when you autofill the login.
   askToAdd: Ask to add login
   askToUpdate: Ask to update existing login
   excludedDomains: Excluded domains
@@ -583,6 +585,7 @@ contextMenu:
   openKeepiq: Open Keepiq
   copyUsername: Copy username
   copyPassword: Copy password
+  copyCode: Copy verification code
   generatePassword: Generate password and copy
   unlock: Unlock vault
 
@@ -612,6 +615,18 @@ inlineList:
       n: $1 Keepiq logins. Press Down Arrow to choose.
     noMatch: No Keepiq logins for {host}
     locked: Keepiq is locked. Press Down Arrow to unlock.
+  # The list on a one-time code field, which offers authenticator items.
+  code:
+    frameTitle: Keepiq verification codes
+    label: Keepiq verification codes for {host}
+    noMatch: No verification codes for {host}
+    locked: Unlock Keepiq to see your verification codes
+    invalid: Not a valid authenticator secret
+    status:
+      count:
+        1: 1 Keepiq verification code. Press Down Arrow to choose.
+        n: $1 Keepiq verification codes. Press Down Arrow to choose.
+      noMatch: No Keepiq verification codes for {host}
 
 # The save and update bar at the top of the web page.
 notificationBar:

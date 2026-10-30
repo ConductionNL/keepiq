@@ -1,5 +1,5 @@
 /** The item form's model: per-type fields, the payloads they serialize to, and the limits Keepiq enforces. */
-import type { DecryptField, EditableItem, ItemDraft, ItemPatch } from '@/src/messages'
+import type { EditableItem, FormField, ItemDraft, ItemPatch } from '@/src/messages'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
 import { parseObject, parsePayload, text } from './payloads'
 
@@ -255,7 +255,7 @@ function faithfulObject(raw: string): Record<string, unknown> | null {
  * Whether the edit form shows all of a field's plaintext under this type, since a save leaves an untouched field as it is and partners get it whole (ADR-002).
  * Composite members count when each is one the form has a field for, holding what that field shows.
  */
-export function shownInFull(field: DecryptField, plaintext: string | null, typeName: string | undefined): boolean {
+export function shownInFull(field: FormField, plaintext: string | null, typeName: string | undefined): boolean {
 	if (!plaintext) return true
 	const kind = formKind(typeName)
 	switch (field) {

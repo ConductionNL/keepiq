@@ -303,6 +303,8 @@ function withheld(rows: FetchedRow[], suites: SuiteRow[]): StoredSecretRow[] {
 		delete meta.key
 		delete meta.login
 		delete meta.additionalFields
+		delete meta.totp
+		delete meta.passkeys
 		delete meta.blockedReason
 		return { ...(meta as Omit<StoredBlockedRow, 'blocked' | 'blockedReason'>), blocked: true, blockedReason }
 	})

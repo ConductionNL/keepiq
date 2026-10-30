@@ -19,9 +19,9 @@ const ROWS = [
 	{ id: 'w', name: 'Work', username: 'alice@work.test' },
 	{ id: 'b', name: 'Bank', username: null },
 ]
-const unlocked = (rows = ROWS, host = 'example.test'): InlineStateReply => ({ state: 'unlocked', host, rows, theme: 'system' })
+const unlocked = (rows = ROWS, host = 'example.test'): InlineStateReply => ({ state: 'unlocked', mode: 'login', host, rows, theme: 'system' })
 const noMatch = (): InlineStateReply => unlocked([], 'nothing.test')
-const locked = (): InlineStateReply => ({ state: 'locked', host: 'example.test', rows: [], theme: 'system' })
+const locked = (): InlineStateReply => ({ state: 'locked', mode: 'login', host: 'example.test', rows: [], theme: 'system' })
 
 let sent: InlineListToBackground[]
 let stateReply: InlineStateReply
@@ -33,7 +33,7 @@ beforeEach(() => {
 	document.body.innerHTML = BODY
 	sent = []
 	stateReply = unlocked()
-	pickReply = { filled: 'both' }
+	pickReply = { filled: 'both', code: false }
 	vi.spyOn(browser.runtime, 'sendMessage').mockImplementation((async (message: InlineListToBackground) => {
 		sent.push(message)
 		// SECOND_KEY is valid too, as if the background had opened a second session; the list must still keep its first.
@@ -476,7 +476,7 @@ describe('insecure question', () => {
 		key(row(0), 'ArrowDown')
 		key(row(1), 'Enter')
 		await flush()
-		pickReply = { filled: 'both' }
+		pickReply = { filled: 'both', code: false }
 	}
 
 	it('asks inside the list with focus on Cancel', async () => {
@@ -900,5 +900,88 @@ describe('visibility on Chrome', () => {
 		row(0).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 		await flush()
 		expect(picks()).toEqual([])
+	})
+})
+
+describe('code mode', () => {
+	const NOW = 1_000_000
+	const code = (digits: string | null, validUntil = NOW + 12_000) => ({ digits, period: 30, validUntil })
+	const CODE_ROWS = [
+		{ id: 'p', name: 'Personal', username: null, code: code('492039') },
+		{ id: 'w', name: 'Work', username: 'alice@work.test', code: code('12345678') },
+		{ id: 'x', name: 'Broken', username: null, code: code(null) },
+	]
+	const codes = (rows = CODE_ROWS, host = 'example.test'): InlineStateReply => ({ state: 'unlocked', mode: 'code', host, rows, theme: 'system' })
+	const shown = (index: number) => [...row(index).querySelectorAll('.row__code span')].map((part) => part.textContent)
+	const seconds = (index: number) => row(index).querySelector('.row__timer')?.textContent
+
+	it('shows each code in two halves with the seconds left, hidden from assistive technology', async () => {
+		await open(codes())
+		expect(document.title).toBe('Keepiq verification codes')
+		expect(listbox()!.getAttribute('aria-label')).toBe('Keepiq verification codes for example.test')
+		expect(options().map((option) => option.getAttribute('aria-label'))).toEqual(['Personal', 'Work, alice@work.test', 'Broken, Not a valid authenticator secret'])
+		expect([shown(0), shown(1)]).toEqual([['492', '039'], ['1234', '5678']])
+		expect(seconds(0)).toBe('12')
+		for (const part of document.querySelectorAll('.row__code, .row__timer')) expect(part.getAttribute('aria-hidden')).toBe('true')
+		await wait(250)
+		expect(status().textContent).toBe('3 Keepiq verification codes. Press Down Arrow to choose.')
+	})
+
+	it('shows an item without a valid seed disabled, which no pick reaches', async () => {
+		await open(codes())
+		expect(row(2).getAttribute('aria-disabled')).toBe('true')
+		expect(row(2).querySelector('.row__code')).toBeNull()
+		post({ kind: 'inline.focus', key: KEY })
+		key(row(0), 'End')
+		key(row(2), 'Enter')
+		click(row(2))
+		await flush()
+		expect(picks()).toEqual([])
+		key(row(2), 'Home')
+		key(row(0), 'Enter')
+		await flush()
+		expect(picks()).toEqual([expect.objectContaining({ itemId: 'p' })])
+	})
+
+	it('counts down every second and asks for the rows again once the earliest code ends, keeping focus', async () => {
+		await open(codes())
+		post({ kind: 'inline.focus', key: KEY })
+		key(row(0), 'ArrowDown')
+		expect(document.activeElement).toBe(row(1))
+		await wait(5_000)
+		expect(seconds(0)).toBe('7')
+		expect(sent.filter((m) => m.kind === 'inline.state')).toHaveLength(1)
+		stateReply = codes([{ ...CODE_ROWS[0]!, code: code('111222', NOW + 42_000) }, { ...CODE_ROWS[1]!, code: code('87654321', NOW + 42_000) }, CODE_ROWS[2]!])
+		await wait(7_500)
+		expect(sent.filter((m) => m.kind === 'inline.state')).toHaveLength(2)
+		expect([shown(0), shown(1)]).toEqual([['111', '222'], ['8765', '4321']])
+		expect(document.activeElement).toBe(row(1))
+	})
+
+	it('renders anew, keeping the focused item, when the refreshed rows differ', async () => {
+		await open(codes())
+		post({ kind: 'inline.focus', key: KEY })
+		key(row(0), 'ArrowDown')
+		stateReply = codes([{ ...CODE_ROWS[1]!, code: code('87654321', NOW + 42_000) }])
+		await wait(13_000)
+		expect(options().map((option) => option.getAttribute('aria-label'))).toEqual(['Work, alice@work.test'])
+		expect(document.activeElement).toBe(row(0))
+	})
+
+	it('says when no code matches, and asks to unlock while locked', async () => {
+		await open(codes([], 'nothing.test'))
+		expect(message('No verification codes for nothing.test')).toBeTruthy()
+		await wait(250)
+		expect(status().textContent).toBe('No Keepiq verification codes for nothing.test')
+		stop()
+		document.body.innerHTML = BODY
+		await open({ state: 'locked', mode: 'code', host: 'example.test', rows: [], theme: 'system' })
+		expect(message('Unlock Keepiq to see your verification codes')).toBeTruthy()
+		expect(document.querySelector('.row__code')).toBeNull()
+	})
+
+	it('refuses a reply whose code rows are malformed', async () => {
+		await open(codes([{ id: 'p', name: 'Personal', username: null, code: { digits: '<b>1</b>', period: 30, validUntil: NOW } } as never]), { settle: false })
+		expect(options()).toHaveLength(0)
 	})
 })

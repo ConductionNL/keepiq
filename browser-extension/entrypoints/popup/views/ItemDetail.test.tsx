@@ -73,7 +73,7 @@ describe('login credentials', () => {
 	it('shows the username and a masked password that reveals in monospace', async () => {
 		const { sent } = renderDetail(itemMeta(), { login: 'alice', key: 'hunter2' })
 		await screen.findByRole('heading', { name: 'Login credentials' })
-		expect(sent).toHaveBeenCalledWith({ kind: 'item.decrypt', ids: ['i1'], fields: ['login', 'key', 'additionalFields'], passive: false })
+		expect(sent).toHaveBeenCalledWith({ kind: 'item.decrypt', ids: ['i1'], fields: ['login', 'key', 'additionalFields', 'totp'], passive: false })
 		const credentials = section('Login credentials')
 		expect(within(credentials).getByText('alice')).toBeTruthy()
 		expect(within(credentials).queryByText('hunter2')).toBeNull()
@@ -112,6 +112,19 @@ describe('TOTP', () => {
 		await vi.waitFor(() => expect(document.querySelector('.totp')!.textContent).toMatch(/^\d{3} \d{3}$/))
 		expect(screen.getByRole('timer').getAttribute('aria-label')).toMatch(/^Changes in \d+ seconds?$/)
 		expect(screen.queryByRole('heading', { name: 'Login credentials' })).toBeNull()
+	})
+
+	it('shows a login’s own code under its credentials, never the seed', async () => {
+		const { view } = renderDetail(itemMeta(), { login: 'alice', key: 'hunter2', totp: 'JBSWY3DPEHPK3PXP' })
+		await vi.waitFor(() => expect(within(section('Login credentials')).getByText(/^\d{3} \d{3}$/)).toBeTruthy())
+		expect(within(section('Login credentials')).getByRole('button', { name: 'Copy verification code' })).toBeTruthy()
+		expect(view.container.innerHTML).not.toContain('JBSWY3DPEHPK3PXP')
+	})
+
+	it('shows no code row for a login without a code', async () => {
+		renderDetail(itemMeta(), { login: 'alice', key: 'hunter2' })
+		await screen.findByText('alice')
+		expect(document.querySelector('.totp')).toBeNull()
 	})
 
 	it('shows no code for an invalid seed', async () => {
@@ -287,7 +300,7 @@ describe('use-only copy', () => {
 	it('asks for the login only and shows no value, reveal or copy beyond it', async () => {
 		const { sent, view } = renderDetail(itemMeta({ useOnly: true }), { login: 'bob', key: 'hunter2', additionalFields: JSON.stringify({ PIN: '1234' }) })
 		const credentials = await screen.findByRole('heading', { name: 'Login credentials' }).then((h) => h.closest('section')!)
-		expect(sent).toHaveBeenCalledWith({ kind: 'item.decrypt', ids: ['i1'], fields: ['login'], passive: false })
+		expect(sent).toHaveBeenCalledWith({ kind: 'item.decrypt', ids: ['i1'], fields: ['login', 'totp'], passive: false })
 		expect(within(credentials).getByText('bob')).toBeTruthy()
 		expect(within(credentials).getByText("Its owner doesn't let you view or copy this.")).toBeTruthy()
 		expect(within(credentials).queryByText('Password')).toBeNull()
@@ -305,6 +318,12 @@ describe('use-only copy', () => {
 			expect(document.body.innerHTML).not.toContain('GEZDGNBVGY3TQOJQ')
 			cleanup()
 		}
+	})
+
+	it('shows a use-only login’s code, as Keepiq allows, and never its seed', async () => {
+		const { view } = renderDetail(itemMeta({ useOnly: true }), { login: 'bob', totp: 'JBSWY3DPEHPK3PXP' })
+		await vi.waitFor(() => expect(within(section('Login credentials')).getByText(/^\d{3} \d{3}$/)).toBeTruthy())
+		expect(view.container.innerHTML).not.toContain('JBSWY3DPEHPK3PXP')
 	})
 
 	it('says so when the background refuses a copy that became use-only', async () => {
@@ -475,7 +494,7 @@ describe('metadata and actions', () => {
 describe('Fill', () => {
 	const tab = { id: 7, windowId: 1, url: 'https://github.com/login', host: 'github.com' }
 
-	function renderFillable(fillTab: typeof tab | undefined, fillReply: unknown = { filled: 'both' }) {
+	function renderFillable(fillTab: typeof tab | undefined, fillReply: unknown = { filled: 'both', code: false }) {
 		const sent = fakeBackground({ replies: { 'fill.request': fillReply } })
 		const toast = vi.fn()
 		render(
@@ -505,11 +524,11 @@ describe('Fill', () => {
 		await userEvent.setup().click(fill)
 		expect(fill.disabled).toBe(false)
 		expect(fill.getAttribute('aria-busy')).not.toBe('true')
-		answer({ filled: 'none' })
+		answer({ filled: 'none', code: false })
 	})
 
 	it('returns focus to Fill when the insecure question is cancelled', async () => {
-		renderFillable(tab, { filled: 'none', needsInsecureConfirm: true })
+		renderFillable(tab, { filled: 'none', code: false, needsInsecureConfirm: true })
 		const fill = within(footer).getByRole('button', { name: 'Fill' })
 		expect(fill.className).toBe('btn btn--secondary')
 		const user = userEvent.setup()
@@ -526,15 +545,23 @@ describe('Fill', () => {
 
 	it('stays open and says so when nothing could be filled', async () => {
 		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
-		const { toast } = renderFillable(tab, { filled: 'none' })
+		const { toast } = renderFillable(tab, { filled: 'none', code: false })
 		await userEvent.setup().click(within(footer).getByRole('button', { name: 'Fill' }))
 		await vi.waitFor(() => expect(toast).toHaveBeenCalledWith('Unable to autofill on this page. Copy and paste instead.'))
 		expect(close).not.toHaveBeenCalled()
 	})
 
+	it('closes after a second-step page took only the code', async () => {
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		const { toast } = renderFillable(tab, { filled: 'none', code: true })
+		await userEvent.setup().click(within(footer).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(toast).not.toHaveBeenCalled()
+	})
+
 	it('asks before filling an insecure page', async () => {
 		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
-		const { sent } = renderFillable(tab, { filled: 'none', needsInsecureConfirm: true })
+		const { sent } = renderFillable(tab, { filled: 'none', code: false, needsInsecureConfirm: true })
 		await userEvent.setup().click(within(footer).getByRole('button', { name: 'Fill' }))
 		expect(await screen.findByRole('dialog', { name: 'Do you still wish to fill this login?' })).toBeTruthy()
 		expect(sentOf(sent, 'fill.request')).toHaveLength(1)

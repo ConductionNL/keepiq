@@ -1,11 +1,11 @@
 /** A value change of a possibly shared item in one `PUT /api/v1/secrets/{id}/share-save`, ported from the web app's `saveShared` (`src/services/shareSave.js`); the server's rules are in `ShareSaveService`. */
 import { ApiError, KeepiqNotInstalled, type Client } from '@/src/api/client'
 import { FederatedCertificateError, importPublicKey, importSpki, rsaDecrypt, rsaEncrypt, verifyFederatedCertificate, type VerifiedFederatedCertificate } from '@/src/crypto'
-import type { DecryptField, ShareSaveNote } from '@/src/messages'
+import type { DecryptField, FormField, ShareSaveNote } from '@/src/messages'
 import { verifiedPartners } from './verified-partners'
 import { WriteFailure } from './write-error'
 
-export const VALUE_FIELDS: readonly DecryptField[] = ['key', 'login', 'additionalFields']
+export const VALUE_FIELDS: readonly FormField[] = ['key', 'login', 'additionalFields']
 
 /** `ShareSaveRequest::MAX_ENTRIES` per list pair, and `ShareController::MAX_RECIPIENT_PROBE`. */
 const BATCH = 100

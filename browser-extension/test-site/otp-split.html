@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>One-time code in six boxes</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>One-time code in six boxes</h1>
+		<p class="tests">Six one-character inputs that move focus along as you type. A fill puts one digit in each; the list opens on any empty box. The code is checked against the key on <a href="/totp-setup.html">Two-step setup</a>.</p>
+		<form method="post" action="/otp">
+			<fieldset class="code-group">
+				<legend>Authentication code</legend>
+				<input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Digit 1 of 6" data-code>
+				<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2 of 6" data-code>
+				<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3 of 6" data-code>
+				<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4 of 6" data-code>
+				<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5 of 6" data-code>
+				<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6 of 6" data-code>
+			</fieldset>
+			<button type="submit">Verify</button>
+			<p class="status" role="status"></p>
+		</form>
+	</main>
+	<script type="module">
+		import { checkCodeForm } from '/totp.js'
+		checkCodeForm(document.querySelector('form'))
+	</script>
+</body>
+</html>

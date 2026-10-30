@@ -4,6 +4,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import background from '@/entrypoints/background'
 import { dropAllCaptures } from '@/src/autofill/capture-queue'
 import { addAccount, listAccounts } from '@/src/accounts/store'
+import { CLIPBOARD_ALARM, CLIPBOARD_CODE_KEY } from '@/src/clipboard'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
 import { inlineHeight, POPUP_PORT, POPUP_REQUEST_KINDS, type Result } from '@/src/messages'
 import { installMenuFakes } from '@/src/testing/menus'
@@ -224,7 +225,7 @@ describe('background entrypoint', () => {
 		it('answers fill.request from the popup, reaching the frames page_ready recorded', async () => {
 			await deliver({ kind: 'page_ready', url: 'ignored', passwordField: false }, frameSender(3, 'https://login.example.test/'))
 			await deliver({ kind: 'page_ready', url: 'ignored', passwordField: false }, frameSender(4, 'https://ads.other.test/'))
-			expect(await deliver({ kind: 'fill.request', itemId: 'i1', tabId: 7 }, popupSender)).toEqual({ filled: 'both' })
+			expect(await deliver({ kind: 'fill.request', itemId: 'i1', tabId: 7 }, popupSender)).toEqual({ filled: 'both', code: false })
 			expect(toTab.map(({ frameId }) => frameId)).toEqual([0, 3])
 		})
 
@@ -377,40 +378,40 @@ describe('background entrypoint', () => {
 			})
 
 			it('opens a session for a content script, answers the list page and fills on its pick', async () => {
-				const opened = await deliver({ kind: 'inline.open' }, top) as { key: string }
+				const opened = await deliver({ kind: 'inline.open', mode: 'login' }, top) as { key: string }
 				expect(opened).toEqual({ key: expect.any(String), height: inlineHeight(1) })
 				const { key } = opened
 				expect(await deliver({ kind: 'inline.state', key }, listSender)).toMatchObject({ state: 'unlocked', rows: [{ id: 'i1', username: 'alice' }] })
 				expect(await deliver({ kind: 'inline.refocus', key }, listSender)).toBeUndefined()
 				expect(await deliver({ kind: 'inline.resize', key, height: 130 }, listSender)).toBeUndefined()
 				const input = { kind: 'pointer', at: 1, x: 5, y: 5 }
-				expect(await deliver({ kind: 'inline.pick', key, itemId: 'i1', input }, listSender)).toEqual({ filled: 'both' })
+				expect(await deliver({ kind: 'inline.pick', key, itemId: 'i1', input }, listSender)).toEqual({ filled: 'both', code: false })
 				expect(toTab.map(({ message }) => message.kind)).toEqual(['inline.ready', 'inline.refocus', 'inline.resize', 'inline.verify', 'fill.execute', 'inline.close'])
 				// A pick changes last used, which orders the context menu.
 				await vi.waitFor(() => expect(menus.entries.map((e) => e.id)).toContain('autofill:i1'))
 			})
 
 			it('takes list kinds only from the list page, and inline.open only from a content script', async () => {
-				const { key } = await deliver({ kind: 'inline.open' }, top) as { key: string }
+				const { key } = await deliver({ kind: 'inline.open', mode: 'login' }, top) as { key: string }
 				for (const sender of [top, popupSender, barSender]) {
 					expect(await deliver({ kind: 'inline.state', key }, sender)).toBeUndefined()
 					expect(await deliver({ kind: 'inline.pick', key, itemId: 'i1', input: { kind: 'key', at: 1, x: 1, y: 1 } }, sender)).toBeUndefined()
 				}
-				expect(await deliver({ kind: 'inline.open' }, listSender)).toBeUndefined()
+				expect(await deliver({ kind: 'inline.open', mode: 'login' }, listSender)).toBeUndefined()
 				await new Promise((resolve) => setTimeout(resolve, 10))
 				expect(toTab).toEqual([])
 			})
 
 			it('closes every list when the popup switches accounts', async () => {
 				const [account] = await listAccounts()
-				const { key } = await deliver({ kind: 'inline.open' }, top) as { key: string }
+				const { key } = await deliver({ kind: 'inline.open', mode: 'login' }, top) as { key: string }
 				await deliver({ kind: 'accounts.switch', accountId: account!.id }, popupSender)
 				await vi.waitFor(() => expect(toTab).toEqual([{ message: { kind: 'inline.close', key, refocus: false }, frameId: 0 }]))
 				expect(await deliver({ kind: 'inline.state', key }, listSender)).toBeNull()
 			})
 
 			it('drops the session on inline.closed', async () => {
-				const { key } = await deliver({ kind: 'inline.open' }, top) as { key: string }
+				const { key } = await deliver({ kind: 'inline.open', mode: 'login' }, top) as { key: string }
 				expect(await deliver({ kind: 'inline.closed', key }, top)).toBeUndefined()
 				await vi.waitFor(async () => expect(await deliver({ kind: 'inline.state', key }, listSender)).toBeNull())
 			})
@@ -450,6 +451,17 @@ describe('background entrypoint', () => {
 		onConnect.trigger({ name: POPUP_PORT, onDisconnect })
 		onDisconnect.trigger()
 		await vi.waitFor(async () => expect(await hasKey(account.id)).toBe(false))
+	})
+
+	it('clears a code the account copied as soon as it locks', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const account = await storedAccount()
+		await deliver({ kind: 'vault.unlock', accountId: account.id, method: { type: 'masterPassword', masterPassword: envelope.password } }, popupSender)
+		await browser.storage.session.set({ [CLIPBOARD_CODE_KEY]: account.id })
+		await browser.alarms.create(CLIPBOARD_ALARM, { when: Date.now() + 120_000 })
+		await deliver({ kind: 'vault.lock', accountId: account.id }, popupSender)
+		await vi.waitFor(async () => expect(await browser.storage.session.get(CLIPBOARD_CODE_KEY)).toEqual({}))
+		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
 	})
 
 	it('answers vault requests from the popup only', async () => {

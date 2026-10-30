@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Two-step setup</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Two-step setup</h1>
+		<p class="tests">A site's "turn on two-step verification" page: a QR code, the key to type instead, and a code to confirm. Every code page on this test site checks against this key. Keepiq cannot add the key from the page yet; until it can, put the key below in the Authenticator key of your login for <code class="origin">http://localhost:8100</code> in the Keepiq web app.</p>
+		<div class="card">
+			<h2>Scan this QR code with your authenticator app</h2>
+			<img class="qr" src="/totp-qr.svg" width="180" height="180" alt="QR code for the authenticator key of Keepiq test site, account test-user">
+			<p>Can't scan it? Enter this key instead:</p>
+			<p><code id="secret">JBSW Y3DP EHPK 3PXP</code></p>
+			<p>Or open the setup link: <a id="otpauth" href="otpauth://totp/Keepiq%20test%20site:test-user?secret=JBSWY3DPEHPK3PXP&amp;issuer=Keepiq%20test%20site">otpauth://totp/Keepiq%20test%20site:test-user?secret=JBSWY3DPEHPK3PXP&amp;issuer=Keepiq%20test%20site</a></p>
+		</div>
+		<form method="post" action="/otp">
+			<label>Enter the code from your app to finish <input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" data-code></label>
+			<button type="submit">Turn on</button>
+			<p class="status" role="status"></p>
+		</form>
+	</main>
+	<script type="module">
+		import { checkCodeForm } from '/totp.js'
+		checkCodeForm(document.querySelector('form'))
+		for (const origin of document.querySelectorAll('.origin')) origin.textContent = location.origin
+	</script>
+</body>
+</html>

@@ -49,15 +49,17 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `broadcast.ts`: background-to-popup notices.
   - `sender.ts`: names the sender page and the kinds it may send.
 - `src/autofill/`, the specs in `openspec/changes/ext-autofill/`:
-  - `matcher.ts`: the six URI match rules and `candidatesFor()`, the logins for a page in last-used order.
-  - `fill.ts`: the fill every surface goes through: frame choice, insecure check, decrypt, `fill.execute`, last used.
+  - `matcher.ts`: the six URI match rules and `candidatesFor()`, the logins (or another type's items) for a page in last-used order.
+  - `fill.ts`: the fill every surface goes through: frame choice, insecure check, decrypt, the login's code, `fill.execute`, last used, the code's copy.
+  - `login-codes.ts`: the logins with a code for a page, and current codes from a login's `totp` field (`openspec/changes/ext-totp-autofill/`).
+  - `code-fill.ts`: a pick from the inline list on a code field.
   - `frames.ts`: the frames of each tab, from `page_ready` senders.
   - `triggers.ts`: fill on page load and from the `autofill_login` shortcut.
   - `inline-session.ts`: the inline list's session and its `inline.*` requests.
   - `capture-queue.ts`: the pending save or update per tab and the bar's `capture.*` requests.
   - `tab-items.ts`: the item each tab last filled or captured, for a password change form without a username.
-  - `fields.ts` (content script): field and group detection, and `fillField()`.
-  - `execute.ts` (content script): answers `fill.execute`.
+  - `fields.ts` (content script): field and group detection, code groups, and `fillField()`.
+  - `execute.ts` (content script): answers `fill.execute`, the code into one code group.
   - `capture-collector.ts` (content script): reports a login the user submitted.
   - `frame-host.ts` (content script): an extension page in an iframe inside a closed shadow root.
   - `inline-host.ts` and `notification-host.ts` (content script): place, guard and close the list and the bar.
@@ -68,8 +70,8 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 - `src/last-used.ts`: when each item was last filled.
 - `src/messages.ts`: every message type, in one place.
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
-- `src/clipboard.ts`: copy in the popup; write and clear from the background.
-- `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module.
+- `src/clipboard.ts`: copy in the popup; write and clear from the background, and clear a copied code on its account's lock.
+- `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module; the popup and the background both use it.
 - `src/generator/`: a port of the web app's password, passphrase and username generator, tested against `../tests/vectors/generator/`. All modules are safe for the popup, except two background-only ones:
   - `store.ts`: the options and the cached policy.
   - `history.ts`: the session history.
@@ -111,7 +113,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 
 - **Routing by sender page.** `src/background/sender.ts` tells the popup, the list and the bar apart by `sender.url` path, and a content script by its tab and frame; each gets only its own kind set in `src/messages.ts`.
 - **Popup port.** The popup holds a `popup` port open. Its disconnect drives the "Immediately" timeout, with a 5-second grace while a pop-out window takes over.
-- **Use-only copies.** `item.decrypt` returns only the `login` of a `useOnly` row. Asking for more gets `use_only`; in a batch, the row is left out.
+- **Use-only copies.** `item.decrypt` returns only the `login` and the `totp` seed of a `useOnly` row; the popup turns the seed into a code and never shows it. Asking for more gets `use_only`; in a batch, the row is left out.
 - **Passive requests.** A popup request made in reaction to a broadcast is sent with `passive` (or without `opened`), so it doesn't count as user activity for the timeout.
 
 ## Storage
@@ -143,7 +145,8 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
 | `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
 | `generatorSealed.<id>` | session | Values generated while locked, RSA-OAEP-sealed to the certificate proven at the last unlock; merged into `generatorHistory.<id>` by the first history request after the unlock; dropped as in [design.md, History while locked](openspec/changes/ext-generator/design.md) |
-| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame and offered item ids, no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
+| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode and offered item ids, no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
+| `clipboardCode` | session | The account whose one-time code the background copied, never the code; gone when the clear runs, on any other copy, and at that account's lock or logout, which clears the clipboard at once |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
 
@@ -204,6 +207,8 @@ After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the 
 The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts).
 
 - **Fill:** the popup, the context menu, the shortcut, page load and an inline pick all go through `fill()`: it matches the item against each recorded frame's URL, decrypts `login` and `key`, and sends one `fill.execute` per matching frame.
+- **TOTP:** `fill()` puts the current code from the login's own `totp` field in `fill.execute`, and copies it after the fill; not on page load (`openspec/changes/ext-totp-autofill/`).
+- **Code list:** on a code field the inline list opens in code mode; its rows carry codes, its pick goes to `pickCode()`, and the list page asks `inline.state` again when a code ends.
 - **Inline list:** the content script asks `inline.open` for a key and posts it to the list page, which loads its rows with `inline.state`; a pick goes to the background, which asks the host frame `inline.verify` before it fills.
 - **Save bar:** `capture.submitted` queues a capture; the background sends `capture.show` with a fresh key to the top frame, and the bar loads its state with `capture.state` and answers with `capture.save`, `capture.update` or `capture.dismiss`; the background asks the host `capture.verify` for all but Close.
 
@@ -217,7 +222,7 @@ The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-0
 
 - **Lock** clears the key.
 - **Log out** marks the account first, then purges. A sync or unlock that is still running sees the mark and undoes its own writes.
-- Both end in the `vault.locked` broadcast, on which the toolbar empties the badge on every tab.
+- Both end in the `vault.locked` broadcast, on which the toolbar empties the badge on every tab and a code the locked account copied is cleared.
 - **Account-list changes** queue through `mutateAccounts`, so none of them works on a stale read.
 
 ## Translations

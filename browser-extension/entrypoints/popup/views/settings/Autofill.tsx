@@ -76,6 +76,12 @@ export function Autofill() {
 					options={CLEAR_CLIPBOARD_OPTIONS.map((ms) => ({ value: String(ms), label: clipboardLabel(ms) }))}
 					onChange={(ms) => void update({ clearClipboardMs: Number(ms) })}
 				/>
+				<OptionCheckbox
+					label={i18n.t('settings.autoCopyTotp')}
+					checked={values.autoCopyTotp}
+					onChange={(autoCopyTotp) => void update({ autoCopyTotp })}
+					hint={i18n.t('settings.autoCopyTotpHint')}
+				/>
 			</div>
 		</div>
 	)
