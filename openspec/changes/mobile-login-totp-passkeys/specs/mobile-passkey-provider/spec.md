@@ -3,9 +3,11 @@
 ### Requirement: Keepiq as a passkey provider
 On iOS 17+ and Android 14+ the apps MUST act as a passkey provider. They offer the passkeys stored in the vault, on a login's `passkeys` field or as a standalone Passkey item, when an app or browser asks to sign in with a passkey, and save new passkeys when one is created. Passkeys use the same credential JSON as the web app and the browser extension, so a passkey created on any client works on the others.
 
-A new passkey MUST be saved onto a login, never as a standalone Passkey item. It goes onto the login for the same site whose user name equals the passkey's user name, ignoring case and surrounding spaces, when exactly one such login exists and the user may edit it. Otherwise the apps MUST create a new login named after the relying party, with its rpId as address, the passkey's user name, an empty password and the passkey. Adding to a login MUST fetch it fresh and keep every passkey it already holds.
+A new passkey MUST be saved onto a login, never as a standalone Passkey item. It goes onto the login for the same site, not linked to an app, whose user name equals the passkey's user name, ignoring case and surrounding spaces, when exactly one such login exists, the user may edit it, and its `passkeys` is empty or an array; a value that is not an array is never rewritten. Otherwise the apps MUST create a new login named after the relying party, with its rpId as address, the passkey's user name, an empty password and the passkey. Adding to a login MUST fetch it fresh and keep every passkey it already holds. When the fresh login turns out to be one the server takes no passkeys on (no longer the user's to change, or not owned by a user), a new login MUST be made instead. When the fresh login's `passkeys` is no longer an array, the registration MUST fail and nothing is written.
 
-A counter written back for a passkey on a login MUST fetch the login fresh and change only that credential's counter.
+Signing with a passkey on a login MUST fetch the login fresh first and sign with that credential as the server holds it, so a non-zero counter is the stored one plus one; when the credential is no longer on the login, signing MUST fail, whatever its counter. Only when the server cannot be reached MAY a passkey whose counter is zero sign from the phone's copy, since nothing is written. A counter written back MUST change only that credential's counter, the entry with that credential id and rpId.
+
+Every write of a login's `passkeys` (a counter, a new passkey, a delete) MUST send the fetched row's `updatedAt` as `baseUpdatedAt`, so the server refuses it when the login changed in between; the app then reads the login again and makes the change once more, and a second refusal fails.
 
 A passkey on a login the user may not change (a use-only or read-only copy) is offered like any other, but its counter cannot be written back: once that counter is above zero, signing with it MUST fail, because a failed write-back fails the sign-in. With a counter of zero it signs, since nothing is written.
 
@@ -30,6 +32,16 @@ A passkey on a login the user may not change (a use-only or read-only copy) is o
 - **WHEN** `example.com` asks to create a passkey for `alice` and the user chooses Keepiq
 - **THEN** the passkey is added to that login's `passkeys`, and the web app shows it on the login after its next load
 - **AND** no Passkey item is created
+
+#### Scenario: A login linked to an app, or with passkeys that are not an array
+- **GIVEN** one login for `example.com` with user name `alice` that is linked to an Android app, or whose `passkeys` holds something other than an array
+- **WHEN** `example.com` asks to create a passkey for `alice` and the user chooses Keepiq
+- **THEN** that login is not a match and is left as it is, and a new login with the passkey is saved
+
+#### Scenario: A passkey deleted on another device
+- **GIVEN** a passkey on a login that another device deleted after this phone last synced
+- **WHEN** the user picks it in the passkey sheet with the phone online
+- **THEN** the sign-in fails and nothing is written
 
 #### Scenario: Create a passkey without a matching login
 - **GIVEN** Keepiq as the passkey provider and no login for `example.com` with user name `alice`

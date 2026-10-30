@@ -1,9 +1,9 @@
 ## ADDED Requirements
 
 ### Requirement: A login's code and passkeys on the detail screen
-In the Android app, an item whose `totp` field holds a value MUST show its current code and the seconds left, with copy, as a standalone Authenticator item does; a use-only copy MUST show and copy the code too. The seed MUST NOT be shown. An item whose `passkeys` field holds credentials MUST show one row per passkey on its detail screen, with the date it was added in the phone's locale, and the account it is for when the item holds more than one. A credential without a readable date MUST show that a passkey is saved. Passkeys MUST NOT be shown in the vault list or search, and no passkey private key, credential id or site MUST be shown. A use-only copy MUST NOT list passkeys.
+In the Android app, an item whose `totp` field holds a value, an Authenticator item included, MUST show its current code and the seconds left, with copy, as a standalone Authenticator item does (on an Authenticator item, under its own label next to the code of its `key`); a use-only copy MUST show and copy the code too. The seed MUST NOT be shown. An item whose `passkeys` field holds credentials MUST show one row per passkey on its detail screen, with the date it was added in the phone's locale, and the account it is for when the item holds more than one. A credential without a readable date MUST show that a passkey is saved. Passkeys MUST NOT be shown in the vault list or search, and no passkey private key, credential id or site MUST be shown. A use-only copy MUST NOT list passkeys.
 
-Where the user may edit the item and the phone is online, each passkey row MUST offer Delete behind a confirmation. Deleting MUST fetch the item fresh, remove only that credential, and save the others, or `''` when none remain. After a delete, focus MUST move to the next passkey row, else the Edit button.
+Where the user may edit the item and the phone is online, each passkey row MUST offer Delete behind a confirmation. Deleting MUST fetch the item fresh, remove every entry with that credential id and rpId, and save the others, or `''` when none remain, sending the fetched row's `updatedAt` as `baseUpdatedAt` so a passkey added elsewhere in between is never overwritten. After a delete, focus MUST move to the next passkey row, else the Edit button.
 
 #### Scenario: A login with a code and a passkey
 - **GIVEN** a login with a seed in `totp` and one passkey added on 12 March 2026
@@ -29,7 +29,7 @@ Where the user may edit the item and the phone is online, each passkey row MUST 
 - **AND** no passkey row and no Delete is shown
 
 ### Requirement: An Authenticator key on a login
-In the Android app, the edit screen of a login MUST offer an Authenticator key field that takes a base32 secret or an `otpauth://totp/` URI and refuses a key the code generator cannot read before saving. The seed MUST be stored in the login's `totp` field, encrypted on the device, never in the additional fields. A saved seed MUST NOT be loaded into the form: the field MUST show that a key is saved and offer Replace and Remove, Remove MUST send `''`, and an untouched field MUST send no `totp` value. On an item of another type whose `totp` holds a value, the field MUST offer Remove only. An edit MUST NOT send `passkeys`.
+In the Android app, the edit screen of a login MUST offer an Authenticator key field that takes a base32 secret or an `otpauth://totp/` URI and refuses a key the code generator cannot read before saving. The seed MUST be stored in the login's `totp` field, encrypted on the device, never in the additional fields. A saved seed MUST NOT be loaded into the form: the field MUST show that a key is saved and offer Replace and Remove, Remove MUST send `''`, and an untouched field MUST send no `totp` value. On an item of another type whose `totp` holds a value, an Authenticator item included, the field MUST offer Remove only. An edit MUST NOT send `passkeys`.
 
 #### Scenario: Adding a key to a login
 - **GIVEN** a login without a seed
