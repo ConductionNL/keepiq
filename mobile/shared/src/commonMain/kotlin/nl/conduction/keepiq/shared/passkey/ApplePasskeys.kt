@@ -4,9 +4,11 @@
 package nl.conduction.keepiq.shared.passkey
 
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.autofill.AppLink
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.AutofillSites
+import nl.conduction.keepiq.shared.autofill.SiteMatch
 import nl.conduction.keepiq.shared.crypto.ClientData
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
@@ -42,13 +44,21 @@ class AppleRegistration(val credentialId: String, val attestationObject: String,
  * the page, so both arrive here already verified.
  */
 object ApplePasskeys {
-    /** The passkeys of the index, on Passkey items and on logins, for the identity store. Decrypts each item once. */
+    /**
+     * The passkeys of the index, on Passkey items and on logins, for the
+     * identity store. Decrypts each item once. A login's passkey is listed
+     * only when the sheet can offer it (Passkeys.candidates): the login is
+     * not linked to an app and its address is on the site of the
+     * passkey's rpId (mobile-login-totp-passkeys D11).
+     */
     fun identities(accountId: String, index: AutofillIndex, keys: VaultKeys): List<PasskeyIdentity> =
         index.entries.filter { it.isPasskey || it.hasPasskeys }.flatMap { e ->
             val records = if (e.isPasskey) {
                 listOfNotNull(runCatching { PasskeyCredential.parse(keys.decryptField(e.key)) { "" } }.getOrNull())
             } else {
+                val site = if (AppLink.parse(e.url) == null) SiteMatch.registrableDomain(e.url ?: "") else ""
                 runCatching { LoginPasskeys.credentials(keys.decryptField(e.passkeys)) }.getOrDefault(emptyList())
+                    .filter { site.isNotEmpty() && SiteMatch.registrableDomain(it.rpId.lowercase()) == site }
             }
             records.map { record -> identity(accountId, e, record) }
         }

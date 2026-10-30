@@ -486,4 +486,24 @@ class PasskeysTest {
         val ids = ApplePasskeys.identities("acc", index, keys).map { it.credentialId }
         assertEquals(3, ids.toSet().size)
     }
+
+    @Test
+    fun identitiesLeaveOutALoginsPasskeyTheSheetCannotOffer() {
+        val (here, _) = made("login.example.nl", 0)
+        val (elsewhere, _) = made("login.example.nl", 0)
+        val (noAddress, _) = made("login.example.nl", 0)
+        val (appLinked, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(
+            listOf(
+                loginEntry("l1", "https://login.example.nl", "alice@example.nl", here),
+                loginEntry("l2", "https://example.org", "alice@example.nl", elsewhere),
+                AutofillEntry("l3", "Example", null, AutofillEntry.LOGIN, enc("alice"), enc("pw"), false, passkeys = enc(array(noAddress))),
+                loginEntry("l4", "androidapp://nl.example.login", "alice@example.nl", appLinked),
+            ),
+        )
+        val listed = ApplePasskeys.identities("acc", index, keys).map { it.credentialId }
+        assertEquals(listOf(Encoding.toBase64(Encoding.fromBase64Url(here.credentialId))), listed)
+        // Each listed identity resolves to a choice in the sheet.
+        assertEquals(listOf("l1"), Passkeys.candidates(index, "login.example.nl", keys).map { it.itemId })
+    }
 }
