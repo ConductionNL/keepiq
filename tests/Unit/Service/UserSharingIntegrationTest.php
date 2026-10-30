@@ -354,9 +354,15 @@ class UserSharingIntegrationTest extends TestCase {
 		);
 
 		$secret = $this->makeSecret('s-1', 'alice');
-		$secretMapper->method('findById')->willReturn($secret);
+		$copy = $this->makeSecret('c-1', 'mallory');
+		$secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'c-1' ? $copy : $secret)
+		);
+		$shareRow = new ShareTarget();
+		$shareRow->setTargetUserId('mallory');
+		$shareRow->setSecretId('c-1');
 		$shareTargetMapper->method('findBySourceSecretAndTargetUser')
-			->willReturn(new ShareTarget());
+			->willReturn($shareRow);
 
 		$mapper->expects($this->once())->method('insert')->willReturnArgument(0);
 		$row = $service->createAdminHandover(

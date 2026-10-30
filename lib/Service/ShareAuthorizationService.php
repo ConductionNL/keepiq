@@ -49,6 +49,14 @@ use OCP\IGroupManager;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: one rule set for every share path.
  */
 class ShareAuthorizationService {
+
+	/**
+	 * The judged share rows, or null when no share-target mapper is wired.
+	 *
+	 * @var ShareRowJudge|null
+	 */
+	private ?ShareRowJudge $rowJudge;
+
 	/**
 	 * Constructor for ShareAuthorizationService.
 	 *
@@ -59,6 +67,8 @@ class ShareAuthorizationService {
 	 * @param GroupShareMapper|null $groupShareMapper The group shares of a source
 	 * @param IGroupManager|null $groupManager Whether a copy holder is in one of their groups
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper, with no
+	 *   pending scan
 	 *
 	 * @return void
 	 *
@@ -72,7 +82,12 @@ class ShareAuthorizationService {
 		private ?GroupShareMapper $groupShareMapper = null,
 		private ?IGroupManager $groupManager = null,
 		private ?ShareGrantReader $grants = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = $rowJudge;
+		if ($rowJudge === null && $shareTargetMapper !== null) {
+			$this->rowJudge = new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper);
+		}
 	}//end __construct()
 
 	/**
@@ -192,7 +207,9 @@ class ShareAuthorizationService {
 	 * the source, so their client names their own received copy; when they
 	 * hold that copy and are an active delegate of its source, the source is
 	 * returned. Anything else comes back as is, so a plain recipient's copy
-	 * stays a received copy and is refused as a share source.
+	 * stays a received copy and is refused as a share source. Only a trusted
+	 * share row (ShareRowJudge) leads to a source: a secret a row the pending
+	 * quarantine scan holds back names is its own source.
 	 *
 	 * @param Secret $secret The secret the caller named
 	 * @param string $userId The acting user
@@ -202,18 +219,18 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	public function resolveShareSource(Secret $secret, string $userId): Secret {
-		if ($this->shareTargetMapper === null) {
+		$row = $this->rowJudge?->forCopy(copy: $secret)->trustedRow();
+		if ($row === null) {
 			return $secret;
 		}
 
 		try {
-			$row = $this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $secret->getId());
 			$source = $this->secretMapper->findById($row->getSourceSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return $secret;
 		}
 
-		if ($row->getTargetUserId() !== $userId || $row->isHeldByTarget(copy: $secret) === false
+		if ($row->getTargetUserId() !== $userId
 			|| ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId)
 			|| $this->isOwnerOrDelegate(secret: $source, userId: $userId) === false
 		) {
@@ -275,25 +292,31 @@ class ShareAuthorizationService {
 
 	/**
 	 * The source secret of a received copy, or the secret itself when it is
-	 * not a copy.
+	 * not a copy: no live share row names it, or the pending quarantine scan
+	 * quarantines the one that does. A row whose target does not hold the
+	 * copy, or that the scan cannot judge, leads nowhere.
 	 *
 	 * @param Secret $copy The secret that may be a received copy
 	 *
 	 * @return Secret
 	 *
-	 * @throws InvalidArgumentException When the copy's source cannot be loaded
+	 * @throws InvalidArgumentException When the copy's source cannot be loaded, or its share row cannot be followed
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function sourceOf(Secret $copy): Secret {
-		try {
-			$row = $this->shareTargetMapper?->findByRecipientSecret(recipientSecretId: $copy->getId());
-		} catch (DoesNotExistException) {
-			return $copy;
-		} catch (MultipleObjectsReturnedException) {
-			throw new InvalidArgumentException(message: 'Ambiguous copy');
+		if ($this->rowJudge === null) {
+			throw new InvalidArgumentException(message: 'No share-target mapper');
 		}
 
+		$verdict = $this->rowJudge->forCopy(copy: $copy);
+		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {
+			return $copy;
+		}
+
+		$row = $verdict->trustedRow();
 		if ($row === null) {
-			throw new InvalidArgumentException(message: 'No share-target mapper');
+			throw new InvalidArgumentException(message: 'The share row of this copy cannot be followed');
 		}
 
 		return $this->loadSecret(secretId: $row->getSourceSecretId());
@@ -318,8 +341,9 @@ class ShareAuthorizationService {
 	 * The grade the caller's own copy of a source secret gives them: `write`
 	 * when they may change the copy and are a member of a group the source is
 	 * shared with, however the copy reached them; `none` for any other copy;
-	 * null when they hold no copy of it or its access ended. Fails closed when
-	 * the mappers are not wired.
+	 * null when they hold no copy of it, their share row of it is not trusted
+	 * (ShareRowJudge), or its access ended. Fails closed when the mappers are
+	 * not wired.
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The candidate user
@@ -329,15 +353,12 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function copyGrade(Secret $source, string $userId): ?string {
-		if ($this->shareTargetMapper === null) {
+		$target = $this->rowJudge?->forPair(sourceId: $source->getId(), targetUserId: $userId)->trustedRow();
+		if ($target === null) {
 			return null;
 		}
 
 		try {
-			$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $source->getId(),
-				targetUserId: $userId
-			);
 			$copy = $this->secretMapper->findById($target->getSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return null;

@@ -37,12 +37,22 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * Authorization decisions for the SecretDelegation lifecycle.
  */
 class DelegationAuthorizer {
+
+	/**
+	 * The judged share rows, or null when no share-target mapper is wired.
+	 *
+	 * @var ShareRowJudge|null
+	 */
+	private ?ShareRowJudge $rowJudge;
+
 	/**
 	 * Constructor for DelegationAuthorizer.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)
 	 * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
 	 * @param AdminAreaAuthorizer|null $areas The People area check (admin path)
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper, with no
+	 *   pending scan
 	 *
 	 * @return void
 	 *
@@ -50,9 +60,15 @@ class DelegationAuthorizer {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ?ShareTargetMapper $shareTargetMapper = null,
+		?ShareTargetMapper $shareTargetMapper = null,
 		private ?AdminAreaAuthorizer $areas = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = $rowJudge;
+		if ($rowJudge === null && $shareTargetMapper !== null) {
+			$this->rowJudge = new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper);
+		}
+
 	}//end __construct()
 
 	/**
@@ -151,9 +167,11 @@ class DelegationAuthorizer {
 	}//end canHandover()
 
 	/**
-	 * Assert that $userId already holds a share of $secretId. No-op when
-	 * the share-target mapper is not wired (preserves backward compat with
-	 * existing constructors that pre-date the §17.1 hardening).
+	 * Assert that $userId already holds a share of $secretId through a
+	 * trusted share row (ShareRowJudge): a row the pending quarantine scan
+	 * holds back is no share. No-op when the share-target mapper is not wired
+	 * (preserves backward compat with existing constructors that pre-date the
+	 * §17.1 hardening).
 	 *
 	 * @param string $secretId The source Secret ID
 	 * @param string $userId The candidate recipient
@@ -165,18 +183,14 @@ class DelegationAuthorizer {
 	 *                                  (sourceSecret, user).
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function requirePreExistingShare(string $secretId, string $userId): void {
-		if ($this->shareTargetMapper === null) {
+		if ($this->rowJudge === null) {
 			return;
 		}
 
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $secretId,
-				targetUserId: $userId,
-			);
-		} catch (DoesNotExistException) {
+		if ($this->rowJudge->forPair(sourceId: $secretId, targetUserId: $userId)->trustedRow() === null) {
 			throw new InvalidArgumentException(
 				message: 'Delegation requires the recipient to already hold a share of the secret'
 			);

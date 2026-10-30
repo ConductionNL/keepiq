@@ -43,7 +43,6 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
@@ -66,6 +65,13 @@ use Throwable;
  *   grant (GHSA-m5p9-6pw7-pf3g).
  */
 class GroupShareService {
+
+	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
 	/**
 	 * Constructor for GroupShareService.
 	 *
@@ -86,6 +92,7 @@ class GroupShareService {
 	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy, when no authorization service is wired
 	 * @param IDBConnection|null $db Makes a restriction change and a revoke all-or-nothing
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null builds one on the share-target mapper and the scan
 	 *
 	 * @return void
 	 */
@@ -107,7 +114,9 @@ class GroupShareService {
 		private ?ShareQuarantineScanner $quarantineScan = null,
 		private ?ShareGrantReader $grants = null,
 		private ?IDBConnection $db = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper, scanner: $quarantineScan));
 	}//end __construct()
 
 	/**
@@ -658,30 +667,26 @@ class GroupShareService {
 			groupShareMapper: $this->mapper,
 			groupManager: $this->groupManager,
 			grants: $this->grants,
+			rowJudge: $this->rowJudge,
 		));
 	}//end authorization()
 
 	/**
 	 * Whether the source is itself a received copy — a secret that is some share
-	 * target's recipient secret. An ambiguous match counts as a copy; only a
-	 * genuinely absent row reads as an original.
+	 * target's recipient secret (ShareRowVerdict::countsAsCopy()). Fails open to
+	 * "original" only when no row names it, or the pending quarantine scan
+	 * quarantines the one that does; an ambiguous match, a row its target does
+	 * not hold and a row the scan cannot judge count as a copy.
 	 *
 	 * @param Secret $secret The source secret
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
-		try {
-			$this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $secret->getId());
-		} catch (DoesNotExistException) {
-			return false;
-		} catch (MultipleObjectsReturnedException) {
-			return true;
-		}
-
-		return true;
+		return $this->rowJudge->forCopy(copy: $secret)->countsAsCopy();
 	}//end isReceivedCopy()
 
 	/**

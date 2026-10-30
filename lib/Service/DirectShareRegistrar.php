@@ -40,7 +40,6 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception as DbException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -65,6 +64,13 @@ class DirectShareRegistrar {
 	private ShareAuditTrail $auditTrail;
 
 	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
+
+	/**
 	 * Constructor for DirectShareRegistrar.
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
@@ -76,6 +82,7 @@ class DirectShareRegistrar {
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 * @param ShareAuthorizationService|null $authorization Owner-or-delegate check on the source secret
 	 * @param IDBConnection|null $connection Wraps the copy mint and link insert in one transaction
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
@@ -91,8 +98,10 @@ class DirectShareRegistrar {
 		private ?ShareRestrictionResolver $restrictions = null,
 		private ?ShareAuthorizationService $authorization = null,
 		private ?IDBConnection $connection = null,
+		?ShareRowJudge $rowJudge = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $mapper, secrets: $secretMapper));
 	}//end __construct()
 
 	/**
@@ -468,25 +477,20 @@ class DirectShareRegistrar {
 
 	/**
 	 * Whether the source is itself a received copy — a secret that is some share
-	 * target's recipient secret. Fails open to "original" only when the row is
-	 * genuinely absent; an ambiguous match counts as a copy.
+	 * target's recipient secret (ShareRowVerdict::countsAsCopy()). Fails open to
+	 * "original" only when no row names it, or the pending quarantine scan
+	 * quarantines the one that does; an ambiguous match, a row its target does
+	 * not hold and a row the scan cannot judge count as a copy.
 	 *
 	 * @param Secret $secret The source secret
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
-		try {
-			$this->mapper->findByRecipientSecret(recipientSecretId: $secret->getId());
-		} catch (DoesNotExistException) {
-			return false;
-		} catch (MultipleObjectsReturnedException) {
-			return true;
-		}
-
-		return true;
+		return $this->rowJudge->forCopy(copy: $secret)->countsAsCopy();
 	}//end isReceivedCopy()
 
 	/**

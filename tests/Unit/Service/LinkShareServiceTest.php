@@ -94,8 +94,11 @@ class LinkShareServiceTest extends TestCase {
 					throw new DoesNotExistException('not a copy');
 				}
 
+				// A real row: its target holds the copy it names.
 				$row = new ShareTarget();
 				$row->setSourceSecretId($this->copies[$copyId]);
+				$row->setTargetUserId((string)($this->secretRows[$copyId] ?? null)?->getOwnerId());
+				$row->setSecretId($copyId);
 				return $row;
 			}
 		);

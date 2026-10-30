@@ -47,27 +47,39 @@ class ViewOnlyCopyGuard {
 	public const VALUE_FIELDS = Secret::VALUE_FIELDS;
 
 	/**
+	 * The judged share rows.
+	 *
+	 * @var ShareRowJudge
+	 */
+	private ShareRowJudge $rowJudge;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets (copy to source)
+	 * @param ShareTargetMapper $targets The share targets, read only through the judge
 	 * @param SecretMapper $secrets The secrets
 	 * @param ShareWriteContext $contexts The holder's standing on the source
+	 * @param ShareRowJudge|null $rowJudge Judged share rows; null judges them with no pending scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareTargetMapper $targets,
+		ShareTargetMapper $targets,
 		private SecretMapper $secrets,
 		private ShareWriteContext $contexts,
+		?ShareRowJudge $rowJudge = null,
 	) {
+		$this->rowJudge = ($rowJudge ?? new ShareRowJudge(targets: $targets, secrets: $secrets));
 	}//end __construct()
 
 	/**
 	 * Refuse a change of the value of a copy its holder may not write.
 	 * A change that leaves the value alone, and a row that is not a copy,
-	 * pass.
+	 * pass. Only a trusted share row (ShareRowJudge) makes a row a copy; a
+	 * row the pending quarantine scan cannot judge refuses the change until
+	 * it has judged it.
 	 *
 	 * @param Secret $row The holder's row, already checked to be theirs
 	 * @param string[] $fields The fields the change writes
@@ -79,18 +91,27 @@ class ViewOnlyCopyGuard {
 	 * @throws ViewOnlyCopyException When the holder may not write the copy's source
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function assertMayChangeValue(Secret $row, array $fields, string $userId): void {
 		if (array_intersect(self::VALUE_FIELDS, $fields) === []) {
 			return;
 		}
 
-		try {
-			$target = $this->targets->findByRecipientSecret(recipientSecretId: $row->getId());
-		} catch (DoesNotExistException) {
-			return;
-		} catch (MultipleObjectsReturnedException) {
+		$verdict = $this->rowJudge->forCopy(copy: $row);
+		if ($verdict->state === ShareRowVerdict::AMBIGUOUS) {
 			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		// Until the pending scan has judged its row, the copy stays as limited as it may be.
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw new ViewOnlyCopyException();
+		}
+
+		$target = $verdict->trustedRow();
+		if ($target === null) {
+			// Not a copy: no row names it, the scan quarantines the row, or its target does not hold it.
+			return;
 		}
 
 		try {
