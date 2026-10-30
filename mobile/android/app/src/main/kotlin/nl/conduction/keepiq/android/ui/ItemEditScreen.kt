@@ -98,7 +98,9 @@ fun ItemEditScreen(
 
     LaunchedEffect(id) {
         if (id != null) {
-            // The saved Authenticator key is not decrypted for the form: it is replaced or removed, never shown.
+            // openForEdit leaves the item's own `totp` field (a login's saved Authenticator key) encrypted: the form
+            // replaces or removes it, never shows it. An Authenticator item's seed is its `key`, its value, which
+            // is still opened, because that is what the form edits.
             val opened = io { repository.openForEdit(id) }
             if (opened is OpenResult.Opened) {
                 item = opened.item

@@ -25,7 +25,10 @@ internal class PlainKeys : VaultKeys {
     override val suiteId: String = "suite-1"
     override val unlockKeyEpoch: Long? = null
 
-    override fun decryptField(ciphertext: String?): String = ciphertext ?: ""
+    /** Every value decrypted so far, so a test can see what a screen opened. */
+    val decrypted: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
+
+    override fun decryptField(ciphertext: String?): String = (ciphertext ?: "").also { if (it.isNotEmpty()) decrypted += it }
 
     override fun encryptField(plaintext: String): String = plaintext
 }
@@ -64,7 +67,8 @@ internal class FakeVault {
     }
 
     private val account = Account("acc", "https://cloud.example.nl", "alice", "pw")
-    val session = VaultSession(account, KeepiqApi(KeepiqApi.httpClient(engine), account), PlainKeys(), null, null)
+    val keys = PlainKeys()
+    val session = VaultSession(account, KeepiqApi(KeepiqApi.httpClient(engine), account), keys, null, null)
 
     /** The writes of one method and path, such as "PUT" to "/api/v1/secrets/s4". */
     fun count(method: String, path: String): Int = synchronized(requests) { requests.count { it == method to path } }

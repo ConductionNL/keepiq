@@ -592,4 +592,15 @@ class ScreensTest {
         compose.onNodeWithText("Show $seed").performScrollTo().performClick()
         compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
     }
+
+    @Test
+    fun theEditScreenNeverDecryptsALoginsSavedKey() {
+        val seed = "GEZDGNBVGY3TQOJQ"
+        vault.put("l2", FakeVault.row("l2", "Mail", "1", key = "geheim", login = "alice", totp = seed))
+        showEdit("l2")
+        compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
+        // The form opened the login (its password was decrypted) but not its own `totp`.
+        assert("geheim" in vault.keys.decrypted) { vault.keys.decrypted }
+        assert(seed !in vault.keys.decrypted) { "the edit screen decrypted the saved key" }
+    }
 }
