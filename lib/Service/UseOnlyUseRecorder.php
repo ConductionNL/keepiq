@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
@@ -89,14 +90,7 @@ class UseOnlyUseRecorder {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		$verdict = $this->rowJudge->forCopy(copy: $copy);
-		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::AMBIGUOUS) {
-			throw new NotFoundException(message: 'Secret not found');
-		}
-
-		// Only a trusted row names the source the use is recorded on; a use of
-		// a secret a held-back row names is recorded on that secret itself.
-		$target = $verdict->trustedRow();
+		$sourceId = $this->usedSecretOf(copy: $copy);
 
 		$accessEnds = $copy->getAccessExpiresAt();
 		if ($copy->getOwnerType() !== 'user'
@@ -109,7 +103,6 @@ class UseOnlyUseRecorder {
 
 		$this->secretMapper->markUsed($copyId, $userId, new DateTime());
 
-		$sourceId   = ($target?->getSourceSecretId() ?? $copyId);
 		$sourceName = $copy->getName();
 		try {
 			$sourceName = $this->secretMapper->findById($sourceId)->getName();
@@ -128,4 +121,26 @@ class UseOnlyUseRecorder {
 			)
 		);
 	}//end recordUse()
+
+	/**
+	 * The secret a use of a copy is recorded on: its source, through a share
+	 * row the judge trusts. A use of a secret a held-back row names is
+	 * recorded on that secret itself.
+	 *
+	 * @param Secret $copy The copy
+	 *
+	 * @return string
+	 *
+	 * @throws NotFoundException When no share row, or more than one, names the copy
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	private function usedSecretOf(Secret $copy): string {
+		$verdict = $this->rowJudge->forCopy(copy: $copy);
+		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::AMBIGUOUS) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		return ($verdict->trustedRow()?->getSourceSecretId() ?? $copy->getId());
+	}//end usedSecretOf()
 }//end class

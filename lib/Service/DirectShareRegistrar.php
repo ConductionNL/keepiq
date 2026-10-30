@@ -87,6 +87,9 @@ class DirectShareRegistrar {
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; the registration behaviour carries the spec anchors.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list; the judged share-row lookup is the tenth,
+	 *   and every optional one keeps the older constructions in the tests working.
 	 */
 	public function __construct(
 		private ShareTargetMapper $mapper,
