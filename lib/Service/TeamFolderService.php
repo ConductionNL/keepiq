@@ -359,9 +359,10 @@ class TeamFolderService {
 			);
 		}
 
-		$covered = $this->memberships->expandMember(memberType: $membership->getMemberType(), memberId: $membership->getMemberId());
-		foreach ($covered as $coveredUserId) {
-			$this->shares->assertRevocable(teamFolderId: $teamFolderId, targetUserId: $coveredUserId);
+		// Judged before the transaction, so a quarantine this makes is kept
+		// when a row the scan cannot judge refuses the removal.
+		foreach ($this->usersLosingAccess(membership: $membership) as $droppedUserId) {
+			$this->shares->assertRevocable(teamFolderId: $teamFolderId, targetUserId: $droppedUserId);
 		}
 
 		return $this->dropMembership(
@@ -426,8 +427,37 @@ class TeamFolderService {
 	}//end membershipToRemove()
 
 	/**
+	 * The users a membership alone covers in its team folder: the ones who
+	 * lose access when it is removed.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 *
+	 * @return list<string>
+	 */
+	private function usersLosingAccess(TeamFolderMember $membership): array {
+		$coveredByOthers = [];
+		foreach ($this->memberMapper->findByTeamFolder(teamFolderId: (string)$membership->getTeamFolderId()) as $other) {
+			if ($other->getId() === $membership->getId()) {
+				continue;
+			}
+
+			foreach ($this->memberships->expandMember(memberType: $other->getMemberType(), memberId: $other->getMemberId()) as $otherUserId) {
+				$coveredByOthers[$otherUserId] = true;
+			}
+		}
+
+		return array_values(
+			array_filter(
+				$this->memberships->expandMember(memberType: $membership->getMemberType(), memberId: $membership->getMemberId()),
+				static fn (string $coveredUserId): bool => isset($coveredByOthers[$coveredUserId]) === false
+			)
+		);
+	}//end usersLosingAccess()
+
+	/**
 	 * Delete a membership and revoke the derived shares of every user it
-	 * alone covered, with the given revoke.
+	 * alone covered, with the given revoke, in one transaction: a revoke that
+	 * is refused, or fails, leaves the membership and every row as they were.
 	 *
 	 * @param TeamFolderMember $membership The membership row
 	 * @param string $userId The caller
@@ -437,25 +467,32 @@ class TeamFolderService {
 	 */
 	private function dropMembership(TeamFolderMember $membership, string $userId, Closure $revoke): int {
 		$teamFolderId = (string)$membership->getTeamFolderId();
-		$this->memberMapper->delete($membership);
+		$this->db->beginTransaction();
+		try {
+			$this->memberMapper->delete($membership);
 
-		$coveredAfter = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
-		$dropped = array_diff(
-			$this->memberships->expandMember(
-				memberType: $membership->getMemberType(),
-				memberId: $membership->getMemberId()
-			),
-			$coveredAfter
-		);
+			$coveredAfter = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
+			$dropped = array_diff(
+				$this->memberships->expandMember(
+					memberType: $membership->getMemberType(),
+					memberId: $membership->getMemberId()
+				),
+				$coveredAfter
+			);
 
-		$revoked = 0;
-		foreach ($dropped as $droppedUserId) {
-			$revoked += $revoke($droppedUserId);
+			$revoked = 0;
+			foreach ($dropped as $droppedUserId) {
+				$revoked += $revoke($droppedUserId);
+			}
+
+			// Users still covered by another grant may have lost the one that
+			// lifted use-only or extended their access.
+			$this->resolveCopiesOf(membership: $membership);
+			$this->db->commit();
+		} catch (Throwable $exception) {
+			$this->db->rollBack();
+			throw $exception;
 		}
-
-		// Users still covered by another grant may have lost the one that
-		// lifted use-only or extended their access.
-		$this->resolveCopiesOf(membership: $membership);
 
 		$this->audit->memberRemoved(
 			actorId: $userId,

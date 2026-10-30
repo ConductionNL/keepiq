@@ -118,6 +118,13 @@ class TeamFolderServiceTest extends TestCase {
 	private ShareQuarantineScanner&MockObject $scanner;
 
 	/**
+	 * The database connection the service's transactions run on.
+	 *
+	 * @var IDBConnection&MockObject
+	 */
+	private IDBConnection&MockObject $db;
+
+	/**
 	 * Audit events dispatched by the offboarding auditor.
 	 *
 	 * @var array<int,AuditEvent>
@@ -148,6 +155,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->userManager = $this->createMock(originalClassName: IUserManager::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 		$this->scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
+		$this->db = $this->createMock(originalClassName: IDBConnection::class);
 
 		$memberships = new TeamFolderMembershipResolver(
 			memberMapper: $this->memberMapper,
@@ -206,7 +214,7 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			audit: new TeamFolderAuditor(eventDispatcher: null),
 			notificationService: $this->notificationService,
-			db: $this->createMock(originalClassName: IDBConnection::class),
+			db: $this->db,
 		);
 	}//end setUp()
 
@@ -624,6 +632,51 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame(1, $this->service->expireMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', ownerId: 'alice'));
 		$this->assertSame(['st-carol'], $deleted);
 	}//end testAnEndedMembershipDropsARowTheScanCannotJudgeAndKeepsItsCopy()
+
+	/**
+	 * A row the scan clears in the check before the removal, but cannot
+	 * judge when it is revoked, refuses the removal as a whole: the membership
+	 * delete is rolled back and no row is revoked.
+	 *
+	 * @return void
+	 */
+	public function testARemovalRefusedAfterItsCheckChangesNothing(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol'));
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$this->carolsRow()]);
+		$this->scanner->method('heldBack')->willReturnOnConsecutiveCalls(null, ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+		$this->shareTargetMapper->expects($this->never())->method('delete');
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', userId: 'alice');
+	}//end testARemovalRefusedAfterItsCheckChangesNothing()
+
+	/**
+	 * Only the users who lose access are checked before a removal: a row of
+	 * a user another membership still covers cannot hold it back.
+	 *
+	 * @return void
+	 */
+	public function testAUserStillCoveredCannotHoldARemovalBack(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$groupMembership = $this->buildMember(type: 'group', id: 'devops');
+		$this->memberMapper->method('findById')->willReturn($groupMembership);
+		$this->memberMapper->method('findByTeamFolder')->willReturn([$groupMembership, $this->buildMember(type: 'user', id: 'bob')]);
+		$this->groupManager->method('get')->willReturn($this->buildGroup(userIds: ['bob', 'carol']));
+		$bobsRow = new ShareTarget();
+		$bobsRow->setId('st-bob');
+		$bobsRow->setTargetUserId('bob');
+		$bobsRow->setSecretId('copy-bob');
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturnCallback(
+			static fn (string $teamFolderId, string $targetUserId): array => ($targetUserId === 'bob' ? [$bobsRow] : [])
+		);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+
+		$this->assertSame(0, $this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-group-devops', userId: 'alice'));
+	}//end testAUserStillCoveredCannotHoldARemovalBack()
 
 	/**
 	 * Carol's row in tf-1, naming her copy.
