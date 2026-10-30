@@ -603,4 +603,18 @@ class ScreensTest {
         assert("geheim" in vault.keys.decrypted) { vault.keys.decrypted }
         assert(seed !in vault.keys.decrypted) { "the edit screen decrypted the saved key" }
     }
+
+    @Test
+    fun anUnreadableOwnKeyOnAnAuthenticatorItemNamesWhichCode() {
+        val totp = SecretType("3", "totp", "Authenticator", emptyList())
+        val item = DecryptedItem(
+            row = row(useOnly = false).copy(typeId = "3"), typeName = "totp", type = totp, login = "", secret = "JBSWY3DPEHPK3PXP",
+            additionalFields = null, additionalFieldsError = false, passkey = null, fromCache = false,
+            totpSeed = "not a key!", hasSavedKey = true,
+        )
+        show(item, mutableListOf())
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithText("Code from the item's own key").assertExists()
+        compose.onNodeWithText("This is not a valid authenticator secret.").assertExists()
+    }
 }

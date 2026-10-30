@@ -355,7 +355,11 @@ fun FieldRow(label: String, value: String, masked: Boolean = false, copy: Boolea
 @Composable
 private fun TotpRow(params: Totp.Params?, label: String, onCopy: (String) -> Unit) {
     if (params == null) {
-        Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
+        // Labelled too: an Authenticator item can show two codes, and the reader must know which one cannot be read.
+        Column {
+            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
+        }
         return
     }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
