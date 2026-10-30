@@ -20,6 +20,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.crypto.RsaFields
 import nl.conduction.keepiq.shared.crypto.RsaPrivateKey
@@ -70,6 +71,22 @@ class VaultRepositoryTest {
     private val useOnlyRow = """{"id":"s2","name":"Leveranciersportaal","url":"https://portal.supplier.example","typeId":"1","folderId":null,
         "key":"${enc("niet-tonen")}","login":"${enc("bob")}","additionalFields":"${enc("""{"geheim":"x"}""")}",
         "useOnly":true,"readOnly":true,"blocked":false,"updatedAt":"2026-10-01T09:00:00+00:00"}"""
+    private fun credential(id: String, userName: String) = PasskeyCredential(
+        credentialId = id, rpId = "mail.example", rpName = "Mail", userName = userName, userDisplayName = "",
+        userHandle = "dTE", privateKey = "pk-$id", algorithm = -7L, counter = 0L, transports = emptyList(),
+        createdAt = "2026-03-12T10:00:00.000Z",
+    )
+    private fun passkeysOf(vararg ids: String) = "[" + ids.joinToString(",") { credential(it, "alice-$it").toJson() } + "]"
+    private val seed = "JBSWY3DPEHPK3PXP"
+
+    /** A login with its own seed and two passkeys; what GET /secrets/s4 answers. */
+    private var mailRow = mailRowWith(passkeysOf("a", "b"))
+    private fun mailRowWith(passkeys: String) = """{"id":"s4","name":"Mail","url":"https://mail.example","typeId":"1","folderId":null,
+        "key":"${enc("geheim-4")}","login":"${enc("alice")}","totp":"${enc(seed)}","passkeys":"${enc(passkeys)}",
+        "useOnly":false,"readOnly":false,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
+    private val useOnlyMailRow = """{"id":"s5","name":"Gedeelde mail","url":"https://mail.example","typeId":"1","folderId":null,
+        "login":"${enc("bob")}","totp":"${enc(seed)}","passkeys":"${enc(passkeysOf("c"))}",
+        "useOnly":true,"readOnly":true,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
     private val blockedRow = """{"id":"s3","name":"Ánders","url":null,"typeId":"2","folderId":null,"blocked":true,"blockedReason":"Old suite","updatedAt":"2026-10-01T08:00:00+00:00"}"""
     private val types = """[{"id":"1","name":"login","fields":[{"key":"klantnummer","label":"Klantnummer","kind":"text","required":true}]},{"id":"2","name":"note","fields":[]}]"""
     private val folders = """[{"id":"f1","name":"Werk","parentId":null},{"id":"f2","name":"Bank","parentId":"f1"},{"id":"f3","name":"Algemeen","parentId":null}]"""
@@ -91,6 +108,8 @@ class VaultRepositoryTest {
             path == "/api/v1/offline/manifest" -> """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},"secrets":[$loginRow,$useOnlyRow,$blockedRow],"folders":$folders,"types":$types,"unlockBlocked":null}"""
             path == "/api/v1/secrets/s1" && request.method == HttpMethod.Get -> loginRow
             path == "/api/v1/secrets/s2" && request.method == HttpMethod.Get -> useOnlyRow
+            path == "/api/v1/secrets/s4" && request.method == HttpMethod.Get -> mailRow
+            path == "/api/v1/secrets/s5" && request.method == HttpMethod.Get -> useOnlyMailRow
             path == "/api/v1/secrets" && request.method == HttpMethod.Post -> """{"id":"new-1"}"""
             path.startsWith("/api/v1/folders/") && path.endsWith("/children") -> """{"directSecretCount":2,"subfolders":[]}"""
             else -> "{}"
@@ -342,5 +361,77 @@ class VaultRepositoryTest {
             """{"number":"4111111111111111","expiry":"","cvv":"123","pin":"","cardholder":""}""",
             ItemCodec.parts(draft, type).key,
         )
+    }
+
+    @Test
+    fun opensALoginsCodeAndPasskeys() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertNotNull(item.totp)
+        assertTrue(item.hasSavedKey)
+        assertEquals("geheim-4", item.secret)
+        assertEquals(listOf("a", "b"), item.passkeys.map { it.credentialId })
+        assertEquals(listOf("alice-a", "alice-b"), item.passkeys.map { it.userName })
+        assertEquals("2026-03-12T10:00:00.000Z", item.passkeys.first().createdAt)
+        assertFalse(item.passkeysError)
+    }
+
+    @Test
+    fun aUseOnlyCopyOpensItsCodeButNoPasskeys() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
+        assertNotNull(item.totp)
+        assertTrue(item.passkeys.isEmpty())
+        assertEquals("", item.secret)
+    }
+
+    @Test
+    fun anEditThatKeepsTheKeySendsNeitherField() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        val draft = ItemCodec.draft(item, item.type)
+        assertTrue(draft.hasSavedKey)
+        assertEquals(KeyEdit.KEEP, draft.keyEdit)
+        assertIs<WriteResult.Saved>(repo.update(item, draft.copy(name = "Mail thuis")))
+        assertEquals(setOf("name"), bodies.single().keys)
+    }
+
+    @Test
+    fun replacingTheKeySendsItEncrypted() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s1")).item
+        val draft = ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REPLACE, newKey = " $seed ")
+        assertIs<WriteResult.Saved>(repo.update(item, draft))
+        val body = bodies.single()
+        assertEquals(setOf("totp"), body.keys)
+        assertEquals(seed, dec(body["totp"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun removingTheKeySendsAnEmptyString() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REMOVE)))
+        assertEquals(JsonObject(mapOf("totp" to JsonPrimitive(""))), bodies.single())
+    }
+
+    @Test
+    fun aNewLoginSendsItsKeyOnlyWhenSet() = runTest {
+        val type = repo.refresh(SyncTrigger.START).typeNamed("login")
+        val draft = ItemCodec.draft(null, type).copy(name = "Nieuw", typed = mapOf("klantnummer" to "1"))
+        assertIs<WriteResult.Saved>(repo.create(draft, type))
+        assertFalse("totp" in bodies.last())
+        assertFalse("passkeys" in bodies.last())
+        assertIs<WriteResult.Saved>(repo.create(draft.copy(keyEdit = KeyEdit.REPLACE, newKey = seed), type))
+        assertEquals(seed, dec(bodies.last()["totp"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun aKeyTheGeneratorCannotReadIsRefused() {
+        val draft = ItemCodec.draft(null, null).copy(name = "x")
+        assertEquals(DraftProblem.NOT_AN_AUTHENTICATOR_SECRET, ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REPLACE, newKey = "not a key!"), null)["totp"])
+        assertNull(ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REPLACE, newKey = seed), null)["totp"])
+        assertNull(ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REMOVE), null)["totp"])
+        assertNull(ItemCodec.validate(draft, null)["totp"])
     }
 }
