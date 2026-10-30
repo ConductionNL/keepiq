@@ -25,6 +25,10 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -432,5 +436,63 @@ class ScreensTest {
         compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
         compose.onNodeWithText("Remove").assertExists()
         compose.onNodeWithText("Replace").assertDoesNotExist()
+    }
+
+    private fun showDetail(id: String) {
+        compose.setContent {
+            MaterialTheme { ItemDetailScreen(vault.session, id, Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> }) }
+        }
+    }
+
+    private fun waitForDescription(description: String) =
+        compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription(description).fetchSemanticsNodes().isNotEmpty() }
+
+    private val mailWithTwoPasskeys =
+        FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(FakeVault.credential("a", "alice"), FakeVault.credential("b", "alice-work")))
+
+    @Test
+    fun theDetailScreenAsksBeforeItDeletesAPasskey() {
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNodeWithText("Delete the passkey for alice-work?").assertExists()
+        compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
+        compose.onNodeWithText("Delete the passkey for alice-work?").assertDoesNotExist()
+        compose.waitForIdle()
+        assertEquals("Cancel deletes nothing", 0, vault.count("PUT", "/api/v1/secrets/s4"))
+
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        assertEquals("the dialog asks first", 0, vault.count("PUT", "/api/v1/secrets/s4"))
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { vault.count("PUT", "/api/v1/secrets/s4") > 0 }
+        compose.waitForIdle()
+        assertEquals(1, vault.count("PUT", "/api/v1/secrets/s4"))
+    }
+
+    @Test
+    fun aLoginsEditScreenOffersTheFullKeyField() {
+        vault.put("l1", FakeVault.row("l1", "Mail", "1", key = "geheim", login = "alice"))
+        showEdit("l1")
+        compose.onNodeWithText(keyLabel).performScrollTo().assertExists()
+        compose.onNodeWithText("Remove").assertDoesNotExist()
+    }
+
+    @Test
+    fun anotherTypeWithASavedKeyOffersRemoveOnlyOnTheEditScreen() {
+        vault.put("n1", FakeVault.row("n1", "Notitie", "2", key = "tekst", totp = "JBSWY3DPEHPK3PXP"))
+        showEdit("n1")
+        compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithText("Replace").assertDoesNotExist()
+        compose.onNodeWithText(keyLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun anotherTypeWithoutAKeyShowsNoKeyField() {
+        vault.put("n2", FakeVault.row("n2", "Notitie", "2", key = "tekst"))
+        showEdit("n2")
+        compose.onNodeWithText("Authenticator key saved").assertDoesNotExist()
+        compose.onNodeWithText(keyLabel).assertDoesNotExist()
     }
 }

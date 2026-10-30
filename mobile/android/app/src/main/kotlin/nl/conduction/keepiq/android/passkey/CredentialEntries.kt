@@ -27,6 +27,7 @@ import nl.conduction.keepiq.android.R
 import nl.conduction.keepiq.android.autofill.AutofillCore
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.SiteMatch
+import nl.conduction.keepiq.shared.passkey.PasskeyChoice
 import nl.conduction.keepiq.shared.passkey.Passkeys
 import nl.conduction.keepiq.shared.passkey.WebAuthnJson
 import nl.conduction.keepiq.shared.vault.VaultKeys
@@ -70,8 +71,8 @@ class CredentialEntries(private val context: Context, private val app: KeepiqApp
                     val get = WebAuthnJson.get(option.requestJson) ?: continue
                     val rpId = rpIdOf(get.rpId, caller) ?: continue
                     if (!caller.mayUse(rpId, core.identities)) continue
-                    for (choice in Passkeys.candidates(index, rpId, keys, get.allowCredentialIds)) {
-                        val intent = CredentialProviderActivity.intent(context, CredentialProviderActivity.MODE_PASSKEY, choice.id)
+                    val choices = Passkeys.candidates(index, rpId, keys, get.allowCredentialIds)
+                    for ((choice, intent) in choices.zip(passkeyIntents(context, choices))) {
                         out += PublicKeyCredentialEntry.Builder(context, choice.label, pending(intent), option)
                             .setDisplayName(choice.name)
                             .setIcon(icon())
@@ -149,6 +150,14 @@ class CredentialEntries(private val context: Context, private val app: KeepiqApp
     private fun icon(): Icon = Icon.createWithResource(context, R.drawable.ic_autofill_key)
 
     companion object {
+        /**
+         * The intent of each passkey entry. It carries the choice's id, not
+         * only its item: a login can hold several passkeys, and
+         * [CredentialProviderActivity.chosen] finds the one picked by it.
+         */
+        internal fun passkeyIntents(context: Context, choices: List<PasskeyChoice>): List<Intent> =
+            choices.map { CredentialProviderActivity.intent(context, CredentialProviderActivity.MODE_PASSKEY, it.id) }
+
         private val EMPTY_GET = BeginGetCredentialResponse()
         private val EMPTY_CREATE = BeginCreateCredentialResponse()
         private var requestCode = 0

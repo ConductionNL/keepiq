@@ -65,6 +65,7 @@ import nl.conduction.keepiq.shared.crypto.ClientData
 import nl.conduction.keepiq.shared.crypto.KeepiqCryptoException
 import nl.conduction.keepiq.shared.crypto.WebAuthn
 import nl.conduction.keepiq.shared.passkey.ExcludedCredentialException
+import nl.conduction.keepiq.shared.passkey.PasskeyChoice
 import nl.conduction.keepiq.shared.passkey.Passkeys
 import nl.conduction.keepiq.shared.passkey.WebAuthnJson
 import nl.conduction.keepiq.shared.sync.SyncTrigger
@@ -165,8 +166,7 @@ class CredentialProviderActivity : FragmentActivity() {
         if (!caller.mayUse(rpId, core.identities)) return getError(NoCredentialException())
         refreshIndex(accountId, keys, always = false)
         // The choice's id names the passkey, not only its item: a login can hold several.
-        val choiceId = intent.getStringExtra(EXTRA_ITEM)
-        val choice = Passkeys.candidates(core.indexOf(accountId), rpId, keys, get.allowCredentialIds).firstOrNull { it.id == choiceId }
+        val choice = chosen(Passkeys.candidates(core.indexOf(accountId), rpId, keys, get.allowCredentialIds), intent)
             ?: return getError(NoCredentialException())
         val clientData = option.clientDataHash?.let { ClientData.hashed(it) } ?: ClientData.build(ClientData.GET, get.challenge, caller.origin)
         val api = core.api(accountId) ?: return getError(GetCredentialUnknownException("no account"))
@@ -254,6 +254,12 @@ class CredentialProviderActivity : FragmentActivity() {
         const val MODE_PASSKEY = "passkey"
         const val MODE_PASSWORD = "password"
         const val MODE_CREATE = "create"
+
+        /** The passkey an entry's [intent] names (CredentialEntries.passkeyIntents): by the choice's id, never only its item. */
+        internal fun chosen(choices: List<PasskeyChoice>, intent: Intent): PasskeyChoice? {
+            val id = intent.getStringExtra(EXTRA_ITEM)
+            return choices.firstOrNull { it.id == id }
+        }
 
         fun intent(context: Context, mode: String, itemId: String?): Intent =
             Intent(context, CredentialProviderActivity::class.java)
