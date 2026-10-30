@@ -3,6 +3,7 @@
 
 package nl.conduction.keepiq.android.ui
 
+import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,8 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import nl.conduction.keepiq.android.R
 import nl.conduction.keepiq.shared.vault.DraftProblem
@@ -34,10 +39,20 @@ internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = Keyboar
  * The Authenticator key of an item (mobile-login-totp-passkeys D8). A saved
  * key is never loaded: the field says one is saved and offers Replace and
  * Remove, or with [removeOnly] Remove alone. Focus moves to the control
- * that took the chosen one's place.
+ * that took the chosen one's place. A typed key is masked until shown, as
+ * a password is, and while the field is on screen the screen is kept out of
+ * the autofill framework, so another autofill service is never offered the
+ * seed to save (the web field's autocomplete="off").
  */
 @Composable
 internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, removeOnly: Boolean, onChange: (ItemDraft) -> Unit) {
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val before = view.importantForAutofill
+        view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        onDispose { view.importantForAutofill = before }
+    }
+    var shown by remember { mutableStateOf(false) }
     val field = remember { FocusRequester() }
     val replace = remember { FocusRequester() }
     val remove = remember { FocusRequester() }
@@ -50,8 +65,18 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     val label = stringResource(R.string.edit_totp_key)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (!draft.hasSavedKey || draft.keyEdit == KeyEdit.REPLACE) {
-            TextInput(label, draft.newKey, problem, modifier = Modifier.focusRequester(field), keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD) { v ->
+            TextInput(
+                label,
+                draft.newKey,
+                problem,
+                modifier = Modifier.focusRequester(field),
+                keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
+                visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+            ) { v ->
                 onChange(draft.copy(newKey = v, keyEdit = if (draft.hasSavedKey || v.isNotBlank()) KeyEdit.REPLACE else KeyEdit.KEEP))
+            }
+            TextButton(onClick = { shown = !shown }) {
+                Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
             }
         } else {
             Text(

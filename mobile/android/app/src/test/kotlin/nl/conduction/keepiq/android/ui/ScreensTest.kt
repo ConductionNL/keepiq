@@ -3,6 +3,7 @@
 
 package nl.conduction.keepiq.android.ui
 
+import android.view.View
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
@@ -13,7 +14,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -324,6 +329,27 @@ class ScreensTest {
         compose.onNodeWithText("Remove").performClick()
         compose.onNodeWithText("Keep saved key").performClick()
         compose.onNodeWithText("Remove").assertIsFocused()
+    }
+
+    @Test
+    fun theKeyFieldIsMaskedAndKeepsTheScreenOutOfAutofill() {
+        var view: View? = null
+        var shown by mutableStateOf(false)
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme { if (shown) AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
+        }
+        compose.waitForIdle()
+        val before = view!!.importantForAutofill
+        shown = true
+        compose.waitForIdle()
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        compose.onNodeWithText("Show $keyLabel").performClick()
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        shown = false
+        compose.waitForIdle()
+        assertEquals(before, view!!.importantForAutofill)
     }
 
     @Test

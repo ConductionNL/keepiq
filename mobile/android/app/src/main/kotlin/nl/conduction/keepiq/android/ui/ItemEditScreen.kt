@@ -279,6 +279,7 @@ fun TextInput(
     singleLine: Boolean = true,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = keyboard),
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     onChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -289,6 +290,7 @@ fun TextInput(
         isError = problem != null,
         supportingText = problem?.let { { Text(draftProblemText(it)) } },
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         modifier = modifier.fillMaxWidth(),
     )
 }
