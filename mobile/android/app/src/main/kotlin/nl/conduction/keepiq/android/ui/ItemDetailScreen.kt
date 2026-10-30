@@ -32,6 +32,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -51,11 +53,15 @@ import nl.conduction.keepiq.shared.vault.Composite
 import nl.conduction.keepiq.shared.vault.DecryptedItem
 import nl.conduction.keepiq.shared.vault.FormKind
 import nl.conduction.keepiq.shared.vault.OpenResult
+import nl.conduction.keepiq.shared.vault.PasskeySummary
 import nl.conduction.keepiq.shared.vault.VaultIndex
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteResult
 
 private const val MASK = "••••••••"
+
+/** How long "Passkey deleted." stays after it is announced. */
+internal const val PASSKEY_DELETED_SHOWN_MILLIS = 5_000L
 
 /**
  * One item (task 3.1): secret values hidden until revealed, copy through
@@ -75,6 +81,16 @@ fun ItemDetailScreen(
     var result by remember(id) { mutableStateOf<OpenResult?>(null) }
     var action by remember { mutableStateOf<DetailAction?>(null) }
     var problem by remember { mutableStateOf<WriteProblem?>(null) }
+    var deleting by remember { mutableStateOf<PasskeySummary?>(null) }
+    var focusPasskey by remember(id) { mutableStateOf<Int?>(null) }
+    var passkeyDeleted by remember(id) { mutableStateOf(false) }
+    // The announcement is made once: it goes after a while, or at the next action or problem.
+    LaunchedEffect(passkeyDeleted) {
+        if (passkeyDeleted) {
+            delay(PASSKEY_DELETED_SHOWN_MILLIS)
+            passkeyDeleted = false
+        }
+    }
     val scope = rememberCoroutineScope()
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
 
@@ -91,21 +107,57 @@ fun ItemDetailScreen(
             modifier = modifier,
             onCopy = onCopy,
             onEdit = onEdit,
-            onMove = { action = DetailAction.Move },
-            onTrash = { action = DetailAction.Trash },
+            onMove = {
+                passkeyDeleted = false
+                action = DetailAction.Move
+            },
+            onTrash = {
+                passkeyDeleted = false
+                action = DetailAction.Trash
+            },
             onSendLogin = { onSendLogin(r.item.login, r.item.secret) },
+            onDeletePasskey = {
+                passkeyDeleted = false
+                deleting = it
+            },
+            focusPasskey = focusPasskey,
+            onPasskeyFocused = { focusPasskey = null },
+            passkeyDeleted = passkeyDeleted,
         )
     }
 
     val item = (result as? OpenResult.Opened)?.item ?: return
     fun write(block: suspend () -> WriteResult, after: () -> Unit) {
         action = null
+        passkeyDeleted = false
         scope.launch {
             when (val w = io { block() }) {
                 is WriteResult.Saved -> after()
                 is WriteResult.Refused -> problem = w.problem
             }
         }
+    }
+    deleting?.let { pk ->
+        PasskeyDeleteDialog(
+            account = pk.userName,
+            onConfirm = {
+                deleting = null
+                passkeyDeleted = false
+                val index = item.passkeys.indexOf(pk)
+                scope.launch {
+                    when (val w = io { session.repository.deletePasskey(item, pk.credentialId, pk.rpId) }) {
+                        is WriteResult.Saved -> {
+                            problem = null
+                            result = io { session.repository.open(id) }
+                            focusPasskey = index
+                            passkeyDeleted = true
+                        }
+                        is WriteResult.Refused -> problem = w.problem
+                    }
+                }
+            },
+            onDismiss = { deleting = null },
+        )
     }
     when (action) {
         DetailAction.Trash -> AlertDialog(
@@ -164,15 +216,27 @@ internal fun ItemDetail(
     onMove: () -> Unit,
     onTrash: () -> Unit,
     onSendLogin: () -> Unit,
+    onDeletePasskey: (PasskeySummary) -> Unit = {},
+    /** After a passkey Delete: the row whose Delete takes focus, else the Edit button. */
+    focusPasskey: Int? = null,
+    /** Focus moved for [focusPasskey]: the caller clears it, so a later reopen does not move focus again. */
+    onPasskeyFocused: () -> Unit = {},
+    /** A passkey was just deleted: said in a polite live region, as focus alone tells a screen reader nothing. */
+    passkeyDeleted: Boolean = false,
 ) {
     val row = item.row
+    val editFocus = remember { FocusRequester() }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
         if (item.fromCache) Note(stringResource(R.string.detail_from_cache))
         if (row.useOnly) Note(stringResource(R.string.detail_use_only))
         if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
+        // A refusal is announced: after a refused passkey Delete the dialog closes and focus goes nowhere.
+        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+        if (passkeyDeleted) {
+            Text(stringResource(R.string.detail_passkey_deleted), style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        }
         if (row.blocked) {
             Note(row.blockedReason ?: stringResource(R.string.detail_blocked))
             return@Column
@@ -184,7 +248,7 @@ internal fun ItemDetail(
                 if (item.login.isNotEmpty()) FieldRow(stringResource(R.string.detail_username), item.login, onCopy = onCopy)
                 if (!row.useOnly) FieldRow(passwordLabel, item.secret, masked = true, onCopy = onCopy)
             }
-            FormKind.TOTP -> TotpRow(item, onCopy)
+            FormKind.TOTP -> TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
             FormKind.NOTE -> if (!row.useOnly) FieldRow(stringResource(R.string.detail_notes), item.secret, onCopy = onCopy)
             FormKind.CARD, FormKind.IDENTITY -> if (!row.useOnly) {
                 val data = item.composite
@@ -209,6 +273,26 @@ internal fun ItemDetail(
                 Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
             }
         }
+        // The item's own `totp` field, for any type that holds one; on an Authenticator item it is a second code, named so.
+        if (item.hasSavedKey) {
+            if (item.kind == FormKind.TOTP) {
+                val own = item.totpSeed.takeIf { it.isNotBlank() }?.let { runCatching { Totp.parse(it) }.getOrNull() }
+                TotpRow(own, stringResource(R.string.detail_code_own_key), onCopy)
+            } else {
+                TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
+            }
+        }
+        val mayDelete = !row.useOnly && !row.readOnly && !offline
+        if (!row.useOnly) {
+            PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey, onPasskeyFocused)
+            if (item.passkeysError) Text(stringResource(R.string.detail_passkeys_error), color = MaterialTheme.colorScheme.error)
+        }
+        LaunchedEffect(focusPasskey, item) {
+            if (focusPasskey != null && (focusPasskey >= item.passkeys.size || !mayDelete) && !row.useOnly) {
+                editFocus.requestFocus()
+                onPasskeyFocused()
+            }
+        }
         row.url?.takeIf { it.isNotEmpty() }?.let { FieldRow(stringResource(R.string.detail_address), it, onCopy = onCopy) }
         if (!row.useOnly) {
             for ((field, value) in item.typedValues) {
@@ -225,7 +309,7 @@ internal fun ItemDetail(
         HorizontalDivider()
         if (!row.useOnly) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit, enabled = !offline) { Text(stringResource(R.string.action_edit)) }
+                OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusRequester(editFocus)) { Text(stringResource(R.string.action_edit)) }
                 OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
             }
             if (item.kind == FormKind.LOGIN) {
@@ -289,10 +373,13 @@ fun FieldRow(label: String, value: String, masked: Boolean = false, copy: Boolea
 
 /** The current code and its seconds left, refreshed every second. */
 @Composable
-private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
-    val params = item.totp
+private fun TotpRow(params: Totp.Params?, label: String, onCopy: (String) -> Unit) {
     if (params == null) {
-        Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
+        // Labelled too: an Authenticator item can show two codes, and the reader must know which one cannot be read.
+        Column {
+            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
+        }
         return
     }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -304,7 +391,6 @@ private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
     }
     val code = remember(params, now / 1_000L / params.period) { Totp.generate(params, now) }
     val left = Totp.secondsRemaining(params.period, now)
-    val label = stringResource(R.string.detail_code)
     val leftText = stringResource(R.string.detail_code_seconds, left)
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium)

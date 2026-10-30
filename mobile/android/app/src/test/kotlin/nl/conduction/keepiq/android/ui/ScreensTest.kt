@@ -3,30 +3,59 @@
 
 package nl.conduction.keepiq.android.ui
 
+import android.text.InputType
+import android.view.View
+import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
 import nl.conduction.keepiq.shared.generator.GeneratorSettings
 import nl.conduction.keepiq.shared.vault.DecryptedItem
+import nl.conduction.keepiq.shared.vault.FormKind
+import nl.conduction.keepiq.shared.vault.ItemDraft
+import nl.conduction.keepiq.shared.vault.KeyEdit
+import nl.conduction.keepiq.shared.vault.PasskeySummary
 import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.TypeField
 import nl.conduction.keepiq.shared.vault.VaultRow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.ZoneOffset
+import java.util.Locale
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -136,5 +165,490 @@ class ScreensTest {
         compose.onNodeWithText("Keepiq fills in your logins in apps and browsers.").assertExists()
         compose.onNodeWithText("Choose Keepiq for autofill").assertDoesNotExist()
         compose.onNodeWithText("Show where Keepiq never saves").assertExists()
+    }
+
+    private fun passkey(id: String, user: String?, createdAt: String?) = PasskeySummary(id, "mail.example", "Mail", user, createdAt)
+
+    private fun mail(useOnly: Boolean = false, readOnly: Boolean = useOnly, passkeys: List<PasskeySummary> = emptyList(), seed: String = "JBSWY3DPEHPK3PXP") =
+        DecryptedItem(
+            row = row(useOnly).copy(readOnly = readOnly), typeName = "login", type = login, login = "alice",
+            secret = if (useOnly) "" else "geheim-1", additionalFields = null, additionalFieldsError = false, passkey = null,
+            fromCache = false, totpSeed = seed, hasSavedKey = seed.isNotEmpty(), passkeys = passkeys,
+        )
+
+    private fun showMail(
+        item: DecryptedItem,
+        offline: Boolean = false,
+        deleted: MutableList<String> = mutableListOf(),
+        focusPasskey: Int? = null,
+        onFocused: () -> Unit = {},
+    ) =
+        compose.setContent {
+            // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
+            val inputMode = LocalInputModeManager.current
+            var keyboard by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard) MaterialTheme {
+                ItemDetail(
+                    item = item, folderPath = "Geen map", offline = offline, problem = null, modifier = Modifier,
+                    onCopy = {}, onEdit = {}, onMove = {}, onTrash = {}, onSendLogin = {},
+                    onDeletePasskey = { deleted += it.credentialId }, focusPasskey = focusPasskey, onPasskeyFocused = onFocused,
+                )
+            }
+        }
+
+    @Test
+    fun aLoginShowsItsCodeButNeverItsKey() {
+        showMail(mail())
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithContentDescription("Copy Authenticator code").assertExists()
+        compose.onNodeWithText("JBSWY3DPEHPK3PXP", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun aPasskeyRowShowsTheDateItWasAdded() {
+        assertEquals("March 12, 2026", passkeyAdded("2026-03-12T10:00:00.000Z", Locale.US, ZoneOffset.UTC))
+        // An offset, as an import may write it; the date is the instant's date in the phone's zone.
+        assertEquals("March 12, 2026", passkeyAdded("2026-03-12T10:00:00+01:00", Locale.US, ZoneOffset.UTC))
+        assertEquals("March 11, 2026", passkeyAdded("2026-03-12T00:30:00+01:00", Locale.US, ZoneOffset.UTC))
+        showMail(mail(passkeys = listOf(passkey("a", "alice", "2026-03-12T10:00:00.000Z"))))
+        compose.onNodeWithText("Passkey").assertExists()
+        compose.onNodeWithText("Added March 12, 2026").assertExists()
+        compose.onNodeWithText("mail.example", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun twoPasskeysNameTheirAccounts() {
+        showMail(mail(passkeys = listOf(passkey("a", "alice", "2026-03-12T10:00:00.000Z"), passkey("b", "alice-work", "2026-04-01T10:00:00.000Z"))))
+        compose.onNodeWithText("alice · added March 12, 2026").assertExists()
+        compose.onNodeWithText("alice-work · added April 1, 2026").assertExists()
+    }
+
+    @Test
+    fun aPasskeyWithoutAReadableDateReadsSaved() {
+        assertEquals(null, passkeyAdded("yesterday", Locale.US, ZoneOffset.UTC))
+        showMail(mail(passkeys = listOf(passkey("a", "alice", null))))
+        compose.onNodeWithText("Passkey saved").assertExists()
+    }
+
+    @Test
+    fun deleteNamesThePasskeyAndReportsIt() {
+        val deleted = mutableListOf<String>()
+        showMail(mail(passkeys = listOf(passkey("a", "alice", null), passkey("b", "alice-work", null))), deleted = deleted)
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        assertEquals(listOf("b"), deleted)
+    }
+
+    @Test
+    fun theDeleteDialogAsksFirst() {
+        val calls = mutableListOf<String>()
+        compose.setContent { MaterialTheme { PasskeyDeleteDialog(account = null, onConfirm = { calls += "yes" }, onDismiss = { calls += "no" }) } }
+        compose.onNodeWithText("Delete this passkey?").assertExists()
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        assertEquals(listOf("no", "yes"), calls)
+    }
+
+    @Test
+    fun theDeleteDialogNamesTheAccount() {
+        compose.setContent { MaterialTheme { PasskeyDeleteDialog(account = "alice-work", onConfirm = {}, onDismiss = {}) } }
+        compose.onNodeWithText("Delete the passkey for alice-work?").assertExists()
+    }
+
+    @Test
+    fun aReadOnlyCopyOffersNoDelete() {
+        val one = listOf(passkey("a", "alice", null))
+        showMail(mail(readOnly = true, passkeys = one))
+        compose.onNodeWithText("Passkey saved").assertExists()
+        compose.onNodeWithContentDescription("Delete passkey").assertDoesNotExist()
+    }
+
+    @Test
+    fun anOfflineCopyOffersNoDelete() {
+        showMail(mail(passkeys = listOf(passkey("a", "alice", null))), offline = true)
+        compose.onNodeWithContentDescription("Delete passkey").assertDoesNotExist()
+    }
+
+    @Test
+    fun aUseOnlyCopyShowsItsCodeButNoPasskeys() {
+        // The item holds a passkey: only the screen's use-only rule keeps it out.
+        showMail(mail(useOnly = true, passkeys = listOf(passkey("a", "alice", null))))
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithText("Passkey saved").assertDoesNotExist()
+        compose.onNodeWithText("Passkey").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Delete passkey").assertDoesNotExist()
+    }
+
+    @Test
+    fun afterADeleteFocusGoesToTheNextPasskeyElseEdit() {
+        showMail(mail(passkeys = listOf(passkey("b", "alice-work", null))), focusPasskey = 0)
+        compose.onNodeWithContentDescription("Delete passkey").assertIsFocused()
+    }
+
+    @Test
+    fun afterTheLastDeleteFocusGoesToEdit() {
+        showMail(mail(), focusPasskey = 0)
+        compose.onNodeWithText("Edit").assertIsFocused()
+    }
+
+    @Test
+    fun theFocusRequestIsClearedOnceTheNextRowHasFocus() {
+        var cleared = 0
+        showMail(mail(passkeys = listOf(passkey("b", "alice-work", null))), focusPasskey = 0, onFocused = { cleared++ })
+        compose.onNodeWithContentDescription("Delete passkey").assertIsFocused()
+        assertEquals(1, cleared)
+    }
+
+    @Test
+    fun theFocusRequestIsClearedOnceEditHasFocus() {
+        var cleared = 0
+        showMail(mail(), focusPasskey = 0, onFocused = { cleared++ })
+        compose.onNodeWithText("Edit").assertIsFocused()
+        assertEquals(1, cleared)
+    }
+
+    private var keyDraft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
+
+    private fun showKeyField(draft: ItemDraft, removeOnly: Boolean = false) {
+        keyDraft = draft
+        compose.setContent {
+            val inputMode = LocalInputModeManager.current
+            var keyboard by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard) MaterialTheme { Column { AuthenticatorKeyField(keyDraft, null, removeOnly) { keyDraft = it } } }
+        }
+    }
+
+    private val keyLabel = "Authenticator key (base32 secret or otpauth link)"
+
+    @Test
+    fun aNewItemOffersNeitherAuthenticatorNorPasskey() {
+        val types = listOf("login", "note", "totp", "passkey").map { SecretType(it, it, null, emptyList()) }
+        assertEquals(listOf("login", "note"), creatableTypes(types).map { it.name })
+    }
+
+    @Test
+    fun aLoginWithoutAKeyTakesOne() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
+        compose.onNodeWithText(keyLabel).performTextInput("JBSWY3DPEHPK3PXP")
+        assertEquals(KeyEdit.REPLACE, keyDraft.keyEdit)
+        assertEquals("JBSWY3DPEHPK3PXP", keyDraft.newKey)
+    }
+
+    @Test
+    fun aSavedKeyIsNeverShown() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithText("Authenticator key saved").assertExists()
+        compose.onNodeWithText("Replace").assertExists()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithText(keyLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun replaceShowsAnEmptyFieldAndKeepGoesBack() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithText("Replace").performClick()
+        assertEquals(KeyEdit.REPLACE, keyDraft.keyEdit)
+        compose.onNodeWithText(keyLabel).assertIsFocused()
+        compose.onNodeWithText("Keep saved key").performClick()
+        assertEquals(KeyEdit.KEEP, keyDraft.keyEdit)
+        assertEquals("", keyDraft.newKey)
+        compose.onNodeWithText("Replace").assertIsFocused()
+    }
+
+    @Test
+    fun removeMarksTheKeyForRemoval() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithText("Remove").performClick()
+        assertEquals(KeyEdit.REMOVE, keyDraft.keyEdit)
+        compose.onNodeWithText("The key is removed when you save.")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+        compose.onNodeWithText("Keep saved key").assertIsFocused()
+    }
+
+    @Test
+    fun theKeyButtonsNameTheField() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithContentDescription("Replace authenticator key").assertExists()
+        compose.onNodeWithContentDescription("Remove authenticator key").performClick()
+        compose.onNodeWithContentDescription("Keep saved authenticator key").assertIsFocused()
+    }
+
+    @Test
+    fun anotherTypeWithAKeyOffersRemoveOnly() {
+        showKeyField(ItemDraft(kind = FormKind.NOTE, typeId = "2", hasSavedKey = true), removeOnly = true)
+        compose.onNodeWithText("Extra authenticator key saved").assertExists()
+        compose.onNodeWithContentDescription("Remove extra authenticator key").assertExists()
+        compose.onNodeWithText("Replace").assertDoesNotExist()
+        compose.onNodeWithText("Remove").performClick()
+        compose.onNodeWithText("Keep saved key").performClick()
+        compose.onNodeWithText("Remove").assertIsFocused()
+    }
+
+    @Test
+    fun theKeyFieldIsMaskedAndKeepsTheScreenOutOfAutofill() {
+        var view: View? = null
+        var shown by mutableStateOf(false)
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme { if (shown) AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
+        }
+        compose.waitForIdle()
+        val before = view!!.importantForAutofill
+        shown = true
+        compose.waitForIdle()
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        compose.onNodeWithText("Show $keyLabel").performClick()
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        shown = false
+        compose.waitForIdle()
+        assertEquals(before, view!!.importantForAutofill)
+    }
+
+    @Test
+    fun theKeyFieldAsksForAPasswordKeyboardWithoutAutocorrect() {
+        var view: View? = null
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme { AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
+        }
+        // What the keyboard is told when the field takes focus: the EditorInfo of the field's input connection.
+        compose.onNodeWithText(keyLabel).performClick()
+        compose.waitUntil(5_000) { view!!.onCheckIsTextEditor() }
+        val info = EditorInfo()
+        compose.runOnIdle { view!!.onCreateInputConnection(info) }
+        assertEquals(
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
+            info.inputType and (InputType.TYPE_MASK_CLASS or InputType.TYPE_MASK_VARIATION),
+        )
+        assertEquals(0, info.inputType and InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
+    }
+
+    @Test
+    fun anAuthenticatorItemShowsItsOwnKeysCodeNamedApart() {
+        val totp = SecretType("3", "totp", "Authenticator", emptyList())
+        val item = DecryptedItem(
+            row = row(useOnly = false).copy(typeId = "3"), typeName = "totp", type = totp, login = "", secret = "JBSWY3DPEHPK3PXP",
+            additionalFields = null, additionalFieldsError = false, passkey = null, fromCache = false,
+            totpSeed = "GEZDGNBVGY3TQOJQ", hasSavedKey = true,
+        )
+        show(item, mutableListOf())
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithText("Code from the item's own key").assertExists()
+        compose.onNodeWithContentDescription("Copy Code from the item's own key").assertExists()
+    }
+
+    private val vault = FakeVault()
+
+    private fun showEdit(id: String) {
+        compose.setContent {
+            MaterialTheme {
+                ItemEditScreen(vault.session, id, null, null, GeneratorSettings(), Modifier, onSaved = {}, onCancel = {})
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun anAuthenticatorItemWithItsOwnKeyOffersRemoveOnly() {
+        vault.put("t1", FakeVault.row("t1", "Code", "3", key = "JBSWY3DPEHPK3PXP", totp = "GEZDGNBVGY3TQOJQ"))
+        showEdit("t1")
+        compose.onNodeWithText("Extra authenticator key saved").performScrollTo().assertExists()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithText("Replace").assertDoesNotExist()
+        // The item's own seed field and the extra key's Remove cannot be taken for the same key.
+        compose.onNodeWithText("Authenticator secret or otpauth link").assertExists()
+        compose.onNodeWithContentDescription("Remove extra authenticator key").assertExists()
+        compose.onNodeWithText("Authenticator key saved").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Remove authenticator key").assertDoesNotExist()
+    }
+
+    private fun showDetail(id: String, keyboard: Boolean = false) {
+        compose.setContent {
+            // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
+            val inputMode = LocalInputModeManager.current
+            var ready by remember { mutableStateOf(!keyboard) }
+            LaunchedEffect(Unit) { if (keyboard) ready = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (ready) {
+                MaterialTheme { ItemDetailScreen(vault.session, id, Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> }) }
+            }
+        }
+    }
+
+    private fun waitForDescription(description: String) =
+        compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription(description).fetchSemanticsNodes().isNotEmpty() }
+
+    private val mailWithTwoPasskeys =
+        FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(FakeVault.credential("a", "alice"), FakeVault.credential("b", "alice-work")))
+
+    @Test
+    fun theDetailScreenAsksBeforeItDeletesAPasskey() {
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNodeWithText("Delete the passkey for alice-work?").assertExists()
+        compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
+        compose.onNodeWithText("Delete the passkey for alice-work?").assertDoesNotExist()
+        compose.waitForIdle()
+        assertEquals("Cancel deletes nothing", 0, vault.count("PUT", "/api/v1/secrets/s4"))
+
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        assertEquals("the dialog asks first", 0, vault.count("PUT", "/api/v1/secrets/s4"))
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { vault.count("PUT", "/api/v1/secrets/s4") > 0 }
+        compose.waitForIdle()
+        assertEquals(1, vault.count("PUT", "/api/v1/secrets/s4"))
+    }
+
+    @Test
+    fun aLoginsEditScreenOffersTheFullKeyField() {
+        vault.put("l1", FakeVault.row("l1", "Mail", "1", key = "geheim", login = "alice"))
+        showEdit("l1")
+        compose.onNodeWithText(keyLabel).performScrollTo().assertExists()
+        compose.onNodeWithText("Remove").assertDoesNotExist()
+    }
+
+    @Test
+    fun anotherTypeWithASavedKeyOffersRemoveOnlyOnTheEditScreen() {
+        vault.put("n1", FakeVault.row("n1", "Notitie", "2", key = "tekst", totp = "JBSWY3DPEHPK3PXP"))
+        showEdit("n1")
+        compose.onNodeWithText("Extra authenticator key saved").performScrollTo().assertExists()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithText("Replace").assertDoesNotExist()
+        compose.onNodeWithText(keyLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun anotherTypeWithoutAKeyShowsNoKeyField() {
+        vault.put("n2", FakeVault.row("n2", "Notitie", "2", key = "tekst"))
+        showEdit("n2")
+        compose.onNodeWithText("Extra authenticator key saved").assertDoesNotExist()
+        compose.onNodeWithText(keyLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun aRefusedDeleteIsAnnounced() {
+        vault.put("s4", mailWithTwoPasskeys)
+        vault.refuseWrites = true
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("You can only read this item.", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("You can only read this item.", substring = true)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+        compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
+    }
+
+    @Test
+    fun aDeleteIsAnnounced() {
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Passkey deleted.").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Passkey deleted.").assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    @Test
+    fun afterADeleteOnTheScreenFocusGoesToThePasskeyThatTookItsPlace() {
+        val (a, b, c) = listOf(FakeVault.credential("a", "alice-a"), FakeVault.credential("b", "alice-b"), FakeVault.credential("c", "alice-c"))
+        vault.put("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, b, c)))
+        showDetail("s4", keyboard = true)
+        waitForDescription("Delete passkey for alice-b")
+        compose.onNodeWithContentDescription("Delete passkey for alice-b").performScrollTo().performClick()
+        // What the server holds once the delete is saved; the screen reopens the login from it.
+        vault.replace("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, c)))
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription("Delete passkey for alice-b").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithContentDescription("Delete passkey for alice-c").assertIsFocused()
+    }
+
+    @Test
+    fun theVaultListShowsNoPasskeyMarker() {
+        vault.put("s4", mailWithTwoPasskeys)
+        compose.setContent {
+            MaterialTheme {
+                VaultListScreen(vault.session, null, Modifier, onOpenFolder = {}, onOpenItem = {}, onAddItem = {}, onFolderGone = {})
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Mail").fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodesWithText("passkey", substring = true, ignoreCase = true).assertCountEquals(0)
+        compose.onAllNodesWithContentDescription("passkey", substring = true, ignoreCase = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun anAuthenticatorItemsSeedIsTypedLikeALoginsKey() {
+        vault.put("t2", FakeVault.row("t2", "Code", "3", key = "JBSWY3DPEHPK3PXP"))
+        var view: View? = null
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme { ItemEditScreen(vault.session, "t2", null, null, GeneratorSettings(), Modifier, onSaved = {}, onCancel = {}) }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
+        val seed = "Authenticator secret or otpauth link"
+        compose.onNodeWithText(seed).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        compose.onNodeWithText("Show $seed").performScrollTo().performClick()
+        compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+    }
+
+    @Test
+    fun theEditScreenNeverDecryptsALoginsSavedKey() {
+        val seed = "GEZDGNBVGY3TQOJQ"
+        vault.put("l2", FakeVault.row("l2", "Mail", "1", key = "geheim", login = "alice", totp = seed))
+        showEdit("l2")
+        compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
+        // The form opened the login (its password was decrypted) but not its own `totp`.
+        assertTrue("the form opened the login: ${vault.keys.decrypted}", "geheim" in vault.keys.decrypted)
+        assertFalse("the edit screen decrypted the saved key", seed in vault.keys.decrypted)
+    }
+
+    @Test
+    fun anUnreadableOwnKeyOnAnAuthenticatorItemNamesWhichCode() {
+        val totp = SecretType("3", "totp", "Authenticator", emptyList())
+        val item = DecryptedItem(
+            row = row(useOnly = false).copy(typeId = "3"), typeName = "totp", type = totp, login = "", secret = "JBSWY3DPEHPK3PXP",
+            additionalFields = null, additionalFieldsError = false, passkey = null, fromCache = false,
+            totpSeed = "not a key!", hasSavedKey = true,
+        )
+        show(item, mutableListOf())
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithText("Code from the item's own key").assertExists()
+        compose.onNodeWithText("This is not a valid authenticator secret.").assertExists()
+    }
+
+    private fun deleteAliceWorkAndWaitForTheAnnouncement() {
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Passkey deleted.").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun theDeleteAnnouncementGoesAfterAWhile() {
+        deleteAliceWorkAndWaitForTheAnnouncement()
+        compose.mainClock.advanceTimeBy(PASSKEY_DELETED_SHOWN_MILLIS + 1_000)
+        compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
+    }
+
+    @Test
+    fun theDeleteAnnouncementGoesAtTheNextAction() {
+        deleteAliceWorkAndWaitForTheAnnouncement()
+        compose.onNodeWithText("Move").performScrollTo().performClick()
+        compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
+    }
+
+    @Test
+    fun anOffsetDateIsReadWhereInstantParseTakesOnlyZ() {
+        // As Instant.parse behaves below Android 14: it refuses an offset, so only the fallback can read it.
+        val zOnly: (String) -> java.time.Instant = { if (it.endsWith("Z")) java.time.Instant.parse(it) else throw java.time.format.DateTimeParseException("offset", it, 0) }
+        assertEquals(java.time.Instant.parse("2026-03-12T09:00:00Z"), createdInstant("2026-03-12T10:00:00+01:00", zOnly))
+        assertEquals(java.time.Instant.parse("2026-03-12T10:00:00Z"), createdInstant("2026-03-12T10:00:00.000Z", zOnly))
     }
 }

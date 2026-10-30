@@ -23,7 +23,11 @@ CREATE TABLE secret (
     use_only INTEGER NOT NULL DEFAULT 0,
     read_only INTEGER NOT NULL DEFAULT 0,
     blocked INTEGER NOT NULL DEFAULT 0,
-    blocked_reason TEXT
+    blocked_reason TEXT,
+    -- A login's own seed and passkeys, as ciphertext (1.sqm). Last, so a
+    -- migrated table and a new one agree for `INSERT INTO secret VALUES ?`.
+    totp_ciphertext TEXT,
+    passkeys_ciphertext TEXT
 );
 
 CREATE TABLE folder (

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,6 +26,14 @@ import com.google.android.apps.common.testing.accessibility.framework.Accessibil
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityViewCheckResult
 import com.google.android.apps.common.testing.accessibility.framework.integrations.espresso.AccessibilityValidator
 import java.io.File
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
+import nl.conduction.keepiq.shared.crypto.PasskeyCredential
+import nl.conduction.keepiq.shared.vault.ItemCodec
+import nl.conduction.keepiq.shared.vault.ItemParts
+import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
@@ -37,7 +46,8 @@ import org.junit.runner.RunWith
  * Automatic accessibility audit of the main screens (task 3.1), with the
  * Accessibility Test Framework for Android (Apache 2.0) through Compose's
  * `enableAccessibilityChecks`: connect, unlock, the vault list, an item, a
- * one-time code, the item form, the generator, Send and its form, and the
+ * one-time code, a login with its own code and passkeys and the passkey
+ * delete dialog, the item form, the generator, Send and its form, and the
  * settings. The checks run on every action and once more on each screen.
  *
  * Every finding is collected first, so one run names all of them; the test
@@ -133,6 +143,24 @@ class AccessibilityAuditTest {
         audit("item detail, one-time code")
         compose.onNodeWithText("Back").performClick()
 
+        // A login with its own code and two passkeys, and the delete dialog (mobile-login-totp-passkeys 3.4).
+        val loginId = createLoginWithCodeAndPasskeys()
+        try {
+            compose.onNodeWithContentDescription("Sync now").performClick()
+            compose.waitForText("Mail with passkeys (a11y)", 60_000)
+            compose.onNodeWithText("Mail with passkeys (a11y)").performClick()
+            // The row's description, not its date: the date follows the emulator's locale and zone.
+            compose.waitUntil(60_000) { compose.onAllNodes(hasContentDescription("Delete passkey for anna")).fetchSemanticsNodes().isNotEmpty() }
+            audit("item detail, login code and passkeys")
+            compose.onNodeWithContentDescription("Delete passkey for anna").performScrollTo().performClick()
+            compose.waitForText("Delete the passkey for anna?")
+            audit("passkey delete dialog")
+            compose.onNodeWithText("Cancel").performClick()
+            compose.onNodeWithText("Back").performClick()
+        } finally {
+            runBlocking { session().api.trashSecret(loginId) }
+        }
+
         // The item form.
         compose.waitForText("Webmail (demo)")
         compose.onNodeWithContentDescription("Add an item").performClick()
@@ -161,6 +189,22 @@ class AccessibilityAuditTest {
         audit("settings")
 
         report()
+    }
+
+    private fun session() = (E2e.app.state.screen.value as Screen.Unlocked).session
+
+    /** A login holding a seed and two passkeys, made through the API as another client would. */
+    private fun createLoginWithCodeAndPasskeys(): String = runBlocking {
+        val session = session()
+        val typeId = session.api.listTypes().first { (it["name"] as? JsonPrimitive)?.contentOrNull == "login" }["id"]!!.jsonPrimitive.content
+        val passkeys = listOf("anna", "anna-work").fold("") { json, user ->
+            LoginPasskeys.appended(
+                json,
+                PasskeyCredential("cred-$user", "mail.example", "Mail", user, "", "dTE", "not-a-real-key", -7L, 0L, emptyList(), "2026-03-12T10:00:00.000Z"),
+            )
+        }
+        val parts = ItemParts("Mail with passkeys (a11y)", "https://mail.example", null, "anna", "a11y-password", null, totp = "JBSWY3DPEHPK3PXP", passkeys = passkeys)
+        session.api.createSecret(ItemCodec.createBody(parts, typeId, session.keys))!!["id"]!!.jsonPrimitive.content
     }
 
     /** Runs the checks over the whole window of [name], and names the screen for what the next actions find. */

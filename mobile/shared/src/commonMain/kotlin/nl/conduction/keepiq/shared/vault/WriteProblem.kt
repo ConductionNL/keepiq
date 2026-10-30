@@ -42,6 +42,8 @@ data class WriteProblem(val kind: WriteProblemKind, val serverMessage: String? =
          */
         fun from(error: Throwable): WriteProblem {
             if (error is CancellationException) throw error
+            // Refused on the phone after the server answered: a login's passkeys that cannot be rewritten, or a login that is gone.
+            if (error is UnreadablePasskeysException || error is LoginGoneException) return WriteProblem(WriteProblemKind.FAILED, error.message)
             if (error !is KeepiqApiException) return WriteProblem(WriteProblemKind.UNREACHABLE)
             val status = error.status
             val outer = parseBody(error.body)
