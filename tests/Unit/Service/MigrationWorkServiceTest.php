@@ -735,6 +735,8 @@ class MigrationWorkServiceTest extends TestCase {
 
 		$version = $this->makeVersion();
 		$version->setTotp('OLD-V-TOTP-CIPHERTEXT');
+		// Recorded while the field was empty: listed as null, as a head's is.
+		$version->setPasskeys('');
 
 		$this->secretMapper->method('findBySuiteForOwner')->willReturn([$secret]);
 		$this->grantMapper->method('findBySuiteForRecipient')->willReturn([]);
@@ -900,6 +902,55 @@ class MigrationWorkServiceTest extends TestCase {
 		$this->assertNull($committedVersion->getTotp());
 		$this->assertNull($committedVersion->getPasskeys());
 	}//end testLegacyCommitSucceedsWhenNewFieldsAreNull()
+
+	/**
+	 * Test a commit that sends a TOTP seed or passkeys for a record holding none is refused, and nothing is written:
+	 * re-encrypting an empty field cannot produce a value.
+	 *
+	 * @return void
+	 */
+	public function testACommitCannotPlantAFieldTheRecordDoesNotHold(): void {
+		$secret = $this->makeSecret();
+		$version = $this->makeVersion();
+		$version->setPasskeys('');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->versionMapper->method('findById')->willReturn($version);
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->versionMapper->expects($this->never())->method('update');
+
+		$commits = [
+			fn () => $this->service->commitSecret(
+				migration: $this->makeMigration(),
+				ownerId: 'alice',
+				secretId: 'secret-1',
+				key: 'NEW-KEY-CIPHERTEXT',
+				login: null,
+				additionalFields: null,
+				totp: 'PLANTED-TOTP'
+			),
+			fn () => $this->service->commitVersion(
+				migration: $this->makeMigration(),
+				ownerId: 'alice',
+				versionId: 'version-1',
+				key: 'NEW-KEY-CIPHERTEXT',
+				login: null,
+				additionalFields: null,
+				passkeys: 'PLANTED-PASSKEYS'
+			),
+		];
+		foreach ($commits as $commit) {
+			try {
+				$commit();
+				$this->fail('A value for a field the record does not hold was committed');
+			} catch (\InvalidArgumentException $exception) {
+				$this->assertStringContainsString('holds no value', $exception->getMessage());
+			}
+		}
+
+		$this->assertNull($secret->getTotp());
+		$this->assertSame('old-suite', $secret->getEncryptionSuiteId());
+		$this->assertSame('', $version->getPasskeys());
+	}//end testACommitCannotPlantAFieldTheRecordDoesNotHold()
 
 	/**
 	 * Test an empty string counts as not sent: it is refused next to a stored value and never written.

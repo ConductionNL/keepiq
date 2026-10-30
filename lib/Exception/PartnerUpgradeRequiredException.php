@@ -53,7 +53,8 @@ class PartnerUpgradeRequiredException extends RuntimeException {
 	) {
 		parent::__construct(
 			message: sprintf(
-				'The receiving organisation must upgrade Keepiq to %s or later to receive one-time codes and passkeys',
+				'The receiving organisation must upgrade Keepiq to the stable release %1$s or later to receive '
+				.'one-time codes and passkeys; a %1$s-unstable build does not count',
 				$requiredVersion
 			)
 		);

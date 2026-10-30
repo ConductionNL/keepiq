@@ -70,6 +70,7 @@ use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 require_once __DIR__ . '/FederationFixtures.php';
 require_once __DIR__ . '/OcmDoubles.php';
@@ -92,6 +93,12 @@ class FederatedValueFieldsTest extends TestCase {
 
 	/** @var AuditEvent[] */
 	private array $audit = [];
+
+	/** @var list<array<string,mixed>> The context of every warning logged */
+	private array $warnings = [];
+
+	/** Alice's secret that is shared */
+	private Secret $source;
 
 	private FederationPartner $partnerRow;
 
@@ -149,6 +156,9 @@ class FederatedValueFieldsTest extends TestCase {
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
 		$source->setKey('ALICE-OWN-CIPHERTEXT');
+		$source->setTotp('ALICE-OWN-TOTP');
+		$source->setPasskeys('ALICE-OWN-PASSKEYS');
+		$this->source = $source;
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);
 
@@ -205,9 +215,26 @@ class FederatedValueFieldsTest extends TestCase {
 			random: $random,
 			delivery: new FederatedNotificationDelivery($mapper, $messenger, $audit),
 			audit: $audit,
+			logger: $this->warningLog(),
 		);
 
 		return $this->service;
+	}
+
+	/**
+	 * A logger that keeps the context of every warning in `$warnings`.
+	 *
+	 * @return LoggerInterface
+	 */
+	private function warningLog(): LoggerInterface {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			function (string $message, array $context = []): void {
+				$this->warnings[] = $context;
+			}
+		);
+
+		return $logger;
 	}
 
 	/**
@@ -318,6 +345,24 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->assertSame(Http::STATUS_CREATED, $this->share(self::TOTP, null)->getStatus());
 	}
 
+	/**
+	 * A new partner share mirrors its source like a direct share: for a partner that stores the fields, leaving out
+	 * one the source holds is refused, and so is carrying one the source does not hold. Nothing is written.
+	 */
+	public function testAShareThatDoesNotMirrorTheSourceIsRefused(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+
+		$response = $this->share(self::TOTP, null);
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'copy_fields_mismatch'], $response->getData());
+
+		$this->source->setTotp(null);
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->share(self::TOTP, self::PASSKEYS)->getStatus());
+
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
 	public function testAShareWithoutTheNewFieldsToAnOldPartnerWorksAsBefore(): void {
 		$this->alice(valueFields: null);
 
@@ -396,7 +441,8 @@ class FederatedValueFieldsTest extends TestCase {
 
 	/**
 	 * A field the client did not send stays while the certificate is the same, and goes with a new certificate:
-	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it.
+	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it. The source no
+	 * longer holds the fields the update drops or clears, or the update would not mirror it.
 	 */
 	public function testAnAbsentFieldIsKeptOnlyUnderTheSameCertificate(): void {
 		$this->alice(valueFields: '["totp","passkeys"]');
@@ -406,13 +452,43 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::PASSKEYS, $this->rows[self::SHARE_ID]->getPasskeys());
 
+		$this->source->setPasskeys(null);
 		$this->controller(['passkeys' => null])->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, null, null);
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertNull($this->rows[self::SHARE_ID]->getPasskeys());
 
+		$this->source->setTotp(null);
 		$this->controller()->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'KEY-FOR-NEW-CERT');
 		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::NEW_FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
+	}
+
+	/**
+	 * An update for a partner that stores the fields mirrors the source like a new share does: leaving out a field
+	 * the source holds under a new certificate would drop it from the partner's copy, and carrying one the source
+	 * does not hold would add it. Left out under the same certificate it keeps the stored value, so it is accepted.
+	 * Nothing is written or sent when it is refused.
+	 */
+	public function testAnUpdateThatDoesNotMirrorTheSourceIsRefused(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+		$this->existingShare(totp: self::TOTP, passkeys: self::PASSKEYS);
+
+		$response = $this->controller()->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'KEY-FOR-NEW-CERT');
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'copy_fields_mismatch'], $response->getData());
+
+		$this->source->setPasskeys(null);
+		$carried = $this->controller(['totp' => self::TOTP, 'passkeys' => self::PASSKEYS])
+			->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, self::TOTP, self::PASSKEYS);
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $carried->getStatus());
+
+		$this->assertSame('OLD-KEY', $this->rows[self::SHARE_ID]->getKey());
+		$this->assertSame(self::FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
+		$this->assertSame([], $this->sent);
+		$this->assertSame([], $this->audit);
+
+		$sameCertificate = $this->controller()->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY');
+		$this->assertSame(Http::STATUS_OK, $sameCertificate->getStatus());
 	}
 
 	public function testAnUpdateToANewPartnerReplacesBothFields(): void {
@@ -514,7 +590,9 @@ class FederatedValueFieldsTest extends TestCase {
 		]);
 		$version = new SecretVersion();
 		$version->setTotp(null);
-		[$patch, $entries] = $request->restoring(version: $version, entries: $request->entries);
+		$head = new Secret();
+		$head->setTotp('HEAD-TOTP');
+		[$patch, $entries, $kept] = $request->restoring(version: $version, entries: $request->entries, head: $head);
 		$ciphertext = array_intersect_key($entries->federated[0], $entry);
 		$write = fn (array $ciphertext): FederatedShare => $this->service->writeCiphertext(
 			row: clone $this->rows[self::SHARE_ID],
@@ -522,6 +600,7 @@ class FederatedValueFieldsTest extends TestCase {
 			ciphertext: $ciphertext,
 			savedAt: new DateTime(),
 			patch: $patch,
+			kept: $kept,
 		);
 
 		$this->alice(valueFields: '["totp","passkeys"]');
@@ -542,6 +621,142 @@ class FederatedValueFieldsTest extends TestCase {
 		$write(['totp' => null] + $ciphertext);
 		$this->assertSame('NEW-KEY', $this->rows[self::SHARE_ID]->getKey());
 		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
+	}
+
+	/**
+	 * The web app of this release restores with only the legacy fields. A version recorded after this release holds
+	 * `''` for a login without a TOTP seed or passkeys; with a head that holds neither, the partner share is written.
+	 */
+	public function testACurrentClientsRestoreOfAVersionWithEmptyFieldsReachesThePartner(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+		$this->existingShare(totp: null, passkeys: null);
+		$version = new SecretVersion();
+		$version->setTotp('');
+		$version->setPasskeys('');
+		$legacy = ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null];
+		$request = new ShareSaveRequest([
+			'baseUpdatedAt' => '2026-10-01T10:00:00+00:00',
+			'restoredFrom' => 'v-1',
+			'patch' => ['key' => 'K-ALICE', 'login' => null, 'additionalFields' => null],
+			'federated' => [['shareId' => self::SHARE_ID, 'certFingerprint' => self::NEW_FINGERPRINT] + $legacy],
+		]);
+
+		[$patch, $entries, $kept] = $request->restoring(version: $version, entries: $request->entries, head: new Secret());
+		$this->service->writeCiphertext(
+			row: clone $this->rows[self::SHARE_ID],
+			certFingerprint: self::NEW_FINGERPRINT,
+			ciphertext: array_intersect_key($entries->federated[0], array_flip(Secret::VALUE_FIELDS)),
+			savedAt: new DateTime(),
+			patch: $patch,
+			kept: $kept,
+		);
+
+		$this->assertArrayNotHasKey('totp', $patch);
+		$this->assertSame('NEW-KEY', $this->rows[self::SHARE_ID]->getKey());
+		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
+	}
+
+	/**
+	 * A restore that clears a TOTP seed the head holds clears the partner's too, without the client sending it.
+	 */
+	public function testARestoreThatClearsTheHeadsTotpClearsThePartners(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+		$this->existingShare(totp: self::TOTP, passkeys: null);
+		$version = new SecretVersion();
+		$version->setTotp('');
+		$head = new Secret();
+		$head->setTotp('HEAD-TOTP');
+		$legacy = ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null];
+		$request = new ShareSaveRequest([
+			'baseUpdatedAt' => '2026-10-01T10:00:00+00:00',
+			'restoredFrom' => 'v-1',
+			'patch' => ['key' => 'K-ALICE', 'login' => null, 'additionalFields' => null],
+			'federated' => [['shareId' => self::SHARE_ID, 'certFingerprint' => self::NEW_FINGERPRINT] + $legacy],
+		]);
+
+		[$patch, $entries, $kept] = $request->restoring(version: $version, entries: $request->entries, head: $head);
+		$this->service->writeCiphertext(
+			row: clone $this->rows[self::SHARE_ID],
+			certFingerprint: self::NEW_FINGERPRINT,
+			ciphertext: array_intersect_key($entries->federated[0], array_flip(Secret::VALUE_FIELDS)),
+			savedAt: new DateTime(),
+			patch: $patch,
+			kept: $kept,
+		);
+
+		$this->assertSame('', $patch['totp']);
+		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
+		$this->assertSame('NEW-KEY', $this->rows[self::SHARE_ID]->getKey());
+	}
+
+	/**
+	 * In a restore of a version without a TOTP seed, the head keeps its seed, so a partner that stores the field
+	 * may not have its seed cleared or a seed set the head does not hold; leaving the field out stays allowed.
+	 */
+	public function testARestoreCannotChangeAPartnersTotpTheHeadKeeps(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+		$version = new SecretVersion();
+		$version->setTotp(null);
+		$write = function (?string $headTotp, array $entry) use ($version): void {
+			$request = new ShareSaveRequest([
+				'baseUpdatedAt' => '2026-10-01T10:00:00+00:00',
+				'restoredFrom' => 'v-1',
+				'patch' => ['key' => 'K-ALICE', 'login' => null, 'additionalFields' => null],
+				'federated' => [['shareId' => self::SHARE_ID, 'certFingerprint' => self::NEW_FINGERPRINT] + $entry],
+			]);
+			$head = new Secret();
+			$head->setTotp($headTotp);
+			[$patch, $entries, $kept] = $request->restoring(version: $version, entries: $request->entries, head: $head);
+			$this->service->writeCiphertext(
+				row: clone $this->rows[self::SHARE_ID],
+				certFingerprint: self::NEW_FINGERPRINT,
+				ciphertext: array_intersect_key($entries->federated[0], $entry),
+				savedAt: new DateTime(),
+				patch: $patch,
+				kept: $kept,
+			);
+		};
+		$legacy = ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null];
+
+		foreach ([['HEAD-TOTP', ['totp' => null]], [null, ['totp' => 'PLANTED']]] as [$headTotp, $field]) {
+			$this->existingShare(totp: $headTotp === null ? null : 'HEAD-TOTP-FOR-BOB', passkeys: null);
+			try {
+				$write($headTotp, $legacy + $field);
+				$this->fail('A restore changed the partner\'s totp while the head kept its own');
+			} catch (ShareSaveRefusal $refusal) {
+				$this->assertSame('copy_fields_mismatch', $refusal->getError());
+				$this->assertSame('OLD-KEY', $this->rows[self::SHARE_ID]->getKey());
+			}
+		}
+
+		$this->existingShare(totp: 'HEAD-TOTP-FOR-BOB', passkeys: null);
+		$write('HEAD-TOTP', $legacy);
+		$this->assertSame('NEW-KEY', $this->rows[self::SHARE_ID]->getKey());
+	}
+
+	/**
+	 * A restore with an entry that carries none of the kept fields does not look the partner up, so a share whose
+	 * partner row is gone is written as a plain save is; an entry that carries a kept field passes too, as a gone
+	 * partner stores no field.
+	 */
+	public function testARestoreToAShareWhosePartnerIsGoneIsWrittenAsAPlainSave(): void {
+		$legacy = ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null];
+		foreach ([$legacy, $legacy + ['totp' => null]] as $ciphertext) {
+			$this->alice(valueFields: '["totp","passkeys"]');
+			$this->existingShare(totp: null, passkeys: null);
+			$this->partnerGone = true;
+
+			$this->service->writeCiphertext(
+				row: clone $this->rows[self::SHARE_ID],
+				certFingerprint: self::FINGERPRINT,
+				ciphertext: $ciphertext,
+				savedAt: new DateTime(),
+				patch: ['key' => 'K', 'login' => null, 'additionalFields' => null],
+				kept: ['totp' => 'HEAD-TOTP', 'passkeys' => null],
+			);
+
+			$this->assertSame('NEW-KEY', $this->rows[self::SHARE_ID]->getKey());
+		}
 	}
 
 	public function testAWriteToAShareWhosePartnerIsGoneIsNotFound(): void {
@@ -609,6 +824,28 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->assertSame(['message' => 'Unknown recipient'], $body);
 		[$status] = $this->pull(['valueFields' => ['passkeys']]);
 		$this->assertSame(Http::STATUS_NOT_FOUND, $status);
+
+		// The answer leaks nothing, but the owner's log names the partner and the field.
+		$this->assertCount(2, $this->warnings);
+		$this->assertSame(self::SHARE_ID, $this->warnings[0]['share']);
+		$this->assertSame('totp', $this->warnings[0]['fields']);
+		$this->assertStringNotContainsString(self::TOTP, (string)json_encode($this->warnings));
+	}
+
+	/**
+	 * A pull refused for another reason, such as a wrong shared secret, logs no value-field warning.
+	 *
+	 * @return void
+	 */
+	public function testAPullWithAWrongSecretLogsNoValueFieldWarning(): void {
+		$this->alice(valueFields: '["totp","passkeys"]');
+		$this->existingShare(totp: self::TOTP, passkeys: null);
+		$this->rows[self::SHARE_ID]->setSharedSecretHash(hash('sha256', 'another secret'));
+
+		[$status] = $this->pull([]);
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $status);
+		$this->assertSame([], $this->warnings);
 	}
 
 	public function testAPullThatDeclaresTheFieldsGetsThem(): void {

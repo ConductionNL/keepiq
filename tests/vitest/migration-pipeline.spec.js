@@ -162,7 +162,6 @@ describe('reEncryptSecretFields', () => {
 			key: await sealUnderOldSuite('only-a-key'),
 			login: null,
 			additionalFields: '',
-			totp: '',
 		}
 
 		const out = await reEncryptSecretFields(record, keys)
@@ -174,12 +173,11 @@ describe('reEncryptSecretFields', () => {
 		expect(out.passkeys).toBeNull()
 	})
 
-	it('re-encrypts a login seed and passkeys, which the server refuses to leave behind (keepiq#1326)', async () => {
-		const passkeys = '[{"credentialId":"c1","rpId":"bank.example"}]'
+	it('re-encrypts the one-time code and passkeys a record holds', async () => {
 		const record = {
-			key: await sealUnderOldSuite('pw'),
+			key: await sealUnderOldSuite('s3cret'),
 			totp: await sealUnderOldSuite('JBSWY3DPEHPK3PXP'),
-			passkeys: await sealUnderOldSuite(passkeys),
+			passkeys: await sealUnderOldSuite('[{"id":"credential-1"}]'),
 		}
 
 		const out = await reEncryptSecretFields(record, keys)
@@ -187,7 +185,10 @@ describe('reEncryptSecretFields', () => {
 		expect(await rsaDecrypt(out.totp, keys.newPrivateKey)).toBe(
 			'JBSWY3DPEHPK3PXP',
 		)
-		expect(await rsaDecrypt(out.passkeys, keys.newPrivateKey)).toBe(passkeys)
+		expect(await rsaDecrypt(out.passkeys, keys.newPrivateKey)).toBe(
+			'[{"id":"credential-1"}]',
+		)
+		expect(out.totp).not.toBe(record.totp)
 	})
 })
 

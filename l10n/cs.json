@@ -1787,6 +1787,11 @@
         "A restored copy came from a share that has ended. It stays read-only.": "Obnovená kopie pochází ze sdílení, které skončilo. Zůstává jen pro čtení.",
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizaci, která sdílela obnovenou kopii, se nepodařilo zastihnout. Kopie zůstává jen pro čtení a nesleduje jejich změny.",
         "Recipient at another organisation restored their copy": "Příjemce z jiné organizace obnovil svou kopii",
+        "Another organisation changed the fields it stores": "Jiná organizace změnila pole, která ukládá",
+        "These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}": "Tato tajemství obsahují jednorázový kód nebo přístupové klíče, které tato verze Keepiqu zatím neumí zkopírovat, proto je noví členové nedostali: {names}",
+        "This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.": "Tato přihlašovací položka obsahuje také jednorázový kód nebo přístupové klíče, které byly rovněž odhaleny. Nahraďte každý z nich a staré přístupové klíče odstraňte, nestačí jen přidat nové. Upozornění zmizí, jakmile budou všechny nahrazeny.",
+        "This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.": "Tato přihlašovací položka obsahuje jednorázový kód nebo přístupové klíče, které tato verze Keepiqu zatím neumí sdílet, proto nebyla sdílena.",
+        "A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.": "Nový člen týmové složky nedostal přihlašovací položku s jednorázovým kódem nebo přístupovými klíči, které tato verze Keepiqu zatím neumí zkopírovat.",
         "_%n passkey_::_%n passkeys_": [
             "%n přístupový klíč",
             "%n přístupové klíče",

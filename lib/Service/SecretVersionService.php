@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
@@ -67,6 +68,10 @@ class SecretVersionService {
 	 * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 * @param OfflineEditGuard $editGuard Refuses a restore over a head that moved on
+	 * @param RotationFlagMapper|null $rotationFlags Tells a restore whether the row's compromise flag is still open
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: the restore joins the version, the head,
+	 *   the read gate, the stale check, the audit and the head's rotation flag.
 	 *
 	 * @return void
 	 */
@@ -80,8 +85,34 @@ class SecretVersionService {
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
+		private ?RotationFlagMapper $rotationFlags = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * Whether a secret has an open `suite_compromise` rotation flag. A restore reads such a row as flagged even
+	 * when its possibly-compromised warning is already cleared, so the old key it writes back proves no rotation.
+	 *
+	 * @param string $secretId The secret UUID
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function compromiseFlagOpen(string $secretId): bool {
+		if ($this->rotationFlags === null) {
+			return false;
+		}
+
+		try {
+			$flag = $this->rotationFlags->findBySecret($secretId);
+		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		return $flag->getStatus() === 'open'
+			&& in_array($flag->getReason(), CredentialFields::COMPROMISE_REASONS, true) === true;
+	}//end compromiseFlagOpen()
 
 	/**
 	 * Snapshot a secret's PRE-UPDATE state as an immutable version. The
@@ -105,8 +136,10 @@ class SecretVersionService {
 		$version->setKey($preUpdate->getKey());
 		$version->setLogin($preUpdate->getLogin());
 		$version->setAdditionalFields($preUpdate->getAdditionalFields());
-		$version->setTotp($preUpdate->getTotp());
-		$version->setPasskeys($preUpdate->getPasskeys());
+		// `''`, not null, for an empty field: a restore tells "cleared then"
+		// apart from a version made before these fields existed.
+		$version->setTotp($preUpdate->getTotp() ?? '');
+		$version->setPasskeys($preUpdate->getPasskeys() ?? '');
 		$version->setEncryptionSuiteId($preUpdate->getEncryptionSuiteId());
 		$version->setActorType($actorType);
 		$version->setActorId($actorId);
@@ -220,7 +253,7 @@ class SecretVersionService {
 	 * @return Secret The updated head
 	 *
 	 * @throws \InvalidArgumentException On not found / not owned / suite blocked / a malformed base
-	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the head is a copy its holder may only view
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the head is a copy its holder may only view, or a read-only copy from another organisation
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the head is a copy whose source cannot be resolved
 	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
 	 *
@@ -230,6 +263,8 @@ class SecretVersionService {
 	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
 		$secret = $this->reload(id: $version->getSecretId());
+		// A read-only copy from another organisation has no share target, so the view-only guard passes it.
+		$secret->assertNotReadOnly();
 		$this->viewOnlyCopies->assertMayChangeValue(
 			row: $secret,
 			fields: ViewOnlyCopyGuard::VALUE_FIELDS,
@@ -274,21 +309,40 @@ class SecretVersionService {
 		// Snapshot the current head so the restore itself is undoable.
 		$this->snapshot(preUpdate: $secret, actorType: 'user', actorId: $userId);
 
+		$beforeRestore = clone $secret;
 		$secret->setName($version->getName());
 		$secret->setUrl($version->getUrl());
 		$secret->setKey($version->getKey());
 		$secret->setLogin($version->getLogin());
 		$secret->setAdditionalFields($version->getAdditionalFields());
-		// A version made before these fields existed holds null (or an empty string); the head keeps its values.
-		if (in_array($version->getTotp(), [null, ''], true) === false) {
+		// A version made before these fields existed holds null and the head
+		// keeps its values; `''` was empty then and clears them.
+		if ($version->getTotp() !== null) {
 			$secret->setTotp($version->getTotp());
 		}
 
-		if (in_array($version->getPasskeys(), [null, ''], true) === false) {
+		if ($version->getPasskeys() !== null) {
 			$secret->setPasskeys($version->getPasskeys());
 		}
 
-		$secret->setKeyUpdatedAt(new DateTime());
+		if ($secret->getTotp() === '') {
+			$secret->setTotp(null);
+		}
+
+		if ($secret->getPasskeys() === '') {
+			$secret->setPasskeys(null);
+		}
+
+		// Old ciphertext is no new value: on a flagged row a credential it
+		// changes has no change time, so it reads as exposed and moves no
+		// rotation proof.
+		(new CredentialFields())->stampRestore(
+			after: $secret,
+			before: $beforeRestore,
+			now: new DateTime(),
+			compromiseFlagOpen: $this->compromiseFlagOpen(secretId: $secret->getId())
+		);
+
 		$secret->setUpdatedAt($savedAt);
 		$this->secretMapper->update($secret);
 

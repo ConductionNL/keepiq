@@ -109,7 +109,9 @@ describe('team folder fan-outs and a login seed', () => {
 								{
 									teamFolderId: 'tf-ops',
 									missing: [{ secretId: 's1', userId: 'kim' }],
-									recipients: [{ userId: 'kim', certificate: 'PEM-KIM' }],
+									recipients: [
+										{ userId: 'kim', certificate: 'PEM-KIM' },
+									],
 								},
 							],
 						},

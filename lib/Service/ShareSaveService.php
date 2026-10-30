@@ -154,8 +154,9 @@ class ShareSaveService {
 
 		$request->assertConsistent(entries: $entries);
 		$patch = (array)$request->patch;
+		$kept = [];
 		if ($version !== null) {
-			[$patch, $entries] = $request->restoring(version: $version, entries: $entries);
+			[$patch, $entries, $kept] = $request->restoring(version: $version, entries: $entries, head: $path->row);
 		}
 
 		$this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
@@ -171,7 +172,8 @@ class ShareSaveService {
 					entries: $entries,
 					userId: $userId,
 					savedAt: $savedAt,
-					version: $version
+					version: $version,
+					kept: $kept
 				),
 				db: $this->db
 			)
@@ -283,6 +285,7 @@ class ShareSaveService {
 	 * @param string $userId The caller
 	 * @param DateTime $savedAt The version every written row gets
 	 * @param SecretVersion|null $version The version a restore comes from
+	 * @param array<string,?string> $kept The head's value of each field a restore leaves out of the patch
 	 *
 	 * @return array{secret:Secret,copies:int,federatedRows:list<FederatedShare>,ownerOnly:bool}
 	 */
@@ -294,10 +297,17 @@ class ShareSaveService {
 		string $userId,
 		DateTime $savedAt,
 		?SecretVersion $version,
+		array $kept = [],
 	): array {
 		$this->lockVersions(path: $path, request: $request, savedAt: $savedAt);
 		$path = $this->scope->assertStillWriter(path: $path, userId: $userId);
 		$required = $this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
+
+		// A restore writes back the version's credentials: old values, not replacements.
+		$restored = [];
+		if ($version !== null) {
+			$restored = CredentialFields::CREDENTIALS;
+		}
 
 		$copies = $this->sync->writeCopyBlobs(
 			source: $path->source,
@@ -305,6 +315,7 @@ class ShareSaveService {
 			allowedIds: array_fill_keys(array_keys($required['copies']), true),
 			savedAt: $savedAt,
 			writerId: $userId,
+			restored: $restored,
 		);
 		$federatedRows = $this->writePartners(
 			path: $path,
@@ -312,7 +323,8 @@ class ShareSaveService {
 			entries: $entries,
 			required: $required['federated'],
 			userId: $userId,
-			savedAt: $savedAt
+			savedAt: $savedAt,
+			kept: $kept
 		);
 
 		// The row goes last, through the same path as PUT /secrets/{id}, so its
@@ -321,7 +333,8 @@ class ShareSaveService {
 			id: $path->row->getId(),
 			data: $patch,
 			userId: $userId,
-			savedAt: $savedAt
+			savedAt: $savedAt,
+			restoring: $version !== null
 		);
 
 		if ($version !== null) {
@@ -352,13 +365,14 @@ class ShareSaveService {
 	 * @param array<string,FederatedShare> $required The active partner shares, by id
 	 * @param string $userId The caller
 	 * @param DateTime $savedAt The version every written row gets
+	 * @param array<string,?string> $kept The head's value of each field a restore leaves out of the patch
 	 *
 	 * @return list<FederatedShare> The written shares
 	 *
 	 * @throws NotFoundException When a share or its partner went away and the lists still look complete
 	 * @throws ShareSaveRefusal `partner_upgrade_required` when a partner cannot store a value field it is sent,
-	 *   `copy_fields_mismatch` when an entry does not mirror the patch for a partner that stores the field;
-	 *   the transaction is rolled back with either
+	 *   `copy_fields_mismatch` when an entry does not mirror the patch, or a kept field of the head, for a
+	 *   partner that stores the field; the transaction is rolled back with either
 	 */
 	private function writePartners(
 		ShareSavePath $path,
@@ -367,6 +381,7 @@ class ShareSaveService {
 		array $required,
 		string $userId,
 		DateTime $savedAt,
+		array $kept = [],
 	): array {
 		$written = [];
 		try {
@@ -379,6 +394,7 @@ class ShareSaveService {
 						ciphertext: array_intersect_key($share, array_flip(Secret::VALUE_FIELDS)),
 						savedAt: $savedAt,
 						patch: $patch,
+						kept: $kept,
 					);
 				} catch (PartnerUpgradeRequiredException $tooOld) {
 					throw new ShareSaveRefusal(

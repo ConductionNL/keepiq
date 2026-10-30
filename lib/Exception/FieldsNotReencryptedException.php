@@ -28,7 +28,7 @@ use RuntimeException;
 /**
  * Thrown when a migration commit omits a stored value field.
  *
- * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
  */
 class FieldsNotReencryptedException extends RuntimeException {
 	/**
@@ -45,7 +45,7 @@ class FieldsNotReencryptedException extends RuntimeException {
 	 *
 	 * @return self
 	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function withFields(array $fields): self {
 		$this->fields = $fields;
@@ -57,7 +57,7 @@ class FieldsNotReencryptedException extends RuntimeException {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function getFields(): array {
 		return $this->fields;

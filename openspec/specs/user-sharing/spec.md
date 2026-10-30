@@ -98,6 +98,13 @@ Both paths share only an ORIGINAL secret as the source. A received copy — a se
 - WHEN user A attempts to share a secret with user B
 - THEN the system MUST return an error indicating the recipient has no encryption suite
 
+#### Scenario: A copy must carry the source's TOTP seed and passkeys
+@e2e exclude A server-side refusal of a register-batch row; covered by PHPUnit (DirectShareRegistrarTest).
+- GIVEN user A's secret holds a `totp` value and no `passkeys`
+- WHEN a direct share or a group share row for user B leaves out `encryptedTotp`, or carries an `encryptedPasskeys`
+- THEN that row MUST be reported with status `copy_fields_mismatch` and no copy or share row is written
+- AND the other rows of the batch are handled as usual, as with any other per-row status
+
 ### Requirement: Sharing With A New Party Requires A Verified Key Proof
 A session alone MUST NOT be able to add a new party who then receives a secret and every later value of it through sync (keepiq#818). The risky sharing shapes MUST carry a verified vault-key proof (a signature with the caller's active suite key over a single-use, purpose-bound challenge), enforced by `#[VaultKeyProofRequired]` and VaultKeyProofMiddleware:
 

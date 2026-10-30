@@ -65,6 +65,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setPossiblyCompromisedAt(?DateTime $possiblyCompromisedAt)
  * @method DateTime|null getKeyUpdatedAt()
  * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
+ * @method DateTime|null getTotpUpdatedAt()
+ * @method void setTotpUpdatedAt(?DateTime $totpUpdatedAt)
+ * @method DateTime|null getPasskeysUpdatedAt()
+ * @method void setPasskeysUpdatedAt(?DateTime $passkeysUpdatedAt)
  * @method DateTime|null getExpiresAt()
  * @method void setExpiresAt(?DateTime $expiresAt)
  * @method string|null getMigrationError()
@@ -255,6 +259,20 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?DateTime $keyUpdatedAt = null;
 
 	/**
+	 * When the `totp` ciphertext last changed (nullable), kept like `keyUpdatedAt`.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $totpUpdatedAt = null;
+
+	/**
+	 * When the `passkeys` ciphertext last changed (nullable), kept like `keyUpdatedAt`.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $passkeysUpdatedAt = null;
+
+	/**
 	 * Optional per-secret expiry instant (rotation-expiry-policies §2.3).
 	 *
 	 * @var DateTime|null
@@ -430,6 +448,8 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'ownerId', type: 'string');
 		$this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
 		$this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
+		$this->addType(fieldName: 'totpUpdatedAt', type: 'datetime');
+		$this->addType(fieldName: 'passkeysUpdatedAt', type: 'datetime');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 		$this->addType(fieldName: 'migrationError', type: 'string');
 		$this->addType(fieldName: 'tombstonedAt', type: 'datetime');

@@ -83,7 +83,7 @@ The system MUST allow an authenticated user to create a secret with at minimum a
 
 #### Scenario: Create with all fields
 - GIVEN a user has an active EncryptionSuite and their master password is in session
-- WHEN they submit a secret with name, url, folder, key, login, and additional fields
+- WHEN they submit a secret with name, url, folder, key, login, additional fields, a TOTP seed, and passkeys
 - THEN all fields except name, url, and folder_id MUST be stored encrypted
 
 #### Scenario: Create in a folder
@@ -179,7 +179,7 @@ The system MUST raise, render and clear the `possibly_compromised_at` flag as se
 
 **Render.** A secret carrying `possibly_compromised_at` MUST be surfaced as a warning that is hard to ignore — visible on the secret itself and in the vault-wide health surface, not only in a report the user must go looking for. The warning MUST say that the stored value should be considered exposed and replaced at its source, and MUST NOT be dismissible in a way that hides it while the flag is still set. The flag is plaintext metadata, not ciphertext, so rendering it requires no decryption and MUST work whether or not the vault is unlocked.
 
-**Clear.** The flag MUST be cleared exactly when the secret's `key` ciphertext is written with a value different from the stored one, whoever writes it. Binding the rule to the write rather than to the writer is deliberate: any future path that replaces the value inherits the clearing without needing its own rule, and no path can replace a value while leaving the warning standing.
+**Clear.** A secret can hold three credentials: `key`, `totp` and `passkeys`, and a compromise exposes all three. The flag MUST be cleared exactly when a write changes one of them and leaves none of the three exposed: each is empty, changed in that write, or changed after the flag was raised, whoever writes it. The server tracks when `totp` and `passkeys` last changed (`totp_updated_at`, `passkeys_updated_at`) as it does `key_updated_at`, so the credentials may be replaced in one save or one after the other. A change of `totp` or `passkeys` does not touch `key_updated_at`, which stays the password's age; only a `suite_compromise` rotation flag resolves on the change of a `totp` or `passkeys`, and then by this same rule (see the rotation-expiry-policies spec, which also lists the known limitations). Restoring a version writes back old ciphertext, by either route: a `key`, `totp` or `passkeys` the restore changes replaces no exposed value, and on a flagged row (its warning set, or its `suite_compromise` rotation flag still open, which outlives the warning until the owner marks it rotated) its change time is cleared, so it reads as exposed until a later write replaces it. A `totp` or `passkeys` change time is read by this rule alone and is cleared on any row; a changed `key` on a row that is not flagged gets the time of the restore, as an edit's does, because the key's age also feeds expiry, health and the compliance report. A restore therefore never clears the warning, and never advances what a `suite_compromise` rotation flag is proven by. Binding the rule to the write rather than to the writer is deliberate: any future path that replaces a value inherits the clearing without needing its own rule, and no path can replace the last exposed value while leaving the warning standing.
 
 It MUST NOT be cleared by a rename, a folder move, a type change, a metadata edit, a share operation, or by the migration itself. It MUST NOT be cleared by a write that re-submits the ciphertext already stored — a client that echoes the whole record back on every save must not silence the warning without the value having changed. Clearing a source secret's flag MUST propagate to shared copies through the existing sync-on-update path.
 
@@ -217,11 +217,20 @@ Note for implementers: secret-request **fulfilment** is expected to be such a wr
 #### Scenario: Replacing the value clears the flag
 
 @e2e exclude Clearing is asserted on the persisted row and on shared copies after sync-on-update; covered by PHPUnit on the secret-update and share-sync paths.
-- **GIVEN** a secret carrying `possibly_compromised_at`
+- **GIVEN** a secret carrying `possibly_compromised_at` that holds no `totp` or `passkeys`
 - **WHEN** any path writes a `key` ciphertext different from the stored one
 - **THEN** `possibly_compromised_at` MUST be cleared on that secret and on every shared copy of it
 - **WHEN** a write re-submits the ciphertext already stored, alongside a rename
 - **THEN** `possibly_compromised_at` MUST remain set
+
+#### Scenario: A password change leaves the flag while the TOTP seed stays exposed
+
+@e2e exclude Asserted on the persisted row; covered by PHPUnit (SecretServiceTest, ShareSyncServiceTest).
+- **GIVEN** a secret carrying `possibly_compromised_at` that holds a `totp` or `passkeys` value set before the flag
+- **WHEN** a write changes only its `key`
+- **THEN** `possibly_compromised_at` MUST remain set
+- **WHEN** a later write replaces or clears the `totp` and `passkeys` it holds
+- **THEN** `possibly_compromised_at` MUST be cleared
 
 ### Requirement: Secret Types
 Every secret MUST have a type. The type is a UI hint only — it drives how the UI labels and presents fields but does not affect server-side validation or the underlying data model. If no type is specified at creation, the `login` system type MUST be used as default.
@@ -551,9 +560,9 @@ Known limitation, stated rather than implied: an EXPIRED request remains `pendin
 - [ ] Users can create, rename, and delete their own (user-scoped) types
 - [ ] Admins can create, rename, and delete global types
 - [ ] Deleting a custom type reassigns its secrets to the `login` system type
-- [ ] URL, folder, login, and additional fields are optional
+- [ ] URL, folder, login, additional fields, TOTP seed, and passkeys are optional
 - [ ] Name, url, and folder_id are stored and returned in plain text
-- [ ] Key, login, and additional fields are stored encrypted and returned decrypted when master password is in session
+- [ ] Key, login, additional fields, TOTP seed, and passkeys are stored encrypted and returned decrypted when master password is in session
 - [ ] The app UI requires the master password to be in session before any secrets are accessible
 - [ ] The API returns only name, url, and folder_id when no AES key is in session (API-level contract)
 - [ ] Folders can be created, renamed, moved, and deleted

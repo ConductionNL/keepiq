@@ -312,7 +312,6 @@ class ViewOnlyCopyGuardTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $this->delegations,
-			suiteMapper: $suites,
 			teamFolderService: $this->teamFolders,
 			shareTargetMapper: $this->targets,
 			groupShareMapper: $groupShares,

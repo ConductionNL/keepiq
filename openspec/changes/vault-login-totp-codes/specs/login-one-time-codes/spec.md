@@ -123,6 +123,19 @@ Each version of a secret MUST carry its `totp` and `passkeys` values, and restor
 - **WHEN** the owner restores version 3
 - **THEN** the login holds version 3's seed again and shows a code
 
+#### Scenario: Restoring a version without a seed takes the seed away
+
+- **GIVEN** a login that had no seed when version 3 was saved, and gained one after
+- **WHEN** the owner restores version 3
+- **THEN** the login holds no seed, on the row, on every copy and on every partner share
+- **AND** the same holds for the passkeys
+
+#### Scenario: A version from before the fields existed leaves them alone
+
+- **GIVEN** a version saved before a secret could hold a seed or passkeys, which records neither as empty
+- **WHEN** the owner restores it
+- **THEN** the login keeps the seed and passkeys it holds
+
 #### Scenario: The version details hide the seed
 
 - **GIVEN** a version of a login that holds a seed and a passkey
@@ -212,11 +225,11 @@ The password health analysis MUST NOT decrypt, score, reuse-match or breach-chec
 
 ### Requirement: The login fields wait for a server that stores them
 
-The web app MUST offer the Authenticator key field and the passkey Delete action only when the server's Keepiq version, read from the app's `appVersion` initial state, stores `totp` and `passkeys`; the read-only code and passkey rows depend only on the row holding a value. A development build marked `-unstable`, and a missing or unreadable version, MUST pass. No new Nextcloud OCP interface is used; session and user handling are those of the existing secret views.
+The web app MUST offer the Authenticator key field and the passkey Delete action only when the server declares, in the `loginValueFields` initial state, that it stores `totp` and `passkeys`; the read-only code and passkey rows depend only on the row holding a value. The web app MUST keep no release number of its own: the release that first stored the fields, named in the message for a partner that must upgrade, comes from that same initial state. No new Nextcloud OCP interface is used; session and user handling are those of the existing secret views.
 
 #### Scenario: A web app served by an older server
 
-- **GIVEN** a web app whose `appVersion` initial state names a release before the one that stores the fields
+- **GIVEN** a web app served by a server that does not declare `loginValueFields`
 - **WHEN** the user opens the create dialog for a login
 - **THEN** no Authenticator key field is shown
 

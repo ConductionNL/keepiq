@@ -24,6 +24,12 @@ import SecretShareDialog from '../../src/dialogs/SecretShareDialog.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { echoedCloudId } from '../fixtures/shareSaveServer.js'
 
+// The server declares the release that first stored a login's one-time code and passkeys.
+vi.mock('@nextcloud/initial-state', () => ({
+	loadState: (app, key, fallback) =>
+		key === 'loginValueFields' ? { since: '0.3.12' } : fallback,
+}))
+
 const F = JSON.parse(
 	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
 )
@@ -231,6 +237,26 @@ describe('FederatedShareForm', () => {
 		expect(calls[0][1].recipientCloudId).toBe('bob@Cloud.Partner.Example')
 	})
 
+	it('says why a login with a one-time code or passkeys was not shared', async () => {
+		const { wrapper, post } = await mountWith({
+			certificate: F.bob,
+			chain: [F.intermediateA, F.rootA],
+			partnerRootFingerprint: F.rootAFingerprint,
+		})
+		post.mockImplementation(async () => {
+			throw {
+				response: { status: 400, data: { message: 'copy_fields_mismatch' } },
+			}
+		})
+
+		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
+		await settled(wrapper, ['federated-share-done', 'federated-share-error'])
+
+		const error = wrapper.find('[data-testid="federated-share-error"]').text()
+		expect(error).toContain('one-time code or passkeys')
+		expect(error).not.toContain('Something went wrong')
+	})
+
 	it('says when the organisation is not a partner', async () => {
 		const { wrapper } = await mountWith({
 			reject: { response: { data: { message: 'not_a_partner' } } },
@@ -290,7 +316,8 @@ describe('FederatedShareForm', () => {
 						status: 409,
 						data: {
 							error: 'partner_upgrade_required',
-							message: 'The receiving organisation must upgrade Keepiq',
+							message:
+								'The receiving organisation must upgrade Keepiq',
 							requiredVersion: '0.4.0',
 						},
 					},

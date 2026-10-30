@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service\ShareSave;
 
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
@@ -220,10 +221,27 @@ class ShareSaveRequestTest extends TestCase {
 		return $body;
 	}
 
+	/**
+	 * The row a restore writes, holding this `totp` and `passkeys`.
+	 *
+	 * @param string|null $totp The head's TOTP ciphertext
+	 * @param string|null $passkeys The head's passkeys ciphertext
+	 *
+	 * @return Secret
+	 */
+	private function head(?string $totp = 'HEAD-T', ?string $passkeys = null): Secret {
+		$head = new Secret();
+		$head->setId('s-1');
+		$head->setTotp($totp);
+		$head->setPasskeys($passkeys);
+
+		return $head;
+	}
+
 	public function testARestoreFromAnOlderClientNeedsOnlyTheLegacyFields(): void {
 		$request = new ShareSaveRequest(self::restoreBody(fields: []));
 
-		[$patch, $entries] = $request->restoring(version: $this->version(), entries: $request->entries);
+		[$patch, $entries, $kept] = $request->restoring(version: $this->version(), entries: $request->entries, head: $this->head());
 
 		$this->assertSame('v-1', $request->restoredFrom);
 		$this->assertSame($request->patch, $patch);
@@ -231,23 +249,103 @@ class ShareSaveRequestTest extends TestCase {
 		$this->assertSame($request->entries->federated, $entries->federated);
 		$this->assertSame($request->entries->skipped, $entries->skipped);
 		$this->assertSame($request->entries->suspend, $entries->suspend);
+		$this->assertSame(['totp' => 'HEAD-T', 'passkeys' => null], $kept);
 	}
 
 	/**
-	 * A field the version does not hold, null or empty, leaves the head's and every copy's value as it is,
-	 * as a plain restore does. A partner share keeps the whole value it was sent.
+	 * A field a version made before it existed holds as null leaves the head's and every copy's value as it is,
+	 * as a plain restore does; the head's value is handed on so partner shares are held to it.
 	 */
-	public function testARestoreLeavesOutAFieldTheVersionDoesNotHold(): void {
-		foreach ([null, ''] as $none) {
-			$request = new ShareSaveRequest(self::restoreBody(fields: ['totp' => 'T', 'passkeys' => 'P']));
+	public function testARestoreLeavesOutAFieldTheVersionPredates(): void {
+		$request = new ShareSaveRequest(self::restoreBody(fields: ['totp' => 'T', 'passkeys' => 'P']));
 
-			[$patch, $entries] = $request->restoring(version: $this->version(totp: $none, passkeys: 'V-P'), entries: $request->entries);
+		[$patch, $entries, $kept] = $request->restoring(
+			version: $this->version(totp: null, passkeys: 'V-P'),
+			entries: $request->entries,
+			head: $this->head()
+		);
 
-			$this->assertSame(['key' => 'K', 'login' => null, 'additionalFields' => null, 'passkeys' => 'P'], $patch);
-			$this->assertArrayNotHasKey('totp', $entries->copies[0]);
-			$this->assertSame('P', $entries->copies[0]['passkeys']);
-			$this->assertSame($request->entries->federated, $entries->federated);
+		$this->assertSame(['key' => 'K', 'login' => null, 'additionalFields' => null, 'passkeys' => 'P'], $patch);
+		$this->assertArrayNotHasKey('totp', $entries->copies[0]);
+		$this->assertSame('P', $entries->copies[0]['passkeys']);
+		$this->assertSame($request->entries->federated, $entries->federated);
+		$this->assertSame(['totp' => 'HEAD-T'], $kept);
+	}
+
+	/**
+	 * A field the version holds as `''` was empty then: the restore clears it on the head and every copy, also
+	 * when the client left it out, and a patch that carries a value for it is refused.
+	 */
+	public function testARestoreClearsAFieldTheVersionHeldEmpty(): void {
+		$request = new ShareSaveRequest(self::restoreBody(fields: []));
+
+		[$patch, $entries, $kept] = $request->restoring(
+			version: $this->version(totp: '', passkeys: ''),
+			entries: $request->entries,
+			head: $this->head(totp: 'HEAD-T', passkeys: 'HEAD-P')
+		);
+
+		$this->assertSame('', $patch['totp']);
+		$this->assertSame('', $patch['passkeys']);
+		$this->assertSame('', $entries->copies[0]['totp']);
+		$this->assertSame('', $entries->copies[0]['passkeys']);
+		// The partner share is cleared on the server; the client did not send it.
+		$this->assertNull($entries->federated[0]['totp']);
+		$this->assertNull($entries->federated[0]['passkeys']);
+		$this->assertSame([], $kept);
+
+		$request = new ShareSaveRequest(self::restoreBody(fields: ['totp' => 'T']));
+		try {
+			$request->restoring(version: $this->version(totp: ''), entries: $request->entries, head: $this->head());
+			$this->fail('A restore that sets a field the version held empty was accepted');
+		} catch (ShareSaveRefusal $refusal) {
+			$this->assertSame(['invalid_body', 'totp'], [$refusal->getError(), $refusal->getBody()['field']]);
 		}
+	}
+
+	/**
+	 * The web app of this release restores with only the legacy fields. A version whose TOTP seed is the head's own
+	 * ciphertext needs nothing from the client: the field is kept. One with another seed still needs the client to
+	 * send it, so leaving it out is refused.
+	 */
+	public function testARestoreOfTheHeadsOwnTotpNeedsNothingFromTheClient(): void {
+		$request = new ShareSaveRequest(self::restoreBody(fields: []));
+
+		[$patch, $entries, $kept] = $request->restoring(
+			version: $this->version(totp: 'SAME-T', passkeys: 'SAME-P'),
+			entries: $request->entries,
+			head: $this->head(totp: 'SAME-T', passkeys: 'SAME-P')
+		);
+
+		$this->assertSame($request->patch, $patch);
+		$this->assertSame($request->entries->copies, $entries->copies);
+		$this->assertSame(['totp' => 'SAME-T', 'passkeys' => 'SAME-P'], $kept);
+
+		try {
+			$request->restoring(version: $this->version(totp: 'OTHER-T', passkeys: 'SAME-P'), entries: $request->entries, head: $this->head(totp: 'SAME-T', passkeys: 'SAME-P'));
+			$this->fail('A restore that leaves out a seed the head does not hold was accepted');
+		} catch (ShareSaveRefusal $refusal) {
+			$this->assertSame(['invalid_body', 'totp'], [$refusal->getError(), $refusal->getBody()['field']]);
+		}
+	}
+
+	/**
+	 * The web app of this release restores with only the legacy fields. A field the version held empty that the
+	 * head does not hold either has nothing to clear: the request is left as sent, so nothing is audited or mirrored.
+	 */
+	public function testARestoreOfAnEmptyFieldTheHeadLacksLeavesTheRequestAsSent(): void {
+		$request = new ShareSaveRequest(self::restoreBody(fields: []));
+
+		[$patch, $entries, $kept] = $request->restoring(
+			version: $this->version(totp: '', passkeys: ''),
+			entries: $request->entries,
+			head: $this->head(totp: null)
+		);
+
+		$this->assertSame($request->patch, $patch);
+		$this->assertSame($request->entries->copies, $entries->copies);
+		$this->assertSame($request->entries->federated, $entries->federated);
+		$this->assertSame(['totp' => null, 'passkeys' => null], $kept);
 	}
 
 	/**
@@ -271,7 +369,7 @@ class ShareSaveRequestTest extends TestCase {
 	public function testARestoreCarryingTheFieldsTheVersionHoldsKeepsThem(): void {
 		$request = new ShareSaveRequest(self::restoreBody(fields: ['totp' => 'T', 'passkeys' => 'P']));
 
-		[$patch, $entries] = $request->restoring(version: $this->version(totp: 'V-T', passkeys: 'V-P'), entries: $request->entries);
+		[$patch, $entries] = $request->restoring(version: $this->version(totp: 'V-T', passkeys: 'V-P'), entries: $request->entries, head: $this->head());
 
 		$this->assertSame($request->patch, $patch);
 		$this->assertSame($request->entries->copies, $entries->copies);
@@ -285,7 +383,7 @@ class ShareSaveRequestTest extends TestCase {
 		foreach ([[], ['totp' => null], ['totp' => '']] as $fields) {
 			$request = new ShareSaveRequest(self::restoreBody(fields: $fields));
 			try {
-				$request->restoring(version: $this->version(totp: 'V-T'), entries: $request->entries);
+				$request->restoring(version: $this->version(totp: 'V-T'), entries: $request->entries, head: $this->head());
 				$this->fail('A restore without the version\'s totp was accepted');
 			} catch (ShareSaveRefusal $refusal) {
 				$this->assertSame(['invalid_body', 400, 'totp'], [$refusal->getError(), $refusal->getStatus(), $refusal->getBody()['field']]);

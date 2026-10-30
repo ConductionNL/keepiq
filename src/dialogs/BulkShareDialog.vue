@@ -198,6 +198,15 @@ export default {
 					reason: item.status === 'exists' ? 'already shared' : undefined,
 				}
 			}
+			if (item?.status === 'copy_fields_mismatch') {
+				return {
+					status: 'skipped',
+					reason: this.t(
+						'keepiq',
+						'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+					),
+				}
+			}
 			return { status: 'skipped', reason: item?.status || 'not registered' }
 		},
 

@@ -110,6 +110,33 @@ const CASES = [
 	},
 ]
 
+describe('BulkTeamFolderDialog: refused secrets', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		useBulkStore().setSelection(['a'])
+		vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue(undefined)
+		vi.spyOn(useTeamFolderStore(), 'fetchTeamFolders').mockResolvedValue(
+			undefined,
+		)
+	})
+
+	it('names the secrets the server would not copy to the members', async () => {
+		vi.spyOn(useTeamFolderStore(), 'runFanOut').mockResolvedValue({
+			created: 0,
+			skipped: [],
+			refused: ['Wiki'],
+		})
+		const wrapper = mountDialog(BulkTeamFolderDialog)
+		await wrapper.setData({ target: { id: 'tf-1', folderId: 'folder-b' } })
+
+		await wrapper.find('[data-testid="bulk-team-folder-run"]').trigger('click')
+		await flushPromises()
+
+		expect(wrapper.vm.refused).toEqual(['Wiki'])
+	})
+})
+
 describe.each(CASES)(
 	'$name: asking and reporting are separate phases',
 	({

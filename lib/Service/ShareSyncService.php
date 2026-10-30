@@ -154,6 +154,7 @@ class ShareSyncService {
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
 		$this->guards->assertNoDuplicates(updates: $updates);
+		$updates = $this->guards->mirroredValueFields(source: $source, updates: $updates);
 
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
@@ -371,6 +372,7 @@ class ShareSyncService {
 	 * @param array<string,bool> $allowedIds The secret ids this sync may write
 	 * @param DateTime $savedAt The version every written row gets
 	 * @param string $writerId The caller
+	 * @param string[] $restored The fields a restore writes back from a version, which replace no exposed value
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
@@ -384,6 +386,7 @@ class ShareSyncService {
 		array $allowedIds,
 		DateTime $savedAt,
 		string $writerId,
+		array $restored = [],
 	): int {
 		// Defence in depth: the share row that owns each recipient copy, so a
 		// copy whose row does not genuinely belong to its target (a poisoned or
@@ -412,16 +415,8 @@ class ShareSyncService {
 			}
 
 			$preUpdate = clone $copy;
-			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt);
+			$this->applyRecipientBlob(copy: $copy, update: $update, savedAt: $savedAt, restored: $restored);
 			$this->keepVersion(source: $source, preUpdate: $preUpdate, after: $copy, writerId: $writerId);
-
-			// A key rewrite of the SOURCE row is a real rotation —
-			// advance keyUpdatedAt so rotation proofs stay honest
-			// (folder-permission-grades §2.3).
-			if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
-				$copy->setKeyUpdatedAt(clone $savedAt);
-			}
-
 			$this->secretMapper->update($copy);
 			++$updated;
 		}//end foreach
@@ -501,12 +496,18 @@ class ShareSyncService {
 	 * @param Secret $copy The recipient copy to mutate
 	 * @param array<string,string|null> $update The blob row for this recipient
 	 * @param DateTime $savedAt The copy's new version
+	 * @param string[] $restored The fields a restore writes back from a version
 	 *
 	 * @return void
 	 */
-	private function applyRecipientBlob(Secret $copy, array $update, DateTime $savedAt): void {
-		if (isset($update['key']) === true) {
+	private function applyRecipientBlob(Secret $copy, array $update, DateTime $savedAt, array $restored): void {
+		$before = clone $copy;
+		// A new key is a real rotation, on the source row and on a copy alike:
+		// keyUpdatedAt moves so rotation proofs and the compromise rule see it
+		// (folder-permission-grades §2.3).
+		if (isset($update['key']) === true && (string)$update['key'] !== $copy->getKey()) {
 			$copy->setKey((string)$update['key']);
+			$copy->setKeyUpdatedAt(clone $savedAt);
 		}
 
 		// An absent field stays as it is; a null one is cleared.
@@ -518,20 +519,30 @@ class ShareSyncService {
 			$copy->setAdditionalFields($this->nullableBlob(value: $update['additionalFields']));
 		}
 
+		// For these two `''` means "not set" and is stored as null, as on the head.
+		$blobs = new FederatedValueFields();
 		if (array_key_exists('totp', $update) === true) {
-			$copy->setTotp($this->nullableBlob(value: $update['totp']));
+			$copy->setTotp($blobs->blob(value: $update['totp']));
 		}
 
 		if (array_key_exists('passkeys', $update) === true) {
-			$copy->setPasskeys($this->nullableBlob(value: $update['passkeys']));
+			$copy->setPasskeys($blobs->blob(value: $update['passkeys']));
 		}
 
+		$credentials = new CredentialFields();
+		$credentials->stamp(
+			after: $copy,
+			before: $before,
+			now: $savedAt,
+			restored: $restored,
+			compromiseFlagOpen: $restored !== [] && $this->versionService->compromiseFlagOpen(secretId: $copy->getId())
+		);
 		$copy->setUpdatedAt(clone $savedAt);
 
-		// If the copy was previously flagged as possibly compromised
-		// (e.g. EncryptionSuite migration mid-air), the freshly
-		// re-encrypted blob clears that warning for the recipient.
-		if ($copy->getPossiblyCompromisedAt() !== null) {
+		// A copy flagged as possibly compromised (e.g. an EncryptionSuite
+		// migration mid-air) is cleared by the same rule as the head: once
+		// none of its key, totp and passkeys is left exposed.
+		if ($credentials->answersCompromiseWarning(after: $copy, before: $before, restored: $restored) === true) {
 			$copy->setPossiblyCompromisedAt(null);
 		}
 	}//end applyRecipientBlob()

@@ -109,7 +109,7 @@ The system MUST support checking password-bearing values against the Have I Been
 - **AND** weak, reused, and stale findings MUST still be produced
 
 ### Requirement: No Server-Side Health Knowledge
-The server MUST hold no health information about any secret: no endpoint accepts scores, digests, hashes (beyond the 5-character range prefix), reuse data, or breach verdicts, and none are derivable from stored data beyond `key_updated_at` (ciphertext age) and the pre-existing `possibly_compromised_at` flag. A database dump MUST reveal nothing about the strength, reuse, or breach status of any secret value.
+The server MUST hold no health information about any secret: no endpoint accepts scores, digests, hashes (beyond the 5-character range prefix), reuse data, or breach verdicts, and none are derivable from stored data beyond `key_updated_at` (ciphertext age), `totp_updated_at` and `passkeys_updated_at` (when those two ciphertexts last changed, which never feed the password's age) and the pre-existing `possibly_compromised_at` flag. A database dump MUST reveal nothing about the strength, reuse, or breach status of any secret value.
 
 #### Scenario: No health write surface exists
 @e2e exclude Route-enumeration contract — asserting no endpoint accepts strength/digest/reuse/breach data is a static routes.php / controller-surface assertion, not a DOM flow; the only health-related endpoint (the breach proxy) accepts a 5-char prefix only, covered by PHPUnit (BreachProxyController prefix-validation tests).

@@ -117,7 +117,11 @@ describe('secret store — totp and passkeys', () => {
 			const log = shareSaveServer({
 				id: 's1',
 				required: [
-					{ secretId: 'copy-bob', holder: 'recipient', targetUserId: 'bob' },
+					{
+						secretId: 'copy-bob',
+						holder: 'recipient',
+						targetUserId: 'bob',
+					},
 				],
 				suites: { bob: 'PEM-BOB' },
 			})

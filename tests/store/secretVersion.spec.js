@@ -76,7 +76,7 @@ async function restore(version, { head = {}, partner = null } = {}) {
 	const encrypted = async (fields) => {
 		const out = {}
 		for (const [field, value] of Object.entries(fields)) {
-			out[field] = value === null ? null : await own(value)
+			out[field] = value === null || value === '' ? value : await own(value)
 		}
 		return out
 	}
@@ -188,6 +188,30 @@ describe('restore', () => {
 		}
 	})
 
+	it('takes a seed and passkeys away when the version records them as empty', async () => {
+		const log = await restore(
+			{ totp: '', passkeys: '' },
+			{ head: { totp: HEAD_SEED, passkeys: PASSKEYS } },
+		)
+
+		const final = log.saves.at(-1)
+		for (const entry of [final.patch, ...final.copies]) {
+			expect(entry.totp).toBe('')
+			expect(entry.passkeys).toBe('')
+		}
+	})
+
+	it('clears only the field the version records as empty', async () => {
+		const log = await restore(
+			{ totp: '' },
+			{ head: { totp: HEAD_SEED, passkeys: PASSKEYS } },
+		)
+
+		const final = log.saves.at(-1)
+		expect(final.patch.totp).toBe('')
+		expect('passkeys' in final.patch).toBe(false)
+	})
+
 	it('restores one field the version holds and keeps the other on the head', async () => {
 		const log = await restore({ passkeys: PASSKEYS })
 
@@ -197,7 +221,7 @@ describe('restore', () => {
 		expect(final.patch.passkeys).not.toBe('')
 	})
 
-	it("restores a version without a seed for a login shared with an older partner, which gets null", async () => {
+	it('restores a version without a seed for a login shared with an older partner, which gets null', async () => {
 		const log = await restore(
 			{},
 			{ head: { totp: HEAD_SEED }, partner: { ...LEGACY_PARTNER } },
@@ -236,5 +260,24 @@ describe('restore', () => {
 		expect(typeof entry.totp).toBe('string')
 		expect(entry.totp.length).toBeGreaterThan(0)
 		expect(entry.passkeys).toBeNull()
+	})
+
+	it("clears a partner's seed when the version records none", async () => {
+		const log = await restore(
+			{ totp: '' },
+			{
+				head: { totp: HEAD_SEED },
+				partner: {
+					cloudId: BOB,
+					certificate: F.bob,
+					chain: [F.intermediateA, F.rootA],
+					partnerRootFingerprint: F.rootAFingerprint,
+					valueFields: ['totp', 'passkeys'],
+				},
+			},
+		)
+
+		const [entry] = log.saves.at(-1).federated
+		expect(entry.totp).toBeNull()
 	})
 })

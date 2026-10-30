@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Migration;
 
 use OCA\Keepiq\Migration\Version001016Date20261028120000;
+use OCA\Keepiq\Migration\Version001017Date20261028130000;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -63,6 +64,27 @@ class TotpPasskeysColumnsMigrationTest extends TestCase {
 		$this->assertNull((new Version001016Date20261028120000())->changeSchema($this->createMock(IOutput::class), fn () => $wrapper, []));
 		$this->assertSame([], $added);
 	}//end testIsANoopWhenTheColumnsExist()
+
+	/**
+	 * The secrets table gets nullable `totp_updated_at` and `passkeys_updated_at`, once.
+	 *
+	 * @return void
+	 */
+	public function testAddsTheChangeTimesToTheSecrets(): void {
+		$added = [];
+		$wrapper = $this->schemaDouble(added: $added);
+
+		$step = new Version001017Date20261028130000();
+		$this->assertSame($wrapper, $step->changeSchema($this->createMock(IOutput::class), fn () => $wrapper, []));
+		$this->assertSame(
+			['keepiq_secrets' => ['totp_updated_at' => ['notnull' => false], 'passkeys_updated_at' => ['notnull' => false]]],
+			$added
+		);
+
+		$added = [];
+		$this->assertNull($step->changeSchema($this->createMock(IOutput::class), fn () => $this->schemaDouble(added: $added, exists: true), []));
+		$this->assertSame([], $added);
+	}//end testAddsTheChangeTimesToTheSecrets()
 
 	/**
 	 * Missing tables are skipped, and with none present nothing changes.

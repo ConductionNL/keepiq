@@ -415,6 +415,8 @@ class TeamFolderServiceTest extends TestCase {
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
 		$source->setTypeId('type-login');
+		$source->setTotp('SOURCE-TOTP');
+		$source->setPasskeys('SOURCE-PASSKEYS');
 		$this->secretMapper->method('findByOwner')->willReturn([$source]);
 		$this->secretMapper->method('findById')->willReturn($source);
 
@@ -478,8 +480,51 @@ class TeamFolderServiceTest extends TestCase {
 		$resultRetry = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
 		$this->assertSame(0, $resultRetry['created']);
 		$this->assertSame([], $resultRetry['rows']);
+		$this->assertSame([['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'exists']], $resultRetry['skipped']);
 		$this->assertCount(1, $insertedTargets);
 	}//end testRegisterFanOutSharesIdempotent()
+
+	/**
+	 * A fan-out row that leaves out the TOTP seed or passkeys the source holds,
+	 * or carries ones it does not, mints no copy, so the pair stays missing.
+	 *
+	 * @return void
+	 */
+	public function testAFanOutRowThatDoesNotMirrorTheSourcesTotpOrPasskeysIsSkipped(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
+
+		$source = new Secret();
+		$source->setId('sec-1');
+		$source->setOwnerType('user');
+		$source->setOwnerId('alice');
+		$source->setTotp('SOURCE-TOTP');
+		$this->secretMapper->method('findByOwner')->willReturn([$source]);
+		$this->secretMapper->method('findById')->willReturn($source);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn(new EncryptionSuite());
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willThrowException(new DoesNotExistException(''));
+		$this->secretMapper->expects($this->never())->method('insert');
+		$this->shareTargetMapper->expects($this->never())->method('insert');
+
+		$rows = [
+			['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K'],
+			['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'encryptedKey' => 'K', 'encryptedTotp' => 'T', 'encryptedPasskeys' => 'P'],
+		];
+		$rows[] = ['sourceSecretId' => 'sec-1', 'targetUserId' => 'dan'];
+		$result = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: $rows, userId: 'alice');
+
+		$this->assertSame(0, $result['created']);
+		$this->assertSame([], $result['rows']);
+		// Each skipped row comes back with its reason, so the client can stop retrying it.
+		$this->assertSame(
+			[
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'copy_fields_mismatch'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'reason' => 'copy_fields_mismatch'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'dan', 'reason' => 'incomplete'],
+			],
+			$result['skipped']
+		);
+	}//end testAFanOutRowThatDoesNotMirrorTheSourcesTotpOrPasskeysIsSkipped()
 
 	/**
 	 * removeMember revokes only the derived copies of users no longer

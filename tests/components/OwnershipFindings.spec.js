@@ -129,6 +129,21 @@ describe('OwnershipFindings', () => {
 		expect(wrapper.vm.findings).toEqual([])
 	})
 
+	it('an owner move names the secrets the server would not copy to the members', async () => {
+		const wrapper = await mountWith(true)
+		vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({})
+		vi.spyOn(useTeamFolderStore(), 'runFanOut').mockResolvedValue({
+			created: 0,
+			refused: ['Old login'],
+		})
+
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[0]
+		await wrapper.vm.move({ id: 'old-login' })
+
+		// The test t() stub returns the key untranslated, so the names are not substituted.
+		expect(wrapper.vm.error).toContain('one-time code or passkeys')
+	})
+
 	it('a contribution move contributes first and deletes the personal secret after', async () => {
 		const wrapper = await mountWith(true)
 		const order = []
@@ -158,27 +173,30 @@ describe('OwnershipFindings', () => {
 	it.each([
 		['carries', 'JBSWY3DPEHPK3PXP', '[{"credentialId":"c1"}]'],
 		["passes '' for", '', ''],
-	])("a contribution move %s a login's seed and passkeys (keepiq#1326)", async (_, totp, passkeys) => {
-		const wrapper = await mountWith(true)
-		const secretStore = useSecretStore()
-		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
-			name: 'Bank',
-			typeId: 't',
-			key: 'plain',
-			totp,
-			passkeys,
-		})
-		vi.spyOn(secretStore, 'contributeSecret').mockResolvedValue({})
-		vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
+	])(
+		"a contribution move %s a login's seed and passkeys (keepiq#1326)",
+		async (_, totp, passkeys) => {
+			const wrapper = await mountWith(true)
+			const secretStore = useSecretStore()
+			vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
+				name: 'Bank',
+				typeId: 't',
+				key: 'plain',
+				totp,
+				passkeys,
+			})
+			vi.spyOn(secretStore, 'contributeSecret').mockResolvedValue({})
+			vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
 
-		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
-		await wrapper.vm.move({ id: 'old-login' })
+			wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
+			await wrapper.vm.move({ id: 'old-login' })
 
-		expect(secretStore.contributeSecret).toHaveBeenCalledWith(
-			'tf-ops',
-			expect.objectContaining({ totp, passkeys }),
-		)
-	})
+			expect(secretStore.contributeSecret).toHaveBeenCalledWith(
+				'tf-ops',
+				expect.objectContaining({ totp, passkeys }),
+			)
+		},
+	)
 
 	it('keeps the personal secret when the contribution fails', async () => {
 		const wrapper = await mountWith(true)

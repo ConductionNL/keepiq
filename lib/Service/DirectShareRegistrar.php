@@ -296,7 +296,8 @@ class DirectShareRegistrar {
 	 * @param string $encryptedKey Recipient-encrypted key blob
 	 * @param array<string,mixed> $row The original row (optional blobs)
 	 *
-	 * @return Secret|string The copy, or the status when neither it nor its row was written
+	 * @return Secret|string The copy, or the status when neither it nor its row was written:
+	 *   `copy_fields_mismatch` when the row's totp or passkeys does not mirror the source's, `no_suite`, `exists`
 	 */
 	private function mintAndLink(
 		Secret $source,
@@ -306,6 +307,13 @@ class DirectShareRegistrar {
 		string $encryptedKey,
 		array $row,
 	): Secret|string {
+		// A copy without the source's TOTP seed or passkeys, or with ones it
+		// does not hold, would show the recipient another value.
+		$carried = ['totp' => ($row['encryptedTotp'] ?? null), 'passkeys' => ($row['encryptedPasskeys'] ?? null)];
+		if ((new CredentialFields())->notMirrored(source: $source, copy: $carried) !== []) {
+			return 'copy_fields_mismatch';
+		}
+
 		$this->connection?->beginTransaction();
 		try {
 			$copy = $this->copyFactory->create(

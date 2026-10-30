@@ -214,13 +214,22 @@ class SecretControllerTest extends TestCase {
 	}//end testCreateAndShowCarryTotpAndPasskeys()
 
 	/**
-	 * An application-owned create that carries totp or passkeys is refused
-	 * with 400 instead of storing the secret without them.
+	 * An application-owned create that carries totp or passkeys reaches the
+	 * service with them, and its refusal answers 400.
 	 *
 	 * @return void
 	 */
 	public function testApplicationCreateWithTotpOrPasskeysIsRefused(): void {
-		$this->secretService->expects($this->never())->method('createForApplication');
+		$this->secretService->expects($this->exactly(2))->method('createForApplication')
+			->willReturnCallback(
+				static function (array $data): never {
+					if ($data['totp'] === null && $data['passkeys'] === null) {
+						throw new \LogicException('the value field did not reach the service');
+					}
+
+					throw new \InvalidArgumentException('totp and passkeys are not supported on an application-owned secret');
+				}
+			);
 
 		foreach (['totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'] as $field => $value) {
 			$response = $this->controller->create(

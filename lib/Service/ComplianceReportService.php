@@ -341,8 +341,9 @@ class ComplianceReportService {
 	}//end rotationPostureSection()
 
 	/**
-	 * Ciphertext-age bands from key_updated_at (§2.3) — explicitly
-	 * labelled ciphertext-age, never password strength.
+	 * Ciphertext-age bands from key_updated_at (§2.3), falling back to
+	 * created_at for a key with no change time as the expiry engine does —
+	 * explicitly labelled ciphertext-age, never password strength.
 	 *
 	 * @return array<string,int>
 	 */
@@ -353,11 +354,11 @@ class ComplianceReportService {
 			'over1Year' => 0,
 		];
 		$result = $this->db->executeQuery(
-			'SELECT key_updated_at FROM *PREFIX*keepiq_secrets WHERE key_updated_at IS NOT NULL'
+			'SELECT COALESCE(key_updated_at, created_at) AS aged_at FROM *PREFIX*keepiq_secrets'
 		);
 		$now = time();
 		while (($row = $result->fetch()) !== false) {
-			$age = $now - strtotime((string)$row['key_updated_at']);
+			$age = $now - strtotime((string)$row['aged_at']);
 			$band = 'over1Year';
 			if ($age < 7776000) {
 				$band = 'under90Days';

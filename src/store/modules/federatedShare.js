@@ -11,10 +11,7 @@ import {
 } from '../../crypto/federatedCertificate.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 import { importSpkiPublicKey } from '../../crypto/rsa.js'
-import {
-	BLOB_FIELDS,
-	TOTP_PASSKEYS_FIELDS_SINCE,
-} from '../../utils/valueFields.js'
+import { BLOB_FIELDS, valueFieldsSince } from '../../utils/valueFields.js'
 import { useShareStore } from './share.js'
 
 /**
@@ -38,7 +35,7 @@ export class PartnerUpgradeRequiredError extends Error {
 	 * @param {{cause?: Error}} [options] The refusal this one stands for.
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
-	constructor(requiredVersion = TOTP_PASSKEYS_FIELDS_SINCE, options = undefined) {
+	constructor(requiredVersion = valueFieldsSince(), options = undefined) {
 		super(
 			t(
 				'keepiq',
@@ -90,7 +87,7 @@ export function partnerUpgradeText(error) {
 	) {
 		return null
 	}
-	const version = data?.requiredVersion || TOTP_PASSKEYS_FIELDS_SINCE
+	const version = data?.requiredVersion || valueFieldsSince()
 	const partners = (Array.isArray(error.partners) ? error.partners : [])
 		.map((share) => share.recipientCloudId)
 		.filter(Boolean)
@@ -200,7 +197,7 @@ function upgradeRefusal(error) {
 		return error
 	}
 	return new PartnerUpgradeRequiredError(
-		data.requiredVersion || TOTP_PASSKEYS_FIELDS_SINCE,
+		data.requiredVersion || valueFieldsSince(),
 		{ cause: error },
 	)
 }

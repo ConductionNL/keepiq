@@ -324,6 +324,12 @@ export default {
 					'keepiq',
 					'This secret is already shared with that account.',
 				),
+
+				// The login holds a one-time code or passkeys this client does not send yet.
+				copy_fields_mismatch: t(
+					'keepiq',
+					'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+				),
 			}
 			return (
 				texts[e?.response?.data?.message]

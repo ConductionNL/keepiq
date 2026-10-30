@@ -181,7 +181,7 @@ class TeamFolderContributionController extends Controller {
 		}
 
 		return new JSONResponse(
-			data: ['secret' => $result['secret']->jsonSerialize(), 'copies' => $result['copies']],
+			data: ['secret' => $result['secret']->jsonSerialize(), 'copies' => $result['copies'], 'skipped' => $result['skipped']],
 			statusCode: Http::STATUS_CREATED
 		);
 	}//end contribute()

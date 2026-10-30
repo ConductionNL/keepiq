@@ -37,6 +37,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
+use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -46,6 +47,7 @@ use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Federation\ICloudIdManager;
 use OCP\Security\ISecureRandom;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
 
@@ -93,10 +95,13 @@ class FederatedShareService {
 	 * @param ISecureRandom $random The shared secret
 	 * @param FederatedNotificationDelivery $delivery Notifications with retries
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
+	 * @param LoggerInterface|null $logger Warns about a pull refused for the value fields it did not declare
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; no behaviour.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list, one collaborator per concern.
 	 */
 	public function __construct(
 		private FederatedShareMapper $shareMapper,
@@ -108,6 +113,7 @@ class FederatedShareService {
 		private ISecureRandom $random,
 		private FederatedNotificationDelivery $delivery,
 		private FederatedShareAuditTrail $audit,
+		private ?LoggerInterface $logger = null,
 	) {
 		$this->valueFields = new FederatedValueFields();
 	}//end __construct()
@@ -125,7 +131,8 @@ class FederatedShareService {
 	 * @return FederatedShare
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
-	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient` or `already_shared`
+	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`, or
+	 *   `copy_fields_mismatch` when its totp or passkeys does not mirror the source's
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 * @throws RuntimeException `federation_unavailable`, or `delivery_failed` when the partner refused it
 	 *
@@ -160,6 +167,7 @@ class FederatedShareService {
 		}
 
 		$this->valueFields->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
+		$this->valueFields->assertMirrorsSource(partner: $partner, source: $source, ciphertext: $ciphertext);
 		$this->assertNotSharedWith(secretId: $secretId, recipientCloudId: $recipient->getId());
 
 		$sharedSecret = $this->random->generate(self::SHARED_SECRET_LENGTH, ISecureRandom::CHAR_ALPHANUMERIC);
@@ -207,7 +215,8 @@ class FederatedShareService {
 	 * @return FederatedShare
 	 *
 	 * @throws NotFoundException When it is not the user's live share
-	 * @throws InvalidArgumentException `invalid`
+	 * @throws InvalidArgumentException `invalid`, or `copy_fields_mismatch` when its totp or passkeys does not mirror
+	 *   the source's
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
@@ -217,6 +226,16 @@ class FederatedShareService {
 		if ($row->getStatus() !== FederatedShare::STATUS_ACTIVE) {
 			throw new NotFoundException(message: 'Share not found');
 		}
+
+		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
+		// The same checks, in the same order, as a new share of this secret.
+		$this->valueFields->assertUpdateMirrorsSource(
+			partner: $this->partners->find(id: (string)$row->getPartnerId()),
+			source: $this->ownedSecret(secretId: $row->getSourceSecretId(), userId: $userId),
+			row: $row,
+			ciphertext: $ciphertext,
+			certFingerprint: $certFingerprint
+		);
 
 		$row = $this->writeCiphertext(
 			row: $row,
@@ -243,12 +262,14 @@ class FederatedShareService {
 	 * @param array{key:string,login:?string,additionalFields:?string,totp?:?string,passkeys?:?string} $ciphertext Encrypted for the recipient
 	 * @param DateTime $savedAt The save's version, which the share gets unless it already had it
 	 * @param array<string,mixed>|null $patch The share-save's patch of the owner's row, null outside a share-save
+	 * @param array<string,?string> $kept The head's value of each field a restore leaves out of the patch
 	 *
 	 * @return FederatedShare
 	 *
 	 * @throws InvalidArgumentException `invalid`
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised; nothing is written
-	 * @throws ShareSaveRefusal `copy_fields_mismatch` when it does not mirror the patch's new fields for a partner that stores them
+	 * @throws ShareSaveRefusal `copy_fields_mismatch` when it does not mirror the patch's new fields, or a kept field
+	 *   of the head, for a partner that stores them
 	 * @throws NotFoundException When the share stopped being active meanwhile or its partner is gone
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
@@ -260,9 +281,10 @@ class FederatedShareService {
 		array $ciphertext,
 		DateTime $savedAt,
 		?array $patch = null,
+		array $kept = [],
 	): FederatedShare {
 		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
-		$this->valueFields->assertShareStores(row: $row, ciphertext: $ciphertext, partners: $this->partners, patch: $patch);
+		$this->valueFields->assertShareStores(row: $row, ciphertext: $ciphertext, partners: $this->partners, patch: $patch, kept: $kept);
 
 		$same = $certFingerprint === $row->getRecipientCertFingerprint();
 		$row->setRecipientCertFingerprint($certFingerprint);
@@ -542,8 +564,8 @@ class FederatedShareService {
 		// receive from here, and the share must be live.
 		$partner = $this->partners->outboundPartnerForRemote(remote: $signer);
 		if ($partner === null || $partner->getId() !== $row->getPartnerId()
-			|| $this->isServable(row: $row, source: $source, payload: $payload) === false
 			|| hash_equals($row->getSharedSecretHash(), hash('sha256', $sharedSecret)) === false
+			|| $this->isServable(row: $row, source: $source, partner: $partner, payload: $payload) === false
 		) {
 			return null;
 		}
@@ -568,17 +590,19 @@ class FederatedShareService {
 	/**
 	 * Whether a share may be served to this pull: it is active and belongs to its secret's owner, as one that an
 	 * ownership transfer left with the previous owner is not served, and the pull declared every value field it holds.
-	 * An older Keepiq declares none and would build a copy without them.
+	 * An older Keepiq declares none and would build a copy without them; that refusal alone is logged, as answerPull()
+	 * checks it last.
 	 *
 	 * @param FederatedShare $row The share
 	 * @param Secret $source The secret it is of
+	 * @param FederationPartner $partner The pulling partner
 	 * @param array<array-key,mixed> $payload The pull request
 	 *
 	 * @return bool
 	 */
-	private function isServable(FederatedShare $row, Secret $source, array $payload): bool {
+	private function isServable(FederatedShare $row, Secret $source, FederationPartner $partner, array $payload): bool {
 		return $row->getStatus() === FederatedShare::STATUS_ACTIVE && $row->getOwnerId() === $source->getOwnerId()
-			&& $this->valueFields->servable(row: $row, payload: $payload) === true;
+			&& $this->valueFields->servable(row: $row, payload: $payload, logger: $this->logger, partner: $partner->getBaseUrl()) === true;
 	}//end isServable()
 
 	/**
