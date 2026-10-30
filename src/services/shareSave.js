@@ -32,6 +32,10 @@ import { onVaultLock, useSessionStore } from '../store/modules/session.js'
 import { useShareStore } from '../store/modules/share.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
+import {
+	SHARE_SCAN_PENDING,
+	shareScanPendingText,
+} from '../utils/shareScanPending.js'
 import { BLOB_FIELDS } from '../utils/valueFields.js'
 
 /** The encrypted value fields of a secret. */
@@ -716,11 +720,8 @@ export function shareSaveErrorText(error) {
 			'The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.',
 		)
 	}
-	if (code === 'share_scan_pending') {
-		return t(
-			'keepiq',
-			'This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.',
-		)
+	if (code === SHARE_SCAN_PENDING) {
+		return shareScanPendingText()
 	}
 	if (code === 'partner_lookup_limit') {
 		return t(

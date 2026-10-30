@@ -15,6 +15,7 @@ import TeamFolderDialog from '../../src/modals/TeamFolderDialog.vue'
 import { resetPolicyCache } from '../../src/policy/policy.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useShareStore } from '../../src/store/modules/share.js'
+import { shareScanPendingText } from '../../src/utils/shareScanPending.js'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -150,6 +151,59 @@ describe('TeamFolderDialog', () => {
 		expect(wrapper.find('[data-testid="team-folder-unshare"]').exists()).toBe(
 			true,
 		)
+	})
+
+	it.each([
+		[
+			'removing a member',
+			(vm) => vm.onRemoveMember({ id: 'm1' }),
+			'removeMember',
+		],
+		['stopping the share', (vm) => vm.onUnshare(), 'unshareFolder'],
+	])(
+		'shows the translated text when %s waits for the share scan',
+		async (_label, act, method) => {
+			mockApi({
+				owned: [
+					{
+						id: 'tf-1',
+						folderId: 'folder-1',
+						folderName: 'DevOps',
+						members: [{ id: 'm1', memberType: 'user', memberId: 'bob' }],
+					},
+				],
+			})
+			const wrapper = mount(TeamFolderDialog, {
+				propsData: {
+					open: true,
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+				},
+			})
+			wrapper.vm.refresh()
+			await flush()
+			vi.spyOn(wrapper.vm.store, method).mockRejectedValue({
+				response: {
+					status: 409,
+					data: { error: 'share_scan_pending', message: 'server text' },
+				},
+			})
+			await act(wrapper.vm)
+			expect(wrapper.vm.error).toBe(shareScanPendingText())
+			expect(wrapper.vm.error).not.toBe('server text')
+		},
+	)
+
+	it('shows the server message for any other failure', async () => {
+		mockApi({ owned: [] })
+		const wrapper = mount(TeamFolderDialog, {
+			propsData: { open: true, folderId: 'folder-1', folderName: 'DevOps' },
+		})
+		expect(
+			wrapper.vm.failureText({
+				response: { status: 400, data: { message: 'Membership not found' } },
+			}),
+		).toBe('Membership not found')
 	})
 
 	it('stays a picker when there is nobody left to add', async () => {
