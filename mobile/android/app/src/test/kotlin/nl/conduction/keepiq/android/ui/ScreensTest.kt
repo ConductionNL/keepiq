@@ -167,7 +167,13 @@ class ScreensTest {
             fromCache = false, totpSeed = seed, hasSavedKey = seed.isNotEmpty(), passkeys = if (useOnly) emptyList() else passkeys,
         )
 
-    private fun showMail(item: DecryptedItem, offline: Boolean = false, deleted: MutableList<String> = mutableListOf(), focusPasskey: Int? = null) =
+    private fun showMail(
+        item: DecryptedItem,
+        offline: Boolean = false,
+        deleted: MutableList<String> = mutableListOf(),
+        focusPasskey: Int? = null,
+        onFocused: () -> Unit = {},
+    ) =
         compose.setContent {
             // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
             val inputMode = LocalInputModeManager.current
@@ -177,7 +183,7 @@ class ScreensTest {
                 ItemDetail(
                     item = item, folderPath = "Geen map", offline = offline, problem = null, modifier = Modifier,
                     onCopy = {}, onEdit = {}, onMove = {}, onTrash = {}, onSendLogin = {},
-                    onDeletePasskey = { deleted += it.credentialId }, focusPasskey = focusPasskey,
+                    onDeletePasskey = { deleted += it.credentialId }, focusPasskey = focusPasskey, onPasskeyFocused = onFocused,
                 )
             }
         }
@@ -262,6 +268,22 @@ class ScreensTest {
     fun afterTheLastDeleteFocusGoesToEdit() {
         showMail(mail(), focusPasskey = 0)
         compose.onNodeWithText("Edit").assertIsFocused()
+    }
+
+    @Test
+    fun theFocusRequestIsClearedOnceTheNextRowHasFocus() {
+        var cleared = 0
+        showMail(mail(passkeys = listOf(passkey("b", "alice-work", null))), focusPasskey = 0, onFocused = { cleared++ })
+        compose.onNodeWithContentDescription("Delete passkey").assertIsFocused()
+        assertEquals(1, cleared)
+    }
+
+    @Test
+    fun theFocusRequestIsClearedOnceEditHasFocus() {
+        var cleared = 0
+        showMail(mail(), focusPasskey = 0, onFocused = { cleared++ })
+        compose.onNodeWithText("Edit").assertIsFocused()
+        assertEquals(1, cleared)
     }
 
     private var keyDraft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))

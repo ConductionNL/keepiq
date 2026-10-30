@@ -101,6 +101,7 @@ fun ItemDetailScreen(
             onSendLogin = { onSendLogin(r.item.login, r.item.secret) },
             onDeletePasskey = { deleting = it },
             focusPasskey = focusPasskey,
+            onPasskeyFocused = { focusPasskey = null },
         )
     }
 
@@ -192,6 +193,8 @@ internal fun ItemDetail(
     onDeletePasskey: (PasskeySummary) -> Unit = {},
     /** After a passkey Delete: the row whose Delete takes focus, else the Edit button. */
     focusPasskey: Int? = null,
+    /** Focus moved for [focusPasskey]: the caller clears it, so a later reopen does not move focus again. */
+    onPasskeyFocused: () -> Unit = {},
 ) {
     val row = item.row
     val editFocus = remember { FocusRequester() }
@@ -249,11 +252,14 @@ internal fun ItemDetail(
         }
         val mayDelete = !row.useOnly && !row.readOnly && !offline
         if (!row.useOnly) {
-            PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey)
+            PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey, onPasskeyFocused)
             if (item.passkeysError) Text(stringResource(R.string.detail_passkeys_error), color = MaterialTheme.colorScheme.error)
         }
         LaunchedEffect(focusPasskey, item) {
-            if (focusPasskey != null && (focusPasskey >= item.passkeys.size || !mayDelete) && !row.useOnly) editFocus.requestFocus()
+            if (focusPasskey != null && (focusPasskey >= item.passkeys.size || !mayDelete) && !row.useOnly) {
+                editFocus.requestFocus()
+                onPasskeyFocused()
+            }
         }
         row.url?.takeIf { it.isNotEmpty() }?.let { FieldRow(stringResource(R.string.detail_address), it, onCopy = onCopy) }
         if (!row.useOnly) {

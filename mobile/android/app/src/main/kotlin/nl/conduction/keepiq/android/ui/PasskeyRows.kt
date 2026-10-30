@@ -34,10 +34,17 @@ import java.util.Locale
  * when there are several, the account it is for (mobile-login-totp-passkeys
  * D6). No site, credential id or key is shown. Where [mayDelete], each row
  * offers Delete; [focusIndex] moves focus to that row's Delete after a
- * passkey before it went (D7).
+ * passkey before it went (D7), and [onFocused] tells the caller it moved,
+ * so the request is not made again when the item reopens.
  */
 @Composable
-internal fun PasskeyRows(passkeys: List<PasskeySummary>, mayDelete: Boolean, focusIndex: Int?, onDelete: (PasskeySummary) -> Unit) {
+internal fun PasskeyRows(
+    passkeys: List<PasskeySummary>,
+    mayDelete: Boolean,
+    focusIndex: Int?,
+    onDelete: (PasskeySummary) -> Unit,
+    onFocused: () -> Unit = {},
+) {
     val locale = LocalConfiguration.current.locales[0]
     val requesters = remember(passkeys) { passkeys.map { FocusRequester() } }
     for ((i, pk) in passkeys.withIndex()) {
@@ -64,7 +71,10 @@ internal fun PasskeyRows(passkeys: List<PasskeySummary>, mayDelete: Boolean, foc
         }
     }
     LaunchedEffect(focusIndex, passkeys) {
-        if (mayDelete && focusIndex != null && focusIndex < requesters.size) requesters[focusIndex].requestFocus()
+        if (mayDelete && focusIndex != null && focusIndex < requesters.size) {
+            requesters[focusIndex].requestFocus()
+            onFocused()
+        }
     }
 }
 
