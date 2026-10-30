@@ -48,8 +48,10 @@ use OCA\Keepiq\Service\TeamSecretTransferService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Rule\InvocationOrder;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Alice owns S_a in her team folder. A row `{S_a, bob, V}` names Bob's own
@@ -86,6 +88,13 @@ class TeamFolderFollowsOnlyJudgedRowsTest extends TestCase {
 	private ShareTarget $row;
 
 	/**
+	 * The team-folder share service's logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $tfLogger;
+
+	/**
 	 * Seed S_a, V and the row naming V.
 	 *
 	 * @return void
@@ -95,6 +104,7 @@ class TeamFolderFollowsOnlyJudgedRowsTest extends TestCase {
 		$this->secrets        = [];
 		$this->deletedSecrets = [];
 		$this->deletedRows    = [];
+		$this->tfLogger       = $this->createMock(LoggerInterface::class);
 		$this->secret(id: 'S_a', ownerId: 'alice');
 		$this->secret(id: 'V', ownerId: 'bob');
 
@@ -194,6 +204,13 @@ class TeamFolderFollowsOnlyJudgedRowsTest extends TestCase {
 	 */
 	public function testARevokeThatCannotWaitDropsAnUnjudgedRowAndKeepsItsCopy(): void {
 		$shares = $this->shares(verdict: ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->tfLogger->expects($this->exactly(2))->method('warning')->with(
+			$this->anything(),
+			$this->callback(
+				static fn (array $context): bool => $context['shareId'] === 'row-V' && $context['sourceSecretId'] === 'S_a'
+					&& $context['targetUserId'] === 'bob' && $context['secretId'] === 'V'
+			)
+		);
 
 		$this->assertSame(1, $shares->releaseForMember(teamFolderId: 'tf-1', targetUserId: 'bob'));
 		$this->assertSame(1, $shares->revokeTeamSharesForUser(targetUserId: 'bob'));
@@ -399,7 +416,7 @@ class TeamFolderFollowsOnlyJudgedRowsTest extends TestCase {
 			),
 			notificationService: $this->createMock(NotificationService::class),
 			db: $this->createMock(IDBConnection::class),
-			rowJudge: $this->judge(targets: $targets, secrets: $secrets, verdict: $verdict),
-		);
+			logger: $this->tfLogger,
+			rowJudge: $this->judge(targets: $targets, secrets: $secrets, verdict: $verdict));
 	}//end shares()
 }//end class

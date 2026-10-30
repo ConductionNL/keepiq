@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 
@@ -57,6 +58,7 @@ class TeamFolderShareService {
 	 * @param RecipientSecretCopyService $copies The recipient-copy service
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param LoggerInterface $logger Records each unjudged row a revoke that cannot wait removes
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
@@ -70,6 +72,7 @@ class TeamFolderShareService {
 		private RecipientSecretCopyService $copies,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private LoggerInterface $logger,
 		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 	}//end __construct()
@@ -380,8 +383,9 @@ class TeamFolderShareService {
 
 	/**
 	 * Revoke rows where the caller cannot be refused: a row the scan
-	 * quarantines is kept with its copy, one it cannot judge is removed and
-	 * its copy kept, and every other row goes with its copy.
+	 * quarantines is kept with its copy, one it cannot judge is removed, its
+	 * copy kept and the row logged as a warning, and every other row goes
+	 * with its copy.
 	 *
 	 * @param JudgedShareRows $rows The rows
 	 *
@@ -397,6 +401,22 @@ class TeamFolderShareService {
 
 			if ($held === null) {
 				$this->copies->deleteByShare(share: $row);
+			}
+
+			if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+				// The row is the only link from the kept copy to its source:
+				// record it, so an administrator can still find the copy.
+				$this->logger->warning(
+					'Removed a team-folder share row the pending quarantine scan cannot judge and kept its copy',
+					[
+						'app' => 'keepiq',
+						'shareId' => $row->getId(),
+						'sourceSecretId' => $row->getSourceSecretId(),
+						'targetUserId' => $row->getTargetUserId(),
+						'secretId' => $row->getSecretId(),
+						'teamFolderId' => $row->getTeamFolderId(),
+					]
+				);
 			}
 
 			$this->shareTargetMapper->delete($row);

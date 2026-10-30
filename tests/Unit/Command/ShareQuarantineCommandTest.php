@@ -130,6 +130,8 @@ class ShareQuarantineCommandTest extends TestCase {
 				secretMapper: new SecretMapper(db: $this->db),
 				groupShareMapper: new GroupShareMapper(db: $this->db),
 				eventDispatcher: $dispatcher,
+				teamFolders: new \OCA\Keepiq\Db\TeamFolderMapper(db: $this->db),
+				memberships: $this->createMock(\OCA\Keepiq\Service\TeamFolderMembershipResolver::class),
 			)
 		));
 	}//end command()

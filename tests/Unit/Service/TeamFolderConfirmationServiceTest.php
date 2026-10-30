@@ -259,8 +259,8 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			),
 			notificationService: $notificationService,
 			db: $this->createMock(IDBConnection::class),
-			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper),
-		);
+			logger: $this->createMock(\Psr\Log\LoggerInterface::class),
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper));
 		$this->teamFolders = $this->createMock(TeamFolderService::class);
 
 		$queries = new TeamFolderQueryService(

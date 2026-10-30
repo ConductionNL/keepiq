@@ -125,6 +125,13 @@ class TeamFolderServiceTest extends TestCase {
 	private IDBConnection&MockObject $db;
 
 	/**
+	 * The team-folder share service's logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $tfLogger;
+
+	/**
 	 * Audit events dispatched by the offboarding auditor.
 	 *
 	 * @var array<int,AuditEvent>
@@ -156,6 +163,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 		$this->scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
 		$this->db = $this->createMock(originalClassName: IDBConnection::class);
+		$this->tfLogger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		$memberships = new TeamFolderMembershipResolver(
 			memberMapper: $this->memberMapper,
@@ -176,8 +184,8 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, scanner: $this->scanner),
-		);
+			logger: $this->tfLogger,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, scanner: $this->scanner));
 
 		$this->service = new TeamFolderService(
 			mapper: $this->mapper,
@@ -740,6 +748,70 @@ class TeamFolderServiceTest extends TestCase {
 		$revoked = $this->service->handleGroupMemberLeave(userId: 'dave', groupId: 'devops');
 		$this->assertSame(1, $revoked);
 	}//end testGroupLeaveRevokesUnlessStillCovered()
+
+	/**
+	 * A group leave cannot wait for the share quarantine scan: a row it
+	 * cannot judge is removed, its copy kept, and the removal logged.
+	 *
+	 * @return void
+	 */
+	public function testAGroupLeaveDropsARowTheScanCannotJudgeAndKeepsItsCopy(): void {
+		$this->memberMapper->method('findGroupMemberships')->willReturn([$this->buildMember(type: 'group', id: 'devops')]);
+		$this->memberMapper->method('findByTeamFolder')->willReturn([$this->buildMember(type: 'user', id: 'bob')]);
+		$daveShare = new ShareTarget();
+		$daveShare->setId('st-dave');
+		$daveShare->setTargetUserId('dave');
+		$daveShare->setSecretId('copy-dave');
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$daveShare]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->shareTargetMapper->expects($this->once())->method('delete')->with($daveShare);
+		$this->secretMapper->expects($this->never())->method('delete');
+		$this->tfLogger->expects($this->once())->method('warning');
+
+		$this->assertSame(1, $this->service->handleGroupMemberLeave(userId: 'dave', groupId: 'devops'));
+	}//end testAGroupLeaveDropsARowTheScanCannotJudgeAndKeepsItsCopy()
+
+	/**
+	 * A manager leaving the folder themselves cannot be refused either: a
+	 * row the scan cannot judge is removed, its copy kept, and the removal
+	 * logged.
+	 *
+	 * @return void
+	 */
+	public function testLeavingTheFolderDropsARowTheScanCannotJudgeAndKeepsItsCopy(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->folderMapper->method('findById')->willReturn($this->buildFolder('folder-1'));
+		$olga = new TeamFolderMember();
+		$olga->setId('mem-olga');
+		$olga->setTeamFolderId('tf-1');
+		$olga->setMemberType('user');
+		$olga->setMemberId('olga');
+		$olga->setGrade('manage');
+		$left = false;
+		$this->memberMapper->method('findById')->willReturn($olga);
+		$this->memberMapper->method('findByTeamFolder')->willReturnCallback(
+			static function () use (&$left, $olga): array {
+				return ($left === true ? [] : [$olga]);
+			}
+		);
+		$this->memberMapper->method('delete')->willReturnCallback(
+			static function (TeamFolderMember $row) use (&$left): TeamFolderMember {
+				$left = true;
+				return $row;
+			}
+		);
+		$olgasRow = new ShareTarget();
+		$olgasRow->setId('st-olga');
+		$olgasRow->setTargetUserId('olga');
+		$olgasRow->setSecretId('copy-olga');
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$olgasRow]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->shareTargetMapper->expects($this->once())->method('delete')->with($olgasRow);
+		$this->secretMapper->expects($this->never())->method('delete');
+		$this->tfLogger->expects($this->once())->method('warning');
+
+		$this->assertSame(1, $this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'mem-olga', userId: 'olga'));
+	}//end testLeavingTheFolderDropsARowTheScanCannotJudgeAndKeepsItsCopy()
 
 	/**
 	 * handleGroupMemberLeave keeps shares when a direct membership still
@@ -1565,8 +1637,8 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper),
-		);
+			logger: $this->tfLogger,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper));
 
 		return new TeamFolderService(
 			mapper: $this->mapper,

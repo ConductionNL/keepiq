@@ -1294,6 +1294,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			),
 			notificationService: $this->createMock(NotificationService::class),
 			db: $this->db,
+			logger: $this->createMock(\Psr\Log\LoggerInterface::class),
 			restrictions: new ShareRestrictionResolver(
 				secretMapper: new SecretMapper(db: $this->db),
 				shareTargetMapper: new ShareTargetMapper(db: $this->db),
@@ -1302,8 +1303,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 				groupManager: $this->createMock(IGroupManager::class),
 				quarantineScan: $this->brokenScanner(),
 			),
-			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db)),
-		);
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db)));
 
 		$result = $service->registerFanOutShares(
 			teamFolder: $folder,
