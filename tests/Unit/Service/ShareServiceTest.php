@@ -37,15 +37,19 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -156,7 +160,6 @@ class ShareServiceTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $this->delegationMapper,
-			suiteMapper: $this->suiteMapper,
 			teamFolderService: $teamFolderService,
 		);
 
@@ -167,8 +170,6 @@ class ShareServiceTest extends TestCase {
 
 		return new ShareService(
 			mapper: $this->mapper,
-			db: $this->db,
-			notificationService: $this->notificationService,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $this->mapper,
@@ -235,194 +236,24 @@ class ShareServiceTest extends TestCase {
 	}//end stubRecipientNoSuite()
 
 	/**
-	 * Test createShare persists a row when the owner shares with a
-	 * recipient that has an active EncryptionSuite, and notifies the
-	 * recipient.
+	 * The client-supplied-id share-create surface is retired
+	 * (GHSA-m5p9-6pw7-pf3g): a caller can no longer hand the server a
+	 * `recipientSecretId`, so a share can never point at a secret the server
+	 * did not mint for the recipient. Shares are created only through
+	 * DirectShareRegistrar (register-batch), which mints each copy itself.
 	 *
 	 * @return void
 	 */
-	public function testCreateShareInsertsRowWhenOwnerWithSuite(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->with('src-1')->willReturn($source);
-		$this->stubRecipientHasSuite();
-		$this->mapper->method('findBySourceSecretAndTargetUser')
-			->willThrowException(new DoesNotExistException('no row'));
-
-		$captured = null;
-		$this->mapper->expects($this->once())
-			->method('insert')
-			->willReturnCallback(
-				static function (ShareTarget $entity) use (&$captured) {
-					$captured = $entity;
-					return $entity;
-				}
-			);
-
-		$this->notificationService->expects($this->once())
-			->method('notify')
-			->with('secret_shared', 'bob');
-
-		$result = $this->service->createShare(
-			sourceSecretId: 'src-1',
-			targetUserId: 'bob',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'alice'
+	public function testCreateShareSurfaceIsRetired(): void {
+		$this->assertFalse(
+			method_exists(ShareService::class, 'createShare'),
+			'createShare must be retired so recipientSecretId can never be client-supplied'
 		);
-
-		$this->assertSame($captured, $result);
-		$this->assertSame('src-1', $result->getSourceSecretId());
-		$this->assertSame('bob', $result->getTargetUserId());
-		$this->assertSame('alice', $result->getCreatedBy());
-		$this->assertNotSame('', $result->getId(), 'UUID should be generated');
-	}//end testCreateShareInsertsRowWhenOwnerWithSuite()
-
-	/**
-	 * Test createShare allows an active delegate to share.
-	 *
-	 * @return void
-	 */
-	public function testCreateShareAllowsActiveDelegate(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->with('src-1')->willReturn($source);
-		$this->stubRecipientHasSuite();
-		$this->delegationMapper->method('findActiveBySecretAndUser')
-			->with('src-1', 'carol')
-			->willReturn(new SecretDelegation());
-		$this->mapper->method('findBySourceSecretAndTargetUser')
-			->willThrowException(new DoesNotExistException('no row'));
-
-		$this->mapper->expects($this->once())->method('insert')
-			->willReturnArgument(0);
-
-		$result = $this->service->createShare(
-			sourceSecretId: 'src-1',
-			targetUserId: 'bob',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'carol'
+		$this->assertFalse(
+			method_exists(ShareService::class, 'createBatchShares'),
+			'createBatchShares must be retired with createShare'
 		);
-
-		$this->assertSame('carol', $result->getCreatedBy());
-	}//end testCreateShareAllowsActiveDelegate()
-
-	/**
-	 * Test createShare rejects a non-owner non-delegate.
-	 *
-	 * @return void
-	 */
-	public function testCreateShareRejectsNonOwnerNonDelegate(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-		$this->delegationMapper->method('findActiveBySecretAndUser')
-			->willThrowException(new DoesNotExistException('no delegation'));
-
-		$this->mapper->expects($this->never())->method('insert');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('Not authorized');
-
-		$this->service->createShare(
-			sourceSecretId: 'src-1',
-			targetUserId: 'bob',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'mallory'
-		);
-	}//end testCreateShareRejectsNonOwnerNonDelegate()
-
-	/**
-	 * Test createShare rejects when the recipient has no active suite.
-	 *
-	 * @return void
-	 */
-	public function testCreateShareRejectsRecipientWithoutSuite(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-		$this->stubRecipientNoSuite();
-
-		$this->mapper->expects($this->never())->method('insert');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('no active encryption suite');
-
-		$this->service->createShare(
-			sourceSecretId: 'src-1',
-			targetUserId: 'bob',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'alice'
-		);
-	}//end testCreateShareRejectsRecipientWithoutSuite()
-
-	/**
-	 * Test createShare rejects duplicate (source, recipient) pair.
-	 *
-	 * @return void
-	 */
-	public function testCreateShareRejectsDuplicateRecipient(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-		$this->stubRecipientHasSuite();
-		$this->mapper->method('findBySourceSecretAndTargetUser')
-			->willReturn(new ShareTarget());
-
-		$this->mapper->expects($this->never())->method('insert');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('already shared');
-
-		$this->service->createShare(
-			sourceSecretId: 'src-1',
-			targetUserId: 'bob',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'alice'
-		);
-	}//end testCreateShareRejectsDuplicateRecipient()
-
-	/**
-	 * Test createShare rejects sharing with self.
-	 *
-	 * @return void
-	 */
-	public function testCreateShareRejectsSelfShare(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-
-		$this->mapper->expects($this->never())->method('insert');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('Cannot share a secret with its owner');
-
-		$this->service->createShare(
-			sourceSecretId: 'src-1',
-			targetUserId: 'alice',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'alice'
-		);
-	}//end testCreateShareRejectsSelfShare()
-
-	/**
-	 * Test createShare rejects empty source secret.
-	 *
-	 * @return void
-	 */
-	public function testCreateShareRejectsEmptySource(): void {
-		$this->mapper->expects($this->never())->method('insert');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('sourceSecretId is required');
-
-		$this->service->createShare(
-			sourceSecretId: '',
-			targetUserId: 'bob',
-			recipientSecretId: 'copy-1',
-			groupShareId: null,
-			userId: 'alice'
-		);
-	}//end testCreateShareRejectsEmptySource()
+	}//end testCreateShareSurfaceIsRetired()
 
 	/**
 	 * Test listSharesForSecret without userId returns raw mapper result.
@@ -490,10 +321,10 @@ class ShareServiceTest extends TestCase {
 		$entity->setId('st-1');
 		$entity->setSourceSecretId('src-1');
 		$entity->setSecretId('copy-1');
+		$entity->setTargetUserId('bob');
 
 		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$copy = new Secret();
-		$copy->setId('copy-1');
+		$copy = $this->makeOwnerSecret('copy-1', 'bob');
 
 		$this->mapper->expects($this->once())
 			->method('findById')
@@ -524,13 +355,14 @@ class ShareServiceTest extends TestCase {
 		$bob = new ShareTarget();
 		$bob->setSourceSecretId('src-1');
 		$bob->setSecretId('copy-bob');
+		$bob->setTargetUserId('bob');
 		$carol = new ShareTarget();
 		$carol->setSourceSecretId('src-1');
 		$carol->setSecretId('copy-carol');
+		$carol->setTargetUserId('carol');
 		$this->mapper->method('findBySourceSecret')->with('src-1')->willReturn([$bob, $carol]);
 
-		$copyBob = new Secret();
-		$copyBob->setId('copy-bob');
+		$copyBob = $this->makeOwnerSecret('copy-bob', 'bob');
 		$this->secretMapper->method('findById')->willReturnCallback(
 			static function (string $id) use ($copyBob): Secret {
 				if ($id === 'copy-bob') {
@@ -604,11 +436,9 @@ class ShareServiceTest extends TestCase {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
 		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
 
-		$copy1 = new Secret();
-		$copy1->setId('copy-1');
+		$copy1 = $this->makeOwnerSecret('copy-1', 'bob');
 		$copy1->setPossiblyCompromisedAt(new DateTime('2026-01-01'));
-		$copy2 = new Secret();
-		$copy2->setId('copy-2');
+		$copy2 = $this->makeOwnerSecret('copy-2', 'carol');
 
 		$this->secretMapper->method('findById')->willReturnMap(
 			[
@@ -619,13 +449,16 @@ class ShareServiceTest extends TestCase {
 		);
 
 		// The membership guard (folder-permission-grades §2.3) only
-		// writes ACTUAL recipient copies of the source.
+		// writes ACTUAL recipient copies of the source, and the ownership
+		// guard (GHSA-m5p9-6pw7-pf3g) only a copy held by its target.
 		$row1 = new ShareTarget();
 		$row1->setSourceSecretId('src-1');
 		$row1->setSecretId('copy-1');
+		$row1->setTargetUserId('bob');
 		$row2 = new ShareTarget();
 		$row2->setSourceSecretId('src-1');
 		$row2->setSecretId('copy-2');
+		$row2->setTargetUserId('carol');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row1, $row2]);
 
 		$this->secretMapper->expects($this->once())->method('advanceVersion')
@@ -656,12 +489,12 @@ class ShareServiceTest extends TestCase {
 	 */
 	public function testSyncUpdateCommitsItsCopiesInOneTransaction(): void {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$copy = new Secret();
-		$copy->setId('copy-1');
+		$copy = $this->makeOwnerSecret('copy-1', 'bob');
 		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
 		$row = new ShareTarget();
 		$row->setSourceSecretId('src-1');
 		$row->setSecretId('copy-1');
+		$row->setTargetUserId('bob');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
 
 		$this->db->expects($this->once())->method('beginTransaction');
@@ -686,9 +519,13 @@ class ShareServiceTest extends TestCase {
 	 */
 	public function testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion(): void {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$copy = new Secret();
-		$copy->setId('copy-1');
+		$copy = $this->makeOwnerSecret('copy-1', 'bob');
 		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$row->setTargetUserId('bob');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
 		$this->db->expects($this->never())->method('beginTransaction');
 		$sync = new ShareSyncService(
 			mapper: $this->mapper,
@@ -718,7 +555,8 @@ class ShareServiceTest extends TestCase {
 		$this->assertNull($copy->getLogin());
 		$this->assertSame($at->getTimestamp(), $source->getUpdatedAt()?->getTimestamp());
 		$this->assertSame($at->getTimestamp(), $source->getKeyUpdatedAt()?->getTimestamp());
-		$this->assertNull($copy->getKeyUpdatedAt());
+		// A copy's new key is a rotation of that copy too.
+		$this->assertSame($at->getTimestamp(), $copy->getKeyUpdatedAt()?->getTimestamp());
 	}//end testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion()
 
 	/**
@@ -734,8 +572,7 @@ class ShareServiceTest extends TestCase {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
 		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
 
-		$copy = new Secret();
-		$copy->setId('copy-1');
+		$copy = $this->makeOwnerSecret('copy-1', 'bob');
 		$copy->setIsFavourite(true);
 		$copy->setLastUsedAt(new DateTime('2026-09-30T08:00:00+00:00'));
 		// As loaded from the database: nothing pending.
@@ -745,6 +582,7 @@ class ShareServiceTest extends TestCase {
 		$row = new ShareTarget();
 		$row->setSourceSecretId('src-1');
 		$row->setSecretId('copy-1');
+		$row->setTargetUserId('bob');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
 		$this->secretMapper->method('advanceVersion')->willReturn(1);
 
@@ -856,12 +694,12 @@ class ShareServiceTest extends TestCase {
 		$stored = (new DateTime('+1 hour'))->getTimestamp();
 		$source = $this->makeOwnerSecret('src-1', 'alice');
 		$source->setUpdatedAt(new DateTime('@'.$stored));
-		$copy = new Secret();
-		$copy->setId('copy-1');
+		$copy = $this->makeOwnerSecret('copy-1', 'bob');
 		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
 		$row = new ShareTarget();
 		$row->setSourceSecretId('src-1');
 		$row->setSecretId('copy-1');
+		$row->setTargetUserId('bob');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
 
 		$this->secretMapper->expects($this->once())->method('advanceVersion')
@@ -881,35 +719,6 @@ class ShareServiceTest extends TestCase {
 
 		$this->assertSame($stored + 1, $copy->getUpdatedAt()?->getTimestamp());
 	}//end testSyncUpdateMovesTheSourcePastItsStoredVersion()
-
-	/**
-	 * Test createBatchShares creates each row inside one transaction.
-	 *
-	 * @return void
-	 */
-	public function testCreateBatchSharesAllRecipients(): void {
-		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$this->secretMapper->method('findById')->willReturn($source);
-		$this->stubRecipientHasSuite();
-		$this->mapper->method('findBySourceSecretAndTargetUser')
-			->willThrowException(new DoesNotExistException('no row'));
-
-		$this->mapper->expects($this->exactly(2))->method('insert')
-			->willReturnArgument(0);
-
-		$created = $this->service->createBatchShares(
-			sourceSecretId: 'src-1',
-			shares: [
-				['targetUserId' => 'bob',   'recipientSecretId' => 'copy-bob'],
-				['targetUserId' => 'carol', 'recipientSecretId' => 'copy-carol'],
-			],
-			groupShareId: 'gs-1',
-			userId: 'alice'
-		);
-
-		$this->assertCount(2, $created);
-		$this->assertSame('gs-1', $created[0]->getGroupShareId());
-	}//end testCreateBatchSharesAllRecipients()
 
 	/**
 	 * bulk-actions §8.3: registerDirectShares is idempotent (an existing
@@ -932,9 +741,11 @@ class ShareServiceTest extends TestCase {
 			}
 		);
 		$this->stubRecipientHasSuite();
-		// No existing shares.
+		// No existing shares, and every source is an original (no copy row).
 		$this->mapper->method('findBySourceSecretAndTargetUser')
 			->willThrowException(new DoesNotExistException('no row'));
+		$this->mapper->method('findByRecipientSecret')
+			->willThrowException(new DoesNotExistException('original'));
 
 		$inserted = [];
 		$this->mapper->method('insert')->willReturnCallback(
@@ -992,6 +803,9 @@ class ShareServiceTest extends TestCase {
 		$this->stubRecipientHasSuite();
 		$this->mapper->method('findBySourceSecretAndTargetUser')
 			->willThrowException(new DoesNotExistException('no row'));
+		// The source is an original (no copy row).
+		$this->mapper->method('findByRecipientSecret')
+			->willThrowException(new DoesNotExistException('original'));
 
 		$ours = new GroupShare();
 		$ours->setId('gs-1');
@@ -1053,6 +867,9 @@ class ShareServiceTest extends TestCase {
 				throw new DoesNotExistException('no row');
 			}
 		);
+		// The source is an original (no copy row).
+		$this->mapper->method('findByRecipientSecret')
+			->willThrowException(new DoesNotExistException('original'));
 		$this->mapper->expects($this->never())->method('insert');
 
 		$report = $this->service->registerDirectShares(
@@ -1106,12 +923,12 @@ class ShareServiceTest extends TestCase {
 	 */
 	private function stubLoggedSync(array &$log): void {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
-		$copy = new Secret();
-		$copy->setId('copy-1');
+		$copy = $this->makeOwnerSecret('copy-1', 'dan');
 		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
 		$row = new ShareTarget();
 		$row->setSourceSecretId('src-1');
 		$row->setSecretId('copy-1');
+		$row->setTargetUserId('dan');
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
 		$this->db->method('beginTransaction')->willReturnCallback(
 			static function () use (&$log): void {
@@ -1312,6 +1129,224 @@ class ShareServiceTest extends TestCase {
 			}
 		}
 	}//end testSyncUpdateRejectsReadAndUngraded()
+
+	/**
+	 * A ShareService whose authorization reads share rows, as the container
+	 * wires it. Alice owns src-1; dave is an active delegate of it and holds
+	 * his own direct copy, use-only or full; bob holds a use-only direct copy.
+	 *
+	 * @param bool                          $daveUseOnly  Whether dave's own copy is use-only
+	 * @param DateTime|null                 $daveEndsAt   The end date of dave's own share
+	 * @param ShareGrantReader|null         $grants       Judges dave's grants that have not ended
+	 *
+	 * @return ShareService
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The scenario switch.
+	 */
+	private function delegateScenario(
+		bool $daveUseOnly,
+		?DateTime $daveEndsAt = null,
+		?ShareGrantReader $grants = null,
+	): ShareService {
+		$rows = [
+			'dave' => $this->directRow(id: 'row-dave', target: 'dave', useOnly: $daveUseOnly),
+			'bob' => $this->directRow(id: 'row-bob', target: 'bob', useOnly: true),
+		];
+		$rows['dave']->setExpiresAt($daveEndsAt);
+		$secrets = [
+			'src-1' => $this->makeOwnerSecret(id: 'src-1', ownerId: 'alice'),
+			'copy-dave' => $this->makeOwnerSecret(id: 'copy-dave', ownerId: 'dave'),
+			'copy-bob' => $this->makeOwnerSecret(id: 'copy-bob', ownerId: 'bob'),
+		];
+		$secrets['copy-dave']->setUseOnly($daveUseOnly);
+		$secrets['copy-bob']->setUseOnly(true);
+
+		$this->mapper->method('findById')->willReturnCallback(
+			static fn (string $id): ShareTarget => ($rows[substr($id, 4)] ?? throw new DoesNotExistException('none'))
+		);
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			static fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($rows[$targetUserId] ?? throw new DoesNotExistException('none'))
+		);
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($secrets[$id] ?? throw new DoesNotExistException('none'))
+		);
+		$this->delegationMapper->method('findActiveBySecretAndUser')->willReturnCallback(
+			static fn (string $secretId, string $userId): SecretDelegation => ($secretId === 'src-1' && $userId === 'dave'
+				? new SecretDelegation()
+				: throw new DoesNotExistException('none'))
+		);
+
+		return new ShareService(
+			mapper: $this->mapper,
+			auth: new ShareAuthorizationService(
+				secretMapper: $this->secretMapper,
+				delegationMapper: $this->delegationMapper,
+				shareTargetMapper: $this->mapper,
+				grants: $grants,
+			),
+			directRegistrar: $this->createMock(DirectShareRegistrar::class),
+			syncService: $this->createMock(ShareSyncService::class),
+			revocationService: $this->createMock(ShareRevocationService::class),
+		);
+	}//end delegateScenario()
+
+	/**
+	 * A direct share row of src-1.
+	 *
+	 * @param string $id      The row id
+	 * @param string $target  The recipient
+	 * @param bool   $useOnly Whether the share is use-only
+	 *
+	 * @return ShareTarget
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A fixture field.
+	 */
+	private function directRow(string $id, string $target, bool $useOnly): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId($id);
+		$row->setSourceSecretId('src-1');
+		$row->setTargetUserId($target);
+		$row->setSecretId('copy-'.$target);
+		$row->setUseOnly($useOnly);
+		return $row;
+	}//end directRow()
+
+	/**
+	 * A delegate whose own copy is use-only cannot lift it through
+	 * PATCH /shares/{id} (GHSA-m5p9-6pw7-pf3g): the copy stays use-only.
+	 *
+	 * @return void
+	 */
+	public function testADelegateCannotLiftTheirOwnUseOnlyShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: true);
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$service->updateRestriction(shareId: 'row-dave', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+			$this->fail('dave lifted his own use-only share');
+		} catch (InvalidArgumentException) {
+			$this->assertTrue($this->secretMapper->findById('copy-dave')->getUseOnly());
+		}
+	}//end testADelegateCannotLiftTheirOwnUseOnlyShare()
+
+	/**
+	 * A delegate whose own copy is use-only cannot lift anyone else's
+	 * restriction either, as that would turn a restricted grant into a full
+	 * copy for someone else.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithAUseOnlyCopyCannotLiftAnotherRecipientsShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: true);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateWithAUseOnlyCopyCannotLiftAnotherRecipientsShare()
+
+	/**
+	 * A delegate never changes a share made to themselves, even when their
+	 * copy is full.
+	 *
+	 * @return void
+	 */
+	public function testADelegateCannotChangeAShareMadeToThem(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('You cannot change a share made to you');
+		$service->updateRestriction(shareId: 'row-dave', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateCannotChangeAShareMadeToThem()
+
+	/**
+	 * A delegate with a full copy of their own may still change another
+	 * recipient's share, as they could share a full copy anyway.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithAFullCopyMayChangeAnotherRecipientsShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
+
+		$updated = $service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+
+		$this->assertFalse($updated->getUseOnly());
+	}//end testADelegateWithAFullCopyMayChangeAnotherRecipientsShare()
+
+	/**
+	 * Dave's copy still reads as full because his full direct share ended an
+	 * hour ago and the expiry job has not removed it yet; the use-only group
+	 * share he is in is all that is left, so he is judged use-only.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWhoseFullGrantEndedIsJudgedOnTheGrantsLeft(): void {
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-1');
+		$groupShare->setSecretId('src-1');
+		$groupShare->setGroupId('team');
+		$groupShare->setUseOnly(true);
+		$this->groupShareMapper->method('findBySecret')->willReturn([$groupShare]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'dave' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		$service = $this->delegateScenario(
+			daveUseOnly: false,
+			daveEndsAt: new DateTime('-1 hour'),
+			grants: new ShareGrantReader(
+				secretMapper: $this->secretMapper,
+				groupShareMapper: $this->groupShareMapper,
+				teamFolders: $teamFolders,
+				groupManager: $groups,
+			),
+		);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateWhoseFullGrantEndedIsJudgedOnTheGrantsLeft()
+
+	/**
+	 * Dave's full direct share ends tomorrow and the group share he is in is
+	 * use-only without an end date. Combined per dimension his copy reads as
+	 * full and permanent, but neither grant is, so he may not lift bob's
+	 * restriction.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused(): void {
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-1');
+		$groupShare->setSecretId('src-1');
+		$groupShare->setGroupId('team');
+		$groupShare->setUseOnly(true);
+		$this->groupShareMapper->method('findBySecret')->willReturn([$groupShare]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'dave' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		$service = $this->delegateScenario(
+			daveUseOnly: false,
+			daveEndsAt: new DateTime('+1 day'),
+			grants: new ShareGrantReader(
+				secretMapper: $this->secretMapper,
+				groupShareMapper: $this->groupShareMapper,
+				teamFolders: $teamFolders,
+				groupManager: $groups,
+			),
+		);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'dave');
+	}//end testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused()
 
 	/**
 	 * Bob owns his copy of alice's secret, so the owner check passes on it. A

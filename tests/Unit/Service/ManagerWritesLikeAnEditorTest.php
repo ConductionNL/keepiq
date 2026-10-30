@@ -59,7 +59,6 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
 			teamFolderService: $teamFolders,
 		);
 

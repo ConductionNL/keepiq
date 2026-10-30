@@ -37,6 +37,7 @@ The system MUST let the owner of a secret share it with a Nextcloud group from t
 - **GIVEN** a secret shared with Finance
 - **WHEN** the owner revokes the Finance share in the sidebar
 - **THEN** the group share is gone and members of Finance lose their copies
+- **AND** while the share quarantine scan (user-sharing) is pending and one of the share's rows cannot be judged, the revoke MUST answer `409` with `error: share_scan_pending` and change nothing
 
 ### Requirement: A group member saves for everyone it is shared with
 

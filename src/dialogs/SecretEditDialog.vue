@@ -149,6 +149,16 @@
 				@update:open="generatorOpen = $event"
 				@generated="onGenerated" />
 
+			<!-- The saved seed is never loaded into the form: the field only
+			     says one is saved and offers Replace and Remove. -->
+			<AuthenticatorKeyField
+				v-if="showAuthenticator"
+				v-model:mode="totpMode"
+				v-model:value="totpInput"
+				:saved="totpSaved"
+				:removeOnly="!totpEditable"
+				:disabled="saving || loading || viewOnly" />
+
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
@@ -211,6 +221,7 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
@@ -229,6 +240,10 @@ import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useShareStore } from '../store/modules/share.js'
+import {
+	authenticatorKeyError,
+	normaliseAuthenticatorKey,
+} from '../totp/authenticatorKey.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
@@ -239,6 +254,7 @@ import {
 	splitTypedValues,
 	typedFieldsOf,
 } from '../utils/typedFields.js'
+import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -250,6 +266,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		AuthenticatorKeyField,
 		SecretTagsField,
 		TypedFieldsForm,
 		ContentSave,
@@ -297,6 +314,10 @@ export default {
 			value: '',
 			url: '',
 			login: '',
+			/** What happens to a saved authenticator key: keep, replace or remove. */
+			totpMode: 'keep',
+			/** A new authenticator key being entered; the saved one is never loaded here. */
+			totpInput: '',
 			additionalFields: [],
 			tags: [],
 			typedValues: {},
@@ -407,6 +428,82 @@ export default {
 		},
 
 		/**
+		 * Whether a key can be entered: on a login only.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpEditable() {
+			return this.selectedTypeName === 'login'
+		},
+
+		/**
+		 * Whether the authenticator key field shows, when the server stores
+		 * the field: on a login, and on any other type that holds a key, so
+		 * that key can be removed.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		showAuthenticator() {
+			return (this.totpEditable || this.totpSaved) && valueFieldsSupported()
+		},
+
+		/**
+		 * Whether the login already holds an authenticator key. Only its
+		 * presence is read; the seed itself never reaches the form.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpSaved() {
+			return Boolean(this.original?.totp)
+		},
+
+		/**
+		 * Why the entered authenticator key blocks the save, '' when it does not.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpError() {
+			if (!this.showAuthenticator || !this.totpEditable) {
+				return ''
+			}
+			if (this.totpSaved && this.totpMode !== 'replace') {
+				return ''
+			}
+			return authenticatorKeyError(this.totpInput)
+		},
+
+		/**
+		 * The `totp` change to send: the new key, '' to remove the saved
+		 * one, or undefined to leave it as it is.
+		 *
+		 * @return {string|undefined}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpChange() {
+			if (!this.showAuthenticator) {
+				return undefined
+			}
+			if (this.totpSaved && this.totpMode === 'remove') {
+				return ''
+			}
+			if (
+				!this.totpEditable
+				|| (this.totpSaved && this.totpMode !== 'replace')
+			) {
+				return undefined
+			}
+			const entered = normaliseAuthenticatorKey(this.totpInput)
+			if (entered === '' || entered === (this.original?.totp || '')) {
+				return undefined
+			}
+			return entered
+		},
+
+		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		canSubmit() {
@@ -416,6 +513,7 @@ export default {
 				&& !this.viewOnly
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
+				&& this.totpError === ''
 			)
 		},
 	},
@@ -465,6 +563,8 @@ export default {
 			this.error = ''
 			this.sourceBase = null
 			this.viewOnly = false
+			this.totpMode = 'keep'
+			this.totpInput = ''
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				this.original = secret
@@ -666,6 +766,11 @@ export default {
 				}
 				if ((this.login || '') !== (o.login || '')) {
 					diff.login = this.login
+				}
+				// Sent only when replaced or removed, so it counts as a change
+				// below and carries the base versions like any value change.
+				if (this.totpChange !== undefined) {
+					diff.totp = this.totpChange
 				}
 
 				// One blob is the storage unit, so ANY member change rewrites all of

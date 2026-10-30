@@ -25,6 +25,14 @@ The system MUST allow a folder's owner — and only the owner — to share an ow
 - WHEN they attempt to change its membership
 - THEN the system MUST reject the request with a 403/forbidden response
 
+#### Scenario: The fan-out reports every row it skips
+@e2e exclude The response shape of the fan-out write; covered by PHPUnit (TeamFolderServiceTest, TeamFolderConfirmationServiceTest).
+- GIVEN a fan-out call whose rows include one that cannot be written
+- WHEN the server registers the rows
+- THEN the response MUST keep `created` and `rows` and add `skipped`, one `{sourceSecretId, targetUserId, reason}` per row not written, so a client can stop retrying it
+- AND `reason` MUST be one of `incomplete` (a required field is missing), `not_in_folder` (the source is outside the folder or the target is its owner), `exists` (the share is already there), `not_found` (the source is gone), `no_suite` (the recipient has no active suite), `copy_fields_mismatch` (the row's `encryptedTotp` or `encryptedPasskeys` does not mirror the source's: one the source holds is left out, or one it does not hold is carried) or `not_eligible` (a confirmer's row that fails the confirmer's checks)
+- AND a skipped pair stays in the reconcile's missing pairs
+
 ### Requirement: Inherited access on add, revoked on removal
 The system MUST auto-share a secret to a team folder's current recipients when it is placed in the folder and MUST auto-revoke the folder-derived copies when it is removed or deleted. Fan-out writes MUST be idempotent.
 
@@ -143,6 +151,6 @@ The team folder reconcile (`GET /api/v1/team-folders/{id}/reconcile`) MUST exclu
 ## Notes
 
 - Introduces `keepiq_team_folders` and `keepiq_team_folder_members` tables plus a nullable `team_folder_id` provenance column on the existing share table (parallel to `group_share_id`).
-- Reuses `ShareService::createBatchShares`/`revokeShare`/`syncUpdate`, `GroupShareService` group-expansion/propagation, and `DelegationService::createDelegation`/`makePermanent` — no new crypto.
+- Reuses the server-side recipient-copy minting (`DirectShareRegistrar`/`RecipientSecretCopyFactory`), `revokeShare`/`syncUpdate`, `GroupShareService` group-expansion/propagation, and `DelegationService::createDelegation`/`makePermanent` — no new crypto.
 - Related ADRs: ADR-001 (own tables), ADR-003 (per-recipient RSA, write-without-read, zero-knowledge).
 - Out of scope for v1: shared symmetric folder key, folder co-ownership, per-secret read/write permission grades, subfolder membership narrowing.

@@ -120,7 +120,6 @@ class UseOnlyShareRefusalTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $this->suites,
 		);
 		$groupShares = $this->createMock(GroupShareMapper::class);
 		$groupShares->method('findBySecret')->willReturn([]);
@@ -138,8 +137,6 @@ class UseOnlyShareRefusalTest extends TestCase {
 
 		$service = new ShareService(
 			mapper: $this->targets,
-			db: $db,
-			notificationService: $notifications,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $this->targets,
@@ -224,15 +221,11 @@ class UseOnlyShareRefusalTest extends TestCase {
 
 		$controller = $this->shareController('alice');
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $controller->update('share-1', false, '2020-01-01T00:00:00Z')->getStatus());
-		$this->assertSame(
-			Http::STATUS_BAD_REQUEST,
-			$controller->create('src', 'carla', 'copy-c', null, false, '2020-01-01T00:00:00Z')->getStatus()
-		);
 	}
 
 	/**
-	 * Bob cannot share his use-only copy onward, by any of the three share
-	 * routes, even from a modified client.
+	 * Bob cannot share his use-only copy onward through the register-batch
+	 * route (the only share-create surface), even from a modified client.
 	 *
 	 * @return void
 	 */
@@ -241,17 +234,10 @@ class UseOnlyShareRefusalTest extends TestCase {
 		$this->targets->expects($this->never())->method('insert');
 		$controller = $this->shareController('bob');
 
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $controller->create('copy', 'bob-private', 'copy-x')->getStatus());
-
 		$batch = $controller->registerBatch(
 			[['sourceSecretId' => 'copy', 'targetUserId' => 'bob-private', 'encryptedKey' => 'CIPHER']]
 		);
 		$this->assertSame('restricted', $batch->getData()['items'][0]['status']);
-
-		$this->assertSame(
-			Http::STATUS_BAD_REQUEST,
-			$controller->createBatch('copy', [['targetUserId' => 'x', 'recipientSecretId' => 'y']], 'gs-1')->getStatus()
-		);
 	}
 
 	/**

@@ -23,10 +23,10 @@
  * copy named with its `stale` or `stale_source` 409. Each is null until a
  * conflict and when the 409 gave none.
  * `sealed` is the hybrid envelope (RSA-OAEP + AES-256-GCM, the one
- * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login` and
- * `additionalFields` ciphertext an online save sends, plus the index fields
- * `name`, `url`, `typeId` and `folderId`. Recipient ciphertext is never
- * queued; it is made at replay time. `sealedFailure` is the same envelope of
+ * emergencyEnvelope.js builds) of the JSON body: the same `key`, `login`,
+ * `additionalFields`, `totp` and `passkeys` ciphertext an online save sends,
+ * plus the index fields `name`, `url`, `typeId` and `folderId`. Recipient
+ * ciphertext is never queued; it is made at replay time. `sealedFailure` is the same envelope of
  * a failed entry's reason, which can name partners, and null otherwise.
  *
  * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
@@ -194,6 +194,8 @@ function indexAndCiphertext(body) {
 		'key',
 		'login',
 		'additionalFields',
+		'totp',
+		'passkeys',
 	]) {
 		if (body && body[k] !== undefined) out[k] = body[k]
 	}
@@ -220,6 +222,9 @@ export function replayOrder(entries) {
  */
 export function classifyReplayError(error) {
 	const status = error?.response?.status
+	// Not a version conflict: the server waits for the share quarantine scan,
+	// which can take longer than the user should be kept from the rest.
+	if (error?.response?.data?.error === 'share_scan_pending') return 'failed'
 	if (status === 409) return 'conflict'
 	if (isRefusal(error) || status === 404) return 'failed'
 	return 'retry'

@@ -6,6 +6,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { isCreatableType } from '../../utils/secretTypes.js'
 
 /** The type a new secret starts as when nothing usable was saved. */
 export const FALLBACK_TYPE = 'login'
@@ -27,18 +28,21 @@ export function resolveDefaultView(saved) {
 
 /**
  * The id of the type the create dialog preselects: the saved type when it
- * still exists, else Login, else the first type there is.
+ * still exists and new items may be created as it, else Login, else the
+ * first such type there is.
  *
  * @param {string|undefined|null} saved The saved `default_secret_type` (a type name).
  * @param {Array<{id: string, name: string}>} types The secret types.
- * @return {string|null} A type id, or null when there are no types.
+ * @return {string|null} A type id, or null when no type may be created.
  * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function resolveDefaultTypeId(saved, types) {
+	const creatable = types.filter(isCreatableType)
 	const match =
-		types.find((type) => type.name === saved)
-		?? types.find((type) => type.name === FALLBACK_TYPE)
-		?? types[0]
+		creatable.find((type) => type.name === saved)
+		?? creatable.find((type) => type.name === FALLBACK_TYPE)
+		?? creatable[0]
 	return match ? match.id : null
 }
 

@@ -33,6 +33,8 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Runs the share-related steps of the account-deletion cascade.
@@ -54,6 +56,8 @@ class AccountShareCleanupService {
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
 	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
 	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
+	 * @param LoggerInterface|null $logger The logger (skipped cross-user tombstones)
+	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -66,6 +70,8 @@ class AccountShareCleanupService {
 		private SecretDelegationMapper $delegationMapper,
 		private ShareSaveStageMapper $stageMapper,
 		private SecretOwnerTransferService $ownerTransfer,
+		private ?LoggerInterface $logger = null,
+		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 	}//end __construct()
 
@@ -135,6 +141,28 @@ class AccountShareCleanupService {
 		foreach ($ownedSecrets as $secret) {
 			foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $share) {
 				// Tombstone the recipient's copy (display metadata only).
+				// Defence in depth: a copy that exists but is not genuinely held
+				// by the share's target (a poisoned or drifted `secret_id`) is
+				// left untouched, so erasing one owner never tombstones another
+				// user's secret, and so is the copy of a row the pending
+				// quarantine scan holds back. The link row is severed either way
+				// below.
+				try {
+					$copy = $this->secretMapper->findById($share->getSecretId());
+				} catch (DoesNotExistException) {
+					$copy = null;
+				}
+
+				if ($copy !== null
+					&& ($this->quarantineScan?->mayTouchCopy(row: $share, copy: $copy) ?? $share->isHeldByTarget(copy: $copy)) === false
+				) {
+					$this->logger?->warning(
+						'Kept a secret its detached share target does not hold, or the pending quarantine scan holds back',
+						['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
+					);
+					continue;
+				}
+
 				$this->secretMapper->tombstone(
 					secretId: $share->getSecretId(),
 					reason: self::TOMBSTONE_REASON,
@@ -168,8 +196,7 @@ class AccountShareCleanupService {
 	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function removeReceivedShares(string $userId, DeletionReport $report): void {
-		$report->sharesRemoved = count($this->shareMapper->findByTargetUser(targetUserId: $userId));
-		$this->shareMapper->deleteByTargetUser(targetUserId: $userId);
+		$report->sharesRemoved = $this->shareMapper->deleteByTargetUser(targetUserId: $userId);
 	}//end removeReceivedShares()
 
 	/**

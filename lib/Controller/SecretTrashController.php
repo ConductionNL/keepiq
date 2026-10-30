@@ -28,6 +28,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCP\AppFramework\Controller;
@@ -181,6 +182,12 @@ class SecretTrashController extends Controller {
 		} catch (StaleWriteException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		} catch (ShareScanPendingException $e) {
+			// A share of the secret waits for the share quarantine scan.
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $e) {

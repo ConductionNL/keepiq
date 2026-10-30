@@ -32,12 +32,17 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Federation;
 
 use OCA\Keepiq\Controller\FederationController;
+use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IConfig;
@@ -71,6 +76,14 @@ class FederationLookupTest extends TestCase {
 
 	private LoggerInterface&MockObject $logger;
 
+	private FederationPartnerMapper&MockObject $partnerTable;
+
+	/** @var array<int,?string> The `valueFields` of every partner row written */
+	private array $partnerUpdates = [];
+
+	/** @var list<AuditEvent> The audit events dispatched */
+	private array $audits = [];
+
 	/**
 	 * The controller over the given partners.
 	 *
@@ -83,8 +96,21 @@ class FederationLookupTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
+		$this->partnerTable = $this->partnerMapper($partners);
+		$this->partnerTable->method('update')->willReturnCallback(
+			function (FederationPartner $partner): FederationPartner {
+				$this->partnerUpdates[] = $partner->getValueFields();
+				return $partner;
+			}
+		);
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			function (AuditEvent $event): void {
+				$this->audits[] = $event;
+			}
+		);
 		$service = new FederatedCertificateService(
-			new FederationPartnerService($this->partnerMapper($partners), $this->createMock(IClientService::class), $config),
+			new FederationPartnerService($this->partnerTable, $this->createMock(IClientService::class), $config),
 			new FederationRootService($this->caMapper()),
 			$this->createMock(ShareService::class),
 			$this->cloudIdManager(),
@@ -92,6 +118,8 @@ class FederationLookupTest extends TestCase {
 			$config,
 			$this->ocm,
 			$this->logger,
+			$this->partnerTable,
+			$dispatcher,
 		);
 		$session = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
@@ -141,9 +169,130 @@ class FederationLookupTest extends TestCase {
 				'certificate' => 'BOB',
 				'chain' => ['INT', 'ROOT'],
 				'partnerRootFingerprint' => str_repeat('ab', 32),
+				'valueFields' => [],
 			],
 			$response->getData()
 		);
+	}
+
+	/**
+	 * The lookup records the value fields the partner advertised, so a share it cannot hold is refused later,
+	 * and names them to the browser, which picks the payload for that partner. Unknown names are dropped.
+	 */
+	public function testRecordsTheValueFieldsAPartnerAdvertises(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$controller = $this->controller([$partner]);
+		$this->ocm->method('requestRemoteOcmEndpoint')->willReturn(
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'valueFields' => ['passkeys', 'future', 'totp']])
+		);
+
+		$response = $controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['cloudId', 'certificate', 'chain', 'partnerRootFingerprint', 'valueFields'], array_keys($response->getData()));
+		$this->assertSame(['totp', 'passkeys'], $response->getData()['valueFields']);
+		$this->assertSame('["totp","passkeys"]', $partner->getValueFields());
+		$this->assertSame(['["totp","passkeys"]'], $this->partnerUpdates);
+
+		// The same advertisement again writes nothing.
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertCount(1, $this->partnerUpdates);
+	}
+
+	/**
+	 * An older Keepiq advertises nothing: a partner that did before is recorded as holding none of the new fields,
+	 * and one that never did is not written at all.
+	 */
+	public function testAPartnerThatAdvertisesNothingIsRecordedAsOld(): void {
+		$downgraded = $this->partner('cloud.partner.example', true, false);
+		$downgraded->setValueFields('["totp","passkeys"]');
+		$controller = $this->controller([$downgraded]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
+
+		$response = $controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame([], $response->getData()['valueFields']);
+		$this->assertNull($downgraded->getValueFields());
+		$this->assertSame([null], $this->partnerUpdates);
+
+		$this->partnerUpdates = [];
+		$old = $this->partner('cloud.partner.example', true, false);
+		$controller = $this->controller([$old]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertNull($old->getValueFields());
+		$this->assertSame([], $this->partnerUpdates);
+	}
+
+	/**
+	 * A partner that stops advertising the fields it stored is audited once, by field name, and logged as a
+	 * warning; the same answer again changes nothing and audits nothing. The admin list shows what is recorded.
+	 */
+	public function testAChangeOfAPartnersValueFieldsIsAuditedOnce(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$partner->setValueFields('["totp","passkeys"]');
+		$controller = $this->controller([$partner]);
+		$this->logger->expects($this->once())->method('warning')
+			->with($this->stringContains('no longer advertises'), $this->callback(
+				static fn (array $context): bool => $context['fields'] === 'totp, passkeys'
+			));
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertCount(1, $this->audits);
+		$this->assertSame(AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED, $this->audits[0]->getEventType());
+		$this->assertSame(
+			['partnerId' => $partner->getId(), 'from' => ['totp', 'passkeys'], 'to' => []],
+			$this->audits[0]->getMetadata()
+		);
+		$this->assertNull($partner->jsonSerialize()['valueFields']);
+
+		$partner->setValueFields('["totp","passkeys"]');
+		$this->assertSame(['totp', 'passkeys'], $partner->jsonSerialize()['valueFields']);
+	}
+
+	/**
+	 * A partner moving from no `valueFields` to `[]` writes the row, since absent and empty stay distinct there, but
+	 * the list it stores did not change, so nothing is audited. A later real change is audited once.
+	 */
+	public function testAnAbsentToEmptyValueFieldsAnswerIsNotAudited(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$controller = $this->controller([$partner]);
+		$this->ocm->method('requestRemoteOcmEndpoint')->willReturnOnConsecutiveCalls(
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'valueFields' => []]),
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'valueFields' => ['totp']]),
+		);
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertSame(['[]'], $this->partnerUpdates);
+		$this->assertSame([], $this->audits);
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+		$this->assertSame(['[]', '["totp"]'], $this->partnerUpdates);
+		$this->assertCount(1, $this->audits);
+		$this->assertSame(
+			['partnerId' => $partner->getId(), 'from' => [], 'to' => ['totp']],
+			$this->audits[0]->getMetadata()
+		);
+	}
+
+	public function testAFailedLookupRecordsNothing(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$partner->setValueFields('["totp","passkeys"]');
+		$controller = $this->controller([$partner]);
+		$this->ocm->method('requestRemoteOcmEndpoint')
+			->willReturn($this->response(404, ['message' => 'Unknown recipient']));
+
+		$controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertSame('["totp","passkeys"]', $partner->getValueFields());
+		$this->assertSame([], $this->partnerUpdates);
 	}
 
 	public function testSendsNothingToAnInstanceThatIsNoPartner(): void {

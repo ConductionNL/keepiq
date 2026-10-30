@@ -2,7 +2,7 @@
 
 This folder keeps the specs and decisions of the former repository `ConductionNL/keepiq-extension`. That repository planned a browser extension as a separate project, built with WXT and React. It was never released. The extension that ships lives in `browser-extension/` of this repository and was built independently.
 
-The files here are a verbatim copy of branch `development` at commit `1d9f719` (2026-09-22). They are kept so no requirement or decision is lost when that repository goes away.
+The files here are a verbatim copy of branch `development` at commit `1d9f719` (2026-09-22). They are kept so no requirement or decision is lost when that repository goes away. The one addition is the note at the top of `architecture/adr-003-keepiq-api-contract.md` that points to the live contract.
 
 ## Status
 

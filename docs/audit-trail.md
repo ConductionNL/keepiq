@@ -36,12 +36,7 @@ secret operations" therefore honestly means:
 
 ## No secret material, ever
 
-Audit entries carry metadata only. Each entry is validated against a
-per-event-type **whitelist** of keys; unknown keys are dropped, and the keys
-`key`, `login`, `password`, `value`, `additionalFields`, `ciphertext`,
-`payload` are rejected outright in any position. A secret's `name` (plaintext
-metadata, safe to display, denormalized so the entry survives deletion) is the
-only object-identifying string stored.
+Audit entries carry metadata only. Each entry is validated against a per-event-type **whitelist** of keys; unknown keys are dropped, and the keys `key`, `login`, `password`, `value`, `additionalFields`, `totp`, `passkeys`, `ciphertext`, `payload` are rejected outright in any position. A field's name is not secret material: `secret.updated` names the changed fields, `totp` and `passkeys` included, in `changedFields`. A secret's `name` (plaintext metadata, safe to display, denormalized so the entry survives deletion) is the only object-identifying string stored.
 
 ## Append-only
 
@@ -84,7 +79,11 @@ operators and works councils know it is the default.
 ## Event-type reference
 
 `secret.created`, `secret.updated`, `secret.read`, `secret.deleted`,
-`folder.deleted_cascade`, `share.granted`, `share.revoked`, `share.delegated`,
+`folder.deleted_cascade`, `share.granted`, `share.revoked`,
+`share.quarantined` (records the copy's use-only flag and access end date),
+`share.quarantine_released` (records whether it was forced),
+`share.quarantine_dropped` (records whether the copy's restrictions were cleared),
+`share.delegated`,
 `share.delegation_reclaimed`, `link_share.created`, `link_share.accessed`,
 `link_share.access_failed`, `link_share.revoked`, `link_share.auto_deleted`,
 `request.created`, `request.fulfilled`, `request.re_requested`,

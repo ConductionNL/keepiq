@@ -362,4 +362,50 @@ describe('SecretListItem', () => {
 
 		expect(wrapper.html()).not.toMatch(/[a-f0-9]{32}/)
 	})
+
+	// keepiq#1326: the row holds `totp` and `passkeys` as ciphertext, so only
+	// their presence is read.
+	it.each([
+		[{ totp: 'CIPHER-T', passkeys: null }, true, false],
+		[{ totp: '', passkeys: 'CIPHER-P' }, false, true],
+		[{ totp: 'CIPHER-T', passkeys: 'CIPHER-P' }, true, true],
+		[{ totp: null, passkeys: '' }, false, false],
+		[{}, false, false],
+	])('marks a login with %o: code %s, passkeys %s', (fields, code, passkeys) => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-5', name: 'Bank', typeId: 'type-login', ...fields },
+			},
+		})
+		const totpMarker = wrapper.find('[data-testid="login-marker-totp"]')
+		const passkeyMarker = wrapper.find('[data-testid="login-marker-passkeys"]')
+		expect(totpMarker.exists()).toBe(code)
+		expect(passkeyMarker.exists()).toBe(passkeys)
+		if (code) {
+			expect(totpMarker.attributes('aria-label')).toBe('Has a one-time code')
+		}
+		if (passkeys) {
+			expect(passkeyMarker.attributes('aria-label')).toBe('Has passkeys')
+		}
+		expect(wrapper.html()).not.toContain('CIPHER-')
+	})
+
+	// The row is a role=button, which hides the markers' own text from screen
+	// readers, so its accessible name carries it.
+	it.each([
+		[{ totp: 'CIPHER-T' }, 'Open Bank, has a one-time code'],
+		[{ passkeys: 'CIPHER-P' }, 'Open Bank, has passkeys'],
+		[
+			{ totp: 'CIPHER-T', passkeys: 'CIPHER-P' },
+			'Open Bank, has a one-time code and passkeys',
+		],
+		[{ totp: '', passkeys: null }, 'Open Bank'],
+	])('names the row with %o as %s', (fields, label) => {
+		const wrapper = mount(SecretListItem, {
+			propsData: { secret: { id: 's-6', name: 'Bank', ...fields } },
+		})
+		expect(wrapper.find('.secret-list-item').attributes('aria-label')).toBe(
+			label,
+		)
+	})
 })
