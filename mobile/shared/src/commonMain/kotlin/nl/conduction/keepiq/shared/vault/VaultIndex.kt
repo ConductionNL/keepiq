@@ -29,6 +29,9 @@ data class VaultRow(
     val blocked: Boolean,
     val blockedReason: String?,
     val trashed: Boolean = false,
+    /** A login's own seed and passkeys: ciphertext, decrypted only when the item is opened or used. */
+    val totp: String? = null,
+    val passkeys: String? = null,
 ) {
     override fun toString(): String = "VaultRow(id=$id, typeId=$typeId, folderId=$folderId)"
 
@@ -47,6 +50,8 @@ data class VaultRow(
             readOnly = stored.readOnly,
             blocked = stored.blocked,
             blockedReason = stored.blockedReason,
+            totp = stored.totp,
+            passkeys = stored.passkeys,
         )
 
         /** From a server row (Secret::jsonSerialize). Returns null without an id. */
@@ -67,6 +72,8 @@ data class VaultRow(
                 blocked = obj.flag("blocked"),
                 blockedReason = obj.text("blockedReason"),
                 trashed = obj.text("trashedAt") != null || obj.text("archivedAt") != null,
+                totp = obj.text("totp"),
+                passkeys = obj.text("passkeys"),
             )
         }
     }

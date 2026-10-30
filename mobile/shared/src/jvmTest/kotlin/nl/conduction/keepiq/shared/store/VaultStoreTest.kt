@@ -10,6 +10,7 @@ import nl.conduction.keepiq.shared.crypto.KeepiqCryptoException
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.store.db.KeepiqDatabase
 import nl.conduction.keepiq.shared.vault.VaultLockedException
+import nl.conduction.keepiq.shared.vault.VaultRow
 import java.io.File
 import java.util.Properties
 import kotlin.test.AfterTest
@@ -115,6 +116,54 @@ class VaultStoreTest {
         assertEquals(listOf("s1"), store.secrets().map { it.id })
         store.touch(3_000L)
         assertEquals(3_000L, store.state()!!.syncedAtMillis)
+    }
+
+    @Test
+    fun aLoginsCodeAndPasskeysReadBackAsCiphertext() {
+        val store = open()
+        store.replaceAll(
+            snapshot.copy(
+                secrets = listOf(
+                    obj("""{"id":"s1","name":"Huisbank","typeId":1,"key":"S0VZ","totp":"VE9UUA==","passkeys":"UEFTUw=="}"""),
+                    obj("""{"id":"s2","name":"Portaal","typeId":1,"key":"S0VZ","totp":"","passkeys":null}"""),
+                ),
+            ),
+            1_000L,
+        )
+        val s1 = store.secret("s1")!!
+        assertEquals("VE9UUA==", s1.totp)
+        assertEquals("UEFTUw==", s1.passkeys)
+        assertEquals("", store.secret("s2")!!.totp)
+        assertNull(store.secret("s2")!!.passkeys)
+        val row = VaultRow.from(s1)
+        assertEquals("VE9UUA==", row.totp)
+        assertEquals("UEFTUw==", row.passkeys)
+    }
+
+    @Test
+    fun aStoreFromBeforeTheFieldsMigratesAndSyncsInFull() {
+        // The schema as it was before totp and passkeys (version 1).
+        JdbcSqliteDriver("jdbc:sqlite:${file.absolutePath}").use { old ->
+            listOf(
+                "CREATE TABLE secret (id TEXT NOT NULL PRIMARY KEY, name_sealed TEXT NOT NULL, url_sealed TEXT, type_id TEXT, folder_id TEXT, " +
+                    "key_ciphertext TEXT, login_ciphertext TEXT, additional_fields_ciphertext TEXT, encryption_suite_id TEXT, updated_at TEXT, " +
+                    "position INTEGER NOT NULL, use_only INTEGER NOT NULL DEFAULT 0, read_only INTEGER NOT NULL DEFAULT 0, " +
+                    "blocked INTEGER NOT NULL DEFAULT 0, blocked_reason TEXT)",
+                "CREATE TABLE folder (id TEXT NOT NULL PRIMARY KEY, name_sealed TEXT NOT NULL, parent_id TEXT)",
+                "CREATE TABLE secret_type (id TEXT NOT NULL PRIMARY KEY, json TEXT NOT NULL)",
+                "CREATE TABLE sync_state (singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1), suite_id TEXT, unlock_key_epoch INTEGER, " +
+                    "synced_at_millis INTEGER NOT NULL, check_top TEXT, check_total INTEGER NOT NULL)",
+                "INSERT INTO secret (id, name_sealed, key_ciphertext, position) VALUES ('s1', '${UnlockKeySealer(unlockKey).seal("Huisbank")}', 'S0VZ', 0)",
+                "INSERT INTO sync_state VALUES (1, 'suite-9', 2, 1000, '2026-10-03T09:00:00+00:00', 1)",
+                "PRAGMA user_version = 1",
+            ).forEach { old.execute(null, it, 0) }
+        }
+        val store = open()
+        val s1 = store.secret("s1")!!
+        assertEquals("S0VZ", s1.key)
+        assertNull(s1.totp)
+        assertNull(s1.passkeys)
+        assertNull(store.state())
     }
 
     private fun obj(json: String) = Json.parseToJsonElement(json).jsonObject
