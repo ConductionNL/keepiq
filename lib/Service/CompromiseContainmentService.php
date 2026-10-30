@@ -230,7 +230,7 @@ class CompromiseContainmentService {
 	 */
 	private function collectOutbound(CompromiseBlastRadius $radius, Secret $secret): void {
 		try {
-			foreach ($this->rowJudge->rowsOfSource(sourceId: $secret->getId())->trusted() as $shareTarget) {
+			foreach ($this->rowJudge->rowsOfSource(sourceId: $secret->getId())->notHeldBack() as $shareTarget) {
 				$recipientId = $shareTarget->getTargetUserId();
 				if ($recipientId === '' || $recipientId === $secret->getOwnerId()) {
 					continue;

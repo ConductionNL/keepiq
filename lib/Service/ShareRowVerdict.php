@@ -109,18 +109,6 @@ final class ShareRowVerdict {
 	}//end trustedRow()
 
 	/**
-	 * Whether a row was found but may not be followed: its target does not
-	 * hold the copy, or the pending scan quarantines it or cannot judge it.
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
-	 */
-	public function isUntrustedRow(): bool {
-		return in_array($this->state, [self::FOREIGN, self::QUARANTINED, self::UNJUDGED], true);
-	}//end isUntrustedRow()
-
-	/**
 	 * Whether the secret counts as a copy for a check that refuses copies:
 	 * a trusted row, two rows, a row its target does not hold, and a row the
 	 * pending scan cannot judge all do, so the check fails closed until the

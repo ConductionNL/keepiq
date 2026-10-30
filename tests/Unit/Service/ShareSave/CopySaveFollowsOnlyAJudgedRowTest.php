@@ -445,8 +445,9 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 
 	/**
 	 * A shared V whose row the pending scan quarantines on the spot is Bob's
-	 * own source; one whose row its target does not hold still answers as an
-	 * unknown id, as before.
+	 * own source, also when the row's target does not hold V; a row its
+	 * target does not hold that the scan clears still answers as an unknown
+	 * id, as before.
 	 *
 	 * @return void
 	 */
@@ -461,8 +462,11 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 		$this->assertSame('owner', $context['effectiveGrade']);
 
 		$this->rows[0]->setTargetUserId('someone-else');
+		$this->assertSame('V', $contexts->writeContext(secretId: 'V', userId: 'bob')['sourceSecretId']);
+
+		[$clearing] = $this->services(scanner: $this->scannerFor(verdicts: []));
 		$this->expectException(InvalidArgumentException::class);
-		$contexts->writeContext(secretId: 'V', userId: 'bob');
+		$clearing->writeContext(secretId: 'V', userId: 'bob');
 	}//end testASharedSecretWithAQuarantinedOrForeignRowAnswersAsBefore()
 
 	/**

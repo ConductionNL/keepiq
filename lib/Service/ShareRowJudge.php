@@ -68,7 +68,9 @@ class ShareRowJudge {
 	/**
 	 * The pending scan's verdict on a row the caller already holds:
 	 * ShareQuarantineScanner::HELD_QUARANTINED, HELD_UNJUDGED, or null when
-	 * it does not hold the row back.
+	 * it does not hold the row back. Fails closed: a row that carries a
+	 * quarantine stamp is quarantined whatever the scan says, and an answer
+	 * the scan is not known to give counts as unjudged.
 	 *
 	 * @param ShareTarget $row The share row
 	 *
@@ -77,9 +79,17 @@ class ShareRowJudge {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function verdict(ShareTarget $row): ?string {
-		return $this->scanner->heldBack(row: $row);
-	}//end verdict()
+		if ($row->getQuarantinedAt() !== null) {
+			return ShareQuarantineScanner::HELD_QUARANTINED;
+		}
 
+		$held = $this->scanner->heldBack(row: $row);
+		if ($held === null || $held === ShareQuarantineScanner::HELD_QUARANTINED) {
+			return $held;
+		}
+
+		return ShareQuarantineScanner::HELD_UNJUDGED;
+	}//end verdict()
 
 	/**
 	 * The verdict on the share row naming a secret as its copy.
@@ -206,9 +216,11 @@ class ShareRowJudge {
 	}//end scanPending()
 
 	/**
-	 * Judge one row found for a copy: its target must hold the copy, and the
-	 * pending scan must not hold it back. A row its target does not hold is
-	 * not judged by the scan, as no path follows it either way.
+	 * Judge one row found for a copy. A row is trusted only when its target
+	 * holds the copy and the pending scan answers that it does not hold the
+	 * row back; every other answer fails closed. A row whose target does not
+	 * hold the copy is still judged, so the scan can quarantine it on the
+	 * spot: it is then no copy at all, and otherwise stays foreign.
 	 *
 	 * @param ShareTarget $row  The row
 	 * @param Secret      $copy The copy it names
@@ -216,20 +228,20 @@ class ShareRowJudge {
 	 * @return ShareRowVerdict
 	 */
 	private function judgeRow(ShareTarget $row, Secret $copy): ShareRowVerdict {
-		if ($row->isHeldByTarget(copy: $copy) === false) {
-			return new ShareRowVerdict(state: ShareRowVerdict::FOREIGN, row: $row);
-		}
-
 		$held = $this->verdict(row: $row);
 		if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
 			return new ShareRowVerdict(state: ShareRowVerdict::QUARANTINED, row: $row);
 		}
 
-		if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
-			return new ShareRowVerdict(state: ShareRowVerdict::UNJUDGED, row: $row);
+		if ($row->isHeldByTarget(copy: $copy) === false) {
+			return new ShareRowVerdict(state: ShareRowVerdict::FOREIGN, row: $row);
 		}
 
-		return new ShareRowVerdict(state: ShareRowVerdict::TRUSTED, row: $row);
+		if ($held === null) {
+			return new ShareRowVerdict(state: ShareRowVerdict::TRUSTED, row: $row);
+		}
+
+		return new ShareRowVerdict(state: ShareRowVerdict::UNJUDGED, row: $row);
 	}//end judgeRow()
 
 	/**

@@ -89,15 +89,19 @@ final class JudgedShareRows {
 	}//end verdict()
 
 	/**
-	 * The rows the pending scan does not hold back.
+	 * The rows the pending scan does not hold back. This does not check that
+	 * a row's target holds the copy it names: unlike a TRUSTED
+	 * ShareRowVerdict, a row here may name someone else's secret, so a
+	 * caller that touches or names the copy checks ShareTarget::isHeldByTarget()
+	 * against it first.
 	 *
 	 * @return list<ShareTarget>
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	public function trusted(): array {
+	public function notHeldBack(): array {
 		return array_values(array_filter($this->rows, fn (ShareTarget $row): bool => $this->verdict(row: $row) === null));
-	}//end trusted()
+	}//end notHeldBack()
 
 	/**
 	 * The rows the pending scan quarantines or cannot judge.
