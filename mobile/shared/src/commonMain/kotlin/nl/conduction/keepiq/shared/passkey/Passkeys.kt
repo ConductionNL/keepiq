@@ -98,7 +98,8 @@ object Passkeys {
 
     /**
      * A passkey on a login signs from the login as the server holds it now,
-     * never from the index: the counter it sends is the stored one plus one,
+     * read fresh, with one exception below: the counter it sends is the
+     * stored one plus one,
      * and a passkey deleted elsewhere refuses with [PasskeyGoneException],
      * whatever its counter. The counter goes back with the row's `updatedAt`
      * as `baseUpdatedAt`; when the login changed in between, it is read and

@@ -50,8 +50,9 @@ open class KeepiqApiException(
 /**
  * The server does not store a login's own code and passkeys: a write of
  * `totp` or `passkeys` would be dropped while the server answers 2xx
- * (mobile-login-totp-passkeys D1). Refused before anything is sent, with the
- * message pairing gives, as a 426 whose body carries it, so WriteProblem
+ * (mobile-login-totp-passkeys D1). Refused before the write is sent (the
+ * fresh read and the pair call may go out first), with the message pairing
+ * gives, as a 426 whose body carries it, so WriteProblem
  * shows that message.
  */
 class MissingCapabilityException :
