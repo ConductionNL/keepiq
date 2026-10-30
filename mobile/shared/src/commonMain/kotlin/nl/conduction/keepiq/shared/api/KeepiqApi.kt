@@ -44,7 +44,8 @@ open class KeepiqApiException(
     message: String,
     val code: String? = null,
     val body: String = "",
-) : Exception(message)
+    cause: Throwable? = null,
+) : Exception(message, cause)
 
 /**
  * The server does not store a login's own code and passkeys: a write of

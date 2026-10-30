@@ -15,11 +15,7 @@ class LoginGoneException : IllegalStateException("The login is gone")
  * or a [KeepiqApiException] with status 0, before any answer. Status 0, as
  * WriteProblem reads it, so a write still shows as offline.
  */
-class ServerUnreachableException(cause: Throwable) : KeepiqApiException(0, "Cannot reach the server") {
-    init {
-        initCause(cause)
-    }
-}
+class ServerUnreachableException(cause: Throwable) : KeepiqApiException(0, "Cannot reach the server", cause = cause)
 
 /**
  * The read-modify-write of a login's `passkeys` (mobile-login-totp-passkeys
