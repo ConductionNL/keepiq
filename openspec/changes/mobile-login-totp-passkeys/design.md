@@ -21,7 +21,7 @@
 
 ## Decisions
 
-**D1. Pairing checks capabilities, not a version.** `PairResponse` reads `capabilities`, and pairing refuses a server that lacks `totp-field` or `passkeys-field`, with the message the API-version check gives. A capability is what the app actually needs, and a development server reports a version like `0.3.9-unstable` that a version check would refuse although it has the fields. Accounts paired before this change are not checked again.
+**D1. Pairing checks capabilities, not a version.** `PairResponse` reads `capabilities`, and pairing refuses a server that lacks `totp-field` or `passkeys-field`, with the message the API-version check gives. A capability is what the app actually needs, and a development server reports a version like `0.3.9-unstable` that a version check would refuse although it has the fields. Accounts paired before this change are checked again before a write of a login's `totp` or `passkeys` (`KeepiqApi.requireLoginFields`): the same pair call, asked once per `KeepiqApi`, refuses the write with the pairing message, before a passkey is made. The check runs at the write and not at unlock, because the passkey provider and the iOS extension write without going through the unlock screen.
 
 **D2. The fields stay ciphertext until used.** `VaultRow`, `StoredSecret` and `AutofillEntry` carry `totp` and `passkeys` as the server sent them. Nothing in the list, the index or the store decrypts them; the detail screen, the code fill and the passkey provider decrypt only the item they act on.
 
@@ -51,7 +51,7 @@
 
 ## Risks / Trade-offs
 
-- An account paired before this change against a server without the fields is not refused (D1). A passkey it creates would then be sent as a field that server does not store. Only internal testers have the app, and pairing again fixes it.
+- An account paired before this change against a server without the fields is refused at its first write of a login's code or passkeys (D1), not at unlock, so reading and filling keep working there.
 - A counter written back on a shared login reaches only the user's own copy until the mobile apps use share-save, as with a standalone passkey today.
 - Matching on the user name (D12) attaches a passkey to the wrong login only when two people's logins on one site share a user name; then there are two matches and a new login is made.
 

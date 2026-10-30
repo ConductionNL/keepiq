@@ -46,6 +46,26 @@ open class KeepiqApiException(
     val body: String = "",
 ) : Exception(message)
 
+/**
+ * The server does not store a login's own code and passkeys: a write of
+ * `totp` or `passkeys` would be dropped while the server answers 2xx
+ * (mobile-login-totp-passkeys D1). Refused before anything is sent, with the
+ * message pairing gives, as a 426 whose body carries it, so WriteProblem
+ * shows that message.
+ */
+class MissingCapabilityException :
+    KeepiqApiException(STATUS, MESSAGE, body = JsonObject(mapOf("message" to JsonPrimitive(MESSAGE))).toString()) {
+    companion object {
+        /** HTTP 426 Upgrade Required: the server needs a newer Keepiq. */
+        const val STATUS = 426
+
+        const val MESSAGE = "This server runs a Keepiq version without one-time codes and passkeys on a login. Ask your administrator to update Keepiq."
+
+        /** The pair response's capabilities a login's code and passkeys need. */
+        val LOGIN_FIELDS: Set<String> = setOf("totp-field", "passkeys-field")
+    }
+}
+
 /** The server address is not https, so the app password is never sent. */
 class InsecureServerException(server: String) :
     KeepiqApiException(0, "Keepiq needs an https address, so your app password is never sent in clear: $server")
@@ -60,6 +80,9 @@ class InsecureServerException(server: String) :
  */
 class KeepiqApi(private val client: HttpClient, private val account: Account) {
     private val base: String = account.server.trimEnd('/')
+
+    /** Whether the server lists the login fields; null until [requireLoginFields] asked. */
+    private var loginFields: Boolean? = null
 
     init {
         val url = runCatching { Url(base) }.getOrNull()
@@ -142,6 +165,19 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
      * the server's `apiVersion` (lib/Controller/ExtensionController::pair).
      */
     suspend fun pair(): PairResponse = PairResponse.from(request(HttpMethod.Post, "/api/v1/extension/pair") as? JsonObject ?: JsonObject(emptyMap()))
+
+    /**
+     * Refuses with [MissingCapabilityException] when the server does not list
+     * `totp-field` and `passkeys-field`. Pairing checks them too, but an
+     * account paired before that check was added is checked here, before
+     * every write of a login's `totp` or `passkeys`: the server is asked
+     * once per [KeepiqApi] (POST /api/v1/extension/pair, which pairing calls
+     * and which changes nothing), and the answer is kept for the next write.
+     */
+    suspend fun requireLoginFields() {
+        val supported = loginFields ?: pair().capabilities.containsAll(MissingCapabilityException.LOGIN_FIELDS).also { loginFields = it }
+        if (!supported) throw MissingCapabilityException()
+    }
 
     /** POST /api/v1/extension/unpair: the acknowledgement before the revoke. */
     suspend fun unpair() {

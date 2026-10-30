@@ -129,9 +129,11 @@ object Passkeys {
     /**
      * Creates a passkey for [rpId] and saves it in the vault. Throws
      * [ExcludedCredentialException] when the vault holds one of
-     * [excludeCredentialIds] for this rpId, and a
+     * [excludeCredentialIds] for this rpId, a
      * [nl.conduction.keepiq.shared.crypto.KeepiqCryptoException] with
-     * [WebAuthn.UNSUPPORTED_ALGORITHM] when ES256 is not allowed.
+     * [WebAuthn.UNSUPPORTED_ALGORITHM] when ES256 is not allowed, and a
+     * [nl.conduction.keepiq.shared.api.MissingCapabilityException] before
+     * any key is made when the server does not store `passkeys`.
      */
     suspend fun create(
         api: KeepiqApi,
@@ -147,6 +149,8 @@ object Passkeys {
         if (request.excludeCredentialIds.isNotEmpty() && candidates(index, request.rpId, keys, request.excludeCredentialIds).isNotEmpty()) {
             throw ExcludedCredentialException()
         }
+        // The passkey is stored only in `passkeys`: a server without the field would drop it after answering 2xx.
+        api.requireLoginFields()
         val registration = WebAuthn.createCredential(
             rpId = request.rpId,
             rpName = request.rpName,

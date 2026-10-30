@@ -16,6 +16,8 @@ class LoginGoneException : IllegalStateException("The login is gone")
  * `baseUpdatedAt`, so a change saved elsewhere in between is refused with
  * 409 (lib/Service/OfflineEditGuard.php) instead of overwritten. After that
  * refusal the login is read and changed once more; a second refusal fails.
+ * A server that does not store `passkeys` refuses before the PUT
+ * (KeepiqApi.requireLoginFields).
  */
 object PasskeysWrite {
     /** The server's answer to a write based on an older version (StaleWriteException). */
@@ -36,6 +38,7 @@ object PasskeysWrite {
             val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
             val next = change(fresh, stored)
             val passkeys = next.passkeys ?: return next.result
+            api.requireLoginFields()
             try {
                 api.updateSecret(id, ItemCodec.passkeysBody(passkeys, keys, fresh.updatedAt))
                 return next.result

@@ -206,7 +206,9 @@ class VaultRepository(
     /** Creates an item of [type] from [draft]. */
     suspend fun create(draft: ItemDraft, type: SecretType?): WriteResult = write {
         if (draft.kind == FormKind.PASSKEY) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
-        val body = ItemCodec.createBody(ItemCodec.parts(draft, type), type?.id ?: draft.typeId, keys)
+        val parts = ItemCodec.parts(draft, type)
+        if (!parts.totp.isNullOrEmpty()) api.requireLoginFields()
+        val body = ItemCodec.createBody(parts, type?.id ?: draft.typeId, keys)
         val saved = api.createSecret(body)
         WriteResult.Saved(saved?.let { it["id"] as? JsonPrimitive }?.contentOrNull)
     }
@@ -221,6 +223,7 @@ class VaultRepository(
         val after = ItemCodec.parts(draft, item.type)
         val changed = ItemCodec.changed(before, after).let { if (item.kind == FormKind.PASSKEY) it - "key" - "login" else it }
         if (changed.isEmpty()) return@write WriteResult.Saved(item.row.id)
+        if ("totp" in changed) api.requireLoginFields()
         api.updateSecret(item.row.id, ItemCodec.updateBody(after, changed, keys))
         WriteResult.Saved(item.row.id)
     }

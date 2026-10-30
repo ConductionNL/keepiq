@@ -18,6 +18,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.api.KeepiqApiException
+import nl.conduction.keepiq.shared.api.MissingCapabilityException
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.crypto.ClientData
@@ -68,12 +69,19 @@ class PasskeysTest {
     private var freshLogin = "{}"
     private val bodies = mutableListOf<JsonObject>()
     private var offline = false
+    private var capabilities = """["match","totp-field","passkeys-field"]"""
+    private var pairCalls = 0
 
     /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
     private var staleWrites = 0
     private var afterStale: () -> Unit = {}
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
+        // The capability check before a write of `passkeys` (KeepiqApi.requireLoginFields).
+        if (path == "/api/v1/extension/pair") {
+            pairCalls++
+            return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
         if (offline) throw java.io.IOException("no network")
@@ -313,6 +321,36 @@ class PasskeysTest {
         assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
         assertEquals("2026-10-05T11:00:00+00:00", bodies.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(existing, addedElsewhere, r.record), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)))
+    }
+
+    @Test
+    fun aServerWithoutThePasskeysFieldGetsNoNewPasskey() = runTest {
+        capabilities = """["match","totp-field"]"""
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        for (i in listOf(index, AutofillIndex.EMPTY)) {
+            val e = assertFailsWith<MissingCapabilityException> { Passkeys.create(api, keys, i, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0) }
+            assertTrue(e.message!!.contains("update Keepiq"))
+        }
+        assertTrue(requests.isEmpty(), "nothing is read or written: $requests")
+    }
+
+    @Test
+    fun aServerWithoutThePasskeysFieldTakesNoCounterOnALogin() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        capabilities = """["match"]"""
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        assertFailsWith<MissingCapabilityException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun theCapabilityIsAskedOncePerApi() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        freshLoginWith()
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(1, pairCalls)
     }
 
     @Test

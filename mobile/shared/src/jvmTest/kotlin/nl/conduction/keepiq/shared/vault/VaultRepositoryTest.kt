@@ -20,6 +20,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.MissingCapabilityException
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.crypto.RsaFields
@@ -64,6 +65,7 @@ class VaultRepositoryTest {
     private var offline = false
     private var refuseWrites = false
     private var cachingOff = false
+    private var capabilities = """["match","totp-field","passkeys-field"]"""
 
     /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
     private var staleWrites = 0
@@ -97,6 +99,10 @@ class VaultRepositoryTest {
 
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
+        // The capability check before a write of `totp` or `passkeys` (KeepiqApi.requireLoginFields).
+        if (path == "/api/v1/extension/pair") {
+            return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
         if (offline) throw IOException("no network")
@@ -484,6 +490,26 @@ class VaultRepositoryTest {
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
         assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""), "baseUpdatedAt" to JsonPrimitive("2026-10-03T09:00:00+00:00"))), bodies.single())
+    }
+
+    @Test
+    fun aServerPairedBeforeTheFieldsTakesNoCodeOrPasskeyWrite() = runTest {
+        capabilities = """["match"]"""
+        val type = repo.refresh(SyncTrigger.START).typeNamed("login")
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        val results = listOf(
+            repo.deletePasskey(item, "a"),
+            repo.update(item, ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REMOVE)),
+            repo.create(ItemCodec.draft(null, type).copy(name = "Nieuw", typed = mapOf("klantnummer" to "1"), keyEdit = KeyEdit.REPLACE, newKey = seed), type),
+        )
+        for (r in results) {
+            val problem = assertIs<WriteResult.Refused>(r).problem
+            assertEquals(WriteProblemKind.SERVER_MESSAGE, problem.kind)
+            assertEquals(MissingCapabilityException.MESSAGE, problem.serverMessage)
+        }
+        assertTrue(requests.none { it.first == "PUT" || it.first == "POST" }, "$requests")
+        // A change that writes neither field still goes through.
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(name = "Mail 2")))
     }
 
     @Test
