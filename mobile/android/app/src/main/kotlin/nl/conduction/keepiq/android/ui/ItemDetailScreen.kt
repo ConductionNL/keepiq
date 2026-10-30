@@ -60,6 +60,9 @@ import nl.conduction.keepiq.shared.vault.WriteResult
 
 private const val MASK = "••••••••"
 
+/** How long "Passkey deleted." stays after it is announced. */
+internal const val PASSKEY_DELETED_SHOWN_MILLIS = 5_000L
+
 /**
  * One item (task 3.1): secret values hidden until revealed, copy through
  * the sensitive clipboard, the TOTP code with its seconds left. A use-only
@@ -81,6 +84,13 @@ fun ItemDetailScreen(
     var deleting by remember { mutableStateOf<PasskeySummary?>(null) }
     var focusPasskey by remember(id) { mutableStateOf<Int?>(null) }
     var passkeyDeleted by remember(id) { mutableStateOf(false) }
+    // The announcement is made once: it goes after a while, or at the next action or problem.
+    LaunchedEffect(passkeyDeleted) {
+        if (passkeyDeleted) {
+            delay(PASSKEY_DELETED_SHOWN_MILLIS)
+            passkeyDeleted = false
+        }
+    }
     val scope = rememberCoroutineScope()
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
 
@@ -97,10 +107,19 @@ fun ItemDetailScreen(
             modifier = modifier,
             onCopy = onCopy,
             onEdit = onEdit,
-            onMove = { action = DetailAction.Move },
-            onTrash = { action = DetailAction.Trash },
+            onMove = {
+                passkeyDeleted = false
+                action = DetailAction.Move
+            },
+            onTrash = {
+                passkeyDeleted = false
+                action = DetailAction.Trash
+            },
             onSendLogin = { onSendLogin(r.item.login, r.item.secret) },
-            onDeletePasskey = { deleting = it },
+            onDeletePasskey = {
+                passkeyDeleted = false
+                deleting = it
+            },
             focusPasskey = focusPasskey,
             onPasskeyFocused = { focusPasskey = null },
             passkeyDeleted = passkeyDeleted,
@@ -110,6 +129,7 @@ fun ItemDetailScreen(
     val item = (result as? OpenResult.Opened)?.item ?: return
     fun write(block: suspend () -> WriteResult, after: () -> Unit) {
         action = null
+        passkeyDeleted = false
         scope.launch {
             when (val w = io { block() }) {
                 is WriteResult.Saved -> after()

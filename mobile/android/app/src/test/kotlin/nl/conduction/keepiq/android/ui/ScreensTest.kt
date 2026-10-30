@@ -617,4 +617,27 @@ class ScreensTest {
         compose.onNodeWithText("Code from the item's own key").assertExists()
         compose.onNodeWithText("This is not a valid authenticator secret.").assertExists()
     }
+
+    private fun deleteAliceWorkAndWaitForTheAnnouncement() {
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Passkey deleted.").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun theDeleteAnnouncementGoesAfterAWhile() {
+        deleteAliceWorkAndWaitForTheAnnouncement()
+        compose.mainClock.advanceTimeBy(PASSKEY_DELETED_SHOWN_MILLIS + 1_000)
+        compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
+    }
+
+    @Test
+    fun theDeleteAnnouncementGoesAtTheNextAction() {
+        deleteAliceWorkAndWaitForTheAnnouncement()
+        compose.onNodeWithText("Move").performScrollTo().performClick()
+        compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
+    }
 }
