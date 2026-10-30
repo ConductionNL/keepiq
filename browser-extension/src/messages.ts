@@ -451,9 +451,11 @@ export interface ItemDraft {
 	login: string | null
 	/** Name to value, `notes` included; `{}` when empty. */
 	additionalFields: Record<string, string>
+	/** A login's authenticator key; absent or `''` for none. */
+	totp?: string
 }
 
-/** The fields the user changed. `null` clears; `additionalFields` is always whole. */
+/** The fields the user changed. `null` clears; `additionalFields` is always whole; `totp` `''` removes the saved key. */
 export type ItemPatch = Partial<ItemDraft>
 
 /** A fresh fetch, decrypted for the edit form. */
@@ -467,6 +469,10 @@ export interface EditableItem extends ItemDraft {
 	typeName?: string
 	/** An edit fetch's record of what its form showed, for that form's save to name; absent for a clone. */
 	recordId?: string
+	/** The row holds an authenticator key; the key itself never reaches the popup. Always `false` for a clone. */
+	totpSaved: boolean
+	/** A clone of a row that holds a key, which is not cloned. */
+	totpLeftOut?: true
 }
 
 export interface FolderChildren {
@@ -514,13 +520,17 @@ export type WriteErrorCode =
 	| 'passkey_clone'
 	/** A send password needs Argon2id, whose WebAssembly this browser does not run. */
 	| 'argon2_unavailable'
+	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key the change adds. */
+	| 'partner_upgrade_required'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
 	/** With `blocked`, when the row's reason is a known code. */
 	reason?: BlockReason
-	/** With `partner_unreachable`. */
+	/** With `partner_unreachable` and `partner_upgrade_required`. */
 	partners?: Array<{ shareId: string; cloudId: string }>
+	/** With `partner_upgrade_required`, when the server named the release the partner needs. */
+	requiredVersion?: string
 }
 
 export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultWriteError }

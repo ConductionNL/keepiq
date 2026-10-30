@@ -3,11 +3,14 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EditableItem, FolderMeta } from '@/src/messages'
+import { scanVisibleTab } from '@/src/totp/qr-scan'
 import { CARD_FIELDS, IDENTITY_FIELDS, shownInFull } from '@/src/vault/fields'
 import { setLocale } from '@/src/testing/i18n'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { editableItem, fakeBackground, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
 import { ItemForm, type FormMode } from './ItemForm'
+
+vi.mock('@/src/totp/qr-scan', () => ({ scanVisibleTab: vi.fn() }))
 
 let footer: HTMLElement
 beforeEach(() => {
@@ -71,6 +74,19 @@ describe('adding', () => {
 		expect((screen.getByLabelText('Type') as HTMLSelectElement).value).toBe('t-login')
 	})
 
+	it('offers no Authenticator type, which a login holds itself, also not as the default', () => {
+		renderForm({ snapshot: snapshotReply({ defaultSecretType: 'totp' }) })
+		const type = screen.getByLabelText('Type') as HTMLSelectElement
+		expect(type.value).toBe('t-login')
+		expect([...type.options].map((option) => option.value)).not.toContain('t-totp')
+	})
+
+	it('still shows an existing Authenticator item\'s type and secret', async () => {
+		renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', key: 'JBSWY3DPEHPK3PXP', login: null }) } })
+		expect((await screen.findByLabelText('Authenticator key') as HTMLInputElement).value).toBe('JBSWY3DPEHPK3PXP')
+		expect((screen.getByLabelText('Type') as HTMLSelectElement).value).toBe('t-totp')
+	})
+
 	it('refuses a missing name without a request', async () => {
 		const { sent, user } = renderForm()
 		await user.click(save())
@@ -109,26 +125,22 @@ describe('adding', () => {
 		expect((save() as HTMLButtonElement).disabled).toBe(true)
 	})
 
-	it('refuses an invalid authenticator secret', async () => {
-		const { sent, user } = renderForm()
-		await user.selectOptions(screen.getByLabelText('Type'), 't-totp')
-		await user.type(field('Name'), 'GitHub 2FA')
+	it('refuses an invalid secret on an existing Authenticator item', async () => {
+		const { sent, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', name: 'GitHub 2FA', key: 'JBSWY3DPEHPK3PXP', login: null }) } })
+		await user.clear(await screen.findByLabelText('Authenticator key'))
 		await user.type(field('Authenticator key'), 'not a secret!')
 		await user.click(save())
 		expect(screen.getByText('Not a valid authenticator secret')).toBeTruthy()
-		expect(created(sent)).toEqual([])
+		expect(sentOf(sent, 'item.update')).toEqual([])
 	})
 
-	it('writes changed TOTP options into the seed', async () => {
-		const { sent, onSaved, user } = renderForm()
-		await user.selectOptions(screen.getByLabelText('Type'), 't-totp')
-		await user.type(field('Name'), 'GitHub')
-		await user.type(field('Authenticator key'), 'JBSWY3DPEHPK3PXP')
-		await user.click(screen.getByText('Advanced'))
+	it('writes changed TOTP options of an existing Authenticator item into its seed', async () => {
+		const { sent, onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', key: 'JBSWY3DPEHPK3PXP', login: null }) } })
+		await user.click(await screen.findByText('Advanced'))
 		await user.selectOptions(screen.getByLabelText('Digits'), '8')
 		await user.click(save())
 		await waitFor(() => expect(onSaved).toHaveBeenCalled())
-		expect(created(sent)[0]).toMatchObject({ key: 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=8&period=30', login: null })
+		expect(sentOf(sent, 'item.update')[0]).toMatchObject({ patch: { key: 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=8&period=30' } })
 	})
 
 	it('writes a card with all five members', async () => {
@@ -156,8 +168,11 @@ describe('adding', () => {
 		['identity', ['Phone', 'Email', 'Website URL', 'Field name']],
 		['totp', ['Website URL', 'Field name']],
 	])('keeps every %s field from the spell checker, a revealed secret too, and %j from a phone keyboard\'s corrections', async (typeName, verbatim) => {
-		const { user } = renderForm()
-		await user.selectOptions(screen.getByLabelText('Type'), `t-${typeName}`)
+		// No new item is an Authenticator, so that one is an existing item.
+		const { user } = typeName === 'totp'
+			? renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', key: 'JBSWY3DPEHPK3PXP', login: null }) } })
+			: renderForm()
+		if (typeName !== 'totp') await user.selectOptions(screen.getByLabelText('Type'), `t-${typeName}`)
 		await user.click(await screen.findByRole('button', { name: 'Add field' }))
 		for (const show of screen.getAllByRole('button', { name: /^Show / })) await user.click(show)
 		const inputs = [...document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')]
@@ -529,6 +544,100 @@ describe('editing', () => {
 	})
 })
 
+describe('authenticator key', () => {
+	const LINK = 'otpauth://totp/Keepiq%20test%20site:test-user?secret=JBSWY3DPEHPK3PXP&issuer=Keepiq%20test%20site'
+	const keyField = (label = 'Authenticator key (optional)') => field(label)
+	const edit = (item: Partial<EditableItem>) => renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ recordId: 'r1', ...item }) } })
+	const patches = (sent: ReturnType<typeof fakeBackground>) => sentOf(sent, 'item.update').map((message) => message.patch)
+
+	it('creates a login with a pasted key as it is stored', async () => {
+		const { sent, user } = renderForm()
+		await user.type(field('Name'), 'Site')
+		await user.type(keyField(), 'jbsw y3dp ehpk 3pxp')
+		await user.click(save())
+		await waitFor(() => expect(created(sent)).toHaveLength(1))
+		expect(created(sent)[0]).toMatchObject({ totp: 'JBSWY3DPEHPK3PXP' })
+	})
+
+	it('refuses a key that does not read, without a request', async () => {
+		const { sent, user } = renderForm()
+		await user.type(field('Name'), 'Site')
+		await user.type(keyField(), 'not a key!')
+		await user.click(save())
+		expect(screen.getByText('Not a valid authenticator secret')).toBeTruthy()
+		expect(created(sent)).toEqual([])
+	})
+
+	it('creates with a scanned key, which counts as a change to leave', async () => {
+		vi.mocked(scanVisibleTab).mockResolvedValueOnce({ key: LINK })
+		const { sent, shell, user } = renderForm()
+		const isDirty = shell.setLeaveGuard.mock.calls[0]![0] as () => boolean
+		await user.click(screen.getByRole('button', { name: 'Scan QR code on page' }))
+		expect(isDirty()).toBe(true)
+		await user.type(field('Name'), 'Site')
+		await user.click(save())
+		await waitFor(() => expect(created(sent)[0]).toMatchObject({ totp: LINK }))
+	})
+
+	it('sends no key from a type that takes none', async () => {
+		const { sent, user } = renderForm()
+		await user.type(field('Name'), 'Site')
+		await user.type(keyField(), 'JBSWY3DPEHPK3PXP')
+		await user.selectOptions(screen.getByLabelText('Type'), 't-note')
+		expect(screen.queryByLabelText('Authenticator key (optional)')).toBeNull()
+		await user.click(save())
+		await waitFor(() => expect(created(sent)).toHaveLength(1))
+		expect(created(sent)[0]).not.toHaveProperty('totp')
+	})
+
+	it('removes a saved key with an empty string when no new one is entered', async () => {
+		const { sent, user } = edit({ totpSaved: true })
+		await user.click(await screen.findByRole('button', { name: 'Remove authenticator key' }))
+		await user.click(save())
+		await waitFor(() => expect(patches(sent)).toEqual([{ totp: '' }]))
+	})
+
+	it('replaces a saved key with one entered after removing it', async () => {
+		const { sent, user } = edit({ totpSaved: true })
+		await user.click(await screen.findByRole('button', { name: 'Remove authenticator key' }))
+		await user.type(keyField('New authenticator key'), 'nbsw y3dp')
+		await user.click(save())
+		await waitFor(() => expect(patches(sent)).toEqual([{ totp: 'NBSWY3DP' }]))
+	})
+
+	it('sends nothing of a saved key it leaves alone, or keeps after all', async () => {
+		const { sent, user } = edit({ totpSaved: true })
+		await user.click(await screen.findByRole('button', { name: 'Remove authenticator key' }))
+		await user.click(screen.getByRole('button', { name: 'Keep the saved key' }))
+		await user.type(field('Username'), '2')
+		await user.click(save())
+		await waitFor(() => expect(patches(sent)).toEqual([{ login: 'alice2' }]))
+	})
+
+	it('offers only Remove on another type that holds a key', async () => {
+		const { sent, user } = edit({ typeId: 't-note', typeName: 'note', key: 'text', login: null, totpSaved: true })
+		await user.click(await screen.findByRole('button', { name: 'Remove authenticator key' }))
+		expect(screen.queryByLabelText('New authenticator key')).toBeNull()
+		await user.click(save())
+		await waitFor(() => expect(patches(sent)).toEqual([{ totp: '' }]))
+	})
+
+	it('shows nothing of a key on a type that holds none', async () => {
+		edit({ typeId: 't-note', typeName: 'note', key: 'text', login: null })
+		expect(await screen.findByRole('textbox', { name: 'Note' })).toBeTruthy()
+		expect(screen.queryByText(/Authenticator key/)).toBeNull()
+	})
+
+	it('says a clone leaves the key out, and creates it without one', async () => {
+		const { sent, user } = renderForm({ mode: 'clone', id: 'i1', items: { i1: editableItem({ totpLeftOut: true }) } })
+		expect(await screen.findByText('The authenticator key is not cloned.')).toBeTruthy()
+		expect(keyField().value).toBe('')
+		await user.click(save())
+		await waitFor(() => expect(created(sent)).toHaveLength(1))
+		expect(created(sent)[0]).not.toHaveProperty('totp')
+	})
+})
+
 describe('cloning', () => {
 	it('prefills every field with the name suffixed and creates a new item', async () => {
 		const { sent, onSaved, user } = renderForm({ mode: 'clone', id: 'i1', items: { i1: editableItem({ folderId: 'w', additionalFields: { pin: '1' } }) } })
@@ -664,7 +773,7 @@ describe('what an edit shows', () => {
 
 	it.each([
 		['Login', 't-login', 'Password'],
-		['Authenticator', 't-totp', 'Authenticator key'],
+		['Note', 't-note', 'Note'],
 	])('keeps the lines of a key typed under SSH key once switched to %s', async (_, typeId, label) => {
 		const snapshot = snapshotReply({ types: [...types, { id: 't-ssh_key', name: 'ssh_key', label: 'SSH key' }] })
 		const { user } = renderForm({ snapshot })

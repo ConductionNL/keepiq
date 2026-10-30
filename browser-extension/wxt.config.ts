@@ -64,6 +64,8 @@ export default defineConfig({
 				'alarms',
 				'idle',
 				'tabs',
+				// Scan QR code on page takes a picture of the tab under the toolbar popup; `tabs` alone doesn't allow that.
+				'activeTab',
 				// Clearing the clipboard writes it without a user gesture, from an offscreen
 				// document on Chrome and from the background page on Firefox.
 				'clipboardWrite',

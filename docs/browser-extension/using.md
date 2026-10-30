@@ -103,9 +103,17 @@ A **blocked** item cannot be opened. Its key was revoked or compromised. The ite
 
 ### Adding an item
 
-**New** at the top of the vault, next to the pop-out button, opens a new item. It starts with your **Default item type in this extension**, **Login** unless you chose another in [Settings](#settings), and with the address of the site in your current tab. Pick a type, give the item a name and fill in what you need: a login has a user name and password, a card and an identity have their own fields, and an authenticator takes the setup key or `otpauth://` link the site gave you. **Additional fields** holds anything else, such as a PIN, and **Notes** holds free text. **Save** opens the new item.
+**New** at the top of the vault, next to the pop-out button, opens a new item. It starts with your **Default item type in this extension**, **Login** unless you chose another in [Settings](#settings), and with the address of the site in your current tab. Pick a type, give the item a name and fill in what you need: a login has a user name, a password and an optional authenticator key, and a card and an identity have their own fields. **Additional fields** holds anything else, such as a PIN, and **Notes** holds free text. **Save** opens the new item.
 
-Passkeys are not added here; they are made when you sign up on a website with one.
+Passkeys are not added here; they are made when you sign up on a website with one. Authenticator items are not added either: a login holds its own authenticator key.
+
+### Adding an authenticator key
+
+When a site asks you to turn on two-step verification, it shows a QR code and a key. Open Keepiq from the toolbar on that page, edit your login for the site (or add one), and press the scan button in the **Authenticator key** field. Keepiq takes a picture of the visible part of the page, reads the QR code in your browser and drops the picture; scroll the QR code into view first. You can also paste the key or the `otpauth://` link. Save, and the login shows its code; fill it into the site's confirmation field to finish.
+
+- Scanning works from the toolbar button only, not in the pop-out window, and not on Firefox before version 126; paste the key there.
+- Once saved, the key is never shown again; the field reads **Saved**. Its trash button takes the key off when you save, unless you paste or scan a new one in its place.
+- **Clone** does not copy the key.
 
 ### Editing an item
 

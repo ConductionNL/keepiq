@@ -20,7 +20,7 @@ The extension talks to your own Nextcloud, and to nobody else. It sends your ser
 
 Your master password never leaves the browser. Neither do your decrypted secrets.
 
-Filling in logins and the save bar send nothing new: matching happens in your browser, and a login you save or update from the bar goes to your server like any item you add or change.
+Filling in logins and the save bar send nothing new: matching happens in your browser, and a login you save or update from the bar goes to your server like any item you add or change. **Scan QR code on page** sends nothing either: the picture it takes of the page is read in your browser and dropped.
 
 The extension sends nothing to Conduction. It has no analytics, no crash reports and no advertising. It does not load website icons, so no site and no icon service learns which accounts you have. The Firefox version declares to Mozilla that it collects no data.
 
@@ -73,6 +73,7 @@ When you are halfway through adding an account, the extension remembers the serv
 | Read and change data on all websites | The page script that fills in logins runs on every site. It holds no vault data. |
 | Storage, unlimited storage | Keeps your accounts, settings and the encrypted vault copy. Firefox otherwise limits it to 5 MB. |
 | Tabs | Reads the current tab's address for suggestions, and opens an item's website in a new tab. |
+| Active tab | Takes a picture of the page under the toolbar button when you choose **Scan QR code on page**, to read a two-step setup QR code. The picture is read in your browser and dropped. |
 | Alarms | Locks the vault on time and checks for changes every 15 minutes. |
 | Idle | Locks the vault when your computer locks, if you choose that. |
 | Clipboard write | Copies from the right-click menu, and clears a copied password after 30 seconds, or after the delay you choose in the settings. |

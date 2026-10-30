@@ -124,17 +124,22 @@ describe('Vault settings', () => {
 		expect(screen.getByRole('link', { name: 'Import items' })).toBeTruthy()
 	})
 
-	it('stores the default item type from the cached types, without passkeys', async () => {
+	it('stores the default item type from the cached types, without passkeys or authenticators', async () => {
 		const { sent, user } = await openVault()
 		const select = await typeSelect()
 		expect(select.value).toBe('login')
-		expect([...select.options].map((option) => option.textContent)).toEqual(['Login', 'API key', 'Note', 'TOTP', 'Card', 'Identity'])
+		expect([...select.options].map((option) => option.textContent)).toEqual(['Login', 'API key', 'Note', 'Card', 'Identity'])
 		await user.selectOptions(select, 'Note')
 		await waitFor(() => expect(sentOf(sent, 'account.settings.set').map((message) => message.patch)).toEqual([{ defaultItemType: 'note' }]))
 	})
 
 	it('shows Login for a stored type this server lacks', async () => {
 		await openVault({ accountSettings: { values: { defaultItemType: 'wifi' } } })
+		expect((await typeSelect()).value).toBe('login')
+	})
+
+	it('shows Login for a stored Authenticator default from before it was dropped', async () => {
+		await openVault({ accountSettings: { values: { defaultItemType: 'totp' } } })
 		expect((await typeSelect()).value).toBe('login')
 	})
 

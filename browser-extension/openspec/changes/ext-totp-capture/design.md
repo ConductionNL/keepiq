@@ -28,7 +28,7 @@ No web standard marks a two-factor setup page: there is no attribute or event fo
 - **Decode in the popup.** The key ends up in the form, which is popup memory, either way, and the popup has a DOM for `createImageBitmap` and a canvas. jsQR 1.4.0, the web app's version, is loaded with a dynamic `import()` on the first scan, so it stays out of the popup's first chunk. The picture is scaled to at most 2048 pixels on its longer side before decoding: a high-density screen gives pictures of 8 million pixels and more, and a setup QR code stays readable at that size. jsQR runs with `inversionAttempts: 'attemptBoth'` for dark themes.
 - **The picture lives only for the decode.** `scanVisibleTab()` returns only the link or a failure code; the data URL, the bitmap and the pixels go out of scope when it returns. Nothing of it is logged.
 - **One QR code per picture.** jsQR reports the first it finds. A page with two codes is rare on a setup page; the user can scroll one out of view.
-- **The key module is shared.** `src/totp/authenticator-key.ts` ports `normaliseAuthenticatorKey`, `authenticatorKeyError` and `otpauthFromQrText`: a link is trimmed, a bare secret loses its whitespace and is upper-cased, and a key is valid when `parseTotpSeed()` reads it. The popup validates for the message, the background again before it encrypts, since it writes.
+- **The key module is shared.** `src/totp/authenticator-key.ts` ports `normaliseAuthenticatorKey`, `authenticatorKeyError` (as `isAuthenticatorKey`) and `otpauthFromQrText`: a link is trimmed, a bare secret loses its whitespace and is upper-cased, and a key is valid when `parseTotpSeed()` reads it. The popup validates for the message, the background again before it encrypts, since it writes.
 - **The seed never goes to the edit form.** `item.fetch` answers `totpSaved: true` when the row's `totp` is non-empty ciphertext and decrypts nothing for it. The form's key field starts empty; `totp` in the patch is a new seed, `''` removes the saved one, and its absence keeps it.
 - **A key is entered only on a Login.** `item.create` refuses `totp` on another type with `invalid`; `item.update` refuses a non-empty `totp` unless the cached row's type is `login`, and takes `''` on any type. A standalone `totp` item keeps its own Secret field in `key` (ext-vault-edit § Composite types).
 - **`totp` is a value field of share-save.** It joins `key`, `login` and `additionalFields`: a patch with it goes through share-save, and each copy carries it with the patch's null-ness, `''` for a removed key. `passkeys` is not a form field here; ext-passkey-provider adds it to the patch.
@@ -38,7 +38,8 @@ No web standard marks a two-factor setup page: there is no attribute or event fo
 - **`valueFields` is kept with the verified certificate.** `lookUp()` reads it, an array of strings or else empty, and `verifiedPartners()` keeps it for the certificate's 5 minutes, so a partner that upgraded counts within that time.
 - **Clone sends nothing of the key.** `item.fetch` for a clone answers `totpSaved: false` and `totpLeftOut: true`, and the form says the key is not cloned when the original had one; the clone form can take a new key.
 - **The Type select and Default item type drop `totp`,** keeping it only to show an existing item's type, as `TypeSelect` already does for `passkey`. A stored default of `totp` reads as Login.
-- **Focus.** Replace moves focus to the key input, Remove to Keep the saved key, Keep the saved key back to Replace (or Remove when Replace is not offered), as in the web app's `AuthenticatorKeyField`. A scan result is announced in a `role="status"` line; a scan failure is the field's error, linked with `aria-describedby`.
+- **One trash button instead of the web app's Replace and Remove.** Replacing a key means removing the old one, so on a Login the trash brings back the input: a new key replaces the saved one, an empty input removes it. The scan is an icon button in the input's box, like the password's generate button.
+- **Focus.** The trash moves focus to the key input, or to Keep the saved key where there is no input, and Keep the saved key back to the trash, so focus never falls to the page. A scan result is announced in a `role="status"` line; a scan failure is the field's error, linked with `aria-describedby`.
 
 ## Lock audit
 
@@ -64,9 +65,9 @@ The form is only reachable unlocked; a lock closes it and drops the draft (ext-v
 
 ## Module layout
 
-- `src/totp/authenticator-key.ts` (new): `normaliseAuthenticatorKey()`, `authenticatorKeyError()`, `otpauthFromQrText()`.
+- `src/totp/authenticator-key.ts` (new): `normaliseAuthenticatorKey()`, `isAuthenticatorKey()`, `otpauthFromQrText()`; codes and booleans, the popup words them.
 - `src/totp/qr-scan.ts` (new): `scanVisibleTab(deps)`, with the capture, the pixel read and the decoder replaceable for tests.
-- `entrypoints/popup/components/AuthenticatorKeyField.tsx` (new): the entry, the saved state with Replace and Remove, the scan button and its messages.
+- `entrypoints/popup/components/AuthenticatorKeyField.tsx` (new): the entry, the saved state with its trash button, the scan button and its messages.
 - `entrypoints/popup/views/ItemForm.tsx`: the field on Login and the remove-only state on other types, the clone note, `totp` in the draft and the patch.
 - `entrypoints/popup/components/TypeSelect.tsx`, `entrypoints/popup/views/settings/Vault.tsx`: no `totp` for new items.
 - `src/messages.ts`: the contract below.
@@ -94,8 +95,8 @@ interface EditableItem extends ItemDraft {
 	/** A clone of a row that holds a seed, for the form's note. */
 	totpLeftOut?: true
 }
-/** `partners`: cloud ids of the partner shares that cannot store the key; `requiredVersion` when the server named it. */
-type WriteError = /* …as before */ | { code: 'partner_upgrade_required'; partners: string[]; requiredVersion?: string }
+/** `partners`: the partner shares that cannot store the key, as `partner_unreachable` names them; `requiredVersion` when the server named it. */
+type WriteError = /* …as before */ | { code: 'partner_upgrade_required'; partners: Array<{ shareId: string; cloudId: string }>; requiredVersion?: string }
 ```
 
 No new kind.
@@ -106,7 +107,7 @@ No new kind.
 - [Firefox 109 to 125 cannot take the picture under `activeTab`] → The scan says to paste the key. Raising the minimum Firefox or asking for `<all_urls>` is not worth it for a paste away.
 - [A QR code outside the visible part of the page is not found] → The message says to scroll it into view.
 - [A setup page that times out the QR code while the popup is open] → The site's own flow; the key stays valid once saved.
-- [A user saves the key but never confirms it on the site] → The site then has no two-factor sign-in and the login a key it does not use; Remove takes it off. The detail view's code lets the user confirm right away.
+- [A user saves the key but never confirms it on the site] → The site then has no two-factor sign-in and the login a key it does not use; The trash button takes it off. The detail view's code lets the user confirm right away.
 - [A partner on an older Keepiq stops a change that adds a key] → As in the web app; the message names the partner, and the version when the server gave it.
 
 ## Open Questions

@@ -3,7 +3,10 @@ import type { VerifiedFederatedCertificate } from '@/src/crypto'
 
 export const VERIFIED_PARTNER_TTL_MS = 5 * 60 * 1000
 
-interface Kept { recipientCloudId: string; verified: VerifiedFederatedCertificate; at: number }
+/** `valueFields`: the value fields beyond `key`, `login` and `additionalFields` the partner stores, from the same lookup. */
+export interface VerifiedPartner extends VerifiedFederatedCertificate { valueFields: readonly string[] }
+
+interface Kept { recipientCloudId: string; verified: VerifiedPartner; at: number }
 interface Share { shareId: string; recipientCloudId: string }
 
 const kept = new Map<string, Kept>()
@@ -24,13 +27,13 @@ export function verifiedPartners(accountId: string) {
 	const used = new Map<string, Kept>()
 	const fresh = (entry: Kept) => Date.now() - entry.at < VERIFIED_PARTNER_TTL_MS
 	return {
-		get(share: Share): VerifiedFederatedCertificate | undefined {
+		get(share: Share): VerifiedPartner | undefined {
 			const entry = kept.get(keyOf(accountId, share.shareId))
 			if (!entry || !fresh(entry) || entry.recipientCloudId !== share.recipientCloudId) return undefined
 			used.set(share.shareId, entry)
 			return entry.verified
 		},
-		add(share: Share, verified: VerifiedFederatedCertificate): void {
+		add(share: Share, verified: VerifiedPartner): void {
 			used.set(share.shareId, { recipientCloudId: share.recipientCloudId, verified, at: Date.now() })
 		},
 		/** The share got this save's value, so the next save looks it up again. */

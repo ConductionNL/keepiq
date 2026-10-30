@@ -37,6 +37,8 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | The list of sends | Popup memory, fetched per popup session | Closing the popup, lock, timeout, account switch |
 | The credential of a fill | Background memory for the fill; the page's fields once filled | The fill's end; the content script drops it after writing the fields |
 | A login's TOTP seed and its code | Background memory for one fill, list refresh or menu click; popup memory while the detail view shows the code, never the seed; the code also in the page's code field once filled | That handler's end or the view closing; the content script drops a code it has no code field for |
+| A new authenticator key, typed or scanned | Popup memory in the form; background memory while it is saved; never sent back to the form once saved | Save, closing the form or the popup; the save's end |
+| The picture Scan QR code on page takes of the tab | Popup memory while it is read | The read's end; it is never stored, logged or sent |
 | When each item was last filled (`lastUsed.<id>`), no other history | `storage.local` | Logout, account removal |
 | Inline list session: a random key, the tab, frame and frame URL, the offered item ids; no plaintext | `storage.session`, like the private key | The list closing, the next list in the tab, tab close or navigation, lock, timeout, logout, account switch, browser restart, extension reload |
 | Names, usernames and verification codes in the inline list | The list page's memory while shown | The list closing |
@@ -64,6 +66,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - Requests go from the background only, with Basic auth on an app password and `credentials: 'omit'`, so browser cookies are never sent.
 - Server URLs must be `https`. Plain `http` is allowed only for `localhost`, `127.0.0.1` and `.test` hosts, for development.
 - Host access is requested per server, when you add an account. The extension holds no other host permissions.
+- `activeTab` lets Scan QR code on page take a picture of the tab under the toolbar popup, on your click only. It shows no install prompt and gives no access to other tabs or to pages you never opened Keepiq on.
 - On Chrome, `privacy` is requested only when you turn on "Make Keepiq your default password manager", and given back when you turn it off.
 
 ## Revocation

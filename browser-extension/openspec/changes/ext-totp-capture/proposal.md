@@ -25,7 +25,7 @@ ext-totp-autofill fills and copies a login's code, but the seed can only get ont
 - Mirrors Bitwarden's "Authenticator key (TOTP)" field with its "Scan QR code" button in the add and edit form of a login. The seed goes in the login's own `totp` field (keepiq#1324, #1325), with the web app's rules (`vault-login-totp-codes`, `login-one-time-codes`).
 - **Authenticator key field.** On a Login in the add and edit form, the user pastes an `otpauth://totp/` link or a base32 secret. It is validated and normalised as the web app does.
 - **Scan QR code on page.** The extension takes a picture of the visible part of the tab the popup opened over, reads the QR code in it in the popup, and puts the key in the field. Only an `otpauth://totp/` QR code is accepted. The picture is never stored or sent.
-- **A saved key stays hidden.** The edit form shows "Authenticator key saved" with Replace and Remove, never the seed. A type other than Login that holds a key offers Remove only.
+- **A saved key stays hidden.** The edit form shows the key as "Saved" with a trash button, never the seed. On a Login the trash brings back the input, so a new key replaces the saved one and an empty one removes it; another type that holds a key can only remove it.
 - **Clone leaves the key out.** A clone is usually another account on the same site, which has its own key.
 - **Share-save carries `totp`.** A changed key reaches every copy in the same request. Partner shares always get the whole value with `totp` and `passkeys` when the partner stores them; adding a key to a login shared with a partner that cannot store one is refused before anything is written.
 - **No new standalone `totp` items.** The Type select of the add form and the Default item type setting no longer offer Authenticator, as in the web app. Existing ones stay editable.
@@ -38,7 +38,7 @@ ext-totp-autofill fills and copies a login's code, but the seed can only get ont
 ## Capabilities
 
 ### New Capabilities
-- `totp-capture`: the Authenticator key field, Scan QR code on page, the hidden saved key with Replace and Remove, saving the key encrypted on create and edit, and a clone without the key.
+- `totp-capture`: the Authenticator key field, Scan QR code on page, the hidden saved key with its trash button, saving the key encrypted on create and edit, and a clone without the key.
 
 ### Modified Capabilities
 - `item-editing` (ext-vault-edit): the add form's Type select drops `totp`; Clone leaves the authenticator key out.
@@ -47,7 +47,7 @@ ext-totp-autofill fills and copies a login's code, but the seed can only get ont
 
 ## Deviations from Bitwarden
 
-- The edit form never shows a saved seed; it offers Replace and Remove. Keepiq's `login-one-time-codes` requires it; Bitwarden shows the key.
+- The edit form never shows a saved seed; a trash button takes it off, and a new key entered then replaces it. Keepiq's `login-one-time-codes` requires the hidden seed; Bitwarden shows the key. The web app offers Replace and Remove as two buttons; one trash button does both here, as replacing a key means removing the old one.
 - Clone leaves the key out; Bitwarden copies it. Not forced.
 - Only an `otpauth://totp/` QR code is accepted, as in the web app; Bitwarden also takes Steam and HOTP links, which Keepiq's code generator cannot use.
 - Scanning works only in the toolbar popup, not the pop-out window: `activeTab` is granted to the popup's tab, and the pop-out has no page under it. Bitwarden's pop-out has the same limit.

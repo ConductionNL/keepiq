@@ -117,6 +117,30 @@ describe('createItem', () => {
 		expect(await decrypt(body.additionalFields)).toBe('{}')
 	})
 
+	it('encrypts a login\'s authenticator key as it is stored, in groups joined and upper-cased', async () => {
+		server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) })
+		expect(await createItem(draft({ totp: ' jbsw y3dp ehpk 3pxp ' }))).toMatchObject({ ok: true })
+		const body = bodyOf('POST /api/v1/secrets')
+		expect(await decrypt(body.totp)).toBe('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(body)).not.toContain('JBSWY3DPEHPK3PXP')
+	})
+
+	it('sends no key for an empty one', async () => {
+		server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) })
+		await createItem(draft({ totp: '' }))
+		expect(bodyOf('POST /api/v1/secrets')).not.toHaveProperty('totp')
+	})
+
+	it.each([
+		['a key that does not read', draft({ totp: 'not a key!' })],
+		['a key on a note', draft({ typeId: 't-note', totp: 'JBSWY3DPEHPK3PXP' })],
+		['a key that is no text', { ...draft(), totp: 42 } as unknown as ItemDraft],
+	])('refuses %s before any request', async (_, refused) => {
+		server()
+		expect(await createItem(refused)).toEqual({ ok: false, error: { code: 'invalid' } })
+		expect(writes()).toEqual([])
+	})
+
 	it('replies once a sync started after the write holds the new row', async () => {
 		let release!: () => void
 		const gate = new Promise<void>((resolve) => (release = resolve))
@@ -190,7 +214,7 @@ describe('fetchItem', () => {
 			ok: true,
 			value: {
 				id: 's1', typeId: 't-login', typeName: 'login', name: 'GitHub', url: 'https://github.com', folderId: null,
-				key: 'pw', login: 'bob', additionalFields: { notes: 'n', pin: '1234' }, updatedAt: row.updatedAt, recordId: expect.any(String),
+				key: 'pw', login: 'bob', additionalFields: { notes: 'n', pin: '1234' }, updatedAt: row.updatedAt, recordId: expect.any(String), totpSaved: false,
 			},
 		})
 		expect(sent()).toEqual(['GET /api/v1/secrets/s1', 'GET /api/v1/secrets/s1/write-context'])
@@ -200,10 +224,30 @@ describe('fetchItem', () => {
 		const row = secretRow({ key: await encrypt('pw') })
 		await serve(row)
 		await fetchItem('s1')
-		expect(await records()).toEqual([{ id: 's1', recordId: expect.any(String), shown: { key: row.key, login: null, additionalFields: null }, updatedAt: row.updatedAt, sourceUpdatedAt: SOURCE_AT }])
+		expect(await records()).toEqual([{ id: 's1', recordId: expect.any(String), shown: { key: row.key, login: null, additionalFields: null, totp: null, passkeys: null }, updatedAt: row.updatedAt, sourceUpdatedAt: SOURCE_AT }])
 		fetchMock.mockClear()
 		await fetchItem('s1', 'clone')
 		expect(sent()).toEqual(['GET /api/v1/secrets/s1'])
+	})
+
+	it('says a key is saved without opening it, and leaves it out of a clone', async () => {
+		const row = secretRow({ key: await encrypt('pw'), totp: await encrypt('JBSWY3DPEHPK3PXP') })
+		await serve(row)
+		const edit = await fetchItem('s1')
+		expect(edit).toMatchObject({ ok: true, value: { totpSaved: true } })
+		expect(JSON.stringify(edit)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(vi.mocked(rsaDecrypt).mock.calls.map(([ciphertext]) => ciphertext)).not.toContain(row.totp)
+		const clone = await fetchItem('s1', 'clone')
+		expect(clone).toMatchObject({ ok: true, value: { totpSaved: false, totpLeftOut: true } })
+		expect(JSON.stringify(clone)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect((await records())[0]!.shown).toMatchObject({ totp: row.totp, passkeys: null })
+	})
+
+	it('refuses a row whose key the cache does not hold for it', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await serve(row)
+		server({ 'GET /api/v1/secrets/s1': () => json({ ...row, totp: 'swapped-in' }) }, [row])
+		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'conflict' } })
 	})
 
 	it('names a new record for each edit form, and none for a clone', async () => {
@@ -431,6 +475,43 @@ describe('updateItem', () => {
 		expect(patch).not.toHaveProperty('baseUpdatedAt')
 		expect(await decrypt(patch.key)).toBe('new')
 		expect(await decrypt(patch.additionalFields)).toBe('{"pin":"1"}')
+	})
+
+	it('saves a new authenticator key through share-save, as a value change', async () => {
+		server()
+		expect(await updateItem('s1', { totp: 'JBSWY3DPEHPK3PXP' }, BASE)).toMatchObject({ ok: true })
+		expect(await decrypt((bodyOf('PUT /api/v1/secrets/s1/share-save').patch as Record<string, unknown>).totp)).toBe('JBSWY3DPEHPK3PXP')
+		expect(writes()).not.toContain('PUT /api/v1/secrets/s1')
+	})
+
+	it('removes the key with an empty string, on any type', async () => {
+		await snapshot([secretRow({ typeId: 't-note', totp: await encrypt('JBSWY3DPEHPK3PXP') })])
+		server()
+		await updateItem('s1', { totp: '' }, BASE)
+		expect(bodyOf('PUT /api/v1/secrets/s1/share-save').patch).toEqual({ totp: '' })
+	})
+
+	it('sends no key when the patch leaves it alone', async () => {
+		server()
+		await updateItem('s1', { key: 'new' }, BASE)
+		expect(bodyOf('PUT /api/v1/secrets/s1/share-save').patch).not.toHaveProperty('totp')
+	})
+
+	it.each([
+		['a key that does not read on a login', secretRow(), 'not a key!'],
+		['a new key on a note', secretRow({ typeId: 't-note' }), 'JBSWY3DPEHPK3PXP'],
+	])('refuses %s before any request', async (_, row, totp) => {
+		await snapshot([row])
+		server()
+		expect(await updateItem('s1', { totp }, BASE)).toEqual({ ok: false, error: { code: 'invalid' } })
+		expect(writes()).toEqual([])
+	})
+
+	it('leaves no key in plain in either storage area after a save', async () => {
+		server()
+		await updateItem('s1', { totp: 'JBSWY3DPEHPK3PXP' }, BASE)
+		const stored = JSON.stringify([await browser.storage.local.get(null), await browser.storage.session.get(null)])
+		expect(stored).not.toContain('JBSWY3DPEHPK3PXP')
 	})
 
 	it('never writes a passkey credential', async () => {

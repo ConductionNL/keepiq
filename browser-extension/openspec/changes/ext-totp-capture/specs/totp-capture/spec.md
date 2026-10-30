@@ -48,11 +48,11 @@ In the pop-out window the button MUST be disabled with "Open Keepiq from the too
 - **AND** pasting a key MUST still work
 
 ### Requirement: A saved key stays hidden
-`item.fetch` SHALL answer `totpSaved: true` for a row whose `totp` is non-empty ciphertext and MUST NOT decrypt it or send the seed to the popup. The edit form of such a row MUST show "Authenticator key saved" with Replace and Remove instead of the input, and never the seed:
-- Replace shows the input, labelled "New authenticator key", with Scan QR code on page and Keep the saved key; Save sends the new key as `totp`.
-- Remove shows "The authenticator key is removed when you save." with Keep the saved key; Save sends `totp` as `''`.
+`item.fetch` SHALL answer `totpSaved: true` for a row whose `totp` is non-empty ciphertext and MUST NOT decrypt it or send the seed to the popup. The edit form of such a row MUST show the Authenticator key as a field reading "Saved", with a trash button named "Remove authenticator key" in it, instead of the input, and never the seed:
+- On a Login, the trash brings back the input, labelled "New authenticator key", with Scan QR code on page, the help text "Paste or scan a new key, or leave this empty to remove the saved one." and Keep the saved key. Save sends a new key as `totp`, or `''` when the input is left empty.
+- On a row of another type, the trash shows "The authenticator key is removed when you save." with Keep the saved key, and no input; Save sends `totp` as `''`.
 - Keep the saved key, or leaving it untouched, sends no `totp`.
-On a row of another type whose `totp` holds a value the form MUST offer Remove only, with no input. Replace moves focus to the input, Remove to Keep the saved key, and Keep the saved key back to Replace, or to Remove where Replace is not offered.
+The trash moves focus to the input, or to Keep the saved key where there is no input; Keep the saved key moves it back to the trash button.
 
 #### Scenario: Editing a login without touching its key
 - **GIVEN** a login that holds a seed
@@ -62,20 +62,20 @@ On a row of another type whose `totp` holds a value the form MUST offer Remove o
 
 #### Scenario: Removing the key
 - **GIVEN** a login that holds a seed
-- **WHEN** the user chooses Remove and saves
+- **WHEN** the user presses the trash button, leaves the new key empty and saves
 - **THEN** the patch MUST carry `totp` as `''`
 - **AND** its detail view MUST show no code
 
 #### Scenario: Replacing the key
 - **GIVEN** a login that holds a seed
-- **WHEN** the user chooses Replace, scans a new QR code and saves
+- **WHEN** the user presses the trash button, scans a new QR code and saves
 - **THEN** the patch MUST carry the new key encrypted as `totp`
-- **AND** reopening Edit MUST show "Authenticator key saved", not the key
+- **AND** reopening Edit MUST show the key as "Saved", not the key
 
 #### Scenario: A note with a key
 - **GIVEN** a note whose `totp` holds a seed from an import
-- **WHEN** the user opens Edit
-- **THEN** the form MUST show "Authenticator key saved" with Remove only
+- **WHEN** the user opens Edit and presses the trash button
+- **THEN** the form MUST say the key is removed when saving, and offer no input for a new one
 
 #### Scenario: The seed never reaches the popup
 - **GIVEN** a login that holds a seed
