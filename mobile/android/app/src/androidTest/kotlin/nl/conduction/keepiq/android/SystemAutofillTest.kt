@@ -57,6 +57,9 @@ class SystemAutofillTest {
     private val service = "nl.conduction.keepiq/nl.conduction.keepiq.android.autofill.KeepiqAutofillService"
     private val seed = "otpauth://totp/Keepiq:e2e?secret=JBSWY3DPEHPK3PXP&issuer=Keepiq"
 
+    /** The login's own seed: another key than the Authenticator item's, so the test sees which one filled the code. */
+    private val loginSeed = "otpauth://totp/Keepiq:e2e-login?secret=GEZDGNBVGY3TQOJQ&issuer=Keepiq"
+
     @Before
     fun setUp() {
         E2e.requireServer()
@@ -92,7 +95,7 @@ class SystemAutofillTest {
         val lookAlikeUrl = AppLink(testPackage, setOf("00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF")).toUrl()
         val webId = create(api, keys, "login", "Test server", "https://10.0.2.2:8443", "webuser", "web-secret-1")
         // The app's login carries its own seed (mobile-login-totp-passkeys D10); "Test code" is a standalone Authenticator item.
-        val appId = create(api, keys, "login", "Test app", appUrl, "appuser", "app-secret-1", totp = seed)
+        val appId = create(api, keys, "login", "Test app", appUrl, "appuser", "app-secret-1", totp = loginSeed)
         val lookAlikeId = create(api, keys, "login", "Look-alike", lookAlikeUrl, "wrongcert", "look-alike-1")
         val codeId = create(api, keys, "totp", "Test code", appUrl, "", seed)
 
@@ -132,8 +135,10 @@ class SystemAutofillTest {
         val statusText = waitForStatus { it.substringAfter("code=").length == 6 }
         val code = statusText.substringAfter("code=")
         val now = System.currentTimeMillis()
-        val valid = (-1..1).map { Totp.generate(Totp.parse(seed), now + it * 30_000L) }
-        assertTrue("code $code is one of $valid", code in valid)
+        val valid = (-1..1).map { Totp.generate(Totp.parse(loginSeed), now + it * 30_000L) }
+        assertTrue("code $code is one of the login's $valid", code in valid)
+        val itemCodes = (-1..1).map { Totp.generate(Totp.parse(seed), now + it * 30_000L) }
+        assertFalse("code $code came from the Authenticator item ($itemCodes)", code in itemCodes)
         E2e.shot("autofill-05-one-time-code")
 
         // 4.1 unlocked: the dropdown names the logins; the look-alike stays out.
