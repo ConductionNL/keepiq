@@ -40,19 +40,28 @@ class LoginPasskeysTest {
 
     @Test
     fun withCounterChangesOnlyThatCredential() {
-        val after = entries(LoginPasskeys.withCounter(two, "b", 5))
+        val after = entries(LoginPasskeys.withCounter(two, "b", "example.com", 5))
         assertEquals(withExtra, after[0])
         assertEquals("5", after[1]["counter"].toString())
     }
 
     @Test
     fun withoutRemovesOneAndKeepsTheRestAsStored() {
-        assertEquals(listOf(withExtra), entries(LoginPasskeys.without(two, "b")))
+        assertEquals(listOf(withExtra), entries(LoginPasskeys.without(two, "b", "example.com")))
     }
 
     @Test
     fun withoutTheLastGivesAnEmptyString() {
-        assertEquals("", LoginPasskeys.without(LoginPasskeys.without(two, "a"), "b"))
+        assertEquals("", LoginPasskeys.without(LoginPasskeys.without(two, "a", "example.com"), "b", "example.com"))
+    }
+
+    @Test
+    fun oneCredentialIdForTwoRpIdsIsTwoCredentials() {
+        val other = credential("b").copy(rpId = "example.org")
+        val both = JsonArray(listOf(Json.parseToJsonElement(credential("b", 4).toJson()), Json.parseToJsonElement(other.toJson()))).toString()
+        val counted = entries(LoginPasskeys.withCounter(both, "b", "example.com", 5))
+        assertEquals(listOf("5", "0"), counted.map { it["counter"].toString() })
+        assertEquals(listOf("example.org"), LoginPasskeys.credentials(LoginPasskeys.without(both, "b", "example.com")).map { it.rpId })
     }
 
     @Test
@@ -73,7 +82,7 @@ class LoginPasskeysTest {
         assertTrue(LoginPasskeys.readable(""))
         assertTrue(LoginPasskeys.readable(two))
         assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.appended(single, credential("c")) }
-        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.without(single, "a") }
-        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.withCounter("{", "a", 1) }
+        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.without(single, "a", "example.com") }
+        assertFailsWith<UnreadablePasskeysException> { LoginPasskeys.withCounter("{", "a", "example.com", 1) }
     }
 }

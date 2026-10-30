@@ -457,7 +457,7 @@ class VaultRepositoryTest {
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         // Another client added "b" since the phone opened the login.
         mailRow = mailRowWith(passkeysOf("a", "b"))
-        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
         assertEquals("PUT" to "/api/v1/secrets/s4", requests.first { it.first == "PUT" })
         val body = bodies.single()
         assertEquals(setOf("passkeys", "baseUpdatedAt"), body.keys)
@@ -472,14 +472,14 @@ class VaultRepositoryTest {
         staleWrites = 1
         // Another client added "c" between the phone's read and its write.
         afterStale = { mailRow = mailRowWith(passkeysOf("a", "b", "c")).replace("2026-10-03T09:00:00+00:00", "2026-10-03T10:00:00+00:00") }
-        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
         assertEquals(listOf("PUT", "PUT"), requests.filter { it.first == "PUT" }.map { it.first })
         val body = bodies.last()
         assertEquals("2026-10-03T10:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf("b", "c"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
 
         staleWrites = 2
-        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "b"))
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "b", "mail.example"))
         assertEquals(409, refused.problem.status)
     }
 
@@ -488,7 +488,7 @@ class VaultRepositoryTest {
         repo.refresh(SyncTrigger.START)
         mailRow = mailRowWith(passkeysOf("a"))
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
-        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
         assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""), "baseUpdatedAt" to JsonPrimitive("2026-10-03T09:00:00+00:00"))), bodies.single())
     }
 
@@ -498,7 +498,7 @@ class VaultRepositoryTest {
         val type = repo.refresh(SyncTrigger.START).typeNamed("login")
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         val results = listOf(
-            repo.deletePasskey(item, "a"),
+            repo.deletePasskey(item, "a", "mail.example"),
             repo.update(item, ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REMOVE)),
             repo.create(ItemCodec.draft(null, type).copy(name = "Nieuw", typed = mapOf("klantnummer" to "1"), keyEdit = KeyEdit.REPLACE, newKey = seed), type),
         )
@@ -516,7 +516,7 @@ class VaultRepositoryTest {
     fun aUseOnlyOrReadOnlyCopyCannotDeleteAPasskey() = runTest {
         repo.refresh(SyncTrigger.START)
         val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
-        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "c"))
+        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "c", "mail.example"))
         assertTrue(requests.none { it.first == "PUT" })
     }
 

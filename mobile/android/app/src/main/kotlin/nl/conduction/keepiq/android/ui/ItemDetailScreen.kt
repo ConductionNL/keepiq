@@ -120,7 +120,7 @@ fun ItemDetailScreen(
                 deleting = null
                 val index = item.passkeys.indexOf(pk)
                 scope.launch {
-                    when (val w = io { session.repository.deletePasskey(item, pk.credentialId) }) {
+                    when (val w = io { session.repository.deletePasskey(item, pk.credentialId, pk.rpId) }) {
                         is WriteResult.Saved -> {
                             result = io { session.repository.open(id) }
                             focusPasskey = index

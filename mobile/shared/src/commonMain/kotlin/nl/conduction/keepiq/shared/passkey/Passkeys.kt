@@ -109,11 +109,12 @@ object Passkeys {
         return try {
             PasskeysWrite.rewrite(api, keys, choice.itemId) { _, stored ->
                 fetched = true
-                val record = LoginPasskeys.credentials(stored).firstOrNull { it.credentialId == choice.credential.credentialId }
+                val record = LoginPasskeys.credentials(stored)
+                    .firstOrNull { it.credentialId == choice.credential.credentialId && it.rpId == choice.credential.rpId }
                     ?: throw PasskeyGoneException()
                 val assertion = WebAuthn.getAssertion(clientData, rpId, record)
                 val write = assertion.counter > 0 && assertion.counter != record.counter
-                PasskeysWrite.Change(if (write) LoginPasskeys.withCounter(stored, record.credentialId, assertion.counter) else null, assertion)
+                PasskeysWrite.Change(if (write) LoginPasskeys.withCounter(stored, record.credentialId, record.rpId, assertion.counter) else null, assertion)
             }
         } catch (e: CancellationException) {
             throw e

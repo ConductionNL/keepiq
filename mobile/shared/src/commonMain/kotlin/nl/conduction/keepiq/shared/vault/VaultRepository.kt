@@ -229,16 +229,16 @@ class VaultRepository(
     }
 
     /**
-     * Deletes one passkey from [item]'s `passkeys` (mobile-login-totp-passkeys
-     * D7). The item is read fresh, so a passkey added elsewhere since it
+     * Deletes the passkey [credentialId] for [rpId] from [item]'s `passkeys`
+     * (mobile-login-totp-passkeys D7). The item is read fresh, so a passkey added elsewhere since it
      * was opened is kept, and written with that row's `updatedAt` as
      * `baseUpdatedAt`, so one added in between is not overwritten either
      * (PasskeysWrite).
      */
-    suspend fun deletePasskey(item: DecryptedItem, credentialId: String): WriteResult = write {
+    suspend fun deletePasskey(item: DecryptedItem, credentialId: String, rpId: String): WriteResult = write {
         if (item.row.useOnly || item.row.readOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
         try {
-            PasskeysWrite.rewrite(api, keys, item.row.id) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId), Unit) }
+            PasskeysWrite.rewrite(api, keys, item.row.id) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
         } catch (e: LoginGoneException) {
             return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
         }

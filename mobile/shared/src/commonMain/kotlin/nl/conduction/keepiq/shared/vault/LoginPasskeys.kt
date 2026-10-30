@@ -28,13 +28,17 @@ object LoginPasskeys {
     /** Whether [json] is empty or an array, so a change keeps what is stored. */
     fun readable(json: String): Boolean = json.isEmpty() || runCatching { Json.parseToJsonElement(json) }.getOrNull() is JsonArray
 
-    /** The array without [credentialId], or `""` when none remain. */
-    fun without(json: String, credentialId: String): String =
-        serialize(array(json).filter { idOf(it) != credentialId })
+    /**
+     * The array without the credential [credentialId] for [rpId], or `""`
+     * when none remain. The pair names one credential: an import keeps one
+     * id for two rpIds as two entries (src/import/loginValueFields.js).
+     */
+    fun without(json: String, credentialId: String, rpId: String): String =
+        serialize(array(json).filter { !it.isCredential(credentialId, rpId) })
 
-    /** The array with [counter] on [credentialId]. */
-    fun withCounter(json: String, credentialId: String, counter: Long): String = serialize(
-        array(json).map { e -> (e as? JsonObject)?.takeIf { idOf(it) == credentialId }?.let { JsonObject(it + ("counter" to JsonPrimitive(counter))) } ?: e },
+    /** The array with [counter] on the credential [credentialId] for [rpId]. */
+    fun withCounter(json: String, credentialId: String, rpId: String, counter: Long): String = serialize(
+        array(json).map { e -> (e as? JsonObject)?.takeIf { it.isCredential(credentialId, rpId) }?.let { JsonObject(it + ("counter" to JsonPrimitive(counter))) } ?: e },
     )
 
     /** The array with [credential] added; [json] may be `""`. */
@@ -47,7 +51,10 @@ object LoginPasskeys {
     /** The entries to change; a value that is not an array refuses, so it is never overwritten. */
     private fun array(json: String): List<JsonElement> = if (readable(json)) entries(json) else throw UnreadablePasskeysException()
 
-    private fun idOf(entry: JsonElement): String? = ((entry as? JsonObject)?.get("credentialId") as? JsonPrimitive)?.contentOrNull
+    private fun JsonElement.isCredential(credentialId: String, rpId: String): Boolean =
+        member("credentialId") == credentialId && member("rpId") == rpId
+
+    private fun JsonElement.member(name: String): String? = ((this as? JsonObject)?.get(name) as? JsonPrimitive)?.contentOrNull
 
     private fun serialize(entries: List<JsonElement>): String = if (entries.isEmpty()) "" else JsonArray(entries).toString()
 }
