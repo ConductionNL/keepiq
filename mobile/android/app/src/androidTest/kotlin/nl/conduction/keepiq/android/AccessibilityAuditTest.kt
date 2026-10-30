@@ -145,17 +145,21 @@ class AccessibilityAuditTest {
 
         // A login with its own code and two passkeys, and the delete dialog (mobile-login-totp-passkeys 3.4).
         val loginId = createLoginWithCodeAndPasskeys()
-        compose.onNodeWithContentDescription("Sync now").performClick()
-        compose.waitForText("Mail with passkeys (a11y)", 60_000)
-        compose.onNodeWithText("Mail with passkeys (a11y)").performClick()
-        compose.waitForText("anna · added March 12, 2026", 60_000)
-        audit("item detail, login code and passkeys")
-        compose.onNodeWithContentDescription("Delete passkey for anna").performScrollTo().performClick()
-        compose.waitForText("Delete the passkey for anna?")
-        audit("passkey delete dialog")
-        compose.onNodeWithText("Cancel").performClick()
-        compose.onNodeWithText("Back").performClick()
-        runBlocking { session().api.trashSecret(loginId) }
+        try {
+            compose.onNodeWithContentDescription("Sync now").performClick()
+            compose.waitForText("Mail with passkeys (a11y)", 60_000)
+            compose.onNodeWithText("Mail with passkeys (a11y)").performClick()
+            // The row's description, not its date: the date follows the emulator's locale and zone.
+            compose.waitUntil(60_000) { compose.onAllNodes(hasContentDescription("Delete passkey for anna")).fetchSemanticsNodes().isNotEmpty() }
+            audit("item detail, login code and passkeys")
+            compose.onNodeWithContentDescription("Delete passkey for anna").performScrollTo().performClick()
+            compose.waitForText("Delete the passkey for anna?")
+            audit("passkey delete dialog")
+            compose.onNodeWithText("Cancel").performClick()
+            compose.onNodeWithText("Back").performClick()
+        } finally {
+            runBlocking { session().api.trashSecret(loginId) }
+        }
 
         // The item form.
         compose.waitForText("Webmail (demo)")
