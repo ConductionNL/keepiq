@@ -117,7 +117,7 @@ class SeedDevelopmentData implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_pkey_export populates $privateKeyPem
 	 *   via by-reference output param — PHPMD cannot trace by-ref semantics.
 	 *
-	 * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
+	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
 	 */
 	public function mintSuite(string $userId, string $masterPassword, IOutput $output): ?EncryptionSuite {
 		// Generate RSA key pair.

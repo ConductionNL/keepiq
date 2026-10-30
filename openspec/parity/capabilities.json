@@ -9712,12 +9712,13 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/entrypoints/popup/views/VaultList.tsx:102 search and :103 folder filter with type chips; browser-extension/entrypoints/popup/views/ItemDetail.tsx masked fields with reveal and copy, Edit and Delete disabled (:214-215); add, edit and folder management specified in browser-extension/openspec/changes/ext-vault-edit",
+        "evidence": "browser-extension/entrypoints/popup/views/VaultList.tsx:102 search and :103 folder filter with type chips; browser-extension/entrypoints/popup/views/ItemDetail.tsx masked fields with reveal and copy; add and edit in entrypoints/popup/views/ItemForm.tsx with hooks/useItemDraft.ts and hooks/useUnsavedChangesGuard.ts; folders in views/settings/FolderManager.tsx and views/FolderPicker.tsx; specified in browser-extension/openspec/specs/item-editing and folder-management (change ext-vault-edit, archived 2026-10-30)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Extension popup -> Vault tab",
-        "note": "Browsing, searching, filtering by folder and type, and viewing and copying fields work. Adding, editing, deleting and managing folders are not built; ext-vault-edit specifies them.",
+        "note": "Browsing, searching, filtering by folder and type, viewing and copying fields, adding, editing, deleting and managing folders work in the extension popup.",
         "change": "browser-extension/openspec/changes/ext-vault-browse",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-30",
+        "spec": "browser-extension/openspec/specs/item-editing"
       },
       "rowSource": "own",
       "provider": "keepiq",

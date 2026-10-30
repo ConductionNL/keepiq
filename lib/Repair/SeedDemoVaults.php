@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md
+ * @spec openspec/specs/demo-vault/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -100,7 +100,7 @@ class SeedDemoVaults implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
+	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
 	 */
 	public function run(IOutput $output): void {
 		$owners   = array_filter(array_map('trim', explode(',', $this->appConfig->getValueString(Application::APP_ID, self::OWNERS_KEY, ''))));
@@ -127,7 +127,7 @@ class SeedDemoVaults implements IRepairStep {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
+	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
 	 */
 	private function refusal(string $uid): string {
 		if ($this->userManager->get($uid) === null) {
@@ -154,7 +154,7 @@ class SeedDemoVaults implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/example-set-demo-vault/specs/demo-vault/spec.md#requirement-a-demo-vault-holds-only-demo-secrets
+	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-holds-only-demo-secrets
 	 */
 	private function seed(string $uid, string $password, IOutput $output): void {
 		$suite = $this->suites->mintSuite(userId: $uid, masterPassword: $password, output: $output);
