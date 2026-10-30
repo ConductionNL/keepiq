@@ -5,28 +5,37 @@ package nl.conduction.keepiq.android.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
 import nl.conduction.keepiq.shared.generator.GeneratorSettings
 import nl.conduction.keepiq.shared.vault.DecryptedItem
+import nl.conduction.keepiq.shared.vault.PasskeySummary
 import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.TypeField
 import nl.conduction.keepiq.shared.vault.VaultRow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.ZoneOffset
+import java.util.Locale
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -136,5 +145,111 @@ class ScreensTest {
         compose.onNodeWithText("Keepiq fills in your logins in apps and browsers.").assertExists()
         compose.onNodeWithText("Choose Keepiq for autofill").assertDoesNotExist()
         compose.onNodeWithText("Show where Keepiq never saves").assertExists()
+    }
+
+    private fun passkey(id: String, user: String?, createdAt: String?) = PasskeySummary(id, "mail.example", "Mail", user, createdAt)
+
+    private fun mail(useOnly: Boolean = false, readOnly: Boolean = useOnly, passkeys: List<PasskeySummary> = emptyList(), seed: String = "JBSWY3DPEHPK3PXP") =
+        DecryptedItem(
+            row = row(useOnly).copy(readOnly = readOnly), typeName = "login", type = login, login = "alice",
+            secret = if (useOnly) "" else "geheim-1", additionalFields = null, additionalFieldsError = false, passkey = null,
+            fromCache = false, totpSeed = seed, hasSavedKey = seed.isNotEmpty(), passkeys = if (useOnly) emptyList() else passkeys,
+        )
+
+    private fun showMail(item: DecryptedItem, offline: Boolean = false, deleted: MutableList<String> = mutableListOf(), focusPasskey: Int? = null) =
+        compose.setContent {
+            // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
+            val inputMode = LocalInputModeManager.current
+            var keyboard by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard) MaterialTheme {
+                ItemDetail(
+                    item = item, folderPath = "Geen map", offline = offline, problem = null, modifier = Modifier,
+                    onCopy = {}, onEdit = {}, onMove = {}, onTrash = {}, onSendLogin = {},
+                    onDeletePasskey = { deleted += it.credentialId }, focusPasskey = focusPasskey,
+                )
+            }
+        }
+
+    @Test
+    fun aLoginShowsItsCodeButNeverItsKey() {
+        showMail(mail())
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithContentDescription("Copy Authenticator code").assertExists()
+        compose.onNodeWithText("JBSWY3DPEHPK3PXP", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun aPasskeyRowShowsTheDateItWasAdded() {
+        assertEquals("March 12, 2026", passkeyAdded("2026-03-12T10:00:00.000Z", Locale.US, ZoneOffset.UTC))
+        showMail(mail(passkeys = listOf(passkey("a", "alice", "2026-03-12T10:00:00.000Z"))))
+        compose.onNodeWithText("Passkey").assertExists()
+        compose.onNodeWithText("Added March 12, 2026").assertExists()
+        compose.onNodeWithText("mail.example", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun twoPasskeysNameTheirAccounts() {
+        showMail(mail(passkeys = listOf(passkey("a", "alice", "2026-03-12T10:00:00.000Z"), passkey("b", "alice-work", "2026-04-01T10:00:00.000Z"))))
+        compose.onNodeWithText("alice · added March 12, 2026").assertExists()
+        compose.onNodeWithText("alice-work · added April 1, 2026").assertExists()
+    }
+
+    @Test
+    fun aPasskeyWithoutAReadableDateReadsSaved() {
+        assertEquals(null, passkeyAdded("yesterday", Locale.US, ZoneOffset.UTC))
+        showMail(mail(passkeys = listOf(passkey("a", "alice", null))))
+        compose.onNodeWithText("Passkey saved").assertExists()
+    }
+
+    @Test
+    fun deleteNamesThePasskeyAndReportsIt() {
+        val deleted = mutableListOf<String>()
+        showMail(mail(passkeys = listOf(passkey("a", "alice", null), passkey("b", "alice-work", null))), deleted = deleted)
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        assertEquals(listOf("b"), deleted)
+    }
+
+    @Test
+    fun theDeleteDialogAsksFirst() {
+        val calls = mutableListOf<String>()
+        compose.setContent { MaterialTheme { PasskeyDeleteDialog(onConfirm = { calls += "yes" }, onDismiss = { calls += "no" }) } }
+        compose.onNodeWithText("Delete this passkey?").assertExists()
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        assertEquals(listOf("no", "yes"), calls)
+    }
+
+    @Test
+    fun aReadOnlyCopyOffersNoDelete() {
+        val one = listOf(passkey("a", "alice", null))
+        showMail(mail(readOnly = true, passkeys = one))
+        compose.onNodeWithText("Passkey saved").assertExists()
+        compose.onNodeWithContentDescription("Delete passkey").assertDoesNotExist()
+    }
+
+    @Test
+    fun anOfflineCopyOffersNoDelete() {
+        showMail(mail(passkeys = listOf(passkey("a", "alice", null))), offline = true)
+        compose.onNodeWithContentDescription("Delete passkey").assertDoesNotExist()
+    }
+
+    @Test
+    fun aUseOnlyCopyShowsItsCodeButNoPasskeys() {
+        showMail(mail(useOnly = true, passkeys = listOf(passkey("a", "alice", null))))
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithText("Passkey saved").assertDoesNotExist()
+    }
+
+    @Test
+    fun afterADeleteFocusGoesToTheNextPasskeyElseEdit() {
+        showMail(mail(passkeys = listOf(passkey("b", "alice-work", null))), focusPasskey = 0)
+        compose.onNodeWithContentDescription("Delete passkey").assertIsFocused()
+    }
+
+    @Test
+    fun afterTheLastDeleteFocusGoesToEdit() {
+        showMail(mail(), focusPasskey = 0)
+        compose.onNodeWithText("Edit").assertIsFocused()
     }
 }

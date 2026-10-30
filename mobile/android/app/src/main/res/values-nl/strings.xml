@@ -79,6 +79,16 @@
     <string name="detail_passkey_account">Account</string>
     <string name="detail_passkey_created">Gemaakt</string>
     <string name="detail_passkey_note">De website die deze passkey gebruikt, maakt en wijzigt hem.</string>
+    <string name="detail_passkey">Passkey</string>
+    <string name="detail_passkey_added">Toegevoegd op %1$s</string>
+    <string name="detail_passkey_added_for">%1$s · toegevoegd op %2$s</string>
+    <string name="detail_passkey_saved">Passkey opgeslagen</string>
+    <string name="detail_passkey_saved_for">%1$s · passkey opgeslagen</string>
+    <string name="detail_passkeys_error">De passkeys van dit item kunnen niet worden gelezen.</string>
+    <string name="cd_delete_passkey">Passkey verwijderen</string>
+    <string name="cd_delete_passkey_for">Passkey voor %1$s verwijderen</string>
+    <string name="passkey_delete_title">Deze passkey verwijderen?</string>
+    <string name="passkey_delete_body">Je kunt er niet meer mee inloggen op deze site. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="detail_extra_fields">Extra velden</string>
     <string name="detail_fields_error">De extra velden zijn niet te lezen.</string>
     <string name="detail_use_only">Gedeeld om alleen te gebruiken. Je kunt het invullen, maar de waarde niet zien of kopiëren.</string>

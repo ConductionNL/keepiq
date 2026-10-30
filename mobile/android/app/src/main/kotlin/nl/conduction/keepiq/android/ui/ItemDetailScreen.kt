@@ -32,6 +32,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -51,6 +53,7 @@ import nl.conduction.keepiq.shared.vault.Composite
 import nl.conduction.keepiq.shared.vault.DecryptedItem
 import nl.conduction.keepiq.shared.vault.FormKind
 import nl.conduction.keepiq.shared.vault.OpenResult
+import nl.conduction.keepiq.shared.vault.PasskeySummary
 import nl.conduction.keepiq.shared.vault.VaultIndex
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteResult
@@ -75,6 +78,8 @@ fun ItemDetailScreen(
     var result by remember(id) { mutableStateOf<OpenResult?>(null) }
     var action by remember { mutableStateOf<DetailAction?>(null) }
     var problem by remember { mutableStateOf<WriteProblem?>(null) }
+    var deleting by remember { mutableStateOf<PasskeySummary?>(null) }
+    var focusPasskey by remember(id) { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
 
@@ -94,6 +99,8 @@ fun ItemDetailScreen(
             onMove = { action = DetailAction.Move },
             onTrash = { action = DetailAction.Trash },
             onSendLogin = { onSendLogin(r.item.login, r.item.secret) },
+            onDeletePasskey = { deleting = it },
+            focusPasskey = focusPasskey,
         )
     }
 
@@ -106,6 +113,24 @@ fun ItemDetailScreen(
                 is WriteResult.Refused -> problem = w.problem
             }
         }
+    }
+    deleting?.let { pk ->
+        PasskeyDeleteDialog(
+            onConfirm = {
+                deleting = null
+                val index = item.passkeys.indexOf(pk)
+                scope.launch {
+                    when (val w = io { session.repository.deletePasskey(item, pk.credentialId) }) {
+                        is WriteResult.Saved -> {
+                            result = io { session.repository.open(id) }
+                            focusPasskey = index
+                        }
+                        is WriteResult.Refused -> problem = w.problem
+                    }
+                }
+            },
+            onDismiss = { deleting = null },
+        )
     }
     when (action) {
         DetailAction.Trash -> AlertDialog(
@@ -164,8 +189,12 @@ internal fun ItemDetail(
     onMove: () -> Unit,
     onTrash: () -> Unit,
     onSendLogin: () -> Unit,
+    onDeletePasskey: (PasskeySummary) -> Unit = {},
+    /** After a passkey Delete: the row whose Delete takes focus, else the Edit button. */
+    focusPasskey: Int? = null,
 ) {
     val row = item.row
+    val editFocus = remember { FocusRequester() }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
@@ -209,6 +238,15 @@ internal fun ItemDetail(
                 Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
             }
         }
+        if (item.kind != FormKind.TOTP && item.hasSavedKey) TotpRow(item, onCopy)
+        val mayDelete = !row.useOnly && !row.readOnly && !offline
+        if (!row.useOnly) {
+            PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey)
+            if (item.passkeysError) Text(stringResource(R.string.detail_passkeys_error), color = MaterialTheme.colorScheme.error)
+        }
+        LaunchedEffect(focusPasskey, item) {
+            if (focusPasskey != null && (focusPasskey >= item.passkeys.size || !mayDelete) && !row.useOnly) editFocus.requestFocus()
+        }
         row.url?.takeIf { it.isNotEmpty() }?.let { FieldRow(stringResource(R.string.detail_address), it, onCopy = onCopy) }
         if (!row.useOnly) {
             for ((field, value) in item.typedValues) {
@@ -225,7 +263,7 @@ internal fun ItemDetail(
         HorizontalDivider()
         if (!row.useOnly) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit, enabled = !offline) { Text(stringResource(R.string.action_edit)) }
+                OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusRequester(editFocus)) { Text(stringResource(R.string.action_edit)) }
                 OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
             }
             if (item.kind == FormKind.LOGIN) {
