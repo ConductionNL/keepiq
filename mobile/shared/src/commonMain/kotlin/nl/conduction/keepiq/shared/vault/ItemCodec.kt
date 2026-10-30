@@ -423,8 +423,18 @@ object ItemCodec {
         return JsonObject(body)
     }
 
-    /** The body that sets a login's passkeys: `''` when none remain, never an encrypted empty string. */
-    fun passkeysBody(json: String, keys: VaultKeys): JsonObject = JsonObject(mapOf("passkeys" to encryptedOrEmpty(json, keys)))
+    /**
+     * The body that sets a login's passkeys: `''` when none remain, never an
+     * encrypted empty string. With [baseUpdatedAt], the `updatedAt` of the
+     * row the change was made on, the server refuses the write when the
+     * login changed since (PasskeysWrite).
+     */
+    fun passkeysBody(json: String, keys: VaultKeys, baseUpdatedAt: String? = null): JsonObject = JsonObject(
+        buildMap {
+            put("passkeys", encryptedOrEmpty(json, keys))
+            baseUpdatedAt?.let { put("baseUpdatedAt", JsonPrimitive(it)) }
+        },
+    )
 
     private fun encryptedOrEmpty(text: String, keys: VaultKeys): JsonPrimitive =
         JsonPrimitive(if (text.isEmpty()) "" else keys.encryptField(text))

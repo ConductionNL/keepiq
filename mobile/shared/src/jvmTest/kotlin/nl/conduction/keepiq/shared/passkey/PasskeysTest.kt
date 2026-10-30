@@ -7,6 +7,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
@@ -16,6 +17,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.KeepiqApiException
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.crypto.ClientData
@@ -49,6 +51,10 @@ import kotlin.test.assertTrue
  * and a request that allows only RS256 is declined before anything is sent.
  */
 class PasskeysTest {
+    private companion object {
+        const val UPDATED_AT = "2026-10-05T10:00:00+00:00"
+    }
+
     private val privatePem = Vectors.envelope.str("privateKeyPem")
     private val keys = RsaVaultKeys.fromPem(privatePem, Vectors.envelope.str("certificatePem"), "suite-9", 2)
     private val publicKey = RsaPublicKey.fromPem(Vectors.envelope.str("publicKeyPem"))
@@ -62,11 +68,20 @@ class PasskeysTest {
     private var freshLogin = "{}"
     private val bodies = mutableListOf<JsonObject>()
     private var offline = false
+
+    /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
+    private var staleWrites = 0
+    private var afterStale: () -> Unit = {}
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
         if (offline) throw java.io.IOException("no network")
+        if (request.method == HttpMethod.Put && staleWrites > 0) {
+            staleWrites--
+            afterStale()
+            return@MockEngine respond("""{"message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"9","name":"passkey","fields":[]}]"""
             path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get -> freshLogin
@@ -94,8 +109,8 @@ class PasskeysTest {
             passkeys = if (records.isEmpty()) null else enc(array(*records)), readOnly = readOnly,
         )
 
-    private fun freshLoginWith(vararg records: PasskeyCredential) {
-        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"${enc(array(*records))}"}"""
+    private fun freshLoginWith(vararg records: PasskeyCredential, updatedAt: String = UPDATED_AT) {
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"${enc(array(*records))}","updatedAt":"$updatedAt"}"""
     }
 
     private fun sentPasskeys(): List<PasskeyCredential> =
@@ -112,8 +127,35 @@ class PasskeysTest {
         assertEquals(5L, assertion.counter)
         assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
         assertEquals(listOf("GET" to "/api/v1/secrets/l1", "PUT" to "/api/v1/secrets/l1"), requests)
-        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(setOf("passkeys", "baseUpdatedAt"), bodies.single().keys)
+        assertEquals(UPDATED_AT, bodies.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(5L), sentPasskeys().map { it.counter })
+    }
+
+    @Test
+    fun aCounterWriteRefusedAsStaleSignsAgainFromTheNewRowOnce() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        staleWrites = 1
+        // Signed on another device between the read and the write.
+        afterStale = { freshLoginWith(record.copy(counter = 12), updatedAt = "2026-10-05T11:00:00+00:00") }
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl")
+        assertEquals(13L, assertion.counter)
+        assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
+        assertEquals("2026-10-05T11:00:00+00:00", bodies.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf(13L), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)).map { it.counter })
+    }
+
+    @Test
+    fun aSecondStaleRefusalFailsTheWrite() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        staleWrites = 2
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals(409, e.status)
+        assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
     }
 
     @Test
@@ -254,8 +296,23 @@ class PasskeysTest {
         val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", " Alice@Example.nl")))
         val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
         assertEquals(listOf("GET" to "/api/v1/secrets/l1", "PUT" to "/api/v1/secrets/l1"), requests)
-        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(setOf("passkeys", "baseUpdatedAt"), bodies.single().keys)
+        assertEquals(UPDATED_AT, bodies.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(existing, r.record), sentPasskeys())
+    }
+
+    @Test
+    fun aNewPasskeyRefusedAsStaleIsAddedToTheNewRowOnce() = runTest {
+        val (existing, _) = made("login.example.nl", 0)
+        val (addedElsewhere, _) = made("login.example.nl", 0)
+        freshLoginWith(existing)
+        staleWrites = 1
+        afterStale = { freshLoginWith(existing, addedElsewhere, updatedAt = "2026-10-05T11:00:00+00:00") }
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
+        assertEquals("2026-10-05T11:00:00+00:00", bodies.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf(existing, addedElsewhere, r.record), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)))
     }
 
     @Test

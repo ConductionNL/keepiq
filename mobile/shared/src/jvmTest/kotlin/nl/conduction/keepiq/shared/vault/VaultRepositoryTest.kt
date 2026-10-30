@@ -65,6 +65,10 @@ class VaultRepositoryTest {
     private var refuseWrites = false
     private var cachingOff = false
 
+    /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
+    private var staleWrites = 0
+    private var afterStale: () -> Unit = {}
+
     private val loginRow = """{"id":"s1","name":"Huisbank","url":"https://mijn.huisbank.example","typeId":"1","folderId":"f2",
         "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42}""")}",
         "useOnly":false,"readOnly":false,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
@@ -96,6 +100,11 @@ class VaultRepositoryTest {
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
         if (offline) throw IOException("no network")
+        if (request.method == HttpMethod.Put && staleWrites > 0) {
+            staleWrites--
+            afterStale()
+            return@MockEngine respond("""{"message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         val write = request.method != HttpMethod.Get
         val body = when {
             write && refuseWrites -> """{"ocs":{"meta":{"status":"failure","statuscode":403,"message":""},"data":{"error":"read_only","message":"You can only read this item."}}}"""
@@ -445,8 +454,27 @@ class VaultRepositoryTest {
         assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
         assertEquals("PUT" to "/api/v1/secrets/s4", requests.first { it.first == "PUT" })
         val body = bodies.single()
-        assertEquals(setOf("passkeys"), body.keys)
+        assertEquals(setOf("passkeys", "baseUpdatedAt"), body.keys)
+        assertEquals("2026-10-03T09:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf("b"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+    }
+
+    @Test
+    fun aDeleteRefusedAsStaleIsMadeOnceMoreOnTheNewRow() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        staleWrites = 1
+        // Another client added "c" between the phone's read and its write.
+        afterStale = { mailRow = mailRowWith(passkeysOf("a", "b", "c")).replace("2026-10-03T09:00:00+00:00", "2026-10-03T10:00:00+00:00") }
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertEquals(listOf("PUT", "PUT"), requests.filter { it.first == "PUT" }.map { it.first })
+        val body = bodies.last()
+        assertEquals("2026-10-03T10:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf("b", "c"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+
+        staleWrites = 2
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "b"))
+        assertEquals(409, refused.problem.status)
     }
 
     @Test
@@ -455,7 +483,7 @@ class VaultRepositoryTest {
         mailRow = mailRowWith(passkeysOf("a"))
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
-        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""))), bodies.single())
+        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""), "baseUpdatedAt" to JsonPrimitive("2026-10-03T09:00:00+00:00"))), bodies.single())
     }
 
     @Test

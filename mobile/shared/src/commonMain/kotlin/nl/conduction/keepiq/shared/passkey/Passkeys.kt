@@ -18,9 +18,10 @@ import nl.conduction.keepiq.shared.crypto.WebAuthn
 import nl.conduction.keepiq.shared.send.IsoTime
 import nl.conduction.keepiq.shared.vault.ItemCodec
 import nl.conduction.keepiq.shared.vault.ItemParts
+import nl.conduction.keepiq.shared.vault.LoginGoneException
 import nl.conduction.keepiq.shared.vault.LoginPasskeys
+import nl.conduction.keepiq.shared.vault.PasskeysWrite
 import nl.conduction.keepiq.shared.vault.VaultKeys
-import nl.conduction.keepiq.shared.vault.VaultRow
 
 /**
  * A stored passkey for the asked relying party, decrypted for one request:
@@ -97,36 +98,32 @@ object Passkeys {
      * A passkey on a login signs from the login as the server holds it now,
      * never from the index: the counter it sends is the stored one plus one,
      * and a passkey deleted elsewhere refuses with [PasskeyGoneException],
-     * whatever its counter. When the server cannot be reached, a passkey
-     * whose counter is zero signs from the index as before, since it writes
-     * nothing back; one with a counter fails, as its write-back would.
+     * whatever its counter. The counter goes back with the row's `updatedAt`
+     * as `baseUpdatedAt`; when the login changed in between, it is read and
+     * signed once more (PasskeysWrite). When the server cannot be reached, a
+     * passkey whose counter is zero signs from the index as before, since it
+     * writes nothing back; one with a counter fails, as its write-back would.
      */
     private suspend fun signOnLogin(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
-        val row = try {
-            api.getSecret(choice.itemId)
+        var fetched = false
+        return try {
+            PasskeysWrite.rewrite(api, keys, choice.itemId) { _, stored ->
+                fetched = true
+                val record = LoginPasskeys.credentials(stored).firstOrNull { it.credentialId == choice.credential.credentialId }
+                    ?: throw PasskeyGoneException()
+                val assertion = WebAuthn.getAssertion(clientData, rpId, record)
+                val write = assertion.counter > 0 && assertion.counter != record.counter
+                PasskeysWrite.Change(if (write) LoginPasskeys.withCounter(stored, record.credentialId, assertion.counter) else null, assertion)
+            }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: LoginGoneException) {
+            throw PasskeyGoneException()
         } catch (e: Exception) {
             // A KeepiqApiException with a status is the server's answer; anything else never reached it.
             val unreachable = e !is KeepiqApiException || e.status == 0
-            if (unreachable && choice.credential.counter == 0L) return WebAuthn.getAssertion(clientData, rpId, choice.credential)
-            throw e
+            if (!fetched && unreachable && choice.credential.counter == 0L) WebAuthn.getAssertion(clientData, rpId, choice.credential) else throw e
         }
-        val fresh = row?.let { VaultRow.from(it) } ?: throw PasskeyGoneException()
-        val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
-        val record = LoginPasskeys.credentials(stored).firstOrNull { it.credentialId == choice.credential.credentialId }
-            ?: throw PasskeyGoneException()
-        val assertion = WebAuthn.getAssertion(clientData, rpId, record)
-        if (assertion.counter > 0 && assertion.counter != record.counter) {
-            api.updateSecret(choice.itemId, ItemCodec.passkeysBody(LoginPasskeys.withCounter(stored, record.credentialId, assertion.counter), keys))
-        }
-        return assertion
-    }
-
-    /** A login's `passkeys` as the server holds it now, decrypted; `""` for none. */
-    private suspend fun storedPasskeys(api: KeepiqApi, keys: VaultKeys, id: String): String {
-        val fresh = api.getSecret(id)?.let { VaultRow.from(it) } ?: throw IllegalStateException("The login is gone")
-        return if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
     }
 
     /**
@@ -163,7 +160,7 @@ object Passkeys {
         val record = registration.record
         val login = matchingLogin(index, request.rpId, request.userName, keys)
         if (login != null) {
-            api.updateSecret(login.id, ItemCodec.passkeysBody(LoginPasskeys.appended(storedPasskeys(api, keys, login.id), record), keys))
+            PasskeysWrite.rewrite(api, keys, login.id) { _, stored -> PasskeysWrite.Change(LoginPasskeys.appended(stored, record), Unit) }
         } else {
             val typeId = api.listTypes().firstOrNull { (it["name"] as? JsonPrimitive)?.contentOrNull == AutofillEntry.LOGIN }
                 ?.let { (it["id"] as? JsonPrimitive)?.contentOrNull }
