@@ -164,8 +164,8 @@ fun ItemEditScreen(
             }
             FormKind.NOTE, FormKind.PASSKEY -> Unit
         }
-        // A key set elsewhere on another type: it can be removed, not entered here (web D6).
-        if (draft.kind != FormKind.LOGIN && draft.kind != FormKind.TOTP && draft.hasSavedKey) {
+        // A key set elsewhere on another type, an Authenticator item included: it can be removed, not entered here (web D6).
+        if (draft.kind != FormKind.LOGIN && draft.hasSavedKey) {
             AuthenticatorKeyField(draft, error("totp"), removeOnly = true) { draft = it }
         }
         for (field in type?.fields ?: emptyList()) {

@@ -213,7 +213,7 @@ internal fun ItemDetail(
                 if (item.login.isNotEmpty()) FieldRow(stringResource(R.string.detail_username), item.login, onCopy = onCopy)
                 if (!row.useOnly) FieldRow(passwordLabel, item.secret, masked = true, onCopy = onCopy)
             }
-            FormKind.TOTP -> TotpRow(item, onCopy)
+            FormKind.TOTP -> TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
             FormKind.NOTE -> if (!row.useOnly) FieldRow(stringResource(R.string.detail_notes), item.secret, onCopy = onCopy)
             FormKind.CARD, FormKind.IDENTITY -> if (!row.useOnly) {
                 val data = item.composite
@@ -238,7 +238,15 @@ internal fun ItemDetail(
                 Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
             }
         }
-        if (item.kind != FormKind.TOTP && item.hasSavedKey) TotpRow(item, onCopy)
+        // The item's own `totp` field, for any type that holds one; on an Authenticator item it is a second code, named so.
+        if (item.hasSavedKey) {
+            if (item.kind == FormKind.TOTP) {
+                val own = item.totpSeed.takeIf { it.isNotBlank() }?.let { runCatching { Totp.parse(it) }.getOrNull() }
+                TotpRow(own, stringResource(R.string.detail_code_own_key), onCopy)
+            } else {
+                TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
+            }
+        }
         val mayDelete = !row.useOnly && !row.readOnly && !offline
         if (!row.useOnly) {
             PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey)
@@ -327,8 +335,7 @@ fun FieldRow(label: String, value: String, masked: Boolean = false, copy: Boolea
 
 /** The current code and its seconds left, refreshed every second. */
 @Composable
-private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
-    val params = item.totp
+private fun TotpRow(params: Totp.Params?, label: String, onCopy: (String) -> Unit) {
     if (params == null) {
         Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
         return
@@ -342,7 +349,6 @@ private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
     }
     val code = remember(params, now / 1_000L / params.period) { Totp.generate(params, now) }
     val left = Totp.secondsRemaining(params.period, now)
-    val label = stringResource(R.string.detail_code)
     val leftText = stringResource(R.string.detail_code_seconds, left)
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium)

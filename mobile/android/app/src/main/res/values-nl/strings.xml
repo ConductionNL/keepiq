@@ -74,6 +74,7 @@
     <string name="detail_code">Verificatiecode</string>
     <string name="detail_code_seconds">Nog %1$d seconden</string>
     <string name="detail_code_invalid">Dit is geen geldige verificatiesleutel.</string>
+    <string name="detail_code_own_key">Code van de eigen sleutel van het item</string>
     <string name="detail_card_ending">Kaart eindigend op %1$s</string>
     <string name="detail_passkey_site">Site</string>
     <string name="detail_passkey_account">Account</string>

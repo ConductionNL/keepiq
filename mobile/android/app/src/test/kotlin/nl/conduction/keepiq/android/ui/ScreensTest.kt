@@ -24,6 +24,7 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -356,5 +357,39 @@ class ScreensTest {
     fun theKeyFieldKeepsTheKeyboardFromLearningTheKey() {
         assertEquals(KeyboardType.Password, AUTHENTICATOR_KEY_KEYBOARD.keyboardType)
         assertEquals(false, AUTHENTICATOR_KEY_KEYBOARD.autoCorrectEnabled)
+    }
+
+    @Test
+    fun anAuthenticatorItemShowsItsOwnKeysCodeNamedApart() {
+        val totp = SecretType("3", "totp", "Authenticator", emptyList())
+        val item = DecryptedItem(
+            row = row(useOnly = false).copy(typeId = "3"), typeName = "totp", type = totp, login = "", secret = "JBSWY3DPEHPK3PXP",
+            additionalFields = null, additionalFieldsError = false, passkey = null, fromCache = false,
+            totpSeed = "GEZDGNBVGY3TQOJQ", hasSavedKey = true,
+        )
+        show(item, mutableListOf())
+        compose.onNodeWithText("Authenticator code").assertExists()
+        compose.onNodeWithText("Code from the item's own key").assertExists()
+        compose.onNodeWithContentDescription("Copy Code from the item's own key").assertExists()
+    }
+
+    private val vault = FakeVault()
+
+    private fun showEdit(id: String) {
+        compose.setContent {
+            MaterialTheme {
+                ItemEditScreen(vault.session, id, null, null, GeneratorSettings(), Modifier, onSaved = {}, onCancel = {})
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun anAuthenticatorItemWithItsOwnKeyOffersRemoveOnly() {
+        vault.put("t1", FakeVault.row("t1", "Code", "3", key = "JBSWY3DPEHPK3PXP", totp = "GEZDGNBVGY3TQOJQ"))
+        showEdit("t1")
+        compose.onNodeWithText("Authenticator key saved").performScrollTo().assertExists()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithText("Replace").assertDoesNotExist()
     }
 }
