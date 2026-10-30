@@ -176,7 +176,16 @@ class VaultRepository(
      * Opens one item, fetched fresh so a stale row never seeds an edit
      * (the extension's vault-item). Offline, the stored row is read instead.
      */
-    suspend fun open(id: String): OpenResult {
+    suspend fun open(id: String): OpenResult = openRow(id, withSeed = true)
+
+    /**
+     * Opens one item for the edit form: as [open], but a login's own
+     * Authenticator key is not decrypted, so the saved key is never held by
+     * the edit screen (mobile-login-totp-passkeys D8).
+     */
+    suspend fun openForEdit(id: String): OpenResult = openRow(id, withSeed = false)
+
+    private suspend fun openRow(id: String, withSeed: Boolean): OpenResult {
         val types = state.types
         val (row, fromCache) = try {
             if (state.offline) throw OfflineSignal()
@@ -192,7 +201,7 @@ class VaultRepository(
             (cachedRow(id) ?: return OpenResult.Failed(WriteProblem(WriteProblemKind.UNREACHABLE))) to true
         }
         return try {
-            OpenResult.Opened(ItemCodec.open(row, types.firstOrNull { it.id == row.typeId }, keys, fromCache))
+            OpenResult.Opened(ItemCodec.open(row, types.firstOrNull { it.id == row.typeId }, keys, fromCache, withSeed = withSeed))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

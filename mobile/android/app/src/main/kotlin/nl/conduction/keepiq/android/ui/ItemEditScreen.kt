@@ -95,7 +95,8 @@ fun ItemEditScreen(
 
     LaunchedEffect(id) {
         if (id != null) {
-            val opened = io { repository.open(id) }
+            // The saved Authenticator key is not decrypted for the form: it is replaced or removed, never shown.
+            val opened = io { repository.openForEdit(id) }
             if (opened is OpenResult.Opened) {
                 item = opened.item
                 type = opened.item.type

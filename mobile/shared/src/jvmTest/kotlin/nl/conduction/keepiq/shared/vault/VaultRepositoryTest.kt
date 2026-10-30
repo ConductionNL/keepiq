@@ -513,6 +513,20 @@ class VaultRepositoryTest {
     }
 
     @Test
+    fun theEditFormNeverHoldsTheSavedKey() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val shown = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertEquals(seed, shown.totpSeed)
+        val edited = assertIs<OpenResult.Opened>(repo.openForEdit("s4")).item
+        assertEquals("", edited.totpSeed)
+        assertTrue(edited.hasSavedKey)
+        assertNull(edited.totp)
+        // Saving the form without touching the key sends no `totp`.
+        assertIs<WriteResult.Saved>(repo.update(edited, ItemCodec.draft(edited, edited.type).copy(name = "Mail 2")))
+        assertFalse("totp" in bodies.last())
+    }
+
+    @Test
     fun aUseOnlyOrReadOnlyCopyCannotDeleteAPasskey() = runTest {
         repo.refresh(SyncTrigger.START)
         val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
