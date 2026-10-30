@@ -23,8 +23,8 @@
 
 ## 4. Follow-ups
 
-- [ ] 4.1 File an issue for share-save in the mobile apps, covering every edit of a shared item and the passkey counter.
-- [ ] 4.2 File an issue for scanning a QR code for the Authenticator key in the Android app.
+- [x] 4.1 File an issue for share-save in the mobile apps, covering every edit of a shared item and the passkey counter. Filed as keepiq#1347.
+- [x] 4.2 File an issue for scanning a QR code for the Authenticator key in the Android app. Filed as keepiq#1348.
 
 ## Acceptance criteria
 
