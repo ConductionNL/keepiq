@@ -354,6 +354,19 @@ class PasskeysTest {
     }
 
     @Test
+    fun aMatchTheServerRefusesPasskeysOnMakesANewLogin() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        for (owner in listOf(""","ownerType":"application"""", ""","readOnly":true""")) {
+            requests.clear()
+            bodies.clear()
+            freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","updatedAt":"$UPDATED_AT"$owner}"""
+            val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+            assertEquals(listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests, owner)
+            assertEquals(listOf(r.record), sentPasskeys())
+        }
+    }
+
+    @Test
     fun aNewPasskeyWithoutAMatchMakesANewLogin() = runTest {
         val r = Passkeys.create(api, keys, AutofillIndex.EMPTY, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
         assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)

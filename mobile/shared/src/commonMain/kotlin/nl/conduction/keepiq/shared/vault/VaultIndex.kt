@@ -32,6 +32,8 @@ data class VaultRow(
     /** A login's own seed and passkeys: ciphertext, decrypted only when the item is opened or used. */
     val totp: String? = null,
     val passkeys: String? = null,
+    /** Who owns the row on the server (`user`, `application`); null when it was not sent, as in the store. */
+    val ownerType: String? = null,
 ) {
     override fun toString(): String = "VaultRow(id=$id, typeId=$typeId, folderId=$folderId)"
 
@@ -74,6 +76,7 @@ data class VaultRow(
                 trashed = obj.text("trashedAt") != null || obj.text("archivedAt") != null,
                 totp = obj.text("totp"),
                 passkeys = obj.text("passkeys"),
+                ownerType = obj.text("ownerType"),
             )
         }
     }

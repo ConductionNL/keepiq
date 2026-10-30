@@ -22,6 +22,7 @@ import nl.conduction.keepiq.shared.vault.LoginGoneException
 import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.PasskeysWrite
 import nl.conduction.keepiq.shared.vault.VaultKeys
+import nl.conduction.keepiq.shared.vault.VaultRow
 
 /**
  * A stored passkey for the asked relying party, decrypted for one request:
@@ -164,9 +165,11 @@ object Passkeys {
         )
         val record = registration.record
         val login = matchingLogin(index, request.rpId, request.userName, keys)
-        if (login != null) {
-            PasskeysWrite.rewrite(api, keys, login.id) { _, stored -> PasskeysWrite.Change(LoginPasskeys.appended(stored, record), Unit) }
-        } else {
+        // The index carries no owner: a login the server refuses `passkeys` on, read fresh, gets none and a new login is made.
+        val appended = login != null && PasskeysWrite.rewrite(api, keys, login.id) { fresh, stored ->
+            if (mayTakePasskeys(fresh)) PasskeysWrite.Change(LoginPasskeys.appended(stored, record), true) else PasskeysWrite.Change(null, false)
+        }
+        if (!appended) {
             val typeId = api.listTypes().firstOrNull { (it["name"] as? JsonPrimitive)?.contentOrNull == AutofillEntry.LOGIN }
                 ?.let { (it["id"] as? JsonPrimitive)?.contentOrNull }
             val parts = ItemParts(
@@ -177,6 +180,14 @@ object Passkeys {
         }
         return registration
     }
+
+    /**
+     * Whether the server takes `passkeys` on [fresh]: a row the user may
+     * change and that a user owns. The server refuses them on an
+     * application-owned secret (SecretService::refuseApplicationValueFields).
+     */
+    private fun mayTakePasskeys(fresh: VaultRow): Boolean =
+        !fresh.useOnly && !fresh.readOnly && !fresh.blocked && (fresh.ownerType ?: "user") == "user"
 
     /**
      * The login a new passkey for [userName] goes onto: the only same-site
