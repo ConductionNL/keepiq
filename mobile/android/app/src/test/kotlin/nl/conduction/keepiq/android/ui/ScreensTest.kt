@@ -20,6 +20,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -441,9 +442,15 @@ class ScreensTest {
         compose.onNodeWithText("Replace").assertDoesNotExist()
     }
 
-    private fun showDetail(id: String) {
+    private fun showDetail(id: String, keyboard: Boolean = false) {
         compose.setContent {
-            MaterialTheme { ItemDetailScreen(vault.session, id, Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> }) }
+            // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
+            val inputMode = LocalInputModeManager.current
+            var ready by remember { mutableStateOf(!keyboard) }
+            LaunchedEffect(Unit) { if (keyboard) ready = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (ready) {
+                MaterialTheme { ItemDetailScreen(vault.session, id, Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> }) }
+            }
         }
     }
 
@@ -522,5 +529,32 @@ class ScreensTest {
         compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Passkey deleted.").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Passkey deleted.").assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    @Test
+    fun afterADeleteOnTheScreenFocusGoesToThePasskeyThatTookItsPlace() {
+        val (a, b, c) = listOf(FakeVault.credential("a", "alice-a"), FakeVault.credential("b", "alice-b"), FakeVault.credential("c", "alice-c"))
+        vault.put("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, b, c)))
+        showDetail("s4", keyboard = true)
+        waitForDescription("Delete passkey for alice-b")
+        compose.onNodeWithContentDescription("Delete passkey for alice-b").performScrollTo().performClick()
+        // What the server holds once the delete is saved; the screen reopens the login from it.
+        vault.replace("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, c)))
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription("Delete passkey for alice-b").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithContentDescription("Delete passkey for alice-c").assertIsFocused()
+    }
+
+    @Test
+    fun theVaultListShowsNoPasskeyMarker() {
+        vault.put("s4", mailWithTwoPasskeys)
+        compose.setContent {
+            MaterialTheme {
+                VaultListScreen(vault.session, null, Modifier, onOpenFolder = {}, onOpenItem = {}, onAddItem = {}, onFolderGone = {})
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Mail").fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodesWithText("passkey", substring = true, ignoreCase = true).assertCountEquals(0)
+        compose.onAllNodesWithContentDescription("passkey", substring = true, ignoreCase = true).assertCountEquals(0)
     }
 }

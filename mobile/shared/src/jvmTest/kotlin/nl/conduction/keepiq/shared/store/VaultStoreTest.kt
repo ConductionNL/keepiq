@@ -4,11 +4,25 @@
 package nl.conduction.keepiq.shared.store
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
+import nl.conduction.keepiq.shared.api.Account
+import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.crypto.KeepiqCryptoException
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.store.db.KeepiqDatabase
+import nl.conduction.keepiq.shared.sync.LockReason
+import nl.conduction.keepiq.shared.sync.SyncListener
+import nl.conduction.keepiq.shared.sync.SyncOutcome
+import nl.conduction.keepiq.shared.sync.SyncTrigger
+import nl.conduction.keepiq.shared.sync.UnlockedSession
+import nl.conduction.keepiq.shared.sync.VaultSync
 import nl.conduction.keepiq.shared.vault.VaultLockedException
 import nl.conduction.keepiq.shared.vault.VaultRow
 import java.io.File
@@ -18,6 +32,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -141,7 +156,7 @@ class VaultStoreTest {
     }
 
     @Test
-    fun aStoreFromBeforeTheFieldsMigratesAndSyncsInFull() {
+    fun aStoreFromBeforeTheFieldsMigratesAndSyncsInFull() = runTest {
         // The schema as it was before totp and passkeys (version 1).
         JdbcSqliteDriver("jdbc:sqlite:${file.absolutePath}").use { old ->
             listOf(
@@ -168,6 +183,37 @@ class VaultStoreTest {
         assertEquals(1000L, state.syncedAtMillis)
         assertNull(state.checkTop)
         assertEquals(-1L, state.checkTotal)
+
+        // The first sync after the update: the copy is a minute old, so only the cheap check would run,
+        // and the server's newest change and total are what the store held before. It still reads the
+        // whole vault, and the login's code and passkeys are stored.
+        val calls = mutableListOf<String>()
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath.substringAfter("/apps/keepiq")
+            calls += path
+            val body = when (path) {
+                "/api/v1/offline/manifest" -> """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},
+                    "secrets":[{"id":"s1","name":"Huisbank","url":null,"key":"S0VZ","totp":"VE9UUA==","passkeys":"UEFTU0tFWVM=",
+                    "updatedAt":"2026-10-03T09:00:00+00:00"}],"folders":[],"types":[],"unlockBlocked":null}"""
+                else -> """{"items":[{"id":"s1","updatedAt":"2026-10-03T09:00:00+00:00"}],"total":1}"""
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val sync = VaultSync(
+            KeepiqApi(KeepiqApi.httpClient(engine), Account("a", "https://cloud.example.nl", "alice", "pw")),
+            store,
+            object : SyncListener {
+                override fun lock(reason: LockReason) = Unit
+
+                override fun deleteUnlockWraps() = Unit
+            },
+            clock = { 61_000L },
+        )
+        assertIs<SyncOutcome.Synced>(sync.sync(SyncTrigger.FOREGROUND, UnlockedSession("suite-9", 2)))
+        assertEquals(listOf("/api/v1/secrets", "/api/v1/offline/manifest"), calls)
+        val synced = store.secret("s1")!!
+        assertEquals("VE9UUA==", synced.totp)
+        assertEquals("UEFTU0tFWVM=", synced.passkeys)
     }
 
     private fun obj(json: String) = Json.parseToJsonElement(json).jsonObject

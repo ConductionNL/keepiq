@@ -69,6 +69,11 @@ internal class FakeVault {
     /** The writes of one method and path, such as "PUT" to "/api/v1/secrets/s4". */
     fun count(method: String, path: String): Int = synchronized(requests) { requests.count { it == method to path } }
 
+    /** Changes what the server holds for [id], as another client or this phone's own write would. */
+    fun replace(id: String, row: String) {
+        synchronized(rows) { rows[id] = row }
+    }
+
     /** Adds a row and reads the vault, so the types are known to the screens. */
     fun put(id: String, row: String) {
         synchronized(rows) { rows[id] = row }
