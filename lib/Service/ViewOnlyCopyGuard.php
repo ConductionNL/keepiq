@@ -26,6 +26,7 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -67,8 +68,8 @@ class ViewOnlyCopyGuard {
 	 * Refuse a change of the value of a copy its holder may not write.
 	 * A change that leaves the value alone, and a row that is not a copy,
 	 * pass. Only a trusted share row (ShareRowJudge) makes a row a copy; a
-	 * row the pending quarantine scan cannot judge refuses the change until
-	 * it has judged it.
+	 * row the pending quarantine scan cannot judge refuses the change with
+	 * share_scan_pending until it has judged it.
 	 *
 	 * @param Secret $row The holder's row, already checked to be theirs
 	 * @param string[] $fields The fields the change writes
@@ -78,6 +79,7 @@ class ViewOnlyCopyGuard {
 	 *
 	 * @throws NotFoundException When the copy's share row or source cannot be resolved
 	 * @throws ViewOnlyCopyException When the holder may not write the copy's source
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the copy
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
@@ -92,9 +94,9 @@ class ViewOnlyCopyGuard {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		// Until the pending scan has judged its row, the copy stays as limited as it may be.
+		// Until the pending scan has judged its row, the change waits for it.
 		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
-			throw new ViewOnlyCopyException();
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be changed yet');
 		}
 
 		$target = $verdict->trustedRow();

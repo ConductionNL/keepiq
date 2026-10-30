@@ -24,6 +24,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\LinkShareController;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Http;
@@ -220,6 +221,29 @@ class LinkShareControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testCreateAnswers404WhenTheCallerMayNotReshare()
+
+	/**
+	 * A link share of a secret whose share row waits for the share
+	 * quarantine scan answers 409 with its own error code.
+	 *
+	 * @return void
+	 */
+	public function testCreateAnswersScanPendingWithItsOwnCode(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
+		$this->linkShareService->method('create')
+			->willThrowException(new ShareScanPendingException('This secret waits for the share quarantine scan'));
+
+		$response = $this->controller->create(
+			secretId: 'secret-1',
+			encryptedSecretSnapshot: 'blob',
+			argon2idSalt: 'salt',
+			usageLimit: 1,
+			expiresAt: null
+		);
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_scan_pending', $response->getData()['error']);
+	}//end testCreateAnswersScanPendingWithItsOwnCode()
 
 	/**
 	 * Test create returns 400 when the expiry timestamp is malformed.

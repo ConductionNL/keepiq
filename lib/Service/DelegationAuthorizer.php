@@ -29,6 +29,7 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -162,12 +163,18 @@ class DelegationAuthorizer {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When no trusted share row exists for (sourceSecret, user).
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge that row
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function requirePreExistingShare(string $secretId, string $userId): void {
-		if ($this->rowJudge->forPair(sourceId: $secretId, targetUserId: $userId)->trustedRow() === null) {
+		$verdict = $this->rowJudge->forPair(sourceId: $secretId, targetUserId: $userId);
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->rowJudge->scanPending(refusal: 'This share waits for the share quarantine scan, so it cannot be delegated yet');
+		}
+
+		if ($verdict->trustedRow() === null) {
 			throw new InvalidArgumentException(
 				message: 'Delegation requires the recipient to already hold a share of the secret'
 			);

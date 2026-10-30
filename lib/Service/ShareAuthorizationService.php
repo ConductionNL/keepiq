@@ -158,15 +158,24 @@ class ShareAuthorizationService {
 	 * @throws DoesNotExistException When the user may not re-share the secret
 	 * @throws InvalidArgumentException When the copy is use-only or expiring, or a delegate holds no single copy
 	 * @throws ForbiddenException When the copy is a read-only copy from another organisation
-	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the delegate's share row
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the caller's own
+	 *   secret, or the delegate's share row
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertMayReshare(string $secretId, string $userId): void {
 		try {
-			$copy   = $this->loadSecret(secretId: $secretId);
-			$source = $this->sourceOf(copy: $copy);
+			$copy = $this->loadSecret(secretId: $secretId);
+		} catch (InvalidArgumentException) {
+			throw new DoesNotExistException('Secret not found');
+		}
+
+		$verdict = $this->rowJudge->forCopy(copy: $copy);
+		$this->refuseOwnSecretAwaitingTheScan(copy: $copy, verdict: $verdict, userId: $userId);
+
+		try {
+			$source = $this->sourceOf(copy: $copy, verdict: $verdict);
 		} catch (InvalidArgumentException) {
 			throw new DoesNotExistException('Secret not found');
 		}
@@ -183,6 +192,28 @@ class ShareAuthorizationService {
 		$copy->assertOnwardShareable();
 		$this->assertMayShareOnward(source: $source, userId: $userId);
 	}//end assertMayReshare()
+
+	/**
+	 * Tell the holder of a secret whose share row the pending quarantine scan
+	 * cannot judge that it waits for the scan. Anyone else is left to the
+	 * unknown-id answer, so the refusal reveals nothing about another user's
+	 * secret.
+	 *
+	 * @param Secret          $copy    The secret the caller named
+	 * @param ShareRowVerdict $verdict The judge's verdict on the row naming it
+	 * @param string          $userId  The caller
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the caller holds the secret and its row cannot be judged
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	private function refuseOwnSecretAwaitingTheScan(Secret $copy, ShareRowVerdict $verdict, string $userId): void {
+		if ($verdict->state === ShareRowVerdict::UNJUDGED && $copy->getOwnerType() === 'user' && $copy->getOwnerId() === $userId) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
+		}
+	}//end refuseOwnSecretAwaitingTheScan()
 
 	/**
 	 * The source a share made by $userId hangs on. A delegate cannot decrypt
@@ -283,7 +314,8 @@ class ShareAuthorizationService {
 	 * quarantines the one that does. A row whose target does not hold the
 	 * copy, or that the scan cannot judge, leads nowhere.
 	 *
-	 * @param Secret $copy The secret that may be a received copy
+	 * @param Secret          $copy    The secret that may be a received copy
+	 * @param ShareRowVerdict $verdict The judge's verdict on the row naming it
 	 *
 	 * @return Secret
 	 *
@@ -291,8 +323,7 @@ class ShareAuthorizationService {
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	private function sourceOf(Secret $copy): Secret {
-		$verdict = $this->rowJudge->forCopy(copy: $copy);
+	private function sourceOf(Secret $copy, ShareRowVerdict $verdict): Secret {
 		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {
 			return $copy;
 		}

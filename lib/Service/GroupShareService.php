@@ -530,6 +530,7 @@ class GroupShareService {
 	 *
 	 * @throws InvalidArgumentException When the source is a received copy, or the delegate's copy is missing, ambiguous or restricted
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is read-only
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the source
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
@@ -673,11 +674,18 @@ class GroupShareService {
 	 *
 	 * @return bool
 	 *
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming it
+	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
-		return $this->rowJudge->forCopy(copy: $secret)->countsAsCopy();
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
+		}
+
+		return $verdict->countsAsCopy();
 	}//end isReceivedCopy()
 
 	/**

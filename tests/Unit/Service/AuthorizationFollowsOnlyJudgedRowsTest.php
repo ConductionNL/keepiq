@@ -135,7 +135,10 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 		$this->assertNull($auth->copyGrade(source: $this->secrets['S_a'], userId: 'bob'));
 		$this->assertSame('V', $auth->resolveShareSource(secret: $this->secrets['V'], userId: 'bob')->getId());
 
-		$this->expectException(InvalidArgumentException::class);
+		// A quarantined row is no share; one the scan cannot judge waits for it.
+		$this->expectException(
+			$verdict === ShareQuarantineScanner::HELD_UNJUDGED ? ShareScanPendingException::class : InvalidArgumentException::class
+		);
 		$this->delegations(verdict: $verdict)->requirePreExistingShare(secretId: 'S_a', userId: 'bob');
 	}//end testAHeldBackRowIsNoShareToDelegateGradeOrReRootOn()
 
@@ -193,7 +196,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	public function testARowQuarantinedOnTheSpotDoesNotMakeVACopy(): void {
 		$verdict = ShareQuarantineScanner::HELD_QUARANTINED;
 
-		$this->assertFalse($this->isReceivedCopy(service: $this->registrar(verdict: $verdict)));
+		$this->assertNotContains($this->registrarRefusal(verdict: $verdict), ['not_shareable', 'share_scan_pending']);
 		$this->assertFalse($this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)));
 		$this->syncStartsFrom(verdict: $verdict);
 		$this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob');
@@ -203,26 +206,43 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 
 	/**
 	 * A row the scan cannot judge keeps every refusal of a copy in place
-	 * until it has judged it, and never leads to S_a.
+	 * until it has judged it, and never leads to S_a; Bob, who holds V, is
+	 * told on every onward path that V waits for the scan.
 	 *
 	 * @return void
 	 */
 	public function testARowTheScanCannotJudgeKeepsTheRefusalsOfACopy(): void {
 		$verdict = ShareQuarantineScanner::HELD_UNJUDGED;
 
-		$this->assertTrue($this->isReceivedCopy(service: $this->registrar(verdict: $verdict)));
-		$this->assertTrue($this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)));
-
-		try {
-			$this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob');
-			$this->fail('A link share of a copy the scan cannot judge must wait');
-		} catch (DoesNotExistException) {
-			// Refused.
+		$this->assertSame('share_scan_pending', $this->registrarRefusal(verdict: $verdict));
+		foreach ([
+			'group share' => fn () => $this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)),
+			'link share' => fn () => $this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob'),
+			'value change' => fn () => $this->viewOnlyGuard(verdict: $verdict, standing: true)->assertMayChangeValue(
+				row: $this->secrets['V'],
+				fields: ['key'],
+				userId: 'bob'
+			),
+		] as $path => $onward) {
+			try {
+				$onward();
+				$this->fail('The '.$path.' of a secret whose row the scan cannot judge must wait for the scan');
+			} catch (ShareScanPendingException) {
+				$this->addToAssertionCount(1);
+			}
 		}
-
-		$this->expectException(ViewOnlyCopyException::class);
-		$this->viewOnlyGuard(verdict: $verdict, standing: true)->assertMayChangeValue(row: $this->secrets['V'], fields: ['key'], userId: 'bob');
 	}//end testARowTheScanCannotJudgeKeepsTheRefusalsOfACopy()
+
+	/**
+	 * Someone who does not hold V still gets the unknown-id answer, not the
+	 * wait for the scan.
+	 *
+	 * @return void
+	 */
+	public function testAStrangerIsNotToldTheSecretWaitsForTheScan(): void {
+		$this->expectException(DoesNotExistException::class);
+		$this->authorization(verdict: ShareQuarantineScanner::HELD_UNJUDGED)->assertMayReshare(secretId: 'V', userId: 'mallory');
+	}//end testAStrangerIsNotToldTheSecretWaitsForTheScan()
 
 	/**
 	 * A legitimate copy is still a copy everywhere, as before.
@@ -230,7 +250,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	 * @return void
 	 */
 	public function testALegitimateCopyIsStillACopy(): void {
-		$this->assertTrue($this->isReceivedCopy(service: $this->registrar(verdict: null)));
+		$this->assertSame('not_shareable', $this->registrarRefusal(verdict: null));
 		$this->assertTrue($this->isReceivedCopy(service: $this->groupShares(verdict: null)));
 
 		$this->expectException(ViewOnlyCopyException::class);
@@ -416,15 +436,28 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	}//end viewOnlyGuard()
 
 	/**
-	 * Whether a service's private check calls V a received copy.
+	 * Whether the group-share service's private check calls V a received copy.
 	 *
-	 * @param DirectShareRegistrar|GroupShareService $service The service
+	 * @param GroupShareService $service The service
 	 *
 	 * @return bool
 	 */
-	private function isReceivedCopy(DirectShareRegistrar|GroupShareService $service): bool {
+	private function isReceivedCopy(GroupShareService $service): bool {
 		return (bool)(new ReflectionMethod($service, 'isReceivedCopy'))->invoke($service, $this->secrets['V']);
 	}//end isReceivedCopy()
+
+	/**
+	 * The status register-batch reports for a share of V by Bob, its holder.
+	 *
+	 * @param string|null $verdict The scan's verdict on the row
+	 *
+	 * @return string|null
+	 */
+	private function registrarRefusal(?string $verdict): ?string {
+		$registrar = $this->registrar(verdict: $verdict);
+
+		return (new ReflectionMethod($registrar, 'refusalFor'))->invoke($registrar, $this->secrets['V'], null, 'bob', []);
+	}//end registrarRefusal()
 
 	/**
 	 * Run the sync's check that it starts from a source, not a copy, on V.

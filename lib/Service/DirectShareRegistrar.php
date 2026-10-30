@@ -453,7 +453,13 @@ class DirectShareRegistrar {
 		// itself a share target's recipient secret) is never one, so a recipient
 		// can never re-share what was shared with them (user-sharing: Share a Secret).
 		// A delegate's own copy was already resolved to its source.
-		if ($this->isReceivedCopy(secret: $source) === true) {
+		$verdict = $this->rowJudge->forCopy(copy: $source);
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			// The row naming the source waits for the scan, as on the other share paths.
+			return 'share_scan_pending';
+		}
+
+		if ($verdict->countsAsCopy() === true) {
 			return 'not_shareable';
 		}
 
@@ -470,24 +476,6 @@ class DirectShareRegistrar {
 
 		return null;
 	}//end refusalFor()
-
-	/**
-	 * Whether the source is itself a received copy — a secret that is some share
-	 * target's recipient secret (ShareRowVerdict::countsAsCopy()). Fails open to
-	 * "original" only when no row names it, or the pending quarantine scan
-	 * quarantines the one that does; an ambiguous match, a row its target does
-	 * not hold and a row the scan cannot judge count as a copy.
-	 *
-	 * @param Secret $secret The source secret
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
-	 */
-	private function isReceivedCopy(Secret $secret): bool {
-		return $this->rowJudge->forCopy(copy: $secret)->countsAsCopy();
-	}//end isReceivedCopy()
 
 	/**
 	 * Whether the caller's own grant keeps them from minting a full copy. The
