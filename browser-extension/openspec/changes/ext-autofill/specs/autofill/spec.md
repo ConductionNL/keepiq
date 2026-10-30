@@ -19,7 +19,7 @@ The extension SHALL decide which vault items match a page in the background, usi
 - **THEN** the row is excluded from every fill surface
 
 ### Requirement: Match rule is the global default from settings
-The extension SHALL apply the "Default URI match detection" setting to every item, with the options Base domain, Host, Starts with, Exact, Regular expression and Never, and Base domain as the shipped default. Base domain MUST be public suffix aware. A `url` that is not a valid regular expression MUST never match under the Regular expression rule. Under the Regular expression rule a `url` is ordinary unless it contains regex syntax: one of the characters `^ $ * + ( ) [ ] { } | \` before its first `?` or `#` (an IPv6 host's brackets aside, an escaped `\?` counting), or a `?` in its scheme (`https?://`); a `.`, or anything in the query or fragment, does not make it a pattern. Only a `url` with that syntax is tested as a case-insensitive regular expression against the page URL. An ordinary `url` MUST never be tested as a pattern, whatever its scheme: a web URL matches by Base domain, and any other `url` (`ftp://`, `ssh://`, `androidapp://`, `mailto:`) matches no page, as under every other rule. There is no per-item override (Keepiq has one `url` per item).
+The extension SHALL apply the "Default URI match detection" setting to every item, with the options Base domain, Host, Starts with, Exact, Regular expression and Never, and Base domain as the shipped default. Base domain MUST be public suffix aware. A `url` that is not a valid regular expression MUST never match under the Regular expression rule. Under the Regular expression rule a `url` is ordinary unless it is written as a pattern: it starts with `^`, has a `?` in its scheme (`https?://`), or has one of the characters `^ $ * + ( ) [ ] { } | \` in its host, the part before its first `/`, `?` or `#` after any `scheme://` (an IPv6 host's brackets aside); a `.`, or anything in the path, query or fragment, does not make it a pattern, so `https://en.wikipedia.org/wiki/Foo_(bar)` stays an address. Only such a `url` is tested as a case-insensitive regular expression against the page URL, anchored at the start of the page URL when it starts with a scheme. An ordinary `url` MUST never be tested as a pattern, whatever its scheme: a web URL matches by Base domain, and any other `url` (`ftp://`, `ssh://`, `androidapp://`, `mailto:`) matches no page, as under every other rule. There is no per-item override (Keepiq has one `url` per item).
 
 #### Scenario: Base domain ignores subdomains but respects the public suffix
 - **GIVEN** the default rule and an item with url `https://accounts.example.co.uk/login`
@@ -55,6 +55,18 @@ The extension SHALL apply the "Default URI match detection" setting to every ite
 - **WHEN** an item's url is `https://login.example.com/oauth?scope=openid+profile`, or `https://[::1]:8080/`
 - **THEN** it matches by base domain, so the first does not match `https://evil.net/https://login.example.com/oauthscope=openidprofile`
 - **AND** an item whose url is `https?://bank.com/login` is tested as a pattern and matches `http://bank.com/login`
+
+#### Scenario: Syntax only in the path under the Regular expression rule
+- **GIVEN** the Regular expression rule
+- **WHEN** an item's url is `https://en.wikipedia.org/wiki/Foo_(bar)`, `https://example.com/c++/login` or `https://bank.com/login*`
+- **THEN** it matches by base domain, its own page included, and does not match `https://evil.net/?u=https://bank.com/login`
+- **AND** an item whose url is `^https://example\.test/app1/` is tested as a pattern and does not match `https://example.test/app2/login`
+
+#### Scenario: A pattern with a scheme is anchored
+- **GIVEN** the Regular expression rule and an item whose url is `https://(www\.)?bank\.com/`
+- **WHEN** the page is `https://evil.net/?u=https://bank.com/`
+- **THEN** the item does not match
+- **AND** it matches `https://www.bank.com/login`
 
 #### Scenario: A url that is no web URL under the Regular expression rule
 - **GIVEN** the Regular expression rule and an item whose url is `ftp://files.bank.com`, `ssh://git.bank.com` or `androidapp://com.bank.app`

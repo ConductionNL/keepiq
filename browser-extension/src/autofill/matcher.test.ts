@@ -112,8 +112,28 @@ describe('matches', () => {
 		it('does not count an IPv6 host\'s brackets as syntax', () => {
 			expect(matches('https://[::1]:8080/', 'http://[::1]/login', 'regex')).toBe(true)
 			expect(matches('https://[::1]:8080/', 'https://evil.net/', 'regex')).toBe(false)
-			// Other syntax still makes it a pattern, which by base domain would match.
-			expect(matches('https://[::1]/(admin|root)', 'https://[::1]/other', 'regex')).toBe(false)
+			expect(matches('https://user@[::1]/', 'https://[::1]/login', 'regex')).toBe(true)
+		})
+
+		it.each([
+			['https://en.wikipedia.org/wiki/Foo_(bar)', 'https://en.wikipedia.org/wiki/Foo_(bar)'],
+			['https://example.com/c++/login', 'https://example.com/c++/login'],
+			['https://bank.com/login*', 'https://www.bank.com/'],
+			['https://[::1]/(admin|root)', 'https://[::1]/other'],
+		])('reads syntax only in the path of %s as part of an address, matching %s by base domain', (item, page) => {
+			expect(matches(item, page, 'regex')).toBe(true)
+			expect(matches(item, `https://evil.net/?u=${item}`, 'regex')).toBe(false)
+		})
+
+		it('runs a url starting with ^ as a pattern, whatever its host', () => {
+			expect(matches('^https://example\\.test/app1/', 'https://example.test/app1/login', 'regex')).toBe(true)
+			expect(matches('^https://example.test/app1/', 'https://example.test/app2/login', 'regex')).toBe(false)
+		})
+
+		it('anchors a pattern that starts with a scheme at the start of the page url', () => {
+			expect(matches('https://(www\\.)?bank\\.com/', 'https://www.bank.com/login', 'regex')).toBe(true)
+			expect(matches('https://(www\\.)?bank\\.com/', 'https://evil.net/?u=https://bank.com/', 'regex')).toBe(false)
+			expect(matches('https?://bank\\.com/|https://other\\.com/', 'https://evil.net/?u=https://other.com/', 'regex')).toBe(false)
 		})
 
 		it('runs a url with a ? in its scheme as a pattern', () => {

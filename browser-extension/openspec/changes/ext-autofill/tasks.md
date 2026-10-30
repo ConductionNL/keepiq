@@ -13,7 +13,8 @@
 - [x] 2.1 Write `src/autofill/matcher.ts` with the six rules over `baseDomain()` in `src/vault/match.ts` (already on `tldts`), plus `candidatesFor()` that filters out empty `url`, `blocked` rows and non-`login` types and sorts by last used then name; and `src/last-used.ts` storing `{ [itemId]: epochMs }` under `lastUsed.<accountId>` in `storage.local`, cleared with the account by the ext-accounts-and-unlock purge
   - Base domain: `accounts.example.co.uk` matches `www.example.co.uk`; `a.github.io` does not match `b.github.io`
   - Invalid regex never matches and never throws; only `http:` and `https:` page URLs are matchable
-  - Under regex, a url is a pattern only with `^ $ * + ( ) [ ] { } | \` before its query (an IPv6 host's brackets aside) or a `?` in its scheme; any other is ordinary, never runs as a pattern, and matches by base domain if a web URL, else nothing
+  - Under regex, a url is a pattern only when it starts with `^`, has `^ $ * + ( ) [ ] { } | \` in its host (an IPv6 host's brackets aside) or a `?` in its scheme; any other is ordinary, never runs as a pattern, and matches by base domain if a web URL, else nothing
+  - A pattern that starts with a scheme is anchored at the start of the page URL
 
 ## 3. Fill pipeline
 

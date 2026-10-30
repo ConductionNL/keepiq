@@ -13,25 +13,29 @@ function pageUrl(raw: string): URL | null {
 	}
 }
 
+/** A scheme, `https?` included. */
+const SCHEME = /^[a-z][a-z\d+.-]*\??:\/\//i
+
 function matchesRegex(pattern: string, page: string): boolean {
 	try {
-		return new RegExp(pattern, 'i').test(page)
+		// Sticky anchors a pattern that starts with a scheme, so it never matches inside another site's query.
+		return new RegExp(pattern, SCHEME.test(pattern) ? 'iy' : 'i').test(page)
 	} catch {
 		return false
 	}
 }
 
 const REGEX_SYNTAX = /[\^$*+()[\]{}|\\]/
-/** Up to and including an IPv6 host's brackets, after any scheme and userinfo. */
-const IPV6_HOST = /^((?:[a-z][a-z\d+.-]*:\/\/)?(?:[^/?#@[]*@)?)\[[\da-f]*:[\da-f:.]*\]/i
+const IPV6_HOST = /(^|@)\[[\da-f]*:[\da-f:.]*\]/i
 
 /**
- * Default deny: only regex syntax before the query or fragment, where `+` and the like are ordinary, makes an item url
- * a pattern; so does a `?` in its scheme (`https?://`).
+ * Default deny: an item url is a pattern only when it starts with `^`, has a `?` in its scheme (`https?://`) or regex
+ * syntax in its host, so a plain URL with `(` or `+` in its path (`/wiki/Foo_(bar)`, `/c++/`) stays an address.
  */
 function isPattern(url: string): boolean {
-	if (/^[a-z][a-z\d+-]*\?[a-z\d+-]*:\/\//i.test(url)) return true
-	return REGEX_SYNTAX.test(url.split(/[?#]/, 1)[0]!.replace(IPV6_HOST, '$1'))
+	if (url.startsWith('^') || /^[a-z][a-z\d+-]*\?[a-z\d+-]*:\/\//i.test(url)) return true
+	const authority = url.replace(SCHEME, '').split(/[/?#]/, 1)[0]!
+	return REGEX_SYNTAX.test(authority.replace(IPV6_HOST, '$1'))
 }
 
 /**

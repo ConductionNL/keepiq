@@ -233,7 +233,7 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Lock now**, **Log out**, and **Change master password**, which opens the Keepiq web app.
 - **Autofill:**
   - **Autofill on page load,** off by default, and **Default autofill setting for login items**, see [Filling in logins](#filling-in-logins).
-  - **Default URI match detection:** **Base domain** by default, or **Host**, **Starts with**, **Exact**, **Regular expression** or **Never**. Under **Regular expression**, a login whose URL is an ordinary address, such as `https://bank.com`, still matches by base domain, and one that is no web address, such as an `ftp://` or app address, matches no page; only a URL written as a pattern, with characters such as `^`, `*` or `(` before any `?`, is read as one.
+  - **Default URI match detection:** **Base domain** by default, or **Host**, **Starts with**, **Exact**, **Regular expression** or **Never**. Under **Regular expression**, a login whose URL is an ordinary address, such as `https://bank.com`, still matches by base domain, and one that is no web address, such as an `ftp://` or app address, matches no page; only a URL written as a pattern, one that starts with `^` or has characters such as `*` or `(` in its host, is read as one.
   - **Show autofill suggestions on form fields** turns the list under login fields on or off; **Enable context menu options** the right-click menu.
   - **Make Keepiq your default password manager,** Chrome only, turns off Chrome's own password saving and address autofill, so its dropdown no longer covers Keepiq's list. Chrome asks for permission to change its settings; turning it off gives them back.
   - **Autofill keyboard shortcut** shows the keys, with **Change**.
