@@ -169,7 +169,7 @@ class ScreensTest {
         DecryptedItem(
             row = row(useOnly).copy(readOnly = readOnly), typeName = "login", type = login, login = "alice",
             secret = if (useOnly) "" else "geheim-1", additionalFields = null, additionalFieldsError = false, passkey = null,
-            fromCache = false, totpSeed = seed, hasSavedKey = seed.isNotEmpty(), passkeys = if (useOnly) emptyList() else passkeys,
+            fromCache = false, totpSeed = seed, hasSavedKey = seed.isNotEmpty(), passkeys = passkeys,
         )
 
     private fun showMail(
@@ -267,9 +267,12 @@ class ScreensTest {
 
     @Test
     fun aUseOnlyCopyShowsItsCodeButNoPasskeys() {
+        // The item holds a passkey: only the screen's use-only rule keeps it out.
         showMail(mail(useOnly = true, passkeys = listOf(passkey("a", "alice", null))))
         compose.onNodeWithText("Authenticator code").assertExists()
         compose.onNodeWithText("Passkey saved").assertDoesNotExist()
+        compose.onNodeWithText("Passkey").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Delete passkey").assertDoesNotExist()
     }
 
     @Test
