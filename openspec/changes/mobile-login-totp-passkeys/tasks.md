@@ -25,6 +25,7 @@
 
 - [x] 4.1 File an issue for share-save in the mobile apps, covering every edit of a shared item and the passkey counter. Filed as keepiq#1347.
 - [x] 4.2 File an issue for scanning a QR code for the Authenticator key in the Android app. Filed as keepiq#1348.
+- [ ] 4.3 File an issue for the iOS screens: a login's code and passkeys on the detail screen, the Authenticator key field, and leaving the Authenticator type out of a new item (the `mobile-vault` requirements of this change are met on Android only).
 
 ## Acceptance criteria
 
