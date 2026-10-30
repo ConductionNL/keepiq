@@ -34,11 +34,11 @@ By the time this change lands, the earlier changes provide:
   - the `vault.locked` broadcast, and the popup requests that add, re-authenticate, switch or unlock an account, which trigger `'state'`;
   - `storage.onChanged` on `local` for `accounts`, `activeAccountId`, `settings.*` and `vaultCache.*`;
   - `tabs.onActivated`, `tabs.onUpdated` (when `url` or `status === 'complete'` changes), and `windows.onFocusChanged`;
-  - `runtime.onStartup`, `runtime.onInstalled`, and `registerToolbarListeners()` itself, for a start neither event covers, such as re-enabling the extension.
+  - `runtime.onStartup`, `runtime.onInstalled`, and `registerToolbarListeners()` itself, for a start neither event covers, such as re-enabling the extension. It paints only while `toolbar:painted` is missing from `storage.session`; every `'state'` request removes it and a finished paint sets it, so a worker stopped before its paint still repaints on the next wake.
 
   Lock state is not read from `storage.onChanged` on `session`, because on Firefox below 115 the key lives in memory and no event fires.
 - **A `'state'` run recounts only each window's active tab.** Every other tab gets an empty badge and the state title, so it never shows a count from another account or an older snapshot; it gets its count on activation. Recomputing every open tab costs a match pass per tab for badges nobody is looking at.
-- **A lock or logout clears every count at once.** The `vault.locked` listener empties the badge globally and on each tab from `tabs.query({})`, and sets each tab's title to the bare name, outside the timer, because a per-tab value overrides the global one. The coalesced run then sets the state title. A paint in flight checks a generation counter the lock bumps before it sets anything, so it can't put a count back.
+- **A lock or logout clears every count at once.** The `vault.locked` listener empties the badge globally and on each tab from `tabs.query({})`, and sets each tab's title to the state title, outside the timer, because a per-tab value overrides the global one. A paint in flight checks a generation counter the lock bumps before it sets anything, so it can't put a count back.
 - **Badge colours are set once at startup.** `setBadgeBackgroundColor` uses the Keepiq brand colour, and `setBadgeTextColor` uses white where the method exists. It exists on Chrome 110+ and Firefox 63+, and the call is guarded with `?.`. Both constants live in `src/toolbar-icon.ts`.
 - **The tooltip name comes from `browser.runtime.getManifest().name`.** This keeps the dev build's " (DEV)" suffix without duplicating `wxt.config.ts`. "1 login for this site" uses the singular.
 - **No new messages.** Everything happens inside the background. The setting is read and written through ext-settings' existing `settings.get` and `settings.set`, and the refresh is triggered by the storage change it causes.
@@ -56,6 +56,6 @@ By the time this change lands, the earlier changes provide:
 ## Risks / Trade-offs
 
 - [The badge reveals how many accounts the user has on the visible site to anyone who sees the screen] → This is Bitwarden's default. It is shown only while unlocked, and the setting turns it off.
-- [The MV3 worker is asleep when a tab navigates] → `tabs.onUpdated` wakes it because the listener is registered at top level. The count comes from `storage.local`, so the cold path is `enforce()`'s reads plus the snapshot. A wake also repaints the state, which empties the badges of background tabs.
+- [The MV3 worker is asleep when a tab navigates] → `tabs.onUpdated` wakes it because the listener is registered at top level. The count comes from `storage.local`, so the cold path is `enforce()`'s reads plus the snapshot. A wake repaints the state only when the last `'state'` paint has not finished, so its cost does not grow with the open tabs.
 - [A large vault makes each recompute a full match pass] → Recomputes are coalesced and limited to visible tabs. If profiling shows a cost, the snapshot can be indexed by base domain later without changing behaviour.
 - [The app icon changes] → Every variant is rendered from `img/app-store.svg`, so re-rendering keeps them in step.

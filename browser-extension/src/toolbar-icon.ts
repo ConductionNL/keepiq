@@ -11,7 +11,7 @@ import { action } from '@/src/browser-action'
 import type { AccountStatus } from '@/src/messages'
 import { createQueue } from '@/src/queue'
 import { readGlobalSettings } from '@/src/settings/global'
-import { sessionEpoch } from '@/src/vault/key-store'
+import { sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { readSnapshot } from '@/src/vault/store'
 import { enforce } from '@/src/vault/timeout'
 
@@ -27,6 +27,8 @@ const ICON_FOLDERS: Record<AccountStatus, string> = { unlocked: 'toolbar', locke
 
 /** The storage keys a 'state' refresh follows; the lock state is not among them, it arrives by broadcast or popup reply. */
 const WATCHED = /^(accounts|activeAccountId|settings\..+|vaultCache\..+)$/
+/** In `storage.session` while the last 'state' refresh is painted, so a worker wake need not repaint every tab. */
+const PAINTED_KEY = 'toolbar:painted'
 
 interface View {
 	accountId: string | null
@@ -107,15 +109,17 @@ async function paintState(): Promise<void> {
 	])
 	const failed = results.find((result) => result.status === 'rejected')
 	if (failed) throw failed.reason
+	// A newer refresh is pending otherwise, and its paint sets it.
+	if (view.generation === generation) await sessionValues.set({ [PAINTED_KEY]: 'true' })
 }
 
 /**
- * Outside the queue, so a lock drops every count from the badges and tooltips at once; the repaint then sets the state
- * title. No count lands after it, as every paint checks the generation with no await before its calls.
+ * Outside the queue, so a lock drops every count from the badges and tooltips at once. No count lands after it, as every
+ * paint checks the generation with no await before its calls.
  */
 async function clearCounts(): Promise<void> {
-	const tabs = await browser.tabs.query({})
-	await Promise.allSettled([action.setBadgeText({ text: '' }), ...tabs.map((tab) => (tab.id === undefined ? undefined : setTab(tab.id, '', extensionName())))])
+	const [tabs, view] = await Promise.all([browser.tabs.query({}), readView()])
+	await Promise.allSettled([action.setBadgeText({ text: '' }), ...tabs.map((tab) => (tab.id === undefined ? undefined : setTab(tab.id, '', view.title)))])
 }
 
 async function paintTabById(tabId: number): Promise<void> {
@@ -125,7 +129,10 @@ async function paintTabById(tabId: number): Promise<void> {
 
 /** Coalesced per scope; the state is read when the refresh runs, never when it was asked for. */
 export function refreshToolbar(scope: ToolbarScope): void {
-	if (scope === 'state') generation++
+	if (scope === 'state') {
+		generation++
+		void sessionValues.remove([PAINTED_KEY]).catch(() => {})
+	}
 	if (timers.has(scope)) return
 	timers.set(scope, setTimeout(() => {
 		timers.delete(scope)
@@ -162,6 +169,9 @@ export function registerToolbarListeners(): void {
 			if (tab?.id !== undefined) refreshToolbar(tab.id)
 		}).catch(() => {})
 	})
-	// Re-enabling the extension, or a worker stopped before its paint ran, fires neither event above.
-	state()
+	// Re-enabling the extension, which empties `storage.session`, or a worker stopped before its paint ran, fires neither
+	// event above. Any other wake finds the last paint in place.
+	void sessionValues.get(PAINTED_KEY).then((painted) => {
+		if (!painted) state()
+	}).catch(state)
 }

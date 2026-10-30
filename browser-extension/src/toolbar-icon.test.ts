@@ -164,7 +164,10 @@ describe('the icon', () => {
 	it.each([
 		['the browser starts', () => fakeBrowser.runtime.onStartup.trigger()],
 		['the extension is installed or updated', () => fakeBrowser.runtime.onInstalled.trigger({ reason: 'update' } as never)],
-		['the listeners register, as when the extension is re-enabled', async () => registerToolbarListeners()],
+		['the extension is re-enabled, which empties storage.session', async () => {
+			await browser.storage.session.clear()
+			registerToolbarListeners()
+		}],
 	])('paints the state when %s, with no storage change to follow', async (_, start) => {
 		// No broadcast and no `storage.local` change, so only the start itself repaints.
 		await clearKey(accountId)
@@ -172,6 +175,25 @@ describe('the icon', () => {
 		await start()
 		await settle()
 		expect(iconFolder()).toBe('toolbar-locked')
+	})
+
+	it('repaints nothing when the worker wakes after its last paint', async () => {
+		setIcon.mockClear()
+		vi.mocked(browser.tabs.query).mockClear()
+		registerToolbarListeners()
+		await settle()
+		expect(setIcon).not.toHaveBeenCalled()
+		expect(browser.tabs.query).not.toHaveBeenCalled()
+	})
+
+	it('leaves the next wake to paint while a refresh is pending, as when the worker stops before it', async () => {
+		const painted = async () => (await browser.storage.session.get('toolbar:painted'))['toolbar:painted']
+		expect(await painted()).toBe('true')
+		refreshToolbar('state')
+		await flush()
+		expect(await painted()).toBeUndefined()
+		await settle()
+		expect(await painted()).toBe('true')
 	})
 
 	it('keeps the development name', async () => {
@@ -318,7 +340,7 @@ describe('the badge', () => {
 		expect(await badge(7)).toBe('4')
 	})
 
-	it('writes nothing to storage', async () => {
+	it('writes no count to storage, only that the state is painted', async () => {
 		const local = vi.spyOn(browser.storage.local, 'set')
 		const session = vi.spyOn(browser.storage.session, 'set')
 		refreshToolbar('state')
@@ -326,7 +348,7 @@ describe('the badge', () => {
 		await settle()
 		expect(await badge(7)).toBe('3')
 		expect(local).not.toHaveBeenCalled()
-		expect(session).not.toHaveBeenCalled()
+		expect(session.mock.calls).toEqual([[{ 'toolbar:painted': 'true' }]])
 	})
 
 	it('drops another account\'s count from a background tab, also once that account locks', async () => {
@@ -403,7 +425,7 @@ describe('the badge is empty unless unlocked', () => {
 		expect(vi.getTimerCount()).toBe(1)
 		expect(setIcon).not.toHaveBeenCalled()
 		expect([await badge(7), await badge(8)]).toEqual(['', ''])
-		expect([await title(7), await title(8)]).toEqual(['Keepiq', 'Keepiq'])
+		expect([await title(7), await title(8)]).toEqual(['Keepiq: Locked', 'Keepiq: Locked'])
 	})
 
 	it('paints no coloured icon read before a lock, not even for a moment', async () => {

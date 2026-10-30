@@ -16,7 +16,7 @@
 - [x] 2.2 Add `registerToolbarListeners()`:
   - `tabs.onActivated`, `tabs.onUpdated` (url or `status: 'complete'`), `windows.onFocusChanged`;
   - `storage.onChanged` on `local` for `accounts`, `activeAccountId`, `settings.*` and `vaultCache.*`;
-  - `runtime.onStartup` and `runtime.onInstalled`, plus a `'state'` paint when the listeners register;
+  - `runtime.onStartup` and `runtime.onInstalled`, plus a `'state'` paint when the listeners register and the last one has not finished;
   - badge colours set once, with `setBadgeTextColor` guarded.
 - [ ] 2.3 Wire it into `entrypoints/background.ts`:
   - call `registerToolbarListeners()` at top level;
