@@ -200,7 +200,6 @@ class ScreensTest {
         showMail(mail())
         compose.onNodeWithText("Authenticator code").assertExists()
         compose.onNodeWithContentDescription("Copy Authenticator code").assertExists()
-        compose.onNodeWithText("JBSWY3DPEHPK3PXP", substring = true).assertDoesNotExist()
     }
 
     @Test
@@ -576,5 +575,21 @@ class ScreensTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Mail").fetchSemanticsNodes().isNotEmpty() }
         compose.onAllNodesWithText("passkey", substring = true, ignoreCase = true).assertCountEquals(0)
         compose.onAllNodesWithContentDescription("passkey", substring = true, ignoreCase = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun anAuthenticatorItemsSeedIsTypedLikeALoginsKey() {
+        vault.put("t2", FakeVault.row("t2", "Code", "3", key = "JBSWY3DPEHPK3PXP"))
+        var view: View? = null
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme { ItemEditScreen(vault.session, "t2", null, null, GeneratorSettings(), Modifier, onSaved = {}, onCancel = {}) }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
+        val seed = "Authenticator secret or otpauth link"
+        compose.onNodeWithText(seed).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        compose.onNodeWithText("Show $seed").performScrollTo().performClick()
+        compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
     }
 }

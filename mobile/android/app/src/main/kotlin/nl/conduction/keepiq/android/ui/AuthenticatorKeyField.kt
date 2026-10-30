@@ -45,16 +45,14 @@ import nl.conduction.keepiq.shared.vault.KeyEdit
 internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
 
 /**
- * The Authenticator key of an item (mobile-login-totp-passkeys D8). A saved
- * key is never loaded: the field says one is saved and offers Replace and
- * Remove, or with [removeOnly] Remove alone. Focus moves to the control
- * that took the chosen one's place. A typed key is masked until shown, as
- * a password is, and while the field is on screen the screen is kept out of
- * the autofill framework, so another autofill service is never offered the
- * seed to save (the web field's autocomplete="off").
+ * Where an Authenticator seed is typed, on a login's key field and on an
+ * Authenticator item's own seed: masked until shown, as a password is, with
+ * a password keyboard without autocorrect, and while it is on screen the
+ * screen is kept out of the autofill framework, so another autofill service
+ * is never offered the seed to save (the web field's autocomplete="off").
  */
 @Composable
-internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, removeOnly: Boolean, onChange: (ItemDraft) -> Unit) {
+internal fun SeedInput(label: String, value: String, problem: DraftProblem?, modifier: Modifier = Modifier, onChange: (String) -> Unit) {
     val view = LocalView.current
     DisposableEffect(view) {
         val before = view.importantForAutofill
@@ -62,6 +60,28 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
         onDispose { view.importantForAutofill = before }
     }
     var shown by remember { mutableStateOf(false) }
+    TextInput(
+        label,
+        value,
+        problem,
+        modifier = modifier,
+        keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
+        visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+        onChange = onChange,
+    )
+    TextButton(onClick = { shown = !shown }) {
+        Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
+    }
+}
+
+/**
+ * The Authenticator key of an item (mobile-login-totp-passkeys D8). A saved
+ * key is never loaded: the field says one is saved and offers Replace and
+ * Remove, or with [removeOnly] Remove alone. Focus moves to the control
+ * that took the chosen one's place. A key is typed in a [SeedInput].
+ */
+@Composable
+internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, removeOnly: Boolean, onChange: (ItemDraft) -> Unit) {
     val field = remember { FocusRequester() }
     val replace = remember { FocusRequester() }
     val remove = remember { FocusRequester() }
@@ -74,18 +94,8 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     val label = stringResource(R.string.edit_totp_key)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (!draft.hasSavedKey || draft.keyEdit == KeyEdit.REPLACE) {
-            TextInput(
-                label,
-                draft.newKey,
-                problem,
-                modifier = Modifier.focusRequester(field),
-                keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
-                visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-            ) { v ->
+            SeedInput(label, draft.newKey, problem, modifier = Modifier.focusRequester(field)) { v ->
                 onChange(draft.copy(newKey = v, keyEdit = if (draft.hasSavedKey || v.isNotBlank()) KeyEdit.REPLACE else KeyEdit.KEEP))
-            }
-            TextButton(onClick = { shown = !shown }) {
-                Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
             }
         } else {
             // Announced when it changes: after Remove, focus lands on Keep and this line says what Remove did.

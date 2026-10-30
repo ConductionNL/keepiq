@@ -156,7 +156,8 @@ fun ItemEditScreen(
                 ) { draft = draft.copy(secret = it) }
                 if (draft.kind == FormKind.LOGIN) AuthenticatorKeyField(draft, error("totp"), removeOnly = false) { draft = it }
             }
-            FormKind.TOTP -> TextInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
+            // An Authenticator item's seed is its value: typed like a login's key (SeedInput), masked and kept from autofill.
+            FormKind.TOTP -> SeedInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
             FormKind.CARD, FormKind.IDENTITY -> for (field in Composite.fieldsOf(draft.kind)) {
                 val value = draft.composite[field] ?: ""
                 val label = compositeFieldLabel(field)
