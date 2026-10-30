@@ -170,6 +170,20 @@ describe('item.decrypt', () => {
 		}
 	})
 
+	it('opens a login\'s code field, also for a use-only copy, whose code may be shown', async () => {
+		await snapshot([
+			secretRow({ id: 'a', login: await encrypt('alice'), totp: await encrypt('JBSWY3DPEHPK3PXP') }),
+			secretRow({ id: 'u', useOnly: true, login: await encrypt('bob'), totp: await encrypt('JBSWY3DPEHPK3PXP') }),
+		])
+		expect(await send({ kind: 'item.decrypt', ids: ['a'], fields: ['login', 'totp'] })).toEqual({ ok: true, items: { a: { login: 'alice', totp: 'JBSWY3DPEHPK3PXP' } } })
+		expect(await send({ kind: 'item.decrypt', ids: ['u'], fields: ['login', 'totp'] })).toEqual({ ok: true, items: { u: { login: 'bob', totp: 'JBSWY3DPEHPK3PXP' } } })
+	})
+
+	it('reads an empty field as no value rather than failing', async () => {
+		await snapshot([secretRow({ id: 'a', login: await encrypt('alice'), totp: '' })])
+		expect(await send({ kind: 'item.decrypt', ids: ['a'], fields: ['login', 'totp'] })).toEqual({ ok: true, items: { a: { login: 'alice' } } })
+	})
+
 	it('withholds a use-only authenticator\'s seed too', async () => {
 		await snapshot([secretRow({ id: 't', useOnly: true, typeId: 't-totp', key: await encrypt('JBSWY3DPEHPK3PXP') })])
 		expect(await send({ kind: 'item.decrypt', ids: ['t'], fields: ['key'] })).toEqual({ ok: false, error: 'use_only' })

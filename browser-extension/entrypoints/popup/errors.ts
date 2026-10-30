@@ -76,6 +76,11 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
 		case 'unverified': return i18n.t('writeErrors.unverified')
 		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
+		case 'partner_upgrade_required': {
+			const cloudIds = (error.partners ?? []).map((partner) => partner.cloudId)
+			const text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
+			return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
+		}
 		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
 		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
 		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })

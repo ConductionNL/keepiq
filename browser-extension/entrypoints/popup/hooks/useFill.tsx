@@ -22,7 +22,8 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 		try {
 			const reply = await request({ kind: 'fill.request', itemId, tabId, ...(confirmedInsecure && { confirmedInsecure }) })
 			if (reply?.needsInsecureConfirm) return setInsecure(itemId)
-			if (reply && reply.filled !== 'none') {
+			// A second-step page fills only the code.
+			if (reply && (reply.filled !== 'none' || reply.code)) {
 				if (!isPopout) window.close()
 				return
 			}

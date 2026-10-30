@@ -1,5 +1,6 @@
 /** The item form's model: per-type fields, the payloads they serialize to, and the limits Keepiq enforces. */
-import type { DecryptField, EditableItem, ItemDraft, ItemPatch } from '@/src/messages'
+import type { EditableItem, FormField, ItemDraft, ItemPatch } from '@/src/messages'
+import { isAuthenticatorKey, normaliseAuthenticatorKey } from '@/src/totp/authenticator-key'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
 import { parseObject, parsePayload, text } from './payloads'
 
@@ -34,6 +35,9 @@ export function formKind(typeName: string | undefined): FormKind {
 			return 'credential'
 	}
 }
+
+/** No new item gets these types: a passkey comes from its ceremony, an authenticator key goes on its login (keepiq#1324). */
+export const isNewItemType = (typeName: string) => typeName !== 'passkey' && typeName !== 'totp'
 
 /** Secrets that span lines. */
 export const isMultiline = (typeName: string | undefined) => typeName === 'ssh_key' || typeName === 'certificate'
@@ -85,7 +89,14 @@ export interface FormValues {
 	/** The member the notes came from, so an edit writes them back under the same name. */
 	notesKey: string | null
 	fields: CustomField[]
+	/** A login's new authenticator key, as typed or scanned; a saved one is never loaded here. */
+	authKey: string
+	/** The row holds an authenticator key, which `authKeyMode` keeps, replaces with `authKey` (removes, when that is empty) or, on a type that takes none, removes. */
+	totpSaved: boolean
+	authKeyMode: AuthKeyMode
 }
+
+export type AuthKeyMode = 'keep' | 'replace' | 'remove'
 
 const blank = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((key) => [key, ''])) as Record<K, string>
 
@@ -96,7 +107,19 @@ export function emptyValues(typeId: string, url = '', folderId: string | null = 
 	return {
 		typeId, name: '', url, folderId, login: '', loginShown: false, plainKey: false, secret: '', totp: {},
 		card: blank(CARD_FIELDS), identity: blank(IDENTITY_FIELDS), notes: '', notesKey: null, fields: [],
+		authKey: '', totpSaved: false, authKeyMode: 'keep',
 	}
+}
+
+/** Whether the form shows the key input: a login without a saved key, or one whose key is being replaced (Keepiq `login-one-time-codes`). */
+export const authKeyInput = (values: Pick<FormValues, 'totpSaved' | 'authKeyMode'>, typeName: string | undefined) =>
+	typeName === 'login' && (!values.totpSaved || values.authKeyMode === 'replace')
+
+/** `undefined` keeps what the row holds, `''` removes a saved key; a saved key being replaced is removed when no new one is entered. */
+function totpOf(values: FormValues, typeName: string | undefined): string | undefined {
+	if (values.totpSaved && values.authKeyMode === 'remove') return ''
+	if (!authKeyInput(values, typeName)) return undefined
+	return normaliseAuthenticatorKey(values.authKey) || (values.totpSaved ? '' : undefined)
 }
 
 export interface FormSections {
@@ -131,6 +154,7 @@ function members<K extends string>(raw: string, keys: readonly K[]): Record<K, s
 export function fromItem(item: EditableItem, typeName: string | undefined): FormValues {
 	const values = emptyValues(item.typeId, item.url ?? '', item.folderId)
 	values.name = item.name
+	values.totpSaved = item.totpSaved
 	values.login = item.login ?? ''
 	values.loginShown = values.login !== ''
 	const kind = formKind(typeName)
@@ -185,6 +209,7 @@ export function toDraft(values: FormValues, typeName: string | undefined): ItemD
 	if (sections.notes && values.notes !== '') entries.push([values.notesKey ?? NOTES, values.notes])
 	// `fromEntries` defines each name, so a field called `__proto__` is kept rather than setting the prototype.
 	const additionalFields: Record<string, string> = Object.fromEntries(entries)
+	const totp = totpOf(values, typeName)
 	return {
 		typeId: values.typeId,
 		name: values.name,
@@ -193,6 +218,7 @@ export function toDraft(values: FormValues, typeName: string | undefined): ItemD
 		key: keyOf(values, kind),
 		login: sections.login && values.login !== '' ? values.login : null,
 		additionalFields,
+		...(totp !== undefined && { totp }),
 	}
 }
 
@@ -211,10 +237,11 @@ export function diffDraft(before: ItemDraft, after: ItemDraft): ItemPatch {
 	if (before.key !== after.key) patch.key = after.key
 	if (before.login !== after.login) patch.login = after.login
 	if (!sameRecord(before.additionalFields, after.additionalFields)) patch.additionalFields = after.additionalFields
+	if (after.totp !== undefined && after.totp !== before.totp) patch.totp = after.totp
 	return patch
 }
 
-const unopened: EditableItem = { id: '', typeId: '', name: '', url: null, folderId: null, key: '', login: null, additionalFields: {}, updatedAt: '' }
+const unopened: EditableItem = { id: '', typeId: '', name: '', url: null, folderId: null, key: '', login: null, additionalFields: {}, updatedAt: '', totpSaved: false }
 
 /**
  * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse
@@ -255,7 +282,7 @@ function faithfulObject(raw: string): Record<string, unknown> | null {
  * Whether the edit form shows all of a field's plaintext under this type, since a save leaves an untouched field as it is and partners get it whole (ADR-002).
  * Composite members count when each is one the form has a field for, holding what that field shows.
  */
-export function shownInFull(field: DecryptField, plaintext: string | null, typeName: string | undefined): boolean {
+export function shownInFull(field: FormField, plaintext: string | null, typeName: string | undefined): boolean {
 	if (!plaintext) return true
 	const kind = formKind(typeName)
 	switch (field) {
@@ -283,7 +310,7 @@ export type FieldError =
 	| { code: 'tooLong' | 'tooLongBytes'; max: number }
 
 /**
- * Keyed by field: `name`, `url`, `login`, `secret`, `notes`, `card.<member>`, `identity.<member>`,
+ * Keyed by field: `name`, `url`, `login`, `secret`, `authKey`, `notes`, `card.<member>`, `identity.<member>`,
  * `field.<id>.name`, `field.<id>.value`, and `additionalFields` when the blob is too big without notes.
  */
 export type FormErrors = Record<string, FieldError>
@@ -314,6 +341,7 @@ export function validate(values: FormValues, typeName: string | undefined): Form
 			errors.secret = { code: 'invalidTotp' }
 		}
 	}
+	if (authKeyInput(values, typeName) && values.authKey.trim() && !isAuthenticatorKey(values.authKey)) errors.authKey = { code: 'invalidTotp' }
 	const draft = toDraft(values, typeName)
 	if (!errors.secret && bytes(draft.key) > BLOB_MAX_BYTES) errors.secret = { code: 'tooLongBytes', max: BLOB_MAX_BYTES }
 

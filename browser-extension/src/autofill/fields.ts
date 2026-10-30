@@ -1,4 +1,5 @@
 // Field detection and classification, spec `autofill` § Field detection; precedence in design.md.
+import type { InlineMode } from '@/src/messages'
 
 export type FieldRole = 'username' | 'currentPassword' | 'newPassword' | 'oneTimeCode' | 'other'
 export type GroupKind = 'login' | 'passwordChange' | 'signUp' | 'other'
@@ -35,6 +36,8 @@ const USERNAME_TEXT = /user|login|log in|e ?mail|gebruiker|account|inlog|identif
 const PHONE_TEXT = /phone|telefoon|mobiel|mobile/
 const NOT_USERNAME_TEXT = /search|zoek|captcha|coupon|voucher|promo/
 const OTP_TEXT = /\b(otp|totp|2fa|mfa|code|token)\b|verif|authenticat|eenmalig/
+// A recovery or backup code is typed once, never generated (spec `totp-autofill`, Code fields).
+const RECOVERY_TEXT = /recovery|back ?up|herstel/
 const NEW_TEXT = /new|nieuw|confirm|bevestig|repeat|herhaal|again|retype/
 const CURRENT_TEXT = /current|old|huidig|oud|existing/
 const OTHER_TOKENS =
@@ -118,7 +121,7 @@ function factsOf(input: HTMLInputElement): Facts {
 	if (input.getAttribute('inputmode') === 'numeric' || input.type === 'number') otp += 1
 	const max = Number(input.getAttribute('maxlength'))
 	if (max >= 4 && max <= 8) otp += 1
-	return { text, token, otp: otp >= 3 }
+	return { text, token, otp: otp >= 3 && !RECOVERY_TEXT.test(text) }
 }
 
 function usernameScore({ text, token }: Facts, phone: boolean): number {
@@ -294,10 +297,58 @@ export function classifyField(field: Element): FieldRole {
 	return groupOf(field)?.roles.get(field as HTMLInputElement) ?? 'other'
 }
 
-/** Whether the inline list may open on `field` (spec `inline-list`, Which fields open the list). */
-export function isQualifying(field: Element): boolean {
+const SPLIT_TYPES = new Set(['text', 'tel', 'number'])
+
+/** 1: a one-character input, 2: one of two to four characters, 0: neither. */
+function splitKind(input: HTMLInputElement): 0 | 1 | 2 {
+	if (!SPLIT_TYPES.has(input.type) || RECOVERY_TEXT.test(fieldText(input))) return 0
+	const max = input.maxLength
+	return max === 1 ? 1 : max >= 2 && max <= 4 ? 2 : 0
+}
+
+/** The code group holding `field` in `group`: its run of short inputs, else the field alone when it is a one-time code. */
+function codeGroupIn(group: FieldGroup, field: HTMLInputElement): HTMLInputElement[] | null {
+	const kind = splitKind(field)
+	const at = group.fields.indexOf(field)
+	if (kind !== 0 && at >= 0) {
+		let start = at
+		let end = at
+		while (start > 0 && splitKind(group.fields[start - 1]!) === kind) start--
+		while (end < group.fields.length - 1 && splitKind(group.fields[end + 1]!) === kind) end++
+		const run = group.fields.slice(start, end + 1)
+		const total = run.reduce((sum, input) => sum + input.maxLength, 0)
+		// A run of longer inputs needs a one-time-code member, so a birth date in three inputs is no code.
+		if (kind === 1 ? run.length >= 4 && run.length <= 8
+			: run.length >= 2 && run.length <= 4 && total >= 4 && total <= 8 && run.some((input) => group.roles.get(input) === 'oneTimeCode')) return run
+	}
+	return group.roles.get(field) === 'oneTimeCode' ? [field] : null
+}
+
+/** The code group `field` belongs to (spec `totp-autofill`, Code fields), or null. */
+export function codeGroup(field: Element): HTMLInputElement[] | null {
 	const group = groupOf(field)
-	return group?.kind === 'login' && (field === group.username || field === group.currentPassword)
+	return group ? codeGroupIn(group, field as HTMLInputElement) : null
+}
+
+/** Every code group in `root`, in document order; `within` keeps those of one field group. */
+export function findCodeGroups(root: Root = document, within?: FieldGroup): HTMLInputElement[][] {
+	const found: HTMLInputElement[][] = []
+	for (const group of within ? [within] : findGroups(root)) {
+		for (const field of group.fields) {
+			if (found.some((run) => run.includes(field))) continue
+			const run = codeGroupIn(group, field)
+			if (run) found.push(run)
+		}
+	}
+	return found
+}
+
+/** Whether the inline list may open on `field`, and in which mode (spec `inline-list`, Which fields open the list). */
+export function isQualifying(field: Element): InlineMode | null {
+	const group = groupOf(field)
+	if (!group) return null
+	if (group.kind === 'login' && (field === group.username || field === group.currentPassword)) return 'login'
+	return codeGroupIn(group, field as HTMLInputElement) ? 'code' : null
 }
 
 /** The native setter, so a framework's value tracker sees a change, then the events a typing user sends. */

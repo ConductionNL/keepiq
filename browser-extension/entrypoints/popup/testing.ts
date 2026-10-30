@@ -212,7 +212,7 @@ export function editableItem(overrides: Partial<EditableItem> = {}): EditableIte
 	const typeId = overrides.typeId ?? 't-login'
 	return {
 		id: 'i1', typeId, typeName: types.find((type) => type.id === typeId)?.name, name: 'GitHub', url: 'https://github.com', folderId: null, key: 'hunter2', login: 'alice',
-		additionalFields: {}, updatedAt: '2026-03-02T10:00:00Z', ...overrides,
+		additionalFields: {}, updatedAt: '2026-03-02T10:00:00Z', totpSaved: false, ...overrides,
 	}
 }
 

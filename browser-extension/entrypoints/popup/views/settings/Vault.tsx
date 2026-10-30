@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { i18n } from '#i18n'
 import type { VaultSnapshotReply } from '@/src/messages'
+import { isNewItemType } from '@/src/vault/fields'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Icon } from '../../components/Icon'
 import { Loading } from '../../components/Loading'
@@ -116,7 +117,7 @@ interface DefaultTypeProps {
 }
 
 function DefaultType({ settings, types, update, reload }: DefaultTypeProps) {
-	const usable = types.filter((type) => type.name !== 'passkey')
+	const usable = types.filter((type) => isNewItemType(type.name))
 	const value = usable.some((type) => type.name === settings.values.defaultItemType) ? settings.values.defaultItemType : 'login'
 	return (
 		<div className="card form-card">

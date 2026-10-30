@@ -2,9 +2,10 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
 import type { EditableItem, ShareSaveNote, VaultSnapshotReply, VaultWriteError, WriteResult } from '@/src/messages'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
-import { CARD_FIELDS, emptyValues, formKind, formSections, fromItem, hasLineBreak, IDENTITY_FIELDS, isMultiline, keepLineBreaks, type CardField, type FormValues, type IdentityField } from '@/src/vault/fields'
+import { CARD_FIELDS, emptyValues, formKind, formSections, fromItem, hasLineBreak, IDENTITY_FIELDS, isMultiline, isNewItemType, keepLineBreaks, type CardField, type FormValues, type IdentityField } from '@/src/vault/fields'
 import { folderPath } from '@/src/vault/list'
 import { AdditionalFieldsEditor } from '../components/AdditionalFieldsEditor'
+import { AuthenticatorKeyField } from '../components/AuthenticatorKeyField'
 import { Button } from '../components/Button'
 import { Banner } from '../components/ErrorBanner'
 import { Icon } from '../components/Icon'
@@ -44,7 +45,7 @@ const isRetryable = (error: VaultWriteError | undefined) => !error || error.code
 type Partner = NonNullable<VaultWriteError['partners']>[number]
 
 /** The patch fields share-save sends to every copy. */
-const VALUE_FIELDS = ['key', 'login', 'additionalFields'] as const
+const VALUE_FIELDS = ['key', 'login', 'additionalFields', 'totp'] as const
 
 const unionOf = (earlier: Partner[], later: Partner[]) => [...earlier, ...later.filter((partner) => !earlier.some((known) => known.shareId === partner.shareId))]
 
@@ -57,9 +58,9 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
 	)
 }
 
-/** The user's default type, else `login`; never a passkey, which only a passkey ceremony creates. */
+/** The user's default type, else `login`; never one a new item may not have. */
 function defaultTypeId(snapshot: Unlocked): string {
-	const usable = snapshot.types.filter((type) => type.name !== 'passkey')
+	const usable = snapshot.types.filter((type) => isNewItemType(type.name))
 	return (usable.find((type) => type.name === snapshot.defaultSecretType) ?? usable.find((type) => type.name === 'login') ?? usable[0])?.id ?? ''
 }
 
@@ -215,6 +216,20 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 	const secretLabel = draft.typeName === 'login' || draft.typeName === 'database' || !draft.typeName
 		? i18n.t('detail.password')
 		: rendered?.label ?? i18n.t('form.secret')
+	// Only a login takes a new key; any other type that holds one may only drop it.
+	const isLogin = draft.typeName === 'login'
+	const authKeyField = (isLogin || values.totpSaved) && (
+		<AuthenticatorKeyField
+			saved={values.totpSaved}
+			mode={values.authKeyMode}
+			removeOnly={!isLogin}
+			value={values.authKey}
+			error={error('authKey')}
+			leftOut={mode === 'clone' && item?.totpLeftOut}
+			onMode={(authKeyMode) => update({ authKeyMode, authKey: '' })}
+			onValue={(authKey) => update({ authKey })}
+		/>
+	)
 	const areaChange = (field: 'secret' | 'notes') => (value: string) => update({ [field]: keepLineBreaks(value, initial[field]) })
 	const secretField = (label: string, autoComplete: string, area = multiline, generate = false) => area
 		? <TextArea label={label} value={values.secret} onChange={areaChange('secret')} error={error('secret')} rows={6} mono concealed />
@@ -256,6 +271,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 					<FormSection title={i18n.t('detail.loginCredentials')}>
 						{sections.login && <TextField label={i18n.t('detail.username')} value={values.login} onChange={(login) => update({ login })} error={error('login')} autoComplete="off" verbatim action={{ icon: 'generate', label: i18n.t('generator.generateUsername'), onClick: (button) => shell.generate('username', (login) => update({ login }), button) }} />}
 						{secretField(secretLabel, 'new-password', isMultiline(draft.typeName) || multiline, true)}
+						{authKeyField}
 					</FormSection>
 				)}
 				{kind === 'totp' && (
@@ -288,6 +304,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				)}
 
 				<FormSection title={i18n.t('form.autofillOptions')}>
+					{kind !== 'credential' && authKeyField}
 					{kind !== 'credential' && sections.login && <TextField label={i18n.t('detail.username')} value={values.login} onChange={(login) => update({ login })} error={error('login')} autoComplete="off" verbatim />}
 					<TextField label={i18n.t('form.website')} value={values.url} onChange={(url) => update({ url })} error={error('url')} inputMode="url" autoComplete="off" verbatim />
 				</FormSection>

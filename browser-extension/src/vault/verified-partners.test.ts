@@ -6,7 +6,7 @@ import { forgetVerifiedPartners, verifiedPartners } from './verified-partners'
 
 const BOB = { shareId: 'fs-bob', recipientCloudId: 'bob@cloud.partner.example' }
 const CAROL = { shareId: 'fs-carol', recipientCloudId: 'carol@cloud.partner.example' }
-const VERIFIED = { fingerprint: 'ab'.repeat(32), spki: new Uint8Array([1]) }
+const VERIFIED = { fingerprint: 'ab'.repeat(32), spki: new Uint8Array([1]), valueFields: ['totp'] }
 
 /** A save of `accountId` that verified `share` and then failed or went through. */
 function saved(outcome: 'failed' | 'succeeded', accountId = 'a1', share = BOB) {

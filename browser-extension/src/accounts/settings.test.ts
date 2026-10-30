@@ -7,6 +7,7 @@ const defaults: AccountSettings = {
 	vaultTimeout: 15,
 	vaultTimeoutAction: 'lock',
 	clearClipboardMs: 30_000,
+	autoCopyTotp: true,
 	autofillOnPageLoad: false,
 	defaultAutofill: 'onPageLoad',
 	uriMatch: 'baseDomain',
@@ -41,6 +42,7 @@ describe('reading', () => {
 		['clearClipboardMs', -1],
 		['clearClipboardMs', 'soon'],
 		['clearClipboardMs', Number.POSITIVE_INFINITY],
+		['autoCopyTotp', 'yes'],
 		['autofillOnPageLoad', 'yes'],
 		['defaultAutofill', 'always'],
 		['uriMatch', 'fuzzy'],
@@ -71,7 +73,7 @@ describe('reading', () => {
 
 	it('keeps valid values', async () => {
 		const chosen: AccountSettings = {
-			vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'logout', clearClipboardMs: 0, autofillOnPageLoad: true, defaultAutofill: 'never',
+			vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'logout', clearClipboardMs: 0, autoCopyTotp: false, autofillOnPageLoad: true, defaultAutofill: 'never',
 			uriMatch: 'regex', inlineSuggestions: false, contextMenu: false, askToAdd: false, askToUpdate: false,
 			excludedDomains: ['example.test', 'example.co.uk', 'user.github.io', '192.168.1.10', 'localhost'], defaultItemType: 'note',
 		}

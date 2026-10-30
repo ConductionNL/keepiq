@@ -35,7 +35,7 @@ Card and identity items can be stored, viewed and edited in the popup, but filli
 - Test-site pages per fill case.
 - Out of scope, each a later change or a Keepiq change:
   - saving a card or identity from a submitted form;
-  - "New card", "New identity" and "Add identity" in the inline list and the context menu (the inline list has no "New item", ext-autofill);
+  - "New card" and "New identity" in the inline list (the inline list has no "New item", ext-autofill); the context menu's Add card and Add identity come with ext-context-menu;
   - master password re-prompt per item, which needs a field Keepiq does not have (`ISSUE-item-reprompt`);
   - identity members Keepiq does not store: title, middle name, company, username, address lines 2 and 3, city, state, postcode, country (`ISSUE-identity-fields`);
   - identities suggested on sign-up username fields together with a generated password (Bitwarden's account creation inline menu);

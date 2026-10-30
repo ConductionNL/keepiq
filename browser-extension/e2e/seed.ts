@@ -9,6 +9,8 @@ import { envelope, suiteRow } from '@/src/testing/vectors'
 import type { VaultSnapshot } from '@/src/vault/types'
 
 export const LOGIN = { username: 'test-user', password: 'test-password' }
+/** The key `test-site/totp.js` checks codes against. */
+export const TOTP_SECRET = 'JBSWY3DPEHPK3PXP'
 
 export interface FakeStorage {
 	local: Record<string, unknown>
@@ -28,9 +30,12 @@ export interface LoginItem {
 	https?: boolean
 }
 
-/** The login matches `site`; `matches` adds more matching logins after it. Locked leaves out the private key, as a lock does. */
+/**
+ * The login matches `site`; `matches` adds more matching logins after it; `totp` gives the first one `TOTP_SECRET` as
+ * its code. Locked leaves out the private key, as a lock does.
+ */
 export async function fakeStorage(
-	site: string, unlocked: boolean, { longFolder = false, matches = 1, loginItem = {} as LoginItem } = {},
+	site: string, unlocked: boolean, { longFolder = false, matches = 1, loginItem = {} as LoginItem, totp = false } = {},
 ): Promise<FakeStorage> {
 	const { name = 'Test site', username = LOGIN.username, https = false } = loginItem
 	const now = new Date().toISOString()
@@ -44,6 +49,7 @@ export async function fakeStorage(
 			secretRow({
 				name, url: https ? site.replace(/^http:/, 'https:') : site, ownerId: account.uid, createdAt: now, updatedAt: now,
 				login: username === null ? null : await encrypt(username), key: await encrypt(LOGIN.password),
+				...totp && { totp: await encrypt(TOTP_SECRET) },
 			}),
 			...await Promise.all(Array.from({ length: matches - 1 }, async (_, i) => secretRow({
 				id: `s${i + 2}`, name: `Test site ${i + 2}`, url: site, ownerId: account.uid, createdAt: now, updatedAt: now,

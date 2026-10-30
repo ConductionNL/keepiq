@@ -201,6 +201,24 @@ form:
   discard: Discard
   keepEditing: Keep editing
 
+authKey:
+  label: Authenticator key
+  optionalLabel: Authenticator key (optional)
+  newLabel: New authenticator key
+  help: Paste the otpauth://totp/ link or the secret key, or scan the QR code on the page.
+  scan: Scan QR code on page
+  read: Authenticator key read from the QR code
+  noQr: No QR code found on the page. Scroll it into view and try again.
+  notTotp: This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.
+  noPicture: Keepiq cannot take a picture of this page. Paste the key instead.
+  popout: Open Keepiq from the toolbar on the page with the QR code to scan it.
+  saved: Saved
+  remove: Remove authenticator key
+  replaceHelp: Paste or scan a new key, or leave this empty to remove the saved one.
+  keep: Keep the saved key
+  removedOnSave: The authenticator key is removed when you save.
+  notCloned: The authenticator key is not cloned.
+
 fieldErrors:
   required: Name is required
   tooLong: At most {max} characters
@@ -234,6 +252,9 @@ writeErrors:
   badCertificate: Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.
   unverified: This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.
   partnerUnreachable: "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+  partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to receive an authenticator key. Remove the key, or ask them to update Keepiq."
+  partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this item is shared with runs a Keepiq too old to receive an authenticator key. Remove the key, or ask them to update Keepiq."
+  partnerUpgradeVersion: They need Keepiq {version} or later.
   partnerLookupLimit: Too many partner lookups. Nothing was saved; try again in a minute.
   federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
   keepiqOutdated: Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version {version} or later.
@@ -422,6 +443,8 @@ settings:
   clipboardSeconds:
     1: 1 second
     n: $1 seconds
+  autoCopyTotp: Copy TOTP automatically
+  autoCopyTotpHint: If a login has a verification code, copy it to your clipboard when you autofill the login.
   askToAdd: Ask to add login
   askToUpdate: Ask to update existing login
   excludedDomains: Excluded domains
@@ -583,6 +606,7 @@ contextMenu:
   openKeepiq: Open Keepiq
   copyUsername: Copy username
   copyPassword: Copy password
+  copyCode: Copy verification code
   generatePassword: Generate password and copy
   unlock: Unlock vault
 
@@ -612,6 +636,18 @@ inlineList:
       n: $1 Keepiq logins. Press Down Arrow to choose.
     noMatch: No Keepiq logins for {host}
     locked: Keepiq is locked. Press Down Arrow to unlock.
+  # The list on a one-time code field, which offers authenticator items.
+  code:
+    frameTitle: Keepiq verification codes
+    label: Keepiq verification codes for {host}
+    noMatch: No verification codes for {host}
+    locked: Unlock Keepiq to see your verification codes
+    invalid: Not a valid authenticator secret
+    status:
+      count:
+        1: 1 Keepiq verification code. Press Down Arrow to choose.
+        n: $1 Keepiq verification codes. Press Down Arrow to choose.
+      noMatch: No Keepiq verification codes for {host}
 
 # The save and update bar at the top of the web page.
 notificationBar:

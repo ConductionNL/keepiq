@@ -37,4 +37,11 @@ export default [
 			globals: globals.nodeBuiltin,
 		},
 	},
+	{
+		// The test site's page scripts run in the browser.
+		files: ['test-site/**/*.js'],
+		languageOptions: {
+			globals: globals.browser,
+		},
+	},
 ];

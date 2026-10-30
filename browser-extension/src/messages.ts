@@ -34,7 +34,8 @@ export type FillOutcome = 'both' | 'username' | 'password' | 'none'
 
 /** Popup → background, and the menu, command and page-load paths in the background. `tabId` omitted means the active tab. */
 export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean }
-export type FillResult = { filled: FillOutcome; needsInsecureConfirm?: boolean }
+/** `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`. */
+export type FillResult = { filled: FillOutcome; code: boolean; needsInsecureConfirm?: boolean }
 
 /** Background → the top frame. Reply: whether the user accepted. */
 export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string }
@@ -42,12 +43,16 @@ export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: stri
 /**
  * Background → one frame; the only message to a content script carrying vault data.
  * `origin`: the frame origin the background matched. `anchorKey`: an inline pick, filling only the form of the list with this key.
+ * `code`: the paired or picked authenticator item's current code, `null` on page load or without one.
  */
-export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; origin: string; anchorKey?: string }
-export type FillExecuteReply = { filled: FillOutcome }
+export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; code: string | null; origin: string; anchorKey?: string }
+export type FillExecuteReply = { filled: FillOutcome; code: boolean }
 
-/** Request/response. */
-export type InlineOpen = { kind: 'inline.open' }
+/** What the list shows: logins, or authenticator items on a code field. */
+export type InlineMode = 'login' | 'code'
+export const INLINE_MODES: readonly InlineMode[] = ['login', 'code']
+/** Request/response. Without a valid `mode` it reads as `login`. */
+export type InlineOpen = { kind: 'inline.open'; mode: InlineMode }
 /**
  * `null`: no list, for no logged-in account, `inlineSuggestions` off or a page that is not http(s). `height`: the
  * list's, by `inlineHeight`, which the page can read from the host anyway.
@@ -90,10 +95,19 @@ export const INLINE_MAX_HEIGHT_PX = inlineHeight(INLINE_MAX_ROWS)
 export const inlineClampHeight = (height: unknown): number | null =>
 	typeof height === 'number' && Number.isFinite(height) ? Math.min(Math.max(Math.ceil(height), INLINE_MIN_HEIGHT_PX), INLINE_MAX_HEIGHT_PX) : null
 
+/** `null` digits: not a valid seed. `validUntil`: epoch ms the code ends. */
+export interface InlineCode {
+	digits: string | null
+	period: number
+	validUntil: number
+}
+
 export interface InlineRow {
 	id: string
 	name: string
 	username: string | null
+	/** Code mode only. */
+	code?: InlineCode
 }
 
 /** `at`: `Date.now()` of the pointerdown or keydown. `x`, `y`: that point, or the focused row's centre, in list coordinates. */
@@ -116,12 +130,12 @@ export type InlineListToBackground =
 	| { kind: 'inline.resize'; key: string; height: number }
 
 /** `null`: refused, for a wrong key, tab or frame. `host`: of the field's frame. */
-export type InlineStateReply = { state: 'locked' | 'unlocked'; host: string; rows: InlineRow[]; theme: Theme } | null
+export type InlineStateReply = { state: 'locked' | 'unlocked'; mode: InlineMode; host: string; rows: InlineRow[]; theme: Theme } | null
 /**
  * `filled`, `locked` and `stale` come with the background closing the list; after `needsInsecureConfirm` and
  * `not_visible` it stays open, for the question or the explanation. `null` for a wrong key, tab or frame.
  */
-export type InlinePickReply = { filled: FillOutcome } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | null
+export type InlinePickReply = { filled: FillOutcome; code: boolean } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | null
 
 export const INLINE_LIST_KINDS = kindSet<InlineListToBackground['kind']>({
 	'inline.state': true, 'inline.pick': true, 'inline.refocus': true, 'inline.close': true, 'inline.unlock': true, 'inline.resize': true,
@@ -413,11 +427,14 @@ export type VaultSnapshotReply =
 		folderNoticeDismissed: boolean
 	}
 
-export type DecryptField = 'login' | 'key' | 'additionalFields'
+/** The value fields the edit form shows and saves. */
+export type FormField = 'login' | 'key' | 'additionalFields'
+/** `totp`: a login's seed (keepiq#1325), which the popup only turns into a code. */
+export type DecryptField = FormField | 'totp'
 export type DecryptedItem = Partial<Record<DecryptField, string>>
 
-/** All a use-only copy's holder may see; the background refuses the rest (use-only-shares). */
-export const USE_ONLY_FIELDS: readonly DecryptField[] = ['login']
+/** All a use-only copy's holder may see, its code but not its seed; the background refuses the rest (use-only-shares). */
+export const USE_ONLY_FIELDS: readonly DecryptField[] = ['login', 'totp']
 
 /** A batch leaves out rows that are blocked, use-only or do not decrypt; a single id gets the reason instead. */
 export type DecryptReply =
@@ -434,9 +451,11 @@ export interface ItemDraft {
 	login: string | null
 	/** Name to value, `notes` included; `{}` when empty. */
 	additionalFields: Record<string, string>
+	/** A login's authenticator key; absent or `''` for none. */
+	totp?: string
 }
 
-/** The fields the user changed. `null` clears; `additionalFields` is always whole. */
+/** The fields the user changed. `null` clears; `additionalFields` is always whole; `totp` `''` removes the saved key. */
 export type ItemPatch = Partial<ItemDraft>
 
 /** A fresh fetch, decrypted for the edit form. */
@@ -450,6 +469,10 @@ export interface EditableItem extends ItemDraft {
 	typeName?: string
 	/** An edit fetch's record of what its form showed, for that form's save to name; absent for a clone. */
 	recordId?: string
+	/** The row holds an authenticator key; the key itself never reaches the popup. Always `false` for a clone. */
+	totpSaved: boolean
+	/** A clone of a row that holds a key, which is not cloned. */
+	totpLeftOut?: true
 }
 
 export interface FolderChildren {
@@ -497,13 +520,17 @@ export type WriteErrorCode =
 	| 'passkey_clone'
 	/** A send password needs Argon2id, whose WebAssembly this browser does not run. */
 	| 'argon2_unavailable'
+	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key the change adds. */
+	| 'partner_upgrade_required'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
 	/** With `blocked`, when the row's reason is a known code. */
 	reason?: BlockReason
-	/** With `partner_unreachable`. */
+	/** With `partner_unreachable` and `partner_upgrade_required`. */
 	partners?: Array<{ shareId: string; cloudId: string }>
+	/** With `partner_upgrade_required`, when the server named the release the partner needs. */
+	requiredVersion?: string
 }
 
 export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultWriteError }

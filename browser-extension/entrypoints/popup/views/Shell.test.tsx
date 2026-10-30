@@ -75,7 +75,7 @@ describe('Shell', () => {
 	it('offers Fill on the detail of a suggested item only, for the tab the popup belongs to', async () => {
 		const sent = fakeBackground({
 			snapshot: snapshotReply({ items: [itemMeta({ id: 'i1', name: 'GitHub' }), itemMeta({ id: 'i2', name: 'Bank', url: 'bank.test' })], suggestionIds: ['i1'] }),
-			replies: { 'fill.request': { filled: 'both' } },
+			replies: { 'fill.request': { filled: 'both', code: false } },
 		})
 		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
 		render(<App />)

@@ -12,7 +12,7 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' |
 	/** No capitals or corrections from a phone keyboard, e.g. for a username or URL. A password field always is. */
 	verbatim?: boolean
 	/** An icon button after the input, e.g. to generate its value. */
-	action?: { icon: IconName; label: string; onClick: (button: HTMLButtonElement) => void }
+	action?: { icon: IconName; label: string; onClick: (button: HTMLButtonElement) => void; disabled?: boolean }
 	/** Reads `error` out as it appears, also while the field already has focus. */
 	announce?: boolean
 }
@@ -51,7 +51,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 						aria-pressed={revealed}
 					/>
 				)}
-				{action && <IconButton icon={action.icon} label={action.label} onClick={(event) => action.onClick(event.currentTarget)} />}
+				{action && <IconButton icon={action.icon} label={action.label} onClick={(event) => action.onClick(event.currentTarget)} disabled={action.disabled} />}
 			</div>
 			{hint && <p className="field__hint" id={`${id}-hint`}>{hint}</p>}
 			{error && <p className="field__error" id={`${id}-error`} role={announce ? 'alert' : undefined}>{error}</p>}
