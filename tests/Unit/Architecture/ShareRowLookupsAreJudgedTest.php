@@ -71,9 +71,6 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		'Service/TeamFolderShareService.php' => [
 			'findBySourceSecretAndTargetUser' => 'missingPairs() and fan-out idempotency: an existing row only skips a pair or a mint',
 		],
-		'Service/TeamSecretTransferService.php' => [
-			'findBySourceSecretAndTargetUser' => 'offboarding hand-over to the successor the departing owner names: existence check, reads no copy',
-		],
 		'Service/OfflineManifestService.php' => [
 			'findByTargetUser' => 'lists the caller\'s own rows for the offline manifest; follows none to a source',
 		],

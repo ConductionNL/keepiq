@@ -40,6 +40,7 @@ use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
@@ -110,6 +111,13 @@ class TeamFolderServiceTest extends TestCase {
 	private NotificationService&MockObject $notificationService;
 
 	/**
+	 * The pending share quarantine scan.
+	 *
+	 * @var ShareQuarantineScanner&MockObject
+	 */
+	private ShareQuarantineScanner&MockObject $scanner;
+
+	/**
 	 * Audit events dispatched by the offboarding auditor.
 	 *
 	 * @var array<int,AuditEvent>
@@ -139,6 +147,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->groupManager = $this->createMock(originalClassName: IGroupManager::class);
 		$this->userManager = $this->createMock(originalClassName: IUserManager::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
+		$this->scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
 
 		$memberships = new TeamFolderMembershipResolver(
 			memberMapper: $this->memberMapper,
@@ -159,7 +168,7 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper),
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, scanner: $this->scanner),
 		);
 
 		$this->service = new TeamFolderService(
@@ -180,7 +189,7 @@ class TeamFolderServiceTest extends TestCase {
 				transfers: new TeamSecretTransferService(
 					mapper: $this->mapper,
 					memberships: $memberships,
-					shareTargetMapper: $this->shareTargetMapper,
+					rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
 					delegationMapper: $this->delegationMapper,
 					ownerTransfer: new SecretOwnerTransferService(
 						db: $this->createMock(originalClassName: IDBConnection::class),
@@ -572,6 +581,65 @@ class TeamFolderServiceTest extends TestCase {
 	}//end testRemoveMemberRevokesOnlyUncoveredUsers()
 
 	/**
+	 * While the share quarantine scan is pending, an owner removing a member
+	 * whose share row it cannot judge is refused before anything changes.
+	 *
+	 * @return void
+	 */
+	public function testRemovingAMemberWaitsForARowTheScanCannotJudge(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol'));
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$this->carolsRow()]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->memberMapper->expects($this->never())->method('delete');
+		$this->shareTargetMapper->expects($this->never())->method('delete');
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', userId: 'alice');
+	}//end testRemovingAMemberWaitsForARowTheScanCannotJudge()
+
+	/**
+	 * A membership whose end date passed cannot wait for the scan: the
+	 * membership goes, the row the scan cannot judge is removed, and its copy
+	 * is kept.
+	 *
+	 * @return void
+	 */
+	public function testAnEndedMembershipDropsARowTheScanCannotJudgeAndKeepsItsCopy(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol'));
+		$this->memberMapper->method('findByTeamFolder')->willReturn([]);
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$this->carolsRow()]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->memberMapper->expects($this->once())->method('delete');
+		$this->secretMapper->expects($this->never())->method('delete');
+		$deleted = [];
+		$this->shareTargetMapper->method('delete')->willReturnCallback(
+			static function (ShareTarget $row) use (&$deleted) {
+				$deleted[] = $row->getId();
+				return $row;
+			}
+		);
+
+		$this->assertSame(1, $this->service->expireMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', ownerId: 'alice'));
+		$this->assertSame(['st-carol'], $deleted);
+	}//end testAnEndedMembershipDropsARowTheScanCannotJudgeAndKeepsItsCopy()
+
+	/**
+	 * Carol's row in tf-1, naming her copy.
+	 *
+	 * @return ShareTarget
+	 */
+	private function carolsRow(): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId('st-carol');
+		$row->setTargetUserId('carol');
+		$row->setSecretId('copy-carol');
+
+		return $row;
+	}//end carolsRow()
+
+	/**
 	 * handleGroupMemberJoin notifies the folder owner (approval required
 	 * before any share is created).
 	 *
@@ -691,10 +759,18 @@ class TeamFolderServiceTest extends TestCase {
 		$secretB->setId('sec-b');
 		$secretB->setName('B');
 		$this->secretMapper->method('findByOwner')->willReturn([$secretA, $secretB]);
+		$bobsCopy = new Secret();
+		$bobsCopy->setId('bob-copy-a');
+		$bobsCopy->setOwnerType('user');
+		$bobsCopy->setOwnerId('bob');
 		$this->secretMapper->method('findById')->willReturnCallback(
-			static function (string $id) use ($secretA): Secret {
+			static function (string $id) use ($secretA, $bobsCopy): Secret {
 				if ($id === 'sec-a') {
 					return $secretA;
+				}
+
+				if ($id === 'bob-copy-a') {
+					return $bobsCopy;
 				}
 
 				throw new DoesNotExistException('');
@@ -706,7 +782,10 @@ class TeamFolderServiceTest extends TestCase {
 			->willReturnCallback(
 				static function (string $sourceSecretId, string $targetUserId) {
 					if ($sourceSecretId === 'sec-a') {
-						return new ShareTarget();
+						$row = new ShareTarget();
+						$row->setTargetUserId($targetUserId);
+						$row->setSecretId('bob-copy-a');
+						return $row;
 					}
 
 					throw new DoesNotExistException('');

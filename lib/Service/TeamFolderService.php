@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use Closure;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
@@ -46,6 +47,7 @@ use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Exception\OwnerOnlyException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -153,11 +155,16 @@ class TeamFolderService {
 	 * @return int Number of derived shares revoked
 	 *
 	 * @throws InvalidArgumentException When not found / not authorized
+	 * @throws ShareScanPendingException When a share row of the folder waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function unshareFolder(string $teamFolderId, string $userId): int {
 		$teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+		// Judged before the transaction, so a quarantine this makes is kept
+		// when a row the scan cannot judge refuses the unshare.
+		$this->shares->assertRevocable(teamFolderId: $teamFolderId);
 
 		$this->db->beginTransaction();
 		try {
@@ -324,7 +331,11 @@ class TeamFolderService {
 
 	/**
 	 * Remove a membership row — revokes the derived shares of every user
-	 * that is no longer covered by any remaining membership.
+	 * that is no longer covered by any remaining membership. An owner or
+	 * manager removing someone else is refused, before anything changes,
+	 * when a share row it would revoke is one the pending share quarantine
+	 * scan cannot judge; a member leaving the folder themselves is never
+	 * refused (TeamFolderShareService::releaseForMember()).
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $membershipId The membership row UUID
@@ -333,10 +344,70 @@ class TeamFolderService {
 	 * @return int Number of derived shares revoked
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized
+	 * @throws ShareScanPendingException When a row it would revoke waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function removeMember(string $teamFolderId, string $membershipId, string $userId): int {
+		$membership = $this->membershipToRemove(teamFolderId: $teamFolderId, membershipId: $membershipId, userId: $userId);
+		if ($membership->getMemberType() === 'user' && $membership->getMemberId() === $userId) {
+			return $this->dropMembership(
+				membership: $membership,
+				userId: $userId,
+				revoke: fn (string $droppedUserId): int => $this->shares->releaseForMember(teamFolderId: $teamFolderId, targetUserId: $droppedUserId)
+			);
+		}
+
+		$covered = $this->memberships->expandMember(memberType: $membership->getMemberType(), memberId: $membership->getMemberId());
+		foreach ($covered as $coveredUserId) {
+			$this->shares->assertRevocable(teamFolderId: $teamFolderId, targetUserId: $coveredUserId);
+		}
+
+		return $this->dropMembership(
+			membership: $membership,
+			userId: $userId,
+			revoke: fn (string $droppedUserId): int => $this->shares->revokeForMember(teamFolderId: $teamFolderId, targetUserId: $droppedUserId)
+		);
+	}//end removeMember()
+
+	/**
+	 * Remove a membership whose end date passed, as the folder's owner. The
+	 * expiry job cannot be refused, so a share row the pending share
+	 * quarantine scan holds back is handled as a member leaving
+	 * (TeamFolderShareService::releaseForMember()).
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $membershipId The membership row UUID
+	 * @param string $ownerId The folder's owner
+	 *
+	 * @return int Number of derived shares revoked
+	 *
+	 * @throws InvalidArgumentException On not found / not authorized
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	public function expireMember(string $teamFolderId, string $membershipId, string $ownerId): int {
+		return $this->dropMembership(
+			membership: $this->membershipToRemove(teamFolderId: $teamFolderId, membershipId: $membershipId, userId: $ownerId),
+			userId: $ownerId,
+			revoke: fn (string $droppedUserId): int => $this->shares->releaseForMember(teamFolderId: $teamFolderId, targetUserId: $droppedUserId)
+		);
+	}//end expireMember()
+
+	/**
+	 * The membership a caller may remove from a team folder.
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $membershipId The membership row UUID
+	 * @param string $userId The caller (the owner or a manager)
+	 *
+	 * @return TeamFolderMember
+	 *
+	 * @throws InvalidArgumentException On not found / not authorized
+	 */
+	private function membershipToRemove(string $teamFolderId, string $membershipId, string $userId): TeamFolderMember {
 		$teamFolder = $this->queries->loadManageableTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
 		try {
@@ -350,6 +421,22 @@ class TeamFolderService {
 		}
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $membership, userId: $userId, leaving: true);
+
+		return $membership;
+	}//end membershipToRemove()
+
+	/**
+	 * Delete a membership and revoke the derived shares of every user it
+	 * alone covered, with the given revoke.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 * @param string $userId The caller
+	 * @param Closure(string):int $revoke Revokes one dropped user's rows in the folder
+	 *
+	 * @return int Number of derived shares revoked
+	 */
+	private function dropMembership(TeamFolderMember $membership, string $userId, Closure $revoke): int {
+		$teamFolderId = (string)$membership->getTeamFolderId();
 		$this->memberMapper->delete($membership);
 
 		$coveredAfter = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
@@ -363,10 +450,7 @@ class TeamFolderService {
 
 		$revoked = 0;
 		foreach ($dropped as $droppedUserId) {
-			$revoked += $this->shares->revokeForMember(
-				teamFolderId: $teamFolderId,
-				targetUserId: $droppedUserId
-			);
+			$revoked += $revoke($droppedUserId);
 		}
 
 		// Users still covered by another grant may have lost the one that
@@ -382,7 +466,7 @@ class TeamFolderService {
 		);
 
 		return $revoked;
-	}//end removeMember()
+	}//end dropMembership()
 
 	/**
 	 * Resolve the effective recipient set of a secret by walking its
@@ -576,7 +660,7 @@ class TeamFolderService {
 				continue;
 			}
 
-			$revoked += $this->shares->revokeForMember(teamFolderId: $teamFolderId, targetUserId: $userId);
+			$revoked += $this->shares->releaseForMember(teamFolderId: $teamFolderId, targetUserId: $userId);
 		}
 
 		return $revoked;

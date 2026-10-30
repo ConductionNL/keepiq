@@ -3,8 +3,10 @@
 /**
  * The team-folder paths that follow a share row ask the pending quarantine
  * scan first. A confirmer whose own row the scan holds back has no copy to
- * hand on, so the pair is left out; a revoke of a held-back row removes the
- * row and keeps its copy. A legitimate row behaves as before.
+ * hand on, so the pair is left out. A revoke keeps a row the scan
+ * quarantines with its copy; one it cannot judge refuses a revoke that can be
+ * refused, and is removed with its copy kept by one that cannot. A
+ * legitimate row behaves as before.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\Service
@@ -25,20 +27,28 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Db\TeamFolderMapper;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ConfirmerCopyResolver;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\TeamFolderShareService;
+use OCA\Keepiq\Service\TeamSecretTransferService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\Rule\InvocationOrder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -131,36 +141,143 @@ class TeamFolderFollowsOnlyJudgedRowsTest extends TestCase {
 	}//end testAConfirmersLegitimateCopyIsHandedOn()
 
 	/**
-	 * A member leaving the folder, leaving every folder, or the folder being
-	 * unshared removes a held-back row and keeps its copy.
+	 * Every team-folder revoke keeps a row the pending scan quarantines on
+	 * the spot, with its copy, for an administrator to judge.
+	 *
+	 * @return void
+	 */
+	public function testEveryRevokeKeepsAQuarantinedRowAndItsCopy(): void {
+		$shares = $this->shares(verdict: ShareQuarantineScanner::HELD_QUARANTINED);
+
+		$shares->assertRevocable(teamFolderId: 'tf-1', targetUserId: 'bob');
+		$this->assertSame(0, $shares->revokeForMember(teamFolderId: 'tf-1', targetUserId: 'bob'));
+		$this->assertSame(0, $shares->revokeForTeamFolder(teamFolderId: 'tf-1'));
+		$this->assertSame(0, $shares->releaseForMember(teamFolderId: 'tf-1', targetUserId: 'bob'));
+		$this->assertSame(0, $shares->revokeTeamSharesForUser(targetUserId: 'bob'));
+
+		$this->assertSame([], $this->deletedRows);
+		$this->assertSame([], $this->deletedSecrets);
+	}//end testEveryRevokeKeepsAQuarantinedRowAndItsCopy()
+
+	/**
+	 * An owner removing a member or unsharing the folder waits for a row the
+	 * pending scan cannot judge, and changes nothing.
+	 *
+	 * @return void
+	 */
+	public function testARefusableRevokeWaitsForAnUnjudgedRow(): void {
+		$shares = $this->shares(verdict: ShareQuarantineScanner::HELD_UNJUDGED);
+
+		foreach ([
+			fn () => $shares->assertRevocable(teamFolderId: 'tf-1', targetUserId: 'bob'),
+			fn () => $shares->assertRevocable(teamFolderId: 'tf-1'),
+			fn () => $shares->revokeForMember(teamFolderId: 'tf-1', targetUserId: 'bob'),
+			fn () => $shares->revokeForTeamFolder(teamFolderId: 'tf-1'),
+		] as $revoke) {
+			try {
+				$revoke();
+				$this->fail('A revoke that reaches an unjudged row must wait for the scan');
+			} catch (ShareScanPendingException) {
+				$this->addToAssertionCount(1);
+			}
+		}
+
+		$this->assertSame([], $this->deletedRows);
+		$this->assertSame([], $this->deletedSecrets);
+	}//end testARefusableRevokeWaitsForAnUnjudgedRow()
+
+	/**
+	 * A member leaving a group or the folder, a membership ending and
+	 * offboarding cannot wait: an unjudged row is removed and its copy kept.
+	 *
+	 * @return void
+	 */
+	public function testARevokeThatCannotWaitDropsAnUnjudgedRowAndKeepsItsCopy(): void {
+		$shares = $this->shares(verdict: ShareQuarantineScanner::HELD_UNJUDGED);
+
+		$this->assertSame(1, $shares->releaseForMember(teamFolderId: 'tf-1', targetUserId: 'bob'));
+		$this->assertSame(1, $shares->revokeTeamSharesForUser(targetUserId: 'bob'));
+
+		$this->assertSame(['row-V', 'row-V'], $this->deletedRows);
+		$this->assertSame([], $this->deletedSecrets);
+	}//end testARevokeThatCannotWaitDropsAnUnjudgedRowAndKeepsItsCopy()
+
+	/**
+	 * A legitimate row's copy goes with the row, as before, on every revoke.
+	 *
+	 * @return void
+	 */
+	public function testRevokingALegitimateRowDeletesItsCopy(): void {
+		$shares = $this->shares(verdict: null);
+		$shares->assertRevocable(teamFolderId: 'tf-1');
+		$shares->revokeForMember(teamFolderId: 'tf-1', targetUserId: 'bob');
+		$shares->releaseForMember(teamFolderId: 'tf-1', targetUserId: 'bob');
+
+		$this->assertSame(['row-V', 'row-V'], $this->deletedRows);
+		$this->assertSame(['V', 'V'], $this->deletedSecrets);
+	}//end testRevokingALegitimateRowDeletesItsCopy()
+
+	/**
+	 * Offboarding Alice to Bob delegates S_a to Bob only through his own
+	 * trusted copy: a row the scan holds back is no copy, so S_a is skipped.
 	 *
 	 * @param string $verdict The scan's verdict on the row
 	 *
 	 * @return void
 	 */
 	#[DataProvider('heldBackVerdicts')]
-	public function testRevokingAHeldBackRowKeepsItsCopy(string $verdict): void {
-		$shares = $this->shares(verdict: $verdict);
+	public function testAHandOverSkipsASecretTheSuccessorHoldsOnlyThroughAHeldBackRow(string $verdict): void {
+		$result = $this->transfers(verdict: $verdict, delegations: $this->never())->transfer(
+			leavingUserId: 'alice',
+			successorUserId: 'bob',
+			adminId: 'admin'
+		);
 
-		$this->assertSame(1, $shares->revokeForMember(teamFolderId: 'tf-1', targetUserId: 'bob'));
-		$this->assertSame(1, $shares->revokeTeamSharesForUser(targetUserId: 'bob'));
-		$this->assertSame(1, $shares->revokeForTeamFolder(teamFolderId: 'tf-1'));
-
-		$this->assertSame(['row-V', 'row-V', 'row-V'], $this->deletedRows);
-		$this->assertSame([], $this->deletedSecrets);
-	}//end testRevokingAHeldBackRowKeepsItsCopy()
+		$this->assertSame(0, $result['transferred']);
+		$this->assertSame(['S_a'], $result['skipped']);
+	}//end testAHandOverSkipsASecretTheSuccessorHoldsOnlyThroughAHeldBackRow()
 
 	/**
-	 * A legitimate row's copy goes with the row, as before.
+	 * A successor's legitimate copy is promoted on hand-over, as before.
 	 *
 	 * @return void
 	 */
-	public function testRevokingALegitimateRowDeletesItsCopy(): void {
-		$this->shares(verdict: null)->revokeForMember(teamFolderId: 'tf-1', targetUserId: 'bob');
+	public function testAHandOverPromotesTheSuccessorsLegitimateCopy(): void {
+		$result = $this->transfers(verdict: null, delegations: $this->once())->transfer(
+			leavingUserId: 'alice',
+			successorUserId: 'bob',
+			adminId: 'admin'
+		);
 
-		$this->assertSame(['row-V'], $this->deletedRows);
-		$this->assertSame(['V'], $this->deletedSecrets);
-	}//end testRevokingALegitimateRowDeletesItsCopy()
+		$this->assertSame(1, $result['transferred']);
+		$this->assertSame([], $result['skipped']);
+	}//end testAHandOverPromotesTheSuccessorsLegitimateCopy()
+
+	/**
+	 * The team-secret transfer of Alice's folder holding S_a.
+	 *
+	 * @param string|null     $verdict     The scan's verdict on Bob's row
+	 * @param InvocationOrder $delegations How often a delegation is inserted
+	 *
+	 * @return TeamSecretTransferService
+	 */
+	private function transfers(?string $verdict, InvocationOrder $delegations): TeamSecretTransferService {
+		$folders = $this->createMock(TeamFolderMapper::class);
+		$folders->method('findByOwner')->willReturn([new TeamFolder()]);
+		$memberships = $this->createMock(TeamFolderMembershipResolver::class);
+		$memberships->method('subtreeSecretRefs')->willReturn([['id' => 'S_a', 'name' => 'S_a']]);
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->expects($delegations)->method('insert')->willReturnArgument(0);
+		$secrets = $this->secretMapper();
+
+		return new TeamSecretTransferService(
+			mapper: $folders,
+			memberships: $memberships,
+			rowJudge: $this->judge(targets: $this->targets(), secrets: $secrets, verdict: $verdict),
+			delegationMapper: $delegationMapper,
+			ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
+		);
+	}//end transfers()
 
 	/**
 	 * Add a user-owned secret.

@@ -166,7 +166,7 @@ class ShareExpiryTest extends TestCase {
 		$this->members->method('findEndingBetween')->willReturn([$membership]);
 		$this->teamFolders->method('findById')->willReturn($teamFolder);
 		$this->groupShareService->expects($this->once())->method('revokeGroupShare')->with('gs-1', 'alice');
-		$this->teamFolderService->expects($this->once())->method('removeMember')->with('tf-1', 'mem-1', 'olga');
+		$this->teamFolderService->expects($this->once())->method('expireMember')->with('tf-1', 'mem-1', 'olga');
 
 		$this->assertSame(2, $this->remover()->removeExpired($this->now));
 	}
