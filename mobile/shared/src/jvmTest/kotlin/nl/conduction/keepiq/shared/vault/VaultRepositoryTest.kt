@@ -529,8 +529,23 @@ class VaultRepositoryTest {
     @Test
     fun aUseOnlyOrReadOnlyCopyCannotDeleteAPasskey() = runTest {
         repo.refresh(SyncTrigger.START)
-        val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
-        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "c", "mail.example"))
+        val useOnly = assertIs<OpenResult.Opened>(repo.open("s5")).item
+        assertIs<WriteResult.Refused>(repo.deletePasskey(useOnly, "c", "mail.example"))
+        // A read-only copy the user may still use: only the readOnly guard refuses it.
+        mailRow = mailRowWith(passkeysOf("a", "b")).replace("\"readOnly\":false", "\"readOnly\":true")
+        val readOnly = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertTrue(readOnly.row.readOnly && !readOnly.row.useOnly)
+        assertIs<WriteResult.Refused>(repo.deletePasskey(readOnly, "a", "mail.example"))
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aDeleteNeverRewritesAFreshValueThatIsNotAnArray() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        // Another client wrote one object instead of an array since the phone opened the login.
+        mailRow = mailRowWith(credential("a", "alice-a").toJson())
+        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "a", "mail.example"))
         assertTrue(requests.none { it.first == "PUT" })
     }
 

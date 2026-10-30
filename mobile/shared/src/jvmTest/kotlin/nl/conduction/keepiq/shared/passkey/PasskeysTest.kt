@@ -75,6 +75,8 @@ class PasskeysTest {
     /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
     private var staleWrites = 0
     private var afterStale: () -> Unit = {}
+    /** What GET /api/v1/secrets/l1 answers with instead of the login, when set. */
+    private var freshStatus: HttpStatusCode? = null
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         // The capability check before a write of `passkeys` (KeepiqApi.requireLoginFields).
@@ -89,6 +91,9 @@ class PasskeysTest {
             staleWrites--
             afterStale()
             return@MockEngine respond("""{"message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        if (path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get) {
+            freshStatus?.let { return@MockEngine respond("""{"message":"x"}""", it, headersOf(HttpHeaders.ContentType, "application/json")) }
         }
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"9","name":"passkey","fields":[]}]"""
@@ -518,5 +523,39 @@ class PasskeysTest {
         assertEquals(listOf(Encoding.toBase64(Encoding.fromBase64Url(here.credentialId))), listed)
         // Each listed identity resolves to a choice in the sheet.
         assertEquals(listOf("l1"), Passkeys.candidates(index, "login.example.nl", keys).map { it.itemId })
+    }
+
+    private fun freshLoginNotAnArray(record: PasskeyCredential) {
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"${enc(record.toJson())}","updatedAt":"$UPDATED_AT"}"""
+    }
+
+    @Test
+    fun aFreshValueThatIsNotAnArrayIsNeverRewritten() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        // The index holds an array; the server now holds one object.
+        freshLoginNotAnArray(record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        assertFailsWith<PasskeyGoneException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        assertFailsWith<nl.conduction.keepiq.shared.vault.UnreadablePasskeysException> {
+            Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        }
+        assertTrue(requests.none { it.first == "PUT" || it.first == "POST" }, "$requests")
+    }
+
+    @Test
+    fun aFreshReadThatFailsFailsTheSignIn() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        for (status in listOf(HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)) {
+            freshStatus = status
+            val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+            assertEquals(status.value, e.status)
+        }
+        // A counter of zero fails too when the server answered: only an unreachable server signs from the index.
+        val (zero, _) = made("login.example.nl", 0)
+        val zeroChoice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", zero))), "login.example.nl", keys).single()
+        assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, zeroChoice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(requests.none { it.first == "PUT" })
     }
 }
