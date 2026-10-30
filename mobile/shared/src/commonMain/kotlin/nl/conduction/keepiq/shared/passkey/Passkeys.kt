@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.KeepiqApiException
 import nl.conduction.keepiq.shared.autofill.AppLink
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
@@ -167,8 +168,16 @@ object Passkeys {
         val record = registration.record
         val login = matchingLogin(index, request.rpId, request.userName, keys)
         // The index carries no owner: a login the server refuses `passkeys` on, read fresh, gets none and a new login is made.
-        val appended = login != null && PasskeysWrite.rewrite(api, keys, login.id) { fresh, stored ->
-            if (mayTakePasskeys(fresh)) PasskeysWrite.Change(LoginPasskeys.appended(stored, record), true) else PasskeysWrite.Change(null, false)
+        // A matched login deleted elsewhere since the index was built is no match either: a new login is made.
+        val appended = login != null && try {
+            PasskeysWrite.rewrite(api, keys, login.id) { fresh, stored ->
+                if (mayTakePasskeys(fresh)) PasskeysWrite.Change(LoginPasskeys.appended(stored, record), true) else PasskeysWrite.Change(null, false)
+            }
+        } catch (e: LoginGoneException) {
+            false
+        } catch (e: KeepiqApiException) {
+            if (e.status != 404) throw e
+            false
         }
         if (!appended) {
             val typeId = api.listTypes().firstOrNull { (it["name"] as? JsonPrimitive)?.contentOrNull == AutofillEntry.LOGIN }

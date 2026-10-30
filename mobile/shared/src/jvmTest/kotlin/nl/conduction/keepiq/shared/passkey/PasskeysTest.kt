@@ -590,4 +590,13 @@ class PasskeysTest {
         assertFalse(e is nl.conduction.keepiq.shared.vault.ServerUnreachableException)
         assertEquals(listOf("GET" to "/api/v1/secrets/l1"), requests)
     }
+
+    @Test
+    fun aMatchDeletedElsewhereMakesANewLogin() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        freshStatus = HttpStatusCode.NotFound
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+        assertEquals(listOf(r.record), sentPasskeys())
+    }
 }
