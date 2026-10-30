@@ -22,11 +22,15 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
 import nl.conduction.keepiq.shared.generator.GeneratorSettings
 import nl.conduction.keepiq.shared.vault.DecryptedItem
+import nl.conduction.keepiq.shared.vault.FormKind
+import nl.conduction.keepiq.shared.vault.ItemDraft
+import nl.conduction.keepiq.shared.vault.KeyEdit
 import nl.conduction.keepiq.shared.vault.PasskeySummary
 import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.TypeField
@@ -251,5 +255,73 @@ class ScreensTest {
     fun afterTheLastDeleteFocusGoesToEdit() {
         showMail(mail(), focusPasskey = 0)
         compose.onNodeWithText("Edit").assertIsFocused()
+    }
+
+    private var keyDraft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
+
+    private fun showKeyField(draft: ItemDraft, removeOnly: Boolean = false) {
+        keyDraft = draft
+        compose.setContent {
+            val inputMode = LocalInputModeManager.current
+            var keyboard by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard) MaterialTheme { Column { AuthenticatorKeyField(keyDraft, null, removeOnly) { keyDraft = it } } }
+        }
+    }
+
+    private val keyLabel = "Authenticator key (base32 secret or otpauth link)"
+
+    @Test
+    fun aNewItemOffersNeitherAuthenticatorNorPasskey() {
+        val types = listOf("login", "note", "totp", "passkey").map { SecretType(it, it, null, emptyList()) }
+        assertEquals(listOf("login", "note"), creatableTypes(types).map { it.name })
+    }
+
+    @Test
+    fun aLoginWithoutAKeyTakesOne() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
+        compose.onNodeWithText(keyLabel).performTextInput("JBSWY3DPEHPK3PXP")
+        assertEquals(KeyEdit.REPLACE, keyDraft.keyEdit)
+        assertEquals("JBSWY3DPEHPK3PXP", keyDraft.newKey)
+    }
+
+    @Test
+    fun aSavedKeyIsNeverShown() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithText("Authenticator key saved").assertExists()
+        compose.onNodeWithText("Replace").assertExists()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithText(keyLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun replaceShowsAnEmptyFieldAndKeepGoesBack() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithText("Replace").performClick()
+        assertEquals(KeyEdit.REPLACE, keyDraft.keyEdit)
+        compose.onNodeWithText(keyLabel).assertIsFocused()
+        compose.onNodeWithText("Keep saved key").performClick()
+        assertEquals(KeyEdit.KEEP, keyDraft.keyEdit)
+        assertEquals("", keyDraft.newKey)
+        compose.onNodeWithText("Replace").assertIsFocused()
+    }
+
+    @Test
+    fun removeMarksTheKeyForRemoval() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithText("Remove").performClick()
+        assertEquals(KeyEdit.REMOVE, keyDraft.keyEdit)
+        compose.onNodeWithText("The key is removed when you save.").assertExists()
+        compose.onNodeWithText("Keep saved key").assertIsFocused()
+    }
+
+    @Test
+    fun anotherTypeWithAKeyOffersRemoveOnly() {
+        showKeyField(ItemDraft(kind = FormKind.NOTE, typeId = "2", hasSavedKey = true), removeOnly = true)
+        compose.onNodeWithText("Authenticator key saved").assertExists()
+        compose.onNodeWithText("Replace").assertDoesNotExist()
+        compose.onNodeWithText("Remove").performClick()
+        compose.onNodeWithText("Keep saved key").performClick()
+        compose.onNodeWithText("Remove").assertIsFocused()
     }
 }

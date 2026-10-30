@@ -104,6 +104,11 @@
     <string name="edit_name">Naam</string>
     <string name="edit_url">Websiteadres</string>
     <string name="edit_totp_secret">Verificatiesleutel of otpauth-link</string>
+    <string name="edit_totp_key">Authenticatorsleutel (base32-geheim of otpauth-link)</string>
+    <string name="edit_totp_saved">Authenticatorsleutel opgeslagen</string>
+    <string name="edit_totp_removed">De sleutel wordt verwijderd als je opslaat.</string>
+    <string name="action_replace">Vervangen</string>
+    <string name="action_keep_key">Opgeslagen sleutel houden</string>
     <string name="edit_add_field">Veld toevoegen</string>
     <string name="edit_field_name">Veldnaam</string>
     <string name="edit_field_value">Veldwaarde</string>

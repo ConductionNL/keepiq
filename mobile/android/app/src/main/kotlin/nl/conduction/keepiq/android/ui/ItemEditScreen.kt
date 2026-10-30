@@ -80,7 +80,7 @@ fun ItemEditScreen(
     onCancel: () -> Unit,
 ) {
     val repository = session.repository
-    val types = repository.state.types.filter { it.name != "passkey" }
+    val types = creatableTypes(repository.state.types)
     var item by remember(id) { mutableStateOf<DecryptedItem?>(null) }
     var loaded by remember(id) { mutableStateOf(id == null) }
     var type by remember(id) { mutableStateOf<SecretType?>(types.firstOrNull { it.name == "login" } ?: types.firstOrNull()) }
@@ -150,6 +150,7 @@ fun ItemEditScreen(
                     problem = error("secret"),
                     onGenerate = { generateFor = { v -> draft = draft.copy(secret = v) } },
                 ) { draft = draft.copy(secret = it) }
+                if (draft.kind == FormKind.LOGIN) AuthenticatorKeyField(draft, error("totp"), removeOnly = false) { draft = it }
             }
             FormKind.TOTP -> TextInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
             FormKind.CARD, FormKind.IDENTITY -> for (field in Composite.fieldsOf(draft.kind)) {
@@ -162,6 +163,10 @@ fun ItemEditScreen(
                 }
             }
             FormKind.NOTE, FormKind.PASSKEY -> Unit
+        }
+        // A key set elsewhere on another type: it can be removed, not entered here (web D6).
+        if (draft.kind != FormKind.LOGIN && draft.kind != FormKind.TOTP && draft.hasSavedKey) {
+            AuthenticatorKeyField(draft, error("totp"), removeOnly = true) { draft = it }
         }
         for (field in type?.fields ?: emptyList()) {
             val value = draft.typed[field.key] ?: ""
@@ -272,6 +277,7 @@ fun TextInput(
     problem: DraftProblem?,
     keyboard: KeyboardType = KeyboardType.Text,
     singleLine: Boolean = true,
+    modifier: Modifier = Modifier,
     onChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -282,9 +288,12 @@ fun TextInput(
         isError = problem != null,
         supportingText = problem?.let { { Text(draftProblemText(it)) } },
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     )
 }
+
+/** The types a new item may have: Authenticator and Passkey items are no longer made (mobile-login-totp-passkeys D9). */
+internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.filter { it.name != "totp" && it.name != "passkey" }
 
 /** A hidden input with Show and, where it fits, Generate. The keyboard is told not to learn it. */
 @Composable
