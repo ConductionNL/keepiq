@@ -6,6 +6,8 @@ package nl.conduction.keepiq.shared.passkey
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.autofill.AppLink
+import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.SiteMatch
 import nl.conduction.keepiq.shared.crypto.ClientData
@@ -13,8 +15,8 @@ import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.WebAuthn
 import nl.conduction.keepiq.shared.send.IsoTime
 import nl.conduction.keepiq.shared.vault.ItemCodec
-import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.ItemParts
+import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import nl.conduction.keepiq.shared.vault.VaultRow
 
@@ -32,9 +34,6 @@ class PasskeyChoice(val itemId: String, val name: String, val credential: Passke
 /** The site already has one of the passkeys the request excludes (WebAuthn InvalidStateError). */
 class ExcludedCredentialException : IllegalStateException("A passkey for this account is already in your vault.")
 
-/** The server has no `passkey` type, so a new passkey cannot be saved. */
-class NoPasskeyTypeException : IllegalStateException("This server cannot store passkeys yet.")
-
 /**
  * Keepiq as a passkey provider on the phones (mobile-passkey-provider), as
  * browser-extension/src/passkey/orchestrator.js does it in the extension:
@@ -47,9 +46,10 @@ class NoPasskeyTypeException : IllegalStateException("This server cannot store p
  *   (orchestrator.js handleGet); on a login, to that credential of the
  *   login as the server holds it now. A write-back that fails fails the
  *   request, as in the extension.
- * - [create]: a new ES256 passkey saved with POST /secrets as a `passkey`
- *   item, name rpName or rpId, address the rpId (orchestrator.js
- *   handleCreate). An excluded credential refuses before anything is made.
+ * - [create]: a new ES256 passkey saved onto the one matching login, else
+ *   onto a new login named rpName or rpId with the rpId as address
+ *   (mobile-login-totp-passkeys D12). An excluded credential refuses before
+ *   anything is made.
  *
  * The rpId MUST come from the origin the operating system verified; the
  * callers check that before they come here.
@@ -113,8 +113,6 @@ object Passkeys {
         if (request.excludeCredentialIds.isNotEmpty() && candidates(index, request.rpId, keys, request.excludeCredentialIds).isNotEmpty()) {
             throw ExcludedCredentialException()
         }
-        val typeId = api.listTypes().firstOrNull { (it["name"] as? JsonPrimitive)?.contentOrNull == PasskeyCredential.TYPE_NAME }
-            ?.let { (it["id"] as? JsonPrimitive)?.contentOrNull } ?: throw NoPasskeyTypeException()
         val registration = WebAuthn.createCredential(
             rpId = request.rpId,
             rpName = request.rpName,
@@ -126,9 +124,36 @@ object Passkeys {
             createdAt = IsoTime.format(nowMillis),
         )
         val record = registration.record
-        val parts = ItemParts(record.rpName.ifEmpty { request.rpId }, request.rpId, null, "", record.toJson(), null)
-        api.createSecret(ItemCodec.createBody(parts, typeId, keys))
+        val login = matchingLogin(index, request.rpId, request.userName, keys)
+        if (login != null) {
+            api.updateSecret(login.id, ItemCodec.passkeysBody(LoginPasskeys.appended(storedPasskeys(api, keys, login.id), record), keys))
+        } else {
+            val typeId = api.listTypes().firstOrNull { (it["name"] as? JsonPrimitive)?.contentOrNull == AutofillEntry.LOGIN }
+                ?.let { (it["id"] as? JsonPrimitive)?.contentOrNull }
+            val parts = ItemParts(
+                record.rpName.ifEmpty { request.rpId }, request.rpId, null, request.userName, "", null,
+                passkeys = LoginPasskeys.appended("", record),
+            )
+            api.createSecret(ItemCodec.createBody(parts, typeId, keys))
+        }
         return registration
+    }
+
+    /**
+     * The login a new passkey for [userName] goes onto: the only same-site
+     * login, not linked to an app, that the user may change and whose user
+     * name equals [userName] trimmed and ignoring case. Null for none, for
+     * several, or for a blank [userName].
+     */
+    internal fun matchingLogin(index: AutofillIndex, rpId: String, userName: String, keys: VaultKeys): AutofillEntry? {
+        val wanted = userName.trim()
+        val site = SiteMatch.registrableDomain(rpId.lowercase())
+        if (wanted.isEmpty() || site.isEmpty()) return null
+        return index.entries.filter { e ->
+            e.isLogin && !e.useOnly && !e.readOnly && AppLink.parse(e.url) == null &&
+                SiteMatch.registrableDomain(SiteMatch.hostOf(e.url ?: "")) == site &&
+                runCatching { keys.decryptField(e.login).trim() }.getOrNull().equals(wanted, ignoreCase = true)
+        }.singleOrNull()
     }
 
     /**

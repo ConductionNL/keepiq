@@ -200,23 +200,77 @@ class PasskeysTest {
         assertTrue(requests.isEmpty())
     }
 
+    private fun creation(userName: String) = WebAuthnJson.creation(
+        """{"challenge":"AAEC","rp":{"id":"login.example.nl","name":"Example Login"},"user":{"id":"dTE","name":"$userName","displayName":"Alice"},
+        "pubKeyCredParams":[{"type":"public-key","alg":-8},{"type":"public-key","alg":-7}],"excludeCredentials":[]}""",
+    )!!
+
     @Test
-    fun aNewPasskeyIsSavedAsAPasskeyItemForItsRpId() = runTest {
-        val request = WebAuthnJson.creation(
-            """{"challenge":"AAEC","rp":{"id":"login.example.nl","name":"Example Login"},"user":{"id":"dTE","name":"alice@example.nl","displayName":"Alice"},
-            "pubKeyCredParams":[{"type":"public-key","alg":-8},{"type":"public-key","alg":-7}],"excludeCredentials":[]}""",
-        )!!
-        val r = Passkeys.create(api, keys, AutofillIndex.EMPTY, request, ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
+    fun aNewPasskeyGoesOntoTheOneMatchingLogin() = runTest {
+        val (existing, _) = made("login.example.nl", 0)
+        freshLoginWith(existing)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", " Alice@Example.nl")))
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
+        assertEquals(listOf("GET" to "/api/v1/secrets/l1", "PUT" to "/api/v1/secrets/l1"), requests)
+        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(listOf(existing, r.record), sentPasskeys())
+    }
+
+    @Test
+    fun aNewPasskeyWithoutAMatchMakesANewLogin() = runTest {
+        val r = Passkeys.create(api, keys, AutofillIndex.EMPTY, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
         assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
         val body = bodies.single()
         assertEquals("Example Login", body["name"]!!.jsonPrimitive.content)
         assertEquals("login.example.nl", body["url"]!!.jsonPrimitive.content)
-        assertEquals("9", body["typeId"]!!.jsonPrimitive.content)
-        assertFalse("login" in body)
-        val saved = assertNotNull(PasskeyCredential.parse(dec(body["key"]!!.jsonPrimitive.content)) { "" })
-        assertEquals(r.record, saved)
-        assertEquals("2026-10-05T10:00:00.000Z", saved.createdAt)
-        assertContentEquals(Encoding.utf8("u1"), Encoding.fromBase64Url(saved.userHandle))
+        assertEquals("7", body["typeId"]!!.jsonPrimitive.content)
+        assertEquals("alice@example.nl", dec(body["login"]!!.jsonPrimitive.content))
+        assertEquals("", dec(body["key"]!!.jsonPrimitive.content))
+        assertEquals(listOf(r.record), sentPasskeys())
+        assertEquals("2026-10-05T10:00:00.000Z", r.record.createdAt)
+        assertContentEquals(Encoding.utf8("u1"), Encoding.fromBase64Url(r.record.userHandle))
+    }
+
+    @Test
+    fun twoMatchingLoginsMakeANewLogin() = runTest {
+        val index = AutofillIndex(
+            listOf(
+                loginEntry("l1", "https://login.example.nl", "alice@example.nl"),
+                loginEntry("l2", "https://www.example.nl", "alice@example.nl"),
+            ),
+        )
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+    }
+
+    @Test
+    fun aReadOnlyOrUseOnlyLoginIsNotAMatch() = runTest {
+        for (entry in listOf(
+            loginEntry("l1", "https://login.example.nl", "alice@example.nl", readOnly = true),
+            loginEntry("l1", "https://login.example.nl", "alice@example.nl", useOnly = true),
+        )) {
+            requests.clear()
+            Passkeys.create(api, keys, AutofillIndex(listOf(entry)), creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+            assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+        }
+    }
+
+    @Test
+    fun aBlankUserNameNeverMatches() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "")))
+        Passkeys.create(api, keys, index, creation(" "), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+    }
+
+    @Test
+    fun anExcludedCredentialOnALoginRefuses() = runTest {
+        val (record, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record)))
+        val excluded = WebAuthnJson.creation(
+            """{"challenge":"AA","rp":{"id":"login.example.nl"},"user":{"id":"dTE","name":"a"},"excludeCredentials":[{"type":"public-key","id":"${record.credentialId}"}]}""",
+        )!!
+        assertFailsWith<ExcludedCredentialException> { Passkeys.create(api, keys, index, excluded, ClientData.hashed(ByteArray(32)), 0) }
+        assertTrue(requests.isEmpty())
     }
 
     @Test
