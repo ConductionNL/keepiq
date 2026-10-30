@@ -276,6 +276,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 								folders={snapshot.folders}
 								webAppUrl={snapshot.webAppUrl}
 								shareSave={shareSave?.id === detail.id ? shareSave.note : undefined}
+								fillTab={snapshot.suggestionIds.includes(detail.id) ? tab : undefined}
 							/>
 						)}
 					</>

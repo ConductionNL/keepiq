@@ -20,6 +20,8 @@ The extension talks to your own Nextcloud, and to nobody else. It sends your ser
 
 Your master password never leaves the browser. Neither do your decrypted secrets.
 
+Filling in logins and the save bar send nothing new: matching happens in your browser, and a login you save or update from the bar goes to your server like any item you add or change.
+
 The extension sends nothing to Conduction. It has no analytics, no crash reports and no advertising. It does not load website icons, so no site and no icon service learns which accounts you have. The Firefox version declares to Mozilla that it collects no data.
 
 ## What the extension stores in your browser
@@ -40,6 +42,12 @@ Per account, your organisation's lock maximum and whether it turned vault export
 
 Per account, your generator options, until you remove the account, and your organisation's password policy, until you log out.
 
+Per account, when you last filled in each login, so the one you used last comes first and the keyboard shortcut knows which to fill. It is one time per login, not a list of the sites you visited, and stays in this browser until you log out. It is the only thing filling in and saving logins keep on disk.
+
+While a list of logins is open under a login field, the browser keeps a random key and which logins it offered in its session storage, without names or user names. It goes when the list closes.
+
+A user name and password you just submitted on a website stay in memory only, for the save bar, until you answer it, leave the site or lock the vault, and at most 5 minutes.
+
 The last 50 values you regenerated, copied or used, or left on a sub-tab, in the browser's session storage, which lives in memory. They are not encrypted, and the extension shows them only while the vault is unlocked. They go when the vault locks, when you log out, when the browser closes, or when you clear the history. Values you generate on the lock screen are kept encrypted until you unlock, and only then show in the history.
 
 An item you are adding or editing stays in memory only, and is gone when you save, leave the form or close the extension.
@@ -51,7 +59,8 @@ When you are halfway through adding an account, the extension remembers the serv
 ## What the extension reads in your browser
 
 - **The address of your current tab,** to suggest the items for that site, and for the site name in a generated email address when you choose it. It stays in the extension.
-- **The pages you visit:** the extension's page script runs on every site, so that filling in logins can work there. Today it only tells the extension a page has loaded. It never receives your vault, and when autofill arrives it gets one login, after you chose it.
+- **The pages you visit:** the extension's page script runs on every site, to find login fields, fill in a login and offer to save one. It never receives your vault: a fill gives the page one login, after you chose it. The list under a login field and the save bar are extension frames the site can't read.
+- **The user name and password you submit on a website,** to offer to save or update them. They stay in the extension, and reach your server only encrypted, when you choose **Save** or **Update**.
 - **Whether your computer is locked,** for the **On system lock** lock option.
 - **Your browser's language,** to show the extension in it. It stays in the extension.
 - **Whether your browser is set to light or dark,** for the **System default** theme. It stays in the extension.
@@ -66,12 +75,13 @@ When you are halfway through adding an account, the extension remembers the serv
 | Tabs | Reads the current tab's address for suggestions, and opens an item's website in a new tab. |
 | Alarms | Locks the vault on time and checks for changes every 15 minutes. |
 | Idle | Locks the vault when your computer locks, if you choose that. |
-| Clipboard write | Clears a copied password after 30 seconds, or after the delay you choose in the settings. |
-| Offscreen document (Chrome) | Chrome needs a hidden page to clear the clipboard. |
+| Clipboard write | Copies from the right-click menu, and clears a copied password after 30 seconds, or after the delay you choose in the settings. |
+| Offscreen document (Chrome) | Chrome needs a hidden page to write and clear the clipboard. |
+| Context menus | Adds the Keepiq menu when you right-click a field. |
 
 ## What the extension does not do
 
-- It does not keep a history of the sites you visit or fill in.
+- It does not keep a history of the sites you visit or fill in; it only remembers when each login was last filled.
 - It does not collect analytics or crash reports.
 - It does not sell, share or transfer data to third parties.
 

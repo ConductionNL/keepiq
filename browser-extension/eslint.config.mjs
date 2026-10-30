@@ -32,7 +32,7 @@ export default [
 	{
 		// Build tooling runs in Node, not in the extension — without this every
 		// `process` / `console` reference is a `no-undef` error.
-		files: ['scripts/**/*.{js,mjs,ts}'],
+		files: ['scripts/**/*.{js,mjs,ts}', 'e2e/**/*.ts', 'playwright.config.ts'],
 		languageOptions: {
 			globals: globals.nodeBuiltin,
 		},

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login and sign-up without a form</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<header class="bar"><span>Shop</span><button type="button" id="header-signup">Sign up</button></header>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Login and sign-up without a form</h1>
+		<p class="tests">No <code>&lt;form&gt;</code> anywhere. Only the login panel gets the inline list and fill; "Create account", the header "Sign up" and the newsletter never count as its submit. The same layout as the fixture in <code>src/autofill/fields.test.ts</code>.</p>
+		<section class="card" id="login-panel">
+			<label>Username <input id="lu" type="text"></label>
+			<label>Password <input id="lp" type="password"></label>
+			<button type="button" id="login-submit">Sign in</button>
+		</section>
+		<section class="card" id="signup-panel">
+			<label>Username <input id="su" type="text"></label>
+			<label>Password <input id="sp" type="password"></label>
+			<label>Confirm password <input id="sc" type="password"></label>
+			<button type="button" id="signup-submit">Create account</button>
+		</section>
+		<p class="status" id="status" role="status"></p>
+	</main>
+	<footer class="bar"><label>Email <input id="ne" type="email"></label><button type="button">Subscribe</button></footer>
+	<script>
+		const report = document.getElementById('status')
+		const send = async (username, password, done) => {
+			await fetch('/api/login', {
+				method: 'POST',
+				body: JSON.stringify({ username: document.getElementById(username).value, password: document.getElementById(password).value }),
+			})
+			report.textContent = done
+		}
+		const signIn = () => send('lu', 'lp', 'Signed in without leaving the page.')
+		const signUp = () => send('su', 'sp', 'Account created without leaving the page.')
+		document.getElementById('login-submit').addEventListener('click', signIn)
+		document.getElementById('signup-submit').addEventListener('click', signUp)
+		document.getElementById('lp').addEventListener('keydown', (event) => {
+			if (event.key === 'Enter') signIn()
+		})
+		document.getElementById('sc').addEventListener('keydown', (event) => {
+			if (event.key === 'Enter') signUp()
+		})
+		document.getElementById('header-signup').addEventListener('click', () => document.getElementById('su').focus())
+		document.querySelector('footer button').addEventListener('click', () => (report.textContent = 'Subscribed to the newsletter.'))
+	</script>
+</body>
+</html>

@@ -188,6 +188,29 @@ describe('useCurrentTab in a popped-out window', () => {
 		expect(get).toHaveBeenCalledWith(9)
 		expect(query).not.toHaveBeenCalled()
 	})
+
+	it('fills the tab it came from and keeps the window open', async () => {
+		window.history.replaceState({}, '', '/popup.html?popout=1&tabId=9')
+		vi.resetModules()
+		// The fresh `useFill` reads the fresh module's context, so the provider must come from it too.
+		const { useFill } = await import('./useFill')
+		const { DEFAULT_SHELL: freshShell, ShellContext: FreshContext } = await import('../shell-context')
+		const sent = fakeBackground({ replies: { 'fill.request': { filled: 'both' } } })
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		const toast = vi.fn()
+		const wrapper = ({ children }: { children: ReactNode }) => <FreshContext.Provider value={{ ...freshShell, toast }}>{children}</FreshContext.Provider>
+		const { result } = renderHook(() => useFill({ id: 9, windowId: 5, url: 'https://github.com/login', host: 'github.com' }), { wrapper })
+		act(() => result.current.fill('i1'))
+		await waitFor(() => expect(sentOf(sent, 'fill.request')).toHaveLength(1))
+		// A second fill goes out only once the first was handled.
+		await waitFor(() => {
+			act(() => result.current.fill('i1'))
+			expect(sentOf(sent, 'fill.request')).toHaveLength(2)
+		})
+		expect(sentOf(sent, 'fill.request')[0]).toEqual({ kind: 'fill.request', itemId: 'i1', tabId: 9 })
+		expect(close).not.toHaveBeenCalled()
+		expect(toast).not.toHaveBeenCalled()
+	})
 })
 
 describe('useVaultSnapshot', () => {

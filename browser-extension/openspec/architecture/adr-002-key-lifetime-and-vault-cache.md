@@ -40,10 +40,11 @@ The extension caches ciphertext on disk and never persists the private key or an
 | Master password | Nowhere. Used to derive, then dropped. | n/a |
 | PBKDF2-derived unlock key | Memory, for the duration of one unlock | End of unlock |
 | RSA private key | `browser.storage.session` as PKCS#8 bytes, imported to a non-extractable `CryptoKey` per worker generation | Lock, timeout, browser restart, extension reload |
-| Decrypted item fields | Memory, per popup render or per fill | Popup close or fill completion |
+| Decrypted item fields | Memory, per popup render, per inline list render (usernames only) or per fill | Popup close, inline list close or fill completion |
 | Ciphertext an edit form opened, with the row's `updatedAt` and the source's `sourceUpdatedAt`, the 10 newest forms | `browser.storage.session` | That form's accepted save, or 10 newer entries; lock, timeout, logout, account removal, browser restart, extension reload. Closing the form or popup leaves it. |
 | Suite row, secret rows (ciphertext plus plaintext metadata), folders, types | `browser.storage.local` | Logout, account removal, suite change (`encryptionSuiteId` or `unlockKeyEpoch` differs on sync) |
 | App password | `browser.storage.local` | Logout, account removal, server returns 401 |
+| Inline list session: a random key, the tab, frame and frame URL, and the offered item ids; no plaintext | `browser.storage.session`; background-page memory on Firefox below 115 | The list closing, the next list in the tab, tab close or navigation, lock, logout, account switch, browser restart, extension reload |
 | Generated values, the 50 newest per account, in plaintext | `browser.storage.session` | Clear in the History view; lock, timeout, logout, account removal, browser restart, extension reload |
 | Values generated while locked, sealed to the certificate proven at the last unlock | `browser.storage.session` | The first history request after the unlock, which merges them into the history; Clear in the History view; a lock after that unlock, other than for a suite change; logout, account removal, the two-factor block, browser restart, extension reload |
 | Generator options | `browser.storage.local` | Account removal |
@@ -122,6 +123,8 @@ Only `name`, `url`, `typeId` and `folderId` are needed for list, search and URL 
 ## Content scripts
 
 Content scripts run in hostile pages. They never hold vault state, never receive the private key, and receive exactly one credential for one fill over a runtime message after the user explicitly picked it. URL matching happens in the background.
+
+UI shown inside a page (the save bar, the inline list) is an extension page in an iframe the content script hosts but cannot read. The inline list may show the names and decrypted usernames of the logins matching its frame, which live only in that page and in the background while it answers. It shows on every qualifying field, matches or not, so its presence does not tell the page whether a login matches; its height fits up to five rows, so the page can count the matches, which is accepted as useless to a site. A pick counts only while the list was visibly on top, so the page cannot click it on the user's behalf. The list shows only in the top frame and in frames whose ancestors are all same-origin, on both browsers, so the extension can read everything above it. On Chrome, IntersectionObserver v2 plus the same-origin ancestor checks; masks are covered by refusing cross-origin ancestors. On Firefox the extension samples visibility, which is best effort: an overlay that lets clicks through, or a style changed only between samples, goes unnoticed.
 
 ## Website icons
 

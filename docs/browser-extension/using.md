@@ -1,8 +1,8 @@
 # Using the browser extension
 
-The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
+The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, fill them in on websites, save new ones as you sign up or sign in, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
 
-The extension is in development. You can browse, copy, add, edit, delete, generate passwords and send secrets today; filling in logins and saving them as you sign up come in later updates (see [Coming next](#coming-next)).
+The extension is in development. You can browse, fill in, save, copy, add, edit, delete, generate passwords and send secrets today; passkeys come in a later update (see [Coming next](#coming-next)).
 
 ## Getting the extension
 
@@ -83,7 +83,7 @@ The **Vault** tab lists your items alphabetically. Above the list you can narrow
 - The folder menu shows one folder, or **No folder** for items outside a folder.
 - The type chips show only logins, cards, identities, notes, authenticators or passkeys. **More** has the other types.
 
-**Autofill suggestions** at the top lists the items for the site in your current tab. It matches on the site's domain, so `login.example.com` also finds an item saved for `example.com`.
+**Autofill suggestions** at the top lists the logins for the site in your current tab, the one you used last first; click one to fill it in (see [Filling in logins](#filling-in-logins)). By default it matches on the site's domain, so `login.example.com` also finds an item saved for `example.com`.
 
 Each item has three actions:
 
@@ -143,6 +143,45 @@ Folder names are not encrypted in Keepiq, so pick names you don't mind your serv
 
 The pop-out button at the top opens the extension in its own window, which stays open while you work in the browser. Suggestions keep following the tab you opened it from.
 
+## Filling in logins
+
+Keepiq fills in the user name and password of a login whose website matches the site you are on. It only fills in what you chose, on the site you chose it for.
+
+- **From the extension:** click a login under **Autofill suggestions**, or its **Fill** button, or **Fill** on an opened login. The extension closes once it has filled, unless it is popped out. **Unable to autofill on this page. Copy and paste instead.** means it found no login form there. On a page that isn't a website, such as the browser's own pages, the section says **Autofill is not available on this page**.
+- **Under the login field:** click in, or move to, an empty user name or password field and Keepiq lists the logins for the site beneath it. Click one to fill it in. With the keyboard, press Down Arrow to move into the list, Up and Down Arrow to choose, and Enter to fill; Escape or Tab closes it. While the vault is locked the list shows **Unlock**, and with no matching login it says so. Turn it off with **Show autofill suggestions on form fields** in [Settings](#settings).
+- **Right-click a field:** the **Keepiq** menu has **Autofill** with up to 10 matching logins, **Copy username** and **Copy password** of a matching login, and **Generate password and copy**, or **Unlock vault** while locked. Copied values are cleared from the clipboard like any other copy. Turn the menu off with **Enable context menu options** in [Settings](#settings).
+- **Keyboard shortcut:** `Ctrl+Shift+L` (`Cmd+Shift+L` on a Mac) fills the login you used last on the site, or its only login. Otherwise, or while locked, it opens Keepiq. Change the keys under **Autofill keyboard shortcut** in [Settings](#settings).
+- **On page load:** turn on **Autofill on page load** in [Settings](#settings) and Keepiq fills the login you used last, or the only one, as soon as a login page opens. Only turn it on if you trust the sites you visit: a compromised site could take advantage of it.
+- **Insecure sites:** before it fills a login saved for an `https` site into a plain `http` page, Keepiq asks.
+
+What Keepiq counts as the same site is **Default URI match detection** in [Settings](#settings): the base domain unless you chose otherwise.
+
+Logins are filled in frames of a page too, but only in frames from the login's own site.
+
+### When the list does not show
+
+- **No list in frames from another site:** a login form embedded from another website gets no list, in Chrome or Firefox. Fill it from the extension, the right-click menu or the shortcut.
+- **No list in small frames, or where the page blocks the extension's frame:** the same alternatives work there.
+- **Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar.** The list refuses a choice while the page hides, covers or alters it, so a site can't trick you into choosing a login you can't see. Fill from the toolbar button instead.
+- **Page filters refuse every pick:** a zoom extension does so in every browser; in Firefox, so does a filter on the whole page, such as "Invert the page" or Dark Reader's filter mode.
+- **In Firefox the check is best effort:** Chrome tells Keepiq whether the list is really visible, Firefox doesn't, so Firefox may miss a page that covers the list with a see-through layer.
+
+## Saving logins
+
+After you sign in, sign up or change a password on a website, a card in the top-right corner of the page asks whether to save it:
+
+- **Save login for *site* to Keepiq?** Pick a **Folder** and choose **Save**. The login is named after the site and saved as a **Login**.
+- **Update password for *login*?** You signed in with a different password than Keepiq has. **Update** saves the new one, for everyone the login is shared with too.
+- **Never for this site** stops asking on this site; the site is added to **Excluded domains** in [Settings](#settings). **Close** asks nothing more for this sign-in.
+
+The card shows only while the vault is unlocked, and only after you signed in yourself; a site can't make it appear. It waits up to 5 minutes for your answer, and goes when you leave the site. When it covers the field you're typing in, it moves to the bottom-right corner.
+
+To reach the card with the keyboard, press `Alt+Shift+K` (`Cmd+Shift+K` on a Mac). In a small window it starts as a single row and grows when you move into it or choose its **Show options** arrow.
+
+When the page hides, covers or alters the card, it refuses with **Keepiq can't do this here because this page changes how it is shown. Close this and add the login from the Keepiq button in the toolbar.** Choose **Close**, then **New** in the extension. The same limits as for the list apply in Firefox.
+
+Turn the questions off with **Ask to add login** and **Ask to update existing login** in [Settings](#settings).
+
 ## Generator
 
 The **Generator** tab makes a new value as soon as it opens, and again whenever you change an option. **Regenerate** makes another one and **Copy** copies it. The value is made in your browser, the same way the Keepiq web app makes it, and is sent nowhere. Your options are remembered per account.
@@ -192,8 +231,14 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **After a browser restart you enter your master password once; then your PIN works again.** Locking keeps the PIN; five wrong PINs in a row, logging out and a changed vault key forget it, and you unlock with your master password.
   - **Unlock with biometrics** is not available yet.
   - **Lock now**, **Log out**, and **Change master password**, which opens the Keepiq web app.
-- **Autofill:** **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default, and the **Autofill keyboard shortcut**. The other entries say **Coming later** until filling in logins arrives.
-- **Notifications:** **Ask to add login**, **Ask to update existing login** and **Excluded domains** say **Coming later** too. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.
+- **Autofill:**
+  - **Autofill on page load,** off by default, and **Default autofill setting for login items**, see [Filling in logins](#filling-in-logins).
+  - **Default URI match detection:** **Base domain** by default, or **Host**, **Starts with**, **Exact**, **Regular expression** or **Never**. Under **Regular expression**, a login whose URL is an ordinary address, such as `https://bank.com`, still matches by base domain, and one that is no web address, such as an `ftp://` or app address, matches no page; only a URL written as a pattern, one that starts with `^` or has characters such as `*` or `(` in its host, is read as one.
+  - **Show autofill suggestions on form fields** turns the list under login fields on or off; **Enable context menu options** the right-click menu.
+  - **Make Keepiq your default password manager,** Chrome only, turns off Chrome's own password saving and address autofill, so its dropdown no longer covers Keepiq's list. Chrome asks for permission to change its settings; turning it off gives them back.
+  - **Autofill keyboard shortcut** shows the keys, with **Change**.
+  - **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default.
+- **Notifications:** **Ask to add login**, **Ask to update existing login**, and **Excluded domains**, the sites the save bar never asks on. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.
 - **Vault:**
   - **Sync now**, with the time of the last sync.
   - **Folders**, see [Folders](#folders).
@@ -215,6 +260,5 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 ## Coming next
 
-- **Fill in logins** on websites, and save new logins as you sign up.
 - **Passkeys.** Sign in to websites with the passkeys in your vault.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

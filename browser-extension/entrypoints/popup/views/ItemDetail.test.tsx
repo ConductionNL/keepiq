@@ -471,3 +471,73 @@ describe('metadata and actions', () => {
 		expect(screen.getByRole('alert').textContent).toBe('Could not decrypt this item')
 	})
 })
+
+describe('Fill', () => {
+	const tab = { id: 7, windowId: 1, url: 'https://github.com/login', host: 'github.com' }
+
+	function renderFillable(fillTab: typeof tab | undefined, fillReply: unknown = { filled: 'both' }) {
+		const sent = fakeBackground({ replies: { 'fill.request': fillReply } })
+		const toast = vi.fn()
+		render(
+			<ShellContext.Provider value={{ ...DEFAULT_SHELL, footer, toast }}>
+				<ItemDetail item={itemMeta()} type={types[0]} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" fillTab={fillTab} />
+			</ShellContext.Provider>,
+		)
+		return { sent, toast }
+	}
+
+	it('fills the tab the item matches, after Edit, and closes the popup', async () => {
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		const { sent } = renderFillable(tab)
+		const buttons = within(footer).getAllByRole('button')
+		expect(buttons.map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual(['Edit', 'Fill', 'More, GitHub', 'Delete'])
+		await userEvent.setup().click(within(footer).getByRole('button', { name: 'Fill' }))
+		expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'i1', tabId: 7 }])
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+	})
+
+	// A browser moves focus off a button that becomes disabled, to `<body>`, which the dialog would then return to.
+	it('keeps Fill enabled while the fill is in flight', async () => {
+		vi.spyOn(window, 'close').mockImplementation(() => {})
+		let answer: (reply: unknown) => void = () => {}
+		renderFillable(tab, () => new Promise((resolve) => (answer = resolve)))
+		const fill = within(footer).getByRole('button', { name: 'Fill' }) as HTMLButtonElement
+		await userEvent.setup().click(fill)
+		expect(fill.disabled).toBe(false)
+		expect(fill.getAttribute('aria-busy')).not.toBe('true')
+		answer({ filled: 'none' })
+	})
+
+	it('returns focus to Fill when the insecure question is cancelled', async () => {
+		renderFillable(tab, { filled: 'none', needsInsecureConfirm: true })
+		const fill = within(footer).getByRole('button', { name: 'Fill' })
+		expect(fill.className).toBe('btn btn--secondary')
+		const user = userEvent.setup()
+		await user.click(fill)
+		await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+		expect(document.activeElement).toBe(fill)
+	})
+
+	it('is not offered when the item does not match the tab', () => {
+		renderFillable(undefined)
+		expect(within(footer).queryByRole('button', { name: 'Fill' })).toBeNull()
+	})
+
+	it('stays open and says so when nothing could be filled', async () => {
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		const { toast } = renderFillable(tab, { filled: 'none' })
+		await userEvent.setup().click(within(footer).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(toast).toHaveBeenCalledWith('Unable to autofill on this page. Copy and paste instead.'))
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('asks before filling an insecure page', async () => {
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		const { sent } = renderFillable(tab, { filled: 'none', needsInsecureConfirm: true })
+		await userEvent.setup().click(within(footer).getByRole('button', { name: 'Fill' }))
+		expect(await screen.findByRole('dialog', { name: 'Do you still wish to fill this login?' })).toBeTruthy()
+		expect(sentOf(sent, 'fill.request')).toHaveLength(1)
+		expect(close).not.toHaveBeenCalled()
+	})
+})

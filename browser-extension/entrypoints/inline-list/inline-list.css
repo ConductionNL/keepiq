@@ -1,0 +1,273 @@
+/*
+ * The popup's tokens (popup.css), only those the list uses. `--row`, `--gap`, `--inset` and `--radius` come from
+ * `src/messages.ts`, whose `inlineHeight` the host sizes the list by. No animation, by spec.
+ */
+:root {
+	color-scheme: light dark;
+	--surface: #ffffff;
+	--surface-hover: #eef1f6;
+	--fg: #1a2130;
+	--fg-muted: #5b6577;
+	--border-strong: #c5ccd8;
+	--accent: #21468b;
+	--accent-hover: #1a386f;
+	--accent-fg: #ffffff;
+	--accent-soft: #e6edf9;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--surface: #1e222a;
+		--surface-hover: #272c36;
+		--fg: #e8ebf0;
+		--fg-muted: #9aa3b3;
+		--border-strong: #444c5b;
+		--accent: #7fa3ec;
+		--accent-hover: #9ab7f1;
+		--accent-fg: #0c1730;
+		--accent-soft: #1d2840;
+	}
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--surface: #1e222a;
+	--surface-hover: #272c36;
+	--fg: #e8ebf0;
+	--fg-muted: #9aa3b3;
+	--border-strong: #444c5b;
+	--accent: #7fa3ec;
+	--accent-hover: #9ab7f1;
+	--accent-fg: #0c1730;
+	--accent-soft: #1d2840;
+}
+
+html,
+body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	background: var(--surface);
+	color: var(--fg);
+	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+/*
+ * The edge, in `--fg-muted` for 3:1 against the page, on the body so it shows while the list loads; it is the first
+ * pixel of `--inset`. The host clips the frame to the same radius and draws the shadow.
+ */
+body {
+	box-sizing: border-box;
+	border: 1px solid var(--fg-muted);
+	border-radius: var(--radius);
+}
+
+p {
+	margin: 0;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Content the host has no room for scrolls here. Anything painted over `#list`, such as a fixed `::after`, makes IntersectionObserver v2 refuse every pick. */
+.list {
+	box-sizing: border-box;
+	height: 100%;
+	padding: calc(var(--inset) - 1px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-width: thin;
+}
+
+.listbox {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.row {
+	box-sizing: border-box;
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: var(--row);
+	padding: 0 10px 0 8px;
+	border-radius: calc(var(--radius) - var(--inset) + 2px);
+	cursor: pointer;
+}
+
+.row:hover {
+	background: var(--surface-hover);
+}
+
+.row:focus {
+	background: var(--accent-soft);
+}
+
+/* `:focus`, not `:focus-visible`: focus arrives by script from the field's Down key. */
+.row:focus,
+.message:focus,
+.question__text:focus {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+.row__icon {
+	flex: none;
+	box-sizing: border-box;
+	width: 32px;
+	height: 32px;
+	padding: 7px;
+	border-radius: 8px;
+	background: var(--accent-soft);
+	color: var(--accent);
+}
+
+.row:focus .row__icon {
+	background: var(--surface);
+}
+
+.row__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.row__name,
+.row__user {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.row__name {
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.row__user {
+	font-size: 12px;
+	line-height: 1.35;
+	color: var(--fg-muted);
+}
+
+/* At least one row. The locked and no-match frames stay one row tall, so their longer text scrolls; the notice makes the list ask for more. */
+.message {
+	box-sizing: border-box;
+	min-height: var(--row);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 4px 12px;
+	border-radius: calc(var(--radius) - var(--inset) + 2px);
+	overflow-wrap: anywhere;
+	text-align: center;
+}
+
+.message--muted {
+	color: var(--fg-muted);
+}
+
+/* Unlock beside the text, so the card fits one row at the minimum width in every locale. */
+.message--locked {
+	gap: 8px;
+	padding-inline: 6px;
+	overflow-wrap: break-word;
+	text-align: start;
+}
+
+.message--locked p {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.message--locked .btn {
+	padding-inline: 10px;
+}
+
+.message--notice {
+	justify-content: flex-start;
+	padding-block: 8px;
+	text-align: start;
+}
+
+.btn {
+	box-sizing: border-box;
+	flex: none;
+	height: 32px;
+	padding: 0 16px;
+	font: inherit;
+	font-weight: 600;
+	white-space: nowrap;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	cursor: pointer;
+}
+
+.btn--primary {
+	background: var(--accent);
+	color: var(--accent-fg);
+}
+
+.btn--primary:hover {
+	background: var(--accent-hover);
+}
+
+.btn--secondary {
+	background: var(--surface);
+	border-color: var(--border-strong);
+	color: var(--fg);
+}
+
+.btn--secondary:hover {
+	background: var(--surface-hover);
+}
+
+.btn:focus {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/* Inset by the focus ring's 4 px, which the list would clip. */
+.question {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 12px;
+}
+
+.question__title {
+	font-weight: 600;
+}
+
+.question__text {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.question__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 8px;
+}

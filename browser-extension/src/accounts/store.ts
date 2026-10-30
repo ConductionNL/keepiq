@@ -2,6 +2,7 @@ import { MAX_ACCOUNTS, type AccountStatus } from '@/src/messages'
 import type { CachedSuite } from '@/src/api/types'
 import { broadcast } from '@/src/background/broadcast'
 import { clearPolicy, generatorOptionsKey, generatorPolicyKey } from '@/src/generator/store'
+import { forgetLastUsed } from '@/src/last-used'
 import { provenCertificateKey } from '@/src/vault/certificate'
 import { clearKey, hasKey, LAST_TAB_KEY, sessionValues, syncNeverLockKey } from '@/src/vault/key-store'
 import { forgetPin } from '@/src/vault/pin'
@@ -139,6 +140,7 @@ async function isActive(accountId: string): Promise<boolean> {
 export async function markLoggedOut(accountId: string, revoked = false): Promise<void> {
 	await updateAccount(accountId, { appPassword: null, revoked })
 	await clearKey(accountId, { sealed: 'drop' })
+	await forgetLastUsed(accountId)
 	await forgetPin(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
@@ -149,6 +151,7 @@ export async function markLoggedOut(accountId: string, revoked = false): Promise
 /** `clearKey` takes the generator history, sealed values too, with the key. */
 async function purge(accountId: string): Promise<void> {
 	await clearKey(accountId, { sealed: 'drop' })
+	await forgetLastUsed(accountId)
 	await forgetPin(accountId)
 	await clearSnapshot(accountId)
 	await browser.storage.local.remove([

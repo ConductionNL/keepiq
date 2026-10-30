@@ -47,6 +47,17 @@ describe('OptionCheckbox', () => {
 		expect(checkbox().checked).toBe(true)
 	})
 
+	it('describes itself with a note without refusing the change', async () => {
+		const user = userEvent.setup()
+		const onChange = vi.fn()
+		render(<OptionCheckbox label="Numbers" checked onChange={onChange} note="Partly set elsewhere" hint="Careful" />)
+		expect(checkbox().getAttribute('aria-disabled')).toBeNull()
+		const ids = checkbox().getAttribute('aria-describedby')!.split(' ')
+		expect(ids.map((id) => document.getElementById(id)!.textContent)).toEqual(['Partly set elsewhere', 'Careful'])
+		await user.click(checkbox())
+		expect(onChange).toHaveBeenCalledWith(false)
+	})
+
 	it('points at a reason shown once for its row, refusing the change', async () => {
 		const user = userEvent.setup()
 		const onChange = vi.fn()

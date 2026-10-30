@@ -2,6 +2,7 @@ node_modules
 .output
 .wxt
 stats.html
+test-results
 *.zip
 
 # Per-machine browser binary overrides for `wxt dev` — copy

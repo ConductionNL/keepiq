@@ -16,10 +16,12 @@
 		"typecheck": "tsc --noEmit",
 		"zip": "wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
-		"test": "vitest run"
+		"test": "vitest run",
+		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@playwright/test": "1.64.1",
 		"@testing-library/dom": "10.4.2",
 		"@testing-library/react": "16.3.3",
 		"@testing-library/user-event": "14.6.7",

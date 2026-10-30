@@ -1,6 +1,8 @@
 # Terms and tone follow the mobile app: je, kluis, hoofdwachtwoord, app-wachtwoord, webapp.
 language: nl
 extensionDescription: Keepiq voor je browser. Vul logins, passkeys en eenmalige codes in vanuit je Nextcloud-kluis, end-to-end versleuteld.
+commandAutofillLogin: Laatst gebruikte login invullen
+commandFocusNotificationBar: Naar de opslagbalk van Keepiq
 
 errors:
   insecureUrl: Gebruik https voor deze server
@@ -114,6 +116,8 @@ vault:
   allBlocked: Alle items zijn geblokkeerd.
   suggestions: Suggesties voor automatisch invullen
   noSuggestions: Geen items voor {host}
+  autofillUnavailable: Automatisch invullen is niet beschikbaar op deze pagina
+  fillFailed: Kan op deze pagina niet automatisch invullen. Kopieer en plak de gegevens zelf.
   openFailed: Kan de website niet openen
   popoutFailed: Kan geen nieuw venster openen
 
@@ -138,6 +142,10 @@ filters:
 item:
   blocked: Geblokkeerd
   launch: "{name} openen"
+  fill: Invullen
+  fillName: "{name} invullen"
+  insecureTitle: Wil je deze login toch invullen?
+  insecureWarning: "Waarschuwing: dit is een onbeveiligde HTTP-pagina. Alles wat je verstuurt, kunnen anderen mogelijk zien en wijzigen. Deze login is oorspronkelijk opgeslagen op een beveiligde (HTTPS-)pagina."
   copyMenu: Kopiëren, {name}
   moreMenu: Meer, {name}
   copyUsername: Gebruikersnaam kopiëren
@@ -401,6 +409,9 @@ settings:
   uriRegex: Reguliere expressie
   uriRegexNote: Reguliere expressies zijn een geavanceerde optie en kunnen het herkennen van websites verstoren
   inlineSuggestions: Invulsuggesties tonen in formuliervelden
+  defaultPasswordManager: Maak Keepiq je standaard wachtwoordbeheerder
+  defaultPasswordManagerHint: Zet het opslaan van wachtwoorden en het invullen van adressen in de browser uit, zodat de suggesties ervan die van Keepiq niet bedekken.
+  defaultPasswordManagerManaged: Je organisatie of een andere extensie beheert deze browserinstelling.
   contextMenu: Opties in het contextmenu tonen
   shortcut: Sneltoets voor automatisch invullen
   shortcutNotSet: Niet ingesteld
@@ -556,3 +567,69 @@ send:
     n: Kopieer deze link nu. Je ziet hem alleen tot je dit venster sluit, en de inhoud verdwijnt na $1 weergaven.
   passwordNote: Deel het toegangswachtwoord apart van de link. Na 5 foute pogingen wordt de verzending verwijderd.
   done: Klaar
+
+pageFill:
+  insecure: "Waarschuwing: dit is een onbeveiligde HTTP-pagina. Alles wat je verstuurt, kunnen anderen mogelijk zien en wijzigen. Deze login is oorspronkelijk opgeslagen op een beveiligde (HTTPS-)pagina, {host}.\n\nWil je deze login toch invullen?"
+  insecureNoHost: "Waarschuwing: dit is een onbeveiligde HTTP-pagina. Alles wat je verstuurt, kunnen anderen mogelijk zien en wijzigen. Deze login is oorspronkelijk opgeslagen op een beveiligde (HTTPS-)pagina.\n\nWil je deze login toch invullen?"
+
+contextMenu:
+  root: Keepiq
+  autofill: Automatisch invullen
+  noMatches: Geen passende logins
+  openKeepiq: Keepiq openen
+  copyUsername: Gebruikersnaam kopiëren
+  copyPassword: Wachtwoord kopiëren
+  generatePassword: Wachtwoord genereren en kopiëren
+  unlock: Kluis ontgrendelen
+
+inlineList:
+  frameTitle: Keepiq-logins
+  label: Keepiq-logins voor {host}
+  row: "{name}, {username}"
+  noMatch: Geen logins voor {host}
+  locked: Keepiq is vergrendeld
+  unlock: Ontgrendelen
+  insecureQuestion: Toch invullen op deze onbeveiligde site?
+  insecureDetail: Deze site is niet beveiligd. Iedereen op het netwerk kan lezen wat er wordt ingevuld.
+  fill: Invullen
+  notVisible: Keepiq kan hier niet invullen, omdat deze pagina aanpast hoe ze wordt weergegeven. Gebruik de Keepiq-knop in de werkbalk.
+  status:
+    count:
+      1: 1 Keepiq-login. Druk op pijl-omlaag om te kiezen.
+      n: $1 Keepiq-logins. Druk op pijl-omlaag om te kiezen.
+    noMatch: Geen Keepiq-logins voor {host}
+    locked: Keepiq is vergrendeld. Druk op pijl-omlaag om te ontgrendelen.
+
+notificationBar:
+  label: Keepiq-melding
+  saveQuestion: Login voor {host} opslaan in Keepiq?
+  updateQuestion: Wachtwoord van {name} bijwerken?
+  updateQuestionUser: Wachtwoord van {name} ({username}) bijwerken?
+  updateQuestionHost: Wachtwoord van {name} op {host} bijwerken?
+  updateQuestionUserHost: Wachtwoord van {name} ({username}) op {host} bijwerken?
+  folder: Map
+  noFolder: Geen map
+  save: Opslaan
+  never: Nooit voor deze site
+  update: Bijwerken
+  close: Sluiten
+  expand: Opties tonen
+  shortcutHint: Druk op {shortcut} om te antwoorden.
+  saving: Opslaan…
+  updating: Bijwerken…
+  saved: Login opgeslagen
+  updated: Wachtwoord bijgewerkt
+  notVisible: Keepiq kan dit hier niet doen, omdat deze pagina aanpast hoe ze wordt weergegeven. Sluit dit en voeg de login toe via Keepiq in de werkbalk.
+  errors:
+    writeLocked: De kluis is tijdelijk vergrendeld voor wijzigingen. Probeer het later opnieuw.
+    unverified: Bewerk deze login in de Keepiq-pop-up of de Keepiq-webapp om het wachtwoord te wijzigen.
+    viewOnly: Deze login is met je gedeeld om alleen te bekijken, dus het wachtwoord kan hier niet worden bijgewerkt.
+    loginGone: Deze login bestaat niet meer. Opslaan als nieuwe login?
+    locked: Keepiq is vergrendeld. Ontgrendel het met de Keepiq-knop in de werkbalk en probeer het daarna opnieuw.
+    notResponding: Keepiq reageert niet. Probeer het opnieuw.
+    accountChanged: Je bent van account gewisseld, dus er is niets opgeslagen.
+    keyMismatch: De sleutel van Keepiq past niet bij je kluis. Er is niets opgeslagen; meld dit bij je beheerder.
+    staleSource: Het origineel van deze gedeelde login is gewijzigd. Er is niets opgeslagen; probeer het opnieuw.
+    incomplete: Met wie deze login gedeeld is, veranderde steeds. Er is niets opgeslagen; probeer het opnieuw.
+    badCertificate: De versleutelingssleutel van een ontvanger kon niet worden gelezen. Er is niets opgeslagen.
+    keepiqOutdated: Je Keepiq-server is te oud. Er is niets opgeslagen; vraag je beheerder om Keepiq {version} of nieuwer.

@@ -1,7 +1,7 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { i18n } from '#i18n'
 import type { DefaultAutofill } from '@/src/accounts/settings'
-import { CLEAR_CLIPBOARD_OPTIONS, URI_MATCHES, type AutofillFeature, type UriMatch } from '@/src/messages'
+import { CLEAR_CLIPBOARD_OPTIONS, URI_MATCHES, type AutofillFeature, type DefaultManagerState, type UriMatch } from '@/src/messages'
 import { Button, IconButton } from '../../components/Button'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Loading } from '../../components/Loading'
@@ -10,6 +10,7 @@ import { Select } from '../../components/Select'
 import { errorText } from '../../errors'
 import { useAccountSettings } from '../../hooks/useAccountSettings'
 import { useClipboard } from '../../hooks/useClipboard'
+import { request } from '../../hooks/useMessage'
 import { fieldAction } from '../../i18n'
 import { useShell } from '../../shell-context'
 
@@ -27,7 +28,7 @@ function clipboardLabel(ms: number): string {
 	return ms < 60_000 ? i18n.t('settings.clipboardSeconds', ms / 1000) : i18n.t('settings.timeoutMinutes', ms / 60_000)
 }
 
-/** Bitwarden's Settings → Autofill; ext-autofill delivers the behaviour, so until then the entries only keep their values. */
+/** Bitwarden's Settings → Autofill; an entry whose behaviour is not delivered only keeps its value. */
 export function Autofill() {
 	const { snapshot, failed, update } = useAccountSettings()
 	if (!snapshot) return failed ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : <Loading />
@@ -64,6 +65,7 @@ export function Autofill() {
 					hint={uriLater ?? (values.uriMatch === 'regex' ? i18n.t('settings.uriRegexNote') : undefined)}
 				/>
 				<OptionCheckbox label={i18n.t('settings.inlineSuggestions')} checked={values.inlineSuggestions} onChange={(inlineSuggestions) => void update({ inlineSuggestions })} lockedBy={later('inlineSuggestions')} />
+				{import.meta.env.BROWSER !== 'firefox' && <DefaultPasswordManager />}
 				<OptionCheckbox label={i18n.t('settings.contextMenu')} checked={values.contextMenu} onChange={(contextMenu) => void update({ contextMenu })} lockedBy={later('contextMenu')} />
 			</div>
 			<div className="card form-card">
@@ -76,6 +78,62 @@ export function Autofill() {
 				/>
 			</div>
 		</div>
+	)
+}
+
+function DefaultPasswordManager() {
+	const [state, setState] = useState<DefaultManagerState>()
+	const [busy, setBusy] = useState(false)
+	const [failed, setFailed] = useState(false)
+
+	useEffect(() => {
+		let live = true
+		void request({ kind: 'defaultManager.get' }).then((reply) => {
+			if (!live) return
+			setState(reply ?? 'off')
+			setFailed(reply === undefined)
+		})
+		return () => {
+			live = false
+		}
+	}, [])
+
+	async function settle(reply: Promise<DefaultManagerState | undefined>) {
+		setBusy(true)
+		const next = await reply
+		setBusy(false)
+		setFailed(next === undefined)
+		if (next) setState(next)
+	}
+
+	function change(on: boolean) {
+		if (!on) {
+			void settle(request({ kind: 'defaultManager.disable' }))
+			return
+		}
+		// Nothing may be awaited first: the browser only prompts inside the click's user gesture.
+		const granted = browser.permissions.request({ permissions: ['privacy'] }).catch(() => false)
+		void granted.then((ok) => {
+			// Joins the run `registerDefaultManager` starts on the grant, which also covers a popup Chrome closed at the prompt.
+			if (ok) void settle(request({ kind: 'defaultManager.enable' }))
+		})
+	}
+
+	if (!state || state === 'unsupported') return null
+	const managed = i18n.t('settings.defaultPasswordManagerManaged')
+	return (
+		<>
+			<OptionCheckbox
+				label={i18n.t('settings.defaultPasswordManager')}
+				checked={state === 'on' || state === 'managedOn'}
+				onChange={change}
+				disabled={busy}
+				lockedBy={state === 'managed' ? managed : undefined}
+				note={state === 'managedOn' ? managed : undefined}
+				hint={i18n.t('settings.defaultPasswordManagerHint')}
+			/>
+			{failed && <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner>}
+		</>
 	)
 }
 

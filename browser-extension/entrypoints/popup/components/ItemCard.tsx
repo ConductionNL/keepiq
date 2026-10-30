@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { i18n } from '#i18n'
 import type { DecryptField, ItemMeta, TypeMeta } from '@/src/messages'
 import { generateCode, parseTotpSeed } from '@/src/totp/totp'
@@ -50,9 +51,12 @@ interface Props {
 	/** The decrypted login once its row was in view. */
 	login: string | undefined
 	onOpen: (id: string) => void
+	/** Set in Autofill suggestions: the card click fills instead of opening. */
+	onFill?: (id: string) => void
 }
 
-export function ItemCard({ item, type, login, onOpen }: Props) {
+export function ItemCard({ item, type, login, onOpen, onFill }: Props) {
+	const fillId = useId()
 	const copy = useClipboard()
 	const shell = useShell()
 	const quickCopy = useSettings().settings?.quickCopy !== false
@@ -94,7 +98,7 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 
 	return (
 		<li className="item" data-lazy-login={item.hasLogin && !item.blocked ? loginKey(item) : undefined}>
-			<button type="button" className="item__main" onClick={() => onOpen(item.id)}>
+			<button type="button" className="item__main" aria-describedby={onFill ? fillId : undefined} onClick={() => (onFill ?? onOpen)(item.id)}>
 				<span className="item__icon"><Icon name={typeIcon(type?.name)} size={18} /></span>
 				<span className="item__text">
 					<span className="item__name">{item.name}</span>
@@ -105,6 +109,11 @@ export function ItemCard({ item, type, login, onOpen }: Props) {
 				</span>
 			</button>
 			<div className="item__actions">
+				{onFill && (
+					<button type="button" id={fillId} className="btn btn--secondary item__fill" aria-label={i18n.t('item.fillName', { name: item.name })} onClick={() => onFill(item.id)}>
+						{i18n.t('item.fill')}
+					</button>
+				)}
 				{launch && <IconButton icon="external" label={i18n.t('item.launch', { name: item.name })} onClick={() => shell.launch(launch)} />}
 				{quickCopy && <Menu label={i18n.t('item.copyMenu', { name: item.name })} icon="copy" items={copyItems} disabled={item.blocked || copyItems.length === 0} />}
 				<Menu

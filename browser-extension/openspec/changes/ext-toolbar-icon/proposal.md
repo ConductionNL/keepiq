@@ -5,6 +5,7 @@ chain:
   - ext-accounts-and-unlock
   - ext-vault-browse
   - ext-vault-edit
+  - ext-share-sync
   - ext-generator
   - ext-send
   - ext-settings
@@ -51,5 +52,5 @@ None. The counter reads the cached snapshot from ext-vault-browse (ADR-002), and
 - `entrypoints/background.ts`: registers the icon updater's listeners at top level, so an MV3 wake re-registers them.
 - New file `src/toolbar-icon.ts`. `src/browser-action.ts` stays the only place `action` and `browserAction` are resolved.
 - New art under `public/icon/` for the grey and locked variants.
-- `wxt.config.ts`: `action.default_icon` points at the grey set. There are no new permissions: `tabs` comes from ext-autofill.
+- `wxt.config.ts`: `action.default_icon` points at the grey set. There are no new permissions: `tabs` comes from ext-vault-browse.
 - ext-settings' Appearance view and schema gain one boolean entry.
