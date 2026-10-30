@@ -94,7 +94,12 @@ internal fun PasskeyDeleteDialog(account: String?, onConfirm: () -> Unit, onDism
     )
 }
 
-/** A passkey's `createdAt` as a long date in [locale], or null when it is not an ISO instant. */
+/**
+ * A passkey's `createdAt` as a long date in [locale], or null when it is not
+ * an ISO date-time. Below Android 14 `Instant.parse` takes only `Z`, so a
+ * time with an offset such as `+01:00` is read as an offset date-time.
+ */
 internal fun passkeyAdded(createdAt: String, locale: Locale, zone: ZoneId): String? = runCatching {
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(zone).format(Instant.parse(createdAt))
+    val instant = runCatching { Instant.parse(createdAt) }.getOrElse { java.time.OffsetDateTime.parse(createdAt).toInstant() }
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(zone).format(instant)
 }.getOrNull()

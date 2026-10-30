@@ -199,6 +199,9 @@ class ScreensTest {
     @Test
     fun aPasskeyRowShowsTheDateItWasAdded() {
         assertEquals("March 12, 2026", passkeyAdded("2026-03-12T10:00:00.000Z", Locale.US, ZoneOffset.UTC))
+        // An offset, as an import may write it; the date is the instant's date in the phone's zone.
+        assertEquals("March 12, 2026", passkeyAdded("2026-03-12T10:00:00+01:00", Locale.US, ZoneOffset.UTC))
+        assertEquals("March 11, 2026", passkeyAdded("2026-03-12T00:30:00+01:00", Locale.US, ZoneOffset.UTC))
         showMail(mail(passkeys = listOf(passkey("a", "alice", "2026-03-12T10:00:00.000Z"))))
         compose.onNodeWithText("Passkey").assertExists()
         compose.onNodeWithText("Added March 12, 2026").assertExists()
