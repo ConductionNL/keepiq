@@ -200,6 +200,7 @@ class ScreensTest {
         showMail(mail())
         compose.onNodeWithText("Authenticator code").assertExists()
         compose.onNodeWithContentDescription("Copy Authenticator code").assertExists()
+        compose.onNodeWithText("JBSWY3DPEHPK3PXP", substring = true).assertDoesNotExist()
     }
 
     @Test
