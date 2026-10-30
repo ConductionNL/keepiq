@@ -13,11 +13,16 @@ import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.WebAuthn
 import nl.conduction.keepiq.shared.send.IsoTime
 import nl.conduction.keepiq.shared.vault.ItemCodec
+import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.ItemParts
 import nl.conduction.keepiq.shared.vault.VaultKeys
+import nl.conduction.keepiq.shared.vault.VaultRow
 
-/** A stored passkey for the asked relying party, decrypted for one request. */
-class PasskeyChoice(val itemId: String, val name: String, val credential: PasskeyCredential) {
+/**
+ * A stored passkey for the asked relying party, decrypted for one request:
+ * a Passkey item, or with [onLogin] one credential of a login's `passkeys`.
+ */
+class PasskeyChoice(val itemId: String, val name: String, val credential: PasskeyCredential, val onLogin: Boolean = false) {
     /** What the platform shows: the user name, else the display name, else the item name. */
     val label: String get() = credential.userName.ifEmpty { credential.userDisplayName }.ifEmpty { name }
 
@@ -34,12 +39,14 @@ class NoPasskeyTypeException : IllegalStateException("This server cannot store p
  * Keepiq as a passkey provider on the phones (mobile-passkey-provider), as
  * browser-extension/src/passkey/orchestrator.js does it in the extension:
  *
- * - [candidates]: the stored passkeys for an rpId, matched on the item's
- *   plaintext address first and then on the decrypted record's rpId, which
- *   must be equal. An allow list narrows them to its credential ids.
+ * - [candidates]: the stored passkeys for an rpId, on Passkey items and on
+ *   logins, matched on the item's plaintext address first and then on the
+ *   decrypted record's rpId, which must be equal. An allow list narrows
+ *   them to its credential ids.
  * - [sign]: the assertion, and a non-zero counter written back with PUT
- *   (orchestrator.js handleGet). A write-back that fails fails the request,
- *   as in the extension.
+ *   (orchestrator.js handleGet); on a login, to that credential of the
+ *   login as the server holds it now. A write-back that fails fails the
+ *   request, as in the extension.
  * - [create]: a new ES256 passkey saved with POST /secrets as a `passkey`
  *   item, name rpName or rpId, address the rpId (orchestrator.js
  *   handleCreate). An excluded credential refuses before anything is made.
@@ -52,23 +59,37 @@ object Passkeys {
         val rp = rpId.lowercase()
         val site = SiteMatch.registrableDomain(rp)
         if (site.isEmpty()) return emptyList()
-        return index.entries.filter { it.isPasskey && SiteMatch.registrableDomain(it.url ?: "") == site }.mapNotNull { e ->
-            val record = runCatching { PasskeyCredential.parse(keys.decryptField(e.key)) { "" } }.getOrNull() ?: return@mapNotNull null
-            if (record.rpId.lowercase() != rp) return@mapNotNull null
-            if (allowCredentialIds.isNotEmpty() && record.credentialId !in allowCredentialIds) return@mapNotNull null
-            PasskeyChoice(e.id, e.name, record)
+        fun usable(record: PasskeyCredential) =
+            record.rpId.lowercase() == rp && (allowCredentialIds.isEmpty() || record.credentialId in allowCredentialIds)
+        return index.entries.filter { (it.isPasskey || it.hasPasskeys) && SiteMatch.registrableDomain(it.url ?: "") == site }.flatMap { e ->
+            if (e.isPasskey) {
+                val record = runCatching { PasskeyCredential.parse(keys.decryptField(e.key)) { "" } }.getOrNull()
+                listOfNotNull(record?.takeIf(::usable)?.let { PasskeyChoice(e.id, e.name, it) })
+            } else {
+                val records = runCatching { LoginPasskeys.credentials(keys.decryptField(e.passkeys)) }.getOrDefault(emptyList())
+                records.filter(::usable).map { PasskeyChoice(e.id, e.name, it, onLogin = true) }
+            }
         }
     }
 
     /** Signs for [rpId] with [choice] and writes a non-zero counter back to its item. */
     suspend fun sign(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
         val assertion = WebAuthn.getAssertion(clientData, rpId, choice.credential)
-        if (assertion.counter > 0 && assertion.counter != choice.credential.counter) {
+        if (assertion.counter > 0 && assertion.counter != choice.credential.counter && choice.onLogin) {
+            val stored = storedPasskeys(api, keys, choice.itemId)
+            api.updateSecret(choice.itemId, ItemCodec.passkeysBody(LoginPasskeys.withCounter(stored, choice.credential.credentialId, assertion.counter), keys))
+        } else if (assertion.counter > 0 && assertion.counter != choice.credential.counter) {
             val updated = choice.credential.copy(counter = assertion.counter)
             val parts = ItemParts(choice.name, rpId, null, "", updated.toJson(), null)
             api.updateSecret(choice.itemId, ItemCodec.updateBody(parts, setOf("key"), keys))
         }
         return assertion
+    }
+
+    /** A login's `passkeys` as the server holds it now, decrypted; `""` for none. */
+    private suspend fun storedPasskeys(api: KeepiqApi, keys: VaultKeys, id: String): String {
+        val fresh = api.getSecret(id)?.let { VaultRow.from(it) } ?: throw IllegalStateException("The login is gone")
+        return if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
     }
 
     /**

@@ -128,7 +128,7 @@ class CredentialEntries(private val context: Context, private val app: KeepiqApp
     private fun mayMatch(option: androidx.credentials.provider.BeginGetCredentialOption, caller: CredentialCaller, index: AutofillIndex): Boolean = when (option) {
         is BeginGetPublicKeyCredentialOption -> {
             val rpId = rpIdOf(WebAuthnJson.get(option.requestJson)?.rpId, caller)
-            rpId != null && index.entries.any { it.isPasskey && SiteMatch.registrableDomain(it.url ?: "") == SiteMatch.registrableDomain(rpId) }
+            rpId != null && index.entries.any { (it.isPasskey || it.hasPasskeys) && SiteMatch.registrableDomain(it.url ?: "") == SiteMatch.registrableDomain(rpId) }
         }
         is BeginGetPasswordOption -> index.candidates(caller.passwordTarget(core.identities)).isNotEmpty()
         else -> false
