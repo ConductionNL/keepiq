@@ -3,7 +3,9 @@
 
 package nl.conduction.keepiq.android.ui
 
+import android.text.InputType
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
@@ -17,7 +19,6 @@ import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
@@ -403,9 +404,22 @@ class ScreensTest {
     }
 
     @Test
-    fun theKeyFieldKeepsTheKeyboardFromLearningTheKey() {
-        assertEquals(KeyboardType.Password, AUTHENTICATOR_KEY_KEYBOARD.keyboardType)
-        assertEquals(false, AUTHENTICATOR_KEY_KEYBOARD.autoCorrectEnabled)
+    fun theKeyFieldAsksForAPasswordKeyboardWithoutAutocorrect() {
+        var view: View? = null
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme { AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
+        }
+        // What the keyboard is told when the field takes focus: the EditorInfo of the field's input connection.
+        compose.onNodeWithText(keyLabel).performClick()
+        compose.waitUntil(5_000) { view!!.onCheckIsTextEditor() }
+        val info = EditorInfo()
+        compose.runOnIdle { view!!.onCreateInputConnection(info) }
+        assertEquals(
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
+            info.inputType and (InputType.TYPE_MASK_CLASS or InputType.TYPE_MASK_VARIATION),
+        )
+        assertEquals(0, info.inputType and InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
     }
 
     @Test

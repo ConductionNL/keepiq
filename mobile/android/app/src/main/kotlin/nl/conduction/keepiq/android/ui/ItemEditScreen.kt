@@ -302,7 +302,7 @@ fun TextInput(
 /** The types a new item may have: Authenticator and Passkey items are no longer made (mobile-login-totp-passkeys D9). */
 internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.filter { it.name != "totp" && it.name != "passkey" }
 
-/** A hidden input with Show and, where it fits, Generate. The keyboard is told not to learn it. */
+/** A hidden input with Show and, where it fits, Generate. A password keyboard without autocorrect, which keyboards do not learn from. */
 @Composable
 private fun SecretInput(label: String, value: String, problem: DraftProblem?, onGenerate: (() -> Unit)?, onChange: (String) -> Unit) {
     var shown by remember { mutableStateOf(false) }

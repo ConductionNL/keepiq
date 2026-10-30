@@ -36,7 +36,12 @@ import nl.conduction.keepiq.shared.vault.DraftProblem
 import nl.conduction.keepiq.shared.vault.ItemDraft
 import nl.conduction.keepiq.shared.vault.KeyEdit
 
-/** The keyboard for a key: a seed is a second factor, so the keyboard must not learn or suggest it. */
+/**
+ * The keyboard for a key: a seed is a second factor. A password keyboard
+ * without autocorrect, which keyboards do not learn from or suggest; that
+ * is a convention a keyboard follows, as Compose cannot set
+ * IME_FLAG_NO_PERSONALIZED_LEARNING.
+ */
 internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
 
 /**
