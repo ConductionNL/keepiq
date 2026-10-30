@@ -113,6 +113,9 @@
     <string name="edit_totp_removed">The key is removed when you save.</string>
     <string name="action_replace">Replace</string>
     <string name="action_keep_key">Keep saved key</string>
+    <string name="cd_replace_totp_key">Replace authenticator key</string>
+    <string name="cd_remove_totp_key">Remove authenticator key</string>
+    <string name="cd_keep_totp_key">Keep saved authenticator key</string>
     <string name="edit_add_field">Add a field</string>
     <string name="edit_field_name">Field name</string>
     <string name="edit_field_value">Field value</string>

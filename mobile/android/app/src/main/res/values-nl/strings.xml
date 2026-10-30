@@ -111,6 +111,9 @@
     <string name="edit_totp_removed">De sleutel wordt verwijderd als je opslaat.</string>
     <string name="action_replace">Vervangen</string>
     <string name="action_keep_key">Opgeslagen sleutel houden</string>
+    <string name="cd_replace_totp_key">Verificatiesleutel vervangen</string>
+    <string name="cd_remove_totp_key">Verificatiesleutel weghalen</string>
+    <string name="cd_keep_totp_key">Opgeslagen verificatiesleutel houden</string>
     <string name="edit_add_field">Veld toevoegen</string>
     <string name="edit_field_name">Veldnaam</string>
     <string name="edit_field_value">Veldwaarde</string>

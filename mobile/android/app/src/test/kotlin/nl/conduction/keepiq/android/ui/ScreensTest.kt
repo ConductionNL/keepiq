@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.test.SemanticsMatcher
@@ -349,8 +350,17 @@ class ScreensTest {
         showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
         compose.onNodeWithText("Remove").performClick()
         assertEquals(KeyEdit.REMOVE, keyDraft.keyEdit)
-        compose.onNodeWithText("The key is removed when you save.").assertExists()
+        compose.onNodeWithText("The key is removed when you save.")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
         compose.onNodeWithText("Keep saved key").assertIsFocused()
+    }
+
+    @Test
+    fun theKeyButtonsNameTheField() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true))
+        compose.onNodeWithContentDescription("Replace authenticator key").assertExists()
+        compose.onNodeWithContentDescription("Remove authenticator key").performClick()
+        compose.onNodeWithContentDescription("Keep saved authenticator key").assertIsFocused()
     }
 
     @Test

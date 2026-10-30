@@ -23,6 +23,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -79,20 +83,35 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
                 Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
             }
         } else {
+            // Announced when it changes: after Remove, focus lands on Keep and this line says what Remove did.
             Text(
                 stringResource(if (draft.keyEdit == KeyEdit.REMOVE) R.string.edit_totp_removed else R.string.edit_totp_saved),
                 style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
         if (draft.hasSavedKey) {
+            // Each button names the field it acts on, as Show, Copy and Remove do elsewhere.
+            val replaceCd = stringResource(R.string.cd_replace_totp_key)
+            val removeCd = stringResource(R.string.cd_remove_totp_key)
+            val keepCd = stringResource(R.string.cd_keep_totp_key)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (draft.keyEdit == KeyEdit.KEEP) {
                     if (!removeOnly) {
-                        TextButton(onClick = { choose(KeyEdit.REPLACE) }, modifier = Modifier.focusRequester(replace)) { Text(stringResource(R.string.action_replace)) }
+                        TextButton(
+                            onClick = { choose(KeyEdit.REPLACE) },
+                            modifier = Modifier.focusRequester(replace).semantics { contentDescription = replaceCd },
+                        ) { Text(stringResource(R.string.action_replace)) }
                     }
-                    TextButton(onClick = { choose(KeyEdit.REMOVE) }, modifier = Modifier.focusRequester(remove)) { Text(stringResource(R.string.action_remove)) }
+                    TextButton(
+                        onClick = { choose(KeyEdit.REMOVE) },
+                        modifier = Modifier.focusRequester(remove).semantics { contentDescription = removeCd },
+                    ) { Text(stringResource(R.string.action_remove)) }
                 } else {
-                    TextButton(onClick = { choose(KeyEdit.KEEP) }, modifier = Modifier.focusRequester(keep)) { Text(stringResource(R.string.action_keep_key)) }
+                    TextButton(
+                        onClick = { choose(KeyEdit.KEEP) },
+                        modifier = Modifier.focusRequester(keep).semantics { contentDescription = keepCd },
+                    ) { Text(stringResource(R.string.action_keep_key)) }
                 }
             }
         }
