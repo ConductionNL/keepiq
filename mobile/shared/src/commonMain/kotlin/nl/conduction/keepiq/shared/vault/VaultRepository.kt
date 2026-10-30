@@ -176,7 +176,16 @@ class VaultRepository(
      * Opens one item, fetched fresh so a stale row never seeds an edit
      * (the extension's vault-item). Offline, the stored row is read instead.
      */
-    suspend fun open(id: String): OpenResult {
+    suspend fun open(id: String): OpenResult = openRow(id, withSeed = true)
+
+    /**
+     * Opens one item for the edit form: as [open], but a login's own
+     * Authenticator key is not decrypted, so the saved key is never held by
+     * the edit screen (mobile-login-totp-passkeys D8).
+     */
+    suspend fun openForEdit(id: String): OpenResult = openRow(id, withSeed = false)
+
+    private suspend fun openRow(id: String, withSeed: Boolean): OpenResult {
         val types = state.types
         val (row, fromCache) = try {
             if (state.offline) throw OfflineSignal()
@@ -192,7 +201,7 @@ class VaultRepository(
             (cachedRow(id) ?: return OpenResult.Failed(WriteProblem(WriteProblemKind.UNREACHABLE))) to true
         }
         return try {
-            OpenResult.Opened(ItemCodec.open(row, types.firstOrNull { it.id == row.typeId }, keys, fromCache))
+            OpenResult.Opened(ItemCodec.open(row, types.firstOrNull { it.id == row.typeId }, keys, fromCache, withSeed = withSeed))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -206,7 +215,9 @@ class VaultRepository(
     /** Creates an item of [type] from [draft]. */
     suspend fun create(draft: ItemDraft, type: SecretType?): WriteResult = write {
         if (draft.kind == FormKind.PASSKEY) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
-        val body = ItemCodec.createBody(ItemCodec.parts(draft, type), type?.id ?: draft.typeId, keys)
+        val parts = ItemCodec.parts(draft, type)
+        if (!parts.totp.isNullOrEmpty()) api.requireLoginFields()
+        val body = ItemCodec.createBody(parts, type?.id ?: draft.typeId, keys)
         val saved = api.createSecret(body)
         WriteResult.Saved(saved?.let { it["id"] as? JsonPrimitive }?.contentOrNull)
     }
@@ -221,20 +232,25 @@ class VaultRepository(
         val after = ItemCodec.parts(draft, item.type)
         val changed = ItemCodec.changed(before, after).let { if (item.kind == FormKind.PASSKEY) it - "key" - "login" else it }
         if (changed.isEmpty()) return@write WriteResult.Saved(item.row.id)
+        if ("totp" in changed) api.requireLoginFields()
         api.updateSecret(item.row.id, ItemCodec.updateBody(after, changed, keys))
         WriteResult.Saved(item.row.id)
     }
 
     /**
-     * Deletes one passkey from [item]'s `passkeys` (mobile-login-totp-passkeys
-     * D7). The item is read fresh, so a passkey added elsewhere since it
-     * was opened is kept.
+     * Deletes the passkey [credentialId] for [rpId] from [item]'s `passkeys`
+     * (mobile-login-totp-passkeys D7). The item is read fresh, so a passkey added elsewhere since it
+     * was opened is kept, and written with that row's `updatedAt` as
+     * `baseUpdatedAt`, so one added in between is not overwritten either
+     * (PasskeysWrite).
      */
-    suspend fun deletePasskey(item: DecryptedItem, credentialId: String): WriteResult = write {
+    suspend fun deletePasskey(item: DecryptedItem, credentialId: String, rpId: String): WriteResult = write {
         if (item.row.useOnly || item.row.readOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
-        val fresh = api.getSecret(item.row.id)?.let { VaultRow.from(it) } ?: return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
-        val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
-        api.updateSecret(item.row.id, ItemCodec.passkeysBody(LoginPasskeys.without(stored, credentialId), keys))
+        try {
+            PasskeysWrite.rewrite(api, keys, item.row.id) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
+        } catch (e: LoginGoneException) {
+            return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
+        }
         WriteResult.Saved(item.row.id)
     }
 

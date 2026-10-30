@@ -230,8 +230,10 @@ object ItemCodec {
      * Opens an item. A blocked item is not decrypted. A use-only copy shows
      * its login name and, for an authenticator, the current code, as the web
      * app may (use-only-shares); its value and additional fields stay closed.
+     * With [withSeed] false a login's own `totp` stays ciphertext: the item
+     * says a key is saved, never what it is (mobile-login-totp-passkeys D8).
      */
-    fun open(row: VaultRow, type: SecretType?, keys: VaultKeys, fromCache: Boolean, now: () -> String = { "" }): DecryptedItem {
+    fun open(row: VaultRow, type: SecretType?, keys: VaultKeys, fromCache: Boolean, now: () -> String = { "" }, withSeed: Boolean = true): DecryptedItem {
         val typeName = type?.name ?: "login"
         val kind = FormKind.of(typeName)
         if (row.blocked) {
@@ -240,7 +242,8 @@ object ItemCodec {
         val login = keys.decryptField(row.login)
         val hasSavedKey = !row.totp.isNullOrEmpty()
         // A field that cannot be decrypted shows as unreadable; the rest of the item still opens.
-        val totpSeed = if (hasSavedKey) runCatching { keys.decryptField(row.totp) }.getOrDefault("") else ""
+        // Without [withSeed] (the edit screen), the saved key is not decrypted at all: only that one is saved.
+        val totpSeed = if (hasSavedKey && withSeed) runCatching { keys.decryptField(row.totp) }.getOrDefault("") else ""
         if (row.useOnly) {
             val code = if (kind == FormKind.TOTP) keys.decryptField(row.key) else ""
             return DecryptedItem(row, typeName, type, login, code, null, false, null, fromCache, totpSeed, hasSavedKey)
@@ -423,8 +426,18 @@ object ItemCodec {
         return JsonObject(body)
     }
 
-    /** The body that sets a login's passkeys: `''` when none remain, never an encrypted empty string. */
-    fun passkeysBody(json: String, keys: VaultKeys): JsonObject = JsonObject(mapOf("passkeys" to encryptedOrEmpty(json, keys)))
+    /**
+     * The body that sets a login's passkeys: `''` when none remain, never an
+     * encrypted empty string. With [baseUpdatedAt], the `updatedAt` of the
+     * row the change was made on, the server refuses the write when the
+     * login changed since (PasskeysWrite).
+     */
+    fun passkeysBody(json: String, keys: VaultKeys, baseUpdatedAt: String? = null): JsonObject = JsonObject(
+        buildMap {
+            put("passkeys", encryptedOrEmpty(json, keys))
+            baseUpdatedAt?.let { put("baseUpdatedAt", JsonPrimitive(it)) }
+        },
+    )
 
     private fun encryptedOrEmpty(text: String, keys: VaultKeys): JsonPrimitive =
         JsonPrimitive(if (text.isEmpty()) "" else keys.encryptField(text))

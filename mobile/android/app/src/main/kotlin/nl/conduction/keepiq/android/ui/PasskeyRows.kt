@@ -34,10 +34,17 @@ import java.util.Locale
  * when there are several, the account it is for (mobile-login-totp-passkeys
  * D6). No site, credential id or key is shown. Where [mayDelete], each row
  * offers Delete; [focusIndex] moves focus to that row's Delete after a
- * passkey before it went (D7).
+ * passkey before it went (D7), and [onFocused] tells the caller it moved,
+ * so the request is not made again when the item reopens.
  */
 @Composable
-internal fun PasskeyRows(passkeys: List<PasskeySummary>, mayDelete: Boolean, focusIndex: Int?, onDelete: (PasskeySummary) -> Unit) {
+internal fun PasskeyRows(
+    passkeys: List<PasskeySummary>,
+    mayDelete: Boolean,
+    focusIndex: Int?,
+    onDelete: (PasskeySummary) -> Unit,
+    onFocused: () -> Unit = {},
+) {
     val locale = LocalConfiguration.current.locales[0]
     val requesters = remember(passkeys) { passkeys.map { FocusRequester() } }
     for ((i, pk) in passkeys.withIndex()) {
@@ -64,23 +71,43 @@ internal fun PasskeyRows(passkeys: List<PasskeySummary>, mayDelete: Boolean, foc
         }
     }
     LaunchedEffect(focusIndex, passkeys) {
-        if (mayDelete && focusIndex != null && focusIndex < requesters.size) requesters[focusIndex].requestFocus()
+        if (mayDelete && focusIndex != null && focusIndex < requesters.size) {
+            requesters[focusIndex].requestFocus()
+            onFocused()
+        }
     }
 }
 
-/** Asks before a passkey is deleted: the site no longer accepts it afterwards. */
+/**
+ * Asks before a passkey is deleted: the site no longer accepts it
+ * afterwards. Names the [account] the passkey is for, when it has one, so
+ * the user can tell which of a login's passkeys goes.
+ */
 @Composable
-internal fun PasskeyDeleteDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+internal fun PasskeyDeleteDialog(account: String?, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.passkey_delete_title)) },
+        title = { Text(account?.let { stringResource(R.string.passkey_delete_title_for, it) } ?: stringResource(R.string.passkey_delete_title)) },
         text = { Text(stringResource(R.string.passkey_delete_body)) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_delete)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
-/** A passkey's `createdAt` as a long date in [locale], or null when it is not an ISO instant. */
+/**
+ * A passkey's `createdAt` as a long date in [locale], or null when it is not
+ * an ISO date-time. Below Android 14 `Instant.parse` takes only `Z`, so a
+ * time with an offset such as `+01:00` is read as an offset date-time.
+ */
 internal fun passkeyAdded(createdAt: String, locale: Locale, zone: ZoneId): String? = runCatching {
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(zone).format(Instant.parse(createdAt))
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(zone).format(createdInstant(createdAt))
 }.getOrNull()
+
+/**
+ * [createdAt] as an instant: [primary] first (Instant.parse, which takes
+ * only `Z` below Android 14), else as an offset date-time. [primary] is a
+ * parameter so a JVM test, whose Instant.parse takes offsets, can reach the
+ * fallback.
+ */
+internal fun createdInstant(createdAt: String, primary: (String) -> Instant = Instant::parse): Instant =
+    runCatching { primary(createdAt) }.getOrElse { java.time.OffsetDateTime.parse(createdAt).toInstant() }

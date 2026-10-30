@@ -20,6 +20,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.MissingCapabilityException
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.crypto.RsaFields
@@ -64,6 +65,11 @@ class VaultRepositoryTest {
     private var offline = false
     private var refuseWrites = false
     private var cachingOff = false
+    private var capabilities = """["match","totp-field","passkeys-field"]"""
+
+    /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
+    private var staleWrites = 0
+    private var afterStale: () -> Unit = {}
 
     private val loginRow = """{"id":"s1","name":"Huisbank","url":"https://mijn.huisbank.example","typeId":"1","folderId":"f2",
         "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42}""")}",
@@ -93,9 +99,18 @@ class VaultRepositoryTest {
 
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
+        // The capability check before a write of `totp` or `passkeys` (KeepiqApi.requireLoginFields).
+        if (path == "/api/v1/extension/pair") {
+            return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         requests += request.method.value to path
         (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
         if (offline) throw IOException("no network")
+        if (request.method == HttpMethod.Put && staleWrites > 0) {
+            staleWrites--
+            afterStale()
+            return@MockEngine respond("""{"message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         val write = request.method != HttpMethod.Get
         val body = when {
             write && refuseWrites -> """{"ocs":{"meta":{"status":"failure","statuscode":403,"message":""},"data":{"error":"read_only","message":"You can only read this item."}}}"""
@@ -442,11 +457,30 @@ class VaultRepositoryTest {
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         // Another client added "b" since the phone opened the login.
         mailRow = mailRowWith(passkeysOf("a", "b"))
-        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
         assertEquals("PUT" to "/api/v1/secrets/s4", requests.first { it.first == "PUT" })
         val body = bodies.single()
-        assertEquals(setOf("passkeys"), body.keys)
+        assertEquals(setOf("passkeys", "baseUpdatedAt"), body.keys)
+        assertEquals("2026-10-03T09:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf("b"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+    }
+
+    @Test
+    fun aDeleteRefusedAsStaleIsMadeOnceMoreOnTheNewRow() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        staleWrites = 1
+        // Another client added "c" between the phone's read and its write.
+        afterStale = { mailRow = mailRowWith(passkeysOf("a", "b", "c")).replace("2026-10-03T09:00:00+00:00", "2026-10-03T10:00:00+00:00") }
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals(listOf("PUT", "PUT"), requests.filter { it.first == "PUT" }.map { it.first })
+        val body = bodies.last()
+        assertEquals("2026-10-03T10:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf("b", "c"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+
+        staleWrites = 2
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "b", "mail.example"))
+        assertEquals(409, refused.problem.status)
     }
 
     @Test
@@ -454,15 +488,66 @@ class VaultRepositoryTest {
         repo.refresh(SyncTrigger.START)
         mailRow = mailRowWith(passkeysOf("a"))
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
-        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a"))
-        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""))), bodies.single())
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""), "baseUpdatedAt" to JsonPrimitive("2026-10-03T09:00:00+00:00"))), bodies.single())
+    }
+
+    @Test
+    fun aServerPairedBeforeTheFieldsTakesNoCodeOrPasskeyWrite() = runTest {
+        capabilities = """["match"]"""
+        val type = repo.refresh(SyncTrigger.START).typeNamed("login")
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        val results = listOf(
+            repo.deletePasskey(item, "a", "mail.example"),
+            repo.update(item, ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REMOVE)),
+            repo.create(ItemCodec.draft(null, type).copy(name = "Nieuw", typed = mapOf("klantnummer" to "1"), keyEdit = KeyEdit.REPLACE, newKey = seed), type),
+        )
+        for (r in results) {
+            val problem = assertIs<WriteResult.Refused>(r).problem
+            assertEquals(WriteProblemKind.SERVER_MESSAGE, problem.kind)
+            assertEquals(MissingCapabilityException.MESSAGE, problem.serverMessage)
+        }
+        assertTrue(requests.none { it.first == "PUT" || it.first == "POST" }, "$requests")
+        // A change that writes neither field still goes through.
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(name = "Mail 2")))
+    }
+
+    @Test
+    fun theEditFormNeverHoldsTheSavedKey() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val shown = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertEquals(seed, shown.totpSeed)
+        val edited = assertIs<OpenResult.Opened>(repo.openForEdit("s4")).item
+        assertEquals("", edited.totpSeed)
+        assertTrue(edited.hasSavedKey)
+        assertNull(edited.totp)
+        // Saving the form without touching the key sends no `totp`.
+        assertIs<WriteResult.Saved>(repo.update(edited, ItemCodec.draft(edited, edited.type).copy(name = "Mail 2")))
+        assertFalse("totp" in bodies.last())
     }
 
     @Test
     fun aUseOnlyOrReadOnlyCopyCannotDeleteAPasskey() = runTest {
         repo.refresh(SyncTrigger.START)
-        val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
-        assertIs<WriteResult.Refused>(repo.deletePasskey(item, "c"))
+        val useOnly = assertIs<OpenResult.Opened>(repo.open("s5")).item
+        assertIs<WriteResult.Refused>(repo.deletePasskey(useOnly, "c", "mail.example"))
+        // A read-only copy the user may still use: only the readOnly guard refuses it.
+        mailRow = mailRowWith(passkeysOf("a", "b")).replace("\"readOnly\":false", "\"readOnly\":true")
+        val readOnly = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertTrue(readOnly.row.readOnly && !readOnly.row.useOnly)
+        assertIs<WriteResult.Refused>(repo.deletePasskey(readOnly, "a", "mail.example"))
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aDeleteNeverRewritesAFreshValueThatIsNotAnArray() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        // Another client wrote one object instead of an array since the phone opened the login.
+        mailRow = mailRowWith(credential("a", "alice-a").toJson())
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "a", "mail.example"))
+        // The server answered: the phone is not offline.
+        assertEquals(WriteProblemKind.FAILED, refused.problem.kind)
         assertTrue(requests.none { it.first == "PUT" })
     }
 

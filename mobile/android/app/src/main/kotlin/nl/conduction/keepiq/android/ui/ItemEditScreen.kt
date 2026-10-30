@@ -40,6 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -95,7 +98,10 @@ fun ItemEditScreen(
 
     LaunchedEffect(id) {
         if (id != null) {
-            val opened = io { repository.open(id) }
+            // openForEdit leaves the item's own `totp` field (a login's saved Authenticator key) encrypted: the form
+            // replaces or removes it, never shows it. An Authenticator item's seed is its `key`, its value, which
+            // is still opened, because that is what the form edits.
+            val opened = io { repository.openForEdit(id) }
             if (opened is OpenResult.Opened) {
                 item = opened.item
                 type = opened.item.type
@@ -152,7 +158,8 @@ fun ItemEditScreen(
                 ) { draft = draft.copy(secret = it) }
                 if (draft.kind == FormKind.LOGIN) AuthenticatorKeyField(draft, error("totp"), removeOnly = false) { draft = it }
             }
-            FormKind.TOTP -> TextInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
+            // An Authenticator item's seed is its value: typed like a login's key (SeedInput), masked and kept from autofill.
+            FormKind.TOTP -> SeedInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
             FormKind.CARD, FormKind.IDENTITY -> for (field in Composite.fieldsOf(draft.kind)) {
                 val value = draft.composite[field] ?: ""
                 val label = compositeFieldLabel(field)
@@ -164,8 +171,8 @@ fun ItemEditScreen(
             }
             FormKind.NOTE, FormKind.PASSKEY -> Unit
         }
-        // A key set elsewhere on another type: it can be removed, not entered here (web D6).
-        if (draft.kind != FormKind.LOGIN && draft.kind != FormKind.TOTP && draft.hasSavedKey) {
+        // A key set elsewhere on another type, an Authenticator item included: it can be removed, not entered here (web D6).
+        if (draft.kind != FormKind.LOGIN && draft.hasSavedKey) {
             AuthenticatorKeyField(draft, error("totp"), removeOnly = true) { draft = it }
         }
         for (field in type?.fields ?: emptyList()) {
@@ -186,7 +193,7 @@ fun ItemEditScreen(
         TextInput(stringResource(R.string.detail_notes), draft.notes, null, singleLine = false) { draft = draft.copy(notes = it) }
         if (draft.kind != FormKind.PASSKEY) ExtraFields(draft, ::error) { draft = it }
 
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
+        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
         error("fields")?.let { Text(draftProblemText(it), color = MaterialTheme.colorScheme.error) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
@@ -279,6 +286,7 @@ fun TextInput(
     singleLine: Boolean = true,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = keyboard),
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     onChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -289,6 +297,7 @@ fun TextInput(
         isError = problem != null,
         supportingText = problem?.let { { Text(draftProblemText(it)) } },
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         modifier = modifier.fillMaxWidth(),
     )
 }
@@ -296,7 +305,7 @@ fun TextInput(
 /** The types a new item may have: Authenticator and Passkey items are no longer made (mobile-login-totp-passkeys D9). */
 internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.filter { it.name != "totp" && it.name != "passkey" }
 
-/** A hidden input with Show and, where it fits, Generate. The keyboard is told not to learn it. */
+/** A hidden input with Show and, where it fits, Generate. A password keyboard without autocorrect, which keyboards do not learn from. */
 @Composable
 private fun SecretInput(label: String, value: String, problem: DraftProblem?, onGenerate: (() -> Unit)?, onChange: (String) -> Unit) {
     var shown by remember { mutableStateOf(false) }
