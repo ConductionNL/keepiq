@@ -29,9 +29,11 @@ use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Listener\SuiteCompromiseListener;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
-use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -130,6 +132,78 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$this->assertNotNull($source->getPossiblyCompromisedAt(), 'the source must be stamped');
 		$this->assertSame(['copy-1', 'src-1'], $flagged, 'the copy and its source are both flagged');
 	}//end testHandleNotifiesSourceOwnerForSharedCopy()
+
+	/**
+	 * The pending quarantine scan's verdicts that hold a row back.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function heldBackVerdicts(): array {
+		return [
+			'quarantined on the spot' => [ShareQuarantineScanner::HELD_QUARANTINED],
+			'cannot be judged' => [ShareQuarantineScanner::HELD_UNJUDGED],
+		];
+	}//end heldBackVerdicts()
+
+	/**
+	 * A compromised secret V of Bob's that a held-back row `{S_a, bob, V}`
+	 * names is warned about as V itself, to Bob; S_a is neither stamped nor
+	 * flagged, and its owner is not told.
+	 *
+	 * @param string $verdict The scan's verdict on the row
+	 *
+	 * @return void
+	 */
+	#[DataProvider('heldBackVerdicts')]
+	public function testAHeldBackRowDoesNotTurnTheWarningToItsSource(string $verdict): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$rotationService = $this->createMock(RotationPolicyService::class);
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($verdict);
+		$listener = new SuiteCompromiseListener(
+			secretMapper: $secretMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper, scanner: $scanner),
+			notificationService: $notificationService,
+			logger: $this->createMock(LoggerInterface::class),
+			rotationService: $rotationService
+		);
+
+		$v = new Secret();
+		$v->setId('V');
+		$v->setOwnerType('user');
+		$v->setOwnerId('bob');
+		$v->setName('bobs-own');
+		$v->setPossiblyCompromisedAt(new DateTime());
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$v]);
+		$row = new ShareTarget();
+		$row->setId('row-V');
+		$row->setSourceSecretId('S_a');
+		$row->setTargetUserId('bob');
+		$row->setSecretId('V');
+		$shareTargetMapper->method('findByRecipientSecret')->willReturn($row);
+		$secretMapper->expects($this->never())->method('findById');
+		$secretMapper->expects($this->never())->method('update');
+		$flagged = [];
+		$rotationService->method('flag')->willReturnCallback(
+			static function (string $secretId) use (&$flagged): RotationFlag {
+				$flagged[] = $secretId;
+				return new RotationFlag();
+			}
+		);
+		$notificationService->expects($this->once())
+			->method('notify')
+			->with(
+				'secret_compromised',
+				'bob',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'V')
+			);
+
+		$listener->handle(new SuiteMigrationCompletedEvent(oldSuiteId: 'old', newSuiteId: 'new', migrationId: 'mig-1'));
+
+		$this->assertSame(['V'], $flagged, 'only V is flagged; S_a is not touched');
+	}//end testAHeldBackRowDoesNotTurnTheWarningToItsSource()
 
 	/**
 	 * A shared copy whose source is gone warns about the copy itself, quietly:
