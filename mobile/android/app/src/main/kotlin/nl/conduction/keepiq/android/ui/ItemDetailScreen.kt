@@ -80,6 +80,7 @@ fun ItemDetailScreen(
     var problem by remember { mutableStateOf<WriteProblem?>(null) }
     var deleting by remember { mutableStateOf<PasskeySummary?>(null) }
     var focusPasskey by remember(id) { mutableStateOf<Int?>(null) }
+    var passkeyDeleted by remember(id) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
 
@@ -102,6 +103,7 @@ fun ItemDetailScreen(
             onDeletePasskey = { deleting = it },
             focusPasskey = focusPasskey,
             onPasskeyFocused = { focusPasskey = null },
+            passkeyDeleted = passkeyDeleted,
         )
     }
 
@@ -120,12 +122,15 @@ fun ItemDetailScreen(
             account = pk.userName,
             onConfirm = {
                 deleting = null
+                passkeyDeleted = false
                 val index = item.passkeys.indexOf(pk)
                 scope.launch {
                     when (val w = io { session.repository.deletePasskey(item, pk.credentialId, pk.rpId) }) {
                         is WriteResult.Saved -> {
+                            problem = null
                             result = io { session.repository.open(id) }
                             focusPasskey = index
+                            passkeyDeleted = true
                         }
                         is WriteResult.Refused -> problem = w.problem
                     }
@@ -196,6 +201,8 @@ internal fun ItemDetail(
     focusPasskey: Int? = null,
     /** Focus moved for [focusPasskey]: the caller clears it, so a later reopen does not move focus again. */
     onPasskeyFocused: () -> Unit = {},
+    /** A passkey was just deleted: said in a polite live region, as focus alone tells a screen reader nothing. */
+    passkeyDeleted: Boolean = false,
 ) {
     val row = item.row
     val editFocus = remember { FocusRequester() }
@@ -205,7 +212,11 @@ internal fun ItemDetail(
         if (item.fromCache) Note(stringResource(R.string.detail_from_cache))
         if (row.useOnly) Note(stringResource(R.string.detail_use_only))
         if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
+        // A refusal is announced: after a refused passkey Delete the dialog closes and focus goes nowhere.
+        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+        if (passkeyDeleted) {
+            Text(stringResource(R.string.detail_passkey_deleted), style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        }
         if (row.blocked) {
             Note(row.blockedReason ?: stringResource(R.string.detail_blocked))
             return@Column

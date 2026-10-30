@@ -40,6 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -187,7 +190,7 @@ fun ItemEditScreen(
         TextInput(stringResource(R.string.detail_notes), draft.notes, null, singleLine = false) { draft = draft.copy(notes = it) }
         if (draft.kind != FormKind.PASSKEY) ExtraFields(draft, ::error) { draft = it }
 
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
+        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
         error("fields")?.let { Text(draftProblemText(it), color = MaterialTheme.colorScheme.error) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(

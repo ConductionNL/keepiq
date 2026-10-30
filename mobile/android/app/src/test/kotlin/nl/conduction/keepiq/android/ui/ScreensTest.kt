@@ -495,4 +495,29 @@ class ScreensTest {
         compose.onNodeWithText("Authenticator key saved").assertDoesNotExist()
         compose.onNodeWithText(keyLabel).assertDoesNotExist()
     }
+
+    @Test
+    fun aRefusedDeleteIsAnnounced() {
+        vault.put("s4", mailWithTwoPasskeys)
+        vault.refuseWrites = true
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("You can only read this item.", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("You can only read this item.", substring = true)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+        compose.onNodeWithText("Passkey deleted.").assertDoesNotExist()
+    }
+
+    @Test
+    fun aDeleteIsAnnounced() {
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Passkey deleted.").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Passkey deleted.").assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
 }

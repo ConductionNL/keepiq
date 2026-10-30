@@ -37,6 +37,9 @@ internal class PlainKeys : VaultKeys {
  */
 internal class FakeVault {
     val rows = LinkedHashMap<String, String>()
+
+    /** Every PUT is refused as the server refuses a write the user may not make. */
+    @Volatile var refuseWrites = false
     private val requests = mutableListOf<Pair<String, String>>()
     private val types = """[{"id":"1","name":"login","label":"Login","fields":[]},{"id":"2","name":"note","label":"Note","fields":[]},""" +
         """{"id":"3","name":"totp","label":"Authenticator","fields":[]}]"""
@@ -45,6 +48,9 @@ internal class FakeVault {
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         synchronized(requests) { requests += request.method.value to path }
         val json = headersOf(HttpHeaders.ContentType, "application/json")
+        if (refuseWrites && request.method == HttpMethod.Put) {
+            return@MockEngine respond("""{"error":"read_only","message":"You can only read this item."}""", HttpStatusCode.Forbidden, json)
+        }
         val body = when {
             path == "/api/v1/extension/pair" -> """{"ok":true,"apiVersion":1,"capabilities":["totp-field","passkeys-field"]}"""
             path == "/api/v1/offline/manifest" ->

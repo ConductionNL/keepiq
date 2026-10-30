@@ -91,6 +91,7 @@
     <string name="passkey_delete_title">Deze passkey verwijderen?</string>
     <string name="passkey_delete_title_for">De passkey voor %1$s verwijderen?</string>
     <string name="passkey_delete_body">Je kunt er niet meer mee inloggen op deze site. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="detail_passkey_deleted">Passkey verwijderd.</string>
     <string name="detail_extra_fields">Extra velden</string>
     <string name="detail_fields_error">De extra velden zijn niet te lezen.</string>
     <string name="detail_use_only">Gedeeld om alleen te gebruiken. Je kunt het invullen, maar de waarde niet zien of kopiëren.</string>
