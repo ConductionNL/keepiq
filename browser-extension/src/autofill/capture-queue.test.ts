@@ -440,6 +440,12 @@ describe('the save or update lookup, whatever the fill rule', () => {
 		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item b' })
 	})
 
+	it('offers a new login, not an update of the parent host\'s, while a login on the frame\'s own host sits at another path', async () => {
+		await vault([await item('a', 'u', 'one', { url: 'https://site.test/' }), await item('b', 'u', 'two', { url: 'https://login.site.test/app' })])
+		await submitOn('https://login.site.test/sign-in', 'u', 'new')
+		expect(await state()).toMatchObject({ mode: 'add' })
+	})
+
 	it('treats another IP address as another site', async () => {
 		await vault([await item('a', 'u', 'pw', { url: 'http://10.0.0.5/' })])
 		await submitOn('http://10.0.0.6/login', 'u', 'pw')

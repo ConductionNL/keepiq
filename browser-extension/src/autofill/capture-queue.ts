@@ -153,10 +153,12 @@ async function decide(accountId: string, tabId: number, frameUrl: string, report
 	const editable = (row: OpenSecretRow) => !row.useOnly && !row.readOnly
 	const only = (candidates: OpenSecretRow[], counts: (row: OpenSecretRow) => boolean) => {
 		// The nearest tier with a login decides, so a login for the frame's own host wins over one for its parent.
+		const onHost = (row: OpenSecretRow) => webUrl(row.url)?.host === frame.host
 		const tiers = [
 			(row: OpenSecretRow) => under(row.url, frame),
-			...(report.changed ? [(row: OpenSecretRow) => webUrl(row.url)?.host === frame.host] : []),
-			(row: OpenSecretRow) => onParentHost(row.url, frame),
+			...(report.changed ? [onHost] : []),
+			// Any login on the frame's own host, at whatever path, may be the one meant, so the parent's is never guessed over it.
+			...(candidates.some(onHost) ? [] : [(row: OpenSecretRow) => onParentHost(row.url, frame)]),
 		]
 		const pool = (tiers.map((tier) => candidates.filter(tier)).find((rows) => rows.length > 0) ?? []).filter(counts)
 		return pool.length === 1 ? pool[0] : undefined
