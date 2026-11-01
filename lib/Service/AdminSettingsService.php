@@ -195,81 +195,135 @@ class AdminSettingsService {
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.3
 	 */
 	public function getAdminSettings(): array {
-		$appId = Application::APP_ID;
 		$settings = array_merge(
-			[
-				'min_password_length' => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
-				'min_password_score' => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
-				'default_session_timeout' => $this->appConfig->getValueString(
-					$appId,
-					'default_session_timeout',
-					self::DEFAULT_SESSION_TIMEOUT
-				),
-				'ca_auto_renew_enabled' => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
-				'audit_retention_days' => $this->appConfig->getValueInt(
-					$appId,
-					'audit_retention_days',
-					self::AUDIT_RETENTION_DEFAULT
-				),
-				'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
-				'expiry_default_max_age_days' => $this->appConfig->getValueInt(
-					$appId,
-					'expiry_default_max_age_days',
-					0
-				),
-				'expiry_reminder_days' => json_decode(
-					$this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
-					true
-				),
-				'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
-				'version_retention_days' => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
-				// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
-				'trash_retention_days' => $this->appConfig->getValueInt(
-					$appId,
-					'trash_retention_days',
-					SecretTrashService::RETENTION_DEFAULT
-				),
-				'attachment_max_bytes' => $this->appConfig->getValueInt(
-					$appId,
-					'attachment_max_bytes',
-					26214400
-				),
-				'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
-					$appId,
-					'attachment_user_quota_bytes',
-					104857600
-				),
-			],
+			$this->sessionAndAuditSettings(),
+			$this->expiryAndVersionSettings(),
+			$this->storageSettings(),
 			// Org password policy (org-password-policies §1.1) — one reader,
 			// shared with the user-visible getPolicy() floor.
 			$this->policyService->readAdminPolicyKeys(),
-			[
-				// Machine leases (machine-secret-leases §2.4).
-				'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
-					$appId,
-					'lease_default_ttl_seconds',
-					900
-				),
-				'lease_max_ttl_seconds' => $this->appConfig->getValueInt(
-					$appId,
-					'lease_max_ttl_seconds',
-					86400
-				),
-				'lease_renewable' => $this->appConfig->getValueBool($appId, 'lease_renewable', true),
-				'lease_revocation_blocks_refetch' => $this->appConfig->getValueBool(
-					$appId,
-					'lease_revocation_blocks_refetch',
-					false
-				),
-				// The longest idle lock delay a user may pick in the browser extension.
-				'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
-				// New device approval (crypto-new-device-approval D5), default on.
-				'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
-			],
+			$this->leaseAndDeviceSettings(),
 			$this->offlineSettings()
 		);
 
-		// Best-effort CA status; never blocks if the service is unavailable.
+		return $this->withCaStatus(settings: $settings);
+	}//end getAdminSettings()
+
+	/**
+	 * The password, session, CA renewal, audit and breach check settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function sessionAndAuditSettings(): array {
+		$appId = Application::APP_ID;
+		return [
+			'min_password_length' => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
+			'min_password_score' => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
+			'default_session_timeout' => $this->appConfig->getValueString(
+				$appId,
+				'default_session_timeout',
+				self::DEFAULT_SESSION_TIMEOUT
+			),
+			'ca_auto_renew_enabled' => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+			'audit_retention_days' => $this->appConfig->getValueInt(
+				$appId,
+				'audit_retention_days',
+				self::AUDIT_RETENTION_DEFAULT
+			),
+			'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+		];
+	}//end sessionAndAuditSettings()
+
+	/**
+	 * The expiry defaults and the version retention settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function expiryAndVersionSettings(): array {
+		$appId = Application::APP_ID;
+		return [
+			'expiry_default_max_age_days' => $this->appConfig->getValueInt(
+				$appId,
+				'expiry_default_max_age_days',
+				0
+			),
+			'expiry_reminder_days' => json_decode(
+				$this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
+				true
+			),
+			'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
+			'version_retention_days' => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
+		];
+	}//end expiryAndVersionSettings()
+
+	/**
+	 * The trash retention and attachment size settings.
+	 *
+	 * @return array<string,int>
+	 */
+	private function storageSettings(): array {
+		$appId = Application::APP_ID;
+		return [
+			// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
+			'trash_retention_days' => $this->appConfig->getValueInt(
+				$appId,
+				'trash_retention_days',
+				SecretTrashService::RETENTION_DEFAULT
+			),
+			'attachment_max_bytes' => $this->appConfig->getValueInt(
+				$appId,
+				'attachment_max_bytes',
+				26214400
+			),
+			'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
+				$appId,
+				'attachment_user_quota_bytes',
+				104857600
+			),
+		];
+	}//end storageSettings()
+
+	/**
+	 * The machine lease, extension idle and new device approval settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function leaseAndDeviceSettings(): array {
+		$appId = Application::APP_ID;
+		return [
+			// Machine leases (machine-secret-leases §2.4).
+			'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
+				$appId,
+				'lease_default_ttl_seconds',
+				900
+			),
+			'lease_max_ttl_seconds' => $this->appConfig->getValueInt(
+				$appId,
+				'lease_max_ttl_seconds',
+				86400
+			),
+			'lease_renewable' => $this->appConfig->getValueBool($appId, 'lease_renewable', true),
+			'lease_revocation_blocks_refetch' => $this->appConfig->getValueBool(
+				$appId,
+				'lease_revocation_blocks_refetch',
+				false
+			),
+			// The longest idle lock delay a user may pick in the browser extension.
+			'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
+			// New device approval (crypto-new-device-approval D5), default on.
+			'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
+		];
+	}//end leaseAndDeviceSettings()
+
+	/**
+	 * The settings with the CA status added: best effort, it never blocks
+	 * when the service is unavailable.
+	 *
+	 * @param array<string,mixed> $settings The admin settings
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function withCaStatus(array $settings): array {
 		try {
 			$caService = $this->container->get('OCA\Keepiq\Service\CertificateAuthorityService');
 			if (method_exists($caService, 'getStatus') === true) {
@@ -281,7 +335,7 @@ class AdminSettingsService {
 		}
 
 		return $settings;
-	}//end getAdminSettings()
+	}//end withCaStatus()
 
 	/**
 	 * The offline cache switches: offline reading (default on) and offline
