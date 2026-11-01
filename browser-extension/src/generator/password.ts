@@ -53,43 +53,82 @@ function ensureMinimums(value: string, charset: string, minimums: [string, numbe
 	return chars
 }
 
-/** A uniform draw from the set, topped up to the minimum of every chosen class, then shuffled. */
-export function generatePassword(request: PasswordRequest, policy: GeneratorPolicy | null, rand: RandomInt = randomInt): Generated<InvalidPassword> {
-	let length = Number(request.length ?? 16)
-	let includeUpper = request.includeUppercase !== false
-	let includeLower = request.includeLowercase !== false
-	let includeDigits = request.includeDigits !== false
-	let includeSpecial = request.includeSpecialCharacters !== false
-	const minDigits = Math.max(0, Math.floor(Number(request.minDigits ?? 0)) || 0)
-	const minSpecial = Math.max(0, Math.floor(Number(request.minSpecial ?? 0)) || 0)
-	const excluded = new Set(request.excludedCharacters ?? '')
-	if (request.avoidAmbiguous === true) for (const char of AMBIGUOUS) excluded.add(char)
+interface PasswordSpec {
+	length: number
+	upper: boolean
+	lower: boolean
+	digits: boolean
+	special: boolean
+	minDigits: number
+	minSpecial: number
+	excluded: Set<string>
+}
 
-	if (policy !== null) {
-		length = Math.max(length, policy.minLength)
-		includeUpper ||= policy.requireUpper
-		includeLower ||= policy.requireLower
-		includeDigits ||= policy.requireDigit
-		includeSpecial ||= policy.requireSymbol
+/** A non-negative whole count; anything else is 0. */
+function count(value: unknown): number {
+	return Math.max(0, Math.floor(Number(value ?? 0)) || 0)
+}
+
+/** The request with the web module's defaults, raised to the policy's floor. */
+function readSpec(request: PasswordRequest, policy: GeneratorPolicy | null): PasswordSpec {
+	const spec: PasswordSpec = {
+		length: Number(request.length ?? 16),
+		upper: request.includeUppercase !== false,
+		lower: request.includeLowercase !== false,
+		digits: request.includeDigits !== false,
+		special: request.includeSpecialCharacters !== false,
+		minDigits: count(request.minDigits),
+		minSpecial: count(request.minSpecial),
+		excluded: new Set(request.excludedCharacters ?? ''),
 	}
-	if (!includeUpper && !includeLower && !includeDigits && !includeSpecial) return { ok: false, failure: 'no_kind' }
-	let charset = (includeUpper ? UPPERCASE : '') + (includeLower ? LOWERCASE : '') + (includeDigits ? DIGITS : '') + (includeSpecial ? SPECIAL : '')
-	charset = [...new Set([...charset].filter((c) => !excluded.has(c)))].join('')
+	if (request.avoidAmbiguous === true) for (const char of AMBIGUOUS) spec.excluded.add(char)
+	if (policy !== null) {
+		spec.length = Math.max(spec.length, policy.minLength)
+		spec.upper ||= policy.requireUpper
+		spec.lower ||= policy.requireLower
+		spec.digits ||= policy.requireDigit
+		spec.special ||= policy.requireSymbol
+	}
+	return spec
+}
+
+function buildCharset(spec: PasswordSpec, policy: GeneratorPolicy | null): string {
+	let charset = (spec.upper ? UPPERCASE : '') + (spec.lower ? LOWERCASE : '') + (spec.digits ? DIGITS : '') + (spec.special ? SPECIAL : '')
+	charset = [...new Set([...charset].filter((c) => !spec.excluded.has(c)))].join('')
 	// An exclusion may not hollow out a class the policy requires.
 	if (policy !== null) for (const classSet of requiredClasses(policy)) if (!intersects(charset, classSet)) charset += classSet
+	return charset
+}
 
-	const minimums = ([
-		[UPPERCASE, includeUpper ? 1 : 0],
-		[LOWERCASE, includeLower ? 1 : 0],
-		[DIGITS, includeDigits ? Math.max(minDigits, 1) : 0],
-		[SPECIAL, includeSpecial ? Math.max(minSpecial, 1) : 0],
-	] as [string, number][]).filter(([classSet, count]) => count > 0 && intersects(charset, classSet))
-	length = Math.max(length, minimums.reduce((sum, [, count]) => sum + count, 0))
+/** The minimum count of every chosen class the charset still holds. */
+function classMinimums(spec: PasswordSpec, charset: string): [string, number][] {
+	return ([
+		[UPPERCASE, spec.upper ? 1 : 0],
+		[LOWERCASE, spec.lower ? 1 : 0],
+		[DIGITS, spec.digits ? Math.max(spec.minDigits, 1) : 0],
+		[SPECIAL, spec.special ? Math.max(spec.minSpecial, 1) : 0],
+	] as [string, number][]).filter(([classSet, min]) => min > 0 && intersects(charset, classSet))
+}
 
-	if (!Number.isInteger(length) || length < PASSWORD_LENGTH.min) return { ok: false, failure: 'length_too_short' }
-	if (length > PASSWORD_LENGTH.max) return { ok: false, failure: 'length_too_long' }
-	if (charset.length === 0) return { ok: false, failure: 'charset_empty' }
-	if (charset.length < MIN_CHARSET_SIZE) return { ok: false, failure: 'charset_too_small' }
+function invalidLength(length: number): InvalidPassword | null {
+	if (!Number.isInteger(length) || length < PASSWORD_LENGTH.min) return 'length_too_short'
+	return length > PASSWORD_LENGTH.max ? 'length_too_long' : null
+}
+
+function invalidCharset(charset: string): InvalidPassword | null {
+	if (charset.length === 0) return 'charset_empty'
+	return charset.length < MIN_CHARSET_SIZE ? 'charset_too_small' : null
+}
+
+/** A uniform draw from the set, topped up to the minimum of every chosen class, then shuffled. */
+export function generatePassword(request: PasswordRequest, policy: GeneratorPolicy | null, rand: RandomInt = randomInt): Generated<InvalidPassword> {
+	const spec = readSpec(request, policy)
+	if (!spec.upper && !spec.lower && !spec.digits && !spec.special) return { ok: false, failure: 'no_kind' }
+	const charset = buildCharset(spec, policy)
+	const minimums = classMinimums(spec, charset)
+	const length = Math.max(spec.length, minimums.reduce((sum, [, min]) => sum + min, 0))
+	const failure = invalidLength(length) ?? invalidCharset(charset)
+	if (failure !== null) return { ok: false, failure }
 
 	const chars = ensureMinimums(buildString(charset, length, rand), charset, minimums, rand)
 	return { ok: true, value: shuffle(chars, rand).join('') }
