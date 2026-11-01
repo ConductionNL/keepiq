@@ -41,7 +41,7 @@ export async function buildState(): Promise<PopupState> {
 		accounts,
 		active,
 		notice,
-		canAddAccount: accounts.length < MAX_ACCOUNTS,
+		canAddAccount: MAX_ACCOUNTS > accounts.length,
 		lastTab: await readLastTab(),
 	}
 }
