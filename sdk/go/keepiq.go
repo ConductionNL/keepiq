@@ -63,7 +63,8 @@ var (
 	// the last read of the same address (the server answered 304 to the ETag).
 	ErrNotModified = errors.New("keepiq: not modified")
 	// ErrKeyMismatch is returned when the envelope was encrypted to a
-	// certificate other than the one configured with WithCertificate.
+	// certificate other than the one configured with WithCertificate, or
+	// names no certificate fingerprint while one is configured.
 	ErrKeyMismatch = errors.New("keepiq: the envelope is encrypted to a different certificate")
 	// ErrPreconditionFailed is returned by UpdateIfMatch when the secret
 	// changed since the ETag was read (HTTP 412); nothing was written.
@@ -163,7 +164,8 @@ func WithHTTPClient(h *http.Client) Option { return func(c *Client) { c.http = h
 
 // WithCertificate sets the application's certificate (PEM). New checks that it
 // belongs to the private key, and every read then refuses an envelope whose
-// certificate fingerprint differs, before any decryption, with ErrKeyMismatch.
+// certificate fingerprint differs or is missing, before any decryption, with
+// ErrKeyMismatch.
 func WithCertificate(pem string) Option { return func(c *Client) { c.certPEM = pem } }
 
 // WithClock replaces time.Now, for tests.
@@ -502,8 +504,7 @@ func (c *Client) open(env *envelope) (*Secret, error) {
 	if env.Encryption.Scheme != Scheme {
 		return nil, fmt.Errorf("keepiq: unsupported encryption scheme %q", env.Encryption.Scheme)
 	}
-	if c.fingerprint != "" && env.Encryption.CertificateFingerprint != "" &&
-		!strings.EqualFold(env.Encryption.CertificateFingerprint, c.fingerprint) {
+	if c.fingerprint != "" && !strings.EqualFold(env.Encryption.CertificateFingerprint, c.fingerprint) {
 		return nil, ErrKeyMismatch
 	}
 	s := &Secret{

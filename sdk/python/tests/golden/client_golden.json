@@ -2291,23 +2291,9 @@
  "open fp empty cert=True": {
   "results": [
    {
-    "_extra": {},
-    "additional_fields": "{\"host\":\"db.internal.test\",\"port\":\"5432\"}",
-    "created_at": "2026-09-28T09:00:00+00:00",
-    "etag": "\"e1\"",
-    "folder_path": "ci/database",
-    "id": "sec-cli-fixture",
-    "key": "ci-fixture-db-password",
-    "key_updated_at": "2026-09-28T09:00:00+00:00",
-    "lease": {
-     "expires": "2026-11-01T10:00:00Z",
-     "id": "lease-1"
-    },
-    "login": "ci-deployer",
-    "name": "ci-fixture-db-password",
-    "type": "9c491896-3d6b-5a1a-9b0e-e89dfeb6617c",
-    "updated_at": "2026-09-28T09:00:00+00:00",
-    "url": "https://db.internal.test"
+    "attrs": {},
+    "error": "KeyMismatchError",
+    "text": "the envelope names no certificate fingerprint"
    }
   ],
   "sent": [
@@ -2445,23 +2431,9 @@
  "open fp missing cert=True": {
   "results": [
    {
-    "_extra": {},
-    "additional_fields": "{\"host\":\"db.internal.test\",\"port\":\"5432\"}",
-    "created_at": "2026-09-28T09:00:00+00:00",
-    "etag": "\"e1\"",
-    "folder_path": "ci/database",
-    "id": "sec-cli-fixture",
-    "key": "ci-fixture-db-password",
-    "key_updated_at": "2026-09-28T09:00:00+00:00",
-    "lease": {
-     "expires": "2026-11-01T10:00:00Z",
-     "id": "lease-1"
-    },
-    "login": "ci-deployer",
-    "name": "ci-fixture-db-password",
-    "type": "9c491896-3d6b-5a1a-9b0e-e89dfeb6617c",
-    "updated_at": "2026-09-28T09:00:00+00:00",
-    "url": "https://db.internal.test"
+    "attrs": {},
+    "error": "KeyMismatchError",
+    "text": "the envelope names no certificate fingerprint"
    }
   ],
   "sent": [

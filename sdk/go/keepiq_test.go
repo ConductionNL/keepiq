@@ -229,6 +229,29 @@ func TestFingerprintMismatchIsRefused(t *testing.T) {
 	}
 }
 
+// With the certificate configured, an envelope that names no certificate
+// fingerprint is refused too.
+func TestMissingFingerprintIsRefusedWhenPinned(t *testing.T) {
+	f := loadFixture(t)
+	for name, change := range map[string]func(map[string]any){
+		"empty":   func(enc map[string]any) { enc["certificateFingerprint"] = "" },
+		"null":    func(enc map[string]any) { enc["certificateFingerprint"] = nil },
+		"missing": func(enc map[string]any) { delete(enc, "certificateFingerprint") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			st := startStub(t)
+			change(st.Envelopes["sec-cli-fixture"]["encryption"].(map[string]any))
+			c := newClient(t, st, f, WithCertificate(f.CertificatePem))
+			if _, err := c.GetByID("sec-cli-fixture"); !errors.Is(err, ErrKeyMismatch) {
+				t.Fatalf("want ErrKeyMismatch, got %v", err)
+			}
+			if s, err := newClient(t, st, f).GetByID("sec-cli-fixture"); err != nil || s.Key != f.Plaintext["key"] {
+				t.Fatalf("without a certificate the envelope must still open: %v", err)
+			}
+		})
+	}
+}
+
 // The Go-encrypted vector in sdk/testdata decrypts here; PHPUnit
 // (tests/Unit/Service/SdkEncryptedVectorsTest.php) decrypts the same file
 // with DecryptService. KEEPIQ_WRITE_VECTORS=1 rewrites it.
