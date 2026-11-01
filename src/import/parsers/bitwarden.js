@@ -88,9 +88,17 @@ function buildAdditional(item) {
  * @param {object|string} input The export object or its JSON text.
  * @return {Array<object>} Normalized rows (login items) + rejected rows
  *   (non-login item types).
+ * @throws {Error} When the input is not an unencrypted Bitwarden JSON export.
  */
 export function parseBitwardenJson(input) {
 	const data = typeof input === 'string' ? JSON.parse(input) : input
+	// Encrypted exports (account-restricted or password-protected) hold
+	// cipher strings in place of names and values.
+	if (data && data.encrypted === true) {
+		throw new Error(
+			'Encrypted Bitwarden exports cannot be imported. Export the vault again as unencrypted JSON and import that file.',
+		)
+	}
 	if (!data || !Array.isArray(data.items)) {
 		throw new Error('Not a Bitwarden JSON export (missing items array)')
 	}
