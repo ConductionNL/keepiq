@@ -1,0 +1,293 @@
+{
+ "not an export": "throws Error: Not a Bitwarden JSON export (missing items array)",
+ "no items": "throws Error: Not a Bitwarden JSON export (missing items array)",
+ "items not array": "throws Error: Not a Bitwarden JSON export (missing items array)",
+ "json text": [
+  {
+   "sourceRow": 1,
+   "name": "T",
+   "url": null,
+   "login": "a",
+   "password": "b",
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  }
+ ],
+ "empty": [],
+ "mixed": [
+  {
+   "sourceRow": 1,
+   "name": "GitHub",
+   "url": "https://github.com",
+   "login": "me",
+   "password": "pw",
+   "additionalFields": {
+    "7": 0,
+    "notes": "n",
+    "pin": "1234"
+   },
+   "folder": "Work/Dev",
+   "type": "login",
+   "errors": [],
+   "totp": "JBSWY3DPEHPK3PXP"
+  },
+  {
+   "sourceRow": 2,
+   "name": "Uri wins",
+   "url": "https://direct",
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  },
+  {
+   "sourceRow": 3,
+   "name": "Unknown folder",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  },
+  {
+   "sourceRow": 4,
+   "name": "Collection",
+   "url": null,
+   "login": "u",
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  },
+  {
+   "sourceRow": 5,
+   "name": "No type",
+   "url": null,
+   "login": null,
+   "password": "p",
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  },
+  {
+   "sourceRow": 6,
+   "name": "",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Missing name"
+   ]
+  },
+  {
+   "sourceRow": 7,
+   "name": "Note",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Unsupported Bitwarden item type (secure note); only login items import"
+   ]
+  },
+  {
+   "sourceRow": 8,
+   "name": "SSH key",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Unsupported Bitwarden item type (non-login); only login items import"
+   ]
+  },
+  {
+   "sourceRow": 9,
+   "name": "Card",
+   "url": null,
+   "login": null,
+   "password": "{\"number\":\"4111111111111111\",\"expiry\":\"01/30\",\"cvv\":\"123\",\"pin\":\"\",\"cardholder\":\"A B\"}",
+   "additionalFields": null,
+   "folder": "",
+   "type": "card",
+   "errors": []
+  },
+  {
+   "sourceRow": 10,
+   "name": "Identity",
+   "url": null,
+   "login": null,
+   "password": "{\"firstName\":\"A\",\"lastName\":\"B\",\"address\":\"\",\"phone\":\"\",\"email\":\"a@b\",\"bsn\":\"\"}",
+   "additionalFields": null,
+   "folder": "",
+   "type": "identity",
+   "errors": []
+  },
+  {
+   "sourceRow": 11,
+   "name": "Steam",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": {
+    "totp": "steam://ABCDEFGHIJ"
+   },
+   "folder": "",
+   "type": "login",
+   "errors": []
+  },
+  {
+   "sourceRow": 12,
+   "name": "Bad seed",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": {
+    "notes": "keep",
+    "totp": "not a seed!"
+   },
+   "folder": "",
+   "type": "login",
+   "errors": []
+  }
+ ],
+ "passkeys": [
+  {
+   "sourceRow": 1,
+   "name": "Only passkey",
+   "url": "example.com",
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [],
+   "passkeys": "[{\"credentialId\":\"p1\",\"rpId\":\"example.com\",\"rpName\":\"\",\"userName\":\"u\",\"userDisplayName\":\"\",\"userHandle\":\"\",\"privateKey\":\"KEY-p1\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-01-01T00:00:00Z\"}]"
+  },
+  {
+   "sourceRow": 2,
+   "name": "Two passkeys",
+   "url": "https://site",
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [],
+   "passkeys": "[{\"credentialId\":\"p2\",\"rpId\":\"example.com\",\"rpName\":\"\",\"userName\":\"u\",\"userDisplayName\":\"\",\"userHandle\":\"\",\"privateKey\":\"KEY-p2\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-01-01T00:00:00Z\"},{\"credentialId\":\"p3\",\"rpId\":\"example.com\",\"rpName\":\"\",\"userName\":\"u\",\"userDisplayName\":\"\",\"userHandle\":\"\",\"privateKey\":\"KEY-p3\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-01-01T00:00:00Z\"}]"
+  },
+  {
+   "sourceRow": 3,
+   "name": "Incomplete",
+   "url": "example.com",
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [],
+   "passkeys": "[{\"credentialId\":\"p5\",\"rpId\":\"example.com\",\"rpName\":\"\",\"userName\":\"u\",\"userDisplayName\":\"\",\"userHandle\":\"\",\"privateKey\":\"KEY-p5\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-01-01T00:00:00Z\"}]"
+  },
+  {
+   "sourceRow": 7,
+   "name": "Incomplete",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)"
+   ]
+  },
+  {
+   "sourceRow": 8,
+   "name": "Incomplete",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)"
+   ]
+  },
+  {
+   "sourceRow": 4,
+   "name": "Mixed",
+   "url": "example.com",
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [],
+   "passkeys": "[{\"credentialId\":\"p6\",\"rpId\":\"example.com\",\"rpName\":\"\",\"userName\":\"u\",\"userDisplayName\":\"\",\"userHandle\":\"\",\"privateKey\":\"KEY-p6\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-01-01T00:00:00Z\"},{\"credentialId\":\"p7\",\"rpId\":\"example.com\",\"rpName\":\"\",\"userName\":\"u\",\"userDisplayName\":\"\",\"userHandle\":\"\",\"privateKey\":\"KEY-p7\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-01-01T00:00:00Z\"}]"
+  },
+  {
+   "sourceRow": 9,
+   "name": "Mixed",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)"
+   ]
+  },
+  {
+   "sourceRow": 10,
+   "name": "Mixed",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": [
+    "Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)"
+   ]
+  },
+  {
+   "sourceRow": 5,
+   "name": "Not array",
+   "url": null,
+   "login": null,
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  },
+  {
+   "sourceRow": 6,
+   "name": "After",
+   "url": null,
+   "login": "z",
+   "password": null,
+   "additionalFields": null,
+   "folder": "",
+   "type": "login",
+   "errors": []
+  }
+ ]
+}

@@ -94,8 +94,29 @@ export async function analyse(rows, options = {}) {
 	} = options
 
 	const cutoff = staleCutoffDays(stalenessThreshold)
+	const ctx = {
+		index: await digestIndex(rows, digest),
+		cutoff,
+		now,
+		breachResults,
+	}
+	const findings = rows
+		.map((row) => analyseRow(row, ctx))
+		.filter((finding) => finding !== null)
+	const summary = summarise(rows.length, findings)
 
-	// Build the reuse map over digests of EVERY value (key material included).
+	return { findings, summary, score: vaultScore(summary) }
+}
+
+/**
+ * Digest every non-empty string value (key material included), and group
+ * the secret ids per digest for the reuse check.
+ *
+ * @param {Array<object>} rows The rows passed to {@link analyse}.
+ * @param {(value: string) => Promise<string>} digest Async value->hex-digest fn.
+ * @return {Promise<{digestById: Map<string,string>, byDigest: Map<string,Array<string>>}>}
+ */
+async function digestIndex(rows, digest) {
 	const digestById = new Map()
 	const byDigest = new Map()
 	for (const row of rows) {
@@ -110,85 +131,113 @@ export async function analyse(rows, options = {}) {
 		}
 		byDigest.get(d).push(row.id)
 	}
+	return { digestById, byDigest }
+}
 
-	const findings = []
-	let weakCount = 0
-	let reusedCount = 0
-	let staleCount = 0
-	let breachedCount = 0
-	let compromisedCount = 0
-
-	for (const row of rows) {
-		const flags = []
-		const value = typeof row.value === 'string' ? row.value : ''
-
-		// Strength (password-bearing values only).
-		let score = null
-		if (isPasswordBearing(value)) {
-			score = zxcvbn(value).score
-			if (score <= WEAK_SCORE_THRESHOLD) {
-				flags.push('weak')
-				weakCount++
-			}
-		}
-
-		// Reuse: this value's digest bucket holds 2+ secrets.
-		const d = digestById.get(row.id)
-		let shareCount = 1
-		if (d && byDigest.get(d).length >= 2) {
-			shareCount = byDigest.get(d).length
-			flags.push('reused')
-			reusedCount++
-		}
-
-		// Staleness from server-maintained ciphertext age.
-		const age = ageInDays(row.keyUpdatedAt, now)
-		if (cutoff !== null && age !== null && age > cutoff) {
-			flags.push('stale')
-			staleCount++
-		}
-
+/**
+ * The finding for one row, or null when it has no flag and no strength score.
+ * Flags come in a fixed order: weak, reused, stale, compromised, breached.
+ *
+ * @param {object} row One row passed to {@link analyse}.
+ * @param {object} ctx The digest index, stale cutoff, reference time and breach verdicts.
+ * @return {object|null}
+ */
+function analyseRow(row, ctx) {
+	const value = typeof row.value === 'string' ? row.value : ''
+	// Strength (password-bearing values only).
+	const score = isPasswordBearing(value) ? zxcvbn(value).score : null
+	const d = ctx.index.digestById.get(row.id)
+	const shareCount = reuseCount(d, ctx.index.byDigest)
+	// Staleness from server-maintained ciphertext age.
+	const age = ageInDays(row.keyUpdatedAt, ctx.now)
+	const { breach, breached } = breachVerdict(d, ctx.breachResults)
+	const flags = [
+		[score !== null && score <= WEAK_SCORE_THRESHOLD, 'weak'],
+		[shareCount >= 2, 'reused'],
+		[isStale(age, ctx.cutoff), 'stale'],
 		// Possibly-compromised (the one server-known finding, from suite recovery).
-		if (row.possiblyCompromisedAt) {
-			flags.push('compromised')
-			compromisedCount++
-		}
+		[Boolean(row.possiblyCompromisedAt), 'compromised'],
+		[breached, 'breached'],
+	]
+		.filter(([on]) => on)
+		.map(([, flag]) => flag)
 
-		// Breach (only when a verdict was supplied for this value's digest).
-		let breach = null
-		if (breachResults && d && breachResults.has(d)) {
-			breach = breachResults.get(d)
-			if (breach.status === 'breached') {
-				flags.push('breached')
-				breachedCount++
-			}
-		}
-
-		if (flags.length > 0 || score !== null) {
-			findings.push({
-				id: row.id,
-				name: row.name,
-				folderPath: row.folderPath ?? null,
-				score,
-				flags,
-				shareCount,
-				ageDays: age,
-				breach,
-			})
-		}
+	if (flags.length === 0 && score === null) {
+		return null
 	}
+	return {
+		id: row.id,
+		name: row.name,
+		folderPath: row.folderPath ?? null,
+		score,
+		flags,
+		shareCount,
+		ageDays: age,
+		breach,
+	}
+}
 
-	const analysedCount = rows.length
-	const summary = {
+/**
+ * How many secrets share this digest: the bucket size when it holds 2 or
+ * more, otherwise 1.
+ *
+ * @param {string|undefined} d The row's value digest.
+ * @param {Map<string,Array<string>>} byDigest Secret ids per digest.
+ * @return {number}
+ */
+function reuseCount(d, byDigest) {
+	if (!d) {
+		return 1
+	}
+	const count = byDigest.get(d).length
+	return count >= 2 ? count : 1
+}
+
+/**
+ * Whether an age in days is past the stale cutoff; never when either is unknown.
+ *
+ * @param {number|null} age The age in days.
+ * @param {number|null} cutoff The cutoff in days.
+ * @return {boolean}
+ */
+function isStale(age, cutoff) {
+	return cutoff !== null && age !== null && age > cutoff
+}
+
+/**
+ * The breach verdict for a digest, only when one was supplied for it, and
+ * whether it says breached.
+ *
+ * @param {string|undefined} d The row's value digest.
+ * @param {Map<string,object>|null} breachResults Digest -> breach verdict.
+ * @return {{breach: object|null, breached: boolean}}
+ */
+function breachVerdict(d, breachResults) {
+	if (breachResults && d && breachResults.has(d)) {
+		const breach = breachResults.get(d)
+		return { breach, breached: breach.status === 'breached' }
+	}
+	return { breach: null, breached: false }
+}
+
+/**
+ * The finding counts per flag.
+ *
+ * @param {number} analysedCount The number of rows analysed.
+ * @param {Array<object>} findings The findings.
+ * @return {object}
+ */
+function summarise(analysedCount, findings) {
+	const count = (flag) =>
+		findings.filter((finding) => finding.flags.includes(flag)).length
+	return {
 		analysedCount,
-		weakCount,
-		reusedCount,
-		staleCount,
-		breachedCount,
-		compromisedCount,
+		weakCount: count('weak'),
+		reusedCount: count('reused'),
+		staleCount: count('stale'),
+		breachedCount: count('breached'),
+		compromisedCount: count('compromised'),
 	}
-
-	return { findings, summary, score: vaultScore(summary) }
 }
 
 /**
