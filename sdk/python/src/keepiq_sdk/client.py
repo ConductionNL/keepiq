@@ -53,9 +53,9 @@ class Secret:
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     key_updated_at: Optional[str] = None
-    key: str = ""
-    login: str = ""
-    additional_fields: str = ""
+    key: str = field(default="", repr=False)
+    login: str = field(default="", repr=False)
+    additional_fields: str = field(default="", repr=False)
     etag: Optional[str] = None
     lease: Optional[Lease] = None
     _extra: Dict[str, Any] = field(default_factory=dict, repr=False)
