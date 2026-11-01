@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "src"))
 from cryptography.hazmat.primitives import hashes, serialization  # noqa: E402
 from cryptography.hazmat.primitives.asymmetric import padding, rsa  # noqa: E402
 
-from keepiq_sdk import Client, crypto  # noqa: E402
+from keepiq_sdk import Client, ClientConfig, Credentials, crypto  # noqa: E402
 from keepiq_sdk import client as client_module  # noqa: E402
 
 with open(os.path.join(TESTDATA, "machine_envelope.json"), encoding="utf-8") as _fh:
@@ -197,7 +197,9 @@ def run(script: dict, steps, ctor=None) -> dict:
     with mock.patch.object(client_module.urllib.request, "urlopen", transport):
         try:
             args, kwargs = ctor or ((BASE, "billing", FIXTURE["privateKeyPem"]), {})
-            c = Client(*args, clock=clock, **kwargs)
+            (url, app, pem), options = args, dict(kwargs)
+            credentials = Credentials(app, pem, options.pop("certificate_pem", None))
+            c = Client(ClientConfig(url, credentials, clock=clock, **options))
         except Exception as err:  # noqa: BLE001
             # Error text can come from cryptography and varies per version.
             record["ctor"] = {"error": type(err).__name__}
