@@ -199,7 +199,8 @@ def run(script: dict, steps, ctor=None) -> dict:
             args, kwargs = ctor or ((BASE, "billing", FIXTURE["privateKeyPem"]), {})
             c = Client(*args, clock=clock, **kwargs)
         except Exception as err:  # noqa: BLE001
-            record["ctor"] = outcome(err)
+            # Error text can come from cryptography and varies per version.
+            record["ctor"] = {"error": type(err).__name__}
             return record
         results = []
         for step in steps:

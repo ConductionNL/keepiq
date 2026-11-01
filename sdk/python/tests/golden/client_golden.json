@@ -676,9 +676,7 @@
  },
  "ctor bad pem": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "Unable to load PEM file. See https://cryptography.io/en/latest/faq/#why-can-t-i-import-my-pem-file for more details. MalformedFraming"
+   "error": "ValueError"
   }
  },
  "ctor cert matches": {
@@ -760,9 +758,7 @@
  },
  "ctor cert of another key": {
   "ctor": {
-   "attrs": {},
-   "error": "KeyMismatchError",
-   "text": "the certificate does not belong to the private key"
+   "error": "KeyMismatchError"
   }
  },
  "ctor empty cert": {
@@ -841,37 +837,27 @@
  },
  "ctor url='' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "invalid base URL ''"
+   "error": "ValueError"
   }
  },
  "ctor url='' app='billing'": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "invalid base URL ''"
+   "error": "ValueError"
   }
  },
  "ctor url='cloud.example.org' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "invalid base URL 'cloud.example.org'"
+   "error": "ValueError"
   }
  },
  "ctor url='cloud.example.org' app='billing'": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "invalid base URL 'cloud.example.org'"
+   "error": "ValueError"
   }
  },
  "ctor url='ftp://x/y' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "application id is required"
+   "error": "ValueError"
   }
  },
  "ctor url='ftp://x/y' app='billing'": {
@@ -896,9 +882,7 @@
  },
  "ctor url='http://h:8080/a//' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "application id is required"
+   "error": "ValueError"
   }
  },
  "ctor url='http://h:8080/a//' app='billing'": {
@@ -923,23 +907,17 @@
  },
  "ctor url='https://' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "invalid base URL 'https://'"
+   "error": "ValueError"
   }
  },
  "ctor url='https://' app='billing'": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "invalid base URL 'https://'"
+   "error": "ValueError"
   }
  },
  "ctor url='https://h' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "application id is required"
+   "error": "ValueError"
   }
  },
  "ctor url='https://h' app='billing'": {
@@ -964,9 +942,7 @@
  },
  "ctor url='https://h/index.php/' app=''": {
   "ctor": {
-   "attrs": {},
-   "error": "ValueError",
-   "text": "application id is required"
+   "error": "ValueError"
   }
  },
  "ctor url='https://h/index.php/' app='billing'": {

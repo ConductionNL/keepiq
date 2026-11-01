@@ -78,7 +78,7 @@ class _Call:
     method: str
     addr: str
     data: Optional[bytes] = None
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: Dict[str, str] = field(default_factory=dict, repr=False)
 
 
 class _Response(NamedTuple):
