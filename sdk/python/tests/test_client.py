@@ -24,6 +24,8 @@ import stub_server  # noqa: E402
 from keepiq_sdk import (  # noqa: E402
     AmbiguousNameError,
     Client,
+    ClientConfig,
+    Credentials,
     KeyMismatchError,
     NotFoundError,
     NotModifiedError,
@@ -50,8 +52,8 @@ class ClientTest(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
 
-    def client(self, **kw) -> Client:
-        return Client(self.url, "billing", FIXTURE["privateKeyPem"], **kw)
+    def client(self, certificate_pem=None) -> Client:
+        return Client(ClientConfig(self.url, Credentials("billing", FIXTURE["privateKeyPem"], certificate_pem)))
 
     def test_get_by_name_decrypts_the_server_envelope(self) -> None:
         c = self.client()
@@ -88,7 +90,7 @@ class ClientTest(unittest.TestCase):
         other = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         pem = other.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()).decode()
         with self.assertRaises(UnauthorizedError):
-            Client(self.url, "billing", pem).get_by_id("sec-cli-fixture")
+            Client(ClientConfig(self.url, Credentials("billing", pem))).get_by_id("sec-cli-fixture")
 
     def test_revoked_token_is_renewed_once(self) -> None:
         c = self.client()
