@@ -46,7 +46,7 @@ export async function buildState(): Promise<PopupState> {
 	}
 }
 
-async function add({ serverUrl, username, appPassword }: Extract<PopupToBackground, { kind: 'accounts.add' }>): Promise<void> {
+async function add(serverUrl: string, username: string, appPassword: string): Promise<void> {
 	const normalized = normalizeServerUrl(serverUrl)
 	if (!normalized.ok) throw new Failure(normalized.code)
 	// The popup asks for the permission; nothing is sent to a server the user declined.
@@ -89,7 +89,7 @@ async function perform(message: PopupToBackground): Promise<void> {
 		case 'accounts.list':
 			return
 		case 'accounts.add':
-			return add(message)
+			return add(message.serverUrl, message.username, message.appPassword)
 		case 'accounts.reauthenticate':
 			return reauthenticate(message.accountId, message.appPassword)
 		case 'accounts.remove':
