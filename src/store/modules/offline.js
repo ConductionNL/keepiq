@@ -185,9 +185,8 @@ export function failureText(failure) {
 				fromShareSave: true,
 				response: { status: REFUSAL_STATUS, data: { error: 'not_allowed' } },
 			})
-		default:
-			return failure?.message ?? null
 	}
+	return failure?.message ?? null
 }
 
 let lockHookRegistered = false
