@@ -20,8 +20,8 @@ func assertHidden(t *testing.T, text string, values ...string) {
 	}
 }
 
-// No fmt verb prints the app password, whether the client is a pointer, a
-// value or inside a slice or a struct.
+// No fmt verb except %p prints the app password, whether the client is a
+// pointer, a value or inside a slice or a struct.
 func TestClientPrintsWithoutAppPassword(t *testing.T) {
 	c := New("https://vault.example")
 	c.WithAppPassword("ruben", "app-p4ss")
@@ -45,7 +45,8 @@ func sampleSuite() Suite {
 	return Suite{ID: "su-1", Certificate: "cert-pem", PrivateKey: "wr4pped-key", Status: "active"}
 }
 
-// No fmt verb and neither slog handler prints a suite's private key.
+// No fmt verb except %p prints a suite's private key, and neither slog
+// handler does when the suite is the attribute value itself.
 func TestSuitePrintsWithoutPrivateKey(t *testing.T) {
 	s := sampleSuite()
 	for _, verb := range printVerbs {
