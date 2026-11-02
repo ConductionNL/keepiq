@@ -82,12 +82,12 @@ function mask(value) {
 	return value
 }
 
-function field (kind) {
-  return {
-	props: ['modelValue', 'label', 'required', 'disabled'],
-	emits: ['update:modelValue'],
-	template: `<input data-kind="${kind}" :aria-label="label" @input="$emit('update:modelValue', $event.target.value)" />`,
-}
+function field(kind) {
+	return {
+		props: ['modelValue', 'label', 'required', 'disabled'],
+		emits: ['update:modelValue'],
+		template: `<input data-kind="${kind}" :aria-label="label" @input="$emit('update:modelValue', $event.target.value)" />`,
+	}
 }
 
 const stubs = {
@@ -157,7 +157,7 @@ const TYPES = [
 	{ id: 'type-identity', name: 'identity', label: 'Identity', fields: [] },
 ]
 
-async function flush (wrapper) {
+async function flush(wrapper) {
 	for (let i = 0; i < 6; i++) {
 		await wrapper.vm.$nextTick()
 		await new Promise((resolve) => setTimeout(resolve, 0))
