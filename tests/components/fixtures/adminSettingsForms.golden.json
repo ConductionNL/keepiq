@@ -102,6 +102,27 @@
 			]
 		]
 	},
+	"AttachmentLimitsSection save refused": {
+		"state": {
+			"error": "Server says no",
+			"maxMib": 10,
+			"quotaMib": 4
+		},
+		"calls": [
+			[
+				"get",
+				"/apps/keepiq/api/settings/admin/general"
+			],
+			[
+				"put",
+				"/apps/keepiq/api/settings/admin/general",
+				{
+					"attachment_max_bytes": 10485760,
+					"attachment_user_quota_bytes": 4194304
+				}
+			]
+		]
+	},
 	"RetentionPolicySection load+save": {
 		"loaded": {
 			"error": null,
@@ -204,6 +225,29 @@
 					"version_retention_days": 0,
 					"trash_retention_days": 365
 				}
+			],
+			[
+				"put",
+				"/apps/keepiq/api/settings/admin/policies",
+				{
+					"version_retention_count": 5,
+					"version_retention_days": 0,
+					"trash_retention_days": 365
+				}
+			]
+		]
+	},
+	"RetentionPolicySection save refused": {
+		"state": {
+			"error": "Server says no",
+			"retentionCount": 5,
+			"retentionDays": 0,
+			"trashDays": 400
+		},
+		"calls": [
+			[
+				"get",
+				"/apps/keepiq/api/settings/admin/policies"
 			],
 			[
 				"put",
@@ -335,6 +379,30 @@
 			]
 		]
 	},
+	"RotationPolicySection save refused": {
+		"state": {
+			"error": "Server says no",
+			"maxAgeDays": 90,
+			"reminderCsv": "14, 2"
+		},
+		"calls": [
+			[
+				"get",
+				"/apps/keepiq/api/settings/admin/policies"
+			],
+			[
+				"put",
+				"/apps/keepiq/api/settings/admin/policies",
+				{
+					"expiry_default_max_age_days": 90,
+					"expiry_reminder_days": [
+						14,
+						2
+					]
+				}
+			]
+		]
+	},
 	"ExtensionSection load+save": {
 		"loaded": {
 			"error": null,
@@ -406,6 +474,25 @@
 				{
 					"extension_max_idle_minutes": 15
 				}
+			],
+			[
+				"put",
+				"/apps/keepiq/api/settings/admin/policies",
+				{
+					"extension_max_idle_minutes": 15
+				}
+			]
+		]
+	},
+	"ExtensionSection save refused": {
+		"state": {
+			"error": "Server says no",
+			"maxIdleMinutes": 15
+		},
+		"calls": [
+			[
+				"get",
+				"/apps/keepiq/api/settings/admin/policies"
 			],
 			[
 				"put",

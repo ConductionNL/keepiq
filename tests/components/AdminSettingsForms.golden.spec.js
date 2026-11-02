@@ -208,5 +208,19 @@ describe('admin settings forms (golden)', () => {
 				calls,
 			})
 		})
+
+		it(`${name}: a refused save shows the server message`, async () => {
+			const calls = stubAxios(
+				{ data: section.stored },
+				{ reject: serverError },
+			)
+			const wrapper = mount(section.component, { global })
+			await flush()
+			await wrapper.vm.save()
+			check(`${name} save refused`, {
+				state: state(section, wrapper),
+				calls,
+			})
+		})
 	}
 })
