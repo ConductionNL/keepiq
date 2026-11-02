@@ -61,15 +61,17 @@ internal fun SeedInput(label: String, value: String, problem: DraftProblem?, mod
         onDispose { screen.importantForAutofill = before }
     }
     var shown by remember { mutableStateOf(false) }
-    TextInput(
-        label,
-        value,
-        problem,
-        modifier = modifier,
-        keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
-        visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-        onChange = onChange,
-    )
+    ShowableField(shown) { rebuilt ->
+        TextInput(
+            label,
+            value,
+            problem,
+            modifier = modifier.then(rebuilt),
+            keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
+            visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+            onChange = onChange,
+        )
+    }
     TextButton(onClick = { shown = !shown }) {
         Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
     }

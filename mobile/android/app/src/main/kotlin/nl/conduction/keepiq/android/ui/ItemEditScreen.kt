@@ -32,12 +32,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -300,6 +304,24 @@ fun TextInput(
         visualTransformation = visualTransformation,
         modifier = modifier.fillMaxWidth(),
     )
+}
+
+/**
+ * A masked field that a Show button reveals, built by [field] with the
+ * modifier it is given. Compose 1.8.3 keeps a text field's Password
+ * semantics once its PasswordVisualTransformation is dropped
+ * (CoreTextFieldSemanticsModifierNode never stores the new isPassword), so a
+ * screen reader would still take a shown value for a password. The field is
+ * therefore built anew when [shown] changes, and takes focus back when it
+ * had it.
+ */
+@Composable
+internal fun ShowableField(shown: Boolean, field: @Composable (Modifier) -> Unit) {
+    val requester = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    val hadFocus = focused
+    key(shown) { field(Modifier.focusRequester(requester).onFocusChanged { focused = it.isFocused }) }
+    LaunchedEffect(shown) { if (hadFocus) requester.requestFocus() }
 }
 
 /** The types a new item may have: Authenticator and Passkey items are no longer made (mobile-login-totp-passkeys D9). */

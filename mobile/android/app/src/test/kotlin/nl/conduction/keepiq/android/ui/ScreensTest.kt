@@ -409,11 +409,7 @@ class ScreensTest {
         assertAccessibilityFocused(compose.onNodeWithText("Remove"))
     }
 
-    /**
-     * The text a field lays out: dots while masked, the value once shown.
-     * Compose 1.8.3 keeps a field's Password semantics after its
-     * PasswordVisualTransformation is dropped, so Show is checked here.
-     */
+    /** The text a field lays out: dots while masked, the value once shown. */
     private fun laidOutText(label: String): String {
         val results = mutableListOf<TextLayoutResult>()
         compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(results)
@@ -502,8 +498,14 @@ class ScreensTest {
         compose.onNodeWithText(keyLabel).performTextInput("JBSWY3DPEHPK3PXP")
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         assertEquals("\u2022".repeat(16), laidOutText(keyLabel))
+        compose.onNodeWithText(keyLabel).assertIsFocused()
         compose.onNodeWithText("Show $keyLabel").performClick()
         assertEquals("JBSWY3DPEHPK3PXP", laidOutText(keyLabel))
+        // Shown, it is no password to a screen reader; the rebuilt field keeps the focus it had.
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        compose.onNodeWithText(keyLabel).assertIsFocused()
+        compose.onNodeWithText("Hide $keyLabel").performClick()
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         shown = false
         compose.waitForIdle()
         assertEquals(before, view!!.rootView.importantForAutofill)
@@ -712,6 +714,7 @@ class ScreensTest {
         assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
         compose.onNodeWithText("Show $seed").performScrollTo().performClick()
         assertEquals("JBSWY3DPEHPK3PXP", laidOutText(seed))
+        compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
     }
 
     @Test
