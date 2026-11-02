@@ -1,6 +1,6 @@
 ## Purpose
 
-Makes Keepiq a passkey provider in the browser, as Bitwarden's extension is: a site's `navigator.credentials.create()` and `.get()` can save a passkey to the vault or sign in with one, and anything Keepiq doesn't handle goes to the browser's own authenticator.
+Makes Keepiq a passkey provider in the browser, as Bitwarden's extension is: a site's `navigator.credentials.create()` and `.get()` can save a passkey to a login or sign in with one, and anything Keepiq doesn't handle goes to the browser's own authenticator. A login keeps its passkeys in its own encrypted `passkeys` field (keepiq#1324, keepiq#1325): a JSON array of credentials in the canonical schema of Keepiq's `passkey-item-type`.
 
 ## ADDED Requirements
 
@@ -79,7 +79,7 @@ Each of these depends on the settings and the request only, never on what the va
 - **THEN** the browser's own `create` runs
 
 ### Requirement: The passkey window
-For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (item id, name and decrypted user name) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
+For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
 
 #### Scenario: Two requests in one tab
 - **GIVEN** a passkey window open for a `get` in a tab
@@ -92,11 +92,11 @@ For every `create` and every `get` without `mediation: 'conditional'` that Keepi
 - **THEN** the page's call rejects with `NotAllowedError`, as Cancel does
 
 ### Requirement: Sign in with a passkey
-For a `get`, the window SHALL list the passkeys offered for the request under "Sign in with a passkey" and "Use a passkey saved in Keepiq for <rpId>", each row showing the item name and its user name. Picking one makes the background sign the assertion and reply to the page, record the item in `lastUsed.<accountId>` and close the window. With no passkey offered, the window reads "No Keepiq passkey for <rpId>". Every state offers "Use your device or hardware key" and Cancel.
+For a `get`, the window SHALL list the passkeys offered for the request under "Sign in with a passkey" and "Use a passkey saved in Keepiq for <rpId>", each row showing the login's name and the passkey's user name. Picking one makes the background sign the assertion and reply to the page, record the login in `lastUsed.<accountId>` and close the window. With no passkey offered, the window reads "No Keepiq passkey for <rpId>". Every state offers "Use your device or hardware key" and Cancel.
 
 #### Scenario: One passkey
-- **GIVEN** an unlocked vault with passkey "Example" for `example.test`, user name `alice`
-- **WHEN** `https://example.test` calls `get` and the user picks "Example"
+- **GIVEN** an unlocked vault with a login "Example" holding a passkey for `example.test`, user name `alice`
+- **WHEN** `https://example.test` calls `get` and the user picks "Example, alice"
 - **THEN** the page receives a `PublicKeyCredential` whose response verifies against the passkey's public key
 - **AND** the window closes
 
@@ -106,42 +106,83 @@ For a `get`, the window SHALL list the passkeys offered for the request under "S
 - **THEN** the window reads "No Keepiq passkey for nothing.test" with "Use your device or hardware key" and Cancel, and the page receives nothing until the user picks one
 
 ### Requirement: Which passkeys are offered
-The background SHALL offer, for the active account only, every row of the `passkey` type that is not blocked and not past its `accessExpiresAt`, whose decrypted `key` parses as a canonical passkey (`credentialId`, `rpId`, `privateKey` present) with `rpId` equal to the request's RP ID and `algorithm` `-7`, and, when `allowCredentials` is not empty, whose `credentialId` is in it. Matching decrypts `key` in the background only while unlocked and keeps only the item id, name and `userName` (else `userDisplayName`) for the window. A use-only shared copy is offered, since signing is using it. The plaintext `url` is not used to choose passkeys, since the user may have edited it.
+The background SHALL offer, for the active account only, every entry in the `passkeys` field of every `login` row that is not blocked and not past its `accessExpiresAt`, where the entry parses as a canonical passkey (`credentialId`, `rpId`, `privateKey` present) with `rpId` equal to the request's RP ID and `algorithm` `-7`, and, when `allowCredentials` is not empty, whose `credentialId` is in it. A login may offer several. Matching decrypts `passkeys` in the background only while unlocked and keeps only the login id, the credential id, the login's name and the entry's `userName` (else `userDisplayName`) for the window. A use-only shared copy is offered, since signing is using it. The plaintext `url` is not used to choose passkeys, since the user may have edited it. A row whose `passkeys` is null or `''`, or does not decrypt or parse as an array, offers none; an entry that does not parse is skipped and the others stay.
 
 #### Scenario: Allow list
-- **GIVEN** passkeys A and B for `example.test`
+- **GIVEN** a login holding passkeys A and B for `example.test`
 - **WHEN** the request's `allowCredentials` names only B's credential id
 - **THEN** only B is listed
 
+#### Scenario: Two logins
+- **GIVEN** logins "Work" and "Personal", each holding a passkey for `example.test`
+- **WHEN** `https://example.test` calls `get`
+- **THEN** both are listed, each under its login's name with its passkey's user name
+
 #### Scenario: Edited URL
-- **GIVEN** a passkey whose `rpId` is `example.test` and whose `url` the user changed to `https://intranet.test`
+- **GIVEN** a login holding a passkey whose `rpId` is `example.test`, its `url` changed to `https://intranet.test`
 - **WHEN** `https://example.test` calls `get`
 - **THEN** the passkey is listed
 
-#### Scenario: Unreadable passkey
-- **GIVEN** a passkey row whose `key` does not parse
-- **WHEN** a `get` for any RP ID runs
-- **THEN** that row is not listed
+#### Scenario: Unreadable entry
+- **GIVEN** a login whose `passkeys` holds one entry that does not parse and one for `example.test`
+- **WHEN** `https://example.test` calls `get`
+- **THEN** only the readable passkey is listed
+
+### Requirement: Standalone passkey items are not used
+The extension SHALL NOT offer, sign with or create items of the standalone `passkey` type, since Keepiq clients no longer create them (keepiq#1324). The item detail still shows an existing one, as `item-detail` specifies.
+
+#### Scenario: Standalone item
+- **GIVEN** a standalone `passkey` item for `example.test` and no login holding a passkey for it
+- **WHEN** `https://example.test` calls `get`
+- **THEN** the window reads "No Keepiq passkey for example.test"
 
 ### Requirement: Save a passkey
-For a `create`, the window SHALL show "Save passkey", the RP ID, the request's `user.name`, a Name field prefilled with `rp.name` or else the RP ID, a Folder select (default "No folder", from the cached folders), a "Save passkey" button, "Use your device or hardware key" and Cancel. On Save, the background makes an ECDSA P-256 key pair, builds the canonical credential (a random 16-byte `credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle` from `user.id`, `privateKey` as base64url PKCS#8, `algorithm` `-7`, `counter` 0, `transports` `["internal"]`, `createdAt`), encrypts it as `key` and creates the item through the same write path as every create, with `url` set to the RP ID, the `passkey` type id and the chosen folder. The page MUST receive the attestation only after the server accepted the item. A failed save keeps the window open with the reason, Retry, "Use your device or hardware key" and Cancel. When the cached types have no `passkey` type, Save refuses with `passkey_type_missing` and writes nothing.
+For a `create`, the window SHALL show "Save passkey", the RP ID and the request's `user.name`, then where to save it, as in Bitwarden:
+- the logins matching the requesting frame's URL under the URI match rule, as `autofill` matches them, without use-only, read-only and view-only copies, each with its name and username, last used first;
+- "Save as new login", with a Name field prefilled with `rp.name` or else the RP ID, and a Folder select (default "No folder", from the cached folders);
+- "Use your device or hardware key" and Cancel.
 
-#### Scenario: Save
-- **GIVEN** an unlocked vault and `https://example.test` calling `create` for user `alice`
-- **WHEN** the user clicks "Save passkey" with Name "Example"
-- **THEN** a `passkey` item "Example" with `url` `example.test` exists in the vault, its `key` decrypting to a credential the web app's `parsePasskey` accepts
+On a choice, the background makes an ECDSA P-256 key pair and builds the canonical credential (a random 16-byte `credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle` from `user.id`, `privateKey` as base64url PKCS#8, `algorithm` `-7`, `counter` 0, `transports` `["internal"]`, `createdAt`), field order as the web app writes it. A new login is created through the same write path as every create: the `login` type, `url` the frame's origin, no username, an empty password (`key` the encryption of `''`, as the web app's import writes one), the chosen folder, and `passkeys` the JSON array of that one credential. An existing login gets the credential appended to its `passkeys` (The passkeys field is saved whole). When the chosen login already holds a passkey with the same `rpId` and `userHandle`, the window first asks "Replace the passkey for <user name> on <login name>?" with Replace and Cancel; Replace puts the new credential in that entry's place. The page MUST receive the attestation only after the server accepted the save. A failed save keeps the window open with the reason, Retry, "Use your device or hardware key" and Cancel.
+
+#### Scenario: Save as a new login
+- **GIVEN** an unlocked vault without a login for `example.test`, and `https://example.test` calling `create` for user `alice`
+- **WHEN** the user clicks "Save as new login" with Name "Example"
+- **THEN** a login "Example" with `url` `https://example.test`, no username and an empty password exists, its `passkeys` decrypting to one credential the web app's passkey parser accepts
 - **AND** the page receives an attestation of format `none` whose public key verifies a later assertion
 
+#### Scenario: Save to an existing login
+- **GIVEN** a login "Example" (`alice`) for `example.test` with a password and no passkey
+- **WHEN** `https://example.test` calls `create` and the user picks "Example"
+- **THEN** that login holds the passkey in its `passkeys`, and its password, username and other fields are unchanged
+
+#### Scenario: Replace
+- **GIVEN** a login holding a passkey for `example.test` with the request's user handle
+- **WHEN** the user picks that login and confirms Replace
+- **THEN** the login holds the new passkey in the old one's place, and its other passkeys are unchanged
+
 #### Scenario: Server refuses
-- **GIVEN** the server answers the create with 423
-- **WHEN** the user clicks "Save passkey"
+- **GIVEN** the server answers the save with 423
+- **WHEN** the user saves the passkey
 - **THEN** the window shows the reason worded by `writeErrors.writeLocked` and the page receives nothing yet
 
+### Requirement: The passkeys field is saved whole
+Every write of an existing login's `passkeys` (Save to it, Replace, the counter) SHALL go through the value save of ext-share-sync with `passkeys` as the only changed field: a fresh `GET /api/v1/secrets/{id}` whose `passkeys` ciphertext must equal the vault cache's (`unmatched` otherwise), the decrypted array changed in background memory and re-encrypted whole, `baseUpdatedAt` from that fetch, and the copies of a shared login re-encrypted for each holder. Every entry it does not change MUST be written back exactly as stored. On `stale` it syncs, reads again and tries once more. A partner share whose partner does not store `passkeys` refuses the save with `partner_upgrade_required` and the version it needs (keepiq#1325), which the window names. Use-only, read-only and view-only copies refuse with `restricted` or `view_only`.
+
+#### Scenario: Other passkeys kept
+- **GIVEN** a login holding passkeys A and B
+- **WHEN** A's counter is saved
+- **THEN** B is written back byte for byte
+
+#### Scenario: Partner without the field
+- **GIVEN** a login shared with a partner whose Keepiq does not store `passkeys`
+- **WHEN** the user saves a passkey to it
+- **THEN** nothing is written and the window names the Keepiq version the partner needs
+
 ### Requirement: A passkey that already exists
-On a `create` whose `excludeCredentials` names the `credentialId` of a passkey the active account holds for the RP ID, the window SHALL read "A passkey for this account is already saved in Keepiq" with Close, and the page MUST receive `InvalidStateError` only after the user closed it. The check runs after unlock, so a locked vault never answers it.
+On a `create` whose `excludeCredentials` names the `credentialId` of a passkey a login of the active account holds for the RP ID, the window SHALL read "A passkey for this account is already saved in Keepiq" with Close, and the page MUST receive `InvalidStateError` only after the user closed it. The check runs after unlock, so a locked vault never answers it.
 
 #### Scenario: Excluded credential
-- **GIVEN** passkey A for `example.test` and a `create` excluding A's credential id
+- **GIVEN** a login holding passkey A for `example.test` and a `create` excluding A's credential id
 - **WHEN** the window opens on an unlocked vault
 - **THEN** it shows the already-saved message, and the page gets `InvalidStateError` after Close
 
@@ -219,12 +260,12 @@ A result is delivered only to the frame that started the ceremony, and the conte
 - **THEN** the window closes and nothing is signed
 
 ### Requirement: The signature counter
-The extension SHALL sign with counter 0 and write nothing when the stored `counter` is 0. For a stored `counter` above 0, it MUST save the credential with `counter` plus one before replying to the page, and sign with that value. The save is the value save of ext-share-sync with `key` as the only changed field: a fresh fetch whose `key` must equal the vault cache's, `baseUpdatedAt` from that fetch, and the copies of a shared passkey re-encrypted for each holder. On `stale` it syncs, rereads the counter and tries once more. When the save is refused or fails, the window shows the reason with Retry, "Use your device or hardware key" and Cancel, and the page receives no assertion; so a use-only, read-only or view-only copy with a non-zero counter cannot sign.
+The extension SHALL sign with counter 0 and write nothing when the stored `counter` is 0. For a stored `counter` above 0, it MUST save the login's `passkeys` with that entry's `counter` plus one before replying to the page, and sign with that value. The save is the one of "The passkeys field is saved whole"; after `stale` it rereads the counter. When the save is refused or fails, the window shows the reason with Retry, "Use your device or hardware key" and Cancel, and the page receives no assertion; so a use-only, read-only or view-only copy with a non-zero counter cannot sign.
 
 #### Scenario: Imported passkey
-- **GIVEN** a passkey with `counter` 41
+- **GIVEN** a login holding an imported passkey with `counter` 41
 - **WHEN** the user signs in with it
-- **THEN** the item is saved with `counter` 42 before the page receives an assertion whose counter is 42
+- **THEN** the login is saved with that entry's `counter` 42 before the page receives an assertion whose counter is 42
 
 #### Scenario: New passkey
 - **GIVEN** a passkey Keepiq saved, `counter` 0
@@ -245,7 +286,7 @@ The background SHALL build WebAuthn Level 3 responses: `clientDataJSON` with `ty
 - **THEN** both the attestation and the assertion verify
 
 ### Requirement: The passkey key lives in background memory for one signature
-The extension SHALL decrypt a passkey's `key` only in the background, import its `privateKey` as a non-extractable ECDSA `CryptoKey`, sign, and drop the decrypted JSON and the key when the handler returns. On Save, the generated private key exists in background memory only until it is exported into the credential and encrypted. No passkey key, decrypted credential or signature input is written to `storage.local` or `storage.session`, sent to the popup, the inline list or the content script, or sent to the server except as the encrypted `key`.
+The extension SHALL decrypt a login's `passkeys` only in the background, import the chosen entry's `privateKey` as a non-extractable ECDSA `CryptoKey`, sign, and drop the decrypted JSON and the key when the handler returns. On Save, the generated private key exists in background memory only until it is exported into the credential and encrypted. No passkey key, decrypted credential or signature input is written to `storage.local` or `storage.session`, sent to the popup, the inline list or the content script, or sent to the server except as the encrypted `passkeys`.
 
 #### Scenario: Nothing left after signing
 - **GIVEN** a completed sign-in
@@ -282,12 +323,12 @@ For `get` with `mediation: 'conditional'`, the background SHALL register the cer
 - **THEN** the page receives the browser's credential and the Keepiq ceremony ends without a reply
 
 ### Requirement: Works on every supported Keepiq
-The provider SHALL use only routes and fields in every Keepiq from `MIN_KEEPIQ_VERSION` on: secret create, the value save through share-save and the reads it needs (ADR-003), and the `passkey` system type, seeded in every release from 0.3.0 on. Nothing is gated in `KEEPIQ_FEATURES`.
+The provider SHALL use only routes and fields in every Keepiq from `MIN_KEEPIQ_VERSION` on: secret create, the value save through share-save and the reads it needs (ADR-003), and the `passkeys` field, in 0.3.12 (keepiq#1325). Nothing is gated in `KEEPIQ_FEATURES`. A row without the field, as from a server that does not send it, holds no passkey.
 
 #### Scenario: Keepiq at the minimum
 - **GIVEN** an account on Keepiq 0.3.12
-- **WHEN** the user saves a passkey and signs in with an imported one whose counter is 3
-- **THEN** both succeed, through `POST /api/v1/secrets` and `PUT /api/v1/secrets/{id}/share-save`
+- **WHEN** the user saves a passkey to a new login and signs in with an imported one whose counter is 3
+- **THEN** both succeed, through `POST /api/v1/secrets` and `PUT /api/v1/secrets/{id}/share-save` with `passkeys`
 
 #### Scenario: Development build
 - **GIVEN** an account on a Keepiq reporting `0.3.9-unstable.20261007125844`
