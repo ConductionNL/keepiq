@@ -31,10 +31,11 @@ interface Options {
 	offline?: boolean
 	items?: Record<string, EditableItem>
 	replies?: Record<string, unknown>
+	unanswered?: string[]
 }
 
-function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies }: Options = {}) {
-	const sent = fakeBackground({ snapshot, items, replies })
+function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies, unanswered }: Options = {}) {
+	const sent = fakeBackground({ snapshot, items, replies, unanswered })
 	const shell = { ...DEFAULT_SHELL, footer, offline, toast: vi.fn(), refreshState: vi.fn(), syncNow: vi.fn(), setLeaveGuard: vi.fn(), generate: vi.fn() }
 	const onSaved = vi.fn()
 	const onCancel = vi.fn()
@@ -141,6 +142,18 @@ describe('adding', () => {
 		await user.click(save())
 		await waitFor(() => expect(onSaved).toHaveBeenCalled())
 		expect(sentOf(sent, 'item.update')[0]).toMatchObject({ patch: { key: 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=8&period=30' } })
+	})
+
+	it('shows an existing Authenticator item\'s algorithm and odd period as stored, and keeps them when the digits change', async () => {
+		const key = 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA512&digits=8&period=45'
+		const { sent, onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', key, login: null }) } })
+		const select = (label: string) => screen.getByLabelText(label) as HTMLSelectElement
+		await screen.findByLabelText('Algorithm')
+		expect([select('Algorithm').value, select('Digits').value, select('Period in seconds').value]).toEqual(['SHA512', '8', '45'])
+		await user.selectOptions(select('Digits'), '6')
+		await user.click(save())
+		await waitFor(() => expect(onSaved).toHaveBeenCalled())
+		expect(sentOf(sent, 'item.update')[0]).toMatchObject({ patch: { key: key.replace('digits=8', 'digits=6') } })
 	})
 
 	it('writes a card with all five members', async () => {
@@ -499,6 +512,25 @@ describe('editing', () => {
 		await user.click(save())
 		await user.click(await screen.findByRole('button', { name: 'Try again' }))
 		await waitFor(() => expect(onSaved).toHaveBeenCalledWith('new', undefined))
+	})
+
+	it('says the background is not responding when a save gets no answer, and offers to try again', async () => {
+		const { onSaved, user } = renderForm({ unanswered: ['item.create'] })
+		await user.type(field('Name'), 'GitHub')
+		await user.click(save())
+		const alert = await screen.findByRole('alert')
+		expect(alert.textContent).toContain('Keepiq is not responding. Reload the extension and reopen this popup.')
+		expect(within(alert).getByRole('button', { name: 'Try again' })).toBeTruthy()
+		expect(onSaved).not.toHaveBeenCalled()
+	})
+
+	// Only an edit has a version the server can find stale; a new item or a clone has none.
+	it.each(['add', 'clone'] as const)('reads a conflict on %s as refused, not as an item changed elsewhere', async (mode) => {
+		const { user } = renderForm({ mode, id: mode === 'clone' ? 'i1' : undefined, items: { i1: editableItem() }, replies: { 'item.create': { ok: false, error: { code: 'conflict' } } } })
+		await user.type(await screen.findByLabelText('Name'), '!')
+		await user.click(save())
+		expect(await screen.findByText('Keepiq refused this change')).toBeTruthy()
+		expect(screen.queryByText(/changed elsewhere/)).toBeNull()
 	})
 
 	it.each([

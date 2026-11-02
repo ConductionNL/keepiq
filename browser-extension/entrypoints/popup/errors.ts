@@ -61,8 +61,6 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'not_found': return context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
 		case 'blocked': return blockedText(error.reason)
 		case 'unreadable': return i18n.t('writeErrors.unreadable')
-		case 'restricted': return i18n.t('writeErrors.restricted')
-		case 'view_only': return i18n.t('item.viewOnly')
 		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'key_mismatch': return i18n.t('writeErrors.keyMismatch')
 		case 'offline': return context === 'send' ? i18n.t('writeErrors.sendOffline') : i18n.t('writeErrors.offline')
@@ -85,7 +83,7 @@ function conflictText(context: WriteContext): string {
 	return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 }
 
-/** The codes about the user's own server, which read the same in every context. */
+/** The codes about the user's own server. */
 function serverWriteErrorText(error: VaultWriteError, context: WriteContext): string {
 	switch (error.code) {
 		case 'server_error': return i18n.t('writeErrors.serverError')
@@ -98,6 +96,8 @@ function serverWriteErrorText(error: VaultWriteError, context: WriteContext): st
 /** The codes about sharing: shared copies, partner organisations and their certificates. */
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {
 	switch (error.code) {
+		case 'restricted': return i18n.t('writeErrors.restricted')
+		case 'view_only': return i18n.t('item.viewOnly')
 		case 'stale_source': return i18n.t('writeErrors.staleSource')
 		case 'incomplete': return i18n.t('writeErrors.incomplete')
 		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')

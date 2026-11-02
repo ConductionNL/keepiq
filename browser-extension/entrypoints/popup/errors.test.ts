@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { i18n } from '#i18n'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
-import type { VaultWriteError, WriteErrorCode } from '@/src/messages'
+import type { BlockReason, VaultWriteError, WriteErrorCode } from '@/src/messages'
 import { LOCALES, setLocale } from '@/src/testing/i18n'
-import { blockedText, writeErrorText, type WriteContext } from './errors'
+import { writeErrorText, type WriteContext } from './errors'
 
 const t = i18n.t as (key: string, substitutions?: Record<string, string>) => string
 
@@ -87,9 +87,11 @@ describe('writeErrorText', () => {
 		expect(writeErrorText({ code: 'keepiq_outdated' })).toContain(MIN_KEEPIQ_VERSION)
 	})
 
-	it('says why a row is blocked when the server gave a reason', () => {
-		expect(writeErrorText({ code: 'blocked', reason: 'suite_revoked' })).toBe(blockedText('suite_revoked'))
-		expect(blockedText('suite_revoked')).not.toBe(blockedText(undefined))
+	it.each(Object.entries({
+		suite_missing: 'blocked.suiteMissing', suite_revoked: 'blocked.suiteRevoked', suite_compromised: 'blocked.suiteCompromised', migration_failed: 'blocked.migrationFailed',
+	} satisfies Record<BlockReason, string>))('says a row is blocked for %s when the server gave that reason', (reason, key) => {
+		expect(t(key)).not.toBe('')
+		expect(writeErrorText({ code: 'blocked', reason: reason as BlockReason })).toBe(t(key))
 	})
 
 	it('names the partners that could not be reached', () => {
