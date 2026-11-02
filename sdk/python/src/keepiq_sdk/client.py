@@ -77,14 +77,19 @@ class _Call:
 
     method: str
     addr: str
-    data: Optional[bytes] = None
+    data: Optional[bytes] = field(default=None, repr=False)
     headers: Dict[str, str] = field(default_factory=dict, repr=False)
 
 
 class _Response(NamedTuple):
+    """One HTTP answer; ``repr()`` leaves out the body, which can hold an access token."""
+
     status: int
     headers: Dict[str, str]
     body: bytes
+
+    def __repr__(self) -> str:
+        return f"_Response(status={self.status!r}, body=<{len(self.body)} bytes>)"
 
 
 def _split_base(url: str) -> Tuple[str, str]:
@@ -201,6 +206,9 @@ class Client:
         self._fingerprint = _fingerprint_for(config.credentials.certificate_pem, self._key)
         self._timeout, self._clock = config.timeout, config.clock
         self._init_session()
+
+    def __repr__(self) -> str:
+        return f"Client(url={self._base!r}, application_id={self._app!r})"
 
     def _init_session(self) -> None:
         self._lock = threading.Lock()
