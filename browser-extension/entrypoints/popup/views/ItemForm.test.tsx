@@ -860,3 +860,48 @@ describe('offline', () => {
 		expect(shell.syncNow).toHaveBeenCalled()
 	})
 })
+
+describe('errors of a group of fields', () => {
+	const wide = (count: number) => '\u{1F511}'.repeat(count)
+	const tooBig = 'Too long (max 65536 bytes)'
+	const section = (title: string) => screen.getByRole('heading', { name: title }).closest('section')!
+	const bigFields = Object.fromEntries(['a', 'b', 'c', 'd', 'e'].map((name) => [name, wide(4096)]))
+
+	async function saveEdit(item: EditableItem) {
+		const { sent, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: item } })
+		fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Renamed' } })
+		await user.click(save())
+		return sent
+	}
+
+	it('shows card members that are too big only together under the card, on none of them, without a request', async () => {
+		const key = JSON.stringify(Object.fromEntries(CARD_FIELDS.map((member) => [member, wide(4096)])))
+		const sent = await saveEdit(editableItem({ typeId: 't-card', key, login: null }))
+		const card = section('Card details')
+		expect((await within(card).findByText(tooBig)).tagName).toBe('P')
+		expect(card.querySelectorAll('[aria-invalid]')).toHaveLength(0)
+		expect(screen.getAllByText(tooBig)).toHaveLength(1)
+		expect(screen.queryByRole('alert')).toBeNull()
+		expect(sentOf(sent, 'item.update')).toEqual([])
+	})
+
+	it('shows fields that are too big together under the additional fields', async () => {
+		const sent = await saveEdit(editableItem({ additionalFields: bigFields }))
+		const fields = section('Additional fields')
+		expect((await within(fields).findByText(tooBig)).tagName).toBe('P')
+		expect(fields.querySelectorAll('[aria-invalid]')).toHaveLength(0)
+		expect(screen.getAllByText(tooBig)).toHaveLength(1)
+		expect(sentOf(sent, 'item.update')).toEqual([])
+	})
+
+	it('puts that error on the notes instead when there are notes, which share the fields\' limit', async () => {
+		await saveEdit(editableItem({ additionalFields: { ...bigFields, notes: 'Recovery codes in the safe' } }))
+		const notes = await waitFor(() => {
+			const notes = field('Notes')
+			expect(notes.getAttribute('aria-invalid')).toBe('true')
+			return notes
+		})
+		expect(document.getElementById(notes.getAttribute('aria-describedby')!)?.textContent).toBe(tooBig)
+		expect(screen.getAllByText(tooBig)).toHaveLength(1)
+	})
+})

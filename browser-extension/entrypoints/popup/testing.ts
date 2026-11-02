@@ -180,6 +180,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 			return { ok: true, items }
 		},
 		'item.passkeys': () => ({ ok: true, passkeys: [] }),
+		'fill.request': () => ({ filled: 'both', code: false }),
 	})
 	const generatorAnswers = (): FakeAnswers => ({
 		'generator.context': () => ({ options: generatorOptions, policy: options.generator?.policy ?? null, accountEmail: options.generator?.accountEmail === undefined ? 'alice@example.org' : options.generator.accountEmail }),
