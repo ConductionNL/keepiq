@@ -1,0 +1,307 @@
+{
+ "options": [
+  {
+   "id": "vault.account_deleted",
+   "label": "[keepiq] Account data deleted"
+  },
+  {
+   "id": "federation_partner.value_fields_changed",
+   "label": "[keepiq] Another organisation changed the fields it stores"
+  },
+  {
+   "id": "federated_share.failed",
+   "label": "[keepiq] Another organisation did not get a change"
+  },
+  {
+   "id": "application.approved",
+   "label": "[keepiq] Application approved"
+  },
+  {
+   "id": "application.deleted",
+   "label": "[keepiq] Application deleted"
+  },
+  {
+   "id": "application.registered",
+   "label": "[keepiq] Application registered"
+  },
+  {
+   "id": "application.rejected",
+   "label": "[keepiq] Application rejected"
+  },
+  {
+   "id": "application.secret_retrieved",
+   "label": "[keepiq] Application secret retrieved"
+  },
+  {
+   "id": "application.token_issued",
+   "label": "[keepiq] Application token issued"
+  },
+  {
+   "id": "federated_share.updated",
+   "label": "[keepiq] Change sent to another organisation"
+  },
+  {
+   "id": "suite.compromise_contained",
+   "label": "[keepiq] Compromise containment recorded"
+  },
+  {
+   "id": "suite.recovery_aborted",
+   "label": "[keepiq] Compromise recovery aborted"
+  },
+  {
+   "id": "suite.recovery_completed",
+   "label": "[keepiq] Compromise recovery completed"
+  },
+  {
+   "id": "suite.recovery_started",
+   "label": "[keepiq] Compromise recovery started"
+  },
+  {
+   "id": "federated_share.copy_removed",
+   "label": "[keepiq] Copy from another organisation removed"
+  },
+  {
+   "id": "federated_share.copy_updated",
+   "label": "[keepiq] Copy from another organisation updated"
+  },
+  {
+   "id": "share.delegation_reclaimed",
+   "label": "[keepiq] Delegation reclaimed"
+  },
+  {
+   "id": "suite.reinstated",
+   "label": "[keepiq] Encryption suite reinstated"
+  },
+  {
+   "id": "suite.revoke_refused",
+   "label": "[keepiq] Encryption suite revoke refused"
+  },
+  {
+   "id": "suite.revoked",
+   "label": "[keepiq] Encryption suite revoked"
+  },
+  {
+   "id": "folder.deleted_cascade",
+   "label": "[keepiq] Folder deleted with contents"
+  },
+  {
+   "id": "vault.gdpr_exported",
+   "label": "[keepiq] GDPR data exported"
+  },
+  {
+   "id": "suite.migration_terminated",
+   "label": "[keepiq] Key rotation ended by a compromise revoke"
+  },
+  {
+   "id": "link_share.access_failed",
+   "label": "[keepiq] Link share access failed"
+  },
+  {
+   "id": "link_share.accessed",
+   "label": "[keepiq] Link share accessed"
+  },
+  {
+   "id": "link_share.auto_deleted",
+   "label": "[keepiq] Link share auto-deleted"
+  },
+  {
+   "id": "link_share.created",
+   "label": "[keepiq] Link share created"
+  },
+  {
+   "id": "link_share.revoked",
+   "label": "[keepiq] Link share revoked"
+  },
+  {
+   "id": "key_proof.refused",
+   "label": "[keepiq] Master password proof refused"
+  },
+  {
+   "id": "share.delegated",
+   "label": "[keepiq] Ownership delegated"
+  },
+  {
+   "id": "share.quarantine_dropped",
+   "label": "[keepiq] Quarantined share dropped"
+  },
+  {
+   "id": "share.quarantine_released",
+   "label": "[keepiq] Quarantined share released"
+  },
+  {
+   "id": "federated_share.recipient_declined",
+   "label": "[keepiq] Recipient at another organisation removed their copy"
+  },
+  {
+   "id": "federated_share.recipient_resumed",
+   "label": "[keepiq] Recipient at another organisation restored their copy"
+  },
+  {
+   "id": "secret.archived",
+   "label": "[keepiq] Secret archived"
+  },
+  {
+   "id": "secret.created",
+   "label": "[keepiq] Secret created"
+  },
+  {
+   "id": "secret.deleted",
+   "label": "[keepiq] Secret deleted"
+  },
+  {
+   "id": "secret.purged",
+   "label": "[keepiq] Secret deleted for good"
+  },
+  {
+   "id": "federated_share.accepted",
+   "label": "[keepiq] Secret from another organisation accepted"
+  },
+  {
+   "id": "federated_share.declined",
+   "label": "[keepiq] Secret from another organisation declined"
+  },
+  {
+   "id": "secret.trashed",
+   "label": "[keepiq] Secret moved to the trash"
+  },
+  {
+   "id": "secret.read",
+   "label": "[keepiq] Secret read"
+  },
+  {
+   "id": "federated_share.received",
+   "label": "[keepiq] Secret received from another organisation"
+  },
+  {
+   "id": "request.created",
+   "label": "[keepiq] Secret request created"
+  },
+  {
+   "id": "request.fulfilled",
+   "label": "[keepiq] Secret request fulfilled"
+  },
+  {
+   "id": "request.re_requested",
+   "label": "[keepiq] Secret request re-requested"
+  },
+  {
+   "id": "request.revoked",
+   "label": "[keepiq] Secret request revoked"
+  },
+  {
+   "id": "secret.restored",
+   "label": "[keepiq] Secret restored from the trash"
+  },
+  {
+   "id": "secret.unarchived",
+   "label": "[keepiq] Secret unarchived"
+  },
+  {
+   "id": "secret.updated",
+   "label": "[keepiq] Secret updated"
+  },
+  {
+   "id": "share.granted",
+   "label": "[keepiq] Share granted"
+  },
+  {
+   "id": "share.quarantined",
+   "label": "[keepiq] Share quarantined"
+  },
+  {
+   "id": "share.revoked",
+   "label": "[keepiq] Share revoked"
+  },
+  {
+   "id": "federated_share.revoked",
+   "label": "[keepiq] Share with another organisation revoked"
+  },
+  {
+   "id": "federated_share.sent",
+   "label": "[keepiq] Shared with another organisation"
+  },
+  {
+   "id": "federated_share.suspended",
+   "label": "[keepiq] Sharing with another organisation stopped"
+  },
+  {
+   "id": "vault.exported",
+   "label": "[keepiq] Vault exported"
+  }
+ ],
+ "labels": {
+  "(empty)": "",
+  "SECRET.CREATED": "SECRET.CREATED",
+  "__proto__": {},
+  "application.approved": "[keepiq] Application approved",
+  "application.deleted": "[keepiq] Application deleted",
+  "application.registered": "[keepiq] Application registered",
+  "application.rejected": "[keepiq] Application rejected",
+  "application.secret_retrieved": "[keepiq] Application secret retrieved",
+  "application.token_issued": "[keepiq] Application token issued",
+  "constructor": "function Object",
+  "federated_share.accepted": "[keepiq] Secret from another organisation accepted",
+  "federated_share.copy_removed": "[keepiq] Copy from another organisation removed",
+  "federated_share.copy_updated": "[keepiq] Copy from another organisation updated",
+  "federated_share.declined": "[keepiq] Secret from another organisation declined",
+  "federated_share.failed": "[keepiq] Another organisation did not get a change",
+  "federated_share.received": "[keepiq] Secret received from another organisation",
+  "federated_share.recipient_declined": "[keepiq] Recipient at another organisation removed their copy",
+  "federated_share.recipient_resumed": "[keepiq] Recipient at another organisation restored their copy",
+  "federated_share.revoked": "[keepiq] Share with another organisation revoked",
+  "federated_share.sent": "[keepiq] Shared with another organisation",
+  "federated_share.suspended": "[keepiq] Sharing with another organisation stopped",
+  "federated_share.updated": "[keepiq] Change sent to another organisation",
+  "federation_partner.value_fields_changed": "[keepiq] Another organisation changed the fields it stores",
+  "folder.deleted_cascade": "[keepiq] Folder deleted with contents",
+  "key_proof.refused": "[keepiq] Master password proof refused",
+  "link_share.access_failed": "[keepiq] Link share access failed",
+  "link_share.accessed": "[keepiq] Link share accessed",
+  "link_share.auto_deleted": "[keepiq] Link share auto-deleted",
+  "link_share.created": "[keepiq] Link share created",
+  "link_share.revoked": "[keepiq] Link share revoked",
+  "request.created": "[keepiq] Secret request created",
+  "request.fulfilled": "[keepiq] Secret request fulfilled",
+  "request.re_requested": "[keepiq] Secret request re-requested",
+  "request.revoked": "[keepiq] Secret request revoked",
+  "secret": "secret",
+  "secret.archived": "[keepiq] Secret archived",
+  "secret.created": "[keepiq] Secret created",
+  "secret.deleted": "[keepiq] Secret deleted",
+  "secret.purged": "[keepiq] Secret deleted for good",
+  "secret.read": "[keepiq] Secret read",
+  "secret.restored": "[keepiq] Secret restored from the trash",
+  "secret.trashed": "[keepiq] Secret moved to the trash",
+  "secret.unarchived": "[keepiq] Secret unarchived",
+  "secret.updated": "[keepiq] Secret updated",
+  "share.delegated": "[keepiq] Ownership delegated",
+  "share.delegation_reclaimed": "[keepiq] Delegation reclaimed",
+  "share.granted": "[keepiq] Share granted",
+  "share.quarantine_dropped": "[keepiq] Quarantined share dropped",
+  "share.quarantine_released": "[keepiq] Quarantined share released",
+  "share.quarantined": "[keepiq] Share quarantined",
+  "share.revoked": "[keepiq] Share revoked",
+  "suite.compromise_contained": "[keepiq] Compromise containment recorded",
+  "suite.migration_terminated": "[keepiq] Key rotation ended by a compromise revoke",
+  "suite.recovery_aborted": "[keepiq] Compromise recovery aborted",
+  "suite.recovery_completed": "[keepiq] Compromise recovery completed",
+  "suite.recovery_started": "[keepiq] Compromise recovery started",
+  "suite.reinstated": "[keepiq] Encryption suite reinstated",
+  "suite.revoke_refused": "[keepiq] Encryption suite revoke refused",
+  "suite.revoked": "[keepiq] Encryption suite revoked",
+  "toString": "function toString",
+  "unknown.event": "unknown.event",
+  "vault.account_deleted": "[keepiq] Account data deleted",
+  "vault.exported": "[keepiq] Vault exported",
+  "vault.gdpr_exported": "[keepiq] GDPR data exported"
+ },
+ "freshCopies": true,
+ "actors": [
+  "[keepiq] Anonymous visitor",
+  "[keepiq] System",
+  "[keepiq] Deleted account",
+  "[keepiq] Deleted account",
+  "alice",
+  "(undefined)"
+ ]
+}
