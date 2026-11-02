@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { i18n } from '#i18n'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import type {
@@ -162,7 +162,9 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		else setNotice(i18n.t('errors.notResponding'))
 	}
 
-	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId]))
+	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved ? failure : null
+	// A failure banner from a reply moves focus to Retry, so it counts as a step too.
+	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId, showFailure]))
 	const guarded = <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => {
 		if (ready()) action(...args)
 	}
@@ -181,7 +183,6 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		return () => document.removeEventListener('keydown', onKey)
 	}, [])
 
-	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved ? failure : null
 	let title = ''
 	let body: ReactNode
 	let ways = true
@@ -225,11 +226,11 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	}, [title])
 
 	return (
-		<main className="popup popup--popout">
+		<main className="popup popup--popout" onKeyDownCapture={ignoreHeld}>
 			<Header title={title} active={null} onBack={confirmStep ? back : undefined} />
 			<div className="popup__body stack">
 				{showFailure && (
-					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
+					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus focusable busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
 						{writeErrorText(showFailure, 'passkey')}
 					</Banner>
 				)}
@@ -238,7 +239,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			</div>
 			{ways && (
 				<div className="passkey__ways">
-					{/* The browser's own conditional request runs beside a conditional one, so there is no dialog to fall back to. */}
+					{/* No fallback for a conditional request: spec § Sign in with a passkey. */}
 					{!view?.conditional && <Button variant="secondary" busy={busy === 'fallback'} onClick={() => void fallback()}>{i18n.t('passkey.fallback')}</Button>}
 					<Button variant="secondary" busy={busy === 'cancel'} onClick={() => void cancel()}>{i18n.t('common.cancel')}</Button>
 				</div>
@@ -254,6 +255,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 						}),
 					}]}
 					onCancel={() => setReplacing(null)}
+					focusCancel
 				/>
 			)}
 		</main>
@@ -281,6 +283,11 @@ function useSettled(step: string): () => boolean {
 		}
 	}, [])
 	return useCallback(() => shownAt.current !== null && Date.now() - shownAt.current >= GUARD_MS, [])
+}
+
+/** A held Enter or Space repeats past that guard, so only its first press counts. */
+function ignoreHeld(event: ReactKeyboardEvent) {
+	if (event.repeat && (event.key === 'Enter' || event.key === ' ')) event.preventDefault()
 }
 
 const rowKey = (row: Pick<PasskeyRow, 'itemId' | 'credentialId'>) => `${row.itemId}:${row.credentialId}`
@@ -355,7 +362,7 @@ function SaveTo({ view, busy, focus, name, folderId, onName, onFolder, onTarget,
 					label={i18n.t('passkey.folder')} value={folderId} onChange={onFolder}
 					options={[{ value: '', label: i18n.t('passkey.noFolder') }, ...view.folders.map((folder) => ({ value: folder.id, label: folder.name }))]}
 				/>
-				<Button type="submit" busy={busy === 'new'} disabled={busy !== null || !name.trim()}>{i18n.t('passkey.saveNew')}</Button>
+				<Button type="submit" focusable busy={busy === 'new'} disabled={busy !== null || !name.trim()}>{i18n.t('passkey.saveNew')}</Button>
 			</form>
 		</>
 	)

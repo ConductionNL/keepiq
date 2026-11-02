@@ -11,7 +11,7 @@ import { ceremonyKey, endForAccountChange, handlePasskeyContent, handlePasskeyWi
 import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { hasKey, putKey, unlockedAtKey } from '@/src/vault/key-store'
+import { getKey, hasKey, putKey, unlockedAtKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
 import { lock, unlock } from '@/src/vault/unlock'
@@ -25,6 +25,10 @@ vi.mock('@/src/crypto', async (importOriginal) => {
 	return { ...actual, rsaDecrypt: vi.fn(actual.rsaDecrypt) }
 })
 vi.mock('@/src/vault/unlock', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/vault/unlock')>(), unlock: vi.fn() }))
+vi.mock('@/src/vault/key-store', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@/src/vault/key-store')>()
+	return { ...actual, getKey: vi.fn(actual.getKey) }
+})
 vi.mock('@/src/vault/write', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/vault/write')>()
 	return { ...actual, savePasskeyCounter: vi.fn(actual.savePasskeyCounter) }
@@ -896,6 +900,24 @@ describe('passkeys during a conditional request', () => {
 		await browser.storage.local.set({ [`settings.${accountId}`]: { askPasskeys: false } })
 		const fromWindow = { id: browser.runtime.id, url: browser.runtime.getURL(`/popup.html?passkey=${ceremonyId}`), tab: { id: 550 }, frameId: 0 } as never
 		expect(await handlePasskeyWindow({ kind: 'passkey.verify', ceremonyId, method: { type: 'pin', pin: '123456' } }, fromWindow)).toEqual({ ok: false, code: 'stale' })
+		expect(results()).toEqual([])
+	})
+
+	it('holds no pick and opens no window when the vault locks after the pick was checked', async () => {
+		vi.mocked(unlock).mockReset()
+		await conditional({ userVerification: 'required' })
+		const { key } = await openWithState()
+		const { getKey: unmocked } = await vi.importActual<typeof import('@/src/vault/key-store')>('@/src/vault/key-store')
+		vi.mocked(getKey).mockImplementationOnce(async (id) => {
+			const checked = await unmocked(id)
+			await lock(id)
+			return checked
+		})
+		expect(await pickPasskey(key)).toEqual({ refused: 'locked' })
+		await flush()
+		expect(await ceremony()).toBeDefined()
+		expect((await ceremony())?.pending).toBeUndefined()
+		expect(windows).toEqual([])
 		expect(results()).toEqual([])
 	})
 

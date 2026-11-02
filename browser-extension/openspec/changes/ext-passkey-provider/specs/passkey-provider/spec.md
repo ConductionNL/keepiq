@@ -79,7 +79,7 @@ Each of these depends on the settings and the request only, never on what the va
 - **THEN** the browser's own `create` runs
 
 ### Requirement: The passkey window
-For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. A click, Enter or Space that signs, saves, replaces, retries or submits the unlock or "Confirm it's you" form counts only 500 ms after the window or its current step appeared or the window got focus, so input meant for the page does nothing; Cancel and Escape count at once. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
+For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. A click, Enter or Space that signs, saves, replaces, retries or submits the unlock or "Confirm it's you" form counts only 500 ms after the window, its current step or a failure with Retry appeared or the window got focus, so input meant for the page does nothing; a held Enter or Space counts only its first press, and the Replace question starts on Cancel; Cancel and Escape count at once. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
 
 #### Scenario: Two requests in one tab
 - **GIVEN** a passkey window open for a `get` in a tab
@@ -215,7 +215,7 @@ Every assertion and attestation SHALL set the user-present flag, since the user 
 - **THEN** the assertion is signed at once with the user-verified flag clear
 
 ### Requirement: A locked vault asks to unlock, then continues
-When the active account is locked, the window SHALL open on the unlock view (master password, or PIN where set) under "Unlock Keepiq to use a passkey for <rpId>", or "Unlock Keepiq to save a passkey for <rpId>" for a save, with "Use your device or hardware key" and Cancel, and show the sign-in or save view after a successful unlock. While locked, the background MUST NOT decrypt, match or count anything for the ceremony, and the window MUST NOT show whether a passkey exists. A lock during the ceremony returns the window to the unlock view.
+When the active account is locked, the window SHALL open on the unlock view (master password, or PIN where set) under "Unlock Keepiq to use a passkey for <rpId>", or "Unlock Keepiq to save a passkey for <rpId>" for a save, with "Use your device or hardware key" and Cancel (Cancel only for a conditional request, as "Sign in with a passkey" says), and show the sign-in or save view after a successful unlock. While locked, the background MUST NOT decrypt, match or count anything for the ceremony, and the window MUST NOT show whether a passkey exists. A lock during the ceremony returns the window to the unlock view.
 
 #### Scenario: Locked sign-in
 - **GIVEN** a locked vault with a passkey for `example.test`
@@ -242,7 +242,7 @@ The extension SHALL send a page nothing that depends on the vault before the use
 - **THEN** the window opens just as it does for an unlocked vault and the page receives nothing until the user acts
 
 ### Requirement: Fallback to the browser
-"Use your device or hardware key" SHALL end the Keepiq ceremony and make the page script call the browser's original method with the page's original options and signal, so the browser's own dialog takes over. The page then receives whatever the browser returns.
+"Use your device or hardware key" SHALL end the Keepiq ceremony and make the page script call the browser's original method with the page's original options and signal, so the browser's own dialog takes over. The page then receives whatever the browser returns. A window for a conditional request does not offer it, and a `passkey.fallback` from that window acts as its Cancel.
 
 #### Scenario: Fallback from the list
 - **GIVEN** the sign-in window with one passkey listed
@@ -277,7 +277,7 @@ A result is delivered only to the frame that started the ceremony, and the conte
 - **THEN** the window closes, the page receives nothing, and the inline list still offers the passkeys on the next focus
 
 ### Requirement: The signature counter
-The extension SHALL sign with counter 0 and write nothing when the stored `counter` is 0. For a stored `counter` above 0, it MUST save the login's `passkeys` with that entry's `counter` plus one before replying to the page, and sign with that value. The save is the one of "The passkeys field is saved whole"; after `stale` it rereads the counter. When the save is refused or fails, the window shows the reason with Retry, "Use your device or hardware key" and Cancel, and the page receives no assertion; so a use-only, read-only or view-only copy with a non-zero counter cannot sign.
+The extension SHALL sign with counter 0 and write nothing when the stored `counter` is 0. For a stored `counter` above 0, it MUST save the login's `passkeys` with that entry's `counter` plus one before replying to the page, and sign with that value. The save is the one of "The passkeys field is saved whole"; after `stale` it rereads the counter. When the save is refused or fails, the window shows the reason with Retry, "Use your device or hardware key" and Cancel (Retry and Cancel only for a conditional request), and the page receives no assertion; so a use-only, read-only or view-only copy with a non-zero counter cannot sign.
 
 #### Scenario: Imported passkey
 - **GIVEN** a login holding an imported passkey with `counter` 41

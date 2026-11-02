@@ -152,6 +152,22 @@ describe('sign in', () => {
 		expect(close).toHaveBeenCalled()
 	})
 
+	it('keeps focus on Retry while it runs and when it fails again', async () => {
+		let answer: (reply: unknown) => void = () => {}
+		const { sent, user } = renderWindow(passkeyView({ rows: [row()], failure: { code: 'offline' } }), {
+			replies: { 'passkey.retry': () => new Promise((resolve) => (answer = resolve)) },
+		})
+		const retry = await screen.findByRole('button', { name: 'Retry' })
+		await user.click(retry)
+		expect(retry.hasAttribute('disabled')).toBe(false)
+		expect(retry.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(retry)
+		await user.click(retry)
+		expect(sentOf(sent, 'passkey.retry')).toHaveLength(1)
+		await act(async () => answer({ ok: false, code: 'write_failed', error: { code: 'offline' } }))
+		expect(document.activeElement).toBe(retry)
+	})
+
 	it('opens on the failed step with Retry focused rather than the first row', async () => {
 		renderWindow(passkeyView({ rows: [row()], failure: { code: 'write_locked' } }))
 		expect(await alertText()).toContain('Vault is temporarily locked for a key migration, try again later')
@@ -384,9 +400,27 @@ describe('save', () => {
 	})
 
 	it('cannot save a new login without a name', async () => {
-		const { user } = renderWindow(createView())
+		const { sent, user } = renderWindow(createView())
 		await user.clear(await screen.findByLabelText('Name'))
-		expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Save as new login' }).disabled).toBe(true)
+		const saveNew = screen.getByRole('button', { name: 'Save as new login' })
+		expect(saveNew.getAttribute('aria-disabled')).toBe('true')
+		await user.click(saveNew)
+		expect(sentOf(sent, 'passkey.save')).toEqual([])
+	})
+
+	it('keeps focus on "Save as new login" while it runs, ignoring another click', async () => {
+		let answer: (reply: unknown) => void = () => {}
+		const { sent, user } = renderWindow(createView(), { replies: { 'passkey.save': () => new Promise((resolve) => (answer = resolve)) } })
+		const saveNew = await screen.findByRole('button', { name: 'Save as new login' })
+		await user.click(saveNew)
+		expect(saveNew.hasAttribute('disabled')).toBe(false)
+		expect(saveNew.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(saveNew)
+		await user.click(saveNew)
+		expect(sentOf(sent, 'passkey.save')).toHaveLength(1)
+		await act(async () => answer({ ok: false, code: 'stale' }))
+		expect(await alertText()).toBeTruthy()
+		expect(document.activeElement).toBe(saveNew)
 	})
 
 	it('asks the Replace question for a login holding this user\'s passkey, and replaces on Replace', async () => {
@@ -593,6 +627,61 @@ describe('activations right after a step appears', () => {
 		const { sent, hasty } = renderWindow(passkeyView({ rows: [row()], failure: { code: 'offline' } }), { replies: { 'passkey.retry': { ok: true } } })
 		await hasty.click(await screen.findByRole('button', { name: 'Retry' }))
 		expect(sentOf(sent, 'passkey.retry')).toEqual([])
+	})
+
+	it('ignores Retry right after a reply shows the failure', async () => {
+		const { sent, user, hasty } = renderWindow(passkeyView({ rows: [row()] }), {
+			replies: { 'passkey.pick': { ok: false, code: 'write_failed', error: { code: 'offline' } }, 'passkey.retry': { ok: true } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		const retry = await screen.findByRole('button', { name: 'Retry' })
+		await hasty.click(retry)
+		expect(sentOf(sent, 'passkey.retry')).toEqual([])
+		wait()
+		await hasty.click(retry)
+		expect(sentOf(sent, 'passkey.retry')).toHaveLength(1)
+	})
+
+	describe('a held Enter', () => {
+		/** Each repeat of a held key comes past the guard time, as when holding it for a second. */
+		function repeatsPastGuard() {
+			const advance = (event: KeyboardEvent) => {
+				if (event.repeat) wait()
+			}
+			document.addEventListener('keydown', advance, true)
+			return () => document.removeEventListener('keydown', advance, true)
+		}
+		let release = () => {}
+		afterEach(() => release())
+
+		it('does not pick a passkey, and the next press does', async () => {
+			const { sent, hasty } = renderWindow(passkeyView({ rows: [row()] }), { replies: { 'passkey.pick': { ok: true } } })
+			await screen.findByRole('button', { name: 'Example, alice' })
+			release = repeatsPastGuard()
+			await hasty.keyboard('{Enter>4}')
+			expect(sentOf(sent, 'passkey.pick')).toEqual([])
+			await hasty.keyboard('{Enter}')
+			expect(sentOf(sent, 'passkey.pick')).toHaveLength(1)
+		})
+
+		it('does not submit the Name form, and the next press does', async () => {
+			const { sent, hasty } = renderWindow(createView(), { replies: { 'passkey.save': { ok: true } } })
+			await hasty.click(await screen.findByLabelText('Name'))
+			release = repeatsPastGuard()
+			await hasty.keyboard('{Enter>4}')
+			expect(sentOf(sent, 'passkey.save')).toEqual([])
+			await hasty.keyboard('{Enter}')
+			expect(sentOf(sent, 'passkey.save')).toHaveLength(1)
+		})
+
+		it('meets Cancel first in the Replace question', async () => {
+			const { sent, user, hasty } = renderWindow(createView({ targets: [target({ replace: { userName: 'alice' } })] }), { replies: { 'passkey.save': { ok: true } } })
+			await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+			expect(document.activeElement).toBe(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+			release = repeatsPastGuard()
+			await hasty.keyboard('{Enter>4}')
+			expect(sentOf(sent, 'passkey.save')).toEqual([])
+		})
 	})
 
 	it('does not submit "Confirm it\'s you" or the unlock form from typing meant for the page', async () => {

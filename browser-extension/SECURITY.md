@@ -105,7 +105,7 @@ The reasoning is in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vau
 - **No probing:** the first answer depends on the settings, whether the account is logged in and the request, never on the vault or the lock. A handled request gets nothing back until you act in the passkey window or the inline list.
 - **Only its own frame gets the result,** and the relay drops it when the frame left the ceremony's origin.
 - **The window** gets the site, the page's `rp.name` and `user.name` as text, the lock state, and login ids, names and user names; never ciphertext, a key, the challenge or the credential. Only that ceremony's window may answer it.
-- **Unintended clicks:** a sign, save, replace, retry or unlock counts only 500 ms after the window or its step appeared or got focus; Cancel counts at once.
+- **Unintended clicks:** a sign, save, replace, retry or unlock counts only 500 ms after the window, its step or a failure appeared or it got focus; a held Enter or Space counts only its first press, and the Replace question starts on Cancel; Cancel counts at once.
 - **User verification** is set only when you entered the master password or PIN during the ceremony; a `required` request asks for it ("Confirm it's you"), the PIN under its five-try limit.
 
 ## In-page UI

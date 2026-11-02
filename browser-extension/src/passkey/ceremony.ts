@@ -341,7 +341,7 @@ async function pick(ceremony: Ceremony, itemId: unknown, credentialId: unknown):
 	if (ceremony.kind !== 'get' || typeof itemId !== 'string' || typeof credentialId !== 'string') return STALE
 	if (ceremony.conditional && !(await stillAsked(ceremony))) return STALE
 	// Any other pick replaces the held one, so a later "Confirm it's you" never signs a passkey the user moved away from.
-	if (ceremony.pending &&!(await update(ceremony, { pending: undefined }))) return ENDED
+	if (ceremony.pending && !(await update(ceremony, { pending: undefined }))) return ENDED
 	const acting = await actingKey(ceremony)
 	if ('refused' in acting) return acting.refused
 	const { key } = acting
@@ -425,7 +425,7 @@ export async function handlePasskeyWindow(message: PasskeyPopupRequest, sender: 
 			case 'passkey.fallback':
 			case 'passkey.cancel': {
 				await touch()
-				// A conditional request has no browser dialog to fall back to, since the browser's own request runs beside it.
+				// A conditional request has no fallback (spec § Sign in with a passkey), so its window offers none and this acts as Cancel.
 				const closed = ceremony.conditional
 					? release(ceremony)
 					: end(ceremony.tabId, ceremony.id, message.kind === 'passkey.fallback' ? { type: 'fallback' } : cancelled(ceremony))
@@ -448,11 +448,12 @@ export async function endForAccountChange(): Promise<void> {
 	}
 }
 
-/** A lock forgets every held pick: after unlocking, the user picks again from what the window then shows. */
+/**
+ * A lock forgets every held pick: after unlocking, the user picks again from what the window then shows. Each ceremony is
+ * read again in its tab's queue, behind a `hold` that checked the key just before the lock.
+ */
 async function forgetHeldPicks(): Promise<void> {
-	for (const ceremony of await store.all()) {
-		if (ceremony.pending) await update(ceremony, { pending: undefined })
-	}
+	for (const ceremony of await store.all()) await update(ceremony, { pending: undefined })
 }
 
 async function windowClosed(windowId: number): Promise<void> {
@@ -471,6 +472,17 @@ export async function conditionalCeremony(tabId: number, frameId: number, accoun
 
 export type ListPick = 'signed' | 'window' | 'locked' | 'stale'
 
+/** Keeps a list pick for "Confirm it's you", unless the vault locked since it was checked: that lock already forgot held picks. */
+function hold(ceremony: Ceremony, pending: NonNullable<Ceremony['pending']>): Promise<'held' | 'locked' | 'stale'> {
+	return inTab(ceremony.tabId, async () => {
+		const current = await store.get(ceremony.tabId)
+		if (current?.id !== ceremony.id) return 'stale'
+		if (!(await getKey(ceremony.accountId))) return 'locked'
+		await store.set({ ...current, pending })
+		return 'held'
+	})
+}
+
 /**
  * A passkey the user picked in the inline list, signed as a pick in the window is; verification or a failed counter
  * save opens the window on that step (spec § Conditional requests). The caller checked it was offered and visible.
@@ -483,7 +495,10 @@ export async function pickFromList(tabId: number, ceremonyId: string, itemId: st
 	if (reply.ok) return 'signed'
 	if (reply.code === 'locked') return 'locked'
 	if (reply.code !== 'verify_required' && reply.code !== 'write_failed') return 'stale'
-	if (reply.code === 'verify_required' && !(await update(ceremony, { pending: { itemId, credentialId } }))) return 'stale'
+	if (reply.code === 'verify_required') {
+		const held = await hold(ceremony, { itemId, credentialId })
+		if (held !== 'held') return held
+	}
 	await inTab(tabId, () => showWindow(tabId, ceremony.id)).catch(log('window'))
 	return 'window'
 }
