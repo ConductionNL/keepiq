@@ -16,10 +16,10 @@ See [OpenConnector integration](./integration-openconnector.md) for how an appli
 Install `keepiq-sdk` (it needs only `cryptography`):
 
 ```python
-from keepiq_sdk import Client
+from keepiq_sdk import Client, ClientConfig, Credentials
 
 key = open("/run/secrets/keepiq.pem").read()
-client = Client("https://cloud.example.org", "billing", key)
+client = Client(ClientConfig("https://cloud.example.org", Credentials("billing", key)))
 secret = client.get_by_name("stripe-key")
 print(secret.key)
 ```

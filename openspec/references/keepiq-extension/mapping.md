@@ -94,7 +94,7 @@ The old docs (`docs/WXT-AND-BROWSERS.md`) describe WXT, Firefox on MV2 and `brow
 | 13 | Lock and logout labelled distinctly | 124 | CODE-ONLY | BE/popup/popup.html:42,45,55,295: "Unlock", "Lock" and "Disconnect" / "Disconnect this account"; the words are never mixed | Keepiq uses "Disconnect" where the old spec says "Log out". No spec states the labelling rule. |
 | 14 | Alternative unlock method hook | 131 | CHANGED (recorded) | Two entry points, `unlock` and `unlock-raw` (BE/background/router.js:439,456), both ending in BE/lib/vault.js:63 `hold`; the popup offers fingerprint or face unlock (popup.html:43) | Keepiq shipped a second method (passkey PRF) instead of a single method-parameterised entry point with no other option shown. Recorded: openspec/specs/extension-biometric-unlock/spec.md. |
 
-### openspec/changes/ext-vault-edit/specs/folder-management/spec.md
+### openspec/changes/archive/2026-10-30-ext-vault-edit/specs/folder-management/spec.md
 Keepiq spec referenced as "Manage folders" = openspec/specs/extension-vault/spec.md "Requirement: Manage folders".
 
 | # | Requirement (old title) | old line | Class | Keepiq evidence | Gap (if any) |
@@ -109,7 +109,7 @@ Keepiq spec referenced as "Manage folders" = openspec/specs/extension-vault/spec
 | 8 | Folder names are plaintext | 102 | SPEC | "Manage folders" ("MUST say once that folder names are not encrypted"); BE/popup/popup.html:92-95; BE/popup/folder-view.js:123,288-291 flag `folders-notice-seen` in `storage.local` | The flag is global and is not cleared when an account is removed. |
 | 9 | Folder write errors and offline | 110 | PARTIAL | BE/background/vault-handlers.js:346,368,401 map errors through `writeErrorMessage` (423/403/400/409/network); the typed name stays on error (folder-view.js:195-196); offline disables `folder-add-save` and `folder-delete-confirm` (vault-view.js:74-83) with the offline text (popup.html:84) | The per-row Rename and Delete buttons are created dynamically (folder-view.js:278-282), are not in `WRITE_CONTROLS`, and stay enabled offline. A network failure offers no Retry. No keepiq spec maps folder write errors; extension-vault-sync "Work offline" disables "the controls that change the vault" in general. |
 
-### openspec/changes/ext-vault-edit/specs/item-editing/spec.md
+### openspec/changes/archive/2026-10-30-ext-vault-edit/specs/item-editing/spec.md
 Keepiq specs referenced: "Edit every kind" / "Clone and move" / "Detail sections" = openspec/specs/extension-vault/spec.md; "Add, edit and delete items" = openspec/specs/extension-vault/spec.md; "Pick mode" = openspec/specs/extension-generator/spec.md; "Work offline" = clients-extension-complete/specs/extension-vault-sync/spec.md.
 
 | # | Requirement (old title) | old line | Class | Keepiq evidence | Gap (if any) |
