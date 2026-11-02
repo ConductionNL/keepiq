@@ -13,7 +13,7 @@
 		<p class="tests">Register a passkey, then sign in with it. The page checks both as a site's server would, with WebCrypto: the challenge, origin, RP ID hash, flags, signature and counter. Keepiq's window offers to save or use a passkey for <code class="host">localhost</code>, or hands the request to the browser.</p>
 		<form id="passkey">
 			<label>User name <input name="userName" type="text" value="alice" autocomplete="off" aria-describedby="user-name-hint"></label>
-			<p class="hint" id="user-name-hint">The account this passkey is for. A real site fills this in from your account; this page has no accounts, so you type one. Keepiq shows it next to the site so you can tell passkeys apart. Register with a second name to test two passkeys on one login, or with the same name again to see Keepiq ask whether to replace the old one.</p>
+			<p class="hint" id="user-name-hint">Represents the username of your account on the site.</p>
 			<label>User verification
 				<select name="userVerification" aria-describedby="user-verification-hint">
 					<option>preferred</option>
