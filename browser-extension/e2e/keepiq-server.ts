@@ -1,8 +1,7 @@
 /**
  * The account's Keepiq at `keepiq.invalid`, faked with `context.route`, which also catches the extension worker's
- * requests: the routes an unlock, a passkey save and the sync after it use (ADR-003), over the rows the seed cached, on
- * the oldest supported Keepiq. Every other
- * request fails as offline, as without it.
+ * requests: the routes an unlock, a passkey save and the sync after it use (ADR-003), over the rows the seed cached,
+ * on the oldest supported Keepiq. Every other request fails as offline, as without it.
  */
 import { expect, type BrowserContext, type Route } from '@playwright/test'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
