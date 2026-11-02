@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { GeneratorPolicy } from './options'
@@ -32,6 +31,25 @@ const lengths: unknown[] = [undefined, 0, 7, 8, 16, 128, 129, 12.5, '20', Number
 const counts: unknown[] = [undefined, -1, 3, 2.7, 'x']
 const flags = [undefined, false, true] as const
 
+/**
+ * A running FNV-1a digest (two 32-bit lanes) of the recorded lines. It only
+ * detects change between runs, so it need not be a cryptographic hash.
+ */
+function digest() {
+	let a = 0x811c9dc5
+	let b = 0x01000193
+	return {
+		update(text: string) {
+			for (let i = 0; i < text.length; i++) {
+				const code = text.charCodeAt(i)
+				a = Math.imul(a ^ code, 0x01000193) >>> 0
+				b = Math.imul(b ^ code, 0x811c9dc5 | 1) >>> 0
+			}
+		},
+		hex: () => a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0'),
+	}
+}
+
 /** Every request in the grid, as a stable label and the request. */
 function* requests(): Generator<[string, PasswordRequest]> {
 	let n = 0
@@ -54,7 +72,7 @@ function record(): Record<string, { cases: number; failures: Record<string, numb
 	const out: Record<string, { cases: number; failures: Record<string, number>; digest: string }> = {}
 	for (const [policyName, policy] of Object.entries(policies)) {
 		for (const [excludedName, excluded] of Object.entries(exclusions)) {
-			const hash = createHash('sha256')
+			const hash = digest()
 			const failures: Record<string, number> = {}
 			let cases = 0
 			for (const [label, request] of requests()) {
@@ -63,7 +81,7 @@ function record(): Record<string, { cases: number; failures: Record<string, numb
 				hash.update(`${label}=${JSON.stringify(result)}\n`)
 				cases++
 			}
-			out[`${policyName}/${excludedName}`] = { cases, failures, digest: hash.digest('hex') }
+			out[`${policyName}/${excludedName}`] = { cases, failures, digest: hash.hex() }
 		}
 	}
 	return out
