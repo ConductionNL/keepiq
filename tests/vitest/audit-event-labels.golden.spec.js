@@ -48,7 +48,10 @@ describe('audit event labels', () => {
 			labels: Object.fromEntries(
 				[...options.map((o) => o.id), ...extra]
 					.sort()
-					.map((id) => [id, describeValue(auditEventLabel(id))]),
+					.map((id) => [
+						id || '(empty)',
+						describeValue(auditEventLabel(id)),
+					]),
 			),
 			undefinedLabel: describeValue(auditEventLabel(undefined)),
 			freshCopies: auditEventOptions() !== options,

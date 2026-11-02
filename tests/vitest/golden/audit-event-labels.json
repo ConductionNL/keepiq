@@ -230,7 +230,7 @@
   }
  ],
  "labels": {
-  "": "",
+  "(empty)": "",
   "SECRET.CREATED": "SECRET.CREATED",
   "__proto__": {},
   "application.approved": "[keepiq] Application approved",
