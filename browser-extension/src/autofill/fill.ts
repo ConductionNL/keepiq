@@ -53,7 +53,7 @@ export interface FillTarget {
 	itemId: string
 	tabId: number
 	ask: 'reply' | 'page'
-	/** Pair the login with its authenticator item, fill and copy the code; `false` on page load. */
+	/** Fill and copy the login's code; `false` on page load. */
 	code: boolean
 	confirmedInsecure?: boolean
 	/**

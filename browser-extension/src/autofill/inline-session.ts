@@ -29,7 +29,7 @@ export interface InlineSession {
 	frameUrl: string
 	/** The list page's frame, bound by the first accepted `inline.state`. */
 	listFrameId: number | null
-	/** `code`: the list is open on a code field and offers authenticator items. */
+	/** `code`: the list is open on a code field and offers logins with a code. */
 	mode: InlineMode
 	itemIds: string[]
 	openedAt: number

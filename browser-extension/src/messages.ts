@@ -43,12 +43,12 @@ export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: stri
 /**
  * Background → one frame; the only message to a content script carrying vault data.
  * `origin`: the frame origin the background matched. `anchorKey`: an inline pick, filling only the form of the list with this key.
- * `code`: the paired or picked authenticator item's current code, `null` on page load or without one.
+ * `code`: the login's current code, `null` on page load or without one.
  */
 export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; code: string | null; origin: string; anchorKey?: string }
 export type FillExecuteReply = { filled: FillOutcome; code: boolean }
 
-/** What the list shows: logins, or authenticator items on a code field. */
+/** What the list shows: logins, or logins with a code on a code field. */
 export type InlineMode = 'login' | 'code'
 export const INLINE_MODES: readonly InlineMode[] = ['login', 'code']
 /** Request/response. Without a valid `mode` it reads as `login`. */
@@ -433,7 +433,7 @@ export type FormField = 'login' | 'key' | 'additionalFields'
 export type DecryptField = FormField | 'totp'
 export type DecryptedItem = Partial<Record<DecryptField, string>>
 
-/** All a use-only copy's holder may see, its code but not its seed; the background refuses the rest (use-only-shares). */
+/** All a use-only copy's holder gets, seed included; the background refuses the rest (use-only-shares). */
 export const USE_ONLY_FIELDS: readonly DecryptField[] = ['login', 'totp']
 
 /** A batch leaves out rows that are blocked, use-only or do not decrypt; a single id gets the reason instead. */

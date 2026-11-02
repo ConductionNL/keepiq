@@ -958,14 +958,21 @@ describe('code mode', () => {
 		expect(document.activeElement).toBe(row(1))
 	})
 
-	it('renders anew, keeping the focused item, when the refreshed rows differ', async () => {
+	it('renders anew, keeping the focused item and restarting the pick guard, when the refreshed rows differ', async () => {
 		await open(codes())
 		post({ kind: 'inline.focus', key: KEY })
 		key(row(0), 'ArrowDown')
 		stateReply = codes([{ ...CODE_ROWS[1]!, code: code('87654321', NOW + 42_000) }])
-		await wait(13_000)
+		await wait(11_500)
 		expect(options().map((option) => option.getAttribute('aria-label'))).toEqual(['Work, alice@work.test'])
 		expect(document.activeElement).toBe(row(0))
+		click(row(0))
+		await flush()
+		expect(picks()).toEqual([])
+		await wait(GUARD_MS)
+		click(row(0))
+		await flush()
+		expect(picks()).toEqual([expect.objectContaining({ itemId: 'w' })])
 	})
 
 	it('says when no code matches, and asks to unlock while locked', async () => {

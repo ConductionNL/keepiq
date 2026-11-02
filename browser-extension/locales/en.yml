@@ -636,7 +636,7 @@ inlineList:
       n: $1 Keepiq logins. Press Down Arrow to choose.
     noMatch: No Keepiq logins for {host}
     locked: Keepiq is locked. Press Down Arrow to unlock.
-  # The list on a one-time code field, which offers authenticator items.
+  # The list on a one-time code field, which offers logins with a code.
   code:
     frameTitle: Keepiq verification codes
     label: Keepiq verification codes for {host}
