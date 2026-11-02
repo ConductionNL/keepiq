@@ -191,9 +191,9 @@ test.describe('with a passkey on the login', () => {
 				const box = (await row().boundingBox({ timeout: 1000 }))!
 				await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 			}
-			await expect(page).toHaveURL(/\/signed-in\.html\?/, { timeout: 1000 })
+			await expect(page).toHaveURL(/\/signed-in\.html\?from=%2Fpasskey-conditional&passkey=alice$/, { timeout: 1000 })
 		}).toPass()
-		await expect(page.locator('#from')).toHaveText('You signed in with a passkey as alice. Counter 0, flags UP BE BS. Came from /passkey-conditional.')
+		await expect(page.locator('#from')).toHaveText('You signed in with a passkey as alice. Came from /passkey-conditional.')
 		expect(await page.evaluate(() => JSON.parse(localStorage.getItem('keepiq-test-site.passkeys')!))).toEqual([registered])
 		await expect.poll(() => listOpen(page)).toBe(false)
 	})

@@ -34,7 +34,7 @@
 			status.dataset.result = 'waiting'
 			try {
 				const passkey = await signIn({ mediation: 'conditional', publicKey: { userVerification: 'preferred' } })
-				const query = new URLSearchParams({ from: '/passkey-conditional', passkey: passkey.userName, counter: passkey.counter, flags: passkey.flags.join(' ') })
+				const query = new URLSearchParams({ from: '/passkey-conditional', passkey: passkey.userName })
 				location.assign(`/signed-in.html?${query}`)
 			} catch (error) {
 				report(status, { error })
