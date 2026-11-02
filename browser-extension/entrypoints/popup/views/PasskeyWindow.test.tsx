@@ -18,7 +18,7 @@ afterEach(() => {
 
 function passkeyView(overrides: Partial<PasskeyView> = {}): PasskeyView {
 	return {
-		kind: 'get', rpId: 'example.test', host: 'example.test', rpName: 'Example Corp', userName: 'alice', locked: false, verify: false,
+		kind: 'get', conditional: false, rpId: 'example.test', host: 'example.test', rpName: 'Example Corp', userName: 'alice', locked: false, verify: false,
 		rows: [], targets: [], folders: [], alreadySaved: false, failure: null, pending: null, ...overrides,
 	}
 }
@@ -158,6 +158,39 @@ describe('sign in', () => {
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Retry' }))
 	})
 
+	it('goes back to the list from "Confirm it\'s you" with Escape or Back, and cancels with Escape from the list', async () => {
+		const { sent, user } = renderWindow(passkeyView({ rows: [row()], verify: true }))
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		await heading('Confirm it\'s you')
+		await user.keyboard('{Escape}')
+		await heading('Sign in with a passkey')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
+		await user.click(screen.getByRole('button', { name: 'Example, alice' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await heading('Sign in with a passkey')
+		expect(sentOf(sent, 'passkey.cancel')).toEqual([])
+		expect(sentOf(sent, 'passkey.pick')).toEqual([])
+		await user.keyboard('{Escape}')
+		expect(sentOf(sent, 'passkey.cancel')).toHaveLength(1)
+	})
+
+	it('keeps the rows focusable while a pick runs, ignores another, and keeps focus after a stale answer', async () => {
+		let answer: (reply: unknown) => void = () => {}
+		const { sent, user } = renderWindow(passkeyView({ rows: [row(), row({ itemId: 'i2', credentialId: 'cred-2', name: 'Work' })] }), {
+			replies: { 'passkey.pick': () => new Promise((resolve) => (answer = resolve)) },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		const other = screen.getByRole('button', { name: 'Work, alice' })
+		expect(other.hasAttribute('disabled')).toBe(false)
+		expect(other.getAttribute('aria-disabled')).toBe('true')
+		await user.click(other)
+		expect(sentOf(sent, 'passkey.pick')).toHaveLength(1)
+		await act(async () => answer({ ok: false, code: 'stale' }))
+		expect(await alertText()).toBe('This passkey is no longer in your vault. Choose another one.')
+		expect(document.activeElement).toBe(other)
+		expect(other.getAttribute('aria-disabled')).toBe('false')
+	})
+
 	it('says when the picked passkey is gone and shows the list again', async () => {
 		const { sent, user, setView } = renderWindow(passkeyView({ rows: [row()] }), { replies: { 'passkey.pick': { ok: false, code: 'stale' } } })
 		const picked = await screen.findByRole('button', { name: 'Example, alice' })
@@ -207,6 +240,35 @@ describe('a pick from the inline list that waits on "Confirm it\'s you"', () => 
 		expect(await alertText()).toContain('Could not reach the server')
 		expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
 		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('goes back to the list with Escape, and a pick there replaces the held one in the background first', async () => {
+		let picks = 0
+		const { sent, close, user } = renderWindow(heldView(), {
+			replies: {
+				'passkey.pick': () => (++picks === 1 ? { ok: false, code: 'verify_required' } : { ok: true }),
+				'passkey.verify': { ok: true, view: passkeyView({ rows: [row(), work] }) },
+			},
+		})
+		await heading('Confirm it\'s you')
+		await user.keyboard('{Escape}')
+		await heading('Sign in with a passkey')
+		expect(sentOf(sent, 'passkey.cancel')).toEqual([])
+		await user.click(screen.getByRole('button', { name: 'Example, alice' }))
+		await heading('Confirm it\'s you')
+		expect(screen.getByText('Example')).toBeTruthy()
+		expect(sentOf(sent, 'passkey.pick')).toEqual([{ kind: 'passkey.pick', ceremonyId: 'c1', itemId: 'i1', credentialId: 'cred-1' }])
+		await user.type(screen.getByLabelText('Master password'), 'hunter2{Enter}')
+		await waitFor(() => expect(close).toHaveBeenCalled())
+		expect(sentOf(sent, 'passkey.pick')).toHaveLength(2)
+		expect(sentOf(sent, 'passkey.pick')[1]).toMatchObject({ itemId: 'i1', credentialId: 'cred-1' })
+	})
+
+	it('offers no "Use your device or hardware key", since the browser\'s own request already runs', async () => {
+		renderWindow({ ...heldView(), conditional: true })
+		await heading('Confirm it\'s you')
+		expect(screen.queryByRole('button', { name: 'Use your device or hardware key' })).toBeNull()
+		expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy()
 	})
 
 	it('shows no passkey name while locked', async () => {
@@ -385,7 +447,7 @@ describe('save', () => {
 
 	it('words a conflict so it fits a fetch the vault does not hold and a second stale alike', async () => {
 		renderWindow(createView({ failure: { code: 'conflict' } }))
-		expect(await alertText()).toContain('This login was changed elsewhere at the same time, or Keepiq sent a version of it your vault does not hold. Nothing was saved; try again.')
+		expect(await alertText()).toContain('This login changed while saving. Nothing was saved; try again.')
 	})
 
 	it('says so when a passkey for this account is already saved, and answers Close with passkey.cancel', async () => {

@@ -2048,11 +2048,11 @@ a.menu__item {
 	cursor: pointer;
 }
 
-.passkey__row:hover:not(:disabled) {
+.passkey__row:hover:not([aria-disabled='true']) {
 	background: var(--surface-hover);
 }
 
-.passkey__row:disabled {
+.passkey__row[aria-disabled='true'] {
 	cursor: default;
 }
 

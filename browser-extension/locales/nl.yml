@@ -706,7 +706,7 @@ passkey:
   folder: Map
   noFolder: Geen map
   saveNew: Opslaan als nieuwe login
-  replaceQuestion: De passkey van {userName} op {name} vervangen?
+  replaceQuestion: De passkey van {userName} bij {name} vervangen?
   replace: Vervangen
   alreadySavedTitle: Passkey al opgeslagen
   alreadySaved: Er is al een passkey voor dit account opgeslagen in Keepiq
@@ -716,6 +716,6 @@ passkey:
   stalePick: Deze passkey staat niet meer in je kluis. Kies een andere.
   staleSave: Bij deze login kan de passkey niet meer worden opgeslagen. Kies een andere, of sla hem op als nieuwe login.
   errors:
-    conflict: Deze login is tegelijk ergens anders gewijzigd, of Keepiq stuurde een versie ervan die je kluis niet heeft. Er is niets opgeslagen; probeer het opnieuw.
+    conflict: Deze login is tijdens het opslaan gewijzigd. Er is niets opgeslagen; probeer het opnieuw.
     partnerUpgradeRequired: "Er is niets opgeslagen: de Keepiq van {cloudIds} is te oud om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
     partnerUpgradeRequiredUnnamed: "Er is niets opgeslagen: een partnerorganisatie waarmee deze login gedeeld is, heeft een Keepiq die te oud is om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."

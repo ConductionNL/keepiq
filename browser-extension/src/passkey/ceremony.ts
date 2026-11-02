@@ -143,6 +143,14 @@ async function stillActive(ceremony: Ceremony): Promise<boolean> {
 	return (await activeAccount())?.id === ceremony.accountId
 }
 
+/** A conditional request outlives the settings it started under: once they would refuse it, it offers and signs nothing. */
+async function stillAsked(ceremony: Ceremony): Promise<boolean> {
+	const account = await activeAccount()
+	if (account?.id !== ceremony.accountId) return false
+	const sender = { origin: ceremony.origin, url: ceremony.url, tab: { id: ceremony.tabId }, frameId: ceremony.frameId }
+	return !('fallback' in frameGate({ sender, crossOriginAncestor: false, account: account.gate }))
+}
+
 function newId(): string {
 	return toBase64Url(crypto.getRandomValues(new Uint8Array(16)))
 }
@@ -247,6 +255,7 @@ async function view(ceremony: Ceremony): Promise<PasskeyView> {
 	const key = await getKey(ceremony.accountId)
 	const shown: PasskeyView = {
 		kind: ceremony.kind,
+		conditional: ceremony.conditional,
 		rpId: ceremony.rpId,
 		host: new URL(ceremony.origin).host,
 		rpName: ceremony.rpName,
@@ -340,6 +349,7 @@ async function actingKey(ceremony: Ceremony): Promise<{ key: CryptoKey } | { ref
 
 async function pick(ceremony: Ceremony, itemId: unknown, credentialId: unknown): Promise<PasskeyWindowReply> {
 	if (ceremony.kind !== 'get' || typeof itemId !== 'string' || typeof credentialId !== 'string') return STALE
+	if (ceremony.conditional && !(await stillAsked(ceremony))) return STALE
 	// Any other pick replaces the held one, so a later "Confirm it's you" never signs a passkey the user moved away from.
 	if (ceremony.pending &&!(await update(ceremony, { pending: undefined }))) return ENDED
 	const acting = await actingKey(ceremony)
@@ -425,7 +435,8 @@ export async function handlePasskeyWindow(message: PasskeyPopupRequest, sender: 
 			case 'passkey.fallback':
 			case 'passkey.cancel': {
 				await touch()
-				const closed = message.kind === 'passkey.cancel' && ceremony.conditional
+				// A conditional request has no browser dialog to fall back to, since the browser's own request runs beside it.
+				const closed = ceremony.conditional
 					? release(ceremony)
 					: end(ceremony.tabId, ceremony.id, message.kind === 'passkey.fallback' ? { type: 'fallback' } : cancelled(ceremony))
 				return await closed ? { ok: true } : ENDED
@@ -463,7 +474,8 @@ async function windowClosed(windowId: number): Promise<void> {
 export async function conditionalCeremony(tabId: number, frameId: number, accountId: string, frameUrl: string): Promise<Pick<Ceremony, 'id' | 'rpId' | 'credentialIds'> | null> {
 	const ceremony = await store.get(tabId)
 	if (!ceremony?.conditional || ceremony.kind !== 'get' || ceremony.frameId !== frameId || ceremony.accountId !== accountId) return null
-	return originOf(frameUrl) === ceremony.origin ? { id: ceremony.id, rpId: ceremony.rpId, credentialIds: ceremony.credentialIds } : null
+	if (originOf(frameUrl) !== ceremony.origin || !(await stillAsked(ceremony))) return null
+	return { id: ceremony.id, rpId: ceremony.rpId, credentialIds: ceremony.credentialIds }
 }
 
 /** The rows a pending conditional request offers; the caller holds the account's unlocked key. */
@@ -487,7 +499,7 @@ export type ListPick = 'signed' | 'window' | 'locked' | 'stale'
 export async function pickFromList(tabId: number, ceremonyId: string, itemId: string, credentialId: string): Promise<ListPick> {
 	await enforce()
 	const ceremony = await store.get(tabId)
-	if (ceremony?.id !== ceremonyId || !ceremony.conditional || !(await stillActive(ceremony))) return 'stale'
+	if (ceremony?.id !== ceremonyId || !ceremony.conditional || !(await stillAsked(ceremony))) return 'stale'
 	const reply = await once(ceremony, () => pick(ceremony, itemId, credentialId))
 	if (reply.ok) return 'signed'
 	if (reply.code === 'locked') return 'locked'

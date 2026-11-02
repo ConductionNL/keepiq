@@ -97,7 +97,7 @@ For every `create` and every `get` without `mediation: 'conditional'` that Keepi
 - **THEN** nothing is signed, and Enter on that passkey after 500 ms signs it
 
 ### Requirement: Sign in with a passkey
-For a `get`, the window SHALL list the passkeys offered for the request under "Sign in with a passkey" and "Use a passkey saved in Keepiq for <rpId>", each row showing the login's name and the passkey's user name. Picking one makes the background sign the assertion and reply to the page, record the login in `lastUsed.<accountId>` and close the window. With no passkey offered, the window reads "No Keepiq passkey for <rpId>". Every state offers "Use your device or hardware key" and Cancel.
+For a `get`, the window SHALL list the passkeys offered for the request under "Sign in with a passkey" and "Use a passkey saved in Keepiq for <rpId>", each row showing the login's name and the passkey's user name. Picking one makes the background sign the assertion and reply to the page, record the login in `lastUsed.<accountId>` and close the window. With no passkey offered, the window reads "No Keepiq passkey for <rpId>". Every state offers "Use your device or hardware key" and Cancel, except that a window for a conditional request offers Cancel only, since the browser's own conditional request already runs beside it.
 
 #### Scenario: One passkey
 - **GIVEN** an unlocked vault with a login "Example" holding a passkey for `example.test`, user name `alice`
@@ -215,7 +215,7 @@ Every assertion and attestation SHALL set the user-present flag, since the user 
 - **THEN** the assertion is signed at once with the user-verified flag clear
 
 ### Requirement: A locked vault asks to unlock, then continues
-When the active account is locked, the window SHALL open on the unlock view (master password, or PIN where set) under "Unlock Keepiq to use a passkey for <rpId>", with "Use your device or hardware key" and Cancel, and show the sign-in or save view after a successful unlock. While locked, the background MUST NOT decrypt, match or count anything for the ceremony, and the window MUST NOT show whether a passkey exists. A lock during the ceremony returns the window to the unlock view.
+When the active account is locked, the window SHALL open on the unlock view (master password, or PIN where set) under "Unlock Keepiq to use a passkey for <rpId>", or "Unlock Keepiq to save a passkey for <rpId>" for a save, with "Use your device or hardware key" and Cancel, and show the sign-in or save view after a successful unlock. While locked, the background MUST NOT decrypt, match or count anything for the ceremony, and the window MUST NOT show whether a passkey exists. A lock during the ceremony returns the window to the unlock view.
 
 #### Scenario: Locked sign-in
 - **GIVEN** a locked vault with a passkey for `example.test`
@@ -257,6 +257,8 @@ The extension SHALL end a ceremony and close its window when:
 - the tab closes, the frame unloads or the tab leaves the ceremony's origin: nothing is sent. A same-origin history change, as `pushState`, keeps the ceremony;
 - the active account logs out or changes: the page gets `NotAllowedError`.
 
+A conditional request is the exception, as in Bitwarden: Cancel or closing the window the inline list opened drops only that window, and the request keeps waiting with nothing sent. It ends only when the page aborts, the frame unloads or navigates, a new request in the tab replaces it, or the account logs out or changes.
+
 A result is delivered only to the frame that started the ceremony, and the content script drops it when that frame's origin changed since.
 
 #### Scenario: Page aborts
@@ -268,6 +270,11 @@ A result is delivered only to the frame that started the ceremony, and the conte
 - **GIVEN** an open passkey window
 - **WHEN** the requesting tab navigates to another page
 - **THEN** the window closes and nothing is signed
+
+#### Scenario: Cancel during a conditional request
+- **GIVEN** a passkey window that a pick in the inline list opened on "Confirm it's you"
+- **WHEN** the user clicks Cancel or closes the window
+- **THEN** the window closes, the page receives nothing, and the inline list still offers the passkeys on the next focus
 
 ### Requirement: The signature counter
 The extension SHALL sign with counter 0 and write nothing when the stored `counter` is 0. For a stored `counter` above 0, it MUST save the login's `passkeys` with that entry's `counter` plus one before replying to the page, and sign with that value. The save is the one of "The passkeys field is saved whole"; after `stale` it rereads the counter. When the save is refused or fails, the window shows the reason with Retry, "Use your device or hardware key" and Cancel, and the page receives no assertion; so a use-only, read-only or view-only copy with a non-zero counter cannot sign.
@@ -325,7 +332,7 @@ While the provider would handle a request from the frame (the setting on, an acc
 - **THEN** it resolves `true`
 
 ### Requirement: Conditional requests
-For `get` with `mediation: 'conditional'`, the background SHALL register the ceremony for its frame without opening a window, and the page script MUST also start the browser's own conditional request; the first to resolve wins and the other is aborted, as in Bitwarden. A pick in the inline list signs as a pick in the window does; when verification is required or the counter save fails, the passkey window opens on that step. After "Confirm it's you" the background signs that pick, once it checked the pick is still offered; otherwise the window shows the list. A conditional request has no deadline: it ends when the page aborts, the frame navigates or a modal request in the tab replaces it.
+For `get` with `mediation: 'conditional'`, the background SHALL register the ceremony for its frame without opening a window, and the page script MUST also start the browser's own conditional request; the first to resolve wins and the other is aborted, as in Bitwarden. A pick in the inline list signs as a pick in the window does; when verification is required or the counter save fails, the passkey window opens on that step. After "Confirm it's you" the background signs that pick, once it checked the pick is still offered; otherwise the window shows the list. A conditional request has no deadline: it ends when the page aborts, the frame navigates or a modal request in the tab replaces it. Once "Ask to save and use passkeys" is off or the site is excluded, a pending one offers and signs nothing.
 
 #### Scenario: Browser's own passkey wins
 - **GIVEN** a conditional `get` and a passkey in the browser's own manager

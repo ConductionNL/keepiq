@@ -421,7 +421,7 @@ describe('the passkey window', () => {
 		const { ceremonyId } = await start()
 		await lock(accountId)
 		vi.mocked(rsaDecrypt).mockClear()
-		const view = { kind: 'get', rpId: 'example.test', host: 'example.test', rpName: '', userName: '', verify: false, targets: [], folders: [], alreadySaved: false, failure: null, pending: null }
+		const view = { kind: 'get', conditional: false, rpId: 'example.test', host: 'example.test', rpName: '', userName: '', verify: false, targets: [], folders: [], alreadySaved: false, failure: null, pending: null }
 		expect(await window({ kind: 'passkey.state', ceremonyId }, windowOf(ceremonyId!))).toEqual({ ok: true, view: { ...view, locked: true, rows: [] } })
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 		await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))

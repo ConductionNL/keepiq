@@ -16,7 +16,7 @@ While a conditional `get` ceremony (`passkey-provider`) is registered for the li
 #### Scenario: Locked with a conditional request
 - **GIVEN** a locked vault and a pending conditional `get`
 - **WHEN** the user focuses the field
-- **THEN** the list reads "Unlock Keepiq to see your logins" with "Unlock", and no passkey row
+- **THEN** the list reads "Keepiq is locked" with "Unlock", and no passkey row
 - **AND** after unlocking, focusing the field again lists the passkey
 
 #### Scenario: Suggestions turned off

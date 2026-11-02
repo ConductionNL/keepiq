@@ -160,6 +160,8 @@ export interface PasskeySaveTarget {
 /** What the passkey window shows of its ceremony; `rpName` and `userName` are the page's own, to show as text. */
 export interface PasskeyView {
 	kind: 'create' | 'get'
+	/** A conditional `get` opened from the inline list: no "Use your device or hardware key", and Cancel keeps the request. */
+	conditional: boolean
 	rpId: string
 	host: string
 	rpName: string

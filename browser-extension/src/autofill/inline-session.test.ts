@@ -823,17 +823,42 @@ describe('passkeys during a conditional request', () => {
 		expect(results()).toEqual([])
 	})
 
-	it('keeps the request on Cancel in that window, and ends it on "Use your device or hardware key"', async () => {
+	it('keeps the request on Cancel in that window, and on a fallback the window does not offer', async () => {
 		const ceremonyId = await conditional({ userVerification: 'required' })
 		const fromWindow = { id: browser.runtime.id, url: browser.runtime.getURL(`/popup.html?passkey=${ceremonyId}`), tab: { id: 550 }, frameId: 0 } as never
 		expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
+		expect(await handlePasskeyWindow({ kind: 'passkey.state', ceremonyId }, fromWindow)).toMatchObject({ ok: true, view: { conditional: true } })
 		expect(await handlePasskeyWindow({ kind: 'passkey.cancel', ceremonyId }, fromWindow)).toEqual({ ok: true })
 		expect(await ceremony()).toMatchObject({ id: ceremonyId, window: null })
-		expect(results()).toEqual([])
 		expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
 		expect(await handlePasskeyWindow({ kind: 'passkey.fallback', ceremonyId }, fromWindow)).toEqual({ ok: true })
-		expect(await ceremony()).toBeUndefined()
-		expect(resultsOnly()).toEqual([{ type: 'fallback' }])
+		expect(await ceremony()).toMatchObject({ id: ceremonyId, window: null })
+		expect(results()).toEqual([])
+	})
+
+	it.each([
+		['"Ask to save and use passkeys" is off', { askPasskeys: false }],
+		['the site is excluded', { excludedDomains: ['example.test'] }],
+	])('offers and signs no passkey of a pending request once %s', async (_, settings) => {
+		await conditional()
+		const { key } = await openWithState()
+		await browser.storage.local.set({ [`settings.${accountId}`]: settings })
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await pickPasskey(key)).toEqual({ refused: 'stale' })
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+		expect((await openWithState()).state).not.toHaveProperty('passkeys')
+		expect(passkeyDecrypts()).toBe(0)
+		expect(results()).toEqual([])
+	})
+
+	it('does not sign a held pick once the setting is off', async () => {
+		vi.mocked(unlock).mockReset()
+		const ceremonyId = await conditional({ userVerification: 'required' })
+		expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
+		await browser.storage.local.set({ [`settings.${accountId}`]: { askPasskeys: false } })
+		const fromWindow = { id: browser.runtime.id, url: browser.runtime.getURL(`/popup.html?passkey=${ceremonyId}`), tab: { id: 550 }, frameId: 0 } as never
+		expect(await handlePasskeyWindow({ kind: 'passkey.verify', ceremonyId, method: { type: 'pin', pin: '123456' } }, fromWindow)).toEqual({ ok: false, code: 'stale' })
+		expect(results()).toEqual([])
 	})
 
 	describe('a pick that waits on "Confirm it\'s you"', () => {

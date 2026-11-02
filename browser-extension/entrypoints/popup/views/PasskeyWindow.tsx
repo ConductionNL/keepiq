@@ -34,18 +34,19 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const [busy, setBusy] = useState<string | null>(null)
 	/** A pick or save waiting on "Confirm it's you". */
 	const [confirming, setConfirming] = useState<Act | null>(null)
-	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
-	const [held, setHeld] = useState<PasskeyRow | null>(null)
+	/** The held pick the user left with Back or Escape, or that `passkey.verify` answered. */
+	const [dismissed, setDismissed] = useState<string | null>(null)
 	const [replacing, setReplacing] = useState<PasskeySaveTarget | null>(null)
 	const [name, setName] = useState<string | null>(null)
 	const [folderId, setFolderId] = useState('')
+	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
+	const held = view && !view.locked && view.pending && rowKey(view.pending) !== dismissed ? view.pending : null
 
 	const send = useCallback((command: Command) => passkeyRequest({ ...command, ceremonyId } as PasskeyPopupRequest), [ceremonyId])
 
 	const show = useCallback((next: PasskeyView) => {
 		setView(next)
 		setFailure(next.failure)
-		setHeld(next.pending)
 		// Nothing said about the vault before a lock stays on screen after it.
 		if (next.locked) {
 			setConfirming(null)
@@ -115,9 +116,15 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		await settle(reply, command)
 	}
 
+	// While the background still holds a pick the user went Back from, a pick goes there first to replace it.
 	function act(command: Act, control: string) {
-		if (view?.verify) setConfirming(command)
+		if (view?.verify && !(command.kind === 'passkey.pick' && view.pending)) setConfirming(command)
 		else void run(command, control)
+	}
+
+	function back() {
+		setConfirming(null)
+		if (held) setDismissed(rowKey(held))
 	}
 
 	const pick = (row: PasskeyRow) => act({ kind: 'passkey.pick', itemId: row.itemId, credentialId: row.credentialId }, `pick:${row.itemId}:${row.credentialId}`)
@@ -127,7 +134,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		const reply = await send({ kind: 'passkey.verify', method })
 		// The background signed the held pick, or answers its signing as it answers a pick.
 		if (held && reply && (reply.ok ? !reply.view : PICK_CODES.includes(reply.code))) {
-			setHeld(null)
+			setDismissed(rowKey(held))
 			await settle(reply, { kind: 'passkey.pick', itemId: held.itemId, credentialId: held.credentialId })
 			return { ok: true }
 		}
@@ -160,14 +167,15 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		if (ready()) action(...args)
 	}
 
-	const cancelRef = useRef(cancel)
+	const confirmStep = view !== null && !view.locked && (confirming !== null || held !== null)
+	const escapeRef = useRef(() => {})
 	useEffect(() => {
-		cancelRef.current = cancel
+		escapeRef.current = confirmStep ? back : () => void cancel()
 	})
 	useEffect(() => {
-		// The Replace question stops its own Escape, so this one is the window's.
+		// The Replace question's Escape stops propagating, so it never reaches this listener.
 		const onKey = (event: KeyboardEvent) => {
-			if (event.key === 'Escape' && !event.defaultPrevented) void cancelRef.current()
+			if (event.key === 'Escape' && !event.defaultPrevented) escapeRef.current()
 		}
 		document.addEventListener('keydown', onKey)
 		return () => document.removeEventListener('keydown', onKey)
@@ -218,7 +226,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	return (
 		<main className="popup popup--popout">
-			<Header title={title} active={null} />
+			<Header title={title} active={null} onBack={confirmStep ? back : undefined} />
 			<div className="popup__body stack">
 				{showFailure && (
 					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
@@ -230,7 +238,8 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			</div>
 			{ways && (
 				<div className="passkey__ways">
-					<Button variant="secondary" busy={busy === 'fallback'} onClick={() => void fallback()}>{i18n.t('passkey.fallback')}</Button>
+					{/* The browser's own conditional request runs beside a conditional one, so there is no dialog to fall back to. */}
+					{!view?.conditional && <Button variant="secondary" busy={busy === 'fallback'} onClick={() => void fallback()}>{i18n.t('passkey.fallback')}</Button>}
 					<Button variant="secondary" busy={busy === 'cancel'} onClick={() => void cancel()}>{i18n.t('common.cancel')}</Button>
 				</div>
 			)}
@@ -273,6 +282,8 @@ function useSettled(step: string): () => boolean {
 	}, [])
 	return useCallback(() => shownAt.current !== null && Date.now() - shownAt.current >= GUARD_MS, [])
 }
+
+const rowKey = (row: Pick<PasskeyRow, 'itemId' | 'credentialId'>) => `${row.itemId}:${row.credentialId}`
 
 const rowLabel = (name: string, userName: string) => (userName ? i18n.t('passkey.row', { name, userName }) : name)
 
@@ -361,10 +372,14 @@ interface RowProps {
 	onClick: () => void
 }
 
+/** `disabled` stays focusable, so focus is still on the row when a busy pick or save comes back. */
 function RowButton({ name, sub, label, note, busy, disabled, autoFocus, onClick }: RowProps) {
 	const noteId = useId()
 	return (
-		<button type="button" className="passkey__row" aria-label={label} aria-describedby={note ? noteId : undefined} aria-busy={busy} disabled={disabled} autoFocus={autoFocus} onClick={onClick}>
+		<button
+			type="button" className="passkey__row" aria-label={label} aria-describedby={note ? noteId : undefined} aria-busy={busy} aria-disabled={disabled} autoFocus={autoFocus}
+			onClick={() => !disabled && onClick()}
+		>
 			<span className="passkey__name">{busy && <span className="spinner" aria-hidden="true" />}{name}</span>
 			{sub && <span className="passkey__sub">{sub}</span>}
 			{note && <span className="passkey__sub" id={noteId}>{note}</span>}

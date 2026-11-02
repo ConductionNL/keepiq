@@ -726,6 +726,6 @@ passkey:
   stalePick: This passkey is no longer in your vault. Choose another one.
   staleSave: This login can no longer take the passkey. Choose another, or save it as a new login.
   errors:
-    conflict: This login was changed elsewhere at the same time, or Keepiq sent a version of it your vault does not hold. Nothing was saved; try again.
+    conflict: This login changed while saving. Nothing was saved; try again.
     partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
     partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this login is shared with runs a Keepiq too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."

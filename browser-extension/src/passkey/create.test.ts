@@ -144,7 +144,7 @@ describe('the Save view', () => {
 		const id = await start(createRequest({ excludeCredentials: [{ type: 'public-key', id: 'QQ' }] }))
 		vi.mocked(rsaDecrypt).mockClear()
 		expect(await stateOf(id)).toEqual({
-			kind: 'create', rpId: 'example.test', host: 'example.test', rpName: 'Example', userName: 'alice@example.test', locked: true, verify: false,
+			kind: 'create', conditional: false, rpId: 'example.test', host: 'example.test', rpName: 'Example', userName: 'alice@example.test', locked: true, verify: false,
 			rows: [], targets: [], folders: [], alreadySaved: false, failure: null, pending: null,
 		})
 		expect(rsaDecrypt).not.toHaveBeenCalled()
