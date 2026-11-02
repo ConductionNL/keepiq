@@ -318,6 +318,12 @@ fun TextInput(
  * takes focus back when it had it. Text and selection are held here, above
  * the rebuild, so the cursor stays where the user left it; when [value]
  * changes from outside (Generate, a draft reset) the cursor goes to its end.
+ * A prefilled field starts with the cursor at the end.
+ *
+ * Known limitation: on this TextFieldValue path, Compose foundation 1.8.3's
+ * BasicTextField drops a change equal to the last recomposed value, so when
+ * two keyboard edits arrive within one frame and the second restores the
+ * earlier text, the second is lost (the String path forwarded both).
  */
 @Composable
 internal fun ShowableField(
