@@ -394,16 +394,17 @@ class ScreensTest {
             MaterialTheme { if (shown) AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
         }
         compose.waitForIdle()
-        val before = view!!.importantForAutofill
+        val before = view!!.rootView.importantForAutofill
         shown = true
         compose.waitForIdle()
-        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
+        assertFalse(view!!.isImportantForAutofill)
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         compose.onNodeWithText("Show $keyLabel").performClick()
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
         shown = false
         compose.waitForIdle()
-        assertEquals(before, view!!.importantForAutofill)
+        assertEquals(before, view!!.rootView.importantForAutofill)
     }
 
     @Test
@@ -591,7 +592,7 @@ class ScreensTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
         val seed = "Authenticator secret or otpauth link"
         compose.onNodeWithText(seed).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
-        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
         compose.onNodeWithText("Show $seed").performScrollTo().performClick()
         compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
     }

@@ -55,9 +55,12 @@ internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = Keyboar
 internal fun SeedInput(label: String, value: String, problem: DraftProblem?, modifier: Modifier = Modifier, onChange: (String) -> Unit) {
     val view = LocalView.current
     DisposableEffect(view) {
-        val before = view.importantForAutofill
-        view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-        onDispose { view.importantForAutofill = before }
+        // On the window's root, not on LocalView: Compose's AndroidComposeView
+        // always reports IMPORTANT_FOR_AUTOFILL_YES and ignores the setter.
+        val screen = view.rootView
+        val before = screen.importantForAutofill
+        screen.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        onDispose { screen.importantForAutofill = before }
     }
     var shown by remember { mutableStateOf(false) }
     TextInput(
