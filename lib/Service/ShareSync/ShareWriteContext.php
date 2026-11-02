@@ -150,6 +150,7 @@ class ShareWriteContext {
 	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
+	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with

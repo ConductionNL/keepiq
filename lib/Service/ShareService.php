@@ -250,6 +250,7 @@ class ShareService {
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row of a copy the sync writes
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 	 */
@@ -277,6 +278,7 @@ class ShareService {
 	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
+	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
