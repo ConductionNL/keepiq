@@ -13,9 +13,12 @@
  * - every place naming the share-targets table outside the three mappers
  *   and the migrations: quoted, in raw `*PREFIX*` SQL, or through a
  *   constant that holds the name, also as part of a concatenation or as an
- *   alias of another such constant. Comments and log messages do not count.
- *   Not caught: a name split across concatenated literals, or held in a
- *   property or variable.
+ *   alias of another such constant. Comments do not count, nor a literal
+ *   at the top level of a log message: the first argument of a log-level
+ *   call on `$this->logger` or `$logger`, or a `message:` argument of such
+ *   a call or of `->report(`. Not caught: a name split across concatenated
+ *   literals or held in a property or variable, and a query written as
+ *   such a top-level message literal.
  *
  * It fails closed. A finder name no other class in lib/ declares is reported
  * on any receiver. A name other classes share (findById and the like, see
@@ -28,7 +31,9 @@
  * of the same name. A getter, an inherited, undeclared or untyped property,
  * a loop or `global` variable, an untyped or by-reference parameter, a
  * variable passed to a by-reference parameter of a function the file
- * declares, or anything else it cannot follow is reported.
+ * declares, or anything else it cannot follow is reported. Not caught: a
+ * variable passed to a by-reference parameter of a method declared in
+ * another file.
  *
  * The allowlists are per call site: a file, a finder and the number of calls
  * of it in that file, so a new call in an allowed file fails as well. An
@@ -1322,9 +1327,11 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	/**
 	 * The string literals that only make up a message: those at the top
 	 * level of the first argument of a PSR-3 log call on the logger
-	 * (`$this->logger->error(`, `$logger->warning(`, …) or of a `message:`
-	 * named argument. A literal inside a nested call, a log-level method on
-	 * another receiver, a context array and every other argument still count.
+	 * (`$this->logger->error(`, `$logger->warning(`, …), or of a `message:`
+	 * named argument of such a log call or of a `->report(` call. A literal
+	 * inside a nested call, a log-level method on another receiver, a
+	 * `message:` argument of any other call, a context array and every other
+	 * argument still count.
 	 *
 	 * @param list<PhpToken> $all All tokens
 	 *
@@ -1341,11 +1348,27 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			}
 
 			$at = static fn (int $offset): ?PhpToken => ($all[($sig[$p + $offset] ?? -1)] ?? null);
-			$onLogger = ($at(-1)?->is(self::OBJECT_OPERATORS) === true
-				&& (($at(-2)?->text === 'logger' && $at(-3)?->is(self::OBJECT_OPERATORS) === true && $at(-4)?->text === '$this')
-				|| $at(-2)?->text === '$logger'));
-			$logCall = (in_array(strtolower($token->text), $levels, true) === true && $onLogger === true && $at(1)?->text === '(');
+			$logCall = ($at(1)?->text === '(' && $this->isLogCall(at: $at, levels: $levels));
 			$named = (strtolower($token->text) === 'message' && $at(1)?->text === ':' && in_array($at(-1)?->text, ['(', ','], true) === true);
+			if ($named === true) {
+				// Only a `message:` of a log call or of `->report(`.
+				$depth = 0;
+				for ($o = -1; $at($o) !== null; $o--) {
+					$text = $at($o)->text;
+					if (in_array($text, [')', ']'], true) === true) {
+						$depth++;
+					} elseif (in_array($text, ['(', '['], true) === true) {
+						if ($depth === 0) {
+							break;
+						}
+
+						$depth--;
+					}
+				}
+
+				$named = ($at($o)?->text === '(' && (($at($o - 1)?->text === 'report' && $at($o - 2)?->is(self::OBJECT_OPERATORS) === true)
+					|| $this->isLogCall(at: $at, levels: $levels, offset: $o - 1)));
+			}
 			if ($logCall === false && $named === false) {
 				continue;
 			}
@@ -1371,6 +1394,23 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 		return $literals;
 	}//end messageLiterals()
+
+	/**
+	 * Whether the name at $offset is a log-level method called on the
+	 * logger (`$this->logger->error`, `$logger->warning`, …).
+	 *
+	 * @param callable(int):?PhpToken $at     The significant token at an offset
+	 * @param list<string>            $levels The PSR-3 level methods
+	 * @param int                     $offset The offset of the method name
+	 *
+	 * @return bool
+	 */
+	private function isLogCall(callable $at, array $levels, int $offset=0): bool {
+		return in_array(strtolower((string)$at($offset)?->text), $levels, true) === true
+			&& $at($offset - 1)?->is(self::OBJECT_OPERATORS) === true
+			&& (($at($offset - 2)?->text === 'logger' && $at($offset - 3)?->is(self::OBJECT_OPERATORS) === true && $at($offset - 4)?->text === '$this')
+			|| $at($offset - 2)?->text === '$logger');
+	}//end isLogCall()
 
 	/**
 	 * The line numbers in a source that match a pattern.
@@ -1678,10 +1718,11 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			)
 		);
 
-		// A query inside a log call or a `message:` argument, and a log-level
-		// method on another receiver, still count.
+		// A query inside a log call or a `message:` argument, a log-level
+		// method on another receiver and a `message:` of any call but a log
+		// call or `->report(` still count.
 		$this->assertSame(
-			expected: [2, 3, 4, 5],
+			expected: [2, 3, 4, 5, 6],
 			actual: $this->linesMatching(
 				pattern: self::TABLE_PATTERN,
 				source: implode("\n", [
@@ -1690,6 +1731,8 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 					'$this->logger->info(\'n=\' . $db->executeQuery(\'SELECT * FROM *PREFIX*keepiq_share_targets\')->rowCount());',
 					'$this->run(message: $db->executeQuery(\'SELECT * FROM *PREFIX*keepiq_share_targets\'));',
 					'$conn->error(\'SELECT * FROM *PREFIX*keepiq_share_targets\');',
+					'$this->run(message: \'SELECT * FROM *PREFIX*keepiq_share_targets\');',
+					'$this->logger->error(message: \'keepiq_share_targets row held back\');',
 				])
 			)
 		);
