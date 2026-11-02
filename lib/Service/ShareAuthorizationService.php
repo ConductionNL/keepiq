@@ -210,7 +210,7 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function refuseOwnSecretAwaitingTheScan(Secret $copy, ShareRowVerdict $verdict, string $userId): void {
-		if ($verdict->state === ShareRowVerdict::UNJUDGED && $copy->getOwnerType() === 'user' && $copy->getOwnerId() === $userId) {
+		if ($verdict->awaitsTheScanFor(secret: $copy, userId: $userId) === true) {
 			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
 		}
 	}//end refuseOwnSecretAwaitingTheScan()
