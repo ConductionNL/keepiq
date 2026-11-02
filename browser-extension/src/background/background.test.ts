@@ -157,6 +157,22 @@ describe('background entrypoint', () => {
 		expect(await browser.storage.local.get('accounts')).toHaveProperty(`accounts.${account.id}`)
 	})
 
+	it('ignores a passkey.start from the popup and a passkey.pick from a content script', async () => {
+		const request = { type: 'get', options: { challenge: 'AAAA', allowCredentials: [] } }
+		expect(await deliver({ kind: 'passkey.start', request, crossOriginAncestor: false }, popupSender)).toBeUndefined()
+		expect(await deliver({ kind: 'passkey.pick', ceremonyId: 'c1', itemId: 'i1', credentialId: 'AAAA' }, pageSender)).toBeUndefined()
+		// A passkey window kind reaches the ceremony, not the account router, which would answer `unknown`.
+		expect(await deliver({ kind: 'passkey.cancel', ceremonyId: 'c1' }, popupSender)).toEqual({ ok: false, code: 'ended' })
+	})
+
+	it('answers passkey.start and passkey.available from a content script, and passkey.abort not at all', async () => {
+		const request = { type: 'get', options: { challenge: 'AAAA', allowCredentials: [] } }
+		// Logged out, and `evil.example` is a page over https with a tab and frame: the gates answer, nothing opens.
+		expect(await deliver({ kind: 'passkey.start', request, crossOriginAncestor: false }, pageSender)).toEqual({ fallback: true })
+		expect(await deliver({ kind: 'passkey.available', crossOriginAncestor: false }, pageSender)).toBe(false)
+		expect(await deliver({ kind: 'passkey.abort', ceremonyId: 'c1' }, pageSender)).toBeUndefined()
+	})
+
 	// Which page may send which kind is `acceptedFrom` in sender.test.ts; these check the listener applies it.
 	describe('routing by sender page', () => {
 		it.each([

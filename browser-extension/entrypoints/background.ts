@@ -19,17 +19,21 @@ import { acceptedFrom, senderPage } from '@/src/background/sender'
 import { onBroadcast } from '@/src/background/broadcast'
 import { CLIPBOARD_ALARM, clearClipboard, clearCodeAfterLock } from '@/src/clipboard'
 import { rebuildMenus, registerMenus } from '@/src/menus'
-import { POPUP_PORT, POPUP_REQUEST_KINDS, type ContentToBackground, type FillRequest, type InlineListToBackground, type NotificationToBackground, type PopupToBackground } from '@/src/messages'
+import {
+	PASSKEY_POPUP_KINDS, POPUP_PORT, POPUP_REQUEST_KINDS,
+	type ContentToBackground, type FillRequest, type InlineListToBackground, type NotificationToBackground, type PasskeyPopupRequest, type PopupToBackground,
+} from '@/src/messages'
+import { endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies } from '@/src/passkey/ceremony'
 import { refreshToolbar, registerToolbarListeners } from '@/src/toolbar-icon'
 import { SYNC_ALARM } from '@/src/vault/sync'
 import { enforce, onIdleStateChanged, onPopupClosed, onPopupOpened, syncAlarm, TIMEOUT_ALARM } from '@/src/vault/timeout'
 
 /** Popup kinds that change what the context menu shows; locks, logouts and syncs reach it by broadcast. */
-const MENU_CHANGES = new Set(['accounts.add', 'accounts.reauthenticate', 'accounts.switch', 'vault.unlock', 'account.settings.set', 'fill.request'])
+const MENU_CHANGES = new Set(['accounts.add', 'accounts.reauthenticate', 'accounts.switch', 'vault.unlock', 'passkey.verify', 'account.settings.set', 'fill.request'])
 /** Popup kinds that change the active account, which closes every inline list and drops every capture; locks and logouts do so by broadcast. */
 const ACCOUNT_CHANGES = new Set(['accounts.add', 'accounts.switch'])
 /** Popup kinds that can change the active account's status, failed unlocks too (they may hold the key briefly); locks and logouts arrive by broadcast. */
-const TOOLBAR_CHANGES = new Set(['accounts.add', 'accounts.reauthenticate', 'accounts.switch', 'vault.unlock'])
+const TOOLBAR_CHANGES = new Set(['accounts.add', 'accounts.reauthenticate', 'accounts.switch', 'vault.unlock', 'passkey.verify'])
 
 /** Tab, frame and URL from `sender`, which `senderPage` checked; never from the message. */
 function onPageReady(msg: Extract<ContentToBackground, { kind: 'page_ready' }>, sender: Browser.runtime.MessageSender): void {
@@ -57,6 +61,11 @@ export default defineBackground(() => {
 			else if (m.kind === 'capture.reshow') void reshow(sender).catch(() => {})
 			else if (m.kind === 'inline.open') {
 				void openSession(m, sender).catch(() => null).then(sendResponse)
+				return true
+			}
+			else if (m.kind === 'passkey.abort') void handlePasskeyContent(m, sender)
+			else if (m.kind === 'passkey.start' || m.kind === 'passkey.available') {
+				void handlePasskeyContent(m, sender).then(sendResponse)
 				return true
 			}
 			return
@@ -89,11 +98,13 @@ export default defineBackground(() => {
 			if (ACCOUNT_CHANGES.has(kind)) {
 				void closeAllSessions()
 				dropAllCaptures()
+				void endForAccountChange().catch(() => {})
 			}
 			return reply
 		}
-		const m = msg as PopupToBackground | HandledRequest | FillRequest
-		if (m.kind === 'fill.request') void handleFillRequest(m).then(rebuild).then(sendResponse)
+		const m = msg as PopupToBackground | HandledRequest | FillRequest | PasskeyPopupRequest
+		if (PASSKEY_POPUP_KINDS.has(m.kind)) void handlePasskeyWindow(m as PasskeyPopupRequest, sender).then(rebuild).then(sendResponse)
+		else if (m.kind === 'fill.request') void handleFillRequest(m as FillRequest).then(rebuild).then(sendResponse)
 		else if (POPUP_REQUEST_KINDS.has(m.kind)) void handlePopupRequest(m as HandledRequest).then(rebuild).then(sendResponse)
 		else void handlePopupMessage(m as PopupToBackground).then(rebuild).then(sendResponse)
 		return true
@@ -108,6 +119,7 @@ export default defineBackground(() => {
 	registerInlineSessions()
 	registerCaptureQueue()
 	registerDefaultManager()
+	registerPasskeyCeremonies()
 	registerToolbarListeners()
 	onBroadcast((message) => {
 		if (message.kind !== 'vault.locked') return
