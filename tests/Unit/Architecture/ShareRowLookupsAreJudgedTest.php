@@ -244,8 +244,8 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		'Backup/BackupTableRegistry.php' => [1, 'backup and restore copy the table whole; a restore reopens the scan'],
 		'Backup/RestoreService.php' => [
 			2,
-			'the table list (BackupTableRegistry::TABLES) the restore replaces whole, and the row count of the archive file '
-				.'tables/share_targets.jsonl, read to reopen the scan; follows no row',
+			'compare() counts the current rows of each table in BackupTableRegistry::TABLES against the archive, and replace() '
+				.'reads the row count of the archive file tables/share_targets.jsonl to reopen the scan; neither follows a row',
 		],
 		'Backup/ArchiveReader.php' => [1, 'verify(): iterates the table list (BackupTableRegistry::TABLES) to check an archive; reads no live row'],
 		'Backup/ArchiveWriter.php' => [1, 'iterates the table list (BackupTableRegistry::TABLES) to copy every table whole into a backup'],
@@ -1320,9 +1320,11 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	}//end resolve()
 
 	/**
-	 * The string literals that only make up a message: the first argument
-	 * of a PSR-3 log call (`->error(`, `->warning(`, …) or a `message:`
-	 * named argument. Context arrays and every other argument still count.
+	 * The string literals that only make up a message: those at the top
+	 * level of the first argument of a PSR-3 log call on the logger
+	 * (`$this->logger->error(`, `$logger->warning(`, …) or of a `message:`
+	 * named argument. A literal inside a nested call, a log-level method on
+	 * another receiver, a context array and every other argument still count.
 	 *
 	 * @param list<PhpToken> $all All tokens
 	 *
@@ -1338,10 +1340,12 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				continue;
 			}
 
-			$previous = $all[($sig[$p - 1] ?? -1)] ?? null;
-			$next = $all[($sig[$p + 1] ?? -1)] ?? null;
-			$logCall = (in_array(strtolower($token->text), $levels, true) === true && $previous?->is(self::OBJECT_OPERATORS) === true && $next?->text === '(');
-			$named = (strtolower($token->text) === 'message' && $next?->text === ':' && in_array($previous?->text, ['(', ','], true) === true);
+			$at = static fn (int $offset): ?PhpToken => ($all[($sig[$p + $offset] ?? -1)] ?? null);
+			$onLogger = ($at(-1)?->is(self::OBJECT_OPERATORS) === true
+				&& (($at(-2)?->text === 'logger' && $at(-3)?->is(self::OBJECT_OPERATORS) === true && $at(-4)?->text === '$this')
+				|| $at(-2)?->text === '$logger'));
+			$logCall = (in_array(strtolower($token->text), $levels, true) === true && $onLogger === true && $at(1)?->text === '(');
+			$named = (strtolower($token->text) === 'message' && $at(1)?->text === ':' && in_array($at(-1)?->text, ['(', ','], true) === true);
 			if ($logCall === false && $named === false) {
 				continue;
 			}
@@ -1359,7 +1363,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 					$depth--;
 				} elseif ($depth === 0 && $text === ',') {
 					break;
-				} elseif ($all[$sig[$q]]->is([T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE]) === true) {
+				} elseif ($depth === 0 && $all[$sig[$q]]->is([T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE]) === true) {
 					$literals[$sig[$q]] = true;
 				}
 			}
@@ -1670,6 +1674,22 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 					'$this->report(output: $o, message: "quarantined keepiq_share_targets row {$id}");',
 					'$qb->from(\'keepiq_share_targets\');',
 					'$this->logger->warning(\'moved\', [\'table\' => \'keepiq_share_targets\']);',
+				])
+			)
+		);
+
+		// A query inside a log call or a `message:` argument, and a log-level
+		// method on another receiver, still count.
+		$this->assertSame(
+			expected: [2, 3, 4, 5],
+			actual: $this->linesMatching(
+				pattern: self::TABLE_PATTERN,
+				source: implode("\n", [
+					'<?php',
+					'$this->logger->info($this->db->executeQuery(\'SELECT count(*) FROM *PREFIX*keepiq_share_targets\')->fetchOne());',
+					'$this->logger->info(\'n=\' . $db->executeQuery(\'SELECT * FROM *PREFIX*keepiq_share_targets\')->rowCount());',
+					'$this->run(message: $db->executeQuery(\'SELECT * FROM *PREFIX*keepiq_share_targets\'));',
+					'$conn->error(\'SELECT * FROM *PREFIX*keepiq_share_targets\');',
 				])
 			)
 		);
