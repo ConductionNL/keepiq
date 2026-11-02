@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import type { OpenSecretRow } from '@/src/api/types'
 import { addAccount, markLoggedOut, setActive } from '@/src/accounts/store'
@@ -12,6 +12,8 @@ import { writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
 import { lock } from '@/src/vault/unlock'
 import { closeAllSessions, closedByHost, handleInlineList, inlineSessionKey, openSession, registerInlineSessions } from './inline-session'
+
+const OPEN = { kind: 'inline.open', mode: 'login' } as const
 
 vi.mock('@/src/crypto', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/crypto')>()
@@ -52,7 +54,7 @@ const list = (message: InlineListToBackground, sender = listPage()) => handleInl
 
 /** Opens a list on the top frame and lets the list page load its state. */
 async function openWithState(sender = content()) {
-	const { key } = (await openSession(sender))!
+	const { key } = (await openSession(OPEN, sender))!
 	const state = await list({ kind: 'inline.state', key })
 	return { key, state }
 }
@@ -85,58 +87,58 @@ beforeEach(async () => {
 
 describe('inline.open', () => {
 	it('answers a random 128-bit key and keeps a session without plaintext in storage.session', async () => {
-		const first = await openSession(content())
+		const first = await openSession(OPEN, content())
 		expect(first?.key).toMatch(/^[0-9a-f]{32}$/)
 		expect(JSON.parse((await stored())!)).toEqual({
-			key: first!.key, accountId, frameId: 0, frameUrl: pageUrl, listFrameId: null, itemIds: [], openedAt: expect.any(Number),
+			key: first!.key, accountId, frameId: 0, frameUrl: pageUrl, listFrameId: null, mode: 'login', itemIds: [], openedAt: expect.any(Number),
 		})
-		expect((await openSession(content()))!.key).not.toBe(first!.key)
+		expect((await openSession(OPEN, content()))!.key).not.toBe(first!.key)
 	})
 
 	it('opens on a locked vault at one row, the locked message, reading nothing from the vault', async () => {
 		await twoLogins()
 		await lock(accountId)
-		expect(await openSession(content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
 	})
 
 	it.each([1, 3, 5, 7])('sizes the list for %i matching logins, decrypting nothing', async (count) => {
 		await vault(await Promise.all(Array.from({ length: count }, (_, i) => login({ id: `item${i}`, name: `Item ${i}` }))))
 		vi.mocked(rsaDecrypt).mockClear()
-		expect(await openSession(content())).toEqual({ key: expect.any(String), height: inlineHeight(count) })
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(count) })
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 	})
 
 	it('sizes the no-match message as one row', async () => {
 		await twoLogins()
 		pageUrl = 'https://nothing.test/login'
-		expect(await openSession(content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
 	})
 
 	it('opens nothing without a logged-in account', async () => {
 		await markLoggedOut(accountId)
-		expect(await openSession(content())).toBeNull()
+		expect(await openSession(OPEN, content())).toBeNull()
 		expect(await stored()).toBeUndefined()
 	})
 
 	it('follows the inlineSuggestions setting on every open', async () => {
 		await browser.storage.local.set({ [`settings.${accountId}`]: { inlineSuggestions: false } })
-		expect(await openSession(content())).toBeNull()
+		expect(await openSession(OPEN, content())).toBeNull()
 		await browser.storage.local.set({ [`settings.${accountId}`]: { inlineSuggestions: true } })
-		expect(await openSession(content())).not.toBeNull()
+		expect(await openSession(OPEN, content())).not.toBeNull()
 	})
 
 	it('opens on an excluded domain', async () => {
 		await browser.storage.local.set({ [`settings.${accountId}`]: { excludedDomains: ['example.test'] } })
-		expect(await openSession(content())).not.toBeNull()
+		expect(await openSession(OPEN, content())).not.toBeNull()
 	})
 
 	it.each(['file:///home/alice/login.html', 'chrome-extension://abc/page.html', 'about:blank'])('opens nothing for a frame on %s', async (url) => {
-		expect(await openSession(content({ url }))).toBeNull()
+		expect(await openSession(OPEN, content({ url }))).toBeNull()
 	})
 
 	it('opens nothing for a sender without a tab or frame', async () => {
-		expect(await openSession(content({ tab: undefined }))).toBeNull()
-		expect(await openSession(content({ frameId: undefined }))).toBeNull()
+		expect(await openSession(OPEN, content({ tab: undefined }))).toBeNull()
+		expect(await openSession(OPEN, content({ frameId: undefined }))).toBeNull()
 	})
 })
 
@@ -145,7 +147,7 @@ describe('inline.state', () => {
 		await twoLogins()
 		const { key, state } = await openWithState()
 		expect(state).toEqual({
-			state: 'unlocked', host: 'example.test', theme: 'system',
+			state: 'unlocked', mode: 'login', host: 'example.test', theme: 'system',
 			rows: [{ id: 'personal', name: 'Personal', username: 'alice' }, { id: 'work', name: 'Work', username: 'alice@work.test' }],
 		})
 		expect(sent).toEqual([{ tabId: TAB, message: { kind: 'inline.ready', key }, frameId: 0 }])
@@ -168,13 +170,13 @@ describe('inline.state', () => {
 	it('answers the no-match state with no rows', async () => {
 		await vault([])
 		pageUrl = 'https://nothing.test/login'
-		expect((await openWithState()).state).toEqual({ state: 'unlocked', host: 'nothing.test', rows: [], theme: 'system' })
+		expect((await openWithState()).state).toEqual({ state: 'unlocked', mode: 'login', host: 'nothing.test', rows: [], theme: 'system' })
 	})
 
 	it('answers locked without decrypting anything', async () => {
 		await twoLogins()
 		await lock(accountId)
-		expect((await openWithState()).state).toEqual({ state: 'locked', host: 'example.test', rows: [], theme: 'system' })
+		expect((await openWithState()).state).toEqual({ state: 'locked', mode: 'login', host: 'example.test', rows: [], theme: 'system' })
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 	})
 
@@ -186,7 +188,7 @@ describe('inline.state', () => {
 
 	it('refuses a wrong key, another tab, a second list frame and a page other than the list', async () => {
 		await twoLogins()
-		const { key } = (await openSession(content()))!
+		const { key } = (await openSession(OPEN, content()))!
 		expect(await list({ kind: 'inline.state', key: 'f'.repeat(32) })).toBeNull()
 		expect(await list({ kind: 'inline.state', key }, listPage({ tab: { id: 8 } }))).toBeNull()
 		expect(await list({ kind: 'inline.state', key })).not.toBeNull()
@@ -198,7 +200,7 @@ describe('inline.state', () => {
 
 	it('binds the list frame only by inline.state, so a pick first is refused and binds nothing', async () => {
 		await twoLogins()
-		const { key } = (await openSession(content()))!
+		const { key } = (await openSession(OPEN, content()))!
 		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input }, listPage({ frameId: 12 }))).toBeNull()
 		expect(await list({ kind: 'inline.state', key })).not.toBeNull()
 	})
@@ -208,7 +210,7 @@ describe('inline.state', () => {
 			serverUrl: 'https://other.example.org', uid: 'bob', loginName: 'bob', displayName: 'Bob', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
 		}, { ...suiteRow })
 		await setActive(accountId)
-		const { key } = (await openSession(content()))!
+		const { key } = (await openSession(OPEN, content()))!
 		await setActive(other.id)
 		expect(await list({ kind: 'inline.state', key })).toBeNull()
 		expect(await stored()).toBeUndefined()
@@ -221,10 +223,10 @@ describe('inline.pick', () => {
 		await twoLogins()
 		const { key } = await openWithState()
 		sent = []
-		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ filled: 'both' })
+		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ filled: 'both', code: false })
 		expect(sent).toEqual([
 			{ tabId: TAB, message: { kind: 'inline.verify', key, input }, frameId: 0 },
-			{ tabId: TAB, message: { kind: 'fill.execute', username: 'alice@work.test', password: 'hunter2', origin: 'https://example.test', anchorKey: key }, frameId: 0 },
+			{ tabId: TAB, message: { kind: 'fill.execute', username: 'alice@work.test', password: 'hunter2', code: null, origin: 'https://example.test', anchorKey: key }, frameId: 0 },
 			{ tabId: TAB, message: { kind: 'inline.close', key, refocus: true }, frameId: 0 },
 		])
 		expect((await browser.storage.local.get(lastUsedKey(accountId)))[lastUsedKey(accountId)]).toHaveProperty('work')
@@ -235,7 +237,7 @@ describe('inline.pick', () => {
 		await vault([await login({ id: 'i1', name: 'Login', url: 'https://login.example.test/' })])
 		const { key } = await openWithState(content({ frameId: 3, url: 'https://login.example.test/frame' }))
 		sent = []
-		expect(await list({ kind: 'inline.pick', key, itemId: 'i1', input })).toEqual({ filled: 'both' })
+		expect(await list({ kind: 'inline.pick', key, itemId: 'i1', input })).toEqual({ filled: 'both', code: false })
 		expect(kinds()).toEqual([['inline.verify', 3], ['fill.execute', 3], ['inline.close', 3]])
 	})
 
@@ -301,7 +303,7 @@ describe('inline.pick', () => {
 		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ needsInsecureConfirm: true })
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 		expect(kinds()).toEqual([['inline.verify', 0]])
-		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input, confirmedInsecure: true })).toEqual({ filled: 'both' })
+		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input, confirmedInsecure: true })).toEqual({ filled: 'both', code: false })
 	})
 
 	it('ignores a malformed pick', async () => {
@@ -321,6 +323,125 @@ describe('inline.pick', () => {
 		expect(await lastInteraction()).toBeUndefined()
 		await list({ kind: 'inline.pick', key, itemId: 'work', input })
 		expect(await lastInteraction()).toBeDefined()
+	})
+})
+
+describe('code mode', () => {
+	/** RFC 6238's SHA-1 key; at 59 s its code is `287082`, until 60 s. */
+	const SEED = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
+	const CODE = { kind: 'inline.open', mode: 'code' } as const
+	const withCode = async (overrides: Partial<OpenSecretRow>) =>
+		login({ url: 'https://example.test', login: null, totp: await encrypt(SEED), ...overrides })
+
+	async function openCodes(sender = content()) {
+		const { key, height } = (await openSession(CODE, sender))!
+		return { key, height, state: await list({ kind: 'inline.state', key }) }
+	}
+
+	beforeEach(async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(59_000)
+		pageUrl = 'https://example.test/2fa'
+		await vault([
+			await withCode({ id: 'work', name: 'Work', login: await encrypt('alice@work.test') }),
+			await withCode({ id: 'personal', name: 'Personal' }),
+			await withCode({ id: 'broken', name: 'Broken', totp: await encrypt('not-a-seed') }),
+			await withCode({ id: 'shared', name: 'Shared', useOnly: true }),
+			await login({ id: 'login', name: 'Login' }),
+			secretRow({ id: 'standalone', name: 'Standalone', url: 'https://example.test', typeId: 't-totp', key: await encrypt(SEED) }),
+		])
+		await browser.storage.local.set({ [lastUsedKey(accountId)]: { personal: 5 } })
+	})
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	it('counts the matching logins with a code for the height and lists them with their codes, use-only copies too', async () => {
+		const { height, state } = await openCodes()
+		expect(height).toBe(inlineHeight(4))
+		expect(state).toEqual({
+			state: 'unlocked', mode: 'code', host: 'example.test', theme: 'system',
+			rows: [
+				{ id: 'personal', name: 'Personal', username: null, code: { digits: '287082', period: 30, validUntil: 60_000 } },
+				{ id: 'broken', name: 'Broken', username: null, code: { digits: null, period: 30, validUntil: 60_000 } },
+				{ id: 'shared', name: 'Shared', username: null, code: { digits: '287082', period: 30, validUntil: 60_000 } },
+				{ id: 'work', name: 'Work', username: 'alice@work.test', code: { digits: '287082', period: 30, validUntil: 60_000 } },
+			],
+		})
+		expect(JSON.parse((await stored())!)).toMatchObject({ mode: 'code', itemIds: ['personal', 'broken', 'shared', 'work'] })
+		expect(await stored()).not.toContain('287082')
+	})
+
+	it('reads an unknown mode as login', async () => {
+		const { key } = (await openSession({ kind: 'inline.open', mode: 'codes' } as never, content()))!
+		const state = await list({ kind: 'inline.state', key }) as { mode: string; rows: Array<{ id: string; code?: unknown }> }
+		expect(state.mode).toBe('login')
+		expect(state.rows.map((row) => row.id)).toContain('login')
+		expect(state.rows.some((row) => row.code !== undefined || row.id === 'standalone')).toBe(false)
+	})
+
+	it('answers a refresh from the bound list frame with the next codes', async () => {
+		const { key } = await openCodes()
+		vi.setSystemTime(61_000)
+		expect(await list({ kind: 'inline.state', key })).toMatchObject({ rows: [{ code: { validUntil: 90_000 } }, {}, {}, {}] })
+		expect(await list({ kind: 'inline.state', key }, listPage({ frameId: LIST_FRAME + 1 }))).toBeNull()
+	})
+
+	it('opens at one row locked and answers locked without decrypting anything', async () => {
+		await lock(accountId)
+		vi.mocked(rsaDecrypt).mockClear()
+		const { height, state } = await openCodes()
+		expect(height).toBe(inlineHeight(1))
+		expect(state).toEqual({ state: 'locked', mode: 'code', host: 'example.test', rows: [], theme: 'system' })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+	})
+
+	it('fills the code computed at the pick into the list\'s frame only, records last used and closes the list', async () => {
+		const { key } = await openCodes()
+		sent = []
+		vi.mocked(browser.tabs.sendMessage).mockImplementation(async (tabId: number, message: unknown, options?: { frameId?: number }) => {
+			sent.push({ tabId, message: structuredClone(message) as BackgroundToContent, frameId: options?.frameId })
+			const m = message as BackgroundToContent
+			return (m.kind === 'inline.verify' ? true : m.kind === 'fill.execute' ? { filled: 'none', code: true } : undefined) as never
+		})
+		vi.setSystemTime(61_000)
+		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ filled: 'none', code: true })
+		expect(sent).toEqual([
+			{ tabId: TAB, message: { kind: 'inline.verify', key, input }, frameId: 0 },
+			{ tabId: TAB, message: { kind: 'fill.execute', username: null, password: null, code: expect.stringMatching(/^\d{6}$/), origin: 'https://example.test', anchorKey: key }, frameId: 0 },
+			{ tabId: TAB, message: { kind: 'inline.close', key, refocus: true }, frameId: 0 },
+		])
+		expect((sent[1]!.message as { code: string }).code).not.toBe('287082')
+		expect((await browser.storage.local.get(lastUsedKey(accountId)))[lastUsedKey(accountId)]).toHaveProperty('work')
+		expect(await browser.storage.session.get('clipboardCode')).toEqual({})
+	})
+
+	it('refuses a login without a code, a standalone item, and a pick while locked, without filling', async () => {
+		const { key } = await openCodes()
+		expect(await list({ kind: 'inline.pick', key, itemId: 'login', input })).toEqual({ refused: 'stale' })
+		const other = (await openCodes()).key
+		expect(await list({ kind: 'inline.pick', key: other, itemId: 'standalone', input })).toEqual({ refused: 'stale' })
+		const second = (await openCodes()).key
+		await browser.storage.session.remove(`privateKeyPkcs8.${accountId}`)
+		expect(await list({ kind: 'inline.pick', key: second, itemId: 'work', input })).toEqual({ refused: 'locked' })
+		expect(sent.some(({ message }) => message.kind === 'fill.execute')).toBe(false)
+	})
+
+	it('refuses as not visible when the host does not confirm, keeping the list open', async () => {
+		const { key } = await openCodes()
+		visible = false
+		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ refused: 'not_visible' })
+		expect(await stored()).toBeDefined()
+	})
+
+	it('asks for an https login on an http frame before filling', async () => {
+		pageUrl = 'http://example.test/2fa'
+		const { key } = await openCodes()
+		sent = []
+		expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ needsInsecureConfirm: true })
+		expect(kinds()).toEqual([['inline.verify', 0]])
+		await list({ kind: 'inline.pick', key, itemId: 'work', input, confirmedInsecure: true })
+		expect(kinds()).toEqual([['inline.verify', 0], ['inline.verify', 0], ['fill.execute', 0], ['inline.close', 0]])
 	})
 })
 
@@ -366,7 +487,7 @@ describe('the list page’s other messages', () => {
 	})
 
 	it('takes inline.resize only from the bound list frame', async () => {
-		const { key } = (await openSession(content()))!
+		const { key } = (await openSession(OPEN, content()))!
 		sent = []
 		await list({ kind: 'inline.resize', key, height: 130 })
 		expect(sent).toEqual([])
@@ -402,16 +523,16 @@ describe('dropping the session', () => {
 	})
 
 	it('on the next inline.open in the tab, closing the earlier list by its key', async () => {
-		const first = (await openSession(content({ frameId: 3, url: 'https://login.example.test/' })))!.key
-		const second = (await openSession(content()))!.key
+		const first = (await openSession(OPEN, content({ frameId: 3, url: 'https://login.example.test/' })))!.key
+		const second = (await openSession(OPEN, content()))!.key
 		expect(sent).toEqual([{ tabId: TAB, message: { kind: 'inline.close', key: first, refocus: false }, frameId: 3 }])
 		expect(JSON.parse((await stored())!)).toMatchObject({ key: second })
 	})
 
 	it('on two opens from different frames at once, closing the first instead of orphaning it', async () => {
 		const [first, second] = await Promise.all([
-			openSession(content({ frameId: 3, url: 'https://login.example.test/' })),
-			openSession(content()),
+			openSession(OPEN, content({ frameId: 3, url: 'https://login.example.test/' })),
+			openSession(OPEN, content()),
 		])
 		expect(first).not.toBeNull()
 		expect(second).not.toBeNull()
@@ -423,14 +544,14 @@ describe('dropping the session', () => {
 	})
 
 	it('on the next inline.open even when that one opens nothing', async () => {
-		await openSession(content())
+		await openSession(OPEN, content())
 		await browser.storage.local.set({ [`settings.${accountId}`]: { inlineSuggestions: false } })
-		expect(await openSession(content())).toBeNull()
+		expect(await openSession(OPEN, content())).toBeNull()
 		expect(await stored()).toBeUndefined()
 	})
 
 	it('on tab close, sending nothing', async () => {
-		await openSession(content())
+		await openSession(OPEN, content())
 		await fakeBrowser.tabs.onRemoved.trigger(TAB, { windowId: 1, isWindowClosing: false })
 		await flush()
 		expect(await stored()).toBeUndefined()
@@ -438,7 +559,7 @@ describe('dropping the session', () => {
 	})
 
 	it('on the tab starting to load', async () => {
-		const { key } = (await openSession(content()))!
+		const { key } = (await openSession(OPEN, content()))!
 		await fakeBrowser.tabs.onUpdated.trigger(TAB, { status: 'loading' }, { id: TAB } as never)
 		await vi.waitFor(async () => expect(await stored()).toBeUndefined())
 		expect(sent.map(({ message }) => message)).toEqual([{ kind: 'inline.close', key, refocus: false }])
@@ -466,7 +587,7 @@ describe('dropping the session', () => {
 			await twoLogins()
 			const { key, state } = await openWithState()
 			expect(state).toMatchObject({ state: 'unlocked', rows: [{ id: 'personal' }, { id: 'work' }] })
-			expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ filled: 'both' })
+			expect(await list({ kind: 'inline.pick', key, itemId: 'work', input })).toEqual({ filled: 'both', code: false })
 		} finally {
 			Object.assign(browser.storage, { session })
 		}
@@ -475,7 +596,7 @@ describe('dropping the session', () => {
 
 it('sends a content script no name, username or item id, only a height, and plaintext only in the one fill', async () => {
 	await twoLogins()
-	const opened = await openSession(content())
+	const opened = await openSession(OPEN, content())
 	const { key } = opened!
 	await list({ kind: 'inline.state', key })
 	await list({ kind: 'inline.refocus', key })
