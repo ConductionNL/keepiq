@@ -196,7 +196,7 @@ Turn the questions off with **Ask to add login** and **Ask to update existing lo
 
 A passkey signs you in to a website without a password. Keepiq keeps your passkeys on your logins, encrypted like the rest of your vault, and offers them on every site that uses passkeys.
 
-- **Saving a passkey:** when a site creates a passkey, a Keepiq window opens with **Save passkey**. Pick one of your logins for the site, or choose **Save as new login** with a name and a folder. When that login already has a passkey for the same account, Keepiq asks before it replaces it. The site gets the passkey only after your server saved it.
+- **Saving a passkey:** when a site creates a passkey, a Keepiq window opens with **Save passkey**. Pick one of your logins for the site, or click **New login** (the **+** in the corner) to save it as a new login with a name and a folder; without a login for the site, Keepiq asks for that name and folder at once. When that login already has a passkey for the same account, Keepiq asks before it replaces it. The site gets the passkey only after your server saved it.
 - **Signing in:** when a site asks for a passkey, the window lists your passkeys for that site. Pick one to sign in. With none, it says **No Keepiq passkey for *site***.
 - **Under the login field:** some sites offer passkeys as soon as you click the user name field. Keepiq then lists your passkeys above your logins there, and the browser's own suggestions keep working.
 - **Locked:** the window asks you to unlock first, then goes on. Before you unlock, it shows nothing about which passkeys you have.

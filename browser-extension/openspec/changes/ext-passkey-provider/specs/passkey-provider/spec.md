@@ -79,7 +79,7 @@ Each of these depends on the settings and the request only, never on what the va
 - **THEN** the browser's own `create` runs
 
 ### Requirement: The passkey window
-For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. A click, Enter or Space that signs, saves, replaces, retries or submits the unlock or "Confirm it's you" form counts only 500 ms after the window, its current step or a failure with Retry appeared or the window got focus, so input meant for the page does nothing; a held Enter or Space counts only its first press, and the Replace question starts on Cancel; Cancel and Escape count at once. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
+For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. A click, Enter or Space that signs, saves, replaces, retries, opens New login or submits the unlock or "Confirm it's you" form counts only 500 ms after the window, its current step or a failure with Retry appeared or the window got focus, so input meant for the page does nothing; a held Enter or Space counts only its first press, and the Replace question starts on Cancel; Cancel and Escape count at once. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
 
 #### Scenario: Two requests in one tab
 - **GIVEN** a passkey window open for a `get` in a tab
@@ -143,9 +143,9 @@ The extension SHALL NOT offer, sign with or create items of the standalone `pass
 
 ### Requirement: Save a passkey
 For a `create`, the window SHALL show "Save passkey", the RP ID and the request's `user.name`, then where to save it, as in Bitwarden:
-- the logins matching the requesting frame's URL under the URI match rule, as `autofill` matches them, without use-only, read-only and view-only copies, each with its name and username, last used first;
-- "Save as new login", with a Name field prefilled with `rp.name` or else the RP ID, and a Folder select (default "No folder", from the cached folders);
-- "Use your device or hardware key" and Cancel.
+- under "Save to a login", the logins matching the requesting frame's URL under the URI match rule, as `autofill` matches them, without use-only, read-only and view-only copies, each with its name and username, last used first;
+- a "New login" icon button in the header corner, which opens the New login step: a Name field prefilled with `rp.name` or else the RP ID, a Folder select (default "No folder", from the cached folders) and "Save as new login", with Back and Escape returning to the list. Without a matching login the window opens on that step, with no Back and no "New login" button;
+- "Use your device or hardware key" and Cancel, on both steps.
 
 On a choice, the background makes an ECDSA P-256 key pair and builds the canonical credential (a random 16-byte `credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle` from `user.id`, `privateKey` as base64url PKCS#8, `algorithm` `-7`, `counter` 0, `transports` `["internal"]`, `createdAt`), field order as the web app writes it. A new login is created through the same write path as every create: the `login` type, `url` the frame's origin, no username, an empty password (`key` the encryption of `''`, as the web app's import writes one), the chosen folder, and `passkeys` the JSON array of that one credential. An existing login gets the credential appended to its `passkeys` (The passkeys field is saved whole). When the chosen login already holds a passkey with the same `rpId` and `userHandle`, the window first asks "Replace the passkey for <user name> on <login name>?" with Replace and Cancel; Replace puts the new credential in that entry's place. The page MUST receive the attestation only after the server accepted the save. A failed save keeps the window open with the reason, Retry, "Use your device or hardware key" and Cancel. Retry syncs first, since a lost reply may hide a stored write: when a login holds the passkey a failed try of this save wrote, the new one takes its place there, so no second login or entry appears; without a sync, Retry saves nothing and shows the sync's reason.
 
@@ -154,6 +154,17 @@ On a choice, the background makes an ECDSA P-256 key pair and builds the canonic
 - **WHEN** the user clicks "Save as new login" with Name "Example"
 - **THEN** a login "Example" with `url` `https://example.test`, no username and an empty password exists, its `passkeys` decrypting to one credential the web app's passkey parser accepts
 - **AND** the page receives an attestation of format `none` whose public key verifies a later assertion
+
+#### Scenario: No matching login
+- **GIVEN** no login matching `https://example.test`
+- **WHEN** it calls `create`
+- **THEN** the window opens on the New login step with Name focused, and shows no Back and no "New login" button
+
+#### Scenario: New login next to matching logins
+- **GIVEN** a login "Example" (`alice`) for `example.test`
+- **WHEN** `https://example.test` calls `create`
+- **THEN** the window lists "Example" under "Save to a login", focused, and shows no Name field
+- **AND** "New login" in the header opens the New login step with Name focused, and Back or Escape returns to the list with focus on "New login"
 
 #### Scenario: Save to an existing login
 - **GIVEN** a login "Example" (`alice`) for `example.test` with a password and no passkey
