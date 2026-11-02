@@ -1,14 +1,22 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import { sendRow } from '../testing'
 import { isExpired, sendLabel, SendRow } from './SendRow'
 
+const thisYear = 2026
+
+beforeEach(() => {
+	vi.useFakeTimers({ toFake: ['Date'] })
+	vi.setSystemTime(new Date(thisYear, 9, 23, 9, 0))
+})
+
 afterEach(() => {
 	cleanup()
 	setLocale('en')
+	vi.useRealTimers()
 })
 
 const renderRow = (row = sendRow(), link?: string) => {
@@ -16,8 +24,6 @@ const renderRow = (row = sendRow(), link?: string) => {
 	render(<ul><SendRow row={row} name="Text send (2)" link={link} onRemove={onRemove} /></ul>)
 	return onRemove
 }
-
-const thisYear = new Date().getFullYear()
 
 describe('SendRow', () => {
 	it('labels by type and a short 24-hour time, as sends have no name', () => {
