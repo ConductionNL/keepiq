@@ -22,10 +22,177 @@ export type ContentToBackground =
 	 * that cannot move an iframe without reloading it (no `moveBefore`); the background answers with a fresh `capture.show`.
 	 */
 	| { kind: 'capture.reshow' }
+	| PasskeyContentToBackground
 
 /** The only kinds a content script may send. */
 export const CONTENT_KINDS = kindSet<ContentToBackground['kind']>({
 	'page_ready': true, 'inline.open': true, 'inline.closed': true, 'capture.submitted': true, 'capture.reshow': true,
+	'passkey.start': true, 'passkey.abort': true, 'passkey.available': true,
+})
+
+// Passkeys, ext-passkey-provider design.md § Messages. Every byte string is base64url.
+
+/** A `PublicKeyCredentialDescriptor`. */
+export interface PasskeyDescriptor {
+	type: string
+	id: string
+	transports?: string[]
+}
+
+/** The `publicKey` members of `create()` Keepiq reads; other extensions than `credProps` are left out. */
+export interface PasskeyCreateOptions {
+	rp: { id?: string; name: string }
+	user: { id: string; name: string; displayName: string }
+	challenge: string
+	pubKeyCredParams: Array<{ type: string; alg: number }>
+	timeout?: number
+	excludeCredentials: PasskeyDescriptor[]
+	authenticatorSelection?: { authenticatorAttachment?: string; residentKey?: string; requireResidentKey?: boolean; userVerification?: string }
+	attestation?: string
+	extensions?: { credProps?: boolean }
+}
+
+/** The `publicKey` members of `get()` Keepiq reads. */
+export interface PasskeyGetOptions {
+	challenge: string
+	timeout?: number
+	rpId?: string
+	allowCredentials: PasskeyDescriptor[]
+	userVerification?: string
+}
+
+/** `conditional` only with `get`; `silent` and `immediate` go to the browser. */
+export type PasskeyMediation = 'optional' | 'required' | 'conditional'
+
+export type PasskeyRequest =
+	| { type: 'create'; options: PasskeyCreateOptions; mediation?: PasskeyMediation }
+	| { type: 'get'; options: PasskeyGetOptions; mediation?: PasskeyMediation }
+
+/** WebAuthn's `RegistrationResponseJSON` response; `publicKey` is the SPKI. */
+export interface PasskeyAttestationJSON {
+	clientDataJSON: string
+	attestationObject: string
+	authenticatorData: string
+	publicKey: string
+	publicKeyAlgorithm: number
+	transports: string[]
+}
+
+/** WebAuthn's `AuthenticationResponseJSON` response. */
+export interface PasskeyAssertionJSON {
+	clientDataJSON: string
+	authenticatorData: string
+	signature: string
+	userHandle: string | null
+}
+
+export interface PasskeyCredentialJSON {
+	id: string
+	rawId: string
+	type: 'public-key'
+	authenticatorAttachment: 'platform'
+	clientExtensionResults: { credProps?: { rk: boolean } }
+	/** By the ceremony's kind: an attestation for `create`, an assertion for `get`. */
+	response: PasskeyAttestationJSON | PasskeyAssertionJSON
+}
+
+export const PASSKEY_ERRORS = ['NotAllowedError', 'InvalidStateError', 'AbortError'] as const
+export type PasskeyErrorName = typeof PASSKEY_ERRORS[number]
+
+/** `fallback`: the page script calls the browser's own method with the page's arguments. */
+export type PasskeyResult =
+	| { type: 'credential'; credential: PasskeyCredentialJSON }
+	| { type: 'error'; name: PasskeyErrorName }
+	| { type: 'fallback' }
+
+/** `crossOriginAncestor`: from the isolated world; tab, frame and origin come from `sender`. */
+export type PasskeyContentToBackground =
+	/** Request/response, reply `PasskeyStartReply`; the result follows as `passkey.result`. */
+	| { kind: 'passkey.start'; request: PasskeyRequest; crossOriginAncestor: boolean }
+	/** Fire-and-forget: the page aborted, or the frame went away. */
+	| { kind: 'passkey.abort'; ceremonyId: string }
+	/** Request/response, reply `boolean`: whether the provider would handle a request from this frame. */
+	| { kind: 'passkey.available'; crossOriginAncestor: boolean }
+
+export type PasskeyStartReply = { ceremonyId: string } | { fallback: true }
+
+/** Page script → relay, by `window.postMessage` with the call's own `MessageChannel` port. */
+export type PageToRelay =
+	| { channel: 'keepiq.passkey'; kind: 'create'; id: string; options: PasskeyCreateOptions; mediation?: string }
+	| { channel: 'keepiq.passkey'; kind: 'get'; id: string; options: PasskeyGetOptions; mediation?: string }
+	| { channel: 'keepiq.passkey'; kind: 'available'; id: string }
+
+/** Page script → relay over the port. */
+export type PagePortMessage = { kind: 'abort'; id: string }
+
+/** Relay → page script over the port: `ack` at once, then one answer. `available`: answer `true`. */
+export type RelayToPage = { type: 'ack' } | { type: 'available' } | PasskeyResult
+
+/** The passkey window → background. Each names its ceremony, so a stale window cannot answer a newer one. */
+export type PasskeyPopupRequest = { ceremonyId: string } & (
+	| { kind: 'passkey.state' }
+	| { kind: 'passkey.pick'; itemId: string; credentialId: string }
+	/** `replace`: the user confirmed replacing the login's passkey for the same relying party and user. */
+	| { kind: 'passkey.save'; target: { itemId: string; replace?: boolean } | { name: string; folderId: string | null } }
+	/** "Confirm it's you", and the window's unlock: only an unlock through here sets the user-verified flag. */
+	| { kind: 'passkey.verify'; method: UnlockMethod }
+	| { kind: 'passkey.retry' }
+	| { kind: 'passkey.fallback' }
+	| { kind: 'passkey.cancel' }
+)
+
+/** A passkey offered for a sign-in: the login's name and the passkey's user name, nothing secret. */
+export interface PasskeyRow {
+	itemId: string
+	credentialId: string
+	name: string
+	userName: string
+}
+
+/** A login a `create` may save to. `replace`: it holds a passkey for this RP and user, named by that passkey's user name. */
+export interface PasskeySaveTarget {
+	itemId: string
+	name: string
+	username: string
+	replace: { userName: string } | null
+}
+
+/** What the passkey window shows of its ceremony; `rpName` and `userName` are the page's own, to show as text. */
+export interface PasskeyView {
+	kind: 'create' | 'get'
+	rpId: string
+	host: string
+	rpName: string
+	userName: string
+	locked: boolean
+	/** "Confirm it's you" comes before a pick or a save. */
+	verify: boolean
+	/** A `get`'s passkeys; always empty while locked. */
+	rows: PasskeyRow[]
+	/** A `create`'s matching logins, last used first, then "Save as new login" with these folders by path; empty while locked. */
+	targets: PasskeySaveTarget[]
+	folders: Array<{ id: string; name: string }>
+	/** A `create` excluding a passkey the vault holds: "already saved", whose Close (`passkey.cancel`) answers `InvalidStateError`. */
+	alreadySaved: boolean
+	/** The last pick or save failed; `passkey.retry` runs it again. Null while locked. */
+	failure: VaultWriteError | null
+}
+
+/**
+ * `ended`: the ceremony is over or was never this window's. `verify_required`: "Confirm it's you" first.
+ * `stale`: the passkey or login picked is no longer offered. `replace_required`: ask Replace first.
+ * `write_failed`: the counter save or the passkey save failed, as `error` says; the ceremony stays open for Retry.
+ * An `ErrorCode` comes from unlocking at `passkey.verify`.
+ */
+export type PasskeyFailure = 'ended' | 'locked' | 'verify_required' | 'stale' | 'already_saved' | 'replace_required' | 'write_failed' | ErrorCode
+
+export type PasskeyWindowReply =
+	| { ok: true; view?: PasskeyView }
+	| { ok: false; code: PasskeyFailure; attemptsLeft?: number; error?: VaultWriteError }
+
+export const PASSKEY_POPUP_KINDS = kindSet<PasskeyPopupRequest['kind']>({
+	'passkey.state': true, 'passkey.pick': true, 'passkey.save': true, 'passkey.verify': true,
+	'passkey.retry': true, 'passkey.fallback': true, 'passkey.cancel': true,
 })
 
 // Autofill, ext-autofill design.md § Message contract.
@@ -258,6 +425,8 @@ export type BackgroundToContent =
 	| { kind: 'capture.focus' }
 	/** From the bar's `capture.expand`, relayed: the host grows to the full height until focus leaves it. */
 	| { kind: 'capture.expand'; key: string }
+	/** Fire-and-forget, to the frame that started the ceremony. `origin`: the ceremony's, which the relay checks. */
+	| { kind: 'passkey.result'; ceremonyId: string; origin: string; result: PasskeyResult }
 
 export type AccountStatus = 'unlocked' | 'locked' | 'logged_out'
 
