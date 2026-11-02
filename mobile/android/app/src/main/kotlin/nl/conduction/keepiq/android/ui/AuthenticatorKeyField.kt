@@ -33,6 +33,7 @@ import nl.conduction.keepiq.android.R
 import nl.conduction.keepiq.shared.vault.DraftProblem
 import nl.conduction.keepiq.shared.vault.ItemDraft
 import nl.conduction.keepiq.shared.vault.KeyEdit
+import java.util.WeakHashMap
 
 /**
  * The keyboard for a key: a seed is a second factor. A password keyboard
@@ -43,11 +44,22 @@ import nl.conduction.keepiq.shared.vault.KeyEdit
 internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
 
 /**
+ * The seed fields on screen per window, and the window's autofill flag from
+ * before the first of them: the window stays out of autofill while any of
+ * them is on screen, whatever order they leave in. Touched on the main
+ * thread only.
+ */
+private val seedFieldsOnScreen = WeakHashMap<View, IntArray>()
+
+/**
  * Where an Authenticator seed is typed, on a login's key field and on an
  * Authenticator item's own seed: masked until shown, as a password is, with
  * a password keyboard without autocorrect, and while it is on screen the
  * screen is kept out of the autofill framework, so another autofill service
  * is never offered the seed to save (the web field's autocomplete="off").
+ * The window's root is marked IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS;
+ * the protection relies on the platform leaving the descendants of such a
+ * view out of the autofill structure it hands a service.
  */
 @Composable
 internal fun SeedInput(label: String, value: String, problem: DraftProblem?, modifier: Modifier = Modifier, onChange: (String) -> Unit) {
@@ -56,9 +68,15 @@ internal fun SeedInput(label: String, value: String, problem: DraftProblem?, mod
         // On the window's root, not on LocalView: Compose's AndroidComposeView
         // always reports IMPORTANT_FOR_AUTOFILL_YES and ignores the setter.
         val screen = view.rootView
-        val before = screen.importantForAutofill
+        val entry = seedFieldsOnScreen.getOrPut(screen) { intArrayOf(0, screen.importantForAutofill) }
+        entry[0]++
         screen.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-        onDispose { screen.importantForAutofill = before }
+        onDispose {
+            if (--entry[0] == 0) {
+                screen.importantForAutofill = entry[1]
+                seedFieldsOnScreen.remove(screen)
+            }
+        }
     }
     var shown by remember { mutableStateOf(false) }
     ShowableField(shown) { rebuilt ->

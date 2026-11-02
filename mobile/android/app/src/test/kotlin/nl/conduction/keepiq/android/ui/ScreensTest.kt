@@ -5,6 +5,7 @@ package nl.conduction.keepiq.android.ui
 
 import android.text.InputType
 import android.view.View
+import android.view.ViewGroup
 import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.Column
@@ -491,10 +492,13 @@ class ScreensTest {
         }
         compose.waitForIdle()
         val before = view!!.rootView.importantForAutofill
+        assertTrue(view!! in viewsForAutofill(view!!))
         shown = true
         compose.waitForIdle()
         assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
         assertFalse(view!!.isImportantForAutofill)
+        // What the platform walks to build the structure an autofill service gets: the screen is not in it.
+        assertFalse(view!! in viewsForAutofill(view!!))
         compose.onNodeWithText(keyLabel).performTextInput("JBSWY3DPEHPK3PXP")
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         assertEquals("\u2022".repeat(16), laidOutText(keyLabel))
@@ -507,6 +511,49 @@ class ScreensTest {
         compose.onNodeWithText("Hide $keyLabel").performClick()
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         shown = false
+        compose.waitForIdle()
+        assertEquals(before, view!!.rootView.importantForAutofill)
+        assertTrue(view!! in viewsForAutofill(view!!))
+    }
+
+    /**
+     * The views the window offers for autofill: ViewGroup.getChildrenForAutofill
+     * without FLAG_INCLUDE_NOT_IMPORTANT_VIEWS, the walk
+     * dispatchProvideAutofillStructure makes for the structure an autofill
+     * service gets (private API, so called by reflection).
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun viewsForAutofill(view: View): List<View> = ArrayList(
+        ViewGroup::class.java.getDeclaredMethod("getChildrenForAutofill", Int::class.javaPrimitiveType)
+            .apply { isAccessible = true }.invoke(view.rootView, 0) as List<View>,
+    )
+
+    @Test
+    fun theScreenStaysOutOfAutofillUntilTheLastSeedFieldGoes() {
+        var view: View? = null
+        var first by mutableStateOf(false)
+        var second by mutableStateOf(false)
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme {
+                Column {
+                    if (first) SeedInput("First seed", "", null) {}
+                    if (second) SeedInput("Second seed", "", null) {}
+                }
+            }
+        }
+        compose.waitForIdle()
+        val before = view!!.rootView.importantForAutofill
+        first = true
+        compose.waitForIdle()
+        second = true
+        compose.waitForIdle()
+        // The first goes while the second stays: the window stays out of autofill.
+        first = false
+        compose.waitForIdle()
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
+        assertFalse(view!!.isImportantForAutofill)
+        second = false
         compose.waitForIdle()
         assertEquals(before, view!!.rootView.importantForAutofill)
     }
