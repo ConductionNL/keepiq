@@ -37,7 +37,7 @@ What crosses each boundary, and nothing else:
 | Relay → page script | ack; credential as base64url, a `DOMException` name, or `fallback` | nothing: the page reads it anyway |
 | Relay → background (`passkey.start`, `passkey.abort`, `passkey.available`) | the options, `crossOriginAncestor` | the ancestor flag only; tab, frame and origin come from `sender` |
 | Background → relay (`passkey.result`, by `frameId`) | ceremony id, origin, result | — |
-| Background ↔ passkey window (popup kinds) | ceremony view: kind, RP ID, host, page's `rp.name` and `user.name`, lock state, sign-in rows (login id, credential id, login name, user name), save targets (login id, name, username), codes; back: pick, save to a login or a new one, replace, verify, fallback, cancel | — |
+| Background ↔ passkey window (popup kinds) | ceremony view: kind, RP ID, host, page's `rp.name` and `user.name`, lock state, sign-in rows (login id, credential id, login name, user name) and the one picked in the inline list, save targets (login id, name, username), codes; back: pick, save to a login or a new one, replace, verify, fallback, cancel | — |
 | Background ↔ inline list | passkey rows (login id, credential id, login name, user name) in `inline.state`; `inline.pick` with a login id and credential id | — |
 | Background ↔ popup detail | `item.passkeys`: per entry relying party, user name, created date | — |
 
@@ -116,7 +116,7 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 
 | Data | Lives in | Cleared by |
 | --- | --- | --- |
-| Ceremony: ids, origin, frame URL without fragment, RP ID, challenge, page's `rp` and `user`, credential id lists, requirements, deadline, window id, verified flag, `alreadySaved`; after a failed pick or save its login and credential ids, the typed name and folder, and the error with any partner cloud ids and share ids | `storage.session` `passkeyCeremony.<tabId>`; memory below Firefox 115 | Ceremony end, next ceremony in the tab, tab close or navigation, logout, account switch, restart, reload |
+| Ceremony: ids, origin, frame URL without fragment, RP ID, challenge, page's `rp` and `user`, credential id lists, requirements, deadline, window id, verified flag, `alreadySaved`; after a failed pick or save its login and credential ids, the typed name and folder, and the error with any partner cloud ids and share ids; an inline-list pick waiting on "Confirm it's you" as login and credential id | `storage.session` `passkeyCeremony.<tabId>`; memory below Firefox 115 | Ceremony end, next ceremony in the tab, tab close or navigation, logout, account switch, restart, reload |
 | `write-context` answers of the Save view, by ceremony and login id | Background memory, the latest four ceremonies | Worker stop, four newer ceremonies |
 | Decrypted `passkeys` array, imported signing key, generated key pair | Background memory, one handler | Handler return |
 | Rows a pending conditional request offers (login id, credential id, login name, user name) | Background memory, by ceremony id | Ceremony end, lock, vault change, worker stop |

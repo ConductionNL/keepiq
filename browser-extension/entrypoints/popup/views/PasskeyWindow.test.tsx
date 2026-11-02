@@ -15,7 +15,7 @@ afterEach(cleanup)
 function passkeyView(overrides: Partial<PasskeyView> = {}): PasskeyView {
 	return {
 		kind: 'get', rpId: 'example.test', host: 'example.test', rpName: 'Example Corp', userName: 'alice', locked: false, verify: false,
-		rows: [], targets: [], folders: [], alreadySaved: false, failure: null, ...overrides,
+		rows: [], targets: [], folders: [], alreadySaved: false, failure: null, pending: null, ...overrides,
 	}
 }
 
@@ -145,6 +145,53 @@ describe('sign in', () => {
 		expect(await alertText()).toBe('This passkey is no longer in your vault. Choose another one.')
 		await screen.findByText('No Keepiq passkey for example.test')
 		expect(sentOf(sent, 'passkey.state').length).toBeGreaterThan(1)
+	})
+})
+
+describe('a pick from the inline list that waits on "Confirm it\'s you"', () => {
+	const work = row({ itemId: 'i2', credentialId: 'cred-2', name: 'Work', userName: 'alice.w' })
+	const heldView = () => passkeyView({ rows: [row(), work], verify: true, pending: work })
+
+	it('opens on that step for the picked passkey, and closes once the background signed it', async () => {
+		const { sent, close, user } = renderWindow(heldView(), { replies: { 'passkey.verify': { ok: true } } })
+		await heading('Confirm it\'s you')
+		expect(screen.getByText('Work')).toBeTruthy()
+		expect(screen.getByText('alice.w')).toBeTruthy()
+		expect(screen.queryByText('Example')).toBeNull()
+		expect(screen.queryByRole('list')).toBeNull()
+		const field = screen.getByLabelText('Master password')
+		expect(document.activeElement).toBe(field)
+		await user.type(field, 'hunter2{Enter}')
+		await waitFor(() => expect(close).toHaveBeenCalled())
+		expect(sentOf(sent, 'passkey.verify')).toEqual([{ kind: 'passkey.verify', ceremonyId: 'c1', method: { type: 'masterPassword', masterPassword: 'hunter2' } }])
+		expect(sentOf(sent, 'passkey.pick')).toEqual([])
+	})
+
+	it('shows the list and says so when the passkey is gone by then', async () => {
+		const { sent, user, setView } = renderWindow(heldView(), { replies: { 'passkey.verify': { ok: false, code: 'stale' } } })
+		const field = await screen.findByLabelText('Master password')
+		setView(passkeyView({ rows: [row()] }))
+		await user.type(field, 'hunter2{Enter}')
+		expect(await alertText()).toBe('This passkey is no longer in your vault. Choose another one.')
+		await heading('Sign in with a passkey')
+		expect(screen.getByRole('button', { name: 'Example, alice' })).toBeTruthy()
+		expect(sentOf(sent, 'passkey.pick')).toEqual([])
+	})
+
+	it('shows a failed counter save with Retry', async () => {
+		const { close, user, setView } = renderWindow(heldView(), { replies: { 'passkey.verify': { ok: false, code: 'write_failed', error: { code: 'offline' } } } })
+		const field = await screen.findByLabelText('Master password')
+		setView(passkeyView({ rows: [row(), work], failure: { code: 'offline' } }))
+		await user.type(field, 'hunter2{Enter}')
+		expect(await alertText()).toContain('Could not reach the server')
+		expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('shows no passkey name while locked', async () => {
+		renderWindow(passkeyView({ locked: true, rows: [], pending: null }))
+		await heading('Unlock')
+		expect(document.body.textContent).not.toMatch(/Work|alice/)
 	})
 })
 

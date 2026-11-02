@@ -176,6 +176,8 @@ export interface PasskeyView {
 	alreadySaved: boolean
 	/** The last pick or save failed; `passkey.retry` runs it again. Null while locked. */
 	failure: VaultWriteError | null
+	/** A passkey picked in the inline list, one of `rows`: the window opens on "Confirm it's you" for it. Null while locked. */
+	pending: PasskeyRow | null
 }
 
 /**

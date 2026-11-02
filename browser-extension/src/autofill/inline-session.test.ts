@@ -4,7 +4,7 @@ import type { OpenSecretRow } from '@/src/api/types'
 import { addAccount, markLoggedOut, setActive } from '@/src/accounts/store'
 import { broadcast } from '@/src/background/broadcast'
 import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
-import { toBase64Url } from '@/src/crypto/base64'
+import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { lastUsedKey } from '@/src/last-used'
 import { inlineHeight, type BackgroundToContent, type InlineListToBackground, type PickInput } from '@/src/messages'
 import { ceremonyKey, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from '@/src/passkey/ceremony'
@@ -13,7 +13,7 @@ import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey, putKey, unlockedAtKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
-import { lock } from '@/src/vault/unlock'
+import { lock, unlock } from '@/src/vault/unlock'
 import { savePasskeyCounter } from '@/src/vault/write'
 import { closeAllSessions, closedByHost, handleInlineList, inlineSessionKey, openSession, registerInlineSessions } from './inline-session'
 
@@ -23,6 +23,7 @@ vi.mock('@/src/crypto', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/crypto')>()
 	return { ...actual, rsaDecrypt: vi.fn(actual.rsaDecrypt) }
 })
+vi.mock('@/src/vault/unlock', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/vault/unlock')>(), unlock: vi.fn() }))
 vi.mock('@/src/vault/write', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/vault/write')>()
 	return { ...actual, savePasskeyCounter: vi.fn(actual.savePasskeyCounter) }
@@ -833,6 +834,75 @@ describe('passkeys during a conditional request', () => {
 		expect(await handlePasskeyWindow({ kind: 'passkey.fallback', ceremonyId }, fromWindow)).toEqual({ ok: true })
 		expect(await ceremony()).toBeUndefined()
 		expect(resultsOnly()).toEqual([{ type: 'fallback' }])
+	})
+
+	describe('a pick that waits on "Confirm it\'s you"', () => {
+		const PIN = { type: 'pin', pin: '123456' } as const
+		let ceremonyId: string
+		const fromWindow = () => ({ id: browser.runtime.id, url: browser.runtime.getURL(`/popup.html?passkey=${ceremonyId}`), tab: { id: 550 }, frameId: 0 }) as never
+		const passkeyWindow = (message: object) => handlePasskeyWindow({ ceremonyId, ...message } as never, fromWindow())
+
+		beforeEach(async () => {
+			vi.mocked(unlock).mockReset()
+			ceremonyId = await conditional({ userVerification: 'required' })
+			expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
+		})
+
+		it('is held by ids only, and the window opens on it', async () => {
+			expect((await ceremony())?.pending).toEqual({ itemId: 'example', credentialId: 'QQ' })
+			expect(await passkeyWindow({ kind: 'passkey.state' })).toMatchObject({ ok: true, view: { verify: true, pending: offered, rows: [offered] } })
+		})
+
+		it('is signed after "Confirm it\'s you", with the user-verified flag', async () => {
+			expect(await passkeyWindow({ kind: 'passkey.verify', method: PIN })).toEqual({ ok: true })
+			expect(unlock).toHaveBeenCalledWith(accountId, PIN)
+			const [result] = resultsOnly()
+			expect(result).toEqual({ type: 'credential', credential: expect.objectContaining({ id: 'QQ' }) })
+			const { authenticatorData } = (result as Extract<typeof result, { type: 'credential' }>).credential.response
+			expect(fromBase64Url(authenticatorData)[32]! & 0x04).toBe(0x04)
+			expect(await ceremony()).toBeUndefined()
+		})
+
+		it('is refused once no longer offered, signing nothing and showing the list', async () => {
+			await vault([await login({ id: 'work', name: 'Work' })])
+			broadcast({ kind: 'vault.changed', sync: {} as never })
+			expect(await passkeyWindow({ kind: 'passkey.verify', method: PIN })).toEqual({ ok: false, code: 'stale' })
+			expect(results()).toEqual([])
+			expect((await ceremony())?.pending).toBeUndefined()
+			expect(await passkeyWindow({ kind: 'passkey.state' })).toMatchObject({ ok: true, view: { verify: false, pending: null, rows: [] } })
+		})
+
+		it('is dropped from the view once no longer offered', async () => {
+			await vault([await login({ id: 'work', name: 'Work' })])
+			expect(await passkeyWindow({ kind: 'passkey.state' })).toMatchObject({ ok: true, view: { verify: true, pending: null, rows: [] } })
+			expect((await ceremony())?.pending).toBeUndefined()
+		})
+
+		it('is replaced by a pick in the window, so confirming signs nothing the user moved away from', async () => {
+			expect(await passkeyWindow({ kind: 'passkey.pick', itemId: 'example', credentialId: 'QQ' })).toEqual({ ok: false, code: 'verify_required' })
+			expect((await ceremony())?.pending).toBeUndefined()
+			expect(await passkeyWindow({ kind: 'passkey.verify', method: PIN })).toMatchObject({ ok: true, view: { verify: false, pending: null } })
+			expect(results()).toEqual([])
+		})
+
+		it('is forgotten on a lock, and not signed after unlocking in the window', async () => {
+			await lock(accountId)
+			await flush()
+			expect((await ceremony())?.pending).toBeUndefined()
+			vi.mocked(unlock).mockImplementation(async (id) => putKey(id, toBase64(pemToPkcs8(envelope.privateKeyPem))))
+			expect(await passkeyWindow({ kind: 'passkey.verify', method: { type: 'masterPassword', masterPassword: 'pw' } })).toMatchObject({ ok: true, view: { locked: false, pending: null } })
+			expect(results()).toEqual([])
+		})
+
+		it('is forgotten on Cancel, and gone with the request', async () => {
+			expect(await passkeyWindow({ kind: 'passkey.cancel' })).toEqual({ ok: true })
+			expect(await ceremony()).toMatchObject({ id: ceremonyId, window: null })
+			expect((await ceremony())?.pending).toBeUndefined()
+			expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
+			await handlePasskeyContent({ kind: 'passkey.abort', ceremonyId } as never, content())
+			expect(await ceremony()).toBeUndefined()
+			expect(results()).toEqual([])
+		})
 	})
 
 	it('opens the passkey window on Retry when the counter save fails, sending the page nothing', async () => {

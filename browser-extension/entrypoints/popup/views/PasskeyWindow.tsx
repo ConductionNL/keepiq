@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { i18n } from '#i18n'
 import type {
-	AccountSummary, ErrorCode, PasskeyPopupRequest, PasskeyRow, PasskeySaveTarget, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
+	AccountSummary, ErrorCode, PasskeyFailure, PasskeyPopupRequest, PasskeyRow, PasskeySaveTarget, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
 } from '@/src/messages'
 import { Button } from '../components/Button'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -19,6 +19,8 @@ type Command = PasskeyPopupRequest extends infer R ? (R extends unknown ? Omit<R
 type Act = Extract<Command, { kind: 'passkey.pick' | 'passkey.save' }>
 type Save = Extract<Command, { kind: 'passkey.save' }>['target']
 
+const PICK_CODES: readonly PasskeyFailure[] = ['ended', 'locked', 'stale', 'write_failed']
+
 /**
  * The window of one passkey ceremony (spec § The passkey window). The background decides what it may show and closes it when
  * the ceremony ends; `rpName` and `userName` are the page's own and only ever render as text.
@@ -31,6 +33,8 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const [busy, setBusy] = useState<string | null>(null)
 	/** A pick or save waiting on "Confirm it's you". */
 	const [confirming, setConfirming] = useState<Act | null>(null)
+	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
+	const [held, setHeld] = useState<PasskeyRow | null>(null)
 	const [replacing, setReplacing] = useState<PasskeySaveTarget | null>(null)
 	const [name, setName] = useState<string | null>(null)
 	const [folderId, setFolderId] = useState('')
@@ -40,6 +44,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const show = useCallback((next: PasskeyView) => {
 		setView(next)
 		setFailure(next.failure)
+		setHeld(next.pending)
 		// Nothing said about the vault before a lock stays on screen after it.
 		if (next.locked) {
 			setConfirming(null)
@@ -119,6 +124,12 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	async function verify(method: UnlockMethod): Promise<PasskeyWindowReply | undefined> {
 		const reply = await send({ kind: 'passkey.verify', method })
+		// The background signed the held pick, or answers its signing as it answers a pick.
+		if (held && reply && (reply.ok ? !reply.view : PICK_CODES.includes(reply.code))) {
+			setHeld(null)
+			await settle(reply, { kind: 'passkey.pick', itemId: held.itemId, credentialId: held.credentialId })
+			return { ok: true }
+		}
 		if (reply?.ok === false && reply.code === 'ended') window.close()
 		if (!reply?.ok || !reply.view) return reply
 		const pending = confirming
@@ -156,19 +167,21 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		return () => document.removeEventListener('keydown', onKey)
 	}, [])
 
-	const showFailure = view && !view.locked && !confirming && !view.alreadySaved ? failure : null
+	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved ? failure : null
 	let title = ''
 	let body: ReactNode
 	let ways = true
 	if (!view) {
 		body = notice ? <ErrorBanner>{notice}</ErrorBanner> : <Loading />
-	} else if (view.locked || confirming) {
+	} else if (view.locked || confirming || held) {
 		title = view.locked ? i18n.t('titles.unlock') : i18n.t('passkey.verifyTitle')
 		const intro = view.locked
 			? i18n.t(view.kind === 'get' ? 'passkey.unlockGet' : 'passkey.unlockCreate', { rpId: view.rpId })
 			: undefined
+		const picked = confirming?.kind === 'passkey.pick' ? confirming : held
+		const subject = view.locked ? undefined : view.rows.find((row) => row.itemId === picked?.itemId && row.credentialId === picked.credentialId)
 		body = account
-			? <SecretForm key={view.locked ? 'unlock' : 'verify'} account={account} intro={intro} submitLabel={view.locked ? i18n.t('unlock.submit') : i18n.t('passkey.confirm')} onSubmit={verify} />
+			? <SecretForm key={view.locked ? 'unlock' : 'verify'} account={account} intro={intro} subject={subject} submitLabel={view.locked ? i18n.t('unlock.submit') : i18n.t('passkey.confirm')} onSubmit={verify} />
 			: <Loading />
 	} else if (view.alreadySaved) {
 		title = i18n.t('passkey.alreadySavedTitle')
@@ -333,12 +346,14 @@ function RowButton({ name, sub, label, note, busy, disabled, autoFocus, onClick 
 interface SecretProps {
 	account: AccountSummary
 	intro?: string
+	/** The passkey "Confirm it's you" signs with. */
+	subject?: PasskeyRow
 	submitLabel: string
 	onSubmit: (method: UnlockMethod) => Promise<PasskeyWindowReply | undefined>
 }
 
 /** Unlocking and "Confirm it's you" alike, as the Unlock view asks; the background keeps the PIN's five tries. */
-function SecretForm({ account, intro, submitLabel, onSubmit }: SecretProps) {
+function SecretForm({ account, intro, subject, submitLabel, onSubmit }: SecretProps) {
 	const [secret, setSecret] = useState('')
 	const [switched, setSwitched] = useState(false)
 	const withPin = account.pin && !switched
@@ -365,6 +380,12 @@ function SecretForm({ account, intro, submitLabel, onSubmit }: SecretProps) {
 	return (
 		<form className="stack" onSubmit={submit}>
 			<Identity account={account} />
+			{subject && (
+				<div className="passkey__site">
+					<p className="passkey__rp">{subject.name}</p>
+					{subject.userName && <p className="passkey__user">{subject.userName}</p>}
+				</div>
+			)}
 			<p className="passkey__text">{intro ?? i18n.t(withPin ? 'passkey.verifyPin' : 'passkey.verifyPassword')}</p>
 			{withPin
 				? <TextField key="pin" ref={field} label={i18n.t('unlock.pin')} type="password" value={secret} onChange={setSecret} autoFocus autoComplete="off" />

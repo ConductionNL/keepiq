@@ -145,7 +145,7 @@ describe('the Save view', () => {
 		vi.mocked(rsaDecrypt).mockClear()
 		expect(await stateOf(id)).toEqual({
 			kind: 'create', rpId: 'example.test', host: 'example.test', rpName: 'Example', userName: 'alice@example.test', locked: true, verify: false,
-			rows: [], targets: [], folders: [], alreadySaved: false, failure: null,
+			rows: [], targets: [], folders: [], alreadySaved: false, failure: null, pending: null,
 		})
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 		expect(fetchMock).not.toHaveBeenCalled()

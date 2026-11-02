@@ -37,6 +37,8 @@ export interface Ceremony extends CeremonyRequest {
 	/** The window showed "already saved", so closing it answers `InvalidStateError`. */
 	alreadySaved?: true
 	failed?: FailedStep
+	/** A passkey picked in the inline list that waits on "Confirm it's you"; `passkey.verify` signs it. */
+	pending?: { itemId: string; credentialId: string }
 }
 
 type Sender = Browser.runtime.MessageSender
@@ -256,10 +258,18 @@ async function view(ceremony: Ceremony): Promise<PasskeyView> {
 		folders: [],
 		alreadySaved: false,
 		failure: null,
+		pending: null,
 	}
 	if (!key) return shown
 	const failure = ceremony.failed?.error ?? null
-	if (ceremony.kind === 'get') return { ...shown, failure, rows: await matchPasskeys(ceremony.accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds }) }
+	if (ceremony.kind === 'get') {
+		const rows = await matchPasskeys(ceremony.accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds })
+		const { pending } = ceremony
+		const held = pending && rows.find((row) => row.itemId === pending.itemId && row.credentialId === pending.credentialId)
+		// A held pick no longer offered is dropped, so the window shows the list instead.
+		if (pending && (!held || !shown.verify)) await update(ceremony, { pending: undefined })
+		return { ...shown, failure, rows, pending: held && shown.verify ? held : null }
+	}
 	if (await alreadySaved(ceremony, key)) {
 		await update(ceremony, { alreadySaved: true })
 		return { ...shown, alreadySaved: true }
@@ -302,8 +312,12 @@ async function verify(ceremony: Ceremony, method: unknown): Promise<PasskeyWindo
 	}
 	if (wasLocked) void sync(ceremony.accountId, 'full')
 	await syncAlarm()
-	const verified = await update(ceremony, { verified: true })
-	return verified ? { ok: true, view: await view(verified) } : ENDED
+	const verified = await update(ceremony, { verified: true, pending: undefined })
+	if (!verified) return ENDED
+	// The held pick signs only when the user confirmed it as shown; after an unlock they pick again from the list.
+	const { pending } = ceremony
+	if (pending && !wasLocked && ceremony.kind === 'get') return once(verified, () => pick(verified, pending.itemId, pending.credentialId))
+	return { ok: true, view: await view(verified) }
 }
 
 /** A failed write stays open for Retry: the page gets nothing, the step is kept. Any other refusal drops it, so its error does not show beside the new question. */
@@ -326,6 +340,8 @@ async function actingKey(ceremony: Ceremony): Promise<{ key: CryptoKey } | { ref
 
 async function pick(ceremony: Ceremony, itemId: unknown, credentialId: unknown): Promise<PasskeyWindowReply> {
 	if (ceremony.kind !== 'get' || typeof itemId !== 'string' || typeof credentialId !== 'string') return STALE
+	// Any other pick replaces the held one, so a later "Confirm it's you" never signs a passkey the user moved away from.
+	if (ceremony.pending &&!(await update(ceremony, { pending: undefined }))) return ENDED
 	const acting = await actingKey(ceremony)
 	if ('refused' in acting) return acting.refused
 	const { key } = acting
@@ -368,6 +384,7 @@ function release(ceremony: Ceremony): Promise<boolean> {
 		if (current?.id !== ceremony.id) return false
 		const kept: Ceremony = { ...current, window: null }
 		delete kept.failed
+		delete kept.pending
 		await store.set(kept)
 		closeWindow(current)
 		return true
@@ -429,6 +446,13 @@ export async function endForAccountChange(): Promise<void> {
 	}
 }
 
+/** A lock forgets every held pick: after unlocking, the user picks again from what the window then shows. */
+async function forgetHeldPicks(): Promise<void> {
+	for (const ceremony of await store.all()) {
+		if (ceremony.pending) await update(ceremony, { pending: undefined })
+	}
+}
+
 async function windowClosed(windowId: number): Promise<void> {
 	for (const ceremony of await store.all()) {
 		if (ceremony.window?.id === windowId) await (ceremony.conditional ? release(ceremony) : end(ceremony.tabId, ceremony.id, cancelled(ceremony)))
@@ -468,6 +492,7 @@ export async function pickFromList(tabId: number, ceremonyId: string, itemId: st
 	if (reply.ok) return 'signed'
 	if (reply.code === 'locked') return 'locked'
 	if (reply.code !== 'verify_required' && reply.code !== 'write_failed') return 'stale'
+	if (reply.code === 'verify_required' && !(await update(ceremony, { pending: { itemId, credentialId } }))) return 'stale'
 	await inTab(tabId, () => showWindow(tabId, ceremony.id)).catch(log('window'))
 	return 'window'
 }
@@ -482,6 +507,6 @@ export function registerPasskeyCeremonies(): void {
 	browser.windows.onRemoved.addListener((windowId) => void windowClosed(windowId).catch(log('window closed')))
 	onBroadcast((message) => {
 		if (message.kind === 'vault.locked' || message.kind === 'vault.changed') offers.clear()
-		if (message.kind === 'vault.locked') void endForAccountChange().catch(log('logout'))
+		if (message.kind === 'vault.locked') void forgetHeldPicks().then(endForAccountChange).catch(log('lock'))
 	})
 }
