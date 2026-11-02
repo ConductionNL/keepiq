@@ -718,6 +718,19 @@ class ScreensTest {
     }
 
     @Test
+    fun aShownPasswordIsNoPasswordToAScreenReader() {
+        vault.put("p1", FakeVault.row("p1", "Mail", "1", key = "geheim", login = "alice"))
+        showEdit("p1")
+        compose.onNodeWithText("Password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals("\u2022".repeat(6), laidOutText("Password"))
+        compose.onNodeWithText("Show Password").performScrollTo().performClick()
+        assertEquals("geheim", laidOutText("Password"))
+        compose.onNodeWithText("Password").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        compose.onNodeWithText("Hide Password").performClick()
+        compose.onNodeWithText("Password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+    }
+
+    @Test
     fun theEditScreenNeverDecryptsALoginsSavedKey() {
         val seed = "GEZDGNBVGY3TQOJQ"
         vault.put("l2", FakeVault.row("l2", "Mail", "1", key = "geheim", login = "alice", totp = seed))

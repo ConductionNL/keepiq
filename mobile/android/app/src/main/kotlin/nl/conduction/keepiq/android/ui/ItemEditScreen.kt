@@ -332,17 +332,19 @@ internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.f
 private fun SecretInput(label: String, value: String, problem: DraftProblem?, onGenerate: (() -> Unit)?, onChange: (String) -> Unit) {
     var shown by remember { mutableStateOf(false) }
     Column {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            label = { Text(label) },
-            singleLine = true,
-            isError = problem != null,
-            supportingText = problem?.let { { Text(draftProblemText(it)) } },
-            visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ShowableField(shown) { rebuilt ->
+            OutlinedTextField(
+                value = value,
+                onValueChange = onChange,
+                label = { Text(label) },
+                singleLine = true,
+                isError = problem != null,
+                supportingText = problem?.let { { Text(draftProblemText(it)) } },
+                visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+                modifier = Modifier.fillMaxWidth().then(rebuilt),
+            )
+        }
         Row {
             TextButton(onClick = { shown = !shown }) {
                 Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
