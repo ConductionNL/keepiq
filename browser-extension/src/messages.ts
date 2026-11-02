@@ -689,7 +689,7 @@ export type WriteErrorCode =
 	| 'passkey_clone'
 	/** A send password needs Argon2id, whose WebAssembly this browser does not run. */
 	| 'argon2_unavailable'
-	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key the change adds. */
+	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key or passkeys the change adds. */
 	| 'partner_upgrade_required'
 
 export interface VaultWriteError {
@@ -698,7 +698,7 @@ export interface VaultWriteError {
 	reason?: BlockReason
 	/** With `partner_unreachable` and `partner_upgrade_required`. */
 	partners?: Array<{ shareId: string; cloudId: string }>
-	/** With `partner_upgrade_required`, when the server named the release the partner needs. */
+	/** With `partner_upgrade_required`: the release the partner needs, as the server or the background named it. */
 	requiredVersion?: string
 }
 

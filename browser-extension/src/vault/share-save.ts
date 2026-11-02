@@ -1,5 +1,6 @@
 /** A value change of a possibly shared item in one `PUT /api/v1/secrets/{id}/share-save`, ported from the web app's `saveShared` (`src/services/shareSave.js`); the server's rules are in `ShareSaveService`. */
 import { ApiError, KeepiqNotInstalled, type Client } from '@/src/api/client'
+import { TOTP_PASSKEYS_FIELDS_SINCE } from '@/src/api/keepiq-version'
 import { FederatedCertificateError, importPublicKey, importSpki, rsaDecrypt, rsaEncrypt, verifyFederatedCertificate } from '@/src/crypto'
 import type { DecryptField, ShareSaveNote } from '@/src/messages'
 import { verifiedPartners, type VerifiedPartner } from './verified-partners'
@@ -7,10 +8,8 @@ import { WriteFailure } from './write-error'
 
 export type ValueField = DecryptField | 'passkeys'
 
-/** What a save may change. */
-export const VALUE_FIELDS: readonly DecryptField[] = ['key', 'login', 'additionalFields', 'totp']
-/** What a partner share gets whole and an edit fetch must find in the cache; only a passkey ceremony writes `passkeys`. */
-export const WHOLE_FIELDS: readonly ValueField[] = [...VALUE_FIELDS, 'passkeys']
+/** What a save may change, a partner share gets whole and an edit fetch must find in the cache; only a passkey ceremony writes `passkeys`. */
+export const VALUE_FIELDS: readonly ValueField[] = ['key', 'login', 'additionalFields', 'totp', 'passkeys']
 /** Fields a partner may not store (ADR-003 § Partner certificate). */
 const PARTNER_OPTIONAL = ['totp', 'passkeys'] as const
 
@@ -219,7 +218,7 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 		const value: Values = {}
 		// The form's ciphertext is the item's only at the version the save is checked against.
 		const current = opened && Date.parse(opened.updatedAt) === Date.parse(baseUpdatedAt)
-		for (const field of WHOLE_FIELDS) {
+		for (const field of VALUE_FIELDS) {
 			if (plain[field] !== undefined) {
 				value[field] = plain[field]
 				continue
@@ -271,8 +270,8 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 		const todo = required.filter((share) => !federated.has(share.shareId) && !suspend.has(share.shareId))
 		if (todo.length === 0) return
 		const value = whole ??= await wholeValue()
-		// A replaced or removed key reaches a partner that cannot store one as null, since it never held one; only a new one stops the save, as in the web app.
-		const addsKey = !!plain.totp && !opened?.shown.totp
+		// A replaced or removed key or passkey reaches a partner that cannot store it as null, since it never held one; only a field the item did not hold stops the save, as in the web app.
+		const adds = PARTNER_OPTIONAL.filter((field) => !!plain[field] && !opened?.shown[field])
 		const unreachable: RequiredShare[] = []
 		const tooOld: RequiredShare[] = []
 		for (const share of todo) {
@@ -286,11 +285,14 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 					throw new WriteFailure({ code: 'bad_certificate' })
 				})
 				if (!kept) partners.add(share, outcome.verified)
-				if (addsKey && !outcome.verified.valueFields.includes('totp')) tooOld.push(share)
+				if (adds.some((field) => !outcome.verified.valueFields.includes(field))) tooOld.push(share)
 				else federated.set(share.shareId, { shareId: share.shareId, certFingerprint: outcome.verified.fingerprint, ...await sealWhole(value, key, outcome.verified.valueFields) })
 			}
 		}
-		if (tooOld.length > 0) throw new WriteFailure({ code: 'partner_upgrade_required', partners: tooOld.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })
+		if (tooOld.length > 0) {
+			const partners = tooOld.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId }))
+			throw new WriteFailure({ code: 'partner_upgrade_required', partners, requiredVersion: TOTP_PASSKEYS_FIELDS_SINCE })
+		}
 		// Only shares the user agreed to leave out are suspended; naming every unreachable one lets one Save without them cover them all.
 		if (unreachable.some((share) => !withoutUnreachable.has(share.shareId))) {
 			throw new WriteFailure({ code: 'partner_unreachable', partners: unreachable.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })

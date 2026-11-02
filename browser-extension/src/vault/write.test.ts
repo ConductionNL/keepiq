@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { addAccount, suiteKey } from '@/src/accounts/store'
+import { addAccount, suiteKey, updateAccount } from '@/src/accounts/store'
+import { buildPasskeyCredential, parsePasskey, type PasskeyCredential } from '@/src/passkey/credential'
 import { importPrivateKey, pemToPkcs8, rsaDecrypt, toBase64, verifyFederatedCertificate } from '@/src/crypto'
 import { decodePem, extractSpki } from '@/src/crypto/rsa'
 import type { EditableItem, ItemDraft, WriteResult } from '@/src/messages'
@@ -9,10 +10,13 @@ import { envelope, federationChain, suiteRow } from '@/src/testing/vectors'
 import { customField, diffDraft, formSections, fromItem, toDraft, type FormValues } from './fields'
 import { editOpenedKey, hasKey, putKey } from './key-store'
 import { readSnapshot, writeSnapshot } from './store'
-import { sync, syncStatus } from './sync'
+import { sync, syncAfterWrite, syncStatus } from './sync'
 import type { VaultSnapshot } from './types'
 import { lock } from './unlock'
-import { createFolder, createItem, deleteFolder, deleteItem, fetchItem, folderChildren, itemEditable, renameFolder, updateItem } from './write'
+import {
+	createFolder, createItem, createPasskeyLogin, deleteFolder, deleteItem, fetchItem, folderChildren, itemEditable, renameFolder, savePasskeyCounter, updateItem, writeLoginPasskeys,
+	type PasskeyLoginDraft, type PasskeysChange,
+} from './write'
 
 vi.mock('@/src/crypto', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/crypto')>()
@@ -1058,6 +1062,314 @@ describe('errors and the offline flag', () => {
 		await deleteItem('s1')
 		expect(await createFolder('Work/Clients', null)).toEqual({ ok: false, error: { code: 'invalid' } })
 		expect(await syncStatus(accountId)).toMatchObject({ offline: true })
+	})
+})
+
+describe('passkey writes', () => {
+	const F = federationChain()
+	const SHARE_SAVE = 'PUT /api/v1/secrets/s1/share-save'
+	const BOB_COPY = { secretId: 'c-bob', holder: 'recipient', targetUserId: 'bob' }
+	const BOB = { shareId: 'fs-bob', recipientCloudId: 'bob@cloud.partner.example' }
+	const A = { credentialId: 'cred-a', rpId: 'example.test', rpName: 'Example', userName: 'alice', userDisplayName: 'Alice', userHandle: 'dXNlcg', privateKey: 'pk-a', algorithm: -7, counter: 41, transports: ['internal'], createdAt: '2026-01-01T00:00:00.000Z' }
+	/** With a field a newer client added, which a save keeps. */
+	const B = { ...A, credentialId: 'cred-b', userName: 'bob', privateKey: 'pk-b', counter: 0, addedLater: { x: 1 } }
+	const STORED = JSON.stringify([A, B])
+	const fresh = (overrides: Partial<PasskeyCredential> = {}) => buildPasskeyCredential({ ...A, credentialId: 'cred-new', privateKey: 'pk-new', counter: 0, ...overrides })!
+
+	let row: ReturnType<typeof secretRow>
+
+	/** The login `s1`, cached and served alike. */
+	async function login(plain: { key?: string; login?: string | null; additionalFields?: string | null; passkeys?: string | null } = {}, overrides: Partial<ReturnType<typeof secretRow>> = {}) {
+		const { key = 'pw', login: username = 'alice', additionalFields = null, passkeys = STORED } = plain
+		row = secretRow({
+			key: await encrypt(key), login: username === null ? null : await encrypt(username), additionalFields: additionalFields === null ? null : await encrypt(additionalFields),
+			passkeys: passkeys === null ? null : await encrypt(passkeys), ...overrides,
+		})
+		await snapshot([row])
+		return row
+	}
+
+	/** Certificate lookups and a share-save that answers `incomplete` until its lists name `copies` and `shares`. */
+	const sharing = ({ copies = [] as object[], shares = [] as object[], valueFields = [] as string[] } = {}) => ({
+		'POST /api/v1/shares/recipient-certificates': ({ body }: Sent) => json({ recipients: (body!.userIds as string[]).map((userId) => ({ userId, shareable: true, certificate: envelope.certificatePem })) }),
+		'POST /api/v1/federation/recipient-certificate': ({ body }: Sent) => json({ cloudId: body!.cloudId, certificate: F.bob, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint, valueFields }),
+		[SHARE_SAVE]: ({ body }: Sent) => {
+			const named = [...body!.copies as object[], ...body!.skipped as object[]].length
+			const partners = [...(body!.federated ?? []) as object[], ...(body!.suspend ?? []) as object[]].length
+			if (named !== copies.length || partners !== shares.length) return json({ error: 'incomplete', copies: { required: copies, skipRefused: [] }, federated: { required: shares } }, 409)
+			return json({ secret: secretRow(), federated: { ownerOnly: false } })
+		},
+	})
+
+	const serve = (routes: Record<string, (sent: Sent) => Response | Promise<Response>> = {}) => server({ 'GET /api/v1/secrets/s1': () => json(row), ...routes }, [row])
+	const saved = async () => decrypt((lastBodyOf(SHARE_SAVE).patch as { passkeys: string }).passkeys)
+	const partnerOpens = () => vi.mocked(verifyFederatedCertificate).mockResolvedValueOnce({ fingerprint: 'ab'.repeat(32), spki: extractSpki(decodePem(envelope.certificatePem).der) })
+
+	// Each write starts a sync it does not wait for; it ends before the next test resets the fakes.
+	afterEach(() => syncAfterWrite(accountId))
+
+	describe('writeLoginPasskeys', () => {
+		beforeEach(() => login())
+
+		it('adds a passkey through share-save with only passkeys in the patch, the other entries byte for byte', async () => {
+			serve()
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: true, value: { id: 's1', credentialId: 'cred-new', counter: 0 } })
+			expect(Object.keys(lastBodyOf(SHARE_SAVE).patch as object)).toEqual(['passkeys'])
+			expect(lastBodyOf(SHARE_SAVE).baseUpdatedAt).toBe(row.updatedAt)
+			expect(await saved()).toBe(`${STORED.slice(0, -1)},${JSON.stringify(fresh())}]`)
+			expect(parsePasskey(JSON.stringify(JSON.parse(await saved())[2]))).toEqual(fresh())
+			expect(writes().filter((line) => !line.startsWith('POST /api/v1/shares'))).toEqual(['GET /api/v1/secrets/s1', 'GET /api/v1/secrets/s1/write-context', SHARE_SAVE])
+		})
+
+		it('replaces the named entry in its place', async () => {
+			serve()
+			expect(await writeLoginPasskeys('s1', { kind: 'replace', credentialId: 'cred-a', credential: fresh() })).toMatchObject({ ok: true, value: { credentialId: 'cred-new' } })
+			expect(await saved()).toBe(JSON.stringify([fresh(), B]))
+		})
+
+		it.each([null, ''])('adds the first passkey to a login whose passkeys are %j', async (passkeys) => {
+			await login({}, { passkeys })
+			serve()
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toMatchObject({ ok: true })
+			expect(await saved()).toBe(JSON.stringify([fresh()]))
+		})
+
+		it('replies once the server took it, without waiting for the sync after', async () => {
+			let release!: () => void
+			const gate = new Promise<void>((resolve) => (release = resolve))
+			serve({ 'GET /api/v1/offline/manifest': async () => (await gate, json({ suite: suiteRow, secrets: [row], folders: [folderRow()], types: typeRows, syncedAt: '' })) })
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toMatchObject({ ok: true })
+			release()
+		})
+
+		it.each([
+			['a use-only copy', { useOnly: true }, 'restricted'],
+			['a read-only copy', { readOnly: true }, 'restricted'],
+		])('refuses %s before any request', async (_, overrides, code) => {
+			await login({}, overrides)
+			serve()
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code } })
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
+
+		it('refuses an item the cache does not hold before any request', async () => {
+			await snapshot([])
+			serve()
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'not_found' } })
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
+
+		it.each([
+			['a counter below zero', { kind: 'counter', credentialId: 'cred-a', seen: -1 }],
+			['a counter past four bytes', { kind: 'counter', credentialId: 'cred-a', seen: 2 ** 32 }],
+			['a credential without its private key', { kind: 'add', credential: { ...fresh(), privateKey: '' } }],
+			['an unknown kind', { kind: 'delete', credentialId: 'cred-a' }],
+		])('refuses %s before any request', async (_, change) => {
+			serve()
+			expect(await writeLoginPasskeys('s1', change as PasskeysChange)).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
+
+		it('refuses a copy whose grade is view-only, writing nothing', async () => {
+			serve({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'read', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }) })
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'view_only' } })
+			expect(sent()).not.toContain(SHARE_SAVE)
+		})
+
+		it('refuses a fetch whose passkeys the cache does not hold, even after a sync', async () => {
+			const swapped = { ...row, passkeys: await encrypt(STORED) }
+			server({ 'GET /api/v1/secrets/s1': () => json(swapped) }, [row])
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'conflict' } })
+			expect(sent()).not.toContain(SHARE_SAVE)
+		})
+
+		it('refuses a standalone passkey item', async () => {
+			await login({}, { typeId: 't-passkey' })
+			serve()
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(sent()).not.toContain(SHARE_SAVE)
+		})
+
+		it.each([
+			['passkeys that are not an array', { passkeys: '{"rpId":"example.test"}' }, { kind: 'add', credential: fresh() }, 'unreadable'],
+			['an entry that is gone', {}, { kind: 'counter', credentialId: 'cred-gone', seen: 3 }, 'not_found'],
+			['a Replace of an entry that is gone', {}, { kind: 'replace', credentialId: 'cred-gone', credential: fresh() }, 'not_found'],
+			['an added credential id the login holds', {}, { kind: 'add', credential: fresh({ credentialId: 'cred-b' }) }, 'invalid'],
+			['two entries with one credential id', { passkeys: JSON.stringify([A, A]) }, { kind: 'counter', credentialId: 'cred-a', seen: 41 }, 'unreadable'],
+		])('writes nothing for %s', async (_, plain, change, code) => {
+			await login(plain)
+			serve()
+			expect(await writeLoginPasskeys('s1', change as PasskeysChange)).toEqual({ ok: false, error: { code } })
+			expect(sent()).not.toContain(SHARE_SAVE)
+		})
+
+		it('saves on another client\'s passkey written since the last sync, keeping it', async () => {
+			const C = { ...A, credentialId: 'cred-c', privateKey: 'pk-c' }
+			const newer = { ...row, passkeys: await encrypt(JSON.stringify([A, B, C])), updatedAt: '2026-03-03T10:00:00+00:00' }
+			server({ 'GET /api/v1/secrets/s1': () => json(newer) }, [newer])
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toMatchObject({ ok: true })
+			expect(await saved()).toBe(JSON.stringify([A, B, C, fresh()]))
+			expect(lastBodyOf(SHARE_SAVE).baseUpdatedAt).toBe(newer.updatedAt)
+		})
+
+		it('reads again and saves once more after stale, on the newer value', async () => {
+			const C = { ...A, credentialId: 'cred-c', privateKey: 'pk-c' }
+			const newer = { ...row, passkeys: await encrypt(JSON.stringify([A, B, C])), updatedAt: '2026-03-03T10:00:00+00:00' }
+			let current = row
+			server({
+				'GET /api/v1/secrets/s1': () => json(current),
+				[SHARE_SAVE]: () => {
+					if (current === newer) return json({ secret: newer, federated: { ownerOnly: false } })
+					current = newer
+					return json({ error: 'stale', message: 'Stale', current: newer }, 409)
+				},
+				'GET /api/v1/offline/manifest': () => json({ suite: suiteRow, secrets: [current], folders: [folderRow()], types: typeRows, syncedAt: '' }),
+			}, [row])
+			expect(await writeLoginPasskeys('s1', { kind: 'counter', credentialId: 'cred-a', seen: 41 })).toEqual({ ok: true, value: { id: 's1', credentialId: 'cred-a', counter: 42 } })
+			expect(bodiesOf(SHARE_SAVE).map((body) => body.baseUpdatedAt)).toEqual([row.updatedAt, newer.updatedAt])
+			expect(await saved()).toBe(JSON.stringify([{ ...A, counter: 42 }, B, C]))
+		})
+
+		it('gives up after a second stale', async () => {
+			serve({ [SHARE_SAVE]: () => json({ error: 'stale', message: 'Stale', current: row }, 409) })
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'conflict' } })
+			expect(bodiesOf(SHARE_SAVE)).toHaveLength(2)
+		})
+
+		it('gives up with conflict after a second stale source', async () => {
+			serve({ [SHARE_SAVE]: () => json({ error: 'stale_source', message: 'Stale source' }, 409) })
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'conflict' } })
+			expect(bodiesOf(SHARE_SAVE)).toHaveLength(2)
+		})
+
+		it.each([
+			['a locked vault on the server (423)', { [SHARE_SAVE]: () => json({ message: 'Locked' }, 423) }, 'write_locked'],
+			['a server that stops answering', { [SHARE_SAVE]: () => Promise.reject(new TypeError('Failed to fetch')) }, 'offline'],
+			['a server that does not answer the fetch', { 'GET /api/v1/secrets/s1': () => Promise.reject(new TypeError('Failed to fetch')) }, 'offline'],
+		])('fails retryably on %s', async (_, routes, code) => {
+			serve(routes)
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code } })
+		})
+	})
+
+	describe('createPasskeyLogin', () => {
+		const passkeyLogin = (overrides: Partial<PasskeyLoginDraft> = {}): PasskeyLoginDraft => ({ name: 'Example', url: 'https://example.test', folderId: 'f1', credential: fresh(), ...overrides })
+
+		it('creates a login with the passkey, an empty password and no username or fields', async () => {
+			server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) })
+			expect(await createPasskeyLogin(passkeyLogin())).toEqual({ ok: true, value: { id: 'new' } })
+			const body = bodyOf('POST /api/v1/secrets')
+			expect(Object.keys(body).sort()).toEqual(['folderId', 'key', 'name', 'passkeys', 'typeId', 'url'])
+			expect(body).toMatchObject({ name: 'Example', url: 'https://example.test', typeId: 't-login', folderId: 'f1' })
+			expect(await decrypt(body.key)).toBe('')
+			expect(await decrypt(body.passkeys)).toBe(JSON.stringify([fresh()]))
+			expect(JSON.stringify(body)).not.toContain('pk-new')
+		})
+
+		it('files it in no folder', async () => {
+			server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) })
+			expect(await createPasskeyLogin(passkeyLogin({ folderId: null }))).toMatchObject({ ok: true })
+			expect(bodyOf('POST /api/v1/secrets').folderId).toBeNull()
+		})
+
+		it('replies once the server took it, without waiting for the sync after', async () => {
+			let release!: () => void
+			const gate = new Promise<void>((resolve) => (release = resolve))
+			server({
+				'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201),
+				'GET /api/v1/offline/manifest': async () => (await gate, json({ suite: suiteRow, secrets: [], folders: [folderRow()], types: typeRows, syncedAt: '' })),
+			})
+			expect(await createPasskeyLogin(passkeyLogin())).toEqual({ ok: true, value: { id: 'new' } })
+			release()
+		})
+
+		it.each([
+			['a blank name', passkeyLogin({ name: '  ' })],
+			['a name past 255 characters', passkeyLogin({ name: 'x'.repeat(256) })],
+			['a URL that is not an origin', passkeyLogin({ url: 'https://example.test/login' })],
+			['a URL that is no web origin', passkeyLogin({ url: 'javascript:alert(1)' })],
+			['a folder the vault does not hold', passkeyLogin({ folderId: 'f-gone' })],
+			['a credential without its private key', passkeyLogin({ credential: { ...fresh(), privateKey: '' } })],
+		])('refuses %s before any request', async (_, draft) => {
+			server()
+			expect(await createPasskeyLogin(draft)).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
+
+		it('locks instead of encrypting to a key the server replaced since the last sync', async () => {
+			server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) }, [], { ...suiteRow, id: 'suite-rotated' })
+			expect(await createPasskeyLogin(passkeyLogin())).toEqual({ ok: false, error: { code: 'locked' } })
+			expect(sent()).not.toContain('POST /api/v1/secrets')
+		})
+
+		it.each([
+			['423', () => json({ message: 'Locked' }, 423), 'write_locked'],
+			['no answer', () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
+		])('fails retryably on %s', async (_, answer, code) => {
+			server({ 'POST /api/v1/secrets': answer })
+			expect(await createPasskeyLogin(passkeyLogin())).toEqual({ ok: false, error: { code } })
+		})
+	})
+
+	describe.each(['0.3.12', '0.3.9-unstable.20261007125844', undefined])('savePasskeyCounter on Keepiq %s', (keepiqVersion) => {
+		beforeEach(() => updateAccount(accountId, { keepiqVersion }))
+
+		it('signs with 0 and sends nothing for a stored 0', async () => {
+			await login()
+			serve()
+			expect(await savePasskeyCounter('s1', 'cred-b', 0)).toEqual({ ok: true, value: { counter: 0 } })
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
+
+		it('saves an own login\'s counter one up, the other entry byte for byte', async () => {
+			await login()
+			serve()
+			expect(await savePasskeyCounter('s1', 'cred-a', 41)).toEqual({ ok: true, value: { counter: 42 } })
+			expect(await saved()).toBe(JSON.stringify([{ ...A, counter: 42 }, B]))
+		})
+
+		it('counts up from what the caller read when the stored counter is lower', async () => {
+			await login()
+			serve()
+			expect(await savePasskeyCounter('s1', 'cred-a', 45)).toEqual({ ok: true, value: { counter: 46 } })
+		})
+
+		it('gives a shared login\'s local copy the new counter', async () => {
+			await login()
+			serve(sharing({ copies: [BOB_COPY] }))
+			expect(await savePasskeyCounter('s1', 'cred-a', 41)).toEqual({ ok: true, value: { counter: 42 } })
+			const [copy] = lastBodyOf(SHARE_SAVE).copies as Array<Record<string, string>>
+			expect(Object.keys(copy!).sort()).toEqual(['passkeys', 'secretId'])
+			expect(await decrypt(copy!.passkeys)).toBe(JSON.stringify([{ ...A, counter: 42 }, B]))
+		})
+
+		it('sends a partner the whole value of a login with an empty password, no username and no fields', async () => {
+			await login({ key: '', login: null, additionalFields: '{}' })
+			serve(sharing({ shares: [BOB], valueFields: ['totp', 'passkeys'] }))
+			partnerOpens()
+			expect(await savePasskeyCounter('s1', 'cred-a', 41)).toEqual({ ok: true, value: { counter: 42 } })
+			const [entry] = lastBodyOf(SHARE_SAVE).federated as Array<Record<string, string | null>>
+			expect([await decrypt(entry!.key), entry!.login, await decrypt(entry!.additionalFields), await decrypt(entry!.passkeys)]).toEqual(['', null, '{}', JSON.stringify([{ ...A, counter: 42 }, B])])
+		})
+
+		it.each([
+			['a username', { key: '', login: 'alice' }],
+			['a password', { key: 'pw', login: null }],
+			['fields', { key: '', login: null, additionalFields: '{"notes":"x"}' }],
+		])('refuses a partner-shared login with %s it never showed, before any lookup', async (_, plain) => {
+			await login(plain)
+			serve(sharing({ shares: [BOB], valueFields: ['totp', 'passkeys'] }))
+			expect(await savePasskeyCounter('s1', 'cred-a', 41)).toEqual({ ok: false, error: { code: 'unverified' } })
+			expect(sent()).not.toContain('POST /api/v1/federation/recipient-certificate')
+			expect(bodiesOf(SHARE_SAVE)).toHaveLength(1)
+		})
+
+		it('refuses a use-only copy before any request', async () => {
+			await login({}, { useOnly: true })
+			serve()
+			expect(await savePasskeyCounter('s1', 'cred-a', 41)).toEqual({ ok: false, error: { code: 'restricted' } })
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
 	})
 })
 

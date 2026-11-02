@@ -8,6 +8,9 @@ export const KEEPIQ_FEATURES = {} as const satisfies Record<string, string>
 
 export type KeepiqFeature = keyof typeof KEEPIQ_FEATURES
 
+/** The first Keepiq that stores `totp` and `passkeys` for a federation partner, as the server's `Application::TOTP_PASSKEYS_FIELDS_SINCE`; named to the user, never compared. */
+export const TOTP_PASSKEYS_FIELDS_SINCE = '0.3.12'
+
 type Core = [number, number, number]
 
 /** `major.minor.patch` and whether it is an `-unstable` build; `null` for anything else. */

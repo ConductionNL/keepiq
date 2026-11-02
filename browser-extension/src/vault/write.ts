@@ -8,7 +8,8 @@ import { provenKey } from './certificate'
 import { fieldTexts, shownInFull } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
-import { isViewOnly, readWriteContext, sealValue, shareSave, VALUE_FIELDS, WHOLE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
+import { buildPasskeyCredential, passkeyEntries, storedArray, withCounter, withPasskey, type PasskeyCredential } from '@/src/passkey/credential'
+import { isViewOnly, readWriteContext, sealValue, shareSave, VALUE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
 import { readSnapshot } from './store'
 import { isAuthenticatorKey, normaliseAuthenticatorKey } from '@/src/totp/authenticator-key'
 import { recordOutcome, syncAfterWrite } from './sync'
@@ -107,7 +108,7 @@ function isRestricted(row: Pick<SecretRow, 'useOnly' | 'readOnly' | 'accessExpir
 const cachedRow = async (accountId: string, id: string) => (await readSnapshot(accountId))?.secrets.find((secret) => secret.id === id)
 
 const holds = (cached: StoredSecretRow | undefined, row: OpenSecretRow): cached is OpenSecretRow =>
-	!!cached && !cached.blocked && WHOLE_FIELDS.every((field) => (row[field] || null) === (cached[field] || null))
+	!!cached && !cached.blocked && VALUE_FIELDS.every((field) => (row[field] || null) === (cached[field] || null))
 
 /**
  * Every item is encrypted to the same key, so a fetched ciphertext the cache does not hold for this item may be another's, and the form would save it back and share it as typed (ADR-002).
@@ -183,7 +184,7 @@ function unrecorded(error: unknown): undefined {
  * A key and passkeys are never shown, by design, so they count as opened: `holds()` checked them against the cache.
  */
 async function recordOpened(accountId: string, id: string, recordId: string, row: OpenSecretRow, typeNames: Array<string | undefined>, plain: Values, sourceUpdatedAt: string | null): Promise<void> {
-	const shown = WHOLE_FIELDS.filter((field) => field === 'totp' || field === 'passkeys' || !row[field] || (plain[field] !== undefined && typeNames.every((name) => shownInFull(field, plain[field]!, name))))
+	const shown = VALUE_FIELDS.filter((field) => field === 'totp' || field === 'passkeys' || !row[field] || (plain[field] !== undefined && typeNames.every((name) => shownInFull(field, plain[field]!, name))))
 	// Refused, the form opens without it, and a save of it that needs the record for partners fails with `unverified`.
 	await swapRecord(accountId, id, recordId, { shown: Object.fromEntries(shown.map((field) => [field, row[field] || null])), updatedAt: row.updatedAt, sourceUpdatedAt }).catch(unrecorded)
 }
@@ -351,6 +352,190 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 /** For the item's detail to show Edit as unavailable up front; `fetchItem` and `updateItem` check again. */
 export function itemEditable(id: string, accountId?: string): Promise<WriteResult<{ editable: boolean }>> {
 	return run(async ({ client }) => ({ editable: !isViewOnly(id, await readWriteContext(client, id)) }), 'reply', accountId)
+}
+
+/** A change to a login's `passkeys`; an existing entry is named by its `credentialId`. */
+export type PasskeysChange =
+	| { kind: 'add'; credential: PasskeyCredential }
+	| { kind: 'replace'; credentialId: string; credential: PasskeyCredential }
+	/** Raises the entry's counter past both the stored one and `seen`, the one the caller read, so a save after another client's still counts up. */
+	| { kind: 'counter'; credentialId: string; seen: number }
+
+export interface PasskeysSaved {
+	id: string
+	/** The entry the change wrote, with its counter as saved. */
+	credentialId: string
+	counter: number
+	shareSave?: ShareSaveNote
+}
+
+/** Authenticator data holds the counter in four bytes. */
+const MAX_COUNTER = 0xffffffff
+
+const isCounter = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_COUNTER
+const isText = (value: unknown): value is string => typeof value === 'string' && value !== ''
+
+function isChange(change: PasskeysChange): boolean {
+	const c = change as Partial<Record<'kind' | 'credentialId' | 'credential' | 'seen', unknown>> | null
+	if (c?.kind === 'add') return withPasskey(null, c.credential as PasskeyCredential) !== null
+	if (c?.kind === 'replace') return isText(c.credentialId) && withPasskey(null, c.credential as PasskeyCredential) !== null
+	return c?.kind === 'counter' && isText(c.credentialId) && isCounter(c.seen)
+}
+
+/** The new plaintext, every other entry as stored; refuses rather than write a value that would lose one. */
+function changed(stored: string | null, change: PasskeysChange): { value: string; credentialId: string; counter: number } {
+	if (stored && !storedArray(stored)) throw new WriteFailure({ code: 'unreadable' })
+	const entries = passkeyEntries(stored)
+	const named = (credentialId: string) => entries.filter(({ credential }) => credential.credentialId === credentialId)
+	const only = (credentialId: string) => {
+		const [entry, ...more] = named(credentialId)
+		if (!entry) throw new WriteFailure({ code: 'not_found' })
+		if (more.length > 0) throw new WriteFailure({ code: 'unreadable' })
+		return entry
+	}
+	let value: string | null
+	if (change.kind === 'counter') {
+		const { index, credential } = only(change.credentialId)
+		const counter = Math.max(isCounter(credential.counter) ? credential.counter : 0, change.seen) + 1
+		if (counter > MAX_COUNTER) throw new WriteFailure({ code: 'invalid' })
+		value = withCounter(stored ?? '', index, counter)
+		if (value !== null) return { value, credentialId: change.credentialId, counter }
+	} else {
+		const { credentialId, counter } = buildPasskeyCredential(change.credential)!
+		const index = change.kind === 'replace' ? only(change.credentialId).index : undefined
+		if (named(credentialId).some((entry) => entry.index !== index)) throw new WriteFailure({ code: 'invalid' })
+		value = withPasskey(stored, change.credential, index)
+		if (value !== null) return { value, credentialId, counter }
+	}
+	throw new WriteFailure({ code: 'invalid' })
+}
+
+/** True when a field holds nothing to show: no ciphertext, `''`, or fields `{}`. */
+async function holdsNothing(field: 'key' | 'login' | 'additionalFields', ciphertext: string | null, privateKey: CryptoKey): Promise<boolean> {
+	if (!ciphertext) return true
+	try {
+		const plain = await rsaDecrypt(ciphertext, privateKey)
+		const fields = field === 'additionalFields' ? parseObject(plain) : null
+		return plain === '' || (!!fields && Object.keys(fields).length === 0)
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Partner shares get the whole value, and a passkey save never showed the login's other fields, so it vouches only for those holding nothing; any other fails partners as `unverified` (design.md § Open Questions).
+ * `totp` and `passkeys` count as opened, as for an edit form: `cachedMatch` checked them against the cache.
+ */
+async function passkeySaveOpened(row: OpenSecretRow, privateKey: CryptoKey, sourceUpdatedAt: string | null): Promise<Opened> {
+	const shown: Values = { totp: row.totp || null, passkeys: row.passkeys || null }
+	for (const field of ['key', 'login', 'additionalFields'] as const) {
+		if (await holdsNothing(field, row[field], privateKey)) shown[field] = row[field] || null
+	}
+	return { shown, updatedAt: row.updatedAt, sourceUpdatedAt }
+}
+
+async function savePasskeys(ctx: Context, id: string, change: PasskeysChange): Promise<PasskeysSaved> {
+	const { account, client, privateKey } = ctx
+	const cached = await cachedRow(account.id, id)
+	if (!cached) throw new WriteFailure({ code: 'not_found' })
+	if (cached.blocked) throw new WriteFailure({ code: 'blocked', reason: cached.blockedReason })
+	// What the server enforces too, refused here so nothing is fetched or decrypted for it.
+	if (isRestricted(cached, 'edit')) throw new WriteFailure({ code: 'restricted' })
+	// Fresh, since the whole field is written back and a stale cache would drop another client's passkey (ADR-002).
+	const row = await client.keepiq<OpenSecretRow | null>('GET', secretPath(id))
+	if (typeof row?.updatedAt !== 'string') throw new WriteFailure({ code: 'server_error' })
+	if (isRestricted(row, 'edit')) throw new WriteFailure({ code: 'restricted' })
+	const held = await cachedMatch(account.id, id, row)
+	// Only a login holds passkeys; a standalone passkey item is never written here.
+	if ((await typeNamesOf(account.id, [row.typeId, held.typeId])).some((name) => name !== 'login')) throw new WriteFailure({ code: 'invalid' })
+	const context = await readWriteContext(client, id)
+	if (isViewOnly(id, context)) throw new WriteFailure({ code: 'view_only' })
+	let stored: string | null
+	try {
+		stored = row.passkeys ? await rsaDecrypt(row.passkeys, privateKey) : null
+	} catch (error) {
+		console.error('[keepiq] could not open the passkeys of', id, error)
+		throw new WriteFailure({ code: 'unreadable' })
+	}
+	const next = changed(stored, change)
+	const note = await shareSave(client, privateKey, {
+		accountId: account.id, id, patch: { passkeys: await sealValue('passkeys', next.value, await publicKey(ctx)) }, plain: { passkeys: next.value },
+		baseUpdatedAt: row.updatedAt, context, opened: await passkeySaveOpened(row, privateKey, context.sourceUpdatedAt), withoutUnreachable: new Set(),
+	})
+	return { id, credentialId: next.credentialId, counter: next.counter, ...(note && { shareSave: note }) }
+}
+
+const isStale = (error: unknown) => (error instanceof ApiError && error.status === 409 && error.code === 'stale') || (error instanceof WriteFailure && error.error.code === 'stale_source')
+
+/**
+ * Saves a login's `passkeys` whole, the only field changed, through share-save so every copy gets it (design.md § Writes). Pushes nothing to a page.
+ * Replies once the server took it, not after the sync that follows.
+ */
+export function writeLoginPasskeys(id: string, change: PasskeysChange, accountId?: string): Promise<WriteResult<PasskeysSaved>> {
+	return run(async (ctx) => {
+		if (!isChange(change)) throw new WriteFailure({ code: 'invalid' })
+		let saved: PasskeysSaved
+		try {
+			saved = await savePasskeys(ctx, id, change)
+		} catch (error) {
+			if (!isStale(error)) throw error
+			// Another client saved first: the next fetch brings its value into the cache, and the change applies to it.
+			saved = await savePasskeys(ctx, id, change).catch((again: unknown) => {
+				// A second `stale` is `conflict`; a 409 `stale` already reads as one.
+				throw again instanceof WriteFailure && again.error.code === 'stale_source' ? new WriteFailure({ code: 'conflict' }) : again
+			})
+		}
+		void syncAfterWrite(ctx.account.id)
+		return saved
+	}, 'reply', accountId)
+}
+
+/** The counter to sign with. A stored 0, as on every passkey Keepiq made, stays 0 and writes nothing. */
+export async function savePasskeyCounter(id: string, credentialId: string, stored: number, accountId?: string): Promise<WriteResult<{ counter: number; shareSave?: ShareSaveNote }>> {
+	if (stored === 0) return { ok: true, value: { counter: 0 } }
+	const result = await writeLoginPasskeys(id, { kind: 'counter', credentialId, seen: stored }, accountId)
+	if (!result.ok) return result
+	return { ok: true, value: { counter: result.value.counter, ...(result.value.shareSave && { shareSave: result.value.shareSave }) } }
+}
+
+export interface PasskeyLoginDraft {
+	name: string
+	/** The requesting frame's origin. */
+	url: string
+	folderId: string | null
+	credential: PasskeyCredential
+}
+
+function isOrigin(url: unknown): boolean {
+	try {
+		const parsed = new URL(url as string)
+		return (parsed.protocol === 'https:' || parsed.protocol === 'http:') && parsed.origin === url
+	} catch {
+		return false
+	}
+}
+
+/**
+ * A new login holding only the passkey, as the web app's import makes one: no username, `key` the encryption of `''`.
+ * Replies once the server took it, not after the sync that follows.
+ */
+export function createPasskeyLogin(draft: PasskeyLoginDraft, accountId?: string): Promise<WriteResult<{ id: string }>> {
+	return run(async (ctx) => {
+		const snapshot = await readSnapshot(ctx.account.id)
+		const typeId = snapshot?.types.find((type) => type.name === 'login')?.id
+		const passkeys = withPasskey(null, draft?.credential)
+		const named = typeof draft?.name === 'string' && draft.name.trim() !== '' && draft.name.length <= 255
+		const filed = draft?.folderId === null || snapshot?.folders.some((folder) => folder.id === draft?.folderId)
+		if (!typeId || passkeys === null || !named || !isOrigin(draft.url) || !filed) throw new WriteFailure({ code: 'invalid' })
+		// Checks the server's active suite first, so the login opens for its owner.
+		const key = await publicKey(ctx)
+		const row = await ctx.client.keepiq<SecretRow | null>('POST', '/api/v1/secrets', {
+			name: draft.name, url: draft.url, typeId, folderId: draft.folderId, key: await rsaEncrypt('', key), passkeys: await rsaEncrypt(passkeys, key),
+		})
+		if (!isText(row?.id)) throw new WriteFailure({ code: 'unknown' })
+		void syncAfterWrite(ctx.account.id)
+		return { id: row.id }
+	}, 'reply', accountId)
 }
 
 /** Moves the item to Keepiq's trash, which also revokes its shares; restoring is the web app's. */
