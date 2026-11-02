@@ -134,6 +134,7 @@ class ShareService {
 	 * @throws InvalidArgumentException When not found, not authorized, not a direct share, or the delegate's own grant
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is a read-only copy from another organisation
 	 * @throws ConflictException When the pending quarantine scan holds the row back
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row, the caller's copy or a row it resolves
 	 *
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
