@@ -483,6 +483,32 @@ describe('save', () => {
 		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 	})
 
+	it('keeps a failed save as a new login on New login when a later save to a login is refused as locked before writing', async () => {
+		const offline = { code: 'offline' } as const
+		const { sent, user, setView } = renderWindow(createView({ targets: [target()] }), {
+			replies: {
+				'passkey.save': (message: { target: object }) => ('name' in message.target ? { ok: false, code: 'write_failed', error: offline } : { ok: false, code: 'locked' }),
+				'passkey.verify': { ok: true, view: createView({ targets: [target()], failure: offline }) },
+			},
+		})
+		await user.click(await screen.findByRole('button', { name: 'New login' }))
+		await user.click(screen.getByRole('button', { name: 'Save as new login' }))
+		await screen.findByRole('button', { name: 'Retry' })
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		setView(createView({ locked: true }))
+		await user.click(screen.getByRole('button', { name: 'Example, alice@example.test' }))
+		await heading('Unlock')
+		await user.type(screen.getByLabelText('Master password'), 'hunter2{Enter}')
+		await heading('Save passkey')
+		expect(screen.getByRole('list', { name: 'Save to a login' })).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(screen.queryByRole('alert')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'New login' }))
+		expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
+		expect(sentOf(sent, 'passkey.retry')).toEqual([])
+		expect(sentOf(sent, 'passkey.save').map((message) => message.target)).toEqual([{ name: 'Example Corp', folderId: null }, { itemId: 'i1' }])
+	})
+
 	it('stays on New login while its save runs, with Back disabled and Escape doing nothing', async () => {
 		let answer: (reply: unknown) => void = () => {}
 		const { sent, user } = renderWindow(createView({ targets: [target()] }), { replies: { 'passkey.save': () => new Promise((resolve) => (answer = resolve)) } })

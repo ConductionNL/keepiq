@@ -44,7 +44,10 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	 * login arriving later must not take away, or Enter meant for Name would save to it; `left` returns focus to its button.
 	 */
 	const [newLogin, setNewLogin] = useState<'opened' | 'only' | 'left' | null>(null)
-	/** The step of the last save, so a failure's Retry, which repeats that save, shows only there. */
+	/**
+	 * The step of the last failed save, so its Retry, which repeats that save, shows only there. The view does not say which
+	 * step a failure it opens with came from, so that one shows on both.
+	 */
 	const [savedFrom, setSavedFrom] = useState<'list' | 'new' | null>(null)
 	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
 	const held = view && !view.locked && view.pending && rowKey(view.pending) !== dismissed ? view.pending : null
@@ -95,7 +98,10 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		}
 		switch (reply.code) {
 			case 'ended': return window.close()
-			case 'write_failed': return setFailure(reply.error ?? { code: 'unknown' })
+			case 'write_failed':
+				// Only a write that failed replaces the background's failed step; a save refused before it keeps the earlier one.
+				if (command.kind === 'passkey.save') setSavedFrom('name' in command.target ? 'new' : 'list')
+				return setFailure(reply.error ?? { code: 'unknown' })
 			case 'verify_required':
 				if (command.kind === 'passkey.pick' || command.kind === 'passkey.save') setConfirming(command)
 				return
@@ -122,7 +128,6 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	async function run(command: Command, control: string): Promise<void> {
 		setBusy(control)
 		setNotice(null)
-		if (command.kind === 'passkey.save') setSavedFrom('name' in command.target ? 'new' : 'list')
 		const reply = await send(command)
 		setBusy(null)
 		await settle(reply, command)

@@ -181,6 +181,11 @@ On a choice, the background makes an ECDSA P-256 key pair and builds the canonic
 - **WHEN** the user saves the passkey
 - **THEN** the window shows the reason worded by `writeErrors.writeLocked` and the page receives nothing yet
 
+#### Scenario: A failure stays on its step
+- **GIVEN** a save as a new login failed, showing the reason and Retry
+- **WHEN** the user goes Back to the list, or a later save to a login there is refused before anything is written
+- **THEN** the list shows neither, and New login shows them again
+
 #### Scenario: Retry after a lost reply
 - **GIVEN** the server stored a new login with the passkey, but its reply never arrived
 - **WHEN** the user clicks Retry
