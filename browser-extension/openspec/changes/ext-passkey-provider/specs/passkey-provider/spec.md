@@ -79,7 +79,7 @@ Each of these depends on the settings and the request only, never on what the va
 - **THEN** the browser's own `create` runs
 
 ### Requirement: The passkey window
-For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
+For every `create` and every `get` without `mediation: 'conditional'` that Keepiq handles, the extension SHALL open one popup window (the popup page at `?passkey=<ceremonyId>`, 380 × 630, as the pop-out) for that ceremony, whatever the vault holds and whether it is locked. One ceremony runs per tab: a new one in the same tab ends the previous one with `NotAllowedError` and takes over its window. The window gets from the background only the ceremony's kind, the RP ID and the requesting host, the `rp.name` and `user.name` the page sent (shown as text), the lock state, the rows to pick from (for a sign-in the login id, credential id, login name and the passkey's user name; for Save the matching logins' id, name and decrypted username) and codes; never ciphertext, a key, the challenge or the credential. Its buttons answer the ceremony; it closes itself when the ceremony ends. A click, Enter or Space that signs, saves, replaces, retries or submits the unlock or "Confirm it's you" form counts only 500 ms after the window or its current step appeared or the window got focus, so input meant for the page does nothing; Cancel and Escape count at once. Every text in it goes through `i18n.t()` in `en.yml` and `nl.yml`, and it meets WCAG 2.2 AA as the popup does.
 
 #### Scenario: Two requests in one tab
 - **GIVEN** a passkey window open for a `get` in a tab
@@ -90,6 +90,11 @@ For every `create` and every `get` without `mediation: 'conditional'` that Keepi
 - **GIVEN** a passkey window
 - **WHEN** the user closes it
 - **THEN** the page's call rejects with `NotAllowedError`, as Cancel does
+
+#### Scenario: The window appears while the user types
+- **GIVEN** a page that asks the user to type and press Enter, and calls `get` while they do
+- **WHEN** the window opens with the first passkey focused and Enter arrives within 500 ms
+- **THEN** nothing is signed, and Enter on that passkey after 500 ms signs it
 
 ### Requirement: Sign in with a passkey
 For a `get`, the window SHALL list the passkeys offered for the request under "Sign in with a passkey" and "Use a passkey saved in Keepiq for <rpId>", each row showing the login's name and the passkey's user name. Picking one makes the background sign the assertion and reply to the page, record the login in `lastUsed.<accountId>` and close the window. With no passkey offered, the window reads "No Keepiq passkey for <rpId>". Every state offers "Use your device or hardware key" and Cancel.

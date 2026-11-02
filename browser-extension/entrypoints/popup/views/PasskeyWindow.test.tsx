@@ -4,13 +4,17 @@ import { resolve } from 'node:path'
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { GUARD_MS } from '@/src/autofill/visibility'
 import type { AccountSummary, PasskeyRow, PasskeySaveTarget, PasskeyView } from '@/src/messages'
 import { setLocale } from '@/src/testing/i18n'
 import App from '../App'
 import { account, fakeBackground, popupState, sentOf } from '../testing'
 import { PasskeyWindow } from './PasskeyWindow'
 
-afterEach(cleanup)
+afterEach(() => {
+	cleanup()
+	vi.useRealTimers()
+})
 
 function passkeyView(overrides: Partial<PasskeyView> = {}): PasskeyView {
 	return {
@@ -21,6 +25,22 @@ function passkeyView(overrides: Partial<PasskeyView> = {}): PasskeyView {
 
 const row = (overrides: Partial<PasskeyRow> = {}): PasskeyRow => ({ itemId: 'i1', credentialId: 'cred-1', name: 'Example', userName: 'alice', ...overrides })
 const target = (overrides: Partial<PasskeySaveTarget> = {}): PasskeySaveTarget => ({ itemId: 'i1', name: 'Example', username: 'alice@example.test', replace: null, ...overrides })
+
+const wait = (ms = GUARD_MS) => vi.setSystemTime(Date.now() + ms)
+
+/** The window ignores activations for `GUARD_MS` after a step appears; `user` waits that out before each action, `hasty` does not. */
+function settled(user: ReturnType<typeof userEvent.setup>): typeof user {
+	return new Proxy(user, {
+		get(target, property, receiver) {
+			const value: unknown = Reflect.get(target, property, receiver)
+			if (typeof value !== 'function') return value
+			return (...args: unknown[]) => {
+				wait()
+				return (value as (...a: unknown[]) => unknown).apply(target, args)
+			}
+		},
+	})
+}
 
 interface Setup {
 	replies?: Record<string, unknown>
@@ -39,10 +59,11 @@ function renderWindow(view: PasskeyView, { replies = {}, unanswered, account: ac
 		replies: { 'passkey.state': () => ({ ok: true, view: current }), 'passkey.cancel': { ok: true }, 'passkey.fallback': { ok: true }, ...replies },
 	})
 	const close = vi.spyOn(window, 'close').mockImplementation(() => {})
-	const user = userEvent.setup()
+	vi.useFakeTimers({ toFake: ['Date'] })
+	const hasty = userEvent.setup()
 	render(<PasskeyWindow ceremonyId="c1" />)
 	return {
-		sent, close, user,
+		sent, close, hasty, user: settled(hasty),
 		setView: (next: PasskeyView) => (current = next),
 		broadcast: (message: unknown) => act(() => listeners.forEach((listener) => listener(message))),
 	}
@@ -441,6 +462,92 @@ describe('the ways out', () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {})
 		renderWindow(passkeyView(), { unanswered: ['passkey.state'] })
 		expect(await alertText()).toMatch(/not responding/)
+	})
+})
+
+describe('activations right after a step appears', () => {
+	const createView = (overrides: Partial<PasskeyView> = {}) => passkeyView({ kind: 'create', ...overrides })
+
+	it('ignores a click or Enter on a passkey until the window has shown for the guard time', async () => {
+		const { sent, hasty } = renderWindow(passkeyView({ rows: [row()] }), { replies: { 'passkey.pick': { ok: true } } })
+		const first = await screen.findByRole('button', { name: 'Example, alice' })
+		await hasty.keyboard('{Enter}')
+		await hasty.click(first)
+		wait(GUARD_MS - 1)
+		await hasty.keyboard(' ')
+		expect(sentOf(sent, 'passkey.pick')).toEqual([])
+		wait(1)
+		await hasty.keyboard('{Enter}')
+		expect(sentOf(sent, 'passkey.pick')).toHaveLength(1)
+	})
+
+	it('ignores Enter on a login and in the Name field right after the save view appears', async () => {
+		const { sent, hasty } = renderWindow(createView({ targets: [target()] }), { replies: { 'passkey.save': { ok: true } } })
+		await screen.findByRole('button', { name: 'Example, alice@example.test' })
+		await hasty.keyboard('{Enter}')
+		await hasty.type(screen.getByLabelText('Name'), '{Enter}')
+		expect(sentOf(sent, 'passkey.save')).toEqual([])
+		wait()
+		await hasty.type(screen.getByLabelText('Name'), '{Enter}')
+		expect(sentOf(sent, 'passkey.save')).toHaveLength(1)
+	})
+
+	it('applies again after each view change, as a sign-in that turns into a save', async () => {
+		const { sent, hasty, setView, broadcast } = renderWindow(passkeyView({ rows: [row()] }), { replies: { 'passkey.save': { ok: true }, 'passkey.pick': { ok: true } } })
+		await screen.findByRole('button', { name: 'Example, alice' })
+		wait()
+		setView(createView({ targets: [target()] }))
+		broadcast({ kind: 'vault.changed' })
+		const login = await screen.findByRole('button', { name: 'Example, alice@example.test' })
+		await hasty.click(login)
+		expect(sentOf(sent, 'passkey.save')).toEqual([])
+		wait()
+		await hasty.click(login)
+		expect(sentOf(sent, 'passkey.save')).toHaveLength(1)
+		expect(sentOf(sent, 'passkey.pick')).toEqual([])
+	})
+
+	it('applies again when the window gets focus', async () => {
+		const { sent, hasty } = renderWindow(passkeyView({ rows: [row()] }), { replies: { 'passkey.pick': { ok: true } } })
+		const first = await screen.findByRole('button', { name: 'Example, alice' })
+		wait()
+		act(() => void window.dispatchEvent(new Event('focus')))
+		await hasty.click(first)
+		expect(sentOf(sent, 'passkey.pick')).toEqual([])
+	})
+
+	it('ignores Replace right after the question appears', async () => {
+		const { sent, user, hasty } = renderWindow(createView({ targets: [target({ replace: { userName: 'alice' } })] }), { replies: { 'passkey.save': { ok: true } } })
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		const replace = within(screen.getByRole('dialog')).getByRole('button', { name: 'Replace' })
+		await hasty.click(replace)
+		expect(sentOf(sent, 'passkey.save')).toEqual([])
+		wait()
+		await hasty.click(replace)
+		expect(sentOf(sent, 'passkey.save')).toEqual([{ kind: 'passkey.save', ceremonyId: 'c1', target: { itemId: 'i1', replace: true } }])
+	})
+
+	it('ignores Retry right after the failure appears', async () => {
+		const { sent, hasty } = renderWindow(passkeyView({ rows: [row()], failure: { code: 'offline' } }), { replies: { 'passkey.retry': { ok: true } } })
+		await hasty.click(await screen.findByRole('button', { name: 'Retry' }))
+		expect(sentOf(sent, 'passkey.retry')).toEqual([])
+	})
+
+	it('does not submit "Confirm it\'s you" or the unlock form from typing meant for the page', async () => {
+		const held = row()
+		const { sent, hasty } = renderWindow(passkeyView({ rows: [held], verify: true, pending: held }), { account: { pin: true } })
+		await hasty.type(await screen.findByLabelText('PIN'), '1234{Enter}')
+		expect(sentOf(sent, 'passkey.verify')).toEqual([])
+		wait()
+		await hasty.keyboard('{Enter}')
+		expect(sentOf(sent, 'passkey.verify')).toHaveLength(1)
+	})
+
+	it('cancels at once with Escape or Cancel', async () => {
+		const { sent, hasty } = renderWindow(passkeyView({ rows: [row()] }))
+		await screen.findByRole('button', { name: 'Example, alice' })
+		await hasty.keyboard('{Escape}')
+		expect(sentOf(sent, 'passkey.cancel')).toHaveLength(1)
 	})
 })
 

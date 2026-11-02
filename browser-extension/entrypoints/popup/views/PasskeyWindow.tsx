@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { i18n } from '#i18n'
+import { GUARD_MS } from '@/src/autofill/visibility'
 import type {
 	AccountSummary, ErrorCode, PasskeyFailure, PasskeyPopupRequest, PasskeyRow, PasskeySaveTarget, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
 } from '@/src/messages'
@@ -154,6 +155,11 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		else setNotice(i18n.t('errors.notResponding'))
 	}
 
+	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId]))
+	const guarded = <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => {
+		if (ready()) action(...args)
+	}
+
 	const cancelRef = useRef(cancel)
 	useEffect(() => {
 		cancelRef.current = cancel
@@ -181,7 +187,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		const picked = confirming?.kind === 'passkey.pick' ? confirming : held
 		const subject = view.locked ? undefined : view.rows.find((row) => row.itemId === picked?.itemId && row.credentialId === picked.credentialId)
 		body = account
-			? <SecretForm key={view.locked ? 'unlock' : 'verify'} account={account} intro={intro} subject={subject} submitLabel={view.locked ? i18n.t('unlock.submit') : i18n.t('passkey.confirm')} onSubmit={verify} />
+			? <SecretForm key={view.locked ? 'unlock' : 'verify'} account={account} intro={intro} subject={subject} submitLabel={view.locked ? i18n.t('unlock.submit') : i18n.t('passkey.confirm')} ready={ready} onSubmit={verify} />
 			: <Loading />
 	} else if (view.alreadySaved) {
 		title = i18n.t('passkey.alreadySavedTitle')
@@ -194,14 +200,14 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		)
 	} else if (view.kind === 'get') {
 		title = i18n.t('passkey.signInTitle')
-		body = <SignIn view={view} busy={busy} focus={!showFailure} onPick={pick} />
+		body = <SignIn view={view} busy={busy} focus={!showFailure} onPick={guarded(pick)} />
 	} else {
 		title = i18n.t('passkey.saveTitle')
 		body = (
 			<SaveTo
 				view={view} busy={busy} focus={!showFailure} name={name ?? (view.rpName || view.rpId)} folderId={folderId} onName={setName} onFolder={setFolderId}
-				onTarget={(target) => (target.replace ? setReplacing(target) : save({ itemId: target.itemId }, `save:${target.itemId}`))}
-				onNew={() => save({ name: name ?? (view.rpName || view.rpId), folderId: folderId || null }, 'new')}
+				onTarget={guarded((target: PasskeySaveTarget) => (target.replace ? setReplacing(target) : save({ itemId: target.itemId }, `save:${target.itemId}`)))}
+				onNew={guarded(() => save({ name: name ?? (view.rpName || view.rpId), folderId: folderId || null }, 'new'))}
 			/>
 		)
 	}
@@ -215,7 +221,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			<Header title={title} active={null} />
 			<div className="popup__body stack">
 				{showFailure && (
-					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus busy={busy === 'retry'} onClick={() => void run({ kind: 'passkey.retry' }, 'retry')}>{i18n.t('passkey.retry')}</Button>}>
+					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
 						{writeErrorText(showFailure, 'passkey')}
 					</Banner>
 				)}
@@ -233,16 +239,39 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 					title={i18n.t('passkey.replaceQuestion', { userName: replacing.replace.userName, name: replacing.name })}
 					actions={[{
 						label: i18n.t('passkey.replace'),
-						onClick: () => {
+						onClick: guarded(() => {
 							setReplacing(null)
 							save({ itemId: replacing.itemId, replace: true }, `save:${replacing.itemId}`)
-						},
+						}),
 					}]}
 					onCancel={() => setReplacing(null)}
 				/>
 			)}
 		</main>
 	)
+}
+
+/**
+ * The page opens the window and changes its step without the user, so a click, Enter or Space meant for the page must
+ * not sign, save or replace: those count only `GUARD_MS` after `step` last changed or the window last got focus.
+ */
+function useSettled(step: string): () => boolean {
+	const shownAt = useRef<number | null>(null)
+	useLayoutEffect(() => {
+		shownAt.current = Date.now()
+	}, [step])
+	useEffect(() => {
+		const reshow = () => {
+			if (document.visibilityState === 'visible') shownAt.current = Date.now()
+		}
+		window.addEventListener('focus', reshow)
+		document.addEventListener('visibilitychange', reshow)
+		return () => {
+			window.removeEventListener('focus', reshow)
+			document.removeEventListener('visibilitychange', reshow)
+		}
+	}, [])
+	return useCallback(() => shownAt.current !== null && Date.now() - shownAt.current >= GUARD_MS, [])
 }
 
 const rowLabel = (name: string, userName: string) => (userName ? i18n.t('passkey.row', { name, userName }) : name)
@@ -349,11 +378,13 @@ interface SecretProps {
 	/** The passkey "Confirm it's you" signs with. */
 	subject?: PasskeyRow
 	submitLabel: string
+	/** False while a submit would come from typing meant for the page, which could spend a PIN try. */
+	ready: () => boolean
 	onSubmit: (method: UnlockMethod) => Promise<PasskeyWindowReply | undefined>
 }
 
 /** Unlocking and "Confirm it's you" alike, as the Unlock view asks; the background keeps the PIN's five tries. */
-function SecretForm({ account, intro, subject, submitLabel, onSubmit }: SecretProps) {
+function SecretForm({ account, intro, subject, submitLabel, ready, onSubmit }: SecretProps) {
 	const [secret, setSecret] = useState('')
 	const [switched, setSwitched] = useState(false)
 	const withPin = account.pin && !switched
@@ -364,6 +395,7 @@ function SecretForm({ account, intro, subject, submitLabel, onSubmit }: SecretPr
 
 	async function submit(event: FormEvent) {
 		event.preventDefault()
+		if (!ready()) return
 		setBusy(true)
 		setError(null)
 		const method: UnlockMethod = withPin ? { type: 'pin', pin: secret } : { type: 'masterPassword', masterPassword: secret }
