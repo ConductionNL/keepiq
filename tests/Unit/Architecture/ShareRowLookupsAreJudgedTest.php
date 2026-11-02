@@ -18,12 +18,14 @@
  * on any receiver. A name other classes share (findById and the like, see
  * SHARED_NAMES) is reported unless its receiver is proven to be another
  * class: `$this`, a variable or a `$this->` property whose every declaration
- * in the file (native type, `@var`/`@param`, assignment, copy of another
- * variable) resolves to a class unrelated to the share mappers, or a
- * container lookup or `new` of such a class. A getter, an inherited or
- * undeclared property, a loop variable, an untyped or by-reference
- * parameter, a variable passed to a by-reference parameter of a function
- * the file declares, or anything else it cannot follow is reported.
+ * in the file (native type, `@var`/`@param`/`@property`, assignment, copy
+ * of another variable or property) resolves to a class unrelated to the
+ * share mappers, or a container lookup or `new` of such a class. Properties
+ * and variables are kept apart: a parameter or local never types a property
+ * of the same name. A getter, an inherited, undeclared or untyped property,
+ * a loop or `global` variable, an untyped or by-reference parameter, a
+ * variable passed to a by-reference parameter of a function the file
+ * declares, or anything else it cannot follow is reported.
  *
  * The allowlists are per call site: a file, a finder and the number of calls
  * of it in that file, so a new call in an allowed file fails as well. An
@@ -619,9 +621,21 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 					|| ($tokens[$i - 1]->text === ']' && $before->is([T_VARIABLE, T_STRING]) === false && in_array($before->text, [']', ')', '}'], true) === false)
 				) {
 					for ($j = $open; $j < $i; $j++) {
-						if ($tokens[$j]->is(T_VARIABLE) === true) {
+						if ($tokens[$j]->text === '$this' && ($tokens[$j + 2] ?? null)?->is(T_STRING) === true) {
+							$types['->'.$tokens[$j + 2]->text][] = 'unknown';
+						} elseif ($tokens[$j]->is(T_VARIABLE) === true) {
 							$types[substr($tokens[$j]->text, 1)][] = 'unknown';
 						}
+					}
+				}
+
+				continue;
+			}
+
+			if ($token->is(T_GLOBAL) === true) {
+				for ($j = $i + 1; $j < $count && $tokens[$j]->text !== ';'; $j++) {
+					if ($tokens[$j]->is(T_VARIABLE) === true) {
+						$types[substr($tokens[$j]->text, 1)][] = 'unknown';
 					}
 				}
 
@@ -636,7 +650,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				if (($tokens[$i + 1] ?? null)?->is(self::OBJECT_OPERATORS) === true && ($tokens[$i + 2] ?? null)?->is(T_STRING) === true
 					&& ($tokens[$i + 3] ?? null)?->is(['=', T_COALESCE_EQUAL]) === true
 				) {
-					$types[$tokens[$i + 2]->text][] = $this->assigned(tokens: $tokens, start: $i + 4, context: $context);
+					$types['->'.$tokens[$i + 2]->text][] = $this->assigned(tokens: $tokens, start: $i + 4, context: $context);
 				}
 
 				continue;
@@ -647,8 +661,20 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				$types[$name][] = $this->assigned(tokens: $tokens, start: $i + 2, context: $context);
 			}
 
+			// A property declaration types the property; a promoted parameter is
+			// both. A plain parameter or local never types a property.
+			$keys = [$name];
+			if ($this->declaresProperty(tokens: $tokens, variable: $i) === true) {
+				$keys = ['->'.$name];
+				if ($this->isParameter(tokens: $tokens, variable: $i) === true) {
+					$keys[] = $name;
+				}
+			}
+
 			foreach ($this->declaredTypes(tokens: $tokens, variable: $i, context: $context) as $type) {
-				$types[$name][] = $type;
+				foreach ($keys as $key) {
+					$types[$key][] = $type;
+				}
 			}
 		}//end for
 
@@ -657,8 +683,16 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				continue;
 			}
 
-			preg_match_all('/@(?:var|param|property(?:-read|-write)?)\s+(\S+)(?:\s+&?\s*(?:\.\.\.)?\$(\w+))?/', $doc->text, $tags, PREG_SET_ORDER);
+			$next = ($d + 1);
+			while (($all[$next] ?? null)?->isIgnorable() === true) {
+				$next++;
+			}
+
+			$onProperty = (($all[$next] ?? null)?->is(self::MODIFIERS) === true);
+			preg_match_all('/@(var|param|property(?:-read|-write)?)\s+(\S+)(?:\s+&?\s*(?:\.\.\.)?\$(\w+))?/', $doc->text, $tags, PREG_SET_ORDER);
 			foreach ($tags as $tag) {
+				$property = (str_starts_with($tag[1], 'property') === true || ($tag[1] === 'var' && $onProperty === true));
+				array_shift($tag);
 				$name = ($tag[2] ?? '');
 				if ($name === '') {
 					$name = $this->nextVariable(all: $all, after: $d);
@@ -666,6 +700,10 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 				if ($name === null) {
 					continue;
+				}
+
+				if ($property === true) {
+					$name = '->'.$name;
 				}
 
 				$expression = $tag[1];
@@ -812,6 +850,30 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	}//end declaredTypes()
 
 	/**
+	 * Whether a variable is a property declaration (also a promoted
+	 * constructor parameter): a modifier stands before it and its type.
+	 *
+	 * @param list<PhpToken> $tokens   The significant tokens
+	 * @param int            $variable The variable's index
+	 *
+	 * @return bool
+	 */
+	private function declaresProperty(array $tokens, int $variable): bool {
+		$j = ($variable - 1);
+		while ($j >= 0 && ($tokens[$j]->is([...self::NAME_TOKENS, T_ARRAY, T_CALLABLE, T_ELLIPSIS]) === true
+			|| in_array($tokens[$j]->text, ['&', '?', '|', '(', ')'], true) === true)
+		) {
+			if ($tokens[$j]->text === '(' && ($tokens[$j - 1] ?? null)?->is(self::MODIFIERS) !== true && ($tokens[$j - 1] ?? null)?->text !== '|') {
+				break;
+			}
+
+			$j--;
+		}
+
+		return ($tokens[$j] ?? null)?->is(self::MODIFIERS) === true;
+	}//end declaresProperty()
+
+	/**
 	 * Whether the token before a parameter's name (after any `&` and `...`)
 	 * ends a type.
 	 *
@@ -919,7 +981,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		$static = ($size === 3 && in_array(strtolower($rhs[0]->text), ['self', 'static'], true) === true
 			&& $rhs[1]->is(T_DOUBLE_COLON) === true && $rhs[2]->is(T_VARIABLE) === true);
 		if ($property === true || $static === true) {
-			return '$'.ltrim($rhs[2]->text, '$');
+			return '$->'.ltrim($rhs[2]->text, '$');
 		}
 
 		if ($size >= 2 && $rhs[0]->is(T_NEW) === true) {
@@ -977,7 +1039,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		if ($before->is(T_STRING) === true && ($tokens[$operator - 2] ?? null)?->is(self::OBJECT_OPERATORS) === true
 			&& ($tokens[$operator - 3] ?? null)?->text === '$this'
 		) {
-			return $this->statusOf(name: $before->text, types: $types);
+			return $this->statusOf(name: '->'.$before->text, types: $types);
 		}
 
 		if ($before->text === ')') {
@@ -1416,7 +1478,10 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		);
 
 		// An untyped or by-reference declaration of a name makes it unknown,
-		// even when another declaration in the file types it as another class.
+		// even when another declaration in the file types it as another class;
+		// so does `global`. A parameter or local never types a `$this->`
+		// property of the same name, so an inherited or untyped property stays
+		// unknown; a promoted one is typed.
 		$evasive = <<<'PHP'
 			<?php
 			namespace OCA\Keepiq\Service;
@@ -1429,10 +1494,14 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				private function viaOut(AttachmentMapper $held): void { $this->pick($held); $held->findBySourceSecret('z'); }
 				private function byReference(AttachmentMapper &$ref): void { $ref->findBySourceSecret('w'); }
 				private function control(AttachmentMapper $typed): void { $typed->findBySourceSecret('v'); }
+				protected $untyped;
+				private function collide(AttachmentMapper $inherited, AttachmentMapper $untyped, AttachmentMapper $glob): void { $this->inherited->findBySourceSecret('i'); $this->untyped->findBySourceSecret('j'); }
+				private function viaGlobal(): void { global $glob; $glob->findBySourceSecret('k'); }
+				private function promoted(): void { $this->typed->findBySourceSecret('l'); }
 			}
 			PHP;
 
-		$this->assertSame(expected: ['findBySourceSecret' => [6, 7, 9, 10]], actual: $this->callsIn(source: $evasive));
+		$this->assertSame(expected: ['findBySourceSecret' => [6, 7, 9, 10, 13, 13, 14]], actual: $this->callsIn(source: $evasive));
 	}//end testTheScanFollowsOrReportsEveryReceiver()
 
 	/**
