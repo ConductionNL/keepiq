@@ -142,84 +142,54 @@ export default {
 
 	computed: {
 		/**
-		 * The fields of the card or identity, in form order.
+		 * The card fields as [name, label, secret], in form order.
+		 *
+		 * @return {Array<Array>}
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
+		 */
+		cardFields() {
+			return [
+				['number', t('keepiq', 'Card number'), true],
+				['expiry', t('keepiq', 'Expiry (MM/YY)'), false],
+				['cvv', t('keepiq', 'CVV'), true],
+				['pin', t('keepiq', 'PIN (optional)'), true],
+				['cardholder', t('keepiq', 'Cardholder name'), false],
+			]
+		},
+
+		/**
+		 * The identity fields as [name, label, secret], in form order.
+		 *
+		 * @return {Array<Array>}
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
+		 */
+		identityFields() {
+			return [
+				['firstName', t('keepiq', 'First name'), false],
+				['lastName', t('keepiq', 'Last name'), false],
+				['address', t('keepiq', 'Address'), false],
+				['phone', t('keepiq', 'Phone'), false],
+				['email', t('keepiq', 'Email'), false],
+				['bsn', t('keepiq', 'BSN'), true],
+			]
+		},
+
+		/**
+		 * The fields of the card or identity, in form order, with their test
+		 * ids (card-number, identity-first-name, ...).
 		 *
 		 * @return {Array<{key: string, label: string, testid: string, secret: boolean}>}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
 		 */
 		fields() {
-			if (this.isCard) {
-				return [
-					{
-						key: 'number',
-						label: t('keepiq', 'Card number'),
-						testid: 'card-number',
-						secret: true,
-					},
-					{
-						key: 'expiry',
-						label: t('keepiq', 'Expiry (MM/YY)'),
-						testid: 'card-expiry',
-						secret: false,
-					},
-					{
-						key: 'cvv',
-						label: t('keepiq', 'CVV'),
-						testid: 'card-cvv',
-						secret: true,
-					},
-					{
-						key: 'pin',
-						label: t('keepiq', 'PIN (optional)'),
-						testid: 'card-pin',
-						secret: true,
-					},
-					{
-						key: 'cardholder',
-						label: t('keepiq', 'Cardholder name'),
-						testid: 'card-cardholder',
-						secret: false,
-					},
-				]
-			}
-			return [
-				{
-					key: 'firstName',
-					label: t('keepiq', 'First name'),
-					testid: 'identity-first-name',
-					secret: false,
-				},
-				{
-					key: 'lastName',
-					label: t('keepiq', 'Last name'),
-					testid: 'identity-last-name',
-					secret: false,
-				},
-				{
-					key: 'address',
-					label: t('keepiq', 'Address'),
-					testid: 'identity-address',
-					secret: false,
-				},
-				{
-					key: 'phone',
-					label: t('keepiq', 'Phone'),
-					testid: 'identity-phone',
-					secret: false,
-				},
-				{
-					key: 'email',
-					label: t('keepiq', 'Email'),
-					testid: 'identity-email',
-					secret: false,
-				},
-				{
-					key: 'bsn',
-					label: t('keepiq', 'BSN'),
-					testid: 'identity-bsn',
-					secret: true,
-				},
-			]
+			const prefix = this.isCard ? 'card' : 'identity'
+			const list = this.isCard ? this.cardFields : this.identityFields
+			return list.map(([key, label, secret]) => ({
+				key,
+				label,
+				secret,
+				testid: `${prefix}-${key.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())}`,
+			}))
 		},
 
 		/**

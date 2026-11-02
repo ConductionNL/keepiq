@@ -78,16 +78,7 @@
 				</span>
 			</div>
 
-			<SecretPayloadFields
-				v-model:value="value"
-				v-model:card="card"
-				v-model:identity="identity"
-				v-model:generatorOpen="generatorOpen"
-				:isCard="isCard"
-				:isIdentity="isIdentity"
-				:valueLabel="valueLabel"
-				@generate="openGenerator"
-				@generated="onGenerated" />
+			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
 			<!-- The saved seed is never loaded into the form: the field only
 			     says one is saved and offers Replace and Remove. -->

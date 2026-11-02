@@ -35,16 +35,9 @@
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
 			<SecretPayloadFields
-				v-model:value="value"
-				v-model:card="card"
-				v-model:identity="identity"
-				v-model:generatorOpen="generatorOpen"
-				:isCard="isCard"
-				:isIdentity="isIdentity"
-				:valueLabel="valueLabel"
+				v-bind="payloadFields"
 				:checkLuhn="true"
-				@generate="openGenerator"
-				@generated="onGenerated" />
+				v-on="payloadFieldEvents" />
 
 			<AuthenticatorKeyField
 				v-if="showAuthenticator"

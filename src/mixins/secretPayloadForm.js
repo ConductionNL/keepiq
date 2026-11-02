@@ -83,6 +83,49 @@ export const secretPayloadForm = {
 		},
 
 		/**
+		 * The props of the SecretPayloadFields in the dialog.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
+		payloadFields() {
+			return {
+				value: this.value,
+				card: this.card,
+				identity: this.identity,
+				generatorOpen: this.generatorOpen,
+				isCard: this.isCard,
+				isIdentity: this.isIdentity,
+				valueLabel: this.valueLabel,
+			}
+		},
+
+		/**
+		 * The listeners of the SecretPayloadFields in the dialog.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
+		 */
+		payloadFieldEvents() {
+			return {
+				'update:value': (value) => {
+					this.value = value
+				},
+				'update:card': (card) => {
+					this.card = card
+				},
+				'update:identity': (identity) => {
+					this.identity = identity
+				},
+				'update:generatorOpen': (open) => {
+					this.generatorOpen = open
+				},
+				generate: this.openGenerator,
+				generated: this.onGenerated,
+			}
+		},
+
+		/**
 		 * The value serialized for the encrypted key field.
 		 *
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
