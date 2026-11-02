@@ -128,13 +128,44 @@ function Fetched(props: Props & { id: string }) {
 
 const ALGORITHMS: TotpAlgorithm[] = ['SHA1', 'SHA256', 'SHA512']
 
+/** `without` and `valueKey`: what the failed attempt sent, so Try again sends it again while the values are the same. */
+interface SaveFailure {
+	error: VaultWriteError | undefined
+	without?: Partner[]
+	valueKey?: string
+}
+
+function OfflineNotice({ offline, onSync }: { offline: boolean; onSync: () => void }) {
+	if (!offline) return null
+	return (
+		<Banner tone="warning" role="status" action={<Button variant="link" onClick={onSync}>{i18n.t('vault.syncNow')}</Button>}>
+			{i18n.t('form.offline')}
+		</Banner>
+	)
+}
+
+/** The last save's failure; an edit reads a conflict as a stale copy. */
+function SaveFailureNotice({ failure, editing, actionFor, webAppUrl }: { failure: SaveFailure | null; editing: boolean; actionFor: (failure: SaveFailure) => ReactNode; webAppUrl: string }) {
+	if (!failure) return null
+	return (
+		<Banner tone="error" role="alert" action={actionFor(failure)}>
+			{writeErrorText(failure.error, editing ? 'edit' : 'item')}
+			{failure.error?.code === 'unverified' && <><br /><a href={webAppUrl} target="_blank" rel="noreferrer">{i18n.t('common.openWebApp')}</a></>}
+		</Banner>
+	)
+}
+
+/** A form-level error under a group of fields. */
+function GroupError({ text }: { text: string | null }) {
+	return text ? <p className="field__error">{text}</p> : null
+}
+
 function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { item?: EditableItem; initial: FormValues }) {
 	const shell = useShell()
 	const draft = useItemDraft(initial, snapshot.types, item && { id: item.typeId, name: item.typeName })
 	useUnsavedChangesGuard(draft.dirty)
 	const [busy, setBusy] = useState(false)
-	/** `without` and `valueKey`: what the failed attempt sent, so Try again sends it again while the values are the same. */
-	const [failure, setFailure] = useState<{ error: VaultWriteError | undefined; without?: Partner[]; valueKey?: string } | null>(null)
+	const [failure, setFailure] = useState<SaveFailure | null>(null)
 	const [picking, setPicking] = useState(false)
 	const formId = useId()
 	const { values, update } = draft
@@ -175,7 +206,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 		setFailure({ error: failed, without, valueKey })
 	}
 
-	function failureAction({ error, without, valueKey: failedKey }: NonNullable<typeof failure>): ReactNode {
+	function failureAction({ error, without, valueKey: failedKey }: SaveFailure): ReactNode {
 		const partners = error?.code === 'partner_unreachable' ? error.partners : undefined
 		if (partners?.length) {
 			const onClick = () => {
@@ -241,17 +272,8 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				event.preventDefault()
 				void save()
 			}}>
-				{shell.offline && (
-					<Banner tone="warning" role="status" action={<Button variant="link" onClick={shell.syncNow}>{i18n.t('vault.syncNow')}</Button>}>
-						{i18n.t('form.offline')}
-					</Banner>
-				)}
-				{failure && (
-					<Banner tone="error" role="alert" action={failureAction(failure)}>
-						{writeErrorText(failure.error, mode === 'edit' ? 'edit' : 'item')}
-						{failure.error?.code === 'unverified' && <><br /><a href={snapshot.webAppUrl} target="_blank" rel="noreferrer">{i18n.t('common.openWebApp')}</a></>}
-					</Banner>
-				)}
+				<OfflineNotice offline={shell.offline} onSync={shell.syncNow} />
+				<SaveFailureNotice failure={failure} editing={mode === 'edit'} actionFor={failureAction} webAppUrl={snapshot.webAppUrl} />
 				<FormSection title={i18n.t('form.itemDetails')}>
 					<TypeSelect types={typeOptions} value={values.typeId} onChange={(typeId) => update({ typeId })} disabled={mode === 'edit'} />
 					<TextField label={i18n.t('form.name')} value={values.name} onChange={(name) => update({ name })} error={error('name')} autoComplete="off" />
@@ -296,7 +318,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 									{kind === 'identity' && IDENTITY_FIELDS.map((member) => (
 										<TextField key={member} label={identityLabels[member]} type={masked.has(member) ? 'password' : 'text'} value={values.identity[member]} onChange={identity(member)} error={error(`identity.${member}`)} autoComplete="off" inputMode={keyboards[member]} verbatim={member in keyboards} />
 									))}
-									{error('secret') && <p className="field__error">{error('secret')}</p>}
+									<GroupError text={error('secret')} />
 								</>
 							)
 							: secretField(secretLabel, 'off')}
@@ -311,7 +333,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				{sections.fields && (
 					<FormSection title={i18n.t('detail.additionalFields')}>
 						<AdditionalFieldsEditor fields={values.fields} errors={draft.errors} onChange={(fields) => update({ fields })} />
-						{error('additionalFields') && <p className="field__error">{error('additionalFields')}</p>}
+						<GroupError text={error('additionalFields')} />
 					</FormSection>
 				)}
 				{sections.notes && (
