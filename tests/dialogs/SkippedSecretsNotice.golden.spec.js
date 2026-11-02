@@ -234,16 +234,21 @@ describe('skipped secrets notice (golden)', () => {
 				!== undefined
 			const before = { html: html(wrapper), sendDisabled: send() }
 			const ack = wrapper.find('[data-testid="cxp-skipped-ack"]')
+			let afterAck = null
+			let afterUntick = null
 			if (ack.exists()) {
 				await ack.trigger('click')
-			}
-			check(`cxp ${skipped}`, {
-				before,
-				afterAck: {
+				afterAck = {
 					sendDisabled: send(),
 					acknowledged: wrapper.vm.skippedAcknowledged,
-				},
-			})
+				}
+				await ack.trigger('click')
+				afterUntick = {
+					sendDisabled: send(),
+					acknowledged: wrapper.vm.skippedAcknowledged,
+				}
+			}
+			check(`cxp ${skipped}`, { before, afterAck, afterUntick })
 		})
 	}
 })
