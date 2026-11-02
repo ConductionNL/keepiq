@@ -10,8 +10,9 @@
  *   QuarantinedShareTargetMapper, found by reflection;
  * - every string naming a finder, so a callable (`[$rows, 'findById']`,
  *   call_user_func) or a dynamic call is reported too;
- * - query-builder reads of the share-targets table by name outside the
- *   mappers.
+ * - every place naming the share-targets table outside the three mappers
+ *   and the migrations: quoted, in raw `*PREFIX*` SQL, or through a
+ *   constant that holds the name (comments do not count).
  *
  * It fails closed. A finder name no other class in lib/ declares is reported
  * on any receiver. A name other classes share (findById and the like, see
@@ -20,8 +21,9 @@
  * in the file (native type, `@var`/`@param`, assignment, copy of another
  * variable) resolves to a class unrelated to the share mappers, or a
  * container lookup or `new` of such a class. A getter, an inherited or
- * undeclared property, a loop variable or anything else it cannot follow is
- * reported.
+ * undeclared property, a loop variable, an untyped or by-reference
+ * parameter, a variable passed to a by-reference parameter of a function
+ * the file declares, or anything else it cannot follow is reported.
  *
  * The allowlists are per call site: a file, a finder and the number of calls
  * of it in that file, so a new call in an allowed file fails as well. An
@@ -127,11 +129,12 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	private const OBJECT_OPERATORS = [T_OBJECT_OPERATOR, T_NULLSAFE_OBJECT_OPERATOR];
 
 	/**
-	 * The share-targets table, as a query names it.
+	 * The share-targets table, as a query names it: quoted, in raw SQL after
+	 * `*PREFIX*`, or anywhere else as a whole word. Comments do not count.
 	 *
 	 * @var string
 	 */
-	private const TABLE_PATTERN = '/[\'"](?:keepiq_)?share_targets[\'"]/';
+	private const TABLE_PATTERN = '/\b(?:keepiq_)?share_targets\b/';
 
 	/**
 	 * The calls allowed outside ShareRowJudge: file (relative to lib/) =>
@@ -227,9 +230,13 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 * @var array<string,array{0:int,1:string}>
 	 */
 	private const TABLE_ALLOWED = [
-		'Service/ShareQuarantineScanner.php' => [1, 'the scan itself reads every row, quarantined or not'],
+		'Service/ShareQuarantineScanner.php' => [
+			8,
+			'the scan itself reads every row, quarantined or not: the TABLE constant, its four reads and three log messages',
+		],
 		'Service/ComplianceReportService.php' => [1, 'counts live rows for the compliance report; follows none'],
 		'Backup/BackupTableRegistry.php' => [1, 'backup and restore copy the table whole; a restore reopens the scan'],
+		'Backup/RestoreService.php' => [1, 'reads the row count of the archive file tables/share_targets.jsonl to reopen the scan; reads no row'],
 	];
 
 	/**
@@ -343,19 +350,32 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	}//end rawCalls()
 
 	/**
-	 * Every query naming the share-targets table in lib/ outside lib/Db/ and
-	 * the migrations, as "file => lines".
+	 * Every place naming the share-targets table in lib/ outside the three
+	 * mappers and the migrations, directly or through a constant, as
+	 * "file => lines".
 	 *
 	 * @return array<string,list<int>>
 	 */
 	private function tableReads(): array {
+		$sources = $this->libSources();
+		$constants = [];
+		foreach ($sources as $source) {
+			$tokens = $this->significant(source: $source);
+			$class = $this->contextOf(source: $source, tokens: $tokens)['class'];
+			$names = $this->tableConstantsIn(tokens: $tokens);
+			if ($class !== null && $names !== []) {
+				$short = strtolower(substr((string)strrchr('\\'.$class, '\\'), 1));
+				$constants[$short] = array_merge(($constants[$short] ?? []), $names);
+			}
+		}
+
 		$reads = [];
-		foreach ($this->libSources() as $file => $source) {
-			if (str_starts_with($file, 'Db/') === true || str_starts_with($file, 'Migration/') === true) {
+		foreach ($sources as $file => $source) {
+			if ($this->mayNameTheTable(file: $file) === true) {
 				continue;
 			}
 
-			$lines = $this->linesMatching(pattern: self::TABLE_PATTERN, source: $source);
+			$lines = $this->tableLinesIn(source: $source, constants: $constants);
 			if ($lines !== []) {
 				$reads[$file] = $lines;
 			}
@@ -363,6 +383,100 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 		return $reads;
 	}//end tableReads()
+
+	/**
+	 * Whether a file (relative to lib/) may name the share-targets table
+	 * freely: the three share mappers and the migrations only.
+	 *
+	 * @param string $file The file, relative to lib/
+	 *
+	 * @return bool
+	 */
+	private function mayNameTheTable(string $file): bool {
+		return in_array($file, $this->mapperFiles(), true) === true || str_starts_with($file, 'Migration/') === true;
+	}//end mayNameTheTable()
+
+	/**
+	 * The tokens of a source that are not whitespace or comments.
+	 *
+	 * @param string $source The source
+	 *
+	 * @return list<PhpToken>
+	 */
+	private function significant(string $source): array {
+		return array_values(array_filter(PhpToken::tokenize($source), static fn (PhpToken $token): bool => $token->isIgnorable() === false));
+	}//end significant()
+
+	/**
+	 * The constants a file declares whose value names the share-targets table.
+	 *
+	 * @param list<PhpToken> $tokens The significant tokens
+	 *
+	 * @return list<string>
+	 */
+	private function tableConstantsIn(array $tokens): array {
+		$names = [];
+		foreach ($tokens as $i => $token) {
+			if ($token->is(T_CONST) === false) {
+				continue;
+			}
+
+			// Skip a typed constant's type, up to the name before `=`.
+			$j = ($i + 1);
+			while (($tokens[$j + 1] ?? null) !== null && in_array($tokens[$j + 1]->text, ['=', ';'], true) === false) {
+				$j++;
+			}
+
+			$value = ($tokens[$j + 2] ?? null);
+			if ($tokens[$j]->is(T_STRING) === true && $value?->is(T_CONSTANT_ENCAPSED_STRING) === true
+				&& preg_match(self::TABLE_PATTERN, $value->text) === 1
+			) {
+				$names[] = $tokens[$j]->text;
+			}
+		}
+
+		return $names;
+	}//end tableConstantsIn()
+
+	/**
+	 * The lines of one file that name the share-targets table: the name
+	 * itself outside comments, and every read of a constant that holds it
+	 * (`self::`/`static::` of the file's own, or `Class::` of one another
+	 * file declares).
+	 *
+	 * @param string                    $source    The file's source
+	 * @param array<string,list<string>> $constants Lower-case short class name => its table constants
+	 *
+	 * @return list<int>
+	 */
+	private function tableLinesIn(string $source, array $constants=[]): array {
+		$lines = $this->linesMatching(pattern: self::TABLE_PATTERN, source: $source);
+		$tokens = $this->significant(source: $source);
+		$own = $this->tableConstantsIn(tokens: $tokens);
+		$class = $this->contextOf(source: $source, tokens: $tokens)['class'];
+		$self = strtolower(substr((string)strrchr('\\'.(string)$class, '\\'), 1));
+		foreach ($tokens as $i => $token) {
+			if ($token->is(T_STRING) === false || ($tokens[$i - 1] ?? null)?->is(T_DOUBLE_COLON) !== true
+				|| ($tokens[$i + 1] ?? null)?->text === '(' || ($tokens[$i - 2] ?? null) === null
+			) {
+				continue;
+			}
+
+			$receiver = strtolower(substr((string)strrchr('\\'.$tokens[$i - 2]->text, '\\'), 1));
+			$names = ($constants[$receiver] ?? []);
+			if (in_array($receiver, ['self', 'static', $self], true) === true) {
+				$names = array_merge($names, $own);
+			}
+
+			if (in_array($token->text, $names, true) === true) {
+				$lines[] = $token->line;
+			}
+		}
+
+		sort($lines);
+
+		return $lines;
+	}//end tableLinesIn()
 
 	/**
 	 * The raw finder calls in one file, and the strings naming a finder.
@@ -478,6 +592,10 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 */
 	private function receiverTypes(array $tokens, array $all, array $context): array {
 		$types = [];
+		foreach ($this->passedByReference(tokens: $tokens) as $name) {
+			$types[$name][] = 'unknown';
+		}
+
 		$count = count($tokens);
 		for ($i = 0; $i < $count; $i++) {
 			$token = $tokens[$i];
@@ -568,6 +686,63 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	}//end receiverTypes()
 
 	/**
+	 * The variables a file passes, as a bare argument, to a function or
+	 * method it declares with a by-reference parameter: the callee can
+	 * assign them anything.
+	 *
+	 * @param list<PhpToken> $tokens The significant tokens
+	 *
+	 * @return list<string>
+	 */
+	private function passedByReference(array $tokens): array {
+		$functions = [];
+		foreach ($tokens as $i => $token) {
+			if ($token->is(T_FUNCTION) === false) {
+				continue;
+			}
+
+			$at = ($i + 1);
+			if (($tokens[$at] ?? null)?->text === '&') {
+				$at++;
+			}
+
+			$name = ($tokens[$at] ?? null);
+			$open = ($at + 1);
+			if ($name?->is(T_STRING) !== true || ($tokens[$open] ?? null)?->text !== '(') {
+				continue;
+			}
+
+			$close = $this->matching(tokens: $tokens, open: $open);
+			for ($j = $open + 1; $j < $close; $j++) {
+				if ($tokens[$j]->text === '&' && ($tokens[$j + 1]->is(T_VARIABLE) === true || $tokens[$j + 1]->is(T_ELLIPSIS) === true)) {
+					$functions[strtolower($name->text)] = true;
+				}
+			}
+		}
+
+		$names = [];
+		foreach ($tokens as $i => $token) {
+			if ($token->is(T_STRING) === false || isset($functions[strtolower($token->text)]) === false
+				|| ($tokens[$i + 1] ?? null)?->text !== '(' || ($tokens[$i - 1] ?? null)?->is(T_FUNCTION) === true
+				|| ($tokens[$i - 1] ?? null)?->text === '&'
+			) {
+				continue;
+			}
+
+			$close = $this->matching(tokens: $tokens, open: $i + 1);
+			for ($j = $i + 2; $j < $close; $j++) {
+				if ($tokens[$j]->is(T_VARIABLE) === true && in_array($tokens[$j - 1]->text, ['(', ',', ':'], true) === true
+					&& in_array($tokens[$j + 1]->text, [',', ')'], true) === true
+				) {
+					$names[] = substr($tokens[$j]->text, 1);
+				}
+			}
+		}
+
+		return $names;
+	}//end passedByReference()
+
+	/**
 	 * The variable a nameless `@var` tag documents: the next one before the
 	 * end of the declaration.
 	 *
@@ -593,7 +768,9 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 	/**
 	 * The native types declared right before a variable, when it is a
-	 * parameter, a property or a caught exception.
+	 * parameter, a property or a caught exception. An untyped parameter and
+	 * a by-reference one are unknown: a caller can pass, or the callee
+	 * assign, anything.
 	 *
 	 * @param list<PhpToken>                                                 $tokens   The significant tokens
 	 * @param int                                                            $variable The variable's index
@@ -603,8 +780,16 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 */
 	private function declaredTypes(array $tokens, int $variable, array $context): array {
 		$j = ($variable - 1);
+		$byReference = false;
 		while ($j >= 0 && ($tokens[$j]->text === '&' || $tokens[$j]->is(T_ELLIPSIS) === true)) {
+			$byReference = ($byReference || $tokens[$j]->text === '&');
 			$j--;
+		}
+
+		if ($this->isParameter(tokens: $tokens, variable: $variable) === true
+			&& ($byReference === true || $this->isTyped(tokens: $tokens, before: $j) === false)
+		) {
+			return ['unknown'];
 		}
 
 		$parts = [];
@@ -625,6 +810,63 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 		return array_map(fn (string $part): string => $this->classify(type: $part, context: $context), $parts);
 	}//end declaredTypes()
+
+	/**
+	 * Whether the token before a parameter's name (after any `&` and `...`)
+	 * ends a type.
+	 *
+	 * @param list<PhpToken> $tokens The significant tokens
+	 * @param int            $before The index of that token
+	 *
+	 * @return bool
+	 */
+	private function isTyped(array $tokens, int $before): bool {
+		$token = ($tokens[$before] ?? null);
+
+		return $token !== null && ($token->is([...self::NAME_TOKENS, T_ARRAY, T_CALLABLE, T_STATIC]) === true || $token->text === ')');
+	}//end isTyped()
+
+	/**
+	 * Whether a variable stands at the top level of a function's, a
+	 * closure's or an arrow function's parameter list.
+	 *
+	 * @param list<PhpToken> $tokens   The significant tokens
+	 * @param int            $variable The variable's index
+	 *
+	 * @return bool
+	 */
+	private function isParameter(array $tokens, int $variable): bool {
+		$depth = 0;
+		for ($i = $variable - 1; $i >= 0; $i--) {
+			$text = $tokens[$i]->text;
+			if (in_array($text, [')', ']', '}'], true) === true) {
+				$depth++;
+			} elseif (in_array($text, ['(', '[', '{'], true) === true || $tokens[$i]->is([T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES]) === true) {
+				if ($depth === 0) {
+					break;
+				}
+
+				$depth--;
+			} elseif ($depth === 0 && $text === ';') {
+				return false;
+			}
+		}
+
+		if ($i < 0 || $tokens[$i]->text !== '(') {
+			return false;
+		}
+
+		$k = ($i - 1);
+		if (($tokens[$k] ?? null)?->is(T_STRING) === true) {
+			$k--;
+		}
+
+		if (($tokens[$k] ?? null)?->text === '&') {
+			$k--;
+		}
+
+		return ($tokens[$k] ?? null)?->is([T_FUNCTION, T_FN]) === true;
+	}//end isParameter()
 
 	/**
 	 * What the right-hand side of an assignment holds: a copy of another
@@ -980,10 +1222,21 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 * @return list<int>
 	 */
 	private function linesMatching(string $pattern, string $source): array {
+		// Comments keep their line breaks but lose their text.
+		$code = '';
+		foreach (PhpToken::tokenize($source) as $token) {
+			if ($token->is([T_COMMENT, T_DOC_COMMENT]) === true) {
+				$code .= str_repeat("\n", substr_count($token->text, "\n"));
+				continue;
+			}
+
+			$code .= $token->text;
+		}
+
 		$lines = [];
-		preg_match_all($pattern, $source, $matches, PREG_OFFSET_CAPTURE);
+		preg_match_all($pattern, $code, $matches, PREG_OFFSET_CAPTURE);
 		foreach ($matches[0] as [, $offset]) {
-			$lines[] = substr_count(substr($source, 0, $offset), "\n") + 1;
+			$lines[] = substr_count(substr($code, 0, $offset), "\n") + 1;
 		}
 
 		return $lines;
@@ -1100,8 +1353,9 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 * The scan follows a receiver through a group-use alias, a nullable
 	 * promoted property, a local copy, a property typed only by `@var`, a
 	 * container lookup by `::class` or by string, `->query()` and `new`; it
-	 * reports an inherited property, a getter and a callable string as
-	 * unknown; it reports a unique finder name on any receiver; and it lets
+	 * reports an inherited property, a getter, a callable string, an untyped
+	 * or by-reference parameter and a variable passed to a by-reference
+	 * parameter as unknown; it reports a unique finder name on any receiver; and it lets
 	 * a shared name pass only on a receiver proven to be another class.
 	 *
 	 * @return void
@@ -1160,13 +1414,33 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			],
 			actual: $calls
 		);
+
+		// An untyped or by-reference declaration of a name makes it unknown,
+		// even when another declaration in the file types it as another class.
+		$evasive = <<<'PHP'
+			<?php
+			namespace OCA\Keepiq\Service;
+			use OCA\Keepiq\Db\AttachmentMapper;
+			class Evasive {
+				public function __construct(private AttachmentMapper $mapper, private AttachmentMapper $m, private AttachmentMapper $typed) {}
+				private function rowsOf($mapper) { return $mapper->findBySourceSecret('x'); }
+				private function viaArrow(): array { return array_map(fn ($m) => $m->findBySourceSecret('y'), []); }
+				private function pick(?AttachmentMapper &$out): void { $out = $this->shareTargets; }
+				private function viaOut(AttachmentMapper $held): void { $this->pick($held); $held->findBySourceSecret('z'); }
+				private function byReference(AttachmentMapper &$ref): void { $ref->findBySourceSecret('w'); }
+				private function control(AttachmentMapper $typed): void { $typed->findBySourceSecret('v'); }
+			}
+			PHP;
+
+		$this->assertSame(expected: ['findBySourceSecret' => [6, 7, 9, 10]], actual: $this->callsIn(source: $evasive));
 	}//end testTheScanFollowsOrReportsEveryReceiver()
 
 	/**
 	 * The scan sees calls through a promoted property, a nullable, union or
 	 * aliased type, a plain variable, a container lookup and a variable
 	 * assigned from one, for both mappers, so a raw call cannot hide behind
-	 * the syntax; and a query naming the table.
+	 * the syntax; and a query naming the table, also in raw `*PREFIX*` SQL or
+	 * through a constant, but not in a comment.
 	 *
 	 * @return void
 	 */
@@ -1207,5 +1481,42 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			expected: [2],
 			actual: $this->linesMatching(pattern: self::TABLE_PATTERN, source: "<?php\n\$qb->from('keepiq_share_targets');")
 		);
+		$this->assertSame(
+			expected: [2],
+			actual: $this->linesMatching(pattern: self::TABLE_PATTERN, source: "<?php\n\$db->executeQuery('SELECT * FROM *PREFIX*keepiq_share_targets');")
+		);
+		$this->assertSame(
+			expected: [],
+			actual: $this->linesMatching(
+				pattern: self::TABLE_PATTERN,
+				source: "<?php\n// keepiq_share_targets\n/** share_targets */\n# share_targets\n\$qb->from('keepiq_quarantined_share_targets_x');"
+			)
+		);
+
+		// A constant holding the table name counts on every read of it, in its
+		// own class and through its class name elsewhere.
+		$scanner = implode("\n", [
+			'<?php',
+			'class Scan {',
+			' private const TABLE = \'keepiq_share_targets\';',
+			' public function a($qb) { $qb->from(self::TABLE); }',
+			' public function b($qb) { $qb->from(static::TABLE)->join(Scan::TABLE); }',
+			' public function c() { return self::TABLE_COUNT; }',
+			'}',
+		]);
+		$this->assertSame(expected: [3, 4, 5, 5], actual: $this->tableLinesIn(source: $scanner));
+		$this->assertSame(
+			expected: [2],
+			actual: $this->tableLinesIn(
+				source: "<?php\n\$qb->from(\\OCA\\Keepiq\\Service\\Scan::TABLE);\n\$qb->from(Other::TABLE);",
+				constants: ['scan' => ['TABLE']]
+			)
+		);
+
+		// Only the three share mappers and the migrations may name the table.
+		$this->assertTrue(condition: $this->mayNameTheTable(file: 'Db/ShareTargetMapper.php'));
+		$this->assertTrue(condition: $this->mayNameTheTable(file: 'Db/QuarantinedShareTargetMapper.php'));
+		$this->assertTrue(condition: $this->mayNameTheTable(file: 'Migration/Version001015Date20261021120000.php'));
+		$this->assertFalse(condition: $this->mayNameTheTable(file: 'Db/SecretMapper.php'));
 	}//end testTheScanSeesEveryCallShape()
 }//end class
