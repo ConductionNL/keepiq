@@ -12,11 +12,12 @@ import { saveOptions } from '@/src/generator/store'
 import { defaultOptions } from '@/src/generator/options'
 import { lastUsedKey } from '@/src/last-used'
 import { installMenuFakes } from '@/src/testing/menus'
-import { encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
+import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { provenCertificateKey } from '@/src/vault/certificate'
 import { generatorSealedKey, putKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
+import type { StoredSecretRow } from '@/src/vault/types'
 import { lock } from '@/src/vault/unlock'
 import { MENU_LIMIT, rebuildMenus, registerMenus } from './menus'
 
@@ -33,7 +34,7 @@ const tab = () => ({ id: TAB, url: tabUrl, active: true }) as never
 const ids = () => menus.entries.map((entry) => entry.id)
 const entry = (id: string) => menus.entries.find((e) => e.id === id)
 
-async function vault(secrets: OpenSecretRow[]) {
+async function vault(secrets: StoredSecretRow[]) {
 	const syncedAt = new Date().toISOString()
 	await writeSnapshot(accountId, {
 		suite: { id: suiteRow.id, unlockKeyEpoch: 1 }, secrets, folders: [folderRow()], types: typeRows,
@@ -43,6 +44,11 @@ async function vault(secrets: OpenSecretRow[]) {
 
 async function login(id: string, overrides: Partial<OpenSecretRow> = {}): Promise<OpenSecretRow> {
 	return secretRow({ id, name: id, url: 'https://example.test/', login: await encrypt(`user-${id}`), key: await encrypt(`pass-${id}`), ...overrides })
+}
+
+/** A login with a code: RFC 6238's SHA-1 key, whose code at 59 s is `287082`. */
+async function withCode(id: string, overrides: Partial<OpenSecretRow> = {}): Promise<OpenSecretRow> {
+	return login(id, { totp: await encrypt('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'), ...overrides })
 }
 
 beforeEach(async () => {
@@ -82,7 +88,7 @@ describe('the context menu', () => {
 		await rebuildMenus()
 		expect(ids()).toEqual([
 			'keepiq', 'autofill', 'autofill:a', 'autofill:b', 'autofill-separator', 'open',
-			'copy-user', 'copy-user:a', 'copy-user:b', 'copy-pass', 'copy-pass:a', 'copy-pass:b', 'generate',
+			'copy-user', 'copy-user:a', 'copy-user:b', 'copy-pass', 'copy-pass:a', 'copy-pass:b', 'copy-code', 'generate',
 		])
 		expect(menus.entries.every((e) => e.contexts?.join() === 'editable')).toBe(true)
 		expect(entry('keepiq')!.title).toBe('Keepiq')
@@ -112,7 +118,7 @@ describe('the context menu', () => {
 	it('reads "No matching logins" and disables copying without a match', async () => {
 		await vault([await login('a', { url: 'https://other.test/' })])
 		await rebuildMenus()
-		expect(ids()).toEqual(['keepiq', 'autofill', 'copy-user', 'copy-pass', 'generate'])
+		expect(ids()).toEqual(['keepiq', 'autofill', 'copy-user', 'copy-pass', 'copy-code', 'generate'])
 		expect(entry('autofill')).toMatchObject({ title: 'No matching logins', enabled: false })
 		expect(entry('copy-pass')).toMatchObject({ enabled: false })
 	})
@@ -123,6 +129,55 @@ describe('the context menu', () => {
 		expect(ids()).toEqual(expect.arrayContaining(['autofill:a', 'autofill:b', 'copy-user:a', 'copy-pass:b']))
 		expect(ids()).not.toContain('copy-pass:a')
 		expect(ids()).not.toContain('copy-user:b')
+	})
+
+	describe('Copy verification code', () => {
+		it('names the one matching login with a code directly, after Copy password', async () => {
+			await vault([await login('a'), await withCode('b')])
+			await rebuildMenus()
+			expect(ids().slice(-3)).toEqual(['copy-pass:b', 'copy-code:b', 'generate'])
+			expect(entry('copy-code:b')).toMatchObject({ parentId: 'keepiq', title: 'Copy verification code' })
+		})
+
+		it('lists several in a submenu of at most ten, use-only copies included', async () => {
+			await vault(await Promise.all(Array.from({ length: 12 }, (_, i) => withCode(`t${String(i).padStart(2, '0')}`, { useOnly: i === 0 }))))
+			await rebuildMenus()
+			expect(entry('copy-code')).toMatchObject({ parentId: 'keepiq', title: 'Copy verification code' })
+			expect(menus.entries.filter((e) => e.parentId === 'copy-code').map((e) => e.id)).toHaveLength(MENU_LIMIT)
+			expect(ids()).toContain('copy-code:t00')
+		})
+
+		it('is disabled without a match, and never lists a login without a code, a blocked row or a standalone authenticator item', async () => {
+			await vault([
+				await withCode('t1', { url: 'https://other.test/' }), await login('t2', { totp: '' }), blockedRow({ id: 't3', url: 'https://example.test/' }),
+				secretRow({ id: 't4', name: 't4', url: 'https://example.test/', typeId: 't-totp', key: await encrypt('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ') }),
+			])
+			await rebuildMenus()
+			expect(entry('copy-code')).toMatchObject({ enabled: false })
+			expect(ids().filter((id) => id?.startsWith('copy-code:'))).toEqual([])
+		})
+
+		it('copies the current code, which a lock clears at once', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] })
+			vi.setSystemTime(59_000)
+			try {
+				await vault([await withCode('t1')])
+				registerMenus()
+				menus.click('copy-code:t1', tab())
+				await vi.waitFor(() => expect(clipboard).toEqual(['287082']))
+				expect(await browser.storage.session.get('clipboardCode')).toEqual({ clipboardCode: accountId })
+			} finally {
+				vi.useRealTimers()
+			}
+		})
+
+		it('copies nothing for an item that no longer matches', async () => {
+			await vault([await withCode('t1', { url: 'https://other.test/' })])
+			registerMenus()
+			menus.click('copy-code:t1', tab())
+			await new Promise((resolve) => setTimeout(resolve, 20))
+			expect(clipboard).toEqual([])
+		})
 	})
 
 	it('keeps an & in an item name literal', async () => {
@@ -207,7 +262,7 @@ describe('the context menu', () => {
 		it('fill the picked item into the tab', async () => {
 			await vault([await login('a'), await login('b')])
 			menus.click('autofill:b', tab())
-			await vi.waitFor(() => expect(toTab).toEqual([{ kind: 'fill.execute', username: 'user-b', password: 'pass-b', origin: 'https://example.test' }]))
+			await vi.waitFor(() => expect(toTab).toEqual([{ kind: 'fill.execute', username: 'user-b', password: 'pass-b', code: null, origin: 'https://example.test' }]))
 		})
 
 		it('ask in the page first on an insecure page, and fill once accepted', async () => {

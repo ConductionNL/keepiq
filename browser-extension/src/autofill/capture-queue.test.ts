@@ -234,7 +234,7 @@ describe('capture.submitted', () => {
 		await submit(submitted('alice', 'hunter2'))
 		expect(kinds()).toEqual([])
 		expect((await matchingLogins(accountId, tab.url)).rows.map((row) => row.id)).toEqual(['a'])
-		expect(await fill({ itemId: 'a', tabId: TAB, ask: 'reply' })).toEqual({ filled: 'both' })
+		expect(await fill({ itemId: 'a', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'both', code: false })
 	})
 
 	it('offers to update the one item with this username, naming the item and its username', async () => {
@@ -797,7 +797,7 @@ describe('password change forms', () => {
 		await vault([await item('a', 'alice', 'old'), await item('b', 'bob', 'old')])
 		await submit(submitted(null, 'n3w', true))
 		expect(kinds()).toEqual([])
-		await fill({ itemId: 'b', tabId: TAB, ask: 'reply' })
+		await fill({ itemId: 'b', tabId: TAB, ask: 'reply', code: true })
 		await submit(submitted(null, 'n3w', true))
 		expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item b', username: 'bob' })
 		await vault([await item('c', 'carol', 'old')])
@@ -858,7 +858,7 @@ describe('password change forms', () => {
 		await vault([await item('a', 'alice', 'old', copy)])
 		await submit(submitted('alice', 'n3w', true))
 		expect(await state()).toMatchObject({ mode: 'add' })
-		await fill({ itemId: 'a', tabId: TAB, ask: 'reply' })
+		await fill({ itemId: 'a', tabId: TAB, ask: 'reply', code: true })
 		await submit(submitted(null, 'n3w', true))
 		expect(await state()).toMatchObject({ mode: 'add' })
 	})
@@ -886,7 +886,7 @@ describe('password change forms', () => {
 
 		it('saves a new password for the use-only login this tab filled under its username', async () => {
 			await vault([await item('a', 'alice', 'old'), await item('t', 'team', 'shared', { useOnly: true })])
-			await fill({ itemId: 't', tabId: TAB, ask: 'reply' })
+			await fill({ itemId: 't', tabId: TAB, ask: 'reply', code: true })
 			await submit(submitted(null, 'n3w', true))
 			expect(await state()).toMatchObject({ mode: 'add' })
 			expect(await saveFromBar()).toEqual({ login: 'team', key: 'n3w' })
@@ -905,7 +905,7 @@ describe('password change forms', () => {
 	describe('with a username, deciding by its own login before the others holding it', () => {
 		it('offers to update the login this tab filled, for a password another login with the username holds', async () => {
 			await vault([await item('a', 'alice', 'old'), await item('b', 'alice', 'reused')])
-			await fill({ itemId: 'a', tabId: TAB, ask: 'reply' })
+			await fill({ itemId: 'a', tabId: TAB, ask: 'reply', code: true })
 			await submit(submitted('alice', 'reused', true))
 			expect(await state()).toMatchObject({ mode: 'update', itemName: 'Item a', username: 'alice' })
 		})

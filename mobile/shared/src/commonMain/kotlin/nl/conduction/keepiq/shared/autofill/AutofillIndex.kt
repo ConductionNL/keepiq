@@ -30,9 +30,23 @@ data class AutofillEntry(
     val key: String?,
     override val useOnly: Boolean,
     override val lastUsedAt: String? = null,
+    /** A login's own seed and passkeys, as ciphertext (mobile-login-totp-passkeys D2). */
+    val totp: String? = null,
+    val passkeys: String? = null,
+    /** The user may read the item but not change it: no passkey is saved onto it. */
+    val readOnly: Boolean = false,
 ) : Matchable {
     val isLogin: Boolean get() = typeName == LOGIN
     val isTotp: Boolean get() = typeName == TOTP
+
+    /** An Authenticator item, or a login with its own seed. */
+    val hasCode: Boolean get() = isTotp || (isLogin && !totp.isNullOrEmpty())
+
+    /** A login with its own passkeys. */
+    val hasPasskeys: Boolean get() = isLogin && !passkeys.isNullOrEmpty()
+
+    /** The ciphertext of the seed: an Authenticator item's `key`, else the login's `totp`. */
+    val seed: String? get() = if (isTotp) key else totp
 
     /** A passkey: [url] is its rpId and [key] the encrypted passkey item JSON. Never offered as a password. */
     val isPasskey: Boolean get() = typeName == PASSKEY
@@ -75,7 +89,7 @@ class AutofillIndex(val entries: List<AutofillEntry>) {
      * site, as in the extension.
      */
     fun candidates(target: AutofillTarget, totp: Boolean = false): List<AutofillEntry> {
-        val pool = entries.filter { if (totp) it.isTotp else it.isLogin }
+        val pool = entries.filter { if (totp) it.hasCode else it.isLogin }
         val scored: List<Scored<AutofillEntry>> = when (target) {
             // An item linked to an app is for that app only: its package
             // name reads like a host name, but no website owns it.
@@ -133,6 +147,9 @@ class AutofillIndex(val entries: List<AutofillEntry>) {
                     e.key?.let { put("key", JsonPrimitive(it)) }
                     if (e.useOnly) put("useOnly", JsonPrimitive(true))
                     e.lastUsedAt?.let { put("lastUsedAt", JsonPrimitive(it)) }
+                    e.totp?.let { put("totp", JsonPrimitive(it)) }
+                    e.passkeys?.let { put("passkeys", JsonPrimitive(it)) }
+                    if (e.readOnly) put("readOnly", JsonPrimitive(true))
                 },
             )
         }
@@ -153,7 +170,10 @@ class AutofillIndex(val entries: List<AutofillEntry>) {
                 state.rows.filter { !it.trashed && !it.blocked }.mapNotNull { row ->
                     val typeName = row.typeId?.let { typeNames[it] } ?: AutofillEntry.LOGIN
                     if (typeName != AutofillEntry.LOGIN && typeName != AutofillEntry.TOTP && typeName != AutofillEntry.PASSKEY) return@mapNotNull null
-                    AutofillEntry(row.id, row.name, row.url, typeName, row.login, row.key, row.useOnly)
+                    AutofillEntry(
+                        row.id, row.name, row.url, typeName, row.login, row.key, row.useOnly,
+                        totp = row.totp, passkeys = row.passkeys, readOnly = row.readOnly,
+                    )
                 },
             )
         }
@@ -172,6 +192,9 @@ class AutofillIndex(val entries: List<AutofillEntry>) {
                         key = o.text("key"),
                         useOnly = o.text("useOnly") == "true",
                         lastUsedAt = o.text("lastUsedAt"),
+                        totp = o.text("totp"),
+                        passkeys = o.text("passkeys"),
+                        readOnly = o.text("readOnly") == "true",
                     )
                 },
             )
