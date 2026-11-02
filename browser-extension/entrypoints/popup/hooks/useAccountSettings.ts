@@ -30,11 +30,11 @@ export function useAccountSettings() {
 
 	useEffect(() => {
 		live.current = true
-		void reload()
+		void request({ kind: 'account.settings.get', accountId }).then(apply)
 		return () => {
 			live.current = false
 		}
-	}, [reload])
+	}, [accountId, apply])
 
 	/** Resolves whether the patch was stored. */
 	const update = useCallback(async (patch: Partial<AccountSettings>) => apply(await request({ kind: 'account.settings.set', accountId, patch })), [accountId, apply])

@@ -15,7 +15,8 @@ export default [
 	// `imports.eslintrc` in wxt.config.ts.
 	autoImports,
 	{
-		files: ['entrypoints/**/*.tsx'],
+		// .ts too: hooks such as hooks/*.ts hold no JSX.
+		files: ['entrypoints/**/*.{ts,tsx}'],
 		...reactHooks.configs.flat.recommended,
 	},
 	{

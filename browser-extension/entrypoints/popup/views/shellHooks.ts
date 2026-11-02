@@ -26,7 +26,7 @@ export interface ScrollPages {
 }
 
 /** Keeps the popup body's scroll: Back restores the list's, pick mode's end the form's, and a send page starts at the top. */
-export function useBodyScroll(body: RefObject<HTMLDivElement | null>, pages: ScrollPages) {
+export function useBodyScroll(bodyRef: RefObject<HTMLDivElement | null>, pages: ScrollPages) {
 	const { pick, detailId, form, sendPage } = pages
 	const listScroll = useRef(0)
 	const onList = useRef(true)
@@ -35,36 +35,36 @@ export function useBodyScroll(body: RefObject<HTMLDivElement | null>, pages: Scr
 
 	// Before the list's effect, which wins when the form closed too.
 	useLayoutEffect(() => {
-		if (!body.current) return
+		if (!bodyRef.current) return
 		if (pick) {
-			body.current.scrollTop = 0
+			bodyRef.current.scrollTop = 0
 			return
 		}
 		const from = pickedFrom.current
 		pickedFrom.current = null
 		if (!from) return
-		body.current.scrollTop = from.scroll
+		bodyRef.current.scrollTop = from.scroll
 		from.button?.focus()
-	}, [body, pick])
+	}, [bodyRef, pick])
 
 	useLayoutEffect(() => {
 		onList.current = detailId === null && form === null
-		if (body.current) body.current.scrollTop = onList.current ? listScroll.current : 0
-	}, [body, detailId, form])
+		if (bodyRef.current) bodyRef.current.scrollTop = onList.current ? listScroll.current : 0
+	}, [bodyRef, detailId, form])
 
 	useLayoutEffect(() => {
-		if (sendPage && body.current) body.current.scrollTop = 0
-	}, [body, sendPage])
+		if (sendPage && bodyRef.current) bodyRef.current.scrollTop = 0
+	}, [bodyRef, sendPage])
 
 	/** Opening a page from the list remembers its scroll position. */
 	const leaveList = useCallback(() => {
-		if (onList.current) listScroll.current = body.current?.scrollTop ?? 0
-	}, [body])
+		if (onList.current) listScroll.current = bodyRef.current?.scrollTop ?? 0
+	}, [bodyRef])
 
 	/** Pick mode opening remembers the form's scroll position and the button that opened it. */
 	const keepFormPlace = useCallback((opener: HTMLElement | null) => {
-		pickedFrom.current = { button: opener, scroll: body.current?.scrollTop ?? 0 }
-	}, [body])
+		pickedFrom.current = { button: opener, scroll: bodyRef.current?.scrollTop ?? 0 }
+	}, [bodyRef])
 
 	return { leaveList, keepFormPlace }
 }
@@ -127,17 +127,17 @@ export function useTabPages(lastTab: PopupTab, closeSend: () => void) {
 /** The dialog over the shell, and the check that asks before a dirty form is dropped. */
 export function useLeave(sendBusy: boolean) {
 	const [dialog, setDialog] = useState<ShellDialog | null>(null)
-	const leaveGuard = useRef<(() => boolean) | null>(null)
+	const leaveGuardRef = useRef<(() => boolean) | null>(null)
 
 	/** Runs `then` now, or after the user agreed to drop a dirty form. */
 	function leave(then: () => void) {
 		// A create in flight would land on a page that is gone.
 		if (sendBusy) return
-		if (leaveGuard.current?.()) setDialog({ kind: 'discard', then })
+		if (leaveGuardRef.current?.()) setDialog({ kind: 'discard', then })
 		else then()
 	}
 
-	return { dialog, setDialog, leave, leaveGuard }
+	return { dialog, setDialog, leave, leaveGuardRef }
 }
 
 /** What Send on an item needs from the shell. */
@@ -195,7 +195,7 @@ export interface ContextParts extends Pick<ShellContextValue, 'accountId' | 'ref
 }
 
 /** The context pages read, and the one for a form waiting under the generator, which keeps its Save and Cancel out of the bar. */
-export function useShellContextValue(parts: ContextParts, leaveGuard: RefObject<(() => boolean) | null>) {
+export function useShellContextValue(parts: ContextParts, leaveGuardRef: RefObject<(() => boolean) | null>) {
 	const { accountId, refreshState, toast, windowId, footer, offline, syncNow, items, generate } = parts
 	const context = useMemo<ShellContextValue>(() => ({
 		accountId,
@@ -207,10 +207,10 @@ export function useShellContextValue(parts: ContextParts, leaveGuard: RefObject<
 		syncNow,
 		items,
 		setLeaveGuard: (guard: (() => boolean) | null) => {
-			leaveGuard.current = guard
+			leaveGuardRef.current = guard
 		},
 		generate,
-	}), [accountId, refreshState, toast, windowId, footer, offline, syncNow, items, generate, leaveGuard])
+	}), [accountId, refreshState, toast, windowId, footer, offline, syncNow, items, generate, leaveGuardRef])
 	const hiddenFormContext = useMemo(() => ({ ...context, footer: null }), [context])
 	return { context, hiddenFormContext }
 }
