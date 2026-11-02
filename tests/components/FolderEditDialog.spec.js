@@ -63,7 +63,9 @@ describe('FolderEditDialog', () => {
 		await wrapper.find('[data-testid="stub-pick-icon"]').trigger('click')
 		await wrapper.find('[data-testid="stub-pick-color"]').trigger('click')
 		wrapper.vm.name = 'Renamed'
-		await wrapper.find('[data-testid="folder-edit-save"]').trigger('click')
+		await wrapper
+			.find('[data-testid="cn-dialog-actions-submit"]')
+			.trigger('click')
 		await flush()
 
 		expect(put).toHaveBeenCalledTimes(1)
@@ -84,7 +86,9 @@ describe('FolderEditDialog', () => {
 		})
 
 		await wrapper.find('[data-testid="stub-clear-style"]').trigger('click')
-		await wrapper.find('[data-testid="folder-edit-save"]').trigger('click')
+		await wrapper
+			.find('[data-testid="cn-dialog-actions-submit"]')
+			.trigger('click')
 		await flush()
 
 		// Unchanged name stays OUT of the body (no accidental rename);
@@ -104,7 +108,9 @@ describe('FolderEditDialog', () => {
 		})
 
 		wrapper.vm.name = 'Taken'
-		await wrapper.find('[data-testid="folder-edit-save"]').trigger('click')
+		await wrapper
+			.find('[data-testid="cn-dialog-actions-submit"]')
+			.trigger('click')
 		await flush()
 
 		expect(wrapper.vm.error).toBe('Duplicate name')
