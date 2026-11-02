@@ -250,7 +250,10 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		'Backup/ArchiveReader.php' => [1, 'verify(): iterates the table list (BackupTableRegistry::TABLES) to check an archive; reads no live row'],
 		'Backup/ArchiveWriter.php' => [1, 'iterates the table list (BackupTableRegistry::TABLES) to copy every table whole into a backup'],
 		'Backup/SchemaFingerprint.php' => [1, 'hashes the table list (BackupTableRegistry::TABLES); reads no row'],
-		'Backup/TableStore.php' => [1, 'replaceAll(): iterates the table list (BackupTableRegistry::TABLES) to replace every table whole; the restore reopens the scan'],
+		'Backup/TableStore.php' => [
+			1,
+			'replaceAll(): iterates the table list (BackupTableRegistry::TABLES) to replace every table whole; the restore reopens the scan',
+		],
 	];
 
 	/**
@@ -437,7 +440,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				continue;
 			}
 
-			// One `const` may declare several: NAME = value, NAME = value;
+			// One `const` may declare several, separated by commas.
 			$name = null;
 			$depth = 0;
 			for ($j = $i + 1; ($tokens[$j] ?? null) !== null && $tokens[$j]->text !== ';'; $j++) {
@@ -1587,13 +1590,14 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 				private function byReference(AttachmentMapper &$ref): void { $ref->findBySourceSecret('w'); }
 				private function control(AttachmentMapper $typed): void { $typed->findBySourceSecret('v'); }
 				protected $untyped;
-				private function collide(AttachmentMapper $inherited, AttachmentMapper $untyped, AttachmentMapper $glob): void { $this->inherited->findBySourceSecret('i'); $this->untyped->findBySourceSecret('j'); }
+				private function inherited(AttachmentMapper $inherited): void { $this->inherited->findBySourceSecret('i'); }
+				private function untyped(AttachmentMapper $untyped, AttachmentMapper $glob): void { $this->untyped->findBySourceSecret('j'); }
 				private function viaGlobal(): void { global $glob; $glob->findBySourceSecret('k'); }
 				private function promoted(): void { $this->typed->findBySourceSecret('l'); }
 			}
 			PHP;
 
-		$this->assertSame(expected: ['findBySourceSecret' => [6, 7, 9, 10, 13, 13, 14]], actual: $this->callsIn(source: $evasive));
+		$this->assertSame(expected: ['findBySourceSecret' => [6, 7, 9, 10, 13, 14, 15]], actual: $this->callsIn(source: $evasive));
 	}//end testTheScanFollowsOrReportsEveryReceiver()
 
 	/**
