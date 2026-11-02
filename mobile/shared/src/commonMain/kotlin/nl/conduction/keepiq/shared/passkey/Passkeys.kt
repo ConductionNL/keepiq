@@ -106,8 +106,11 @@ object Passkeys {
      * signed once more (PasskeysWrite). One exception to reading fresh: when
      * the fresh read gets no answer at all ([ServerUnreachableException]), a
      * passkey whose counter is zero signs from the index, since it writes
-     * nothing back; one with a counter fails, as its write-back would. Any
-     * other failure, such as a value that cannot be decrypted, fails.
+     * nothing back; one with a counter fails, as its write-back would. The
+     * index cannot know that such a passkey was deleted on another device or
+     * gained a counter there since, so offline it still signs (counter 0) and
+     * the relying party decides. Any other failure, such as a value that
+     * cannot be decrypted, fails.
      */
     private suspend fun signOnLogin(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
         var fetched = false
