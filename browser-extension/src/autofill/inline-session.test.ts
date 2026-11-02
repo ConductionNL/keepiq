@@ -2,6 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import type { OpenSecretRow } from '@/src/api/types'
 import { addAccount, markLoggedOut, setActive } from '@/src/accounts/store'
+import { broadcast } from '@/src/background/broadcast'
 import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
 import { toBase64Url } from '@/src/crypto/base64'
 import { lastUsedKey } from '@/src/last-used'
@@ -9,7 +10,7 @@ import { inlineHeight, type BackgroundToContent, type InlineListToBackground, ty
 import { ceremonyKey, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from '@/src/passkey/ceremony'
 import { encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
-import { putKey } from '@/src/vault/key-store'
+import { hasKey, putKey, unlockedAtKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
 import { lock } from '@/src/vault/unlock'
@@ -611,13 +612,16 @@ describe('passkeys during a conditional request', () => {
 		credentialId, rpId: 'example.test', rpName: 'Example', userName: 'alice', userDisplayName: 'Alice', userHandle: 'dXNlcg',
 		privateKey, algorithm: -7, counter: 0, transports: ['internal'], createdAt: '2026-01-01T00:00:00.000Z', ...overrides,
 	})
+	let passkeysCipher: string
 	/** `Example` holds a passkey for this site under another URL, and one for another site; `Work` is a plain login for this site. */
-	async function passkeyVault() {
+	async function passkeyVault(name = 'Example') {
+		passkeysCipher = await encrypt(JSON.stringify([entry('QQ'), entry('Qg', { rpId: 'other.test' })]))
 		await vault([
-			await login({ id: 'example', name: 'Example', url: 'https://elsewhere.test/', passkeys: await encrypt(JSON.stringify([entry('QQ'), entry('Qg', { rpId: 'other.test' })])) }),
+			await login({ id: 'example', name, url: 'https://elsewhere.test/', passkeys: passkeysCipher }),
 			await login({ id: 'work', name: 'Work', login: await encrypt('alice@work.test') }),
 		])
 	}
+	const passkeyDecrypts = () => vi.mocked(rsaDecrypt).mock.calls.filter(([cipher]) => cipher === passkeysCipher).length
 	async function conditional(options: object = {}, sender = content()) {
 		const request = { type: 'get', options: { challenge: CHALLENGE, rpId: 'example.test', allowCredentials: [], ...options }, mediation: 'conditional' }
 		return ((await handlePasskeyContent({ kind: 'passkey.start', request, crossOriginAncestor: false } as never, sender)) as { ceremonyId: string }).ceremonyId
@@ -674,6 +678,41 @@ describe('passkeys during a conditional request', () => {
 		})
 		expect(JSON.parse((await stored())!)).toMatchObject({ itemIds: ['work'], passkeys: { ceremonyId, offered: [['example', 'QQ']] } })
 		for (const secret of [privateKey, 'Alice', 'dXNlcg', CHALLENGE]) expect(JSON.stringify(state)).not.toContain(secret)
+	})
+
+	it('locks a vault past its timeout before counting passkeys, answering the locked height', async () => {
+		await conditional()
+		await browser.storage.local.set({ [`settings.${accountId}`]: { vaultTimeout: 1, vaultTimeoutAction: 'lock' } })
+		const overdue = String(Date.now() - 2 * 60_000)
+		await browser.storage.session.set({ lastInteractionAt: overdue, [unlockedAtKey(accountId)]: overdue })
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(await hasKey(accountId)).toBe(false)
+	})
+
+	it('decrypts the passkeys once per request, not again on each open and state', async () => {
+		await conditional()
+		vi.mocked(rsaDecrypt).mockClear()
+		await openSession(OPEN, content())
+		expect(passkeyDecrypts()).toBe(1)
+		await openSession(OPEN, content())
+		expect((await openWithState()).state).toMatchObject({ passkeys: [offered] })
+		await list({ kind: 'inline.state', key: (await openSession(OPEN, content()))!.key })
+		expect(passkeyDecrypts()).toBe(1)
+	})
+
+	it('matches again after the vault changes or locks, never showing rows of before', async () => {
+		await conditional()
+		expect((await openWithState()).state).toMatchObject({ passkeys: [offered] })
+		await passkeyVault('Renamed')
+		broadcast({ kind: 'vault.changed', sync: {} as never })
+		expect((await openWithState()).state).toMatchObject({ passkeys: [{ ...offered, name: 'Renamed' }] })
+		vi.mocked(rsaDecrypt).mockClear()
+		await lock(accountId)
+		await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		expect((await openWithState()).state).toMatchObject({ passkeys: [{ ...offered, name: 'Renamed' }] })
+		expect(passkeyDecrypts()).toBe(1)
 	})
 
 	it('answers an empty passkey list where none matches, for "No logins or passkeys"', async () => {

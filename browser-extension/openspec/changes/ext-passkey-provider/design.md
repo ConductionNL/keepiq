@@ -119,6 +119,7 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 | Ceremony: ids, origin, frame URL without fragment, RP ID, challenge, page's `rp` and `user`, credential id lists, requirements, deadline, window id, verified flag, `alreadySaved`; after a failed pick or save its login and credential ids, the typed name and folder, and the error with any partner cloud ids and share ids | `storage.session` `passkeyCeremony.<tabId>`; memory below Firefox 115 | Ceremony end, next ceremony in the tab, tab close or navigation, logout, account switch, restart, reload |
 | `write-context` answers of the Save view, by ceremony and login id | Background memory, the latest four ceremonies | Worker stop, four newer ceremonies |
 | Decrypted `passkeys` array, imported signing key, generated key pair | Background memory, one handler | Handler return |
+| Rows a pending conditional request offers (login id, credential id, login name, user name) | Background memory, by ceremony id | Ceremony end, lock, vault change, worker stop |
 | Rows (login id, credential id, login name, user name), save targets | Popup or list page memory | Window or list closing |
 | A login's passkey metadata (relying party, user name, date) | Popup memory while the detail shows it | The view closing |
 | Credential in flight | Relay and page script memory | The call settling |
@@ -136,6 +137,7 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 - [Sites see an unnamed authenticator (zero AAGUID)] → Cosmetic; a registered AAGUID can come later without changing stored passkeys.
 - [Chrome below 111 runs the page script isolated, where it does nothing] → The browser handles every request; no harm.
 - [The page counts passkeys from the inline list's height after a focus] → As accepted for logins in ext-autofill, and as in Bitwarden.
+- [The first focus during a conditional request decrypts the logins holding passkeys, so its timing can tell an unlocked vault from a locked one] → Accepted: once per request, key and vault change, since the offered rows (ids and names) stay in background memory by ceremony id; later focuses decrypt nothing.
 - [A fresh save to a different target after a lost reply leaves the lost try's passkey on its original login] → The site never registered it and no secret is exposed; Retry or a save to the same target puts the new one in its place.
 
 ## Open Questions
