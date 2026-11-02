@@ -159,13 +159,13 @@ def _secret_from(meta: Mapping[str, Any], values: Mapping[str, str]) -> Secret:
 class Credentials:
     """Who the client acts as: the application id, its private key and, optionally, its certificate.
 
-    ``certificate_pem`` is optional: when given, it must belong to the key, and
+    ``repr()`` shows only the application id. ``certificate_pem`` is optional: when given, it must belong to the key, and
     every envelope encrypted to another certificate is refused before decryption.
     """
 
     application_id: str
     private_key_pem: str = field(repr=False)
-    certificate_pem: Optional[str] = None
+    certificate_pem: Optional[str] = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)
@@ -192,7 +192,7 @@ _OLD_FORM = (
 class Client:
     """A Keepiq instance seen by one application, built from one ``ClientConfig``."""
 
-    def __init__(self, config: ClientConfig, *legacy: object, **legacy_options: object) -> None:
+    def __init__(self, config: Optional[ClientConfig] = None, *legacy: object, **legacy_options: object) -> None:
         if legacy or legacy_options or not isinstance(config, ClientConfig):
             raise TypeError(_OLD_FORM)
         self._base, self._origin = _split_base(config.url)
