@@ -130,6 +130,7 @@ function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
 		<>
 			<Section title={i18n.t('detail.loginCredentials')}>
 				{values.login !== undefined && <MaskedField label={i18n.t('detail.username')} value={values.login} />}
+				{values.totp && <TotpCode seed={values.totp} />}
 				<p className="field-row field-row__note">{i18n.t('detail.useOnly')}</p>
 			</Section>
 			<Website item={item} />
@@ -137,7 +138,7 @@ function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
 	)
 }
 
-const ALL_FIELDS: readonly DecryptField[] = ['login', 'key', 'additionalFields']
+const ALL_FIELDS: readonly DecryptField[] = ['login', 'key', 'additionalFields', 'totp']
 
 function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undefined; values: DecryptedItem }) {
 	const name = type?.name ?? ''
@@ -162,6 +163,7 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 				<Section title={i18n.t('detail.loginCredentials')}>
 					{values.login !== undefined && <MaskedField label={i18n.t('detail.username')} value={values.login} />}
 					<MaskedField label={secretLabel(type)} value={key} masked />
+					{values.totp && <TotpCode seed={values.totp} />}
 				</Section>
 			)}
 			{name === 'totp' && <Section title={i18n.t('detail.authenticatorKey')}><TotpCode seed={key} /></Section>}

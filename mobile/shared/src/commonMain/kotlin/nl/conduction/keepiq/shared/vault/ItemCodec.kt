@@ -60,7 +60,17 @@ object Composite {
 }
 
 /** What a passkey item shows: never its private key (extension-vault "a passkey's private key stays in the worker"). */
-data class PasskeySummary(val rpId: String, val rpName: String?, val userName: String?, val createdAt: String?)
+data class PasskeySummary(val credentialId: String, val rpId: String, val rpName: String?, val userName: String?, val createdAt: String?) {
+    companion object {
+        fun of(c: PasskeyCredential) = PasskeySummary(
+            c.credentialId,
+            c.rpId,
+            c.rpName.ifEmpty { null },
+            c.userName.ifEmpty { c.userDisplayName }.ifEmpty { null },
+            c.createdAt.ifEmpty { null },
+        )
+    }
+}
 
 /**
  * An opened item. [secret] is the decrypted `key` field; it is empty for a
@@ -77,6 +87,14 @@ class DecryptedItem(
     val passkey: PasskeySummary?,
     /** Read from the offline store because the server could not be reached. */
     val fromCache: Boolean,
+    /** The decrypted `totp` field: shown only as a code, never as itself. */
+    val totpSeed: String = "",
+    /** The `totp` field holds a value. */
+    val hasSavedKey: Boolean = false,
+    /** The passkeys in the `passkeys` field; none for a use-only copy. */
+    val passkeys: List<PasskeySummary> = emptyList(),
+    /** The `passkeys` field holds a value that could not be read. */
+    val passkeysError: Boolean = false,
 ) {
     val kind: FormKind get() = FormKind.of(typeName)
 
@@ -105,9 +123,15 @@ class DecryptedItem(
                 ?.map { (k, v) -> k to v.asText() } ?: emptyList()
         }
 
-    /** The TOTP parameters, or null when the value is not an authenticator secret. */
+    /**
+     * The TOTP parameters: an Authenticator item's value, else the item's
+     * own `totp` field; null when there is none or it is not readable.
+     */
     val totp: Totp.Params?
-        get() = if (kind == FormKind.TOTP && secret.isNotBlank()) runCatching { Totp.parse(secret) }.getOrNull() else null
+        get() {
+            val seed = if (kind == FormKind.TOTP) secret else totpSeed
+            return if (seed.isNotBlank()) runCatching { Totp.parse(seed) }.getOrNull() else null
+        }
 
     private fun notesKey(): String? = additionalFields?.keys?.firstOrNull { it.lowercase() == ItemCodec.NOTES_FIELD }
 
@@ -125,9 +149,16 @@ data class ItemParts(
     val login: String,
     val key: String,
     val additionalFields: JsonObject?,
+    /** The new seed: null leaves it as it is, `""` removes it. */
+    val totp: String? = null,
+    /** The passkeys JSON array, on create only. */
+    val passkeys: String? = null,
 ) {
     override fun toString(): String = "ItemParts(name=$name, folderId=$folderId)"
 }
+
+/** What the Authenticator key field does with a login's `totp` on save (mobile-login-totp-passkeys D8). */
+enum class KeyEdit { KEEP, REPLACE, REMOVE }
 
 /** The form's draft (draftFromItem). */
 data class ItemDraft(
@@ -146,6 +177,11 @@ data class ItemDraft(
     val fields: List<Pair<String, String>> = emptyList(),
     /** Additional members that are not text: kept as they are, never shown. */
     val preserved: Map<String, JsonElement> = emptyMap(),
+    /** The item has a saved key; the key itself is never in the draft. */
+    val hasSavedKey: Boolean = false,
+    val keyEdit: KeyEdit = KeyEdit.KEEP,
+    /** The key typed under [KeyEdit.REPLACE]. */
+    val newKey: String = "",
 ) {
     override fun toString(): String = "ItemDraft(kind=$kind, name=$name)"
 
@@ -194,24 +230,28 @@ object ItemCodec {
      * Opens an item. A blocked item is not decrypted. A use-only copy shows
      * its login name and, for an authenticator, the current code, as the web
      * app may (use-only-shares); its value and additional fields stay closed.
+     * With [withSeed] false a login's own `totp` stays ciphertext: the item
+     * says a key is saved, never what it is (mobile-login-totp-passkeys D8).
      */
-    fun open(row: VaultRow, type: SecretType?, keys: VaultKeys, fromCache: Boolean, now: () -> String = { "" }): DecryptedItem {
+    fun open(row: VaultRow, type: SecretType?, keys: VaultKeys, fromCache: Boolean, now: () -> String = { "" }, withSeed: Boolean = true): DecryptedItem {
         val typeName = type?.name ?: "login"
         val kind = FormKind.of(typeName)
         if (row.blocked) {
             return DecryptedItem(row, typeName, type, "", "", null, false, null, fromCache)
         }
         val login = keys.decryptField(row.login)
+        val hasSavedKey = !row.totp.isNullOrEmpty()
+        // A field that cannot be decrypted shows as unreadable; the rest of the item still opens.
+        // Without [withSeed] (the edit screen), the saved key is not decrypted at all: only that one is saved.
+        val totpSeed = if (hasSavedKey && withSeed) runCatching { keys.decryptField(row.totp) }.getOrDefault("") else ""
         if (row.useOnly) {
             val code = if (kind == FormKind.TOTP) keys.decryptField(row.key) else ""
-            return DecryptedItem(row, typeName, type, login, code, null, false, null, fromCache)
+            return DecryptedItem(row, typeName, type, login, code, null, false, null, fromCache, totpSeed, hasSavedKey)
         }
         var secret = keys.decryptField(row.key)
         var passkey: PasskeySummary? = null
         if (kind == FormKind.PASSKEY) {
-            passkey = PasskeyCredential.parse(secret, now)?.let {
-                PasskeySummary(it.rpId, it.rpName.ifEmpty { null }, (it.userName.ifEmpty { it.userDisplayName }).ifEmpty { null }, it.createdAt.ifEmpty { null })
-            }
+            passkey = PasskeyCredential.parse(secret, now)?.let { PasskeySummary.of(it) }
             secret = ""
         }
         var fields: JsonObject? = null
@@ -220,7 +260,12 @@ object ItemCodec {
             val parsed = runCatching { Json.parseToJsonElement(keys.decryptField(row.additionalFields)) }.getOrNull()
             if (parsed is JsonObject) fields = parsed else fieldsError = true
         }
-        return DecryptedItem(row, typeName, type, login, secret, fields, fieldsError, passkey, fromCache)
+        val passkeysText = if (!row.passkeys.isNullOrEmpty()) runCatching { keys.decryptField(row.passkeys) }.getOrNull() else ""
+        val passkeys = LoginPasskeys.credentials(passkeysText ?: "").map { PasskeySummary.of(it) }
+        return DecryptedItem(
+            row, typeName, type, login, secret, fields, fieldsError, passkey, fromCache,
+            totpSeed, hasSavedKey, passkeys, passkeysError = passkeysText == null || (passkeysText.isNotEmpty() && passkeys.isEmpty()),
+        )
     }
 
     /** draftFromItem; an empty draft of [type] when [item] is null. */
@@ -262,6 +307,7 @@ object ItemCodec {
             typed = typed,
             fields = extra,
             preserved = preserved,
+            hasSavedKey = item.hasSavedKey,
         )
     }
 
@@ -287,6 +333,11 @@ object ItemCodec {
             login = if (draft.kind == FormKind.LOGIN || draft.kind == FormKind.GENERIC) draft.login else "",
             key = key,
             additionalFields = if (fields.isEmpty()) null else JsonObject(fields),
+            totp = when (draft.keyEdit) {
+                KeyEdit.KEEP -> null
+                KeyEdit.REPLACE -> draft.newKey.trim()
+                KeyEdit.REMOVE -> ""
+            },
         )
     }
 
@@ -315,6 +366,9 @@ object ItemCodec {
         if (draft.kind == FormKind.TOTP && draft.secret.trim().isNotEmpty() && runCatching { Totp.parse(draft.secret) }.isFailure) {
             errors["secret"] = DraftProblem.NOT_AN_AUTHENTICATOR_SECRET
         }
+        if (draft.keyEdit == KeyEdit.REPLACE && runCatching { Totp.parse(draft.newKey.trim()) }.isFailure) {
+            errors["totp"] = DraftProblem.NOT_AN_AUTHENTICATOR_SECRET
+        }
         val parts = parts(draft, type)
         if (Encoding.utf8(parts.key).size > MAX_PAYLOAD_BYTES) errors["secret"] = DraftProblem.TOO_LONG
         if (parts.additionalFields != null && Encoding.utf8(parts.additionalFields.toString()).size > MAX_PAYLOAD_BYTES) {
@@ -331,6 +385,7 @@ object ItemCodec {
         if (before.login != after.login) add("login")
         if (before.key != after.key) add("key")
         if (before.additionalFields != after.additionalFields) add("additionalFields")
+        if (after.totp != null) add("totp")
     }
 
     /**
@@ -347,6 +402,8 @@ object ItemCodec {
         body["key"] = JsonPrimitive(keys.encryptField(parts.key))
         if (parts.login.isNotEmpty()) body["login"] = JsonPrimitive(keys.encryptField(parts.login))
         parts.additionalFields?.let { body["additionalFields"] = JsonPrimitive(keys.encryptField(it.toString())) }
+        parts.totp?.takeIf { it.isNotEmpty() }?.let { body["totp"] = JsonPrimitive(keys.encryptField(it)) }
+        parts.passkeys?.takeIf { it.isNotEmpty() }?.let { body["passkeys"] = JsonPrimitive(keys.encryptField(it)) }
         return JsonObject(body)
     }
 
@@ -365,8 +422,25 @@ object ItemCodec {
         if ("additionalFields" in changed) {
             body["additionalFields"] = parts.additionalFields?.let { JsonPrimitive(keys.encryptField(it.toString())) } ?: JsonNull
         }
+        if ("totp" in changed) body["totp"] = encryptedOrEmpty(parts.totp ?: "", keys)
         return JsonObject(body)
     }
+
+    /**
+     * The body that sets a login's passkeys: `''` when none remain, never an
+     * encrypted empty string. With [baseUpdatedAt], the `updatedAt` of the
+     * row the change was made on, the server refuses the write when the
+     * login changed since (PasskeysWrite).
+     */
+    fun passkeysBody(json: String, keys: VaultKeys, baseUpdatedAt: String? = null): JsonObject = JsonObject(
+        buildMap {
+            put("passkeys", encryptedOrEmpty(json, keys))
+            baseUpdatedAt?.let { put("baseUpdatedAt", JsonPrimitive(it)) }
+        },
+    )
+
+    private fun encryptedOrEmpty(text: String, keys: VaultKeys): JsonPrimitive =
+        JsonPrimitive(if (text.isEmpty()) "" else keys.encryptField(text))
 
     private fun String?.json(): JsonElement = if (this == null) JsonNull else JsonPrimitive(this)
 }
