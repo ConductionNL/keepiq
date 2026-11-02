@@ -1,0 +1,672 @@
+{
+	"en": {
+		"no answer": {
+			"(default)": "Keepiq is not responding. Reload the extension and reopen this popup.",
+			"item": "Keepiq is not responding. Reload the extension and reopen this popup.",
+			"edit": "Keepiq is not responding. Reload the extension and reopen this popup.",
+			"open": "Keepiq is not responding. Reload the extension and reopen this popup.",
+			"folderName": "Keepiq is not responding. Reload the extension and reopen this popup.",
+			"folderDelete": "Keepiq is not responding. Reload the extension and reopen this popup.",
+			"send": "Keepiq is not responding. Reload the extension and reopen this popup."
+		},
+		"locked": {
+			"(default)": "Something went wrong",
+			"item": "Something went wrong",
+			"edit": "Something went wrong",
+			"open": "Something went wrong",
+			"folderName": "Something went wrong",
+			"folderDelete": "Something went wrong",
+			"send": "Something went wrong"
+		},
+		"session_revoked": {
+			"(default)": "Session revoked, please log in again",
+			"item": "Session revoked, please log in again",
+			"edit": "Session revoked, please log in again",
+			"open": "Session revoked, please log in again",
+			"folderName": "Session revoked, please log in again",
+			"folderDelete": "Session revoked, please log in again",
+			"send": "Session revoked, please log in again"
+		},
+		"write_locked": {
+			"(default)": "Vault is temporarily locked for a key migration, try again later",
+			"item": "Vault is temporarily locked for a key migration, try again later",
+			"edit": "Vault is temporarily locked for a key migration, try again later",
+			"open": "Vault is temporarily locked for a key migration, try again later",
+			"folderName": "Vault is temporarily locked for a key migration, try again later",
+			"folderDelete": "Vault is temporarily locked for a key migration, try again later",
+			"send": "Vault is temporarily locked for a key migration, try again later"
+		},
+		"forbidden": {
+			"(default)": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"item": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"edit": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"open": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"folderName": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"folderDelete": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"send": "Keepiq does not allow this change. The Keepiq web app shows why."
+		},
+		"policy": {
+			"(default)": "Your organisation's policy does not allow this change",
+			"item": "Your organisation's policy does not allow this change",
+			"edit": "Your organisation's policy does not allow this change",
+			"open": "Your organisation's policy does not allow this change",
+			"folderName": "Your organisation's policy does not allow this change",
+			"folderDelete": "Your organisation's policy does not allow this change",
+			"send": "Your organisation's policy does not allow this change"
+		},
+		"invalid": {
+			"(default)": "Keepiq refused this change",
+			"item": "Keepiq refused this change",
+			"edit": "Keepiq refused this change",
+			"open": "Keepiq refused this change",
+			"folderName": "Keepiq refused this change",
+			"folderDelete": "This folder changed. Check the choices again.",
+			"send": "Keepiq did not accept this send. Nothing was sent; check the fields and try again."
+		},
+		"conflict": {
+			"(default)": "Keepiq refused this change",
+			"item": "Keepiq refused this change",
+			"edit": "This item was changed elsewhere. Go back and edit it again to see the latest version.",
+			"open": "Keepiq sent a version of this item that your vault does not hold, so it was not opened.",
+			"folderName": "A folder with this name already exists here",
+			"folderDelete": "This folder changed. Check the choices again.",
+			"send": "Keepiq refused this change"
+		},
+		"not_found": {
+			"(default)": "This item no longer exists",
+			"item": "This item no longer exists",
+			"edit": "This item no longer exists",
+			"open": "This item no longer exists",
+			"folderName": "This folder no longer exists",
+			"folderDelete": "This folder no longer exists",
+			"send": "This item no longer exists"
+		},
+		"blocked": {
+			"(default)": "This item is blocked.",
+			"item": "This item is blocked.",
+			"edit": "This item is blocked.",
+			"open": "This item is blocked.",
+			"folderName": "This item is blocked.",
+			"folderDelete": "This item is blocked.",
+			"send": "This item is blocked."
+		},
+		"unreadable": {
+			"(default)": "Could not read this item, so it cannot be edited here",
+			"item": "Could not read this item, so it cannot be edited here",
+			"edit": "Could not read this item, so it cannot be edited here",
+			"open": "Could not read this item, so it cannot be edited here",
+			"folderName": "Could not read this item, so it cannot be edited here",
+			"folderDelete": "Could not read this item, so it cannot be edited here",
+			"send": "Could not read this item, so it cannot be edited here"
+		},
+		"offline": {
+			"(default)": "Could not reach the server",
+			"item": "Could not reach the server",
+			"edit": "Could not reach the server",
+			"open": "Could not reach the server",
+			"folderName": "Could not reach the server",
+			"folderDelete": "Could not reach the server",
+			"send": "Could not reach the server, nothing was sent"
+		},
+		"server_error": {
+			"(default)": "Keepiq is unavailable right now, try again later",
+			"item": "Keepiq is unavailable right now, try again later",
+			"edit": "Keepiq is unavailable right now, try again later",
+			"open": "Keepiq is unavailable right now, try again later",
+			"folderName": "Keepiq is unavailable right now, try again later",
+			"folderDelete": "Keepiq is unavailable right now, try again later",
+			"send": "Keepiq is unavailable right now, try again later"
+		},
+		"unknown": {
+			"(default)": "Something went wrong",
+			"item": "Something went wrong",
+			"edit": "Something went wrong",
+			"open": "Something went wrong",
+			"folderName": "Something went wrong",
+			"folderDelete": "Something went wrong",
+			"send": "Something went wrong"
+		},
+		"restricted": {
+			"(default)": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"item": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"edit": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"open": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"folderName": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"folderDelete": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"send": "This item was shared with you with limits, so it cannot be changed or copied here"
+		},
+		"view_only": {
+			"(default)": "Shared with you to view only. Ask its owner for edit rights to change it.",
+			"item": "Shared with you to view only. Ask its owner for edit rights to change it.",
+			"edit": "Shared with you to view only. Ask its owner for edit rights to change it.",
+			"open": "Shared with you to view only. Ask its owner for edit rights to change it.",
+			"folderName": "Shared with you to view only. Ask its owner for edit rights to change it.",
+			"folderDelete": "Shared with you to view only. Ask its owner for edit rights to change it.",
+			"send": "Shared with you to view only. Ask its owner for edit rights to change it."
+		},
+		"key_mismatch": {
+			"(default)": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.",
+			"item": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.",
+			"edit": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.",
+			"open": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.",
+			"folderName": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.",
+			"folderDelete": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator.",
+			"send": "Keepiq sent an encryption key that does not match your vault, so nothing was saved. Tell your Keepiq administrator."
+		},
+		"account_changed": {
+			"(default)": "You switched to another account meanwhile, so nothing was saved. Switch back to save it.",
+			"item": "You switched to another account meanwhile, so nothing was saved. Switch back to save it.",
+			"edit": "You switched to another account meanwhile, so nothing was saved. Switch back to save it.",
+			"open": "You switched to another account meanwhile, so nothing was saved. Switch back to save it.",
+			"folderName": "You switched to another account meanwhile, so nothing was saved. Switch back to save it.",
+			"folderDelete": "You switched to another account meanwhile, so nothing was saved. Switch back to save it.",
+			"send": "You switched to another account meanwhile, so nothing was saved. Switch back to save it."
+		},
+		"stale_source": {
+			"(default)": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.",
+			"item": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.",
+			"edit": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.",
+			"open": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.",
+			"folderName": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.",
+			"folderDelete": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change.",
+			"send": "The original of this shared item was changed after you opened it. Nothing was saved; open it again and redo your change."
+		},
+		"incomplete": {
+			"(default)": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.",
+			"item": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.",
+			"edit": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.",
+			"open": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.",
+			"folderName": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.",
+			"folderDelete": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again.",
+			"send": "The people this item is shared with kept changing while it was saved. Nothing was saved; please try again."
+		},
+		"bad_certificate": {
+			"(default)": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.",
+			"item": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.",
+			"edit": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.",
+			"open": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.",
+			"folderName": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.",
+			"folderDelete": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.",
+			"send": "Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved."
+		},
+		"unverified": {
+			"(default)": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.",
+			"item": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.",
+			"edit": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.",
+			"open": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.",
+			"folderName": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.",
+			"folderDelete": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.",
+			"send": "This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app."
+		},
+		"partner_unreachable": {
+			"(default)": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"item": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"edit": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"open": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderName": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderDelete": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"send": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+		},
+		"partner_lookup_limit": {
+			"(default)": "Too many partner lookups. Nothing was saved; try again in a minute.",
+			"item": "Too many partner lookups. Nothing was saved; try again in a minute.",
+			"edit": "Too many partner lookups. Nothing was saved; try again in a minute.",
+			"open": "Too many partner lookups. Nothing was saved; try again in a minute.",
+			"folderName": "Too many partner lookups. Nothing was saved; try again in a minute.",
+			"folderDelete": "Too many partner lookups. Nothing was saved; try again in a minute.",
+			"send": "Too many partner lookups. Nothing was saved; try again in a minute."
+		},
+		"federation_unavailable": {
+			"(default)": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.",
+			"item": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.",
+			"edit": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.",
+			"open": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.",
+			"folderName": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.",
+			"folderDelete": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.",
+			"send": "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator."
+		},
+		"keepiq_outdated": {
+			"(default)": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later.",
+			"item": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later.",
+			"edit": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later.",
+			"open": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later.",
+			"folderName": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later.",
+			"folderDelete": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later.",
+			"send": "Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version 0.3.12 or later."
+		},
+		"partner_clock": {
+			"(default)": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.",
+			"item": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.",
+			"edit": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.",
+			"open": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.",
+			"folderName": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.",
+			"folderDelete": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.",
+			"send": "The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app."
+		},
+		"passkey_clone": {
+			"(default)": "Passkeys cannot be cloned",
+			"item": "Passkeys cannot be cloned",
+			"edit": "Passkeys cannot be cloned",
+			"open": "Passkeys cannot be cloned",
+			"folderName": "Passkeys cannot be cloned",
+			"folderDelete": "Passkeys cannot be cloned",
+			"send": "Passkeys cannot be cloned"
+		},
+		"argon2_unavailable": {
+			"(default)": "Password protection is not available in this browser",
+			"item": "Password protection is not available in this browser",
+			"edit": "Password protection is not available in this browser",
+			"open": "Password protection is not available in this browser",
+			"folderName": "Password protection is not available in this browser",
+			"folderDelete": "Password protection is not available in this browser",
+			"send": "Password protection is not available in this browser"
+		},
+		"a_code_from_a_newer_background": {
+			"(default)": "Something went wrong",
+			"item": "Something went wrong",
+			"edit": "Something went wrong",
+			"open": "Something went wrong",
+			"folderName": "Something went wrong",
+			"folderDelete": "Something went wrong",
+			"send": "Something went wrong"
+		},
+		"blocked suite_missing": {
+			"(default)": "Its encryption key no longer exists.",
+			"item": "Its encryption key no longer exists.",
+			"edit": "Its encryption key no longer exists.",
+			"open": "Its encryption key no longer exists.",
+			"folderName": "Its encryption key no longer exists.",
+			"folderDelete": "Its encryption key no longer exists.",
+			"send": "Its encryption key no longer exists."
+		},
+		"blocked suite_revoked": {
+			"(default)": "Its encryption key was revoked.",
+			"item": "Its encryption key was revoked.",
+			"edit": "Its encryption key was revoked.",
+			"open": "Its encryption key was revoked.",
+			"folderName": "Its encryption key was revoked.",
+			"folderDelete": "Its encryption key was revoked.",
+			"send": "Its encryption key was revoked."
+		},
+		"blocked suite_compromised": {
+			"(default)": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.",
+			"item": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.",
+			"edit": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.",
+			"open": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.",
+			"folderName": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.",
+			"folderDelete": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.",
+			"send": "Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered."
+		},
+		"blocked migration_failed": {
+			"(default)": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.",
+			"item": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.",
+			"edit": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.",
+			"open": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.",
+			"folderName": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.",
+			"folderDelete": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.",
+			"send": "It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened."
+		},
+		"partners none": {
+			"(default)": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"item": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"edit": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"open": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderName": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderDelete": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"send": "Nothing was saved: a partner organisation this item is shared with can't be reached (). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+		},
+		"partners one": {
+			"(default)": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"item": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"edit": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"open": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderName": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderDelete": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"send": "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+		},
+		"partners three": {
+			"(default)": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"item": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"edit": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"open": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderName": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"folderDelete": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.",
+			"send": "Nothing was saved: a partner organisation this item is shared with can't be reached (a@other.example, b@other.example, and c@other.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+		}
+	},
+	"nl": {
+		"no answer": {
+			"(default)": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.",
+			"item": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.",
+			"edit": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.",
+			"open": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.",
+			"folderName": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.",
+			"folderDelete": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer.",
+			"send": "Keepiq reageert niet. Laad de extensie opnieuw en open deze pop-up nog een keer."
+		},
+		"locked": {
+			"(default)": "Er ging iets mis",
+			"item": "Er ging iets mis",
+			"edit": "Er ging iets mis",
+			"open": "Er ging iets mis",
+			"folderName": "Er ging iets mis",
+			"folderDelete": "Er ging iets mis",
+			"send": "Er ging iets mis"
+		},
+		"session_revoked": {
+			"(default)": "Sessie ingetrokken, log opnieuw in",
+			"item": "Sessie ingetrokken, log opnieuw in",
+			"edit": "Sessie ingetrokken, log opnieuw in",
+			"open": "Sessie ingetrokken, log opnieuw in",
+			"folderName": "Sessie ingetrokken, log opnieuw in",
+			"folderDelete": "Sessie ingetrokken, log opnieuw in",
+			"send": "Sessie ingetrokken, log opnieuw in"
+		},
+		"write_locked": {
+			"(default)": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw",
+			"item": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw",
+			"edit": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw",
+			"open": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw",
+			"folderName": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw",
+			"folderDelete": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw",
+			"send": "De kluis is tijdelijk vergrendeld voor een sleutelmigratie, probeer het later opnieuw"
+		},
+		"forbidden": {
+			"(default)": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"item": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"edit": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"open": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"folderName": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"folderDelete": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"send": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom."
+		},
+		"policy": {
+			"(default)": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"item": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"edit": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"open": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"folderName": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"folderDelete": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"send": "Het beleid van je organisatie staat deze wijziging niet toe"
+		},
+		"invalid": {
+			"(default)": "Keepiq heeft deze wijziging geweigerd",
+			"item": "Keepiq heeft deze wijziging geweigerd",
+			"edit": "Keepiq heeft deze wijziging geweigerd",
+			"open": "Keepiq heeft deze wijziging geweigerd",
+			"folderName": "Keepiq heeft deze wijziging geweigerd",
+			"folderDelete": "Deze map is gewijzigd. Controleer de keuzes opnieuw.",
+			"send": "Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw."
+		},
+		"conflict": {
+			"(default)": "Keepiq heeft deze wijziging geweigerd",
+			"item": "Keepiq heeft deze wijziging geweigerd",
+			"edit": "Dit item is ergens anders gewijzigd. Ga terug en bewerk het opnieuw om de nieuwste versie te zien.",
+			"open": "Keepiq stuurde een versie van dit item die je kluis niet heeft, dus het is niet geopend.",
+			"folderName": "Hier bestaat al een map met deze naam",
+			"folderDelete": "Deze map is gewijzigd. Controleer de keuzes opnieuw.",
+			"send": "Keepiq heeft deze wijziging geweigerd"
+		},
+		"not_found": {
+			"(default)": "Dit item bestaat niet meer",
+			"item": "Dit item bestaat niet meer",
+			"edit": "Dit item bestaat niet meer",
+			"open": "Dit item bestaat niet meer",
+			"folderName": "Deze map bestaat niet meer",
+			"folderDelete": "Deze map bestaat niet meer",
+			"send": "Dit item bestaat niet meer"
+		},
+		"blocked": {
+			"(default)": "Dit item is geblokkeerd.",
+			"item": "Dit item is geblokkeerd.",
+			"edit": "Dit item is geblokkeerd.",
+			"open": "Dit item is geblokkeerd.",
+			"folderName": "Dit item is geblokkeerd.",
+			"folderDelete": "Dit item is geblokkeerd.",
+			"send": "Dit item is geblokkeerd."
+		},
+		"unreadable": {
+			"(default)": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt",
+			"item": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt",
+			"edit": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt",
+			"open": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt",
+			"folderName": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt",
+			"folderDelete": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt",
+			"send": "Dit item kan niet worden gelezen en dus hier niet worden bewerkt"
+		},
+		"offline": {
+			"(default)": "Kan de server niet bereiken",
+			"item": "Kan de server niet bereiken",
+			"edit": "Kan de server niet bereiken",
+			"open": "Kan de server niet bereiken",
+			"folderName": "Kan de server niet bereiken",
+			"folderDelete": "Kan de server niet bereiken",
+			"send": "De server is niet bereikbaar, er is niets verzonden"
+		},
+		"server_error": {
+			"(default)": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"item": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"edit": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"open": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"folderName": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"folderDelete": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"send": "Keepiq is nu niet beschikbaar, probeer het later opnieuw"
+		},
+		"unknown": {
+			"(default)": "Er ging iets mis",
+			"item": "Er ging iets mis",
+			"edit": "Er ging iets mis",
+			"open": "Er ging iets mis",
+			"folderName": "Er ging iets mis",
+			"folderDelete": "Er ging iets mis",
+			"send": "Er ging iets mis"
+		},
+		"restricted": {
+			"(default)": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"item": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"edit": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"open": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"folderName": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"folderDelete": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"send": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren"
+		},
+		"view_only": {
+			"(default)": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.",
+			"item": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.",
+			"edit": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.",
+			"open": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.",
+			"folderName": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.",
+			"folderDelete": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen.",
+			"send": "Met je gedeeld om alleen te bekijken. Vraag de eigenaar om bewerkrechten om het te wijzigen."
+		},
+		"key_mismatch": {
+			"(default)": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.",
+			"item": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.",
+			"edit": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.",
+			"open": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.",
+			"folderName": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.",
+			"folderDelete": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder.",
+			"send": "Keepiq stuurde een versleutelingssleutel die niet bij je kluis past, dus er is niets opgeslagen. Meld dit bij je Keepiq-beheerder."
+		},
+		"account_changed": {
+			"(default)": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.",
+			"item": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.",
+			"edit": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.",
+			"open": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.",
+			"folderName": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.",
+			"folderDelete": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.",
+			"send": "Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan."
+		},
+		"stale_source": {
+			"(default)": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.",
+			"item": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.",
+			"edit": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.",
+			"open": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.",
+			"folderName": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.",
+			"folderDelete": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit.",
+			"send": "Het origineel van dit gedeelde item is gewijzigd nadat je het opende. Er is niets opgeslagen; open het opnieuw en voer je wijziging nog eens uit."
+		},
+		"incomplete": {
+			"(default)": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+			"item": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+			"edit": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+			"open": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+			"folderName": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+			"folderDelete": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw.",
+			"send": "Met wie dit item gedeeld is, veranderde steeds tijdens het opslaan. Er is niets opgeslagen; probeer het opnieuw."
+		},
+		"bad_certificate": {
+			"(default)": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.",
+			"item": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.",
+			"edit": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.",
+			"open": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.",
+			"folderName": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.",
+			"folderDelete": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.",
+			"send": "Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen."
+		},
+		"unverified": {
+			"(default)": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.",
+			"item": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.",
+			"edit": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.",
+			"open": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.",
+			"folderName": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.",
+			"folderDelete": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.",
+			"send": "Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp."
+		},
+		"partner_unreachable": {
+			"(default)": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"item": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"edit": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"open": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderName": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderDelete": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"send": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+		},
+		"partner_lookup_limit": {
+			"(default)": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+			"item": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+			"edit": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+			"open": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+			"folderName": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+			"folderDelete": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.",
+			"send": "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw."
+		},
+		"federation_unavailable": {
+			"(default)": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.",
+			"item": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.",
+			"edit": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.",
+			"open": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.",
+			"folderName": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.",
+			"folderDelete": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.",
+			"send": "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder."
+		},
+		"keepiq_outdated": {
+			"(default)": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer.",
+			"item": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer.",
+			"edit": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer.",
+			"open": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer.",
+			"folderName": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer.",
+			"folderDelete": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer.",
+			"send": "Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie 0.3.12 of nieuwer."
+		},
+		"partner_clock": {
+			"(default)": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.",
+			"item": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.",
+			"edit": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.",
+			"open": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.",
+			"folderName": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.",
+			"folderDelete": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.",
+			"send": "Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp."
+		},
+		"passkey_clone": {
+			"(default)": "Passkeys kun je niet klonen",
+			"item": "Passkeys kun je niet klonen",
+			"edit": "Passkeys kun je niet klonen",
+			"open": "Passkeys kun je niet klonen",
+			"folderName": "Passkeys kun je niet klonen",
+			"folderDelete": "Passkeys kun je niet klonen",
+			"send": "Passkeys kun je niet klonen"
+		},
+		"argon2_unavailable": {
+			"(default)": "Wachtwoordbeveiliging is niet beschikbaar in deze browser",
+			"item": "Wachtwoordbeveiliging is niet beschikbaar in deze browser",
+			"edit": "Wachtwoordbeveiliging is niet beschikbaar in deze browser",
+			"open": "Wachtwoordbeveiliging is niet beschikbaar in deze browser",
+			"folderName": "Wachtwoordbeveiliging is niet beschikbaar in deze browser",
+			"folderDelete": "Wachtwoordbeveiliging is niet beschikbaar in deze browser",
+			"send": "Wachtwoordbeveiliging is niet beschikbaar in deze browser"
+		},
+		"a_code_from_a_newer_background": {
+			"(default)": "Er ging iets mis",
+			"item": "Er ging iets mis",
+			"edit": "Er ging iets mis",
+			"open": "Er ging iets mis",
+			"folderName": "Er ging iets mis",
+			"folderDelete": "Er ging iets mis",
+			"send": "Er ging iets mis"
+		},
+		"blocked suite_missing": {
+			"(default)": "Zijn versleutelingssleutel bestaat niet meer.",
+			"item": "Zijn versleutelingssleutel bestaat niet meer.",
+			"edit": "Zijn versleutelingssleutel bestaat niet meer.",
+			"open": "Zijn versleutelingssleutel bestaat niet meer.",
+			"folderName": "Zijn versleutelingssleutel bestaat niet meer.",
+			"folderDelete": "Zijn versleutelingssleutel bestaat niet meer.",
+			"send": "Zijn versleutelingssleutel bestaat niet meer."
+		},
+		"blocked suite_revoked": {
+			"(default)": "Zijn versleutelingssleutel is ingetrokken.",
+			"item": "Zijn versleutelingssleutel is ingetrokken.",
+			"edit": "Zijn versleutelingssleutel is ingetrokken.",
+			"open": "Zijn versleutelingssleutel is ingetrokken.",
+			"folderName": "Zijn versleutelingssleutel is ingetrokken.",
+			"folderDelete": "Zijn versleutelingssleutel is ingetrokken.",
+			"send": "Zijn versleutelingssleutel is ingetrokken."
+		},
+		"blocked suite_compromised": {
+			"(default)": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.",
+			"item": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.",
+			"edit": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.",
+			"open": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.",
+			"folderName": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.",
+			"folderDelete": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.",
+			"send": "Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is."
+		},
+		"blocked migration_failed": {
+			"(default)": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.",
+			"item": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.",
+			"edit": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.",
+			"open": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.",
+			"folderName": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.",
+			"folderDelete": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.",
+			"send": "Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend."
+		},
+		"partners none": {
+			"(default)": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"item": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"edit": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"open": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderName": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderDelete": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"send": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+		},
+		"partners one": {
+			"(default)": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"item": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"edit": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"open": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderName": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderDelete": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"send": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+		},
+		"partners three": {
+			"(default)": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"item": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"edit": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"open": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderName": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"folderDelete": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.",
+			"send": "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (a@other.example, b@other.example en c@other.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+		}
+	}
+}
