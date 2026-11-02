@@ -53,32 +53,12 @@
 			<!-- Secrets that could not be decrypted are not in the package:
 			     say how many, and hold the download until the user chooses
 			     to continue without them (keepiq#874). -->
-			<div
+			<SkippedSecretsNotice
 				v-if="!locked && skipped > 0"
+				v-model:acknowledged="skippedAcknowledged"
 				class="gdpr-dialog__skipped"
-				data-testid="gdpr-skipped-warning">
-				<NcNoteCard type="warning">
-					{{
-						n(
-							'keepiq',
-							'%n secret could not be decrypted and is not in this export.',
-							'%n secrets could not be decrypted and are not in this export.',
-							skipped,
-						)
-					}}
-				</NcNoteCard>
-				<NcCheckboxRadioSwitch
-					:modelValue="skippedAcknowledged"
-					data-testid="gdpr-skipped-ack"
-					@update:modelValue="skippedAcknowledged = $event">
-					{{
-						t(
-							'keepiq',
-							'Continue without the secrets that could not be decrypted',
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-			</div>
+				name="gdpr"
+				:skipped="skipped" />
 		</div>
 
 		<template #actions>
@@ -101,21 +81,17 @@
 </template>
 
 <script>
-import {
-	NcButton,
-	NcCheckboxRadioSwitch,
-	NcDialog,
-	NcNoteCard,
-} from '@nextcloud/vue'
+import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'GdprExportDialog',
 	components: {
+		SkippedSecretsNotice,
 		NcDialog,
 		NcButton,
-		NcCheckboxRadioSwitch,
 		NcNoteCard,
 	},
 
