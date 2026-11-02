@@ -86,20 +86,39 @@ export function parseOtpauth(raw) {
 	if (value === '') {
 		throw new Error('Empty TOTP seed')
 	}
-
-	// Bare base32 secret (no scheme): validate + apply defaults.
 	if (!/^otpauth:\/\//i.test(value)) {
-		base32Decode(value) // Throws when not valid base32.
-		return {
-			secret: value.replace(/\s+/g, '').toUpperCase(),
-			algorithm: TOTP_DEFAULTS.algorithm,
-			digits: TOTP_DEFAULTS.digits,
-			period: TOTP_DEFAULTS.period,
-			issuer: null,
-			account: null,
-		}
+		return bareSeed(value)
 	}
+	return uriSeed(value)
+}
 
+/**
+ * A bare base32 secret (no scheme), with the RFC 6238 defaults.
+ *
+ * @param {string} value The trimmed seed value.
+ * @return {object} The parsed parameters.
+ * @throws {Error} When the value is not valid base32.
+ */
+function bareSeed(value) {
+	base32Decode(value) // Throws when not valid base32.
+	return {
+		secret: value.replace(/\s+/g, '').toUpperCase(),
+		algorithm: TOTP_DEFAULTS.algorithm,
+		digits: TOTP_DEFAULTS.digits,
+		period: TOTP_DEFAULTS.period,
+		issuer: null,
+		account: null,
+	}
+}
+
+/**
+ * Parse the value as an `otpauth://totp` URL.
+ *
+ * @param {string} value The trimmed seed value.
+ * @return {URL} The parsed URL.
+ * @throws {Error} When it is not a URL, or not of the totp type.
+ */
+function totpUrl(value) {
 	let url
 	try {
 		url = new URL(value)
@@ -110,22 +129,21 @@ export function parseOtpauth(raw) {
 		// HOTP and other otpauth types are unsupported.
 		throw new Error('Not an otpauth://totp URI')
 	}
+	return url
+}
 
-	const params = url.searchParams
-	const secretParam = params.get('secret')
-	if (!secretParam) {
-		throw new Error('otpauth URI has no secret')
-	}
-	base32Decode(secretParam) // Validate.
-
-	const algorithm = normaliseAlgorithm(params.get('algorithm'))
-	const digits = normaliseDigits(params.get('digits'))
-	const period = normalisePeriod(params.get('period'))
-
-	// Label is `otpauth://totp/Issuer:Account` — decode for display only.
+/**
+ * The issuer and account for display. The label is
+ * `otpauth://totp/Issuer:Account`; an `issuer` parameter wins over the
+ * label's issuer.
+ *
+ * @param {URL} url The otpauth URL.
+ * @return {{issuer: (string|null), account: (string|null)}} The display names.
+ */
+function labelParts(url) {
 	const label = decodeURIComponent(url.pathname.replace(/^\//, ''))
 	let account = label || null
-	let issuer = params.get('issuer')
+	let issuer = url.searchParams.get('issuer')
 	if (label.includes(':')) {
 		const [labelIssuer, ...rest] = label.split(':')
 		if (!issuer) {
@@ -133,14 +151,31 @@ export function parseOtpauth(raw) {
 		}
 		account = rest.join(':').trim() || null
 	}
+	return { issuer: issuer || null, account }
+}
+
+/**
+ * An `otpauth://totp` URI with its secret, parameters and label.
+ *
+ * @param {string} value The trimmed seed value.
+ * @return {object} The parsed parameters.
+ * @throws {Error} When the URI is malformed or its secret is missing or invalid.
+ */
+function uriSeed(value) {
+	const url = totpUrl(value)
+	const params = url.searchParams
+	const secretParam = params.get('secret')
+	if (!secretParam) {
+		throw new Error('otpauth URI has no secret')
+	}
+	base32Decode(secretParam) // Validate.
 
 	return {
 		secret: secretParam.replace(/\s+/g, '').toUpperCase(),
-		algorithm,
-		digits,
-		period,
-		issuer: issuer || null,
-		account,
+		algorithm: normaliseAlgorithm(params.get('algorithm')),
+		digits: normaliseDigits(params.get('digits')),
+		period: normalisePeriod(params.get('period')),
+		...labelParts(url),
 	}
 }
 

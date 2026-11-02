@@ -650,10 +650,10 @@ async function encryptWhole(value, recipient) {
 	for (const field of ['login', 'additionalFields', ...BLOB_FIELDS]) {
 		const allowed =
 			!BLOB_FIELDS.includes(field) || partnerStores(recipient, field)
-		out[field] =
-			value[field] && allowed
-				? await rsaEncrypt(String(value[field]), publicKey)
-				: null
+		out[field] = null
+		if (value[field] && allowed) {
+			out[field] = await rsaEncrypt(String(value[field]), publicKey)
+		}
 	}
 	return out
 }
@@ -680,6 +680,139 @@ export async function notifyOwnerOnly(result) {
 }
 
 /**
+ * The text for the `stale` share save refusal.
+ *
+ * @return {string}
+ */
+function staleText() {
+	return t(
+		'keepiq',
+		'This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.',
+	)
+}
+
+/**
+ * The text for the `stale_source` share save refusal.
+ *
+ * @return {string}
+ */
+function staleSourceText() {
+	return t(
+		'keepiq',
+		'The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.',
+	)
+}
+
+/**
+ * The text for the `version_refused` share save refusal.
+ *
+ * @return {string}
+ */
+function versionRefusedText() {
+	return t(
+		'keepiq',
+		'This version cannot be restored to this secret. Nothing was saved.',
+	)
+}
+
+/**
+ * The text for the `incomplete` share save refusal.
+ *
+ * @return {string}
+ */
+function incompleteText() {
+	return t(
+		'keepiq',
+		'The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.',
+	)
+}
+
+/**
+ * The text for the `partner_lookup_limit` share save refusal.
+ *
+ * @return {string}
+ */
+function lookupLimitText() {
+	return t(
+		'keepiq',
+		'Too many partner lookups. Nothing was saved; try again in a minute.',
+	)
+}
+
+/**
+ * The text for the `view_only` share save refusal.
+ *
+ * @return {string}
+ */
+function viewOnlyText() {
+	return t(
+		'keepiq',
+		'Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.',
+	)
+}
+
+/** The text for each share save refusal that needs no more than its code. */
+const CODE_TEXTS = new Map([
+	['stale', staleText],
+	['stale_source', staleSourceText],
+	['version_refused', versionRefusedText],
+	['incomplete', incompleteText],
+	['partner_lookup_limit', lookupLimitText],
+	['view_only', viewOnlyText],
+])
+
+/**
+ * The code of a failed share save: a ShareSaveError's own, else the server's
+ * `error`, and `stale` for a 409 that carries the current version.
+ *
+ * @param {Error|object} error The thrown error.
+ * @return {string|undefined}
+ */
+function shareSaveCode(error) {
+	const data = error?.response?.data
+	const code = error instanceof ShareSaveError ? error.code : data?.error
+	if (error?.response?.status === 409 && data?.current) {
+		return 'stale'
+	}
+	return code
+}
+
+/**
+ * The text for a save stopped by unreachable partner organisations.
+ *
+ * @param {Error|object} error The thrown error, with its `partners`.
+ * @return {string}
+ */
+function partnerUnreachableText(error) {
+	return t(
+		'keepiq',
+		'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
+		{
+			partners: error.partners
+				.map((share) => share.recipientCloudId)
+				.join(', '),
+		},
+	)
+}
+
+/**
+ * Whether the share save itself was refused. A policy refusal or one of the
+ * plain update keeps the server's specific message.
+ *
+ * @param {Error|object} error The thrown error.
+ * @return {boolean}
+ */
+function isShareSaveRefusal(error) {
+	const data = error?.response?.data
+	return (
+		error?.fromShareSave === true
+		&& isRefusal(error)
+		&& ['forbidden', 'not_allowed'].includes(data?.error)
+		&& !data?.code
+	)
+}
+
+/**
  * The translated text for a failed share save, or null when the error has no
  * specific text.
  *
@@ -690,67 +823,19 @@ export async function notifyOwnerOnly(result) {
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 export function shareSaveErrorText(error) {
-	const data = error?.response?.data
-	const code = error instanceof ShareSaveError ? error.code : data?.error
-	if (code === 'stale' || (error?.response?.status === 409 && data?.current)) {
-		return t(
-			'keepiq',
-			'This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.',
-		)
-	}
-	if (code === 'stale_source') {
-		return t(
-			'keepiq',
-			'The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.',
-		)
-	}
-	if (code === 'version_refused') {
-		return t(
-			'keepiq',
-			'This version cannot be restored to this secret. Nothing was saved.',
-		)
-	}
-	if (code === 'incomplete') {
-		return t(
-			'keepiq',
-			'The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.',
-		)
-	}
-	if (code === 'partner_lookup_limit') {
-		return t(
-			'keepiq',
-			'Too many partner lookups. Nothing was saved; try again in a minute.',
-		)
-	}
-	if (code === 'view_only') {
-		return t(
-			'keepiq',
-			'Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.',
-		)
+	const code = shareSaveCode(error)
+	const text = CODE_TEXTS.get(code)
+	if (text !== undefined) {
+		return text()
 	}
 	const tooOld = partnerUpgradeText(error)
 	if (tooOld !== null) {
 		return tooOld
 	}
 	if (code === 'partner_unreachable') {
-		return t(
-			'keepiq',
-			'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
-			{
-				partners: error.partners
-					.map((share) => share.recipientCloudId)
-					.join(', '),
-			},
-		)
+		return partnerUnreachableText(error)
 	}
-	// Only the share save's own refusal; a policy refusal or one of the plain
-	// update keeps the server's specific message.
-	if (
-		error?.fromShareSave === true
-		&& isRefusal(error)
-		&& ['forbidden', 'not_allowed'].includes(data?.error)
-		&& !data?.code
-	) {
+	if (isShareSaveRefusal(error)) {
 		return t(
 			'keepiq',
 			'You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.',
