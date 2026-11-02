@@ -81,15 +81,32 @@ function n(app, singular, plural, count) {
 const global = { stubs, mixins: [{ methods: { t: (app, s) => s, n } }] }
 
 /**
+ * @param {Node} node A DOM node.
+ * @return {string} Its markup with attributes in name order, without scope
+ * ids, comments or layout whitespace.
+ */
+function serialize(node) {
+	if (node.nodeType === 3) {
+		return node.textContent.trim() === '' ? '' : node.textContent
+	}
+	if (node.nodeType !== 1) {
+		return ''
+	}
+	const attrs = [...node.attributes]
+		.filter((attr) => !attr.name.startsWith('data-v-'))
+		.map((attr) => `${attr.name}="${attr.value}"`)
+		.sort()
+	const tag = node.tagName.toLowerCase()
+	const inner = [...node.childNodes].map(serialize).join('')
+	return `<${[tag, ...attrs].join(' ')}>${inner}</${tag}>`
+}
+
+/**
  * @param {object} wrapper The mounted dialog.
- * @return {string} The dialog markup without scope ids, comments or layout whitespace.
+ * @return {string} The dialog markup, normalised.
  */
 function html(wrapper) {
-	return wrapper
-		.html()
-		.replace(/ data-v-[0-9a-f]+=""/g, '')
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.replace(/>\s+</g, '><')
+	return serialize(wrapper.element)
 }
 
 /**
