@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -62,15 +62,28 @@ async function walk(): Promise<Record<string, unknown>> {
 	await step('14 settings', click('Settings'), 'Settings')
 	await step('15 section', click(/^Account security/), 'Account security')
 	await step('16 back from section', click('Back'), 'Settings')
+	const body = () => within(document.querySelector<HTMLElement>('.popup__body')!)
+	await step('16a vault section', async () => user.click(await body().findByRole('button', { name: /^Vault/ })), 'Vault')
+	await step('16b folders', async () => user.click(await body().findByRole('button', { name: /^Folders/ })), 'Folders')
+	await step('16c back to the parent section', click('Back'), 'Vault')
+	await step('16d back to settings', click('Back'), 'Settings')
 	await step('17 send', click('Send'), 'Send')
 	await step('18 new send', click('New'), 'New send')
 	await step('19 back from new send', click('Back'), 'Send')
 	return trace
 }
 
+/** The vault tab when the background does not answer the snapshot read. */
+async function unanswered(): Promise<Record<string, unknown>> {
+	fakeBackground({ unanswered: ['vault.snapshot'] })
+	render(<App />)
+	const alert = await screen.findByRole('alert')
+	return { ...chrome(), alert: alert.textContent }
+}
+
 describe('Shell chrome golden record', () => {
 	it('shows the recorded title, header actions and tab bar on every page of a walk', async () => {
-		const got = await walk()
+		const got = { walk: await walk(), unanswered: (cleanup(), await unanswered()) }
 		if (process.env.KEEPIQ_RECORD_GOLDEN === '1') writeFileSync(GOLDEN, JSON.stringify(got, null, '\t') + '\n')
 		expect(got).toEqual(JSON.parse(readFileSync(GOLDEN, 'utf8')))
 	}, 30_000)
