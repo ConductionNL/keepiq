@@ -32,8 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -225,7 +224,8 @@ internal fun ItemDetail(
     passkeyDeleted: Boolean = false,
 ) {
     val row = item.row
-    val editFocus = remember { FocusRequester() }
+    val editFocus = remember { FocusMove() }
+    val view = LocalView.current
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
@@ -289,7 +289,7 @@ internal fun ItemDetail(
         }
         LaunchedEffect(focusPasskey, item) {
             if (focusPasskey != null && (focusPasskey >= item.passkeys.size || !mayDelete) && !row.useOnly) {
-                editFocus.requestFocus()
+                editFocus.move(view)
                 onPasskeyFocused()
             }
         }
@@ -309,7 +309,7 @@ internal fun ItemDetail(
         HorizontalDivider()
         if (!row.useOnly) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusRequester(editFocus)) { Text(stringResource(R.string.action_edit)) }
+                OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
                 OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
             }
             if (item.kind == FormKind.LOGIN) {

@@ -3,7 +3,7 @@
 ### Requirement: A login's code and passkeys on the detail screen
 In the Android app, an item whose `totp` field holds a value, an Authenticator item included, MUST show its current code and the seconds left, with copy, as a standalone Authenticator item does (on an Authenticator item, under its own label next to the code of its `key`); a use-only copy MUST show and copy the code too. The seed MUST NOT be shown. An item whose `passkeys` field holds credentials MUST show one row per passkey on its detail screen, with the date it was added in the phone's locale, and the account it is for, when it has one and the item holds more than one. A credential without a readable date MUST show that a passkey is saved. Passkeys MUST NOT be shown in the vault list or search, and the app MUST NOT show a passkey's private key, credential id or site. A use-only copy MUST NOT list passkeys.
 
-Where the user may edit the item and the phone is online, each passkey row MUST offer Delete behind a confirmation. Deleting MUST fetch the item fresh, remove every entry with that credential id and rpId, and save the others, or `''` when none remain, sending the fetched row's `updatedAt` as `baseUpdatedAt` so a passkey added elsewhere in between is never overwritten. After a delete, focus MUST move to the next passkey row, else the Edit button.
+Where the user may edit the item and the phone is online, each passkey row MUST offer Delete behind a confirmation. Deleting MUST fetch the item fresh, remove every entry with that credential id and rpId, and save the others, or `''` when none remain, sending the fetched row's `updatedAt` as `baseUpdatedAt` so a passkey added elsewhere in between is never overwritten. After a delete, focus MUST move to the next passkey row, else the Edit button: input focus for keyboard and switch users, and accessibility focus while a screen reader such as TalkBack is on.
 
 #### Scenario: A login with a code and a passkey
 - **GIVEN** a login with a seed in `totp` and one passkey added on 12 March 2026
@@ -21,6 +21,11 @@ Where the user may edit the item and the phone is online, each passkey row MUST 
 - **GIVEN** a login the user may edit, with two passkeys
 - **WHEN** the user deletes one and confirms
 - **THEN** the login keeps only the other passkey, in the web app as well
+
+#### Scenario: Focus after a delete with TalkBack on
+- **GIVEN** TalkBack on and a login the user may edit, with three passkeys
+- **WHEN** the user deletes the second and confirms
+- **THEN** accessibility focus is on the Delete of the passkey that took its place
 
 #### Scenario: A use-only login with a code
 - **GIVEN** a login shared as use-only that holds a seed and a passkey

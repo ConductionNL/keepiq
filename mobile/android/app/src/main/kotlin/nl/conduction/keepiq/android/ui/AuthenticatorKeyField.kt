@@ -19,8 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -85,10 +83,11 @@ internal fun SeedInput(label: String, value: String, problem: DraftProblem?, mod
  */
 @Composable
 internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, removeOnly: Boolean, onChange: (ItemDraft) -> Unit) {
-    val field = remember { FocusRequester() }
-    val replace = remember { FocusRequester() }
-    val remove = remember { FocusRequester() }
-    val keep = remember { FocusRequester() }
+    val field = remember { FocusMove() }
+    val replace = remember { FocusMove() }
+    val remove = remember { FocusMove() }
+    val keep = remember { FocusMove() }
+    val view = LocalView.current
     var moved by remember { mutableStateOf(false) }
     fun choose(edit: KeyEdit) {
         moved = true
@@ -97,7 +96,7 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     val label = stringResource(R.string.edit_totp_key)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (!draft.hasSavedKey || draft.keyEdit == KeyEdit.REPLACE) {
-            SeedInput(label, draft.newKey, problem, modifier = Modifier.focusRequester(field)) { v ->
+            SeedInput(label, draft.newKey, problem, modifier = Modifier.focusMove(field)) { v ->
                 onChange(draft.copy(newKey = v, keyEdit = if (draft.hasSavedKey || v.isNotBlank()) KeyEdit.REPLACE else KeyEdit.KEEP))
             }
         } else {
@@ -125,17 +124,17 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
                     if (!removeOnly) {
                         TextButton(
                             onClick = { choose(KeyEdit.REPLACE) },
-                            modifier = Modifier.focusRequester(replace).semantics { contentDescription = replaceCd },
+                            modifier = Modifier.focusMove(replace).semantics { contentDescription = replaceCd },
                         ) { Text(stringResource(R.string.action_replace)) }
                     }
                     TextButton(
                         onClick = { choose(KeyEdit.REMOVE) },
-                        modifier = Modifier.focusRequester(remove).semantics { contentDescription = removeCd },
+                        modifier = Modifier.focusMove(remove).semantics { contentDescription = removeCd },
                     ) { Text(stringResource(R.string.action_remove)) }
                 } else {
                     TextButton(
                         onClick = { choose(KeyEdit.KEEP) },
-                        modifier = Modifier.focusRequester(keep).semantics { contentDescription = keepCd },
+                        modifier = Modifier.focusMove(keep).semantics { contentDescription = keepCd },
                     ) { Text(stringResource(R.string.action_keep_key)) }
                 }
             }
@@ -144,9 +143,9 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     LaunchedEffect(draft.keyEdit) {
         if (!moved) return@LaunchedEffect
         when (draft.keyEdit) {
-            KeyEdit.REPLACE -> field.requestFocus()
-            KeyEdit.REMOVE -> keep.requestFocus()
-            KeyEdit.KEEP -> (if (removeOnly) remove else replace).requestFocus()
+            KeyEdit.REPLACE -> field.move(view)
+            KeyEdit.REMOVE -> keep.move(view)
+            KeyEdit.KEEP -> (if (removeOnly) remove else replace).move(view)
         }
     }
 }

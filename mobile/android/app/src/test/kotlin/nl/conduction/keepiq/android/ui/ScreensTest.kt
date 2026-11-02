@@ -5,9 +5,11 @@ package nl.conduction.keepiq.android.ui
 
 import android.text.InputType
 import android.view.View
+import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,12 +17,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.node.RootForTest
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -60,7 +65,9 @@ import java.time.ZoneOffset
 import java.util.Locale
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * The item detail and generator screens on the JVM (tasks 3.1 and 3.5),
@@ -184,13 +191,14 @@ class ScreensTest {
         deleted: MutableList<String> = mutableListOf(),
         focusPasskey: Int? = null,
         onFocused: () -> Unit = {},
+        talkBack: Boolean = false,
     ) =
         compose.setContent {
             // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
             val inputMode = LocalInputModeManager.current
             var keyboard by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
-            if (keyboard) MaterialTheme {
+            LaunchedEffect(Unit) { if (!talkBack) keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard || talkBack(talkBack)) MaterialTheme {
                 ItemDetail(
                     item = item, folderPath = "Geen map", offline = offline, problem = null, modifier = Modifier,
                     onCopy = {}, onEdit = {}, onMove = {}, onTrash = {}, onSendLogin = {},
@@ -311,17 +319,95 @@ class ScreensTest {
 
     private var keyDraft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
 
-    private fun showKeyField(draft: ItemDraft, removeOnly: Boolean = false) {
+    private fun showKeyField(draft: ItemDraft, removeOnly: Boolean = false, talkBack: Boolean = false) {
         keyDraft = draft
         compose.setContent {
             val inputMode = LocalInputModeManager.current
             var keyboard by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
-            if (keyboard) MaterialTheme { Column { AuthenticatorKeyField(keyDraft, null, removeOnly) { keyDraft = it } } }
+            LaunchedEffect(Unit) { if (!talkBack) keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard || talkBack(talkBack)) MaterialTheme { Column { AuthenticatorKeyField(keyDraft, null, removeOnly) { keyDraft = it } } }
         }
     }
 
     private val keyLabel = "Authenticator key (base32 secret or otpauth link)"
+
+    private var a11yView: View? = null
+    private var a11yInputMode: InputModeManager? = null
+
+    /**
+     * With [on], the screen as TalkBack sees it: touch input mode, in which
+     * Compose gives a button no input focus, and accessibility with touch
+     * exploration on. True once the window is in touch mode, so the content
+     * shows only then. The tests that use it run in native graphics mode:
+     * Compose builds its accessibility tree with android.graphics.Region,
+     * which Robolectric's legacy graphics leave empty.
+     */
+    @Composable
+    private fun talkBack(on: Boolean): Boolean {
+        if (!on) return false
+        val view = LocalView.current
+        remember(view) {
+            shadowOf(view.context.getSystemService(AccessibilityManager::class.java)).apply {
+                setEnabled(true)
+                setTouchExplorationEnabled(true)
+            }
+            (view as RootForTest).forceAccessibilityForTesting(true)
+            a11yView = view
+            // The window enters touch mode as on a first touch (ViewRootImpl, hidden API; Robolectric starts in keyboard mode).
+            val root = view.rootView.parent
+            root.javaClass.getDeclaredMethod("ensureTouchModeLocally", Boolean::class.javaPrimitiveType).apply { isAccessible = true }.invoke(root, true)
+        }
+        val inputMode = LocalInputModeManager.current
+        a11yInputMode = inputMode
+        var touch by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { touch = inputMode.requestInputMode(InputMode.Touch) }
+        return touch && inputMode.inputMode == InputMode.Touch
+    }
+
+    /** The node holds accessibility focus: what TalkBack reads and acts on next. */
+    private fun assertAccessibilityFocused(node: SemanticsNodeInteraction) {
+        compose.waitForIdle()
+        assertEquals(InputMode.Touch, a11yInputMode!!.inputMode)
+        val id = node.fetchSemanticsNode().id
+        val info = a11yView!!.accessibilityNodeProvider!!.createAccessibilityNodeInfo(id)
+        assertTrue("node $id is not in the accessibility tree", info != null)
+        assertTrue("accessibility focus is not on node $id", info!!.isAccessibilityFocused)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackAfterADeleteAccessibilityFocusGoesToTheNextPasskey() {
+        showMail(mail(passkeys = listOf(passkey("b", "alice-work", null))), focusPasskey = 0, talkBack = true)
+        assertAccessibilityFocused(compose.onNodeWithContentDescription("Delete passkey"))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackAfterTheLastDeleteAccessibilityFocusGoesToEdit() {
+        showMail(mail(), focusPasskey = 0, talkBack = true)
+        assertAccessibilityFocused(compose.onNodeWithText("Edit"))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackRemoveKeepAndReplaceMoveAccessibilityFocus() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true), talkBack = true)
+        compose.onNodeWithText("Remove").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText("Keep saved key"))
+        compose.onNodeWithText("Keep saved key").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText("Replace"))
+        compose.onNodeWithText("Replace").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText(keyLabel))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackRemoveOnlyKeepMovesAccessibilityFocusBackToRemove() {
+        showKeyField(ItemDraft(kind = FormKind.NOTE, typeId = "2", hasSavedKey = true), removeOnly = true, talkBack = true)
+        compose.onNodeWithText("Remove").performClick()
+        compose.onNodeWithText("Keep saved key").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText("Remove"))
+    }
 
     /**
      * The text a field lays out: dots while masked, the value once shown.
@@ -481,13 +567,13 @@ class ScreensTest {
         compose.onNodeWithContentDescription("Remove authenticator key").assertDoesNotExist()
     }
 
-    private fun showDetail(id: String, keyboard: Boolean = false) {
+    private fun showDetail(id: String, keyboard: Boolean = false, talkBack: Boolean = false) {
         compose.setContent {
             // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
             val inputMode = LocalInputModeManager.current
             var ready by remember { mutableStateOf(!keyboard) }
             LaunchedEffect(Unit) { if (keyboard) ready = inputMode.requestInputMode(InputMode.Keyboard) }
-            if (ready) {
+            if (ready && (!talkBack || talkBack(true))) {
                 MaterialTheme { ItemDetailScreen(vault.session, id, Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> }) }
             }
         }
@@ -582,6 +668,20 @@ class ScreensTest {
         compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription("Delete passkey for alice-b").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithContentDescription("Delete passkey for alice-c").assertIsFocused()
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackADeleteOnTheScreenMovesAccessibilityFocusToThePasskeyThatTookItsPlace() {
+        val (a, b, c) = listOf(FakeVault.credential("a", "alice-a"), FakeVault.credential("b", "alice-b"), FakeVault.credential("c", "alice-c"))
+        vault.put("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, b, c)))
+        showDetail("s4", talkBack = true)
+        waitForDescription("Delete passkey for alice-b")
+        compose.onNodeWithContentDescription("Delete passkey for alice-b").performScrollTo().performClick()
+        vault.replace("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, c)))
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription("Delete passkey for alice-b").fetchSemanticsNodes().isEmpty() }
+        assertAccessibilityFocused(compose.onNodeWithContentDescription("Delete passkey for alice-c"))
     }
 
     @Test
