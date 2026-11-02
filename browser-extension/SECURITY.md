@@ -45,7 +45,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | Names, usernames and verification codes in the inline list, and the login names and user names of its passkey rows | The list page's memory while shown | The list closing |
 | A passkey's private key, decrypted `passkeys`, or a new key pair being saved | Background memory for the one sign-in or save | That handler's end; never stored, and sent to the server only inside the encrypted `passkeys` |
 | Passkey ceremony (`passkeyCeremony.<tabId>`): ids, the site's origin and frame URL, the request's challenge, RP ID, `rp.name` and user, the deadline, the window, whether you confirmed it's you, and after a failed step the login, typed name and folder Retry needs; no ciphertext, key or decrypted value | `storage.session`, like the private key | The ceremony's end ([ARCHITECTURE.md](ARCHITECTURE.md#passkeys)), browser restart, extension reload. A lock keeps it, so the window can go on after the unlock. |
-| The passkeys a pending conditional request offers: login ids, credential ids, login names, user names | Background memory | The request's end, lock, a vault change, an MV3 worker restart |
+| Every login's passkeys as the inline list offers them: login ids, credential ids, login names, user names, relying parties | Background memory, once per vault version | A vault change, lock, logout, account switch, turning passkeys off, an MV3 worker restart |
 | Login names, usernames and passkey user names in the passkey window | The window's memory while shown | The window closing |
 | A login's passkeys as the detail shows them: relying party, user name, date | Popup memory while shown | The view closing |
 | The credential a passkey ceremony returns | The relay's and the page script's memory, then the page's | The call settling |
@@ -162,7 +162,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - **Passkey saves trust the recipient list too:** saving a passkey to a shared login, or signing in with an imported passkey whose counter isn't 0, sends the login's passkeys, private keys included, encrypted to every copy the server lists. Passkeys Keepiq made keep counter 0 and never write on sign-in.
 - **Firefox, pages whose CSP forbids inline scripts:** the page script can't run there, so those pages keep the browser's own passkeys and may report a CSP violation. Firefox also injects it after a fetch, so a page's earliest script can call before it is in place; that call goes to the browser.
 - **The page script is visible:** a page can tell Keepiq is installed from the replaced methods, as with Bitwarden. It learns nothing about the vault from them.
-- **Timing during a conditional passkey request:** the first focus decrypts the logins holding passkeys, so its timing can tell an unlocked vault from a locked one, once per request.
+- **Timing during a conditional passkey request:** the first focus after an unlock or a vault change decrypts the logins holding passkeys, so a page can time it to tell an unlocked vault with passkeys from a locked one, and roughly how many logins hold them. Later requests and focuses decrypt nothing.
 - **Offline caching turned off by an admin:** the extension still caches the vault on disk. Whether it should keep it in session storage instead is still open.
 
 ## Supply chain

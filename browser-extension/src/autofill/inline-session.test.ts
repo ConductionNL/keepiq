@@ -7,7 +7,8 @@ import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { lastUsedKey } from '@/src/last-used'
 import { inlineHeight, type BackgroundToContent, type InlineListToBackground, type PickInput } from '@/src/messages'
-import { ceremonyKey, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from '@/src/passkey/ceremony'
+import { ceremonyKey, endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from '@/src/passkey/ceremony'
+import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey, putKey, unlockedAtKey } from '@/src/vault/key-store'
@@ -639,6 +640,7 @@ describe('passkeys during a conditional request', () => {
 	})
 
 	beforeEach(async () => {
+		forgetOfferedPasskeys()
 		await passkeyVault()
 		windows = []
 		vi.spyOn(browser.windows, 'create').mockImplementation(async (data?: { url?: string | string[] }) => {
@@ -692,7 +694,7 @@ describe('passkeys during a conditional request', () => {
 		expect(await hasKey(accountId)).toBe(false)
 	})
 
-	it('decrypts the passkeys once per request, not again on each open and state', async () => {
+	it('decrypts the passkeys once per vault version, not again on each open, state or new request', async () => {
 		await conditional()
 		vi.mocked(rsaDecrypt).mockClear()
 		await openSession(OPEN, content())
@@ -700,7 +702,43 @@ describe('passkeys during a conditional request', () => {
 		await openSession(OPEN, content())
 		expect((await openWithState()).state).toMatchObject({ passkeys: [offered] })
 		await list({ kind: 'inline.state', key: (await openSession(OPEN, content()))!.key })
+		// A page's loop: abort, a new conditional request with another allow list, focus again.
+		for (const allowCredentials of [[], [{ type: 'public-key', id: 'QQ' }], [{ type: 'public-key', id: 'Zm9v' }]]) {
+			const ceremonyId = await conditional({ allowCredentials })
+			await openWithState()
+			await handlePasskeyContent({ kind: 'passkey.abort', ceremonyId } as never, content())
+		}
 		expect(passkeyDecrypts()).toBe(1)
+	})
+
+	it('matches again after an account switch or a logout', async () => {
+		const other = (await addAccount({
+			serverUrl: 'https://cloud.example.org', uid: 'bob', loginName: 'bob', displayName: 'Bob', email: null, avatarDataUrl: null, appPassword: 'pw', keepiqVersion: '0.3.12',
+		}, { ...suiteRow })).id
+		await setActive(accountId)
+		await conditional()
+		await openWithState()
+		vi.mocked(rsaDecrypt).mockClear()
+		await setActive(other)
+		await endForAccountChange()
+		await setActive(accountId)
+		await endForAccountChange()
+		await conditional()
+		expect((await openWithState()).state).toMatchObject({ passkeys: [offered] })
+		expect(passkeyDecrypts()).toBe(1)
+		await markLoggedOut(other)
+		await openWithState()
+		expect(passkeyDecrypts()).toBe(2)
+	})
+
+	it('shows rows of before a change it was not told of yet, but signs only what the vault holds now', async () => {
+		await conditional()
+		await openWithState()
+		await vault([await login({ id: 'work', name: 'Work', login: await encrypt('alice@work.test') })])
+		const { key, state } = await openWithState()
+		expect(state).toMatchObject({ passkeys: [offered] })
+		expect(await pickPasskey(key)).toEqual({ refused: 'stale' })
+		expect(results()).toEqual([])
 	})
 
 	it('matches again after the vault changes or locks, never showing rows of before', async () => {

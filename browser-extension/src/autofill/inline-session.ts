@@ -13,7 +13,8 @@ import {
 	type BackgroundToContent, type InlineClosed, type InlineListToBackground, type InlineMode, type InlineOpen, type InlineOpenReply, type InlinePickReply, type InlineRow,
 	type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
-import { conditionalCeremony, offeredPasskeys, pickFromList, type Ceremony } from '@/src/passkey/ceremony'
+import { conditionalCeremony, pickFromList, type Ceremony } from '@/src/passkey/ceremony'
+import { offeredPasskeys } from '@/src/passkey/offered'
 import { createKeyedQueue } from '@/src/queue'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, sessionValues } from '@/src/vault/key-store'
@@ -78,15 +79,15 @@ const matchingFor = (mode: InlineMode, accountId: string, frameUrl: string) =>
 const conditionalFor = (mode: InlineMode, tabId: number, frameId: number, accountId: string, frameUrl: string) =>
 	(mode === 'login' ? conditionalCeremony(tabId, frameId, accountId, frameUrl) : Promise.resolve(null))
 
-async function passkeysFor(accountId: string, ceremony: Pick<Ceremony, 'id' | 'rpId' | 'credentialIds'>): Promise<PasskeyRow[]> {
+async function passkeysFor(accountId: string, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'>): Promise<PasskeyRow[]> {
 	const key = await getKey(accountId)
-	return key ? offeredPasskeys(accountId, ceremony, key) : []
+	return key ? offeredPasskeys(accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds }) : []
 }
 
 /**
  * `inline.open` from a content script, routed by sender page. Showing the list is no interaction, so no `touch()`.
  * The height counts the logins without decrypting any, and the passkeys of a pending conditional request, which
- * decrypts their logins' `passkeys` once per request (design.md § Risks); `inline.state` decides again what the list shows.
+ * decrypts their logins' `passkeys` once per vault version (design.md § Risks); `inline.state` decides again what the list shows.
  */
 export async function openSession(message: InlineOpen, sender: Browser.runtime.MessageSender): Promise<InlineOpenReply> {
 	// A focus after the worker slept past the timeout must not count passkeys with the overdue key.

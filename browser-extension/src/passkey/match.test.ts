@@ -6,7 +6,7 @@ import { blockedRow, encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { clearSnapshot, writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
-import { credentialIdKey, findPasskeys, matchPasskeys } from './match'
+import { credentialIdKey, findPasskeys, listPasskeys, matchPasskeys, offeredFrom } from './match'
 
 const ACCOUNT = 'a1'
 let key: CryptoKey
@@ -120,6 +120,34 @@ describe('findPasskeys', () => {
 		const [entry] = await findPasskeys(ACCOUNT, key, { ...query(), itemId: 'work' })
 		expect(entry).toMatchObject({ row: { id: 'work' }, index: 1, credential: { credentialId: 'QQ', privateKey: 'cHJpdmF0ZQ' } })
 		expect(await findPasskeys(ACCOUNT, key, { ...query(), itemId: 'missing' })).toEqual([])
+	})
+})
+
+describe('listPasskeys and offeredFrom', () => {
+	it('offer what matchPasskeys finds, for any RP ID and allow list', async () => {
+		await vault([
+			await login('work', [passkey('QQ'), passkey('+/8='), passkey('Qg', { rpId: 'intranet.test' }), passkey('RA', { algorithm: -257 })]),
+			await login('ended', [passkey('Qw')], { accessExpiresAt: '2020-01-01T00:00:00+00:00' }),
+			blockedRow({ id: 'blocked', typeId: 't-login' }),
+		])
+		const listing = await listPasskeys(ACCOUNT, key)
+		for (const asked of [query(), query(['-_8']), query(['Qg']), { rpId: 'intranet.test', allowCredentials: [] }, { rpId: 'other.test', allowCredentials: [] }]) {
+			expect(offeredFrom(listing, asked)).toEqual(await matchPasskeys(ACCOUNT, key, asked))
+		}
+	})
+
+	it('keeps ids, names and the RP ID, never a key', async () => {
+		await vault([await login('work', [passkey('QQ')])])
+		const listing = await listPasskeys(ACCOUNT, key)
+		expect(listing).toEqual([{ itemId: 'work', credentialId: 'QQ', name: 'Work', userName: 'QQ-user', rpId: 'example.test', accessExpiresAt: null }])
+		expect(JSON.stringify(listing)).not.toContain('cHJpdmF0ZQ')
+	})
+
+	it('drops a copy whose access ended after it was listed', async () => {
+		await vault([await login('shared', [passkey('QQ')], { accessExpiresAt: '2030-01-01T00:00:00+00:00' })])
+		const listing = await listPasskeys(ACCOUNT, key, Date.parse('2029-01-01T00:00:00Z'))
+		expect(offeredFrom(listing, query(), Date.parse('2029-06-01T00:00:00Z'))).toHaveLength(1)
+		expect(offeredFrom(listing, query(), Date.parse('2030-06-01T00:00:00Z'))).toEqual([])
 	})
 })
 

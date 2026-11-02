@@ -15,6 +15,7 @@ import {
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readLastUsed } from '@/src/last-used'
 import { buildPasskeyCredential, storedArray } from '@/src/passkey/credential'
+import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
@@ -353,6 +354,7 @@ async function performAccountSettings(message: AccountSettingsRequest): Promise<
 			if (await accountStatus(account) !== 'unlocked') return 'locked'
 			// `writeSettings` drops what fails validation.
 			await updateSettings(accountId, message.patch)
+			if (message.patch?.askPasskeys === false) forgetOfferedPasskeys()
 			return accountSettings(accountId)
 		}
 		case 'pin.set':

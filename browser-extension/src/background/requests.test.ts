@@ -9,6 +9,7 @@ import { addHistory } from '@/src/generator/history'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
 import { writePolicy } from '@/src/generator/store'
 import type { PopupReplies } from '@/src/messages'
+import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { provenCertificateKey } from '@/src/vault/certificate'
@@ -19,6 +20,8 @@ import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
 import { blockUnlock, checkSuite, lock, lockAll } from '@/src/vault/unlock'
 import { handlePopupRequest, readLastTab, type HandledRequest } from './requests'
+
+vi.mock('@/src/passkey/offered', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/passkey/offered')>(), forgetOfferedPasskeys: vi.fn() }))
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -37,6 +40,7 @@ async function snapshot(secrets: VaultSnapshot['secrets'], syncedAt = new Date()
 
 beforeEach(async () => {
 	fakeBrowser.reset()
+	vi.mocked(forgetOfferedPasskeys).mockClear()
 	vi.stubGlobal('fetch', fetchMock)
 	fetchMock.mockReset()
 	fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: 'Down' }), { status: 503 }))
@@ -425,6 +429,13 @@ describe('account settings', () => {
 			values: { vaultTimeout: 60, clearClipboardMs: 20_000, uriMatch: 'baseDomain' },
 			effectiveTimeout: 60,
 		})
+	})
+
+	it('forgets the passkeys the inline list offers when passkeys are turned off', async () => {
+		await send({ kind: 'account.settings.set', accountId, patch: { askPasskeys: true, askToAdd: false } })
+		expect(forgetOfferedPasskeys).not.toHaveBeenCalled()
+		await send({ kind: 'account.settings.set', accountId, patch: { askPasskeys: false } })
+		expect(forgetOfferedPasskeys).toHaveBeenCalledTimes(1)
 	})
 
 	it('moves the Never key onto disk with the timeout', async () => {

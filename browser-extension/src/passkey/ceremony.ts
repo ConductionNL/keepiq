@@ -10,7 +10,7 @@ import { onBroadcast } from '@/src/background/broadcast'
 import { toBase64Url } from '@/src/crypto/base64'
 import { Failure } from '@/src/failure'
 import type {
-	BackgroundToContent, PasskeyContentToBackground, PasskeyPopupRequest, PasskeyResult, PasskeyRow, PasskeyStartReply, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
+	BackgroundToContent, PasskeyContentToBackground, PasskeyPopupRequest, PasskeyResult, PasskeyStartReply, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
 } from '@/src/messages'
 import { createKeyedQueue } from '@/src/queue'
 import { getKey } from '@/src/vault/key-store'
@@ -19,6 +19,7 @@ import { cancelPopout, enforce, expectPopout, syncAlarm, touch } from '@/src/vau
 import { unlock } from '@/src/vault/unlock'
 import { alreadySaved, readSaveRequest, savePasskey, saveView, type SaveAttempt, type SaveOutcome, type SaveRequest } from './create'
 import { matchPasskeys } from './match'
+import { forgetOfferedPasskeys } from './offered'
 import { frameGate, readStart, type CeremonyRequest, type FrameInput } from './request'
 import { signIn, type SignOutcome } from './sign'
 
@@ -80,12 +81,6 @@ const store = {
 const queued = createKeyedQueue()
 const inTab = <T>(tabId: number, change: () => Promise<T>) => queued(String(tabId), change)
 
-/**
- * A conditional request's offered rows by ceremony id, ids and names only, so a page's focus loop does not decrypt
- * every login holding passkeys again. Kept per key, so a new unlock matches anew.
- */
-const offers = new Map<string, { key: CryptoKey; rows: Promise<PasskeyRow[]> }>()
-
 const log = (what: string) => (error: unknown) => console.error(`[keepiq] passkey ${what}`, error)
 
 function toFrame(ceremony: Ceremony, result: PasskeyResult): void {
@@ -104,7 +99,6 @@ function end(tabId: number, id: string, result: PasskeyResult | null): Promise<b
 		const ceremony = await store.get(tabId)
 		if (ceremony?.id !== id) return false
 		await store.remove(tabId)
-		offers.delete(id)
 		if (result) toFrame(ceremony, result)
 		closeWindow(ceremony)
 		return true
@@ -117,7 +111,6 @@ function dropTab(tabId: number, url?: string): Promise<void> {
 		const ceremony = await store.get(tabId)
 		if (!ceremony || (url !== undefined && originOf(url) === ceremony.origin)) return
 		await store.remove(tabId)
-		offers.delete(ceremony.id)
 		closeWindow(ceremony)
 	})
 }
@@ -190,10 +183,7 @@ export async function startCeremony(message: Extract<PasskeyContentToBackground,
 	const { tabId } = ceremony
 	await inTab(tabId, async () => {
 		const previous = await store.get(tabId)
-		if (previous) {
-			toFrame(previous, NOT_ALLOWED)
-			offers.delete(previous.id)
-		}
+		if (previous) toFrame(previous, NOT_ALLOWED)
 		// A modal ceremony takes over the previous one's window; a conditional one has nothing to show in it.
 		if (previous?.window && !ceremony.conditional) ceremony.window = previous.window
 		else if (previous) closeWindow(previous)
@@ -452,6 +442,7 @@ export async function handlePasskeyWindow(message: PasskeyPopupRequest, sender: 
 
 /** A logout or an account switch ends every ceremony of an account that is no longer the active, logged-in one. */
 export async function endForAccountChange(): Promise<void> {
+	forgetOfferedPasskeys()
 	for (const ceremony of await store.all()) {
 		if (!(await stillActive(ceremony))) await end(ceremony.tabId, ceremony.id, NOT_ALLOWED)
 	}
@@ -476,18 +467,6 @@ export async function conditionalCeremony(tabId: number, frameId: number, accoun
 	if (!ceremony?.conditional || ceremony.kind !== 'get' || ceremony.frameId !== frameId || ceremony.accountId !== accountId) return null
 	if (originOf(frameUrl) !== ceremony.origin || !(await stillAsked(ceremony))) return null
 	return { id: ceremony.id, rpId: ceremony.rpId, credentialIds: ceremony.credentialIds }
-}
-
-/** The rows a pending conditional request offers; the caller holds the account's unlocked key. */
-export function offeredPasskeys(accountId: string, ceremony: Pick<Ceremony, 'id' | 'rpId' | 'credentialIds'>, key: CryptoKey): Promise<PasskeyRow[]> {
-	const cached = offers.get(ceremony.id)
-	if (cached?.key === key) return cached.rows
-	const entry = { key, rows: matchPasskeys(accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds }) }
-	offers.set(ceremony.id, entry)
-	entry.rows.catch(() => {
-		if (offers.get(ceremony.id) === entry) offers.delete(ceremony.id)
-	})
-	return entry.rows
 }
 
 export type ListPick = 'signed' | 'window' | 'locked' | 'stale'
@@ -518,7 +497,7 @@ export function registerPasskeyCeremonies(): void {
 	})
 	browser.windows.onRemoved.addListener((windowId) => void windowClosed(windowId).catch(log('window closed')))
 	onBroadcast((message) => {
-		if (message.kind === 'vault.locked' || message.kind === 'vault.changed') offers.clear()
+		if (message.kind === 'vault.locked' || message.kind === 'vault.changed') forgetOfferedPasskeys()
 		if (message.kind === 'vault.locked') void forgetHeldPicks().then(endForAccountChange).catch(log('lock'))
 	})
 }

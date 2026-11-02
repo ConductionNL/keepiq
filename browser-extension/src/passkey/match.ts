@@ -36,7 +36,7 @@ export function credentialIdKey(id: string): string | null {
 }
 
 /** An `accessExpiresAt` that does not parse counts as passed. */
-function accessEnded(row: OpenSecretRow, now: number): boolean {
+function accessEnded(row: { accessExpiresAt?: string | null }, now: number): boolean {
 	if (!row.accessExpiresAt) return false
 	const at = Date.parse(row.accessExpiresAt)
 	return !Number.isFinite(at) || at <= now
@@ -51,24 +51,46 @@ async function decrypted(row: OpenSecretRow, key: CryptoKey): Promise<string | n
 	}
 }
 
-export async function findPasskeys(accountId: string, key: CryptoKey, query: PasskeyQuery, now = Date.now()): Promise<PasskeyEntry[]> {
+/** The usable passkeys of every login, or of `itemId` only; decrypts each login it reads. */
+async function usableEntries(accountId: string, key: CryptoKey, now: number, itemId?: string): Promise<PasskeyEntry[]> {
 	const vault = await readSnapshot(accountId)
 	if (!vault) return []
 	const loginTypes = new Set(vault.types.filter((type) => type.name === 'login').map((type) => type.id))
-	const allowed = new Set(query.allowCredentials.map(credentialIdKey))
 	const rows = vault.secrets.filter((row): row is OpenSecretRow =>
-		!row.blocked && row.typeId !== null && loginTypes.has(row.typeId) && !accessEnded(row, now) && (query.itemId === undefined || row.id === query.itemId))
-	const found = await Promise.all(rows.map(async (row) => {
-		const json = await decrypted(row, key)
-		return passkeyEntries(json).flatMap(({ index, credential: raw }) => {
-			const credential = buildPasskeyCredential(raw)
-			if (!credential || credential.rpId !== query.rpId || credential.algorithm !== ES256) return []
-			const id = credentialIdKey(credential.credentialId)
-			if (id === null || (query.allowCredentials.length > 0 && !allowed.has(id))) return []
-			return [{ row, index, credential }]
-		})
-	}))
+		!row.blocked && row.typeId !== null && loginTypes.has(row.typeId) && !accessEnded(row, now) && (itemId === undefined || row.id === itemId))
+	const found = await Promise.all(rows.map(async (row) => passkeyEntries(await decrypted(row, key)).flatMap(({ index, credential: raw }) => {
+		const credential = buildPasskeyCredential(raw)
+		return credential?.algorithm === ES256 && credentialIdKey(credential.credentialId) !== null ? [{ row, index, credential }] : []
+	})))
 	return found.flat()
+}
+
+function answers(query: PasskeyQuery): (rpId: string, credentialId: string) => boolean {
+	const allowed = new Set(query.allowCredentials.map(credentialIdKey))
+	return (rpId, credentialId) => rpId === query.rpId && (query.allowCredentials.length === 0 || allowed.has(credentialId))
+}
+
+export async function findPasskeys(accountId: string, key: CryptoKey, query: PasskeyQuery, now = Date.now()): Promise<PasskeyEntry[]> {
+	const matches = answers(query)
+	return (await usableEntries(accountId, key, now, query.itemId)).filter(({ credential }) => matches(credential.rpId, credentialIdKey(credential.credentialId)!))
+}
+
+/** A passkey as the inline list's cache keeps it: no key, so a later request can be matched without decrypting. */
+export interface PasskeyListing extends PasskeyRow {
+	rpId: string
+	accessExpiresAt: string | null
+}
+
+export async function listPasskeys(accountId: string, key: CryptoKey, now = Date.now()): Promise<PasskeyListing[]> {
+	return (await usableEntries(accountId, key, now)).map((entry) => ({ ...toPasskeyRow(entry), rpId: entry.credential.rpId, accessExpiresAt: entry.row.accessExpiresAt ?? null }))
+}
+
+/** The rows of `listing` a request offers, as `matchPasskeys` would find them. */
+export function offeredFrom(listing: readonly PasskeyListing[], query: PasskeyQuery, now = Date.now()): PasskeyRow[] {
+	const matches = answers(query)
+	return listing
+		.filter((entry) => !accessEnded(entry, now) && matches(entry.rpId, entry.credentialId))
+		.map(({ itemId, credentialId, name, userName }) => ({ itemId, credentialId, name, userName }))
 }
 
 /** What the window and the inline list may hold of a match. */

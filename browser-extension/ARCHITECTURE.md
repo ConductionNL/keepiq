@@ -176,7 +176,7 @@ Background memory only, lost on an MV3 worker restart:
 - **Tab items** (`tab-items.ts`): the item each tab last filled or captured; forgotten on tab close, lock and account switch.
 - **Frame registry** (`frames.ts`): each tab's frame ids and URLs from `page_ready`; forgotten when the tab loads or closes.
 - **Badge counts** (`toolbar-icon.ts`): never stored, recomputed from the snapshot for each window's active tab; other tabs show none until activated.
-- **Passkey offers** (`passkey/ceremony.ts`): the rows a pending conditional request offers (login id, credential id, login name, user name), by ceremony id; dropped when it ends, on lock and on a vault change.
+- **Passkey offers** (`passkey/offered.ts`): every login's passkeys as the inline list offers them (login id, credential id, login name, user name, RP ID), per account, key and vault version; dropped on a vault change, lock, logout, account switch and turning passkeys off.
 - **Save targets' `write-context` answers** (`passkey/create.ts`): whether each login the Save view lists may take the passkey, for the four newest ceremonies.
 - **A passkey's key material** (`sign.ts`, `create.ts`): the decrypted `passkeys`, the imported signing key or a generated key pair, for one handler only.
 
