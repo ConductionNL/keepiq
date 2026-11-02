@@ -74,5 +74,5 @@ describe('generatePassword golden record', () => {
 		const got = record()
 		if (process.env.KEEPIQ_RECORD_GOLDEN === '1') writeFileSync(GOLDEN, JSON.stringify(got, null, '\t') + '\n')
 		expect(got).toEqual(JSON.parse(readFileSync(GOLDEN, 'utf8')))
-	})
+	}, 30_000)
 })

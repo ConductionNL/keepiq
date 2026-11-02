@@ -104,6 +104,19 @@ describe('generate', () => {
 		expect(stored.password).toEqual(DEFAULT_PASSWORD)
 	})
 
+	it('draws from crypto.getRandomValues, never Math.random, without an injected source', async () => {
+		const secure = vi.spyOn(globalThis.crypto, 'getRandomValues')
+		const weak = vi.spyOn(Math, 'random')
+		try {
+			expect((await generate('password', options(), null, context)).ok).toBe(true)
+			expect(secure).toHaveBeenCalled()
+			expect(weak).not.toHaveBeenCalled()
+		} finally {
+			secure.mockRestore()
+			weak.mockRestore()
+		}
+	})
+
 	it('gives the shared vector for the extension defaults, draw for draw', async () => {
 		const vector = generatorCases().find((entry) => entry.name === 'the extension defaults' && entry.seed === 1)!
 		expect(await generate('password', options(), null, context, seededRandom(1), loaded)).toEqual({ ok: true, value: vector.expected })

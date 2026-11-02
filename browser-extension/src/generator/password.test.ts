@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PASSWORD, type GeneratorPolicy, type PasswordOptions } from './options'
 import { AMBIGUOUS, generatePassword, SPECIAL } from './password'
 
@@ -36,6 +36,19 @@ describe('generatePassword', () => {
 			if (settings.includeSpecialCharacters) expect(count(value, SPECIAL)).toBeGreaterThanOrEqual(Math.max(1, settings.minSpecial))
 			else expect(count(value, SPECIAL)).toBe(0)
 			if (settings.avoidAmbiguous) expect(count(value, AMBIGUOUS)).toBe(0)
+		}
+	})
+
+	it('draws from crypto.getRandomValues, never Math.random, without an injected source', () => {
+		const secure = vi.spyOn(globalThis.crypto, 'getRandomValues')
+		const weak = vi.spyOn(Math, 'random')
+		try {
+			expect(generatePassword({ ...DEFAULT_PASSWORD }, null).ok).toBe(true)
+			expect(secure).toHaveBeenCalled()
+			expect(weak).not.toHaveBeenCalled()
+		} finally {
+			secure.mockRestore()
+			weak.mockRestore()
 		}
 	})
 
