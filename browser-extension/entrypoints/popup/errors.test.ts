@@ -98,6 +98,14 @@ describe('writeErrorText', () => {
 		expect(writeErrorText({ code: 'partner_unreachable', partners: partners('bob@other.example', 'carol@third.example') })).toContain('bob@other.example and carol@third.example')
 	})
 
+	it.each([
+		['en', 'bob@other.example, carol@third.example, and dave@fourth.example'],
+		['nl', 'bob@other.example, carol@third.example en dave@fourth.example'],
+	] as const)('joins the partners in the words of %s', (locale, list) => {
+		setLocale(locale)
+		expect(writeErrorText({ code: 'partner_unreachable', partners: partners('bob@other.example', 'carol@third.example', 'dave@fourth.example') })).toContain(`(${list})`)
+	})
+
 	it('uses the passkey wording for a conflict in the passkey window only', () => {
 		expect(writeErrorText({ code: 'conflict' }, 'passkey')).toBe(t('passkey.errors.conflict'))
 		for (const context of CONTEXTS.filter((context) => context !== 'passkey')) expect(writeErrorText({ code: 'conflict' }, context)).not.toBe(t('passkey.errors.conflict'))
