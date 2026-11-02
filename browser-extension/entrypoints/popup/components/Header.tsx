@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { i18n } from '#i18n'
 import type { AccountSummary } from '@/src/messages'
 import { Avatar } from './Avatar'
@@ -18,14 +19,17 @@ interface Props {
 	onPopout?: () => void
 	/** Disables the ways out of the page, e.g. while a send is being created. */
 	busy?: boolean
+	/** Controls right of the title, e.g. the passkey window's New login. */
+	children?: ReactNode
 }
 
-export function Header({ title, active, onAvatarClick, onBack, onAdd, onPopout, busy = false }: Props) {
+export function Header({ title, active, onAvatarClick, onBack, onAdd, onPopout, busy = false, children }: Props) {
 	return (
 		<header className="header">
 			{onBack ? <IconButton icon="back" label={i18n.t('common.back')} onClick={onBack} disabled={busy} /> : <Logo size={22} />}
 			{/* A spacer while loading; an empty heading would still be announced. */}
 			{title ? <h1 className="header__title">{title}</h1> : <span className="header__title" />}
+			{children}
 			{onAdd && <button type="button" className="btn btn--primary btn--small" onClick={onAdd}><Icon name="plus" />{i18n.t('header.new')}</button>}
 			{onPopout && <IconButton icon="popout" label={i18n.t('header.popout')} onClick={onPopout} disabled={busy} />}
 			{active && onAvatarClick && (

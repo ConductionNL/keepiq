@@ -4,7 +4,7 @@ import { GUARD_MS } from '@/src/autofill/visibility'
 import type {
 	AccountSummary, ErrorCode, PasskeyFailure, PasskeyPopupRequest, PasskeyRow, PasskeySaveTarget, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
 } from '@/src/messages'
-import { Button } from '../components/Button'
+import { Button, IconButton } from '../components/Button'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Header } from '../components/Header'
@@ -39,8 +39,14 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const [replacing, setReplacing] = useState<PasskeySaveTarget | null>(null)
 	const [name, setName] = useState<string | null>(null)
 	const [folderId, setFolderId] = useState('')
+	/** The New login step of the save view; `false` once the user went back from it, so focus returns to its button. */
+	const [newLogin, setNewLogin] = useState<boolean | null>(null)
 	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
 	const held = view && !view.locked && view.pending && rowKey(view.pending) !== dismissed ? view.pending : null
+	const saving = view !== null && !view.locked && view.kind === 'create' && !view.alreadySaved && !confirming && !held
+	// With no login to save to, New login is the only step, so there is nothing to go back to.
+	const adding = saving && (newLogin === true || view.targets.length === 0)
+	const canLeaveNew = adding && view.targets.length > 0
 
 	const send = useCallback((command: Command) => passkeyRequest({ ...command, ceremonyId } as PasskeyPopupRequest), [ceremonyId])
 
@@ -164,7 +170,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved ? failure : null
 	// A failure banner from a reply moves focus to Retry, so it counts as a step too.
-	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId, showFailure]))
+	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId, showFailure, adding]))
 	const guarded = <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => {
 		if (ready()) action(...args)
 	}
@@ -172,7 +178,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const confirmStep = view !== null && !view.locked && (confirming !== null || held !== null)
 	const escapeRef = useRef(() => {})
 	useEffect(() => {
-		escapeRef.current = confirmStep ? back : () => void cancel()
+		escapeRef.current = confirmStep ? back : canLeaveNew ? () => setNewLogin(false) : () => void cancel()
 	})
 	useEffect(() => {
 		// The Replace question's Escape stops propagating, so it never reaches this listener.
@@ -214,8 +220,15 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		title = i18n.t('passkey.saveTitle')
 		body = (
 			<SaveTo
-				view={view} busy={busy} focus={!showFailure} name={name ?? (view.rpName || view.rpId)} folderId={folderId} onName={setName} onFolder={setFolderId}
-				onTarget={guarded((target: PasskeySaveTarget) => (target.replace ? setReplacing(target) : save({ itemId: target.itemId }, `save:${target.itemId}`)))}
+				view={view} busy={busy} adding={adding} name={name ?? (view.rpName || view.rpId)} folderId={folderId} onName={setName} onFolder={setFolderId}
+				// Opening New login focuses its Name even under a failure; coming back from it focuses its button instead.
+				focus={adding ? newLogin === true || !showFailure : !showFailure && newLogin !== false}
+				onTarget={guarded((target: PasskeySaveTarget) => {
+					// A later return to the list, as from "Confirm it's you", focuses its first row again.
+					setNewLogin(null)
+					if (target.replace) setReplacing(target)
+					else save({ itemId: target.itemId }, `save:${target.itemId}`)
+				})}
 				onNew={guarded(() => save({ name: name ?? (view.rpName || view.rpId), folderId: folderId || null }, 'new'))}
 			/>
 		)
@@ -227,7 +240,16 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	return (
 		<main className="popup popup--popout" onKeyDownCapture={ignoreHeld}>
-			<Header title={title} active={null} onBack={confirmStep ? back : undefined} />
+			<Header title={title} active={null} onBack={confirmStep ? back : canLeaveNew ? () => setNewLogin(false) : undefined}>
+				{saving && !adding && (
+					<IconButton
+						icon="plus" label={i18n.t('passkey.newLogin')} aria-disabled={busy !== null} autoFocus={newLogin === false}
+						onClick={guarded(() => {
+							if (busy === null) setNewLogin(true)
+						})}
+					/>
+				)}
+			</Header>
 			<div className="popup__body stack">
 				{showFailure && (
 					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus focusable busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
@@ -318,6 +340,9 @@ function SignIn({ view, busy, focus, onPick }: { view: PasskeyView; busy: string
 interface SaveProps {
 	view: PasskeyView
 	busy: string | null
+	/** The New login step rather than the matching logins. */
+	adding: boolean
+	/** The step's first control takes focus. */
 	focus: boolean
 	name: string
 	folderId: string
@@ -327,7 +352,7 @@ interface SaveProps {
 	onNew: () => void
 }
 
-function SaveTo({ view, busy, focus, name, folderId, onName, onFolder, onTarget, onNew }: SaveProps) {
+function SaveTo({ view, busy, adding, focus, name, folderId, onName, onFolder, onTarget, onNew }: SaveProps) {
 	const id = useId()
 	function submit(event: FormEvent) {
 		event.preventDefault()
@@ -339,7 +364,7 @@ function SaveTo({ view, busy, focus, name, folderId, onName, onFolder, onTarget,
 				<p className="passkey__rp">{view.rpId}</p>
 				{view.userName && <p className="passkey__user">{view.userName}</p>}
 			</div>
-			{view.targets.length > 0 && (
+			{!adding && (
 				<section className="section" aria-labelledby={`${id}-to`}>
 					<h2 className="section__title" id={`${id}-to`}>{i18n.t('passkey.saveTo')}</h2>
 					<ul className="card" aria-labelledby={`${id}-to`}>
@@ -355,15 +380,17 @@ function SaveTo({ view, busy, focus, name, folderId, onName, onFolder, onTarget,
 					</ul>
 				</section>
 			)}
-			<form className="section" aria-labelledby={`${id}-new`} onSubmit={submit}>
-				<h2 className="section__title" id={`${id}-new`}>{i18n.t('passkey.newLogin')}</h2>
-				<TextField label={i18n.t('passkey.name')} value={name} onChange={onName} autoFocus={focus && view.targets.length === 0} autoComplete="off" />
-				<Select
-					label={i18n.t('passkey.folder')} value={folderId} onChange={onFolder}
-					options={[{ value: '', label: i18n.t('passkey.noFolder') }, ...view.folders.map((folder) => ({ value: folder.id, label: folder.name }))]}
-				/>
-				<Button type="submit" focusable busy={busy === 'new'} disabled={busy !== null || !name.trim()}>{i18n.t('passkey.saveNew')}</Button>
-			</form>
+			{adding && (
+				<form className="section" aria-labelledby={`${id}-new`} onSubmit={submit}>
+					<h2 className="section__title" id={`${id}-new`}>{i18n.t('passkey.newLogin')}</h2>
+					<TextField label={i18n.t('passkey.name')} value={name} onChange={onName} autoFocus={focus} autoComplete="off" />
+					<Select
+						label={i18n.t('passkey.folder')} value={folderId} onChange={onFolder}
+						options={[{ value: '', label: i18n.t('passkey.noFolder') }, ...view.folders.map((folder) => ({ value: folder.id, label: folder.name }))]}
+					/>
+					<Button type="submit" focusable busy={busy === 'new'} disabled={busy !== null || !name.trim()}>{i18n.t('passkey.saveNew')}</Button>
+				</form>
+			)}
 		</>
 	)
 }

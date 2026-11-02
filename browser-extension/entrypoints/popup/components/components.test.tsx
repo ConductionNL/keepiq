@@ -135,6 +135,13 @@ describe('Header', () => {
 		await userEvent.setup().click(add)
 		expect(onAdd).toHaveBeenCalled()
 	})
+
+	it('puts its children right of the title', () => {
+		render(<Header title="Vault" active={null}><button type="button">Extra</button></Header>)
+		const header = screen.getByRole('banner')
+		expect(header.lastElementChild).toBe(screen.getByRole('button', { name: 'Extra' }))
+		expect(screen.getByRole('heading', { name: 'Vault' }).nextElementSibling).toBe(header.lastElementChild)
+	})
 })
 
 describe('TabBar', () => {
