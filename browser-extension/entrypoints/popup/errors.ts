@@ -42,8 +42,11 @@ export function noticeText(notice: NoticeCode): string {
 	}
 }
 
-/** What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one. */
-export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send'
+/**
+ * What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one;
+ * `passkey` is the passkey window's save or counter save.
+ */
+export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey'
 
 /** `undefined` is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
@@ -58,6 +61,8 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 			if (context === 'send') return i18n.t('writeErrors.sendInvalid')
 			return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 		case 'conflict':
+			// A fetch the cache does not hold, or a login that changed again after the save's one retry.
+			if (context === 'passkey') return i18n.t('passkey.errors.conflict')
 			if (context === 'edit') return i18n.t('writeErrors.stale')
 			if (context === 'open') return i18n.t('writeErrors.unmatched')
 			if (context === 'folderName') return i18n.t('writeErrors.duplicateFolder')
@@ -78,7 +83,9 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
 		case 'partner_upgrade_required': {
 			const cloudIds = (error.partners ?? []).map((partner) => partner.cloudId)
-			const text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
+			let text: string
+			if (context === 'passkey') text = cloudIds.length > 0 ? i18n.t('passkey.errors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('passkey.errors.partnerUpgradeRequiredUnnamed')
+			else text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
 			return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
 		}
 		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
