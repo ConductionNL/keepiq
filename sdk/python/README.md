@@ -23,7 +23,7 @@ are `name`, `url` and `typeId` (sent as they are) and `key`, `login` and
 `ClientConfig(url, credentials, timeout=30.0, clock=time.time)` holds the
 Nextcloud address, the request timeout in seconds and the clock.
 `Credentials(application_id, private_key_pem, certificate_pem=None)` holds
-who the client acts as; its `repr()` leaves out the private key.
+who the client acts as; its `repr()` leaves out the private key and the certificate.
 
 Pass `certificate_pem` in `Credentials` to refuse any envelope encrypted to
 another certificate before decryption. The application can read its own certificate at

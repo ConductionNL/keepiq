@@ -11,8 +11,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- The client is built from one configuration object. `Client` takes a `ClientConfig`, which holds the Nextcloud address, a `Credentials`, the request timeout and the clock. `Credentials` holds the application id, the private key and, optionally, the certificate. Both are frozen dataclasses, and the `repr()` of `Credentials` leaves out the private key.
-- The old form `Client(url, application_id, private_key_pem, certificate_pem=..., timeout=..., clock=...)` raises a `TypeError` that names the new one.
+- The client is built from one configuration object. `Client` takes a `ClientConfig`, which holds the Nextcloud address, a `Credentials`, the request timeout and the clock. `Credentials` holds the application id, the private key and, optionally, the certificate. Both are frozen dataclasses, and the `repr()` of `Credentials` leaves out the private key and the certificate.
+- The old form `Client(url, application_id, private_key_pem, certificate_pem=..., timeout=..., clock=...)`, with positional or keyword arguments, raises a `TypeError` that names the new one, as do `Client()` and extra arguments after a `ClientConfig`.
 
 Nothing else changed: the five methods, their errors, the requests sent and the checks on the certificate are the same as in 0.1.0.
 

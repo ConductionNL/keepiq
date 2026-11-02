@@ -26,6 +26,9 @@ class ClientConfigTest(unittest.TestCase):
             ((g.BASE, "billing", PEM), {"certificate_pem": g.FIXTURE["certificatePem"]}),
             ((ClientConfig(g.BASE, Credentials("billing", PEM)),), {"timeout": 5.0}),
             ((g.BASE,), {}),
+            ((), {"url": g.BASE, "application_id": "billing", "private_key_pem": PEM}),
+            ((), {}),
+            ((ClientConfig(g.BASE, Credentials("billing", PEM)), "extra"), {}),
         ]:
             with self.subTest(args=len(args), kwargs=sorted(kwargs)):
                 with self.assertRaises(TypeError) as ctx:
@@ -48,6 +51,7 @@ class ClientConfigTest(unittest.TestCase):
     def test_the_private_key_stays_out_of_repr(self) -> None:
         config = ClientConfig(g.BASE, Credentials("billing", PEM, g.FIXTURE["certificatePem"]))
         self.assertNotIn("PRIVATE KEY", repr(config))
+        self.assertNotIn("CERTIFICATE", repr(config))
         self.assertIn("billing", repr(config))
 
     def test_a_config_by_keyword_is_accepted(self) -> None:
