@@ -13,6 +13,8 @@ export interface AccountSettings {
 	vaultTimeout: VaultTimeout
 	vaultTimeoutAction: VaultTimeoutAction
 	clearClipboardMs: number
+	/** Copy a filled login's authenticator code (ext-totp-autofill). */
+	autoCopyTotp: boolean
 	autofillOnPageLoad: boolean
 	defaultAutofill: DefaultAutofill
 	uriMatch: UriMatch
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 	vaultTimeout: 15,
 	vaultTimeoutAction: 'lock',
 	clearClipboardMs: 30_000,
+	autoCopyTotp: true,
 	autofillOnPageLoad: false,
 	defaultAutofill: 'onPageLoad',
 	uriMatch: 'baseDomain',
@@ -63,6 +66,7 @@ const VALIDATORS: Validators<AccountSettings> = {
 	vaultTimeout: isTimeout,
 	vaultTimeoutAction: oneOf(['lock', 'logout'] as const),
 	clearClipboardMs: oneOf<number>(CLEAR_CLIPBOARD_OPTIONS),
+	autoCopyTotp: isBoolean,
 	autofillOnPageLoad: isBoolean,
 	defaultAutofill: oneOf(['onPageLoad', 'never'] as const),
 	uriMatch: oneOf(URI_MATCHES),
