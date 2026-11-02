@@ -204,11 +204,13 @@ export function fakeBackground(options: FakeBackground = {}) {
 			return { ok: true, value: { row, link: input.password === undefined ? `${sendBase}${token}#k=key${created}` : `${sendBase}${token}` } }
 		},
 		'send.delete': (message) => (sends = sends.filter((row) => row.id !== message.id), { ok: true, value: null }),
+	})
+	const popupAnswers = (): FakeAnswers => ({
 		'popup.lastTab.set': () => null,
 		'popup.popout': () => null,
 		'clipboard.copied': () => null,
 	})
-	const answers: FakeAnswers = { ...settingsAnswers(), ...vaultAnswers(), ...generatorAnswers(), ...sendAnswers() }
+	const answers: FakeAnswers = { ...settingsAnswers(), ...vaultAnswers(), ...generatorAnswers(), ...sendAnswers(), ...popupAnswers() }
 	const reply = vi.fn(async (message: FakeMessage): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
 		const canned = options.replies?.[message.kind]

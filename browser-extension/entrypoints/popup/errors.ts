@@ -48,9 +48,9 @@ export function noticeText(notice: NoticeCode): string {
  */
 export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey'
 
-/** `undefined` is the background not answering. */
+/** `undefined`, or an error without a code, is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
-	if (error === undefined) return i18n.t('errors.notResponding')
+	if (error?.code === undefined) return i18n.t('errors.notResponding')
 	switch (error.code) {
 		case 'write_locked': return i18n.t('writeErrors.writeLocked')
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
@@ -63,6 +63,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'unreadable': return i18n.t('writeErrors.unreadable')
 		case 'restricted': return i18n.t('writeErrors.restricted')
 		case 'view_only': return i18n.t('item.viewOnly')
+		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'key_mismatch': return i18n.t('writeErrors.keyMismatch')
 		case 'offline': return context === 'send' ? i18n.t('writeErrors.sendOffline') : i18n.t('writeErrors.offline')
 		default: return serverWriteErrorText(error, context)
@@ -84,20 +85,21 @@ function conflictText(context: WriteContext): string {
 	return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 }
 
-/** The codes from the server itself, which read the same in every context. */
+/** The codes about the user's own server, which read the same in every context. */
 function serverWriteErrorText(error: VaultWriteError, context: WriteContext): string {
 	switch (error.code) {
 		case 'server_error': return i18n.t('writeErrors.serverError')
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
-		case 'stale_source': return i18n.t('writeErrors.staleSource')
-		case 'incomplete': return i18n.t('writeErrors.incomplete')
+		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
 		default: return sharingWriteErrorText(error, context)
 	}
 }
 
-/** The codes about partner organisations and their certificates. */
+/** The codes about sharing: shared copies, partner organisations and their certificates. */
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {
 	switch (error.code) {
+		case 'stale_source': return i18n.t('writeErrors.staleSource')
+		case 'incomplete': return i18n.t('writeErrors.incomplete')
 		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
 		case 'unverified': return i18n.t('writeErrors.unverified')
 		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
@@ -110,7 +112,6 @@ function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): s
 		}
 		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
 		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
-		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
 		default: return localWriteErrorText(error)
 	}
 }
@@ -119,7 +120,6 @@ function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): s
 function localWriteErrorText(error: VaultWriteError): string {
 	switch (error.code) {
 		case 'partner_clock': return i18n.t('writeErrors.partnerClock')
-		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'argon2_unavailable': return i18n.t('writeErrors.argon2Unavailable')
 		case 'locked':
 		case 'unknown':

@@ -75,8 +75,8 @@ describe('writeErrorText', () => {
 		for (const code of CODES) expect(writeErrorText({ code })).toBe(writeErrorText({ code }, 'item'))
 	})
 
-	it('reads no answer from the background as not responding', () => {
-		expect(writeErrorText(undefined)).toBe(t('errors.notResponding'))
+	it.each([['no answer', undefined], ['a null error', null], ['an error without a code', {}]])('reads %s from the background as not responding', (_, error) => {
+		for (const context of CONTEXTS) expect(writeErrorText(error as VaultWriteError | undefined, context)).toBe(t('errors.notResponding'))
 	})
 
 	it('reads a code from a newer background as unknown', () => {

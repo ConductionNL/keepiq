@@ -144,7 +144,6 @@ function OfflineNotice({ offline, onSync }: { offline: boolean; onSync: () => vo
 	)
 }
 
-/** The last save's failure; an edit reads a conflict as a stale copy. */
 function SaveFailureNotice({ failure, editing, actionFor, webAppUrl }: { failure: SaveFailure | null; editing: boolean; actionFor: (failure: SaveFailure) => ReactNode; webAppUrl: string }) {
 	if (!failure) return null
 	return (
@@ -155,7 +154,7 @@ function SaveFailureNotice({ failure, editing, actionFor, webAppUrl }: { failure
 	)
 }
 
-/** A form-level error under a group of fields. */
+/** For a limit the fields reach only together, such as card members over the byte limit, which no single field can show. */
 function GroupError({ text }: { text: string | null }) {
 	return text ? <p className="field__error">{text}</p> : null
 }
