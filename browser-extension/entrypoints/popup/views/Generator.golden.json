@@ -303,5 +303,35 @@
 		"footer": [
 			"Use this username"
 		]
+	},
+	"pick=password tab=passphrase failing": {
+		"tabs": [
+			"Password",
+			"Passphrase*"
+		],
+		"value": "Wordlist unavailable",
+		"controls": [
+			"number:Number of words",
+			"text:Word separator",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this password (off)"
+		]
+	},
+	"pick=username tab=username failing": {
+		"tabs": [],
+		"value": "Wordlist unavailable",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username (off)"
+		]
 	}
 }

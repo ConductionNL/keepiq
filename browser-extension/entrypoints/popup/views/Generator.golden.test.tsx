@@ -27,7 +27,8 @@ const policy = (allowPassphrase: boolean): GeneratorPolicy => ({
 })
 
 /** The sub-tabs, the options shown, the history link and the pick footer of one generator. */
-async function view(tab: GeneratorKind, allowPassphrase: boolean, pick?: GeneratorPick['target']) {
+async function view(tab: GeneratorKind, allowPassphrase: boolean, pick?: GeneratorPick['target'], failing = false) {
+	if (failing) vi.mocked(generate).mockResolvedValue({ ok: false, failure: 'wordlist_unavailable' })
 	const options = defaultOptions()
 	options.tab = tab
 	fakeBackground({ generator: { options, policy: policy(allowPassphrase) } })
@@ -37,7 +38,8 @@ async function view(tab: GeneratorKind, allowPassphrase: boolean, pick?: Generat
 			<Generator onOpenHistory={pick ? undefined : () => {}} pick={pick ? { target: pick, onUse: vi.fn() } : undefined} />
 		</ShellContext.Provider>,
 	)
-	await waitFor(() => expect(document.querySelector('.generated__value')?.textContent).toMatch(/-1$/))
+	if (failing) await screen.findByText('Wordlist unavailable')
+	else await waitFor(() => expect(document.querySelector('.generated__value')?.textContent).toMatch(/-1$/))
 	const out = {
 		tabs: screen.queryAllByRole('tab').map((t) => `${t.textContent}${t.getAttribute('aria-selected') === 'true' ? '*' : ''}${t.hasAttribute('disabled') || t.getAttribute('aria-disabled') === 'true' ? ' (off)' : ''}`),
 		value: document.querySelector('.generated__value')?.textContent,
@@ -59,6 +61,8 @@ async function record() {
 			}
 		}
 	}
+	got['pick=password tab=passphrase failing'] = await view('passphrase', true, 'password', true)
+	got['pick=username tab=username failing'] = await view('username', true, 'username', true)
 	return got
 }
 
