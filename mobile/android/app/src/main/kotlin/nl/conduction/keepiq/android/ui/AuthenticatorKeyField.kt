@@ -7,8 +7,10 @@ import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -79,15 +81,18 @@ internal fun SeedInput(label: String, value: String, problem: DraftProblem?, mod
         }
     }
     var shown by remember { mutableStateOf(false) }
-    ShowableField(shown) { rebuilt ->
-        TextInput(
-            label,
-            value,
-            problem,
-            modifier = modifier.then(rebuilt),
+    ShowableField(value, onChange, shown) { fieldValue, onFieldChange, rebuilt ->
+        // TextInput's field, with the value ShowableField holds.
+        OutlinedTextField(
+            value = fieldValue,
+            onValueChange = onFieldChange,
+            label = { Text(label) },
+            singleLine = true,
+            isError = problem != null,
+            supportingText = problem?.let { { Text(draftProblemText(it)) } },
             keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
             visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-            onChange = onChange,
+            modifier = modifier.then(rebuilt).fillMaxWidth(),
         )
     }
     TextButton(onClick = { shown = !shown }) {

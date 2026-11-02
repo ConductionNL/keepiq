@@ -47,7 +47,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
@@ -308,19 +310,32 @@ fun TextInput(
 
 /**
  * A masked field that a Show button reveals, built by [field] with the
- * modifier it is given. Compose 1.8.3 keeps a text field's Password
- * semantics once its PasswordVisualTransformation is dropped
- * (CoreTextFieldSemanticsModifierNode never stores the new isPassword), so a
- * screen reader would still take a shown value for a password. The field is
- * therefore built anew when [shown] changes, and takes focus back when it
- * had it.
+ * value, change handler and modifier it is given. Compose 1.8.3 keeps a text
+ * field's Password semantics once its PasswordVisualTransformation is
+ * dropped (CoreTextFieldSemanticsModifierNode never stores the new
+ * isPassword), so a screen reader would still take a shown value for a
+ * password. The field is therefore built anew when [shown] changes, and
+ * takes focus back when it had it. Text and selection are held here, above
+ * the rebuild, so the cursor stays where the user left it; when [value]
+ * changes from outside (Generate, a draft reset) the cursor goes to its end.
  */
 @Composable
-internal fun ShowableField(shown: Boolean, field: @Composable (Modifier) -> Unit) {
+internal fun ShowableField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    shown: Boolean,
+    field: @Composable (TextFieldValue, (TextFieldValue) -> Unit, Modifier) -> Unit,
+) {
     val requester = remember { FocusRequester() }
     var focused by remember { mutableStateOf(false) }
     val hadFocus = focused
-    key(shown) { field(Modifier.focusRequester(requester).onFocusChanged { focused = it.isFocused }) }
+    var held by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    val current = if (held.text == value) held else TextFieldValue(value, TextRange(value.length))
+    val change: (TextFieldValue) -> Unit = { next ->
+        held = next
+        if (next.text != value) onValueChange(next.text)
+    }
+    key(shown) { field(current, change, Modifier.focusRequester(requester).onFocusChanged { focused = it.isFocused }) }
     LaunchedEffect(shown) { if (hadFocus) requester.requestFocus() }
 }
 
@@ -332,10 +347,10 @@ internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.f
 private fun SecretInput(label: String, value: String, problem: DraftProblem?, onGenerate: (() -> Unit)?, onChange: (String) -> Unit) {
     var shown by remember { mutableStateOf(false) }
     Column {
-        ShowableField(shown) { rebuilt ->
+        ShowableField(value, onChange, shown) { fieldValue, onFieldChange, rebuilt ->
             OutlinedTextField(
-                value = value,
-                onValueChange = onChange,
+                value = fieldValue,
+                onValueChange = onFieldChange,
                 label = { Text(label) },
                 singleLine = true,
                 isError = problem != null,

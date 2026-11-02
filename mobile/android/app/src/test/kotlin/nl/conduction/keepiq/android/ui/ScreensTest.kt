@@ -44,7 +44,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
@@ -775,6 +777,49 @@ class ScreensTest {
         compose.onNodeWithText("Password").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
         compose.onNodeWithText("Hide Password").performClick()
         compose.onNodeWithText("Password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+    }
+
+    private fun editableText(label: String) = compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+
+    private fun putCursor(label: String, at: Int) =
+        compose.onNodeWithText(label).performSemanticsAction(SemanticsActions.SetSelection) { it(at, at, true) }
+
+    private fun selection(label: String) = compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsProperties.TextSelectionRange]
+
+    @Test
+    fun typingGoesOnWhereTheCursorIsAcrossShowAndHideInASeedField() {
+        var value by mutableStateOf("")
+        compose.setContent { MaterialTheme { Column { SeedInput("Probe seed", value, null) { value = it } } } }
+        compose.onNodeWithText("Probe seed").performTextInput("ABC")
+        compose.onNodeWithText("Show Probe seed").performClick()
+        compose.onNodeWithText("Probe seed").performTextInput("D")
+        compose.onNodeWithText("Hide Probe seed").performClick()
+        compose.onNodeWithText("Probe seed").performTextInput("E")
+        assertEquals("ABCDE", value)
+        // A cursor the user put mid-text stays there through Show.
+        putCursor("Probe seed", 1)
+        compose.onNodeWithText("Show Probe seed").performClick()
+        assertEquals(TextRange(1), selection("Probe seed"))
+        compose.onNodeWithText("Probe seed").performTextInput("F")
+        assertEquals("AFBCDE", value)
+    }
+
+    @Test
+    fun typingGoesOnWhereTheCursorIsAcrossShowAndHideInAPasswordField() {
+        vault.put("p2", FakeVault.row("p2", "Mail", "1", key = "geheim", login = "alice"))
+        showEdit("p2")
+        compose.onNodeWithText("Password").performTextInput("X")
+        compose.onNodeWithText("Show Password").performScrollTo().performClick()
+        compose.onNodeWithText("Password").performTextInput("Y")
+        compose.onNodeWithText("Hide Password").performClick()
+        compose.onNodeWithText("Password").performTextInput("Z")
+        // A cursor the user put mid-text stays there through Show; shown, the field holds the plain text.
+        putCursor("Password", 2)
+        compose.onNodeWithText("Show Password").performClick()
+        assertEquals("geheimXYZ", editableText("Password"))
+        assertEquals(TextRange(2), selection("Password"))
+        compose.onNodeWithText("Password").performTextInput("Q")
+        assertEquals("geQheimXYZ", editableText("Password"))
     }
 
     @Test
