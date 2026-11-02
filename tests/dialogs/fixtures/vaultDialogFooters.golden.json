@@ -3,17 +3,17 @@
 		"idle": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create vault",
 				"variant": "primary",
 				"disabled": false,
 				"icon": "Safe",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
@@ -66,25 +66,21 @@
 		"busy": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
-				"disabled": false,
+				"variant": "default",
+				"disabled": true,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create vault",
 				"variant": "primary",
 				"disabled": true,
 				"icon": "loading",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"during": {
-			"emitted": {
-				"close": [
-					[]
-				]
-			},
+			"emitted": {},
 			"createFolder": [
 				[
 					"Work",
@@ -100,16 +96,15 @@
 		},
 		"after": {
 			"emitted": {
-				"close": [
-					[],
-					[]
-				],
 				"saved": [
 					[
 						{
 							"id": "done"
 						}
 					]
+				],
+				"close": [
+					[]
 				]
 			},
 			"createFolder": [
@@ -130,17 +125,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create vault",
 				"variant": "primary",
 				"disabled": false,
 				"icon": "Safe",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"note": "Refused",
@@ -164,17 +159,17 @@
 		"idle": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create folder",
 				"variant": "primary",
 				"disabled": false,
 				"icon": "FolderPlus",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
@@ -224,25 +219,21 @@
 		"busy": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
-				"disabled": false,
+				"variant": "default",
+				"disabled": true,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create folder",
 				"variant": "primary",
 				"disabled": true,
 				"icon": "loading",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"during": {
-			"emitted": {
-				"close": [
-					[]
-				]
-			},
+			"emitted": {},
 			"createFolder": [
 				[
 					"Sub",
@@ -255,16 +246,15 @@
 		},
 		"after": {
 			"emitted": {
-				"close": [
-					[],
-					[]
-				],
 				"saved": [
 					[
 						{
 							"id": "done"
 						}
 					]
+				],
+				"close": [
+					[]
 				]
 			},
 			"createFolder": [
@@ -282,17 +272,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create folder",
 				"variant": "primary",
 				"disabled": false,
 				"icon": "FolderPlus",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"note": "Refused",
@@ -313,17 +303,17 @@
 		"idle": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Save",
 				"variant": "primary",
 				"disabled": false,
 				"icon": "ContentSaveOutline",
-				"testid": "folder-edit-save"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
@@ -374,25 +364,21 @@
 		"busy": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
-				"disabled": false,
+				"variant": "default",
+				"disabled": true,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Save",
 				"variant": "primary",
 				"disabled": true,
 				"icon": "loading",
-				"testid": "folder-edit-save"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"during": {
-			"emitted": {
-				"close": [
-					[]
-				]
-			},
+			"emitted": {},
 			"createFolder": [],
 			"updateFolder": [
 				[
@@ -406,16 +392,15 @@
 		},
 		"after": {
 			"emitted": {
-				"close": [
-					[],
-					[]
-				],
 				"saved": [
 					[
 						{
 							"id": "done"
 						}
 					]
+				],
+				"close": [
+					[]
 				]
 			},
 			"createFolder": [],
@@ -434,17 +419,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Save",
 				"variant": "primary",
 				"disabled": false,
 				"icon": "ContentSaveOutline",
-				"testid": "folder-edit-save"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"note": "Refused",
@@ -466,17 +451,17 @@
 		"idle": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete folder",
 				"variant": "error",
 				"disabled": false,
 				"icon": "TrashCanOutline",
-				"testid": "nav-folder-delete-confirm"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
@@ -521,25 +506,21 @@
 		"busy": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
-				"disabled": false,
+				"variant": "default",
+				"disabled": true,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete folder",
 				"variant": "error",
 				"disabled": true,
 				"icon": "loading",
-				"testid": "nav-folder-delete-confirm"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"during": {
-			"emitted": {
-				"close": [
-					[]
-				]
-			},
+			"emitted": {},
 			"createFolder": [],
 			"updateFolder": [],
 			"deleteFolder": [
@@ -550,14 +531,13 @@
 		},
 		"after": {
 			"emitted": {
-				"close": [
-					[],
-					[]
-				],
 				"deleted": [
 					[
 						"f1"
 					]
+				],
+				"close": [
+					[]
 				]
 			},
 			"createFolder": [],
@@ -573,17 +553,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete folder",
 				"variant": "error",
 				"disabled": false,
 				"icon": "TrashCanOutline",
-				"testid": "nav-folder-delete-confirm"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"note": "Refused",
@@ -602,17 +582,17 @@
 		"idle": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete vault",
 				"variant": "error",
 				"disabled": false,
 				"icon": "TrashCanOutline",
-				"testid": "nav-folder-delete-confirm"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
@@ -657,25 +637,21 @@
 		"busy": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
-				"disabled": false,
+				"variant": "default",
+				"disabled": true,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete vault",
 				"variant": "error",
 				"disabled": true,
 				"icon": "loading",
-				"testid": "nav-folder-delete-confirm"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"during": {
-			"emitted": {
-				"close": [
-					[]
-				]
-			},
+			"emitted": {},
 			"createFolder": [],
 			"updateFolder": [],
 			"deleteFolder": [
@@ -686,14 +662,13 @@
 		},
 		"after": {
 			"emitted": {
-				"close": [
-					[],
-					[]
-				],
 				"deleted": [
 					[
 						"v1"
 					]
+				],
+				"close": [
+					[]
 				]
 			},
 			"createFolder": [],
@@ -709,17 +684,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete vault",
 				"variant": "error",
 				"disabled": false,
 				"icon": "TrashCanOutline",
-				"testid": "nav-folder-delete-confirm"
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"note": "Refused",
@@ -738,17 +713,17 @@
 		"idle": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete folder",
 				"variant": "error",
 				"disabled": false,
 				"icon": "Delete",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
@@ -803,27 +778,21 @@
 		"busy": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
-				"disabled": false,
+				"variant": "default",
+				"disabled": true,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete folder",
 				"variant": "error",
 				"disabled": true,
 				"icon": "loading",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"during": {
-			"emitted": {
-				"update:open": [
-					[
-						false
-					]
-				]
-			},
+			"emitted": {},
 			"createFolder": [],
 			"updateFolder": [],
 			"deleteFolder": [
@@ -840,17 +809,14 @@
 		},
 		"after": {
 			"emitted": {
-				"update:open": [
-					[
-						false
-					],
-					[
-						false
-					]
-				],
 				"deleted": [
 					[
 						"f1"
+					]
+				],
+				"update:open": [
+					[
+						false
 					]
 				]
 			},
@@ -873,17 +839,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Delete folder",
 				"variant": "error",
 				"disabled": false,
 				"icon": "Delete",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"note": "Refused",
@@ -908,17 +874,17 @@
 		"footer": [
 			{
 				"text": "Cancel",
-				"variant": "tertiary",
+				"variant": "default",
 				"disabled": false,
 				"icon": null,
-				"testid": null
+				"testid": "cn-dialog-actions-cancel"
 			},
 			{
 				"text": "Create vault",
 				"variant": "primary",
 				"disabled": true,
 				"icon": "Safe",
-				"testid": null
+				"testid": "cn-dialog-actions-submit"
 			}
 		],
 		"effects": {
