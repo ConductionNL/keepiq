@@ -19,7 +19,10 @@ import SecretTypeDeleteDialog from '../../src/dialogs/SecretTypeDeleteDialog.vue
 import SecretTypeEditorDialog from '../../src/dialogs/SecretTypeEditorDialog.vue'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
-const FIXTURE = join(process.cwd(), 'tests/dialogs/fixtures/secretTypeDialogsFooter.golden.json')
+const FIXTURE = join(
+	process.cwd(),
+	'tests/dialogs/fixtures/secretTypeDialogsFooter.golden.json',
+)
 const RECORD = process.env.GOLDEN_RECORD === '1'
 const recorded = {}
 const expected = RECORD ? {} : JSON.parse(readFileSync(FIXTURE, 'utf8'))
@@ -39,7 +42,10 @@ const stubs = {
 	},
 	NcSelect: { props: ['options', 'modelValue'], template: '<div />' },
 	NcTextField: { props: ['modelValue', 'label'], template: '<input />' },
-	NcCheckboxRadioSwitch: { props: ['modelValue'], template: '<span><slot /></span>' },
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue'],
+		template: '<span><slot /></span>',
+	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
 	NcLoadingIcon: icon('loading'),
 	CnIcon: { props: ['name'], template: '<i :data-icon="name" />' },
@@ -58,7 +64,9 @@ function footer(wrapper) {
 		text: b.text(),
 		variant: b.attributes('data-variant'),
 		disabled: b.attributes('disabled') !== undefined,
-		icon: b.find('[data-icon]').exists() ? b.find('[data-icon]').attributes('data-icon') : null,
+		icon: b.find('[data-icon]').exists()
+			? b.find('[data-icon]').attributes('data-icon')
+			: null,
 		testid: b.attributes('data-testid') ?? null,
 	}))
 }
@@ -75,12 +83,14 @@ function effects(wrapper, store) {
 			emitted[name] = calls
 		}
 	}
-	return JSON.parse(JSON.stringify({
-		emitted,
-		createType: store.createType.mock.calls,
-		updateType: store.updateType.mock.calls,
-		deleteType: store.deleteType.mock.calls,
-	}))
+	return JSON.parse(
+		JSON.stringify({
+			emitted,
+			createType: store.createType.mock.calls,
+			updateType: store.updateType.mock.calls,
+			deleteType: store.deleteType.mock.calls,
+		}),
+	)
 }
 
 /**
@@ -104,9 +114,15 @@ describe('item type dialog footers (golden)', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		store = useSecretTypeStore()
-		store.types = [{ id: 'type-login', name: 'login', label: 'Login', scope: 'system' }]
+		store.types = [
+			{ id: 'type-login', name: 'login', label: 'Login', scope: 'system' },
+		]
 		store.createType = vi.fn(async (data) => ({ id: 'new', ...data }))
-		store.updateType = vi.fn(async (id, label, fields) => ({ id, label, fields }))
+		store.updateType = vi.fn(async (id, label, fields) => ({
+			id,
+			label,
+			fields,
+		}))
 		store.deleteType = vi.fn(async () => undefined)
 		release = null
 	})
@@ -117,10 +133,11 @@ describe('item type dialog footers (golden)', () => {
 		}
 	})
 
-	const deleteDialog = () => mount(SecretTypeDeleteDialog, {
-		props: { open: true, type: { id: 'type-x', label: 'Server' } },
-		global: { stubs },
-	})
+	const deleteDialog = () =>
+		mount(SecretTypeDeleteDialog, {
+			props: { open: true, type: { id: 'type-x', label: 'Server' } },
+			global: { stubs },
+		})
 
 	it('delete: idle footer', () => {
 		check('delete idle', footer(deleteDialog()))
@@ -140,7 +157,12 @@ describe('item type dialog footers (golden)', () => {
 	})
 
 	it('delete: footer while the delete runs, and a cancel click then', async () => {
-		store.deleteType = vi.fn(() => new Promise((resolve) => { release = resolve }))
+		store.deleteType = vi.fn(
+			() =>
+				new Promise((resolve) => {
+					release = resolve
+				}),
+		)
 		const w = deleteDialog()
 		await w.findAll('footer button')[1].trigger('click')
 		await w.vm.$nextTick()
@@ -159,13 +181,18 @@ describe('item type dialog footers (golden)', () => {
 		const w = deleteDialog()
 		await w.findAll('footer button')[1].trigger('click')
 		await flush()
-		check('delete failure', { footer: footer(w), note: w.find('.note').text(), effects: effects(w, store) })
+		check('delete failure', {
+			footer: footer(w),
+			note: w.find('.note').text(),
+			effects: effects(w, store),
+		})
 	})
 
-	const editor = (props = {}) => mount(SecretTypeEditorDialog, {
-		props: { open: true, ...props },
-		global: { stubs },
-	})
+	const editor = (props = {}) =>
+		mount(SecretTypeEditorDialog, {
+			props: { open: true, ...props },
+			global: { stubs },
+		})
 
 	it('editor: empty name blocks the save', async () => {
 		const w = editor()
@@ -192,7 +219,12 @@ describe('item type dialog footers (golden)', () => {
 	})
 
 	it('editor: footer while the save runs, and a cancel click then', async () => {
-		store.createType = vi.fn(() => new Promise((resolve) => { release = resolve }))
+		store.createType = vi.fn(
+			() =>
+				new Promise((resolve) => {
+					release = resolve
+				}),
+		)
 		const w = editor()
 		w.vm.label = 'Server access'
 		await w.vm.$nextTick()
