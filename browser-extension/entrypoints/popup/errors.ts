@@ -79,19 +79,33 @@ function conflictText(context: WriteContext): string {
 	return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 }
 
-/** The codes from the server, its partner organisations and this browser's limits, which read the same in every context. */
+/** The codes from the server itself, which read the same in every context. */
 function serverWriteErrorText(error: VaultWriteError): string {
 	switch (error.code) {
 		case 'server_error': return i18n.t('writeErrors.serverError')
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
 		case 'stale_source': return i18n.t('writeErrors.staleSource')
 		case 'incomplete': return i18n.t('writeErrors.incomplete')
+		default: return sharingWriteErrorText(error)
+	}
+}
+
+/** The codes about partner organisations and their certificates. */
+function sharingWriteErrorText(error: VaultWriteError): string {
+	switch (error.code) {
 		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
 		case 'unverified': return i18n.t('writeErrors.unverified')
 		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
 		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
 		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
 		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
+		default: return localWriteErrorText(error)
+	}
+}
+
+/** The codes about this browser and its clock, and the fallback for codes this popup does not know. */
+function localWriteErrorText(error: VaultWriteError): string {
+	switch (error.code) {
 		case 'partner_clock': return i18n.t('writeErrors.partnerClock')
 		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'argon2_unavailable': return i18n.t('writeErrors.argon2Unavailable')
