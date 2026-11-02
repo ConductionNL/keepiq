@@ -8,8 +8,9 @@ import { provenKey } from './certificate'
 import { fieldTexts, shownInFull } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
-import { isViewOnly, readWriteContext, shareSave, VALUE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
+import { isViewOnly, readWriteContext, sealValue, shareSave, VALUE_FIELDS, WHOLE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
 import { readSnapshot } from './store'
+import { isAuthenticatorKey, normaliseAuthenticatorKey } from '@/src/totp/authenticator-key'
 import { recordOutcome, syncAfterWrite } from './sync'
 import type { StoredSecretRow } from './types'
 import { WriteFailure, writeError } from './write-error'
@@ -106,7 +107,7 @@ function isRestricted(row: Pick<SecretRow, 'useOnly' | 'readOnly' | 'accessExpir
 const cachedRow = async (accountId: string, id: string) => (await readSnapshot(accountId))?.secrets.find((secret) => secret.id === id)
 
 const holds = (cached: StoredSecretRow | undefined, row: OpenSecretRow): cached is OpenSecretRow =>
-	!!cached && !cached.blocked && VALUE_FIELDS.every((field) => (row[field] || null) === (cached[field] || null))
+	!!cached && !cached.blocked && WHOLE_FIELDS.every((field) => (row[field] || null) === (cached[field] || null))
 
 /**
  * Every item is encrypted to the same key, so a fetched ciphertext the cache does not hold for this item may be another's, and the form would save it back and share it as typed (ADR-002).
@@ -177,9 +178,12 @@ function unrecorded(error: unknown): undefined {
 	return undefined
 }
 
-/** Only what the form shows in full under the type it opens with and the cached one; an empty field hides nothing. */
+/**
+ * Only what the form shows in full under the type it opens with and the cached one; an empty field hides nothing.
+ * A key and passkeys are never shown, by design, so they count as opened: `holds()` checked them against the cache.
+ */
 async function recordOpened(accountId: string, id: string, recordId: string, row: OpenSecretRow, typeNames: Array<string | undefined>, plain: Values, sourceUpdatedAt: string | null): Promise<void> {
-	const shown = VALUE_FIELDS.filter((field) => !row[field] || (plain[field] !== undefined && typeNames.every((name) => shownInFull(field, plain[field]!, name))))
+	const shown = WHOLE_FIELDS.filter((field) => field === 'totp' || field === 'passkeys' || !row[field] || (plain[field] !== undefined && typeNames.every((name) => shownInFull(field, plain[field]!, name))))
 	// Refused, the form opens without it, and a save of it that needs the record for partners fails with `unverified`.
 	await swapRecord(accountId, id, recordId, { shown: Object.fromEntries(shown.map((field) => [field, row[field] || null])), updatedAt: row.updatedAt, sourceUpdatedAt }).catch(unrecorded)
 }
@@ -236,6 +240,9 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 				login: row.login ? await rsaDecrypt(row.login, privateKey) : null,
 				additionalFields: fieldTexts(additional),
 				updatedAt: row.updatedAt,
+				// Never decrypted for the form: a saved key is shown as saved, not as text (Keepiq `login-one-time-codes`).
+				totpSaved: purpose === 'edit' && !!row.totp,
+				...(purpose === 'clone' && !!row.totp && { totpLeftOut: true as const }),
 			}
 		} catch (error) {
 			console.error('[keepiq] could not open', id, 'for editing', error)
@@ -252,12 +259,21 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 function isDraft(draft: unknown): draft is ItemDraft {
 	const d = draft as Partial<ItemDraft> | null
 	return typeof d?.name === 'string' && typeof d.typeId === 'string' && typeof d.key === 'string'
-		&& typeof d.additionalFields === 'object' && d.additionalFields !== null
+		&& typeof d.additionalFields === 'object' && d.additionalFields !== null && (d.totp === undefined || typeof d.totp === 'string')
+}
+
+/** The key as stored, checked again here since this is what writes it; only a login takes a new one (Keepiq `login-one-time-codes`). */
+async function authenticatorKey(accountId: string, raw: unknown, typeId: string | null): Promise<string> {
+	if (typeof raw !== 'string') throw new WriteFailure({ code: 'invalid' })
+	const key = normaliseAuthenticatorKey(raw)
+	if (key && (!isAuthenticatorKey(key) || await typeNameOf(accountId, typeId) !== 'login')) throw new WriteFailure({ code: 'invalid' })
+	return key
 }
 
 export function createItem(draft: ItemDraft, accountId?: string): Promise<WriteResult<{ id: string }>> {
 	return run(async (ctx) => {
 		if (!isDraft(draft)) throw new WriteFailure({ code: 'invalid' })
+		const totp = draft.totp === undefined ? '' : await authenticatorKey(ctx.account.id, draft.totp, draft.typeId)
 		const key = await publicKey(ctx)
 		const body: Record<string, unknown> = {
 			name: draft.name,
@@ -268,6 +284,7 @@ export function createItem(draft: ItemDraft, accountId?: string): Promise<WriteR
 			additionalFields: await rsaEncrypt(JSON.stringify(draft.additionalFields), key),
 		}
 		if (draft.login) body.login = await rsaEncrypt(draft.login, key)
+		if (totp) body.totp = await rsaEncrypt(totp, key)
 		const row = await ctx.client.keepiq<SecretRow>('POST', '/api/v1/secrets', body)
 		return { id: row.id }
 	}, 'sync', accountId)
@@ -302,6 +319,8 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		if (typeof patch.key === 'string' && !passkey) plain.key = patch.key
 		if (patch.login !== undefined) plain.login = patch.login || null
 		if (patch.additionalFields) plain.additionalFields = JSON.stringify(patch.additionalFields)
+		// `''` removes the saved key, on any type.
+		if (patch.totp !== undefined) plain.totp = await authenticatorKey(account.id, patch.totp, cached.typeId)
 		const valueChange = VALUE_FIELDS.some((field) => plain[field] !== undefined)
 		// share-save refuses a save without the version it was made from.
 		if (valueChange && !baseUpdatedAt) throw new WriteFailure({ code: 'invalid' })
@@ -314,7 +333,7 @@ export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string,
 		let key: Promise<CryptoKey> | undefined
 		for (const field of VALUE_FIELDS) {
 			const value = plain[field]
-			if (value !== undefined) body[field] = value === null ? null : await rsaEncrypt(value, await (key ??= publicKey(ctx)))
+			if (value !== undefined) body[field] = await sealValue(field, value, await (key ??= publicKey(ctx)))
 		}
 		let note: ShareSaveNote | undefined
 		if (valueChange) {

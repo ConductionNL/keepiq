@@ -17,7 +17,7 @@ The project MUST ship client libraries for the Keepiq machine API in Go (`sdk/go
 #### Scenario: Python service reads a secret by name
 
 - **GIVEN** an approved application `billing` with its private key in `/run/secrets/keepiq.pem` and a secret `stripe-key` in its vault
-- **WHEN** a Python service calls `Client(url, "billing", key).get_by_name("stripe-key")`
+- **WHEN** a Python service builds a `Client` for application `billing` with that key and calls `get_by_name("stripe-key")`
 - **THEN** the call MUST return the decrypted value and the secret metadata
 - **AND** no request from the library MUST carry the plaintext value or the private key
 

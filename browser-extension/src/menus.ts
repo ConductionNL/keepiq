@@ -7,6 +7,7 @@ import { i18n } from '#i18n'
 import { readSettings } from '@/src/accounts/settings'
 import { accountStatus, getAccount, getActiveAccountId } from '@/src/accounts/store'
 import { activeTab, activeUnlockedId, fill, matchingLogins } from '@/src/autofill/fill'
+import { currentCode, matchingCodes, seedOf } from '@/src/autofill/login-codes'
 import { onBroadcast } from '@/src/background/broadcast'
 import { openPopupOrPopout } from '@/src/browser-action'
 import { writeFromBackground } from '@/src/clipboard'
@@ -50,7 +51,9 @@ export async function menuEntries(): Promise<MenuEntry[]> {
 	if (!account || status === 'logged_out' || !(await readSettings(account.id)).contextMenu) return []
 	const root: MenuEntry = { id: ROOT, title: i18n.t('contextMenu.root') }
 	if (status === 'locked') return [root, { id: 'unlock', parentId: ROOT, title: i18n.t('contextMenu.unlock') }]
-	const { rows } = await matchingLogins(account.id, (await activeTab())?.url)
+	const pageUrl = (await activeTab())?.url
+	const { rows } = await matchingLogins(account.id, pageUrl)
+	const { rows: codes } = await matchingCodes(account.id, pageUrl)
 	const autofill: MenuEntry[] = rows.length
 		? [
 			{ id: 'autofill', parentId: ROOT, title: i18n.t('contextMenu.autofill') },
@@ -65,6 +68,7 @@ export async function menuEntries(): Promise<MenuEntry[]> {
 		...perItem('copy-user', i18n.t('contextMenu.copyUsername'), rows.filter((row) => row.login !== null)),
 		// A use-only copy's password is never shown or copied (ADR-003).
 		...perItem('copy-pass', i18n.t('contextMenu.copyPassword'), rows.filter((row) => row.useOnly !== true)),
+		...perItem('copy-code', i18n.t('contextMenu.copyCode'), codes),
 		{ id: 'generate', parentId: ROOT, title: i18n.t('contextMenu.generatePassword') },
 	]
 }
@@ -98,6 +102,15 @@ async function copy(accountId: string, itemId: string, field: 'login' | 'key', p
 	await writeFromBackground(await rsaDecrypt(ciphertext, key), (await readSettings(accountId)).clearClipboardMs)
 }
 
+/** The current code, computed at the click; the lock clears it from the clipboard at once. */
+async function copyCode(accountId: string, itemId: string, pageUrl: string | undefined): Promise<void> {
+	const row = (await matchingCodes(accountId, pageUrl)).rows.find((match) => match.id === itemId)
+	const key = await getKey(accountId)
+	const seed = row && key ? await seedOf(row, key) : null
+	const code = seed === null ? null : await currentCode(seed)
+	if (code) await writeFromBackground(code.digits, (await readSettings(accountId)).clearClipboardMs, { codeOf: accountId })
+}
+
 async function generateAndCopy(accountId: string): Promise<void> {
 	const epoch = sessionEpoch(accountId)
 	const result = await generate('password', await readOptions(accountId), await readPolicy(accountId), { website: null, accountEmail: null })
@@ -120,11 +133,12 @@ async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<v
 	const action = menuId.slice(0, split)
 	const itemId = menuId.slice(split + 1)
 	if (action === 'autofill') {
-		await fill({ itemId, tabId: tab.id, ask: 'page' })
+		await fill({ itemId, tabId: tab.id, ask: 'page', code: true })
 		await rebuildMenus()
 	}
 	if (action === 'copy-user') await copy(accountId, itemId, 'login', tab.url)
 	if (action === 'copy-pass') await copy(accountId, itemId, 'key', tab.url)
+	if (action === 'copy-code') await copyCode(accountId, itemId, tab.url)
 }
 
 export function onMenuClicked(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): void {

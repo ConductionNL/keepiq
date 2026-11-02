@@ -25,6 +25,7 @@ import nl.conduction.keepiq.shared.crypto.WebAuthn
 import nl.conduction.keepiq.shared.sync.SyncTrigger
 import nl.conduction.keepiq.shared.vault.ItemCodec
 import nl.conduction.keepiq.shared.vault.ItemParts
+import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.RsaVaultKeys
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -44,9 +45,10 @@ import java.security.MessageDigest
  * Links), as a real site lists its app.
  *
  * In the order a user meets it: a site that accepts only RS256 gets nothing
- * from Keepiq; a passkey is created, checked byte by byte and found in the
- * vault on the server; signing in with it verifies with its public key; a
- * stored counter of 4 signs as 5 and the item stores 5; a locked vault
+ * from Keepiq; a passkey is created, checked byte by byte and found on the
+ * account's login in the vault on the server; signing in with it verifies
+ * with its public key; a stored counter of 4 signs as 5 and the login
+ * stores 5; a locked vault
  * shows "Unlock Keepiq", then the passkey; and an rpId whose site does not
  * list the app gets nothing.
  *
@@ -91,6 +93,11 @@ class PasskeyProviderTest {
         val keys = RsaVaultKeys.fromPem(vault.privateKeyPem, vault.certificate!!, vault.suiteId, vault.unlockKeyEpoch)
         val api = state.client.api(account)
         val session = VaultSession(account, api, keys, null, null)
+        // The account already has a login for the site: a new passkey goes onto it (mobile-login-totp-passkeys D12).
+        val loginId = runBlocking {
+            val typeId = api.listTypes().first { (it["name"] as? JsonPrimitive)?.contentOrNull == "login" }.text("id")
+            api.createSecret(ItemCodec.createBody(ItemParts("Passkey demo", rpId, null, userName, "demo-password", null), typeId, keys))!!.text("id")
+        }
         runBlocking { session.repository.refresh(SyncTrigger.MANUAL) }
 
         // The site lists the test app, by package and certificate.
@@ -106,7 +113,7 @@ class PasskeyProviderTest {
         client("create", creation(challenge(1), listOf(-257)))
         val refused = waitForAnswer("passkey-00-rs256", listOf("Create", "Continue", "Save"))
         assertTrue("RS256 only: $refused", refused.startsWith("error:"))
-        assertTrue("nothing was saved", passkeyRows(api).isEmpty())
+        assertTrue("nothing was saved", passkeyRows(api, keys).isEmpty())
 
         // Create.
         val createChallenge = challenge(2)
@@ -130,8 +137,9 @@ class PasskeyProviderTest {
         val spki = spkiOf(authData.copyOfRange(71, authData.size))
         E2e.shot("passkey-02-created")
 
-        // The vault on the server holds it, as a passkey item for the rpId.
+        // The vault on the server holds it, on the account's login.
         val stored = waitForPasskey(api, keys) { it.credentialId == credentialId }
+        assertEquals(loginId, stored.first)
         assertEquals(rpId, stored.second.rpId)
         assertEquals(userName, stored.second.userName)
         assertEquals(Encoding.toBase64Url(userId), stored.second.userHandle)
@@ -139,10 +147,10 @@ class PasskeyProviderTest {
         // Sign in with it: the signature verifies with the public key from the attestation.
         signIn(credentialId, spki, origin, expectCounter = 0, name = "passkey-03-sign-in")
 
-        // A counter of 4 signs as 5, and the item stores 5.
+        // A counter of 4 signs as 5, and the login stores 5.
         val (itemId, record) = stored
         runBlocking {
-            api.updateSecret(itemId, ItemCodec.updateBody(ItemParts(rpId, rpId, null, "", record.copy(counter = 4).toJson(), null), setOf("key"), keys))
+            api.updateSecret(itemId, ItemCodec.passkeysBody(LoginPasskeys.appended("", record.copy(counter = 4)), keys))
             session.repository.refresh(SyncTrigger.MANUAL)
         }
         signIn(credentialId, spki, origin, expectCounter = 5, name = "passkey-04-counter")
@@ -158,7 +166,7 @@ class PasskeyProviderTest {
         val other = waitForAnswer("passkey-06-unlisted", listOf(userName, "Unlock Keepiq"))
         assertTrue("unlisted rpId: $other", other.startsWith("error:"))
 
-        runBlocking { api.trashSecret(itemId) }
+        runBlocking { api.trashSecret(loginId) }
         main { state.lock() }
         state.client.wipe(account.id)
     }
@@ -250,20 +258,19 @@ class PasskeyProviderTest {
         error("$name: no answer from Credential Manager, status ${status()}")
     }
 
-    private fun passkeyRows(api: KeepiqApi): List<JsonObject> = runBlocking {
-        val typeId = api.listTypes().first { (it["name"] as? JsonPrimitive)?.contentOrNull == PasskeyCredential.TYPE_NAME }.text("id")
-        api.listSecrets().filter { (it["typeId"] as? JsonPrimitive)?.contentOrNull == typeId && (it["url"] as? JsonPrimitive)?.contentOrNull == rpId }
+    /** Each item on the server for the rpId with its passkeys: the login's id and its decrypted credentials. */
+    private fun passkeyRows(api: KeepiqApi, keys: RsaVaultKeys): List<Pair<String, PasskeyCredential>> = runBlocking {
+        api.listSecrets()
+            .filter { (it["url"] as? JsonPrimitive)?.contentOrNull == rpId && !(it["passkeys"] as? JsonPrimitive)?.contentOrNull.isNullOrEmpty() }
+            .flatMap { row -> LoginPasskeys.credentials(keys.decryptField(row.text("passkeys"))).map { row.text("id") to it } }
     }
 
-    /** The passkey item on the server whose decrypted record satisfies [match]: its id and record. */
+    /** The login on the server holding a passkey that satisfies [match]: its id and that passkey. */
     private fun waitForPasskey(api: KeepiqApi, keys: RsaVaultKeys, match: (PasskeyCredential) -> Boolean): Pair<String, PasskeyCredential> {
         val end = System.currentTimeMillis() + 30_000
         while (true) {
-            for (row in passkeyRows(api)) {
-                val record = runCatching { PasskeyCredential.parse(keys.decryptField(row.text("key"))) { "" } }.getOrNull() ?: continue
-                if (match(record)) return row.text("id") to record
-            }
-            check(System.currentTimeMillis() < end) { "no passkey item on the server matches" }
+            passkeyRows(api, keys).firstOrNull { match(it.second) }?.let { return it }
+            check(System.currentTimeMillis() < end) { "no login on the server holds a matching passkey" }
             Thread.sleep(500)
         }
     }

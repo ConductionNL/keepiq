@@ -12,7 +12,7 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import test_client_golden as g  # noqa: E402
-from keepiq_sdk import Client, KeyMismatchError, crypto  # noqa: E402
+from keepiq_sdk import Client, ClientConfig, Credentials, KeyMismatchError, crypto  # noqa: E402
 
 
 def tampered(blob: str) -> str:
@@ -21,10 +21,11 @@ def tampered(blob: str) -> str:
     return base64.b64encode(bytes(raw)).decode()
 
 
-def run_one(script: dict, step, **kwargs):
+def run_one(script: dict, step, certificate_pem=None):
     transport = g.Transport(script)
     with mock.patch.object(g.client_module.urllib.request, "urlopen", transport):
-        c = Client(g.BASE, "billing", g.FIXTURE["privateKeyPem"], clock=g.Clock(), **kwargs)
+        credentials = Credentials("billing", g.FIXTURE["privateKeyPem"], certificate_pem)
+        c = Client(ClientConfig(g.BASE, credentials, clock=g.Clock()))
         return step(c), transport
 
 
