@@ -4,6 +4,7 @@
  */
 import type { AccountRecord } from '@/src/accounts/store'
 import { pemToPkcs8, toBase64 } from '@/src/crypto'
+import type { PasskeyCredential } from '@/src/passkey/credential'
 import { encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import type { VaultSnapshot } from '@/src/vault/types'
@@ -32,10 +33,10 @@ export interface LoginItem {
 
 /**
  * The login matches `site`; `matches` adds more matching logins after it; `totp` gives the first one `TOTP_SECRET` as
- * its code. Locked leaves out the private key, as a lock does.
+ * its code and `passkeys` as its passkeys. Locked leaves out the private key, as a lock does.
  */
 export async function fakeStorage(
-	site: string, unlocked: boolean, { longFolder = false, matches = 1, loginItem = {} as LoginItem, totp = false } = {},
+	site: string, unlocked: boolean, { longFolder = false, matches = 1, loginItem = {} as LoginItem, totp = false, passkeys = [] as PasskeyCredential[] } = {},
 ): Promise<FakeStorage> {
 	const { name = 'Test site', username = LOGIN.username, https = false } = loginItem
 	const now = new Date().toISOString()
@@ -50,6 +51,7 @@ export async function fakeStorage(
 				name, url: https ? site.replace(/^http:/, 'https:') : site, ownerId: account.uid, createdAt: now, updatedAt: now,
 				login: username === null ? null : await encrypt(username), key: await encrypt(LOGIN.password),
 				...totp && { totp: await encrypt(TOTP_SECRET) },
+				...passkeys.length > 0 && { passkeys: await encrypt(JSON.stringify(passkeys)) },
 			}),
 			...await Promise.all(Array.from({ length: matches - 1 }, async (_, i) => secretRow({
 				id: `s${i + 2}`, name: `Test site ${i + 2}`, url: site, ownerId: account.uid, createdAt: now, updatedAt: now,
@@ -63,7 +65,10 @@ export async function fakeStorage(
 	}
 	// Keys as `src/accounts/store.ts`, `src/vault/store.ts` and `src/vault/key-store.ts` write them.
 	return {
-		local: { accounts: { [account.id]: account }, activeAccountId: account.id, [`vaultCache.${account.id}`]: snapshot, [`vaultCheckedAt.${account.id}`]: now },
+		local: {
+			accounts: { [account.id]: account }, activeAccountId: account.id, [`suite.${account.id}`]: suiteRow,
+			[`vaultCache.${account.id}`]: snapshot, [`vaultCheckedAt.${account.id}`]: now,
+		},
 		session: unlocked
 			? { [`privateKeyPkcs8.${account.id}`]: toBase64(pemToPkcs8(envelope.privateKeyPem)), [`unlockedAt.${account.id}`]: String(Date.now()) }
 			: {},

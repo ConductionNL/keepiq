@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Passkey in the field's suggestions</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Passkey in the field's suggestions</h1>
+		<p class="tests">The page asks for a passkey with <code>mediation: 'conditional'</code> as it loads, and the username field is marked <code>webauthn</code>. Keepiq's list under the field offers the passkeys for <code class="host">localhost</code> above the logins; picking one signs in without a window. Register one on <a href="/passkey.html">Passkey</a> first, so this page can check it.</p>
+		<form method="post" action="/login">
+			<label>Username <input name="username" type="text" autocomplete="username webauthn"></label>
+			<label>Password <input name="password" type="password" autocomplete="current-password"></label>
+			<button type="submit">Sign in</button>
+			<p class="status" id="result" role="status"></p>
+		</form>
+	</main>
+	<script type="module">
+		import { report, signIn } from '/passkey.js'
+
+		const status = document.getElementById('result')
+		for (const host of document.querySelectorAll('.host')) host.textContent = location.hostname
+		if (await PublicKeyCredential.isConditionalMediationAvailable?.()) {
+			status.textContent = 'Waiting for a passkey from the username field…'
+			status.dataset.result = 'waiting'
+			try {
+				report(status, { result: 'signed-in', passkey: await signIn({ mediation: 'conditional', publicKey: { userVerification: 'preferred' } }) })
+			} catch (error) {
+				report(status, { error })
+			}
+		} else {
+			status.textContent = 'This browser does not offer passkeys in a field\'s suggestions.'
+		}
+	</script>
+</body>
+</html>
