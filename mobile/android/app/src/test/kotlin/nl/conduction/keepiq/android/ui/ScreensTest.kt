@@ -18,6 +18,7 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -37,6 +38,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.text.TextLayoutResult
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
@@ -321,6 +323,17 @@ class ScreensTest {
 
     private val keyLabel = "Authenticator key (base32 secret or otpauth link)"
 
+    /**
+     * The text a field lays out: dots while masked, the value once shown.
+     * Compose 1.8.3 keeps a field's Password semantics after its
+     * PasswordVisualTransformation is dropped, so Show is checked here.
+     */
+    private fun laidOutText(label: String): String {
+        val results = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(results)
+        return results.first().layoutInput.text.text
+    }
+
     @Test
     fun aNewItemOffersNeitherAuthenticatorNorPasskey() {
         val types = listOf("login", "note", "totp", "passkey").map { SecretType(it, it, null, emptyList()) }
@@ -389,9 +402,10 @@ class ScreensTest {
     fun theKeyFieldIsMaskedAndKeepsTheScreenOutOfAutofill() {
         var view: View? = null
         var shown by mutableStateOf(false)
+        var draft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
         compose.setContent {
             view = LocalView.current
-            MaterialTheme { if (shown) AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
+            MaterialTheme { if (shown) AuthenticatorKeyField(draft, null, removeOnly = false) { draft = it } }
         }
         compose.waitForIdle()
         val before = view!!.rootView.importantForAutofill
@@ -399,9 +413,11 @@ class ScreensTest {
         compose.waitForIdle()
         assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
         assertFalse(view!!.isImportantForAutofill)
+        compose.onNodeWithText(keyLabel).performTextInput("JBSWY3DPEHPK3PXP")
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals("\u2022".repeat(16), laidOutText(keyLabel))
         compose.onNodeWithText("Show $keyLabel").performClick()
-        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        assertEquals("JBSWY3DPEHPK3PXP", laidOutText(keyLabel))
         shown = false
         compose.waitForIdle()
         assertEquals(before, view!!.rootView.importantForAutofill)
@@ -592,9 +608,10 @@ class ScreensTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
         val seed = "Authenticator secret or otpauth link"
         compose.onNodeWithText(seed).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals("\u2022".repeat(16), laidOutText(seed))
         assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
         compose.onNodeWithText("Show $seed").performScrollTo().performClick()
-        compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        assertEquals("JBSWY3DPEHPK3PXP", laidOutText(seed))
     }
 
     @Test
