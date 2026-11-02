@@ -41,3 +41,20 @@ const TITLES: Record<ShellPage, (view: ShellView) => string> = {
 export function pageTitle(page: ShellPage | null, view: ShellView): string {
 	return page ? TITLES[page](view) : tabLabel(view.current)
 }
+
+/** What a header shows on each page and tab: Back per page, New per tab. */
+export interface HeaderActions {
+	backs: Record<ShellPage, () => void>
+	adds: Partial<Record<PopupTab, () => void>>
+}
+
+/** The open page, its title, and the header's Back and New: Back only on a page, New only on a tab itself. */
+export function headerFor(view: ShellView, actions: HeaderActions) {
+	const page = openPage(view)
+	return {
+		page,
+		title: pageTitle(page, view),
+		back: page ? actions.backs[page] : undefined,
+		add: page ? undefined : actions.adds[view.current],
+	}
+}
