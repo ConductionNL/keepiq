@@ -444,6 +444,60 @@ describe('save', () => {
 		expect(sentOf(sent, 'passkey.cancel')).toHaveLength(1)
 	})
 
+	it('keeps New login, its focus and its keystrokes when a matching login arrives while typing, adding only Back', async () => {
+		const { sent, user, setView, broadcast } = renderWindow(createView(), { replies: { 'passkey.save': { ok: true } } })
+		const name = await screen.findByLabelText<HTMLInputElement>('Name')
+		await user.type(name, ' Bank')
+		setView(createView({ targets: [target()] }))
+		broadcast({ kind: 'vault.changed' })
+		await screen.findByRole('button', { name: 'Back' })
+		expect(screen.queryByRole('list', { name: 'Save to a login' })).toBeNull()
+		expect(screen.queryByRole('button', { name: 'New login' })).toBeNull()
+		expect(document.activeElement).toBe(name)
+		await user.keyboard(' Account{Enter}')
+		expect(sentOf(sent, 'passkey.save')).toEqual([{ kind: 'passkey.save', ceremonyId: 'c1', target: { name: 'Example Corp Bank Account', folderId: null } }])
+	})
+
+	it('shows a failed save to a login, and its Retry, on the list only, and focuses New login on the way back', async () => {
+		const { sent, user } = renderWindow(createView({ targets: [target()] }), {
+			replies: { 'passkey.save': { ok: false, code: 'write_failed', error: { code: 'offline' } }, 'passkey.retry': { ok: true } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		await screen.findByRole('button', { name: 'Retry' })
+		await user.click(screen.getByRole('button', { name: 'New login' }))
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByLabelText('Name'))
+		await user.keyboard('{Escape}')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'New login' }))
+		await user.click(screen.getByRole('button', { name: 'Retry' }))
+		expect(sentOf(sent, 'passkey.retry')).toHaveLength(1)
+	})
+
+	it('shows a failed save as a new login, and its Retry, on New login only', async () => {
+		const { user } = renderWindow(createView({ targets: [target()] }), { replies: { 'passkey.save': { ok: false, code: 'write_failed', error: { code: 'offline' } } } })
+		await user.click(await screen.findByRole('button', { name: 'New login' }))
+		await user.click(screen.getByRole('button', { name: 'Save as new login' }))
+		await screen.findByRole('button', { name: 'Retry' })
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect(screen.getByRole('list', { name: 'Save to a login' })).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+	})
+
+	it('stays on New login while its save runs, with Back disabled and Escape doing nothing', async () => {
+		let answer: (reply: unknown) => void = () => {}
+		const { sent, user } = renderWindow(createView({ targets: [target()] }), { replies: { 'passkey.save': () => new Promise((resolve) => (answer = resolve)) } })
+		await user.click(await screen.findByRole('button', { name: 'New login' }))
+		await user.click(screen.getByRole('button', { name: 'Save as new login' }))
+		const back = screen.getByRole('button', { name: 'Back' })
+		expect(back.hasAttribute('disabled')).toBe(true)
+		await user.keyboard('{Escape}')
+		expect(screen.getByLabelText('Name')).toBeTruthy()
+		expect(sentOf(sent, 'passkey.cancel')).toEqual([])
+		await act(async () => answer({ ok: false, code: 'write_failed', error: { code: 'offline' } }))
+		expect(await screen.findByRole('button', { name: 'Retry' })).toBeTruthy()
+		expect(screen.getByLabelText('Name')).toBeTruthy()
+	})
+
 	it('goes back from "Confirm it\'s you" to New login, keeping the typed name', async () => {
 		const { sent, user } = renderWindow(createView({ targets: [target()], verify: true }))
 		await user.click(await screen.findByRole('button', { name: 'New login' }))

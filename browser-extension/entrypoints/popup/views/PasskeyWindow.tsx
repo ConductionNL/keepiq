@@ -39,13 +39,18 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const [replacing, setReplacing] = useState<PasskeySaveTarget | null>(null)
 	const [name, setName] = useState<string | null>(null)
 	const [folderId, setFolderId] = useState('')
-	/** The New login step of the save view; `false` once the user went back from it, so focus returns to its button. */
-	const [newLogin, setNewLogin] = useState<boolean | null>(null)
+	/**
+	 * The New login step: `opened` from its button, which focuses Name; `only` as shown for want of a matching login, which a
+	 * login arriving later must not take away, or Enter meant for Name would save to it; `left` returns focus to its button.
+	 */
+	const [newLogin, setNewLogin] = useState<'opened' | 'only' | 'left' | null>(null)
+	/** The step of the last save, so a failure's Retry, which repeats that save, shows only there. */
+	const [savedFrom, setSavedFrom] = useState<'list' | 'new' | null>(null)
 	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
 	const held = view && !view.locked && view.pending && rowKey(view.pending) !== dismissed ? view.pending : null
 	const saving = view !== null && !view.locked && view.kind === 'create' && !view.alreadySaved && !confirming && !held
-	// With no login to save to, New login is the only step, so there is nothing to go back to.
-	const adding = saving && (newLogin === true || view.targets.length === 0)
+	if (saving && view.targets.length === 0 && newLogin !== 'opened' && newLogin !== 'only') setNewLogin('only')
+	const adding = saving && (newLogin === 'opened' || newLogin === 'only' || view.targets.length === 0)
 	const canLeaveNew = adding && view.targets.length > 0
 
 	const send = useCallback((command: Command) => passkeyRequest({ ...command, ceremonyId } as PasskeyPopupRequest), [ceremonyId])
@@ -117,6 +122,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	async function run(command: Command, control: string): Promise<void> {
 		setBusy(control)
 		setNotice(null)
+		if (command.kind === 'passkey.save') setSavedFrom('name' in command.target ? 'new' : 'list')
 		const reply = await send(command)
 		setBusy(null)
 		await settle(reply, command)
@@ -126,6 +132,11 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	function act(command: Act, control: string) {
 		if (view?.verify && !(command.kind === 'passkey.pick' && view.pending)) setConfirming(command)
 		else void run(command, control)
+	}
+
+	// Leaving mid-save would show that save's failure, and the Retry that repeats it, on the list.
+	function leaveNew() {
+		if (busy === null) setNewLogin('left')
 	}
 
 	function back() {
@@ -168,7 +179,8 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		else setNotice(i18n.t('errors.notResponding'))
 	}
 
-	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved ? failure : null
+	const elsewhere = saving && savedFrom !== null && savedFrom !== (adding ? 'new' : 'list')
+	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved && !elsewhere ? failure : null
 	// A failure banner from a reply moves focus to Retry, so it counts as a step too.
 	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId, showFailure, adding]))
 	const guarded = <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => {
@@ -178,7 +190,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const confirmStep = view !== null && !view.locked && (confirming !== null || held !== null)
 	const escapeRef = useRef(() => {})
 	useEffect(() => {
-		escapeRef.current = confirmStep ? back : canLeaveNew ? () => setNewLogin(false) : () => void cancel()
+		escapeRef.current = confirmStep ? back : canLeaveNew ? leaveNew : () => void cancel()
 	})
 	useEffect(() => {
 		// The Replace question's Escape stops propagating, so it never reaches this listener.
@@ -222,7 +234,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			<SaveTo
 				view={view} busy={busy} adding={adding} name={name ?? (view.rpName || view.rpId)} folderId={folderId} onName={setName} onFolder={setFolderId}
 				// Opening New login focuses its Name even under a failure; coming back from it focuses its button instead.
-				focus={adding ? newLogin === true || !showFailure : !showFailure && newLogin !== false}
+				focus={adding ? newLogin === 'opened' || !showFailure : !showFailure && newLogin !== 'left'}
 				onTarget={guarded((target: PasskeySaveTarget) => {
 					// A later return to the list, as from "Confirm it's you", focuses its first row again.
 					setNewLogin(null)
@@ -240,19 +252,19 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	return (
 		<main className="popup popup--popout" onKeyDownCapture={ignoreHeld}>
-			<Header title={title} active={null} onBack={confirmStep ? back : canLeaveNew ? () => setNewLogin(false) : undefined}>
+			<Header title={title} active={null} busy={busy !== null} onBack={confirmStep ? back : canLeaveNew ? leaveNew : undefined}>
 				{saving && !adding && (
 					<IconButton
-						icon="plus" label={i18n.t('passkey.newLogin')} aria-disabled={busy !== null} autoFocus={newLogin === false}
+						icon="plus" label={i18n.t('passkey.newLogin')} aria-disabled={busy !== null} autoFocus={newLogin === 'left'}
 						onClick={guarded(() => {
-							if (busy === null) setNewLogin(true)
+							if (busy === null) setNewLogin('opened')
 						})}
 					/>
 				)}
 			</Header>
 			<div className="popup__body stack">
 				{showFailure && (
-					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus focusable busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
+					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus={newLogin !== 'left'} focusable busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
 						{writeErrorText(showFailure, 'passkey')}
 					</Banner>
 				)}
@@ -340,9 +352,7 @@ function SignIn({ view, busy, focus, onPick }: { view: PasskeyView; busy: string
 interface SaveProps {
 	view: PasskeyView
 	busy: string | null
-	/** The New login step rather than the matching logins. */
 	adding: boolean
-	/** The step's first control takes focus. */
 	focus: boolean
 	name: string
 	folderId: string
