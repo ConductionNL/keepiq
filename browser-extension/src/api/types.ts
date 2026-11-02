@@ -42,6 +42,9 @@ export interface OpenSecretRow extends SecretBase {
 	key: string
 	login: string | null
 	additionalFields: string | null
+	/** A login's TOTP seed and passkeys (keepiq#1325): ciphertext, or null or `''` for none. */
+	totp?: string | null
+	passkeys?: string | null
 }
 
 export interface BlockedSecretRow extends SecretBase {

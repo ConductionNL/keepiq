@@ -174,7 +174,7 @@ describe('opening', () => {
 	it('opens beneath an empty login field on focus, keeping focus and caret in the field', async () => {
 		start()
 		await openOn('#u')
-		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open' })
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'login' })
 		expect(host().element.parentNode).toBe(document.documentElement)
 		expect(host().element.getAttribute('popover')).toBe('manual')
 		expect(hostBox()).toEqual({ top: 134, left: 100, width: 240, height: FIVE_ROWS })
@@ -189,6 +189,19 @@ describe('opening', () => {
 		await settle()
 		expect(isOpen()).toBe(true)
 		expect(hostBox().top).toBe(174)
+	})
+
+	it('shows no list opened by focus on a field that was filled before the reply came, as each box of a split code fill is', async () => {
+		start()
+		let answer!: (reply: unknown) => void
+		request.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		$('#u').focus()
+		await settle()
+		$('#u').value = 'filled'
+		answer({ key: KEY, height: FIVE_ROWS })
+		await settle()
+		expect(isOpen()).toBe(false)
+		expect(sent).toContainEqual({ kind: 'inline.closed', key: KEY })
 	})
 
 	it('opens on any focus of the empty field, script focus included, but not for one the page only claims', async () => {
@@ -221,7 +234,7 @@ describe('opening', () => {
 		['a new-password field', SIGN_UP, '#p'],
 		['a confirm field', SIGN_UP, '#c'],
 		['a newsletter field', '<form><input id="u" type="email" name="email"><button>Subscribe</button></form>', '#u'],
-		['a one-time code field', '<form><input id="u" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button>Verify</button></form>', '#u'],
+		['a recovery code field', '<form><label>Recovery code <input id="u" name="code" maxlength="8" autocomplete="one-time-code"></label><button>Verify</button></form>', '#u'],
 		['a disabled password field', '<form><input id="u" name="username"><input id="p" type="password" disabled><button>Log in</button></form>', '#p'],
 	])('opens nothing on %s', async (_, html, selector) => {
 		start(html)
@@ -229,6 +242,18 @@ describe('opening', () => {
 		$(selector).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 		await settle()
 		expect(request).not.toHaveBeenCalled()
+	})
+
+	it.each([
+		['a one-time code field', '<form><input id="u" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button>Verify</button></form>', '#u'],
+		['any input of six one-character inputs', `<form>${[0, 1, 2, 3, 4, 5].map((i) => `<input id="d${i}" inputmode="numeric" maxlength="1">`).join('')}<button>Verify</button></form>`, '#d2'],
+	])('opens in code mode on %s, titled for codes', async (_, html, selector) => {
+		for (let i = 0; i < 6; i++) rects.set(`d${i}`, { top: 100, left: 100 + 40 * i, width: 32, height: 30 })
+		start(html)
+		$(selector).focus()
+		await settle()
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'code' })
+		expect(host().frame.title).toBe('Keepiq verification codes')
 	})
 
 	it('opens on a login form with autocomplete off', async () => {
@@ -802,13 +827,13 @@ describe('pick', () => {
 		start()
 		await openOn('#p2')
 		trusted = false
-		const fill = { kind: 'fill.execute', username: 'alice', password: 'hunter2', origin: location.origin, anchorKey: KEY } as const
-		expect(executeFill({ ...fill }, inline.openList())).toEqual({ filled: 'both' })
+		const fill = { kind: 'fill.execute', username: 'alice', password: 'hunter2', code: null, origin: location.origin, anchorKey: KEY } as const
+		expect(executeFill({ ...fill }, inline.openList())).toEqual({ filled: 'both', code: false })
 		expect([$('#u2').value, $('#p2').value, $('#u').value, $('#p').value]).toEqual(['alice', 'hunter2', '', ''])
 		expect(isOpen()).toBe(true)
-		expect(executeFill({ ...fill, anchorKey: 'b'.repeat(32) }, inline.openList())).toEqual({ filled: 'none' })
+		expect(executeFill({ ...fill, anchorKey: 'b'.repeat(32) }, inline.openList())).toEqual({ filled: 'none', code: false })
 		inline.handle({ kind: 'inline.close', key: KEY, refocus: true })
-		expect(executeFill({ ...fill }, inline.openList())).toEqual({ filled: 'none' })
+		expect(executeFill({ ...fill }, inline.openList())).toEqual({ filled: 'none', code: false })
 	})
 })
 
