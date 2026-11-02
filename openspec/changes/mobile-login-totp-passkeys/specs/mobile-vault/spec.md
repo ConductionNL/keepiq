@@ -42,7 +42,7 @@ In the Android app, where the user may edit the item and the phone is online, ea
 - **THEN** the login keeps only the other passkey, in the web app as well
 
 ### Requirement: Focus after deleting a passkey
-In the Android app, after a passkey is deleted, focus MUST move to the next passkey row, else the Edit button: input focus for keyboard and switch users, and accessibility focus while a screen reader such as TalkBack is on.
+In the Android app, after a passkey is deleted, focus MUST move to the next passkey row, else the Edit button: input focus for keyboard and switch users, and accessibility focus while touch exploration is on, as with TalkBack.
 
 #### Scenario: Focus after a delete with a keyboard
 - **GIVEN** a login the user may edit, with three passkeys, used with a keyboard
