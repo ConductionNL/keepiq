@@ -40,7 +40,7 @@ class SecrecyTest(unittest.TestCase):
                 run_one(script, lambda c: c.get_by_id("sec-cli-fixture"), certificate_pem=g.FIXTURE["certificatePem"])
 
     def test_a_missing_fingerprint_is_refused_when_a_certificate_is_pinned(self) -> None:
-        for fingerprint in ("", None, "missing"):
+        for fingerprint in ("", None, "missing", 42):
             with self.subTest(fingerprint=fingerprint):
                 env = g.envelope()
                 if fingerprint == "missing":

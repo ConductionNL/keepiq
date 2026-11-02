@@ -229,6 +229,18 @@ func TestFingerprintMismatchIsRefused(t *testing.T) {
 	}
 }
 
+// The fingerprint compare ignores case.
+func TestUpperCaseFingerprintIsAccepted(t *testing.T) {
+	f := loadFixture(t)
+	st := startStub(t)
+	enc := st.Envelopes["sec-cli-fixture"]["encryption"].(map[string]any)
+	enc["certificateFingerprint"] = strings.ToUpper(enc["certificateFingerprint"].(string))
+	s, err := newClient(t, st, f, WithCertificate(f.CertificatePem)).GetByID("sec-cli-fixture")
+	if err != nil || s.Key != f.Plaintext["key"] {
+		t.Fatalf("an upper-case matching fingerprint must be accepted: %v", err)
+	}
+}
+
 // With the certificate configured, an envelope that names no certificate
 // fingerprint is refused too.
 func TestMissingFingerprintIsRefusedWhenPinned(t *testing.T) {
@@ -237,13 +249,14 @@ func TestMissingFingerprintIsRefusedWhenPinned(t *testing.T) {
 		"empty":   func(enc map[string]any) { enc["certificateFingerprint"] = "" },
 		"null":    func(enc map[string]any) { enc["certificateFingerprint"] = nil },
 		"missing": func(enc map[string]any) { delete(enc, "certificateFingerprint") },
+		"number":  func(enc map[string]any) { enc["certificateFingerprint"] = 42 },
 	} {
 		t.Run(name, func(t *testing.T) {
 			st := startStub(t)
 			change(st.Envelopes["sec-cli-fixture"]["encryption"].(map[string]any))
 			c := newClient(t, st, f, WithCertificate(f.CertificatePem))
-			if _, err := c.GetByID("sec-cli-fixture"); !errors.Is(err, ErrKeyMismatch) {
-				t.Fatalf("want ErrKeyMismatch, got %v", err)
+			if _, err := c.GetByID("sec-cli-fixture"); !errors.Is(err, ErrKeyMismatch) || err.Error() != "keepiq: the envelope names no certificate fingerprint" {
+				t.Fatalf("want ErrKeyMismatch naming the missing fingerprint, got %v", err)
 			}
 			if s, err := newClient(t, st, f).GetByID("sec-cli-fixture"); err != nil || s.Key != f.Plaintext["key"] {
 				t.Fatalf("without a certificate the envelope must still open: %v", err)

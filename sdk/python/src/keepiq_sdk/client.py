@@ -294,10 +294,12 @@ class Client:
         self._check_fingerprint(enc.get("certificateFingerprint"))
         return _secret_from(env.get("secret") or {}, self._decrypt_values(env.get("ciphertext") or {}))
 
-    def _check_fingerprint(self, fp: Optional[str]) -> None:
-        if self._fingerprint and not fp:
+    def _check_fingerprint(self, fp: Any) -> None:
+        if not self._fingerprint:
+            return
+        if not fp or not isinstance(fp, str):
             raise KeyMismatchError("the envelope names no certificate fingerprint")
-        if self._fingerprint and fp and fp.lower() != self._fingerprint.lower():
+        if fp.lower() != self._fingerprint.lower():
             raise KeyMismatchError("the envelope is encrypted to a different certificate")
 
     def _decrypt_values(self, ct: Mapping[str, str]) -> Dict[str, str]:

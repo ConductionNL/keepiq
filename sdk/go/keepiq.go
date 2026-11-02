@@ -409,9 +409,9 @@ type envelope struct {
 		ExpiresAt    string `json:"expiresAt"`
 	} `json:"secret"`
 	Encryption struct {
-		SuiteID                string `json:"suiteId"`
-		CertificateFingerprint string `json:"certificateFingerprint"`
-		Scheme                 string `json:"scheme"`
+		SuiteID                string          `json:"suiteId"`
+		CertificateFingerprint json.RawMessage `json:"certificateFingerprint"`
+		Scheme                 string          `json:"scheme"`
 	} `json:"encryption"`
 	Ciphertext struct {
 		Key              *string `json:"key"`
@@ -499,12 +499,35 @@ func (c *Client) decodeOne(resp *http.Response, body []byte) (*Secret, error) {
 	return s, nil
 }
 
+// keyMismatch is ErrKeyMismatch with a message of its own.
+type keyMismatch string
+
+func (e keyMismatch) Error() string { return string(e) }
+
+func (e keyMismatch) Is(target error) bool { return target == ErrKeyMismatch }
+
+// errNoFingerprint refuses an envelope without a usable fingerprint while a certificate is configured.
+const errNoFingerprint = keyMismatch("keepiq: the envelope names no certificate fingerprint")
+
+// fingerprintText is the envelope's fingerprint when it is a JSON string, and "" otherwise.
+func fingerprintText(raw json.RawMessage) string {
+	var text string
+	if json.Unmarshal(raw, &text) != nil {
+		return ""
+	}
+	return text
+}
+
 // open checks the envelope and decrypts it in this process.
 func (c *Client) open(env *envelope) (*Secret, error) {
 	if env.Encryption.Scheme != Scheme {
 		return nil, fmt.Errorf("keepiq: unsupported encryption scheme %q", env.Encryption.Scheme)
 	}
-	if c.fingerprint != "" && !strings.EqualFold(env.Encryption.CertificateFingerprint, c.fingerprint) {
+	fingerprint := fingerprintText(env.Encryption.CertificateFingerprint)
+	if c.fingerprint != "" && fingerprint == "" {
+		return nil, errNoFingerprint
+	}
+	if c.fingerprint != "" && !strings.EqualFold(fingerprint, c.fingerprint) {
 		return nil, ErrKeyMismatch
 	}
 	s := &Secret{
@@ -512,7 +535,7 @@ func (c *Client) open(env *envelope) (*Secret, error) {
 		FolderPath: env.Secret.FolderPath, Type: env.Secret.Type,
 		CreatedAt: env.Secret.CreatedAt, UpdatedAt: env.Secret.UpdatedAt, KeyUpdatedAt: env.Secret.KeyUpdatedAt,
 		ExpiresAt:              env.Secret.ExpiresAt,
-		CertificateFingerprint: env.Encryption.CertificateFingerprint,
+		CertificateFingerprint: fingerprint,
 	}
 	for _, f := range []struct {
 		ct  *string
