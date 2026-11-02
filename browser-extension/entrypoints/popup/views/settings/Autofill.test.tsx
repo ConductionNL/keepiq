@@ -85,6 +85,17 @@ describe('Autofill', () => {
 		await waitFor(() => expect(patches(sent)).toEqual([{ clearClipboardMs: 20_000 }]))
 	})
 
+	it('has Copy TOTP automatically on by default, below Clear clipboard, and stores turning it off', async () => {
+		const { sent, user } = renderView()
+		await loaded()
+		const entry = checkbox('Copy TOTP automatically')
+		expect(entry.checked).toBe(true)
+		expect(select('Clear clipboard').compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		expect(described(entry)).toEqual(['If a login has a verification code, copy it to your clipboard when you autofill the login.'])
+		await user.click(entry)
+		await waitFor(() => expect(patches(sent)).toEqual([{ autoCopyTotp: false }]))
+	})
+
 	it('shows the shortcut and opens the browser\'s shortcut page on Chromium', async () => {
 		const { shell, user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
 		await loaded()

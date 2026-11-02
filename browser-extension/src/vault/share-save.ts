@@ -1,11 +1,22 @@
 /** A value change of a possibly shared item in one `PUT /api/v1/secrets/{id}/share-save`, ported from the web app's `saveShared` (`src/services/shareSave.js`); the server's rules are in `ShareSaveService`. */
 import { ApiError, KeepiqNotInstalled, type Client } from '@/src/api/client'
-import { FederatedCertificateError, importPublicKey, importSpki, rsaDecrypt, rsaEncrypt, verifyFederatedCertificate, type VerifiedFederatedCertificate } from '@/src/crypto'
+import { FederatedCertificateError, importPublicKey, importSpki, rsaDecrypt, rsaEncrypt, verifyFederatedCertificate } from '@/src/crypto'
 import type { DecryptField, ShareSaveNote } from '@/src/messages'
-import { verifiedPartners } from './verified-partners'
+import { verifiedPartners, type VerifiedPartner } from './verified-partners'
 import { WriteFailure } from './write-error'
 
-export const VALUE_FIELDS: readonly DecryptField[] = ['key', 'login', 'additionalFields']
+export type ValueField = DecryptField | 'passkeys'
+
+/** What a save may change. */
+export const VALUE_FIELDS: readonly DecryptField[] = ['key', 'login', 'additionalFields', 'totp']
+/** What a partner share gets whole and an edit fetch must find in the cache; only a passkey ceremony writes `passkeys`. */
+export const WHOLE_FIELDS: readonly ValueField[] = [...VALUE_FIELDS, 'passkeys']
+/** Fields a partner may not store (ADR-003 § Partner certificate). */
+const PARTNER_OPTIONAL = ['totp', 'passkeys'] as const
+
+/** `''` removes a key on the wire; encrypted, it would be a key that does not read. */
+export const sealValue = (field: ValueField, value: string | null, key: CryptoKey): Promise<string | null> =>
+	value === null || (value === '' && (PARTNER_OPTIONAL as readonly ValueField[]).includes(field)) ? Promise.resolve(value) : rsaEncrypt(value, key)
 
 /** `ShareSaveRequest::MAX_ENTRIES` per list pair, and `ShareController::MAX_RECIPIENT_PROBE`. */
 const BATCH = 100
@@ -19,10 +30,10 @@ const PARTNER_GONE = new Map([['unknown_recipient', 404], ['not_a_partner', 403]
 
 const secretPath = (id: string) => `/api/v1/secrets/${encodeURIComponent(id)}`
 
-/** Plaintext or ciphertext per value field, `null` for an empty one. */
-export type Values = Partial<Record<DecryptField, string | null>>
+/** Plaintext or ciphertext per value field, `null` for an empty one; `''` for a removed `totp`. */
+export type Values = Partial<Record<ValueField, string | null>>
 
-/** What an edit form opened: the ciphertext of each field it showed in full, the row version, and the source version `write-context` named. */
+/** What an edit form opened: the ciphertext of each field it showed in full, `totp` and `passkeys` always (`recordOpened`), the row version, and the source version `write-context` named. */
 export interface Opened {
 	shown: Values
 	updatedAt: string
@@ -85,12 +96,22 @@ function incompleteOf(body: unknown) {
 	return { copies, skipRefused: new Set(listOf(answer?.copies?.skipRefused).filter(isString)), shares }
 }
 
-/** The share-save's own refusals that read otherwise through `writeError`. */
-function refusalOf(error: unknown): unknown {
+/** The share-save's own refusals that read otherwise through `writeError`; `cloudIds` by share id, for the partner the server names. */
+function refusalOf(error: unknown, cloudIds: ReadonlyMap<string, string>): unknown {
 	if (!(error instanceof ApiError)) return error
 	// Nextcloud's page for a route this Keepiq doesn't have, as an `-unstable` build from before share-save.
 	if (error instanceof KeepiqNotInstalled) return new WriteFailure({ code: 'keepiq_outdated' })
 	if (error.status === 409 && error.code === 'stale_source') return new WriteFailure({ code: 'stale_source' })
+	if (error.status === 409 && error.code === 'partner_upgrade_required') {
+		const body = error.body as { shareId?: unknown; requiredVersion?: unknown } | null
+		const shareId = isString(body?.shareId) ? body.shareId : null
+		const cloudId = shareId && cloudIds.get(shareId)
+		return new WriteFailure({
+			code: 'partner_upgrade_required',
+			partners: shareId && cloudId ? [{ shareId, cloudId }] : [],
+			...(isString(body?.requiredVersion) && { requiredVersion: body.requiredVersion }),
+		})
+	}
 	if (error.refused && error.code === 'not_allowed') return new WriteFailure({ code: 'forbidden' })
 	return error
 }
@@ -100,20 +121,27 @@ async function sealSparse(plain: Values, key: CryptoKey): Promise<Values> {
 	const sealed: Values = {}
 	for (const field of VALUE_FIELDS) {
 		const value = plain[field]
-		if (value !== undefined) sealed[field] = value === null ? null : await rsaEncrypt(value, key)
+		if (value !== undefined) sealed[field] = await sealValue(field, value, key)
 	}
 	return sealed
 }
 
-async function sealWhole(value: Values, key: CryptoKey) {
+/** Null where the partner does not store a field: a partner left out of it keeps its value only under the same certificate. */
+async function sealWhole(value: Values, key: CryptoKey, valueFields: readonly string[]) {
+	const optional = async (field: (typeof PARTNER_OPTIONAL)[number]) => {
+		const plain = value[field]
+		return plain && valueFields.includes(field) ? rsaEncrypt(plain, key) : null
+	}
 	return {
 		key: await rsaEncrypt(value.key ?? '', key),
 		login: value.login ? await rsaEncrypt(value.login, key) : null,
 		additionalFields: value.additionalFields ? await rsaEncrypt(value.additionalFields, key) : null,
+		totp: await optional('totp'),
+		passkeys: await optional('passkeys'),
 	}
 }
 
-type PartnerOutcome = { verified: VerifiedFederatedCertificate } | { suspend: string } | 'unreachable'
+type PartnerOutcome = { verified: VerifiedPartner } | { suspend: string } | 'unreachable'
 
 /** Looks the partner recipient up and verifies the answer against the share's own cloud id, not the lookup's echo of it. */
 async function lookUp(client: Client, share: RequiredShare): Promise<PartnerOutcome> {
@@ -135,8 +163,10 @@ async function lookUp(client: Client, share: RequiredShare): Promise<PartnerOutc
 	if (typeof answer?.certificate !== 'string' || !Array.isArray(chain) || chain.length !== 2 || !chain.every((pem) => typeof pem === 'string') || typeof pin !== 'string' || !/^[0-9a-f]{64}$/i.test(pin)) {
 		throw new WriteFailure({ code: 'server_error' })
 	}
+	// An older partner sends none, and stores none of those fields.
+	const valueFields = listOf(answer.valueFields).filter(isString)
 	try {
-		return { verified: await verifyFederatedCertificate({ certificate: answer.certificate, chain, partnerRootFingerprint: pin, cloudId: share.recipientCloudId }) }
+		return { verified: { ...await verifyFederatedCertificate({ certificate: answer.certificate, chain, partnerRootFingerprint: pin, cloudId: share.recipientCloudId }), valueFields } }
 	} catch (error) {
 		// Validity is judged by this machine's clock, which may be wrong, so it stops the save instead of suspending for good.
 		if (error instanceof FederatedCertificateError && error.reason === 'not_valid_now') throw new WriteFailure({ code: 'partner_clock' })
@@ -189,7 +219,7 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 		const value: Values = {}
 		// The form's ciphertext is the item's only at the version the save is checked against.
 		const current = opened && Date.parse(opened.updatedAt) === Date.parse(baseUpdatedAt)
-		for (const field of VALUE_FIELDS) {
+		for (const field of WHOLE_FIELDS) {
 			if (plain[field] !== undefined) {
 				value[field] = plain[field]
 				continue
@@ -241,7 +271,10 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 		const todo = required.filter((share) => !federated.has(share.shareId) && !suspend.has(share.shareId))
 		if (todo.length === 0) return
 		const value = whole ??= await wholeValue()
+		// A replaced or removed key reaches a partner that cannot store one as null, since it never held one; only a new one stops the save, as in the web app.
+		const addsKey = !!plain.totp && !opened?.shown.totp
 		const unreachable: RequiredShare[] = []
+		const tooOld: RequiredShare[] = []
 		for (const share of todo) {
 			const kept = partners.get(share)
 			const outcome = kept ? { verified: kept } : await lookUp(client, share)
@@ -253,9 +286,11 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 					throw new WriteFailure({ code: 'bad_certificate' })
 				})
 				if (!kept) partners.add(share, outcome.verified)
-				federated.set(share.shareId, { shareId: share.shareId, certFingerprint: outcome.verified.fingerprint, ...await sealWhole(value, key) })
+				if (addsKey && !outcome.verified.valueFields.includes('totp')) tooOld.push(share)
+				else federated.set(share.shareId, { shareId: share.shareId, certFingerprint: outcome.verified.fingerprint, ...await sealWhole(value, key, outcome.verified.valueFields) })
 			}
 		}
+		if (tooOld.length > 0) throw new WriteFailure({ code: 'partner_upgrade_required', partners: tooOld.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })
 		// Only shares the user agreed to leave out are suspended; naming every unreachable one lets one Save without them cover them all.
 		if (unreachable.some((share) => !withoutUnreachable.has(share.shareId))) {
 			throw new WriteFailure({ code: 'partner_unreachable', partners: unreachable.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })
@@ -310,7 +345,7 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 			break
 		} catch (error) {
 			const restart = error instanceof ApiError && error.status === 404 && error.code === 'stage_unknown' && stage.id !== null
-			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) throw refusalOf(error)
+			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) throw refusalOf(error, cloudIds)
 			if (++rounds >= MAX_ROUNDS) throw new WriteFailure({ code: 'incomplete' })
 			if (restart) stage = { id: null, sent: new Set() }
 			else await fill(error.body)

@@ -2,9 +2,10 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
 import type { EditableItem, ShareSaveNote, VaultSnapshotReply, VaultWriteError, WriteResult } from '@/src/messages'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
-import { CARD_FIELDS, emptyValues, formKind, formSections, fromItem, hasLineBreak, IDENTITY_FIELDS, isMultiline, keepLineBreaks, type CardField, type FormValues, type IdentityField } from '@/src/vault/fields'
+import { CARD_FIELDS, emptyValues, formKind, formSections, fromItem, hasLineBreak, IDENTITY_FIELDS, isMultiline, isNewItemType, keepLineBreaks, type CardField, type FormValues, type IdentityField } from '@/src/vault/fields'
 import { folderPath } from '@/src/vault/list'
 import { AdditionalFieldsEditor } from '../components/AdditionalFieldsEditor'
+import { AuthenticatorKeyField } from '../components/AuthenticatorKeyField'
 import { Button } from '../components/Button'
 import { Banner } from '../components/ErrorBanner'
 import { Icon } from '../components/Icon'
@@ -44,7 +45,7 @@ const isRetryable = (error: VaultWriteError | undefined) => !error || error.code
 type Partner = NonNullable<VaultWriteError['partners']>[number]
 
 /** The patch fields share-save sends to every copy. */
-const VALUE_FIELDS = ['key', 'login', 'additionalFields'] as const
+const VALUE_FIELDS = ['key', 'login', 'additionalFields', 'totp'] as const
 
 const unionOf = (earlier: Partner[], later: Partner[]) => [...earlier, ...later.filter((partner) => !earlier.some((known) => known.shareId === partner.shareId))]
 
@@ -57,9 +58,9 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
 	)
 }
 
-/** The user's default type, else `login`; never a passkey, which only a passkey ceremony creates. */
+/** The user's default type, else `login`; never one a new item may not have. */
 function defaultTypeId(snapshot: Unlocked): string {
-	const usable = snapshot.types.filter((type) => type.name !== 'passkey')
+	const usable = snapshot.types.filter((type) => isNewItemType(type.name))
 	return (usable.find((type) => type.name === snapshot.defaultSecretType) ?? usable.find((type) => type.name === 'login') ?? usable[0])?.id ?? ''
 }
 
@@ -127,13 +128,44 @@ function Fetched(props: Props & { id: string }) {
 
 const ALGORITHMS: TotpAlgorithm[] = ['SHA1', 'SHA256', 'SHA512']
 
+/** `without` and `valueKey`: what the failed attempt sent, so Try again sends it again while the values are the same. */
+interface SaveFailure {
+	error: VaultWriteError | undefined
+	without?: Partner[]
+	valueKey?: string
+}
+
+function OfflineNotice({ offline, onSync }: { offline: boolean; onSync: () => void }) {
+	if (!offline) return null
+	return (
+		<Banner tone="warning" role="status" action={<Button variant="link" onClick={onSync}>{i18n.t('vault.syncNow')}</Button>}>
+			{i18n.t('form.offline')}
+		</Banner>
+	)
+}
+
+/** The last save's failure; an edit reads a conflict as a stale copy. */
+function SaveFailureNotice({ failure, editing, actionFor, webAppUrl }: { failure: SaveFailure | null; editing: boolean; actionFor: (failure: SaveFailure) => ReactNode; webAppUrl: string }) {
+	if (!failure) return null
+	return (
+		<Banner tone="error" role="alert" action={actionFor(failure)}>
+			{writeErrorText(failure.error, editing ? 'edit' : 'item')}
+			{failure.error?.code === 'unverified' && <><br /><a href={webAppUrl} target="_blank" rel="noreferrer">{i18n.t('common.openWebApp')}</a></>}
+		</Banner>
+	)
+}
+
+/** A form-level error under a group of fields. */
+function GroupError({ text }: { text: string | null }) {
+	return text ? <p className="field__error">{text}</p> : null
+}
+
 function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { item?: EditableItem; initial: FormValues }) {
 	const shell = useShell()
 	const draft = useItemDraft(initial, snapshot.types, item && { id: item.typeId, name: item.typeName })
 	useUnsavedChangesGuard(draft.dirty)
 	const [busy, setBusy] = useState(false)
-	/** `without` and `valueKey`: what the failed attempt sent, so Try again sends it again while the values are the same. */
-	const [failure, setFailure] = useState<{ error: VaultWriteError | undefined; without?: Partner[]; valueKey?: string } | null>(null)
+	const [failure, setFailure] = useState<SaveFailure | null>(null)
 	const [picking, setPicking] = useState(false)
 	const formId = useId()
 	const { values, update } = draft
@@ -174,7 +206,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 		setFailure({ error: failed, without, valueKey })
 	}
 
-	function failureAction({ error, without, valueKey: failedKey }: NonNullable<typeof failure>): ReactNode {
+	function failureAction({ error, without, valueKey: failedKey }: SaveFailure): ReactNode {
 		const partners = error?.code === 'partner_unreachable' ? error.partners : undefined
 		if (partners?.length) {
 			const onClick = () => {
@@ -215,6 +247,20 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 	const secretLabel = draft.typeName === 'login' || draft.typeName === 'database' || !draft.typeName
 		? i18n.t('detail.password')
 		: rendered?.label ?? i18n.t('form.secret')
+	// Only a login takes a new key; any other type that holds one may only drop it.
+	const isLogin = draft.typeName === 'login'
+	const authKeyField = (isLogin || values.totpSaved) && (
+		<AuthenticatorKeyField
+			saved={values.totpSaved}
+			mode={values.authKeyMode}
+			removeOnly={!isLogin}
+			value={values.authKey}
+			error={error('authKey')}
+			leftOut={mode === 'clone' && item?.totpLeftOut}
+			onMode={(authKeyMode) => update({ authKeyMode, authKey: '' })}
+			onValue={(authKey) => update({ authKey })}
+		/>
+	)
 	const areaChange = (field: 'secret' | 'notes') => (value: string) => update({ [field]: keepLineBreaks(value, initial[field]) })
 	const secretField = (label: string, autoComplete: string, area = multiline, generate = false) => area
 		? <TextArea label={label} value={values.secret} onChange={areaChange('secret')} error={error('secret')} rows={6} mono concealed />
@@ -226,17 +272,8 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				event.preventDefault()
 				void save()
 			}}>
-				{shell.offline && (
-					<Banner tone="warning" role="status" action={<Button variant="link" onClick={shell.syncNow}>{i18n.t('vault.syncNow')}</Button>}>
-						{i18n.t('form.offline')}
-					</Banner>
-				)}
-				{failure && (
-					<Banner tone="error" role="alert" action={failureAction(failure)}>
-						{writeErrorText(failure.error, mode === 'edit' ? 'edit' : 'item')}
-						{failure.error?.code === 'unverified' && <><br /><a href={snapshot.webAppUrl} target="_blank" rel="noreferrer">{i18n.t('common.openWebApp')}</a></>}
-					</Banner>
-				)}
+				<OfflineNotice offline={shell.offline} onSync={shell.syncNow} />
+				<SaveFailureNotice failure={failure} editing={mode === 'edit'} actionFor={failureAction} webAppUrl={snapshot.webAppUrl} />
 				<FormSection title={i18n.t('form.itemDetails')}>
 					<TypeSelect types={typeOptions} value={values.typeId} onChange={(typeId) => update({ typeId })} disabled={mode === 'edit'} />
 					<TextField label={i18n.t('form.name')} value={values.name} onChange={(name) => update({ name })} error={error('name')} autoComplete="off" />
@@ -256,6 +293,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 					<FormSection title={i18n.t('detail.loginCredentials')}>
 						{sections.login && <TextField label={i18n.t('detail.username')} value={values.login} onChange={(login) => update({ login })} error={error('login')} autoComplete="off" verbatim action={{ icon: 'generate', label: i18n.t('generator.generateUsername'), onClick: (button) => shell.generate('username', (login) => update({ login }), button) }} />}
 						{secretField(secretLabel, 'new-password', isMultiline(draft.typeName) || multiline, true)}
+						{authKeyField}
 					</FormSection>
 				)}
 				{kind === 'totp' && (
@@ -280,7 +318,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 									{kind === 'identity' && IDENTITY_FIELDS.map((member) => (
 										<TextField key={member} label={identityLabels[member]} type={masked.has(member) ? 'password' : 'text'} value={values.identity[member]} onChange={identity(member)} error={error(`identity.${member}`)} autoComplete="off" inputMode={keyboards[member]} verbatim={member in keyboards} />
 									))}
-									{error('secret') && <p className="field__error">{error('secret')}</p>}
+									<GroupError text={error('secret')} />
 								</>
 							)
 							: secretField(secretLabel, 'off')}
@@ -288,13 +326,14 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				)}
 
 				<FormSection title={i18n.t('form.autofillOptions')}>
+					{kind !== 'credential' && authKeyField}
 					{kind !== 'credential' && sections.login && <TextField label={i18n.t('detail.username')} value={values.login} onChange={(login) => update({ login })} error={error('login')} autoComplete="off" verbatim />}
 					<TextField label={i18n.t('form.website')} value={values.url} onChange={(url) => update({ url })} error={error('url')} inputMode="url" autoComplete="off" verbatim />
 				</FormSection>
 				{sections.fields && (
 					<FormSection title={i18n.t('detail.additionalFields')}>
 						<AdditionalFieldsEditor fields={values.fields} errors={draft.errors} onChange={(fields) => update({ fields })} />
-						{error('additionalFields') && <p className="field__error">{error('additionalFields')}</p>}
+						<GroupError text={error('additionalFields')} />
 					</FormSection>
 				)}
 				{sections.notes && (

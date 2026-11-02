@@ -285,7 +285,7 @@ struct ItemEditView: View {
         // Load once: coming back to the form keeps what the user typed.
         guard base == nil else { return }
         if let itemId {
-            let opened = try? await model.repository.open(id: itemId)
+            let opened = try? await model.repository.openForEdit(id: itemId)
             if let opened = opened as? OpenResult.Opened {
                 item = opened.item
                 type = opened.item.type

@@ -48,7 +48,7 @@ describe('content script', () => {
 
 	it('fills on fill.execute and answers what it filled', () => {
 		start('<form><input id="u" name="username"><input id="p" type="password"><button>Log in</button></form>')
-		expect(ask({ kind: 'fill.execute', username: 'alice', password: 'hunter2', origin: location.origin })).toEqual({ filled: 'both' })
+		expect(ask({ kind: 'fill.execute', username: 'alice', password: 'hunter2', code: null, origin: location.origin })).toEqual({ filled: 'both', code: false })
 		expect((document.querySelector('#p') as HTMLInputElement).value).toBe('hunter2')
 	})
 
@@ -105,7 +105,7 @@ describe('content script', () => {
 		it('refuses inline.verify and an inline fill while no list is open', () => {
 			start('<form><input name="username"><input id="p" type="password"><button>Log in</button></form>')
 			expect(ask({ kind: 'inline.verify', key: KEY, input: { kind: 'pointer', at: Date.now() - 10_000, x: 1, y: 1 } })).toBe(false)
-			expect(ask(fill())).toEqual({ filled: 'none' })
+			expect(ask(fill())).toEqual({ filled: 'none', code: false })
 			expect((document.querySelector('#p') as HTMLInputElement).value).toBe('')
 		})
 
@@ -119,8 +119,8 @@ describe('content script', () => {
 			document.body.innerHTML = '<form><input id="u" name="username"><input id="p" type="password"><button>Log in</button></form>'
 			;(document.querySelector('#u') as HTMLInputElement).focus()
 			start(null)
-			await vi.waitFor(() => expect(sent).toContainEqual({ kind: 'inline.open' }))
-			await vi.waitFor(() => expect(ask(fill())).toEqual({ filled: 'both' }))
+			await vi.waitFor(() => expect(sent).toContainEqual({ kind: 'inline.open', mode: 'login' }))
+			await vi.waitFor(() => expect(ask(fill())).toEqual({ filled: 'both', code: false }))
 			expect((document.querySelector('#p') as HTMLInputElement).value).toBe('hunter2')
 			const host = [...document.documentElement.children].find((element) => element.localName === 'div')!
 			expect(host.getAttribute('style')).toContain(`height: ${inlineHeight(1)}px !important;`)
