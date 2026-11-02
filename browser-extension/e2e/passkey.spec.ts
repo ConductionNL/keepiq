@@ -184,13 +184,17 @@ test.describe('with a passkey on the login', () => {
 		await clickField(page, page.locator('input[name=username]'))
 		await expect.poll(() => listText(page)).toContain('Test site alice')
 		const row = () => listFrame(page)!.getByRole('option', { name: 'Test site, alice, passkey' })
+		// The page only leaves once its relying party verified the assertion; a failure stays on it.
 		await expect(async () => {
-			if (await result(page).getAttribute('data-result') === 'waiting') {
+			if (page.url().includes('/passkey-conditional.html')) {
+				expect(await result(page).getAttribute('data-result', { timeout: 1000 })).toBe('waiting')
 				const box = (await row().boundingBox({ timeout: 1000 }))!
 				await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 			}
-			await expect(result(page)).toHaveAttribute('data-result', 'signed-in', { timeout: 1000 })
+			await expect(page).toHaveURL(/\/signed-in\.html\?/, { timeout: 1000 })
 		}).toPass()
+		await expect(page.locator('#from')).toHaveText('You signed in with a passkey as alice. Counter 0, flags UP BE BS. Came from /passkey-conditional.')
+		expect(await page.evaluate(() => JSON.parse(localStorage.getItem('keepiq-test-site.passkeys')!))).toEqual([registered])
 		await expect.poll(() => listOpen(page)).toBe(false)
 	})
 
