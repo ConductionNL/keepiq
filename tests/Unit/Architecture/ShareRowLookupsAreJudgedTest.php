@@ -236,8 +236,9 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 */
 	private const TABLE_ALLOWED = [
 		'Service/ShareQuarantineScanner.php' => [
-			8,
-			'the scan itself reads every row, quarantined or not: the TABLE constant, its four reads and three log messages',
+			5,
+			'the scan itself judges every row, quarantined or not: the TABLE constant and its four uses, three reads and the '
+				.'update that marks a row quarantined',
 		],
 		'Service/ComplianceReportService.php' => [1, 'counts live rows for the compliance report; follows none'],
 		'Backup/BackupTableRegistry.php' => [1, 'backup and restore copy the table whole; a restore reopens the scan'],
@@ -1316,6 +1317,55 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	}//end resolve()
 
 	/**
+	 * The string literals that only make up a message: the first argument
+	 * of a PSR-3 log call (`->error(`, `->warning(`, …) or a `message:`
+	 * named argument. Context arrays and every other argument still count.
+	 *
+	 * @param list<PhpToken> $all All tokens
+	 *
+	 * @return array<int,true> Index in $all => true
+	 */
+	private function messageLiterals(array $all): array {
+		$sig = array_keys(array_filter($all, static fn (PhpToken $token): bool => $token->isIgnorable() === false));
+		$levels = ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'];
+		$literals = [];
+		foreach ($sig as $p => $k) {
+			$token = $all[$k];
+			if ($token->is(T_STRING) === false) {
+				continue;
+			}
+
+			$previous = $all[($sig[$p - 1] ?? -1)] ?? null;
+			$next = $all[($sig[$p + 1] ?? -1)] ?? null;
+			$logCall = (in_array(strtolower($token->text), $levels, true) === true && $previous?->is(self::OBJECT_OPERATORS) === true && $next?->text === '(');
+			$named = (strtolower($token->text) === 'message' && $next?->text === ':' && in_array($previous?->text, ['(', ','], true) === true);
+			if ($logCall === false && $named === false) {
+				continue;
+			}
+
+			$depth = 0;
+			for ($q = $p + 2; isset($sig[$q]) === true; $q++) {
+				$text = $all[$sig[$q]]->text;
+				if (in_array($text, ['(', '['], true) === true) {
+					$depth++;
+				} elseif (in_array($text, [')', ']'], true) === true) {
+					if ($depth === 0) {
+						break;
+					}
+
+					$depth--;
+				} elseif ($depth === 0 && $text === ',') {
+					break;
+				} elseif ($all[$sig[$q]]->is([T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE]) === true) {
+					$literals[$sig[$q]] = true;
+				}
+			}
+		}//end foreach
+
+		return $literals;
+	}//end messageLiterals()
+
+	/**
 	 * The line numbers in a source that match a pattern.
 	 *
 	 * @param string $pattern The pattern
@@ -1324,10 +1374,12 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 * @return list<int>
 	 */
 	private function linesMatching(string $pattern, string $source): array {
-		// Comments keep their line breaks but lose their text.
+		// Comments and log messages keep their line breaks but lose their text.
+		$all = PhpToken::tokenize($source);
+		$messages = $this->messageLiterals(all: $all);
 		$code = '';
-		foreach (PhpToken::tokenize($source) as $token) {
-			if ($token->is([T_COMMENT, T_DOC_COMMENT]) === true) {
+		foreach ($all as $k => $token) {
+			if ($token->is([T_COMMENT, T_DOC_COMMENT]) === true || isset($messages[$k]) === true) {
 				$code .= str_repeat("\n", substr_count($token->text, "\n"));
 				continue;
 			}
@@ -1599,6 +1651,22 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			actual: $this->linesMatching(
 				pattern: self::TABLE_PATTERN,
 				source: "<?php\n// keepiq_share_targets\n/** share_targets */\n# share_targets\n\$qb->from('keepiq_quarantined_share_targets_x');"
+			)
+		);
+
+		// A log message naming the table does not count, so a new read cannot
+		// take the place of an edited message; the log call's context does.
+		$this->assertSame(
+			expected: [4, 5],
+			actual: $this->linesMatching(
+				pattern: self::TABLE_PATTERN,
+				source: implode("\n", [
+					'<?php',
+					'$this->logger->error(\'keepiq_share_targets row \'.$id.\' held back\', [\'app\' => \'keepiq\']);',
+					'$this->report(output: $o, message: "quarantined keepiq_share_targets row {$id}");',
+					'$qb->from(\'keepiq_share_targets\');',
+					'$this->logger->warning(\'moved\', [\'table\' => \'keepiq_share_targets\']);',
+				])
 			)
 		);
 
