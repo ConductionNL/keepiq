@@ -349,5 +349,11 @@
 	},
 	"broken host": {
 		"error": "Error: Malformed otpauth URI"
+	},
+	"bad percent label and unsupported algorithm": {
+		"error": "Error: Unsupported TOTP algorithm: MD5"
+	},
+	"bad percent label and invalid secret": {
+		"error": "Error: Invalid base32 character"
 	}
 }

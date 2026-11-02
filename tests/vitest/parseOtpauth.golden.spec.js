@@ -69,6 +69,8 @@ const INPUTS = {
 	'host with port': `otpauth://totp:99/A:b?secret=${KEY}`,
 	'blank issuer parameter, no colon': `${URI}alice?secret=${KEY}&issuer=`,
 	'broken host': 'otpauth://[::1/A:b?secret=JBSWY3DPEHPK3PXP',
+	'bad percent label and unsupported algorithm': `${URI}Acme%E0%A4%A:alice?secret=${KEY}&algorithm=MD5`,
+	'bad percent label and invalid secret': `${URI}Acme%E0%A4%A:alice?secret=NOT-BASE32`,
 }
 
 /**

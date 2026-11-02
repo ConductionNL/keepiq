@@ -38,6 +38,18 @@
 	"share save forbidden, fromShareSave \"true\"": {
 		"text": null
 	},
+	"ShareSaveError incomplete with partner upgrade data": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"ShareSaveError partner_unreachable with partner upgrade data": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <9.9.9> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"ShareSaveError other with partner upgrade data": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <9.9.9> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"ShareSaveError partner_upgrade_required, no response": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
 	"ShareSaveError stale": {
 		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
 	},
