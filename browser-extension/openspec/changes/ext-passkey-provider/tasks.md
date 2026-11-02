@@ -61,7 +61,7 @@
 
 - [ ] 6.1 Add `test-site/passkey.html` (register and sign in against an in-page relying party that verifies with WebCrypto and shows the counter), `passkey-conditional.html` and `passkey-iframe.html` (a cross-origin frame), linked from `test-site/index.html`; add e2e tests in `e2e/` for save to a new and an existing login, sign-in, cancel and the fallback reaching a CDP virtual authenticator
   - `npm run test:e2e` passes
-- [ ] 6.2 Update ARCHITECTURE.md (entrypoints, modules, messages, storage, a Passkeys flow), SECURITY.md (where data lives, pages and messages), ADR-002 (the page script, the `passkeys` field, its saves to copies) and ADR-003 (the `passkeys` field on create and share-save); `../docs/browser-extension/using.md` and `privacy.md` where they describe what the extension does on pages
+- [x] 6.2 Update ARCHITECTURE.md (entrypoints, modules, messages, storage, a Passkeys flow), SECURITY.md (where data lives, pages and messages), ADR-002 (the page script, the `passkeys` field, its saves to copies) and ADR-003 (the `passkeys` field on create and share-save); `../docs/browser-extension/using.md` and `privacy.md` where they describe what the extension does on pages
   - Every comment and doc line follows CLAUDE.md § Comments & docs
 - [ ] 6.3 Walk every scenario in `specs/` on Chrome (`npm run dev`) and Firefox (`npm run dev:firefox`) on the test site, with the vault locked and unlocked, a stopped MV3 worker and a Keepiq at 0.3.12
   - Every scenario holds on both browsers, or the difference is in design.md
