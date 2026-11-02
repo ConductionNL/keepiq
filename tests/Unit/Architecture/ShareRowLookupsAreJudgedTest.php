@@ -12,7 +12,10 @@
  *   call_user_func) or a dynamic call is reported too;
  * - every place naming the share-targets table outside the three mappers
  *   and the migrations: quoted, in raw `*PREFIX*` SQL, or through a
- *   constant that holds the name (comments do not count).
+ *   constant that holds the name, also as part of a concatenation or as an
+ *   alias of another such constant. Comments and log messages do not count.
+ *   Not caught: a name split across concatenated literals, or held in a
+ *   property or variable.
  *
  * It fails closed. A finder name no other class in lib/ declares is reported
  * on any receiver. A name other classes share (findById and the like, see
@@ -238,7 +241,15 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		],
 		'Service/ComplianceReportService.php' => [1, 'counts live rows for the compliance report; follows none'],
 		'Backup/BackupTableRegistry.php' => [1, 'backup and restore copy the table whole; a restore reopens the scan'],
-		'Backup/RestoreService.php' => [1, 'reads the row count of the archive file tables/share_targets.jsonl to reopen the scan; reads no row'],
+		'Backup/RestoreService.php' => [
+			2,
+			'the table list (BackupTableRegistry::TABLES) the restore replaces whole, and the row count of the archive file '
+				.'tables/share_targets.jsonl, read to reopen the scan; follows no row',
+		],
+		'Backup/ArchiveReader.php' => [1, 'verify(): iterates the table list (BackupTableRegistry::TABLES) to check an archive; reads no live row'],
+		'Backup/ArchiveWriter.php' => [1, 'iterates the table list (BackupTableRegistry::TABLES) to copy every table whole into a backup'],
+		'Backup/SchemaFingerprint.php' => [1, 'hashes the table list (BackupTableRegistry::TABLES); reads no row'],
+		'Backup/TableStore.php' => [1, 'replaceAll(): iterates the table list (BackupTableRegistry::TABLES) to replace every table whole; the restore reopens the scan'],
 	];
 
 	/**
@@ -410,32 +421,61 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	}//end significant()
 
 	/**
-	 * The constants a file declares whose value names the share-targets table.
+	 * The constants a file declares whose value names the share-targets
+	 * table: a literal holding the name (also as one part of a concatenation)
+	 * or another such constant of the same class (`const ALIAS = self::TABLE`).
 	 *
 	 * @param list<PhpToken> $tokens The significant tokens
 	 *
 	 * @return list<string>
 	 */
 	private function tableConstantsIn(array $tokens): array {
-		$names = [];
+		$values = [];
 		foreach ($tokens as $i => $token) {
 			if ($token->is(T_CONST) === false) {
 				continue;
 			}
 
-			// Skip a typed constant's type, up to the name before `=`.
-			$j = ($i + 1);
-			while (($tokens[$j + 1] ?? null) !== null && in_array($tokens[$j + 1]->text, ['=', ';'], true) === false) {
-				$j++;
-			}
-
-			$value = ($tokens[$j + 2] ?? null);
-			if ($tokens[$j]->is(T_STRING) === true && $value?->is(T_CONSTANT_ENCAPSED_STRING) === true
-				&& preg_match(self::TABLE_PATTERN, $value->text) === 1
-			) {
-				$names[] = $tokens[$j]->text;
+			// One `const` may declare several: NAME = value, NAME = value;
+			$name = null;
+			$depth = 0;
+			for ($j = $i + 1; ($tokens[$j] ?? null) !== null && $tokens[$j]->text !== ';'; $j++) {
+				$text = $tokens[$j]->text;
+				if (in_array($text, ['(', '['], true) === true) {
+					$depth++;
+				} elseif (in_array($text, [')', ']'], true) === true) {
+					$depth--;
+				} elseif ($depth === 0 && $text === '=' && $tokens[$j - 1]->is(T_STRING) === true) {
+					$name = $tokens[$j - 1]->text;
+					$values[$name] = [];
+				} elseif ($depth === 0 && $text === ',') {
+					$name = null;
+				} elseif ($name !== null) {
+					$values[$name][] = $j;
+				}
 			}
 		}
+
+		$names = [];
+		do {
+			$found = false;
+			foreach ($values as $name => $indexes) {
+				if (in_array($name, $names, true) === true) {
+					continue;
+				}
+
+				foreach ($indexes as $j) {
+					$literal = ($tokens[$j]->is(T_CONSTANT_ENCAPSED_STRING) === true && preg_match(self::TABLE_PATTERN, $tokens[$j]->text) === 1);
+					$alias = ($tokens[$j]->is(T_STRING) === true && in_array($tokens[$j]->text, $names, true) === true
+						&& ($tokens[$j - 1] ?? null)?->is(T_DOUBLE_COLON) === true);
+					if ($literal === true || $alias === true) {
+						$names[] = $name;
+						$found = true;
+						break;
+					}
+				}
+			}
+		} while ($found === true);
 
 		return $names;
 	}//end tableConstantsIn()
@@ -466,7 +506,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 			$receiver = strtolower(substr((string)strrchr('\\'.$tokens[$i - 2]->text, '\\'), 1));
 			$names = ($constants[$receiver] ?? []);
-			if (in_array($receiver, ['self', 'static', $self], true) === true) {
+			if (in_array($receiver, ['self', 'static', '$this', $self], true) === true) {
 				$names = array_merge($names, $own);
 			}
 
@@ -1563,7 +1603,8 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		);
 
 		// A constant holding the table name counts on every read of it, in its
-		// own class and through its class name elsewhere.
+		// own class (`self::`, `static::`, `$this::`) and through its class name
+		// elsewhere; so does a constant aliasing it or concatenating the name.
 		$scanner = implode("\n", [
 			'<?php',
 			'class Scan {',
@@ -1571,9 +1612,13 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			' public function a($qb) { $qb->from(self::TABLE); }',
 			' public function b($qb) { $qb->from(static::TABLE)->join(Scan::TABLE); }',
 			' public function c() { return self::TABLE_COUNT; }',
+			' private const ALIAS = self::TABLE, OTHER = \'x\';',
+			' public function d($qb) { $qb->from($this::TABLE)->join(self::ALIAS)->join(self::OTHER); }',
+			' private const JOINED = \'*PREFIX*\'.\'keepiq_share_targets\';',
+			' public function e($qb) { $qb->from(self::JOINED); }',
 			'}',
 		]);
-		$this->assertSame(expected: [3, 4, 5, 5], actual: $this->tableLinesIn(source: $scanner));
+		$this->assertSame(expected: [3, 4, 5, 5, 7, 8, 8, 9, 10], actual: $this->tableLinesIn(source: $scanner));
 		$this->assertSame(
 			expected: [2],
 			actual: $this->tableLinesIn(
