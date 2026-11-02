@@ -12,14 +12,19 @@
 		<h1>Passkey</h1>
 		<p class="tests">Register a passkey, then sign in with it. The page checks both as a site's server would, with WebCrypto: the challenge, origin, RP ID hash, flags, signature and counter. Keepiq's window offers to save or use a passkey for <code class="host">localhost</code>, or hands the request to the browser.</p>
 		<form id="passkey">
-			<label>User name <input name="userName" type="text" value="alice" autocomplete="off"></label>
+			<label>User name <input name="userName" type="text" value="alice" autocomplete="off" aria-describedby="user-name-hint"></label>
+			<p class="hint" id="user-name-hint">The account name the site passes to the passkey. A real site fills this in from your account; this page has no accounts, so it asks. Keepiq shows it so you can tell passkeys for one site apart.</p>
 			<label>User verification
-				<select name="userVerification">
+				<select name="userVerification" aria-describedby="user-verification-hint">
 					<option>preferred</option>
 					<option>required</option>
 					<option>discouraged</option>
 				</select>
 			</label>
+			<p class="hint" id="user-verification-hint">How strongly the site wants proof that it is you, on top of having the device. The result shows as the UV flag after a request.<br>
+				<b>preferred:</b> Keepiq signs without asking; UV is set only if you unlocked Keepiq during this request.<br>
+				<b>required:</b> Keepiq asks you to confirm with your master password or PIN, then signs with UV set.<br>
+				<b>discouraged:</b> Keepiq never asks; UV is set only if you unlocked during this request.</p>
 			<button type="button" id="register">Register a passkey</button>
 			<button type="button" id="sign-in">Sign in with a passkey</button>
 			<button type="button" id="abort">Abort the request</button>
