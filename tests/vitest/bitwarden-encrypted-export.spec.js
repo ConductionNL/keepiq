@@ -59,6 +59,34 @@ describe('parseBitwardenJson with an encrypted export', () => {
 		)
 	})
 
+	it.each([
+		['the string "true"', 'true'],
+		['1', 1],
+		['an object', {}],
+	])('refuses an export whose encrypted flag is %s', (_, flag) => {
+		expect(() =>
+			parseBitwardenJson({ ...accountRestricted, encrypted: flag }),
+		).toThrow(REFUSAL)
+	})
+
+	it.each([
+		['0', 0],
+		['an empty string', ''],
+		['null', null],
+	])('still imports an export whose encrypted flag is %s', (_, flag) => {
+		const rows = parseBitwardenJson({
+			encrypted: flag,
+			items: [
+				{
+					type: 1,
+					name: 'GitHub',
+					login: { username: 'me', password: 'pw' },
+				},
+			],
+		})
+		expect(rows.map((row) => row.name)).toEqual(['GitHub'])
+	})
+
 	it('still imports an unencrypted export that says encrypted: false', () => {
 		const rows = parseBitwardenJson({
 			encrypted: false,

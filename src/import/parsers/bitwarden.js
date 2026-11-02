@@ -94,7 +94,7 @@ export function parseBitwardenJson(input) {
 	const data = typeof input === 'string' ? JSON.parse(input) : input
 	// Encrypted exports (account-restricted or password-protected) hold
 	// cipher strings in place of names and values.
-	if (data && data.encrypted === true) {
+	if (data && data.encrypted) {
 		throw new Error(
 			'Encrypted Bitwarden exports cannot be imported. Export the vault again as unencrypted JSON and import that file.',
 		)
