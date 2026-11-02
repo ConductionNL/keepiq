@@ -448,6 +448,7 @@ settings:
   autoCopyTotpHint: Als een login een verificatiecode heeft, wordt die naar je klembord gekopieerd wanneer je de login automatisch invult.
   askToAdd: Vragen om login toe te voegen
   askToUpdate: Vragen om bestaande login bij te werken
+  askPasskeys: Vragen om passkeys op te slaan en te gebruiken
   excludedDomains: Uitgesloten domeinen
   addCurrentSite: Huidige site toevoegen
   domain: Domein
@@ -621,6 +622,9 @@ inlineList:
   label: Keepiq-logins voor {host}
   row: "{name}, {username}"
   noMatch: Geen logins voor {host}
+  passkeyRow: "{name}, {username}, passkey"
+  passkeyRowNoUser: "{name}, passkey"
+  noMatchPasskeys: Geen logins of passkeys voor {host}
   locked: Keepiq is vergrendeld
   unlock: Ontgrendelen
   insecureQuestion: Toch invullen op deze onbeveiligde site?
@@ -632,6 +636,10 @@ inlineList:
       1: 1 Keepiq-login. Druk op pijl-omlaag om te kiezen.
       n: $1 Keepiq-logins. Druk op pijl-omlaag om te kiezen.
     noMatch: Geen Keepiq-logins voor {host}
+    countPasskeys:
+      1: 1 Keepiq-login of -passkey. Druk op pijl-omlaag om te kiezen.
+      n: $1 Keepiq-logins en -passkeys. Druk op pijl-omlaag om te kiezen.
+    noMatchPasskeys: Geen Keepiq-logins of -passkeys voor {host}
     locked: Keepiq is vergrendeld. Druk op pijl-omlaag om te ontgrendelen.
   code:
     frameTitle: Keepiq-verificatiecodes

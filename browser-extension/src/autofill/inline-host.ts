@@ -8,7 +8,7 @@ import {
 	type BackgroundToContent, type ContentToBackground, type ContentToInlineList, type InlineMode, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement, type OpenList } from './execute'
-import { isQualifying } from './fields'
+import { isQualifying, isWebauthnField } from './fields'
 import { createFrameHost, type FrameHost } from './frame-host'
 import { composedAncestors, drawnUntouched, GUARD_MS, hits, modalOf, untouched } from './visibility'
 
@@ -303,14 +303,17 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	function maybeOpen(field: HTMLInputElement, how: 'focus' | 'click'): void {
 		if (!allowed || open?.field === field || pending?.field === field) return
 		if (how === 'focus' && field.value !== '') return
-		const mode = isQualifying(field)
+		const qualifying = isQualifying(field)
+		// The background opens a list on such a field only while the frame has a conditional passkey request pending.
+		const webauthn = qualifying === null && isWebauthnField(field)
+		const mode = qualifying ?? (webauthn ? 'login' : null)
 		if (!mode) return
 		close()
 		// Whatever the list will show, it needs room for one row.
 		if (!placement(field, INLINE_MIN_HEIGHT_PX)) return
 		const token = {}
 		pending = { field, token }
-		void request({ kind: 'inline.open', mode }).then((reply) => {
+		void request({ kind: 'inline.open', mode, ...(webauthn && { webauthn }) }).then((reply) => {
 			const { key, height } = (reply ?? {}) as { key?: unknown; height?: unknown }
 			if (typeof key !== 'string') {
 				if (pending?.token === token) pending = null

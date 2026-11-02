@@ -382,7 +382,7 @@ describe('account settings', () => {
 			maxIdleMinutes: null,
 			exportDisabled: false,
 			pin: false,
-			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'],
+			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys'],
 			shortcut: null,
 			serverUrl: 'https://cloud.example.org',
 			webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',

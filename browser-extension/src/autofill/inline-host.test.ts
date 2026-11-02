@@ -256,6 +256,23 @@ describe('opening', () => {
 		expect(host().frame.title).toBe('Keepiq verification codes')
 	})
 
+	it('asks for a list on a field that qualifies only by its webauthn token, flagged so the background opens it only for a pending conditional request', async () => {
+		start('<div><input id="u" name="q" autocomplete="WebAuthn"></div><input id="p" name="search">')
+		$('#p').focus()
+		await settle()
+		expect(request).not.toHaveBeenCalled()
+		await openOn('#u')
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'login', webauthn: true })
+		expect(isOpen()).toBe(true)
+	})
+
+	it('asks for a plain login list on a login field that also carries the webauthn token', async () => {
+		start('<form><input id="u" name="username" autocomplete="username webauthn"><input id="p" type="password"><button>Log in</button></form>')
+		$('#u').focus()
+		await settle()
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'login' })
+	})
+
 	it('opens on a login form with autocomplete off', async () => {
 		start('<form autocomplete="off"><input id="u" name="username" autocomplete="off"><input id="p" type="password"><button>Log in</button></form>')
 		await openOn('#u')

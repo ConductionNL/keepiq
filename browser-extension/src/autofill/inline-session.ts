@@ -11,8 +11,10 @@ import { rsaDecrypt } from '@/src/crypto'
 import {
 	INLINE_MODES, inlineClampHeight, inlineHeight,
 	type BackgroundToContent, type InlineClosed, type InlineListToBackground, type InlineMode, type InlineOpen, type InlineOpenReply, type InlinePickReply, type InlineRow,
-	type InlineStateReply, type PickInput,
+	type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
+import { conditionalCeremony, pickFromList, type Ceremony } from '@/src/passkey/ceremony'
+import { matchPasskeys } from '@/src/passkey/match'
 import { createKeyedQueue } from '@/src/queue'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, sessionValues } from '@/src/vault/key-store'
@@ -32,6 +34,8 @@ export interface InlineSession {
 	/** `code`: the list is open on a code field and offers authenticator items. */
 	mode: InlineMode
 	itemIds: string[]
+	/** The conditional passkey request the last `inline.state` showed, and the passkeys it offered as login and credential ids. */
+	passkeys?: { ceremonyId: string; offered: Array<[string, string]> }
 	openedAt: number
 }
 
@@ -71,9 +75,19 @@ const isWeb = (url: string) => /^https?:\/\//i.test(url)
 const matchingFor = (mode: InlineMode, accountId: string, frameUrl: string) =>
 	(mode === 'code' ? matchingCodes : matchingLogins)(accountId, frameUrl)
 
+/** A login list's pending conditional passkey request in its frame (ext-passkey-provider), or null. */
+const conditionalFor = (mode: InlineMode, tabId: number, frameId: number, accountId: string, frameUrl: string) =>
+	(mode === 'login' ? conditionalCeremony(tabId, frameId, accountId, frameUrl) : Promise.resolve(null))
+
+async function passkeysFor(accountId: string, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'>): Promise<PasskeyRow[]> {
+	const key = await getKey(accountId)
+	return key ? matchPasskeys(accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds }) : []
+}
+
 /**
  * `inline.open` from a content script, routed by sender page. Showing the list is no interaction, so no `touch()`.
- * The height counts the matches without decrypting any; `inline.state` decides again what the list shows.
+ * The height counts the logins without decrypting any, and the passkeys of a pending conditional request, which takes
+ * decrypting their logins' `passkeys`; `inline.state` decides again what the list shows.
  */
 export async function openSession(message: InlineOpen, sender: Browser.runtime.MessageSender): Promise<InlineOpenReply> {
 	const mode: InlineMode = INLINE_MODES.includes(message.mode) ? message.mode : 'login'
@@ -88,7 +102,12 @@ export async function openSession(message: InlineOpen, sender: Browser.runtime.M
 	const status = account ? await accountStatus(account) : 'logged_out'
 	if (!account || status === 'logged_out') return null
 	if (!(await readSettings(account.id)).inlineSuggestions) return null
-	const height = inlineHeight(status === 'unlocked' ? (await matchingFor(mode, account.id, frameUrl)).rows.length : 1)
+	const ceremony = await conditionalFor(mode, tabId, frameId, account.id, frameUrl)
+	if (message.webauthn === true && !ceremony) return null
+	const count = status === 'unlocked'
+		? (await matchingFor(mode, account.id, frameUrl)).rows.length + (ceremony ? (await passkeysFor(account.id, ceremony)).length : 0)
+		: 1
+	const height = inlineHeight(count)
 	const session: InlineSession = { key: newKey(), accountId: account.id, frameId, frameUrl, listFrameId: null, mode, itemIds: [], openedAt: Date.now() }
 	// Another frame's open may have written its session since the drop above; its list closes too.
 	await queued(String(tabId), async () => {
@@ -154,6 +173,7 @@ async function state(tabId: number, session: InlineSession): Promise<InlineState
 	const { theme } = await readGlobalSettings()
 	const { mode } = session
 	const key = status === 'unlocked' ? await getKey(session.accountId) : null
+	// Locked, nothing says whether a passkey request is pending or what it would offer.
 	if (!key) return { state: 'locked', mode, host, rows: [], theme }
 	const { rows: matched } = await matchingFor(mode, session.accountId, session.frameUrl)
 	const now = Date.now()
@@ -161,11 +181,17 @@ async function state(tabId: number, session: InlineSession): Promise<InlineState
 		id: row.id, name: row.name, username: await decryptLogin(row.login, key),
 		...(mode === 'code' && { code: await inlineCode(row, key, now) }),
 	})))
+	const ceremony = await conditionalFor(mode, tabId, session.frameId, session.accountId, session.frameUrl)
+	const passkeys = ceremony ? await passkeysFor(session.accountId, ceremony) : null
 	await queued(String(tabId), async () => {
 		const current = await read(tabId)
-		if (current?.key === session.key) await write(tabId, { ...current, itemIds: rows.map((row) => row.id) })
+		if (current?.key !== session.key) return
+		const next: InlineSession = { ...current, itemIds: rows.map((row) => row.id) }
+		if (ceremony && passkeys) next.passkeys = { ceremonyId: ceremony.id, offered: passkeys.map((row) => [row.itemId, row.credentialId]) }
+		else delete next.passkeys
+		await write(tabId, next)
 	})
-	return { state: 'unlocked', mode, host, rows, theme }
+	return { state: 'unlocked', mode, host, rows, ...(passkeys && { passkeys }), theme }
 }
 
 const isPickInput = (input: unknown): input is PickInput => {
@@ -173,13 +199,29 @@ const isPickInput = (input: unknown): input is PickInput => {
 	return (value?.kind === 'pointer' || value?.kind === 'key') && [value.at, value.x, value.y].every((n) => typeof n === 'number' && Number.isFinite(n))
 }
 
+/** A passkey row passes only as offered by the last `inline.state`, for the conditional request still pending. */
+async function pickPasskey(tabId: number, session: InlineSession, itemId: string, credentialId: string, input: PickInput, refuse: (refused: 'locked' | 'stale') => Promise<InlinePickReply>): Promise<InlinePickReply> {
+	const offered = session.passkeys
+	if (!offered?.offered.some(([id, credential]) => id === itemId && credential === credentialId)) return refuse('stale')
+	const ceremony = await conditionalCeremony(tabId, session.frameId, session.accountId, session.frameUrl)
+	if (ceremony?.id !== offered.ceremonyId) return refuse('stale')
+	if (await toHost(tabId, session, { kind: 'inline.verify', key: session.key, input }) !== true) return { refused: 'not_visible' }
+	await touch()
+	const outcome = await pickFromList(tabId, ceremony.id, itemId, credentialId)
+	if (outcome === 'locked' || outcome === 'stale') return refuse(outcome)
+	await drop(tabId, { key: session.key, refocus: outcome === 'signed' })
+	return { passkey: outcome }
+}
+
 async function pick(tabId: number, session: InlineSession, message: Extract<InlineListToBackground, { kind: 'inline.pick' }>): Promise<InlinePickReply> {
 	if (typeof message.itemId !== 'string' || !isPickInput(message.input)) return null
+	if (message.credentialId !== undefined && typeof message.credentialId !== 'string') return null
 	const refuse = async (refused: 'locked' | 'stale'): Promise<InlinePickReply> => {
 		await drop(tabId, { key: session.key, refocus: true })
 		return { refused }
 	}
 	if ((await sessionAccount(session)) !== 'unlocked') return refuse('locked')
+	if (message.credentialId !== undefined) return pickPasskey(tabId, session, message.itemId, message.credentialId, message.input, refuse)
 	const { rows } = await matchingFor(session.mode, session.accountId, session.frameUrl)
 	if (!session.itemIds.includes(message.itemId) || !rows.some((row) => row.id === message.itemId)) return refuse('stale')
 	const verify: BackgroundToContent = { kind: 'inline.verify', key: session.key, input: message.input }

@@ -218,11 +218,15 @@ export type FillExecuteReply = { filled: FillOutcome; code: boolean }
 /** What the list shows: logins, or authenticator items on a code field. */
 export type InlineMode = 'login' | 'code'
 export const INLINE_MODES: readonly InlineMode[] = ['login', 'code']
-/** Request/response. Without a valid `mode` it reads as `login`. */
-export type InlineOpen = { kind: 'inline.open'; mode: InlineMode }
 /**
- * `null`: no list, for no logged-in account, `inlineSuggestions` off or a page that is not http(s). `height`: the
- * list's, by `inlineHeight`, which the page can read from the host anyway.
+ * Request/response. Without a valid `mode` it reads as `login`. `webauthn`: a field that qualifies only by its
+ * `autocomplete` `webauthn` token, which opens a list only while a conditional passkey request of the frame is pending.
+ */
+export type InlineOpen = { kind: 'inline.open'; mode: InlineMode; webauthn?: boolean }
+/**
+ * `null`: no list, for no logged-in account, `inlineSuggestions` off, a page that is not http(s) or a `webauthn`
+ * field without a pending conditional request. `height`: the list's, by `inlineHeight`, which the page can read from
+ * the host anyway; passkey rows count as logins do.
  */
 export type InlineOpenReply = { key: string; height: number } | null
 /** Fire-and-forget. `key`: the closed list's, so it never drops a newer session. */
@@ -288,7 +292,8 @@ export interface PickInput {
 /** List page → background. Tab and frame come from `sender`. */
 export type InlineListToBackground =
 	| { kind: 'inline.state'; key: string }
-	| { kind: 'inline.pick'; key: string; itemId: string; input: PickInput; confirmedInsecure?: boolean }
+	/** With `credentialId`, a passkey row: `itemId` is its login's. */
+	| { kind: 'inline.pick'; key: string; itemId: string; credentialId?: string; input: PickInput; confirmedInsecure?: boolean }
 	/** These four are fire-and-forget. */
 	| { kind: 'inline.refocus'; key: string }
 	| { kind: 'inline.close'; key: string; refocus: boolean }
@@ -296,13 +301,18 @@ export type InlineListToBackground =
 	/** `height`: what the list's content needs, for the background to pass on to the host. */
 	| { kind: 'inline.resize'; key: string; height: number }
 
-/** `null`: refused, for a wrong key, tab or frame. `host`: of the field's frame. */
-export type InlineStateReply = { state: 'locked' | 'unlocked'; mode: InlineMode; host: string; rows: InlineRow[]; theme: Theme } | null
 /**
- * `filled`, `locked` and `stale` come with the background closing the list; after `needsInsecureConfirm` and
- * `not_visible` it stays open, for the question or the explanation. `null` for a wrong key, tab or frame.
+ * `null`: refused, for a wrong key, tab or frame. `host`: of the field's frame. `passkeys`: only while unlocked and a
+ * conditional passkey request of the frame is pending, the passkeys it offers, shown above the logins.
  */
-export type InlinePickReply = { filled: FillOutcome; code: boolean } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | null
+export type InlineStateReply = { state: 'locked' | 'unlocked'; mode: InlineMode; host: string; rows: InlineRow[]; passkeys?: PasskeyRow[]; theme: Theme } | null
+/**
+ * `filled`, `locked`, `stale` and `passkey` come with the background closing the list; after `needsInsecureConfirm` and
+ * `not_visible` it stays open, for the question or the explanation. `passkey`: `signed`, or `window` when the passkey
+ * window opened on verification or a failed counter save. `null` for a wrong key, tab or frame.
+ */
+export type InlinePickReply =
+	| { filled: FillOutcome; code: boolean } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | { passkey: 'signed' | 'window' } | null
 
 export const INLINE_LIST_KINDS = kindSet<InlineListToBackground['kind']>({
 	'inline.state': true, 'inline.pick': true, 'inline.refocus': true, 'inline.close': true, 'inline.unlock': true, 'inline.resize': true,
@@ -513,7 +523,7 @@ export const POPUP_MESSAGE_KINDS = kindSet<PopupToBackground['kind']>({
 export type PopupTab = 'vault' | 'generator' | 'send' | 'settings'
 
 /** Autofill behaviours ext-autofill delivers; an entry for one not yet delivered shows "Coming later". */
-export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts'
+export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts' | 'passkeys'
 
 /** Here rather than in the settings module, so the popup can list them without its storage code. */
 export const URI_MATCHES = ['baseDomain', 'host', 'startsWith', 'exact', 'regex', 'never'] as const

@@ -1,7 +1,7 @@
 import { i18n } from '#i18n'
 import {
 	INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MIN_HEIGHT_PX, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
-	type ContentToInlineList, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow, type InlineStateReply, type PickInput,
+	type ContentToInlineList, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow, type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import { trackVisibility } from '@/src/autofill/visibility-tracker'
@@ -11,6 +11,13 @@ import { applyTheme, followMirror, mirroredTheme } from '../popup/theme'
 const ANNOUNCE_MS = 250
 
 type State = NonNullable<InlineStateReply>
+/** A shown row; with `credentialId` a passkey, whose `id` is its login's. */
+type Row = InlineRow & { credentialId?: string }
+
+const isPasskeyRow = (row: unknown): row is PasskeyRow => {
+	const r = row as Partial<PasskeyRow> | null
+	return typeof r === 'object' && r !== null && [r.itemId, r.credentialId, r.name, r.userName].every((value) => typeof value === 'string')
+}
 
 const isCode = (code: unknown): code is InlineCode => {
 	const c = code as Partial<InlineCode> | null
@@ -28,7 +35,14 @@ function isState(reply: unknown): reply is State {
 		&& Array.isArray(r.rows)
 		&& r.rows.every((row) => typeof row?.id === 'string' && typeof row.name === 'string' && (row.username === null || typeof row.username === 'string')
 			&& (r.mode === 'code' ? isCode(row.code) : row.code === undefined))
+		&& (r.passkeys === undefined || (r.state === 'unlocked' && r.mode === 'login' && Array.isArray(r.passkeys) && r.passkeys.every(isPasskeyRow)))
 }
+
+/** Passkeys above the logins (spec `inline-list`, Passkeys in the list during a conditional request). */
+const shownRows = ({ rows, passkeys = [] }: State): Row[] => [
+	...passkeys.map((passkey) => ({ id: passkey.itemId, name: passkey.name, username: passkey.userName || null, credentialId: passkey.credentialId })),
+	...rows,
+]
 
 /** The texts that differ between the login list and the code list. */
 function texts(mode: InlineMode) {
@@ -79,21 +93,27 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Reco
 	return node
 }
 
-/** A globe for a login, a clock for an authenticator item. */
-function rowIcon(mode: InlineMode): SVGSVGElement {
+/** A globe for a login, a clock for an authenticator item, a key for a passkey. */
+function rowIcon(kind: InlineMode | 'passkey'): SVGSVGElement {
 	const ns = 'http://www.w3.org/2000/svg'
 	const svg = document.createElementNS(ns, 'svg')
 	for (const [name, value] of Object.entries({ class: 'row__icon', width: '32', height: '32', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'aria-hidden': 'true' })) {
 		svg.setAttribute(name, value)
 	}
 	const circle = document.createElementNS(ns, 'circle')
-	circle.setAttribute('cx', '12')
-	circle.setAttribute('cy', '12')
-	circle.setAttribute('r', '9')
+	const [cx, cy, r] = kind === 'passkey' ? ['8', '15', '4'] : ['12', '12', '9']
+	circle.setAttribute('cx', cx)
+	circle.setAttribute('cy', cy)
+	circle.setAttribute('r', r)
 	const path = document.createElementNS(ns, 'path')
-	path.setAttribute('d', mode === 'code' ? 'M12 7v5l3 2' : 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18')
+	path.setAttribute('d', kind === 'passkey' ? 'M10.8 12.2 20 3M17 6l3 3M14.5 8.5l2 2' : kind === 'code' ? 'M12 7v5l3 2' : 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18')
 	svg.append(circle, path)
 	return svg
+}
+
+function optionLabel(row: Row): string {
+	if (row.credentialId !== undefined) return row.username ? i18n.t('inlineList.passkeyRow', { name: row.name, username: row.username }) : i18n.t('inlineList.passkeyRowNoUser', { name: row.name })
+	return row.username ? i18n.t('inlineList.row', { name: row.name, username: row.username }) : row.name
 }
 
 const SIZES = { '--row': INLINE_ROW_PX, '--gap': INLINE_GAP_PX, '--inset': INLINE_INSET_PX, '--radius': INLINE_RADIUS_PX }
@@ -119,9 +139,9 @@ export function startInlineList(): () => void {
 	let press: { target: Element; input: PickInput } | null = null
 	/** Set while a pick is pending, and for good once the background answered it, as it then closes the list. */
 	let pickLocked = false
-	let question: { row: InlineRow; text: HTMLElement; cancel: HTMLButtonElement; fill: HTMLButtonElement } | null = null
+	let question: { row: Row; text: HTMLElement; cancel: HTMLButtonElement; fill: HTMLButtonElement } | null = null
 	let entry: HTMLElement | null = null
-	const rowsByElement = new Map<Element, InlineRow>()
+	const rowsByElement = new Map<Element, Row>()
 	let announceTimer: ReturnType<typeof setTimeout> | undefined
 	/** The height last asked of the host; the first render always asks, in case the vault changed since the open. */
 	let requested: number | null = null
@@ -170,7 +190,7 @@ export function startInlineList(): () => void {
 		]
 	}
 
-	function renderRows(rows: InlineRow[], host: string, mode: InlineMode) {
+	function renderRows(rows: Row[], host: string, mode: InlineMode) {
 		rowsByElement.clear()
 		const listbox = element('ul', { class: 'listbox', role: 'listbox', 'aria-label': texts(mode).label(host) })
 		for (const row of rows) {
@@ -180,9 +200,9 @@ export function startInlineList(): () => void {
 			if (username) text.append(element('span', { class: 'row__user' }, username))
 			const option = element('li', {
 				class: 'row', role: 'option', tabindex: '-1', 'aria-selected': 'false',
-				'aria-label': username ? i18n.t('inlineList.row', { name: row.name, username }) : row.name,
+				'aria-label': optionLabel({ ...row, username }),
 				...(invalid && { 'aria-disabled': 'true' }),
-			}, rowIcon(mode), text, ...(row.code ? codeParts(row.code) : []))
+			}, rowIcon(row.credentialId === undefined ? mode : 'passkey'), text, ...(row.code ? codeParts(row.code) : []))
 			rowsByElement.set(option, row)
 			listbox.append(option)
 		}
@@ -232,7 +252,9 @@ export function startInlineList(): () => void {
 		watchCodes()
 	}
 
-	function render({ state: vault, mode, host, rows }: State) {
+	function render(shown: State) {
+		const { state: vault, mode, host } = shown
+		const rows = shownRows(shown)
 		question = null
 		if (vault === 'locked') {
 			const unlock = element('button', { type: 'button', class: 'btn btn--primary' }, i18n.t('inlineList.unlock'))
@@ -246,7 +268,7 @@ export function startInlineList(): () => void {
 			entry = unlock
 			root.replaceChildren(element('div', { class: 'message message--locked' }, element('p', { id: 'locked-text' }, texts(mode).locked()), unlock))
 		} else if (rows.length === 0) {
-			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, texts(mode).noMatch(host))
+			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, shown.passkeys ? i18n.t('inlineList.noMatchPasskeys', { host }) : texts(mode).noMatch(host))
 			root.replaceChildren(entry)
 		} else {
 			renderRows(rows, host, mode)
@@ -276,19 +298,22 @@ export function startInlineList(): () => void {
 		render(reply)
 		fit()
 		watchCodes()
+		const count = shownRows(reply).length
 		announce(reply.state === 'locked' ? i18n.t('inlineList.status.locked')
-			: reply.rows.length === 0 ? texts(reply.mode).statusNoMatch(reply.host)
-				: texts(reply.mode).count(reply.rows.length))
+			: reply.passkeys ? (count === 0 ? i18n.t('inlineList.status.noMatchPasskeys', { host: reply.host }) : i18n.t('inlineList.status.countPasskeys', count))
+				: count === 0 ? texts(reply.mode).statusNoMatch(reply.host) : texts(reply.mode).count(count))
 		if (earlyFocusKey === key) focusEntry()
 		earlyFocusKey = null
 	}
 
-	async function pick(row: InlineRow, input: PickInput, confirmedInsecure = false) {
+	async function pick(row: Row, input: PickInput, confirmedInsecure = false) {
 		// Too soon after showing or moving stays silent, as a second press works; hidden by the page, it says why.
 		if (!key || pickLocked || !settled(input) || row.code?.digits === null) return
 		pickLocked = true
 		if (!visibility.allows(input.at)) return showNotVisible()
-		const reply = await send({ kind: 'inline.pick', key, itemId: row.id, input, ...(confirmedInsecure ? { confirmedInsecure } : {}) })
+		const reply = await send(row.credentialId === undefined
+			? { kind: 'inline.pick', key, itemId: row.id, input, ...(confirmedInsecure ? { confirmedInsecure } : {}) }
+			: { kind: 'inline.pick', key, itemId: row.id, credentialId: row.credentialId, input })
 		if (stopped) return
 		const answer = reply as Partial<{ needsInsecureConfirm: true; refused: string }> | null | undefined
 		if (answer === undefined) pickLocked = false
@@ -308,7 +333,7 @@ export function startInlineList(): () => void {
 		entry.focus()
 	}
 
-	function ask(row: InlineRow) {
+	function ask(row: Row) {
 		const title = element('p', { class: 'question__title', id: 'question-title' }, i18n.t('inlineList.insecureQuestion'))
 		const text = element('p', { class: 'question__text', id: 'question-text' }, i18n.t('inlineList.insecureDetail'))
 		const cancel = element('button', { type: 'button', class: 'btn btn--secondary' }, i18n.t('common.cancel'))
@@ -326,10 +351,10 @@ export function startInlineList(): () => void {
 		if (!question || !state) return
 		const { id } = question.row
 		question = null
-		renderRows(state.rows, state.host, state.mode)
+		renderRows(shownRows(state), state.host, state.mode)
 		fit()
 		restartGuard()
-		const option = [...rowsByElement].find(([, row]) => row.id === id)?.[0] as HTMLElement | undefined
+		const option = [...rowsByElement].find(([, row]) => row.id === id && row.credentialId === undefined)?.[0] as HTMLElement | undefined
 		option?.focus()
 	}
 

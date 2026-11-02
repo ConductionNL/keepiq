@@ -48,6 +48,25 @@ describe('Notifications', () => {
 		expect(onOpen).toHaveBeenCalledWith('excludedDomains')
 	})
 
+	it('shows Ask to save and use passkeys on by default and stores turning it off', async () => {
+		const { sent, user } = renderNotifications()
+		const passkeys = await screen.findByRole<HTMLInputElement>('checkbox', { name: 'Ask to save and use passkeys' })
+		expect(passkeys.checked).toBe(true)
+		expect(passkeys.getAttribute('aria-disabled')).toBeNull()
+		await user.click(passkeys)
+		await waitFor(() => expect(patches(sent)).toEqual([{ askPasskeys: false }]))
+	})
+
+	it('shows Ask to save and use passkeys as coming later while the provider is not delivered', async () => {
+		const { sent, user } = renderNotifications({ accountSettings: { autofillFeatures: ['savePrompts'] } })
+		const passkeys = await screen.findByRole('checkbox', { name: 'Ask to save and use passkeys' })
+		expect(passkeys.getAttribute('aria-disabled')).toBe('true')
+		expect(described(passkeys)).toEqual(['Coming later'])
+		expect(checkbox('Ask to add login').getAttribute('aria-disabled')).toBeNull()
+		await user.click(passkeys)
+		expect(patches(sent)).toEqual([])
+	})
+
 	it('ends with Keepiq on the web, linking to the web app and reading none of its preferences', async () => {
 		const { sent } = renderNotifications({ accountSettings: { webAppUrl: 'https://example.org/cloud/index.php/apps/keepiq/' } })
 		const group = await screen.findByRole('region', { name: 'Keepiq on the web' })

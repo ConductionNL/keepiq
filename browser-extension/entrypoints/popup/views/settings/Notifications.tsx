@@ -14,6 +14,7 @@ export function Notifications({ onOpen }: { onOpen: (section: SettingsSection) =
 	const { snapshot, failed, update } = useAccountSettings()
 	if (!snapshot) return failed ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : <Loading />
 	const later = snapshot.autofillFeatures.includes('savePrompts') ? undefined : i18n.t('settings.comingLater')
+	const passkeysLater = snapshot.autofillFeatures.includes('passkeys') ? undefined : i18n.t('settings.comingLater')
 
 	return (
 		<div className="stack">
@@ -21,6 +22,7 @@ export function Notifications({ onOpen }: { onOpen: (section: SettingsSection) =
 			<div className="card form-card">
 				<OptionCheckbox label={i18n.t('settings.askToAdd')} checked={snapshot.values.askToAdd} onChange={(askToAdd) => void update({ askToAdd })} lockedBy={later} />
 				<OptionCheckbox label={i18n.t('settings.askToUpdate')} checked={snapshot.values.askToUpdate} onChange={(askToUpdate) => void update({ askToUpdate })} lockedBy={later} />
+				<OptionCheckbox label={i18n.t('settings.askPasskeys')} checked={snapshot.values.askPasskeys} onChange={(askPasskeys) => void update({ askPasskeys })} lockedBy={passkeysLater} />
 			</div>
 			<ul className="card menu">
 				<li>
