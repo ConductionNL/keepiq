@@ -5,9 +5,12 @@ package nl.conduction.keepiq.android.ui
 
 import android.text.InputType
 import android.view.View
+import android.view.ViewGroup
+import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,11 +18,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.node.RootForTest
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -37,6 +44,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
@@ -58,7 +68,9 @@ import java.time.ZoneOffset
 import java.util.Locale
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * The item detail and generator screens on the JVM (tasks 3.1 and 3.5),
@@ -182,13 +194,14 @@ class ScreensTest {
         deleted: MutableList<String> = mutableListOf(),
         focusPasskey: Int? = null,
         onFocused: () -> Unit = {},
+        talkBack: Boolean = false,
     ) =
         compose.setContent {
             // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
             val inputMode = LocalInputModeManager.current
             var keyboard by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
-            if (keyboard) MaterialTheme {
+            LaunchedEffect(Unit) { if (!talkBack) keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard || talkBack(talkBack)) MaterialTheme {
                 ItemDetail(
                     item = item, folderPath = "Geen map", offline = offline, problem = null, modifier = Modifier,
                     onCopy = {}, onEdit = {}, onMove = {}, onTrash = {}, onSendLogin = {},
@@ -309,17 +322,102 @@ class ScreensTest {
 
     private var keyDraft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
 
-    private fun showKeyField(draft: ItemDraft, removeOnly: Boolean = false) {
+    private fun showKeyField(draft: ItemDraft, removeOnly: Boolean = false, talkBack: Boolean = false) {
         keyDraft = draft
         compose.setContent {
             val inputMode = LocalInputModeManager.current
             var keyboard by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
-            if (keyboard) MaterialTheme { Column { AuthenticatorKeyField(keyDraft, null, removeOnly) { keyDraft = it } } }
+            LaunchedEffect(Unit) { if (!talkBack) keyboard = inputMode.requestInputMode(InputMode.Keyboard) }
+            if (keyboard || talkBack(talkBack)) MaterialTheme { Column { AuthenticatorKeyField(keyDraft, null, removeOnly) { keyDraft = it } } }
         }
     }
 
     private val keyLabel = "Authenticator key (base32 secret or otpauth link)"
+
+    private var a11yView: View? = null
+    private var a11yInputMode: InputModeManager? = null
+
+    /**
+     * With [on], the screen as TalkBack sees it: touch input mode, in which
+     * Compose gives a button no input focus, and accessibility with touch
+     * exploration on. True once the window is in touch mode, so the content
+     * shows only then. The tests that use it run in native graphics mode:
+     * Compose builds its accessibility tree with android.graphics.Region,
+     * which Robolectric's legacy graphics leave empty.
+     */
+    @Composable
+    private fun talkBack(on: Boolean): Boolean {
+        if (!on) return false
+        val view = LocalView.current
+        remember(view) {
+            shadowOf(view.context.getSystemService(AccessibilityManager::class.java)).apply {
+                setEnabled(true)
+                setTouchExplorationEnabled(true)
+            }
+            (view as RootForTest).forceAccessibilityForTesting(true)
+            a11yView = view
+            // The window enters touch mode as on a first touch (ViewRootImpl, hidden API; Robolectric starts in keyboard mode).
+            val root = view.rootView.parent
+            root.javaClass.getDeclaredMethod("ensureTouchModeLocally", Boolean::class.javaPrimitiveType).apply { isAccessible = true }.invoke(root, true)
+        }
+        val inputMode = LocalInputModeManager.current
+        a11yInputMode = inputMode
+        var touch by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { touch = inputMode.requestInputMode(InputMode.Touch) }
+        return touch && inputMode.inputMode == InputMode.Touch
+    }
+
+    /** The node holds accessibility focus: what TalkBack reads and acts on next. */
+    private fun assertAccessibilityFocused(node: SemanticsNodeInteraction) {
+        compose.waitForIdle()
+        assertEquals(InputMode.Touch, a11yInputMode!!.inputMode)
+        val id = node.fetchSemanticsNode().id
+        val info = a11yView!!.accessibilityNodeProvider!!.createAccessibilityNodeInfo(id)
+        assertTrue("node $id is not in the accessibility tree", info != null)
+        assertTrue("accessibility focus is not on node $id", info!!.isAccessibilityFocused)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackAfterADeleteAccessibilityFocusGoesToTheNextPasskey() {
+        showMail(mail(passkeys = listOf(passkey("b", "alice-work", null))), focusPasskey = 0, talkBack = true)
+        assertAccessibilityFocused(compose.onNodeWithContentDescription("Delete passkey"))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackAfterTheLastDeleteAccessibilityFocusGoesToEdit() {
+        showMail(mail(), focusPasskey = 0, talkBack = true)
+        assertAccessibilityFocused(compose.onNodeWithText("Edit"))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackRemoveKeepAndReplaceMoveAccessibilityFocus() {
+        showKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1", hasSavedKey = true), talkBack = true)
+        compose.onNodeWithText("Remove").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText("Keep saved key"))
+        compose.onNodeWithText("Keep saved key").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText("Replace"))
+        compose.onNodeWithText("Replace").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText(keyLabel))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackRemoveOnlyKeepMovesAccessibilityFocusBackToRemove() {
+        showKeyField(ItemDraft(kind = FormKind.NOTE, typeId = "2", hasSavedKey = true), removeOnly = true, talkBack = true)
+        compose.onNodeWithText("Remove").performClick()
+        compose.onNodeWithText("Keep saved key").performClick()
+        assertAccessibilityFocused(compose.onNodeWithText("Remove"))
+    }
+
+    /** The text a field lays out: dots while masked, the value once shown. */
+    private fun laidOutText(label: String): String {
+        val results = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(results)
+        return results.first().layoutInput.text.text
+    }
 
     @Test
     fun aNewItemOffersNeitherAuthenticatorNorPasskey() {
@@ -389,21 +487,77 @@ class ScreensTest {
     fun theKeyFieldIsMaskedAndKeepsTheScreenOutOfAutofill() {
         var view: View? = null
         var shown by mutableStateOf(false)
+        var draft by mutableStateOf(ItemDraft(kind = FormKind.LOGIN, typeId = "1"))
         compose.setContent {
             view = LocalView.current
-            MaterialTheme { if (shown) AuthenticatorKeyField(ItemDraft(kind = FormKind.LOGIN, typeId = "1"), null, removeOnly = false) {} }
+            MaterialTheme { if (shown) AuthenticatorKeyField(draft, null, removeOnly = false) { draft = it } }
         }
         compose.waitForIdle()
-        val before = view!!.importantForAutofill
+        val before = view!!.rootView.importantForAutofill
+        assertTrue(view!! in viewsForAutofill(view!!))
         shown = true
         compose.waitForIdle()
-        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
+        assertFalse(view!!.isImportantForAutofill)
+        // What the platform walks to build the structure an autofill service gets: the screen is not in it.
+        assertFalse(view!! in viewsForAutofill(view!!))
+        compose.onNodeWithText(keyLabel).performTextInput("JBSWY3DPEHPK3PXP")
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals("\u2022".repeat(16), laidOutText(keyLabel))
+        compose.onNodeWithText(keyLabel).assertIsFocused()
         compose.onNodeWithText("Show $keyLabel").performClick()
+        assertEquals("JBSWY3DPEHPK3PXP", laidOutText(keyLabel))
+        // Shown, it is no password to a screen reader; the rebuilt field keeps the focus it had.
         compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        compose.onNodeWithText(keyLabel).assertIsFocused()
+        compose.onNodeWithText("Hide $keyLabel").performClick()
+        compose.onNodeWithText(keyLabel).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         shown = false
         compose.waitForIdle()
-        assertEquals(before, view!!.importantForAutofill)
+        assertEquals(before, view!!.rootView.importantForAutofill)
+        assertTrue(view!! in viewsForAutofill(view!!))
+    }
+
+    /**
+     * The views the window offers for autofill: ViewGroup.getChildrenForAutofill
+     * without FLAG_INCLUDE_NOT_IMPORTANT_VIEWS, the walk
+     * dispatchProvideAutofillStructure makes for the structure an autofill
+     * service gets (private API, so called by reflection).
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun viewsForAutofill(view: View): List<View> = ArrayList(
+        ViewGroup::class.java.getDeclaredMethod("getChildrenForAutofill", Int::class.javaPrimitiveType)
+            .apply { isAccessible = true }.invoke(view.rootView, 0) as List<View>,
+    )
+
+    @Test
+    fun theScreenStaysOutOfAutofillUntilTheLastSeedFieldGoes() {
+        var view: View? = null
+        var first by mutableStateOf(false)
+        var second by mutableStateOf(false)
+        compose.setContent {
+            view = LocalView.current
+            MaterialTheme {
+                Column {
+                    if (first) SeedInput("First seed", "", null) {}
+                    if (second) SeedInput("Second seed", "", null) {}
+                }
+            }
+        }
+        compose.waitForIdle()
+        val before = view!!.rootView.importantForAutofill
+        first = true
+        compose.waitForIdle()
+        second = true
+        compose.waitForIdle()
+        // The first goes while the second stays: the window stays out of autofill.
+        first = false
+        compose.waitForIdle()
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
+        assertFalse(view!!.isImportantForAutofill)
+        second = false
+        compose.waitForIdle()
+        assertEquals(before, view!!.rootView.importantForAutofill)
     }
 
     @Test
@@ -464,13 +618,13 @@ class ScreensTest {
         compose.onNodeWithContentDescription("Remove authenticator key").assertDoesNotExist()
     }
 
-    private fun showDetail(id: String, keyboard: Boolean = false) {
+    private fun showDetail(id: String, keyboard: Boolean = false, talkBack: Boolean = false) {
         compose.setContent {
             // Focus moves for keyboard and switch users; in touch mode Compose gives buttons no focus.
             val inputMode = LocalInputModeManager.current
             var ready by remember { mutableStateOf(!keyboard) }
             LaunchedEffect(Unit) { if (keyboard) ready = inputMode.requestInputMode(InputMode.Keyboard) }
-            if (ready) {
+            if (ready && (!talkBack || talkBack(true))) {
                 MaterialTheme { ItemDetailScreen(vault.session, id, Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> }) }
             }
         }
@@ -568,6 +722,20 @@ class ScreensTest {
     }
 
     @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun withTalkBackADeleteOnTheScreenMovesAccessibilityFocusToThePasskeyThatTookItsPlace() {
+        val (a, b, c) = listOf(FakeVault.credential("a", "alice-a"), FakeVault.credential("b", "alice-b"), FakeVault.credential("c", "alice-c"))
+        vault.put("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, b, c)))
+        showDetail("s4", talkBack = true)
+        waitForDescription("Delete passkey for alice-b")
+        compose.onNodeWithContentDescription("Delete passkey for alice-b").performScrollTo().performClick()
+        vault.replace("s4", FakeVault.row("s4", "Mail", "1", key = "geheim", login = "alice", passkeys = listOf(a, c)))
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithContentDescription("Delete passkey for alice-b").fetchSemanticsNodes().isEmpty() }
+        assertAccessibilityFocused(compose.onNodeWithContentDescription("Delete passkey for alice-c"))
+    }
+
+    @Test
     fun theVaultListShowsNoPasskeyMarker() {
         vault.put("s4", mailWithTwoPasskeys)
         compose.setContent {
@@ -591,9 +759,67 @@ class ScreensTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
         val seed = "Authenticator secret or otpauth link"
         compose.onNodeWithText(seed).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
-        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.importantForAutofill)
+        assertEquals("\u2022".repeat(16), laidOutText(seed))
+        assertEquals(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS, view!!.rootView.importantForAutofill)
         compose.onNodeWithText("Show $seed").performScrollTo().performClick()
+        assertEquals("JBSWY3DPEHPK3PXP", laidOutText(seed))
         compose.onNodeWithText(seed).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+    }
+
+    @Test
+    fun aShownPasswordIsNoPasswordToAScreenReader() {
+        vault.put("p1", FakeVault.row("p1", "Mail", "1", key = "geheim", login = "alice"))
+        showEdit("p1")
+        compose.onNodeWithText("Password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        assertEquals("\u2022".repeat(6), laidOutText("Password"))
+        compose.onNodeWithText("Show Password").performScrollTo().performClick()
+        assertEquals("geheim", laidOutText("Password"))
+        compose.onNodeWithText("Password").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        compose.onNodeWithText("Hide Password").performClick()
+        compose.onNodeWithText("Password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+    }
+
+    private fun editableText(label: String) = compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+
+    private fun putCursor(label: String, at: Int) =
+        compose.onNodeWithText(label).performSemanticsAction(SemanticsActions.SetSelection) { it(at, at, true) }
+
+    private fun selection(label: String) = compose.onNodeWithText(label).fetchSemanticsNode().config[SemanticsProperties.TextSelectionRange]
+
+    @Test
+    fun typingGoesOnWhereTheCursorIsAcrossShowAndHideInASeedField() {
+        var value by mutableStateOf("")
+        compose.setContent { MaterialTheme { Column { SeedInput("Probe seed", value, null) { value = it } } } }
+        compose.onNodeWithText("Probe seed").performTextInput("ABC")
+        compose.onNodeWithText("Show Probe seed").performClick()
+        compose.onNodeWithText("Probe seed").performTextInput("D")
+        compose.onNodeWithText("Hide Probe seed").performClick()
+        compose.onNodeWithText("Probe seed").performTextInput("E")
+        assertEquals("ABCDE", value)
+        // A cursor the user put mid-text stays there through Show.
+        putCursor("Probe seed", 1)
+        compose.onNodeWithText("Show Probe seed").performClick()
+        assertEquals(TextRange(1), selection("Probe seed"))
+        compose.onNodeWithText("Probe seed").performTextInput("F")
+        assertEquals("AFBCDE", value)
+    }
+
+    @Test
+    fun typingGoesOnWhereTheCursorIsAcrossShowAndHideInAPasswordField() {
+        vault.put("p2", FakeVault.row("p2", "Mail", "1", key = "geheim", login = "alice"))
+        showEdit("p2")
+        compose.onNodeWithText("Password").performTextInput("X")
+        compose.onNodeWithText("Show Password").performScrollTo().performClick()
+        compose.onNodeWithText("Password").performTextInput("Y")
+        compose.onNodeWithText("Hide Password").performClick()
+        compose.onNodeWithText("Password").performTextInput("Z")
+        // A cursor the user put mid-text stays there through Show; shown, the field holds the plain text.
+        putCursor("Password", 2)
+        compose.onNodeWithText("Show Password").performClick()
+        assertEquals("geheimXYZ", editableText("Password"))
+        assertEquals(TextRange(2), selection("Password"))
+        compose.onNodeWithText("Password").performTextInput("Q")
+        assertEquals("geQheimXYZ", editableText("Password"))
     }
 
     @Test

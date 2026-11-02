@@ -32,18 +32,24 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
@@ -302,6 +308,43 @@ fun TextInput(
     )
 }
 
+/**
+ * A masked field that a Show button reveals, built by [field] with the
+ * value, change handler and modifier it is given. Compose 1.8.3 keeps a text
+ * field's Password semantics once its PasswordVisualTransformation is
+ * dropped (CoreTextFieldSemanticsModifierNode never stores the new
+ * isPassword), so a screen reader would still take a shown value for a
+ * password. The field is therefore built anew when [shown] changes, and
+ * takes focus back when it had it. Text and selection are held here, above
+ * the rebuild, so the cursor stays where the user left it; when [value]
+ * changes from outside (Generate, a draft reset) the cursor goes to its end.
+ * A prefilled field starts with the cursor at the end.
+ *
+ * Known limitation: on this TextFieldValue path, Compose foundation 1.8.3's
+ * BasicTextField drops a change equal to the last recomposed value, so when
+ * two keyboard edits arrive within one frame and the second restores the
+ * earlier text, the second is lost (the String path forwarded both).
+ */
+@Composable
+internal fun ShowableField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    shown: Boolean,
+    field: @Composable (TextFieldValue, (TextFieldValue) -> Unit, Modifier) -> Unit,
+) {
+    val requester = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    val hadFocus = focused
+    var held by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    val current = if (held.text == value) held else TextFieldValue(value, TextRange(value.length))
+    val change: (TextFieldValue) -> Unit = { next ->
+        held = next
+        if (next.text != value) onValueChange(next.text)
+    }
+    key(shown) { field(current, change, Modifier.focusRequester(requester).onFocusChanged { focused = it.isFocused }) }
+    LaunchedEffect(shown) { if (hadFocus) requester.requestFocus() }
+}
+
 /** The types a new item may have: Authenticator and Passkey items are no longer made (mobile-login-totp-passkeys D9). */
 internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.filter { it.name != "totp" && it.name != "passkey" }
 
@@ -310,17 +353,19 @@ internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.f
 private fun SecretInput(label: String, value: String, problem: DraftProblem?, onGenerate: (() -> Unit)?, onChange: (String) -> Unit) {
     var shown by remember { mutableStateOf(false) }
     Column {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            label = { Text(label) },
-            singleLine = true,
-            isError = problem != null,
-            supportingText = problem?.let { { Text(draftProblemText(it)) } },
-            visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ShowableField(value, onChange, shown) { fieldValue, onFieldChange, rebuilt ->
+            OutlinedTextField(
+                value = fieldValue,
+                onValueChange = onFieldChange,
+                label = { Text(label) },
+                singleLine = true,
+                isError = problem != null,
+                supportingText = problem?.let { { Text(draftProblemText(it)) } },
+                visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+                modifier = Modifier.fillMaxWidth().then(rebuilt),
+            )
+        }
         Row {
             TextButton(onClick = { shown = !shown }) {
                 Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))

@@ -15,9 +15,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -46,7 +45,8 @@ internal fun PasskeyRows(
     onFocused: () -> Unit = {},
 ) {
     val locale = LocalConfiguration.current.locales[0]
-    val requesters = remember(passkeys) { passkeys.map { FocusRequester() } }
+    val requesters = remember(passkeys) { passkeys.map { FocusMove() } }
+    val view = LocalView.current
     for ((i, pk) in passkeys.withIndex()) {
         val added = pk.createdAt?.let { passkeyAdded(it, locale, ZoneId.systemDefault()) }
         val account = pk.userName?.takeIf { passkeys.size > 1 }
@@ -64,7 +64,7 @@ internal fun PasskeyRows(
                     val cd = account?.let { stringResource(R.string.cd_delete_passkey_for, it) } ?: stringResource(R.string.cd_delete_passkey)
                     TextButton(
                         onClick = { onDelete(pk) },
-                        modifier = Modifier.focusRequester(requesters[i]).semantics { contentDescription = cd },
+                        modifier = Modifier.focusMove(requesters[i]).semantics { contentDescription = cd },
                     ) { Text(stringResource(R.string.action_delete)) }
                 }
             }
@@ -72,7 +72,7 @@ internal fun PasskeyRows(
     }
     LaunchedEffect(focusIndex, passkeys) {
         if (mayDelete && focusIndex != null && focusIndex < requesters.size) {
-            requesters[focusIndex].requestFocus()
+            requesters[focusIndex].move(view)
             onFocused()
         }
     }

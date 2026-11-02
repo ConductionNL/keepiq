@@ -7,8 +7,10 @@ import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -19,8 +21,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -35,6 +35,7 @@ import nl.conduction.keepiq.android.R
 import nl.conduction.keepiq.shared.vault.DraftProblem
 import nl.conduction.keepiq.shared.vault.ItemDraft
 import nl.conduction.keepiq.shared.vault.KeyEdit
+import java.util.WeakHashMap
 
 /**
  * The keyboard for a key: a seed is a second factor. A password keyboard
@@ -45,30 +46,55 @@ import nl.conduction.keepiq.shared.vault.KeyEdit
 internal val AUTHENTICATOR_KEY_KEYBOARD = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
 
 /**
+ * The seed fields on screen per window, and the window's autofill flag from
+ * before the first of them: the window stays out of autofill while any of
+ * them is on screen, whatever order they leave in. Touched on the main
+ * thread only.
+ */
+private val seedFieldsOnScreen = WeakHashMap<View, IntArray>()
+
+/**
  * Where an Authenticator seed is typed, on a login's key field and on an
  * Authenticator item's own seed: masked until shown, as a password is, with
  * a password keyboard without autocorrect, and while it is on screen the
  * screen is kept out of the autofill framework, so another autofill service
  * is never offered the seed to save (the web field's autocomplete="off").
+ * The window's root is marked IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS;
+ * the protection relies on the platform leaving the descendants of such a
+ * view out of the autofill structure it hands a service.
  */
 @Composable
 internal fun SeedInput(label: String, value: String, problem: DraftProblem?, modifier: Modifier = Modifier, onChange: (String) -> Unit) {
     val view = LocalView.current
     DisposableEffect(view) {
-        val before = view.importantForAutofill
-        view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-        onDispose { view.importantForAutofill = before }
+        // On the window's root, not on LocalView: Compose's AndroidComposeView
+        // always reports IMPORTANT_FOR_AUTOFILL_YES and ignores the setter.
+        val screen = view.rootView
+        val entry = seedFieldsOnScreen.getOrPut(screen) { intArrayOf(0, screen.importantForAutofill) }
+        entry[0]++
+        screen.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        onDispose {
+            if (--entry[0] == 0) {
+                screen.importantForAutofill = entry[1]
+                seedFieldsOnScreen.remove(screen)
+            }
+        }
     }
     var shown by remember { mutableStateOf(false) }
-    TextInput(
-        label,
-        value,
-        problem,
-        modifier = modifier,
-        keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
-        visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-        onChange = onChange,
-    )
+    ShowableField(value, onChange, shown) { fieldValue, onFieldChange, rebuilt ->
+        // TextInput's field, with the value ShowableField holds.
+        OutlinedTextField(
+            value = fieldValue,
+            onValueChange = onFieldChange,
+            label = { Text(label) },
+            singleLine = true,
+            isError = problem != null,
+            supportingText = problem?.let { { Text(draftProblemText(it)) } },
+            keyboardOptions = AUTHENTICATOR_KEY_KEYBOARD,
+            visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+            modifier = modifier.then(rebuilt).fillMaxWidth(),
+        )
+    }
     TextButton(onClick = { shown = !shown }) {
         Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))
     }
@@ -82,10 +108,11 @@ internal fun SeedInput(label: String, value: String, problem: DraftProblem?, mod
  */
 @Composable
 internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, removeOnly: Boolean, onChange: (ItemDraft) -> Unit) {
-    val field = remember { FocusRequester() }
-    val replace = remember { FocusRequester() }
-    val remove = remember { FocusRequester() }
-    val keep = remember { FocusRequester() }
+    val field = remember { FocusMove() }
+    val replace = remember { FocusMove() }
+    val remove = remember { FocusMove() }
+    val keep = remember { FocusMove() }
+    val view = LocalView.current
     var moved by remember { mutableStateOf(false) }
     fun choose(edit: KeyEdit) {
         moved = true
@@ -94,7 +121,7 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     val label = stringResource(R.string.edit_totp_key)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (!draft.hasSavedKey || draft.keyEdit == KeyEdit.REPLACE) {
-            SeedInput(label, draft.newKey, problem, modifier = Modifier.focusRequester(field)) { v ->
+            SeedInput(label, draft.newKey, problem, modifier = Modifier.focusMove(field)) { v ->
                 onChange(draft.copy(newKey = v, keyEdit = if (draft.hasSavedKey || v.isNotBlank()) KeyEdit.REPLACE else KeyEdit.KEEP))
             }
         } else {
@@ -122,17 +149,17 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
                     if (!removeOnly) {
                         TextButton(
                             onClick = { choose(KeyEdit.REPLACE) },
-                            modifier = Modifier.focusRequester(replace).semantics { contentDescription = replaceCd },
+                            modifier = Modifier.focusMove(replace).semantics { contentDescription = replaceCd },
                         ) { Text(stringResource(R.string.action_replace)) }
                     }
                     TextButton(
                         onClick = { choose(KeyEdit.REMOVE) },
-                        modifier = Modifier.focusRequester(remove).semantics { contentDescription = removeCd },
+                        modifier = Modifier.focusMove(remove).semantics { contentDescription = removeCd },
                     ) { Text(stringResource(R.string.action_remove)) }
                 } else {
                     TextButton(
                         onClick = { choose(KeyEdit.KEEP) },
-                        modifier = Modifier.focusRequester(keep).semantics { contentDescription = keepCd },
+                        modifier = Modifier.focusMove(keep).semantics { contentDescription = keepCd },
                     ) { Text(stringResource(R.string.action_keep_key)) }
                 }
             }
@@ -141,9 +168,9 @@ internal fun AuthenticatorKeyField(draft: ItemDraft, problem: DraftProblem?, rem
     LaunchedEffect(draft.keyEdit) {
         if (!moved) return@LaunchedEffect
         when (draft.keyEdit) {
-            KeyEdit.REPLACE -> field.requestFocus()
-            KeyEdit.REMOVE -> keep.requestFocus()
-            KeyEdit.KEEP -> (if (removeOnly) remove else replace).requestFocus()
+            KeyEdit.REPLACE -> field.move(view)
+            KeyEdit.REMOVE -> keep.move(view)
+            KeyEdit.KEEP -> (if (removeOnly) remove else replace).move(view)
         }
     }
 }
