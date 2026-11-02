@@ -93,7 +93,7 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Reco
 	return node
 }
 
-/** A globe for a login, a clock for an authenticator item, a key for a passkey. */
+/** A globe for a login, a clock for a login's code, a key for a passkey. */
 function rowIcon(kind: InlineMode | 'passkey'): SVGSVGElement {
 	const ns = 'http://www.w3.org/2000/svg'
 	const svg = document.createElementNS(ns, 'svg')
@@ -225,7 +225,7 @@ export function startInlineList(): () => void {
 		}, 1000)
 	}
 
-	/** Same rows: the codes change in place, so focus and the pick guard stay; other rows: rendered anew, focus kept by id. */
+	/** Same rows: the codes change in place, so focus and the pick guard stay; other rows: rendered anew with the guard restarted, focus kept by id. */
 	async function refreshCodes() {
 		if (!key) return
 		refreshing = true
@@ -246,6 +246,7 @@ export function startInlineList(): () => void {
 			if (reply.rows.length) renderRows(reply.rows, reply.host, 'code')
 			else render(reply)
 			fit()
+			restartGuard()
 			const again = [...rowsByElement].find(([, row]) => row.id === focused)?.[0] as HTMLElement | undefined
 			again?.focus()
 		}
