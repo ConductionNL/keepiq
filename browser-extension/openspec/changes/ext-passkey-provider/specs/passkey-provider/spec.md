@@ -54,7 +54,7 @@ The background SHALL answer `passkey.start` with `fallback` before opening anyth
 - the origin is not `https:`, unless its host is `localhost` or ends in `.localhost`, or the origin is opaque;
 - the RP ID is not the origin's host or a registrable suffix of it, or is a public suffix or an IP address;
 - the frame has a cross-origin ancestor;
-- `create` has no `-7` (ES256) in `pubKeyCredParams`, or asks `authenticatorAttachment: 'cross-platform'`.
+- `create` has a non-empty `pubKeyCredParams` without `-7` (ES256), or asks `authenticatorAttachment: 'cross-platform'`. An empty `pubKeyCredParams` means ES256 and RS256, as in WebAuthn.
 
 Each of these depends on the settings and the request only, never on what the vault holds or whether it is locked.
 
@@ -142,7 +142,7 @@ For a `create`, the window SHALL show "Save passkey", the RP ID and the request'
 - "Save as new login", with a Name field prefilled with `rp.name` or else the RP ID, and a Folder select (default "No folder", from the cached folders);
 - "Use your device or hardware key" and Cancel.
 
-On a choice, the background makes an ECDSA P-256 key pair and builds the canonical credential (a random 16-byte `credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle` from `user.id`, `privateKey` as base64url PKCS#8, `algorithm` `-7`, `counter` 0, `transports` `["internal"]`, `createdAt`), field order as the web app writes it. A new login is created through the same write path as every create: the `login` type, `url` the frame's origin, no username, an empty password (`key` the encryption of `''`, as the web app's import writes one), the chosen folder, and `passkeys` the JSON array of that one credential. An existing login gets the credential appended to its `passkeys` (The passkeys field is saved whole). When the chosen login already holds a passkey with the same `rpId` and `userHandle`, the window first asks "Replace the passkey for <user name> on <login name>?" with Replace and Cancel; Replace puts the new credential in that entry's place. The page MUST receive the attestation only after the server accepted the save. A failed save keeps the window open with the reason, Retry, "Use your device or hardware key" and Cancel.
+On a choice, the background makes an ECDSA P-256 key pair and builds the canonical credential (a random 16-byte `credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle` from `user.id`, `privateKey` as base64url PKCS#8, `algorithm` `-7`, `counter` 0, `transports` `["internal"]`, `createdAt`), field order as the web app writes it. A new login is created through the same write path as every create: the `login` type, `url` the frame's origin, no username, an empty password (`key` the encryption of `''`, as the web app's import writes one), the chosen folder, and `passkeys` the JSON array of that one credential. An existing login gets the credential appended to its `passkeys` (The passkeys field is saved whole). When the chosen login already holds a passkey with the same `rpId` and `userHandle`, the window first asks "Replace the passkey for <user name> on <login name>?" with Replace and Cancel; Replace puts the new credential in that entry's place. The page MUST receive the attestation only after the server accepted the save. A failed save keeps the window open with the reason, Retry, "Use your device or hardware key" and Cancel. Retry syncs first, since a lost reply may hide a stored write: when a login holds the passkey a failed try of this save wrote, the new one takes its place there, so no second login or entry appears; without a sync, Retry saves nothing and shows the sync's reason.
 
 #### Scenario: Save as a new login
 - **GIVEN** an unlocked vault without a login for `example.test`, and `https://example.test` calling `create` for user `alice`
@@ -165,8 +165,13 @@ On a choice, the background makes an ECDSA P-256 key pair and builds the canonic
 - **WHEN** the user saves the passkey
 - **THEN** the window shows the reason worded by `writeErrors.writeLocked` and the page receives nothing yet
 
+#### Scenario: Retry after a lost reply
+- **GIVEN** the server stored a new login with the passkey, but its reply never arrived
+- **WHEN** the user clicks Retry
+- **THEN** that login holds the new passkey in the lost one's place, no second login exists, and the page receives the new one's attestation
+
 ### Requirement: The passkeys field is saved whole
-Every write of an existing login's `passkeys` (Save to it, Replace, the counter) SHALL go through the value save of ext-share-sync with `passkeys` as the only changed field: a fresh `GET /api/v1/secrets/{id}` whose `passkeys` ciphertext must equal the vault cache's (`unmatched` otherwise), the decrypted array changed in background memory and re-encrypted whole, `baseUpdatedAt` from that fetch, and the copies of a shared login re-encrypted for each holder. Every entry it does not change MUST be written back exactly as stored. On `stale` it syncs, reads again and tries once more. A partner share whose partner does not store `passkeys` refuses the save with `partner_upgrade_required` and the version it needs (keepiq#1325), which the window names. Use-only, read-only and view-only copies refuse with `restricted` or `view_only`.
+Every write of an existing login's `passkeys` (Save to it, Replace, the counter) SHALL go through the value save of ext-share-sync with `passkeys` as the only changed field: a fresh `GET /api/v1/secrets/{id}` whose `passkeys` ciphertext must equal the vault cache's (`conflict` otherwise), the decrypted array changed in background memory and re-encrypted whole, `baseUpdatedAt` from that fetch, and the copies of a shared login re-encrypted for each holder. Every entry it does not change MUST be written back exactly as stored. On `stale` it syncs, reads again and tries once more; a second `stale` is `conflict`. A partner share whose partner does not store `passkeys` refuses a login's first passkey save with `partner_upgrade_required` and the version it needs (keepiq#1325), which the window names. Such a partner gets every later change, counter saves included, as null, since it never held the passkeys; were the extension's record of the partner outdated, the server refuses with `copy_fields_mismatch`, so nothing is lost. Use-only, read-only and view-only copies refuse with `restricted` or `view_only`.
 
 #### Scenario: Other passkeys kept
 - **GIVEN** a login holding passkeys A and B
@@ -174,7 +179,7 @@ Every write of an existing login's `passkeys` (Save to it, Replace, the counter)
 - **THEN** B is written back byte for byte
 
 #### Scenario: Partner without the field
-- **GIVEN** a login shared with a partner whose Keepiq does not store `passkeys`
+- **GIVEN** a login without passkeys, shared with a partner whose Keepiq does not store `passkeys`
 - **WHEN** the user saves a passkey to it
 - **THEN** nothing is written and the window names the Keepiq version the partner needs
 
@@ -244,7 +249,7 @@ The extension SHALL end a ceremony and close its window when:
 - the user clicks Cancel or closes the window: the page gets `NotAllowedError`;
 - the page aborts its `signal`: the page gets the signal's reason, as an `AbortError`;
 - its deadline passes: the page's `timeout`, clamped to 30 s–10 min with 5 min by default when user verification is `required` or `preferred`, and to 30 s–3 min with 2 min by default when `discouraged`, as in Bitwarden: the page gets `NotAllowedError`;
-- the tab closes or the frame navigates: nothing is sent;
+- the tab closes, the frame unloads or the tab leaves the ceremony's origin: nothing is sent. A same-origin history change, as `pushState`, keeps the ceremony;
 - the active account logs out or changes: the page gets `NotAllowedError`.
 
 A result is delivered only to the frame that started the ceremony, and the content script drops it when that frame's origin changed since.
@@ -294,7 +299,7 @@ The extension SHALL decrypt a login's `passkeys` only in the background, import 
 - **THEN** neither holds the passkey's private key, its decrypted credential or the challenge
 
 ### Requirement: Where ceremony data lives
-The extension SHALL keep each tab's ceremony in `storage.session` under `passkeyCeremony.<tabId>` (background memory on Firefox below 115): a random ceremony id, the account id, tab and frame ids, origin, RP ID, kind, mediation, the request's challenge, `rp.name`, `user` entity, credential id lists, user verification and attachment requirements, deadline, window id, whether the user unlocked or verified within it, and its state. It holds no vault data and no decrypted values. It is removed when the ceremony ends (result, Cancel, fallback, abort, deadline), when a new ceremony starts in the tab, when the tab closes or navigates, on logout and account switch, and on browser restart or extension reload. A lock keeps it, so the window can continue after unlock. The rows the window shows live only in the popup page's memory while it shows them.
+The extension SHALL keep each tab's ceremony in `storage.session` under `passkeyCeremony.<tabId>` (background memory on Firefox below 115): a random ceremony id, the account id, tab and frame ids, origin, the frame's URL without its fragment, RP ID, kind, mediation, the request's challenge, `rp.name`, `user` entity, credential id lists, user verification and attachment requirements, deadline, window id, whether the user unlocked or verified within it, and whether the window showed "already saved". After a failed pick or save it also holds that step for Retry: the login id and credential id of the pick, or the save's target login id, typed name and folder, and the credential ids its tries wrote with their login id when known, plus the error with the partner cloud ids and share ids it names. Those ids, the name and folder the user typed and the partners' cloud ids and share ids are the only vault data it holds; it holds no ciphertext, key or decrypted value. It is removed when the ceremony ends (result, Cancel, fallback, abort, deadline), when a new ceremony starts in the tab, when the tab closes, on logout and account switch, and on browser restart or extension reload. A lock keeps it, so the window can continue after unlock. The rows the window shows live only in the popup page's memory while it shows them.
 
 #### Scenario: Worker restart
 - **GIVEN** an open passkey window on Chrome

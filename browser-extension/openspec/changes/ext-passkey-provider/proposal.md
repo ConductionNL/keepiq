@@ -54,7 +54,7 @@ Since keepiq#1324 a login keeps its passkeys in its own encrypted `passkeys` fie
 - **Every Keepiq passkey is discoverable.** The canonical schema has no discoverable flag, so `allowCredentials: []` offers every passkey for the RP ID and `credProps.rk` is always true.
 - **AAGUID is all zeros.** Bitwarden has its own registered AAGUID; Keepiq has none, so sites show an unnamed provider.
 - **User verification is the master password or the PIN.** Keepiq has no biometrics yet (ext-settings).
-- **A request Keepiq does not handle goes to the browser untouched**: an RP ID that is not the origin's host or a registrable suffix of it, an `http:` origin other than `localhost`, a frame with a cross-origin ancestor, `authenticatorAttachment: 'cross-platform'`, or no ES256 in `pubKeyCredParams`. Bitwarden throws `SecurityError` for a bad RP ID; the browser applies its own rules, related origins included, and Keepiq reads nothing from the vault.
+- **A request Keepiq does not handle goes to the browser untouched**: an RP ID that is not the origin's host or a registrable suffix of it, an `http:` origin other than `localhost`, a frame with a cross-origin ancestor, `authenticatorAttachment: 'cross-platform'`, or a non-empty `pubKeyCredParams` without ES256 (an empty one means ES256 and RS256). Bitwarden throws `SecurityError` for a bad RP ID; the browser applies its own rules, related origins included, and Keepiq reads nothing from the vault.
 - **The page script is on every `http(s)` page while the setting is off.** Bitwarden registers it only while on, with `scripting.registerContentScripts`; that needs host permission for every site, which this extension does not hold (SECURITY.md). While off, it answers every request with the fallback.
 - **Excluded domains match by base domain,** as ext-settings stores them; Bitwarden compares the host.
 
@@ -73,7 +73,7 @@ All are in ADR-003 and none is newer than `MIN_KEEPIQ_VERSION` (0.3.12); the `pa
 
 ## Impact
 
-- The page script: `entrypoints/passkey-page.content.ts`, a `world: 'MAIN'` content script on Chrome, and `entrypoints/passkey-page.ts`, an unlisted script the relay injects from a web-accessible resource on Firefox.
+- The page script: `entrypoints/passkey-page-main.content.ts`, a `world: 'MAIN'` content script on Chrome, and `entrypoints/passkey-page.ts`, an unlisted script the relay injects from a web-accessible resource on Firefox.
 - New relay content script `entrypoints/passkey.content.ts` at `document_start`; `entrypoints/background.ts` routes ceremonies; the popup gains a passkey view for the ceremony window; the inline list gains passkey rows.
 - New `src/passkey/*`: request checks, the ceremony store, CBOR, authenticator data, attestation, signing, the canonical credential and the `passkeys` array, the saves of that field.
 - `src/vault/share-save.ts`: `passkeys` as a value field of the value save. `src/background/requests.ts`: `item.passkeys` for the detail view, metadata only.
