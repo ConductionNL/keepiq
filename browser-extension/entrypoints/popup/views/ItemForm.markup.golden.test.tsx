@@ -95,9 +95,9 @@ const WORLDS: Record<string, () => Promise<Trace>> = {
 		return { html: markup(), sent: writes(sent) }
 	},
 	'totp options': async () => {
-		const { sent, user } = renderForm()
-		await user.selectOptions(await screen.findByLabelText('Type'), 't-totp')
-		await user.type(screen.getByLabelText('Name'), 'Authenticator')
+		// A new item can no longer be a totp, so the options are traced on an existing one.
+		const { sent, user } = renderForm({ mode: 'edit', item: editableItem({ typeId: 't-totp', name: '', key: '', login: null }) })
+		await user.type(await screen.findByLabelText('Name'), 'Authenticator')
 		await user.type(screen.getByLabelText('Authenticator key'), 'JBSWY3DPEHPK3PXP')
 		const steps: string[] = [markup()]
 		await user.selectOptions(screen.getByLabelText('Algorithm'), 'SHA256')
