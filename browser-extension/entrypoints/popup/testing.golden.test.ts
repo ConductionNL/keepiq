@@ -52,6 +52,7 @@ const WORLDS: Record<string, () => Parameters<typeof fakeBackground>[0]> = {
 	}),
 	'decrypt fails': () => ({ decryptError: 'use_only', generator: { policy: { minLength: 20 } as never, accountEmail: 'bob@example.org' } }),
 	'locked vault': () => ({ snapshot: { state: 'locked' } as never, accountSettings: { values: { defaultItemType: 'note' } } }),
+	'browser manages the default': () => ({ defaultManager: 'managed' }),
 	'unlocked with a default type': () => ({ snapshot: snapshotReply({ defaultSecretType: 'identity' }), accountSettings: { values: { defaultItemType: 'card' } } }),
 }
 
@@ -96,7 +97,7 @@ describe('fakeBackground golden', () => {
 	for (const [name, world] of Object.entries(WORLDS)) {
 		it(`answers as recorded: ${name}`, async () => {
 			const answers = await trace(world)
-			SEQUENCE.forEach((message, index) => expect([index, answers[index]]).toEqual([index, golden[name][index]]))
+			SEQUENCE.forEach((message, index) => expect([index, answers[index]]).toEqual([index, golden[name]![index]]))
 		})
 	}
 })
