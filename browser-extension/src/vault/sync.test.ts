@@ -364,7 +364,7 @@ describe('server quirks', () => {
 	})
 
 	it('marks manifest rows on a revoked or missing suite as blocked, like the server does', async () => {
-		const onRevoked = secretRow({ id: 'old', encryptionSuiteId: 'suite-0', login: 'ciphertext' })
+		const onRevoked = secretRow({ id: 'old', encryptionSuiteId: 'suite-0', login: 'ciphertext', totp: 'seed-ciphertext', passkeys: 'passkeys-ciphertext' })
 		const orphan = secretRow({ id: 'gone', encryptionSuiteId: 'suite-x' })
 		server({
 			'/api/v1/offline/manifest': () => json({ ...manifest, secrets: [rows[0], onRevoked, orphan] }),
@@ -376,6 +376,8 @@ describe('server quirks', () => {
 		expect(stored[1]).toMatchObject({ id: 'old', blocked: true, blockedReason: 'suite_revoked' })
 		expect(stored[1]).not.toHaveProperty('login')
 		expect(stored[1]).not.toHaveProperty('key')
+		expect(stored[1]).not.toHaveProperty('totp')
+		expect(stored[1]).not.toHaveProperty('passkeys')
 		expect(stored[2]).toMatchObject({ id: 'gone', blocked: true, blockedReason: 'suite_missing' })
 	})
 

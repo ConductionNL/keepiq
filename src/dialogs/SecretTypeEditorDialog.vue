@@ -89,38 +89,31 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton
-				variant="primary"
-				:disabled="!canSave"
-				data-testid="type-editor-save"
-				@click="save">
-				<template #icon>
-					<NcLoadingIcon v-if="saving" :size="20" />
-					<ContentSave v-else :size="20" />
-				</template>
-				{{ t('keepiq', 'Save') }}
-			</NcButton>
+			<CnDialogActions
+				:saving="saving"
+				:canSubmit="canSave"
+				confirmIcon="ContentSave"
+				:confirmLabel="t('keepiq', 'Save')"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="save" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
+import { CnDialogActions } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
 	NcDialog,
-	NcLoadingIcon,
 	NcNoteCard,
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
 import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import Close from 'vue-material-design-icons/Close.vue'
-import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import {
@@ -138,11 +131,10 @@ export default {
 	components: {
 		ArrowUp,
 		Close,
-		ContentSave,
+		CnDialogActions,
 		NcButton,
 		NcCheckboxRadioSwitch,
 		NcDialog,
-		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
 		NcTextField,

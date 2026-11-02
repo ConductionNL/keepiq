@@ -42,31 +42,25 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton
+			<CnDialogActions
+				:saving="busy"
 				variant="error"
-				:disabled="busy"
-				data-testid="nav-folder-delete-confirm"
-				@click="submit">
-				<template #icon>
-					<NcLoadingIcon v-if="busy" :size="20" />
-					<TrashCanOutline v-else :size="20" />
-				</template>
-				{{
+				confirmIcon="TrashCanOutline"
+				:confirmLabel="
 					folder.parentId
 						? t('keepiq', 'Delete folder')
 						: t('keepiq', 'Delete vault')
-				}}
-			</NcButton>
+				"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="submit" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import { CnDialogActions } from '@conduction/nextcloud-vue'
+import { NcDialog, NcNoteCard } from '@nextcloud/vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
 /**
@@ -77,11 +71,9 @@ export default {
 	name: 'FolderDeleteConfirmDialog',
 
 	components: {
-		NcButton,
+		CnDialogActions,
 		NcDialog,
-		NcLoadingIcon,
 		NcNoteCard,
-		TrashCanOutline,
 	},
 
 	props: {

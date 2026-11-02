@@ -5,10 +5,10 @@ encrypted in your process; only ciphertext and a signed assertion cross the
 network, and the private key never leaves your process.
 
 ```python
-from keepiq_sdk import Client
+from keepiq_sdk import Client, ClientConfig, Credentials
 
 key = open("/run/secrets/keepiq.pem").read()
-client = Client("https://cloud.example.org", "billing", key)
+client = Client(ClientConfig("https://cloud.example.org", Credentials("billing", key)))
 secret = client.get_by_name("stripe-key")
 print(secret.key)
 ```
@@ -20,9 +20,29 @@ are `name`, `url` and `typeId` (sent as they are) and `key`, `login` and
 `UnauthorizedError`, `NotModifiedError`, `AmbiguousNameError` (with
 `candidates`), `KeyMismatchError` and `ApiError`.
 
-Pass `certificate_pem=` to refuse any envelope encrypted to another certificate
-before decryption. The application can read its own certificate at
+`ClientConfig(url, credentials, timeout=30.0, clock=time.time)` holds the
+Nextcloud address, the request timeout in seconds and the clock.
+`Credentials(application_id, private_key_pem, certificate_pem=None)` holds
+who the client acts as; its `repr()` leaves out the private key and the certificate.
+
+Pass `certificate_pem` in `Credentials` to refuse any envelope encrypted to
+another certificate before decryption. The application can read its own certificate at
 `GET /api/v1/app/certificate` (with its access token) and pass that PEM here.
+
+## Upgrading from 0.x
+
+Version 1.0 builds the client from one `ClientConfig`. The old form
+`Client(url, application_id, private_key_pem, certificate_pem=..., timeout=..., clock=...)`
+now raises a `TypeError` that names the new one. Move the values over:
+
+```python
+# 0.x
+client = Client(url, "billing", key, certificate_pem=cert, timeout=10)
+# 1.0
+client = Client(ClientConfig(url, Credentials("billing", key, cert), timeout=10))
+```
+
+Nothing else changed. See `CHANGELOG.md`.
 
 Tests: `python -m pytest` (or `python -m unittest discover -s tests`) in this
 directory. They run against `sdk/testdata/`, shared with the Go and TypeScript

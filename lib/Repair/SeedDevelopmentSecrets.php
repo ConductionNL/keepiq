@@ -57,6 +57,72 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	private const DEV_USER_ID = 'admin';
 
 	/**
+	 * The example secrets seeded into the development vault. Each names its
+	 * folder by name, or null for the vault root.
+	 *
+	 * @var array<int,array<string,mixed>>
+	 */
+	private const DEV_SECRETS = [
+		[
+			'name' => 'GitHub',
+			'url' => 'https://github.com',
+			'type' => 'login',
+			'key' => 'gh_dev_P@ssw0rd!2024',
+			'login' => 'dev-user',
+			'folder' => 'Work',
+			'favourite' => true,
+			'tags' => ['on call'],
+			'usedDaysAgo' => 0,
+		],
+		[
+			'name' => 'AWS Console',
+			'url' => 'https://aws.amazon.com',
+			'type' => 'api_key',
+			'key' => 'AKIAIOSFODNN7EXAMPLE',
+			'login' => 'dev-access-key',
+			'folder' => 'Work',
+			'favourite' => true,
+			'tags' => ['finance', 'on call'],
+			'usedDaysAgo' => 1,
+		],
+		[
+			'name' => 'Production Database',
+			'url' => 'postgresql://db.internal:5432/prod',
+			'type' => 'database',
+			'key' => 'Pr0d-DB-$ecret!',
+			'login' => 'app_service',
+			'folder' => null,
+			'tags' => ['finance'],
+			'usedDaysAgo' => 3,
+		],
+		[
+			'name' => 'SSH Deploy Key',
+			'url' => 'ssh://git@github.com',
+			'type' => 'ssh_key',
+			'key' => "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEA...",
+			'login' => 'deploy',
+			'folder' => null,
+			'usedDaysAgo' => 7,
+		],
+		[
+			'name' => 'TLS Wildcard Certificate',
+			'url' => 'https://example.com',
+			'type' => 'certificate',
+			'key' => "-----BEGIN CERTIFICATE-----\nMIIE...",
+			'login' => '*.example.com',
+			'folder' => null,
+		],
+		[
+			'name' => 'Server Room WiFi',
+			'url' => null,
+			'type' => 'note',
+			'key' => 'Combination: 42-17-89. Door code: 5523#',
+			'login' => null,
+			'folder' => 'Personal',
+		],
+	];
+
+	/**
 	 * Constructor for SeedDevelopmentSecrets.
 	 *
 	 * @param EncryptionSuiteMapper $suiteMapper The encryption suite mapper
@@ -123,67 +189,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 			return;
 		}
 
-		$secrets = [
-			[
-				'name' => 'GitHub',
-				'url' => 'https://github.com',
-				'type' => 'login',
-				'key' => 'gh_dev_P@ssw0rd!2024',
-				'login' => 'dev-user',
-				'folder' => 'Work',
-				'favourite' => true,
-				'tags' => ['on call'],
-				'usedDaysAgo' => 0,
-			],
-			[
-				'name' => 'AWS Console',
-				'url' => 'https://aws.amazon.com',
-				'type' => 'api_key',
-				'key' => 'AKIAIOSFODNN7EXAMPLE',
-				'login' => 'dev-access-key',
-				'folder' => 'Work',
-				'favourite' => true,
-				'tags' => ['finance', 'on call'],
-				'usedDaysAgo' => 1,
-			],
-			[
-				'name' => 'Production Database',
-				'url' => 'postgresql://db.internal:5432/prod',
-				'type' => 'database',
-				'key' => 'Pr0d-DB-$ecret!',
-				'login' => 'app_service',
-				'folder' => null,
-				'tags' => ['finance'],
-				'usedDaysAgo' => 3,
-			],
-			[
-				'name' => 'SSH Deploy Key',
-				'url' => 'ssh://git@github.com',
-				'type' => 'ssh_key',
-				'key' => "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEA...",
-				'login' => 'deploy',
-				'folder' => null,
-				'usedDaysAgo' => 7,
-			],
-			[
-				'name' => 'TLS Wildcard Certificate',
-				'url' => 'https://example.com',
-				'type' => 'certificate',
-				'key' => "-----BEGIN CERTIFICATE-----\nMIIE...",
-				'login' => '*.example.com',
-				'folder' => null,
-			],
-			[
-				'name' => 'Server Room WiFi',
-				'url' => null,
-				'type' => 'note',
-				'key' => 'Combination: 42-17-89. Door code: 5523#',
-				'login' => null,
-				'folder' => 'Personal',
-			],
-		];
-
-		$count = $this->seedSecrets(ownerId: self::DEV_USER_ID, suite: $suite, folderNames: ['Work', 'Personal'], secrets: $secrets);
+		$count = $this->seedSecrets(ownerId: self::DEV_USER_ID, suite: $suite, folderNames: ['Work', 'Personal'], secrets: self::DEV_SECRETS);
 		if ($count === 0) {
 			$output->info('Keepiq: system types not seeded yet, skipping secret seed');
 			return;

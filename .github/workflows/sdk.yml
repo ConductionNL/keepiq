@@ -46,11 +46,17 @@ jobs:
           echo "Released ${GITHUB_REF_NAME}; consumers fetch it with go get github.com/ConductionNL/keepiq/sdk/go@${GITHUB_REF_NAME#sdk/go/}"
 
   python:
-    runs-on: ubuntu-latest
+    name: python (${{ matrix.python }})
+    # setup-python has no 3.9 build for the newest ubuntu-latest image, so that cell keeps an older runner.
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     strategy:
       matrix:
-        python: ["3.9", "3.12"]
+        include:
+          - python: "3.9"
+            runner: ubuntu-24.04
+          - python: "3.12"
+            runner: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

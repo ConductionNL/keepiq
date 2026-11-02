@@ -10,7 +10,7 @@ function values(overrides: Partial<FormValues> = {}): FormValues {
 function item(overrides: Partial<EditableItem> = {}): EditableItem {
 	return {
 		id: 'i1', typeId: 't-login', name: 'GitHub', url: 'https://github.com', folderId: null,
-		key: 'hunter2', login: 'alice', additionalFields: {}, updatedAt: '2026-03-02T10:00:00+00:00', ...overrides,
+		key: 'hunter2', login: 'alice', additionalFields: {}, updatedAt: '2026-03-02T10:00:00+00:00', totpSaved: false, ...overrides,
 	}
 }
 
