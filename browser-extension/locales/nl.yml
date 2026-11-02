@@ -356,7 +356,9 @@ detail:
   passkey: Passkey
   relyingParty: Website of app
   passkeyUser: Gebruikersnaam
-  passkeyUnsupported: Inloggen met deze passkey kan nog niet in de extensie
+  passkeyOnLogin: Keepiq logt in met passkeys die op een login zijn opgeslagen, niet met dit item
+  passkeys: Passkeys
+  passkeyCreated: Aangemaakt op {date}
   useOnly: De eigenaar laat je dit niet bekijken of kopiëren.
 
 totp:

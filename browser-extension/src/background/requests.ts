@@ -10,10 +10,11 @@ import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
 	USE_ONLY_FIELDS, type AccountSettingsRequest, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
-	type FillRequest, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite,
+	type FillRequest, type GeneratorRequest, type PasskeyDetail, type PasskeysReply, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite,
 } from '@/src/messages'
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readLastUsed } from '@/src/last-used'
+import { buildPasskeyCredential, storedArray } from '@/src/passkey/credential'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
@@ -122,6 +123,43 @@ async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promi
 	return ids.length === 1 && failure ? { ok: false, error: failure } : { ok: true, items }
 }
 
+/** Built field by field, so nothing else of the credential can reach the popup. */
+function passkeyDetail(entry: unknown): PasskeyDetail | null {
+	const credential = buildPasskeyCredential(entry)
+	if (!credential) return null
+	// Not the credential's: `buildPasskeyCredential` makes up a date for an entry without one.
+	const created = (entry as Record<string, unknown>).createdAt
+	return {
+		rpId: credential.rpId,
+		rpName: credential.rpName,
+		userName: credential.userName || credential.userDisplayName,
+		createdAt: typeof created === 'string' && Number.isFinite(Date.parse(created)) ? created : null,
+	}
+}
+
+/** A login's `passkeys` for the detail, a use-only copy's too, since it shows no key. */
+async function loginPasskeys(id: string): Promise<PasskeysReply> {
+	const account = await activeUnlocked()
+	const key = account ? await getKey(account.id) : null
+	if (!account || !key) return { ok: false, error: 'locked' }
+	const cached = await readSnapshot(account.id)
+	const row = rowsById(cached).get(id)
+	if (!row) return { ok: false, error: 'not_found' }
+	if (row.blocked) return { ok: false, error: 'blocked' }
+	const login = cached?.types.some((type) => type.id === row.typeId && type.name === 'login') === true
+	if (!login || typeof row.passkeys !== 'string' || row.passkeys === '') return { ok: true, passkeys: [] }
+	let json: string
+	try {
+		json = await rsaDecrypt(row.passkeys, key)
+	} catch (error) {
+		console.error('[keepiq] passkeys did not decrypt for', id, error)
+		return { ok: false, error: 'unreadable' }
+	}
+	if (json.trim() === '') return { ok: true, passkeys: [] }
+	const entries = storedArray(json)
+	return entries ? { ok: true, passkeys: entries.map(passkeyDetail) } : { ok: false, error: 'unreadable' }
+}
+
 /** Bitwarden's popout: the popup in its own window, for the tab it came from. */
 export async function popout(tabId: number | undefined): Promise<null> {
 	const query = new URLSearchParams({ popout: '1' })
@@ -150,6 +188,8 @@ async function perform(message: Exclude<HandledRequest, GeneratorRequest>): Prom
 			return snapshot(message.tabUrl, message.opened === true)
 		case 'item.decrypt':
 			return decrypt(message.ids, message.fields)
+		case 'item.passkeys':
+			return loginPasskeys(message.id)
 		case 'clipboard.copied': {
 			const accountId = await getActiveAccountId()
 			if (accountId) await scheduleClipboardClear((await readSettings(accountId)).clearClipboardMs)
@@ -328,7 +368,7 @@ function isInteraction(message: Exclude<HandledRequest, GeneratorRequest>): bool
 	// Every popup reads it on open, which `vault.status` already counts.
 	if (message.kind === 'settings.get' || message.kind === 'account.settings.get' || message.kind === 'defaultManager.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
-	if (message.kind === 'item.decrypt') return message.passive !== true
+	if (message.kind === 'item.decrypt' || message.kind === 'item.passkeys') return message.passive !== true
 	return true
 }
 

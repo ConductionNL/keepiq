@@ -470,7 +470,7 @@ describe('the share-save note after a save', () => {
 		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
 		expect((await title()).textContent).toBe('View item')
 		expect(notes()).toEqual([])
-		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.editable', 'popup.lastTab.set'].includes(kind))).toEqual([])
+		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.passkeys', 'item.editable', 'popup.lastTab.set'].includes(kind))).toEqual([])
 	})
 
 	it('drops the note once a later save of the item reaches everyone', async () => {

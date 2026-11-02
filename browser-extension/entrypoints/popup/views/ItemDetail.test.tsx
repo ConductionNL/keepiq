@@ -2,7 +2,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DecryptedItem, FolderMeta, ItemMeta, ShareSaveNote } from '@/src/messages'
+import type { DecryptedItem, FolderMeta, ItemMeta, PasskeysReply, ShareSaveNote } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { setLocale } from '@/src/testing/i18n'
 import { fakeBackground, fakeClipboard, itemMeta, mounts, sentKinds, sentOf, types } from '../testing'
@@ -20,8 +20,11 @@ afterEach(() => {
 
 const folders: FolderMeta[] = [{ id: 'w', name: 'Work', parentId: null }, { id: 'c', name: 'Clients', parentId: 'w' }]
 
-function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 'locked' | 'use_only', offline = false, editable?: unknown) {
-	const sent = fakeBackground({ decrypted: decrypted && { [item.id]: decrypted }, decryptError, replies: editable === undefined ? undefined : { 'item.editable': editable } })
+function renderDetail(item: ItemMeta, decrypted?: DecryptedItem, decryptError?: 'locked' | 'use_only', offline = false, editable?: unknown, passkeys?: PasskeysReply) {
+	const sent = fakeBackground({
+		decrypted: decrypted && { [item.id]: decrypted }, decryptError,
+		replies: { ...(editable !== undefined && { 'item.editable': editable }), ...(passkeys && { 'item.passkeys': passkeys }) },
+	})
 	const refreshState = vi.fn()
 	const launch = vi.fn()
 	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
@@ -102,7 +105,8 @@ describe('login credentials', () => {
 		// The new version mounts a fresh `Decrypted`.
 		await vi.waitFor(() => expect(decrypts()).toBe(2 * mounts()))
 		// Not the user's doing, so it does not reset the vault timeout.
-		expect(sent.mock.calls.at(-1)![0]).toMatchObject({ kind: 'item.decrypt', passive: true })
+		expect(sentOf(sent, 'item.decrypt').at(-1)).toMatchObject({ passive: true })
+		await vi.waitFor(() => expect(sentOf(sent, 'item.passkeys').at(-1)).toMatchObject({ id: 'i1', passive: true }))
 	})
 })
 
@@ -255,19 +259,132 @@ describe('username', () => {
 })
 
 describe('passkey', () => {
-	it('shows who and where, the not-supported note, and never the private key', async () => {
-		const { view } = renderDetail(itemMeta({ typeId: 't-passkey', hasLogin: false, url: null }), {
+	it('shows who, where and when, the note that a login’s passkeys sign in, and never the private key', async () => {
+		const { view, sent } = renderDetail(itemMeta({ typeId: 't-passkey', hasLogin: false, url: null }), {
 			key: JSON.stringify({ credentialId: 'c', rpId: 'example.com', rpName: 'Example', userName: 'alice', privateKey: 'PRIVATE-KEY-MATERIAL', createdAt: '2026-01-05T10:00:00Z' }),
 		})
 		expect(await screen.findByText('Example (example.com)')).toBeTruthy()
 		expect(screen.getByText('alice')).toBeTruthy()
-		expect(screen.getByText('Signing in with this passkey is not yet supported in the extension')).toBeTruthy()
+		expect(within(section('Passkey')).getByText('Created')).toBeTruthy()
+		expect(screen.getByText('Keepiq signs in with passkeys saved on a login, not with this item')).toBeTruthy()
 		expect(view.container.innerHTML).not.toContain('PRIVATE-KEY-MATERIAL')
+		expect(view.container.querySelectorAll('button[aria-label*="Copy"], button[aria-label^="Show"]')).toHaveLength(0)
+		// Not a login, so its key is not looked for in a `passkeys` field.
+		expect(sentOf(sent, 'item.passkeys')).toHaveLength(0)
+	})
+
+	it('shows the note in Dutch', async () => {
+		setLocale('nl')
+		renderDetail(itemMeta({ typeId: 't-passkey', hasLogin: false, url: null }), { key: JSON.stringify({ rpId: 'example.com', userName: 'alice' }) })
+		expect(await screen.findByText('Keepiq logt in met passkeys die op een login zijn opgeslagen, niet met dit item')).toBeTruthy()
 	})
 
 	it('says when the passkey does not parse', async () => {
 		renderDetail(itemMeta({ typeId: 't-passkey', hasLogin: false, url: null }), { key: '{' })
 		expect(await screen.findByText('Could not read this passkey')).toBeTruthy()
+	})
+})
+
+describe('a login’s passkeys', () => {
+	const two: PasskeysReply = {
+		ok: true,
+		passkeys: [
+			{ rpId: 'example.com', rpName: 'Example', userName: 'alice', createdAt: '2026-01-05T10:00:00Z' },
+			{ rpId: 'example.org', rpName: '', userName: 'alice.org', createdAt: null },
+		],
+	}
+
+	it('lists each by relying party, user name and date, under the credentials', async () => {
+		const { sent } = renderDetail(itemMeta(), { login: 'alice', key: 'hunter2' }, undefined, false, undefined, two)
+		const passkeys = await screen.findByRole('heading', { name: 'Passkeys' }).then((h) => h.closest('section')!)
+		expect(sentOf(sent, 'item.passkeys')[0]).toEqual({ kind: 'item.passkeys', id: 'i1', passive: false })
+		const rows = within(passkeys).getAllByRole('listitem')
+		expect(rows.map((row) => row.textContent)).toEqual([
+			`Example (example.com)alice · Created ${new Date('2026-01-05T10:00:00Z').toLocaleDateString('en')}`,
+			'example.orgalice.org',
+		])
+		// Nothing in it copies or reveals.
+		expect(within(passkeys).queryAllByRole('button')).toHaveLength(0)
+		const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+		expect(headings.indexOf('Passkeys')).toBe(headings.indexOf('Login credentials') + 1)
+	})
+
+	it('words the date in Dutch', async () => {
+		setLocale('nl')
+		renderDetail(itemMeta(), { login: 'alice' }, undefined, false, undefined, two)
+		expect(await screen.findByText(/^alice · Aangemaakt op /)).toBeTruthy()
+	})
+
+	it('renders what the page named the relying party and user as text', async () => {
+		const { view } = renderDetail(itemMeta(), { login: 'alice' }, undefined, false, undefined, {
+			ok: true, passkeys: [{ rpId: 'example.com', rpName: '<img src=x onerror=alert(1)>', userName: '<b>bob</b>', createdAt: null }],
+		})
+		expect(await screen.findByText('<img src=x onerror=alert(1)> (example.com)')).toBeTruthy()
+		expect(screen.getByText('<b>bob</b>')).toBeTruthy()
+		expect(view.container.querySelector('img, b')).toBeNull()
+	})
+
+	it('lists them for a use-only copy too', async () => {
+		renderDetail(itemMeta({ useOnly: true }), { login: 'bob' }, undefined, false, undefined, two)
+		const passkeys = await screen.findByRole('heading', { name: 'Passkeys' }).then((h) => h.closest('section')!)
+		expect(within(passkeys).getAllByRole('listitem')).toHaveLength(2)
+		expect(screen.getByText('Its owner doesn\'t let you view or copy this.')).toBeTruthy()
+	})
+
+	it('says which entry does not parse and lists the rest', async () => {
+		renderDetail(itemMeta(), { login: 'alice' }, undefined, false, undefined, { ok: true, passkeys: [null, two.passkeys[0]!] })
+		const passkeys = await screen.findByRole('heading', { name: 'Passkeys' }).then((h) => h.closest('section')!)
+		expect(within(passkeys).getAllByRole('listitem').map((row) => row.textContent)).toEqual([
+			'Could not read this passkey',
+			expect.stringMatching(/^Example \(example\.com\)alice/),
+		])
+	})
+
+	it('says once when the field does not read', async () => {
+		renderDetail(itemMeta(), { login: 'alice' }, undefined, false, undefined, { ok: false, error: 'unreadable' })
+		const passkeys = await screen.findByRole('heading', { name: 'Passkeys' }).then((h) => h.closest('section')!)
+		expect(within(passkeys).getAllByText('Could not read this passkey')).toHaveLength(1)
+	})
+
+	it.each<[string, PasskeysReply]>([
+		['no passkeys', { ok: true, passkeys: [] }],
+		['a locked vault', { ok: false, error: 'locked' }],
+		['a row the cache no longer holds', { ok: false, error: 'not_found' }],
+	])('shows no section for %s', async (_, reply) => {
+		renderDetail(itemMeta(), { login: 'alice', key: 'pw' }, undefined, false, undefined, reply)
+		await screen.findByRole('heading', { name: 'Login credentials' })
+		await new Promise((resolve) => setTimeout(resolve, 0))
+		expect(screen.queryByRole('heading', { name: 'Passkeys' })).toBeNull()
+	})
+
+	it('shows only the three values, whatever else a reply held', async () => {
+		const extra = { ...two.passkeys[0]!, privateKey: 'PRIVATE-KEY-MATERIAL', credentialId: 'CREDENTIAL-ID', userHandle: 'USER-HANDLE' }
+		const { view } = renderDetail(itemMeta(), { login: 'alice' }, undefined, false, undefined, { ok: true, passkeys: [extra] })
+		await screen.findByRole('heading', { name: 'Passkeys' })
+		expect(view.container.innerHTML).not.toMatch(/PRIVATE-KEY-MATERIAL|CREDENTIAL-ID|USER-HANDLE/)
+	})
+
+	it('has the popup look again when the vault locked meanwhile', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice' } }, replies: { 'item.passkeys': { ok: false, error: 'locked' } } })
+		const refreshState = vi.fn()
+		render(
+			<ShellContext.Provider value={{ ...DEFAULT_SHELL, refreshState, footer }}>
+				<ItemDetail item={itemMeta()} type={types[0]} folders={folders} webAppUrl="https://cloud.example.org/index.php/apps/keepiq/" />
+			</ShellContext.Provider>,
+		)
+		await vi.waitFor(() => expect(refreshState).toHaveBeenCalled())
+		expect(sentOf(sent, 'item.passkeys')).toHaveLength(mounts())
+	})
+
+	it.each([['note'], ['card'], ['totp']])('never asks for a %s item', async (name) => {
+		const { sent } = renderDetail(itemMeta({ typeId: `t-${name}`, hasLogin: false, url: null }), { key: 'x' })
+		await vi.waitFor(() => expect(sentOf(sent, 'item.decrypt')).toHaveLength(mounts()))
+		expect(sentOf(sent, 'item.passkeys')).toHaveLength(0)
+	})
+
+	it('never asks for a blocked login', () => {
+		const { sent } = renderDetail(itemMeta({ blocked: true, hasLogin: false }))
+		expect(sentOf(sent, 'item.passkeys')).toHaveLength(0)
 	})
 })
 

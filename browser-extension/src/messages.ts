@@ -610,6 +610,20 @@ export type DecryptReply =
 	| { ok: true; items: Record<string, DecryptedItem> }
 	| { ok: false; error: 'locked' | 'blocked' | 'use_only' | 'decrypt_failed' }
 
+/** All the detail gets of a login's passkey: no key, credential id or user handle. `createdAt` is null when absent or not a date. */
+export interface PasskeyDetail {
+	rpId: string
+	rpName: string
+	/** `userName`, else `userDisplayName`. */
+	userName: string
+	createdAt: string | null
+}
+
+/** In stored order; `null` for an entry that does not parse. `unreadable`: the field does not decrypt or is not an array. */
+export type PasskeysReply =
+	| { ok: true; passkeys: Array<PasskeyDetail | null> }
+	| { ok: false; error: 'locked' | 'not_found' | 'blocked' | 'unreadable' }
+
 /** Plaintext draft. The background encrypts key, login and additionalFields; the popup never does. */
 export interface ItemDraft {
 	typeId: string
@@ -720,6 +734,7 @@ export type PopupRequest =
 	/** `opened` marks the popup's first read: the one that may start a stale sync and counts as interaction. */
 	| { kind: 'vault.snapshot'; tabUrl?: string; opened?: boolean }
 	| { kind: 'item.decrypt'; ids: string[]; fields: DecryptField[]; passive?: boolean }
+	| { kind: 'item.passkeys'; id: string; passive?: boolean }
 	| { kind: 'clipboard.copied' }
 	| { kind: 'popup.popout'; tabId?: number }
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
@@ -858,6 +873,7 @@ export interface PopupReplies {
 	'vault.sync': SyncStatus
 	'vault.snapshot': VaultSnapshotReply
 	'item.decrypt': DecryptReply
+	'item.passkeys': PasskeysReply
 	'clipboard.copied': null
 	'popup.popout': null
 	'popup.lastTab.set': null
@@ -900,7 +916,7 @@ export interface PopupReplies {
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
-	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
+	'vault.sync', 'vault.snapshot', 'item.decrypt', 'item.passkeys', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
 	'settings.get', 'settings.set', 'defaultManager.get', 'defaultManager.enable', 'defaultManager.disable', 'fill.request', 'account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',

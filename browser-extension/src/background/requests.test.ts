@@ -209,6 +209,105 @@ describe('item.decrypt', () => {
 	})
 })
 
+describe('item.passkeys', () => {
+	const credential = (rpId: string, overrides: Record<string, unknown> = {}) => ({
+		credentialId: `CRED-${rpId}`, rpId, rpName: `${rpId} site`, userName: `alice@${rpId}`, userDisplayName: 'Alice', userHandle: `HANDLE-${rpId}`,
+		privateKey: `PRIVATE-${rpId}`, algorithm: -7, counter: 3, transports: ['internal'], createdAt: '2026-01-05T10:00:00.000Z', ...overrides,
+	})
+	const passkeysOf = async (entries: unknown) => encrypt(JSON.stringify(entries))
+	const secretsIn = /PRIVATE|CRED-|HANDLE-|"counter"|"algorithm"|"transports"|"userDisplayName"/
+
+	it('answers relying party, user name and date per entry, and nothing else', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com'), credential('example.org', { rpName: '' })]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toEqual({
+			ok: true,
+			passkeys: [
+				{ rpId: 'example.com', rpName: 'example.com site', userName: 'alice@example.com', createdAt: '2026-01-05T10:00:00.000Z' },
+				{ rpId: 'example.org', rpName: '', userName: 'alice@example.org', createdAt: '2026-01-05T10:00:00.000Z' },
+			],
+		})
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it('falls back to the display name, and answers no date it was not given', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com', { userName: '', createdAt: undefined }), credential('example.org', { createdAt: 'soon' })]) })])
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toMatchObject({
+			ok: true, passkeys: [{ userName: 'Alice', createdAt: null }, { userName: 'alice@example.org', createdAt: null }],
+		})
+	})
+
+	it('answers a use-only copy’s too, as metadata only', async () => {
+		await snapshot([secretRow({ id: 'u', useOnly: true, passkeys: await passkeysOf([credential('example.com')]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'u' })
+		expect(reply).toMatchObject({ ok: true, passkeys: [{ rpId: 'example.com' }] })
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it('marks an entry that does not parse and keeps the others', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf(['junk', { rpId: 'example.net', privateKey: 'PRIVATE-x' }, credential('example.com')]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toMatchObject({ ok: true, passkeys: [null, null, { rpId: 'example.com' }] })
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it.each([
+		['does not decrypt', async () => 'AAAA'],
+		['is not an array', async () => passkeysOf(credential('example.com'))],
+		['is not JSON', async () => encrypt('{')],
+	])('answers unreadable for a field that %s, and nothing of it', async (_, ciphertext) => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		await snapshot([secretRow({ id: 'a', passkeys: await ciphertext() })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toEqual({ ok: false, error: 'unreadable' })
+	})
+
+	it.each([
+		['null', async () => null],
+		['empty', async () => ''],
+		['absent', async () => undefined],
+		['the encryption of nothing', async () => encrypt('')],
+		['an empty array', async () => passkeysOf([])],
+	])('answers none for a field that is %s', async (_, ciphertext) => {
+		await snapshot([secretRow({ id: 'a', passkeys: await ciphertext() })])
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: true, passkeys: [] })
+	})
+
+	it('answers none for a row that is not a login', async () => {
+		await snapshot([secretRow({ id: 'n', typeId: 't-note', passkeys: await passkeysOf([credential('example.com')]) })])
+		expect(await send({ kind: 'item.passkeys', id: 'n' })).toEqual({ ok: true, passkeys: [] })
+	})
+
+	it('refuses a blocked row and one the cache does not hold', async () => {
+		await snapshot([blockedRow({ id: 'x' })])
+		expect(await send({ kind: 'item.passkeys', id: 'x' })).toEqual({ ok: false, error: 'blocked' })
+		expect(await send({ kind: 'item.passkeys', id: 'nope' })).toEqual({ ok: false, error: 'not_found' })
+	})
+
+	it('answers nothing about passkeys while locked or logged out', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com')]) })])
+		await lock(accountId)
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: false, error: 'locked' })
+		expect(await send({ kind: 'item.passkeys', id: 'nope' })).toEqual({ ok: false, error: 'locked' })
+		await markLoggedOut(accountId)
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: false, error: 'locked' })
+	})
+
+	it('writes nothing to storage and counts a passive re-read as no interaction', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com')]) })])
+		const set = vi.spyOn(browser.storage.local, 'set')
+		await send({ kind: 'item.passkeys', id: 'a' })
+		const before = await browser.storage.session.get('lastInteractionAt')
+		expect(before.lastInteractionAt).toBeDefined()
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		await send({ kind: 'item.passkeys', id: 'a', passive: true })
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+		expect(set).not.toHaveBeenCalled()
+		const stored = JSON.stringify({ ...await browser.storage.local.get(null), ...await browser.storage.session.get(null) })
+		expect(stored).not.toMatch(/PRIVATE-example|alice@example\.com/)
+	})
+})
+
 describe('last tab', () => {
 	it('defaults to Vault, remembers a tab and forgets it on lock', async () => {
 		expect(await readLastTab()).toBe('vault')

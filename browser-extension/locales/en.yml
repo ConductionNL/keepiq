@@ -357,7 +357,9 @@ detail:
   passkey: Passkey
   relyingParty: Relying party
   passkeyUser: User name
-  passkeyUnsupported: Signing in with this passkey is not yet supported in the extension
+  passkeyOnLogin: Keepiq signs in with passkeys saved on a login, not with this item
+  passkeys: Passkeys
+  passkeyCreated: Created {date}
   useOnly: Its owner doesn't let you view or copy this.
 
 totp:

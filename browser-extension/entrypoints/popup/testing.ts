@@ -176,6 +176,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 				)]))
 				return { ok: true, items }
 			}
+			case 'item.passkeys': return { ok: true, passkeys: [] }
 			case 'generator.context': return { options: generatorOptions, policy: options.generator?.policy ?? null, accountEmail: options.generator?.accountEmail === undefined ? 'alice@example.org' : options.generator.accountEmail }
 			case 'generator.saveOptions': return (generatorOptions = message.options!)
 			case 'generator.history.list': return history
