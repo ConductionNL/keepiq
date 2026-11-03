@@ -25,8 +25,8 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -49,7 +49,7 @@ class ViewOnlyCopyGuard {
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets (copy to source)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets
 	 * @param ShareWriteContext $contexts The holder's standing on the source
 	 *
@@ -58,7 +58,7 @@ class ViewOnlyCopyGuard {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
 		private ShareWriteContext $contexts,
 	) {
@@ -67,7 +67,9 @@ class ViewOnlyCopyGuard {
 	/**
 	 * Refuse a change of the value of a copy its holder may not write.
 	 * A change that leaves the value alone, and a row that is not a copy,
-	 * pass.
+	 * pass. Only a trusted share row (ShareRowJudge) makes a row a copy; a
+	 * row the pending quarantine scan cannot judge refuses the change with
+	 * share_scan_pending until it has judged it.
 	 *
 	 * @param Secret $row The holder's row, already checked to be theirs
 	 * @param string[] $fields The fields the change writes
@@ -77,20 +79,30 @@ class ViewOnlyCopyGuard {
 	 *
 	 * @throws NotFoundException When the copy's share row or source cannot be resolved
 	 * @throws ViewOnlyCopyException When the holder may not write the copy's source
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the copy
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertMayChangeValue(Secret $row, array $fields, string $userId): void {
 		if (array_intersect(self::VALUE_FIELDS, $fields) === []) {
 			return;
 		}
 
-		try {
-			$target = $this->targets->findByRecipientSecret(recipientSecretId: $row->getId());
-		} catch (DoesNotExistException) {
-			return;
-		} catch (MultipleObjectsReturnedException) {
+		$verdict = $this->rowJudge->forCopy(copy: $row);
+		if ($verdict->state === ShareRowVerdict::AMBIGUOUS) {
 			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		// Until the pending scan has judged its row, the change waits for it.
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be changed yet');
+		}
+
+		$target = $verdict->trustedRow();
+		if ($target === null) {
+			// Not a copy: no row names it, the scan quarantines the row, or its target does not hold it.
+			return;
 		}
 
 		try {

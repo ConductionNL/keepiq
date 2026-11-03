@@ -34,8 +34,10 @@ use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 
@@ -46,14 +48,17 @@ use Throwable;
  *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
+
 	/**
 	 * Constructor for TeamFolderShareService.
 	 *
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (per-row reads/writes)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param BulkGrantShareTargetMapper $bulkGrantMapper The share-target mapper keyed on the grant (cascade)
 	 * @param RecipientSecretCopyService $copies The recipient-copy service
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param LoggerInterface $logger Records each unjudged row a revoke that cannot wait removes
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
@@ -62,10 +67,12 @@ class TeamFolderShareService {
 	 */
 	public function __construct(
 		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private BulkGrantShareTargetMapper $bulkGrantMapper,
 		private RecipientSecretCopyService $copies,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private LoggerInterface $logger,
 		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 	}//end __construct()
@@ -220,72 +227,215 @@ class TeamFolderShareService {
 	}//end confirmers()
 
 	/**
+	 * Refuse, before anything is written, a revoke that would reach a row the
+	 * pending quarantine scan cannot judge: of a whole team folder, or of one
+	 * user's rows in it. A row it quarantines is not refused here; the revoke
+	 * keeps it with its copy for an administrator to judge.
+	 *
+	 * @param string      $teamFolderId The TeamFolder UUID
+	 * @param string|null $targetUserId The user losing access, or null for every member
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function assertRevocable(string $teamFolderId, ?string $targetUserId = null): void {
+		$rows = $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId);
+		foreach ($rows->all() as $row) {
+			if ($rows->verdict(row: $row) === ShareQuarantineScanner::HELD_UNJUDGED) {
+				throw $this->scanPending();
+			}
+		}
+	}//end assertRevocable()
+
+	/**
 	 * Revoke every derived ShareTarget of a team folder (and the
-	 * recipient Secret copies they point at).
+	 * recipient Secret copies they point at), for its owner unsharing it. A
+	 * row the pending quarantine scan quarantines is kept with its copy, and
+	 * one it cannot judge refuses the revoke.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 *
 	 * @return int Rows revoked
 	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeForTeamFolder(string $teamFolderId): int {
-		$revoked = 0;
-		foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $row) {
-			$this->revokeRow(row: $row);
-			++$revoked;
-		}
-
-		return $revoked;
+		return $this->revokeOrRefuse(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: null));
 	}//end revokeForTeamFolder()
 
 	/**
-	 * Revoke one user's derived ShareTargets for one team folder,
-	 * deleting their recipient Secret copies too.
+	 * Revoke one user's derived ShareTargets for one team folder, deleting
+	 * their recipient Secret copies too, for an owner or manager removing a
+	 * member. A row the pending quarantine scan quarantines is kept with its
+	 * copy, and one it cannot judge refuses the revoke.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $targetUserId The recipient losing access
 	 *
 	 * @return int Rows revoked
 	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeForMember(string $teamFolderId, string $targetUserId): int {
-		$revoked = 0;
-		foreach ($this->bulkGrantMapper->findByTeamFolderAndTargetUser(
-			teamFolderId: $teamFolderId,
-			targetUserId: $targetUserId
-		) as $row) {
-			$this->revokeRow(row: $row);
-			++$revoked;
-		}
-
-		return $revoked;
+		return $this->revokeOrRefuse(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId));
 	}//end revokeForMember()
 
 	/**
-	 * Revoke every TEAM-FOLDER-derived share held by a user. Direct
-	 * (non-team) shares are left untouched.
+	 * Revoke one user's derived ShareTargets for one team folder where the
+	 * revoke cannot be refused: they left a group, left the folder
+	 * themselves, or their membership ended. As a group leave does, a row the
+	 * pending quarantine scan quarantines is kept with its copy, and one it
+	 * cannot judge is removed while its copy is kept.
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $targetUserId The recipient losing access
+	 *
+	 * @return int Rows revoked
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function releaseForMember(string $teamFolderId, string $targetUserId): int {
+		return $this->release(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId));
+	}//end releaseForMember()
+
+	/**
+	 * Revoke every TEAM-FOLDER-derived share held by a user, for offboarding,
+	 * which cannot be refused. Direct (non-team) shares are left untouched.
+	 * Held-back rows are handled as releaseForMember() handles them.
 	 *
 	 * @param string $targetUserId The departing user
 	 *
 	 * @return int Number of derived shares revoked
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeTeamSharesForUser(string $targetUserId): int {
+		$rows = $this->rowJudge->rowsOfTarget(targetUserId: $targetUserId);
+
+		return $this->release(
+			rows: $this->rowJudge->judgeRows(
+				rows: array_filter($rows->all(), static fn (ShareTarget $row): bool => (string)$row->getTeamFolderId() !== '')
+			)
+		);
+	}//end revokeTeamSharesForUser()
+
+	/**
+	 * The live rows of a team folder, or of one user in it, judged when asked.
+	 *
+	 * @param string      $teamFolderId The TeamFolder UUID
+	 * @param string|null $targetUserId The user, or null for every member
+	 *
+	 * @return JudgedShareRows
+	 */
+	private function folderRows(string $teamFolderId, ?string $targetUserId): JudgedShareRows {
+		if ($targetUserId === null) {
+			return $this->rowJudge->judgeRows(rows: $this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId));
+		}
+
+		return $this->rowJudge->judgeRows(
+			rows: $this->bulkGrantMapper->findByTeamFolderAndTargetUser(teamFolderId: $teamFolderId, targetUserId: $targetUserId)
+		);
+	}//end folderRows()
+
+	/**
+	 * Revoke rows where the caller can be refused: every row is judged before
+	 * anything is written, a row the scan cannot judge refuses the request,
+	 * a row it quarantines is kept with its copy, and every other row goes
+	 * with its copy.
+	 *
+	 * @param JudgedShareRows $rows The rows
+	 *
+	 * @return int Rows revoked
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 */
+	private function revokeOrRefuse(JudgedShareRows $rows): int {
+		$trusted = [];
+		foreach ($rows->all() as $row) {
+			$held = $rows->verdict(row: $row);
+			if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+				throw $this->scanPending();
+			}
+
+			if ($held === null) {
+				$trusted[] = $row;
+			}
+		}
+
+		foreach ($trusted as $row) {
+			$this->copies->deleteByShare(share: $row);
+			$this->shareTargetMapper->delete($row);
+		}
+
+		return count($trusted);
+	}//end revokeOrRefuse()
+
+	/**
+	 * Revoke rows where the caller cannot be refused: a row the scan
+	 * quarantines is kept with its copy, one it cannot judge is removed, its
+	 * copy kept and the row logged as a warning, and every other row goes
+	 * with its copy.
+	 *
+	 * @param JudgedShareRows $rows The rows
+	 *
+	 * @return int Rows revoked
+	 */
+	private function release(JudgedShareRows $rows): int {
 		$revoked = 0;
-		foreach ($this->shareTargetMapper->findByTargetUser(targetUserId: $targetUserId) as $row) {
-			if ($row->getTeamFolderId() === null || $row->getTeamFolderId() === '') {
+		foreach ($rows->all() as $row) {
+			$held = $rows->verdict(row: $row);
+			if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
 				continue;
 			}
 
-			$this->revokeRow(row: $row);
+			if ($held === null) {
+				$this->copies->deleteByShare(share: $row);
+			}
+
+			if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+				// The row is the only link from the kept copy to its source:
+				// record it, so an administrator can still find the copy.
+				$this->logger->warning(
+					'Removed a team-folder share row the pending quarantine scan cannot judge and kept its copy',
+					[
+						'app' => 'keepiq',
+						'shareId' => $row->getId(),
+						'sourceSecretId' => $row->getSourceSecretId(),
+						'targetUserId' => $row->getTargetUserId(),
+						'secretId' => $row->getSecretId(),
+						'teamFolderId' => $row->getTeamFolderId(),
+					]
+				);
+			}
+
+			$this->shareTargetMapper->delete($row);
 			++$revoked;
 		}
 
 		return $revoked;
-	}//end revokeTeamSharesForUser()
+	}//end release()
+
+	/**
+	 * The refusal of a team-folder revoke that reaches a row the pending scan cannot judge.
+	 *
+	 * @return ShareScanPendingException
+	 */
+	private function scanPending(): ShareScanPendingException {
+		return $this->rowJudge->scanPending(
+			refusal: 'A share of this team folder waits for the share quarantine scan, so it cannot be revoked yet'
+		);
+	}//end scanPending()
 
 	/**
 	 * Materialise one fan-out share row, or report a skip.
@@ -370,21 +520,6 @@ class TeamFolderShareService {
 			'recipientSecretId' => $copy->getId(),
 		];
 	}//end createFanOutShare()
-
-	/**
-	 * Revoke one ShareTarget row: the recipient's Secret copy goes first,
-	 * then the provenance row itself.
-	 *
-	 * @param ShareTarget $row The share-target row
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
-	 */
-	private function revokeRow(ShareTarget $row): void {
-		$this->copies->deleteByShare(share: $row);
-		$this->shareTargetMapper->delete($row);
-	}//end revokeRow()
 
 	/**
 	 * Normalize an optional string value: empty becomes null.

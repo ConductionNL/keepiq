@@ -1807,7 +1807,8 @@
         "This image could not be read.": "Deze afbeelding kon niet worden gelezen.",
         "This image is too large. Choose an image under 10 MB.": "Deze afbeelding is te groot. Kies een afbeelding kleiner dan 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dit is geen authenticator-sleutel. Plak een otpauth://totp/-link of het base32-geheim.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

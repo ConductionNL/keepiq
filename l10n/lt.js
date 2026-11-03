@@ -1725,7 +1725,8 @@ OC.L10N.register(
         "This image could not be read.": "Šio paveikslėlio nepavyko nuskaityti.",
         "This image is too large. Choose an image under 10 MB.": "Šis paveikslėlis per didelis. Pasirinkite mažesnį nei 10 MB paveikslėlį.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Tai nėra autentifikatoriaus raktas. Įklijuokite nuorodą otpauth://totp/ arba paslaptį base32 formatu.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šiame QR kode nėra autentifikatoriaus rakto. Naudokite QR kodą, kurį svetainė rodo nustatant dviejų veiksnių prisijungimą."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šiame QR kode nėra autentifikatoriaus rakto. Naudokite QR kodą, kurį svetainė rodo nustatant dviejų veiksnių prisijungimą.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ši paslaptis laukia savo bendrinimų patikros, kuri dar nebaigta. Niekas neišsaugota; bandykite vėliau arba paprašykite administratoriaus patikrinti, ar veikia foninės užduotys."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
