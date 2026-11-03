@@ -81,8 +81,9 @@ final class ShareRowVerdict {
 	/**
 	 * Constructor.
 	 *
-	 * @param string           $state One of the constants
-	 * @param ShareTarget|null $row   The row, when exactly one was found
+	 * @param string           $state           One of the constants
+	 * @param ShareTarget|null $row             The row, when exactly one was found
+	 * @param bool             $scanCannotJudge Whether the pending scan cannot judge a foreign row
 	 *
 	 * @return void
 	 *
@@ -91,6 +92,7 @@ final class ShareRowVerdict {
 	public function __construct(
 		public readonly string $state,
 		public readonly ?ShareTarget $row = null,
+		public readonly bool $scanCannotJudge = false,
 	) {
 	}//end __construct()
 
@@ -136,6 +138,20 @@ final class ShareRowVerdict {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function awaitsTheScanFor(Secret $secret, string $userId): bool {
-		return $this->state === self::UNJUDGED && $secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId;
+		return $this->awaitsTheScan() === true && $secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId;
 	}//end awaitsTheScanFor()
+
+	/**
+	 * Whether a check that refuses copies waits for the pending scan: the scan
+	 * cannot judge the row, whether or not its target holds the copy. A foreign
+	 * row stays foreign for every other path, so a save through it still saves
+	 * the holder's own row.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function awaitsTheScan(): bool {
+		return $this->state === self::UNJUDGED || ($this->state === self::FOREIGN && $this->scanCannotJudge === true);
+	}//end awaitsTheScan()
 }//end class

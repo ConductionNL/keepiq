@@ -227,7 +227,8 @@ class ShareRowJudge {
 	 * holds the copy and the pending scan answers that it does not hold the
 	 * row back; every other answer fails closed. A row whose target does not
 	 * hold the copy is still judged, so the scan can quarantine it on the
-	 * spot: it is then no copy at all, and otherwise stays foreign.
+	 * spot: it is then no copy at all, and otherwise stays foreign, noting
+	 * when the scan cannot judge it so a check that refuses copies waits.
 	 *
 	 * @param ShareTarget $row  The row
 	 * @param Secret      $copy The copy it names
@@ -241,7 +242,11 @@ class ShareRowJudge {
 		}
 
 		if ($row->isHeldByTarget(copy: $copy) === false) {
-			return new ShareRowVerdict(state: ShareRowVerdict::FOREIGN, row: $row);
+			return new ShareRowVerdict(
+				state: ShareRowVerdict::FOREIGN,
+				row: $row,
+				scanCannotJudge: ($held === ShareQuarantineScanner::HELD_UNJUDGED)
+			);
 		}
 
 		if ($held === null) {

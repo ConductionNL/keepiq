@@ -658,6 +658,13 @@ A share row links a copy to its source. Every runtime path that follows a share 
 - WHEN B saves V, whether or not the quarantine scan has completed
 - THEN the row MUST NOT lead B's save to S_a
 
+#### Scenario: The holder of a secret a foreign row names waits while the scan cannot judge the row
+- GIVEN the quarantine scan has not completed, B holds V, and a row `{source: S_a, target: M, secret: V}` names V while M does not hold V, and the scan cannot judge the row
+- WHEN B syncs, directly shares, group-shares or link-shares V
+- THEN B MUST be answered `409` with `error: share_scan_pending`
+- AND M MUST keep the refusal of a copy
+- AND B's value change of V MUST still save B's own V
+
 #### Scenario: A share-save skips a copy whose row the pending scan quarantines
 - GIVEN the quarantine scan has not completed, and S_a has a row `{source: S_a, target: B, secret: V}` where V is B's own secret
 - WHEN the owner of S_a share-saves S_a and the scan quarantines the row on the spot

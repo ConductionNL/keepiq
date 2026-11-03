@@ -681,7 +681,7 @@ class GroupShareService {
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
 		$verdict = $this->rowJudge->forCopy(copy: $secret);
-		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+		if ($verdict->awaitsTheScan() === true) {
 			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
 		}
 

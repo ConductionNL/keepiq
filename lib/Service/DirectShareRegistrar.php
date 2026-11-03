@@ -455,7 +455,7 @@ class DirectShareRegistrar {
 		// can never re-share what was shared with them (user-sharing: Share a Secret).
 		// A delegate's own copy was already resolved to its source.
 		$verdict = $this->rowJudge->forCopy(copy: $source);
-		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+		if ($verdict->awaitsTheScan() === true) {
 			// The row naming the source waits for the scan, as on the other share paths.
 			return 'share_scan_pending';
 		}

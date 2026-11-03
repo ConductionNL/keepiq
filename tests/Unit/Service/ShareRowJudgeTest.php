@@ -119,7 +119,8 @@ class ShareRowJudgeTest extends TestCase {
 
 	/**
 	 * A row whose target does not hold the copy is still judged: the scan
-	 * quarantining it makes it no copy; otherwise it stays foreign.
+	 * quarantining it makes it no copy; otherwise it stays foreign, and a
+	 * check that refuses copies waits while the scan cannot judge it.
 	 *
 	 * @return void
 	 */
@@ -134,6 +135,8 @@ class ShareRowJudgeTest extends TestCase {
 			$foreign = $this->judge(answer: $answer)->forCopy(copy: $this->copy);
 			$this->assertSame(ShareRowVerdict::FOREIGN, $foreign->state);
 			$this->assertNull($foreign->trustedRow());
+			$this->assertTrue($foreign->countsAsCopy());
+			$this->assertSame($answer === ShareQuarantineScanner::HELD_UNJUDGED, $foreign->awaitsTheScan());
 		}
 	}//end testAForeignRowIsJudgedToo()
 

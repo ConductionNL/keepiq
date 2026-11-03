@@ -285,6 +285,50 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	}//end testASyncFromVIsRefusedOnlyWhileItsRowIsACopy()
 
 	/**
+	 * A row naming Bob's V as Mallory's copy is foreign. While the scan cannot
+	 * judge it, every check that refuses copies tells Bob, who holds V, that
+	 * it waits for the scan, as for an unjudged row he holds; Mallory keeps the
+	 * refusal of a copy, and a value change still saves Bob's own V.
+	 *
+	 * @return void
+	 */
+	public function testAForeignRowTheScanCannotJudgeTellsTheHolderItWaits(): void {
+		$verdict = ShareQuarantineScanner::HELD_UNJUDGED;
+		$this->row->setTargetUserId('mallory');
+
+		$auth = $this->createMock(ShareAuthorizationService::class);
+		$auth->method('loadSecret')->willReturn($this->secrets['V']);
+		$sync = new ShareSyncService(
+			secretMapper: $this->secretMapper(),
+			db: $this->createMock(IDBConnection::class),
+			auth: $auth,
+			versionService: $this->createMock(SecretVersionService::class),
+			guards: $this->createMock(ShareSyncGuards::class),
+			contexts: $this->createMock(ShareWriteContext::class),
+			rowJudge: $this->judge(verdict: $verdict),
+		);
+
+		$this->assertSame('share_scan_pending', $this->registrarRefusal(verdict: $verdict));
+		foreach ([
+			'sync' => fn () => $sync->syncUpdate(secretId: 'V', updates: [], expectedUpdatedAt: '', userId: 'bob'),
+			'group share' => fn () => $this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)),
+			'link share' => fn () => $this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob'),
+		] as $path => $onward) {
+			try {
+				$onward();
+				$this->fail('The '.$path.' of a secret a foreign row the scan cannot judge names must wait for the scan');
+			} catch (ShareScanPendingException) {
+				$this->addToAssertionCount(1);
+			}
+		}
+
+		$this->viewOnlyGuard(verdict: $verdict, standing: false)->assertMayChangeValue(row: $this->secrets['V'], fields: ['key'], userId: 'bob');
+
+		$this->expectException(ForbiddenException::class);
+		$this->syncStartsFrom(verdict: $verdict, userId: 'mallory');
+	}//end testAForeignRowTheScanCannotJudgeTellsTheHolderItWaits()
+
+	/**
 	 * The secret mapper over the secrets.
 	 *
 	 * @return SecretMapper
