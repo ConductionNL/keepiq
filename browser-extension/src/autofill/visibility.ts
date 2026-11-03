@@ -33,13 +33,14 @@ export function modalOf(element: Element, aria: boolean): Element | null {
 	return null
 }
 
-/** Whether a press at the point reaches `element`, through every shadow root above it. */
-export function hits(element: Element, x: number, y: number): boolean {
+/** Whether a press at the point reaches `element`, through every shadow root above it, looking through what `skip` names. */
+export function hits(element: Element, x: number, y: number, skip?: (found: Element) => boolean): boolean {
 	let target = element
 	for (;;) {
 		const root = target.getRootNode() as Document | ShadowRoot
 		if (root.nodeType !== Node.DOCUMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return false
-		if (root.elementFromPoint(x, y) !== target) return false
+		const top = skip ? root.elementsFromPoint?.(x, y).find((found) => !skip(found)) : root.elementFromPoint(x, y)
+		if (top !== target) return false
 		if (root.nodeType === Node.DOCUMENT_NODE) return true
 		target = (root as ShadowRoot).host
 	}

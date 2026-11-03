@@ -5,6 +5,9 @@ export interface FrameRecord {
 	url: string
 }
 
+/** An `http:` or `https:` page, the only kind Keepiq fills or opens a list on. */
+export const isWebUrl = (url: string) => /^https?:\/\//i.test(url)
+
 const tabs = new Map<number, Map<number, string>>()
 
 export function recordFrame(tabId: number, frameId: number, url: string): void {

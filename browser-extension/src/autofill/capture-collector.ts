@@ -4,7 +4,7 @@
  * and at `beforeunload` for a group whose password was still empty then. Only the user submits: whether a bar
  * follows tells the page whether the username is saved, so a script's submit must never be a probe.
  */
-import type { CaptureSubmitted } from '@/src/messages'
+import { isFormRole, type CaptureSubmitted } from '@/src/messages'
 import { findGroups, groupOf, type FieldGroup } from './fields'
 
 type Anchor = FieldGroup['anchor']
@@ -15,6 +15,9 @@ export const ACTIVATION_MS = 5000
 /** Activation-triggering input (HTML § Tracking user activation). */
 const ACTIVATION_EVENTS = ['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend'] as const
 
+// Checked here too, not only in the classifier, since a card number or security code must never reach the capture queue.
+const isCard = (group: FieldGroup, field: HTMLInputElement | null) => field !== null && isFormRole('card', group.roles.get(field))
+
 /** The password a submission of this group sets, or `null` for a group that has none. */
 function passwordOf(group: FieldGroup): { field: HTMLInputElement; changed: boolean } | null {
 	if (group.kind === 'login' && group.currentPassword) return { field: group.currentPassword, changed: false }
@@ -22,6 +25,12 @@ function passwordOf(group: FieldGroup): { field: HTMLInputElement; changed: bool
 	// A sign-up is a new login.
 	if (field && (group.kind === 'passwordChange' || group.kind === 'signUp')) return { field, changed: group.kind === 'passwordChange' }
 	return null
+}
+
+/** The password a submission reports: never a card field's, nor one beside a card-field username. */
+function reportedPassword(group: FieldGroup): { field: HTMLInputElement; changed: boolean } | null {
+	const password = passwordOf(group)
+	return password && !isCard(group, password.field) && !isCard(group, group.username) ? password : null
 }
 
 // Node types rather than `instanceof`, as in fields.ts.
@@ -63,7 +72,7 @@ export function createCaptureCollector(send: (message: CaptureSubmitted) => void
 	function submitted(group: FieldGroup, event: Event): void {
 		// A script's `click()` or dispatched event is untrusted; its `requestSubmit()` is trusted but has no activation.
 		if (!event.isTrusted) return
-		const password = passwordOf(group)
+		const password = reportedPassword(group)
 		if (!password || reported.has(group.anchor)) return
 		if (password.field.value === '') {
 			armed.add(group.anchor)
