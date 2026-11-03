@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Podijeljeno s vama samo za pregled. Zatražite od vlasnika prava uređivanja da biste je promijenili.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Podijeljeno s vama samo za pregled. Ništa nije sačuvano; zatražite od vlasnika prava uređivanja da biste je promijenili.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerska organizacija s kojom se dijeli ova tajna nije dostupna ({partners}). Napravite promjenu ponovo dok ste na mreži, gdje je možete sačuvati bez njih.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Partnerska organizacija s kojom se dijeli ova tajna nije dostupna. Napravite promjenu ponovo dok ste na mreži, gdje je možete sačuvati bez njih.",
         "Save without them": "Sačuvaj bez njih",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sačuvano. Primaoci u partnerskim organizacijama dobit će ovu promjenu kada vlasnik sljedeći put sačuva ovu tajnu.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ova tajna je promijenjena negdje drugdje nakon što ste je otvorili. Ništa nije sačuvano; otvorite je ponovo i ponovite promjenu.",

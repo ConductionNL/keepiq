@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Zdieľané s vami len na zobrazenie. Ak ho chcete zmeniť, požiadajte vlastníka o oprávnenie na úpravy.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Zdieľané s vami len na zobrazenie. Nič sa neuložilo; ak ho chcete zmeniť, požiadajte vlastníka o oprávnenie na úpravy.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerská organizácia, s ktorou je toto tajomstvo zdieľané, nie je dostupná ({partners}). Urobte zmenu znova online, kde ju môžete uložiť bez nej.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Partnerská organizácia, s ktorou je toto tajomstvo zdieľané, nie je dostupná. Urobte zmenu znova online, kde ju môžete uložiť bez nej.",
         "Save without them": "Uložiť bez nich",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Uložené. Príjemcovia v partnerských organizáciách dostanú túto zmenu, keď vlastník nabudúce uloží toto tajomstvo.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Toto tajomstvo bolo po otvorení zmenené inde. Nič sa neuložilo; otvorte ho znova a zmenu urobte znova.",

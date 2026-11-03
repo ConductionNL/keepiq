@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Compartit amb tu només per veure'l. Demana al propietari permisos d'edició per canviar-lo.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Compartit amb tu només per veure'l. No s'ha desat res; demana al propietari permisos d'edició per canviar-lo.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "No es pot contactar amb una organització associada amb qui es comparteix aquest secret ({partners}). Torna a fer el canvi en línia, on pots desar sense ells.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "No es pot contactar amb una organització associada amb qui es comparteix aquest secret. Torna a fer el canvi en línia, on pots desar sense ells.",
         "Save without them": "Desa sense ells",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Desat. Els destinataris d'organitzacions associades rebran aquest canvi quan el propietari torni a desar aquest secret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Aquest secret s'ha modificat en un altre lloc després que l'obrissis. No s'ha desat res; torna'l a obrir i refés el canvi.",

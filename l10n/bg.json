@@ -6,6 +6,7 @@
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Споделено с вас само за преглед. Помолете собственика за права за редактиране, за да го промените.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Споделено с вас само за преглед. Нищо не е запазено; помолете собственика за права за редактиране, за да го промените.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Партньорска организация, с която е споделена тази тайна, е недостъпна ({partners}). Направете промяната отново онлайн, където можете да запазите без тях.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Партньорска организация, с която е споделена тази тайна, е недостъпна. Направете промяната отново онлайн, където можете да запазите без тях.",
         "Save without them": "Запазване без тях",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Запазено. Получателите в партньорски организации ще получат тази промяна, когато собственикът запази тази тайна следващия път.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Тази тайна е променена другаде, след като я отворихте. Нищо не е запазено; отворете я отново и повторете промяната си.",

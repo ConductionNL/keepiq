@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Partilhado consigo apenas para visualização. Peça ao proprietário direitos de edição para o alterar.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Partilhado consigo apenas para visualização. Nada foi guardado; peça ao proprietário direitos de edição para o alterar.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Uma organização parceira com quem este segredo é partilhado está inacessível ({partners}). Faça a alteração novamente online, onde pode guardar sem eles.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Uma organização parceira com quem este segredo é partilhado está inacessível. Faça a alteração novamente online, onde pode guardar sem eles.",
         "Save without them": "Guardar sem eles",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Guardado. Os destinatários em organizações parceiras recebem esta alteração quando o proprietário voltar a guardar este segredo.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Este segredo foi alterado noutro local depois de o abrir. Nada foi guardado; abra-o novamente e repita a sua alteração.",

@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Delt med dig kun til visning. Bed ejeren om redigeringsrettigheder for at ændre den.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Delt med dig kun til visning. Intet blev gemt; bed ejeren om redigeringsrettigheder for at ændre den.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation, som denne hemmelighed er delt med, kan ikke nås ({partners}). Foretag ændringen igen online, hvor du kan gemme uden dem.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "En partnerorganisation, som denne hemmelighed er delt med, kan ikke nås. Foretag ændringen igen online, hvor du kan gemme uden dem.",
         "Save without them": "Gem uden dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Gemt. Modtagere hos partnerorganisationer får denne ændring, næste gang ejeren gemmer denne hemmelighed.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Denne hemmelighed blev ændret et andet sted, efter du åbnede den. Intet blev gemt; åbn den igen, og foretag din ændring igen.",

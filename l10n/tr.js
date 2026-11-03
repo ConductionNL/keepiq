@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Sizinle yalnızca görüntülemeniz için paylaşıldı. Değiştirmek için sahibinden düzenleme izni isteyin.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Sizinle yalnızca görüntülemeniz için paylaşıldı. Hiçbir şey kaydedilmedi; değiştirmek için sahibinden düzenleme izni isteyin.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Bu gizlinin paylaşıldığı bir ortak kuruluşa ulaşılamıyor ({partners}). Değişikliği çevrimiçiyken yeniden yapın; orada onlar olmadan kaydedebilirsiniz.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Bu gizlinin paylaşıldığı bir ortak kuruluşa ulaşılamıyor. Değişikliği çevrimiçiyken yeniden yapın; orada onlar olmadan kaydedebilirsiniz.",
         "Save without them": "Onlar olmadan kaydet",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Kaydedildi. Ortak kuruluşlardaki alıcılar, sahip bu gizliyi bir sonraki kaydedişinde bu değişikliği alır.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Bu gizli, siz açtıktan sonra başka bir yerde değiştirildi. Hiçbir şey kaydedilmedi; yeniden açın ve değişikliğinizi tekrar yapın.",

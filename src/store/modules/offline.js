@@ -110,7 +110,7 @@ function failureOf(e) {
 	if (e instanceof ShareSaveError && e.code === 'partner_unreachable') {
 		return {
 			code: 'partner_unreachable',
-			partners: e.partners.map((p) => p.recipientCloudId),
+			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
 		}
 	}
 	if (
@@ -146,6 +146,28 @@ function failureOf(e) {
 }
 
 /**
+ * The text for a stored unreachable-partner failure, naming the partners
+ * it recorded.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string}
+ */
+function unreachableFailureText(failure) {
+	const partners = (failure.partners ?? []).filter(Boolean).join(', ')
+	if (partners === '') {
+		return t(
+			'keepiq',
+			'A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.',
+		)
+	}
+	return t(
+		'keepiq',
+		'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
+		{ partners },
+	)
+}
+
+/**
  * The text the failed list shows for a stored failure.
  *
  * @param {object|undefined} failure The entry's `failure`.
@@ -155,11 +177,7 @@ function failureOf(e) {
 export function failureText(failure) {
 	switch (failure?.code) {
 		case 'partner_unreachable':
-			return t(
-				'keepiq',
-				'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
-				{ partners: failure.partners.join(', ') },
-			)
+			return unreachableFailureText(failure)
 		case 'partner_lookup_limit':
 		case 'view_only':
 			return shareSaveErrorText(new ShareSaveError(failure.code))

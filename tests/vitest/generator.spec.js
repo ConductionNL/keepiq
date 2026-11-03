@@ -16,7 +16,7 @@
  */
 
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { EFF_LARGE_WORDLIST } from '../../src/generator/eff-large-wordlist.js'
 import {
 	generateKey,
@@ -338,6 +338,26 @@ describe('randomness', () => {
 		expect(source).toContain('crypto.getRandomValues')
 		expect(source).not.toMatch(/Math\.random/)
 	})
+
+	it.each([
+		['a key', () => generateKey({})],
+		['a key from a pattern', () => generateKey({ regex: '[a-z0-9]{12}' })],
+		['a passphrase', () => generatePassphrase({})],
+	])(
+		'draws %s from crypto.getRandomValues without an injected source',
+		(_, make) => {
+			const secure = vi.spyOn(globalThis.crypto, 'getRandomValues')
+			const weak = vi.spyOn(Math, 'random')
+			try {
+				make()
+				expect(secure).toHaveBeenCalled()
+				expect(weak).not.toHaveBeenCalled()
+			} finally {
+				secure.mockRestore()
+				weak.mockRestore()
+			}
+		},
+	)
 })
 
 describe('passphrase generation', () => {
