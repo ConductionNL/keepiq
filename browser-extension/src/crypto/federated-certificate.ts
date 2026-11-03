@@ -101,17 +101,20 @@ function only(bytes: Uint8Array, parent: Element | undefined, tag?: number): Ele
 	return child
 }
 
+/** DER (X.690 8.3.2): no leading byte that only repeats the sign of the next. */
 function uint(bytes: Uint8Array, element: Element): number {
 	const length = element.end - element.start
 	if (element.tag !== 0x02 || length < 1 || length > 4 || byteAt(bytes, element.start) & 0x80) throw malformed()
+	if (length > 1 && byteAt(bytes, element.start) === 0 && !(byteAt(bytes, element.start + 1) & 0x80)) throw malformed()
 	let value = 0
 	for (let i = element.start; i < element.end; i++) value = value * 256 + byteAt(bytes, i)
 	return value
 }
 
-function boolean(bytes: Uint8Array, element: Element): boolean {
-	if (element.tag !== 0x01 || element.end - element.start !== 1) throw malformed()
-	return byteAt(bytes, element.start) !== 0
+/** A BOOLEAN DEFAULT FALSE that is present: DER encodes TRUE as 0xFF only (X.690 11.1) and leaves a default out (11.5), so it is 0xFF or malformed. */
+function presentFlag(bytes: Uint8Array, element: Element): true {
+	if (element.tag !== 0x01 || element.end - element.start !== 1 || byteAt(bytes, element.start) !== 0xff) throw malformed()
+	return true
 }
 
 function oid(bytes: Uint8Array, element: Element | undefined): string {
@@ -162,11 +165,11 @@ function issuing(bytes: Uint8Array, extensions: Element | undefined): Pick<Parse
 		const id = oid(bytes, extnId)
 		if (seen.has(id)) throw malformed()
 		seen.add(id)
-		if (critical && boolean(bytes, critical) && id !== OID_BASIC_CONSTRAINTS && id !== OID_KEY_USAGE) throw malformed()
+		if (critical && presentFlag(bytes, critical) && id !== OID_BASIC_CONSTRAINTS && id !== OID_KEY_USAGE) throw malformed()
 		if (id === OID_BASIC_CONSTRAINTS) {
 			const fields = children(bytes, only(bytes, value, 0x30))
 			let next = 0
-			if (fields[next]?.tag === 0x01) ca = boolean(bytes, fields[next++]!)
+			if (fields[next]?.tag === 0x01) ca = presentFlag(bytes, fields[next++]!)
 			if (fields[next]?.tag === 0x02) pathLen = uint(bytes, fields[next++]!)
 			if (next !== fields.length) throw malformed()
 		} else if (id === OID_KEY_USAGE) {

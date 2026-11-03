@@ -211,15 +211,23 @@ function onlyChild(bytes, parent, tag) {
 }
 
 /**
+ * A BOOLEAN DEFAULT FALSE that is present. DER encodes TRUE as 0xFF only
+ * (X.690 11.1) and leaves a value at its default out (11.5), so a present
+ * flag is 0xFF or malformed.
+ *
  * @param {Uint8Array} bytes The buffer.
  * @param {{tag: number, start: number, end: number}} element A BOOLEAN.
- * @return {boolean}
+ * @return {boolean} Always true.
  */
-function derBoolean(bytes, element) {
-	if (element.tag !== 0x01 || element.end - element.start !== 1) {
+function derPresentFlag(bytes, element) {
+	if (
+		element.tag !== 0x01
+		|| element.end - element.start !== 1
+		|| bytes[element.start] !== 0xff
+	) {
 		throw new FederatedCertificateError('malformed')
 	}
-	return bytes[element.start] !== 0
+	return true
 }
 
 /**
@@ -235,6 +243,7 @@ function derUint(bytes, element) {
 		|| length < 1
 		|| length > 4
 		|| bytes[element.start] & 0x80
+		|| (length > 1 && bytes[element.start] === 0 && !(bytes[element.start + 1] & 0x80))
 	) {
 		throw new FederatedCertificateError('malformed')
 	}
@@ -286,7 +295,7 @@ function decodeExtension(bytes, extension) {
 		throw new FederatedCertificateError('malformed')
 	}
 	return {
-		critical: rest.length === 1 && derBoolean(bytes, rest[0]),
+		critical: rest.length === 1 && derPresentFlag(bytes, rest[0]),
 		name: oid(bytes, id),
 		value,
 	}
@@ -306,7 +315,7 @@ function basicConstraintsOf(bytes, value) {
 	let ca = false
 	let pathLen = null
 	if (fields[next]?.tag === 0x01) {
-		ca = derBoolean(bytes, fields[next++])
+		ca = derPresentFlag(bytes, fields[next++])
 	}
 	if (fields[next]?.tag === 0x02) {
 		pathLen = derUint(bytes, fields[next++])

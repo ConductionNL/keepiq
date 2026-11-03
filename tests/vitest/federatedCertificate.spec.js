@@ -1087,6 +1087,41 @@ describe('verifyFederatedCertificate on chains built here', () => {
 			'name_mismatch',
 		)
 	})
+
+	// DER (X.690 11.1, 11.5, 8.3.2): a BOOLEAN is 0x00 or 0xFF, a field at its
+	// DEFAULT is left out, and an INTEGER has no redundant leading byte.
+	describe('strict DER', () => {
+		const explicitFalse = (id, value) =>
+			derElement(
+				0x30,
+				derElement(0x06, id),
+				derElement(0x01, [0x00]),
+				derElement(0x04, value),
+			)
+
+		it.each([
+			['a cA BOOLEAN of 0x01', { intermediate: { extensions: [basicConstraints(derElement(0x01, [0x01]))] } }],
+			['a cA BOOLEAN of two bytes', { intermediate: { extensions: [basicConstraints(derElement(0x01, [0xff, 0xff]))] } }],
+			['a critical flag of 0x01', { intermediate: { extensions: [CA, derElement(0x30, derElement(0x06, OID.keyUsage), derElement(0x01, [0x01]), derElement(0x04, derElement(0x03, [0x01, 0x06])))] } }],
+			['an explicit critical FALSE', { intermediate: { extensions: [CA, explicitFalse(OID.subjectKeyId, derElement(0x04, [7]))] } }],
+			['an explicit critical FALSE on basicConstraints', { intermediate: { extensions: [explicitFalse(OID.basicConstraints, derElement(0x30, derElement(0x01, [0xff])))] } }],
+			['an explicit cA FALSE on the leaf', { leaf: { extensions: [basicConstraints(derElement(0x01, [0x00]))] } }],
+			['a pathLen of 00 00', { intermediate: { extensions: [basicConstraints(derElement(0x01, [0xff]), derElement(0x02, [0x00, 0x00]))] } }],
+			['a pathLen of 00 05', { root: { extensions: [basicConstraints(derElement(0x01, [0xff]), derElement(0x02, [0x00, 0x05]))] } }],
+		])('refuses %s as malformed', async (_, parts) => {
+			expect(await reasonOf(verifyBuilt(parts))).toBe('malformed')
+		})
+
+		it('accepts a pathLen of 128, which needs its leading zero', async () => {
+			const root = basicConstraints(derElement(0x01, [0xff]), derElement(0x02, [0x00, 0x80]))
+
+			await expect(verifyBuilt({ root: { extensions: [root] } })).resolves.toHaveProperty('fingerprint')
+		})
+
+		it('accepts a leaf whose basicConstraints leaves cA at its default', async () => {
+			await expect(verifyBuilt({ leaf: { extensions: [basicConstraints()] } })).resolves.toHaveProperty('fingerprint')
+		})
+	})
 })
 
 describe('canonicalCloudId', () => {
