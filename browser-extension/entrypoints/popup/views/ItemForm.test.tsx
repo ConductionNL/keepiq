@@ -144,6 +144,22 @@ describe('adding', () => {
 		expect(sentOf(sent, 'item.update')[0]).toMatchObject({ patch: { key: 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=8&period=30' } })
 	})
 
+	it('offers the TOTP options and writes a picked algorithm and period into the seed, labelled with the new name', async () => {
+		const { sent, onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', name: '', key: '', login: null }) } })
+		await user.type(await screen.findByLabelText('Name'), 'Authenticator')
+		await user.type(field('Authenticator key'), 'JBSWY3DPEHPK3PXP')
+		await user.click(screen.getByText('Advanced'))
+		const options = (label: string) => [...(screen.getByLabelText(label) as HTMLSelectElement).options].map((option) => option.value)
+		expect([options('Algorithm'), options('Digits'), options('Period in seconds')]).toEqual([['SHA1', 'SHA256', 'SHA512'], ['6', '8'], ['30', '60']])
+		await user.selectOptions(screen.getByLabelText('Algorithm'), 'SHA256')
+		await user.selectOptions(screen.getByLabelText('Period in seconds'), '60')
+		await user.click(save())
+		await waitFor(() => expect(onSaved).toHaveBeenCalled())
+		expect(sentOf(sent, 'item.update').map((message) => message.patch)).toEqual([
+			{ name: 'Authenticator', key: 'otpauth://totp/Authenticator?secret=JBSWY3DPEHPK3PXP&algorithm=SHA256&digits=6&period=60' },
+		])
+	})
+
 	it('shows an existing Authenticator item\'s algorithm and odd period as stored, and keeps them when the digits change', async () => {
 		const key = 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA512&digits=8&period=45'
 		const { sent, onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', key, login: null }) } })

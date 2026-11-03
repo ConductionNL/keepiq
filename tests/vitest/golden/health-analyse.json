@@ -1,0 +1,1486 @@
+{
+ "defaults": {
+  "summaryKeys": [
+   "analysedCount",
+   "weakCount",
+   "reusedCount",
+   "staleCount",
+   "breachedCount",
+   "compromisedCount"
+  ],
+  "count": 12
+ },
+ "digest and now": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 366,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 4,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 25
+ },
+ "threshold 30": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 366,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak",
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 6,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 20
+ },
+ "threshold number": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 3,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 27
+ },
+ "threshold never": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 0,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 34
+ },
+ "threshold junk": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 366,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 4,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 25
+ },
+ "breaches": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 366,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": {
+     "status": "unknown",
+     "count": 0
+    }
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": {
+     "status": "unknown",
+     "count": 0
+    }
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": {
+     "status": "unknown",
+     "count": 0
+    }
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak",
+     "breached"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": {
+     "status": "breached",
+     "count": 42
+    }
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": {
+     "status": "safe",
+     "count": 0
+    }
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 4,
+   "breachedCount": 1,
+   "compromisedCount": 2
+  },
+  "score": 17
+ },
+ "breaches empty": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised"
+    ],
+    "shareCount": 2,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 366,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale"
+    ],
+    "shareCount": 3,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused"
+    ],
+    "shareCount": 3,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 5,
+   "staleCount": 4,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 25
+ },
+ "constant digest": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": 2,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "stale",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": 2496,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": null,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "compromised",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": null,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "reused",
+     "stale",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": 366,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "stale",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": 3226,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": null,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "reused",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": null,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak",
+     "reused",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": 365,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "reused",
+     "breached"
+    ],
+    "shareCount": 10,
+    "ageDays": 364,
+    "breach": {
+     "status": "breached",
+     "count": 1
+    }
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 10,
+   "staleCount": 4,
+   "breachedCount": 10,
+   "compromisedCount": 2
+  },
+  "score": 0
+ },
+ "empty digest": {
+  "findings": [
+   {
+    "id": "a",
+    "name": "weak",
+    "folderPath": "f",
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 2,
+    "breach": null
+   },
+   {
+    "id": "b",
+    "name": "strong",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2496,
+    "breach": null
+   },
+   {
+    "id": "c",
+    "name": "reuse 1",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "d",
+    "name": "reuse 2",
+    "folderPath": null,
+    "score": 4,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "e",
+    "name": "key material",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 366,
+    "breach": null
+   },
+   {
+    "id": "f",
+    "name": "empty",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 2861,
+    "breach": null
+   },
+   {
+    "id": "h",
+    "name": "missing value",
+    "folderPath": null,
+    "score": null,
+    "flags": [
+     "compromised"
+    ],
+    "shareCount": 1,
+    "ageDays": 0,
+    "breach": null
+   },
+   {
+    "id": "i",
+    "name": "triple 1",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak",
+     "stale"
+    ],
+    "shareCount": 1,
+    "ageDays": 3226,
+    "breach": null
+   },
+   {
+    "id": "j",
+    "name": "triple 2",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "k",
+    "name": "triple 3",
+    "folderPath": null,
+    "score": 0,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": null,
+    "breach": null
+   },
+   {
+    "id": "l",
+    "name": "breached",
+    "folderPath": null,
+    "score": 2,
+    "flags": [
+     "weak"
+    ],
+    "shareCount": 1,
+    "ageDays": 365,
+    "breach": null
+   },
+   {
+    "id": "m",
+    "name": "safe verdict",
+    "folderPath": null,
+    "score": 4,
+    "flags": [],
+    "shareCount": 1,
+    "ageDays": 364,
+    "breach": null
+   }
+  ],
+  "summary": {
+   "analysedCount": 13,
+   "weakCount": 5,
+   "reusedCount": 0,
+   "staleCount": 4,
+   "breachedCount": 0,
+   "compromisedCount": 2
+  },
+  "score": 55
+ },
+ "no rows": {
+  "findings": [],
+  "summary": {
+   "analysedCount": 0,
+   "weakCount": 0,
+   "reusedCount": 0,
+   "staleCount": 0,
+   "breachedCount": 0,
+   "compromisedCount": 0
+  },
+  "score": 100
+ },
+ "null verdict": "throws TypeError"
+}
