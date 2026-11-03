@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Which fields open the list
-The content script SHALL decide whether a field qualifies for the login list, from the page's DOM only, by the field classification of the `autofill` capability: a field classified as the username or the current password of a group classified as a login qualifies, with or without a `<form>`, including a username-only or password-only step. Fields of sign-up and password-change groups, fields classified as a new password (confirm fields included) or a one-time code, and hidden, disabled and read-only fields MUST NOT qualify for it. `autocomplete="off"` is ignored, as that classification specifies. The list opens on any focus of an empty qualifying field, including focus set by page script or `autofocus` and a field already focused when the content script starts, and on a trusted click in a qualifying field, empty or not. Opening MUST NOT move focus out of the field. Card and identity fields open the card or identity list instead, as `card-identity-fill` specifies; a field qualifies for at most one kind.
+The content script SHALL decide whether a field qualifies for the login list, from the page's DOM only, by the field classification of the `autofill` capability: a field classified as the username or the current password of a group classified as a login qualifies, with or without a `<form>`, including a username-only or password-only step. Fields of sign-up and password-change groups, fields classified as a new password (confirm fields included) or a one-time code, and hidden, disabled and read-only fields MUST NOT qualify for it. `autocomplete="off"` is ignored, as that classification specifies. The list opens on any focus of an empty qualifying field, including focus set by page script or `autofocus` and a field already focused when the content script starts, and on a trusted click in a qualifying field, empty or not. Opening MUST NOT move focus out of the field. Card and identity fields open the card or identity list instead, as `card-identity-fill` specifies; a field qualifies for at most one kind. A `<textarea>` street address opens the identity list, never the login, code or card list, and a textarea holding only whitespace counts as empty.
 
 #### Scenario: Focus on a login field
 - **GIVEN** the setting on and a login page
@@ -63,4 +63,4 @@ The content script SHALL decide whether a field qualifies for the login list, fr
 #### Scenario: Security code typed as a password
 - **GIVEN** a checkout form with a card number and a `type=password` "CVV" field
 - **WHEN** the user focuses the empty CVV field
-- **THEN** no login list opens, and the card list opens when "Show cards as suggestions" is on
+- **THEN** no login list opens, and the card list opens when "Display cards as suggestions" is on

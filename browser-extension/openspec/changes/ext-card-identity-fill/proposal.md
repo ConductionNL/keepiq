@@ -31,7 +31,7 @@ Card and identity items can be stored, viewed and edited in the popup, but filli
 - Values are formatted per field: expiry month and year as two or four digits, as a `<select>` option or combined in the field's own pattern; the card number split over several fields; the brand derived from the number, as the popup already does.
 - A fill sends each frame only the members its fields ask for, after the user picked the item. The card's PIN and the identity's BSN are never filled.
 - A card fill into an insecure frame asks first. A fill that reaches frames on another site than the top page (Stripe, Adyen and other payment iframes) names those sites and asks first.
-- Four per-account settings in the Autofill view, all on by default as in Bitwarden: "Show cards as suggestions" and "Show identities as suggestions" (inline list), "Always show cards as Autofill suggestions on Vault view" and "Always show identities as Autofill suggestions on Vault view" (popup section).
+- Four per-account settings in the Autofill view, all on by default as in Bitwarden: "Display cards as suggestions" and "Display identities as suggestions" (inline list), "Always show cards as Autofill suggestions on Vault view" and "Always show identities as Autofill suggestions on Vault view" (popup section).
 - Test-site pages per fill case.
 - Out of scope, each a later change or a Keepiq change:
   - saving a card or identity from a submitted form;

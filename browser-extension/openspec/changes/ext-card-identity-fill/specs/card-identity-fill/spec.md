@@ -28,10 +28,12 @@ The content script SHALL give a field one card role, as part of `classifyField()
 - `number`: token `cc-number`; "card number", "kaartnummer", "creditcardnummer"; a run of up to four `number` fields in a row whose `maxlength` values together hold 14 to 19 digits is a split number.
 - `expiry`: token `cc-exp`; "expiry", "expiration", "valid thru", "MM/YY", "vervaldatum", "geldig tot".
 - `expMonth` and `expYear`: tokens `cc-exp-month` and `cc-exp-year`; "month", "maand", "MM"; "year", "jaar", "YY", "YYYY", "JJ", "JJJJ"; on `<input>` and `<select>`.
-- `securityCode`: token `cc-csc`; "CVC", "CVV", "CVV2", "CID", "security code", "card code", "beveiligingscode", "controlegetal"; also when `type=password`.
+- `securityCode`: token `cc-csc`; "CVC", "CVV", "CVV2", "CID", "security code", "card code", "beveiligingscode", "controlegetal"; a `type=password` field of three or four characters with such a label that is not a one-time code; a `type=password` field with no name of its own after the number and beside an expiry.
 - `brand`: token `cc-type`; "card type", "card brand", "kaarttype"; on `<input>` and `<select>`.
 
-Hidden, disabled and read-only fields MUST be ignored, as for logins. A field named only "PIN" is never given a card role.
+A field whose `autocomplete` token is not a `cc-*` token takes no card role from its wording, so a one-time-code field labelled "Security code" stays a one-time code. Wording alone gives a role only beside a `cc-*` token, a second card role, a split number, or as "Name on card" or a password-typed CVC/CVV/CSC; in a group with a login password it needs two strong card roles. A field whose label names a birth, start or day date ("DD/MM/YYYY", "geboortedatum", "valid from") is no expiry, and a bare month or year beside a day field is part of that date.
+
+Hidden, disabled and read-only fields MUST be ignored, and for card and identity roles more strictly than for logins: a field under `aria-hidden` or `inert`, faded to under 10% opacity, under 10 px on a side, clipped, covered at its centre by another element (its own label excepted), or out of reach of scrolling gets no role. Out of reach means: a `position: fixed` field outside the viewport, a field on a page whose root or body hides its overflow on that axis and which lies beyond the viewport, a field outside a box that hides its overflow, or in a scrolling box with no visible area of its own (under 10 px on a side). A field further down a page or scrolling box the user can scroll to counts as seen. A field a page draws in view but makes invisible is not caught. A field named only "PIN" is never given a card role.
 
 #### Scenario: Checkout form with tokens
 - **GIVEN** a form with fields marked `cc-name`, `cc-number`, `cc-exp` and `cc-csc`
@@ -48,6 +50,31 @@ Hidden, disabled and read-only fields MUST be ignored, as for logins. A field na
 - **WHEN** the fields are classified
 - **THEN** the four together are one split `number`
 
+#### Scenario: Two-factor code labelled "Security code"
+- **GIVEN** a field labelled "Security code" with `autocomplete="one-time-code"`
+- **WHEN** the field is classified
+- **THEN** it is a one-time code and opens the code list, not the card list
+
+#### Scenario: Library card number
+- **GIVEN** a login step with one field labelled "Library card number" and a "Next" button
+- **WHEN** the field is classified
+- **THEN** it is the login's username and gets no card role
+
+#### Scenario: Guest checkout without tokens
+- **GIVEN** a form with "Name on card", "Card number", "Expiry (MM/YY)", a `type=password` "CVV", "Email", "Create a password" and "Create account and pay"
+- **WHEN** the form is submitted
+- **THEN** the CVV and the card number are never reported to the capture queue
+
+#### Scenario: Birth date
+- **GIVEN** a field with placeholder "DD/MM/YYYY"
+- **WHEN** a card is filled
+- **THEN** the field stays empty
+
+#### Scenario: Hidden card fields
+- **GIVEN** a page showing only "Name on card" and hiding "Card number" and "CVC" with `opacity:0`, off-screen positioning or a clipped wrapper
+- **WHEN** the user fills a card
+- **THEN** only the cardholder is filled and no message carries the number or the CVV
+
 ### Requirement: Identity field roles
 The content script SHALL give a field one identity role by the same signals:
 - `fullName`: token `name`; "full name", "your name", "naam", "volledige naam".
@@ -58,7 +85,7 @@ The content script SHALL give a field one identity role by the same signals:
 - `streetAddress`: token `street-address`, an `<input>` or `<textarea>`; "address", "adres".
 - `addressLine1`: token `address-line1`; "address line 1", "street", "straat", "straat en huisnummer".
 
-A field in a group classified as a login, and a field with a login role (username, password, one-time code), MUST NOT get an identity role, except the username of a sign-up group when it is an email field, which gets `email`. A field with a card role keeps it.
+A field in a group classified as a login, and a field with a login role (username, password, one-time code), MUST NOT get an identity role, except the username of a sign-up group when it is an email field, which gets `email`. A field with a card role keeps it. An input with a `maxlength` of 1 to 4 (a code box) gets no identity role, and "address line 2" and "adresregel 2" are no address field. A group qualifies for the identity list with two identity roles; an identity fill uses the first group with two, else the first with any.
 
 #### Scenario: Address form
 - **GIVEN** a form with "Voornaam", "Achternaam", "E-mailadres", "Telefoon" and "Adres"
@@ -123,7 +150,7 @@ The background SHALL parse `expiry` as a month from 1 to 12 and a year, acceptin
 - **THEN** the number is filled and the expiry fields stay empty
 
 ### Requirement: Split numbers and brand fields
-A split `number` SHALL be filled in order, each field taking as many digits as its `maxlength` allows, and fills nothing when the digits do not fit the fields exactly. A `brand` `<select>` takes the option whose value or text matches the derived brand or a common code (Visa: "visa", "vi"; Mastercard: "mastercard", "master card", "mc"; American Express: "amex", "american express", "ax"; Discover: "discover", "di"; Maestro: "maestro"); a `brand` `<input>` takes the brand's name.
+A split `number` SHALL be filled in order, each field taking as many digits as its `maxlength` allows, and fills nothing when the digits do not fit the fields exactly. Two number fields where one is longer than 8 characters (a number and its confirmation) are not a split number; the first takes the whole number. An expiry longer than its `maxlength` is written without the spaces around the separator, else in the pattern its length asks for, else not at all. A `brand` `<select>` takes the option whose value or text matches the derived brand or a common code (Visa: "visa", "vi"; Mastercard: "mastercard", "master card", "mc"; American Express: "amex", "american express", "ax"; Discover: "discover", "di"; Maestro: "maestro"); a `brand` `<input>` takes the brand's name.
 
 #### Scenario: Four-part number
 - **GIVEN** a card number "4111 1111 1111 1111" and a four-part split number
@@ -178,7 +205,7 @@ For a card or identity fill the background SHALL ask the top frame and each reco
 - **THEN** the content script there fills nothing
 
 ### Requirement: Cross-site frames are named and asked about
-When a frame on another base domain than the top frame reported roles, the extension SHALL ask before filling, naming each such frame's host: titled "Also fill on {hosts}?" (nl "Ook invullen op {hosts}?") with "Part of this form comes from {hosts}, not from {host}. Keepiq fills it there only if you agree." (nl "Een deel van dit formulier komt van {hosts}, niet van {host}. Keepiq vult het daar alleen in als je dat goedkeurt."), and the choices "Fill", "Only {host}" (nl "Alleen {host}") and "Cancel". "Only {host}" fills the top frame and the same-site frames; Cancel fills nothing. The popup and the inline list ask in their own UI; for the context menu the background asks through the top frame's `confirm()` with the same text, where "OK" means Fill and "Cancel" fills nothing. The answer holds for that fill only. When the background, after a confirmed answer, finds a frame with roles on a host the user was not asked about, it MUST ask again and fill nothing until then.
+When a frame on another base domain than the top frame reported roles, the extension SHALL ask before filling, naming each such frame's host: titled "Also fill on {hosts}?" (nl "Ook invullen op {hosts}?") with "Part of this form comes from {hosts}, not from {host}. Keepiq fills it there only if you agree." (nl "Een deel van dit formulier komt van {hosts}, niet van {host}. Keepiq vult het daar alleen in als je dat goedkeurt."), and the choices "Fill", "Only {host}" (nl "Alleen {host}") and "Cancel". "Only {host}" fills the top frame and the same-site frames; Cancel fills nothing. The popup counts Fill and "Only {host}" only 500 ms after the question appeared, so one double click cannot answer this question and the insecure one before it; Cancel and Escape count at once. The popup and the inline list ask in their own UI; for the context menu the background asks through the top frame's `confirm()` with the same text, where "OK" means Fill and "Cancel" fills nothing. The answer holds for that fill only, and for the top frame's origin it was given for: on another origin, or the same host over another scheme or port, it counts as no answer. When the background, after a confirmed answer, finds a frame with roles on a host the user was not asked about, it MUST ask again and fill nothing until then.
 
 #### Scenario: Stripe card iframe
 - **GIVEN** a checkout on `https://shop.test` whose card number, expiry and CVC are in frames on `https://js.stripe.com`
@@ -197,7 +224,7 @@ When a frame on another base domain than the top frame reported roles, the exten
 - **THEN** the extension asks again, naming `ads.test`, and fills nothing before the answer
 
 ### Requirement: Insecure frames ask before a card is filled
-A card fill SHALL ask first when the top frame or any frame taking part is served over `http:` on a host other than `localhost`, a `127.0.0.0/8` address or `[::1]`: titled "Fill this card on an insecure site?" (nl "Deze kaart toch invullen op een onbeveiligde site?") with "This site is not secure. Anyone on the network could read the card details that are filled in." (nl "Deze site is niet beveiligd. Iedereen op het netwerk kan de ingevulde kaartgegevens lezen."), "Fill" and "Cancel", in the popup's and the inline list's own UI and through the top frame's `confirm()` for the context menu. It is asked before the cross-site question; Cancel decrypts and sends nothing. An identity fill asks no such question, as in Bitwarden and the browsers' own address autofill.
+A card fill SHALL ask first when the top frame or any frame taking part is served over `http:` on a host other than `localhost`, a `*.localhost` name, a `127.0.0.0/8` address or `[::1]`: titled "Fill this card on an insecure site?" (nl "Deze kaart toch invullen op een onbeveiligde site?") with "This site is not secure. Anyone on the network could read the card details that are filled in." (nl "Deze site is niet beveiligd. Iedereen op het netwerk kan de ingevulde kaartgegevens lezen."), "Fill" and "Cancel", in the popup's and the inline list's own UI and through the top frame's `confirm()` for the context menu. It is asked before the cross-site question; Cancel decrypts and sends nothing. An identity fill asks no such question, as in Bitwarden and the browsers' own address autofill.
 
 #### Scenario: Card on an http page
 - **GIVEN** a checkout on `http://shop.test`
@@ -215,9 +242,9 @@ A card fill SHALL ask first when the top frame or any frame taking part is serve
 - **THEN** it is filled without a question
 
 ### Requirement: Card and identity inline list
-The content script SHALL open the inline list of ext-autofill, with the same host, key hand-off, positioning, keyboard use, visibility guard, frame rule and closing, on an empty qualifying card or identity field on focus, and on a trusted click in one, with `inline.open` naming the kind. A field qualifies for the card list when it has a card role other than `brand`, and for the identity list when it has an identity role in a group with at least two identity roles. The background opens it only when an account is logged in, "Show autofill suggestions on form fields" is on, the kind's "Show cards as suggestions" or "Show identities as suggestions" is on, and the frame is `http:` or `https:`. Opening never depends on whether the vault holds any card or identity.
+The content script SHALL open the inline list of ext-autofill, with the same host, key hand-off, positioning, keyboard use, visibility guard, frame rule and closing, on an empty qualifying card or identity field on focus, and on a trusted click in one, with `inline.open` naming the kind. A field qualifies for the card list when it has a card role other than `brand`, and for the identity list when it has an identity role in a group with at least two identity roles. The background opens it only when an account is logged in, "Show autofill suggestions on form fields" is on, the kind's "Display cards as suggestions" or "Display identities as suggestions" is on, and the frame is `http:` or `https:`. Opening never depends on whether the vault holds any card or identity.
 
-When unlocked, each row shows the item's plaintext `name` and below it, for a card, its brand and last four digits ("Visa, *1111", or "Card, *1111" when no brand is derived), and for an identity its full name, or its email without a name. A use-only copy, and an item without members, shows the name alone. The rows exist only in the background while answering and in the list page while it is open. With no item of the kind the list reads "No cards in Keepiq" (nl "Geen kaarten in Keepiq") or "No identities in Keepiq" (nl "Geen identiteiten in Keepiq"); locked, it reads "Unlock Keepiq to see your cards" (nl "Ontgrendel Keepiq om je kaarten te zien") or "Unlock Keepiq to see your identities" (nl "Ontgrendel Keepiq om je identiteiten te zien") with "Unlock", one row tall, and nothing is listed, counted or decrypted. Unlocked, the list is three rows tall whatever the number of items, scrolling beyond three. Its frame is titled "Keepiq cards" or "Keepiq identities", its listbox is named "Keepiq cards" or "Keepiq identities", and on opening it announces "{n} Keepiq cards. Press Down Arrow to choose." (nl "{n} Keepiq-kaarten. Druk op pijl-omlaag om te kiezen."), the identity equivalent, the no-item text, or "Keepiq is locked. Press Down Arrow to unlock."
+When unlocked, each row shows the item's plaintext `name` and below it, for a card, its brand and last four digits ("Visa, *1111", or "Card, *1111" when no brand is derived), and for an identity its full name, or its email without a name. A card row's accessible name is "{name}, {brand} ending in {last4}" (nl "{name}, {brand} eindigend op {last4}"; without a brand "card ending in" and "kaart eindigend op"), so a screen reader does not read the asterisk. A use-only copy, and an item without members, shows the name alone. The rows exist only in the background while answering and in the list page while it is open. With no item of the kind the list reads "No cards in Keepiq" (nl "Geen kaarten in Keepiq") or "No identities in Keepiq" (nl "Geen identiteiten in Keepiq"); locked, it reads "Unlock Keepiq to see your cards" (nl "Ontgrendel Keepiq om je kaarten te zien") or "Unlock Keepiq to see your identities" (nl "Ontgrendel Keepiq om je identiteiten te zien") with "Unlock", one row tall, and nothing is listed, counted or decrypted. Unlocked, the list is three rows tall whatever the number of items, scrolling beyond three. Its frame is titled "Keepiq cards" or "Keepiq identities", its listbox is named "Keepiq cards" or "Keepiq identities", and on opening it announces "{n} Keepiq cards. Press Down Arrow to choose." (nl "{n} Keepiq-kaarten. Druk op pijl-omlaag om te kiezen."), the identity equivalent, the no-item text, or "Keepiq is locked. Press Down Arrow to unlock."
 
 #### Scenario: Card number field
 - **GIVEN** an unlocked vault with cards "Work Visa" and "Personal", "Personal" filled earlier
@@ -230,7 +257,7 @@ When unlocked, each row shows the item's plaintext `name` and below it, for a ca
 - **THEN** no list opens
 
 #### Scenario: Setting off
-- **GIVEN** "Show cards as suggestions" off and "Show identities as suggestions" on
+- **GIVEN** "Display cards as suggestions" off and "Display identities as suggestions" on
 - **WHEN** the user focuses a card number field, then a "First name" field in an address form
 - **THEN** no list opens on the card field and the identity list opens on the name field
 
