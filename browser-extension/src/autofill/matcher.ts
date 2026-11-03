@@ -77,7 +77,11 @@ export function candidatesFor<T extends CandidateRow>(
 	if (page === undefined) return []
 	const loginTypes = new Set(vault.types.filter((type) => type.name === 'login').map((type) => type.id))
 	const found = vault.secrets.filter((row) => !row.blocked && row.typeId !== null && loginTypes.has(row.typeId) && matches(row.url, page, rule))
+	return byLastUsed(found, lastUsed)
+}
+
+export function byLastUsed<T extends { id: string; name: string }>(rows: T[], lastUsed: Readonly<Record<string, number>>): T[] {
 	const used = (id: string) => (Object.hasOwn(lastUsed, id) ? lastUsed[id]! : 0)
 	// Stable, so rows used equally long ago keep their name order.
-	return sortItems(found).sort((a, b) => used(b.id) - used(a.id))
+	return sortItems(rows).sort((a, b) => used(b.id) - used(a.id))
 }

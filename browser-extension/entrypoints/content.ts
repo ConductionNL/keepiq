@@ -1,11 +1,10 @@
 /**
- * Content script, in every frame. It holds no vault state: it fills the one credential the
- * background sends after the user picked it. It runs on every page, as in Bitwarden; CLAUDE.md says why that is safe.
+ * Content script, in every frame. It holds no vault state: it fills the one credential, or this frame's members of the one card or identity, the background sends after the user picked it.
+ * It runs on every page, as in Bitwarden; CLAUDE.md says why that is safe.
  */
 
 import type { Browser } from 'wxt/browser'
-import { i18n } from '#i18n'
-import { executeFill } from '@/src/autofill/execute'
+import { answerFill, isFillMessage } from '@/src/autofill/execute'
 import { findLoginFields } from '@/src/autofill/fields'
 import { createCaptureCollector } from '@/src/autofill/capture-collector'
 import { createInlineHost } from '@/src/autofill/inline-host'
@@ -58,10 +57,7 @@ export default defineContentScript({
 		browser.runtime.onMessage.addListener((msg: unknown, sender: Browser.runtime.MessageSender, sendResponse: (reply: unknown) => void) => {
 			if (sender.id !== browser.runtime.id) return
 			const m = msg as BackgroundToContent | null
-			if (m?.kind === 'fill.confirmInsecure') {
-				const host = typeof m.itemHost === 'string' ? m.itemHost : ''
-				sendResponse(window.confirm(host ? i18n.t('pageFill.insecure', { host }) : i18n.t('pageFill.insecureNoHost')))
-			} else if (m?.kind === 'fill.execute') sendResponse(executeFill(m, inline.openList()))
+			if (isFillMessage(m)) sendResponse(answerFill(m, inline.openList()))
 			else if (m?.kind === 'inline.verify') sendResponse(inline.handle(m) === true)
 			else if (m?.kind === 'inline.ready' || m?.kind === 'inline.refocus' || m?.kind === 'inline.close' || m?.kind === 'inline.resize') inline.handle(m)
 			else if (m?.kind === 'capture.verify') sendResponse(bar?.handle(m) === true)
