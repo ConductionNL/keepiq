@@ -91,6 +91,8 @@ const CASES = {
 		httpError(400, { error: 'forbidden' }, { fromShareSave: true }),
 	'partner unreachable without partners': () =>
 		httpError(502, { error: 'partner_unreachable' }),
+	'ShareSaveError partner_unreachable with an empty partner list': () =>
+		new ShareSaveError('partner_unreachable', []),
 	'share save forbidden, fromShareSave "true"': () =>
 		httpError(403, { error: 'forbidden' }, { fromShareSave: 'true' }),
 }
