@@ -142,6 +142,652 @@ function listParams(query, paging) {
 }
 
 /**
+ * The paging and sort of a list fetch: each as passed, else as stored.
+ *
+ * @param {object} options The fetch options.
+ * @param {object} store The secret store.
+ * @return {{page: number, limit: number, sort: string, direction: string}}
+ */
+function pagingOf(options, store) {
+	return {
+		page: options.page ?? store.page,
+		limit: options.limit ?? store.limit,
+		sort: options.sort ?? store.sort.field,
+		direction: options.direction ?? store.sort.direction,
+	}
+}
+
+/**
+ * Show a page of the server's list answer.
+ *
+ * @param {object} store The secret store.
+ * @param {object} data The answer: items, total and page.
+ * @return {void}
+ */
+function applyPage(store, data) {
+	store.secrets = data.items || []
+	store.totalCount = data.total || 0
+	store.page = data.page || 1
+}
+
+/**
+ * On a network error, serve the list from the cached snapshot rather than
+ * failing (offline-readonly-cache §4.2): the offline flag can lag the actual
+ * connectivity loss.
+ *
+ * @param {object} store The secret store.
+ * @param {Error} error The failed request's error.
+ * @return {boolean} Whether the snapshot was served.
+ */
+function serveListFromSnapshot(store, error) {
+	const offline = useOfflineStore()
+	if (!(store.isNetworkError(error) && offline.vault)) {
+		return false
+	}
+	offline.servedFromCache = true
+	store.secrets = offline.vault.secrets
+	store.totalCount = offline.vault.secrets.length
+	store.page = 1
+	return true
+}
+
+/**
+ * A secret of the cached snapshot, if there is a snapshot holding it.
+ *
+ * @param {object} offline The offline store.
+ * @param {string} id The secret ID.
+ * @return {object|undefined|null}
+ */
+function snapshotSecret(offline, id) {
+	return offline.vault && offline.vault.secrets.find((s) => s.id === id)
+}
+
+/**
+ * Decrypt a secret and make it the open one.
+ *
+ * @param {object} store The secret store.
+ * @param {object} secret The secret with ciphertext.
+ * @return {Promise<object>} The open secret.
+ */
+async function openSecret(store, secret) {
+	store.currentSecret = await store.decryptSecret(secret)
+	return store.currentSecret
+}
+
+/**
+ * Read a secret from the server and open it, then write back the pending
+ * extra fields it merged. The write-back is not awaited: it is a share save,
+ * which must not hold up opening the secret.
+ *
+ * @param {object} store The secret store.
+ * @param {string} id The secret ID.
+ * @return {Promise<object>} The open secret.
+ */
+async function openFromServer(store, id) {
+	const runningAtSend = writeBacks.get(id) ?? null
+	const response = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
+	)
+	await openSecret(store, response.data)
+	store.persistMergedPending(id, runningAtSend).catch(() => {})
+	return store.currentSecret
+}
+
+/**
+ * The extra fields as decrypted: the parsed JSON, or the text when it is not
+ * JSON.
+ *
+ * @param {string} json The decrypted text.
+ * @return {object|Array|string|number|boolean|null}
+ */
+function parsedOrText(json) {
+	try {
+		return JSON.parse(json)
+	} catch {
+		return json
+	}
+}
+
+/**
+ * Decrypt the key, login and extra fields that are set, in place.
+ *
+ * @param {object} decrypted A copy of the secret with ciphertext.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<void>}
+ */
+async function decryptValueFields(decrypted, cryptoKey) {
+	if (decrypted.key) {
+		decrypted.key = await rsaDecrypt(decrypted.key, cryptoKey)
+	}
+	if (decrypted.login) {
+		decrypted.login = await rsaDecrypt(decrypted.login, cryptoKey)
+	}
+	if (decrypted.additionalFields) {
+		decrypted.additionalFields = parsedOrText(
+			await rsaDecrypt(decrypted.additionalFields, cryptoKey),
+		)
+	}
+	await decryptBlobFields(decrypted, cryptoKey)
+}
+
+/**
+ * Decrypt the one-time code and passkeys in place: plain strings, `''` when
+ * not set; the passkeys stay JSON text.
+ *
+ * @param {object} decrypted A copy of the secret with ciphertext.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<void>}
+ */
+async function decryptBlobFields(decrypted, cryptoKey) {
+	for (const field of BLOB_FIELDS) {
+		if (decrypted[field]) {
+			decrypted[field] = await rsaDecrypt(decrypted[field], cryptoKey)
+		} else {
+			decrypted[field] = ''
+		}
+	}
+}
+
+/**
+ * Merge the request-filled pending blobs into the decrypted extra fields,
+ * and count them as merged only when every blob merged.
+ *
+ * @param {object} decrypted The decrypted secret.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<void>}
+ */
+async function mergePendingInto(decrypted, cryptoKey) {
+	const pending = decrypted.pendingAdditionalFields
+	if (!Array.isArray(pending) || pending.length === 0) {
+		return
+	}
+	const merged = await mergePendingFields(
+		decrypted.additionalFields,
+		pending,
+		cryptoKey,
+	)
+	decrypted.additionalFields = merged.fields
+	decrypted.mergedPending = merged.complete ? pending.length : 0
+}
+
+/**
+ * Whether the open secret is `id` and merged pending blobs to write back.
+ *
+ * @param {object|null} current The open secret.
+ * @param {string} id The secret ID.
+ * @return {boolean}
+ */
+function hasMergedPending(current, id) {
+	return Boolean(current) && current.id === id && current.mergedPending > 0
+}
+
+/**
+ * The write-back of the open secret to wait for instead of starting one: the
+ * one running now, or the one that ran when the open's read went out if the
+ * read was on its base.
+ *
+ * @param {object} current The open secret.
+ * @param {object|null} runningAtSend The write-back in flight when the read went out.
+ * @return {object|null}
+ */
+function runningWriteBack(current, runningAtSend) {
+	return (
+		writeBacks.get(current.id)
+		?? (runningAtSend?.base === current.updatedAt ? runningAtSend : null)
+	)
+}
+
+/**
+ * Wait for a running write-back. Read on the version it saved from, this
+ * copy also merged the blobs it dropped; fills that came after stay to drop.
+ *
+ * @param {object} current The open secret.
+ * @param {object} running The write-back in flight.
+ * @return {Promise<void>}
+ */
+async function joinWriteBack(current, running) {
+	const readAt = current.updatedAt
+	const saved = await running.done
+	if (saved && readAt === running.base) {
+		current.mergedPending -= running.count
+		current.updatedAt = running.updatedAt ?? current.updatedAt
+	}
+}
+
+/**
+ * The save options of a write-back. Nobody sees this save; an edit held
+ * behind it shows its wait.
+ *
+ * @param {object} current The open secret.
+ * @param {{inFlight: object, source: {updatedAt: string|null}}} run The write-back.
+ * @return {object}
+ */
+function writeBackOptions(current, run) {
+	return {
+		baseUpdatedAt: current.updatedAt,
+		writeBack: true,
+		onWait: (ms) => {
+			run.inFlight.waiting = ms
+			for (const waiter of run.inFlight.waiters) {
+				waiter(ms)
+			}
+		},
+		onSourceSaved: (version) => {
+			run.source.updatedAt = version
+		},
+	}
+}
+
+/**
+ * Save the merged extra fields of the open secret. A failure leaves them
+ * pending; they are merged again on the next open.
+ *
+ * @param {object} store The secret store.
+ * @param {{id: string, current: object, inFlight: object, source: {updatedAt: string|null}}} run The write-back.
+ * @return {Promise<{sourceUpdatedAt: string|null}|null>}
+ */
+function startWriteBack(store, run) {
+	const { current } = run
+	return store
+		.updateSecret(
+			run.id,
+			{
+				additionalFields: current.additionalFields,
+				mergedPending: current.mergedPending,
+			},
+			writeBackOptions(current, run),
+		)
+		.then((saved) => {
+			run.inFlight.updatedAt = saved?.updatedAt ?? null
+			current.mergedPending = 0
+			// Also when another open replaced it as the open secret.
+			current.updatedAt = saved?.updatedAt ?? current.updatedAt
+			return { sourceUpdatedAt: run.source.updatedAt }
+		})
+		.catch(() => null)
+}
+
+/**
+ * The value of a new secret encrypted for each team-folder member.
+ *
+ * @param {object} fields The plain value fields (recipientFields).
+ * @param {Array<{userId: string, certificate: string}>} recipients The members.
+ * @return {Promise<Array<object>>} One copy per member.
+ */
+async function encryptCopies(fields, recipients) {
+	const copies = []
+	for (const recipient of recipients) {
+		const blob = await useShareStore().encryptForRecipient(
+			fields,
+			recipient.certificate,
+		)
+		copies.push({
+			targetUserId: recipient.userId,
+			...copyCiphertext(blob),
+		})
+	}
+	return copies
+}
+
+/**
+ * The plain name, url, type and folder of a new secret.
+ *
+ * @param {object} data The new secret.
+ * @return {{name: string, url: string|null, typeId: string|null, folderId: string|null}}
+ */
+function placementOf(data) {
+	return {
+		name: data.name,
+		url: data.url ?? null,
+		typeId: data.typeId ?? null,
+		folderId: data.folderId ?? null,
+	}
+}
+
+/** The owner row's ciphertext fields, each with its value when absent. */
+const OWNER_CIPHERTEXT_DEFAULTS = {
+	key: '',
+	login: null,
+	additionalFields: null,
+	totp: null,
+	passkeys: null,
+}
+
+/**
+ * The owner row's ciphertext fields of an encrypted value.
+ *
+ * @param {object} owner The value encrypted for the folder owner.
+ * @return {object}
+ */
+function ownerCiphertext(owner) {
+	return Object.fromEntries(
+		Object.entries(OWNER_CIPHERTEXT_DEFAULTS).map(([field, absent]) => [
+			field,
+			owner[field] ?? absent,
+		]),
+	)
+}
+
+/**
+ * The relying party a passkey key names, or null.
+ *
+ * @param {object} data The new secret.
+ * @return {string|null}
+ */
+function passkeyUrl(data) {
+	return passkeyRpId(String(data.key ?? '')) ?? null
+}
+
+/**
+ * The plain url of a new secret. Passkey secrets mirror the RP id into it so
+ * they are matchable and searchable by site (passkey-item-type D3). Only the
+ * public RP domain is mirrored, never credential material.
+ *
+ * @param {object} store The secret store.
+ * @param {object} data The new secret.
+ * @return {string|null}
+ */
+function secretUrl(store, data) {
+	const url = data.url ?? null
+	if (!url && store.isPasskeyTypeId(data.typeId)) {
+		return passkeyUrl(data)
+	}
+	return url
+}
+
+/**
+ * Whether a login was entered.
+ *
+ * @param {string|number|null|undefined} login The login.
+ * @return {boolean}
+ */
+function hasLogin(login) {
+	return login !== undefined && login !== null && login !== ''
+}
+
+/**
+ * Encrypt the login, extra fields, one-time code and passkeys that were
+ * entered into the payload. Sent only when entered: an encrypted empty
+ * string reads as a value.
+ *
+ * @param {object} payload The create payload.
+ * @param {{data: object, publicKey: CryptoKey}} input The new secret and the own public key.
+ * @return {Promise<void>}
+ */
+async function encryptOptionalFields(payload, input) {
+	const { data, publicKey } = input
+	if (hasLogin(data.login)) {
+		payload.login = await rsaEncrypt(String(data.login), publicKey)
+	}
+	if (data.additionalFields) {
+		payload.additionalFields = await rsaEncrypt(
+			extraFieldsText(data.additionalFields),
+			publicKey,
+		)
+	}
+	for (const field of BLOB_FIELDS) {
+		if (data[field]) {
+			payload[field] = await rsaEncrypt(String(data[field]), publicKey)
+		}
+	}
+}
+
+/**
+ * Extra fields as the text that is encrypted.
+ *
+ * @param {object|string} fields The extra fields.
+ * @return {string}
+ */
+function extraFieldsText(fields) {
+	return typeof fields === 'string' ? fields : JSON.stringify(fields)
+}
+
+/**
+ * Put a create into the sealed offline queue.
+ *
+ * @param {object} offline The offline store.
+ * @param {object} payload The encrypted create payload.
+ * @return {Promise<object>} The secret as it will be, marked pendingSync.
+ */
+async function queueCreate(offline, payload) {
+	const secretId = crypto.randomUUID()
+	await offline.enqueue({ op: 'create', secretId, body: payload })
+	return { id: secretId, ...payload, pendingSync: true }
+}
+
+/**
+ * Never save alongside a merge write-back of the same secret. A caller that
+ * sends the versions it read takes the ones a write-back that saved wrote
+ * (writeBackSettled), or the write-back makes them stale.
+ *
+ * @param {object} store The secret store.
+ * @param {{id: string, options: object}} save The secret and the update options.
+ * @return {Promise<void>}
+ */
+async function awaitWriteBack(store, save) {
+	if (!save.options.writeBack) {
+		await store.writeBackSettled(save.id, save.options.onWait ?? null)
+	}
+}
+
+/**
+ * The plain fields an update changes. Keeps the passkey RP-id to url mirror
+ * in sync when the credential changes without an explicit url
+ * (passkey-item-type D3).
+ *
+ * @param {object} store The secret store.
+ * @param {object} data The fields to change.
+ * @return {object} The patch so far.
+ */
+function plainPatch(store, data) {
+	const payload = {}
+	for (const field of ['name', 'url', 'typeId', 'folderId']) {
+		if (data[field] !== undefined) {
+			payload[field] = data[field]
+		}
+	}
+	const rpId = mirroredRpId(store, data)
+	if (rpId) {
+		payload.url = rpId
+	}
+	return payload
+}
+
+/**
+ * The RP id a changed passkey credential names, when the update sets no url.
+ *
+ * @param {object} store The secret store.
+ * @param {object} data The fields to change.
+ * @return {string|null}
+ */
+function mirroredRpId(store, data) {
+	if (data.key === undefined || data.url !== undefined) {
+		return null
+	}
+	if (!store.isPasskeyTypeId(data.typeId ?? store.currentSecret?.typeId)) {
+		return null
+	}
+	return passkeyRpId(String(data.key ?? ''))
+}
+
+/**
+ * The changed value fields in plain: strings, `null` for a cleared login or
+ * extra fields, `''` for a removed one-time code or passkeys (encryptSparse
+ * sends that as is).
+ *
+ * @param {object} data The fields to change.
+ * @return {object}
+ */
+function plainDiffOf(data) {
+	const plainDiff = {}
+	if (data.key !== undefined) {
+		plainDiff.key = String(data.key)
+	}
+	if (data.login !== undefined) {
+		plainDiff.login = loginDiff(data.login)
+	}
+	if (data.additionalFields !== undefined) {
+		plainDiff.additionalFields = extraFieldsDiff(data.additionalFields)
+	}
+	addBlobDiff(plainDiff, data)
+	return plainDiff
+}
+
+/**
+ * A changed login as text, or null when cleared.
+ *
+ * @param {string|number|null} login The login.
+ * @return {string|null}
+ */
+function loginDiff(login) {
+	if (!login) {
+		return null
+	}
+	return String(login)
+}
+
+/**
+ * A changed one-time code or passkeys as text, `''` when removed.
+ *
+ * @param {string|null} value The field.
+ * @return {string}
+ */
+function blobText(value) {
+	if (!value) {
+		return ''
+	}
+	return String(value)
+}
+
+/**
+ * Changed extra fields as text, or null when cleared.
+ *
+ * @param {object|string|null} fields The extra fields.
+ * @return {string|null}
+ */
+function extraFieldsDiff(fields) {
+	return fields === null ? null : extraFieldsText(fields)
+}
+
+/**
+ * Add the changed one-time code and passkeys to the plain diff: `''` (or
+ * null) removes one.
+ *
+ * @param {object} plainDiff The plain diff.
+ * @param {object} data The fields to change.
+ * @return {void}
+ */
+function addBlobDiff(plainDiff, data) {
+	for (const field of BLOB_FIELDS) {
+		if (data[field] !== undefined) {
+			plainDiff[field] = blobText(data[field])
+		}
+	}
+}
+
+/**
+ * Encrypt a value change into the patch. The own row and every copy carry
+ * the same fields with the same null-ness, so both come from one plain map.
+ * When the extra-field blob holds the request-filled pending members the
+ * caller's copy merged on open, the server may drop them (keepiq#750).
+ *
+ * @param {object} payload The patch.
+ * @param {{data: object, session: object}} input The fields to change and the session.
+ * @return {Promise<object>} The plain diff.
+ */
+async function encryptValueChange(payload, input) {
+	const { data, session } = input
+	if (!session.certificate) {
+		throw new Error('Vault is locked')
+	}
+	const plainDiff = plainDiffOf(data)
+	Object.assign(payload, await encryptSparse(plainDiff, session.certificate))
+	if (data.additionalFields !== undefined && data.mergedPending > 0) {
+		payload.mergedPending = data.mergedPending
+	}
+	return plainDiff
+}
+
+/**
+ * Put an update into the sealed offline queue, on the cached version.
+ *
+ * @param {object} offline The offline store.
+ * @param {object} change The update.
+ * @return {Promise<object>} The secret as it will be, marked pendingSync.
+ */
+async function queueUpdate(offline, change) {
+	const cached = offline.vault?.secrets?.find((x) => x.id === change.id)
+	await offline.enqueue({
+		op: 'update',
+		secretId: change.id,
+		baseUpdatedAt: change.given ?? cached?.updatedAt ?? null,
+		sourceBaseUpdatedAt: change.sourceBase,
+		body: change.payload,
+	})
+	return { ...(cached || { id: change.id }), ...change.payload, pendingSync: true }
+}
+
+/**
+ * Save an update: a value change through the share save, anything else as a
+ * plain update of the row.
+ *
+ * @param {object} store The secret store.
+ * @param {object} change The update.
+ * @return {Promise<object>} The saved row.
+ */
+async function saveChange(store, change) {
+	if (change.valueChanged) {
+		return saveValueChange(store, change)
+	}
+	const body = change.given
+		? { ...change.payload, baseUpdatedAt: change.given }
+		: change.payload
+	const response = await axios.put(
+		generateUrl(`/apps/keepiq/api/v1/secrets/${change.id}`),
+		body,
+	)
+	return response.data
+}
+
+/**
+ * Save a value change through the share save, which writes every copy and
+ * partner share in the same transaction or nothing at all.
+ *
+ * @param {object} store The secret store.
+ * @param {object} change The update.
+ * @return {Promise<object>} The saved row.
+ */
+async function saveValueChange(store, change) {
+	const { id, options } = change
+	const result = await saveShared({
+		id,
+		plainDiff: change.plainDiff,
+		patch: change.payload,
+		baseUpdatedAt: store.baseOf(id, change.given),
+		sourceBaseUpdatedAt: change.sourceBase,
+		withoutUnreachable: options.withoutUnreachable ?? [],
+		onWait: options.onWait ?? null,
+	})
+	options.onSourceSaved?.(result.sourceUpdatedAt ?? null)
+	await notifyOwnerOnly(result)
+	return result.secret
+}
+
+/**
+ * Keep the open copy's version current, so its next edit is not refused as
+ * stale.
+ *
+ * @param {object} store The secret store.
+ * @param {{id: string, saved: object}} save The secret and the saved row.
+ * @return {void}
+ */
+function keepOpenVersion(store, save) {
+	if (store.currentSecret?.id === save.id && save.saved?.updatedAt) {
+		store.currentSecret.updatedAt = save.saved.updatedAt
+	}
+}
+
+/**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
  * supplied; later fills win for a member they both name. A blob that cannot
@@ -315,30 +961,17 @@ export const useSecretStore = defineStore('secret', {
 		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		async fetchOnline(query, options) {
-			const params = listParams(query, {
-				page: options.page ?? this.page,
-				limit: options.limit ?? this.limit,
-				sort: options.sort ?? this.sort.field,
-				direction: options.direction ?? this.sort.direction,
-			})
+			const params = listParams(query, pagingOf(options, this))
 			try {
 				const response = await axios.get(
 					generateUrl('/apps/keepiq/api/v1/secrets'),
 					{ params },
 				)
-				this.secrets = response.data.items || []
-				this.totalCount = response.data.total || 0
-				this.page = response.data.page || 1
+				applyPage(this, response.data)
 			} catch (e) {
-				const offline = useOfflineStore()
-				if (this.isNetworkError(e) && offline.vault) {
-					offline.servedFromCache = true
-					this.secrets = offline.vault.secrets
-					this.totalCount = offline.vault.secrets.length
-					this.page = 1
-					return
+				if (!serveListFromSnapshot(this, e)) {
+					throw e
 				}
-				throw e
 			}
 		},
 
@@ -418,33 +1051,18 @@ export const useSecretStore = defineStore('secret', {
 				// Offline: open from the cached snapshot's ciphertext (decrypted
 				// with the offline-unlocked private key), no server request.
 				const offline = useOfflineStore()
-				if (offline.servedFromCache && offline.vault) {
-					const cached = offline.vault.secrets.find((s) => s.id === id)
-					if (cached) {
-						this.currentSecret = await this.decryptSecret(cached)
-						return this.currentSecret
-					}
+				const cached = offline.servedFromCache && snapshotSecret(offline, id)
+				if (cached) {
+					return await openSecret(this, cached)
 				}
-
 				try {
-					const runningAtSend = writeBacks.get(id) ?? null
-					const response = await axios.get(
-						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-					)
-					const secret = response.data
-					this.currentSecret = await this.decryptSecret(secret)
-					// Not awaited: the write-back is a share save, which must not
-					// hold up opening the secret.
-					this.persistMergedPending(id, runningAtSend).catch(() => {})
-					return this.currentSecret
+					return await openFromServer(this, id)
 				} catch (e) {
-					if (this.isNetworkError(e) && offline.vault) {
-						const cached = offline.vault.secrets.find((s) => s.id === id)
-						if (cached) {
-							offline.servedFromCache = true
-							this.currentSecret = await this.decryptSecret(cached)
-							return this.currentSecret
-						}
+					const fallback =
+						this.isNetworkError(e) && snapshotSecret(offline, id)
+					if (fallback) {
+						offline.servedFromCache = true
+						return await openSecret(this, fallback)
 					}
 					throw e
 				}
@@ -476,41 +1094,8 @@ export const useSecretStore = defineStore('secret', {
 			}
 
 			const decrypted = { ...secret }
-			if (secret.key) {
-				decrypted.key = await rsaDecrypt(secret.key, session.cryptoKey)
-			}
-			if (secret.login) {
-				decrypted.login = await rsaDecrypt(secret.login, session.cryptoKey)
-			}
-			if (secret.additionalFields) {
-				const json = await rsaDecrypt(
-					secret.additionalFields,
-					session.cryptoKey,
-				)
-				try {
-					decrypted.additionalFields = JSON.parse(json)
-				} catch {
-					decrypted.additionalFields = json
-				}
-			}
-			// Plain strings, `''` when not set; the passkeys stay JSON text.
-			for (const field of BLOB_FIELDS) {
-				decrypted[field] = secret[field]
-					? await rsaDecrypt(secret[field], session.cryptoKey)
-					: ''
-			}
-			const pending = Array.isArray(secret.pendingAdditionalFields)
-				? secret.pendingAdditionalFields
-				: []
-			if (pending.length > 0) {
-				const merged = await mergePendingFields(
-					decrypted.additionalFields,
-					pending,
-					session.cryptoKey,
-				)
-				decrypted.additionalFields = merged.fields
-				decrypted.mergedPending = merged.complete ? pending.length : 0
-			}
+			await decryptValueFields(decrypted, session.cryptoKey)
+			await mergePendingInto(decrypted, session.cryptoKey)
 			return decrypted
 		},
 
@@ -534,21 +1119,12 @@ export const useSecretStore = defineStore('secret', {
 		 */
 		async persistMergedPending(id, runningAtSend = null) {
 			const current = this.currentSecret
-			if (!current || current.id !== id || !(current.mergedPending > 0)) {
+			if (!hasMergedPending(current, id)) {
 				return
 			}
-			const running =
-				writeBacks.get(id)
-				?? (runningAtSend?.base === current.updatedAt ? runningAtSend : null)
+			const running = runningWriteBack(current, runningAtSend)
 			if (running) {
-				const readAt = current.updatedAt
-				const saved = await running.done
-				// Read on the version it saved from, this copy also merged the
-				// blobs it dropped; fills that came after stay to drop.
-				if (saved && readAt === running.base) {
-					current.mergedPending -= running.count
-					current.updatedAt = running.updatedAt ?? current.updatedAt
-				}
+				await joinWriteBack(current, running)
 				return
 			}
 			const inFlight = {
@@ -559,37 +1135,12 @@ export const useSecretStore = defineStore('secret', {
 				count: current.mergedPending,
 				updatedAt: null,
 			}
-			let sourceUpdatedAt = null
-			const done = this.updateSecret(
+			const done = startWriteBack(this, {
 				id,
-				{
-					additionalFields: current.additionalFields,
-					mergedPending: current.mergedPending,
-				},
-				{
-					baseUpdatedAt: current.updatedAt,
-					writeBack: true,
-					// Nobody sees this save; an edit held behind it shows its wait.
-					onWait: (ms) => {
-						inFlight.waiting = ms
-						for (const waiter of inFlight.waiters) {
-							waiter(ms)
-						}
-					},
-					onSourceSaved: (version) => {
-						sourceUpdatedAt = version
-					},
-				},
-			)
-				.then((saved) => {
-					inFlight.updatedAt = saved?.updatedAt ?? null
-					current.mergedPending = 0
-					// Also when another open replaced it as the open secret.
-					current.updatedAt = saved?.updatedAt ?? current.updatedAt
-					return { sourceUpdatedAt }
-				})
-				// Stays pending; merged again on the next open.
-				.catch(() => null)
+				current,
+				inFlight,
+				source: { updatedAt: null },
+			})
 			inFlight.done = done
 			writeBacks.set(id, inFlight)
 			await done
@@ -660,36 +1211,18 @@ export const useSecretStore = defineStore('secret', {
 				)
 			).data
 			const fields = recipientFields(data)
-			const shareStore = useShareStore()
-			const owner = await shareStore.encryptForRecipient(
+			const owner = await useShareStore().encryptForRecipient(
 				fields,
 				context.ownerCertificate,
 			)
-			const copies = []
-			for (const recipient of context.recipients ?? []) {
-				const blob = await shareStore.encryptForRecipient(
-					fields,
-					recipient.certificate,
-				)
-				copies.push({
-					targetUserId: recipient.userId,
-					...copyCiphertext(blob),
-				})
-			}
+			const copies = await encryptCopies(fields, context.recipients ?? [])
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/secrets`,
 				),
 				{
-					name: data.name,
-					url: data.url ?? null,
-					typeId: data.typeId ?? null,
-					folderId: data.folderId ?? null,
-					key: owner.key ?? '',
-					login: owner.login ?? null,
-					additionalFields: owner.additionalFields ?? null,
-					totp: owner.totp ?? null,
-					passkeys: owner.passkeys ?? null,
+					...placementOf(data),
+					...ownerCiphertext(owner),
 					copies,
 				},
 			)
@@ -711,49 +1244,20 @@ export const useSecretStore = defineStore('secret', {
 			}
 			const publicKey = await importPublicKey(session.certificate)
 
-			// Passkey secrets mirror the RP id into the plaintext `url` so
-			// they are matchable/searchable by site (passkey-item-type D3).
-			// Only the public RP domain is mirrored — never credential material.
-			let url = data.url ?? null
-			if (!url && this.isPasskeyTypeId(data.typeId)) {
-				url = passkeyRpId(String(data.key ?? '')) ?? null
-			}
-
 			const payload = {
 				name: data.name,
-				url,
+				url: secretUrl(this, data),
 				typeId: data.typeId ?? null,
 				folderId: data.folderId ?? null,
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
 			}
-			if (
-				data.login !== undefined
-				&& data.login !== null
-				&& data.login !== ''
-			) {
-				payload.login = await rsaEncrypt(String(data.login), publicKey)
-			}
-			if (data.additionalFields) {
-				const json =
-					typeof data.additionalFields === 'string'
-						? data.additionalFields
-						: JSON.stringify(data.additionalFields)
-				payload.additionalFields = await rsaEncrypt(json, publicKey)
-			}
-			// Sent only when entered: an encrypted empty string reads as a value.
-			for (const field of BLOB_FIELDS) {
-				if (data[field]) {
-					payload[field] = await rsaEncrypt(String(data[field]), publicKey)
-				}
-			}
+			await encryptOptionalFields(payload, { data, publicKey })
 
 			// Offline: the same payload goes into the sealed queue and is
 			// replayed later (offline-edit-queue).
 			const offline = useOfflineStore()
 			if (offline.servedFromCache) {
-				const secretId = crypto.randomUUID()
-				await offline.enqueue({ op: 'create', secretId, body: payload })
-				return { id: secretId, ...payload, pendingSync: true }
+				return queueCreate(offline, payload)
 			}
 
 			const response = await axios.post(
@@ -783,117 +1287,33 @@ export const useSecretStore = defineStore('secret', {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async updateSecret(id, data, options = {}) {
-			// Never alongside a merge write-back of the same secret. A caller
-			// that sends the versions it read takes the ones a write-back that
-			// saved wrote (writeBackSettled), or the write-back makes them stale.
-			if (!options.writeBack) {
-				await this.writeBackSettled(id, options.onWait ?? null)
-			}
-			const given = options.baseUpdatedAt
-			const sourceBase = options.sourceBaseUpdatedAt ?? null
+			await awaitWriteBack(this, { id, options })
 			const session = useSessionStore()
-			const payload = {}
-			const plainDiff = {}
-
-			for (const field of ['name', 'url', 'typeId', 'folderId']) {
-				if (data[field] !== undefined) {
-					payload[field] = data[field]
-				}
+			const change = {
+				id,
+				options,
+				given: options.baseUpdatedAt,
+				sourceBase: options.sourceBaseUpdatedAt ?? null,
+				payload: plainPatch(this, data),
+				plainDiff: {},
+				valueChanged: VALUE_FIELDS.some((f) => data[f] !== undefined),
 			}
-
-			// Keep the passkey RP-id → url mirror in sync when the credential
-			// changes without an explicit url (passkey-item-type D3).
-			if (
-				data.key !== undefined
-				&& data.url === undefined
-				&& this.isPasskeyTypeId(data.typeId ?? this.currentSecret?.typeId)
-			) {
-				const rpId = passkeyRpId(String(data.key ?? ''))
-				if (rpId) {
-					payload.url = rpId
-				}
-			}
-
-			const valueChanged = VALUE_FIELDS.some((f) => data[f] !== undefined)
-			if (valueChanged) {
-				if (!session.certificate) {
-					throw new Error('Vault is locked')
-				}
-				if (data.key !== undefined) {
-					plainDiff.key = String(data.key)
-				}
-				if (data.login !== undefined) {
-					plainDiff.login = data.login ? String(data.login) : null
-				}
-				if (data.additionalFields !== undefined) {
-					plainDiff.additionalFields =
-						data.additionalFields === null
-							? null
-							: typeof data.additionalFields === 'string'
-								? data.additionalFields
-								: JSON.stringify(data.additionalFields)
-				}
-				// `''` (or null) removes one; encryptSparse sends that as is.
-				for (const field of BLOB_FIELDS) {
-					if (data[field] !== undefined) {
-						plainDiff[field] = data[field] ? String(data[field]) : ''
-					}
-				}
-				// The own row and every copy carry the same fields with the same
-				// null-ness, so both come from one plain map.
-				Object.assign(
-					payload,
-					await encryptSparse(plainDiff, session.certificate),
-				)
-				// The blob holds the request-filled pending members the caller's
-				// copy merged on open: let the server drop them (keepiq#750).
-				if (data.additionalFields !== undefined && data.mergedPending > 0) {
-					payload.mergedPending = data.mergedPending
-				}
+			if (change.valueChanged) {
+				change.plainDiff = await encryptValueChange(change.payload, {
+					data,
+					session,
+				})
 			}
 
 			// Offline: queue the change on the cached version; the share save
 			// runs at replay time, never from here (offline-edit-queue).
 			const offline = useOfflineStore()
 			if (offline.servedFromCache) {
-				const cached = offline.vault?.secrets?.find((x) => x.id === id)
-				await offline.enqueue({
-					op: 'update',
-					secretId: id,
-					baseUpdatedAt: given ?? cached?.updatedAt ?? null,
-					sourceBaseUpdatedAt: sourceBase,
-					body: payload,
-				})
-				return { ...(cached || { id }), ...payload, pendingSync: true }
+				return queueUpdate(offline, change)
 			}
 
-			let saved
-			if (valueChanged) {
-				const result = await saveShared({
-					id,
-					plainDiff,
-					patch: payload,
-					baseUpdatedAt: this.baseOf(id, given),
-					sourceBaseUpdatedAt: sourceBase,
-					withoutUnreachable: options.withoutUnreachable ?? [],
-					onWait: options.onWait ?? null,
-				})
-				options.onSourceSaved?.(result.sourceUpdatedAt ?? null)
-				await notifyOwnerOnly(result)
-				saved = result.secret
-			} else {
-				const response = await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-					given ? { ...payload, baseUpdatedAt: given } : payload,
-				)
-				saved = response.data
-			}
-
-			// Keep the open copy's version current, so its next edit is not
-			// refused as stale.
-			if (this.currentSecret?.id === id && saved?.updatedAt) {
-				this.currentSecret.updatedAt = saved.updatedAt
-			}
+			const saved = await saveChange(this, change)
+			keepOpenVersion(this, { id, saved })
 			return saved
 		},
 

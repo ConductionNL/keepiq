@@ -73,8 +73,12 @@ const VAULT = {
 }
 const PAGE = { items: [{ id: 'x' }], total: 41, page: 3 }
 
-const networkError = () =>
-	Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' })
+/**
+ * @return {Error} A browser network failure.
+ */
+function networkError() {
+	return Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' })
+}
 
 const ONLINE = {
 	defaults: [{}],
