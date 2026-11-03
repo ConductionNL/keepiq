@@ -53,7 +53,8 @@ async function world({ snapshot, snapshotFailed = false, after, click = false, e
 	)
 	const user = userEvent.setup()
 	await waitFor(() => expect(document.querySelector('.menu')).not.toBeNull())
-	await new Promise((done) => setTimeout(done, 20))
+	// Past Loading's delay, so a spinner shows if there is one.
+	await new Promise((done) => setTimeout(done, 350))
 	if (click) await user.click(screen.getByRole('button', { name: /Sync now/ }))
 	await new Promise((done) => setTimeout(done, 20))
 	if (again) {
