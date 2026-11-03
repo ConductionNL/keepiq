@@ -634,6 +634,13 @@ describe('save', () => {
 		expect(await screen.findByRole('dialog', { name: 'Replace the passkey for alice on Example?' })).toBeTruthy()
 	})
 
+	it('says the login can no longer take the passkey when replace_required finds no Replace to ask', async () => {
+		const { user } = renderWindow(createView({ targets: [target()] }), { replies: { 'passkey.save': { ok: false, code: 'replace_required' } } })
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		expect(await alertText()).toBe('This login can no longer take the passkey. Choose another, or save it as a new login.')
+		expect(screen.queryByRole('dialog')).toBeNull()
+	})
+
 	it('shows a refused save with the reason and Retry, and keeps the window open', async () => {
 		const { close, user } = renderWindow(createView({ targets: [target()] }), { replies: { 'passkey.save': { ok: false, code: 'write_failed', error: { code: 'write_locked' } } } })
 		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
