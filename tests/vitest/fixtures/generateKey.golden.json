@@ -1,0 +1,1776 @@
+{
+	"none/none": {
+		"refusals": {
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must be at least 8 characters": 1568,
+			"GeneratorError: Length must not exceed 128 characters": 400
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"Z#p3X2<{wosgjsU$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"rd)A$M-!NxqIN5m@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"$+,&%6E6m8jgRae*"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"l]GX0+pmwkX8PX1N"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"j5kj1}F*0YkOV/Uo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"+5z|myp<(ammpb?/"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"bng!!f31]$6z6;%0"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"l&119[;yj?{awd.|"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"hm#=<q1]fg&k@7-n"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				".$8chr+@]fe]l.j-"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"M)MuK#FcU:g]raB9"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"UmK__HC/Xji?yzs7"
+			]
+		],
+		"digest": "12aba19be0b74023"
+	},
+	"none/letters": {
+		"refusals": {
+			"GeneratorError: The character set is empty after exclusions": 200,
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must be at least 8 characters": 1600,
+			"GeneratorError: Length must not exceed 128 characters": 400
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				",}]?$<*94]72|]45"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+-$79?*3&+%]20<="
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+0652#2)@51_+8/:"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"(#!1&,$_).*1&6<]"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"(/$7<}|$.}.0*>=^"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"2!^}(;1*<.&]*&7["
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				":@#7=)]_>|6[$:5."
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"}04_13$(4^/$_4@<"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"/%(+(:&{5{2=}511"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"6,(&@(0@?!#9@|@^"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"}5-[]#?_>9@@75*+"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"&(-9_@=7-7+|/8-_"
+			]
+		],
+		"digest": "acbd908ca89271b0"
+	},
+	"none/allButOne": {
+		"refusals": {
+			"GeneratorError: The character set must contain at least 2 distinct characters": 1350,
+			"GeneratorError: The character set is empty after exclusions": 650,
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must be at least 8 characters": 1600,
+			"GeneratorError: Length must not exceed 128 characters": 400
+		},
+		"first": [],
+		"digest": "4a14a997d83c1d2f"
+	},
+	"none/digitsSpecial": {
+		"refusals": {
+			"GeneratorError: The character set is empty after exclusions": 200,
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must be at least 8 characters": 1600,
+			"GeneratorError: Length must not exceed 128 characters": 400
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"HqHDRmFvoCAihEBU"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"HSLvJxeyXZcFYMaw"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"fxRExIvlSKuMfqfk"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"jWJhWrbfRaVsaooc"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"bBPdticczOvpWUik"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"oebvqqvfanvctchg"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"loxtxcbupnhgguci"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"kvihffoefkqflylm"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"jixudvvuvhuqmixw"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"ahhtaizxmvwfpggi"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"bTinvTNrbmvCNhJA"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"XCxQygWricHNksqj"
+			]
+		],
+		"digest": "fc461d9b81b1bce5"
+	},
+	"floor/none": {
+		"refusals": {
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must not exceed 128 characters": 400,
+			"GeneratorError: Length must be at least 8 characters": 400
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"}o3gZw<sXp#,w2{iUFs.jB]$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"N$r4dMq)!NmSsAq5@I<x-!&n"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				",qeL$mE6jR+g&CTB*4%qa8B*"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"wp8kXxk+lPGe^m]d8bXrX10N"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"5Vj1k6i5jA}Ukj/oDY0*FIOi"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"fkppb+(b^s5m?<m8,]a/zy|m"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"gfb63#}%]11u!m%0$;6z[n!x"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"$&.jl{y[^<wt.q;3?=18|d&a"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"0&g@hpqm1f#]fk-=79n=<fks"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				".l8c9$,@+rh]eyh-f.k$.]j@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"u#48BF:U%*Mc)]Mx(rK9;pga"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"mzmKKHXj_/_jsy7}vg?ZC+iU"
+			]
+		],
+		"digest": "d00f9d4d9219e731"
+	},
+	"floor/letters": {
+		"refusals": {
+			"GeneratorError: The character set is empty after exclusions": 320,
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must not exceed 128 characters": 400,
+			"GeneratorError: Length must be at least 8 characters": 400
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"*]?2,)*]$]}]4<91497(|!25"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+&9]7?,]@*${+-+53<{20=-%"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+20)68/_@+5,4[7:2#5_1750"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				")$?266.,(&!%|_#,1:1#*<&]"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"/*(<.+947}}=$/>^>}.$|#0#"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"2-*1&2</5(!(7*&<?%.[^;}]"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"#):6][,5>_[[=@[.|:$[@@7$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"@(:1_4434*^-_8$>0_$?}/{<"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				";2{}//:%&+({5=195|1+(;;7"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"$@(&5,$@0(*9#+@^!6=7|?@8"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"[#@/*?9>|!-_5@}$]7]+/5@5"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"+9&-=]&|_@]2-7(_74@-/87;"
+			]
+		],
+		"digest": "aa9114f3c24d0ec1"
+	},
+	"floor/allButOne": {
+		"refusals": {
+			"GeneratorError: The character set must contain at least 2 distinct characters": 2160,
+			"GeneratorError: The character set is empty after exclusions": 1040,
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must not exceed 128 characters": 400,
+			"GeneratorError: Length must be at least 8 characters": 400
+		},
+		"first": [],
+		"digest": "056f728d419cc86b"
+	},
+	"floor/digitsSpecial": {
+		"refusals": {
+			"GeneratorError: The character set is empty after exclusions": 320,
+			"GeneratorError: Choose at least one kind of character": 50,
+			"GeneratorError: Length must not exceed 128 characters": 400,
+			"GeneratorError: Length must be at least 8 characters": 400
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"DCDiHvFERHqComvkBRAChZgU"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"HXJYvxnFheLUVSZeyaTYMwGc"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"fxxlRqfMSfKvgFKkvIheufEY"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"RbokoJarjaJyzfWbsihxVoWc"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"BWbtvPdYdKiiPLUkpOzccupo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"cstvcoaqofeqhfvdbvngbqvc"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"xclhbqvcpuolxtsinuggroto"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"lebfhfyfiukkldfpvfoakqam"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"buhmjmvivxxuvqxpibwudswm"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"iphtxhhxzijfwgaivaejgmgo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"nTKsJNmbyJirTCbMgNvAdDvh"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"HQQiWKXNySSAqrCjcCgxksNk"
+			]
+		],
+		"digest": "7e5493149f53d866"
+	},
+	"all/none": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"Z#p3X2<{wosgjsU$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"rd)A$M-!NxqIN5m@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"$+,&%6E6m8jgRae*"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"l]GX0+pmwkX8PX1N"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"j5kj1}F*0YkOV/Uo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"95,R$M!FN@ZXnm@:"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"oeV{|mnNx3&v43aO"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"?KhKdH99-L1JZ?lJ"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"!7dka|,Wt0uB_IfL"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"Yr}=DyTo0FNc&{>u"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"M)MuK#FcU:g]raB9"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"UmK__HC/Xji?yzs7"
+			]
+		],
+		"digest": "f2a8d989f348a745"
+	},
+	"all/letters": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"S+EH].?Dp-HcwLb4"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"$0B;G#$acFCiMj8Z"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				":uBg6m4*?F8df=/{"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+E^+6A$oL7XP+BQ/"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"?U/?Qq5gP[/%_z-D"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"YUu*c#Z5$a]+CBat"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"SfM%rC0SKBp$T{D:"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"9@!yj7<!,]yYA$;9"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"ZW;/{ru=IPJ1k8,@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"[Gql3N)DP5$|fpxJ"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				">+=[+V>>Nn?KX8I4"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"GS7dG%4/@5c>)obt"
+			]
+		],
+		"digest": "fcf220dd1a5db3fd"
+	},
+	"all/allButOne": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"8uFYzEc0BPBDb/4z"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"2nDrVW1K7OdKUkP/"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"3Pp/fD7/Is/xQq0L"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"uiUSG/A5KQ83F/Qs"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"/gfZY67n9QhukRzS"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"weY1LXO6r/LLOA89"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"mfyZ/cF2YEjafnAM"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"Kpa/m/2XI8z/VC51"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"GMF/aLE6yvlpJ2P/"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"hBI/5tEQwkGym5yD"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"Kf36Vd/ZXnuIIC37"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"NB0Gud98mL/uTaKu"
+			]
+		],
+		"digest": "07b77fa428aab304"
+	},
+	"all/digitsSpecial": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"Z#p3X2<{wosgjsU$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"rd)A$M-!NxqIN5m@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"$+,&%6E6m8jgRae*"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"l]GX0+pmwkX8PX1N"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"j5kj1}F*0YkOV/Uo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"95,R$M!FN@ZXnm@:"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"oeV{|mnNx3&v43aO"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"?KhKdH99-L1JZ?lJ"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"!7dka|,Wt0uB_IfL"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"Yr}=DyTo0FNc&{>u"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"|cDZmF8;ts}gzrRr"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"m1^!dZ-pWd&a#egi"
+			]
+		],
+		"digest": "b50b492de680b97f"
+	},
+	"digitSymbol/none": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"Z#p3X2<{wosgjsU$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"rd)A$M-!NxqIN5m@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"$+,&%6E6m8jgRae*"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"l]GX0+pmwkX8PX1N"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"j5kj1}F*0YkOV/Uo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"+5z|myp<(ammpb?/"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"bng!!f31]$6z6;%0"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"l&119[;yj?{awd.|"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"hm#=<q1]fg&k@7-n"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				".$8chr+@]fe]l.j-"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"M)MuK#FcU:g]raB9"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"UmK__HC/Xji?yzs7"
+			]
+		],
+		"digest": "1451c29582cc9887"
+	},
+	"digitSymbol/letters": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				",}]?$<*94]72|]45"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+-$79?*3&+%]20<="
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"+0652#2)@51_+8/:"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"(#!1&,$_).*1&6<]"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"(/$7<}|$.}.0*>=^"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"2!^}(;1*<.&]*&7["
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				":@#7=)]_>|6[$:5."
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"}04_13$(4^/$_4@<"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"/%(+(:&{5{2=}511"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"6,(&@(0@?!#9@|@^"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"}5-[]#?_>9@@75*+"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"&(-9_@=7-7+|/8-_"
+			]
+		],
+		"digest": "e6502b47d089dbfd"
+	},
+	"digitSymbol/allButOne": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"/548119443391607"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"13316993472086/3"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"580/58/85329/919"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"5/50302019/56162"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"/201021369333914"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"4/016/20142/7594"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"93/91/795/358961"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"112114//5/033048"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"60388/995/714789"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				"404026656140/916"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"/654549971907736"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"/871031421007216"
+			]
+		],
+		"digest": "629b1b251638fb63"
+	},
+	"digitSymbol/digitsSpecial": {
+		"refusals": {
+			"GeneratorError: Length must not exceed 128 characters": 405,
+			"GeneratorError: Length must be at least 8 characters": 810
+		},
+		"first": [
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"Z#p3X2<{wosgjsU$"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":\"(undefined)\"}",
+				"rd)A$M-!NxqIN5m@"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":\"(undefined)\"}",
+				"$+,&%6E6m8jgRae*"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":\"(undefined)\"}",
+				"l]GX0+pmwkX8PX1N"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":\"(undefined)\",\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":\"(undefined)\"}",
+				"j5kj1}F*0YkOV/Uo"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":false}",
+				"+5z|myp<(ammpb?/"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":false}",
+				"bng!!f31]$6z6;%0"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":3,\"minSpecial\":3,\"avoidAmbiguous\":false}",
+				"l&119[;yj?{awd.|"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":2.7,\"minSpecial\":2.7,\"avoidAmbiguous\":false}",
+				"hm#=<q1]fg&k@7-n"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":false,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"x\",\"minSpecial\":\"x\",\"avoidAmbiguous\":false}",
+				".$8chr+@]fe]l.j-"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":\"(undefined)\",\"minSpecial\":\"(undefined)\",\"avoidAmbiguous\":true}",
+				"|cDZmF8;ts}gzrRr"
+			],
+			[
+				"{\"length\":\"(undefined)\",\"includeUppercase\":true,\"includeLowercase\":\"(undefined)\",\"includeDigits\":\"(undefined)\",\"includeSpecialCharacters\":\"(undefined)\",\"minDigits\":-1,\"minSpecial\":-1,\"avoidAmbiguous\":true}",
+				"m1^!dZ-pWd&a#egi"
+			]
+		],
+		"digest": "ea37c40d7e2ab183"
+	},
+	"regex/none": [
+		[
+			"[a-z]{8,12} #1",
+			{
+				"value": "hsjcxexylaz"
+			}
+		],
+		[
+			"[a-z]{8,12} #2",
+			{
+				"value": "mfsxefqxkfk"
+			}
+		],
+		[
+			"[a-z]{8,12} #3",
+			{
+				"value": "robwhcjajor"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #1",
+			{
+				"value": "P0B254FYHC"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #2",
+			{
+				"value": "EPSR614FQP"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #3",
+			{
+				"value": "3I9CB2TSZY"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagI"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8x"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1m"
+			}
+		],
+		[
+			"[a-z]{4} #1",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #2",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #3",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[ab]{8} #1",
+			{
+				"value": "babababa"
+			}
+		],
+		[
+			"[ab]{8} #2",
+			{
+				"value": "abababab"
+			}
+		],
+		[
+			"[ab]{8} #3",
+			{
+				"value": "babababa"
+			}
+		],
+		[
+			"a{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #3",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[a-z]{30,40} #1",
+			{
+				"value": "hsjcxexylazwvyfyngvutehwpizspilwbsvql"
+			}
+		],
+		[
+			"[a-z]{30,40} #2",
+			{
+				"value": "mfsxefqxkfklivufyvkhgferabajyds"
+			}
+		],
+		[
+			"[a-z]{30,40} #3",
+			{
+				"value": "robwhcjajoravsfijozyxkbmhqxwdyzgdmpo"
+			}
+		],
+		[
+			"[0-9]{12} #1",
+			{
+				"value": "785276185210"
+			}
+		],
+		[
+			"[0-9]{12} #2",
+			{
+				"value": "296327496383"
+			}
+		],
+		[
+			"[0-9]{12} #3",
+			{
+				"value": "767834747816"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #1",
+			{
+				"refused": "GeneratorError: Unable to generate a value matching the supplied regex"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #2",
+			{
+				"refused": "GeneratorError: Unable to generate a value matching the supplied regex"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #3",
+			{
+				"refused": "GeneratorError: Unable to generate a value matching the supplied regex"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7WCIM"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHg"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#ud"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7W"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHgFE4"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIU"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHg"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXx"
+			}
+		],
+		[
+			"( #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #3",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		]
+	],
+	"regex/floor": [
+		[
+			"[a-z]{8,12} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-z]{8,12} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-z]{8,12} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-z]{4} #1",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #2",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #3",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[ab]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[ab]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[ab]{8} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"a{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #3",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[a-z]{30,40} #1",
+			{
+				"value": "hsjcxexylazwvyfyngvutehwpizspilwbsvql"
+			}
+		],
+		[
+			"[a-z]{30,40} #2",
+			{
+				"value": "mfsxefqxkfklivufyvkhgferabajyds"
+			}
+		],
+		[
+			"[a-z]{30,40} #3",
+			{
+				"value": "robwhcjajoravsfijozyxkbmhqxwdyzgdmpo"
+			}
+		],
+		[
+			"[0-9]{12} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[0-9]{12} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[0-9]{12} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7WCIMsp"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHgFE4"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#ud"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7W"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHgFE4"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 24 characters"
+			}
+		],
+		[
+			"( #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #3",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		]
+	],
+	"regex/all": [
+		[
+			"[a-z]{8,12} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{8,12} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{8,12} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the lowercase characters the org policy requires"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the lowercase characters the org policy requires"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the lowercase characters the org policy requires"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagI"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8x"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1m"
+			}
+		],
+		[
+			"[a-z]{4} #1",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #2",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #3",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[ab]{8} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[ab]{8} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[ab]{8} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"a{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #3",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[a-z]{30,40} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{30,40} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{30,40} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[0-9]{12} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[0-9]{12} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[0-9]{12} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the uppercase characters the org policy requires"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7WCIM"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHg"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#ud"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7W"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHgFE4"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIU"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHg"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXx"
+			}
+		],
+		[
+			"( #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #3",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		]
+	],
+	"regex/digitSymbol": [
+		[
+			"[a-z]{8,12} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{8,12} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{8,12} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[A-Z0-9]{10} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagI"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8x"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{16,20} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1m"
+			}
+		],
+		[
+			"[a-z]{4} #1",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #2",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[a-z]{4} #3",
+			{
+				"refused": "GeneratorError: The regex length must be at least 8 characters"
+			}
+		],
+		[
+			"[ab]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[ab]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[ab]{8} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"a{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"a{8} #3",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[a-z]{30,40} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{30,40} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[a-z]{30,40} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the digit characters the org policy requires"
+			}
+		],
+		[
+			"[0-9]{12} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the symbol characters the org policy requires"
+			}
+		],
+		[
+			"[0-9]{12} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the symbol characters the org policy requires"
+			}
+		],
+		[
+			"[0-9]{12} #3",
+			{
+				"refused": "GeneratorError: The regex excludes the symbol characters the org policy requires"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[A-Za-z]{8,10}[0-9]{2} #3",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7WCIM"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHg"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,30} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#ud"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIUGR7W"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHgFE4"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{24} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXxb#"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #1",
+			{
+				"value": "hsJc!4K@Y0ZJ8lSlagIU"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #2",
+			{
+				"value": "mSFxr5DXKsx@8VHsl8xHg"
+			}
+		],
+		[
+			"[a-zA-Z0-9!@#]{20,23} #3",
+			{
+				"value": "rbBWH2wNw14A8ssvw1myXx"
+			}
+		],
+		[
+			"( #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"( #3",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		]
+	]
+}
