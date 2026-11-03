@@ -9,9 +9,10 @@ import XCTest
 /// against the replay, with the clientDataHash Safari would hand over:
 ///
 /// - creating a passkey for keepiq-passkey.test after the unlock in the sheet,
-///   saved as a passkey item, with the attestation checked as a relying party
+///   saved onto a new login for that site (mobile-login-totp-passkeys D12),
+///   with the attestation checked as a relying party
 ///   would (rpId hash, flags UP, UV and AT, zero AAGUID, 16-byte id);
-/// - the index rebuilt: the passkey in the site file and one passkey identity
+/// - the index rebuilt: the login with the passkey in the site file and one passkey identity
 ///   for ASCredentialIdentityStore;
 /// - signing in with it without a new unlock, the signature verified with the
 ///   key from the attestation, counter 0 and the user handle.
