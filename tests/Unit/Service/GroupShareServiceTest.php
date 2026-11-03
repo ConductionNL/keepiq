@@ -45,6 +45,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -52,6 +53,7 @@ use Psr\Log\LoggerInterface;
  * Tests for GroupShareService.
  */
 class GroupShareServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * Service under test.
@@ -186,6 +188,9 @@ class GroupShareServiceTest extends TestCase {
 			logger: $logger,
 			shareManager: $this->shareManager,
 			revocationService: $this->revocationService
+		,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
+			quarantineScan: $this->clearedQuarantineScan()
 		);
 	}//end setUp()
 
@@ -559,6 +564,8 @@ class GroupShareServiceTest extends TestCase {
 				teamFolders: $teamFolders,
 				groupManager: $this->groupManager,
 			),
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);

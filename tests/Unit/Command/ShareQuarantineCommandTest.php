@@ -44,6 +44,7 @@ use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Tests\Support\ShareTargetDatabase;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -54,6 +55,8 @@ use Symfony\Component\Console\Tester\CommandTester;
  * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
  */
 class ShareQuarantineCommandTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use ShareTargetDatabase;
 
 	/**
@@ -127,6 +130,8 @@ class ShareQuarantineCommandTest extends TestCase {
 				secretMapper: new SecretMapper(db: $this->db),
 				groupShareMapper: new GroupShareMapper(db: $this->db),
 				eventDispatcher: $dispatcher,
+				teamFolders: new \OCA\Keepiq\Db\TeamFolderMapper(db: $this->db),
+				memberships: $this->createMock(\OCA\Keepiq\Service\TeamFolderMembershipResolver::class),
 			)
 		));
 	}//end command()
@@ -174,11 +179,12 @@ class ShareQuarantineCommandTest extends TestCase {
 			auth: new ShareAuthorizationService(
 				secretMapper: new SecretMapper(db: $this->db),
 				delegationMapper: $delegations,
-				shareTargetMapper: $mapper,
+				rowJudge: $this->shareRowJudge(targets: $mapper, secrets: new SecretMapper(db: $this->db)),
 			),
 			directRegistrar: $this->createMock(DirectShareRegistrar::class),
 			syncService: $this->createMock(ShareSyncService::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return array_map(

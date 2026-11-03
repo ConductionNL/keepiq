@@ -57,7 +57,9 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
@@ -65,6 +67,7 @@ use OCA\Keepiq\Tests\Support\ShareTargetDatabase;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -74,6 +77,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
  */
 class QuarantinedRowIsInertTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use ShareTargetDatabase;
 
 	/**
@@ -176,7 +181,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: new SecretMapper(db: $this->db),
 			delegationMapper: $delegations,
-			shareTargetMapper: new ShareTargetMapper(db: $this->db),
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db)),
 		);
 	}//end authorization()
 
@@ -197,7 +202,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			mapper: $delegations,
 			authorizer: new DelegationAuthorizer(
 				secretMapper: new SecretMapper(db: $this->db),
-				shareTargetMapper: new ShareTargetMapper(db: $this->db),
+				rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db)),
 			),
 		);
 
@@ -234,7 +239,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			}
 		);
 		$context = (new ShareWriteContext(
-			targets: new ShareTargetMapper(db: $this->db),
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db)),
 			suites: $suites,
 			auth: $this->authorization(suites: $suites),
 		))->writeContext(secretId: $this->secretV->getId(), userId: $this->victim);
@@ -271,9 +276,13 @@ class QuarantinedRowIsInertTest extends TestCase {
 		$listener = new HoneyTripwireListener(
 			honeyService: $honey,
 			linkShareMapper: $this->createMock(LinkShareMapper::class),
-			shareTargetMapper: new ShareTargetMapper(db: $this->db),
 			request: $this->createMock(IRequest::class),
 			logger: $this->createMock(LoggerInterface::class),
+			rowJudge: new ShareRowJudge(
+				targets: new ShareTargetMapper(db: $this->db),
+				secrets: new SecretMapper(db: $this->db),
+				scanner: $this->createMock(ShareQuarantineScanner::class)
+			),
 		);
 
 		$listener->handle(
@@ -310,6 +319,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			copyFactory: $factory,
 			notificationService: $this->createMock(NotificationService::class),
 			authorization: $this->authorization(),
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db)),
 		);
 
 		$report = $registrar->registerDirectShares(
@@ -332,7 +342,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 		$this->plant(quarantined: $quarantined);
 		$secrets = new SecretMapper(db: $this->db);
 		$sync    = new ShareSyncService(
-			mapper: new ShareTargetMapper(db: $this->db),
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: $secrets),
 			secretMapper: $secrets,
 			db: $this->db,
 			auth: $this->authorization(),
@@ -371,6 +381,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->authorization(),
 			quarantined: new QuarantinedShareTargetMapper(db: $this->db),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		if ($quarantined === false) {
@@ -411,6 +422,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 			db: $this->db,
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->authorization(),
+			quarantineScan: $this->clearedQuarantineScan(),
 		))->deleteAllForSecret(sourceSecretId: $this->sourceA->getId());
 
 		if ($quarantined === false) {

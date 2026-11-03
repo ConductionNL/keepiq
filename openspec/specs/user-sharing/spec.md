@@ -495,16 +495,18 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 - AND anyone else MUST get the same not-found answer as for a missing share
 
 ### Requirement: Planted Share Rows Are Quarantined
-Before GHSA-m5p9-6pw7-pf3g was fixed, a client could link a share row to any secret id, including a secret the target already owned. Rows planted that way MUST be quarantined; the scan never deletes a row or a secret. A quarantined row keeps `quarantined_at` and a `quarantine_reason`, and no runtime lookup in `ShareTargetMapper` or `BulkGrantShareTargetMapper` returns it, so it cannot read, write, delete, sync, delegate or alert through its copy. Only the admin tooling, the scan, the revoke refusal, the GDPR export and backups read quarantined rows.
+Before GHSA-m5p9-6pw7-pf3g was fixed, a client could link a share row to any secret id, including a secret the target already owned. Rows planted that way MUST be quarantined; the scan never deletes a row or a secret. A quarantined row keeps `quarantined_at` and a `quarantine_reason`, and no runtime lookup of share rows returns it, so it cannot read, write, delete, sync, delegate or alert through its copy. Only the admin tooling, the scan, the revoke refusal, the GDPR export and backups read quarantined rows.
 
 The scan considers only rows whose copy was created in an earlier second than the row or has a `secret.created` audit entry, and quarantines such a row on the first of three signals that holds, checked in this order:
 - its copy was the source of a share to anyone, created no later than the row, found in `share_targets` or in a `share.granted` audit entry naming the copy as its object (register-batch grants): the attacker learned the copy's id because it was shared with them or an accomplice, and a server-minted copy cannot have been a share source before its row;
 - its copy has a `secret.created` audit entry (object type `secret`), so it was created as a secret of its own, which no server-minted copy is. This applies whatever the timing, so it catches a row planted in the same second as its copy, for example on a secret the attacker contributed to a team folder;
 - its copy was created more than 5 seconds before the row. Every first-party client mints a copy in the same request as its row, which takes well under a second, so the window only absorbs a second boundary or a slow request. A row it catches by mistake comes from a legacy two-step API client, and an admin releases it.
 
-The scan runs once from the upgrade migration and then from the `ShareQuarantineScanJob` background job until one full pass completes. Completion is recorded per scan generation: `share_quarantine_scan_generation` holds the current generation and `share_quarantine_scan_completed` the generation whose pass completed, and the scan is complete only while the two match. A failed pass, or a pass during which the scan was reopened, MUST record nothing and log the reason, so the job retries every 15 minutes and skips rows already quarantined; the upgrade itself MUST NOT fail because of the scan. While the scan is pending, the admin overview MUST show a setup-check warning that planted rows are not quarantined yet and can still be used against other users' secrets. While it is pending, every path that deletes or changes a share row's copy (revoke, the cascade from deleting its source, a group revoke, a member leaving the group, sync, a restriction change and the account-deletion tombstone) MUST first judge a candidate row on the spot, as the scan would. A row a signal catches is quarantined and audited there, and from then on behaves as any quarantined row; so does a row found quarantined when it is judged, even when it was quarantined after the caller loaded it. A candidate no signal catches is handled normally. Judging runs in its own transaction, or a savepoint inside the caller's, so a failed judging query never aborts the caller's operation. When judging fails, the failure is logged as an error and the row's copy MUST NOT be deleted, written, restricted or tombstoned. An owner's request that would touch it answers `409` with `error: share_scan_pending` and changes nothing: revoking the row, changing its restriction, changing its group share's restriction by sharing again, revoking its group share, and deleting (trashing) its source. These requests judge every row before they change anything and run the rest in one transaction, so a judging that fails partway rolls the whole request back; the quarantines the up-front judging made are kept. Only a member leaving the group and a delete nobody can refuse (the trash purge job, request-placeholder cleanup, rolling back a failed request) remove an unjudged row and keep its copy, which then has no share row. A share minted in the same request (`register-batch`, the team-folder fan-out) is never judged: its copy takes its restriction inside the mint transaction, so a use-only or expiring share never gets a full copy. A restriction change of an existing row that cannot be refused (the expiry job, a team-folder membership change) skips a row it cannot judge and sets `share_quarantine_scan_resolve_pending`; once the scan completes, `ShareQuarantineScanJob` resolves every live copy's restriction again and clears the key only after that succeeds and only when no other skip was recorded meanwhile, so a failed or interrupted run leaves it set for the next one. A restore whose archive holds share rows MUST reopen the scan in a new generation before it writes them and MUST run the scan directly after the tables are written, before the attachment blobs and while maintenance mode is still on; a scan that does not complete MUST NOT fail the restore and stays pending for the job. A released row keeps its reason and is never quarantined again.
+The scan runs once from the upgrade migration and then from the `ShareQuarantineScanJob` background job until one full pass completes. Completion is recorded per scan generation: `share_quarantine_scan_generation` holds the current generation and `share_quarantine_scan_completed` the generation whose pass completed, and the scan is complete only while the two match. A failed pass, or a pass during which the scan was reopened, MUST record nothing and log the reason, so the job retries every 15 minutes and skips rows already quarantined; the upgrade itself MUST NOT fail because of the scan. While the scan is pending, the admin overview MUST show a setup-check warning that planted rows are not quarantined yet and can still be used against other users' secrets. While it is pending, every path that deletes or changes a share row's copy (revoke, the cascade from deleting its source, a group revoke, a member leaving the group, sync, a restriction change and the account-deletion tombstone) MUST first judge a candidate row on the spot, as the scan would. A row a signal catches is quarantined and audited there, and from then on behaves as any quarantined row; so does a row found quarantined when it is judged, even when it was quarantined after the caller loaded it. A candidate no signal catches is handled normally. Judging runs in its own transaction, or a savepoint inside the caller's, so a failed judging query never aborts the caller's operation. When judging fails, the failure is logged as an error and the row's copy MUST NOT be deleted, written, restricted or tombstoned. An owner's request that would touch it answers `409` with `error: share_scan_pending` and changes nothing: revoking the row, changing its restriction, changing its group share's restriction by sharing again, revoking its group share, and deleting (trashing) its source. These requests judge every row before they change anything and run the rest in one transaction, so a judging that fails partway rolls the whole request back; the quarantines the up-front judging made are kept. Only a member leaving the group and a delete nobody can refuse (the trash purge job, request-placeholder cleanup, rolling back a failed request) remove an unjudged row and keep its copy, which then has no share row. A share minted in the same request (`register-batch`, the team-folder fan-out) is never judged: its copy takes its restriction inside the mint transaction, so a use-only or expiring share never gets a full copy. A restriction change of an existing row that cannot be refused (the expiry job, a team-folder membership change) skips a row it cannot judge and sets `share_quarantine_scan_resolve_pending`; once the scan completes, `ShareQuarantineScanJob` resolves every live copy's restriction again and clears the key only after that succeeds and only when no other skip was recorded meanwhile, so a failed or interrupted run leaves it set for the next one. How a runtime path follows a share row, while the scan is pending and after it completes, is set out in Runtime Paths Follow Only Judged Share Rows.
 
-An admin manages quarantined rows with `occ keepiq:share-quarantine list|release <id> [--force]|drop <id> [--clear-restrictions]`. `list` shows who holds each copy, the copy's use-only flag and access end date and the row's own end date, since a planted row may have written those restrictions onto the target's own secret. `release` restores the row as a live share and MUST be refused while a live share for the same source and target exists. Without `--force` it MUST only release a row whose copy is gone or is held by the row's creator, as every legacy two-step copy was; a copy held by anyone else may be that person's own secret, which a released row would make look like a received copy again. It MUST also be refused unless `--force` is passed for a row quarantined because its copy was shared before the row, for a row whose copy belongs to the recipient (whatever the reason, since revoking the released share would delete it), for a row whose copy is the source of a live share, which a share copy may no longer be, and for a row whose share, linked group share or copy carries an access end date, because the expiry job revokes an ended share and deletes its copy; the refusal lists every reason at once, with the earliest end date. `drop` removes the row and keeps its copy; with `--clear-restrictions` it also clears the copy's `use_only` and `access_expires_at` when the row's recipient holds the copy. A legitimately shared use-only copy looks the same, so on a row quarantined by mistake this leaves the recipient a full copy nobody can revoke. Each quarantine is audited as `share.quarantined`, with the system as actor and the row's source, recipient, copy, reason and the copy's restrictions, and forwarded to the SIEM sinks; each release as `share.quarantine_released`, recording whether it was forced; each drop as `share.quarantine_dropped`, recording whether the copy's restrictions were cleared. A cascade that removes rows by source, target or group share removes quarantined rows too, without touching their copies, and the account-deletion report counts the received rows it removes, quarantined ones included.
+A restore whose archive holds share rows MUST reopen the scan in a new generation before it writes them and MUST run the scan directly after the tables are written, before the attachment blobs and while maintenance mode is still on; a scan that does not complete MUST NOT fail the restore and stays pending for the job. A released row keeps its reason and is never quarantined again.
+
+An admin manages quarantined rows with `occ keepiq:share-quarantine list|release <id> [--force]|drop <id> [--clear-restrictions]`. `list` shows who holds each copy, the copy's use-only flag and access end date and the row's own end date, since a planted row may have written those restrictions onto the target's own secret. `release` restores the row as a live share and MUST be refused while a live share for the same source and target exists. Even with `--force` it MUST be refused for a team-folder row whose folder no longer exists, whose recipient the folder no longer covers, or whose recipient's account is disabled, since the fan-out never shares to a disabled account and offboarding leaves a leaver whom a group still covers in the folder. Without `--force` it MUST only release a row whose copy is gone or is held by the row's creator, as every legacy two-step copy was; a copy held by anyone else may be that person's own secret, which a released row would make look like a received copy again. It MUST also be refused unless `--force` is passed for a row quarantined because its copy was shared before the row, for a row whose copy belongs to the recipient (whatever the reason, since revoking the released share would delete it), for a row whose copy is the source of a live share, which a share copy may no longer be, and for a row whose share, linked group share or copy carries an access end date, because the expiry job revokes an ended share and deletes its copy; the refusal lists every reason at once, with the earliest end date. `drop` removes the row and keeps its copy; with `--clear-restrictions` it also clears the copy's `use_only` and `access_expires_at` when the row's recipient holds the copy. A legitimately shared use-only copy looks the same, so on a row quarantined by mistake this leaves the recipient a full copy nobody can revoke. Each quarantine is audited as `share.quarantined`, with the system as actor and the row's source, recipient, copy, reason and the copy's restrictions, and forwarded to the SIEM sinks; each release as `share.quarantine_released`, recording whether it was forced; each drop as `share.quarantine_dropped`, recording whether the copy's restrictions were cleared. A cascade that removes rows by source, target or group share removes quarantined rows too, without touching their copies, and the account-deletion report counts the received rows it removes, quarantined ones included.
 
 #### Scenario: A planted row is inert after the upgrade
 - GIVEN a quarantined row `{source: S_a, target: victim, secret: V}` where V is the victim's own secret
@@ -562,6 +564,11 @@ An admin manages quarantined rows with `occ keepiq:share-quarantine list|release
 - WHEN the quarantine scan runs
 - THEN the row MUST be quarantined, on the first signal that holds: a member's copy minted from T in that second makes it the first, T's `secret.created` audit entry the second
 
+#### Scenario: A team-folder row of a disabled recipient is not released, even with --force
+- GIVEN a quarantined row from a team folder whose recipient a group still covers, and whose account is disabled
+- WHEN an admin runs `occ keepiq:share-quarantine release <id> --force`
+- THEN the release MUST be refused and the row MUST stay quarantined
+
 #### Scenario: A release that would let the expiry job delete the copy needs --force
 - GIVEN a quarantined row whose share, linked group share or copy carries an access end date
 - WHEN an admin releases it without `--force`
@@ -571,6 +578,137 @@ An admin manages quarantined rows with `occ keepiq:share-quarantine list|release
 - GIVEN a quarantined row whose recipient holds the copy, and the copy is use-only or has an access end date
 - WHEN an admin runs `occ keepiq:share-quarantine drop <id> --clear-restrictions`
 - THEN the row MUST be removed, the copy MUST be kept with `use_only` and `access_expires_at` cleared, and the drop audit MUST record that the restrictions were cleared
+
+### Requirement: Runtime Paths Follow Only Judged Share Rows
+A share row links a copy to its source. Every runtime path that follows a share row, from a copy to its source, from a source to its copies, or from a source and a target to the target's copy, MUST read the row through one judged lookup: the row's target must hold the copy it names, and while the quarantine scan is pending the row is judged on the spot first, as Planted Share Rows Are Quarantined describes. A share row MUST be followed only when its target holds the copy it names and the pending scan does not hold it back. A row that the scan quarantines is no copy: the secret it names is its holder's own. A row whose target does not hold its copy is never followed either: a save through it saves the holder's own row and a link share through it is refused, while a check that refuses copies still counts the secret as a copy. For a row the scan cannot judge, a path that can refuse its caller and would otherwise leave a copy on its old value MUST answer `409` with `error: share_scan_pending` and write nothing; every other path treats the row as held back, and a check that refuses copies keeps refusing until the row has been judged, answering the secret's own holder with `409` and `error: share_scan_pending`. In particular:
+- a copy holder's save goes through a row to its source (the write context and share-save) only when the row may be followed; through a row the scan cannot judge, the write context names no source and no owner certificate, and share-save answers `409` with `error: share_scan_pending` and writes nothing;
+- share-save judges the row of every copy it would write the same way: a copy whose row the pending scan quarantines is neither required nor written, and a copy whose row it cannot judge refuses the whole share-save with `409` and `error: share_scan_pending`, so no copy is left on the old value;
+- `PUT /secrets/{id}/sync` does the same: a group member's sync that reaches a copy whose row the scan cannot judge, and any sync that names such a copy, answers `409` with `error: share_scan_pending` and writes nothing;
+- the write context of a secret that is itself shared, asked by its holder while the row naming it as a copy cannot be judged, answers `409` with `error: share_scan_pending` instead of the `404` of an unknown id;
+- a team-folder confirmer or manager has no copy of a folder secret through a held-back row, so that pair is left out and the secret the row names is never decrypted or re-encrypted for other members;
+- a team-folder revoke keeps a row the scan quarantines, with its copy, for an administrator to judge, and deletes a trusted row with its copy. For a row the scan cannot judge, an owner or manager removing someone else's membership and an owner unsharing the folder answer `409` with `error: share_scan_pending` before anything changes; a removal checks only the rows of the users who lose access, and deletes the membership and revokes their rows in one transaction, so a revoke refused after that check changes nothing; a member leaving the folder themselves, a group leave, a membership whose end date passed and offboarding cannot be refused, so they remove the row and keep its copy, as a group leave does;
+- an offboarding hand-over delegates a team secret to the successor only through the successor's own row that may be followed; any other secret is reported as skipped;
+- sharing onward as a delegate (a direct, group or link share, or a restriction change) needs the caller's own copy through a row that may be followed; through a row the scan cannot judge it answers `409` with `error: share_scan_pending`, and register-batch reports that delegate's row as `share_scan_pending`, whether they name their own copy or its source;
+- a delegation or an admin handover needs a row that may be followed; through a row the scan cannot judge, the owner delegating the secret, who may know its rows, and an administrator handing it over to themselves through their own row are answered `409` with `error: share_scan_pending`, and the delegate-to-be is never asked; a delegate's share is re-rooted onto a copy's source, and a copy gives a group-write grade on its source, only through such a row;
+- a direct share, a group share, a sync, a link share or a value change of a secret that only a row the scan quarantines names treats that secret as an original. While the scan cannot judge the row, the secret's holder is answered `409` with `error: share_scan_pending` on each of these paths (register-batch reports the row as `share_scan_pending`), and anyone else keeps the refusal of a copy, until the row has been judged;
+- a compromise of the suite that seals a secret whose row the scan cannot judge warns about that secret itself and still warns the people its holder shared it with, and counts the row as a failure;
+- a honey-credential read alert, the target of a compromise warning, the copies a compromise warns about, the `secret.used` audit of a use-only copy (judged only after the caller is found to hold the live use-only copy), the owner's notice that a holder's access ended, and the org-ownership findings name a source only through a row that may be followed, so a held-back row never sends the holder's identity, address or use to the row's source owner.
+
+#### Scenario: A read through a held-back row raises no alert on its source
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN B reads V
+- THEN no read alert MUST name S_a or reach its owner because of V
+
+#### Scenario: A use through a held-back row is not reported to its source
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN B uses V
+- THEN no use audit MUST name S_a or reach its owner because of V
+
+#### Scenario: A secret named by a held-back row is changed as an original
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN B edits V
+- THEN B MUST be able to change V as an original, and the edit MUST NOT reach S_a
+
+#### Scenario: A secret named by a held-back row is shared as an original
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN B shares V with a user or a group
+- THEN the share MUST be made as the share of an original, and MUST NOT be re-rooted onto S_a
+
+#### Scenario: A secret named by a held-back row is link-shared as an original
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN B link-shares V
+- THEN the link share MUST be made as the link share of an original
+
+#### Scenario: A secret named by a held-back row is synced as an original
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN B syncs V
+- THEN the sync MUST go on as the sync of an original, and S_a MUST NOT be written
+
+#### Scenario: Removing a team-folder member leaves a secret named by a held-back row alone
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` in S_a's team folder where V is B's own secret, which the scan quarantines on the spot
+- WHEN B is removed from S_a's team folder
+- THEN V MUST NOT be deleted
+- AND no ended-access notice MUST name S_a or reach its owner because of V
+
+#### Scenario: Unsharing a team folder leaves a secret named by a held-back row alone
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` in S_a's team folder where V is B's own secret, which the scan quarantines on the spot
+- WHEN S_a's owner unshares the folder
+- THEN V MUST NOT be deleted
+- AND no ended-access notice MUST name S_a or reach its owner because of V
+
+#### Scenario: A held-back row gives no standing on its source
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN S_a's owner delegates S_a to B
+- THEN B MUST NOT become a delegate of S_a
+- AND B MUST NOT gain a grade on S_a through V
+
+#### Scenario: A compromise does not warn a source through a held-back row
+- GIVEN the quarantine scan has not completed, and a row `{source: S_a, target: B, secret: V}` where V is B's own secret, which the scan quarantines on the spot
+- WHEN the suite of B, or of S_a's owner, is revoked as compromised
+- THEN no compromise warning MUST name S_a or reach its owner because of V
+- AND V MUST NOT be deleted
+
+#### Scenario: A copy holder's write context does not go through a row the pending scan cannot judge
+- GIVEN the quarantine scan has not completed, judging a row `{source: S_a, target: B, secret: V}` fails, V is B's own secret, and S_a is shared with a group B is in
+- WHEN B asks for the write context of V
+- THEN the write context MUST name no source and no owner certificate
+
+#### Scenario: A copy holder's share-save waits for a row the pending scan cannot judge
+- GIVEN the quarantine scan has not completed, judging a row `{source: S_a, target: B, secret: V}` fails, V is B's own secret, and S_a is shared with a group B is in
+- WHEN B share-saves V
+- THEN the share-save MUST answer `409` with `error: share_scan_pending`, and neither V nor S_a MUST be written
+
+#### Scenario: A row whose target does not hold its copy is never followed
+- GIVEN B holds V, and a row `{source: S_a, secret: V}` names V as its copy while the row's target does not hold V
+- WHEN B saves V, whether or not the quarantine scan has completed
+- THEN the row MUST NOT lead B's save to S_a
+
+#### Scenario: The holder of a secret a foreign row names waits while the scan cannot judge the row
+- GIVEN the quarantine scan has not completed, B holds V, and a row `{source: S_a, target: M, secret: V}` names V while M does not hold V, and the scan cannot judge the row
+- WHEN B syncs, directly shares, group-shares or link-shares V
+- THEN B MUST be answered `409` with `error: share_scan_pending`
+- AND M MUST keep the refusal of a copy
+- AND B's value change of V MUST still save B's own V
+
+#### Scenario: A share-save skips a copy whose row the pending scan quarantines
+- GIVEN the quarantine scan has not completed, and S_a has a row `{source: S_a, target: B, secret: V}` where V is B's own secret
+- WHEN the owner of S_a share-saves S_a and the scan quarantines the row on the spot
+- THEN V MUST be neither required nor written, and S_a and its other copies MUST be saved
+
+#### Scenario: A share-save waits for a copy whose row the pending scan cannot judge
+- GIVEN the quarantine scan has not completed, and judging the row `{source: S_a, target: B, secret: V}` fails
+- WHEN the owner of S_a share-saves S_a
+- THEN the share-save MUST answer `409` with `error: share_scan_pending` and write nothing
+
+#### Scenario: A sync waits for a copy the pending scan cannot judge
+- GIVEN the quarantine scan has not completed, and judging the row of one copy of S fails
+- WHEN a member of a group S is shared with syncs S, or S's owner syncs S naming that copy
+- THEN the sync MUST answer `409` with `error: share_scan_pending` and write nothing
+
+#### Scenario: A shared secret's write context waits for its own unjudged row
+- GIVEN the quarantine scan has not completed, judging a row `{source: S_a, target: B, secret: V}` fails, and V is itself shared by B
+- WHEN B asks for the write context of V
+- THEN the answer MUST be `409` with `error: share_scan_pending`, naming no source and no owner certificate
+
+#### Scenario: A team-folder confirmer's held-back row hands nothing on
+- GIVEN the quarantine scan has not completed, and B holds a write grade in S_a's team folder through a row `{source: S_a, target: B, secret: V}` that the scan quarantines or cannot judge
+- WHEN pending confirmations are served to B, or B's manager reconcile is computed
+- THEN no copy of S_a MUST be named for B, and the pair MUST be left out
+
+#### Scenario: A team-folder revoke that can be refused waits for a row the pending scan cannot judge
+- GIVEN the quarantine scan has not completed, and judging B's share row in a team folder fails
+- WHEN the folder's owner removes B's membership or unshares the folder
+- THEN the system MUST answer `409` with `error: share_scan_pending` and change nothing
+
+#### Scenario: A team-folder revoke that cannot be refused keeps the copy of a row the pending scan cannot judge
+- GIVEN the quarantine scan has not completed, and judging B's share row in a team folder fails
+- WHEN B leaves the folder themselves, leaves the group that made them a member, or B's membership ends
+- THEN the row MUST be removed and its copy kept
+
+#### Scenario: A team-folder revoke keeps a row the scan quarantines
+- GIVEN B's share row in a team folder is quarantined
+- WHEN the folder's owner removes B's membership or unshares the folder, B leaves the folder or the group that made them a member, or B's membership ends
+- THEN the row MUST be kept with its copy
 
 ## User Stories
 
