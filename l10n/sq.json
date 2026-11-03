@@ -6,6 +6,7 @@
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Ndarë me ju vetëm për shikim. Kërkojini pronarit të drejta redaktimi për ta ndryshuar.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Ndarë me ju vetëm për shikim. Asgjë nuk u ruajt; kërkojini pronarit të drejta redaktimi për ta ndryshuar.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Një organizatë partnere me të cilën ndahet ky sekret nuk mund të arrihet ({partners}). Bëjeni sërish ndryshimin në linjë, ku mund ta ruani pa ata.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Ky ndryshim jashtë linje është i një lloji që Keepiq nuk e njeh, ndaj nuk u ruajt. Hidheni poshtë dhe bëjeni sërish ndryshimin në linjë.",
         "Save without them": "Ruaje pa ata",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "U ruajt. Marrësit në organizatat partnere do ta marrin këtë ndryshim kur pronari ta ruajë herën tjetër këtë sekret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ky sekret u ndryshua diku tjetër pasi e hapët. Asgjë nuk u ruajt; hapeni përsëri dhe bëjeni sërish ndryshimin.",

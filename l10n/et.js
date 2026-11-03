@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Sinuga jagatud ainult vaatamiseks. Selle muutmiseks küsi omanikult muutmisõigust.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Sinuga jagatud ainult vaatamiseks. Midagi ei salvestatud; selle muutmiseks küsi omanikult muutmisõigust.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerorganisatsioon, kellega see saladus on jagatud, ei ole kättesaadav ({partners}). Tee muudatus uuesti võrgus olles, kus saad salvestada ilma nendeta.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "See võrguühenduseta muudatus on liiki, mida Keepiq ei tunne, seega seda ei salvestatud. Loobu sellest ja tee muudatus uuesti võrgus olles.",
         "Save without them": "Salvesta ilma nendeta",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Salvestatud. Partnerorganisatsioonide saajad saavad selle muudatuse, kui omanik selle saladuse järgmine kord salvestab.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Seda saladust muudeti mujal pärast selle avamist. Midagi ei salvestatud; ava see uuesti ja tee muudatus uuesti.",

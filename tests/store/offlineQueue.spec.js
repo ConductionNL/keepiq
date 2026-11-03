@@ -187,7 +187,10 @@ describe('replay', () => {
 		expect(put).not.toHaveBeenCalled()
 		expect(post).not.toHaveBeenCalled()
 		expect(offline.failedEntries).toHaveLength(1)
-		expect(offline.failedEntries[0].failure.code).toBe('server')
+		expect(offline.failedEntries[0].failure).toEqual({ code: 'unknown_op' })
+		expect(failureText(offline.failedEntries[0].failure)).toContain(
+			'of a kind Keepiq does not know',
+		)
 	})
 
 	it('replays a delete with the version it was queued on', async () => {

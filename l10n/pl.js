@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Udostępnione Ci tylko do wglądu. Aby to zmienić, poproś właściciela o prawa do edycji.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Udostępnione Ci tylko do wglądu. Nic nie zostało zapisane; aby to zmienić, poproś właściciela o prawa do edycji.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizacja partnerska, której udostępniono ten sekret, jest nieosiągalna ({partners}). Wprowadź zmianę ponownie online, gdzie możesz zapisać bez niej.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Ta zmiana offline jest rodzaju, którego Keepiq nie zna, więc nie została zapisana. Odrzuć ją i wprowadź zmianę ponownie online.",
         "Save without them": "Zapisz bez nich",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Zapisano. Odbiorcy w organizacjach partnerskich otrzymają tę zmianę, gdy właściciel następnym razem zapisze ten sekret.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ten sekret został zmieniony w innym miejscu po jego otwarciu. Nic nie zostało zapisane; otwórz go ponownie i powtórz zmianę.",

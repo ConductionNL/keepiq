@@ -163,6 +163,97 @@ function failureOf(e) {
 }
 
 /**
+ * The text for an entry of a kind Keepiq does not know.
+ *
+ * @return {string}
+ */
+function unknownOpText() {
+	return t(
+		'keepiq',
+		'This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.',
+	)
+}
+
+/**
+ * The text for a stored unreachable-partner failure.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string}
+ */
+function unreachableText(failure) {
+	return t(
+		'keepiq',
+		'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
+		{ partners: failure.partners.join(', ') },
+	)
+}
+
+/**
+ * The share save's own text for a failure that needs only its code.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string|null}
+ */
+function shareSaveCodeText(failure) {
+	return shareSaveErrorText(new ShareSaveError(failure.code))
+}
+
+/**
+ * The text for a partner that runs a Keepiq too old for a value field.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string|null}
+ */
+function upgradeText(failure) {
+	return shareSaveErrorText({
+		code: failure.code,
+		partners: (failure.partners ?? []).map((recipientCloudId) => ({
+			recipientCloudId,
+		})),
+		response: { data: { requiredVersion: failure.requiredVersion } },
+	})
+}
+
+/**
+ * The text for a share save the server refused. The server's code stays
+ * stored with the entry; the list shows words, never the code.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string}
+ */
+function refusedText(failure) {
+	return (
+		shareSaveErrorText({
+			fromShareSave: true,
+			response: { status: 400, data: { error: failure.reason } },
+		}) ?? t('keepiq', 'Failed to save secret')
+	)
+}
+
+/**
+ * The text for a share save that was not allowed.
+ *
+ * @return {string|null}
+ */
+function notAllowedText() {
+	return shareSaveErrorText({
+		fromShareSave: true,
+		response: { status: REFUSAL_STATUS, data: { error: 'not_allowed' } },
+	})
+}
+
+/** The text of each stored failure code; any other shows its own message. */
+const FAILURE_TEXTS = new Map([
+	['unknown_op', unknownOpText],
+	['partner_unreachable', unreachableText],
+	['partner_lookup_limit', shareSaveCodeText],
+	['view_only', shareSaveCodeText],
+	['partner_upgrade_required', upgradeText],
+	['refused', refusedText],
+	['not_allowed', notAllowedText],
+])
+
+/**
  * The text the failed list shows for a stored failure.
  *
  * @param {object|undefined} failure The entry's `failure`.
@@ -170,40 +261,8 @@ function failureOf(e) {
  * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export function failureText(failure) {
-	switch (failure?.code) {
-		case 'partner_unreachable':
-			return t(
-				'keepiq',
-				'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
-				{ partners: failure.partners.join(', ') },
-			)
-		case 'partner_lookup_limit':
-		case 'view_only':
-			return shareSaveErrorText(new ShareSaveError(failure.code))
-		case 'partner_upgrade_required':
-			return shareSaveErrorText({
-				code: failure.code,
-				partners: (failure.partners ?? []).map((recipientCloudId) => ({
-					recipientCloudId,
-				})),
-				response: { data: { requiredVersion: failure.requiredVersion } },
-			})
-		case 'refused':
-			// The server's code stays stored with the entry; the list shows
-			// words, never the code.
-			return (
-				shareSaveErrorText({
-					fromShareSave: true,
-					response: { status: 400, data: { error: failure.reason } },
-				}) ?? t('keepiq', 'Failed to save secret')
-			)
-		case 'not_allowed':
-			return shareSaveErrorText({
-				fromShareSave: true,
-				response: { status: REFUSAL_STATUS, data: { error: 'not_allowed' } },
-			})
-	}
-	return failure?.message ?? null
+	const text = FAILURE_TEXTS.get(failure?.code)
+	return text ? text(failure) : (failure?.message ?? null)
 }
 
 let lockHookRegistered = false
@@ -659,7 +718,13 @@ export const useOfflineStore = defineStore('offline', {
 				return 'conflict'
 			}
 			if (kind === 'failed') {
-				await this.setStatus(entry, 'failed', failureOf(error))
+				// An entry of an unknown kind keeps its own reason: no server
+				// answered it.
+				const failure =
+					error instanceof UnknownQueueOpError
+						? { code: 'unknown_op' }
+						: failureOf(error)
+				await this.setStatus(entry, 'failed', failure)
 				return 'failed'
 			}
 			return 'retry'

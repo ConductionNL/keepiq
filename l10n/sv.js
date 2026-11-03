@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Delad med dig endast för visning. Be ägaren om redigeringsrättigheter för att ändra den.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Delad med dig endast för visning. Inget sparades; be ägaren om redigeringsrättigheter för att ändra den.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation som den här hemligheten delas med kan inte nås ({partners}). Gör om ändringen online, där du kan spara utan dem.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Den här offlineändringen är av ett slag som Keepiq inte känner till, så den sparades inte. Släng den och gör om ändringen online.",
         "Save without them": "Spara utan dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sparat. Mottagare i partnerorganisationer får ändringen nästa gång ägaren sparar den här hemligheten.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Den här hemligheten ändrades på annat håll efter att du öppnade den. Inget sparades; öppna den igen och gör om din ändring.",

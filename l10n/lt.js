@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Bendrinama su jumis tik peržiūrai. Norėdami pakeisti, paprašykite savininko redagavimo teisių.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Bendrinama su jumis tik peržiūrai. Niekas neišsaugota; norėdami pakeisti, paprašykite savininko redagavimo teisių.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerių organizacija, su kuria bendrinama ši paslaptis, nepasiekiama ({partners}). Pakartokite pakeitimą prisijungę, kur galite išsaugoti be jų.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Šis neprisijungus atliktas pakeitimas yra rūšies, kurios Keepiq nežino, todėl jis neišsaugotas. Atmeskite jį ir pakartokite pakeitimą prisijungę.",
         "Save without them": "Išsaugoti be jų",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Išsaugota. Gavėjai partnerių organizacijose gaus šį pakeitimą, kai savininkas kitą kartą išsaugos šią paslaptį.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Ši paslaptis buvo pakeista kitur po to, kai ją atidarėte. Niekas neišsaugota; atidarykite ją iš naujo ir pakartokite pakeitimą.",
