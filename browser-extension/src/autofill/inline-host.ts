@@ -111,6 +111,16 @@ const sameBox = (a: Box, b: Box) =>
 	Math.abs(a.top - b.top) <= TOLERANCE_PX && Math.abs(a.left - b.left) <= TOLERANCE_PX
 	&& Math.abs(a.width - b.width) <= TOLERANCE_PX && Math.abs(a.height - b.height) <= TOLERANCE_PX
 
+/**
+ * The list `field` asks for, or null. A `webauthn` field only asks: the background opens a list on it only while the frame
+ * has a conditional passkey request pending.
+ */
+function listFor(field: HTMLInputElement): { mode: InlineMode; webauthn: boolean } | null {
+	const mode = isQualifying(field)
+	if (mode) return { mode, webauthn: false }
+	return isWebauthnField(field) ? { mode: 'login', webauthn: true } : null
+}
+
 const isPickInput = (input: unknown): input is PickInput => {
 	const value = input as Partial<PickInput> | null
 	return (value?.kind === 'pointer' || value?.kind === 'key') && [value.at, value.x, value.y].every((n) => typeof n === 'number' && Number.isFinite(n))
@@ -300,31 +310,31 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		list.frame = requestAnimationFrame(tick)
 	}
 
+	/** Whether the field an open waited on still has focus and shows, and for a focus open is still empty. */
+	function stillWanted(field: HTMLInputElement, how: 'focus' | 'click'): boolean {
+		// A split code's fill moves focus box by box, and fills each box before this reply arrives.
+		const stillEmpty = how === 'click' || field.value === ''
+		return deepActiveElement() === field && fieldShown(field) && stillEmpty
+	}
+
 	function maybeOpen(field: HTMLInputElement, how: 'focus' | 'click'): void {
 		if (!allowed || open?.field === field || pending?.field === field) return
 		if (how === 'focus' && field.value !== '') return
-		const qualifying = isQualifying(field)
-		// The background opens a list on such a field only while the frame has a conditional passkey request pending.
-		const webauthn = qualifying === null && isWebauthnField(field)
-		const mode = qualifying ?? (webauthn ? 'login' : null)
-		if (!mode) return
+		const list = listFor(field)
+		if (!list) return
 		close()
 		// Whatever the list will show, it needs room for one row.
 		if (!placement(field, INLINE_MIN_HEIGHT_PX)) return
+		const { mode, webauthn } = list
 		const token = {}
 		pending = { field, token }
 		void request({ kind: 'inline.open', mode, ...(webauthn && { webauthn }) }).then((reply) => {
 			const { key, height } = (reply ?? {}) as { key?: unknown; height?: unknown }
-			if (typeof key !== 'string') {
-				if (pending?.token === token) pending = null
-				return
-			}
+			const current = pending?.token === token
+			if (current) pending = null
+			if (typeof key !== 'string') return
 			const wanted = inlineClampHeight(height)
-			// A split code's fill moves focus box by box, and fills each box before this reply arrives.
-			const stillEmpty = how === 'click' || field.value === ''
-			const box = wanted !== null && pending?.token === token && deepActiveElement() === field && fieldShown(field) && stillEmpty
-				? placement(field, wanted, true) : null
-			if (pending?.token === token) pending = null
+			const box = wanted !== null && current && stillWanted(field, how) ? placement(field, wanted, true) : null
 			if (box && wanted !== null) show(field, mode, key, wanted, box)
 			else send({ kind: 'inline.closed', key })
 		})
