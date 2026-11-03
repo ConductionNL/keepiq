@@ -88,6 +88,19 @@ class ShareQuarantineReleaseTest extends TestCase {
 	}//end testARowOfAFormerMemberIsNotReleasedEvenWhenForced()
 
 	/**
+	 * A row whose recipient a group still covers but whose account is
+	 * disabled, as an offboarded leaver's is, is not released, even when
+	 * forced: the fan-out never shares to a disabled account either.
+	 *
+	 * @return void
+	 */
+	public function testARowOfADisabledMemberIsNotReleasedEvenWhenForced(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('disabled');
+		$this->service(folderExists: true, members: ['bob'], disabled: true)->release(id: 'row-V', force: true);
+	}//end testARowOfADisabledMemberIsNotReleasedEvenWhenForced()
+
+	/**
 	 * A row the folder still grants is released when forced, as before.
 	 *
 	 * @return void
@@ -104,10 +117,11 @@ class ShareQuarantineReleaseTest extends TestCase {
 	 *
 	 * @param bool         $folderExists Whether tf-1 exists
 	 * @param list<string> $members      The users tf-1 covers
+	 * @param bool         $disabled     Whether the recipient's account is disabled
 	 *
 	 * @return ShareQuarantineService
 	 */
-	private function service(bool $folderExists, array $members): ShareQuarantineService {
+	private function service(bool $folderExists, array $members, bool $disabled = false): ShareQuarantineService {
 		$quarantined = $this->createMock(QuarantinedShareTargetMapper::class);
 		$quarantined->method('findQuarantinedById')->willReturn($this->row);
 		$quarantined->method('update')->willReturnArgument(0);
@@ -122,6 +136,7 @@ class ShareQuarantineReleaseTest extends TestCase {
 
 		$memberships = $this->createMock(TeamFolderMembershipResolver::class);
 		$memberships->method('effectiveUsers')->willReturn($members);
+		$memberships->method('isDisabledAccount')->willReturn($disabled);
 
 		return new ShareQuarantineService(
 			quarantined: $quarantined,

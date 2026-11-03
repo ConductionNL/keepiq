@@ -159,13 +159,14 @@ class ShareQuarantineService {
 
 	/**
 	 * Refuse, whatever the force, to release a team-folder row whose folder
-	 * no longer exists or no longer covers the row's recipient.
+	 * no longer exists or no longer covers the row's recipient, or whose
+	 * recipient's account is disabled.
 	 *
 	 * @param ShareTarget $row The quarantined row
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When the folder is gone or the recipient is no longer covered
+	 * @throws InvalidArgumentException When the folder is gone, the recipient is no longer covered or is disabled
 	 */
 	private function assertTeamFolderStillGrants(ShareTarget $row): void {
 		$teamFolderId = (string)$row->getTeamFolderId();
@@ -184,6 +185,13 @@ class ShareQuarantineService {
 		if (in_array($row->getTargetUserId(), $this->memberships->effectiveUsers(teamFolderId: $teamFolderId), true) === false) {
 			throw new InvalidArgumentException(
 				message: 'The recipient is no longer a member of the team folder this row came from, so it cannot be released, even with --force; drop it instead'
+			);
+		}
+
+		// The fan-out never shares to a disabled account, so a release does not either.
+		if ($this->memberships->isDisabledAccount(userId: $row->getTargetUserId()) === true) {
+			throw new InvalidArgumentException(
+				message: 'The recipient\'s account is disabled, so this team-folder row cannot be released, even with --force; drop it instead'
 			);
 		}
 	}//end assertTeamFolderStillGrants()
