@@ -139,6 +139,20 @@ describe('vault.snapshot', () => {
 	})
 })
 
+describe('vault.sync', () => {
+	it('syncs the unlocked active account and answers its status', async () => {
+		// The server is down in every test here.
+		expect(await send({ kind: 'vault.sync' })).toMatchObject({ syncing: false, lastError: 'server' })
+		expect(fetchMock).toHaveBeenCalled()
+	})
+
+	it('answers a status that is not syncing while locked, reaching no server', async () => {
+		await lock(accountId)
+		expect(await send({ kind: 'vault.sync' })).toEqual({ syncing: false, syncedAt: null, offline: false, lastError: null })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
 describe('item.decrypt', () => {
 	it('decrypts the asked fields of a batch without writing storage', async () => {
 		await snapshot([
