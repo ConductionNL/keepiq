@@ -560,13 +560,19 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		// exists." A disabled attribute is a claim about the markup; this is the
 		// claim about the wire. Record every user-share request the page makes
 		// while the affordance is clicked, and require none.
+		// ShareList reads the secret's existing shares (GET secrets/<id>/shares)
+		// on its own when it mounts or the secret changes; that read can land in
+		// the listening window on a slow runner and is not a user-share request.
 		const userShareRequests: string[] = []
-		const listener = (r: { url: () => string }) => {
+		const listener = (r: { url: () => string, method: () => string }) => {
+			const isShareListRead = r.method() === 'GET'
+				&& /\/api\/v1\/secrets\/[^/]+\/shares(\?|$)/.test(r.url())
 			if (
 				/\/api\/v1\/(secrets\/[^/]+\/)?(user-)?shares?(\b|\/|\?)/.test(
 					r.url(),
 				)
 				&& !/link-shares/.test(r.url())
+				&& !isShareListRead
 			) {
 				userShareRequests.push(r.url())
 			}
