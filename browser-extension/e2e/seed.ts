@@ -10,6 +10,12 @@ import { envelope, suiteRow } from '@/src/testing/vectors'
 import type { VaultSnapshot } from '@/src/vault/types'
 
 export const LOGIN = { username: 'test-user', password: 'test-password' }
+/** Every seeded card's `key`; the PIN is there to show it is never filled. */
+export const CARD = { number: '4111 1111 1111 1111', expiry: '03/27', cvv: '123', pin: '0000', cardholder: 'Anna de Vries' }
+/** Every seeded identity's `key`; the BSN is there to show it is never filled. */
+export const IDENTITY = {
+	firstName: 'Anna', lastName: 'de Vries', address: 'Kerkstraat 1\n1234 AB Utrecht', phone: '0600000000', email: 'anna@example.test', bsn: '111222333',
+}
 /** The key `test-site/totp.js` checks codes against. */
 export const TOTP_SECRET = 'JBSWY3DPEHPK3PXP'
 
@@ -31,12 +37,19 @@ export interface LoginItem {
 	https?: boolean
 }
 
+/** `count` items of the system `type`, named `names` in turn and then numbered, all with the same `key`. */
+async function walletRows(type: 'card' | 'identity', count: number, names: string[], payload: object, base: Parameters<typeof secretRow>[0]) {
+	const key = await encrypt(JSON.stringify(payload))
+	return Array.from({ length: count }, (_, i) => secretRow({ ...base, id: `${type}${i + 1}`, name: names[i] ?? `${names[0]} ${i + 1}`, url: null, typeId: `t-${type}`, key }))
+}
+
 /**
  * The login matches `site`; `matches` adds more matching logins after it; `totp` gives the first one `TOTP_SECRET` as
- * its code and `passkeys` as its passkeys. Locked leaves out the private key, as a lock does.
+ * its code and `passkeys` as its passkeys; `cards` and `identities` add that many of `CARD` and `IDENTITY`. Locked leaves out the private key, as a lock does.
  */
 export async function fakeStorage(
-	site: string, unlocked: boolean, { longFolder = false, matches = 1, loginItem = {} as LoginItem, totp = false, passkeys = [] as PasskeyCredential[] } = {},
+	site: string, unlocked: boolean,
+	{ longFolder = false, matches = 1, loginItem = {} as LoginItem, totp = false, passkeys = [] as PasskeyCredential[], cards = 0, identities = 0 } = {},
 ): Promise<FakeStorage> {
 	const { name = 'Test site', username = LOGIN.username, https = false } = loginItem
 	const now = new Date().toISOString()
@@ -44,24 +57,28 @@ export async function fakeStorage(
 		id: 'e2e', serverUrl: 'https://keepiq.invalid', uid: 'tester', loginName: 'tester', displayName: 'Tester',
 		email: null, avatarDataUrl: null, appPassword: 'not-an-app-password', keepiqVersion: null,
 	}
+	const owned = { ownerId: account.uid, createdAt: now, updatedAt: now }
+	const secrets = [
+		secretRow({
+			name, url: https ? site.replace(/^http:/, 'https:') : site, ...owned,
+			login: username === null ? null : await encrypt(username), key: await encrypt(LOGIN.password),
+			...totp && { totp: await encrypt(TOTP_SECRET) },
+			...passkeys.length > 0 && { passkeys: await encrypt(JSON.stringify(passkeys)) },
+		}),
+		...await Promise.all(Array.from({ length: matches - 1 }, async (_, i) => secretRow({
+			id: `s${i + 2}`, name: `Test site ${i + 2}`, url: site, ...owned,
+			login: await encrypt(`user-${i + 2}`), key: await encrypt(LOGIN.password),
+		}))),
+		...await walletRows('card', cards, ['Personal', 'Work Visa'], CARD, owned),
+		...await walletRows('identity', identities, ['Anna'], IDENTITY, owned),
+	]
 	const snapshot: VaultSnapshot = {
 		suite: { id: suiteRow.id, unlockKeyEpoch: suiteRow.unlockKeyEpoch },
-		secrets: [
-			secretRow({
-				name, url: https ? site.replace(/^http:/, 'https:') : site, ownerId: account.uid, createdAt: now, updatedAt: now,
-				login: username === null ? null : await encrypt(username), key: await encrypt(LOGIN.password),
-				...totp && { totp: await encrypt(TOTP_SECRET) },
-				...passkeys.length > 0 && { passkeys: await encrypt(JSON.stringify(passkeys)) },
-			}),
-			...await Promise.all(Array.from({ length: matches - 1 }, async (_, i) => secretRow({
-				id: `s${i + 2}`, name: `Test site ${i + 2}`, url: site, ownerId: account.uid, createdAt: now, updatedAt: now,
-				login: await encrypt(`user-${i + 2}`), key: await encrypt(LOGIN.password),
-			}))),
-		],
+		secrets,
 		folders: longFolder
 			? LONG_FOLDER.map((name, i) => folderRow({ id: `f${i}`, name, parentId: i === 0 ? null : `f${i - 1}`, ownerId: account.uid, createdAt: now, updatedAt: now }))
 			: [],
-		types: typeRows, syncedAt: now, listsSyncedAt: now, newestUpdatedAt: now, total: matches,
+		types: typeRows, syncedAt: now, listsSyncedAt: now, newestUpdatedAt: now, total: secrets.length,
 	}
 	// Keys as `src/accounts/store.ts`, `src/vault/store.ts` and `src/vault/key-store.ts` write them.
 	return {

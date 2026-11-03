@@ -9,7 +9,7 @@
 <body>
 	<main class="wide">
 		<h1>Keepiq test site</h1>
-		<p class="tests">Login forms to try the extension on. Nothing you submit is stored or logged. Save a login in Keepiq with the URL <code id="origin">http://localhost:8100</code> to get fill suggestions here.</p>
+		<p class="tests">Login forms to try the extension on. Nothing you submit is stored or logged. Save a login in Keepiq with the URL <code id="origin">http://localhost:8100</code> to get fill suggestions here. Cards and identities are offered on every page, whatever their URL.</p>
 		<ul class="pages">
 			<li><a href="/login.html">Basic login</a><span>Username and password in one form. Fill, save bar, redirect chain after submit.</span></li>
 			<li><a href="/email-login.html">Email login</a><span>Email field with <code>autocomplete</code> hints and a "remember me" checkbox.</span></li>
@@ -38,6 +38,14 @@
 			<li><a href="/passkey-conditional.html">Passkey in the field's suggestions</a><span>A conditional passkey request on load and a <code>webauthn</code> username field. The list offers passkeys above the logins.</span></li>
 			<li><a href="/passkey-iframe.html">Passkey in a cross-origin frame</a><span>The passkey page in a frame on another origin. Its requests go to the browser, never to Keepiq.</span></li>
 			<li><a href="/scripted-submit.html">Login submitted by script</a><span>The page fills and submits a login itself, as a probe of the vault would. No save or update bar.</span></li>
+			<li><a href="/card.html">Card checkout</a><span>A checkout with <code>cc-*</code> tokens and a <code>type=password</code> CVC. The card list on every field, never the login list, and no save bar.</span></li>
+			<li><a href="/card-split.html">Card in split fields</a><span>Month and year selects, a card type select, a number in four boxes and a combined "MM / YYYY" expiry.</span></li>
+			<li><a href="/card-dutch.html">Card checkout in Dutch</a><span>Dutch labels without tokens, an "MMJJ" expiry and a PIN field that stays empty.</span></li>
+			<li><a href="/card-iframe.html">Card fields in frames</a><span>"Name on card" in the page and the card fields in a same-site and a cross-site frame. Keepiq asks before filling the cross-site one, and again for a frame added after the answer.</span></li>
+			<li><a href="/identity.html">Address forms</a><span>Name parts, email, phone and a multi-line address, a first address line, a full name and a Dutch form. The identity list and fill.</span></li>
+			<li><a href="/identity-signup.html">Sign up beside a login</a><span>A sign-up form with a first name and an email username, a login with an email and a newsletter. Only the sign-up form gets the identity list.</span></li>
+			<li><a href="/hidden-fields.html">Hidden card and address fields</a><span>Card and address fields hidden by opacity, <code>aria-hidden</code>, <code>inert</code>, off-screen positioning, clipping, a cover or a zero-height wrapper. Only the shown fields are filled.</span></li>
+			<li><a href="/hidden-fields-locked.html">Card and address fields no scrolling reaches</a><span>Fields fixed off-screen, below the fold of a page that cannot scroll, or in a scrolling box with no room or under a cover. Only the shown fields are filled; those just past the end of a scrolling box are too.</span></li>
 			<li><a href="/newsletter.html">Newsletter</a><span>An email field with "Subscribe". Not a login: no list, no fill, no save bar.</span></li>
 			<li><a href="/no-form.html">No login form</a><span>A page without login fields. The popup should say autofill is not available.</span></li>
 		</ul>

@@ -3,15 +3,14 @@
  * Chrome's occlusion report (IntersectionObserver v2) only exists in a real browser.
  */
 import {
-	clickField, expect, FILLED, holds, inlineListText, keyboardPickFills, listFrame, listOpen, listText, mouseClickCaught, mouseClicksDropped, mousePickFills,
-	mousePickRefused, openPage, test, values,
+	clickField, expect, FILLED, holds, hostHeight, inlineListText, keyboardPickFills, listFrame, listOpen, listText, mouseClickCaught, mouseClicksDropped,
+	mousePickFills, mousePickRefused, openPage, test, values,
 } from './fixtures'
 import type { Page } from '@playwright/test'
 import { INLINE_MIN_WIDTH_PX, inlineHeight } from '@/src/messages'
 
 const guardField = (page: Page) => page.locator('h2:text("Guard cases") ~ form input[name=username]').first()
 const frameField = (page: Page, frame: string) => page.frameLocator(frame).locator('input[name=username]')
-const hostHeight = (page: Page) => page.evaluate(() => document.querySelector(':root > div[popover]')?.getBoundingClientRect().height ?? null)
 
 test('a mouse pick in the top frame fills', async ({ page }) => {
 	await openPage(page)

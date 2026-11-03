@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Sign up beside a login</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Sign up beside a login</h1>
+		<p class="tests">Three forms with an email field each. Only the sign-up form is personal details.</p>
+
+		<h2>Create an account</h2>
+		<p class="tests">"First name" and the email open the identity list, and a pick fills both. The password fields never get an identity value.</p>
+		<form method="post" action="/signup" id="signup">
+			<label>First name <input name="first"></label>
+			<label>Email <input name="email" type="email" autocomplete="username"></label>
+			<label>Password <input name="password" type="password" autocomplete="new-password"></label>
+			<label>Confirm password <input name="confirm" type="password" autocomplete="new-password"></label>
+			<button type="submit">Create account</button>
+		</form>
+
+		<h2>Sign in</h2>
+		<p class="tests">A login whose username is an email: the login list, never the identity list.</p>
+		<form method="post" action="/login" id="login">
+			<label>Email <input name="username" type="email"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+
+		<h2>Newsletter</h2>
+		<p class="tests">A lone email field: no list opens.</p>
+		<form method="post" action="/newsletter" id="newsletter">
+			<label>Email <input name="email" type="email"></label>
+			<button type="submit">Subscribe</button>
+		</form>
+	</main>
+</body>
+</html>
