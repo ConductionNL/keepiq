@@ -63,6 +63,75 @@ const WHOLE_VAULT = {
 const writeBacks = new Map()
 
 /**
+ * Whether a snapshot secret passes the list's folder, type, favourite and
+ * tag filters.
+ *
+ * @param {object} secret A snapshot secret.
+ * @param {object} query The list query.
+ * @return {boolean}
+ */
+function inListFilters(secret, query) {
+	return (
+		(!query.folderId || secret.folderId === query.folderId)
+		// Without the type, a type-filtered list showed the whole vault offline.
+		&& (!query.typeId || secret.typeId === query.typeId)
+		&& (!query.favourite || secret.favourite)
+		&& (!query.tag || (secret.tags || []).includes(query.tag))
+	)
+}
+
+/**
+ * The snapshot secrets the list query selects; search matches the name or
+ * the URL, in any case.
+ *
+ * @param {Array<object>} secrets The snapshot secrets.
+ * @param {object} query The list query.
+ * @return {Array<object>}
+ */
+function offlineItems(secrets, query) {
+	const search = (query.search ?? '').toLowerCase()
+	return secrets.filter(
+		(s) =>
+			inListFilters(s, query)
+			&& (!search
+				|| (s.name || '').toLowerCase().includes(search)
+				|| (s.url || '').toLowerCase().includes(search)),
+	)
+}
+
+/**
+ * The server request's parameters: paging and sort, then each filter the
+ * query sets. The type filter is server-side (passkey-item-type §3.3);
+ * favourites and tags come from vault-favourites-tags-and-last-used.
+ *
+ * @param {object} query The list query.
+ * @param {object} paging page, limit, sort and direction.
+ * @return {object}
+ */
+function listParams(query, paging) {
+	const params = { ...paging }
+	if (query.folderId) {
+		params.folderId = query.folderId
+	}
+	if (query.search) {
+		params.search = query.search
+	}
+	if (query.typeId) {
+		params.typeId = query.typeId
+	}
+	if (query.state !== 'live') {
+		params.state = query.state
+	}
+	if (query.favourite) {
+		params.favourite = 1
+	}
+	if (query.tag) {
+		params.tag = query.tag
+	}
+	return params
+}
+
+/**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
  * supplied; later fills win for a member they both name. A blob that cannot
@@ -186,128 +255,83 @@ export const useSecretStore = defineStore('secret', {
 				// Offline (served from cache): list from the decrypted snapshot
 				// instead of the live API (offline-readonly-cache §4.2).
 				const offline = useOfflineStore()
-				// Trash and archive state (vault-trash-and-archive): live
-				// unless the view names another. The offline snapshot holds
-				// live secrets only, so the Trash and Archive views are empty
-				// offline.
-				const state =
-					('state' in options ? options.state : this.filters.state)
-					|| 'live'
-				if (
-					offline.servedFromCache
-					&& offline.vault
-					&& state !== 'live'
-					&& state !== 'kept'
-				) {
-					this.secrets = []
-					this.totalCount = 0
-					this.page = 1
-					return
-				}
+				const query = this.listQuery(options)
 				if (offline.servedFromCache && offline.vault) {
-					// PRESENCE, not nullishness: an explicit null means "no filter"
-					// (vault root, or a bulk fetch of the whole vault), which `??`
-					// would silently turn back into the stored filter.
-					const folderId =
-						'folderId' in options
-							? options.folderId
-							: this.filters.folderId
-					const search = (
-						('search' in options ? options.search : this.filters.search)
-						?? ''
-					).toLowerCase()
-					// Same presence semantics as folderId, mirroring the online
-					// branch's params.typeId — without it a type-filtered list
-					// silently showed the whole vault while offline.
-					const typeId =
-						'typeId' in options ? options.typeId : this.filters.typeId
-					const { favourite, tag } = this.organisationFilter(options)
-					let items = offline.vault.secrets
-					if (folderId) {
-						items = items.filter((s) => s.folderId === folderId)
-					}
-					if (typeId) {
-						items = items.filter((s) => s.typeId === typeId)
-					}
-					if (favourite) {
-						items = items.filter((s) => s.favourite)
-					}
-					if (tag) {
-						items = items.filter((s) => (s.tags || []).includes(tag))
-					}
-					if (search) {
-						items = items.filter(
-							(s) =>
-								(s.name || '').toLowerCase().includes(search)
-								|| (s.url || '').toLowerCase().includes(search),
-						)
-					}
+					// The offline snapshot holds live secrets only, so the Trash
+					// and Archive views are empty offline.
+					const items =
+						query.state === 'live' || query.state === 'kept'
+							? offlineItems(offline.vault.secrets, query)
+							: []
 					this.secrets = items
 					this.totalCount = items.length
 					this.page = 1
 					return
 				}
-
-				const params = {
-					page: options.page ?? this.page,
-					limit: options.limit ?? this.limit,
-					sort: options.sort ?? this.sort.field,
-					direction: options.direction ?? this.sort.direction,
-				}
-				// PRESENCE, not nullishness — see the offline branch above.
-				const folderId =
-					'folderId' in options ? options.folderId : this.filters.folderId
-				if (folderId) {
-					params.folderId = folderId
-				}
-				const search =
-					'search' in options ? options.search : this.filters.search
-				if (search) {
-					params.search = search
-				}
-				// Server-side secret-type filter (passkey-item-type §3.3):
-				// lets the vault list show only one type, e.g. passkeys.
-				const typeId =
-					'typeId' in options ? options.typeId : this.filters.typeId
-				if (typeId) {
-					params.typeId = typeId
-				}
-				if (state !== 'live') {
-					params.state = state
-				}
-				// Favourites and tags (vault-favourites-tags-and-last-used).
-				const { favourite, tag } = this.organisationFilter(options)
-				if (favourite) {
-					params.favourite = 1
-				}
-				if (tag) {
-					params.tag = tag
-				}
-
-				try {
-					const response = await axios.get(
-						generateUrl('/apps/keepiq/api/v1/secrets'),
-						{ params },
-					)
-					this.secrets = response.data.items || []
-					this.totalCount = response.data.total || 0
-					this.page = response.data.page || 1
-				} catch (e) {
-					// Resilient offline fallback: if the network is unreachable and
-					// a cached snapshot exists, serve the list from it rather than
-					// failing (offline-readonly-cache §4.2). Covers the case where
-					// the offline flag lagged the actual connectivity loss.
-					if (this.isNetworkError(e) && offline.vault) {
-						offline.servedFromCache = true
-						this.secrets = offline.vault.secrets
-						this.totalCount = offline.vault.secrets.length
-						this.page = 1
-						return
-					}
-					throw e
-				}
+				await this.fetchOnline(query, options)
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * The list query of a fetch: each filter as passed, else as stored.
+		 * PRESENCE, not nullishness: an explicit null means "no filter" (vault
+		 * root, or a bulk fetch of the whole vault), which `??` would silently
+		 * turn back into the stored filter. Trash and archive state
+		 * (vault-trash-and-archive) is live unless the view names another.
+		 *
+		 * @param {object} options The fetch options.
+		 * @return {{state: string, folderId: (string|null), search: (string|null), typeId: (string|null), favourite: boolean, tag: (string|null)}}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		listQuery(options) {
+			const pick = (key) => (key in options ? options[key] : this.filters[key])
+			return {
+				state: pick('state') || 'live',
+				folderId: pick('folderId'),
+				search: pick('search'),
+				typeId: pick('typeId'),
+				...this.organisationFilter(options),
+			}
+		},
+
+		/**
+		 * Fetch a page of secrets from the server. When the network is
+		 * unreachable and a cached snapshot exists, serve the list from it
+		 * rather than failing (offline-readonly-cache §4.2): the offline flag
+		 * can lag the actual connectivity loss.
+		 *
+		 * @param {object} query The list query (listQuery).
+		 * @param {object} options The fetch options, for paging and sort.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		async fetchOnline(query, options) {
+			const params = listParams(query, {
+				page: options.page ?? this.page,
+				limit: options.limit ?? this.limit,
+				sort: options.sort ?? this.sort.field,
+				direction: options.direction ?? this.sort.direction,
+			})
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/secrets'),
+					{ params },
+				)
+				this.secrets = response.data.items || []
+				this.totalCount = response.data.total || 0
+				this.page = response.data.page || 1
+			} catch (e) {
+				const offline = useOfflineStore()
+				if (this.isNetworkError(e) && offline.vault) {
+					offline.servedFromCache = true
+					this.secrets = offline.vault.secrets
+					this.totalCount = offline.vault.secrets.length
+					this.page = 1
+					return
+				}
+				throw e
 			}
 		},
 
