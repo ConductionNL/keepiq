@@ -54,6 +54,9 @@ use OCP\AppFramework\Db\Entity;
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedInbound extends Entity implements JsonSerializable {
+
+	use StringPrimaryKey;
+
 	/**
 	 * Announced, not yet accepted.
 	 *
@@ -158,26 +161,6 @@ class FederatedInbound extends Entity implements JsonSerializable {
 	 * @var string
 	 */
 	public $id = '';
-
-	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
 
 	/**
 	 * Constructor: declare column types for QBMapper hydration.
