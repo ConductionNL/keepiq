@@ -9,7 +9,9 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\JudgedShareRows;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
@@ -82,6 +84,117 @@ class ShareSyncServiceTest extends TestCase {
 		$row->setTargetUserId($target);
 		return $row;
 	}
+
+	/**
+	 * A sync by the owner of src-1 whose share rows grow on every read: the
+	 * first read returns none, each later one a row more. Returns the sync,
+	 * how deep in a transaction each row was judged, and how often the
+	 * source was locked.
+	 *
+	 * @return array{0:ShareSyncService,1:\ArrayObject<string,int>,2:\ArrayObject<int,int>}
+	 */
+	private function syncWhoseRowsAppearUnderTheLock(): array {
+		$source = $this->secret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('2026-11-01T00:00:00+00:00'));
+		$depth   = new \ArrayObject([0]);
+		$judgedAt = new \ArrayObject();
+		$locks   = new \ArrayObject([0]);
+
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('beginTransaction')->willReturnCallback(static function () use ($depth): void {
+			$depth[0]++;
+		});
+		$db->method('commit')->willReturnCallback(static function () use ($depth): void {
+			$depth[0]--;
+		});
+		$db->method('rollBack')->willReturnCallback(static function () use ($depth): void {
+			$depth[0]--;
+		});
+
+		$reads = 0;
+		$this->mapper->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->method('findBySourceSecret')->willReturnCallback(function () use (&$reads): array {
+			$rows = [];
+			$reads++;
+			for ($i = 1; $i < $reads; $i++) {
+				$row = $this->row('copy-'.$i, 'bob');
+				$row->setId('row-'.$i);
+				$rows[] = $row;
+			}
+
+			return $rows;
+		});
+		$this->secretMapper->method('advanceVersion')->willReturnCallback(static function () use ($locks): int {
+			$locks[0]++;
+			return 1;
+		});
+
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturnCallback(static function (ShareTarget $row) use ($depth, $judgedAt): ?string {
+			$judgedAt[(string)$row->getId()] = $depth[0];
+			return null;
+		});
+		$judge = $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper, scanner: $scanner);
+
+		$auth = $this->createMock(ShareAuthorizationService::class);
+		$auth->method('loadSecret')->willReturn($source);
+		$guards = $this->createMock(ShareSyncGuards::class);
+		$guards->method('judgedRowsOf')->willReturnCallback(
+			static fn (Secret $source, ?JudgedShareRows $before = null): JudgedShareRows => $judge->rowsOfSource(sourceId: $source->getId(), before: $before)
+		);
+		$guards->method('assertCopiesJudged')->willReturnCallback(
+			static function (Secret $source, array $updates, ?string $writesOn, JudgedShareRows $judged): void {
+				$judged->heldBack();
+			}
+		);
+		$contexts = $this->createMock(ShareWriteContext::class);
+		$contexts->method('standingOn')->willReturn(['grade' => 'owner', 'writesOn' => null]);
+		$contexts->method('writesForEveryone')->willReturn(true);
+
+		$sync = new ShareSyncService(
+			rowJudge: $judge,
+			secretMapper: $this->secretMapper,
+			db: $db,
+			auth: $auth,
+			versionService: $this->createMock(SecretVersionService::class),
+			guards: $guards,
+			contexts: $contexts,
+		);
+
+		return [$sync, $judgedAt, $locks];
+	}//end syncWhoseRowsAppearUnderTheLock()
+
+	/**
+	 * A row that appears under the source's lock is judged outside the
+	 * transaction, so a quarantine the judging makes is never rolled back
+	 * with it; the sync then locks the source again and goes on.
+	 *
+	 * @return void
+	 */
+	public function testARowThatAppearsUnderTheLockIsJudgedOutsideTheTransaction(): void {
+		[$sync, $judgedAt, $locks] = $this->syncWhoseRowsAppearUnderTheLock();
+
+		$sync->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'alice');
+
+		$this->assertSame(0, $judgedAt['row-1']);
+		$this->assertSame(0, $judgedAt['row-2']);
+		$this->assertSame(3, $locks[0]);
+	}//end testARowThatAppearsUnderTheLockIsJudgedOutsideTheTransaction()
+
+	/**
+	 * Rows that keep appearing do not hold a sync off for ever: on its last
+	 * attempt it judges the row that appeared inside the transaction.
+	 *
+	 * @return void
+	 */
+	public function testTheLastAttemptJudgesARowThatAppearedInsideTheTransaction(): void {
+		[$sync, $judgedAt] = $this->syncWhoseRowsAppearUnderTheLock();
+
+		$sync->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'alice');
+
+		$this->assertSame(1, $judgedAt['row-3']);
+		$this->assertArrayNotHasKey('row-4', $judgedAt->getArrayCopy());
+	}//end testTheLastAttemptJudgesARowThatAppearedInsideTheTransaction()
 
 	/**
 	 * A copy whose share row names a DIFFERENT owner than the copy actually has

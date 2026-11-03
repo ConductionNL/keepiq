@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareRowsAppearedException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
@@ -68,6 +69,12 @@ class ShareSyncService {
 	 * How the audit names a write by a delegate.
 	 */
 	public const DELEGATE_WRITE = 'delegate sync';
+
+	/**
+	 * How often a sync locks its source before it judges a share row that
+	 * appeared under the lock inside its transaction.
+	 */
+	private const REREAD_ATTEMPTS = 3;
 
 	/**
 	 * The share audit trail.
@@ -167,15 +174,70 @@ class ShareSyncService {
 		// requests are: a quarantine the judging makes is kept when a row it
 		// cannot judge refuses the sync, and the writes read the same
 		// verdicts, so a copy is never skipped on a second, different answer.
-		$judged = $this->guards->judgedRowsOf(source: $source);
-		$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+		$judged = $this->guards->judgedRowsOf(source: $source)->judgeAll();
+		for ($attempt = 1;; $attempt++) {
+			$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+			try {
+				return $this->writeUnderLock(
+					sync: [
+						'source' => $source,
+						'updates' => $updates,
+						'base' => $base,
+						'savedAt' => $savedAt,
+						'writesOn' => $writesOn,
+						'userId' => $userId,
+					],
+					judged: $judged,
+					judgeNewRowsHere: ($attempt >= self::REREAD_ATTEMPTS)
+				);
+			} catch (ShareRowsAppearedException $appeared) {
+				// Judge the rows that appeared outside the rolled-back transaction.
+				$judged = $appeared->rows->judgeAll();
+			}
+		}
+	}//end syncUpdate()
+
+	/**
+	 * Lock the source and write the sync in one transaction. The rows are read
+	 * again under the lock, so a share registered since they were judged is
+	 * seen. Such a row is judged outside the transaction: the transaction is
+	 * rolled back with ShareRowsAppearedException and syncUpdate() tries again,
+	 * so a quarantine the judging makes is kept whatever the sync answers. On
+	 * the last attempt it is judged here instead.
+	 *
+	 * The lock serialises syncs and share-saves of the source, not a share
+	 * registration, which takes no lock on it: a share registered after the
+	 * re-read is not written by this sync, being in neither the judged rows nor
+	 * the allowed ids, so no copy is ever written without a verdict.
+	 *
+	 * @param array{source:Secret,updates:array<int,array<string,string|null>>,base:?DateTime,savedAt:DateTime,writesOn:?string,userId:string} $sync The sync
+	 * @param JudgedShareRows $judged           The source's rows, every one judged
+	 * @param bool            $judgeNewRowsHere Whether a row that appeared is judged inside the transaction
+	 *
+	 * @return int Number of recipient copies updated
+	 *
+	 * @throws ShareRowsAppearedException When a row appeared and is to be judged outside the transaction
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	private function writeUnderLock(array $sync, JudgedShareRows $judged, bool $judgeNewRowsHere): int {
+		[
+			'source' => $source,
+			'updates' => $updates,
+			'base' => $base,
+			'savedAt' => $savedAt,
+			'writesOn' => $writesOn,
+			'userId' => $userId,
+		] = $sync;
 		return $this->atomic(
-			fn: function () use ($source, $updates, $base, $savedAt, $writesOn, $userId, $judged): int {
+			fn: function () use ($source, $updates, $base, $savedAt, $writesOn, $userId, $judged, $judgeNewRowsHere): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
-				// Read the rows again under the lock: a share registered since
-				// the check above is seen, and judged; a row already judged
-				// keeps its verdict.
+				// A row already judged keeps its verdict.
 				$judged = $this->guards->judgedRowsOf(source: $source, before: $judged);
+				if ($judgeNewRowsHere === false && $judged->appearedSince() === true) {
+					throw new ShareRowsAppearedException(rows: $judged);
+				}
+
 				$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
 				$allowedIds = $this->collectSyncTargets(source: $source, judged: $judged);
 				if ($writesOn === self::GROUP_WRITE) {
@@ -204,7 +266,7 @@ class ShareSyncService {
 			},
 			db: $this->db
 		);
-	}//end syncUpdate()
+	}//end writeUnderLock()
 
 	/**
 	 * Refuse a sync that starts from a received copy. A copy is owned by its

@@ -82,6 +82,40 @@ final class JudgedShareRows {
 	}//end reread()
 
 	/**
+	 * Judge every row now, so a later re-read under a lock only judges a row
+	 * that appeared since.
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function judgeAll(): self {
+		foreach ($this->rows as $row) {
+			$this->verdict(row: $row);
+		}
+
+		return $this;
+	}//end judgeAll()
+
+	/**
+	 * Whether a row has no verdict yet: after a re-read of rows that were all
+	 * judged, one that appeared since.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function appearedSince(): bool {
+		foreach ($this->rows as $row) {
+			if (array_key_exists((string)$row->getId(), $this->verdicts) === false) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end appearedSince()
+
+	/**
 	 * Every live row, judged or not. A caller that follows a row to its copy
 	 * or its source asks verdict() first.
 	 *
