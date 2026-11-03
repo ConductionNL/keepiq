@@ -780,18 +780,23 @@ function shareSaveCode(error) {
 /**
  * The text for a save stopped by unreachable partner organisations.
  *
- * @param {Error|object} error The thrown error, with its `partners`.
+ * @param {Error|object} error The thrown error, with its `partners` when it names them.
  * @return {string}
  */
 function partnerUnreachableText(error) {
+	const partners = (error.partners ?? [])
+		.map((share) => share.recipientCloudId)
+		.join(', ')
+	if (partners === '') {
+		return t(
+			'keepiq',
+			'Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
+		)
+	}
 	return t(
 		'keepiq',
 		'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
-		{
-			partners: error.partners
-				.map((share) => share.recipientCloudId)
-				.join(', '),
-		},
+		{ partners },
 	)
 }
 
