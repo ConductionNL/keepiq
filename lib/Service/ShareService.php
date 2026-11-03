@@ -134,6 +134,7 @@ class ShareService {
 	 * @throws InvalidArgumentException When not found, not authorized, not a direct share, or the delegate's own grant
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is a read-only copy from another organisation
 	 * @throws ConflictException When the pending quarantine scan holds the row back
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row, the caller's copy or a row it resolves
 	 *
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
@@ -250,6 +251,7 @@ class ShareService {
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row of a copy the sync writes
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 	 */
@@ -277,6 +279,7 @@ class ShareService {
 	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
+	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with

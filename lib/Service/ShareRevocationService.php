@@ -116,6 +116,7 @@ class ShareRevocationService {
 	 * @throws InvalidArgumentException When the row does not exist or
 	 *                                  the caller is not authorized.
 	 * @throws ConflictException When the owner or a delegate revokes a quarantined row, or one the pending scan holds back
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
