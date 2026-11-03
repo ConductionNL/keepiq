@@ -83,6 +83,10 @@ describe('writeErrorText', () => {
 		for (const context of CONTEXTS) expect(writeErrorText({ code: 'from_a_newer_background' } as unknown as VaultWriteError, context)).toBe(t('errors.unknown'))
 	})
 
+	it.each(['constructor', 'toString', '__proto__'])('reads a code named like an object property, %s, as unknown', (code) => {
+		for (const context of CONTEXTS) expect(writeErrorText({ code } as unknown as VaultWriteError, context)).toBe(t('errors.unknown'))
+	})
+
 	it('names the Keepiq version the user\'s server needs', () => {
 		expect(writeErrorText({ code: 'keepiq_outdated' })).toContain(MIN_KEEPIQ_VERSION)
 	})

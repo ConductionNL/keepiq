@@ -13,6 +13,7 @@ import { flattenFolders, folderPath } from '@/src/vault/list'
 import { readSnapshot } from '@/src/vault/store'
 import { syncAfterWrite } from '@/src/vault/sync'
 import { createPasskeyLogin, itemEditable, writeLoginPasskeys } from '@/src/vault/write'
+import type { PasskeyCredential } from './credential'
 import { credentialIdKey, findPasskeys, type PasskeyEntry } from './match'
 import type { CeremonyRequest } from './request'
 import { createCredential, ES256, type Registration } from './webauthn'
@@ -27,17 +28,32 @@ export interface SaveAttempt {
 	itemId: string | null
 }
 
+/** `passkey.save`'s target before it is checked. */
+interface RawTarget {
+	itemId?: unknown
+	replace?: unknown
+	name?: unknown
+	folderId?: unknown
+}
+
+/** A login of the vault: `itemId`, and `replace` when given, without a new login's members. */
+function existingLogin(t: RawTarget): SaveRequest | null {
+	if (typeof t.itemId !== 'string' || t.name !== undefined || t.folderId !== undefined) return null
+	if (t.replace !== undefined && typeof t.replace !== 'boolean') return null
+	return { itemId: t.itemId, replace: t.replace === true }
+}
+
+/** A new login: `name` and `folderId`, without an existing login's members. */
+function newLogin(t: RawTarget): SaveRequest | null {
+	if (typeof t.name !== 'string' || t.itemId !== undefined || t.replace !== undefined) return null
+	if (t.folderId !== null && typeof t.folderId !== 'string') return null
+	return { name: t.name, folderId: t.folderId }
+}
+
 /** `passkey.save`'s target, which names a login or a new one, never both. */
 export function readSaveRequest(raw: unknown): SaveRequest | null {
-	const t = raw as Partial<Record<'itemId' | 'replace' | 'name' | 'folderId', unknown>> | null
-	if (typeof t !== 'object' || t === null) return null
-	if (typeof t.itemId === 'string' && t.name === undefined && t.folderId === undefined && (t.replace === undefined || typeof t.replace === 'boolean')) {
-		return { itemId: t.itemId, replace: t.replace === true }
-	}
-	if (typeof t.name === 'string' && (t.folderId === null || typeof t.folderId === 'string') && t.itemId === undefined && t.replace === undefined) {
-		return { name: t.name, folderId: t.folderId }
-	}
-	return null
+	if (typeof raw !== 'object' || raw === null) return null
+	return existingLogin(raw) ?? newLogin(raw)
 }
 
 /** Whether `excludeCredentials` names a passkey the vault holds for the RP ID. */
@@ -148,32 +164,47 @@ async function landed(ceremony: SaveCeremony, key: CryptoKey, attempt: SaveAttem
 	return { entry: (await findPasskeys(ceremony.accountId, key, query))[0] }
 }
 
-export async function savePasskey({ ceremony, key, request, attempt, deliver }: Save): Promise<SaveOutcome> {
-	const { user } = ceremony
-	if (!user) return 'stale'
-	let into: { itemId: string } | { name: string; folderId: string | null } = request
-	let same: PasskeyEntry | undefined
+/** The login the passkey goes into, and the entry of this user it takes the place of. */
+interface Destination {
+	into: { itemId: string } | { name: string; folderId: string | null }
+	same: PasskeyEntry | undefined
+}
+
+/** Where a save goes, or why it does not: a Retry's earlier try that was stored decides first, then the chosen login. */
+async function destination({ ceremony, key, request, attempt }: Save): Promise<Destination | Exclude<SaveOutcome, 'delivered' | 'ended'>> {
 	if (attempt) {
 		const earlier = await landed(ceremony, key, attempt)
 		if ('error' in earlier) return { error: earlier.error, attempt }
 		// The earlier try was stored: this one takes its place, so no second login or entry appears.
-		if (earlier.entry) [into, same] = [{ itemId: earlier.entry.row.id }, earlier.entry]
+		if (earlier.entry) return { into: { itemId: earlier.entry.row.id }, same: earlier.entry }
 	}
-	if (!same && 'itemId' in request) {
-		if (!(await savableLogins(ceremony)).some((row) => row.id === request.itemId)) return 'stale'
-		same = (await findPasskeys(ceremony.accountId, key, { rpId: ceremony.rpId, allowCredentials: [], itemId: request.itemId })).find((entry) => sameUser(ceremony, entry))
-		if (same && !request.replace) return 'replace_required'
-	}
+	if (!('itemId' in request)) return { into: request, same: undefined }
+	if (!(await savableLogins(ceremony)).some((row) => row.id === request.itemId)) return 'stale'
+	const same = (await findPasskeys(ceremony.accountId, key, { rpId: ceremony.rpId, allowCredentials: [], itemId: request.itemId })).find((entry) => sameUser(ceremony, entry))
+	if (same && !request.replace) return 'replace_required'
+	return { into: request, same }
+}
+
+/** Adds the passkey to the login, in place of `same` when there is one, or creates the new login with it. */
+function saveInto({ into, same }: Destination, credential: PasskeyCredential, ceremony: SaveCeremony) {
+	if ('itemId' in into) return writeLoginPasskeys(into.itemId, same ? { kind: 'replace', credentialId: same.credential.credentialId, credential } : { kind: 'add', credential }, ceremony.accountId)
+	return createPasskeyLogin({ name: into.name.trim(), url: ceremony.origin, folderId: into.folderId, credential }, ceremony.accountId)
+}
+
+export async function savePasskey(save: Save): Promise<SaveOutcome> {
+	const { ceremony, attempt, deliver } = save
+	const { user } = ceremony
+	if (!user) return 'stale'
+	const target = await destination(save)
+	if (typeof target === 'string' || 'error' in target) return target
 	const registration = await createCredential({
 		origin: ceremony.origin, rpId: ceremony.rpId, rpName: ceremony.rpName, challenge: fromBase64Url(ceremony.challenge), verified: ceremony.verified,
 		user: { id: fromBase64Url(user.id), name: user.name, displayName: user.displayName },
 	})
 	const { credential } = registration
-	const saved = 'itemId' in into
-		? await writeLoginPasskeys(into.itemId, same ? { kind: 'replace', credentialId: same.credential.credentialId, credential } : { kind: 'add', credential }, ceremony.accountId)
-		: await createPasskeyLogin({ name: into.name.trim(), url: ceremony.origin, folderId: into.folderId, credential }, ceremony.accountId)
+	const saved = await saveInto(target, credential, ceremony)
 	if (!saved.ok) {
-		return { error: saved.error, attempt: { credentialIds: [...attempt?.credentialIds ?? [], credential.credentialId], itemId: 'itemId' in into ? into.itemId : null } }
+		return { error: saved.error, attempt: { credentialIds: [...attempt?.credentialIds ?? [], credential.credentialId], itemId: 'itemId' in target.into ? target.into.itemId : null } }
 	}
 	return (await deliver({ type: 'credential', credential: toJSON(registration, ceremony.credProps) })) ? 'delivered' : 'ended'
 }

@@ -3,6 +3,7 @@
  * untouched", from the settings, the sender and the page's request only, never the vault or its lock state.
  */
 import { parse } from 'tldts'
+import type { PasskeyCreateOptions, PasskeyRequest } from '@/src/messages'
 import { baseDomain } from '@/src/vault/match'
 import { ceremonyTimeout } from './deadline'
 import { MAX_URL, parsePasskeyRequest } from './shape'
@@ -86,6 +87,11 @@ export function frameGate({ sender, account, crossOriginAncestor }: FrameInput):
 	return { tabId, frameId: sender.frameId, origin }
 }
 
+/** A strict suffix of `host` that stays within `domain`, its registrable domain. */
+function withinDomain(rpId: string, host: string, domain: string | null): boolean {
+	return domain !== null && host.endsWith(`.${rpId}`) && (rpId === domain || rpId.endsWith(`.${domain}`))
+}
+
 /**
  * The origin's host, or a suffix of it within its registrable domain. A public suffix only counts as one when the
  * list names it, so an unlisted single label such as `localhost` is a site of its own.
@@ -96,32 +102,46 @@ export function rpIdAllowed(rpId: string, host: string): boolean {
 	const own = parse(rpId, { allowPrivateDomains: true })
 	if (origin.isIp || own.isIp) return false
 	if (own.publicSuffix === rpId && (own.isIcann || own.isPrivate)) return false
-	if (rpId === host) return true
-	const domain = origin.domain
-	return domain !== null && host.endsWith(`.${rpId}`) && (rpId === domain || rpId.endsWith(`.${domain}`))
+	return rpId === host || withinDomain(rpId, host, origin.domain)
 }
 
 /** An unknown value is ignored, as WebAuthn does with an enum member it does not know. */
 const userVerification = (value: string | undefined): UserVerification => (value === 'required' || value === 'discouraged' ? value : 'preferred')
+
+/** The members `create` and `get` name differently, under one name; `create` is null for a `get`. */
+function kindMembers(parsed: PasskeyRequest) {
+	if (parsed.type === 'create') {
+		const { options } = parsed
+		return { create: options, rpId: options.rp.id, userVerification: options.authenticatorSelection?.userVerification, descriptors: options.excludeCredentials }
+	}
+	const { options } = parsed
+	return { create: null, rpId: options.rpId, userVerification: options.userVerification, descriptors: options.allowCredentials }
+}
+
+/** The gates only a `create` has: an ES256 key the page accepts, and no demand for a roaming authenticator. */
+function createFallback(create: PasskeyCreateOptions): FallbackReason | null {
+	const params = create.pubKeyCredParams
+	// WebAuthn reads an empty list as ES256 and RS256.
+	if (params.length > 0 && !params.some((param) => param.type === 'public-key' && param.alg === ES256)) return 'algorithm'
+	if (create.authenticatorSelection?.authenticatorAttachment === 'cross-platform') return 'attachment'
+	return null
+}
 
 export function readStart(input: StartInput): { request: CeremonyRequest } | { fallback: FallbackReason } {
 	const parsed = parsePasskeyRequest(input.request)
 	if (!parsed) return { fallback: 'malformed' }
 	const frame = frameGate(input)
 	if ('fallback' in frame) return frame
-	const create = parsed.type === 'create' ? parsed.options : null
-	const get = parsed.type === 'get' ? parsed.options : null
+	const members = kindMembers(parsed)
+	const { create } = members
 	const { options } = parsed
-	const rpId = (create ? create.rp.id : get?.rpId) ?? frame.origin.hostname
+	const rpId = members.rpId ?? frame.origin.hostname
 	if (!rpIdAllowed(rpId, frame.origin.hostname)) return { fallback: 'rp_id' }
-	// WebAuthn reads an empty list as ES256 and RS256.
-	const es256 = create && (create.pubKeyCredParams.length === 0 || create.pubKeyCredParams.some((param) => param.type === 'public-key' && param.alg === ES256))
-	if (create && !es256) return { fallback: 'algorithm' }
-	if (create?.authenticatorSelection?.authenticatorAttachment === 'cross-platform') return { fallback: 'attachment' }
+	const refused = create && createFallback(create)
+	if (refused) return { fallback: refused }
 
-	const verification = userVerification(create ? create.authenticatorSelection?.userVerification : get?.userVerification)
+	const verification = userVerification(members.userVerification)
 	const conditional = parsed.mediation === 'conditional'
-	const descriptors = create?.excludeCredentials ?? get?.allowCredentials ?? []
 	return {
 		request: {
 			kind: parsed.type,
@@ -134,7 +154,7 @@ export function readStart(input: StartInput): { request: CeremonyRequest } | { f
 			challenge: options.challenge,
 			userVerification: verification,
 			deadline: conditional ? null : (input.now ?? Date.now()) + ceremonyTimeout(options.timeout, verification),
-			credentialIds: descriptors.filter((descriptor) => descriptor.type === 'public-key').map((descriptor) => descriptor.id),
+			credentialIds: members.descriptors.filter((descriptor) => descriptor.type === 'public-key').map((descriptor) => descriptor.id),
 			rpName: create?.rp.name ?? '',
 			user: create ? { ...create.user } : null,
 			credProps: create?.extensions?.credProps === true,

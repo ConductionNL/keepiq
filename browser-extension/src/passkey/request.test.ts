@@ -197,6 +197,13 @@ describe('goes to the browser untouched', () => {
 		expect(fallback(start({ request: create({ authenticatorSelection: { authenticatorAttachment: 'cross-platform' } }) }))).toBe('attachment')
 	})
 
+	it('checks a create’s RP ID first, then its algorithm, then its attachment', () => {
+		const pubKeyCredParams = [{ type: 'public-key', alg: -257 }]
+		const authenticatorSelection = { authenticatorAttachment: 'cross-platform' }
+		expect(fallback(start({ request: create({ rp: { id: 'evil.example', name: 'x' }, pubKeyCredParams, authenticatorSelection }) }))).toBe('rp_id')
+		expect(fallback(start({ request: create({ pubKeyCredParams, authenticatorSelection }) }))).toBe('algorithm')
+	})
+
 	it.each([
 		['a conditional create', create({}, 'conditional')],
 		['a silent get', get({}, 'silent')],

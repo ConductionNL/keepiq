@@ -426,6 +426,11 @@ describe('background entrypoint', () => {
 				expect(await deliver({ kind: 'inline.state', key }, listSender)).toBeNull()
 			})
 
+			it('answers inline.open with null when the session could not be opened', async () => {
+				vi.spyOn(browser.storage.session, 'set').mockRejectedValue(new Error('storage failed'))
+				expect(await deliver({ kind: 'inline.open', mode: 'login' }, top)).toBeNull()
+			})
+
 			it('drops the session on inline.closed', async () => {
 				const { key } = await deliver({ kind: 'inline.open', mode: 'login' }, top) as { key: string }
 				expect(await deliver({ kind: 'inline.closed', key }, top)).toBeUndefined()

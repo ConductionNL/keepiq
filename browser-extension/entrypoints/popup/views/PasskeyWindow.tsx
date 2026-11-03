@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { i18n } from '#i18n'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import type {
-	AccountSummary, ErrorCode, PasskeyFailure, PasskeyPopupRequest, PasskeyRow, PasskeySaveTarget, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
+	AccountSummary, PasskeyFailure, PasskeyPopupRequest, PasskeyRow, PasskeySaveTarget, PasskeyView, PasskeyWindowReply, UnlockMethod, VaultWriteError,
 } from '@/src/messages'
 import { Button, IconButton } from '../components/Button'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -15,12 +15,35 @@ import { TextField } from '../components/TextField'
 import { errorText, writeErrorText } from '../errors'
 import { useBackgroundMessage } from '../hooks/useBackgroundMessage'
 import { passkeyRequest, sendMessage } from '../hooks/useMessage'
+import { useSecretEntry } from '../hooks/useSecretEntry'
 
 type Command = PasskeyPopupRequest extends infer R ? (R extends unknown ? Omit<R, 'ceremonyId'> : never) : never
 type Act = Extract<Command, { kind: 'passkey.pick' | 'passkey.save' }>
 type Save = Extract<Command, { kind: 'passkey.save' }>['target']
+type Refusal = Extract<PasskeyWindowReply, { ok: false }>
 
 const PICK_CODES: readonly PasskeyFailure[] = ['ended', 'locked', 'stale', 'write_failed']
+
+/** Whether `passkey.verify` signed the held pick, or answers its signing as it answers a pick. */
+const answersPick = (reply: PasskeyWindowReply | undefined) => reply !== undefined && (reply.ok ? !reply.view : PICK_CODES.includes(reply.code))
+
+/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`, unless the user left it. */
+function heldPick(view: PasskeyView | null, dismissed: string | null): PasskeyRow | null {
+	return view && !view.locked && view.pending && rowKey(view.pending) !== dismissed ? view.pending : null
+}
+
+/**
+ * The New login step, given the save step's targets or null outside it: `opened` from its button, which focuses Name; `only`
+ * as shown for want of a matching login, which a login arriving later must not take away, or Enter meant for Name would save
+ * to it; `left` returns focus to its button.
+ */
+function useNewLogin(targets: PasskeySaveTarget[] | null) {
+	const [newLogin, setNewLogin] = useState<'opened' | 'only' | 'left' | null>(null)
+	const onlyNew = targets !== null && targets.length === 0
+	if (onlyNew && newLogin !== 'opened' && newLogin !== 'only') setNewLogin('only')
+	const adding = onlyNew || (targets !== null && (newLogin === 'opened' || newLogin === 'only'))
+	return { newLogin, setNewLogin, adding, canLeaveNew: adding && !onlyNew }
+}
 
 /**
  * The window of one passkey ceremony (spec § The passkey window). The background decides what it may show and closes it when
@@ -40,21 +63,13 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const [name, setName] = useState<string | null>(null)
 	const [folderId, setFolderId] = useState('')
 	/**
-	 * The New login step: `opened` from its button, which focuses Name; `only` as shown for want of a matching login, which a
-	 * login arriving later must not take away, or Enter meant for Name would save to it; `left` returns focus to its button.
-	 */
-	const [newLogin, setNewLogin] = useState<'opened' | 'only' | 'left' | null>(null)
-	/**
 	 * The step of the last failed save, so its Retry, which repeats that save, shows only there. The view does not say which
 	 * step a failure it opens with came from, so that one shows on both.
 	 */
 	const [savedFrom, setSavedFrom] = useState<'list' | 'new' | null>(null)
-	/** The inline list's pick the background holds for "Confirm it's you", and signs on `passkey.verify`. */
-	const held = view && !view.locked && view.pending && rowKey(view.pending) !== dismissed ? view.pending : null
+	const held = heldPick(view, dismissed)
 	const saving = view !== null && !view.locked && view.kind === 'create' && !view.alreadySaved && !confirming && !held
-	if (saving && view.targets.length === 0 && newLogin !== 'opened' && newLogin !== 'only') setNewLogin('only')
-	const adding = saving && (newLogin === 'opened' || newLogin === 'only' || view.targets.length === 0)
-	const canLeaveNew = adding && view.targets.length > 0
+	const { newLogin, setNewLogin, adding, canLeaveNew } = useNewLogin(saving ? view.targets : null)
 
 	const send = useCallback((command: Command) => passkeyRequest({ ...command, ceremonyId } as PasskeyPopupRequest), [ceremonyId])
 
@@ -96,33 +111,46 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			else window.close()
 			return
 		}
+		await refused(reply, command)
+	}
+
+	async function refused(reply: Refusal, command: Command): Promise<void> {
 		switch (reply.code) {
 			case 'ended': return window.close()
-			case 'write_failed':
-				// Only a write that failed replaces the background's failed step; a save refused before it keeps the earlier one.
-				if (command.kind === 'passkey.save') setSavedFrom('name' in command.target ? 'new' : 'list')
-				return setFailure(reply.error ?? { code: 'unknown' })
-			case 'verify_required':
-				if (command.kind === 'passkey.pick' || command.kind === 'passkey.save') setConfirming(command)
-				return
+			case 'write_failed': return writeFailed(reply.error, command)
+			case 'verify_required': return confirmFirst(command)
 			case 'stale':
 				setNotice(view?.kind === 'create' ? i18n.t('passkey.staleSave') : i18n.t('passkey.stalePick'))
 				await refresh()
 				return
-			case 'replace_required': {
-				const next = await refresh()
-				const itemId = command.kind === 'passkey.save' && 'itemId' in command.target ? command.target.itemId : null
-				const target = next?.targets.find((candidate) => candidate.itemId === itemId)
-				if (target?.replace) setReplacing(target)
-				else setNotice(i18n.t('passkey.staleSave'))
+			case 'replace_required':
+				await askReplace(command)
 				return
-			}
 			case 'locked':
 			case 'already_saved':
 				await refresh()
 				return
 			default: setNotice(errorText(reply.code, account?.host ?? '', reply.attemptsLeft))
 		}
+	}
+
+	// Only a write that failed replaces the background's failed step; a save refused before it keeps the earlier one.
+	function writeFailed(error: VaultWriteError | undefined, command: Command) {
+		if (command.kind === 'passkey.save') setSavedFrom('name' in command.target ? 'new' : 'list')
+		setFailure(error ?? { code: 'unknown' })
+	}
+
+	function confirmFirst(command: Command) {
+		if (command.kind === 'passkey.pick' || command.kind === 'passkey.save') setConfirming(command)
+	}
+
+	/** Asks Replace for the save's login while the fresh view still offers it, or says the save went stale. */
+	async function askReplace(command: Command) {
+		const next = await refresh()
+		const itemId = command.kind === 'passkey.save' && 'itemId' in command.target ? command.target.itemId : null
+		const target = next?.targets.find((candidate) => candidate.itemId === itemId)
+		if (target?.replace) setReplacing(target)
+		else setNotice(i18n.t('passkey.staleSave'))
 	}
 
 	async function run(command: Command, control: string): Promise<void> {
@@ -154,8 +182,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	async function verify(method: UnlockMethod): Promise<PasskeyWindowReply | undefined> {
 		const reply = await send({ kind: 'passkey.verify', method })
-		// The background signed the held pick, or answers its signing as it answers a pick.
-		if (held && reply && (reply.ok ? !reply.view : PICK_CODES.includes(reply.code))) {
+		if (held && answersPick(reply)) {
 			setDismissed(rowKey(held))
 			await settle(reply, { kind: 'passkey.pick', itemId: held.itemId, credentialId: held.credentialId })
 			return { ok: true }
@@ -449,28 +476,11 @@ interface SecretProps {
 
 /** Unlocking and "Confirm it's you" alike, as the Unlock view asks; the background keeps the PIN's five tries. */
 function SecretForm({ account, intro, subject, submitLabel, ready, onSubmit }: SecretProps) {
-	const [secret, setSecret] = useState('')
-	const [switched, setSwitched] = useState(false)
-	const withPin = account.pin && !switched
-	const afterRestart = account.pinAfterRestart && !account.pin
-	const [error, setError] = useState<string | null>(null)
-	const [busy, setBusy] = useState(false)
-	const field = useRef<HTMLInputElement>(null)
+	const { secret, setSecret, withPin, afterRestart, error, busy, field, switchToMasterPassword, submit: unlock } = useSecretEntry(account)
 
-	async function submit(event: FormEvent) {
+	function submit(event: FormEvent) {
 		event.preventDefault()
-		if (!ready()) return
-		setBusy(true)
-		setError(null)
-		const method: UnlockMethod = withPin ? { type: 'pin', pin: secret } : { type: 'masterPassword', masterPassword: secret }
-		const reply = await onSubmit(method)
-		setBusy(false)
-		setSecret('')
-		if (reply?.ok) return
-		// A code that is no `ErrorCode` reads as "Something went wrong".
-		setError(reply ? errorText(reply.code as ErrorCode, account.host, reply.attemptsLeft) : i18n.t('errors.notResponding'))
-		if (reply?.code === 'pin_forgotten' || reply?.code === 'pin_key_changed') setSwitched(true)
-		else field.current?.focus()
+		if (ready()) void unlock(onSubmit)
 	}
 
 	return (
@@ -487,11 +497,7 @@ function SecretForm({ account, intro, subject, submitLabel, ready, onSubmit }: S
 				? <TextField key="pin" ref={field} label={i18n.t('unlock.pin')} type="password" value={secret} onChange={setSecret} autoFocus autoComplete="off" />
 				: <TextField key="password" ref={field} label={i18n.t('unlock.masterPassword')} type="password" value={secret} onChange={setSecret} autoFocus autoComplete="current-password" hint={afterRestart ? i18n.t('settings.pinAfterRestart') : undefined} />}
 			<ErrorBanner>{error}</ErrorBanner>
-			{withPin && <Button variant="link" onClick={() => {
-				setError(null)
-				setSecret('')
-				setSwitched(true)
-			}}>{i18n.t('unlock.useMasterPassword')}</Button>}
+			{withPin && <Button variant="link" onClick={switchToMasterPassword}>{i18n.t('unlock.useMasterPassword')}</Button>}
 			<Button type="submit" busy={busy} disabled={!secret}>{submitLabel}</Button>
 		</form>
 	)

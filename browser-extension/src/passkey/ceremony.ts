@@ -240,6 +240,16 @@ function update(ceremony: Ceremony, change: Partial<Ceremony>): Promise<Ceremony
 	})
 }
 
+/** The Sign in view's rows, and the held pick while it is still offered and waits on "Confirm it's you". */
+async function signInRows(ceremony: Ceremony, key: CryptoKey, verify: boolean): Promise<Pick<PasskeyView, 'rows' | 'pending'>> {
+	const rows = await matchPasskeys(ceremony.accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds })
+	const { pending } = ceremony
+	const held = pending && rows.find((row) => row.itemId === pending.itemId && row.credentialId === pending.credentialId)
+	// A held pick no longer offered is dropped, so the window shows the list instead.
+	if (pending && (!held || !verify)) await update(ceremony, { pending: undefined })
+	return { rows, pending: held && verify ? held : null }
+}
+
 /** While locked nothing is decrypted, matched or counted, and every vault-derived part stays empty. */
 async function view(ceremony: Ceremony): Promise<PasskeyView> {
 	const key = await getKey(ceremony.accountId)
@@ -261,14 +271,7 @@ async function view(ceremony: Ceremony): Promise<PasskeyView> {
 	}
 	if (!key) return shown
 	const failure = ceremony.failed?.error ?? null
-	if (ceremony.kind === 'get') {
-		const rows = await matchPasskeys(ceremony.accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds })
-		const { pending } = ceremony
-		const held = pending && rows.find((row) => row.itemId === pending.itemId && row.credentialId === pending.credentialId)
-		// A held pick no longer offered is dropped, so the window shows the list instead.
-		if (pending && (!held || !shown.verify)) await update(ceremony, { pending: undefined })
-		return { ...shown, failure, rows, pending: held && shown.verify ? held : null }
-	}
+	if (ceremony.kind === 'get') return { ...shown, failure, ...await signInRows(ceremony, key, shown.verify) }
 	if (await alreadySaved(ceremony, key)) {
 		await update(ceremony, { alreadySaved: true })
 		return { ...shown, alreadySaved: true }
@@ -402,38 +405,45 @@ function once(ceremony: Ceremony, act: () => Promise<PasskeyWindowReply>): Promi
 	return reply
 }
 
+async function fallbackOrCancel(ceremony: Ceremony, kind: 'passkey.fallback' | 'passkey.cancel'): Promise<PasskeyWindowReply> {
+	await touch()
+	// A conditional request has no fallback (spec § Sign in with a passkey), so its window offers none and this acts as Cancel.
+	const closed = ceremony.conditional
+		? release(ceremony)
+		: end(ceremony.tabId, ceremony.id, kind === 'passkey.fallback' ? { type: 'fallback' } : cancelled(ceremony))
+	return await closed ? { ok: true } : ENDED
+}
+
+/** A passkey window kind, for the ceremony the window may answer. */
+async function answer(ceremony: Ceremony, message: PasskeyPopupRequest): Promise<PasskeyWindowReply> {
+	switch (message.kind) {
+		case 'passkey.state':
+			return { ok: true, view: await view(ceremony) }
+		case 'passkey.pick':
+			return once(ceremony, () => pick(ceremony, message.itemId, message.credentialId))
+		case 'passkey.save':
+			return once(ceremony, () => {
+				const request = readSaveRequest(message.target)
+				return save(ceremony, request, attemptFor(ceremony, request))
+			})
+		case 'passkey.retry':
+			return once(ceremony, () => retry(ceremony))
+		case 'passkey.verify':
+			return verify(ceremony, message.method)
+		case 'passkey.fallback':
+		case 'passkey.cancel':
+			return fallbackOrCancel(ceremony, message.kind)
+		default:
+			return { ok: false, code: 'unknown' }
+	}
+}
+
 /** A passkey window kind. */
 export async function handlePasskeyWindow(message: PasskeyPopupRequest, sender: Sender): Promise<PasskeyWindowReply> {
 	try {
 		await enforce()
 		const ceremony = await forWindow(message.ceremonyId, sender)
-		if (!ceremony) return ENDED
-		switch (message.kind) {
-			case 'passkey.state':
-				return { ok: true, view: await view(ceremony) }
-			case 'passkey.pick':
-				return await once(ceremony, () => pick(ceremony, message.itemId, message.credentialId))
-			case 'passkey.save':
-				return await once(ceremony, () => {
-					const request = readSaveRequest(message.target)
-					return save(ceremony, request, attemptFor(ceremony, request))
-				})
-			case 'passkey.retry':
-				return await once(ceremony, () => retry(ceremony))
-			case 'passkey.verify':
-				return await verify(ceremony, message.method)
-			case 'passkey.fallback':
-			case 'passkey.cancel': {
-				await touch()
-				// A conditional request has no fallback (spec § Sign in with a passkey), so its window offers none and this acts as Cancel.
-				const closed = ceremony.conditional
-					? release(ceremony)
-					: end(ceremony.tabId, ceremony.id, message.kind === 'passkey.fallback' ? { type: 'fallback' } : cancelled(ceremony))
-				return await closed ? { ok: true } : ENDED
-			}
-			default:
-				return { ok: false, code: 'unknown' }
-		}
+		return ceremony ? await answer(ceremony, message) : ENDED
 	} catch (error) {
 		log(message.kind)(error)
 		return { ok: false, code: 'unknown' }
@@ -483,14 +493,21 @@ function hold(ceremony: Ceremony, pending: NonNullable<Ceremony['pending']>): Pr
 	})
 }
 
+/** The tab's ceremony while it is still `ceremonyId`, a conditional one, and still asked. */
+async function askedConditional(tabId: number, ceremonyId: string): Promise<Ceremony | null> {
+	const ceremony = await store.get(tabId)
+	if (ceremony?.id !== ceremonyId || !ceremony.conditional) return null
+	return (await stillAsked(ceremony)) ? ceremony : null
+}
+
 /**
  * A passkey the user picked in the inline list, signed as a pick in the window is; verification or a failed counter
  * save opens the window on that step (spec § Conditional requests). The caller checked it was offered and visible.
  */
 export async function pickFromList(tabId: number, ceremonyId: string, itemId: string, credentialId: string): Promise<ListPick> {
 	await enforce()
-	const ceremony = await store.get(tabId)
-	if (ceremony?.id !== ceremonyId || !ceremony.conditional || !(await stillAsked(ceremony))) return 'stale'
+	const ceremony = await askedConditional(tabId, ceremonyId)
+	if (!ceremony) return 'stale'
 	const reply = await once(ceremony, () => pick(ceremony, itemId, credentialId))
 	if (reply.ok) return 'signed'
 	if (reply.code === 'locked') return 'locked'
