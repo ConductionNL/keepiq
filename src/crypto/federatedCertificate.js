@@ -78,6 +78,21 @@ function pemToDer(pem) {
 }
 
 /**
+ * The value of a long-form length. DER uses the long form only past 127, in
+ * as few bytes as it takes (X.690 10.1), so anything else is malformed.
+ *
+ * @param {Uint8Array} octets The length bytes after the count.
+ * @return {number}
+ */
+function longFormLength(octets) {
+	const length = octets.reduce((sum, octet) => sum * 256 + octet, 0)
+	if (length < 0x80 || octets[0] === 0) {
+		throw new FederatedCertificateError('malformed')
+	}
+	return length
+}
+
+/**
  * Read one DER element.
  *
  * @param {Uint8Array} bytes The buffer.
@@ -98,10 +113,8 @@ function tlv(bytes, offset, limit = bytes.length) {
 		if (count === 0 || count > 4 || cursor + count > limit) {
 			throw new FederatedCertificateError('malformed')
 		}
-		length = 0
-		for (let i = 0; i < count; i++) {
-			length = length * 256 + bytes[cursor++]
-		}
+		length = longFormLength(bytes.subarray(cursor, cursor + count))
+		cursor += count
 	}
 	if (cursor + length > limit) {
 		throw new FederatedCertificateError('malformed')
