@@ -51,6 +51,8 @@ use Psr\Log\LoggerInterface;
  *   one transaction, tells a source from a received copy, and asks the pending share quarantine scan before each copy
  *   write (GHSA-m5p9-6pw7-pf3g).
  * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: each is one collaborator of that transaction.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) A sync locks its source again when a share row appears under the
+ *   lock, so that row is judged outside the transaction (GHSA-m5p9-6pw7-pf3g); the retry is part of the one write.
  */
 class ShareSyncService {
 	use TTransactional;
@@ -175,26 +177,30 @@ class ShareSyncService {
 		// cannot judge refuses the sync, and the writes read the same
 		// verdicts, so a copy is never skipped on a second, different answer.
 		$judged = $this->guards->judgedRowsOf(source: $source)->judgeAll();
-		for ($attempt = 1;; $attempt++) {
-			$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+		for ($attempt = 1; $attempt < self::REREAD_ATTEMPTS; $attempt++) {
 			try {
 				return $this->writeUnderLock(
-					sync: [
-						'source' => $source,
-						'updates' => $updates,
-						'base' => $base,
-						'savedAt' => $savedAt,
-						'writesOn' => $writesOn,
-						'userId' => $userId,
-					],
+					source: $source,
+					updates: $updates,
+					lock: ['base' => $base, 'savedAt' => $savedAt],
+					writer: ['writesOn' => $writesOn, 'userId' => $userId],
 					judged: $judged,
-					judgeNewRowsHere: ($attempt >= self::REREAD_ATTEMPTS)
+					judgeNewRowsHere: false
 				);
 			} catch (ShareRowsAppearedException $appeared) {
 				// Judge the rows that appeared outside the rolled-back transaction.
 				$judged = $appeared->rows->judgeAll();
 			}
 		}
+
+		return $this->writeUnderLock(
+			source: $source,
+			updates: $updates,
+			lock: ['base' => $base, 'savedAt' => $savedAt],
+			writer: ['writesOn' => $writesOn, 'userId' => $userId],
+			judged: $judged,
+			judgeNewRowsHere: true
+		);
 	}//end syncUpdate()
 
 	/**
@@ -210,9 +216,12 @@ class ShareSyncService {
 	 * re-read is not written by this sync, being in neither the judged rows nor
 	 * the allowed ids, so no copy is ever written without a verdict.
 	 *
-	 * @param array{source:Secret,updates:array<int,array<string,string|null>>,base:?DateTime,savedAt:DateTime,writesOn:?string,userId:string} $sync The sync
-	 * @param JudgedShareRows $judged           The source's rows, every one judged
-	 * @param bool            $judgeNewRowsHere Whether a row that appeared is judged inside the transaction
+	 * @param Secret                                     $source  The source secret
+	 * @param array<int,array<string,string|null>>       $updates The per-recipient blobs
+	 * @param array{base:?DateTime,savedAt:DateTime}     $lock    The version the source is locked against, and the new one
+	 * @param array{writesOn:?string,userId:string}      $writer  How the caller writes, and who they are
+	 * @param JudgedShareRows                            $judged           The source's rows, every one judged
+	 * @param bool                                       $judgeNewRowsHere Whether a row that appeared is judged inside the transaction
 	 *
 	 * @return int Number of recipient copies updated
 	 *
@@ -220,15 +229,17 @@ class ShareSyncService {
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function writeUnderLock(array $sync, JudgedShareRows $judged, bool $judgeNewRowsHere): int {
-		[
-			'source' => $source,
-			'updates' => $updates,
-			'base' => $base,
-			'savedAt' => $savedAt,
-			'writesOn' => $writesOn,
-			'userId' => $userId,
-		] = $sync;
+	private function writeUnderLock(
+		Secret $source,
+		array $updates,
+		array $lock,
+		array $writer,
+		JudgedShareRows $judged,
+		bool $judgeNewRowsHere,
+	): int {
+		['base' => $base, 'savedAt' => $savedAt] = $lock;
+		['writesOn' => $writesOn, 'userId' => $userId] = $writer;
+		$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
 		return $this->atomic(
 			fn: function () use ($source, $updates, $base, $savedAt, $writesOn, $userId, $judged, $judgeNewRowsHere): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);

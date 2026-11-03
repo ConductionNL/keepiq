@@ -31,6 +31,8 @@ use RuntimeException;
 /**
  * The share rows read under the source's lock, carried out of the rolled-back
  * transaction.
+ *
+ * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
 class ShareRowsAppearedException extends RuntimeException {
 

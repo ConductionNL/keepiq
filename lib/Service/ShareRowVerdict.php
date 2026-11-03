@@ -88,6 +88,9 @@ final class ShareRowVerdict {
 	 * @return void
 	 *
 	 * @spec exclude Value object wiring only.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $scanCannotJudge is what the pending scan answered for the row, not a
+	 *   mode of the verdict.
 	 */
 	public function __construct(
 		public readonly string $state,
