@@ -59,6 +59,8 @@ const WORLDS: Record<string, () => Promise<unknown>> = {
 	'first sync failed, still syncing': () => world(snapshotReply({ items: null, sync: sync({ syncedAt: null, syncing: true, lastError: 'network' }) })),
 	'first sync running': () => world(snapshotReply({ items: null, sync: sync({ syncedAt: null, syncing: true }) })),
 	'first sync, offline and busy flags': () => world(snapshotReply({ items: null, sync: sync({ offline: true, lastError: 'busy' }) })),
+	'first sync idle, no error': () => world(snapshotReply({ items: null, sync: sync({ syncedAt: null }) })),
+	'busy, offline, never synced': () => world(snapshotReply({ items: three(), sync: sync({ lastError: 'busy', offline: true, syncedAt: null }) })),
 	'empty vault': () => world(snapshotReply({ items: [] })),
 	'rows': () => world(snapshotReply({ items: three() }), async (user) => {
 		for (const row of document.querySelectorAll<HTMLElement>('.items .item__main')) await user.click(row)

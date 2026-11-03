@@ -34,13 +34,16 @@ interface World {
 	click?: boolean
 	exportDisabled?: boolean
 	unanswered?: string[]
+	/** Presses Sync now once more, on a sync that does not end, and records the page meanwhile. */
+	again?: boolean
 }
 
-async function world({ snapshot, snapshotFailed = false, after, click = false, exportDisabled = false, unanswered }: World) {
+async function world({ snapshot, snapshotFailed = false, after, click = false, exportDisabled = false, unanswered, again = false }: World) {
 	const calls: string[] = []
 	fakeBackground({ accountSettings: { exportDisabled }, unanswered })
 	const syncNow = async () => {
 		calls.push('syncNow')
+		if (calls.filter((call) => call === 'syncNow').length > 1) await new Promise(() => undefined)
 		return after
 	}
 	render(
@@ -53,6 +56,11 @@ async function world({ snapshot, snapshotFailed = false, after, click = false, e
 	await new Promise((done) => setTimeout(done, 20))
 	if (click) await user.click(screen.getByRole('button', { name: /Sync now/ }))
 	await new Promise((done) => setTimeout(done, 20))
+	if (again) {
+		await user.click(screen.getByRole('button', { name: /Sync now/ }))
+		await new Promise((done) => setTimeout(done, 20))
+		calls.push(markup())
+	}
 	for (const button of screen.queryAllByRole('button', { name: /Folders/ })) await user.click(button)
 	return { html: markup(), calls }
 }
@@ -65,6 +73,8 @@ const WORLDS: Record<string, World> = {
 	'snapshot failed': { snapshotFailed: true },
 	'snapshot failed but cached': { snapshot: unlocked(), snapshotFailed: true },
 	'settings unanswered': { snapshot: unlocked(), unanswered: ['account.settings.get'] },
+	'settings unanswered, no snapshot': { unanswered: ['account.settings.get'] },
+	'a failed sync, then one still running': { snapshot: unlocked(), click: true, after: undefined, again: true },
 	'never synced': { snapshot: unlocked({ syncedAt: null }) },
 	'syncing': { snapshot: unlocked({ syncing: true }), click: true, after: unlocked() },
 	'export turned off': { snapshot: unlocked(), exportDisabled: true },
