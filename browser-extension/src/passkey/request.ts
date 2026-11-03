@@ -5,6 +5,7 @@
 import { parse } from 'tldts'
 import type { PasskeyCreateOptions, PasskeyRequest } from '@/src/messages'
 import { baseDomain } from '@/src/vault/match'
+import { isLocalhost } from '@/src/vault/url'
 import { ceremonyTimeout } from './deadline'
 import { MAX_URL, parsePasskeyRequest } from './shape'
 import { ES256 } from './webauthn'
@@ -69,8 +70,6 @@ function frameUrl(sender: FrameInput['sender'], origin: URL): string {
 		return `${origin.origin}/`
 	}
 }
-
-const isLocalhost = (host: string) => host === 'localhost' || host.endsWith('.localhost')
 
 /** The gates that hold for any request from the frame; `passkey.available` answers by these alone. */
 export function frameGate({ sender, account, crossOriginAncestor }: FrameInput): Frame | { fallback: FallbackReason } {

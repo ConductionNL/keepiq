@@ -40,4 +40,4 @@ export function folderRow(overrides: Partial<FolderRow> = {}): FolderRow {
 
 export const typeRows: SecretTypeRow[] = [
 	'login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp', 'passkey', 'card', 'identity',
-].map((name) => ({ id: `t-${name}`, name, label: name === 'totp' ? 'TOTP' : name[0]!.toUpperCase() + name.slice(1).replace('_', ' ') }))
+].map((name) => ({ id: `t-${name}`, name, scope: 'system', label: name === 'totp' ? 'TOTP' : name[0]!.toUpperCase() + name.slice(1).replace('_', ' ') }))

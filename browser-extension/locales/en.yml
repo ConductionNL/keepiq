@@ -147,6 +147,13 @@ item:
   fillName: Fill {name}
   insecureTitle: Do you still wish to fill this login?
   insecureWarning: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page."
+  # A card or identity fill's questions; the context menu asks the same with pageFill.cardInsecure and pageFill.crossSite.
+  cardInsecureTitle: Fill this card on an insecure site?
+  cardInsecureWarning: This site is not secure. Anyone on the network could read the card details that are filled in.
+  # {hosts} is a comma-separated list of the other sites' hosts, {host} the page's.
+  crossSiteTitle: Also fill on {hosts}?
+  crossSiteWarning: Part of this form comes from {hosts}, not from {host}. Keepiq fills it there only if you agree.
+  onlyHost: Only {host}
   copyMenu: Copy, {name}
   moreMenu: More, {name}
   copyUsername: Copy username
@@ -433,6 +440,11 @@ settings:
   uriRegex: Regular expression
   uriRegexNote: Regular expressions are an advanced option and can break matching
   inlineSuggestions: Show autofill suggestions on form fields
+  inlineCards: Display cards as suggestions
+  inlineIdentities: Display identities as suggestions
+  inlineKindsOff: Turn on Show autofill suggestions on form fields first.
+  vaultCards: Always show cards as Autofill suggestions on Vault view
+  vaultIdentities: Always show identities as Autofill suggestions on Vault view
   defaultPasswordManager: Make Keepiq your default password manager
   defaultPasswordManagerHint: Turns off the browser's own password saving and address autofill, so its suggestions don't cover Keepiq's.
   defaultPasswordManagerManaged: Your organisation or another extension manages this browser setting.
@@ -600,6 +612,10 @@ send:
 pageFill:
   insecure: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page, {host}.\n\nDo you still wish to fill this login?"
   insecureNoHost: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page.\n\nDo you still wish to fill this login?"
+  # A card fill from the context menu into an http page; OK fills.
+  cardInsecure: "Fill this card on an insecure site?\n\nThis site is not secure. Anyone on the network could read the card details that are filled in."
+  # A card or identity fill from the context menu reaching frames of other sites; {hosts} is a comma-separated list, OK fills.
+  crossSite: "Also fill on {hosts}?\n\nPart of this form comes from {hosts}, not from {host}. Keepiq fills it there only if you agree."
 
 # The "Keepiq" right-click menu on editable fields.
 contextMenu:
@@ -610,6 +626,8 @@ contextMenu:
   copyUsername: Copy username
   copyPassword: Copy password
   copyCode: Copy verification code
+  autofillCard: Autofill card
+  autofillIdentity: Autofill identity
   generatePassword: Generate password and copy
   unlock: Unlock vault
 
@@ -659,6 +677,30 @@ inlineList:
         1: 1 Keepiq verification code. Press Down Arrow to choose.
         n: $1 Keepiq verification codes. Press Down Arrow to choose.
       noMatch: No Keepiq verification codes for {host}
+  # The list on a card field, which offers every card; the questions after a pick are item.cardInsecure* and item.crossSite*.
+  card:
+    frameTitle: Keepiq cards
+    noMatch: No cards in Keepiq
+    locked: Unlock Keepiq to see your cards
+    # {brand} is a card brand such as Visa, {last4} the number's last four digits.
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Card, *{last4}"
+    # A card row's accessible name; screen readers read "*" as "star".
+    row: "{name}, {brand} ending in {last4}"
+    rowNoBrand: "{name}, card ending in {last4}"
+    status:
+      count:
+        1: 1 Keepiq card. Press Down Arrow to choose.
+        n: $1 Keepiq cards. Press Down Arrow to choose.
+  # The list on a personal-details or address field, which offers every identity.
+  identity:
+    frameTitle: Keepiq identities
+    noMatch: No identities in Keepiq
+    locked: Unlock Keepiq to see your identities
+    status:
+      count:
+        1: 1 Keepiq identity. Press Down Arrow to choose.
+        n: $1 Keepiq identities. Press Down Arrow to choose.
 
 # The save and update bar at the top of the web page.
 notificationBar:
