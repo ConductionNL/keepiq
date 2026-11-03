@@ -103,6 +103,161 @@ describe('parseOtpauth', () => {
 		expect(() => parseOtpauth('not a valid seed !!!')).toThrow()
 		expect(() => parseOtpauth('')).toThrow()
 	})
+
+	const KEY = 'JBSWY3DPEHPK3PXP'
+	const URI = 'otpauth://totp/'
+
+	it.each([
+		[
+			'bare key, lower case with spaces',
+			' jbsw y3dp ehpk 3pxp ',
+			{ secret: KEY },
+		],
+		['bare key, padded', `${KEY}====`, { secret: `${KEY}====` }],
+		[
+			'secret parameter, lower case with spaces',
+			`${URI}A:b?secret=jbsw%20y3dp%20ehpk%203pxp`,
+			{ secret: KEY },
+		],
+		[
+			'upper-case scheme and host',
+			`OTPAUTH://TOTP/Acme:alice?secret=${KEY}`,
+			{ issuer: 'Acme', account: 'alice' },
+		],
+		[
+			'surrounding whitespace',
+			`  ${URI}A:b?secret=${KEY}  `,
+			{ secret: KEY, issuer: 'A', account: 'b' },
+		],
+		[
+			'label issuer and account',
+			`${URI}Acme:alice@example.org?secret=${KEY}`,
+			{ issuer: 'Acme', account: 'alice@example.org' },
+		],
+		[
+			'issuer parameter wins over the label',
+			`${URI}Label:alice?secret=${KEY}&issuer=Param`,
+			{ issuer: 'Param', account: 'alice' },
+		],
+		[
+			'blank issuer parameter falls back to the label',
+			`${URI}Label:alice?secret=${KEY}&issuer=`,
+			{ issuer: 'Label', account: 'alice' },
+		],
+		[
+			'issuer parameter, no colon',
+			`${URI}alice?secret=${KEY}&issuer=Acme`,
+			{ issuer: 'Acme', account: 'alice' },
+		],
+		[
+			'blank issuer parameter, no colon',
+			`${URI}alice?secret=${KEY}&issuer=`,
+			{ issuer: null, account: 'alice' },
+		],
+		[
+			'account only',
+			`${URI}alice?secret=${KEY}`,
+			{ issuer: null, account: 'alice' },
+		],
+		['no label', `${URI}?secret=${KEY}`, { issuer: null, account: null }],
+		[
+			'no label, no slash',
+			`otpauth://totp?secret=${KEY}`,
+			{ issuer: null, account: null },
+		],
+		['colon only', `${URI}:?secret=${KEY}`, { issuer: null, account: null }],
+		[
+			'blank issuer in label',
+			`${URI}%20:alice?secret=${KEY}`,
+			{ issuer: null, account: 'alice' },
+		],
+		[
+			'blank account in label',
+			`${URI}Acme:%20?secret=${KEY}`,
+			{ issuer: 'Acme', account: null },
+		],
+		[
+			'account with spaces around it',
+			`${URI}Acme:%20alice%20?secret=${KEY}`,
+			{ issuer: 'Acme', account: 'alice' },
+		],
+		[
+			'several colons',
+			`${URI}Acme:team:alice?secret=${KEY}`,
+			{ issuer: 'Acme', account: 'team:alice' },
+		],
+		[
+			'encoded label',
+			`${URI}Acme%20Corp%3Aalice%20doe?secret=${KEY}`,
+			{ issuer: 'Acme Corp', account: 'alice doe' },
+		],
+		[
+			'sha256, eight digits, sixty seconds',
+			`${URI}A:b?secret=${KEY}&algorithm=SHA256&digits=8&period=60`,
+			{ algorithm: 'SHA256', digits: 8, period: 60 },
+		],
+		[
+			'lower-case algorithm',
+			`${URI}A:b?secret=${KEY}&algorithm=sha512`,
+			{ algorithm: 'SHA512' },
+		],
+		['seven digits', `${URI}A:b?secret=${KEY}&digits=7`, { digits: 6 }],
+		['ten digits', `${URI}A:b?secret=${KEY}&digits=10`, { digits: 6 }],
+		['digits not a number', `${URI}A:b?secret=${KEY}&digits=x`, { digits: 6 }],
+		['zero period', `${URI}A:b?secret=${KEY}&period=0`, { period: 30 }],
+		['negative period', `${URI}A:b?secret=${KEY}&period=-30`, { period: 30 }],
+		[
+			'period not a number',
+			`${URI}A:b?secret=${KEY}&period=soon`,
+			{ period: 30 },
+		],
+		[
+			'empty parameters',
+			`${URI}A:b?secret=${KEY}&algorithm=&digits=&period=`,
+			{ algorithm: 'SHA1', digits: 6, period: 30 },
+		],
+	])('parses %s', (_, input, expected) => {
+		expect(parseOtpauth(input)).toMatchObject(expected)
+	})
+
+	it.each([
+		['null', null, 'Empty TOTP seed'],
+		['undefined', undefined, 'Empty TOTP seed'],
+		['blank', '   \n ', 'Empty TOTP seed'],
+		['a number', 12345, 'Invalid base32 character'],
+		[
+			'bare key, invalid character',
+			'JBSWY3DPEHPK3PX1',
+			'Invalid base32 character',
+		],
+		['bare key, one character', 'A', 'Base32 secret too short'],
+		['scheme only', 'otpauth://', 'Not an otpauth://totp URI'],
+		[
+			'hotp URI',
+			`otpauth://hotp/Acme:alice?secret=${KEY}&counter=1`,
+			'Not an otpauth://totp URI',
+		],
+		[
+			'host with port',
+			`otpauth://totp:99/A:b?secret=${KEY}`,
+			'Not an otpauth://totp URI',
+		],
+		['broken host', `otpauth://[::1/A:b?secret=${KEY}`, 'Malformed otpauth URI'],
+		['no secret', `${URI}Acme:alice?issuer=Acme`, 'otpauth URI has no secret'],
+		['empty secret', `${URI}Acme:alice?secret=`, 'otpauth URI has no secret'],
+		[
+			'invalid secret',
+			`${URI}Acme:alice?secret=NOT-BASE32`,
+			'Invalid base32 character',
+		],
+		[
+			'unknown algorithm',
+			`${URI}A:b?secret=${KEY}&algorithm=MD5`,
+			'Unsupported TOTP algorithm: MD5',
+		],
+	])('refuses %s', (_, input, message) => {
+		expect(() => parseOtpauth(input)).toThrow(message)
+	})
 })
 
 describe('generateTotp — RFC 6238 SHA1 vectors', () => {
