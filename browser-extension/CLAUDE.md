@@ -16,7 +16,7 @@ npm run dev            # Chromium dev + HMR, starts the test site and opens a br
 npm run dev:firefox    # Firefox dev (MV2) + HMR
 npm run test-site      # the test site alone, http://localhost:8100
 npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
-npm run test:e2e       # Playwright: builds, then drives the inline list and save bar in headless Chromium (port 8200; Chromium only)
+npm run test:e2e       # Playwright: builds, then drives the inline lists (login, code, card, identity) and save bar in headless Chromium (port 8200; Chromium only)
 npm run typecheck      # tsc --noEmit — does not build or catch MV drift
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
@@ -32,7 +32,7 @@ and `locales/nl.yml`; the background sends codes, never text. See
 [ARCHITECTURE.md § Translations](ARCHITECTURE.md#translations).
 
 `test-site/` holds one mock page per fill and capture case in the `ext-autofill`
-specs. When a change adds a case, add its page and link it from `test-site/index.html`.
+and `ext-card-identity-fill` specs. When a change adds a case, add its page and link it from `test-site/index.html`.
 
 `wxt.config.ts` generates the manifest — there is no hand-written `manifest.json`.
 Do **not** set a global `manifestVersion` there: it breaks Firefox dev (Firefox MV3

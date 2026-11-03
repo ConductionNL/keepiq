@@ -45,7 +45,9 @@ Per account, your generator options, until you remove the account, and your orga
 
 Per account, when you last filled in each login or signed in with its passkey, so the one you used last comes first and the keyboard shortcut knows which to fill. It is one time per login, not a list of the sites you visited, and stays in this browser until you log out. It is the only thing filling in and saving logins keep on disk.
 
-While a list of logins is open under a login field, the browser keeps a random key and which logins and passkeys it offered in its session storage, without names or user names. It goes when the list closes.
+While a list of logins, cards or identities is open under a field, the browser keeps a random key and which items and passkeys it offered in its session storage, without names, user names or card details. It goes when the list closes.
+
+When you fill in a card or an identity, the extension keeps its details in memory for that one fill. Each frame of the page receives only the details its own fields ask for, a card's PIN and an identity's BSN are never sent, and nothing is stored.
 
 While a website waits for a passkey, the browser keeps the request in its session storage: the site, what it asked, and which login you picked or the name you typed if a save failed. It never holds a passkey's key or anything decrypted. It goes when the request ends or the browser closes. A passkey's key is decrypted only in memory, for the one sign-in or save.
 
@@ -62,7 +64,7 @@ When you are halfway through adding an account, the extension remembers the serv
 ## What the extension reads in your browser
 
 - **The address of your current tab,** to suggest the items for that site, and for the site name in a generated email address when you choose it. It stays in the extension.
-- **The pages you visit:** the extension's page script runs on every site, to find login fields, fill in a login and offer to save one. It never receives your vault: a fill gives the page one login, after you chose it. The list under a login field and the save bar are extension frames the site can't read.
+- **The pages you visit:** the extension's page script runs on every site, to find login fields, fill in a login and offer to save one. It never receives your vault: a fill gives the page one login, or one card or identity, after you chose it. The list under a field and the save bar are extension frames the site can't read. A site can see that a list is shown, and how tall it is; a card or identity list is always the same height, so it can't tell how many you have.
 - **The passkey requests of the pages you visit:** on every site the extension takes over the page's passkey requests, so it can offer your Keepiq passkeys. A site learns nothing about your vault until you pick a passkey, and then gets only the signed answer. With **Ask to save and use passkeys** off, every request goes to your browser.
 - **The user name and password you submit on a website,** to offer to save or update them. They stay in the extension, and reach your server only encrypted, when you choose **Save** or **Update**.
 - **Whether your computer is locked,** for the **On system lock** lock option.
