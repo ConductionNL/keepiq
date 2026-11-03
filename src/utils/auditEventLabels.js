@@ -27,6 +27,19 @@ export function auditEventLabel(eventType) {
  */
 function secretAndShareEventLabels() {
 	return {
+		...secretEventLabels(),
+		...shareEventLabels(),
+		...linkShareEventLabels(),
+	}
+}
+
+/**
+ * The labels of secret events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function secretEventLabels() {
+	return {
 		'secret.created': t('keepiq', 'Secret created'),
 		'secret.updated': t('keepiq', 'Secret updated'),
 		'secret.read': t('keepiq', 'Secret read'),
@@ -36,6 +49,16 @@ function secretAndShareEventLabels() {
 		'secret.purged': t('keepiq', 'Secret deleted for good'),
 		'secret.archived': t('keepiq', 'Secret archived'),
 		'secret.unarchived': t('keepiq', 'Secret unarchived'),
+	}
+}
+
+/**
+ * The labels of folder and share events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function shareEventLabels() {
+	return {
 		'folder.deleted_cascade': t('keepiq', 'Folder deleted with contents'),
 		'share.granted': t('keepiq', 'Share granted'),
 		'share.revoked': t('keepiq', 'Share revoked'),
@@ -44,6 +67,16 @@ function secretAndShareEventLabels() {
 		'share.quarantine_dropped': t('keepiq', 'Quarantined share dropped'),
 		'share.delegated': t('keepiq', 'Ownership delegated'),
 		'share.delegation_reclaimed': t('keepiq', 'Delegation reclaimed'),
+	}
+}
+
+/**
+ * The labels of link share events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function linkShareEventLabels() {
+	return {
 		'link_share.created': t('keepiq', 'Link share created'),
 		'link_share.accessed': t('keepiq', 'Link share accessed'),
 		'link_share.access_failed': t('keepiq', 'Link share access failed'),
@@ -59,6 +92,19 @@ function secretAndShareEventLabels() {
  */
 function federatedShareEventLabels() {
 	return {
+		...sentFederatedShareEventLabels(),
+		...stoppedFederatedShareEventLabels(),
+		...receivedFederatedShareEventLabels(),
+	}
+}
+
+/**
+ * The labels of events on secrets sent to another organisation.
+ *
+ * @return {object} Event type to localized label.
+ */
+function sentFederatedShareEventLabels() {
+	return {
 		'federated_share.sent': t('keepiq', 'Shared with another organisation'),
 		'federated_share.updated': t(
 			'keepiq',
@@ -68,6 +114,16 @@ function federatedShareEventLabels() {
 			'keepiq',
 			'Share with another organisation revoked',
 		),
+	}
+}
+
+/**
+ * The labels of events on a send that stopped or failed.
+ *
+ * @return {object} Event type to localized label.
+ */
+function stoppedFederatedShareEventLabels() {
+	return {
 		'federated_share.suspended': t(
 			'keepiq',
 			'Sharing with another organisation stopped',
@@ -76,6 +132,16 @@ function federatedShareEventLabels() {
 			'keepiq',
 			'Another organisation did not get a change',
 		),
+	}
+}
+
+/**
+ * The labels of events on secrets received from another organisation.
+ *
+ * @return {object} Event type to localized label.
+ */
+function receivedFederatedShareEventLabels() {
+	return {
 		'federated_share.received': t(
 			'keepiq',
 			'Secret received from another organisation',
@@ -94,6 +160,19 @@ function federatedShareEventLabels() {
  */
 function federatedCopyEventLabels() {
 	return {
+		...heldFederatedCopyEventLabels(),
+		...removedFederatedCopyEventLabels(),
+		...partnerEventLabels(),
+	}
+}
+
+/**
+ * The labels of events on a received copy.
+ *
+ * @return {object} Event type to localized label.
+ */
+function heldFederatedCopyEventLabels() {
+	return {
 		'federated_share.declined': t(
 			'keepiq',
 			'Secret from another organisation declined',
@@ -102,6 +181,16 @@ function federatedCopyEventLabels() {
 			'keepiq',
 			'Copy from another organisation updated',
 		),
+	}
+}
+
+/**
+ * The labels of a received copy removed, or declined by its recipient.
+ *
+ * @return {object} Event type to localized label.
+ */
+function removedFederatedCopyEventLabels() {
+	return {
 		'federated_share.copy_removed': t(
 			'keepiq',
 			'Copy from another organisation removed',
@@ -110,6 +199,16 @@ function federatedCopyEventLabels() {
 			'keepiq',
 			'Recipient at another organisation removed their copy',
 		),
+	}
+}
+
+/**
+ * The labels of events a partner organisation causes.
+ *
+ * @return {object} Event type to localized label.
+ */
+function partnerEventLabels() {
+	return {
 		'federated_share.recipient_resumed': t(
 			'keepiq',
 			'Recipient at another organisation restored their copy',
@@ -128,10 +227,32 @@ function federatedCopyEventLabels() {
  */
 function requestAndSuiteEventLabels() {
 	return {
+		...requestEventLabels(),
+		...suiteEventLabels(),
+	}
+}
+
+/**
+ * The labels of secret request events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function requestEventLabels() {
+	return {
 		'request.created': t('keepiq', 'Secret request created'),
 		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
 		'request.re_requested': t('keepiq', 'Secret request re-requested'),
 		'request.revoked': t('keepiq', 'Secret request revoked'),
+	}
+}
+
+/**
+ * The labels of encryption suite events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function suiteEventLabels() {
+	return {
 		'suite.revoked': t('keepiq', 'Encryption suite revoked'),
 		'suite.reinstated': t('keepiq', 'Encryption suite reinstated'),
 		'suite.recovery_started': t('keepiq', 'Compromise recovery started'),
