@@ -1,4 +1,6 @@
 /** The CBOR (RFC 8949) shapes WebAuthn needs, in CTAP2 canonical form: shortest heads, map keys sorted. */
+import { concat } from './bytes'
+
 export type CborValue = number | string | Uint8Array | Map<number | string, CborValue>
 
 const UNSIGNED = 0
@@ -16,16 +18,6 @@ function head(major: number, value: number): number[] {
 	return [type | 26, value >>> 24, (value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff]
 }
 
-function concat(parts: (Uint8Array | number[])[]): Uint8Array {
-	const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0))
-	let offset = 0
-	for (const part of parts) {
-		out.set(part, offset)
-		offset += part.length
-	}
-	return out
-}
-
 /** CTAP2 order: shorter encoded key first, then bytewise. */
 function compareKeys(a: Uint8Array, b: Uint8Array): number {
 	if (a.length !== b.length) return a.length - b.length
@@ -37,9 +29,9 @@ export function encodeCbor(value: CborValue): Uint8Array {
 	if (typeof value === 'number') return new Uint8Array(value < 0 ? head(NEGATIVE, -1 - value) : head(UNSIGNED, value))
 	if (typeof value === 'string') {
 		const bytes = new TextEncoder().encode(value)
-		return concat([head(TEXT, bytes.length), bytes])
+		return concat(head(TEXT, bytes.length), bytes)
 	}
-	if (value instanceof Uint8Array) return concat([head(BYTES, value.length), value])
+	if (value instanceof Uint8Array) return concat(head(BYTES, value.length), value)
 	const entries = [...value].map(([key, entry]) => [encodeCbor(key), encodeCbor(entry)] as const).sort(([a], [b]) => compareKeys(a, b))
-	return concat([head(MAP, entries.length), ...entries.flat()])
+	return concat(head(MAP, entries.length), ...entries.flat())
 }

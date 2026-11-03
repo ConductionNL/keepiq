@@ -1,6 +1,7 @@
 /** WebAuthn Level 3 authenticator responses for ES256 passkeys; pure, every key lives only for the call. */
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { pemToPkcs8 } from '@/src/crypto/rsa'
+import { concat } from './bytes'
 import { encodeCbor, type CborValue } from './cbor'
 import { buildPasskeyCredential, type PasskeyCredential } from './credential'
 
@@ -17,16 +18,6 @@ const ECDSA_SHA256 = { name: 'ECDSA', hash: 'SHA-256' } as const
 /** BE and BS always, since a Keepiq passkey syncs with the vault; UV only when the user verified in this ceremony. */
 export function authenticatorFlags(verified: boolean, attested: boolean): number {
 	return FLAGS.UP | FLAGS.BE | FLAGS.BS | (verified ? FLAGS.UV : 0) | (attested ? FLAGS.AT : 0)
-}
-
-function concat(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
-	const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0))
-	let offset = 0
-	for (const part of parts) {
-		out.set(part, offset)
-		offset += part.length
-	}
-	return out
 }
 
 async function sha256(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array> {
