@@ -89,9 +89,10 @@ class ShareSyncServiceTest extends TestCase {
 	 * A sync by the owner of src-1 whose share rows grow on every read: the
 	 * first read returns as many as were there before the sync, each later one
 	 * a row more. A foreign row names bob but its copy is carol's, the planted
-	 * shape of GHSA-m5p9-6pw7-pf3g, and the sync checks its copies with the
-	 * real ShareSyncGuards::assertCopiesJudged(), which skips such a row
-	 * without judging it. Returns the sync, how deep in a transaction each row
+	 * shape of GHSA-m5p9-6pw7-pf3g. With $foreign the sync checks its copies
+	 * with the real ShareSyncGuards::assertCopiesJudged(), which skips such a
+	 * row without judging it; otherwise a stub checks them that judges every
+	 * row. Returns the sync, how deep in a transaction each row
 	 * was judged, how often the source was locked, and how often it had been
 	 * locked when each row was judged.
 	 *
