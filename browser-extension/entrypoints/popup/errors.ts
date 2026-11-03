@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
-import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type VaultWriteError } from '@/src/messages'
+import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type VaultWriteError, type WriteErrorCode } from '@/src/messages'
 import type { FieldError } from '@/src/vault/fields'
 import { language } from './i18n'
 
@@ -93,27 +93,34 @@ function serverWriteErrorText(error: VaultWriteError, context: WriteContext): st
 	}
 }
 
-/** The codes about sharing: shared copies, partner organisations and their certificates. */
+const partnerCloudIds = (error: VaultWriteError) => (error.partners ?? []).map((partner) => partner.cloudId)
+
+/** Names the partners when the server listed them, and the release they need when it named one. */
+function partnerUpgradeText(error: VaultWriteError, context: WriteContext): string {
+	const cloudIds = partnerCloudIds(error)
+	let text: string
+	if (context === 'passkey') text = cloudIds.length > 0 ? i18n.t('passkey.errors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('passkey.errors.partnerUpgradeRequiredUnnamed')
+	else text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
+	return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
+}
+
+/** The codes about sharing: shared copies, partner organisations and their certificates. A `Map`, so a code named like an object property misses. */
+const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, context: WriteContext) => string>([
+	['restricted', () => i18n.t('writeErrors.restricted')],
+	['view_only', () => i18n.t('item.viewOnly')],
+	['stale_source', () => i18n.t('writeErrors.staleSource')],
+	['incomplete', () => i18n.t('writeErrors.incomplete')],
+	['bad_certificate', () => i18n.t('writeErrors.badCertificate')],
+	['unverified', () => i18n.t('writeErrors.unverified')],
+	['partner_unreachable', (error) => i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList(partnerCloudIds(error)) })],
+	['partner_upgrade_required', partnerUpgradeText],
+	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
+	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
+])
+
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {
-	switch (error.code) {
-		case 'restricted': return i18n.t('writeErrors.restricted')
-		case 'view_only': return i18n.t('item.viewOnly')
-		case 'stale_source': return i18n.t('writeErrors.staleSource')
-		case 'incomplete': return i18n.t('writeErrors.incomplete')
-		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
-		case 'unverified': return i18n.t('writeErrors.unverified')
-		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
-		case 'partner_upgrade_required': {
-			const cloudIds = (error.partners ?? []).map((partner) => partner.cloudId)
-			let text: string
-			if (context === 'passkey') text = cloudIds.length > 0 ? i18n.t('passkey.errors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('passkey.errors.partnerUpgradeRequiredUnnamed')
-			else text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
-			return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
-		}
-		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
-		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
-		default: return localWriteErrorText(error)
-	}
+	const text = SHARING_WRITE_ERRORS.get(error.code)
+	return text ? text(error, context) : localWriteErrorText(error)
 }
 
 /** The codes about this browser and its clock, and the fallback for codes this popup does not know. */
