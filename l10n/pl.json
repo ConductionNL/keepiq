@@ -1828,7 +1828,8 @@
         "This image could not be read.": "Nie udało się odczytać tego obrazu.",
         "This image is too large. Choose an image under 10 MB.": "Ten obraz jest za duży. Wybierz obraz mniejszy niż 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "To nie jest klucz uwierzytelniacza. Wklej link otpauth://totp/ lub sekret w formacie base32.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ten kod QR nie zawiera klucza uwierzytelniacza. Użyj kodu QR, który strona pokazuje podczas konfigurowania logowania dwuetapowego."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ten kod QR nie zawiera klucza uwierzytelniacza. Użyj kodu QR, który strona pokazuje podczas konfigurowania logowania dwuetapowego.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ten sekret czeka na sprawdzenie swoich udostępnień, które jeszcze się nie zakończyło. Nic nie zostało zapisane; spróbuj ponownie później lub poproś administratora o sprawdzenie, czy działają zadania w tle."
     },
     "plurals": null
 }

@@ -34,6 +34,7 @@ use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -41,6 +42,8 @@ use Psr\Log\LoggerInterface;
  * Instance admin, People delegate, vault_admin member, other delegate, outsider.
  */
 class PeopleAreaAgreementTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use AdminAreaFixture;
 
 	/**
@@ -82,7 +85,7 @@ class PeopleAreaAgreementTest extends TestCase {
 		);
 		$areas = $this->areaAuthorizer(groupManager: $groups, delegated: $delegated);
 
-		$authorizer = new DelegationAuthorizer(secretMapper: $this->createStub(SecretMapper::class), areas: $areas);
+		$authorizer = new DelegationAuthorizer(secretMapper: $this->createStub(SecretMapper::class), areas: $areas, rowJudge: $this->shareRowJudge(secrets: $this->createStub(SecretMapper::class)));
 		$this->assertSame($expected, $authorizer->canHandover(userId: $uid), 'capabilities flag');
 
 		$handoverAllowed = true;

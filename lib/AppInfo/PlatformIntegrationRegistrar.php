@@ -24,6 +24,7 @@ namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Middleware\JwtAuthMiddleware;
 use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
+use OCA\Keepiq\Middleware\ShareScanPendingMiddleware;
 use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
 use OCA\Keepiq\Notification\KeepiqNotifier;
 use OCA\Keepiq\Search\SecretSearchProvider;
@@ -78,6 +79,10 @@ final class PlatformIntegrationRegistrar {
 		// OCSMiddleware rewrites a 403 there into an HTTP 200 OCS envelope, so
 		// the controller's own 403 leaves as 428 with an `error` code.
 		$context->registerMiddleware(OcsRefusalMiddleware::class);
+
+		// A request that reaches a share row the pending share quarantine scan
+		// cannot judge answers 409 share_scan_pending on every route.
+		$context->registerMiddleware(ShareScanPendingMiddleware::class);
 
 		// The admin overview warns while the share quarantine scan is pending.
 		$context->registerSetupCheck(ShareQuarantineScanPending::class);

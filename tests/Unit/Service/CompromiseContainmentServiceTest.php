@@ -38,6 +38,7 @@ use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Authentication\Token\IProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -46,6 +47,7 @@ use RuntimeException;
  * Tests for CompromiseContainmentService.
  */
 class CompromiseContainmentServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * @var SecretMapper&MockObject
@@ -138,7 +140,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 
 		$this->service = new CompromiseContainmentService(
 			secretMapper: $this->secretMapper,
-			shareTargetMapper: $this->shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
 			contactMapper: $this->emergencyContactMapper,
 			notificationService: $this->notificationService,
 			migrationService: $this->migrationService,
@@ -229,7 +231,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 		);
 		$service = new CompromiseContainmentService(
 			secretMapper: $this->secretMapper,
-			shareTargetMapper: $this->shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
 			contactMapper: $this->emergencyContactMapper,
 			notificationService: $notificationService,
 			migrationService: $this->migrationService,
@@ -403,7 +405,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 		$emergencyContactMapper->method('findByGranteeSuite')->with('suite-a')->willReturn([$approved, $merelyGranted]);
 		$service = new CompromiseContainmentService(
 			secretMapper: $this->secretMapper,
-			shareTargetMapper: $this->shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
 			contactMapper: $emergencyContactMapper,
 			notificationService: $this->notificationService,
 			migrationService: $this->migrationService,

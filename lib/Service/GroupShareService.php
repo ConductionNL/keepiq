@@ -43,7 +43,6 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
@@ -71,6 +70,7 @@ class GroupShareService {
 	 *
 	 * @param GroupShareMapper $mapper The group-share mapper
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (per-row reads/writes)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param BulkGrantShareTargetMapper $bulkGrantMapper The share-target mapper keyed on the grant (cascade)
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (member-eligibility filter)
@@ -80,10 +80,10 @@ class GroupShareService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IShareManager $shareManager Nextcloud's share settings (group sharing on, own groups only)
 	 * @param ShareRevocationService $revocationService Revokes one member's share and deletes its copy
+	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 * @param ShareAuthorizationService|null $auth Whether a new member's existing copy now saves for everyone
 	 * @param ShareWriteContext|null $contexts Whether a new member already saves for everyone other than through a group share
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy, when no authorization service is wired
 	 * @param IDBConnection|null $db Makes a restriction change and a revoke all-or-nothing
 	 *
@@ -92,6 +92,7 @@ class GroupShareService {
 	public function __construct(
 		private GroupShareMapper $mapper,
 		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private BulkGrantShareTargetMapper $bulkGrantMapper,
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
@@ -101,10 +102,10 @@ class GroupShareService {
 		private LoggerInterface $logger,
 		private IShareManager $shareManager,
 		private ShareRevocationService $revocationService,
+		private ShareQuarantineScanner $quarantineScan,
 		private ?ShareRestrictionResolver $restrictions = null,
 		private ?ShareAuthorizationService $auth = null,
 		private ?ShareWriteContext $contexts = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 		private ?ShareGrantReader $grants = null,
 		private ?IDBConnection $db = null,
 	) {
@@ -278,7 +279,7 @@ class GroupShareService {
 		// below and keeps its copy.
 		$live = [];
 		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShareId) as $target) {
-			if ($this->quarantineScan?->refuseUnjudged(
+			if ($this->quarantineScan->refuseUnjudged(
 				row: $target,
 				refusal: 'A share of this group waits for the share quarantine scan, so the group share cannot be revoked yet'
 			) !== true
@@ -482,7 +483,7 @@ class GroupShareService {
 			return true;
 		}
 
-		$held = $this->quarantineScan?->heldBack(row: $row);
+		$held = $this->quarantineScan->heldBack(row: $row);
 		if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
 			$this->logger->warning('Kept the departing member\'s share row and copy the pending quarantine scan quarantined', $context);
 			return false;
@@ -529,6 +530,7 @@ class GroupShareService {
 	 *
 	 * @throws InvalidArgumentException When the source is a received copy, or the delegate's copy is missing, ambiguous or restricted
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the delegate's copy is read-only
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the source
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
@@ -595,7 +597,7 @@ class GroupShareService {
 		// Judged before the transaction, so a quarantine this makes is not
 		// rolled back with a refused change.
 		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShare->getId()) as $row) {
-			$this->quarantineScan?->refuseUnjudged(row: $row, refusal: $refusal);
+			$this->quarantineScan->refuseUnjudged(row: $row, refusal: $refusal);
 		}
 
 		$this->db?->beginTransaction();
@@ -654,34 +656,36 @@ class GroupShareService {
 		return ($this->auth ?? new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $this->delegationMapper,
-			shareTargetMapper: $this->shareTargetMapper,
 			groupShareMapper: $this->mapper,
 			groupManager: $this->groupManager,
 			grants: $this->grants,
+			rowJudge: $this->rowJudge,
 		));
 	}//end authorization()
 
 	/**
 	 * Whether the source is itself a received copy — a secret that is some share
-	 * target's recipient secret. An ambiguous match counts as a copy; only a
-	 * genuinely absent row reads as an original.
+	 * target's recipient secret (ShareRowVerdict::countsAsCopy()). Fails open to
+	 * "original" only when no row names it, or the pending quarantine scan
+	 * quarantines the one that does; an ambiguous match, a row its target does
+	 * not hold and a row the scan cannot judge count as a copy.
 	 *
 	 * @param Secret $secret The source secret
 	 *
 	 * @return bool
 	 *
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming it
+	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function isReceivedCopy(Secret $secret): bool {
-		try {
-			$this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $secret->getId());
-		} catch (DoesNotExistException) {
-			return false;
-		} catch (MultipleObjectsReturnedException) {
-			return true;
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		if ($verdict->awaitsTheScan() === true) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
 		}
 
-		return true;
+		return $verdict->countsAsCopy();
 	}//end isReceivedCopy()
 
 	/**

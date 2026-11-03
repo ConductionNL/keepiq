@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
 
@@ -103,6 +104,7 @@ class DelegationService {
 	 *                                  delegate is the owner themselves,
 	 *                                  or the delegate holds no
 	 *                                  pre-existing share of the Secret.
+	 * @throws ShareScanPendingException When the share row the delegation sits on waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-6.2
 	 */
@@ -158,6 +160,7 @@ class DelegationService {
 	 *                                  the initiator is already the owner,
 	 *                                  or the initiator holds no
 	 *                                  pre-existing share of the Secret.
+	 * @throws ShareScanPendingException When the share row the handover sits on waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
 	 */

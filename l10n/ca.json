@@ -1802,7 +1802,8 @@
         "This image could not be read.": "No s'ha pogut llegir aquesta imatge.",
         "This image is too large. Choose an image under 10 MB.": "Aquesta imatge és massa gran. Trieu una imatge de menys de 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Això no és una clau d'autenticador. Enganxeu un enllaç otpauth://totp/ o el secret en base32.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Aquest codi QR no conté cap clau d'autenticador. Feu servir el codi QR que el lloc mostra quan configureu l'inici de sessió en dos passos."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Aquest codi QR no conté cap clau d'autenticador. Feu servir el codi QR que el lloc mostra quan configureu l'inici de sessió en dos passos.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Aquest secret està esperant una comprovació de les seves comparticions que encara no ha acabat. No s'ha desat res; torneu-ho a provar més tard o demaneu a un administrador que comprovi que les tasques en segon pla s'executen."
     },
     "plurals": null
 }
