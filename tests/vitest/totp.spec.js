@@ -255,6 +255,11 @@ describe('parseOtpauth', () => {
 			`${URI}A:b?secret=${KEY}&algorithm=MD5`,
 			'Unsupported TOTP algorithm: MD5',
 		],
+		[
+			'unknown algorithm before a malformed label',
+			`${URI}Acme%E0%A4%A:alice?secret=${KEY}&algorithm=MD5`,
+			'Unsupported TOTP algorithm: MD5',
+		],
 	])('refuses %s', (_, input, message) => {
 		expect(() => parseOtpauth(input)).toThrow(message)
 	})
