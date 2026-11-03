@@ -52,6 +52,26 @@ describe('generatePassword', () => {
 		}
 	})
 
+	it.each([
+		[2, 5],
+		[5, 2],
+	])('keeps a minimum of %i digits apart from a minimum of %i symbols', (minDigits, minSpecial) => {
+		for (let i = 0; i < 1000; i++) {
+			const value = generated({ length: 8, includeUppercase: false, includeLowercase: false, includeSpecialCharacters: true, minDigits, minSpecial })
+			expect(count(value, DIGITS)).toBeGreaterThanOrEqual(minDigits)
+			expect(count(value, SPECIAL)).toBeGreaterThanOrEqual(minSpecial)
+		}
+	})
+
+	it('keeps ambiguous characters when avoidAmbiguous is not set', () => {
+		expect(generatePassword({ length: 8, includeUppercase: false, includeLowercase: false, includeSpecialCharacters: false }, null, (low) => low)).toEqual({ ok: true, value: '00000000' })
+	})
+
+	it('accepts a set of two characters', () => {
+		const result = generatePassword({ length: 8, includeUppercase: false, includeLowercase: false, includeSpecialCharacters: false, excludedCharacters: '23456789' }, null)
+		expect(result.ok && /^[01]{8}$/.test(result.value)).toBe(true)
+	})
+
 	it('grows the length to hold every minimum', () => {
 		expect(generated({ length: 8, includeSpecialCharacters: true, minDigits: 6, minSpecial: 6 })).toHaveLength(14)
 	})
@@ -86,5 +106,18 @@ describe('generatePassword', () => {
 		const letters = UPPER + LOWER
 		expect(generatePassword({ length: 8, includeSpecialCharacters: false, excludedCharacters: letters + DIGITS }, null)).toEqual({ ok: false, failure: 'charset_empty' })
 		expect(generatePassword({ length: 8, includeSpecialCharacters: false, excludedCharacters: letters.slice(1) + DIGITS }, null)).toEqual({ ok: false, failure: 'charset_too_small' })
+	})
+
+	it('checks the length before the character set', () => {
+		expect(generatePassword({ ...DEFAULT_PASSWORD, length: 0, excludedCharacters: UPPER + LOWER + DIGITS + SPECIAL }, null)).toEqual({ ok: false, failure: 'length_too_short' })
+	})
+
+	it('refuses a length that is not a whole number', () => {
+		expect(generatePassword({ ...DEFAULT_PASSWORD, length: 12.5 }, null)).toEqual({ ok: false, failure: 'length_too_short' })
+	})
+
+	it.each([Number.NaN, -1, 'x'])('reads a minimum of %s as one', (min) => {
+		const result = generatePassword({ ...DEFAULT_PASSWORD, includeDigits: true, minDigits: min as number }, null, (low) => low)
+		expect(result.ok && /[0-9]/.test(result.value)).toBe(true)
 	})
 })
