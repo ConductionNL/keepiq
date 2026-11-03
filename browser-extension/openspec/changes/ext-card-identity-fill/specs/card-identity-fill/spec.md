@@ -244,12 +244,12 @@ A card fill SHALL ask first when the top frame or any frame taking part is serve
 ### Requirement: Card and identity inline list
 The content script SHALL open the inline list of ext-autofill, with the same host, key hand-off, positioning, keyboard use, visibility guard, frame rule and closing, on an empty qualifying card or identity field on focus, and on a trusted click in one, with `inline.open` naming the kind. A field qualifies for the card list when it has a card role other than `brand`, and for the identity list when it has an identity role in a group with at least two identity roles. The background opens it only when an account is logged in, "Show autofill suggestions on form fields" is on, the kind's "Display cards as suggestions" or "Display identities as suggestions" is on, and the frame is `http:` or `https:`. Opening never depends on whether the vault holds any card or identity.
 
-When unlocked, each row shows the item's plaintext `name` and below it, for a card, its brand and last four digits ("Visa, *1111", or "Card, *1111" when no brand is derived), and for an identity its full name, or its email without a name. A card row's accessible name is "{name}, {brand} ending in {last4}" (nl "{name}, {brand} eindigend op {last4}"; without a brand "card ending in" and "kaart eindigend op"), so a screen reader does not read the asterisk. A use-only copy, and an item without members, shows the name alone. The rows exist only in the background while answering and in the list page while it is open. With no item of the kind the list reads "No cards in Keepiq" (nl "Geen kaarten in Keepiq") or "No identities in Keepiq" (nl "Geen identiteiten in Keepiq"); locked, it reads "Unlock Keepiq to see your cards" (nl "Ontgrendel Keepiq om je kaarten te zien") or "Unlock Keepiq to see your identities" (nl "Ontgrendel Keepiq om je identiteiten te zien") with "Unlock", one row tall, and nothing is listed, counted or decrypted. Unlocked, the list is three rows tall whatever the number of items, scrolling beyond three. Its frame is titled "Keepiq cards" or "Keepiq identities", its listbox is named "Keepiq cards" or "Keepiq identities", and on opening it announces "{n} Keepiq cards. Press Down Arrow to choose." (nl "{n} Keepiq-kaarten. Druk op pijl-omlaag om te kiezen."), the identity equivalent, the no-item text, or "Keepiq is locked. Press Down Arrow to unlock."
+When unlocked, each row shows the item's plaintext `name` and below it, for a card, its brand and last four digits ("Visa, *1111", or "Card, *1111" when no brand is derived), and for an identity its full name, or its email without a name. A card row's accessible name is "{name}, {brand} ending in {last4}" (nl "{name}, {brand} eindigend op {last4}"; without a brand "card ending in" and "kaart eindigend op"), so a screen reader does not read the asterisk. A use-only copy, and an item without members, shows the name alone. The rows exist only in the background while answering and in the list page while it is open. With no item of the kind the list reads "No cards in Keepiq" (nl "Geen kaarten in Keepiq") or "No identities in Keepiq" (nl "Geen identiteiten in Keepiq"); locked, it reads "Unlock Keepiq to see your cards" (nl "Ontgrendel Keepiq om je kaarten te zien") or "Unlock Keepiq to see your identities" (nl "Ontgrendel Keepiq om je identiteiten te zien") with "Unlock", one row tall, and nothing is listed, counted or decrypted. Unlocked, the list is as tall as its rows, one row for the no-item text, up to five rows and scrolling beyond five, as the login list is. Its frame is titled "Keepiq cards" or "Keepiq identities", its listbox is named "Keepiq cards" or "Keepiq identities", and on opening it announces "{n} Keepiq cards. Press Down Arrow to choose." (nl "{n} Keepiq-kaarten. Druk op pijl-omlaag om te kiezen."), the identity equivalent, the no-item text, or "Keepiq is locked. Press Down Arrow to unlock."
 
 #### Scenario: Card number field
 - **GIVEN** an unlocked vault with cards "Work Visa" and "Personal", "Personal" filled earlier
 - **WHEN** the user focuses an empty card number field in the top frame
-- **THEN** the list shows "Personal", then "Work Visa" with "Visa, *1111", and is three rows tall
+- **THEN** the list shows "Personal", then "Work Visa" with "Visa, *1111", and is two rows tall
 
 #### Scenario: Newsletter email
 - **GIVEN** a form with only an "Email" field and a "Subscribe" button
@@ -280,12 +280,12 @@ A pick SHALL go through the inline pick of ext-autofill (session key, offered id
 - **THEN** the list closes and nothing can be picked from it
 
 ### Requirement: A locked vault on a payment or address form
-While the active account is locked, the extension SHALL offer on a payment or address form only ways to unlock: the popup shows the unlock view, the context menu shows only "Unlock vault", and the card or identity list shows its locked text with "Unlock". Nothing is matched, counted, decrypted or sent to a content script while locked. The page can learn only what it learns on a login form: that an account is logged in, that the kind's suggestions setting is on, and that the vault is locked, from the list being present and one row tall. It cannot learn whether any card or identity exists.
+While the active account is locked, the extension SHALL offer on a payment or address form only ways to unlock: the popup shows the unlock view, the context menu shows only "Unlock vault", and the card or identity list shows its locked text with "Unlock". Nothing is matched, counted, decrypted or sent to a content script while locked.
 
 #### Scenario: Locked card list
 - **GIVEN** a locked vault with three cards
 - **WHEN** the user focuses a card number field
-- **THEN** the list reads "Unlock Keepiq to see your cards" with "Unlock", one row tall, and has the same size as for a vault without cards
+- **THEN** the list reads "Unlock Keepiq to see your cards" with "Unlock", one row tall, and lists no card
 
 #### Scenario: Unlock and fill
 - **GIVEN** the locked card list
@@ -293,12 +293,12 @@ While the active account is locked, the extension SHALL offer on a payment or ad
 - **THEN** the list shows the cards
 
 ### Requirement: What the page can learn before a fill
-Before the user picks an item, the page SHALL be able to learn nothing about the user's cards and identities: their number, names, brands and members stay in the background and in the list page, the list's height does not depend on them, and `fill.probe` carries only the kind. After a fill, a frame learns the members written into its own fields, and no other.
+Before the user picks an item, the page SHALL be able to learn nothing about the user's cards and identities: their number, names, brands and members stay in the background and in the list page, and `fill.probe` carries only the kind. After a fill, a frame learns the members written into its own fields, and no other.
 
-#### Scenario: Same height with one or eight cards
-- **GIVEN** the same checkout page, an unlocked vault with one card, then with eight
+#### Scenario: Card list height
+- **GIVEN** an unlocked vault with no card, one card, three cards and eight cards
 - **WHEN** the card list opens on the number field
-- **THEN** the list's host has the same size both times
+- **THEN** the list is one, one, three and five rows tall, and with eight it scrolls to the rest
 
 ### Requirement: Cards and identities only by explicit choice
 Cards and identities SHALL be filled only after the user picked one in the popup, the inline list or the context menu. Fill on page load and the `autofill_login` shortcut MUST never fill a card or identity, as in Bitwarden.

@@ -59,7 +59,6 @@ Card and identity items can be stored, viewed and edited in the popup, but filli
 - A card fill into an `http:` frame other than loopback asks first. Bitwarden fills cards on insecure pages silently; Chrome refuses card autofill there. A card is the highest-value item a page can receive.
 - A fill that reaches a frame on another site than the top page names that site and asks first, each fill. Bitwarden fills every frame. Keepiq's rule is one item per fill to the page the user chose, and an ad or widget frame on a checkout page must not get the card silently.
 - Each frame receives only the members its fields ask for. Bitwarden's fill script carries the item to every frame.
-- The card and identity inline list has a fixed height, whatever the number of items. Their suggestions are not matched by site, so a count would be the same on every site.
 - The inline list does not open in a frame with a cross-origin ancestor, so not inside a Stripe or Adyen iframe; fill from the popup or the context menu reaches those frames. Inherited from ext-autofill.
 - Identity fill covers the members Keepiq stores (first and last name, email, phone, address as one text) and never fills the BSN. Bitwarden's identity has separate address parts, company, title, middle name and username; Keepiq's payload has not (`card-identity-items` in the Keepiq app).
 - The card's brand is derived from its number, since Keepiq does not store it. The PIN is never filled; Bitwarden's card has no PIN.
