@@ -32,15 +32,24 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
@@ -80,7 +89,7 @@ fun ItemEditScreen(
     onCancel: () -> Unit,
 ) {
     val repository = session.repository
-    val types = repository.state.types.filter { it.name != "passkey" }
+    val types = creatableTypes(repository.state.types)
     var item by remember(id) { mutableStateOf<DecryptedItem?>(null) }
     var loaded by remember(id) { mutableStateOf(id == null) }
     var type by remember(id) { mutableStateOf<SecretType?>(types.firstOrNull { it.name == "login" } ?: types.firstOrNull()) }
@@ -95,7 +104,10 @@ fun ItemEditScreen(
 
     LaunchedEffect(id) {
         if (id != null) {
-            val opened = io { repository.open(id) }
+            // openForEdit leaves the item's own `totp` field (a login's saved Authenticator key) encrypted: the form
+            // replaces or removes it, never shows it. An Authenticator item's seed is its `key`, its value, which
+            // is still opened, because that is what the form edits.
+            val opened = io { repository.openForEdit(id) }
             if (opened is OpenResult.Opened) {
                 item = opened.item
                 type = opened.item.type
@@ -150,8 +162,10 @@ fun ItemEditScreen(
                     problem = error("secret"),
                     onGenerate = { generateFor = { v -> draft = draft.copy(secret = v) } },
                 ) { draft = draft.copy(secret = it) }
+                if (draft.kind == FormKind.LOGIN) AuthenticatorKeyField(draft, error("totp"), removeOnly = false) { draft = it }
             }
-            FormKind.TOTP -> TextInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
+            // An Authenticator item's seed is its value: typed like a login's key (SeedInput), masked and kept from autofill.
+            FormKind.TOTP -> SeedInput(stringResource(R.string.edit_totp_secret), draft.secret, error("secret")) { draft = draft.copy(secret = it) }
             FormKind.CARD, FormKind.IDENTITY -> for (field in Composite.fieldsOf(draft.kind)) {
                 val value = draft.composite[field] ?: ""
                 val label = compositeFieldLabel(field)
@@ -162,6 +176,10 @@ fun ItemEditScreen(
                 }
             }
             FormKind.NOTE, FormKind.PASSKEY -> Unit
+        }
+        // A key set elsewhere on another type, an Authenticator item included: it can be removed, not entered here (web D6).
+        if (draft.kind != FormKind.LOGIN && draft.hasSavedKey) {
+            AuthenticatorKeyField(draft, error("totp"), removeOnly = true) { draft = it }
         }
         for (field in type?.fields ?: emptyList()) {
             val value = draft.typed[field.key] ?: ""
@@ -181,7 +199,7 @@ fun ItemEditScreen(
         TextInput(stringResource(R.string.detail_notes), draft.notes, null, singleLine = false) { draft = draft.copy(notes = it) }
         if (draft.kind != FormKind.PASSKEY) ExtraFields(draft, ::error) { draft = it }
 
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
+        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
         error("fields")?.let { Text(draftProblemText(it), color = MaterialTheme.colorScheme.error) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
@@ -272,6 +290,9 @@ fun TextInput(
     problem: DraftProblem?,
     keyboard: KeyboardType = KeyboardType.Text,
     singleLine: Boolean = true,
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = keyboard),
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     onChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -281,27 +302,70 @@ fun TextInput(
         singleLine = singleLine,
         isError = problem != null,
         supportingText = problem?.let { { Text(draftProblemText(it)) } },
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
-        modifier = Modifier.fillMaxWidth(),
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
+        modifier = modifier.fillMaxWidth(),
     )
 }
 
-/** A hidden input with Show and, where it fits, Generate. The keyboard is told not to learn it. */
+/**
+ * A masked field that a Show button reveals, built by [field] with the
+ * value, change handler and modifier it is given. Compose 1.8.3 keeps a text
+ * field's Password semantics once its PasswordVisualTransformation is
+ * dropped (CoreTextFieldSemanticsModifierNode never stores the new
+ * isPassword), so a screen reader would still take a shown value for a
+ * password. The field is therefore built anew when [shown] changes, and
+ * takes focus back when it had it. Text and selection are held here, above
+ * the rebuild, so the cursor stays where the user left it; when [value]
+ * changes from outside (Generate, a draft reset) the cursor goes to its end.
+ * A prefilled field starts with the cursor at the end.
+ *
+ * Known limitation: on this TextFieldValue path, Compose foundation 1.8.3's
+ * BasicTextField drops a change equal to the last recomposed value, so when
+ * two keyboard edits arrive within one frame and the second restores the
+ * earlier text, the second is lost (the String path forwarded both).
+ */
+@Composable
+internal fun ShowableField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    shown: Boolean,
+    field: @Composable (TextFieldValue, (TextFieldValue) -> Unit, Modifier) -> Unit,
+) {
+    val requester = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    val hadFocus = focused
+    var held by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    val current = if (held.text == value) held else TextFieldValue(value, TextRange(value.length))
+    val change: (TextFieldValue) -> Unit = { next ->
+        held = next
+        if (next.text != value) onValueChange(next.text)
+    }
+    key(shown) { field(current, change, Modifier.focusRequester(requester).onFocusChanged { focused = it.isFocused }) }
+    LaunchedEffect(shown) { if (hadFocus) requester.requestFocus() }
+}
+
+/** The types a new item may have: Authenticator and Passkey items are no longer made (mobile-login-totp-passkeys D9). */
+internal fun creatableTypes(types: List<SecretType>): List<SecretType> = types.filter { it.name != "totp" && it.name != "passkey" }
+
+/** A hidden input with Show and, where it fits, Generate. A password keyboard without autocorrect, which keyboards do not learn from. */
 @Composable
 private fun SecretInput(label: String, value: String, problem: DraftProblem?, onGenerate: (() -> Unit)?, onChange: (String) -> Unit) {
     var shown by remember { mutableStateOf(false) }
     Column {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            label = { Text(label) },
-            singleLine = true,
-            isError = problem != null,
-            supportingText = problem?.let { { Text(draftProblemText(it)) } },
-            visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ShowableField(value, onChange, shown) { fieldValue, onFieldChange, rebuilt ->
+            OutlinedTextField(
+                value = fieldValue,
+                onValueChange = onFieldChange,
+                label = { Text(label) },
+                singleLine = true,
+                isError = problem != null,
+                supportingText = problem?.let { { Text(draftProblemText(it)) } },
+                visualTransformation = if (shown) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+                modifier = Modifier.fillMaxWidth().then(rebuilt),
+            )
+        }
         Row {
             TextButton(onClick = { shown = !shown }) {
                 Text(stringResource(if (shown) R.string.cd_hide_field else R.string.cd_show_field, label))

@@ -47,18 +47,31 @@ function failureText(failure: GeneratorFailure): string {
 	}
 }
 
+interface Shown {
+	kind: GeneratorKind
+	result: GenerateResult
+}
+
 /** The bare hostname of an http(s) tab, without port. */
-const hostname = (tab: CurrentTab): string | null => (tab.host ? webUrl(tab.url)?.hostname ?? null : null)
+function hostname(tab: CurrentTab): string | null {
+	return tab.host ? webUrl(tab.url)?.hostname ?? null : null
+}
+
+interface GeneratorProps {
+	pick?: GeneratorPick
+	onOpenHistory?: () => void
+	takeFocus?: boolean
+}
 
 /** `takeFocus` when the control that opened it is gone, as on the lock screen; pick mode always takes focus. */
-export function Generator({ pick, onOpenHistory, takeFocus = false }: { pick?: GeneratorPick; onOpenHistory?: () => void; takeFocus?: boolean }) {
+export function Generator({ pick, onOpenHistory, takeFocus = false }: GeneratorProps) {
 	const { options, policy, accountEmail, failed, update } = useGeneratorOptions()
 	const { add } = useGeneratorHistory()
 	const tab = useCurrentTab()
 	const website = tab && hostname(tab)
 	const panelId = useId()
 	// Tagged with its kind, so Copy and Use never act on the previous sub-tab's value.
-	const [shown, setShown] = useState<{ kind: GeneratorKind; result: GenerateResult } | null>(null)
+	const [shown, setShown] = useState<Shown | null>(null)
 	const [announcement, setAnnouncement] = useState('')
 	const [nonce, setNonce] = useState(0)
 	// Once typed in, an emptied email stays empty instead of falling back to the account's.
@@ -67,11 +80,7 @@ export function Generator({ pick, onOpenHistory, takeFocus = false }: { pick?: G
 	const announceNext = useRef(false)
 	const lastRecorded = useRef<string | null>(null)
 
-	const allowed = passphraseAllowed(policy)
-	const offered: GeneratorKind[] = pick ? (pick.target === 'username' ? ['username'] : ['password', 'passphrase']) : [...GENERATOR_KINDS]
-	// Pick mode drops a turned-off Passphrase; the tab shows it disabled with the reason.
-	const kinds = pick ? offered.filter((kind) => kind !== 'passphrase' || allowed) : offered
-	const usable = kinds.filter((kind) => kind !== 'passphrase' || allowed)
+	const { kinds, usable } = offeredKinds(pick?.target, passphraseAllowed(policy))
 	const kind = options && usable.includes(options.tab) ? options.tab : usable[0]!
 
 	const email = options && (emailEdited || options.username.email !== '' ? options.username.email : accountEmail ?? '')
@@ -152,52 +161,92 @@ export function Generator({ pick, onOpenHistory, takeFocus = false }: { pick?: G
 					}}
 					onCopied={(copied) => record(copied, kind)}
 				/>
-				<div className="card form-card">
-					{kind === 'password' && (
-						<PasswordPanel
-							stored={options.password}
-							policy={policy}
-							onChange={(password, debounce) => update((current) => ({ ...current, password }), { debounce })}
-						/>
-					)}
-					{kind === 'passphrase' && (
-						<PassphrasePanel options={options.passphrase} onChange={(passphrase) => update((current) => ({ ...current, passphrase }))} />
-					)}
-					{kind === 'username' && (
-						<UsernamePanel
-							stored={options.username}
-							shown={generated.username}
-							website={website ?? null}
-							onChange={(username) => update((current) => ({ ...current, username }))}
-							onEmail={(typed) => {
-								setEmailEdited(true)
-								update((current) => ({ ...current, username: { ...current.username, email: typed } }))
-							}}
-						/>
-					)}
-				</div>
+				<OptionsCard
+					kind={kind}
+					options={options}
+					shownUsername={generated.username}
+					policy={policy}
+					website={website ?? null}
+					update={update}
+					onEmail={(typed) => {
+						setEmailEdited(true)
+						update((current) => ({ ...current, username: { ...current.username, email: typed } }))
+					}}
+				/>
 			</div>
-			{onOpenHistory && (
-				<ul className="card menu">
-					<li>
-						<button type="button" className="menu__item" onClick={onOpenHistory}>
-							<Icon name="history" />
-							<span className="menu__label">{i18n.t('generator.history')}</span>
-							<Icon name="chevronRight" />
-						</button>
-					</li>
-				</ul>
+			{onOpenHistory && <HistoryLink onOpen={onOpenHistory} />}
+			{pick && <PickFooter target={pick.target} value={value} onUse={use} />}
+		</div>
+	)
+}
+
+/** The kinds on the sub-tabs, and those of them that can generate. */
+function offeredKinds(target: GeneratorPick['target'] | undefined, allowed: boolean): { kinds: GeneratorKind[]; usable: GeneratorKind[] } {
+	const offered: GeneratorKind[] = target ? (target === 'username' ? ['username'] : ['password', 'passphrase']) : [...GENERATOR_KINDS]
+	// Pick mode drops a turned-off Passphrase; the tab shows it disabled with the reason.
+	const kinds = target ? offered.filter((kind) => kind !== 'passphrase' || allowed) : offered
+	return { kinds, usable: kinds.filter((kind) => kind !== 'passphrase' || allowed) }
+}
+
+interface OptionsCardProps {
+	kind: GeneratorKind
+	options: GeneratorOptions
+	shownUsername: UsernameOptions
+	policy: GeneratorPolicy | null
+	website: string | null
+	update: ReturnType<typeof useGeneratorOptions>['update']
+	onEmail: (email: string) => void
+}
+
+function OptionsCard({ kind, options, shownUsername, policy, website, update, onEmail }: OptionsCardProps) {
+	return (
+		<div className="card form-card">
+			{kind === 'password' && (
+				<PasswordPanel
+					stored={options.password}
+					policy={policy}
+					onChange={(password, debounce) => update((current) => ({ ...current, password }), { debounce })}
+				/>
 			)}
-			{pick && (
-				<PageFooter>
-					<div className="footer-actions">
-						<Button disabled={!value} onClick={() => value && use(value)}>
-							{i18n.t(pick.target === 'username' ? 'generator.useUsername' : 'generator.usePassword')}
-						</Button>
-					</div>
-				</PageFooter>
+			{kind === 'passphrase' && (
+				<PassphrasePanel options={options.passphrase} onChange={(passphrase) => update((current) => ({ ...current, passphrase }))} />
+			)}
+			{kind === 'username' && (
+				<UsernamePanel
+					stored={options.username}
+					shown={shownUsername}
+					website={website}
+					onChange={(username) => update((current) => ({ ...current, username }))}
+					onEmail={onEmail}
+				/>
 			)}
 		</div>
+	)
+}
+
+function HistoryLink({ onOpen }: { onOpen: () => void }) {
+	return (
+		<ul className="card menu">
+			<li>
+				<button type="button" className="menu__item" onClick={onOpen}>
+					<Icon name="history" />
+					<span className="menu__label">{i18n.t('generator.history')}</span>
+					<Icon name="chevronRight" />
+				</button>
+			</li>
+		</ul>
+	)
+}
+
+function PickFooter({ target, value, onUse }: { target: GeneratorPick['target']; value: string | null; onUse: (value: string) => void }) {
+	return (
+		<PageFooter>
+			<div className="footer-actions">
+				<Button disabled={!value} onClick={() => value && onUse(value)}>
+					{i18n.t(target === 'username' ? 'generator.useUsername' : 'generator.usePassword')}
+				</Button>
+			</div>
+		</PageFooter>
 	)
 }
 

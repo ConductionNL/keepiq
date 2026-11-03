@@ -32,32 +32,12 @@
 			<!-- Secrets that could not be decrypted are not in the file: say
 			     how many before anything is written, and let the user choose
 			     to continue or cancel (keepiq#794). -->
-			<div
+			<SkippedSecretsNotice
 				v-if="skipped > 0"
+				v-model:acknowledged="skippedAcknowledged"
 				class="export-dialog__skipped"
-				data-testid="export-skipped-warning">
-				<NcNoteCard type="warning">
-					{{
-						n(
-							'keepiq',
-							'%n secret could not be decrypted and is not in this export.',
-							'%n secrets could not be decrypted and are not in this export.',
-							skipped,
-						)
-					}}
-				</NcNoteCard>
-				<NcCheckboxRadioSwitch
-					:modelValue="skippedAcknowledged"
-					data-testid="export-skipped-ack"
-					@update:modelValue="skippedAcknowledged = $event">
-					{{
-						t(
-							'keepiq',
-							'Continue without the secrets that could not be decrypted',
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-			</div>
+				name="export"
+				:skipped="skipped" />
 
 			<!-- The export ban (admin-vault-policies §2.2): every file mode is
 			     hidden; the personal data package stays available. -->
@@ -222,6 +202,7 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
+import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
 import { verifyMasterPassword } from '../crypto/reauth.js'
 import { fetchPolicy, resetPolicyCache } from '../policy/policy.js'
 import { useExportStore } from '../store/modules/export.js'
@@ -234,6 +215,7 @@ const PASSPHRASE_FLOOR = 3
 export default {
 	name: 'ExportDialog',
 	components: {
+		SkippedSecretsNotice,
 		NcDialog,
 		NcButton,
 		NcNoteCard,
