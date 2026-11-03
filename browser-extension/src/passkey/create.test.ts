@@ -554,4 +554,18 @@ describe('readSaveRequest', () => {
 		expect(readSaveRequest({ itemId: 'a', replace: true })).toEqual({ itemId: 'a', replace: true })
 		expect(readSaveRequest({ name: 'n', folderId: null })).toEqual({ name: 'n', folderId: null })
 	})
+
+	it.each([
+		['null', null],
+		['a string', 'a'],
+		['a login with a folder', { itemId: 'a', folderId: null }],
+		['a login with a name', { itemId: 'a', name: 'n' }],
+		['a login with a replace that is not a boolean', { itemId: 'a', replace: 1 }],
+		['a login id that is not a string', { itemId: 1 }],
+		['a new login with a replace', { name: 'n', folderId: null, replace: false }],
+		['a new login with a folder that is not a string', { name: 'n', folderId: 1 }],
+		['a new login whose name is not a string', { name: 1, folderId: null }],
+	])('refuses %s', (_, target) => {
+		expect(readSaveRequest(target)).toBeNull()
+	})
 })
