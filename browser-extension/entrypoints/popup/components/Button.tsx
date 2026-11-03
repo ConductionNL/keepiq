@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, MouseEventHandler } from 'react'
 import { Icon, type IconName } from './Icon'
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -8,13 +8,21 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 	focusable?: boolean
 }
 
+interface OffProps {
+	disabled: boolean
+	'aria-disabled': boolean | undefined
+	onClick: MouseEventHandler<HTMLButtonElement> | undefined
+}
+
+/** How a button is off: natively disabled, or when focusable, `aria-disabled` with its clicks swallowed. */
+function offProps(off: boolean, focusable: boolean, onClick: MouseEventHandler<HTMLButtonElement> | undefined): OffProps {
+	if (!focusable) return { disabled: off, 'aria-disabled': undefined, onClick }
+	return { disabled: false, 'aria-disabled': off, onClick: off ? (event) => event.preventDefault() : onClick }
+}
+
 export function Button({ variant = 'primary', busy = false, focusable = false, disabled, children, type = 'button', onClick, ...rest }: Props) {
-	const off = disabled || busy
 	return (
-		<button
-			{...rest} type={type} className={`btn btn--${variant}`} disabled={off && !focusable} aria-disabled={focusable ? off : undefined} aria-busy={busy}
-			onClick={focusable && off ? (event) => event.preventDefault() : onClick}
-		>
+		<button {...rest} type={type} className={`btn btn--${variant}`} {...offProps(disabled || busy, focusable, onClick)} aria-busy={busy}>
 			{busy && <span className="spinner" aria-hidden="true" />}
 			{children}
 		</button>
