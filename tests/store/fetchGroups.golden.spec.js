@@ -46,14 +46,31 @@ const { useGroupStore } = await import('../../src/store/modules/group.js')
 
 const GOLDEN = path.join(__dirname, 'golden', 'fetch-groups.json')
 
-const ok = (groups) => ({ data: { ocs: { data: { groups } } } })
-const failure = (message, ocs) =>
-	Object.assign(
+/**
+ * An OCS answer listing groups.
+ *
+ * @param {*} groups The groups value.
+ * @return {object}
+ */
+function ok(groups) {
+	return { data: { ocs: { data: { groups } } } }
+}
+
+/**
+ * A failed request, with an OCS message when one is given.
+ *
+ * @param {string} message The error message.
+ * @param {string} [ocs] The OCS meta message.
+ * @return {Error}
+ */
+function failure(message, ocs) {
+	return Object.assign(
 		new Error(message),
 		ocs === undefined
 			? {}
 			: { response: { data: { ocs: { meta: { message: ocs } } } } },
 	)
+}
 
 const CASES = {
 	'groups out of order': [ok(['b', 'a', 'c'])],
