@@ -135,8 +135,8 @@ final class PasskeyUITests: XCTestCase {
         waitForLabel(app.staticTexts["passkeyResult"], containing: "registered: rp true, flags 0x45, id 16 bytes, checks true")
         shot("passkey-ios-02-created")
 
-        // The refresh after the save put it in the site file and the identity store.
-        waitForLabel(app.staticTexts["passkeyIndex"], containing: "keepiq-passkey.test: 1 passkeys on disk, passkey identities 1")
+        // The refresh after the save put the login with it (no Passkey item) in the site file and the identity store.
+        waitForLabel(app.staticTexts["passkeyIndex"], containing: "keepiq-passkey.test: logins with passkeys 1, passkey items 0, passkey identities 1")
         shot("passkey-ios-03-index")
 
         // Sign in: no new unlock within the idle time, one passkey fits, it signs at once.
