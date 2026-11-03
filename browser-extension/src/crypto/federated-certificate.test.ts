@@ -462,8 +462,8 @@ describe('verifyFederatedCertificate on chains built here', () => {
 		expect(await reasonOf(verifyBuilt({ leaf: { issuer: name(utf8('Another CA')) } }))).toBe('bad_chain')
 	})
 
-	it('refuses an intermediate whose basicConstraints spells out cA FALSE', async () => {
-		expect(await reasonOf(verifyBuilt({ intermediate: { extensions: [basicConstraints(der(0x01, [0x00]))] } }))).toBe('bad_chain')
+	it('refuses an intermediate whose basicConstraints spells out cA FALSE, which DER leaves out', async () => {
+		expect(await reasonOf(verifyBuilt({ intermediate: { extensions: [basicConstraints(der(0x01, [0x00]))] } }))).toBe('malformed')
 	})
 
 	it('refuses a leaf marked CA even when its keyUsage lacks keyCertSign', async () => {
@@ -515,6 +515,33 @@ describe('verifyFederatedCertificate on chains built here', () => {
 
 	it('refuses a leaf whose key is no SEQUENCE, though its chain verifies', async () => {
 		expect(await reasonOf(verifyBuilt({ leaf: { spki: der(0x04, keys.spki) } }))).toBe('malformed')
+	})
+
+	// DER (X.690 11.1, 11.5, 8.3.2): a BOOLEAN is 0x00 or 0xFF, a field at its DEFAULT is left out, and an INTEGER has no redundant leading byte.
+	describe('strict DER', () => {
+		const flagged = (id: number[], flag: number, value: number[]) => der(0x30, der(0x06, id), der(0x01, [flag]), der(0x04, value))
+		const cases: [string, Parts][] = [
+			['a cA BOOLEAN of 0x01', { intermediate: { extensions: [basicConstraints(der(0x01, [0x01]))] } }],
+			['a cA BOOLEAN of two bytes', { intermediate: { extensions: [basicConstraints(der(0x01, [0xff, 0xff]))] } }],
+			['a critical flag of 0x01', { intermediate: { extensions: [CA, flagged(OID.keyUsage, 0x01, der(0x03, [0x01, 0x06]))] } }],
+			['an explicit critical FALSE', { intermediate: { extensions: [CA, flagged(OID.subjectKeyId, 0x00, der(0x04, [7]))] } }],
+			['an explicit critical FALSE on basicConstraints', { intermediate: { extensions: [flagged(OID.basicConstraints, 0x00, der(0x30, der(0x01, [0xff])))] } }],
+			['an explicit cA FALSE on the leaf', { leaf: { extensions: [basicConstraints(der(0x01, [0x00]))] } }],
+			['a pathLen of 00 00', { intermediate: { extensions: [basicConstraints(der(0x01, [0xff]), der(0x02, [0x00, 0x00]))] } }],
+			['a pathLen of 00 05', { root: { extensions: [basicConstraints(der(0x01, [0xff]), der(0x02, [0x00, 0x05]))] } }],
+		]
+
+		it.each(cases)('refuses %s as malformed', async (_, parts) => {
+			expect(await reasonOf(verifyBuilt(parts))).toBe('malformed')
+		})
+
+		it('accepts a pathLen of 128, which needs its leading zero', async () => {
+			await expect(verifyBuilt({ root: { extensions: [basicConstraints(der(0x01, [0xff]), der(0x02, [0x00, 0x80]))] } })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
+		})
+
+		it('accepts a leaf whose basicConstraints leaves cA at its default', async () => {
+			await expect(verifyBuilt({ leaf: { extensions: [basicConstraints()] } })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
+		})
 	})
 })
 
