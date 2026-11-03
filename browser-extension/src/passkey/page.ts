@@ -20,6 +20,8 @@ const INSTALLED = Symbol.for('keepiq.passkey')
 type Method = (...args: unknown[]) => Promise<unknown>
 type Kind = 'create' | 'get'
 type Outgoing = PageToRelay extends infer M ? M extends PageToRelay ? Omit<M, 'channel' | 'id'> : never : never
+/** A `create` or `get` as it goes to the relay. */
+type CeremonyMessage = Extract<Outgoing, { kind: Kind }>
 type Listener = (this: EventTarget, type: string, listener: () => void) => void
 
 /** What the page script uses of the page's globals, captured when it starts. */
@@ -88,12 +90,28 @@ const getOptions = (o: PublicKeyCredentialRequestOptions): PasskeyGetOptions => 
 	userVerification: maybe(o.userVerification, String),
 })
 
+/** Whether an earlier copy of this script replaced any of the methods it replaces. */
+function installedBefore(container: CredentialsContainer, Credential: NonNullable<PageScope['PublicKeyCredential']>): boolean {
+	const methods: unknown[] = [container.create, container.get, Credential.isUserVerifyingPlatformAuthenticatorAvailable, Credential.isConditionalMediationAvailable]
+	return methods.some((method) => typeof method === 'function' && Object.hasOwn(method, INSTALLED))
+}
+
+/**
+ * Puts `wrap(method)` in the place of the target's method, marked as this script's; a method the target lacks stays
+ * missing. A page that forges the marker only turns Keepiq off for itself, which deleting the replacements already does.
+ */
+function replaceMethod(target: object, name: string, wrap: (method: Method) => object): void {
+	const method = (target as Record<string, unknown>)[name]
+	if (typeof method !== 'function') return
+	const value = wrap(method as Method)
+	Object.defineProperty(value, INSTALLED, { value: true })
+	Object.defineProperty(target, name, { value, writable: true, configurable: true })
+}
+
 export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope): void {
 	const container = scope.navigator?.credentials
 	const Credential = scope.PublicKeyCredential
-	if (!container || !Credential) return
-	const methods: unknown[] = [container.create, container.get, Credential.isUserVerifyingPlatformAuthenticatorAvailable, Credential.isConditionalMediationAvailable]
-	if (methods.some((method) => typeof method === 'function' && Object.hasOwn(method, INSTALLED))) return
+	if (!container || !Credential || installedBefore(container, Credential)) return
 	const { MessageChannel, AbortController, DOMException } = scope
 	// Read from the prototype, as the page may set a signal's own members; they throw for anything but a real AbortSignal.
 	// On Firefox a page script that ran before this one may have replaced them, which only harms that page's own calls.
@@ -196,10 +214,10 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 		return fallback()
 	}
 
-	function modal(kind: Kind, publicKey: PasskeyCreateOptions | PasskeyGetOptions, mediation: string | undefined, signal: AbortSignal | undefined, fallback: () => Promise<unknown>) {
-		const userVerification = kind === 'create' ? (publicKey as PasskeyCreateOptions).authenticatorSelection?.userVerification : (publicKey as PasskeyGetOptions).userVerification
-		const timeout = ceremonyTimeout(publicKey.timeout, userVerification)
-		const call = open(kind === 'create' ? { kind, options: publicKey as PasskeyCreateOptions, mediation } : { kind, options: publicKey as PasskeyGetOptions, mediation })
+	function modal(message: CeremonyMessage, signal: AbortSignal | undefined, fallback: () => Promise<unknown>) {
+		const userVerification = message.kind === 'create' ? message.options.authenticatorSelection?.userVerification : message.options.userVerification
+		const timeout = ceremonyTimeout(message.options.timeout, userVerification)
+		const call = open(message)
 		return new Promise<unknown>((resolve, reject) => {
 			let done = false
 			const finish = () => {
@@ -224,7 +242,7 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 				if (done) return
 				finish()
 				try {
-					outcome(kind, reply, signal, fallback).then(resolve, reject)
+					outcome(message.kind, reply, signal, fallback).then(resolve, reject)
 				} catch (error) {
 					reject(error)
 				}
@@ -298,18 +316,20 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 				const options = args[0] as (CredentialCreationOptions & CredentialRequestOptions) | undefined
 				if (!options?.publicKey) return method.apply(this, args)
 				const fallback = () => method.apply(this, args)
-				const publicKey = kind === 'create' ? createOptions(options.publicKey as PublicKeyCredentialCreationOptions) : getOptions(options.publicKey as PublicKeyCredentialRequestOptions)
+				const ceremony = kind === 'create'
+					? { kind, options: createOptions(options.publicKey as PublicKeyCredentialCreationOptions) }
+					: { kind, options: getOptions(options.publicKey as PublicKeyCredentialRequestOptions) }
 				const mediation = maybe(options.mediation as string | undefined, String)
 				const signal = options.signal as AbortSignal | undefined
 				// Before any ceremony starts: `aborted` throws for anything but a real AbortSignal, which the catch hands to
 				// the browser; an aborted one the browser rejects with the page's own reason.
 				if (signal !== undefined && aborted(signal)) return fallback()
-				if (kind === 'get' && mediation === 'conditional') {
+				if (ceremony.kind === 'get' && mediation === 'conditional') {
 					// The browser reads inherited members too, which a spread would drop.
 					const withSignal = (own: AbortSignal) => Object.create(options, { signal: { value: own, enumerable: true } }) as unknown
-					return conditional(publicKey as PasskeyGetOptions, signal, (own) => method.call(this, withSignal(own)))
+					return conditional(ceremony.options, signal, (own) => method.call(this, withSignal(own)))
 				}
-				return modal(kind, publicKey, mediation, signal, fallback)
+				return modal({ ...ceremony, mediation }, signal, fallback)
 			} catch {
 				return method.apply(this, args)
 			}
@@ -326,17 +346,6 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 		}
 	}
 
-	// A page that forges the marker only turns Keepiq off for itself, which deleting the replacements already does.
-	const replace = (target: object, name: string, value: object) => {
-		Object.defineProperty(value, INSTALLED, { value: true })
-		Object.defineProperty(target, name, { value, writable: true, configurable: true })
-	}
-	for (const kind of ['create', 'get'] as const) {
-		const method = container[kind] as unknown
-		if (typeof method === 'function') replace(container, kind, replacement(kind, method as Method))
-	}
-	for (const name of ['isUserVerifyingPlatformAuthenticatorAvailable', 'isConditionalMediationAvailable'] as const) {
-		const method = Credential[name]
-		if (typeof method === 'function') replace(Credential, name, availability(method))
-	}
+	for (const kind of ['create', 'get'] as const) replaceMethod(container, kind, (method) => replacement(kind, method))
+	for (const name of ['isUserVerifyingPlatformAuthenticatorAvailable', 'isConditionalMediationAvailable'] as const) replaceMethod(Credential, name, availability)
 }

@@ -471,6 +471,18 @@ describe('page script', () => {
 		expect(posted).toHaveLength(1)
 	})
 
+	it('replaces only the methods the browser has, leaving a missing one missing', () => {
+		const own = { create: browserCreate, get: browserGet }
+		const available = vi.fn(async () => false)
+		class OlderCredential {
+			static isUserVerifyingPlatformAuthenticatorAvailable = available
+		}
+		installPasskeyPage({ ...scope, navigator: { credentials: own as unknown as CredentialsContainer }, PublicKeyCredential: OlderCredential })
+		expect(own.get).not.toBe(browserGet)
+		expect(OlderCredential.isUserVerifyingPlatformAuthenticatorAvailable).not.toBe(available)
+		expect('isConditionalMediationAvailable' in OlderCredential).toBe(false)
+	})
+
 	it('does nothing in a browser without WebAuthn', () => {
 		const bare = { create: browserCreate, get: browserGet }
 		installPasskeyPage({ ...scope, navigator: { credentials: bare as unknown as CredentialsContainer }, PublicKeyCredential: undefined })
