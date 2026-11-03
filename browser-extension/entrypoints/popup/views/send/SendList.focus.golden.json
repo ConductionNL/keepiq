@@ -1,0 +1,43 @@
+{
+	"no focus asked": [
+		"body"
+	],
+	"a listed row": [
+		"row 1: Remove, Text send, Oct #, #:# (#)"
+	],
+	"a row not listed": [
+		"body"
+	],
+	"a row asked, the load fails": [
+		"row -1: Retry"
+	],
+	"the load fails, nothing asked": [
+		"body"
+	],
+	"a removed middle row": [
+		"dialog open: row -1: Remove",
+		"removed: row 1: Remove, Text send, Oct #, #:# (#)"
+	],
+	"a removed last row": [
+		"dialog open: row -1: Remove",
+		"removed: row 1: Remove, Text send, Oct #, #:# (#)"
+	],
+	"the only row removed": [
+		"dialog open: row -1: Remove",
+		"removed: row -1: New send"
+	],
+	"a listed row, then an earlier row removed": [
+		"row 2: Remove, Text send, Oct #, #:# (#)",
+		"dialog open: row -1: Remove",
+		"removed: row 0: Remove, Text send, Oct #, #:# (#)"
+	],
+	"a removal, then a remove cancelled": [
+		"dialog open: row -1: Remove",
+		"removed: row 0: Remove, Text send, Oct #, #:# (#)",
+		"cancelled: row 1: Remove, Text send, Oct #, #:# (#)"
+	],
+	"a removal that fails": [
+		"dialog open: row -1: Remove",
+		"removed: row -1: Remove"
+	]
+}
