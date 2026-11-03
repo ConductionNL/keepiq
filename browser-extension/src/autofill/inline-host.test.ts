@@ -256,6 +256,80 @@ describe('opening', () => {
 		expect(host().frame.title).toBe('Keepiq verification codes')
 	})
 
+	it.each([
+		['card', '<form><label>Card number <input id="u" autocomplete="cc-number"></label><button>Pay</button></form>', 'Keepiq cards'],
+		['identity', '<form><label>First name <input id="u"></label><label>Last name <input id="p"></label><button>Save</button></form>', 'Keepiq identities'],
+	])('opens in %s mode on its field, titled for that kind', async (mode, html, title) => {
+		start(html)
+		// The hit test that card and identity roles need, which happy-dom lacks.
+		const hitFields = (x: number, y: number) => [$('#u'), $('#p')].filter((field) => {
+			const box = field?.getBoundingClientRect()
+			return box && x >= box.left && x < box.right && y >= box.top && y < box.bottom
+		})
+		Object.defineProperty(document, 'elementsFromPoint', { configurable: true, value: hitFields })
+		try {
+			$('#u').focus()
+			await settle()
+		} finally {
+			delete (document as { elementsFromPoint?: unknown }).elementsFromPoint
+		}
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode })
+		expect(host().frame.title).toBe(title)
+	})
+
+	describe('on a textarea', () => {
+		const IDENTITY = '<form><label>First name <input id="u"></label><label>Last name <input id="p"></label><label>Address <textarea id="a" autocomplete="street-address"></textarea></label><button>Save</button></form>'
+		beforeEach(() => {
+			rects.set('a', { top: 180, left: 100, width: 200, height: 60 })
+			// The hit test that identity roles need, which happy-dom lacks.
+			Object.defineProperty(document, 'elementsFromPoint', {
+				configurable: true,
+				value: (x: number, y: number) => ['#u', '#p', '#a'].map((id) => $(id)).filter((field) => {
+					const box = field?.getBoundingClientRect()
+					return box && x >= box.left && x < box.right && y >= box.top && y < box.bottom
+				}),
+			})
+		})
+		afterEach(() => delete (document as { elementsFromPoint?: unknown }).elementsFromPoint)
+
+		it('opens the identity list on a street address textarea, beneath it, and hands Down to the list', async () => {
+			start(IDENTITY)
+			await openOn('#a')
+			expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'identity' })
+			expect(hostBox()).toEqual({ top: 244, left: 100, width: 240, height: FIVE_ROWS })
+			shown()
+			key($('#a'), 'ArrowDown')
+			expect(posted()).toContainEqual({ kind: 'inline.focus', key: KEY })
+		})
+
+		it('counts a textarea holding only whitespace as empty, and one with text as filled', async () => {
+			start(IDENTITY)
+			$<HTMLTextAreaElement>('#a').value = 'Kerkstraat 1'
+			$('#a').focus()
+			await settle()
+			expect(request).not.toHaveBeenCalled()
+			$('#a').blur()
+			$<HTMLTextAreaElement>('#a').value = '  \n '
+			$('#a').focus()
+			await settle()
+			expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'identity' })
+		})
+
+		it.each([
+			['a webauthn textarea', '<div><textarea id="a" autocomplete="webauthn"></textarea></div>'],
+			['a lone address textarea', '<form><label>Address <textarea id="a" autocomplete="street-address"></textarea></label><button>Save</button></form>'],
+			['a comment textarea on a login form', '<form><input id="u" name="username"><input id="p" type="password"><textarea id="a" name="comment"></textarea><button>Log in</button></form>'],
+			['a card number textarea', '<form><label>Card number <textarea id="a" autocomplete="cc-number"></textarea></label><label>CVC <input id="u" autocomplete="cc-csc"></label><button>Pay</button></form>'],
+			['a one-time code textarea', '<form><label>Code <textarea id="a" autocomplete="one-time-code"></textarea></label><button>Verify</button></form>'],
+		])('opens nothing on %s', async (_, html) => {
+			start(html)
+			$('#a').focus()
+			$('#a').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+			await settle()
+			expect(request).not.toHaveBeenCalled()
+		})
+	})
+
 	it('asks for a list on a field that qualifies only by its webauthn token, flagged so the background opens it only for a pending conditional request', async () => {
 		start('<div><input id="u" name="q" autocomplete="WebAuthn"></div><input id="p" name="search">')
 		$('#p').focus()

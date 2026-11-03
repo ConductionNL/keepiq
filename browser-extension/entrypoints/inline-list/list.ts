@@ -1,10 +1,12 @@
 import { i18n } from '#i18n'
 import {
-	INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MIN_HEIGHT_PX, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
-	type ContentToInlineList, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow, type InlineStateReply, type PasskeyRow, type PickInput,
+	INLINE_FRAME_TITLES, INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MODES, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineFixedRows, inlineHeight, THEMES,
+	type ContentToInlineList, type FormConfirmation, type FormQuestion, type InlineCard, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow,
+	type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import { trackVisibility } from '@/src/autofill/visibility-tracker'
+import { answered, answeredOnlyHost } from '@/src/autofill/form-answers'
 import { applyTheme, followMirror, mirroredTheme } from '../popup/theme'
 
 /** A status region filled at once after it appears is not announced. */
@@ -25,10 +27,24 @@ const isCode = (code: unknown): code is InlineCode => {
 		&& typeof c.period === 'number' && Number.isFinite(c.validUntil)
 }
 
-/** A code list has a code on every row, a login list on none. */
+const isCard = (card: unknown): card is InlineCard => {
+	const c = card as Partial<InlineCard> | null
+	return typeof c === 'object' && c !== null && (c.brand === null || typeof c.brand === 'string') && typeof c.last4 === 'string' && /^\d{4}$/.test(c.last4)
+}
+
+const isWalletRow = (row: InlineRow) => row.code === undefined && row.username === null
+
+/** A code list has a code on every row; card and identity rows have no username, a card row may have a card and an identity row has a detail; a login row none of these. */
+const ROW_CHECKS: Record<InlineMode, (row: InlineRow) => boolean> = {
+	login: (row) => row.code === undefined && row.detail === undefined && row.card === undefined,
+	code: (row) => isCode(row.code) && row.detail === undefined && row.card === undefined,
+	card: (row) => isWalletRow(row) && row.detail === undefined && (row.card === undefined || isCard(row.card)),
+	identity: (row) => isWalletRow(row) && row.card === undefined && (row.detail === null || typeof row.detail === 'string'),
+}
+
 function hasValidRows({ mode, rows }: Partial<State>): boolean {
 	return Array.isArray(rows) && rows.every((row) => typeof row?.id === 'string' && typeof row.name === 'string'
-		&& (row.username === null || typeof row.username === 'string') && (mode === 'code' ? isCode(row.code) : row.code === undefined))
+		&& (row.username === null || typeof row.username === 'string') && ROW_CHECKS[mode as InlineMode](row))
 }
 
 /** Passkeys come only with an unlocked login list. */
@@ -40,7 +56,7 @@ function isState(reply: unknown): reply is State {
 	const r = reply as Partial<State> | null
 	return typeof r === 'object' && r !== null
 		&& (r.state === 'locked' || r.state === 'unlocked')
-		&& (r.mode === 'login' || r.mode === 'code')
+		&& INLINE_MODES.includes(r.mode as InlineMode)
 		&& typeof r.host === 'string'
 		&& THEMES.includes(r.theme as never)
 		&& hasValidRows(r)
@@ -53,33 +69,70 @@ const shownRows = ({ rows, passkeys = [] }: State): Row[] => [
 	...rows,
 ]
 
-/** A passkey names its credential; only a login can carry the confirmed insecure fill. */
-function pickMessage(key: string, row: Row, input: PickInput, confirmedInsecure: boolean): InlineListToBackground {
+/** The answers a pick carries: a login's insecure page, or every answer so far for a card or identity. */
+type Answers = { confirmedInsecure?: true; confirmed?: FormConfirmation }
+
+/** A passkey names its credential and carries no answers. */
+function pickMessage(key: string, row: Row, input: PickInput, answers: Answers): InlineListToBackground {
 	if (row.credentialId !== undefined) return { kind: 'inline.pick', key, itemId: row.id, credentialId: row.credentialId, input }
-	return { kind: 'inline.pick', key, itemId: row.id, input, ...(confirmedInsecure ? { confirmedInsecure } : {}) }
+	return { kind: 'inline.pick', key, itemId: row.id, input, ...answers }
 }
 
-type PickAnswer = Partial<{ needsInsecureConfirm: true; refused: string }> | null | undefined
+type PickAnswer = Partial<{ needsInsecureConfirm: true; needsFormConfirm: FormQuestion; refused: string }> | null | undefined
 
-/** The texts that differ between the login list and the code list. */
-function texts(mode: InlineMode) {
-	return mode === 'code'
-		? {
-			frameTitle: () => i18n.t('inlineList.code.frameTitle'),
-			label: (host: string) => i18n.t('inlineList.code.label', { host }),
-			noMatch: (host: string) => i18n.t('inlineList.code.noMatch', { host }),
-			locked: () => i18n.t('inlineList.code.locked'),
-			count: (n: number) => i18n.t('inlineList.code.status.count', n),
-			statusNoMatch: (host: string) => i18n.t('inlineList.code.status.noMatch', { host }),
-		}
-		: {
-			frameTitle: () => i18n.t('inlineList.frameTitle'),
-			label: (host: string) => i18n.t('inlineList.label', { host }),
-			noMatch: (host: string) => i18n.t('inlineList.noMatch', { host }),
-			locked: () => i18n.t('inlineList.locked'),
-			count: (n: number) => i18n.t('inlineList.status.count', n),
-			statusNoMatch: (host: string) => i18n.t('inlineList.status.noMatch', { host }),
-		}
+const isFormQuestion = (value: unknown): value is FormQuestion => {
+	const q = value as Partial<FormQuestion> | null | undefined
+	return typeof q?.insecure === 'boolean' && typeof q.host === 'string' && typeof q.origin === 'string'
+		&& Array.isArray(q.frameHosts) && q.frameHosts.every((host) => typeof host === 'string')
+}
+
+interface ModeTexts {
+	/** The listbox's name. */
+	label: (host: string) => string
+	noMatch: (host: string) => string
+	locked: () => string
+	count: (n: number) => string
+	statusNoMatch: (host: string) => string
+}
+
+/** Cards and identities are not matched by site, so their texts name none. */
+const TEXTS: Record<InlineMode, ModeTexts> = {
+	login: {
+		label: (host) => i18n.t('inlineList.label', { host }),
+		noMatch: (host) => i18n.t('inlineList.noMatch', { host }),
+		locked: () => i18n.t('inlineList.locked'),
+		count: (n) => i18n.t('inlineList.status.count', n),
+		statusNoMatch: (host) => i18n.t('inlineList.status.noMatch', { host }),
+	},
+	code: {
+		label: (host) => i18n.t('inlineList.code.label', { host }),
+		noMatch: (host) => i18n.t('inlineList.code.noMatch', { host }),
+		locked: () => i18n.t('inlineList.code.locked'),
+		count: (n) => i18n.t('inlineList.code.status.count', n),
+		statusNoMatch: (host) => i18n.t('inlineList.code.status.noMatch', { host }),
+	},
+	card: {
+		label: () => i18n.t(INLINE_FRAME_TITLES.card),
+		noMatch: () => i18n.t('inlineList.card.noMatch'),
+		locked: () => i18n.t('inlineList.card.locked'),
+		count: (n) => i18n.t('inlineList.card.status.count', n),
+		statusNoMatch: () => i18n.t('inlineList.card.noMatch'),
+	},
+	identity: {
+		label: () => i18n.t(INLINE_FRAME_TITLES.identity),
+		noMatch: () => i18n.t('inlineList.identity.noMatch'),
+		locked: () => i18n.t('inlineList.identity.locked'),
+		count: (n) => i18n.t('inlineList.identity.status.count', n),
+		statusNoMatch: () => i18n.t('inlineList.identity.noMatch'),
+	},
+}
+
+/** The rows `content` asks the host for, or null for content sized by its own height. */
+function rowsFor(content: Element, mode: InlineMode): number | null {
+	if (content.matches('.message--locked')) return inlineFixedRows(mode, true)
+	const fixed = inlineFixedRows(mode, false)
+	if (content.getAttribute('role') === 'listbox') return fixed ?? content.childElementCount
+	return content.matches('.message--muted') ? fixed ?? 1 : null
 }
 
 /** Seconds until `validUntil`, as the countdown shows them. */
@@ -110,27 +163,40 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Reco
 	return node
 }
 
-/** A globe for a login, a clock for a login's code, a key for a passkey. */
+type Shape = [tag: 'circle' | 'rect' | 'path', attributes: Record<string, string>]
+
+/** A globe for a login, a clock for a login's code, a key for a passkey, a card, a person for an identity. */
+const ICONS: Record<InlineMode | 'passkey', Shape[]> = {
+	login: [['circle', { cx: '12', cy: '12', r: '9' }], ['path', { d: 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18' }]],
+	code: [['circle', { cx: '12', cy: '12', r: '9' }], ['path', { d: 'M12 7v5l3 2' }]],
+	passkey: [['circle', { cx: '8', cy: '15', r: '4' }], ['path', { d: 'M10.8 12.2 20 3M17 6l3 3M14.5 8.5l2 2' }]],
+	card: [['rect', { x: '2', y: '5', width: '20', height: '14', rx: '2' }], ['path', { d: 'M2 10h20M6 15h4' }]],
+	identity: [['circle', { cx: '12', cy: '8', r: '4' }], ['path', { d: 'M4 21a8 8 0 0 1 16 0' }]],
+}
+
+function svgElement<K extends 'svg' | Shape[0]>(tag: K, attributes: Record<string, string>): SVGElementTagNameMap[K] {
+	const node = document.createElementNS('http://www.w3.org/2000/svg', tag)
+	for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value)
+	return node
+}
+
 function rowIcon(kind: InlineMode | 'passkey'): SVGSVGElement {
-	const ns = 'http://www.w3.org/2000/svg'
-	const svg = document.createElementNS(ns, 'svg')
-	for (const [name, value] of Object.entries({ class: 'row__icon', width: '32', height: '32', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'aria-hidden': 'true' })) {
-		svg.setAttribute(name, value)
-	}
-	const circle = document.createElementNS(ns, 'circle')
-	const [cx, cy, r] = kind === 'passkey' ? ['8', '15', '4'] : ['12', '12', '9']
-	circle.setAttribute('cx', cx)
-	circle.setAttribute('cy', cy)
-	circle.setAttribute('r', r)
-	const path = document.createElementNS(ns, 'path')
-	path.setAttribute('d', kind === 'passkey' ? 'M10.8 12.2 20 3M17 6l3 3M14.5 8.5l2 2' : kind === 'code' ? 'M12 7v5l3 2' : 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18')
-	svg.append(circle, path)
+	const svg = svgElement('svg', { class: 'row__icon', width: '32', height: '32', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'aria-hidden': 'true' })
+	svg.append(...ICONS[kind].map(([tag, attributes]) => svgElement(tag, attributes)))
 	return svg
 }
 
-function optionLabel(row: Row): string {
-	if (row.credentialId !== undefined) return row.username ? i18n.t('inlineList.passkeyRow', { name: row.name, username: row.username }) : i18n.t('inlineList.passkeyRowNoUser', { name: row.name })
-	return row.username ? i18n.t('inlineList.row', { name: row.name, username: row.username }) : row.name
+/** A row's second line: a username, an identity's detail or a card's brand and last four. */
+function secondLine({ username, detail, card }: Row): string | null {
+	if (card) return card.brand ? i18n.t('inlineList.card.detail', { brand: card.brand, last4: card.last4 }) : i18n.t('inlineList.card.detailNoBrand', { last4: card.last4 })
+	return username || detail || null
+}
+
+/** `line`: the second line shown. A card's name says "ending in" instead, as screen readers read "*" as "star". */
+function optionLabel({ name, credentialId, card }: Row, line: string | null): string {
+	if (credentialId !== undefined) return line ? i18n.t('inlineList.passkeyRow', { name, username: line }) : i18n.t('inlineList.passkeyRowNoUser', { name })
+	if (card) return card.brand ? i18n.t('inlineList.card.row', { name, brand: card.brand, last4: card.last4 }) : i18n.t('inlineList.card.rowNoBrand', { name, last4: card.last4 })
+	return line ? i18n.t('inlineList.row', { name, username: line }) : name
 }
 
 const SIZES = { '--row': INLINE_ROW_PX, '--gap': INLINE_GAP_PX, '--inset': INLINE_INSET_PX, '--radius': INLINE_RADIUS_PX }
@@ -143,7 +209,7 @@ export function startInlineList(): () => void {
 	const root = document.getElementById('list')!
 	const status = document.querySelector('[role="status"]')!
 	document.documentElement.lang = i18n.t('language')
-	document.title = i18n.t('inlineList.frameTitle')
+	document.title = i18n.t(INLINE_FRAME_TITLES.login)
 	for (const [name, px] of Object.entries(SIZES)) document.documentElement.style.setProperty(name, `${px}px`)
 	applyTheme(mirroredTheme())
 
@@ -156,7 +222,8 @@ export function startInlineList(): () => void {
 	let press: { target: Element; input: PickInput } | null = null
 	/** Set while a pick is pending, and for good once the background answered it, as it then closes the list. */
 	let pickLocked = false
-	let question: { row: Row; text: HTMLElement; cancel: HTMLButtonElement; fill: HTMLButtonElement } | null = null
+	/** `actions`: every button but Cancel, each answering with the press that chose it. */
+	let question: { row: Row; text: HTMLElement; cancel: HTMLButtonElement; actions: Map<Element, (input: PickInput) => void> } | null = null
 	let entry: HTMLElement | null = null
 	const rowsByElement = new Map<Element, Row>()
 	let announceTimer: ReturnType<typeof setTimeout> | undefined
@@ -176,11 +243,10 @@ export function startInlineList(): () => void {
 	/** Through the background: a `postMessage` to the parent would reach the page. */
 	function fit() {
 		const content = root.firstElementChild
-		if (!key || !content) return
-		// Locked and no match stay one row whatever their text, so the frame never tells them from one match.
-		const height = content.getAttribute('role') === 'listbox' ? inlineHeight(content.childElementCount)
-			: content.matches('.message--locked, .message--muted') ? INLINE_MIN_HEIGHT_PX
-				: inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
+		if (!key || !content || !state) return
+		// The locked and no-match texts never size the frame: locked is one row, and no match is as tall as one match, or for cards and identities as any unlocked list.
+		const rows = rowsFor(content, state.mode)
+		const height = rows !== null ? inlineHeight(rows) : inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
 		if (height !== null && height !== requested) {
 			requested = height
 			notify({ kind: 'inline.resize', key, height })
@@ -209,15 +275,15 @@ export function startInlineList(): () => void {
 
 	function renderRows(rows: Row[], host: string, mode: InlineMode) {
 		rowsByElement.clear()
-		const listbox = element('ul', { class: 'listbox', role: 'listbox', 'aria-label': texts(mode).label(host) })
+		const listbox = element('ul', { class: 'listbox', role: 'listbox', 'aria-label': TEXTS[mode].label(host) })
 		for (const row of rows) {
 			const invalid = row.code?.digits === null
-			const username = invalid ? i18n.t('inlineList.code.invalid') : row.username || null
+			const line = invalid ? i18n.t('inlineList.code.invalid') : secondLine(row)
 			const text = element('span', { class: 'row__text' }, element('span', { class: 'row__name' }, row.name))
-			if (username) text.append(element('span', { class: 'row__user' }, username))
+			if (line) text.append(element('span', { class: 'row__user' }, line))
 			const option = element('li', {
 				class: 'row', role: 'option', tabindex: '-1', 'aria-selected': 'false',
-				'aria-label': optionLabel({ ...row, username }),
+				'aria-label': optionLabel(row, line),
 				...(invalid && { 'aria-disabled': 'true' }),
 			}, rowIcon(row.credentialId === undefined ? mode : 'passkey'), text, ...(row.code ? codeParts(row.code) : []))
 			rowsByElement.set(option, row)
@@ -284,9 +350,9 @@ export function startInlineList(): () => void {
 			})
 			unlock.setAttribute('aria-describedby', 'locked-text')
 			entry = unlock
-			root.replaceChildren(element('div', { class: 'message message--locked' }, element('p', { id: 'locked-text' }, texts(mode).locked()), unlock))
+			root.replaceChildren(element('div', { class: 'message message--locked' }, element('p', { id: 'locked-text' }, TEXTS[mode].locked()), unlock))
 		} else if (rows.length === 0) {
-			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, shown.passkeys ? i18n.t('inlineList.noMatchPasskeys', { host }) : texts(mode).noMatch(host))
+			entry = element('p', { class: 'message message--muted', tabindex: '-1' }, shown.passkeys ? i18n.t('inlineList.noMatchPasskeys', { host }) : TEXTS[mode].noMatch(host))
 			root.replaceChildren(entry)
 		} else {
 			renderRows(rows, host, mode)
@@ -311,7 +377,7 @@ export function startInlineList(): () => void {
 		if (stopped || key !== null || !isState(reply)) return
 		key = candidate
 		state = reply
-		document.title = texts(reply.mode).frameTitle()
+		document.title = i18n.t(INLINE_FRAME_TITLES[reply.mode])
 		applyTheme(reply.theme)
 		render(reply)
 		fit()
@@ -319,28 +385,34 @@ export function startInlineList(): () => void {
 		const count = shownRows(reply).length
 		announce(reply.state === 'locked' ? i18n.t('inlineList.status.locked')
 			: reply.passkeys ? (count === 0 ? i18n.t('inlineList.status.noMatchPasskeys', { host: reply.host }) : i18n.t('inlineList.status.countPasskeys', count))
-				: count === 0 ? texts(reply.mode).statusNoMatch(reply.host) : texts(reply.mode).count(count))
+				: count === 0 ? TEXTS[reply.mode].statusNoMatch(reply.host) : TEXTS[reply.mode].count(count))
 		if (earlyFocusKey === key) focusEntry()
 		earlyFocusKey = null
 	}
 
-	async function pick(row: Row, input: PickInput, confirmedInsecure = false) {
+	async function pick(row: Row, input: PickInput, answers: Answers = {}) {
 		// Too soon after showing or moving stays silent, as a second press works; hidden by the page, it says why.
 		if (!key || pickLocked || !settled(input) || row.code?.digits === null) return
 		pickLocked = true
 		if (!visibility.allows(input.at)) return showNotVisible()
-		const reply = await send(pickMessage(key, row, input, confirmedInsecure))
+		const reply = await send(pickMessage(key, row, input, answers))
 		if (stopped) return
-		settlePick(row, reply as PickAnswer)
+		settlePick({ row, answers }, reply as PickAnswer)
 	}
 
-	/** No answer unlocks the list for another pick; one that needs the insecure fill confirmed asks first. */
-	function settlePick(row: Row, answer: PickAnswer) {
-		if (answer === undefined) pickLocked = false
-		else if (answer?.needsInsecureConfirm === true) {
-			pickLocked = false
-			ask(row)
-		} else if (answer?.refused === 'not_visible') showNotVisible()
+	/** No answer unlocks the list for another pick; one with a question due asks it first. */
+	function settlePick(picked: { row: Row; answers: Answers }, answer: PickAnswer) {
+		const asking = questionFor(picked, answer)
+		if (answer === undefined || asking) pickLocked = false
+		if (asking) asking()
+		else if (answer?.refused === 'not_visible') showNotVisible()
+	}
+
+	/** A card's or identity's next question builds on the answers this pick sent, since the background keeps none. */
+	function questionFor({ row, answers }: { row: Row; answers: Answers }, answer: PickAnswer): (() => void) | null {
+		if (answer?.needsInsecureConfirm === true) return () => askInsecure(row)
+		const form = answer?.needsFormConfirm
+		return isFormQuestion(form) ? () => askForm(row, { question: form, previous: answers.confirmed }) : null
 	}
 
 	/** For a pick refused as not visible, here or by the background: the user learns why and where to fill instead; focus reads it out. Picks stay locked. */
@@ -353,18 +425,47 @@ export function startInlineList(): () => void {
 		entry.focus()
 	}
 
-	function ask(row: Row) {
-		const title = element('p', { class: 'question__title', id: 'question-title' }, i18n.t('inlineList.insecureQuestion'))
-		const text = element('p', { class: 'question__text', id: 'question-text' }, i18n.t('inlineList.insecureDetail'))
+	interface Action {
+		label: string
+		secondary?: true
+		answer: (input: PickInput) => void
+	}
+
+	/** Focus starts on Cancel, so a stray Enter answers nothing. */
+	function ask(row: Row, words: { title: string; detail: string }, actions: Action[]) {
+		const title = element('p', { class: 'question__title', id: 'question-title' }, words.title)
+		const text = element('p', { class: 'question__text', id: 'question-text' }, words.detail)
 		const cancel = element('button', { type: 'button', class: 'btn btn--secondary' }, i18n.t('common.cancel'))
-		const fill = element('button', { type: 'button', class: 'btn btn--primary' }, i18n.t('inlineList.fill'))
+		const buttons = actions.map((action) => element('button', { type: 'button', class: `btn btn--${action.secondary ? 'secondary' : 'primary'}` }, action.label))
 		cancel.addEventListener('click', cancelQuestion)
 		root.replaceChildren(element('div', { class: 'question', role: 'alertdialog', 'aria-labelledby': 'question-title', 'aria-describedby': 'question-text' },
-			title, text, element('div', { class: 'question__actions' }, cancel, fill)))
-		question = { row, text, cancel, fill }
+			title, text, element('div', { class: 'question__actions' }, cancel, ...buttons)))
+		question = { row, text, cancel, actions: new Map(buttons.map((button, index) => [button, actions[index]!.answer])) }
 		fit()
 		restartGuard()
 		cancel.focus()
+	}
+
+	function askInsecure(row: Row) {
+		const fill = { label: i18n.t('inlineList.fill'), answer: (input: PickInput) => void pick(row, input, { confirmedInsecure: true }) }
+		ask(row, { title: i18n.t('inlineList.insecureQuestion'), detail: i18n.t('inlineList.insecureDetail') }, [fill])
+	}
+
+	/** The insecure question first, for a card; its Fill goes on to the cross-site question when one is due, as in the popup. */
+	function askForm(row: Row, form: { question: FormQuestion; previous: FormConfirmation | undefined; insecureAnswered?: true }) {
+		const { question: asked, previous } = form
+		const fillWith = (confirmed: FormConfirmation) => (input: PickInput) => void pick(row, input, { confirmed })
+		const fill = { label: i18n.t('inlineList.fill'), answer: fillWith(answered(previous, asked)) }
+		if (asked.insecure && !form.insecureAnswered) {
+			const next = (input: PickInput) => settled(input) && askForm(row, { ...form, insecureAnswered: true })
+			const words = { title: i18n.t('item.cardInsecureTitle'), detail: i18n.t('item.cardInsecureWarning') }
+			return ask(row, words, [asked.frameHosts.length ? { ...fill, answer: next } : fill])
+		}
+		const hosts = asked.frameHosts.join(', ')
+		ask(row, { title: i18n.t('item.crossSiteTitle', { hosts }), detail: i18n.t('item.crossSiteWarning', { hosts, host: asked.host }) }, [
+			{ label: i18n.t('item.onlyHost', { host: asked.host }), secondary: true, answer: fillWith(answeredOnlyHost(previous, asked)) },
+			fill,
+		])
 	}
 
 	function cancelQuestion() {
@@ -388,9 +489,9 @@ export function startInlineList(): () => void {
 			const stops = [...root.querySelectorAll<HTMLElement>('[tabindex="0"], button')]
 			const next = stops.indexOf(target as HTMLElement) + (event.shiftKey ? -1 : 1)
 			stops[(next + stops.length) % stops.length]?.focus()
-		} else if ((event.key === 'Enter' || event.key === ' ') && target === open.fill) {
+		} else if ((event.key === 'Enter' || event.key === ' ') && open.actions.has(target)) {
 			event.preventDefault()
-			if (!event.repeat) void pick(open.row, keyInput(open.fill), true)
+			if (!event.repeat) open.actions.get(target)!(keyInput(target))
 		}
 	}
 
@@ -440,7 +541,7 @@ export function startInlineList(): () => void {
 
 	const pickTarget = (event: Event): Element | null => {
 		const target = (event.target as Element).closest?.('[role="option"], button') ?? null
-		return target && (rowsByElement.has(target) || target === question?.fill) ? target : null
+		return target && (rowsByElement.has(target) || question?.actions.has(target)) ? target : null
 	}
 
 	function onPointerdown(event: PointerEvent) {
@@ -454,7 +555,8 @@ export function startInlineList(): () => void {
 		const pressed = press
 		press = null
 		if (!target || pressed?.target !== target) return
-		if (question && target === question.fill) void pick(question.row, pressed.input, true)
+		const answer = question?.actions.get(target)
+		if (answer) answer(pressed.input)
 		else void pick(rowsByElement.get(target)!, pressed.input)
 	}
 

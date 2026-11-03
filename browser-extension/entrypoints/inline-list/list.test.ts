@@ -2,7 +2,9 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { INLINE_MIN_HEIGHT_PX, INLINE_ROW_PX, inlineHeight, type InlineListToBackground, type InlinePickReply, type InlineStateReply } from '@/src/messages'
+import {
+	INLINE_MIN_HEIGHT_PX, INLINE_ROW_PX, INLINE_WALLET_ROWS, inlineHeight, type FormQuestion, type InlineListToBackground, type InlinePickReply, type InlineRow, type InlineStateReply,
+} from '@/src/messages'
 import { setLocale } from '@/src/testing/i18n'
 import { startInlineList } from './list'
 
@@ -1060,5 +1062,217 @@ describe('passkeys during a conditional request', () => {
 		await open(reply as InlineStateReply, { settle: false })
 		expect(options()).toHaveLength(0)
 		expect(unlockButton()).toBeUndefined()
+	})
+})
+
+describe('card and identity lists', () => {
+	const CARDS: InlineRow[] = [
+		{ id: 'p', name: 'Personal', username: null, card: { brand: 'Mastercard', last4: '4444' } },
+		{ id: 'w', name: 'Work Visa', username: null, card: { brand: 'Visa', last4: '1111' } },
+		{ id: 'u', name: 'Shared', username: null },
+	]
+	const STORE_CARD: InlineRow = { id: 's', name: 'Store card', username: null, card: { brand: null, last4: '1234' } }
+	const QUESTION: FormQuestion = { insecure: true, host: 'shop.test', origin: 'http://shop.test', frameHosts: ['js.stripe.com'] }
+	const wallet = (mode: 'card' | 'identity', rows: InlineRow[], state: 'locked' | 'unlocked' = 'unlocked'): InlineStateReply =>
+		({ state, mode, host: 'shop.test', rows: state === 'locked' ? [] : rows, theme: 'system' })
+	const resizes = () => sent.flatMap((m) => (m.kind === 'inline.resize' ? [m.height] : []))
+	const dialog = () => document.querySelector('[role="alertdialog"]')
+	const title = () => dialog()?.firstElementChild?.textContent
+
+	/** Picks "Work Visa" with Enter; the background answers `reply`, then a fill. */
+	async function pickWork(reply: InlinePickReply) {
+		await open(wallet('card', CARDS))
+		pickReply = reply
+		post({ kind: 'inline.focus', key: KEY })
+		key(row(0), 'ArrowDown')
+		key(row(1), 'Enter')
+		await flush()
+		pickReply = { filled: 'form', code: false }
+	}
+
+	it('lists cards with their brand and last four, a use-only copy by its name, in a listbox named for cards', async () => {
+		await open(wallet('card', [...CARDS, STORE_CARD]), { settle: false })
+		expect([document.title, listbox()!.getAttribute('aria-label')]).toEqual(['Keepiq cards', 'Keepiq cards'])
+		expect(options().map((o) => o.textContent)).toEqual(['PersonalMastercard, *4444', 'Work VisaVisa, *1111', 'Shared', 'Store cardCard, *1234'])
+		await wait(250)
+		expect(status().textContent).toBe('4 Keepiq cards. Press Down Arrow to choose.')
+	})
+
+	it('names a card row "ending in" its last four, as a screen reader reads "*" as "star"', async () => {
+		await open(wallet('card', [...CARDS, STORE_CARD]), { settle: false })
+		expect(options().map((o) => o.getAttribute('aria-label'))).toEqual(['Personal, Mastercard ending in 4444', 'Work Visa, Visa ending in 1111', 'Shared', 'Store card, card ending in 1234'])
+	})
+
+	it('words a card row in Dutch', async () => {
+		setLocale('nl')
+		await open(wallet('card', [CARDS[1]!, STORE_CARD]), { settle: false })
+		expect(options().map((o) => o.textContent)).toEqual(['Work VisaVisa, *1111', 'Store cardKaart, *1234'])
+		expect(options().map((o) => o.getAttribute('aria-label'))).toEqual(['Work Visa, Visa eindigend op 1111', 'Store card, kaart eindigend op 1234'])
+	})
+
+	it('lists identities with their detail, titled and announced for identities', async () => {
+		await open(wallet('identity', [{ id: 'm', name: 'Me', username: null, detail: 'Anna de Vries' }]), { settle: false })
+		expect([document.title, listbox()!.getAttribute('aria-label')]).toEqual(['Keepiq identities', 'Keepiq identities'])
+		expect(options().map((o) => o.getAttribute('aria-label'))).toEqual(['Me, Anna de Vries'])
+		await wait(250)
+		expect(status().textContent).toBe('1 Keepiq identity. Press Down Arrow to choose.')
+	})
+
+	it('says it in Dutch', async () => {
+		setLocale('nl')
+		await open(wallet('card', CARDS.slice(1, 2)), { settle: false })
+		expect(document.title).toBe('Keepiq-kaarten')
+		await wait(250)
+		expect(status().textContent).toBe('1 Keepiq-kaart. Druk op pijl-omlaag om te kiezen.')
+	})
+
+	it.each([0, 1, 8])('asks for three rows with %i cards, so the page cannot count them from the host', async (count) => {
+		const rows = Array.from({ length: count }, (_, i) => ({ id: `${i}`, name: `Card ${i}`, username: null, card: { brand: 'Visa', last4: '1111' } }))
+		await open(wallet('card', rows))
+		expect(resizes()).toEqual([inlineHeight(INLINE_WALLET_ROWS)])
+	})
+
+	it.each([
+		['card', 'No cards in Keepiq', 'Unlock Keepiq to see your cards'],
+		['identity', 'No identities in Keepiq', 'Unlock Keepiq to see your identities'],
+	] as const)('reads the %s list’s no-item text, and its locked text with Unlock one row tall', async (mode, none, lockedText) => {
+		await open(wallet(mode, []), { settle: false })
+		expect(document.querySelector('.message--muted')!.textContent).toBe(none)
+		await wait(250)
+		expect(status().textContent).toBe(none)
+		stop()
+		sent = []
+		await open(wallet(mode, [], 'locked'), { settle: false })
+		expect(document.getElementById('locked-text')!.textContent).toBe(lockedText)
+		expect(unlockButton()).toBeTruthy()
+		expect(resizes()).toEqual([INLINE_MIN_HEIGHT_PX])
+		await wait(250)
+		expect(status().textContent).toBe('Keepiq is locked. Press Down Arrow to unlock.')
+	})
+
+	const VISA = { brand: 'Visa', last4: '1111' }
+
+	it.each([
+		['a username', { id: 'w', name: 'Work', username: 'alice' }],
+		['a code', { id: 'w', name: 'Work', username: null, code: { digits: '123456', period: 30, validUntil: 1 } }],
+		['a detail', { id: 'w', name: 'Work', username: null, detail: 'Visa, *1111' }],
+		['a null card', { id: 'w', name: 'Work', username: null, card: null }],
+		['a card that is no object', { id: 'w', name: 'Work', username: null, card: 'Visa, *1111' }],
+		['a brand that is no text', { id: 'w', name: 'Work', username: null, card: { brand: 7, last4: '1111' } }],
+		['no last four', { id: 'w', name: 'Work', username: null, card: { brand: 'Visa' } }],
+		['three digits', { id: 'w', name: 'Work', username: null, card: { brand: 'Visa', last4: '111' } }],
+		['last four that are no digits', { id: 'w', name: 'Work', username: null, card: { brand: 'Visa', last4: '1<b>' } }],
+	])('refuses a card row with %s, rendering nothing', async (_, bad) => {
+		await open(wallet('card', [bad as never]), { settle: false })
+		expect(options()).toHaveLength(0)
+	})
+
+	it.each([
+		['a username', { id: 'm', name: 'Me', username: 'alice', detail: null }],
+		['no detail', { id: 'm', name: 'Me', username: null }],
+		['a detail that is no text', { id: 'm', name: 'Me', username: null, detail: 7 }],
+		['a card', { id: 'm', name: 'Me', username: null, detail: 'Anna', card: VISA }],
+	])('refuses an identity row with %s, rendering nothing', async (_, bad) => {
+		await open(wallet('identity', [bad as never]), { settle: false })
+		expect(options()).toHaveLength(0)
+	})
+
+	it.each([
+		['a detail', { detail: 'Anna' }],
+		['a card', { card: VISA }],
+	])('refuses a login or code row with %s', async (_, extra) => {
+		await open(unlocked([{ ...ROWS[0]!, ...extra } as InlineRow]), { settle: false })
+		expect(options()).toHaveLength(0)
+		stop()
+		const codeRow = { id: 'w', name: 'Work', username: 'alice', code: { digits: '123456', period: 30, validUntil: Date.now() + 30_000 }, ...extra } as InlineRow
+		await open({ ...unlocked([codeRow])!, mode: 'code' }, { settle: false })
+		expect(options()).toHaveLength(0)
+	})
+
+	it('asks the insecure question, then the cross-site one, each on Cancel, and sends every answer with "Only {host}"', async () => {
+		await pickWork({ needsFormConfirm: QUESTION })
+		expect(title()).toBe('Fill this card on an insecure site?')
+		expect(document.getElementById('question-text')!.textContent).toBe('This site is not secure. Anyone on the network could read the card details that are filled in.')
+		expect(document.activeElement).toBe(button('Cancel'))
+		await wait(GUARD_MS)
+		key(button('Fill'), 'Enter')
+		await flush()
+		expect(picks()).toHaveLength(1)
+		expect(title()).toBe('Also fill on js.stripe.com?')
+		expect(document.getElementById('question-text')!.textContent).toBe('Part of this form comes from js.stripe.com, not from shop.test. Keepiq fills it there only if you agree.')
+		expect(document.activeElement).toBe(button('Cancel'))
+		await wait(GUARD_MS)
+		click(button('Only shop.test'), 5, 6)
+		await flush()
+		expect(picks().at(-1)).toEqual({
+			kind: 'inline.pick', key: KEY, itemId: 'w', input: { kind: 'pointer', at: expect.any(Number), x: 5, y: 6 },
+			confirmed: { insecure: true, frames: 'sameSite', frameHosts: ['js.stripe.com'], origin: 'http://shop.test' },
+		})
+	})
+
+	it('restarts the guard for the cross-site question, so one double press does not answer both', async () => {
+		await pickWork({ needsFormConfirm: QUESTION })
+		await wait(GUARD_MS)
+		key(button('Fill'), 'Enter')
+		await flush()
+		key(button('Fill'), 'Enter')
+		await flush()
+		expect(picks()).toHaveLength(1)
+	})
+
+	it('sends Fill on the insecure question at once when no other site takes part', async () => {
+		await pickWork({ needsFormConfirm: { ...QUESTION, frameHosts: [] } })
+		await wait(GUARD_MS)
+		key(button('Fill'), 'Enter')
+		await flush()
+		expect(picks().at(-1)).toMatchObject({ itemId: 'w', confirmed: { insecure: true, frames: 'all', frameHosts: [], origin: 'http://shop.test' } })
+	})
+
+	it('asks again about a site added after the answer, building on the earlier answers', async () => {
+		await pickWork({ needsFormConfirm: { ...QUESTION, insecure: false } })
+		await wait(GUARD_MS)
+		pickReply = { needsFormConfirm: { ...QUESTION, insecure: false, frameHosts: ['ads.test'] } }
+		key(button('Fill'), 'Enter')
+		await flush()
+		expect(title()).toBe('Also fill on ads.test?')
+		expect(document.activeElement).toBe(button('Cancel'))
+		await wait(GUARD_MS)
+		key(button('Fill'), 'Enter')
+		await flush()
+		expect(picks().map((m) => (m as { confirmed?: unknown }).confirmed)).toEqual([
+			undefined,
+			{ frames: 'all', frameHosts: ['js.stripe.com'], origin: 'http://shop.test' },
+			{ frames: 'all', frameHosts: ['js.stripe.com', 'ads.test'], origin: 'http://shop.test' },
+		])
+	})
+
+	it.each(['Escape', 'Cancel'])('%s on the second question sends nothing and returns to the row', async (how) => {
+		await pickWork({ needsFormConfirm: QUESTION })
+		await wait(GUARD_MS)
+		key(button('Fill'), 'Enter')
+		await flush()
+		if (how === 'Escape') key(button('Cancel'), 'Escape')
+		else button('Cancel').click()
+		expect(dialog()).toBeNull()
+		expect(document.activeElement).toBe(row(1))
+		expect(picks()).toHaveLength(1)
+		expect(kinds()).not.toContain('inline.close')
+	})
+
+	it('keeps Tab among Cancel, "Only {host}" and Fill, and asks in Dutch', async () => {
+		setLocale('nl')
+		await pickWork({ needsFormConfirm: { ...QUESTION, insecure: false } })
+		expect(title()).toBe('Ook invullen op js.stripe.com?')
+		key(button('Annuleren'), 'Tab')
+		expect(document.activeElement).toBe(button('Alleen shop.test'))
+		key(button('Alleen shop.test'), 'Tab')
+		expect(document.activeElement).toBe(button('Invullen'))
+		key(button('Invullen'), 'Tab')
+		expect(document.activeElement).toBe(button('Annuleren'))
+	})
+
+	it('asks nothing for a malformed question', async () => {
+		await pickWork({ needsFormConfirm: { host: 'shop.test' } as never })
+		expect(dialog()).toBeNull()
 	})
 })

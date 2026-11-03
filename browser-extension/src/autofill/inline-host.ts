@@ -4,7 +4,7 @@
  */
 import { i18n } from '#i18n'
 import {
-	INLINE_MIN_HEIGHT_PX, INLINE_MIN_WIDTH_PX, INLINE_RADIUS_PX, inlineClampHeight,
+	INLINE_FRAME_TITLES, INLINE_MIN_HEIGHT_PX, INLINE_MIN_WIDTH_PX, INLINE_RADIUS_PX, inlineClampHeight,
 	type BackgroundToContent, type ContentToBackground, type ContentToInlineList, type InlineMode, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement, type OpenList } from './execute'
@@ -40,7 +40,7 @@ interface Box {
 
 interface Open {
 	key: string
-	field: HTMLInputElement
+	field: Field
 	host: FrameHost
 	/** `<html>`, or the modal holding the field, outside which everything is inert or focus-trapped. */
 	parent: Element
@@ -105,7 +105,11 @@ export function placement(field: Element, height: number, fit = false): Box | nu
 	return { top, left: Math.max(0, Math.min(rect.left, view.width - EDGE_PX - width)), width, height: fitted }
 }
 
-const isInput = (target: EventTarget | null | undefined): target is HTMLInputElement => target instanceof HTMLInputElement
+/** A `<textarea>` only ever holds a street address, so it opens the identity list alone. */
+type Field = HTMLInputElement | HTMLTextAreaElement
+const isField = (target: EventTarget | null | undefined): target is Field => target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+/** A page's markup may leave whitespace in a textarea it shows as empty. */
+const isBlank = (field: Field) => (field.localName === 'textarea' ? field.value.trim() : field.value) === ''
 const deepTarget = (event: Event) => event.composedPath()[0] ?? event.target
 const sameBox = (a: Box, b: Box) =>
 	Math.abs(a.top - b.top) <= TOLERANCE_PX && Math.abs(a.left - b.left) <= TOLERANCE_PX
@@ -115,8 +119,9 @@ const sameBox = (a: Box, b: Box) =>
  * The list `field` asks for, or null. A `webauthn` field only asks: the background opens a list on it only while the frame
  * has a conditional passkey request pending.
  */
-function listFor(field: HTMLInputElement): { mode: InlineMode; webauthn: boolean } | null {
+function listFor(field: Field): { mode: InlineMode; webauthn: boolean } | null {
 	const mode = isQualifying(field)
+	if (field.localName === 'textarea') return mode === 'identity' ? { mode, webauthn: false } : null
 	if (mode) return { mode, webauthn: false }
 	return isWebauthnField(field) ? { mode: 'login', webauthn: true } : null
 }
@@ -139,15 +144,15 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	let ancestors: HTMLElement[] | null = []
 	let allowed = false
 	let open: Open | null = null
-	let pending: { field: HTMLInputElement; token: object } | null = null
+	let pending: { field: Field; token: object } | null = null
 	/** Focus the content script itself gives back to the field, which must not reopen the list. */
-	let suppress: HTMLInputElement | null = null
+	let suppress: Field | null = null
 	let ownToggle = false
 	/**
 	 * How focus reached the field: `tab` is the user's Tab keydown, which counts only if the page did not
 	 * cancel it (and move focus itself); `own` is our refocus.
 	 */
-	let focused: { field: HTMLInputElement; at: number; pointer: boolean; tab: KeyboardEvent | null; own: boolean } | null = null
+	let focused: { field: Field; at: number; pointer: boolean; tab: KeyboardEvent | null; own: boolean } | null = null
 	let tabEvent: KeyboardEvent | null = null
 	let pointerField: EventTarget | null = null
 
@@ -170,7 +175,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	}
 
 	/** `focusin` fires synchronously inside `focus()`, so the suppression cannot outlive it. */
-	function refocusField(field: HTMLInputElement): void {
+	function refocusField(field: Field): void {
 		suppress = field
 		try {
 			field.focus()
@@ -233,7 +238,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		if (!visibleNow(list)) list.lastNotVisibleAt = Date.now()
 	}
 
-	function fieldShown(field: HTMLInputElement): boolean {
+	function fieldShown(field: Field): boolean {
 		const style = getComputedStyle(field)
 		return field.isConnected && style.visibility !== 'hidden' && style.display !== 'none'
 	}
@@ -269,8 +274,8 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		list.intersection.observe(list.host.element)
 	}
 
-	function show(field: HTMLInputElement, mode: InlineMode, key: string, wanted: number, box: Box): void {
-		const host = createFrameHost('/inline-list.html', i18n.t(mode === 'code' ? 'inlineList.code.frameTitle' : 'inlineList.frameTitle'))
+	function show(field: Field, mode: InlineMode, key: string, wanted: number, box: Box): void {
+		const host = createFrameHost('/inline-list.html', i18n.t(INLINE_FRAME_TITLES[mode]))
 		const popover = typeof host.element.showPopover === 'function'
 		const list: Open = {
 			key, field, host, parent: modalOf(field, popover) ?? document.documentElement, popover,
@@ -311,15 +316,15 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	}
 
 	/** Whether the field an open waited on still has focus and shows, and for a focus open is still empty. */
-	function stillWanted(field: HTMLInputElement, how: 'focus' | 'click'): boolean {
+	function stillWanted(field: Field, how: 'focus' | 'click'): boolean {
 		// A split code's fill moves focus box by box, and fills each box before this reply arrives.
-		const stillEmpty = how === 'click' || field.value === ''
+		const stillEmpty = how === 'click' || isBlank(field)
 		return deepActiveElement() === field && fieldShown(field) && stillEmpty
 	}
 
-	function maybeOpen(field: HTMLInputElement, how: 'focus' | 'click'): void {
+	function maybeOpen(field: Field, how: 'focus' | 'click'): void {
 		if (!allowed || open?.field === field || pending?.field === field) return
-		if (how === 'focus' && field.value !== '') return
+		if (how === 'focus' && !isBlank(field)) return
 		const list = listFor(field)
 		if (!list) return
 		close()
@@ -352,7 +357,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		if (open && (event.target === open.host.element || target === open.host.frame)) return
 		if (open && target !== open.field) close()
 		if (pending && target !== pending.field) pending = null
-		if (!isInput(target)) {
+		if (!isField(target)) {
 			focused = null
 			return
 		}
@@ -400,7 +405,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 
 	function onClick(event: MouseEvent): void {
 		const target = deepTarget(event)
-		if (event.isTrusted && isInput(target)) maybeOpen(target, 'click')
+		if (event.isTrusted && isField(target)) maybeOpen(target, 'click')
 	}
 
 	function onInput(event: Event): void {
@@ -450,7 +455,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 			window.addEventListener('pagehide', () => close())
 			// A field focused before `document_idle`, `autofocus` included.
 			const active = deepActiveElement()
-			if (isInput(active)) {
+			if (isField(active)) {
 				focused = { field: active, at: Date.now(), pointer: false, tab: null, own: false }
 				maybeOpen(active, 'focus')
 			}
