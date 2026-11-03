@@ -56,18 +56,40 @@ describe('adminSettingsForm', () => {
 		expect(afterSave).toHaveBeenCalledWith({ example: 1 })
 	})
 
-	it('sends nothing when the payload is null', async () => {
+	it('shows the validateSettings message and sends nothing', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const afterSave = vi.fn()
-		const wrapper = mountHost({ afterSave })
+		const settingsPayload = vi.fn()
+		const wrapper = mountHost({
+			afterSave,
+			settingsPayload,
+			validateSettings: () => 'Not valid',
+		})
 		await flushPromises()
-		wrapper.vm.payload = null
 
 		await wrapper.vm.save()
 
 		expect(put).not.toHaveBeenCalled()
+		expect(settingsPayload).not.toHaveBeenCalled()
 		expect(afterSave).not.toHaveBeenCalled()
+		expect(wrapper.text()).toBe('Not valid')
+	})
+
+	it('saves and clears the error once validateSettings passes', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
+		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
+		const validateSettings = vi.fn().mockReturnValueOnce('Not valid')
+		const wrapper = mountHost({ validateSettings })
+		await flushPromises()
+
+		await wrapper.vm.save()
+		validateSettings.mockReturnValue(null)
+		await wrapper.vm.save()
+
+		expect(put).toHaveBeenCalledTimes(1)
+		expect(put).toHaveBeenCalledWith(ROUTE, { example: 1 })
+		expect(wrapper.vm.error).toBe(null)
 	})
 
 	it('does not call afterSave when the save fails', async () => {
