@@ -10,16 +10,19 @@ interface Props {
 	disabled?: boolean
 	/** Why the organisation fixed this option; refuses changes and shows the reason. */
 	lockedBy?: string
+	/** Shown where `lockedBy` would be, but leaves the option changeable. */
+	note?: string
 	/** The id of the reason it refuses changes, shown once for a row of checkboxes; refuses changes like `disabled`. */
 	reasonId?: string
 	/** A note under the option, such as a warning. */
 	hint?: string
 }
 
-export function OptionCheckbox({ label, short, checked, onChange, disabled = false, lockedBy, reasonId, hint }: Props) {
+export function OptionCheckbox({ label, short, checked, onChange, disabled = false, lockedBy, note, reasonId, hint }: Props) {
 	const id = useId()
 	const inert = disabled || lockedBy !== undefined || reasonId !== undefined
-	const describedBy = [reasonId ?? (lockedBy ? `${id}-locked` : undefined), hint ? `${id}-hint` : undefined].filter(Boolean).join(' ')
+	const reason = lockedBy ?? note
+	const describedBy = [reasonId ?? (reason ? `${id}-reason` : undefined), hint ? `${id}-hint` : undefined].filter(Boolean).join(' ')
 	return (
 		<>
 			<label className="check">
@@ -35,7 +38,7 @@ export function OptionCheckbox({ label, short, checked, onChange, disabled = fal
 				/>
 				{short ?? label}
 			</label>
-			{lockedBy && !reasonId && <p className="field__hint" id={`${id}-locked`}>{lockedBy}</p>}
+			{reason && !reasonId && <p className="field__hint" id={`${id}-reason`}>{reason}</p>}
 			{hint && <p className="field__hint" id={`${id}-hint`}>{hint}</p>}
 		</>
 	)

@@ -242,59 +242,15 @@ function shuffle(chars, rand) {
  * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
  */
 function generateFromCharset(options, policy, rand) {
-	let length = Number(options.length ?? 16)
-	let includeUpper = options.includeUppercase !== false
-	let includeLower = options.includeLowercase !== false
-	let includeDigits = options.includeDigits !== false
-	let includeSpecial = options.includeSpecialCharacters !== false
-	// Whole numbers only: a fraction would make the length a fraction too.
-	const minDigits = Math.max(0, Math.floor(Number(options.minDigits ?? 0)) || 0)
-	const minSpecial = Math.max(0, Math.floor(Number(options.minSpecial ?? 0)) || 0)
-	const excluded = new Set(options.excludedCharacters ?? '')
-	if (options.avoidAmbiguous === true) {
-		for (const char of AMBIGUOUS) {
-			excluded.add(char)
-		}
-	}
-
-	// Org policy clamp: the length is raised to the floor, and required
-	// classes are switched on, forced into the set and into the output.
-	if (policy !== null) {
-		length = Math.max(length, policy.minLength)
-		includeUpper = includeUpper || policy.requireUpper
-		includeLower = includeLower || policy.requireLower
-		includeDigits = includeDigits || policy.requireDigit
-		includeSpecial = includeSpecial || policy.requireSymbol
-	}
-	if (!includeUpper && !includeLower && !includeDigits && !includeSpecial) {
+	const spec = readSpec(options, policy)
+	if (!spec.upper && !spec.lower && !spec.digits && !spec.special) {
 		throw new GeneratorError('Choose at least one kind of character')
 	}
-	let charset =
-		(includeUpper ? UPPERCASE : '')
-		+ (includeLower ? LOWERCASE : '')
-		+ (includeDigits ? DIGITS : '')
-		+ (includeSpecial ? SPECIAL : '')
-	charset = dedupe([...charset].filter((c) => !excluded.has(c)))
-	if (policy !== null) {
-		// An exclusion list may not hollow out a required class.
-		for (const [, classSet] of requiredClasses(policy)) {
-			if (!intersects(charset, classSet)) {
-				charset += classSet
-			}
-		}
-	}
-
-	// Every chosen kind appears at least once, on top of the minimums. A
-	// required class is chosen and in the set, so this also meets the policy.
-	const minimums = [
-		[UPPERCASE, includeUpper ? 1 : 0],
-		[LOWERCASE, includeLower ? 1 : 0],
-		[DIGITS, includeDigits ? Math.max(minDigits, 1) : 0],
-		[SPECIAL, includeSpecial ? Math.max(minSpecial, 1) : 0],
-	].filter(([classSet, count]) => count > 0 && intersects(charset, classSet))
+	const charset = buildCharset(spec, policy)
+	const minimums = classMinimums(spec, charset)
 	// The length grows to hold every minimum, as Bitwarden's atLeastSum does.
-	length = Math.max(
-		length,
+	const length = Math.max(
+		spec.length,
 		minimums.reduce((sum, [, count]) => sum + count, 0),
 	)
 	assertLengthInRange(length)
@@ -307,6 +263,93 @@ function generateFromCharset(options, policy, rand) {
 		rand,
 	)
 	return shuffle([...value], rand).join('')
+}
+
+/**
+ * A non-negative whole count; anything else is 0. Whole numbers only: a
+ * fraction would make the length a fraction too.
+ *
+ * @param {number|string|undefined} value The requested count.
+ * @return {number}
+ */
+function wholeCount(value) {
+	return Math.max(0, Math.floor(Number(value ?? 0)) || 0)
+}
+
+/**
+ * The request with its defaults. Under an org policy the length is raised to
+ * the floor and the required kinds are switched on.
+ *
+ * @param {object} options The request.
+ * @param {object|null} policy A normalised policy.
+ * @return {object} length, the four kinds, the two minimums and the excluded set.
+ */
+function readSpec(options, policy) {
+	const spec = {
+		length: Number(options.length ?? 16),
+		upper: options.includeUppercase !== false,
+		lower: options.includeLowercase !== false,
+		digits: options.includeDigits !== false,
+		special: options.includeSpecialCharacters !== false,
+		minDigits: wholeCount(options.minDigits),
+		minSpecial: wholeCount(options.minSpecial),
+		excluded: new Set(options.excludedCharacters ?? ''),
+	}
+	if (options.avoidAmbiguous === true) {
+		for (const char of AMBIGUOUS) {
+			spec.excluded.add(char)
+		}
+	}
+	if (policy !== null) {
+		spec.length = Math.max(spec.length, policy.minLength)
+		spec.upper = spec.upper || policy.requireUpper
+		spec.lower = spec.lower || policy.requireLower
+		spec.digits = spec.digits || policy.requireDigit
+		spec.special = spec.special || policy.requireSymbol
+	}
+	return spec
+}
+
+/**
+ * The chosen kinds minus the exclusions. An exclusion list may not hollow out
+ * a class the policy requires, so such a class is added back whole.
+ *
+ * @param {object} spec The request as readSpec returns it.
+ * @param {object|null} policy A normalised policy.
+ * @return {string}
+ */
+function buildCharset(spec, policy) {
+	let charset =
+		(spec.upper ? UPPERCASE : '')
+		+ (spec.lower ? LOWERCASE : '')
+		+ (spec.digits ? DIGITS : '')
+		+ (spec.special ? SPECIAL : '')
+	charset = dedupe([...charset].filter((c) => !spec.excluded.has(c)))
+	if (policy !== null) {
+		for (const [, classSet] of requiredClasses(policy)) {
+			if (!intersects(charset, classSet)) {
+				charset += classSet
+			}
+		}
+	}
+	return charset
+}
+
+/**
+ * Every chosen kind appears at least once, on top of the minimums. A required
+ * class is chosen and in the set, so this also meets the policy.
+ *
+ * @param {object} spec The request as readSpec returns it.
+ * @param {string} charset The resolved set.
+ * @return {Array<[string, number]>} Class set and minimum count.
+ */
+function classMinimums(spec, charset) {
+	return [
+		[UPPERCASE, spec.upper ? 1 : 0],
+		[LOWERCASE, spec.lower ? 1 : 0],
+		[DIGITS, spec.digits ? Math.max(spec.minDigits, 1) : 0],
+		[SPECIAL, spec.special ? Math.max(spec.minSpecial, 1) : 0],
+	].filter(([classSet, count]) => count > 0 && intersects(charset, classSet))
 }
 
 /**
@@ -481,6 +524,28 @@ export function extractCharset(regex) {
 }
 
 /**
+ * Refuse a pattern that cannot meet the org policy; it is never weakened.
+ *
+ * @param {object} policy A normalised policy.
+ * @param {{charset: string, maxLength: number}} pattern The pattern's set and longest length.
+ * @return {void}
+ */
+function assertPolicyReachable(policy, pattern) {
+	if (pattern.maxLength < policy.minLength) {
+		throw new GeneratorError(
+			`The regex cannot reach the org policy minimum length of ${policy.minLength} characters`,
+		)
+	}
+	for (const [label, classSet] of requiredClasses(policy)) {
+		if (!intersects(pattern.charset, classSet)) {
+			throw new GeneratorError(
+				`The regex excludes the ${label} characters the org policy requires`,
+			)
+		}
+	}
+}
+
+/**
  * Generate from a regex: a length within its quantifier, characters from its
  * first class, checked against the pattern itself.
  *
@@ -500,20 +565,8 @@ function generateFromRegex(regex, policy, rand) {
 			`The regex length must be at least ${MIN_LENGTH} characters`,
 		)
 	}
-	// A pattern that cannot meet the policy is refused, never weakened.
 	if (policy !== null) {
-		if (maxLength < policy.minLength) {
-			throw new GeneratorError(
-				`The regex cannot reach the org policy minimum length of ${policy.minLength} characters`,
-			)
-		}
-		for (const [label, classSet] of requiredClasses(policy)) {
-			if (!intersects(charset, classSet)) {
-				throw new GeneratorError(
-					`The regex excludes the ${label} characters the org policy requires`,
-				)
-			}
-		}
+		assertPolicyReachable(policy, { charset, maxLength })
 		minLength = Math.max(minLength, Math.min(policy.minLength, maxLength))
 	}
 	assertCharsetViable(charset)

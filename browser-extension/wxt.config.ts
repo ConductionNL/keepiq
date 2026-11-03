@@ -48,6 +48,8 @@ export default defineConfig({
 		const nameSuffix = mode === 'production' ? '' : ' (DEV)'
 		// Each Keepiq server is granted at add time, from the popup (ADR-003).
 		const serverOrigins = ['https://*/*', 'http://*/*']
+		// Only to turn off Chrome's own password manager (ext-default-password-manager); Firefox's cannot hide its dropdowns.
+		const optionalApis = browser === 'firefox' ? [] : ['privacy']
 		return {
 			name: `Keepiq${nameSuffix}`,
 			description: '__MSG_extensionDescription__',
@@ -62,16 +64,36 @@ export default defineConfig({
 				'alarms',
 				'idle',
 				'tabs',
+				// Scan QR code on page takes a picture of the tab under the toolbar popup; `tabs` alone doesn't allow that.
+				'activeTab',
 				// Clearing the clipboard writes it without a user gesture, from an offscreen
 				// document on Chrome and from the background page on Firefox.
 				'clipboardWrite',
 				...(browser === 'firefox' ? [] : ['offscreen']),
+				// Firefox reads it as an alias of `menus`.
+				'contextMenus',
 			],
+			commands: {
+				autofill_login: {
+					suggested_key: { default: 'Ctrl+Shift+L', mac: 'Command+Shift+L' },
+					description: '__MSG_commandAutofillLogin__',
+				},
+				// Why this key: design.md § Notification bar.
+				focus_notification_bar: {
+					suggested_key: { default: 'Alt+Shift+K', mac: 'Command+Shift+K' },
+					description: '__MSG_commandFocusNotificationBar__',
+				},
+			},
+			// The save bar and the inline list, framed into pages. WXT writes MV2's string form for Firefox.
+			web_accessible_resources: [{ resources: ['notification.html', 'inline-list.html'], matches: ['*://*/*'] }],
 			...(manifestVersion === 3
-				? { optional_host_permissions: serverOrigins }
-				: { optional_permissions: serverOrigins }),
-			action: {
+				? { optional_host_permissions: serverOrigins, ...(optionalApis.length > 0 && { optional_permissions: optionalApis }) }
+				: { optional_permissions: [...serverOrigins, ...optionalApis] }),
+			// MV2 gets `browser_action` by name: WXT drops `action` there once the popup has made one.
+			[manifestVersion === 3 ? 'action' : 'browser_action']: {
 				default_title: `Keepiq${nameSuffix}`,
+				// Painted before the background runs, so it must not claim an unlocked vault (src/toolbar-icon.ts).
+				default_icon: { 16: 'icon/toolbar-logged-out/16.png', 32: 'icon/toolbar-logged-out/32.png' },
 			},
 			// Argon2id for send passwords is WebAssembly. Dev builds get this from WXT, production
 			// only from here; WXT turns the object into MV2's string.

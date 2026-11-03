@@ -9,9 +9,9 @@
  *  - Canonical JSON serialize/parse round-trips all fields.
  *  - Malformed/partial credentials yield null (explicit invalid state) —
  *    never fabricated fields.
- *  - Bitwarden `login.fido2Credentials[]` entries map to `passkey` rows
- *    with the credential JSON in `password` and the RP id mirrored into
- *    `url`; a partial entry is rejected with a reason.
+ *  - Bitwarden `login.fido2Credentials[]` entries go on the login's own
+ *    `passkeys` field as canonical credentials (keepiq#1327); a partial
+ *    entry is rejected with a reason.
  *
  * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-canonical-cxf-aligned-passkey-credential-schema
  * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-creation-via-api-and-bitwarden-import
@@ -19,6 +19,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { parseBitwardenJson } from '../../src/import/parsers/bitwarden.js'
+import { passkeyEntries } from '../../src/passkey/loginPasskeys.js'
 import {
 	buildPasskeyCredential,
 	parsePasskey,
@@ -118,35 +119,118 @@ describe('Bitwarden fido2Credentials import', () => {
 		],
 	}
 
-	it('maps a complete entry to a passkey row with JSON in password and rpId in url', () => {
+	it("puts a complete entry on the login's passkeys field, with no passkey row", () => {
 		const rows = parseBitwardenJson(bitwardenExport)
-		const passkeyRows = rows.filter((row) => row.type === 'passkey')
-		expect(passkeyRows).toHaveLength(2)
+		expect(rows.some((row) => row.type === 'passkey')).toBe(false)
 
-		const complete = passkeyRows.find((row) => row.errors.length === 0)
-		expect(complete).toBeDefined()
-		expect(complete.url).toBe('example.com')
-		expect(complete.name).toBe('Example login (passkey)')
-		const credential = parsePasskey(complete.password)
-		expect(credential.privateKey).toBe('BW_KEY_VALUE_PLACEHOLDER')
-		expect(credential.userHandle).toBe('BW_USER_HANDLE_PLACEHOLDER')
-		expect(credential.createdAt).toBe('2026-07-01T00:00:00.000Z')
+		const loginRow = rows.find((row) => row.errors.length === 0)
+		expect(loginRow.name).toBe('Example login')
+		expect(loginRow.url).toBe('https://example.com')
+		// The stored JSON itself, not a re-canonicalised copy.
+		const stored = JSON.parse(loginRow.passkeys)
+		expect(stored).toHaveLength(1)
+		expect(stored[0]).toMatchObject({
+			credentialId: 'BW_CRED_ID_PLACEHOLDER',
+			rpId: 'example.com',
+			rpName: 'Example',
+			userName: 'alice',
+			userDisplayName: 'Alice Example',
+			userHandle: 'BW_USER_HANDLE_PLACEHOLDER',
+			privateKey: 'BW_KEY_VALUE_PLACEHOLDER',
+			counter: 0,
+			createdAt: '2026-07-01T00:00:00.000Z',
+		})
+		expect(typeof stored[0].counter).toBe('number')
 	})
 
-	it('rejects a partial entry with a reason instead of creating a partial passkey', () => {
+	it('rejects a second passkey with the same id but another key', () => {
+		const entry = {
+			credentialId: 'SAME',
+			rpId: 'example.com',
+			keyValue: 'FIRST_KEY',
+		}
+		const rows = parseBitwardenJson({
+			items: [
+				{
+					type: 1,
+					name: 'Twice',
+					login: {
+						password: 'p',
+						fido2Credentials: [
+							entry,
+							{ ...entry, keyValue: 'SECOND_KEY' },
+						],
+					},
+				},
+			],
+		})
+		expect(rows).toHaveLength(2)
+		const [login, rejected] = rows
+		expect(JSON.parse(login.passkeys).map((c) => c.privateKey)).toEqual([
+			'FIRST_KEY',
+		])
+		expect(rejected.name).toBe('Twice')
+		expect(rejected.errors[0]).toMatch(/same credential id/)
+	})
+
+	it('rejects a partial entry with a reason instead of attaching a partial passkey', () => {
 		const rows = parseBitwardenJson(bitwardenExport)
-		const rejected = rows.find(
-			(row) => row.type === 'passkey' && row.errors.length > 0,
-		)
-		expect(rejected).toBeDefined()
-		expect(rejected.errors[0]).toMatch(/Incomplete Bitwarden passkey/)
+		const rejected = rows.filter((row) => row.errors.length > 0)
+		expect(rejected).toHaveLength(1)
+		expect(rejected[0].name).toBe('Example login')
+		expect(rejected[0].errors[0]).toMatch(/Incomplete Bitwarden passkey/)
+		const loginRow = rows.find((row) => row.errors.length === 0)
+		expect(loginRow.passkeys).not.toContain('BW_PARTIAL_ID_PLACEHOLDER')
 	})
 
 	it('keeps the parent login row importing normally alongside its passkeys', () => {
 		const rows = parseBitwardenJson(bitwardenExport)
-		const loginRow = rows.find((row) => row.type === 'login')
+		const loginRow = rows.find(
+			(row) => row.type === 'login' && row.errors.length === 0,
+		)
 		expect(loginRow).toBeDefined()
-		expect(loginRow.errors).toHaveLength(0)
 		expect(loginRow.password).toBe('hunter2-placeholder')
+		expect(rows).toHaveLength(2)
+	})
+
+	it('imports a passkey-only login with an empty password and a seed', () => {
+		const rows = parseBitwardenJson({
+			items: [
+				{
+					type: 1,
+					name: 'Passwordless',
+					login: {
+						totp: 'JBSWY3DPEHPK3PXP',
+						fido2Credentials: [
+							{
+								credentialId: 'ONE',
+								rpId: 'example.com',
+								keyValue: 'KEY_ONE',
+							},
+							{
+								// The same credential twice: kept once.
+								credentialId: 'ONE',
+								rpId: 'example.com',
+								keyValue: 'KEY_ONE',
+							},
+							{
+								credentialId: 'TWO',
+								rpId: 'example.com',
+								keyValue: 'KEY_TWO',
+							},
+						],
+					},
+				},
+			],
+		})
+		expect(rows).toHaveLength(1)
+		expect(rows[0].errors).toEqual([])
+		expect(rows[0].password).toBeNull()
+		expect(rows[0].totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(
+			passkeyEntries(rows[0].passkeys).map(
+				({ credential }) => credential.credentialId,
+			),
+		).toEqual(['ONE', 'TWO'])
 	})
 })

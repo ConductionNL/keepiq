@@ -12,14 +12,17 @@
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"postinstall": "wxt prepare",
+		"render-icons": "bash scripts/render-icons.sh",
 		"test-site": "node scripts/test-site.ts",
 		"typecheck": "tsc --noEmit",
 		"zip": "wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
-		"test": "vitest run"
+		"test": "vitest run",
+		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@playwright/test": "1.64.1",
 		"@testing-library/dom": "10.4.2",
 		"@testing-library/react": "16.3.3",
 		"@testing-library/user-event": "14.6.7",
@@ -39,6 +42,7 @@
 	"dependencies": {
 		"@wxt-dev/i18n": "0.2.7",
 		"hash-wasm": "4.12.0",
+		"jsqr": "1.4.0",
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
 		"tldts": "7.4.15"

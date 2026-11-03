@@ -12,6 +12,8 @@ The popup has many repeated, stateful pieces: the item card in the vault list, f
 
 The popup (and any other extension page, such as the pop-out window or a future options page) is written in React with TypeScript, wired through WXT's `@wxt-dev/module-react`. Background and content scripts stay plain TypeScript; React never runs there.
 
+Extension pages framed inside web pages (the save bar, the inline list) are small vanilla DOM bundles instead: they load on every page that shows them and hold a handful of elements. The background still owns their state, nothing decrypted is stored, and they talk only through their own message kinds.
+
 Rules that follow:
 
 - **The background still owns all state.** React components read state and trigger actions only through the typed runtime messages in `src/messages.ts`, via a small set of hooks under `entrypoints/popup/hooks/` (for example `useVaultState`, `useSettings`, `useMessage`). No component calls `browser.storage` or the API client directly.

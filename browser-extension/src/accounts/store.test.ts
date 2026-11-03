@@ -9,6 +9,7 @@ import { pinGeneration, pinKey, pinSealKey, sealPin, storePinCopies, wrapPin } f
 import { vaultCacheKey } from '@/src/vault/store'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
+import { readLastUsed, recordLastUsed } from '@/src/last-used'
 import { patchAccountPolicy, readAccountPolicy } from './policy'
 import { DEFAULT_SETTINGS, readSettings, writeSettings } from './settings'
 import {
@@ -113,6 +114,23 @@ describe('logging out', () => {
 		expect(Object.keys(left).filter((k) => k.includes(account.id))).toEqual([])
 		expect(await listAccounts()).toEqual([])
 		expect(await getActiveAccountId()).toBeNull()
+	})
+
+	it.each<[string, (id: string) => Promise<unknown>, boolean]>([
+		['a 401', (id) => markLoggedOut(id, true), true],
+		['the timeout action Log out', (id) => markLoggedOut(id), true],
+		['Log out', (id) => removeAccount(id), true],
+		['Log out all', () => removeAllAccounts(), false],
+	])('forgets which items were filled last on %s', async (_, event, otherKept) => {
+		const account = await addAccount(fields(), suite)
+		const other = await addAccount(fields('bob'), suite)
+		for (const id of [account.id, other.id]) {
+			await putKey(id, 'AAAA')
+			await recordLastUsed(id, 'i1')
+		}
+		await event(account.id)
+		expect(await readLastUsed(account.id)).toEqual({})
+		expect(await readLastUsed(other.id)).toEqual(otherKept ? { i1: expect.any(Number) } : {})
 	})
 
 	it('makes the next account active when the active one is removed', async () => {

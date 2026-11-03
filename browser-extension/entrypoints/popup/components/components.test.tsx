@@ -568,6 +568,16 @@ describe('writeErrorText', () => {
 		expect(writeErrorText({ code }, 'edit')).toBe(text)
 	})
 
+	it('names a partner too old for an authenticator key, with the version when the server gave one', () => {
+		const partners = [{ shareId: 'fs-bob', cloudId: 'bob@cloud.partner.example' }]
+		const text = 'Nothing was saved: the Keepiq of bob@cloud.partner.example is too old to receive an authenticator key. Remove the key, or ask them to update Keepiq.'
+		expect(writeErrorText({ code: 'partner_upgrade_required', partners }, 'edit')).toBe(text)
+		expect(writeErrorText({ code: 'partner_upgrade_required', partners, requiredVersion: '0.3.12' }, 'edit')).toBe(`${text} They need Keepiq 0.3.12 or later.`)
+		expect(writeErrorText({ code: 'partner_upgrade_required', partners: [] }, 'edit')).toBe('Nothing was saved: a partner organisation this item is shared with runs a Keepiq too old to receive an authenticator key. Remove the key, or ask them to update Keepiq.')
+		setLocale('nl')
+		expect(writeErrorText({ code: 'partner_upgrade_required', partners, requiredVersion: '0.3.12' }, 'edit')).toBe('Er is niets opgeslagen: de Keepiq van bob@cloud.partner.example is te oud om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken. Ze hebben Keepiq 0.3.12 of nieuwer nodig.')
+	})
+
 	it.each([
 		['en', "Nothing was saved: a partner organisation this item is shared with can't be reached (bob@cloud.partner.example and carol@cloud.partner.example). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."],
 		['nl', 'Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (bob@cloud.partner.example en carol@cloud.partner.example). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.'],

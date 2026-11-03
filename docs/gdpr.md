@@ -31,8 +31,8 @@ browser. Neither sends plaintext, a passphrase, or a derived key to the server.
 
 ### Plaintext CSV
 
-- Columns: `name,url,login,password,notes,folder,type` (RFC 4180), round-trippable
-  through the generic CSV import.
+- Columns: `name,url,login,password,notes,folder,type,totp` (RFC 4180), round-trippable
+  through the generic CSV import. `totp` holds a login's one-time code; a login's passkeys have no column and are not in the CSV.
 - **Gated twice**: an explicit "this file is unencrypted, delete it after use"
   warning that must be acknowledged, then **fresh master-password re-entry**
   even on an unlocked session. Re-entry is verified client-side by decrypting

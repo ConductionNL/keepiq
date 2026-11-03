@@ -1,0 +1,450 @@
+/* The popup's tokens (popup.css), only those the bar uses. The host sizes the card by the viewport alone (`barHeight`). */
+:root {
+	color-scheme: light dark;
+	--surface: #ffffff;
+	--surface-hover: #eef1f6;
+	--fg: #1a2130;
+	--fg-muted: #5b6577;
+	--border-strong: #c5ccd8;
+	--accent: #21468b;
+	--accent-hover: #1a386f;
+	--accent-fg: #ffffff;
+	--logo: #21468b;
+	--danger: #c4291c;
+	--ok: #1f8a3f;
+	--radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--surface: #1e222a;
+		--surface-hover: #272c36;
+		--fg: #e8ebf0;
+		--fg-muted: #9aa3b3;
+		--border-strong: #444c5b;
+		--accent: #7fa3ec;
+		--accent-hover: #9ab7f1;
+		--accent-fg: #0c1730;
+		--logo: #3b67bd;
+		--danger: #ff8b7f;
+		--ok: #5fcd7f;
+	}
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--surface: #1e222a;
+	--surface-hover: #272c36;
+	--fg: #e8ebf0;
+	--fg-muted: #9aa3b3;
+	--border-strong: #444c5b;
+	--accent: #7fa3ec;
+	--accent-hover: #9ab7f1;
+	--accent-fg: #0c1730;
+	--logo: #3b67bd;
+	--danger: #ff8b7f;
+	--ok: #5fcd7f;
+}
+
+html,
+body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	background: var(--surface);
+	color: var(--fg);
+	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+/*
+ * The edge, in `--fg-muted` as the inline list's for 3:1 against the page, on the body so it shows while the bar loads.
+ * The host clips the frame to the same radius (`BAR_RADIUS_PX`) and draws the shadow.
+ */
+body {
+	box-sizing: border-box;
+	border: 1px solid var(--fg-muted);
+	border-radius: 12px;
+}
+
+p {
+	margin: 0;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/*
+ * The question and Close at the top, the folder or the item being updated, then the buttons at the bottom. The
+ * question's row takes what the others leave, up to its text; a question shorter than the host's height splits the rest
+ * between the gaps.
+ */
+.bar {
+	box-sizing: border-box;
+	height: 100%;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-rows: minmax(0, max-content) auto auto;
+	grid-template-areas:
+		'logo text close'
+		'detail detail detail'
+		'buttons buttons buttons';
+	align-content: space-between;
+	align-items: start;
+	column-gap: 10px;
+	row-gap: 10px;
+	padding: 11px;
+}
+
+.bar:empty {
+	display: none;
+}
+
+/* One text from the top. */
+.bar.bar--notice {
+	grid-template-rows: minmax(0, max-content);
+	grid-template-areas: 'logo text close';
+	align-content: start;
+}
+
+.bar.bar--saved {
+	grid-template-columns: auto minmax(0, max-content);
+	grid-template-rows: minmax(0, 1fr);
+	grid-template-areas: 'logo text';
+	justify-content: center;
+	align-items: center;
+}
+
+/* Set by `bar.ts` when the question needs the item row's room, row gap included. */
+.bar.bar--long-question {
+	grid-template-rows: minmax(0, max-content) auto;
+	grid-template-areas:
+		'logo text close'
+		'buttons buttons buttons';
+}
+
+.bar--long-question .bar__item {
+	display: none;
+}
+
+/* Centred on the question's 20 px first line, and no taller than it. */
+.logo {
+	grid-area: logo;
+	margin-block: -2px;
+	color: var(--logo);
+}
+
+/* A long question or error scrolls here rather than being cut off; the script makes it focusable then. */
+.bar__text {
+	grid-area: text;
+	max-height: 100%;
+	overflow-y: auto;
+	overflow-wrap: anywhere;
+	line-height: 18px;
+}
+
+.bar__title {
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+}
+
+.bar__error {
+	color: var(--danger);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.bar__saved {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* Script focus keeps focus or reads a message out; no control, so no ring. One that scrolls is a Tab stop and keeps it. */
+.bar__text[tabindex="-1"]:focus {
+	outline: none;
+}
+
+.bar__check {
+	flex: none;
+	color: var(--ok);
+}
+
+.bar__folder {
+	grid-area: detail;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.bar__label {
+	flex: none;
+	color: var(--fg-muted);
+}
+
+/*
+ * As tall as the folder select, so the question gets the same room in both modes. The icon takes the logo's width and
+ * gap, so the name lines up with the question.
+ */
+.bar__item {
+	grid-area: detail;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	height: 32px;
+}
+
+.bar__item-icon {
+	flex: none;
+	display: inline-flex;
+	justify-content: center;
+	width: 24px;
+	color: var(--fg-muted);
+}
+
+.bar__item-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 16px;
+}
+
+/* Clipped across only, so the 16 px lines keep their descenders. */
+.bar__item-name,
+.bar__item-user {
+	overflow-x: clip;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.bar__item-name {
+	font-weight: 600;
+}
+
+.bar__item-user {
+	color: var(--fg-muted);
+	font-size: 12px;
+}
+
+.bar__buttons {
+	grid-area: buttons;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	min-width: 0;
+}
+
+/* Its glyph centred on the question's first line, its box reaching into the padding. */
+.bar__close {
+	grid-area: close;
+	margin: -6px -6px -6px 0;
+}
+
+/*
+ * A label too wide for the row, as with a wide system font, wraps between its words instead of pushing a button off
+ * the card; two lines fit the 32 px, so the question keeps its room.
+ */
+.btn {
+	box-sizing: border-box;
+	flex: 0 1 auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 32px;
+	padding: 0 16px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 15px;
+	text-align: center;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	cursor: pointer;
+}
+
+.btn--primary {
+	background: var(--accent);
+	color: var(--accent-fg);
+}
+
+.btn--primary:hover {
+	background: var(--accent-hover);
+}
+
+.btn--secondary {
+	background: var(--surface);
+	border-color: var(--border-strong);
+	color: var(--fg);
+}
+
+.btn--secondary:hover {
+	background: var(--surface-hover);
+}
+
+.btn[aria-busy='true'] {
+	cursor: progress;
+}
+
+/* In the flow, after the label: nothing is painted over the button. */
+.btn[aria-busy='true']::after {
+	content: '';
+	flex: none;
+	width: 10px;
+	height: 10px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.btn[aria-busy='true']::after {
+		animation-duration: 2s;
+	}
+}
+
+.icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	color: var(--fg-muted);
+	background: none;
+	border: 0;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.icon-btn:hover {
+	color: var(--fg);
+	background: var(--surface-hover);
+}
+
+.select {
+	position: relative;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	flex: 1 1 auto;
+	min-width: 64px;
+	height: 32px;
+	color: var(--fg-muted);
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+}
+
+.select:focus-within {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.select__input {
+	appearance: none;
+	width: 100%;
+	min-width: 0;
+	height: 100%;
+	padding: 0 26px 0 10px;
+	font: inherit;
+	font-size: 14px;
+	color: var(--fg);
+	background: none;
+	border: 0;
+	outline: none;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+/* The native option list doesn't inherit the select's transparent background. */
+.select__input option {
+	color: var(--fg);
+	background: var(--surface);
+}
+
+.select__chevron {
+	position: absolute;
+	right: 6px;
+	pointer-events: none;
+}
+
+.bar__expand {
+	display: none;
+	grid-area: expand;
+}
+
+/*
+ * Compact: the host's 40 px for a short viewport, set by `bar.ts` as `is-compact`. One row; focus or a press grows
+ * the card. Last, and with `:root`, so it outranks every layout above.
+ */
+:root.is-compact .bar,
+:root.is-compact .bar.bar--saved,
+:root.is-compact .bar.bar--notice {
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
+	grid-template-rows: minmax(0, 1fr);
+	grid-template-areas: 'logo text expand close';
+	justify-content: normal;
+	align-content: normal;
+	align-items: center;
+	row-gap: 0;
+	column-gap: 8px;
+	padding: 0 5px 0 11px;
+}
+
+:root.is-compact :is(.logo, .bar__close) {
+	margin: 0;
+}
+
+:root.is-compact :is(.bar__folder, .bar__item, .bar__buttons) {
+	display: none;
+}
+
+:root.is-compact .bar__expand {
+	display: inline-flex;
+}
+
+:root.is-compact :is(.bar__title, .bar__error, .bar__notice) {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+:root.is-compact .logo {
+	width: 20px;
+	height: 20px;
+}
+
+:root.is-compact .icon-btn {
+	width: 28px;
+	height: 28px;
+}

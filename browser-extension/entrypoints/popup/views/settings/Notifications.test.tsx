@@ -9,7 +9,6 @@ import { Notifications } from './Notifications'
 
 afterEach(cleanup)
 
-const delivered = { autofillFeatures: ['savePrompts' as const] }
 const checkbox = (name: string) => screen.getByRole<HTMLInputElement>('checkbox', { name })
 const described = (element: HTMLElement) => (element.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean).map((id) => document.getElementById(id)!.textContent)
 const patches = (sent: ReturnType<typeof fakeBackground>) => sentOf(sent, 'account.settings.set').map((message) => message.patch)
@@ -22,8 +21,8 @@ function renderNotifications(options: Parameters<typeof fakeBackground>[0] = {})
 }
 
 describe('Notifications', () => {
-	it('shows the prompts as coming later until ext-autofill delivers them', async () => {
-		const { sent, onOpen, user } = renderNotifications({ accountSettings: { values: { askToUpdate: false } } })
+	it('shows the prompts as coming later while save prompts are not delivered', async () => {
+		const { sent, onOpen, user } = renderNotifications({ accountSettings: { autofillFeatures: [], values: { askToUpdate: false } } })
 		await screen.findByRole('checkbox', { name: 'Ask to add login' })
 		for (const name of ['Ask to add login', 'Ask to update existing login']) {
 			expect(checkbox(name).getAttribute('aria-disabled')).toBe('true')
@@ -41,8 +40,8 @@ describe('Notifications', () => {
 		expect(patches(sent)).toEqual([])
 	})
 
-	it('stores the prompts and opens Excluded domains once delivered', async () => {
-		const { sent, onOpen, user } = renderNotifications({ accountSettings: delivered })
+	it('stores the prompts and opens Excluded domains, now that ext-autofill delivered them', async () => {
+		const { sent, onOpen, user } = renderNotifications()
 		await user.click(await screen.findByRole('checkbox', { name: 'Ask to update existing login' }))
 		await waitFor(() => expect(patches(sent)).toEqual([{ askToUpdate: false }]))
 		await user.click(screen.getByRole('button', { name: 'Excluded domains' }))
@@ -59,7 +58,7 @@ describe('Notifications', () => {
 })
 
 function renderExcluded(options: Parameters<typeof fakeBackground>[0] = {}) {
-	const sent = fakeBackground({ ...options, accountSettings: { ...delivered, ...options.accountSettings } })
+	const sent = fakeBackground(options)
 	render(<ShellContext.Provider value={DEFAULT_SHELL}><ExcludedDomains /></ShellContext.Provider>)
 	return { sent, user: userEvent.setup() }
 }
@@ -109,7 +108,7 @@ describe('ExcludedDomains', () => {
 			tabUrl: 'https://login.example.co.uk/',
 			replies: {
 				'account.settings.set': (message: { patch: { excludedDomains: string[] } }) => new Promise((resolve) => (answer = () => resolve(
-					accountSettingsSnapshot({ ...delivered, values: { excludedDomains: message.patch.excludedDomains } }),
+					accountSettingsSnapshot({ values:{ excludedDomains: message.patch.excludedDomains } }),
 				))),
 			},
 		})

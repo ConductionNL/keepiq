@@ -6,10 +6,12 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 
 | Entrypoint | Runs as | Job |
 | --- | --- | --- |
-| `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer. Routes messages, alarms, idle and popup ports. |
+| `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer, and the toolbar icon. Routes messages, alarms, idle and popup ports. |
 | `entrypoints/popup/` | Toolbar popup, or a pop-out window (`?popout=1&tabId=`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
-| `entrypoints/content.ts` | Every `http(s)` page | Sends `page_ready`. Autofill (`ext-autofill`) builds on it. |
-| `entrypoints/offscreen/` | Chrome offscreen document | Clears the clipboard, created and closed per use. |
+| `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one credential a fill sends, hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
+| `entrypoints/inline-list/` | Extension page in an iframe under a login field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
+| `entrypoints/notification/` | Extension page in an iframe, a card in the top-right corner of the page | The save and update card, vanilla DOM. Never gets the password. |
+| `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created and closed per use. |
 
 ## Modules
 
@@ -31,7 +33,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `pin.ts`: the PIN-wrapped key and its failure count in session storage, and the PIN's seal on disk that brings it back after a restart.
   - `timeout.ts`: the timeout engine and both alarms.
   - `sync.ts` and `store.ts`: sync and the snapshot cache.
-  - `match.ts`: base-domain matching for suggestions.
+  - `match.ts`: `baseDomain()`, the public-suffix-aware base domain every match builds on.
   - `list.ts`: sorting, filtering and the folder tree.
   - `payloads.ts`: parses card, identity and passkey payloads.
   - `fields.ts`: the item form's model, limits and validation; pure, so the popup may use it.
@@ -45,10 +47,33 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `router.ts`: account messages.
   - `requests.ts`: vault and popup requests.
   - `broadcast.ts`: background-to-popup notices.
+  - `sender.ts`: names the sender page and the kinds it may send.
+- `src/autofill/`, the specs in `openspec/changes/ext-autofill/`:
+  - `matcher.ts`: the six URI match rules and `candidatesFor()`, the logins (or another type's items) for a page in last-used order.
+  - `fill.ts`: the fill every surface goes through: frame choice, insecure check, decrypt, the login's code, `fill.execute`, last used, the code's copy.
+  - `login-codes.ts`: the logins with a code for a page, and current codes from a login's `totp` field (`openspec/changes/ext-totp-autofill/`).
+  - `code-fill.ts`: a pick from the inline list on a code field.
+  - `frames.ts`: the frames of each tab, from `page_ready` senders.
+  - `triggers.ts`: fill on page load and from the `autofill_login` shortcut.
+  - `inline-session.ts`: the inline list's session and its `inline.*` requests.
+  - `capture-queue.ts`: the pending save or update per tab and the bar's `capture.*` requests.
+  - `tab-items.ts`: the item each tab last filled or captured, for a password change form without a username.
+  - `fields.ts` (content script): field and group detection, code groups, and `fillField()`.
+  - `execute.ts` (content script): answers `fill.execute`, the code into one code group.
+  - `capture-collector.ts` (content script): reports a login the user submitted.
+  - `frame-host.ts` (content script): an extension page in an iframe inside a closed shadow root.
+  - `inline-host.ts` and `notification-host.ts` (content script): place, guard and close the list and the bar.
+  - `visibility.ts` (content script): the visibility guard's checks.
+  - `visibility-tracker.ts` (list and bar pages): Chrome's IntersectionObserver v2 check.
+  - `default-manager.ts`: takes and returns control of Chrome's password manager and address autofill (`openspec/changes/ext-default-password-manager/`).
+- `src/menus.ts`: the "Keepiq" context menu, built and handled in the background.
+- `src/last-used.ts`: when each item was last filled.
 - `src/messages.ts`: every message type, in one place.
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
-- `src/clipboard.ts`: copy in the popup, clear from the background.
-- `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module.
+- `src/clipboard.ts`: copy in the popup; write and clear from the background, and clear a copied code on its account's lock.
+- `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module; the popup and the background both use it.
+  - `authenticator-key.ts`: a login's authenticator key as typed or read from a QR code, normalised and checked as the web app does.
+  - `qr-scan.ts`: Scan QR code on page; a picture of the tab under the popup, read with jsQR in the popup (`openspec/changes/ext-totp-capture/`).
 - `src/generator/`: a port of the web app's password, passphrase and username generator, tested against `../tests/vectors/generator/`. All modules are safe for the popup, except two background-only ones:
   - `store.ts`: the options and the cached policy.
   - `history.ts`: the session history.
@@ -58,7 +83,8 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `link.ts`: builds the recipient link.
   - `api.ts`: the send routes.
   - `handlers.ts`: the `send.*` requests.
-- `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2.
+- `src/browser-action.ts`: hides the `action` / `browserAction` split between MV3 and MV2; `openPopupOrPopout()` falls back to a pop-out window.
+- `src/toolbar-icon.ts`: the only code that sets the toolbar icon, badge and tooltip. The icon follows the active account's state; the badge counts `candidatesFor()` for each window's active tab while unlocked (`openspec/changes/ext-toolbar-icon/`).
 - `entrypoints/popup/`, settings:
   - `views/settings/`: one view per Settings section; `timeout.ts` holds the timeout options and durations, `domains.ts` the excluded-domain rules.
   - `hooks/useSettings.ts`: `SettingsProvider` in `<App />` reads the global settings once and applies and mirrors the theme and appearance on every screen.
@@ -67,7 +93,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 
 ## Messages
 
-All types are in `src/messages.ts`. The background only answers extension pages; see [SECURITY.md](SECURITY.md#pages-and-messages).
+All types are in `src/messages.ts`. The background answers each sender only its own kinds; see [SECURITY.md](SECURITY.md#pages-and-messages).
 
 | Direction | Kinds | Reply |
 | --- | --- | --- |
@@ -75,12 +101,21 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
+| Popup → background, fill | `fill.request` | `FillResult`, or `needsInsecureConfirm` to ask first |
+| Popup → background, default password manager | `defaultManager.get`, `defaultManager.enable`, `defaultManager.disable` | `DefaultManagerState`; `undefined` when the background failed |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
-| Background → offscreen | `offscreen.clearClipboard` | Whether it cleared |
-| Content → background | `page_ready` | None |
+| Background → offscreen | `offscreen.clearClipboard`, `offscreen.writeClipboard` | Whether it wrote |
+| Content → background | `page_ready` (`passwordField`: the top frame has a login form, for fill on page load), `inline.closed`, `capture.submitted`, `capture.reshow` | None |
+| Content → background, inline list | `inline.open` | `{ key, height }`, or `null` for no list |
+| Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `inline.verify`, `capture.verify`, `capture.show` | `boolean`; `FillExecuteReply` for `fill.execute`; the key the host's bar holds for `capture.show` |
+| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand` | None |
+| Content → its list or bar iframe, by `postMessage` to the extension origin | `inline.init`, `inline.focus`, `inline.moved`, `capture.init`, `capture.focus`, `capture.moved` | None |
+| Inline list → background | `inline.state`, `inline.pick`; `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, `InlinePickReply`; none for the last four |
+| Save bar → background | `capture.state`, `capture.save`, `capture.update`, `capture.dismiss`, `capture.expand` | `NotificationReplies` |
 
+- **Routing by sender page.** `src/background/sender.ts` tells the popup, the list and the bar apart by `sender.url` path, and a content script by its tab and frame; each gets only its own kind set in `src/messages.ts`.
 - **Popup port.** The popup holds a `popup` port open. Its disconnect drives the "Immediately" timeout, with a 5-second grace while a pop-out window takes over.
-- **Use-only copies.** `item.decrypt` returns only the `login` of a `useOnly` row. Asking for more gets `use_only`; in a batch, the row is left out.
+- **Use-only copies.** `item.decrypt` returns only the `login` and the `totp` seed of a `useOnly` row; the popup turns the seed into a code and never shows it. Asking for more gets `use_only`; in a batch, the row is left out.
 - **Passive requests.** A popup request made in reaction to a broadcast is sent with `passive` (or without `opened`), so it doesn't count as user activity for the timeout.
 
 ## Storage
@@ -90,7 +125,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `accounts` | local | Account records, app passwords included |
 | `activeAccountId` | local | The active account; heals itself when it points nowhere |
 | `settings.<id>` | local | Every account-scoped setting: vault timeout and action, clipboard delay, autofill and notification entries, excluded domains, default item type; kept through a logout |
-| `settings.global` | local | Theme, compact mode, animations and quick copy; survives logout |
+| `settings.global` | local | Theme, compact mode, animations, quick copy and the badge counter; survives logout |
 | `accountPolicy.<id>` | local | The organisation's idle maximum and export switch, from the last successful read; kept through a logout |
 | `keepiq.theme` | popup `localStorage` | A mirror of the theme for the first frame, never read by the background |
 | `keepiq.appearance` | popup `localStorage` | A mirror of compact mode and animations for the first frame, never read by the background |
@@ -103,6 +138,7 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
 | `pinSeal.<id>` | local | The PIN, sealed under a key derived from the private key and bound to the account, suite and epoch; survives a restart, gone with `pin.<id>` otherwise |
+| `lastUsed.<id>` | local | When each item was last filled, by item id, for the suggestion order, the shortcut and fill on page load; written only while unlocked, dropping ids the vault no longer holds; gone on logout and account removal |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
 | `pin.<id>` | session | The key wrapped under the PIN, its suite and epoch, and the wrong PINs in a row; kept through a lock, gone on restart, logout, a changed suite or epoch and the fifth wrong PIN |
 | `unlockedAt.<id>`, `lastInteractionAt` | session | Timeout bookkeeping |
@@ -111,8 +147,17 @@ All types are in `src/messages.ts`. The background only answers extension pages;
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
 | `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
 | `generatorSealed.<id>` | session | Values generated while locked, RSA-OAEP-sealed to the certificate proven at the last unlock; merged into `generatorHistory.<id>` by the first history request after the unlock; dropped as in [design.md, History while locked](openspec/changes/ext-generator/design.md) |
+| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode and offered item ids, no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
+| `clipboardCode` | session | The account whose one-time code the background copied, never the code; gone when the clear runs, on any other copy, and at that account's lock or logout, which clears the clipboard at once |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
+
+Background memory only, lost on an MV3 worker restart:
+
+- **Captures** (`capture-queue.ts`): one pending save or update per tab, password included, for 5 minutes; dropped on tab close, leaving the site, lock, logout and account switch.
+- **Tab items** (`tab-items.ts`): the item each tab last filled or captured; forgotten on tab close, lock and account switch.
+- **Frame registry** (`frames.ts`): each tab's frame ids and URLs from `page_ready`; forgotten when the tab loads or closes.
+- **Badge counts** (`toolbar-icon.ts`): never stored, recomputed from the snapshot for each window's active tab; other tabs show none until activated.
 
 ## Flows
 
@@ -145,7 +190,8 @@ After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the 
 - **Each write names its account,** and is refused when that is no longer the active one.
 - **Shared copies keep their limits** (use-only, read-only, expiring, view-only) in the popup and again in the background. A copy is view-only when `write-context` gives it no `owner`, `write` or `manage` grade; the detail asks with `item.editable` unless Edit is already unavailable, and the edit fetch and every save but a move refuse it.
 - **Edit and Clone fetch the item fresh** from the server and open it only when its ciphertext matches the vault cache, after one sync on a mismatch (ADR-002); Edit saves the changed fields with `baseUpdatedAt`, so a newer version is not overwritten, and with its fetch's `recordId`, so the save vouches only for what its own form showed.
-- **A changed `key`, `login` or `additionalFields` saves through share-save**, the editor's row and every other copy in one transaction: `write-context` picks the owner path (local copies and partner shares), or the copy-editor path (the source and the other copies). The first call carries empty lists; a 409 `incomplete` names what to encrypt for, at most three rounds. Partners get the typed fields plus what the form's `editOpened` record showed, never a fresh row. Any other edit is a plain `PUT`, after a `write-context` read unless it only moves the item.
+- **A changed `key`, `login`, `additionalFields` or `totp` saves through share-save**, the editor's row and every other copy in one transaction: `write-context` picks the owner path (local copies and partner shares), or the copy-editor path (the source and the other copies). The first call carries empty lists; a 409 `incomplete` names what to encrypt for, at most three rounds. Partners get the typed fields plus what the form's `editOpened` record showed, never a fresh row, with `totp` and `passkeys` only when their `valueFields` lists them. Any other edit is a plain `PUT`, after a `write-context` read unless it only moves the item.
+- **A login's authenticator key never reaches the form:** the edit fetch answers `totpSaved`, the form offers Replace and Remove, and the record keeps the `totp` and `passkeys` ciphertext for partners (`openspec/changes/ext-totp-capture/`).
 - **A refused save writes nothing** and keeps the form open; when the reply to the final call is lost, the server wrote everything or nothing. Nothing about a save outlives the request but verified partner certificates, kept in background memory for 5 minutes and forgotten on lock, logout and account switch, and the server's version check orders concurrent saves. The `item.update` reply carries `shareSave` when the item's detail has a note to show.
 - **Every write records** whether the server answered, which drives the same offline flag as sync.
 - **A successful write runs a full sync** and replies after it, waiting for a sync that started earlier.
@@ -159,6 +205,16 @@ After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the 
 - **Password sends** carry no secret in their link, so `send.list` rebuilds it from the row's `token`.
 - **Send from an item** reads the login with `item.decrypt` and opens New send with it.
 
+### Autofill
+
+The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts).
+
+- **Fill:** the popup, the context menu, the shortcut, page load and an inline pick all go through `fill()`: it matches the item against each recorded frame's URL, decrypts `login` and `key`, and sends one `fill.execute` per matching frame.
+- **TOTP:** `fill()` puts the current code from the login's own `totp` field in `fill.execute`, and copies it after the fill; not on page load (`openspec/changes/ext-totp-autofill/`).
+- **Code list:** on a code field the inline list opens in code mode; its rows carry codes, its pick goes to `pickCode()`, and the list page asks `inline.state` again when a code ends.
+- **Inline list:** the content script asks `inline.open` for a key and posts it to the list page, which loads its rows with `inline.state`; a pick goes to the background, which asks the host frame `inline.verify` before it fills.
+- **Save bar:** `capture.submitted` queues a capture; the background sends `capture.show` with a fresh key to the top frame, and the bar loads its state with `capture.state` and answers with `capture.save`, `capture.update` or `capture.dismiss`; the background asks the host `capture.verify` for all but Close.
+
 ### Timeout
 
 - `enforce()` runs on the `vault-timeout` alarm and before every popup request, and locks or logs out each account past its timeout.
@@ -169,6 +225,7 @@ After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the 
 
 - **Lock** clears the key.
 - **Log out** marks the account first, then purges. A sync or unlock that is still running sees the mark and undoes its own writes.
+- Both end in the `vault.locked` broadcast, on which the toolbar empties the badge on every tab and a code the locked account copied is cleared.
 - **Account-list changes** queue through `mutateAccounts`, so none of them works on a stale read.
 
 ## Translations
@@ -190,4 +247,5 @@ The specs are in `openspec/changes/ext-i18n/`.
 - Popup tests (`*.test.tsx`) run twice: project `popup-prod` as built, `popup-dev` under StrictMode as `npm run dev` renders; count mount effects with `mounts()`.
 - Tests render in English from the real catalogs; `setLocale('nl')` from `src/testing/i18n.ts` switches one to Dutch.
 - `test-site/` holds mock pages for manual checks, one per fill and capture case.
+- `e2e/` drives the inline list and the save bar of the built Chrome extension on the test site with Playwright, for what only a real browser shows (Chrome's occlusion report, the top layer, modals); it seeds a fake unlocked account from the test vectors. Playwright cannot load extensions into Firefox.
 - The commands are in the [README](README.md#checks--builds). Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching `entrypoints/`.

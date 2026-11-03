@@ -34,13 +34,21 @@
 
 - [ ] 5.1 Document the Authenticator key field, the passkeys on a login, the use-only behaviour and that new Authenticator and Passkey items are no longer created, in `docs/`. Verify: docs build.
 
-## 6. Deferred, not in this change
+## 6. Import and export (keepiq#1327)
 
-- [ ] 6.1 Clone and print carry both fields. Deferred: neither feature exists yet; belongs to `vault-item-clone-preview-and-print`.
-- [ ] 6.2 The Passkey type filter also finds logins with passkeys. Deferred: the server cannot see inside the ciphertext; needs a backend query design.
-- [ ] 6.3 Import and export carry both fields and stop creating `(TOTP)` and `(passkey)` items. Deferred to keepiq#1327.
-- [ ] 6.4 Guided move of standalone Authenticator and Passkey items, and of additional fields named `totp` or `otp`, onto their login. Deferred to keepiq#1328.
-- [ ] 6.5 Android reads and writes both fields. Deferred to keepiq#1329.
+- [x] 6.1 Put Bitwarden `login.totp` and `login.fido2Credentials[]` (JSON) and `login_totp` (CSV), and KeePass `otp` and `TimeOtp-*`, on the login's `totp` and `passkeys` fields through `src/import/loginValueFields.js`, accepting only a seed the TOTP parser reads (others stay additional fields), folding KeePass period, length and algorithm into an otpauth URI when not the defaults, and giving a passkey-only Bitwarden login its RP id as URL. Verify: `tests/vitest/import-parsers.spec.js`, `tests/vitest/passkey.spec.js`.
+- [x] 6.2 Attach a CXF item's TOTP and passkeys to its first accepted login, else its first accepted other row, else a new login with an empty password, whatever the credential order and never to a rejected row; read CXF 1.0 TOTP fields and reject an unusable algorithm or digit count; the first seed wins, a different one and a clashing passkey are rejected with a reason, and a repeated passkey is kept once. Verify: `tests/vitest/cxf.spec.js`.
+- [x] 6.3 Export a secret's `totp` and `passkeys` as CXF 1.0 credentials of its own CXF item, report a stored code or passkey that cannot be exported, and keep standalone Authenticator and Passkey items exporting as items of their own. Verify: `tests/vitest/cxf.spec.js`, `tests/vitest/cxf-passkey-roundtrip.spec.js`.
+- [x] 6.4 Remove `expandTotpRows` and the `(TOTP)` and `(passkey)` names; the import commit encrypts `totp` and `passkeys` and sends them only when set; the preview and the duplicates list mark rows with `LoginExtrasMarkers`. Verify: `tests/store/import.spec.js`, `tests/dialogs/ImportWizardDialog.spec.js`.
+- [x] 6.5 Carry both fields in the backup and GDPR payload (`serializeVault`) and read them back on backup restore; write the seed in a `totp` CSV column that the generic CSV import maps back. Verify: `tests/vitest/export-serializer.spec.js`, `tests/vitest/export-gdprPackage.spec.js`, `tests/vitest/import-backupParser.spec.js`, `tests/vitest/import-parsers.spec.js`, `tests/store/import.spec.js`.
+- [x] 6.6 The batch import endpoint (`ImportService::commitChunk`) passes `totp` and `passkeys` on to the secret it creates, and checks both as ciphertext. Done in fdca23d5. Verify: `ImportServiceTest::testTotpAndPasskeysReachTheCreatedSecret`, `ImportServiceTest::testPlaintextTotpOrPasskeysRejected`.
+
+## 7. Deferred, not in this change
+
+- [ ] 7.1 Clone and print carry both fields. Deferred: neither feature exists yet; belongs to `vault-item-clone-preview-and-print`.
+- [ ] 7.2 The Passkey type filter also finds logins with passkeys. Deferred: the server cannot see inside the ciphertext; needs a backend query design.
+- [ ] 7.3 Guided move of standalone Authenticator and Passkey items, and of additional fields named `totp` or `otp`, onto their login. Dropped in keepiq#1328: only internal testers hold such items, so they stay as they are (D12).
+- [ ] 7.4 Android reads and writes both fields. Deferred to keepiq#1329.
 
 ## Acceptance criteria
 
@@ -49,3 +57,4 @@
 - A use-only recipient can copy the code but never sees the seed.
 - Link shares carry neither field; a federated partner that does not store them is never sent a value.
 - New Authenticator or Passkey items cannot be created from the web app; existing ones work unchanged.
+- Importing a Bitwarden, KeePass or CXF export with codes and passkeys gives one login per entry with its code and passkeys on it, and no `(TOTP)` or `(passkey)` items; a CXF export and re-import of such a login gives the same login back.

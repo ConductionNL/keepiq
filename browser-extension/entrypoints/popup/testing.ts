@@ -1,9 +1,9 @@
 import { getConfig } from '@testing-library/react'
 import { vi } from 'vitest'
-import { clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
+import { AUTOFILL_FEATURES, clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
 import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type {
-	AccountSettingsSnapshot, AccountSummary, DecryptField, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
+	AccountSettingsSnapshot, AccountSummary, DecryptField, DefaultManagerState, DecryptedItem, EditableItem, GlobalSettings, ItemMeta, PopupState, PopupTab, Result, SendCreateInput, SendRow, TypeMeta, VaultSnapshotReply,
 } from '@/src/messages'
 
 export function account(overrides: Partial<AccountSummary> = {}): AccountSummary {
@@ -94,13 +94,15 @@ interface FakeBackground {
 	send?: { sends?: SendRow[]; passwordProtection?: boolean }
 	/** The active account's settings; `set` and the PIN requests change them. */
 	accountSettings?: Partial<Omit<AccountSettingsSnapshot, 'values'>> & { values?: Partial<AccountSettings> }
+	/** The browser's own password manager as the background reads it; `enable` and `disable` change it. */
+	defaultManager?: DefaultManagerState
 }
 
 export function accountSettingsSnapshot(overrides: FakeBackground['accountSettings'] = {}): AccountSettingsSnapshot {
 	const values = { ...DEFAULT_SETTINGS, ...overrides.values }
 	const maxIdleMinutes = overrides.maxIdleMinutes ?? null
 	return {
-		accountId: 'a1', effectiveTimeout: clampTimeout(values.vaultTimeout, maxIdleMinutes), exportDisabled: false, pin: false, autofillFeatures: [], shortcut: null,
+		accountId: 'a1', effectiveTimeout: clampTimeout(values.vaultTimeout, maxIdleMinutes), exportDisabled: false, pin: false, autofillFeatures: [...AUTOFILL_FEATURES], shortcut: null,
 		serverUrl: 'https://cloud.example.org', webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/', keepiqVersion: '0.3.12',
 		...overrides, maxIdleMinutes, values,
 	}
@@ -115,85 +117,102 @@ export function sendRow(overrides: Partial<SendRow> = {}): SendRow {
 
 const sendBase = 'https://cloud.example.org/index.php/apps/keepiq/public/send/'
 
+/** A popup request as the fake background reads it. */
+type FakeMessage = {
+	kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings>
+	options?: GeneratorOptions; entry?: Omit<GeneratorHistoryEntry, 'createdAt'>; input?: SendCreateInput
+}
+
+type FakeAnswers = Record<string, (message: FakeMessage) => unknown>
+
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
-	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, ...options.settings }
+	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, showBadgeCounter: true, ...options.settings }
 	let generatorOptions = options.generator?.options ?? defaultOptions()
 	let history = options.generator?.history ?? []
 	let sends = options.send?.sends ?? []
 	let accountSettings = accountSettingsSnapshot(options.accountSettings)
+	let defaultManager = options.defaultManager ?? 'off'
 	let created = 0
 	const snapshot = () => (typeof options.snapshot === 'function' ? options.snapshot() : options.snapshot) ?? snapshotReply()
-	const reply = vi.fn(async (message: {
-		kind: string; id?: string; ids?: string[]; fields?: DecryptField[]; patch?: Partial<GlobalSettings>
-		options?: GeneratorOptions; entry?: Omit<GeneratorHistoryEntry, 'createdAt'>; input?: SendCreateInput
-	}): Promise<unknown> => {
+	const settingsAnswers = (): FakeAnswers => ({
+		'settings.get': () => settings,
+		'settings.set': (message) => (settings = { ...settings, ...message.patch }),
+		'account.settings.get': () => accountSettings,
+		'account.settings.set': (message) => {
+			const values = { ...accountSettings.values, ...message.patch as Partial<AccountSettings> }
+			return (accountSettings = { ...accountSettings, values, effectiveTimeout: clampTimeout(values.vaultTimeout, accountSettings.maxIdleMinutes) })
+		},
+		'pin.set': () => (accountSettings = { ...accountSettings, pin: true }, { ok: true }),
+		'pin.remove': () => (accountSettings = { ...accountSettings, pin: false }, null),
+		'defaultManager.get': () => defaultManager,
+		'defaultManager.enable': () => defaultManager === 'off' ? (defaultManager = 'on') : defaultManager,
+		'defaultManager.disable': () => (defaultManager = 'off'),
+	})
+	const vaultAnswers = (): FakeAnswers => ({
+		// The background reads the default type from the account's settings.
+		'vault.snapshot': () => {
+			const current = snapshot()
+			const defaultItemType = accountSettings.values.defaultItemType
+			return current.state === 'unlocked' && current.defaultSecretType === null && defaultItemType !== 'login' ? { ...current, defaultSecretType: defaultItemType } : current
+		},
+		'vault.sync': () => (snapshot() as UnlockedSnapshot).sync ?? snapshotReply().sync,
+		'item.fetch': (message) => {
+			const item = options.items?.[message.id!]
+			return item ? { ok: true, value: item } : { ok: false, error: { code: 'not_found' } }
+		},
+		'item.create': () => ({ ok: true, value: { id: 'new' } }),
+		// A save that reached everyone carries no `shareSave`.
+		'item.update': (message) => ({ ok: true, value: { id: message.id } }),
+		'item.editable': () => ({ ok: true, value: { editable: true } }),
+		'item.delete': () => ({ ok: true, value: null }),
+		'folder.rename': () => ({ ok: true, value: null }),
+		'folder.delete': () => ({ ok: true, value: null }),
+		'folder.create': () => ({ ok: true, value: { id: 'f-new' } }),
+		'folder.children': () => ({ ok: true, value: { directSecretCount: 0, subfolders: [] } }),
+		'folder.dismissNotice': () => null,
+		'item.decrypt': (message) => {
+			if (options.decryptError) return { ok: false, error: options.decryptError }
+			const items = Object.fromEntries(message.ids!.map((id) => [id, Object.fromEntries(
+				message.fields!.flatMap((field) => options.decrypted?.[id]?.[field] === undefined ? [] : [[field, options.decrypted[id][field]]]),
+			)]))
+			return { ok: true, items }
+		},
+	})
+	const generatorAnswers = (): FakeAnswers => ({
+		'generator.context': () => ({ options: generatorOptions, policy: options.generator?.policy ?? null, accountEmail: options.generator?.accountEmail === undefined ? 'alice@example.org' : options.generator.accountEmail }),
+		'generator.saveOptions': (message) => (generatorOptions = message.options!),
+		'generator.history.list': () => history,
+		'generator.history.add': (message) => (history = [{ ...message.entry!, createdAt: new Date().toISOString() }, ...history].slice(0, HISTORY_LIMIT)),
+		'generator.history.clear': () => (history = [], null),
+	})
+	const sendAnswers = (): FakeAnswers => ({
+		'send.list': () => ({ ok: true, value: { sends, passwordProtection: options.send?.passwordProtection ?? true } }),
+		'send.create': (message) => {
+			const input = message.input!
+			const id = `s-new-${++created}`
+			const token = String(created).padStart(64, '0')
+			const row = sendRow({
+				id, token, payloadType: input.payloadType, hasPassword: input.password !== undefined, maxViews: input.maxViews, viewCount: 0, remainingViews: input.maxViews,
+				expiresAt: new Date(Date.now() + input.ttlSeconds * 1000).toISOString(), createdAt: new Date().toISOString(),
+				...(input.password !== undefined && { link: `${sendBase}${token}` }),
+			})
+			sends = [row, ...sends]
+			return { ok: true, value: { row, link: input.password === undefined ? `${sendBase}${token}#k=key${created}` : `${sendBase}${token}` } }
+		},
+		'send.delete': (message) => (sends = sends.filter((row) => row.id !== message.id), { ok: true, value: null }),
+		'popup.lastTab.set': () => null,
+		'popup.popout': () => null,
+		'clipboard.copied': () => null,
+	})
+	const answers: FakeAnswers = { ...settingsAnswers(), ...vaultAnswers(), ...generatorAnswers(), ...sendAnswers() }
+	const reply = vi.fn(async (message: FakeMessage): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
 		const canned = options.replies?.[message.kind]
 		if (canned !== undefined) return typeof canned === 'function' ? canned(message) : canned
-		switch (message.kind) {
-			case 'settings.get': return settings
-			case 'settings.set': return (settings = { ...settings, ...message.patch })
-			case 'account.settings.get': return accountSettings
-			case 'account.settings.set': {
-				const values = { ...accountSettings.values, ...message.patch as Partial<AccountSettings> }
-				return (accountSettings = { ...accountSettings, values, effectiveTimeout: clampTimeout(values.vaultTimeout, accountSettings.maxIdleMinutes) })
-			}
-			case 'pin.set': return (accountSettings = { ...accountSettings, pin: true }, { ok: true })
-			case 'pin.remove': return (accountSettings = { ...accountSettings, pin: false }, null)
-			// The background reads the default type from the account's settings.
-			case 'vault.snapshot': {
-				const current = snapshot()
-				const defaultItemType = accountSettings.values.defaultItemType
-				return current.state === 'unlocked' && current.defaultSecretType === null && defaultItemType !== 'login' ? { ...current, defaultSecretType: defaultItemType } : current
-			}
-			case 'vault.sync': return (snapshot() as UnlockedSnapshot).sync ?? snapshotReply().sync
-			case 'item.fetch': {
-				const item = options.items?.[message.id!]
-				return item ? { ok: true, value: item } : { ok: false, error: { code: 'not_found' } }
-			}
-			case 'item.create': return { ok: true, value: { id: 'new' } }
-			// A save that reached everyone carries no `shareSave`.
-			case 'item.update': return { ok: true, value: { id: message.id } }
-			case 'item.editable': return { ok: true, value: { editable: true } }
-			case 'item.delete':
-			case 'folder.rename':
-			case 'folder.delete': return { ok: true, value: null }
-			case 'folder.create': return { ok: true, value: { id: 'f-new' } }
-			case 'folder.children': return { ok: true, value: { directSecretCount: 0, subfolders: [] } }
-			case 'folder.dismissNotice': return null
-			case 'item.decrypt': {
-				if (options.decryptError) return { ok: false, error: options.decryptError }
-				const items = Object.fromEntries(message.ids!.map((id) => [id, Object.fromEntries(
-					message.fields!.flatMap((field) => options.decrypted?.[id]?.[field] === undefined ? [] : [[field, options.decrypted[id][field]]]),
-				)]))
-				return { ok: true, items }
-			}
-			case 'generator.context': return { options: generatorOptions, policy: options.generator?.policy ?? null, accountEmail: options.generator?.accountEmail === undefined ? 'alice@example.org' : options.generator.accountEmail }
-			case 'generator.saveOptions': return (generatorOptions = message.options!)
-			case 'generator.history.list': return history
-			case 'generator.history.add': return (history = [{ ...message.entry!, createdAt: new Date().toISOString() }, ...history].slice(0, HISTORY_LIMIT))
-			case 'generator.history.clear': return (history = [], null)
-			case 'send.list': return { ok: true, value: { sends, passwordProtection: options.send?.passwordProtection ?? true } }
-			case 'send.create': {
-				const input = message.input!
-				const id = `s-new-${++created}`
-				const token = String(created).padStart(64, '0')
-				const row = sendRow({
-					id, token, payloadType: input.payloadType, hasPassword: input.password !== undefined, maxViews: input.maxViews, viewCount: 0, remainingViews: input.maxViews,
-					expiresAt: new Date(Date.now() + input.ttlSeconds * 1000).toISOString(), createdAt: new Date().toISOString(),
-					...(input.password !== undefined && { link: `${sendBase}${token}` }),
-				})
-				sends = [row, ...sends]
-				return { ok: true, value: { row, link: input.password === undefined ? `${sendBase}${token}#k=key${created}` : `${sendBase}${token}` } }
-			}
-			case 'send.delete': return (sends = sends.filter((row) => row.id !== message.id), { ok: true, value: null })
-			case 'popup.lastTab.set':
-			case 'popup.popout':
-			case 'clipboard.copied': return null
-			default: return { ok: true, state }
-		}
+		const answer = Object.hasOwn(answers, message.kind) ? answers[message.kind] : undefined
+		return answer ? answer(message) : { ok: true, state }
 	})
 	vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(reply as never)
 	vi.spyOn(browser.tabs, 'query').mockResolvedValue([{ id: 7, windowId: 3, url: options.tabUrl ?? 'https://github.com/login' }] as never)
@@ -206,7 +225,7 @@ export function editableItem(overrides: Partial<EditableItem> = {}): EditableIte
 	const typeId = overrides.typeId ?? 't-login'
 	return {
 		id: 'i1', typeId, typeName: types.find((type) => type.id === typeId)?.name, name: 'GitHub', url: 'https://github.com', folderId: null, key: 'hunter2', login: 'alice',
-		additionalFields: {}, updatedAt: '2026-03-02T10:00:00Z', ...overrides,
+		additionalFields: {}, updatedAt: '2026-03-02T10:00:00Z', totpSaved: false, ...overrides,
 	}
 }
 

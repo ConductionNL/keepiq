@@ -1,0 +1,6382 @@
+{
+	"defaults": [
+		[
+			"settings.get",
+			{
+				"theme": "system",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": true,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.set",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.get",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 15,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 15,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.set",
+			{
+				"ok": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": true,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.remove",
+			null
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.get",
+			"on"
+		],
+		[
+			"defaultManager.disable",
+			"off"
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "note",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"vault.sync",
+			{
+				"syncing": false,
+				"syncedAt": "2026-10-23T08:00:00.000Z",
+				"offline": false,
+				"lastError": null
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "new"
+				}
+			}
+		],
+		[
+			"item.update",
+			{
+				"ok": true,
+				"value": {
+					"id": "i9"
+				}
+			}
+		],
+		[
+			"item.editable",
+			{
+				"ok": true,
+				"value": {
+					"editable": true
+				}
+			}
+		],
+		[
+			"item.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.rename",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "f-new"
+				}
+			}
+		],
+		[
+			"folder.children",
+			{
+				"ok": true,
+				"value": {
+					"directSecretCount": 0,
+					"subfolders": []
+				}
+			}
+		],
+		[
+			"folder.dismissNotice",
+			null
+		],
+		[
+			"item.decrypt",
+			{
+				"ok": true,
+				"items": {
+					"i1": {},
+					"i2": {}
+				}
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					}
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.saveOptions",
+			{
+				"tab": "password",
+				"password": {
+					"length": 14,
+					"includeUppercase": true,
+					"includeLowercase": true,
+					"includeDigits": true,
+					"includeSpecialCharacters": false,
+					"minDigits": 1,
+					"minSpecial": 1,
+					"avoidAmbiguous": true
+				},
+				"passphrase": {
+					"words": 5,
+					"separator": "-",
+					"capitalise": false,
+					"includeNumber": false
+				},
+				"username": {
+					"type": "word",
+					"capitalize": true,
+					"includeNumber": true,
+					"email": "",
+					"domain": "",
+					"mode": "random"
+				},
+				"length": 30
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 30
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"generator.history.add",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.clear",
+			null
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-1",
+						"token": "0000000000000000000000000000000000000000000000000000000000000001",
+						"payloadType": "text",
+						"hasPassword": true,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z",
+						"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-2",
+						"token": "0000000000000000000000000000000000000000000000000000000000000002",
+						"payloadType": "text",
+						"hasPassword": false,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000002#k=key2"
+				}
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						},
+						{
+							"id": "s-new-1",
+							"token": "0000000000000000000000000000000000000000000000000000000000000001",
+							"payloadType": "text",
+							"hasPassword": true,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z",
+							"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"popup.lastTab.set",
+			null
+		],
+		[
+			"popup.popout",
+			null
+		],
+		[
+			"clipboard.copied",
+			null
+		],
+		[
+			"state.get",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"a.kind.nobody.sends",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"__proto__",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"toString",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"constructor",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"hasOwnProperty",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		]
+	],
+	"every option set": [
+		[
+			"settings.get",
+			"(undefined)"
+		],
+		[
+			"settings.set",
+			{
+				"theme": "dark",
+				"compactMode": true,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.get",
+			"(undefined)"
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 15,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.set",
+			{
+				"ok": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": true,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.remove",
+			null
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"defaultManager.get",
+			"on"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.get",
+			"on"
+		],
+		[
+			"defaultManager.disable",
+			"off"
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "card",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 3,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": 3,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"vault.sync",
+			{
+				"syncing": true
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": true,
+				"value": {
+					"id": "i1",
+					"typeId": "t-login",
+					"typeName": "login",
+					"name": "GitHub",
+					"url": "https://github.com",
+					"folderId": null,
+					"key": "hunter2",
+					"login": "alice",
+					"additionalFields": {},
+					"updatedAt": "2026-03-02T10:00:00Z",
+					"totpSaved": false
+				}
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.create",
+			{
+				"ok": false,
+				"echoed": "item.create"
+			}
+		],
+		[
+			"item.update",
+			{
+				"ok": true,
+				"value": {
+					"id": "i9"
+				}
+			}
+		],
+		[
+			"item.editable",
+			{
+				"ok": true,
+				"value": {
+					"editable": true
+				}
+			}
+		],
+		[
+			"item.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.rename",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.create",
+			null
+		],
+		[
+			"folder.children",
+			{
+				"ok": true,
+				"value": {
+					"directSecretCount": 0,
+					"subfolders": []
+				}
+			}
+		],
+		[
+			"folder.dismissNotice",
+			null
+		],
+		[
+			"item.decrypt",
+			{
+				"ok": true,
+				"items": {
+					"i1": {
+						"login": "alice",
+						"key": "pw"
+					},
+					"i2": {
+						"key": "only key"
+					}
+				}
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 12
+				},
+				"policy": null,
+				"accountEmail": null
+			}
+		],
+		[
+			"generator.saveOptions",
+			{
+				"tab": "password",
+				"password": {
+					"length": 14,
+					"includeUppercase": true,
+					"includeLowercase": true,
+					"includeDigits": true,
+					"includeSpecialCharacters": false,
+					"minDigits": 1,
+					"minSpecial": 1,
+					"avoidAmbiguous": true
+				},
+				"passphrase": {
+					"words": 5,
+					"separator": "-",
+					"capitalise": false,
+					"includeNumber": false
+				},
+				"username": {
+					"type": "word",
+					"capitalize": true,
+					"includeNumber": true,
+					"email": "",
+					"domain": "",
+					"mode": "random"
+				},
+				"length": 30
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 30
+				},
+				"policy": null,
+				"accountEmail": null
+			}
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-01-01T00:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.add",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				},
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-01-01T00:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				},
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-01-01T00:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.clear",
+			null
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"send.list",
+			"(undefined)"
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-1",
+						"token": "0000000000000000000000000000000000000000000000000000000000000001",
+						"payloadType": "text",
+						"hasPassword": true,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z",
+						"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-2",
+						"token": "0000000000000000000000000000000000000000000000000000000000000002",
+						"payloadType": "text",
+						"hasPassword": false,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000002#k=key2"
+				}
+			}
+		],
+		[
+			"send.list",
+			"(undefined)"
+		],
+		[
+			"send.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"send.list",
+			"(undefined)"
+		],
+		[
+			"popup.lastTab.set",
+			null
+		],
+		[
+			"popup.popout",
+			null
+		],
+		[
+			"clipboard.copied",
+			null
+		],
+		[
+			"state.get",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "send"
+				}
+			}
+		],
+		[
+			"a.kind.nobody.sends",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "send"
+				}
+			}
+		],
+		[
+			"__proto__",
+			{}
+		],
+		[
+			"toString",
+			"[object Undefined]"
+		],
+		[
+			"constructor",
+			{
+				"kind": "constructor"
+			}
+		],
+		[
+			"hasOwnProperty",
+			{
+				"threw": "TypeError: Cannot convert undefined or null to object"
+			}
+		]
+	],
+	"decrypt fails": [
+		[
+			"settings.get",
+			{
+				"theme": "system",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": true,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.set",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.get",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 15,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 15,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.set",
+			{
+				"ok": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": true,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.remove",
+			null
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.get",
+			"on"
+		],
+		[
+			"defaultManager.disable",
+			"off"
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "note",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"vault.sync",
+			{
+				"syncing": false,
+				"syncedAt": "2026-10-23T08:00:00.000Z",
+				"offline": false,
+				"lastError": null
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "new"
+				}
+			}
+		],
+		[
+			"item.update",
+			{
+				"ok": true,
+				"value": {
+					"id": "i9"
+				}
+			}
+		],
+		[
+			"item.editable",
+			{
+				"ok": true,
+				"value": {
+					"editable": true
+				}
+			}
+		],
+		[
+			"item.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.rename",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "f-new"
+				}
+			}
+		],
+		[
+			"folder.children",
+			{
+				"ok": true,
+				"value": {
+					"directSecretCount": 0,
+					"subfolders": []
+				}
+			}
+		],
+		[
+			"folder.dismissNotice",
+			null
+		],
+		[
+			"item.decrypt",
+			{
+				"ok": false,
+				"error": "use_only"
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					}
+				},
+				"policy": {
+					"minLength": 20
+				},
+				"accountEmail": "bob@example.org"
+			}
+		],
+		[
+			"generator.saveOptions",
+			{
+				"tab": "password",
+				"password": {
+					"length": 14,
+					"includeUppercase": true,
+					"includeLowercase": true,
+					"includeDigits": true,
+					"includeSpecialCharacters": false,
+					"minDigits": 1,
+					"minSpecial": 1,
+					"avoidAmbiguous": true
+				},
+				"passphrase": {
+					"words": 5,
+					"separator": "-",
+					"capitalise": false,
+					"includeNumber": false
+				},
+				"username": {
+					"type": "word",
+					"capitalize": true,
+					"includeNumber": true,
+					"email": "",
+					"domain": "",
+					"mode": "random"
+				},
+				"length": 30
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 30
+				},
+				"policy": {
+					"minLength": 20
+				},
+				"accountEmail": "bob@example.org"
+			}
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"generator.history.add",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.clear",
+			null
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-1",
+						"token": "0000000000000000000000000000000000000000000000000000000000000001",
+						"payloadType": "text",
+						"hasPassword": true,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z",
+						"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-2",
+						"token": "0000000000000000000000000000000000000000000000000000000000000002",
+						"payloadType": "text",
+						"hasPassword": false,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000002#k=key2"
+				}
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						},
+						{
+							"id": "s-new-1",
+							"token": "0000000000000000000000000000000000000000000000000000000000000001",
+							"payloadType": "text",
+							"hasPassword": true,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z",
+							"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"popup.lastTab.set",
+			null
+		],
+		[
+			"popup.popout",
+			null
+		],
+		[
+			"clipboard.copied",
+			null
+		],
+		[
+			"state.get",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"a.kind.nobody.sends",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"__proto__",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"toString",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"constructor",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"hasOwnProperty",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		]
+	],
+	"locked vault": [
+		[
+			"settings.get",
+			{
+				"theme": "system",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": true,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.set",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.get",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 15,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 15,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"pin.set",
+			{
+				"ok": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": true,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"pin.remove",
+			null
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.get",
+			"on"
+		],
+		[
+			"defaultManager.disable",
+			"off"
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "locked"
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "locked"
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "locked"
+			}
+		],
+		[
+			"vault.sync",
+			{
+				"syncing": false,
+				"syncedAt": "2026-10-23T08:00:00.000Z",
+				"offline": false,
+				"lastError": null
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "new"
+				}
+			}
+		],
+		[
+			"item.update",
+			{
+				"ok": true,
+				"value": {
+					"id": "i9"
+				}
+			}
+		],
+		[
+			"item.editable",
+			{
+				"ok": true,
+				"value": {
+					"editable": true
+				}
+			}
+		],
+		[
+			"item.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.rename",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "f-new"
+				}
+			}
+		],
+		[
+			"folder.children",
+			{
+				"ok": true,
+				"value": {
+					"directSecretCount": 0,
+					"subfolders": []
+				}
+			}
+		],
+		[
+			"folder.dismissNotice",
+			null
+		],
+		[
+			"item.decrypt",
+			{
+				"ok": true,
+				"items": {
+					"i1": {},
+					"i2": {}
+				}
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					}
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.saveOptions",
+			{
+				"tab": "password",
+				"password": {
+					"length": 14,
+					"includeUppercase": true,
+					"includeLowercase": true,
+					"includeDigits": true,
+					"includeSpecialCharacters": false,
+					"minDigits": 1,
+					"minSpecial": 1,
+					"avoidAmbiguous": true
+				},
+				"passphrase": {
+					"words": 5,
+					"separator": "-",
+					"capitalise": false,
+					"includeNumber": false
+				},
+				"username": {
+					"type": "word",
+					"capitalize": true,
+					"includeNumber": true,
+					"email": "",
+					"domain": "",
+					"mode": "random"
+				},
+				"length": 30
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 30
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"generator.history.add",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.clear",
+			null
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-1",
+						"token": "0000000000000000000000000000000000000000000000000000000000000001",
+						"payloadType": "text",
+						"hasPassword": true,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z",
+						"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-2",
+						"token": "0000000000000000000000000000000000000000000000000000000000000002",
+						"payloadType": "text",
+						"hasPassword": false,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000002#k=key2"
+				}
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						},
+						{
+							"id": "s-new-1",
+							"token": "0000000000000000000000000000000000000000000000000000000000000001",
+							"payloadType": "text",
+							"hasPassword": true,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z",
+							"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"popup.lastTab.set",
+			null
+		],
+		[
+			"popup.popout",
+			null
+		],
+		[
+			"clipboard.copied",
+			null
+		],
+		[
+			"state.get",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"a.kind.nobody.sends",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"__proto__",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"toString",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"constructor",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"hasOwnProperty",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		]
+	],
+	"browser manages the default": [
+		[
+			"settings.get",
+			{
+				"theme": "system",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": true,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.set",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.get",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 15,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 15,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.set",
+			{
+				"ok": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": true,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"pin.remove",
+			null
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"defaultManager.get",
+			"managed"
+		],
+		[
+			"defaultManager.enable",
+			"managed"
+		],
+		[
+			"defaultManager.enable",
+			"managed"
+		],
+		[
+			"defaultManager.get",
+			"managed"
+		],
+		[
+			"defaultManager.disable",
+			"off"
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "note",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"maxIdleMinutes": null,
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				}
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": null,
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"vault.sync",
+			{
+				"syncing": false,
+				"syncedAt": "2026-10-23T08:00:00.000Z",
+				"offline": false,
+				"lastError": null
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "new"
+				}
+			}
+		],
+		[
+			"item.update",
+			{
+				"ok": true,
+				"value": {
+					"id": "i9"
+				}
+			}
+		],
+		[
+			"item.editable",
+			{
+				"ok": true,
+				"value": {
+					"editable": true
+				}
+			}
+		],
+		[
+			"item.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.rename",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "f-new"
+				}
+			}
+		],
+		[
+			"folder.children",
+			{
+				"ok": true,
+				"value": {
+					"directSecretCount": 0,
+					"subfolders": []
+				}
+			}
+		],
+		[
+			"folder.dismissNotice",
+			null
+		],
+		[
+			"item.decrypt",
+			{
+				"ok": true,
+				"items": {
+					"i1": {},
+					"i2": {}
+				}
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					}
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.saveOptions",
+			{
+				"tab": "password",
+				"password": {
+					"length": 14,
+					"includeUppercase": true,
+					"includeLowercase": true,
+					"includeDigits": true,
+					"includeSpecialCharacters": false,
+					"minDigits": 1,
+					"minSpecial": 1,
+					"avoidAmbiguous": true
+				},
+				"passphrase": {
+					"words": 5,
+					"separator": "-",
+					"capitalise": false,
+					"includeNumber": false
+				},
+				"username": {
+					"type": "word",
+					"capitalize": true,
+					"includeNumber": true,
+					"email": "",
+					"domain": "",
+					"mode": "random"
+				},
+				"length": 30
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 30
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"generator.history.add",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.clear",
+			null
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-1",
+						"token": "0000000000000000000000000000000000000000000000000000000000000001",
+						"payloadType": "text",
+						"hasPassword": true,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z",
+						"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-2",
+						"token": "0000000000000000000000000000000000000000000000000000000000000002",
+						"payloadType": "text",
+						"hasPassword": false,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000002#k=key2"
+				}
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						},
+						{
+							"id": "s-new-1",
+							"token": "0000000000000000000000000000000000000000000000000000000000000001",
+							"payloadType": "text",
+							"hasPassword": true,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z",
+							"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"popup.lastTab.set",
+			null
+		],
+		[
+			"popup.popout",
+			null
+		],
+		[
+			"clipboard.copied",
+			null
+		],
+		[
+			"state.get",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"a.kind.nobody.sends",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"__proto__",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"toString",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"constructor",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"hasOwnProperty",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		]
+	],
+	"unlocked with a default type": [
+		[
+			"settings.get",
+			{
+				"theme": "system",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": true,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.set",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"settings.get",
+			{
+				"theme": "dark",
+				"compactMode": false,
+				"showAnimations": true,
+				"quickCopy": false,
+				"showBadgeCounter": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 15,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 15,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "card"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "card"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "card"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"pin.set",
+			{
+				"ok": true
+			}
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": true,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "card"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"pin.remove",
+			null
+		],
+		[
+			"account.settings.get",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "card"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.enable",
+			"on"
+		],
+		[
+			"defaultManager.get",
+			"on"
+		],
+		[
+			"defaultManager.disable",
+			"off"
+		],
+		[
+			"defaultManager.get",
+			"off"
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "identity",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "note"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "identity",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"account.settings.set",
+			{
+				"accountId": "a1",
+				"effectiveTimeout": 5,
+				"exportDisabled": false,
+				"pin": false,
+				"autofillFeatures": [
+					"pageLoad",
+					"uriMatch",
+					"inlineSuggestions",
+					"contextMenu",
+					"savePrompts"
+				],
+				"shortcut": null,
+				"serverUrl": "https://cloud.example.org",
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"keepiqVersion": "0.3.12",
+				"values": {
+					"vaultTimeout": 5,
+					"vaultTimeoutAction": "lock",
+					"clearClipboardMs": 30000,
+					"autoCopyTotp": true,
+					"autofillOnPageLoad": false,
+					"defaultAutofill": "onPageLoad",
+					"uriMatch": "baseDomain",
+					"inlineSuggestions": true,
+					"contextMenu": true,
+					"askToAdd": true,
+					"askToUpdate": true,
+					"excludedDomains": [],
+					"defaultItemType": "login"
+				},
+				"maxIdleMinutes": null
+			}
+		],
+		[
+			"vault.snapshot",
+			{
+				"state": "unlocked",
+				"items": [
+					{
+						"id": "i1",
+						"name": "GitHub",
+						"url": "https://github.com",
+						"typeId": "t-login",
+						"folderId": null,
+						"hasLogin": true,
+						"blocked": false,
+						"createdAt": "2026-01-05T10:00:00Z",
+						"updatedAt": "2026-03-02T10:00:00Z",
+						"expiresAt": null,
+						"useOnly": false,
+						"readOnly": false,
+						"accessExpiresAt": null
+					}
+				],
+				"folders": [],
+				"types": [
+					{
+						"id": "t-login",
+						"name": "login",
+						"label": "Login"
+					},
+					{
+						"id": "t-api_key",
+						"name": "api_key",
+						"label": "API key"
+					},
+					{
+						"id": "t-note",
+						"name": "note",
+						"label": "Note"
+					},
+					{
+						"id": "t-totp",
+						"name": "totp",
+						"label": "TOTP"
+					},
+					{
+						"id": "t-card",
+						"name": "card",
+						"label": "Card"
+					},
+					{
+						"id": "t-identity",
+						"name": "identity",
+						"label": "Identity"
+					},
+					{
+						"id": "t-passkey",
+						"name": "passkey",
+						"label": "Passkey"
+					}
+				],
+				"suggestionIds": [],
+				"sync": {
+					"syncing": false,
+					"syncedAt": "2026-10-23T08:00:00.000Z",
+					"offline": false,
+					"lastError": null
+				},
+				"webAppUrl": "https://cloud.example.org/index.php/apps/keepiq/",
+				"defaultSecretType": "identity",
+				"folderNoticeDismissed": false
+			}
+		],
+		[
+			"vault.sync",
+			{
+				"syncing": false,
+				"syncedAt": "2026-10-23T08:00:00.000Z",
+				"offline": false,
+				"lastError": null
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.fetch",
+			{
+				"ok": false,
+				"error": {
+					"code": "not_found"
+				}
+			}
+		],
+		[
+			"item.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "new"
+				}
+			}
+		],
+		[
+			"item.update",
+			{
+				"ok": true,
+				"value": {
+					"id": "i9"
+				}
+			}
+		],
+		[
+			"item.editable",
+			{
+				"ok": true,
+				"value": {
+					"editable": true
+				}
+			}
+		],
+		[
+			"item.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.rename",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"folder.create",
+			{
+				"ok": true,
+				"value": {
+					"id": "f-new"
+				}
+			}
+		],
+		[
+			"folder.children",
+			{
+				"ok": true,
+				"value": {
+					"directSecretCount": 0,
+					"subfolders": []
+				}
+			}
+		],
+		[
+			"folder.dismissNotice",
+			null
+		],
+		[
+			"item.decrypt",
+			{
+				"ok": true,
+				"items": {
+					"i1": {},
+					"i2": {}
+				}
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					}
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.saveOptions",
+			{
+				"tab": "password",
+				"password": {
+					"length": 14,
+					"includeUppercase": true,
+					"includeLowercase": true,
+					"includeDigits": true,
+					"includeSpecialCharacters": false,
+					"minDigits": 1,
+					"minSpecial": 1,
+					"avoidAmbiguous": true
+				},
+				"passphrase": {
+					"words": 5,
+					"separator": "-",
+					"capitalise": false,
+					"includeNumber": false
+				},
+				"username": {
+					"type": "word",
+					"capitalize": true,
+					"includeNumber": true,
+					"email": "",
+					"domain": "",
+					"mode": "random"
+				},
+				"length": 30
+			}
+		],
+		[
+			"generator.context",
+			{
+				"options": {
+					"tab": "password",
+					"password": {
+						"length": 14,
+						"includeUppercase": true,
+						"includeLowercase": true,
+						"includeDigits": true,
+						"includeSpecialCharacters": false,
+						"minDigits": 1,
+						"minSpecial": 1,
+						"avoidAmbiguous": true
+					},
+					"passphrase": {
+						"words": 5,
+						"separator": "-",
+						"capitalise": false,
+						"includeNumber": false
+					},
+					"username": {
+						"type": "word",
+						"capitalize": true,
+						"includeNumber": true,
+						"email": "",
+						"domain": "",
+						"mode": "random"
+					},
+					"length": 30
+				},
+				"policy": null,
+				"accountEmail": "alice@example.org"
+			}
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"generator.history.add",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.list",
+			[
+				{
+					"kind": "password",
+					"value": "pw-1",
+					"createdAt": "2026-10-23T08:00:00.000Z"
+				}
+			]
+		],
+		[
+			"generator.history.clear",
+			null
+		],
+		[
+			"generator.history.list",
+			[]
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-1",
+						"token": "0000000000000000000000000000000000000000000000000000000000000001",
+						"payloadType": "text",
+						"hasPassword": true,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z",
+						"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+				}
+			}
+		],
+		[
+			"send.create",
+			{
+				"ok": true,
+				"value": {
+					"row": {
+						"id": "s-new-2",
+						"token": "0000000000000000000000000000000000000000000000000000000000000002",
+						"payloadType": "text",
+						"hasPassword": false,
+						"maxViews": 3,
+						"viewCount": 0,
+						"remainingViews": 3,
+						"expiresAt": "2026-10-23T09:00:00.000Z",
+						"createdAt": "2026-10-23T08:00:00.000Z"
+					},
+					"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000002#k=key2"
+				}
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						},
+						{
+							"id": "s-new-1",
+							"token": "0000000000000000000000000000000000000000000000000000000000000001",
+							"payloadType": "text",
+							"hasPassword": true,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z",
+							"link": "https://cloud.example.org/index.php/apps/keepiq/public/send/0000000000000000000000000000000000000000000000000000000000000001"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"send.delete",
+			{
+				"ok": true,
+				"value": null
+			}
+		],
+		[
+			"send.list",
+			{
+				"ok": true,
+				"value": {
+					"sends": [
+						{
+							"id": "s-new-2",
+							"token": "0000000000000000000000000000000000000000000000000000000000000002",
+							"payloadType": "text",
+							"hasPassword": false,
+							"maxViews": 3,
+							"viewCount": 0,
+							"remainingViews": 3,
+							"expiresAt": "2026-10-23T09:00:00.000Z",
+							"createdAt": "2026-10-23T08:00:00.000Z"
+						}
+					],
+					"passwordProtection": true
+				}
+			}
+		],
+		[
+			"popup.lastTab.set",
+			null
+		],
+		[
+			"popup.popout",
+			null
+		],
+		[
+			"clipboard.copied",
+			null
+		],
+		[
+			"state.get",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"a.kind.nobody.sends",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"__proto__",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"toString",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"constructor",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		],
+		[
+			"hasOwnProperty",
+			{
+				"ok": true,
+				"state": {
+					"screen": "unlocked",
+					"accounts": [
+						{
+							"id": "a1",
+							"serverUrl": "https://cloud.example.org",
+							"host": "cloud.example.org",
+							"uid": "alice",
+							"displayName": "Alice Doe",
+							"avatarDataUrl": null,
+							"status": "unlocked",
+							"active": true,
+							"pin": false,
+							"pinAfterRestart": false
+						}
+					],
+					"active": {
+						"id": "a1",
+						"serverUrl": "https://cloud.example.org",
+						"host": "cloud.example.org",
+						"uid": "alice",
+						"displayName": "Alice Doe",
+						"avatarDataUrl": null,
+						"status": "unlocked",
+						"active": true,
+						"pin": false,
+						"pinAfterRestart": false
+					},
+					"notice": null,
+					"canAddAccount": true,
+					"lastTab": "vault"
+				}
+			}
+		]
+	]
+}

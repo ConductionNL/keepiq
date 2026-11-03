@@ -37,7 +37,7 @@ export default {
 	},
 
 	props: {
-		/** The vault row: its `totp` and `passkeys` are ciphertext, or null / '' for none. */
+		/** The vault row or import preview row; only whether its `totp` and `passkeys` are set is read (null / '' for none). */
 		secret: {
 			type: Object,
 			required: true,

@@ -80,7 +80,7 @@ The extension MUST clear the badge on every tab when the active account is locke
 - **THEN** the badge is empty on every tab
 
 ### Requirement: Badge stays current
-The extension SHALL recompute the badge of the affected tab, within one second, when:
+The extension SHALL recompute the badge of the affected window's active tab, within one second, when:
 - the active tab changes;
 - a tab's URL changes or it finishes loading;
 - the focused window changes;
@@ -88,6 +88,8 @@ The extension SHALL recompute the badge of the affected tab, within one second, 
 - the snapshot changes after a sync, add, edit, delete or capture save;
 - the URI match default changes;
 - the badge counter setting changes.
+
+Other tabs get their count when they are activated, and until then show no count.
 
 On Chrome MV3, listeners are registered when the service worker starts, so a worker woken by any of these events still updates the badge.
 
@@ -128,7 +130,7 @@ The extension SHALL offer "Show number of login autofill suggestions on extensio
 - **THEN** the badge is empty on every tab and the icon stays coloured
 
 ### Requirement: Counts live in memory only
-The extension MUST NOT write the badge counts or the per-tab match results to any storage. They are recomputed from the snapshot when needed and are lost when the worker or background page stops.
+The extension MUST NOT write the badge counts or the per-tab match results to any storage. They are recomputed from the snapshot when needed. Only the browser holds a painted badge, until the tab navigates or the extension clears it.
 
 #### Scenario: Worker restart
 - **GIVEN** the badge reads "3" and the MV3 worker is terminated

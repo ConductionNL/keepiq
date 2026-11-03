@@ -13,6 +13,8 @@ export interface AccountSettings {
 	vaultTimeout: VaultTimeout
 	vaultTimeoutAction: VaultTimeoutAction
 	clearClipboardMs: number
+	/** Copy a filled login's authenticator code (ext-totp-autofill). */
+	autoCopyTotp: boolean
 	autofillOnPageLoad: boolean
 	defaultAutofill: DefaultAutofill
 	uriMatch: UriMatch
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 	vaultTimeout: 15,
 	vaultTimeoutAction: 'lock',
 	clearClipboardMs: 30_000,
+	autoCopyTotp: true,
 	autofillOnPageLoad: false,
 	defaultAutofill: 'onPageLoad',
 	uriMatch: 'baseDomain',
@@ -41,8 +44,8 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 	defaultItemType: 'login',
 }
 
-/** What ext-autofill has delivered; empty until it lands. */
-export const AUTOFILL_FEATURES: AutofillFeature[] = []
+/** The delivered `AutofillFeature`s, sent to Settings in the snapshot. */
+export const AUTOFILL_FEATURES: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts']
 
 export const settingsKey = (accountId: string) => `settings.${accountId}`
 
@@ -63,6 +66,7 @@ const VALIDATORS: Validators<AccountSettings> = {
 	vaultTimeout: isTimeout,
 	vaultTimeoutAction: oneOf(['lock', 'logout'] as const),
 	clearClipboardMs: oneOf<number>(CLEAR_CLIPBOARD_OPTIONS),
+	autoCopyTotp: isBoolean,
 	autofillOnPageLoad: isBoolean,
 	defaultAutofill: oneOf(['onPageLoad', 'never'] as const),
 	uriMatch: oneOf(URI_MATCHES),
@@ -94,6 +98,19 @@ const queued = createQueue()
 export function writeSettings(accountId: string, patch: Partial<AccountSettings>): Promise<void> {
 	return queued(async () => {
 		await browser.storage.local.set({ [settingsKey(accountId)]: { ...await readStored(accountId), ...pickValid(VALIDATORS, patch) } })
+	})
+}
+
+/**
+ * The save bar's "Never for this site": read and written in the same queue as every other patch, so a popup edit
+ * at the same moment is not lost. The excluded list has no bearing on the "Never" key, so no `updateSettings`.
+ */
+export function addExcludedDomain(accountId: string, domain: string): Promise<void> {
+	return queued(async () => {
+		const stored = await readStored(accountId)
+		const current = pickValid(VALIDATORS, stored).excludedDomains ?? []
+		if (current.includes(domain)) return
+		await browser.storage.local.set({ [settingsKey(accountId)]: { ...stored, ...pickValid(VALIDATORS, { excludedDomains: [...current, domain] }) } })
 	})
 }
 

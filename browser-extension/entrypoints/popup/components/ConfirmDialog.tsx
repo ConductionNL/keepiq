@@ -22,12 +22,14 @@ interface Props {
 	onRetry?: () => void
 	/** Starts on Cancel rather than the first action, for a risky one. */
 	focusCancel?: boolean
+	/** Announces the body with the title, for a warning that focus on Cancel would otherwise skip. */
+	describeBody?: boolean
 }
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]'
 
 /** In the page, never `window.confirm`: Firefox closes an extension popup when a native dialog opens. */
-export function ConfirmDialog({ title, children, actions, onCancel, cancelLabel, error, onRetry, focusCancel = false }: Props) {
+export function ConfirmDialog({ title, children, actions, onCancel, cancelLabel, error, onRetry, focusCancel = false, describeBody = false }: Props) {
 	const id = useId()
 	const box = useRef<HTMLDivElement>(null)
 
@@ -55,9 +57,9 @@ export function ConfirmDialog({ title, children, actions, onCancel, cancelLabel,
 
 	return (
 		<div className="dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onCancel()}>
-			<div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id} ref={box} onKeyDown={onKeyDown}>
+			<div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id} aria-describedby={describeBody && children ? `${id}-body` : undefined} ref={box} onKeyDown={onKeyDown}>
 				<h2 className="dialog__title" id={id}>{title}</h2>
-				{children && <div className="dialog__body">{children}</div>}
+				{children && <div className="dialog__body" id={`${id}-body`}>{children}</div>}
 				{error && <Banner tone="error" role="alert" action={onRetry && <Button variant="link" onClick={onRetry}>{i18n.t('vault.tryAgain')}</Button>}>{error}</Banner>}
 				<div className="dialog__actions">
 					{actions.map((action) => (

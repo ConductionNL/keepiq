@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Newsletter</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Newsletter</h1>
+		<p class="tests">An email field with "Subscribe", in English and Dutch. Neither is a login: no inline list opens, fill puts nothing here and submitting offers no save bar.</p>
+		<form method="post" action="/newsletter">
+			<label>Email <input name="email" type="email"></label>
+			<button type="submit">Subscribe</button>
+		</form>
+		<h2>Nederlands</h2>
+		<form method="post" action="/nieuwsbrief">
+			<label>E-mailadres <input name="email" type="email"></label>
+			<button type="submit">Aanmelden voor nieuwsbrief</button>
+		</form>
+	</main>
+</body>
+</html>

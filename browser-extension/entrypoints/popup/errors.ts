@@ -47,38 +47,70 @@ export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDele
 
 /** `undefined` is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
-	const folder = context === 'folderName' || context === 'folderDelete'
-	switch (error?.code) {
-		case undefined: return i18n.t('errors.notResponding')
+	if (error === undefined) return i18n.t('errors.notResponding')
+	switch (error.code) {
 		case 'write_locked': return i18n.t('writeErrors.writeLocked')
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
 		case 'policy': return i18n.t('writeErrors.policy')
 		case 'account_changed': return i18n.t('writeErrors.accountChanged')
-		case 'invalid':
-			if (context === 'send') return i18n.t('writeErrors.sendInvalid')
-			return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
-		case 'conflict':
-			if (context === 'edit') return i18n.t('writeErrors.stale')
-			if (context === 'open') return i18n.t('writeErrors.unmatched')
-			if (context === 'folderName') return i18n.t('writeErrors.duplicateFolder')
-			return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
-		case 'not_found': return folder ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
+		case 'invalid': return invalidText(context)
+		case 'conflict': return conflictText(context)
+		case 'not_found': return context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
 		case 'blocked': return blockedText(error.reason)
 		case 'unreadable': return i18n.t('writeErrors.unreadable')
 		case 'restricted': return i18n.t('writeErrors.restricted')
 		case 'view_only': return i18n.t('item.viewOnly')
 		case 'key_mismatch': return i18n.t('writeErrors.keyMismatch')
 		case 'offline': return context === 'send' ? i18n.t('writeErrors.sendOffline') : i18n.t('writeErrors.offline')
+		default: return serverWriteErrorText(error)
+	}
+}
+
+function invalidText(context: WriteContext): string {
+	if (context === 'send') return i18n.t('writeErrors.sendInvalid')
+	return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
+}
+
+/** A conflict is a stale edit, an unknown version when opening, or a name clash for a folder. */
+function conflictText(context: WriteContext): string {
+	if (context === 'edit') return i18n.t('writeErrors.stale')
+	if (context === 'open') return i18n.t('writeErrors.unmatched')
+	if (context === 'folderName') return i18n.t('writeErrors.duplicateFolder')
+	return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
+}
+
+/** The codes from the server itself, which read the same in every context. */
+function serverWriteErrorText(error: VaultWriteError): string {
+	switch (error.code) {
 		case 'server_error': return i18n.t('writeErrors.serverError')
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
 		case 'stale_source': return i18n.t('writeErrors.staleSource')
 		case 'incomplete': return i18n.t('writeErrors.incomplete')
+		default: return sharingWriteErrorText(error)
+	}
+}
+
+/** The codes about partner organisations and their certificates. */
+function sharingWriteErrorText(error: VaultWriteError): string {
+	switch (error.code) {
 		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
 		case 'unverified': return i18n.t('writeErrors.unverified')
 		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
+		case 'partner_upgrade_required': {
+			const cloudIds = (error.partners ?? []).map((partner) => partner.cloudId)
+			const text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
+			return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
+		}
 		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
 		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
 		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
+		default: return localWriteErrorText(error)
+	}
+}
+
+/** The codes about this browser and its clock, and the fallback for codes this popup does not know. */
+function localWriteErrorText(error: VaultWriteError): string {
+	switch (error.code) {
 		case 'partner_clock': return i18n.t('writeErrors.partnerClock')
 		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'argon2_unavailable': return i18n.t('writeErrors.argon2Unavailable')

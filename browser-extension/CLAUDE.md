@@ -16,6 +16,7 @@ npm run dev            # Chromium dev + HMR, starts the test site and opens a br
 npm run dev:firefox    # Firefox dev (MV2) + HMR
 npm run test-site      # the test site alone, http://localhost:8100
 npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
+npm run test:e2e       # Playwright: builds, then drives the inline list and save bar in headless Chromium (port 8200; Chromium only)
 npm run typecheck      # tsc --noEmit — does not build or catch MV drift
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
@@ -41,8 +42,7 @@ place. Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching
 `entrypoints/` — it covers the `browser.*`-not-`chrome.*` rule, the MV3/MV2 split,
 and message-passing gotchas.
 
-`public/icon/*.png` is rendered from the app icon `../img/app-store.svg`; re-render it when that changes:
-`for s in 16 32 48 96 128; do rsvg-convert -w $s -h $s ../img/app-store.svg -o public/icon/$s.png; done`
+`public/icon/` is rendered from the app icon `../img/app-store.svg` and `assets/toolbar-lock.svg` by `npm run render-icons`; re-run it when either changes.
 
 ## Comments & docs
 

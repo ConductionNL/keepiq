@@ -19,6 +19,8 @@
  *  - A document without a KeePass root element is a hard parse failure.
  */
 
+import { authenticatorKeyFromParts } from '../../totp/authenticatorKey.js'
+import { attachTotp } from '../loginValueFields.js'
 import { joinFolderPath, makeRow, validateRow } from '../model.js'
 
 /** Standard KeePass string keys that map onto top-level row fields. */
@@ -29,13 +31,34 @@ const STANDARD_KEYS = {
 	Password: 'password',
 }
 
+/** KeePass's own TOTP parameter strings beside `TimeOtp-Secret-Base32`. */
+const TIME_OTP_PARAMS = ['TimeOtp-Period', 'TimeOtp-Length', 'TimeOtp-Algorithm']
+
 /**
- * KeePass string keys that hold a one-time-code seed: `otp` (KeePassXC, an
- * otpauth:// URI) and `TimeOtp-Secret-Base32` (KeePass 2.47+, a base32 seed).
- * The seed is stashed as `additionalFields.totp`, which the import store turns
- * into its own authenticator secret (keepiq#749).
+ * The KeePass strings that hold a one-time-code seed, each giving the key to
+ * store and the strings it is made of: `otp` (KeePassXC, an otpauth:// URI)
+ * and `TimeOtp-Secret-Base32` (KeePass 2.47+, a base32 seed folded with its
+ * period, length and algorithm strings). The first seed in the entry goes on
+ * the login's `totp` field (keepiq#1327); the strings of a seed that does not
+ * stay additional fields.
  */
-const TOTP_KEYS = ['otp', 'TimeOtp-Secret-Base32']
+const TOTP_SEEDS = {
+	otp: (strings) => ({ seed: strings.get('otp'), keys: ['otp'] }),
+	'TimeOtp-Secret-Base32': (strings) => {
+		let seed = ''
+		try {
+			seed = authenticatorKeyFromParts({
+				secret: strings.get('TimeOtp-Secret-Base32'),
+				period: strings.get('TimeOtp-Period'),
+				digits: strings.get('TimeOtp-Length'),
+				algorithm: strings.get('TimeOtp-Algorithm'),
+			})
+		} catch {
+			// Parameters the code generator cannot use: keep the strings.
+		}
+		return { seed, keys: ['TimeOtp-Secret-Base32', ...TIME_OTP_PARAMS] }
+	},
+}
 
 /**
  * Read the immediate child elements with a given tag name.
@@ -68,7 +91,7 @@ function parseEntry(entry, pathSegments, sourceRow) {
 		type: 'login',
 		additionalFields: null,
 	}
-	const additional = {}
+	const strings = new Map()
 
 	// Only DIRECT <String> children — never descend into <History>.
 	for (const str of childrenByTag(entry, 'String')) {
@@ -84,16 +107,20 @@ function parseEntry(entry, pathSegments, sourceRow) {
 		}
 		if (STANDARD_KEYS[key]) {
 			fields[STANDARD_KEYS[key]] = value
-		} else if (TOTP_KEYS.includes(key)) {
-			additional.totp ??= value
 		} else {
-			additional[key] = value
+			strings.set(key, value)
 		}
 	}
-	if (Object.keys(additional).length > 0) {
-		fields.additionalFields = additional
+
+	const row = makeRow(fields, sourceRow)
+	for (const key of [...strings.keys()].filter((k) => k in TOTP_SEEDS)) {
+		const { seed, keys } = TOTP_SEEDS[key](strings)
+		if (seed !== '' && attachTotp(row, seed) === null) {
+			keys.forEach((consumed) => strings.delete(consumed))
+		}
 	}
-	return validateRow(makeRow(fields, sourceRow))
+	row.additionalFields = strings.size > 0 ? Object.fromEntries(strings) : null
+	return validateRow(row)
 }
 
 /**

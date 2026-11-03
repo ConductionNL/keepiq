@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { patchAccountPolicy } from './policy'
-import { AUTOFILL_FEATURES, DEFAULT_SETTINGS, effectiveSettings, readSettings, settingsKey, writeSettings, type AccountSettings } from './settings'
+import { addExcludedDomain, AUTOFILL_FEATURES, DEFAULT_SETTINGS, effectiveSettings, readSettings, settingsKey, writeSettings, type AccountSettings } from './settings'
 
 const defaults: AccountSettings = {
 	vaultTimeout: 15,
 	vaultTimeoutAction: 'lock',
 	clearClipboardMs: 30_000,
+	autoCopyTotp: true,
 	autofillOnPageLoad: false,
 	defaultAutofill: 'onPageLoad',
 	uriMatch: 'baseDomain',
@@ -41,6 +42,7 @@ describe('reading', () => {
 		['clearClipboardMs', -1],
 		['clearClipboardMs', 'soon'],
 		['clearClipboardMs', Number.POSITIVE_INFINITY],
+		['autoCopyTotp', 'yes'],
 		['autofillOnPageLoad', 'yes'],
 		['defaultAutofill', 'always'],
 		['uriMatch', 'fuzzy'],
@@ -71,7 +73,7 @@ describe('reading', () => {
 
 	it('keeps valid values', async () => {
 		const chosen: AccountSettings = {
-			vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'logout', clearClipboardMs: 0, autofillOnPageLoad: true, defaultAutofill: 'never',
+			vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'logout', clearClipboardMs: 0, autoCopyTotp: false, autofillOnPageLoad: true, defaultAutofill: 'never',
 			uriMatch: 'regex', inlineSuggestions: false, contextMenu: false, askToAdd: false, askToUpdate: false,
 			excludedDomains: ['example.test', 'example.co.uk', 'user.github.io', '192.168.1.10', 'localhost'], defaultItemType: 'note',
 		}
@@ -84,8 +86,8 @@ describe('reading', () => {
 		expect((await readSettings('a')).excludedDomains).toEqual([])
 	})
 
-	it('lists no autofill behaviour as delivered yet', () => {
-		expect(AUTOFILL_FEATURES).toEqual([])
+	it('lists every autofill behaviour ext-autofill delivered', () => {
+		expect(AUTOFILL_FEATURES).toEqual(['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'])
 	})
 })
 
@@ -142,5 +144,26 @@ describe('writing', () => {
 	it('loses neither of two writes made at once', async () => {
 		await Promise.all([writeSettings('a', { askToAdd: false }), writeSettings('a', { askToUpdate: false })])
 		expect(await readSettings('a')).toMatchObject({ askToAdd: false, askToUpdate: false })
+	})
+})
+
+describe('addExcludedDomain', () => {
+	it('appends a domain once, keeping the rest of the record', async () => {
+		await writeSettings('a', { excludedDomains: ['github.com'], askToAdd: false })
+		await addExcludedDomain('a', 'example.test')
+		await addExcludedDomain('a', 'example.test')
+		expect(await stored()).toEqual({ excludedDomains: ['github.com', 'example.test'], askToAdd: false })
+	})
+
+	it('loses neither a domain nor another write made at the same moment', async () => {
+		await Promise.all([addExcludedDomain('a', 'example.test'), writeSettings('a', { excludedDomains: ['github.com'] }), addExcludedDomain('a', 'other.test')])
+		expect((await readSettings('a')).excludedDomains).toEqual(['github.com', 'other.test'])
+		await Promise.all([addExcludedDomain('a', 'one.test'), addExcludedDomain('a', 'two.test')])
+		expect((await readSettings('a')).excludedDomains).toEqual(['github.com', 'other.test', 'one.test', 'two.test'])
+	})
+
+	it('adds nothing that is not a base domain', async () => {
+		await addExcludedDomain('a', 'login.example.test')
+		expect((await readSettings('a')).excludedDomains).toEqual([])
 	})
 })

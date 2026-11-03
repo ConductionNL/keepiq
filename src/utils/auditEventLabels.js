@@ -11,6 +11,22 @@ import { translate as t } from '@nextcloud/l10n'
  */
 export function auditEventLabel(eventType) {
 	const labels = {
+		...secretAndShareEventLabels(),
+		...federatedShareEventLabels(),
+		...federatedCopyEventLabels(),
+		...requestAndSuiteEventLabels(),
+		...applicationAndVaultEventLabels(),
+	}
+	return labels[eventType] || eventType
+}
+
+/**
+ * The labels of secret, folder, share and link share events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function secretAndShareEventLabels() {
+	return {
 		'secret.created': t('keepiq', 'Secret created'),
 		'secret.updated': t('keepiq', 'Secret updated'),
 		'secret.read': t('keepiq', 'Secret read'),
@@ -33,6 +49,16 @@ export function auditEventLabel(eventType) {
 		'link_share.access_failed': t('keepiq', 'Link share access failed'),
 		'link_share.revoked': t('keepiq', 'Link share revoked'),
 		'link_share.auto_deleted': t('keepiq', 'Link share auto-deleted'),
+	}
+}
+
+/**
+ * The labels of events on secrets sent to or received from another organisation.
+ *
+ * @return {object} Event type to localized label.
+ */
+function federatedShareEventLabels() {
+	return {
 		'federated_share.sent': t('keepiq', 'Shared with another organisation'),
 		'federated_share.updated': t(
 			'keepiq',
@@ -58,6 +84,16 @@ export function auditEventLabel(eventType) {
 			'keepiq',
 			'Secret from another organisation accepted',
 		),
+	}
+}
+
+/**
+ * The labels of events on copies held by another organisation, and partner changes.
+ *
+ * @return {object} Event type to localized label.
+ */
+function federatedCopyEventLabels() {
+	return {
 		'federated_share.declined': t(
 			'keepiq',
 			'Secret from another organisation declined',
@@ -82,6 +118,16 @@ export function auditEventLabel(eventType) {
 			'keepiq',
 			'Another organisation changed the fields it stores',
 		),
+	}
+}
+
+/**
+ * The labels of request and encryption suite events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function requestAndSuiteEventLabels() {
+	return {
 		'request.created': t('keepiq', 'Secret request created'),
 		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
 		'request.re_requested': t('keepiq', 'Secret request re-requested'),
@@ -97,6 +143,16 @@ export function auditEventLabel(eventType) {
 		),
 		'suite.revoke_refused': t('keepiq', 'Encryption suite revoke refused'),
 		'suite.compromise_contained': t('keepiq', 'Compromise containment recorded'),
+	}
+}
+
+/**
+ * The labels of key proof, application and vault events.
+ *
+ * @return {object} Event type to localized label.
+ */
+function applicationAndVaultEventLabels() {
+	return {
 		'key_proof.refused': t('keepiq', 'Master password proof refused'),
 		'application.registered': t('keepiq', 'Application registered'),
 		'application.approved': t('keepiq', 'Application approved'),
@@ -108,8 +164,70 @@ export function auditEventLabel(eventType) {
 		'vault.gdpr_exported': t('keepiq', 'GDPR data exported'),
 		'vault.account_deleted': t('keepiq', 'Account data deleted'),
 	}
-	return labels[eventType] || eventType
 }
+
+/**
+ * Every audit event type the admin filter offers.
+ */
+const AUDIT_EVENT_TYPES = [
+	'secret.created',
+	'secret.updated',
+	'secret.read',
+	'secret.deleted',
+	'secret.trashed',
+	'secret.restored',
+	'secret.purged',
+	'secret.archived',
+	'secret.unarchived',
+	'folder.deleted_cascade',
+	'share.granted',
+	'share.revoked',
+	'share.quarantined',
+	'share.quarantine_released',
+	'share.quarantine_dropped',
+	'share.delegated',
+	'share.delegation_reclaimed',
+	'link_share.created',
+	'link_share.accessed',
+	'link_share.access_failed',
+	'link_share.revoked',
+	'link_share.auto_deleted',
+	'federated_share.sent',
+	'federated_share.updated',
+	'federated_share.revoked',
+	'federated_share.suspended',
+	'federated_share.failed',
+	'federated_share.received',
+	'federated_share.accepted',
+	'federated_share.declined',
+	'federated_share.copy_updated',
+	'federated_share.copy_removed',
+	'federated_share.recipient_declined',
+	'federated_share.recipient_resumed',
+	'federation_partner.value_fields_changed',
+	'request.created',
+	'request.fulfilled',
+	'request.re_requested',
+	'request.revoked',
+	'suite.revoked',
+	'suite.reinstated',
+	'suite.recovery_started',
+	'suite.recovery_completed',
+	'suite.recovery_aborted',
+	'suite.migration_terminated',
+	'suite.revoke_refused',
+	'suite.compromise_contained',
+	'key_proof.refused',
+	'application.registered',
+	'application.approved',
+	'application.rejected',
+	'application.deleted',
+	'application.token_issued',
+	'application.secret_retrieved',
+	'vault.exported',
+	'vault.gdpr_exported',
+	'vault.account_deleted',
+]
 
 /**
  * The full list of event types, for the admin filter dropdown.
@@ -118,68 +236,9 @@ export function auditEventLabel(eventType) {
  * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.6
  */
 export function auditEventOptions() {
-	const types = [
-		'secret.created',
-		'secret.updated',
-		'secret.read',
-		'secret.deleted',
-		'secret.trashed',
-		'secret.restored',
-		'secret.purged',
-		'secret.archived',
-		'secret.unarchived',
-		'folder.deleted_cascade',
-		'share.granted',
-		'share.revoked',
-		'share.quarantined',
-		'share.quarantine_released',
-		'share.quarantine_dropped',
-		'share.delegated',
-		'share.delegation_reclaimed',
-		'link_share.created',
-		'link_share.accessed',
-		'link_share.access_failed',
-		'link_share.revoked',
-		'link_share.auto_deleted',
-		'federated_share.sent',
-		'federated_share.updated',
-		'federated_share.revoked',
-		'federated_share.suspended',
-		'federated_share.failed',
-		'federated_share.received',
-		'federated_share.accepted',
-		'federated_share.declined',
-		'federated_share.copy_updated',
-		'federated_share.copy_removed',
-		'federated_share.recipient_declined',
-		'federated_share.recipient_resumed',
-		'federation_partner.value_fields_changed',
-		'request.created',
-		'request.fulfilled',
-		'request.re_requested',
-		'request.revoked',
-		'suite.revoked',
-		'suite.reinstated',
-		'suite.recovery_started',
-		'suite.recovery_completed',
-		'suite.recovery_aborted',
-		'suite.migration_terminated',
-		'suite.revoke_refused',
-		'suite.compromise_contained',
-		'key_proof.refused',
-		'application.registered',
-		'application.approved',
-		'application.rejected',
-		'application.deleted',
-		'application.token_issued',
-		'application.secret_retrieved',
-		'vault.exported',
-		'vault.gdpr_exported',
-		'vault.account_deleted',
-	]
-	return types
-		.map((id) => ({ id, label: auditEventLabel(id) }))
-		.sort((a, b) => a.label.localeCompare(b.label))
+	return AUDIT_EVENT_TYPES.map((id) => ({ id, label: auditEventLabel(id) })).sort(
+		(a, b) => a.label.localeCompare(b.label),
+	)
 }
 
 /**
