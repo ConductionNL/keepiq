@@ -228,9 +228,12 @@ class TeamFolderService {
 	 * @return array{member:TeamFolderMember,recipients:array<int,array{userId:string,certificate:string}>,secrets:array<int,array{id:string,name:string}>}
 	 *
 	 * @throws InvalidArgumentException On invalid input / not authorized
+	 * @throws OwnerOnlyException When a manager adds or changes a membership that covers them, or changes a manager's
+	 *   restriction
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
 	public function addMember(
 		string $teamFolderId,
@@ -246,8 +249,15 @@ class TeamFolderService {
 			memberId: $memberId
 		);
 
+		$this->assertNotOwnCover(teamFolder: $teamFolder, memberType: $memberType, memberId: $memberId, userId: $userId);
+
 		$coveredBefore = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
-		$membership = $this->findOrCreateMembership(
+		$membership = $this->existingMembership(teamFolderId: $teamFolderId, memberType: $memberType, memberId: $memberId);
+		if ($membership !== null && $restriction !== null) {
+			$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $membership, userId: $userId, leaving: false);
+		}
+
+		$membership ??= $this->createMembership(
 			teamFolderId: $teamFolderId,
 			memberType: $memberType,
 			memberId: $memberId,
@@ -277,7 +287,30 @@ class TeamFolderService {
 	}//end addMember()
 
 	/**
-	 * Return the existing membership row, or create (and audit) a new one.
+	 * The membership row of a member, or null when there is none.
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $memberType The member type (`user`|`group`)
+	 * @param string $memberId The Nextcloud user or group ID
+	 *
+	 * @return TeamFolderMember|null
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 */
+	private function existingMembership(string $teamFolderId, string $memberType, string $memberId): ?TeamFolderMember {
+		try {
+			return $this->memberMapper->findMembership(
+				teamFolderId: $teamFolderId,
+				memberType: $memberType,
+				memberId: $memberId
+			);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end existingMembership()
+
+	/**
+	 * Create (and audit) a new membership row.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $memberType The member type (`user`|`group`)
@@ -288,22 +321,12 @@ class TeamFolderService {
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
 	 */
-	private function findOrCreateMembership(
+	private function createMembership(
 		string $teamFolderId,
 		string $memberType,
 		string $memberId,
 		string $userId,
 	): TeamFolderMember {
-		try {
-			return $this->memberMapper->findMembership(
-				teamFolderId: $teamFolderId,
-				memberType: $memberType,
-				memberId: $memberId
-			);
-		} catch (DoesNotExistException) {
-			// No membership yet — create it below.
-		}
-
 		$membership = new TeamFolderMember();
 		$membership->setId(Uuid::uuid4()->toString());
 		$membership->setTeamFolderId($teamFolderId);
@@ -321,7 +344,7 @@ class TeamFolderService {
 		);
 
 		return $membership;
-	}//end findOrCreateMembership()
+	}//end createMembership()
 
 	/**
 	 * Remove a membership row — revokes the derived shares of every user
@@ -619,6 +642,7 @@ class TeamFolderService {
 	 * @return TeamFolderMember
 	 *
 	 * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
+	 * @throws OwnerOnlyException When a manager changes a manager or a membership that covers them
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
@@ -648,6 +672,12 @@ class TeamFolderService {
 		}
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $member, userId: $ownerId, leaving: false);
+		$this->assertNotOwnCover(
+			teamFolder: $teamFolder,
+			memberType: $member->getMemberType(),
+			memberId: $member->getMemberId(),
+			userId: $ownerId
+		);
 		if ($grade === 'manage' && $teamFolder->getOwnerId() !== $ownerId) {
 			throw new OwnerOnlyException(message: 'Only the owner can make a member a manager');
 		}
@@ -750,6 +780,34 @@ class TeamFolderService {
 			throw new OwnerOnlyException(message: 'Only the owner can change or remove a manager');
 		}
 	}//end assertManagerMayTouch()
+
+	/**
+	 * Keep a member's own access with the owner: a caller who is not the owner
+	 * may not add or change a membership that covers them, their own user row
+	 * or a group they are in. Otherwise a manager could lift the use-only flag
+	 * or end date the owner set on their own access, or add a membership
+	 * without one, and keep the folder past it.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $memberType The membership's member type (`user`|`group`)
+	 * @param string     $memberId   The membership's user or group ID
+	 * @param string     $userId     The caller
+	 *
+	 * @return void
+	 *
+	 * @throws OwnerOnlyException When the membership covers a caller who is not the owner
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function assertNotOwnCover(TeamFolder $teamFolder, string $memberType, string $memberId, string $userId): void {
+		if ($teamFolder->getOwnerId() === $userId) {
+			return;
+		}
+
+		if (in_array($userId, $this->memberships->expandMember(memberType: $memberType, memberId: $memberId), true) === true) {
+			throw new OwnerOnlyException(message: 'Only the owner can add or change a membership that covers you');
+		}
+	}//end assertNotOwnCover()
 
 	/**
 	 * Set a membership's use-only flag and end date, refusing use-only on a

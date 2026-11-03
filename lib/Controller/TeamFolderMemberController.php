@@ -153,10 +153,7 @@ class TeamFolderMemberController extends OCSController {
 				)
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(
