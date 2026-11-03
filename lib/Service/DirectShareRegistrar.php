@@ -467,8 +467,9 @@ class DirectShareRegistrar {
 		// A delegate borrows the owner's authority but keeps their own copy's
 		// limits: a use-only, expiring or read-only copy may not mint a full one
 		// (GHSA-m5p9-6pw7-pf3g).
-		if ($this->callerCopyRestricted(source: $source, userId: $userId) === true) {
-			return 'restricted';
+		$callerRefusal = $this->callerCopyRefusal(source: $source, userId: $userId);
+		if ($callerRefusal !== null) {
+			return $callerRefusal;
 		}
 
 		if ($restriction === null || $this->groupShareMatches(sourceSecretId: $source->getId(), row: $row) === false) {
@@ -479,36 +480,41 @@ class DirectShareRegistrar {
 	}//end refusalFor()
 
 	/**
-	 * Whether the caller's own grant keeps them from minting a full copy. The
-	 * owner is judged by the source itself and never restricted this way; a
-	 * delegate is judged by the copy their delegation sits on, and one with no
-	 * copy or two is refused (ShareAuthorizationService::assertMayShareOnward()).
+	 * Why the caller's own grant keeps them from minting a full copy, or null
+	 * when it does not. The owner is judged by the source itself and never
+	 * refused this way; a delegate is judged by the copy their delegation sits
+	 * on, and one with no copy or two is `restricted`
+	 * (ShareAuthorizationService::assertMayShareOnward()). A delegate whose
+	 * copy's row the pending quarantine scan cannot judge gets
+	 * `share_scan_pending`, as when they name that copy itself.
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The sharing owner or delegate
 	 *
-	 * @return bool
+	 * @return string|null `restricted`, `share_scan_pending` or null
 	 *
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function callerCopyRestricted(Secret $source, string $userId): bool {
+	private function callerCopyRefusal(Secret $source, string $userId): ?string {
 		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
-			return false;
+			return null;
 		}
 
 		if ($this->authorization === null) {
-			return true;
+			return 'restricted';
 		}
 
 		try {
 			$this->authorization->assertMayShareOnward(source: $source, userId: $userId);
-		} catch (InvalidArgumentException|ForbiddenException|ShareScanPendingException) {
-			// A copy the pending quarantine scan cannot judge is refused as restricted until it has.
-			return true;
+		} catch (ShareScanPendingException) {
+			return 'share_scan_pending';
+		} catch (InvalidArgumentException|ForbiddenException) {
+			return 'restricted';
 		}
 
-		return false;
-	}//end callerCopyRestricted()
+		return null;
+	}//end callerCopyRefusal()
 
 	/**
 	 * Whether a row's optional groupShareId names a group share of the SAME
