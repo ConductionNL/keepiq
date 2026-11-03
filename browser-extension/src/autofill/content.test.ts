@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 // Here, not beside the entrypoint: WXT reads every top-level file in entrypoints/ as one.
 import content from '@/entrypoints/content'
-import { INLINE_WALLET_ROWS, inlineHeight } from '@/src/messages'
+import { inlineHeight } from '@/src/messages'
 import { mockLayout } from '@/src/testing/layout'
 
 type Listener = (msg: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
@@ -139,12 +139,13 @@ describe('content script', () => {
 		const ADDRESS = '<form><label>First name <input id="f"></label><label>Email <input id="e" type="email"></label><button>Save</button></form>'
 		const value = (id: string) => (document.getElementById(id) as HTMLInputElement).value
 		const listHost = () => [...document.documentElement.children].find((element) => element.localName === 'div')
+		const HEIGHT = inlineHeight(3)
 
 		beforeEach(() => {
 			mockLayout()
 			vi.mocked(browser.runtime.sendMessage).mockImplementation(async (message: unknown) => {
 				sent.push(message)
-				return ((message as { kind: string }).kind === 'inline.open' ? { key: KEY, height: inlineHeight(INLINE_WALLET_ROWS) } : undefined) as never
+				return ((message as { kind: string }).kind === 'inline.open' ? { key: KEY, height: HEIGHT } : undefined) as never
 			})
 			vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue(null)
 		})
@@ -164,7 +165,7 @@ describe('content script', () => {
 			focusThenStart(`${CHECKOUT}${ADDRESS}`, selector)
 			await vi.waitFor(() => expect(listHost()).toBeDefined())
 			expect(sent).toContainEqual({ kind: 'inline.open', mode })
-			expect(listHost()!.getAttribute('style')).toContain(`height: ${inlineHeight(INLINE_WALLET_ROWS)}px !important;`)
+			expect(listHost()!.getAttribute('style')).toContain(`height: ${HEIGHT}px !important;`)
 		})
 
 		it('probes and fills only the form the list is open on for its key', async () => {

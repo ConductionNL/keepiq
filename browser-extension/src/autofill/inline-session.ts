@@ -11,7 +11,7 @@ import { popout } from '@/src/background/requests'
 import { rsaDecrypt } from '@/src/crypto'
 import { readLastUsed } from '@/src/last-used'
 import {
-	INLINE_MODES, inlineClampHeight, inlineFixedRows, inlineHeight, isFormKind,
+	INLINE_MODES, inlineClampHeight, inlineHeight, isFormKind,
 	type BackgroundToContent, type FormKind, type FormValues, type InlineClosed, type InlineListToBackground, type InlineMode, type InlineOpen, type InlineOpenReply, type InlinePickReply,
 	type InlineRow, type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
@@ -117,20 +117,19 @@ async function listingAccount(mode: InlineMode): Promise<{ id: string; status: '
 	return { id: account.id, status }
 }
 
-/** The rows an unlocked list shows: its matching logins, and the passkeys a pending conditional request offers. */
+/** The rows an unlocked list shows: its matching logins, cards or identities, and the passkeys a pending conditional request offers. */
 async function rowCount(place: ListPlace, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'> | null): Promise<number> {
 	const logins = (await matchingFor(place.mode, place.accountId, place.frameUrl)).rows.length
 	return logins + (ceremony ? (await passkeysFor(place.accountId, ceremony)).length : 0)
 }
 
-/** Cards and identities are the same on every page, so their list reads nothing to size itself and its height tells the page nothing. */
 async function openHeight(place: ListPlace, locked: boolean, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'> | null): Promise<number> {
-	return inlineHeight(inlineFixedRows(place.mode, locked) ?? await rowCount(place, ceremony))
+	return inlineHeight(locked ? 1 : await rowCount(place, ceremony))
 }
 
 /**
  * `inline.open` from a content script, routed by sender page. Showing the list is no interaction, so no `touch()`.
- * The height counts the logins without decrypting any, and the passkeys of a pending conditional request, which
+ * The height counts the logins, cards or identities without decrypting any, and the passkeys of a pending conditional request, which
  * decrypts their logins' `passkeys` once per vault version (design.md § Risks); `inline.state` decides again what the list shows.
  */
 export async function openSession(message: InlineOpen, sender: Browser.runtime.MessageSender): Promise<InlineOpenReply> {

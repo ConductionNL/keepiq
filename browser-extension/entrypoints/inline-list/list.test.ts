@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-	INLINE_MIN_HEIGHT_PX, INLINE_ROW_PX, INLINE_WALLET_ROWS, inlineHeight, type FormQuestion, type InlineListToBackground, type InlinePickReply, type InlineRow, type InlineStateReply,
+	INLINE_MIN_HEIGHT_PX, INLINE_ROW_PX, inlineHeight, type FormQuestion, type InlineListToBackground, type InlinePickReply, type InlineRow, type InlineStateReply,
 } from '@/src/messages'
 import { setLocale } from '@/src/testing/i18n'
 import { startInlineList } from './list'
@@ -1126,10 +1126,14 @@ describe('card and identity lists', () => {
 		expect(status().textContent).toBe('1 Keepiq-kaart. Druk op pijl-omlaag om te kiezen.')
 	})
 
-	it.each([0, 1, 8])('asks for three rows with %i cards, so the page cannot count them from the host', async (count) => {
-		const rows = Array.from({ length: count }, (_, i) => ({ id: `${i}`, name: `Card ${i}`, username: null, card: { brand: 'Visa', last4: '1111' } }))
-		await open(wallet('card', rows))
-		expect(resizes()).toEqual([inlineHeight(INLINE_WALLET_ROWS)])
+	it.each([
+		['card', 0, 1], ['card', 1, 1], ['card', 3, 3], ['card', 8, 5],
+		['identity', 0, 1], ['identity', 1, 1], ['identity', 3, 3], ['identity', 8, 5],
+	] as const)('asks for as many rows as the %s list shows: %i items, %i rows, rendering every item', async (mode, count, shown) => {
+		const rows = Array.from({ length: count }, (_, i) => ({ id: `${i}`, name: `Item ${i}`, username: null, ...(mode === 'card' ? { card: { brand: 'Visa', last4: '1111' } } : { detail: 'Anna de Vries' }) }))
+		await open(wallet(mode, rows))
+		expect(resizes()).toEqual([inlineHeight(shown)])
+		expect(options()).toHaveLength(count)
 	})
 
 	it.each([
@@ -1138,6 +1142,7 @@ describe('card and identity lists', () => {
 	] as const)('reads the %s list’s no-item text, and its locked text with Unlock one row tall', async (mode, none, lockedText) => {
 		await open(wallet(mode, []), { settle: false })
 		expect(document.querySelector('.message--muted')!.textContent).toBe(none)
+		expect(resizes()).toEqual([INLINE_MIN_HEIGHT_PX])
 		await wait(250)
 		expect(status().textContent).toBe(none)
 		stop()

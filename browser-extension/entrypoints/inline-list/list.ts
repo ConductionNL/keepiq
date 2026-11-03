@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import {
-	INLINE_FRAME_TITLES, INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MODES, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineFixedRows, inlineHeight, THEMES,
+	INLINE_FRAME_TITLES, INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MODES, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
 	type ContentToInlineList, type FormConfirmation, type FormQuestion, type InlineCard, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow,
 	type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
@@ -127,12 +127,10 @@ const TEXTS: Record<InlineMode, ModeTexts> = {
 	},
 }
 
-/** The rows `content` asks the host for, or null for content sized by its own height. */
-function rowsFor(content: Element, mode: InlineMode): number | null {
-	if (content.matches('.message--locked')) return inlineFixedRows(mode, true)
-	const fixed = inlineFixedRows(mode, false)
-	if (content.getAttribute('role') === 'listbox') return fixed ?? content.childElementCount
-	return content.matches('.message--muted') ? fixed ?? 1 : null
+/** The rows `content` asks the host for, as the background counted them at `inline.open`, or null for content sized by its own height. */
+function rowsFor(content: Element): number | null {
+	if (content.getAttribute('role') === 'listbox') return content.childElementCount
+	return content.matches('.message--locked, .message--muted') ? 1 : null
 }
 
 /** Seconds until `validUntil`, as the countdown shows them. */
@@ -243,9 +241,9 @@ export function startInlineList(): () => void {
 	/** Through the background: a `postMessage` to the parent would reach the page. */
 	function fit() {
 		const content = root.firstElementChild
-		if (!key || !content || !state) return
-		// The locked and no-match texts never size the frame: locked is one row, and no match is as tall as one match, or for cards and identities as any unlocked list.
-		const rows = rowsFor(content, state.mode)
+		if (!key || !content) return
+		// Locked and no match stay one row whatever their text, so the frame never tells them from one match.
+		const rows = rowsFor(content)
 		const height = rows !== null ? inlineHeight(rows) : inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
 		if (height !== null && height !== requested) {
 			requested = height

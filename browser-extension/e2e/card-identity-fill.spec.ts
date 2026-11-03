@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs'
 import type { Frame, Locator, Page } from '@playwright/test'
-import { INLINE_WALLET_ROWS, inlineHeight } from '@/src/messages'
+import { inlineHeight } from '@/src/messages'
 import { clickField, expect, focusFirstRow, holds, hostHeight, INSECURE_HOST, keyboardPick, listFocus, listFrame, listOpen, test } from './fixtures'
 import { CARD, IDENTITY } from './seed'
 
@@ -368,18 +368,42 @@ test.describe('locked', () => {
 	}
 })
 
-for (const cards of [0, 1, 8]) {
-	test.describe(`with ${cards} cards`, () => {
-		test.use({ cards })
+const SIZED = [
+	['card', '/card.html', '[name=cardnumber]'],
+	['identity', '/identity.html', '#address [name=first]'],
+] as const
 
-		test(`the card list is ${INLINE_WALLET_ROWS} rows tall from the moment it opens`, async ({ page }) => {
-			await page.goto('/card.html')
-			await clickField(page, page.locator('[name=cardnumber]'))
-			await expect.poll(() => hostHeight(page)).not.toBeNull()
-			expect(await hostHeight(page)).toBe(inlineHeight(INLINE_WALLET_ROWS))
-			if (cards) await expect.poll(async () => await listFrame(page)?.locator('[role=option]').count()).toBe(cards)
-			else await expect.poll(() => shownText(page)).toBe(t('inlineList_card_noMatch'))
-			await holds(async () => await hostHeight(page) === inlineHeight(INLINE_WALLET_ROWS), 500)
+for (const [kind, path, selector] of SIZED) {
+	for (const [count, rows] of [[0, 1], [1, 1], [3, 3], [8, 5]] as const) {
+		test.describe(`with ${count} ${kind === 'card' ? 'cards' : 'identities'}`, () => {
+			test.use(kind === 'card' ? { cards: count } : { identities: count })
+
+			test(`the ${kind} list is ${rows} rows tall from the moment it opens`, async ({ page }) => {
+				await page.goto(path)
+				await clickField(page, page.locator(selector))
+				await expect.poll(() => hostHeight(page)).not.toBeNull()
+				expect(await hostHeight(page)).toBe(inlineHeight(rows))
+				if (count) await expect.poll(async () => await listFrame(page)?.locator('[role=option]').count()).toBe(count)
+				else await expect.poll(() => shownText(page)).toBe(t(`inlineList_${kind}_noMatch`))
+				await holds(async () => await hostHeight(page) === inlineHeight(rows), 500)
+			})
 		})
-	})
+	}
 }
+
+test.describe('with 8 cards', () => {
+	test.use({ cards: 8 })
+
+	test('the card list shows five rows and scrolls to the rest', async ({ page }) => {
+		await page.goto('/card.html')
+		await clickField(page, page.locator('[name=cardnumber]'))
+		await expect.poll(async () => await listFrame(page)?.locator('[role=option]').count() ?? 0).toBe(8)
+		const frame = listFrame(page)!
+		const shown = () => frame.evaluate(() => [...document.querySelectorAll('[role=option]')]
+			.filter((row) => row.getBoundingClientRect().bottom <= window.innerHeight + 0.5).length)
+		expect(await shown()).toBe(5)
+		await frame.locator('[role=option]').last().scrollIntoViewIfNeeded()
+		await expect.poll(() => frame.locator('[role=option]').last().evaluate((row) => row.getBoundingClientRect().bottom <= window.innerHeight + 0.5)).toBe(true)
+		expect(listOpen(page)).toBe(true)
+	})
+})

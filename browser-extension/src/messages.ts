@@ -271,10 +271,6 @@ export type FillExecuteReply = { filled: FillOutcome; code: boolean }
 export type InlineMode = 'login' | 'code' | FormKind
 export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity']
 export const isFormKind = (mode: unknown): mode is FormKind => mode === 'card' || mode === 'identity'
-/** The card and identity list's rows while unlocked, whatever the count, so its size tells the page nothing. */
-export const INLINE_WALLET_ROWS = 3
-/** The rows a list is sized to whatever it holds, or null for a list sized by its rows; the background and the list page must agree, or a resize tells the page. */
-export const inlineFixedRows = (mode: InlineMode, locked: boolean): number | null => (locked ? 1 : isFormKind(mode) ? INLINE_WALLET_ROWS : null)
 /** The list frame's title key per mode, for the host's frame and the list page's document alike. */
 export const INLINE_FRAME_TITLES = {
 	login: 'inlineList.frameTitle',
@@ -305,7 +301,7 @@ export type ContentToInlineList =
 /**
  * The list's size, shared by the background, the host and the list page.
  * It is as tall as its rows, up to `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, with `INLINE_INSET_PX` of edge and padding above and below;
- * the locked and no-match messages are one row, as one match; an unlocked card or identity list is `INLINE_WALLET_ROWS`.
+ * the locked and no-match messages are one row, as one match.
  * The questions and the not-visible notice, shown only after a pick, ask for what they need with `inline.resize`, up to `INLINE_MAX_HEIGHT_PX`.
  * At least `INLINE_MIN_WIDTH_PX` wide.
  */

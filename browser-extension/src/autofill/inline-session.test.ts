@@ -6,7 +6,7 @@ import { broadcast } from '@/src/background/broadcast'
 import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { lastUsedKey } from '@/src/last-used'
-import { INLINE_WALLET_ROWS, inlineHeight, type BackgroundToContent, type FormConfirmation, type InlineListToBackground, type InlineStateReply, type PickInput } from '@/src/messages'
+import { inlineHeight, type BackgroundToContent, type FormConfirmation, type InlineListToBackground, type InlineStateReply, type PickInput } from '@/src/messages'
 import { ceremonyKey, endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from '@/src/passkey/ceremony'
 import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { setLocale } from '@/src/testing/i18n'
@@ -509,13 +509,32 @@ describe('card and identity lists', () => {
 
 	afterEach(() => forgetTab(TAB))
 
-	it.each([0, 1, 8])('opens the card list three rows tall with %i cards, reading nothing from the vault', async (count) => {
+	it.each([[0, 1], [1, 1], [3, 3], [8, 5]])('opens the card list with %i cards %i rows tall, decrypting nothing', async (count, rows) => {
 		await vault(await cards(count))
 		vi.mocked(rsaDecrypt).mockClear()
-		vi.mocked(readSnapshot).mockClear()
-		expect(await openSession(CARD, content())).toEqual({ key: expect.any(String), height: inlineHeight(INLINE_WALLET_ROWS) })
+		expect(await openSession(CARD, content())).toEqual({ key: expect.any(String), height: inlineHeight(rows) })
 		expect(rsaDecrypt).not.toHaveBeenCalled()
-		expect(readSnapshot).not.toHaveBeenCalled()
+	})
+
+	it.each([[0, 1], [1, 1], [3, 3], [8, 5]])('opens the identity list with %i identities %i rows tall, decrypting nothing', async (count, rows) => {
+		await vault(await Promise.all(Array.from({ length: count }, (_, i) => identity(`i${i}`, `Identity ${i}`, { firstName: 'Anna' }))))
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await openSession(IDENTITY, content())).toEqual({ key: expect.any(String), height: inlineHeight(rows) })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+	})
+
+	it('counts a use-only copy as a row at open, and neither a blocked row nor another kind', async () => {
+		await vault([
+			await card('work', 'Work Visa'),
+			await card('shared', 'Shared', VISA, { useOnly: true }),
+			blockedRow({ id: 'gone', typeId: 't-card' }),
+			await login({ id: 'site', name: 'Shop', url: 'https://shop.test/' }),
+			await identity('me', 'Me', { firstName: 'Anna' }),
+		])
+		const { key, height } = (await openSession(CARD, content()))!
+		expect(height).toBe(inlineHeight(2))
+		expect((await list({ kind: 'inline.state', key }) as { rows: unknown[] }).rows).toHaveLength(2)
+		expect((await openSession(IDENTITY, content()))!.height).toBe(inlineHeight(1))
 	})
 
 	it.each([0, 3])('opens one row tall while locked with %i cards, and answers locked without listing, counting or decrypting', async (count) => {
