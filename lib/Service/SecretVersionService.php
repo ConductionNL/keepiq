@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\TTransactional;
@@ -256,6 +257,7 @@ class SecretVersionService {
 	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the head is a copy its holder may only view, or a read-only copy from another organisation
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the head is a copy whose source cannot be resolved
 	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
+	 * @throws ShareScanPendingException When the head is a copy whose share row waits for the share quarantine scan
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently

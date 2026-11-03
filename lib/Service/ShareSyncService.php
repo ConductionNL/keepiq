@@ -34,12 +34,12 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareRowsAppearedException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -51,6 +51,8 @@ use Psr\Log\LoggerInterface;
  *   one transaction, tells a source from a received copy, and asks the pending share quarantine scan before each copy
  *   write (GHSA-m5p9-6pw7-pf3g).
  * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: each is one collaborator of that transaction.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) A sync locks its source again when a share row appears under the
+ *   lock, so that row is judged outside the transaction (GHSA-m5p9-6pw7-pf3g); the retry is part of the one write.
  */
 class ShareSyncService {
 	use TTransactional;
@@ -71,6 +73,12 @@ class ShareSyncService {
 	public const DELEGATE_WRITE = 'delegate sync';
 
 	/**
+	 * How often a sync locks its source before it judges a share row that
+	 * appeared under the lock inside its transaction.
+	 */
+	private const REREAD_ATTEMPTS = 3;
+
+	/**
 	 * The share audit trail.
 	 *
 	 * @var ShareAuditTrail
@@ -80,7 +88,7 @@ class ShareSyncService {
 	/**
 	 * Constructor for ShareSyncService.
 	 *
-	 * @param ShareTargetMapper $mapper The share-target mapper
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secretMapper The Secret mapper (recipient copies)
 	 * @param IDBConnection $db The DB connection (sync transaction)
 	 * @param ShareAuthorizationService $auth The share authorization service
@@ -89,14 +97,13 @@ class ShareSyncService {
 	 * @param ShareWriteContext $contexts The caller's standing on a source, and the write context
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user copy writes)
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; the sync behaviour carries the spec anchors.
 	 */
 	public function __construct(
-		private ShareTargetMapper $mapper,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secretMapper,
 		private IDBConnection $db,
 		private ShareAuthorizationService $auth,
@@ -105,7 +112,6 @@ class ShareSyncService {
 		private ShareWriteContext $contexts,
 		?ShareAuditTrail $auditTrail = null,
 		private ?LoggerInterface $logger = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -135,11 +141,13 @@ class ShareSyncService {
 	 *
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
 	 * @throws ForbiddenException When the secret is a read-only copy or a received copy
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row of a copy the sync writes
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function syncUpdate(
 		string $secretId,
@@ -149,7 +157,7 @@ class ShareSyncService {
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
 		$this->guards->assertWritable(source: $source);
-		$this->assertNotACopy(secret: $source);
+		$this->assertNotACopy(secret: $source, userId: $userId);
 
 		$writesOn = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->guards->assertBaseNamed(writesOn: $writesOn, expectedUpdatedAt: $expectedUpdatedAt);
@@ -164,12 +172,93 @@ class ShareSyncService {
 
 		// After the stored version even within the same second, as a share-save stamps.
 		$savedAt = new DateTime('@'.max(time(), ($source->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
-		$allowedIds = $this->collectSyncTargets(source: $source);
+		// Every row is judged once, before the transaction, as the owner's
+		// requests are: a quarantine the judging makes is kept when a row it
+		// cannot judge refuses the sync, and the writes read the same
+		// verdicts, so a copy is never skipped on a second, different answer.
+		$judged = $this->guards->judgedRowsOf(source: $source)->judgeAll();
+		for ($attempt = 1; $attempt < self::REREAD_ATTEMPTS; $attempt++) {
+			try {
+				return $this->writeUnderLock(
+					source: $source,
+					updates: $updates,
+					lock: ['base' => $base, 'savedAt' => $savedAt],
+					writer: ['writesOn' => $writesOn, 'userId' => $userId],
+					judged: $judged,
+					judgeNewRowsHere: false
+				);
+			} catch (ShareRowsAppearedException $appeared) {
+				// Judge the rows that appeared outside the rolled-back transaction.
+				$judged = $appeared->rows->judgeAll();
+			}
+		}
+
+		return $this->writeUnderLock(
+			source: $source,
+			updates: $updates,
+			lock: ['base' => $base, 'savedAt' => $savedAt],
+			writer: ['writesOn' => $writesOn, 'userId' => $userId],
+			judged: $judged,
+			judgeNewRowsHere: true
+		);
+	}//end syncUpdate()
+
+	/**
+	 * Lock the source and write the sync in one transaction. The rows are read
+	 * again under the lock, so a share registered since they were judged is
+	 * seen. Such a row is judged outside the transaction: the transaction is
+	 * rolled back with ShareRowsAppearedException and syncUpdate() tries again,
+	 * so a quarantine the judging makes is kept whatever the sync answers. On
+	 * the last attempt it is judged here instead.
+	 *
+	 * The lock serialises syncs and share-saves of the source, not a share
+	 * registration, which takes no lock on it: a share registered after the
+	 * re-read is not written by this sync, being in neither the judged rows nor
+	 * the allowed ids, so no copy is ever written without a verdict.
+	 *
+	 * @param Secret                                     $source  The source secret
+	 * @param array<int,array<string,string|null>>       $updates The per-recipient blobs
+	 * @param array{base:?DateTime,savedAt:DateTime}     $lock    The version the source is locked against, and the new one
+	 * @param array{writesOn:?string,userId:string}      $writer  How the caller writes, and who they are
+	 * @param JudgedShareRows                            $judged           The source's rows, every one judged
+	 * @param bool                                       $judgeNewRowsHere Whether a row that appeared is judged inside the transaction
+	 *
+	 * @return int Number of recipient copies updated
+	 *
+	 * @throws ShareRowsAppearedException When a row appeared and is to be judged outside the transaction
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	private function writeUnderLock(
+		Secret $source,
+		array $updates,
+		array $lock,
+		array $writer,
+		JudgedShareRows $judged,
+		bool $judgeNewRowsHere,
+	): int {
+		['base' => $base, 'savedAt' => $savedAt] = $lock;
+		['writesOn' => $writesOn, 'userId' => $userId] = $writer;
+		$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
 		return $this->atomic(
-			fn: function () use ($source, $updates, $allowedIds, $base, $savedAt, $writesOn, $userId): int {
+			fn: function () use ($source, $updates, $base, $savedAt, $writesOn, $userId, $judged, $judgeNewRowsHere): int {
 				$this->lockSource(source: $source, base: $base, savedAt: $savedAt);
+				// A row already judged keeps its verdict.
+				$judged = $this->guards->judgedRowsOf(source: $source, before: $judged);
+				if ($judgeNewRowsHere === false && $judged->appearedSince() === true) {
+					throw new ShareRowsAppearedException(rows: $judged);
+				}
+
+				$this->guards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+				$allowedIds = $this->collectSyncTargets(source: $source, judged: $judged);
 				if ($writesOn === self::GROUP_WRITE) {
-					[$writesOn, $allowedIds] = $this->guards->assertGroupWrite(sync: $this, source: $source, updates: $updates, userId: $userId);
+					[$writesOn, $allowedIds] = $this->guards->assertGroupWrite(
+						sync: $this,
+						source: $source,
+						updates: $updates,
+						userId: $userId,
+						judged: $judged
+					);
 				}
 
 				$updated = $this->writeCopyBlobs(
@@ -177,7 +266,8 @@ class ShareSyncService {
 					updates: $updates,
 					allowedIds: $allowedIds,
 					savedAt: $savedAt,
-					writerId: $userId
+					writerId: $userId,
+					judged: $judged
 				);
 				if ($updated > 0) {
 					$this->recordNonOwnerSync(source: $source, userId: $userId, writesOn: $writesOn);
@@ -187,28 +277,38 @@ class ShareSyncService {
 			},
 			db: $this->db
 		);
-	}//end syncUpdate()
+	}//end writeUnderLock()
 
 	/**
 	 * Refuse a sync that starts from a received copy. A copy is owned by its
 	 * holder, so the owner check would pass and the sync would write that copy
-	 * alone, whether or not the holder may write its source.
+	 * alone, whether or not the holder may write its source. A secret named
+	 * only by a row the pending quarantine scan quarantines is no copy; one
+	 * whose row the scan cannot judge waits for it, and its holder is told so.
 	 *
 	 * @param Secret $secret The secret the sync names
+	 * @param string $userId The requesting user
 	 *
 	 * @return void
 	 *
 	 * @throws ForbiddenException When the secret is a received copy
+	 * @throws ShareScanPendingException When the caller holds the secret and the pending scan cannot judge the row naming it
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-view-only-copies
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function assertNotACopy(Secret $secret): void {
-		try {
-			$this->mapper->findByRecipientSecret(recipientSecretId: $secret->getId());
-		} catch (DoesNotExistException) {
+	private function assertNotACopy(Secret $secret, string $userId): void {
+		// A row the pending scan cannot judge still counts as a copy, until it
+		// has judged it; a row it quarantines does not.
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		if ($verdict->countsAsCopy() === false) {
 			return;
-		} catch (MultipleObjectsReturnedException) {
-			// More than one share row: still a copy.
+		}
+
+		// The secret's own holder is told the sync waits for the scan, as on
+		// every other onward path; anyone else keeps the copy refusal.
+		if ($verdict->awaitsTheScanFor(secret: $secret, userId: $userId) === true) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be synced yet');
 		}
 
 		throw new ForbiddenException(message: 'A sync starts from the source secret, not from a copy');
@@ -257,6 +357,7 @@ class ShareSyncService {
 	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
+	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
@@ -348,12 +449,14 @@ class ShareSyncService {
 	 * defect fixed with folder-permission-grades §2.3).
 	 *
 	 * @param Secret $source The source secret being synced
+	 * @param JudgedShareRows $judged The source's rows, judged once for the sync
 	 *
 	 * @return array<string,bool> The secret ids this sync may write, keyed by id.
 	 */
-	private function collectSyncTargets(Secret $source): array {
+	private function collectSyncTargets(Secret $source, JudgedShareRows $judged): array {
 		$allowedIds = [$source->getId() => true];
-		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+		foreach ($judged->all() as $shareRow) {
+			// Only a superset: writeCopyBlobs() judges each row it writes.
 			$allowedIds[$shareRow->getSecretId()] = true;
 		}
 
@@ -373,6 +476,7 @@ class ShareSyncService {
 	 * @param DateTime $savedAt The version every written row gets
 	 * @param string $writerId The caller
 	 * @param string[] $restored The fields a restore writes back from a version, which replace no exposed value
+	 * @param JudgedShareRows|null $judged The source's rows already judged for this request, or null to read them
 	 *
 	 * @return int Number of recipient copies updated.
 	 *
@@ -387,13 +491,18 @@ class ShareSyncService {
 		DateTime $savedAt,
 		string $writerId,
 		array $restored = [],
+		?JudgedShareRows $judged = null,
 	): int {
 		// Defence in depth: the share row that owns each recipient copy, so a
 		// copy whose row does not genuinely belong to its target (a poisoned or
 		// drifted `secret_id`) is skipped rather than overwritten, and so is the
 		// copy of a row the pending quarantine scan holds back. The source row
 		// itself carries no share row and is always writable.
-		$shareRows = $this->shareRowsByCopy(source: $source);
+		$judged ??= $this->rowJudge->rowsOfSource(sourceId: $source->getId());
+		$shareRows = [];
+		foreach ($judged->all() as $shareRow) {
+			$shareRows[$shareRow->getSecretId()] = $shareRow;
+		}
 
 		$updated = 0;
 		foreach ($updates as $update) {
@@ -409,7 +518,12 @@ class ShareSyncService {
 			}
 
 			if ($recipientSecretId !== $source->getId()
-				&& $this->mayWriteCopy(source: $source, copy: $copy, shareRow: ($shareRows[$recipientSecretId] ?? null)) === false
+				&& $this->mayWriteCopy(
+					source: $source,
+					copy: $copy,
+					shareRow: ($shareRows[$recipientSecretId] ?? null),
+					judged: $judged
+				) === false
 			) {
 				continue;
 			}
@@ -425,35 +539,20 @@ class ShareSyncService {
 	}//end writeCopyBlobs()
 
 	/**
-	 * The live share rows of a source, keyed by the copy each names.
-	 *
-	 * @param Secret $source The source secret being synced
-	 *
-	 * @return array<string,ShareTarget>
-	 */
-	private function shareRowsByCopy(Secret $source): array {
-		$shareRows = [];
-		foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
-			$shareRows[$shareRow->getSecretId()] = $shareRow;
-		}
-
-		return $shareRows;
-	}//end shareRowsByCopy()
-
-	/**
 	 * Whether a sync may write a recipient copy: its share row's target holds
 	 * it, and the pending quarantine scan does not hold the row back.
 	 *
 	 * @param Secret $source The source secret being synced
 	 * @param Secret $copy The recipient copy
 	 * @param ShareTarget|null $shareRow The share row naming the copy, or null when none does
+	 * @param JudgedShareRows $judged The source's judged share rows
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function mayWriteCopy(Secret $source, Secret $copy, ?ShareTarget $shareRow): bool {
-		if ($shareRow !== null
-			&& ($this->quarantineScan?->mayTouchCopy(row: $shareRow, copy: $copy) ?? $shareRow->isHeldByTarget(copy: $copy)) === true
-		) {
+	private function mayWriteCopy(Secret $source, Secret $copy, ?ShareTarget $shareRow, JudgedShareRows $judged): bool {
+		if ($shareRow !== null && $shareRow->isHeldByTarget(copy: $copy) === true && $judged->verdict(row: $shareRow) === null) {
 			return true;
 		}
 

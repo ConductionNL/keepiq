@@ -127,7 +127,7 @@ final class StandaloneBootstrapTest extends TestCase {
 		self::assertGreaterThanOrEqual(16, count($this->callsOf(method: 'registerEventListener')), 'the three event registrars');
 		self::assertCount(1, $this->callsOf(method: 'registerSearchProvider'), 'PlatformIntegrationRegistrar');
 		self::assertCount(1, $this->callsOf(method: 'registerNotifierService'), 'PlatformIntegrationRegistrar');
-		self::assertCount(3, $this->callsOf(method: 'registerMiddleware'), 'PlatformIntegrationRegistrar');
+		self::assertCount(4, $this->callsOf(method: 'registerMiddleware'), 'PlatformIntegrationRegistrar');
 		self::assertSame(
 			[ShareQuarantineScanPending::class],
 			array_column($this->callsOf(method: 'registerSetupCheck'), 1),

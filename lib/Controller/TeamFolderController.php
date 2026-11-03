@@ -32,6 +32,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\TeamFolderConfirmationService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Support\MessageResponse;
@@ -141,6 +142,11 @@ class TeamFolderController extends OCSController {
 
 		try {
 			$revoked = $this->teamFolderService->unshareFolder(teamFolderId: $id, userId: $userId);
+		} catch (ShareScanPendingException $exception) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $exception) {
 			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
