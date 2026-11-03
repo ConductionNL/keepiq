@@ -46,68 +46,92 @@ function onPageReady(msg: Extract<ContentToBackground, { kind: 'page_ready' }>, 
 	}
 }
 
+type Sender = Browser.runtime.MessageSender
+type PopupMessage = PopupToBackground | HandledRequest | FillRequest | PasskeyPopupRequest
+
+/** The reply to a content script's question; `null` for the fire-and-forget kinds. */
+function contentReply(m: ContentToBackground, sender: Sender): Promise<unknown> | null {
+	if (m.kind === 'inline.open') return openSession(m, sender).catch(() => null)
+	if (m.kind === 'passkey.start' || m.kind === 'passkey.available') return handlePasskeyContent(m, sender)
+	return null
+}
+
+function onContentEvent(m: ContentToBackground, sender: Sender): void {
+	if (m.kind === 'page_ready') onPageReady(m, sender)
+	else if (m.kind === 'inline.closed') void closedByHost(m, sender).catch(() => {})
+	else if (m.kind === 'capture.submitted') void captureSubmitted(m, sender).catch((error: unknown) => console.error('[keepiq] capture', error))
+	else if (m.kind === 'capture.reshow') void reshow(sender).catch(() => {})
+	else if (m.kind === 'passkey.abort') void handlePasskeyContent(m, sender)
+}
+
+/** Each listener below returns `true` when it answers through `respond` later, as `onMessage` needs. */
+function onContentMessage(m: ContentToBackground, sender: Sender, respond: (reply: unknown) => void): true | undefined {
+	const reply = contentReply(m, sender)
+	if (!reply) {
+		onContentEvent(m, sender)
+		return undefined
+	}
+	void reply.then(respond)
+	return true
+}
+
+function onInlineListMessage(m: InlineListToBackground, sender: Sender, respond: (reply: unknown) => void): true | undefined {
+	const handled = handleInlineList(m, sender).catch((error: unknown) => {
+		console.error('[keepiq] inline list', m.kind, error)
+		return null
+	})
+	if (m.kind !== 'inline.state' && m.kind !== 'inline.pick') return undefined
+	void handled.then((reply) => {
+		if (m.kind === 'inline.pick') void rebuildMenus()
+		respond(reply)
+	})
+	return true
+}
+
+function onNotificationMessage(m: NotificationToBackground, sender: Sender, respond: (reply: unknown) => void): true {
+	void handleNotification(m, sender).catch((error: unknown) => {
+		console.error('[keepiq] save bar', m.kind, error)
+		return m.kind === 'capture.save' || m.kind === 'capture.update' ? { ok: false, error: { code: 'unknown' } } : null
+	}).then(respond)
+	return true
+}
+
+function applyPopupChanges(kind: string): void {
+	if (MENU_CHANGES.has(kind)) void rebuildMenus()
+	if (TOOLBAR_CHANGES.has(kind)) refreshToolbar('state')
+	if (ACCOUNT_CHANGES.has(kind)) {
+		void closeAllSessions()
+		dropAllCaptures()
+		void endForAccountChange().catch(() => {})
+	}
+}
+
+function popupReply(m: PopupMessage, sender: Sender): Promise<unknown> {
+	if (PASSKEY_POPUP_KINDS.has(m.kind)) return handlePasskeyWindow(m as PasskeyPopupRequest, sender)
+	if (m.kind === 'fill.request') return handleFillRequest(m as FillRequest)
+	if (POPUP_REQUEST_KINDS.has(m.kind)) return handlePopupRequest(m as HandledRequest)
+	return handlePopupMessage(m as PopupToBackground)
+}
+
+function onPopupMessage(m: PopupMessage, sender: Sender, respond: (reply: unknown) => void): true {
+	void popupReply(m, sender).then((reply) => {
+		applyPopupChanges(m.kind)
+		return reply
+	}).then(respond)
+	return true
+}
+
 export default defineBackground(() => {
 	setUnauthorizedHandler((accountId) => markLoggedOut(accountId, true))
 
-	browser.runtime.onMessage.addListener((msg: unknown, sender: Browser.runtime.MessageSender, sendResponse: (reply: unknown) => void) => {
+	browser.runtime.onMessage.addListener((msg: unknown, sender: Sender, sendResponse: (reply: unknown) => void) => {
 		const kind = (msg as { kind?: unknown } | null)?.kind
 		if (typeof kind !== 'string' || !acceptedFrom(sender, kind)) return
 		const page = senderPage(sender)
-		if (page === 'content') {
-			const m = msg as ContentToBackground
-			if (m.kind === 'page_ready') onPageReady(m, sender)
-			else if (m.kind === 'inline.closed') void closedByHost(m, sender).catch(() => {})
-			else if (m.kind === 'capture.submitted') void captureSubmitted(m, sender).catch((error: unknown) => console.error('[keepiq] capture', error))
-			else if (m.kind === 'capture.reshow') void reshow(sender).catch(() => {})
-			else if (m.kind === 'inline.open') {
-				void openSession(m, sender).catch(() => null).then(sendResponse)
-				return true
-			}
-			else if (m.kind === 'passkey.abort') void handlePasskeyContent(m, sender)
-			else if (m.kind === 'passkey.start' || m.kind === 'passkey.available') {
-				void handlePasskeyContent(m, sender).then(sendResponse)
-				return true
-			}
-			return
-		}
-		if (page === 'inline-list') {
-			const m = msg as InlineListToBackground
-			const handled = handleInlineList(m, sender).catch((error: unknown) => {
-				console.error('[keepiq] inline list', m.kind, error)
-				return null
-			})
-			if (m.kind !== 'inline.state' && m.kind !== 'inline.pick') return
-			void handled.then((reply) => {
-				if (m.kind === 'inline.pick') void rebuildMenus()
-				sendResponse(reply)
-			})
-			return true
-		}
-		if (page === 'notification') {
-			const m = msg as NotificationToBackground
-			void handleNotification(m, sender).catch((error: unknown) => {
-				console.error('[keepiq] save bar', m.kind, error)
-				return m.kind === 'capture.save' || m.kind === 'capture.update' ? { ok: false, error: { code: 'unknown' } } : null
-			}).then(sendResponse)
-			return true
-		}
-		if (page !== 'popup') return
-		const rebuild = <T>(reply: T): T => {
-			if (MENU_CHANGES.has(kind)) void rebuildMenus()
-			if (TOOLBAR_CHANGES.has(kind)) refreshToolbar('state')
-			if (ACCOUNT_CHANGES.has(kind)) {
-				void closeAllSessions()
-				dropAllCaptures()
-				void endForAccountChange().catch(() => {})
-			}
-			return reply
-		}
-		const m = msg as PopupToBackground | HandledRequest | FillRequest | PasskeyPopupRequest
-		if (PASSKEY_POPUP_KINDS.has(m.kind)) void handlePasskeyWindow(m as PasskeyPopupRequest, sender).then(rebuild).then(sendResponse)
-		else if (m.kind === 'fill.request') void handleFillRequest(m as FillRequest).then(rebuild).then(sendResponse)
-		else if (POPUP_REQUEST_KINDS.has(m.kind)) void handlePopupRequest(m as HandledRequest).then(rebuild).then(sendResponse)
-		else void handlePopupMessage(m as PopupToBackground).then(rebuild).then(sendResponse)
-		return true
+		if (page === 'content') return onContentMessage(msg as ContentToBackground, sender, sendResponse)
+		if (page === 'inline-list') return onInlineListMessage(msg as InlineListToBackground, sender, sendResponse)
+		if (page === 'notification') return onNotificationMessage(msg as NotificationToBackground, sender, sendResponse)
+		if (page === 'popup') return onPopupMessage(msg as PopupMessage, sender, sendResponse)
 	})
 
 	browser.tabs.onUpdated.addListener((tabId, change) => {
