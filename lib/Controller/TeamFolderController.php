@@ -34,6 +34,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\TeamFolderConfirmationService;
 use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -113,10 +114,7 @@ class TeamFolderController extends OCSController {
 		try {
 			$teamFolder = $this->teamFolderService->shareFolder(folderId: $folderId, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $teamFolder->jsonSerialize(), statusCode: Http::STATUS_CREATED);
@@ -144,10 +142,7 @@ class TeamFolderController extends OCSController {
 		try {
 			$revoked = $this->teamFolderService->unshareFolder(teamFolderId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: ['revoked' => $revoked]);
@@ -203,10 +198,7 @@ class TeamFolderController extends OCSController {
 		try {
 			$state = $this->teamFolderService->reconcile(teamFolderId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $state);
@@ -243,10 +235,7 @@ class TeamFolderController extends OCSController {
 				userId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $result, statusCode: Http::STATUS_CREATED);
@@ -280,10 +269,7 @@ class TeamFolderController extends OCSController {
 				adminId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: $summary);

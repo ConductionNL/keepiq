@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\ShareRequestService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -81,10 +82,7 @@ class ShareRequestController extends OCSController {
 				requesterId: $user->getUID()
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: ['status' => 'submitted'], statusCode: Http::STATUS_CREATED);
@@ -125,10 +123,7 @@ class ShareRequestController extends OCSController {
 				ownerId: $user->getUID()
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: $params);
@@ -168,10 +163,7 @@ class ShareRequestController extends OCSController {
 				ownerId: $user->getUID()
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['status' => 'denied']);
