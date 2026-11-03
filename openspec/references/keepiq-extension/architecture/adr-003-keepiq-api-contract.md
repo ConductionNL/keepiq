@@ -1,5 +1,7 @@
 # ADR-003: Keepiq API contract the extension builds against
 
+> Note (added in Keepiq, not part of the snapshot): the live contract is `browser-extension/openspec/architecture/adr-003-keepiq-api-contract.md`.
+
 **Status**: accepted
 
 **Date**: 2026-09-22

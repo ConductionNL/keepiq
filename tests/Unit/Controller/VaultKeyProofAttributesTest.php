@@ -122,15 +122,10 @@ class VaultKeyProofAttributesTest extends TestCase {
 				VaultKeyProofService::PURPOSE_ABORT_MIGRATION,
 			],
 			// keepiq#818: a session alone must not add a new party who then
-			// receives every later value of a secret. A share to a recipient
-			// the caller already shares with is waived by the exemption.
-			'share to a new recipient' => [
-				ShareController::class,
-				'create',
-				['secretId', 'targetUserId'],
-				'active',
-				VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
-			],
+			// receives every later value of a secret. Shares are created only
+			// through register-batch (GHSA-m5p9-6pw7-pf3g retired the
+			// client-supplied-id share-create route), which always requires a
+			// proof — no exemption.
 			'register a batch of shares' => [
 				ShareController::class,
 				'registerBatch',
@@ -223,31 +218,23 @@ class VaultKeyProofAttributesTest extends TestCase {
 	}//end testDestructiveMethodCarriesTheGuard()
 
 	/**
-	 * Only the share-to-a-new-recipient guard carries an exemption, and it is
-	 * the known-recipient one (keepiq#818). Every other guard has none: an
-	 * exemption on a destructive route would be a missing guard.
+	 * No guarded route carries an exemption. The only exemptable route was the
+	 * share-to-a-new-recipient one, retired with its endpoint
+	 * (GHSA-m5p9-6pw7-pf3g); every surviving guard refuses a proofless request
+	 * outright, because an exemption on a destructive route would be a missing
+	 * guard.
 	 *
 	 * @return void
 	 */
-	public function testOnlyTheShareCreateGuardIsExemptable(): void {
+	public function testNoGuardedRouteCarriesAnExemption(): void {
 		foreach (self::guardedMethodsProvider() as $label => [$class, $method]) {
 			$attribute = (new ReflectionMethod($class, $method))
 				->getAttributes(VaultKeyProofRequired::class)[0]
 				->newInstance();
-			$expected = '';
-			if ($class === ShareController::class && $method === 'create') {
-				$expected = KnownShareRecipientExemption::class;
-			}
 
-			$this->assertSame($expected, $attribute->getExemption(), "$label exemption");
+			$this->assertSame('', $attribute->getExemption(), "$label exemption");
 		}
-
-		$this->assertContains(
-			VaultKeyProofExemption::class,
-			class_implements(KnownShareRecipientExemption::class),
-			'the exemption must implement VaultKeyProofExemption, or the middleware ignores it and always asks for a proof'
-		);
-	}//end testOnlyTheShareCreateGuardIsExemptable()
+	}//end testNoGuardedRouteCarriesAnExemption()
 
 	/**
 	 * Methods deliberately NOT guarded, with the reason each is safe.

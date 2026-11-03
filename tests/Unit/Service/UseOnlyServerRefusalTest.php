@@ -33,12 +33,14 @@ use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use OCP\IUserManager;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -50,6 +52,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
  */
 class UseOnlyServerRefusalTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var SecretMapper&MockObject */
 	private SecretMapper $secrets;
@@ -74,6 +77,8 @@ class UseOnlyServerRefusalTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 	}
 
@@ -150,8 +155,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->createMock(SecretDelegationMapper::class),
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				shareTargetMapper: $shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $shareTargets, secrets: $this->secrets),
 			),
 		);
 
@@ -168,9 +172,13 @@ class UseOnlyServerRefusalTest extends TestCase {
 		$this->copy->setAccessExpiresAt(new DateTime('+1 day'));
 		$groupShares = $this->createMock(GroupShareMapper::class);
 		$groupShares->expects($this->never())->method('insert');
+		// Bob holds the row and it is no one's copy, so the restriction is what
+		// stops the group share.
+		$shareTargets = $this->createMock(ShareTargetMapper::class);
+		$shareTargets->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('not a copy'));
 		$service = new GroupShareService(
 			mapper: $groupShares,
-			shareTargetMapper: $this->createMock(ShareTargetMapper::class),
+			shareTargetMapper: $shareTargets,
 			bulkGrantMapper: $this->createMock(BulkGrantShareTargetMapper::class),
 			secretMapper: $this->secrets,
 			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
@@ -180,6 +188,8 @@ class UseOnlyServerRefusalTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			rowJudge: $this->shareRowJudge(targets: $shareTargets, secrets: $this->secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
@@ -197,7 +207,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 		$delegations->expects($this->never())->method('insert');
 		$service = new DelegationService(
 			mapper: $delegations,
-			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets),
+			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);

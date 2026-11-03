@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
@@ -318,6 +319,8 @@ class MigrationController extends OCSController {
 	 * @param string|null $login The re-encrypted login ciphertext
 	 * @param string|null $additionalFields The re-encrypted additional-fields ciphertext
 	 * @param string|null $error A per-record failure to record instead
+	 * @param string|null $totp The re-encrypted TOTP ciphertext
+	 * @param string|null $passkeys The re-encrypted passkeys ciphertext
 	 *
 	 * @NoAdminRequired
 	 *
@@ -333,6 +336,8 @@ class MigrationController extends OCSController {
 		?string $login = null,
 		?string $additionalFields = null,
 		?string $error = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -353,7 +358,7 @@ class MigrationController extends OCSController {
 			store: 'secrets',
 			recordId: $secretId,
 			error: $error,
-			commit: function ($migration, $userId) use ($secretId, $key, $login, $additionalFields) {
+			commit: function ($migration, $userId) use ($secretId, $key, $login, $additionalFields, $totp, $passkeys) {
 				if ($key === null) {
 					throw new ForbiddenException(message: 'A re-encrypted key ciphertext is required');
 				}
@@ -364,7 +369,9 @@ class MigrationController extends OCSController {
 					secretId: $secretId,
 					key: $key,
 					login: $login,
-					additionalFields: $additionalFields
+					additionalFields: $additionalFields,
+					totp: $totp,
+					passkeys: $passkeys
 				);
 
 				return [
@@ -385,6 +392,8 @@ class MigrationController extends OCSController {
 	 * @param string|null $login The re-encrypted login ciphertext
 	 * @param string|null $additionalFields The re-encrypted additional-fields ciphertext
 	 * @param string|null $error A per-record failure to record instead
+	 * @param string|null $totp The re-encrypted TOTP ciphertext
+	 * @param string|null $passkeys The re-encrypted passkeys ciphertext
 	 *
 	 * @NoAdminRequired
 	 *
@@ -400,6 +409,8 @@ class MigrationController extends OCSController {
 		?string $login = null,
 		?string $additionalFields = null,
 		?string $error = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -420,7 +431,7 @@ class MigrationController extends OCSController {
 			store: 'versions',
 			recordId: $versionId,
 			error: $error,
-			commit: function ($migration, $userId) use ($versionId, $key, $login, $additionalFields) {
+			commit: function ($migration, $userId) use ($versionId, $key, $login, $additionalFields, $totp, $passkeys) {
 				if ($key === null) {
 					throw new ForbiddenException(message: 'A re-encrypted key ciphertext is required');
 				}
@@ -431,7 +442,9 @@ class MigrationController extends OCSController {
 					versionId: $versionId,
 					key: $key,
 					login: $login,
-					additionalFields: $additionalFields
+					additionalFields: $additionalFields,
+					totp: $totp,
+					passkeys: $passkeys
 				);
 
 				return [
@@ -668,6 +681,16 @@ class MigrationController extends OCSController {
 			}
 
 			return new JSONResponse(data: $commit($migration, $userId));
+		} catch (FieldsNotReencryptedException $e) {
+			// Nothing was written; the client resends the record with every listed field re-encrypted.
+			return new JSONResponse(
+				data: [
+					'error' => 'fields_not_reencrypted',
+					'message' => $e->getMessage(),
+					'fields' => $e->getFields(),
+				],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {

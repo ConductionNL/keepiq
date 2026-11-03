@@ -42,9 +42,9 @@ warning is not decoration: it is the actual remediation list.
    it byte-for-byte** with the original. Only a record that survives that
    comparison is written. No original ciphertext is ever discarded on the
    strength of a successful encrypt alone.
-6. When nothing is left under the old key, the old suite is locked, outstanding
-   link shares are revoked, passkey unlock envelopes are invalidated, and the
-   write lock is released.
+6. When nothing is left under the old key, the old suite is locked,
+   the link shares you made are revoked, passkey unlock envelopes are invalidated,
+   and the write lock is released.
 
 Progress is shown inside the recovery dialog as `n of m` across every store.
 
@@ -57,7 +57,7 @@ Progress is shown inside the recovery dialog as `n of m` across every store.
 | Attachments | The file key is re-wrapped; the encrypted file itself is not re-uploaded |
 | Your attachment access | Re-wrapped. Other recipients' access is untouched |
 | Pending fill-in requests | Locked during the migration, then re-pointed to the new key |
-| Link shares | **Revoked.** Their snapshots were sealed to the leaked key; re-share afterwards |
+| Link shares | **The links you made are revoked**, also the ones handed to a successor when you left a team. Their snapshots were sealed to the leaked key; re-share afterwards. A link someone else made that was handed to you stays |
 | Emergency access | **Carried only for the contacts you tick.** Before the rotation starts you choose which contacts get your new key, and none is ticked by default. A contact that is unticked, unreachable, or has an emergency-access request pending or approved is removed. The completion screen and the Emergency Access page tell you which ones. Add a contact again only if you're sure you added it yourself |
 
 ## If it is interrupted

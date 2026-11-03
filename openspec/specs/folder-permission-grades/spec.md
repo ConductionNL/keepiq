@@ -39,7 +39,7 @@ The system MUST record a `read` (default), `write` or `manage` grade on every te
 - **THEN** Bob's grade MUST become `write`
 
 ### Requirement: A write-grade member may update a folder secret for all recipients
-The system MUST allow a `write`-grade member to update a folder secret such that the change propagates to every recipient. The value MUST be re-encrypted under each recipient's public certificate by the writer's client; the server MUST NOT decrypt, re-encrypt, or hold plaintext.
+The system MUST allow a `write`-grade member to update a folder secret such that the change propagates to every recipient. The value MUST be re-encrypted under each recipient's public certificate by the writer's client; the server MUST NOT decrypt, re-encrypt, or hold plaintext. A member whose effective grade is `read` holds a view-only copy (user-sharing, "View-Only Copies"): they MUST NOT change its value, neither for every holder nor for their own copy alone.
 
 #### Scenario: Write-grade member rotates a shared credential
 - GIVEN user W holds a `write` grade on a folder containing secret S shared to recipients R
@@ -47,9 +47,15 @@ The system MUST allow a `write`-grade member to update a folder secret such that
 - THEN the system MUST accept the fan-out and update every recipient's copy without decrypting any blob
 
 #### Scenario: Read-grade member cannot write
-- GIVEN user V holds a `read` grade on a folder containing secret S
+@e2e tests/e2e/workflows/share-save.spec.ts
+- GIVEN user V holds a `read` grade on a folder containing secret S, and is in no group S is shared with (a use-only group share does not count)
 - WHEN V attempts a value update that would propagate to recipients
 - THEN the system MUST reject the request and change no recipient's copy
+
+#### Scenario: Read-grade member cannot change their own copy
+- GIVEN user V holds a `read` grade on a folder containing secret S
+- WHEN V sends `PUT /api/v1/secrets/{id}` for their copy of S with a new value
+- THEN the system MUST answer 428 with `error` `view_only` and leave V's copy unchanged
 
 ### Requirement: Effective grade is the highest grade along the ancestor folder chain
 

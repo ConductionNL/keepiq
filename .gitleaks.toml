@@ -3,11 +3,12 @@
 # sdk/testdata/ holds a throwaway RSA key and values encrypted to it. They are
 # conformance vectors that every client library and the server decrypt in
 # tests; the key protects nothing and is labelled TEST ONLY in each file.
+# The browser extension's CA-constraints fixture holds throwaway keys of the same kind.
 title = "keepiq"
 
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Test-only conformance vectors for the client libraries"
-paths = ['''^sdk/testdata/''']
+description = "Test-only conformance vectors and certificate fixtures"
+paths = ['''^sdk/testdata/''', '''^browser-extension/src/testing/ca-constraints-chain\.json$''']

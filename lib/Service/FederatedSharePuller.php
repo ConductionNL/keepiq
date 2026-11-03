@@ -64,7 +64,7 @@ class FederatedSharePuller {
 	 *
 	 * @param FederatedInbound $row The inbound share
 	 *
-	 * @return array{name:string,url:?string,typeId:?string,key:string,login:?string,additionalFields:?string}
+	 * @return array{name:string,url:?string,typeId:?string,key:string,login:?string,additionalFields:?string,totp:?string,passkeys:?string}
 	 *
 	 * @throws RuntimeException `pull_failed` for every failure
 	 *
@@ -80,7 +80,12 @@ class FederatedSharePuller {
 				FederatedCertificateService::OCM_CAPABILITY . '/shares/' . rawurlencode($row->getRemoteShareId()),
 				// `sender` names the recipient, so the sender's Nextcloud can take
 				// the signer's origin from it to verify an RFC 9421 signature.
-				['sharedSecret' => $this->crypto->decrypt($row->getSharedSecretEnc()), 'sender' => $recipient],
+				// `valueFields` tells the sender this copy can hold them.
+				[
+					'sharedSecret' => $this->crypto->decrypt($row->getSharedSecretEnc()),
+					'sender' => $recipient,
+					'valueFields' => FederatedValueFields::VALUE_FIELDS,
+				],
 				'post',
 			);
 			$status = $response->getStatusCode();
@@ -103,6 +108,8 @@ class FederatedSharePuller {
 			'key' => $body['key'],
 			'login' => $this->optional(value: $body['login'] ?? null),
 			'additionalFields' => $this->optional(value: $body['additionalFields'] ?? null),
+			'totp' => $this->optional(value: $body['totp'] ?? null),
+			'passkeys' => $this->optional(value: $body['passkeys'] ?? null),
 		];
 	}//end pull()
 

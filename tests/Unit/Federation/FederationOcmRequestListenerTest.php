@@ -45,6 +45,7 @@ use OCP\IUserManager;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
 use OCP\OCM\IOCMDiscoveryService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 require_once __DIR__ . '/FederationFixtures.php';
 
@@ -89,14 +90,17 @@ class FederationOcmRequestListenerTest extends TestCase {
 			fn (array $ids): array => array_intersect_key($this->suites, array_flip($ids))
 		);
 
+		$partnerMapper = $this->partnerMapper($partners);
 		$service = new FederatedCertificateService(
-			new FederationPartnerService($this->partnerMapper($partners), $this->createMock(IClientService::class), $config),
+			new FederationPartnerService($partnerMapper, $this->createMock(IClientService::class), $config),
 			new FederationRootService($this->caMapper($caPresent)),
 			$shares,
 			$this->cloudIdManager(),
 			$users,
 			$config,
 			$this->createMock(IOCMDiscoveryService::class),
+			$this->createMock(LoggerInterface::class),
+			$partnerMapper,
 		);
 
 		return new FederationOcmRequestListener($service, $this->createMock(FederatedShareService::class));
@@ -151,6 +155,8 @@ class FederationOcmRequestListenerTest extends TestCase {
 				'cloudId' => 'bob@cloud.here.example',
 				'certificate' => 'BOB-CERT',
 				'chain' => [self::INTERMEDIATE_PEM, self::ROOT_PEM],
+				// The owner's server learns from this that bob's copy can hold them.
+				'valueFields' => ['totp', 'passkeys'],
 			],
 			$data
 		);

@@ -112,32 +112,12 @@
 					data-testid="cxp-master-password" />
 				<!-- Secrets that could not be decrypted are not in the transfer:
 				     say how many before anything is sent (keepiq#794). -->
-				<div
+				<SkippedSecretsNotice
 					v-if="skipped > 0"
+					v-model:acknowledged="skippedAcknowledged"
 					class="cxp-dialog__skipped"
-					data-testid="cxp-skipped-warning">
-					<NcNoteCard type="warning">
-						{{
-							n(
-								'keepiq',
-								'%n secret could not be decrypted and is not in this export.',
-								'%n secrets could not be decrypted and are not in this export.',
-								skipped,
-							)
-						}}
-					</NcNoteCard>
-					<NcCheckboxRadioSwitch
-						:modelValue="skippedAcknowledged"
-						data-testid="cxp-skipped-ack"
-						@update:modelValue="skippedAcknowledged = $event">
-						{{
-							t(
-								'keepiq',
-								'Continue without the secrets that could not be decrypted',
-							)
-						}}
-					</NcCheckboxRadioSwitch>
-				</div>
+					name="cxp"
+					:skipped="skipped" />
 				<NcNoteCard
 					v-if="cxpReport && cxpReport.unmapped.length > 0"
 					type="warning"
@@ -197,6 +177,7 @@ import {
 	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
+import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
 import { createImportRequest, openEnvelope } from '../crypto/cxp.js'
 import { verifyMasterPassword } from '../crypto/reauth.js'
 import { useExportStore } from '../store/modules/export.js'
@@ -212,6 +193,7 @@ const POLL_MAX = 60
 export default {
 	name: 'CxpTransferDialog',
 	components: {
+		SkippedSecretsNotice,
 		NcDialog,
 		NcButton,
 		NcNoteCard,

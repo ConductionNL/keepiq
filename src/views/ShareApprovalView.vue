@@ -187,6 +187,14 @@ export default {
 							'The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.',
 						),
 					}
+				} else if (status === 'copy_fields_mismatch') {
+					this.outcome = {
+						type: 'warning',
+						text: this.t(
+							'keepiq',
+							'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+						),
+					}
 				} else {
 					this.outcome = {
 						type: 'error',

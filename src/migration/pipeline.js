@@ -172,40 +172,35 @@ export async function verifiedReEncrypt(ciphertext, keys, field = 'value') {
 /**
  * Re-encrypt a secret or a secret version.
  *
- * `key` is required; `login` and `additionalFields` are nullable and are left
- * null rather than being encrypted as empty strings — an absent field must
- * stay absent, not become a decryptable empty value.
+ * `key` is required; `login`, `additionalFields`, `totp` and `passkeys` are
+ * nullable and are left null rather than being encrypted as empty strings — an
+ * absent field must stay absent, not become a decryptable empty value. The
+ * server refuses a commit that leaves out a `totp` or `passkeys` the record
+ * holds, so both are re-encrypted whenever they are held.
  *
  * @param {object} record The record's current ciphertext.
  * @param {string} record.key The key blob.
  * @param {string|null} [record.login] The login blob.
  * @param {string|null} [record.additionalFields] The additional-fields blob.
+ * @param {string|null} [record.totp] The one-time code blob.
+ * @param {string|null} [record.passkeys] The passkeys blob.
  * @param {object} keys The migration keys (see verifiedReEncrypt).
- * @return {Promise<{key: string, login: string|null, additionalFields: string|null}>}
+ * @return {Promise<{key: string, login: string|null, additionalFields: string|null, totp: string|null, passkeys: string|null}>}
  *   The verified replacement ciphertext.
  */
 export async function reEncryptSecretFields(record, keys) {
 	const key = await verifiedReEncrypt(record.key, keys, 'key')
 
-	let login = null
-	if (record.login !== null && record.login !== undefined && record.login !== '') {
-		login = await verifiedReEncrypt(record.login, keys, 'login')
+	const optional = {}
+	for (const field of ['login', 'additionalFields', 'totp', 'passkeys']) {
+		const blob = record[field]
+		optional[field] =
+			blob !== null && blob !== undefined && blob !== ''
+				? await verifiedReEncrypt(blob, keys, field)
+				: null
 	}
 
-	let additionalFields = null
-	if (
-		record.additionalFields !== null
-		&& record.additionalFields !== undefined
-		&& record.additionalFields !== ''
-	) {
-		additionalFields = await verifiedReEncrypt(
-			record.additionalFields,
-			keys,
-			'additionalFields',
-		)
-	}
-
-	return { key, login, additionalFields }
+	return { key, ...optional }
 }
 
 /**

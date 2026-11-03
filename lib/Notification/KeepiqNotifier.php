@@ -108,6 +108,7 @@ class KeepiqNotifier implements INotifier {
 		// recognised this one. The first renderer that claims the subject wins.
 		$renderers = [
 			fn (): bool => $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderGroupMemberSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l),
@@ -183,6 +184,26 @@ class KeepiqNotifier implements INotifier {
 				$notification->setParsedMessage($resultMessage);
 				$this->withSecretLink(notification: $notification, params: $params);
 				return true;
+		}//end switch
+
+		return false;
+	}//end renderSharingSubject()
+
+	/**
+	 * Render the subjects sent to the owner when someone joins a group their
+	 * secret is shared with. Both deep-link to the owner's secret.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-new-group-member-owner-notification
+	 */
+	private function renderGroupMemberSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		switch ($subject) {
 			case 'group_member_added':
 				// Sent to the owner, so secretId is the owner's own secret.
 				$params = self::normaliseParams(params: $params, aliases: []);
@@ -195,10 +216,25 @@ class KeepiqNotifier implements INotifier {
 				$this->withSecretLink(notification: $notification, params: $params);
 				$this->withGroupMemberActions(notification: $notification, params: $params, l: $l);
 				return true;
+			case 'group_member_gained_write':
+				// The member's copy already saves for everyone, so there is nothing to approve.
+				$params = self::normaliseParams(params: $params, aliases: []);
+				$newMemberId = (string)($params['new_member_id'] ?? $l->t('a user'));
+				$groupId = (string)($params['group_id'] ?? '');
+				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$notification->setParsedSubject((string)$l->t('A group member can now change your secret'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'%1$s joined the group "%2$s" and can now change "%3$s" for everyone it is shared with. Revoke their share to stop this.',
+						[$newMemberId, $groupId, $secretName]
+					)
+				);
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
 		}//end switch
 
 		return false;
-	}//end renderSharingSubject()
+	}//end renderGroupMemberSubject()
 
 	/**
 	 * Render the organisation account recovery subjects

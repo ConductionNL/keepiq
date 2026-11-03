@@ -1,0 +1,897 @@
+{
+	"folder create, vault level cancel": {
+		"idle": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create vault",
+				"variant": "primary",
+				"disabled": false,
+				"icon": "Safe",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, vault level confirm": {
+		"before": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"saved": [
+					[
+						{
+							"id": "new",
+							"name": "Work"
+						}
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [
+				[
+					"Work",
+					null,
+					{
+						"customIcon": null,
+						"customColor": null
+					}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, vault level busy": {
+		"busy": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": true,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create vault",
+				"variant": "primary",
+				"disabled": true,
+				"icon": "loading",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"during": {
+			"emitted": {},
+			"createFolder": [
+				[
+					"Work",
+					null,
+					{
+						"customIcon": null,
+						"customColor": null
+					}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"saved": [
+					[
+						{
+							"id": "done"
+						}
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [
+				[
+					"Work",
+					null,
+					{
+						"customIcon": null,
+						"customColor": null
+					}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, vault level failure": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create vault",
+				"variant": "primary",
+				"disabled": false,
+				"icon": "Safe",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"note": "Refused",
+		"effects": {
+			"emitted": {},
+			"createFolder": [
+				[
+					"Work",
+					null,
+					{
+						"customIcon": null,
+						"customColor": null
+					}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, nested cancel": {
+		"idle": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create folder",
+				"variant": "primary",
+				"disabled": false,
+				"icon": "FolderPlus",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, nested confirm": {
+		"before": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"saved": [
+					[
+						{
+							"id": "new",
+							"name": "Sub"
+						}
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [
+				[
+					"Sub",
+					"v1",
+					{}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, nested busy": {
+		"busy": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": true,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create folder",
+				"variant": "primary",
+				"disabled": true,
+				"icon": "loading",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"during": {
+			"emitted": {},
+			"createFolder": [
+				[
+					"Sub",
+					"v1",
+					{}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"saved": [
+					[
+						{
+							"id": "done"
+						}
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [
+				[
+					"Sub",
+					"v1",
+					{}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder create, nested failure": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create folder",
+				"variant": "primary",
+				"disabled": false,
+				"icon": "FolderPlus",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"note": "Refused",
+		"effects": {
+			"emitted": {},
+			"createFolder": [
+				[
+					"Sub",
+					"v1",
+					{}
+				]
+			],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder edit cancel": {
+		"idle": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Save",
+				"variant": "primary",
+				"disabled": false,
+				"icon": "ContentSaveOutline",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder edit confirm": {
+		"before": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"saved": [
+					[
+						{
+							"id": "f1",
+							"name": "New"
+						}
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [
+				[
+					"f1",
+					{
+						"name": "New"
+					}
+				]
+			],
+			"deleteFolder": []
+		}
+	},
+	"folder edit busy": {
+		"busy": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": true,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Save",
+				"variant": "primary",
+				"disabled": true,
+				"icon": "loading",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"during": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [
+				[
+					"f1",
+					{
+						"name": "New"
+					}
+				]
+			],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"saved": [
+					[
+						{
+							"id": "done"
+						}
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [
+				[
+					"f1",
+					{
+						"name": "New"
+					}
+				]
+			],
+			"deleteFolder": []
+		}
+	},
+	"folder edit failure": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Save",
+				"variant": "primary",
+				"disabled": false,
+				"icon": "ContentSaveOutline",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"note": "Refused",
+		"effects": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [
+				[
+					"f1",
+					{
+						"name": "New"
+					}
+				]
+			],
+			"deleteFolder": []
+		}
+	},
+	"folder delete cancel": {
+		"idle": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete folder",
+				"variant": "error",
+				"disabled": false,
+				"icon": "TrashCanOutline",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"folder delete confirm": {
+		"before": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"deleted": [
+					[
+						"f1"
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1"
+				]
+			]
+		}
+	},
+	"folder delete busy": {
+		"busy": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": true,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete folder",
+				"variant": "error",
+				"disabled": true,
+				"icon": "loading",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"during": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1"
+				]
+			]
+		},
+		"after": {
+			"emitted": {
+				"deleted": [
+					[
+						"f1"
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1"
+				]
+			]
+		}
+	},
+	"folder delete failure": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete folder",
+				"variant": "error",
+				"disabled": false,
+				"icon": "TrashCanOutline",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"note": "Refused",
+		"effects": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1"
+				]
+			]
+		}
+	},
+	"vault delete cancel": {
+		"idle": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete vault",
+				"variant": "error",
+				"disabled": false,
+				"icon": "TrashCanOutline",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"vault delete confirm": {
+		"before": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"deleted": [
+					[
+						"v1"
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"v1"
+				]
+			]
+		}
+	},
+	"vault delete busy": {
+		"busy": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": true,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete vault",
+				"variant": "error",
+				"disabled": true,
+				"icon": "loading",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"during": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"v1"
+				]
+			]
+		},
+		"after": {
+			"emitted": {
+				"deleted": [
+					[
+						"v1"
+					]
+				],
+				"close": [
+					[]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"v1"
+				]
+			]
+		}
+	},
+	"vault delete failure": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete vault",
+				"variant": "error",
+				"disabled": false,
+				"icon": "TrashCanOutline",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"note": "Refused",
+		"effects": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"v1"
+				]
+			]
+		}
+	},
+	"subfolder delete cancel": {
+		"idle": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete folder",
+				"variant": "error",
+				"disabled": false,
+				"icon": "Delete",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {
+				"update:open": [
+					[
+						false
+					]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	},
+	"subfolder delete confirm": {
+		"before": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		},
+		"after": {
+			"emitted": {
+				"deleted": [
+					[
+						"f1"
+					]
+				],
+				"update:open": [
+					[
+						false
+					]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1",
+					{
+						"directSecrets": "move",
+						"subfolders": {
+							"f2": "keep"
+						}
+					}
+				]
+			]
+		}
+	},
+	"subfolder delete busy": {
+		"busy": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": true,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete folder",
+				"variant": "error",
+				"disabled": true,
+				"icon": "loading",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"during": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1",
+					{
+						"directSecrets": "move",
+						"subfolders": {
+							"f2": "keep"
+						}
+					}
+				]
+			]
+		},
+		"after": {
+			"emitted": {
+				"deleted": [
+					[
+						"f1"
+					]
+				],
+				"update:open": [
+					[
+						false
+					]
+				]
+			},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1",
+					{
+						"directSecrets": "move",
+						"subfolders": {
+							"f2": "keep"
+						}
+					}
+				]
+			]
+		}
+	},
+	"subfolder delete failure": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Delete folder",
+				"variant": "error",
+				"disabled": false,
+				"icon": "Delete",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"note": "Refused",
+		"effects": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": [
+				[
+					"f1",
+					{
+						"directSecrets": "move",
+						"subfolders": {
+							"f2": "keep"
+						}
+					}
+				]
+			]
+		}
+	},
+	"folder create empty": {
+		"footer": [
+			{
+				"text": "Cancel",
+				"variant": "default",
+				"disabled": false,
+				"icon": null,
+				"testid": "cn-dialog-actions-cancel"
+			},
+			{
+				"text": "Create vault",
+				"variant": "primary",
+				"disabled": true,
+				"icon": "Safe",
+				"testid": "cn-dialog-actions-submit"
+			}
+		],
+		"effects": {
+			"emitted": {},
+			"createFolder": [],
+			"updateFolder": [],
+			"deleteFolder": []
+		}
+	}
+}

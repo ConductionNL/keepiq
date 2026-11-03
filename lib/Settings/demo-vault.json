@@ -1,0 +1,89 @@
+{
+	"$comment": "The folders and secrets of a Keepiq demo vault (SeedDemoVaults). Every value is made up and says so: a demo vault opens with a public password.",
+	"folders": [
+		"Gemeentebreed",
+		"Koppelingen",
+		"Webbeheer"
+	],
+	"secrets": [
+		{
+			"name": "Koppeling BRP-bevraging",
+			"url": "https://brp.zuiddrecht.example/haal-centraal",
+			"type": "api_key",
+			"key": "demo-brp-api-key-0001",
+			"login": "zuiddrecht-brp-client",
+			"folder": "Koppelingen",
+			"favourite": true,
+			"tags": [
+				"koppeling"
+			],
+			"usedDaysAgo": 0
+		},
+		{
+			"name": "Monitoring Belastingen",
+			"url": "https://monitoring.zuiddrecht.example",
+			"type": "api_key",
+			"key": "demo-monitoring-key-0002",
+			"login": "monitoring",
+			"folder": "Koppelingen",
+			"usedDaysAgo": 0
+		},
+		{
+			"name": "mijn.zuiddrecht.nl",
+			"url": "https://mijn.zuiddrecht.example",
+			"type": "certificate",
+			"key": "-----BEGIN CERTIFICATE-----\ndemo-only-certificate\n-----END CERTIFICATE-----",
+			"login": "PKIoverheid servercertificaat",
+			"folder": "Webbeheer",
+			"usedDaysAgo": 1
+		},
+		{
+			"name": "Beheeraccount zaaksysteem",
+			"url": "https://zaken.zuiddrecht.example",
+			"type": "login",
+			"key": "Demo-Zaaksysteem-2026!",
+			"login": "beheer.zaaksysteem",
+			"folder": "Gemeentebreed",
+			"favourite": true,
+			"tags": [
+				"beheer"
+			],
+			"usedDaysAgo": 1
+		},
+		{
+			"name": "Wifi raadzaal",
+			"url": null,
+			"type": "login",
+			"key": "demo-wifi-raadhuis",
+			"login": "Netwerk Raadhuis-Gast",
+			"folder": "Gemeentebreed",
+			"usedDaysAgo": 21
+		},
+		{
+			"name": "Stuf-koppeling belastingen",
+			"url": "https://stuf.zuiddrecht.example",
+			"type": "certificate",
+			"key": "-----BEGIN CERTIFICATE-----\ndemo-only-stuf-certificate\n-----END CERTIFICATE-----",
+			"login": "stuf-belastingen",
+			"folder": "Koppelingen",
+			"usedDaysAgo": 25
+		},
+		{
+			"name": "Herstelcodes beheerdersaccount",
+			"url": null,
+			"type": "note",
+			"key": "Demo herstelcodes: 1111-2222, 3333-4444",
+			"login": null,
+			"folder": "Gemeentebreed",
+			"usedDaysAgo": 26
+		},
+		{
+			"name": "Database Woo-leeskamer",
+			"url": "postgresql://woo-leeskamer.zuiddrecht.example:5432/woo",
+			"type": "database",
+			"key": "demo-woo-database",
+			"login": "woo_leeskamer",
+			"folder": "Webbeheer"
+		}
+	]
+}

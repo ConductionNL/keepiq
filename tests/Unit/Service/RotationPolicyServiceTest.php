@@ -250,6 +250,88 @@ class RotationPolicyServiceTest extends TestCase {
 	}//end testMarkRotatedClosesOnKeyAdvance()
 
 	/**
+	 * A compromise exposed the password, the TOTP seed and the passkeys together:
+	 * the flag resolves only once every credential the secret holds changed after
+	 * it was raised. A password-only, a TOTP-only or a restored credential, and a
+	 * TOTP or passkeys value with no change time, leave it open.
+	 *
+	 * @return void
+	 */
+	public function testACompromiseFlagResolvesOnlyOnceEveryHeldCredentialChanged(): void {
+		$frozen = new DateTime('2026-06-01T00:00:00Z');
+		$before = new DateTime('2026-05-01T00:00:00Z');
+		$after = new DateTime('2026-06-02T00:00:00Z');
+		// [key age, totp, totp age, passkeys, passkeys age, resolves]
+		$cases = [
+			'every credential changed' => [$after, 'TOTP', $after, 'PASSKEYS', $after, true],
+			'password only' => [$after, 'TOTP', $before, 'PASSKEYS', $before, false],
+			'totp only' => [$before, 'TOTP', $after, null, null, false],
+			'password and totp, no passkeys held' => [$after, 'TOTP', $after, null, null, true],
+			'a held value with no change time' => [$after, 'TOTP', null, null, null, false],
+			'only the password is held' => [$after, null, null, null, null, true],
+		];
+
+		foreach ($cases as $label => [$keyAge, $totp, $totpAge, $passkeys, $passkeysAge, $resolves]) {
+			$flagRow = new RotationFlag();
+			$flagRow->setId('flag-1');
+			$flagRow->setSecretId('sec-1');
+			$flagRow->setStatus('open');
+			$flagRow->setReason('suite_compromise');
+			$flagRow->setKeyUpdatedAtAtFlag(clone $frozen);
+
+			$secret = $this->ownedSecret();
+			$secret->setKey('KEY');
+			$secret->setKeyUpdatedAt(clone $keyAge);
+			$secret->setTotp($totp);
+			$secret->setTotpUpdatedAt($totpAge);
+			$secret->setPasskeys($passkeys);
+			$secret->setPasskeysUpdatedAt($passkeysAge);
+
+			$flagMapper = $this->createMock(RotationFlagMapper::class);
+			$flagMapper->method('findById')->willReturn($flagRow);
+			$flagMapper->expects($resolves === true ? $this->once() : $this->never())->method('update')->willReturnArgument(0);
+			$secretMapper = $this->createMock(SecretMapper::class);
+			$secretMapper->method('findById')->willReturn($secret);
+
+			$service = new RotationFlagService(flagMapper: $flagMapper, secretMapper: $secretMapper);
+			$this->assertSame($resolves, $service->markRotated(flagId: 'flag-1', userId: 'alice')['resolved'], $label);
+			$this->assertSame($resolves === true ? 'rotated' : 'open', $flagRow->getStatus(), $label);
+		}
+	}//end testACompromiseFlagResolvesOnlyOnceEveryHeldCredentialChanged()
+
+	/**
+	 * Every reason but a compromise asks for a new password: a TOTP-only or
+	 * passkeys-only change leaves those flags open, and raising one freezes
+	 * the password's age, not a later TOTP change.
+	 *
+	 * @return void
+	 */
+	public function testATotpOnlyAdvanceDoesNotCloseAPasswordFlag(): void {
+		$keyAge = new DateTime('2026-06-01T00:00:00Z');
+		$secret = $this->ownedSecret();
+		$secret->setKeyUpdatedAt(clone $keyAge);
+		$secret->setTotpUpdatedAt(new DateTime('2026-06-05T00:00:00Z'));
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findById')->willReturn($secret);
+
+		foreach (['policy_expiry', 'user_flagged', 'lease_revoked', 'lease_expired'] as $reason) {
+			$flagMapper = $this->createMock(RotationFlagMapper::class);
+			$flagMapper->method('findBySecret')->willThrowException(new DoesNotExistException('none'));
+			$flagMapper->method('insert')->willReturnArgument(0);
+			$service = new RotationFlagService(flagMapper: $flagMapper, secretMapper: $secretMapper);
+
+			$flagRow = $service->flag(secretId: 'sec-1', reason: $reason);
+			$this->assertSame($keyAge->getTimestamp(), $flagRow->getKeyUpdatedAtAtFlag()?->getTimestamp(), $reason);
+
+			$flagMapper->method('findById')->willReturn($flagRow);
+			$flagMapper->expects($this->never())->method('update');
+			$secret->setPasskeysUpdatedAt(new DateTime('2026-06-10T00:00:00Z'));
+			$this->assertFalse($service->markRotated(flagId: (string)$flagRow->getId(), userId: 'alice')['resolved'], $reason);
+			$secret->setPasskeysUpdatedAt(null);
+		}
+	}//end testATotpOnlyAdvanceDoesNotCloseAPasswordFlag()
+
+	/**
 	 * 8.2: batch-flag persists IDs only with reason user_flagged and
 	 * skips secrets the caller does not own.
 	 *

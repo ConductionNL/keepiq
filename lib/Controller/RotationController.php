@@ -31,6 +31,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Http;
@@ -42,6 +43,10 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for rotation & expiry.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 13 against a threshold of 13:
+ * each outcome of setting an expiry (absent, refused, moved meanwhile) maps
+ * its own exception to its own status.
  */
 class RotationController extends OCSController {
 	/**
@@ -108,6 +113,8 @@ class RotationController extends OCSController {
 			$secret = $this->secretService->setExpiry(id: $id, expiresAt: $when, userId: $userId);
 		} catch (NotFoundException|ForbiddenException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (StaleWriteException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		}
 
 		return new JSONResponse(

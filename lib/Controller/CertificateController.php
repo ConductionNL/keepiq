@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\CertificateLifecycleService;
 use OCA\Keepiq\Settings\AdminSettings;
@@ -152,6 +153,9 @@ class CertificateController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (StaleWriteException $exception) {
+			// The secret moved twice while its expiry was set from notAfter.
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		}
 
 		return new JSONResponse(data: $row->jsonSerialize());

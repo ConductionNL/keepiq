@@ -419,7 +419,7 @@ class RotationPolicyService {
 	}//end openFlags()
 
 	/**
-	 * Mark a flag rotated — ONLY when the head's `key_updated_at` has
+	 * Mark a flag rotated — ONLY when the head's credential change time has
 	 * advanced past the value frozen at flag time (a proven rotation).
 	 * Otherwise the caller is told to rotate first (re-request path).
 	 *

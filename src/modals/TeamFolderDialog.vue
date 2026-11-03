@@ -212,6 +212,18 @@
 						)
 					}}
 				</NcNoteCard>
+				<NcNoteCard
+					v-if="refusedSecrets.length > 0"
+					type="warning"
+					data-testid="team-folder-refused">
+					{{
+						t(
+							'keepiq',
+							'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+							{ names: refusedSecrets.join(', ') },
+						)
+					}}
+				</NcNoteCard>
 
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
 				<div
@@ -322,6 +334,10 @@ import { useGroupStore } from '../store/modules/group.js'
 import { useShareStore } from '../store/modules/share.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 import { restrictionPayload } from '../utils/shareRestriction.js'
+import {
+	isShareScanPending,
+	shareScanPendingText,
+} from '../utils/shareScanPending.js'
 
 /**
  * How long a candidate search waits after the last keystroke.
@@ -377,6 +393,8 @@ export default {
 			newRestriction: { useOnly: false, endDate: '' },
 			/** Folder secrets the last fan-out skipped: this user holds no copy. */
 			skippedSecrets: [],
+			/** Folder secrets the server would not copy: their one-time code or passkeys cannot be copied yet. */
+			refusedSecrets: [],
 			pendingCount: 0,
 			/** Members still waiting for their copies, one Approve button each (keepiq#747). */
 			pendingMembers: [],
@@ -789,7 +807,7 @@ export default {
 				await this.store.removeMember(this.teamFolder.id, member.id)
 				await this.refresh()
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error = this.failureText(e)
 			} finally {
 				this.busy = false
 			}
@@ -829,8 +847,13 @@ export default {
 		async onApproveMember(memberId) {
 			this.busy = true
 			this.error = null
+			this.refusedSecrets = []
 			try {
-				await this.store.approveMember(this.teamFolder.id, memberId)
+				const result = await this.store.approveMember(
+					this.teamFolder.id,
+					memberId,
+				)
+				this.refusedSecrets = result?.refused ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -849,13 +872,31 @@ export default {
 		async onRunFanOut() {
 			this.error = null
 			this.skippedSecrets = []
+			this.refusedSecrets = []
 			try {
 				const result = await this.store.runFanOut(this.teamFolder.id)
 				this.skippedSecrets = result?.skipped ?? []
+				this.refusedSecrets = result?.refused ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}
+		},
+
+		/**
+		 * The text for a failed removal or unshare: the translated
+		 * share-scan-pending text for a 409 that waits for the share
+		 * quarantine scan, else the server's message.
+		 *
+		 * @param {Error|object} e The thrown error.
+		 * @return {string|undefined}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+		 */
+		failureText(e) {
+			if (isShareScanPending(e)) {
+				return shareScanPendingText()
+			}
+			return e?.response?.data?.message || e?.message
 		},
 
 		/**
@@ -873,7 +914,7 @@ export default {
 				await this.store.unshareFolder(this.teamFolder.id)
 				this.$emit('update:open', false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error = this.failureText(e)
 			} finally {
 				this.busy = false
 			}

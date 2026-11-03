@@ -117,6 +117,13 @@ class DashboardController extends Controller {
 			data: $this->appManager->getAppVersion(Application::APP_ID),
 		);
 
+		// A login's `totp` and `passkeys` are stored by this server; the web app reads the release
+		// that first stored them from here, so it keeps no version number of its own (keepiq#1326).
+		$this->initialState->provideInitialState(
+			key: 'loginValueFields',
+			data: ['since' => Application::TOTP_PASSKEYS_FIELDS_SINCE],
+		);
+
 		$response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
 
 		// Link-share encryption derives its AES key client-side via the Argon2id

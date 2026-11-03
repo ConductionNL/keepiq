@@ -324,6 +324,78 @@ class CertificateAuthorityServiceTest extends TestCase {
 	}//end testBootstrapCreatesRootAndIntermediate()
 
 	/**
+	 * The root and the intermediate carry their CA constraints from Keepiq's
+	 * own openssl config, not from the host openssl.cnf: a partner verifying
+	 * the chain refuses an issuer without them, and the intermediate signs
+	 * no further CA.
+	 *
+	 * @return void
+	 */
+	public function testBootstrapGivesTheRootAndIntermediateTheirConstraints(): void {
+		$this->caCertMapper->method('findRoot')
+			->willThrowException(new DoesNotExistException('No root'));
+		$inserted = [];
+		$this->caCertMapper->method('insert')->willReturnCallback(
+			function (CACertificate $entity) use (&$inserted): CACertificate {
+				$inserted[$entity->getType()] = (string)$entity->getCertificate();
+				return $entity;
+			}
+		);
+
+		$this->service->bootstrap();
+
+		$root = openssl_x509_parse($inserted['root'])['extensions'];
+		$intermediate = openssl_x509_parse($inserted['intermediate'])['extensions'];
+		$this->assertSame(expected: 'CA:TRUE', actual: $root['basicConstraints'] ?? null);
+		$this->assertSame(expected: 'Certificate Sign, CRL Sign', actual: $root['keyUsage'] ?? null);
+		$this->assertSame(expected: $root['subjectKeyIdentifier'], actual: $root['authorityKeyIdentifier'] ?? null);
+		$this->assertSame(expected: 'CA:TRUE, pathlen:0', actual: $intermediate['basicConstraints'] ?? null);
+		$this->assertSame(expected: 'Certificate Sign, CRL Sign', actual: $intermediate['keyUsage'] ?? null);
+		$this->assertSame(expected: $root['subjectKeyIdentifier'], actual: $intermediate['authorityKeyIdentifier'] ?? null);
+		$this->assertSame(expected: 1, actual: openssl_x509_verify($inserted['intermediate'], $inserted['root']));
+	}//end testBootstrapGivesTheRootAndIntermediateTheirConstraints()
+
+	/**
+	 * A root without a key identifier, as a host without the v3_ca default
+	 * issued one, still gets a new intermediate: its authority key
+	 * identifier falls back to the root's name and serial.
+	 *
+	 * @return void
+	 */
+	public function testRecoversAnIntermediateUnderARootWithoutAKeyIdentifier(): void {
+		$rootKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		openssl_pkey_export($rootKey, $rootKeyPem);
+		$config = tempnam(sys_get_temp_dir(), 'keepiq-root');
+		file_put_contents($config, "[bare]\nbasicConstraints = critical,CA:true\n");
+		$rootCsr = openssl_csr_new(['commonName' => 'Root CA'], $rootKey);
+		$rootCert = openssl_csr_sign($rootCsr, null, $rootKey, 365, ['config' => $config, 'x509_extensions' => 'bare']);
+		unlink($config);
+		openssl_x509_export($rootCert, $rootCertPem);
+		$this->assertArrayNotHasKey('subjectKeyIdentifier', openssl_x509_parse($rootCertPem)['extensions']);
+
+		$root = new CACertificate();
+		$root->setCertificate($rootCertPem);
+		$root->setPrivateKey('enc:' . $rootKeyPem);
+		$this->caCertMapper->method('findRoot')->willReturn($root);
+		$this->caCertMapper->method('findActiveIntermediate')
+			->willThrowException(new DoesNotExistException('No intermediate'));
+		$inserted = null;
+		$this->caCertMapper->expects($this->once())->method('insert')->willReturnCallback(
+			function (CACertificate $entity) use (&$inserted): CACertificate {
+				$inserted = (string)$entity->getCertificate();
+				return $entity;
+			}
+		);
+
+		$this->service->bootstrap();
+
+		$extensions = openssl_x509_parse($inserted)['extensions'];
+		$this->assertSame(expected: 'CA:TRUE, pathlen:0', actual: $extensions['basicConstraints'] ?? null);
+		$this->assertStringContainsString('serial:', $extensions['authorityKeyIdentifier'] ?? '');
+		$this->assertSame(expected: 1, actual: openssl_x509_verify($inserted, $rootCertPem));
+	}//end testRecoversAnIntermediateUnderARootWithoutAKeyIdentifier()
+
+	/**
 	 * Test that retryBootstrap delegates to bootstrap.
 	 *
 	 * @return void

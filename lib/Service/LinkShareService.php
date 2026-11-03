@@ -113,7 +113,9 @@ class LinkShareService {
 	 *
 	 * @throws InvalidArgumentException When validation fails
 	 * @throws DoesNotExistException When the user may not re-share the secret
-	 * @throws RuntimeException A ForbiddenException when the secret is a read-only copy from another organisation
+	 * @throws RuntimeException A ForbiddenException when the secret is a read-only copy from another organisation,
+	 *                          or a ShareScanPendingException (409) when the share row naming the secret, or the
+	 *                          caller's copy of it, waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
@@ -365,7 +367,8 @@ class LinkShareService {
 	}//end deleteBySecretId()
 
 	/**
-	 * Cascade-delete all link shares for a user (called on compromise recovery).
+	 * Cascade-delete all link shares a user made (called on compromise
+	 * recovery), also the ones an ownership transfer handed to someone else.
 	 *
 	 * @param string $userId The Nextcloud user ID
 	 *
@@ -373,10 +376,10 @@ class LinkShareService {
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
-	public function deleteByUserId(string $userId): void {
-		$this->mapper->deleteByUserId($userId);
-		$this->logger->info("Keepiq: cascade-deleted link shares for user {$userId}");
-	}//end deleteByUserId()
+	public function deleteMadeBy(string $userId): void {
+		$this->mapper->deleteMadeBy($userId);
+		$this->logger->info("Keepiq: cascade-deleted link shares made by user {$userId}");
+	}//end deleteMadeBy()
 
 	/**
 	 * Generate a URL-safe access token with 128 bits of entropy.

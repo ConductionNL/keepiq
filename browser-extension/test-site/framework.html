@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Framework-controlled inputs</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Framework-controlled inputs</h1>
+		<p class="tests">Like React, this form only knows a value it heard through an <code>input</code> event. A fill that only sets <code>.value</code> shows up as empty below.</p>
+		<form id="form">
+			<label>Username <input id="username" type="text" autocomplete="username"></label>
+			<label>Password <input id="password" type="password" autocomplete="current-password"></label>
+			<button type="submit">Sign in</button>
+			<p id="status" class="status"></p>
+		</form>
+	</main>
+	<script>
+		const state = { username: '', password: '' }
+		const status = document.getElementById('status')
+		const render = () => {
+			status.textContent = `Form state: username ${state.username ? 'set' : 'empty'}, password ${state.password ? 'set' : 'empty'}`
+		}
+		for (const key of Object.keys(state)) {
+			document.getElementById(key).addEventListener('input', (event) => {
+				state[key] = event.target.value
+				render()
+			})
+		}
+		document.getElementById('form').addEventListener('submit', async (event) => {
+			event.preventDefault()
+			if (!state.username || !state.password) {
+				status.textContent = 'Refused: the form state is empty, so the fill did not dispatch input events.'
+				return
+			}
+			await fetch('/api/login', { method: 'POST', body: JSON.stringify(state) })
+			location.assign('/signed-in.html?from=/framework')
+		})
+		render()
+	</script>
+</body>
+</html>

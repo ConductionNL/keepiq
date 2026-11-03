@@ -43,6 +43,18 @@
 			     dialog, so an ungated panel showed the previous run's table on
 			     a fresh open. -->
 			<BulkRunPanel v-if="ran || bulk.progress.running" @retry="onRetry" />
+			<NcNoteCard
+				v-if="refused.length > 0"
+				type="warning"
+				data-testid="bulk-tf-refused">
+				{{
+					t(
+						'keepiq',
+						'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+						{ names: refused.join(', ') },
+					)
+				}}
+			</NcNoteCard>
 		</div>
 		<template #actions>
 			<NcButton
@@ -64,7 +76,7 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -76,6 +88,7 @@ export default {
 	components: {
 		NcButton,
 		NcDialog,
+		NcNoteCard,
 		NcSelect,
 		BulkRunPanel,
 	},
@@ -93,6 +106,8 @@ export default {
 			target: null,
 			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
 			ran: false,
+			/** Secrets the server would not copy to the members: a one-time code or passkeys it cannot copy yet. */
+			refused: [],
 		}
 	},
 
@@ -212,7 +227,8 @@ export default {
 				this.t('keepiq', 'Adding to team folder'),
 			)
 			try {
-				await this.teamFolderStore.runFanOut(this.target.id)
+				const result = await this.teamFolderStore.runFanOut(this.target.id)
+				this.refused = result?.refused ?? []
 			} catch {
 				// Fan-out errors surface via the team-folder store; the
 				// idempotent reconcile picks up missing pairs on retry.
@@ -233,7 +249,8 @@ export default {
 				this.t('keepiq', 'Retrying'),
 			)
 			try {
-				await this.teamFolderStore.runFanOut(this.target.id)
+				const result = await this.teamFolderStore.runFanOut(this.target.id)
+				this.refused = result?.refused ?? []
 			} catch {
 				// See onRun.
 			}

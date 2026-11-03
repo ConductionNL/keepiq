@@ -6,11 +6,10 @@
  *
  * Handles both Bitwarden export shapes:
  *  - JSON export: `{ folders: [{id,name}], items: [...] }`. Login items become
- *    rows (name, url, login, password); the TOTP seed (`login.totp`) is kept as
- *    an opaque additionalFields.totp so a future TOTP feature needs no re-import
- *    (design Open Question — decision: keep). Non-login item types (card,
- *    identity, secureNote) are rejected with a reason. Folder + collection names
- *    map onto the folder path.
+ *    rows (name, url, login, password); the TOTP seed (`login.totp`) and the
+ *    passkeys (`login.fido2Credentials[]`) go on the login's own `totp` and
+ *    `passkeys` fields (keepiq#1327). Secure notes are rejected with a reason.
+ *    Folder + collection names map onto the folder path.
  *  - CSV export: delegates to the generic CSV parser with Bitwarden's fixed
  *    header layout, so the round-trip CSV engine is reused (no second parser).
  *
@@ -18,7 +17,13 @@
  */
 
 import { serializeCard, serializeIdentity } from '../../cardIdentity/cardIdentity.js'
-import { serializePasskey } from '../../passkey/passkey.js'
+import { buildPasskeyCredential } from '../../passkey/passkey.js'
+import {
+	attachPasskeys,
+	attachTotp,
+	keepAsAdditionalField,
+	SECOND_PASSKEY_REASON,
+} from '../loginValueFields.js'
 import { joinFolderPath, makeRow, rejectRow, validateRow } from '../model.js'
 import { parseCsvImport } from './csv.js'
 
@@ -29,7 +34,7 @@ const BITWARDEN_CSV_MAPPING = [
 	{ column: 'login_username', target: 'login' },
 	{ column: 'login_password', target: 'password' },
 	{ column: 'notes', target: 'notes' },
-	{ column: 'login_totp', target: 'additional:totp' },
+	{ column: 'login_totp', target: 'totp' },
 	{ column: 'folder', target: 'folder' },
 	{ column: 'type', target: 'type' },
 ]
@@ -67,9 +72,6 @@ function buildAdditional(item) {
 	if (item.notes) {
 		additional.notes = item.notes
 	}
-	if (item.login && item.login.totp) {
-		additional.totp = item.login.totp
-	}
 	if (Array.isArray(item.fields)) {
 		for (const field of item.fields) {
 			if (field && field.name != null && field.value != null) {
@@ -86,97 +88,176 @@ function buildAdditional(item) {
  * @param {object|string} input The export object or its JSON text.
  * @return {Array<object>} Normalized rows (login items) + rejected rows
  *   (non-login item types).
+ * @throws {Error} When the input is not an unencrypted Bitwarden JSON export.
  */
 export function parseBitwardenJson(input) {
 	const data = typeof input === 'string' ? JSON.parse(input) : input
+	// Encrypted exports (account-restricted or password-protected) hold
+	// cipher strings in place of names and values.
+	if (data && data.encrypted) {
+		throw new Error(
+			'Encrypted Bitwarden exports cannot be imported. Export the vault again as unencrypted JSON and import that file.',
+		)
+	}
 	if (!data || !Array.isArray(data.items)) {
 		throw new Error('Not a Bitwarden JSON export (missing items array)')
 	}
 
-	const folderNames = new Map()
-	for (const folder of data.folders || []) {
-		if (folder && folder.id != null) {
-			folderNames.set(folder.id, folder.name ?? '')
-		}
+	const ctx = {
+		folderNames: namesById(data.folders),
+		collectionNames: namesById(data.collections),
+		// Rejected passkey rows are numbered after the last item.
+		state: { nextSourceRow: data.items.length },
 	}
-	const collectionNames = new Map()
-	for (const collection of data.collections || []) {
-		if (collection && collection.id != null) {
-			collectionNames.set(collection.id, collection.name ?? '')
-		}
-	}
-
 	const rows = []
-	let nextSourceRow = data.items.length
 	for (const [index, item] of data.items.entries()) {
-		const sourceRow = index + 1
-		// Bitwarden item types: 1=login, 2=secureNote, 3=card, 4=identity.
-		// Card + identity route into their composite payload types with
-		// the JSON in `password` — encrypted in the browser at commit,
-		// exactly like passkeys (card-identity-items §5.1).
-		if (item.type === 3) {
-			rows.push(buildCardRow(item, sourceRow))
-			continue
-		}
-		if (item.type === 4) {
-			rows.push(buildIdentityRow(item, sourceRow))
-			continue
-		}
-		if (item.type !== 1 && item.type !== undefined) {
-			const row = makeRow({ name: item.name ?? '' }, sourceRow)
-			const kind = { 2: 'secure note' }[item.type] ?? 'non-login'
-			row.errors.push(
-				`Unsupported Bitwarden item type (${kind}); only login items import`,
-			)
-			rows.push(row)
-			continue
-		}
-		const login = item.login || {}
-		const uris = Array.isArray(login.uris) ? login.uris : []
-		const url = login.uri ?? (uris[0] && uris[0].uri) ?? null
-		const fields = {
-			name: item.name ?? '',
-			url,
-			login: login.username ?? null,
-			password: login.password ?? null,
-			folder: resolveFolder(item, folderNames, collectionNames),
-			type: 'login',
-			additionalFields: buildAdditional(item),
-		}
-		rows.push(validateRow(makeRow(fields, sourceRow)))
-
-		// Passkeys: each `login.fido2Credentials[]` entry becomes its own
-		// `passkey`-typed row carrying the canonical CXF-aligned credential
-		// JSON in `password` (which becomes the encrypted `key` at commit).
-		// A partial entry is rejected, never imported partially
-		// (passkey-item-type D5).
-		const fido2 = Array.isArray(login.fido2Credentials)
-			? login.fido2Credentials
-			: []
-		for (const entry of fido2) {
-			nextSourceRow += 1
-			rows.push(buildPasskeyRow(item, entry, nextSourceRow))
-		}
+		rows.push(...itemRows({ item, sourceRow: index + 1 }, ctx))
 	}
 
 	return rows
 }
 
 /**
- * Build a `passkey` row from one Bitwarden `fido2Credentials[]` entry.
+ * Map the entries that have an id onto their name ('' when unnamed).
  *
- * Maps Bitwarden's field names onto the canonical schema (`keyValue` →
- * `privateKey`, `creationDate` → `createdAt`); an entry that cannot yield
- * at least `credentialId` + `rpId` + `privateKey` lands in the rejected
- * list with a reason (passkey-item-type D5).
- *
- * @param {object} item The parent Bitwarden login item.
- * @param {object} entry The fido2Credentials entry.
- * @param {number} sourceRow The synthetic source-row number.
- * @return {object} The normalized row (possibly carrying a rejection).
+ * @param {Array<object>|undefined} list Bitwarden folders or collections.
+ * @return {Map<string,string>} id → name.
  */
-function buildPasskeyRow(item, entry, sourceRow) {
-	const json = serializePasskey({
+function namesById(list) {
+	const names = new Map()
+	for (const entry of list || []) {
+		if (entry && entry.id != null) {
+			names.set(entry.id, entry.name ?? '')
+		}
+	}
+	return names
+}
+
+/**
+ * The rows for one Bitwarden item.
+ *
+ * Bitwarden item types: 1=login, 2=secureNote, 3=card, 4=identity.
+ * Card + identity route into their composite payload types with the JSON
+ * in `password`, encrypted in the browser at commit, exactly like passkeys
+ * (card-identity-items §5.1).
+ *
+ * @param {{item: object, sourceRow: number}} entry The item and its 1-based row.
+ * @param {object} ctx The folder and collection names and the row counter.
+ * @return {Array<object>} The item's rows.
+ */
+function itemRows(entry, ctx) {
+	const { item, sourceRow } = entry
+	if (item.type === 3) {
+		return [buildCardRow(item, sourceRow)]
+	}
+	if (item.type === 4) {
+		return [buildIdentityRow(item, sourceRow)]
+	}
+	if (item.type !== 1 && item.type !== undefined) {
+		const row = makeRow({ name: item.name ?? '' }, sourceRow)
+		const kind = { 2: 'secure note' }[item.type] ?? 'non-login'
+		row.errors.push(
+			`Unsupported Bitwarden item type (${kind}); only login items import`,
+		)
+		return [row]
+	}
+	return loginRows(entry, ctx)
+}
+
+/**
+ * The fields of a Bitwarden login item.
+ *
+ * @param {object} item The Bitwarden item.
+ * @param {object} ctx The folder and collection names.
+ * @return {object} The row fields.
+ */
+function loginFields(item, ctx) {
+	const login = item.login || {}
+	const uris = Array.isArray(login.uris) ? login.uris : []
+	const url = login.uri ?? (uris[0] && uris[0].uri) ?? null
+	return {
+		name: item.name ?? '',
+		url,
+		login: login.username ?? null,
+		password: login.password ?? null,
+		folder: resolveFolder(item, ctx.folderNames, ctx.collectionNames),
+		type: 'login',
+		additionalFields: buildAdditional(item),
+	}
+}
+
+/**
+ * The login row, followed by a rejected row per passkey that did not import.
+ *
+ * @param {{item: object, sourceRow: number}} entry The item and its 1-based row.
+ * @param {object} ctx The folder and collection names and the row counter.
+ * @return {Array<object>} The login row and its rejected passkey rows.
+ */
+function loginRows(entry, ctx) {
+	const { item, sourceRow } = entry
+	const login = item.login || {}
+	const row = makeRow(loginFields(item, ctx), sourceRow)
+	// A seed that is no authenticator key (a Steam code, HOTP) stays an
+	// additional field.
+	if (attachTotp(row, login.totp) !== null) {
+		keepAsAdditionalField(row, 'totp', login.totp)
+	}
+
+	// A partial passkey entry is rejected on a row of its own, never
+	// imported partially (passkey-item-type D5); the login and its
+	// complete passkeys still import.
+	const rejected = []
+	const reject = (reason) => {
+		ctx.state.nextSourceRow += 1
+		rejected.push(
+			rejectRow(
+				makeRow({ name: item.name ?? '' }, ctx.state.nextSourceRow),
+				reason,
+			),
+		)
+	}
+	const passkeys = completePasskeys(login, reject)
+	attachPasskeys(row, passkeys).forEach(() => reject(SECOND_PASSKEY_REASON))
+	// A passkey-only login is found by its site, as a passkey item was.
+	if (row.url === null && passkeys.length > 0) {
+		row.url = passkeys[0].rpId
+	}
+	return [validateRow(row), ...rejected]
+}
+
+/**
+ * The complete passkeys of a login; each incomplete entry goes to `reject`.
+ *
+ * @param {object} login The Bitwarden item's login.
+ * @param {(reason: string) => void} reject Files a rejected row.
+ * @return {Array<object>} The canonical credentials.
+ */
+function completePasskeys(login, reject) {
+	const fido2 = Array.isArray(login.fido2Credentials) ? login.fido2Credentials : []
+	const passkeys = []
+	for (const entry of fido2) {
+		const credential = passkeyFromFido2(entry)
+		if (credential === null) {
+			reject(
+				'Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)',
+			)
+		} else {
+			passkeys.push(credential)
+		}
+	}
+	return passkeys
+}
+
+/**
+ * Map one Bitwarden `fido2Credentials[]` entry onto the canonical passkey
+ * schema (`keyValue` → `privateKey`, `creationDate` → `createdAt`).
+ *
+ * @param {object} entry The fido2Credentials entry.
+ * @return {object|null} The canonical credential, or null when the entry
+ *   lacks a credential id, RP id or key material.
+ */
+function passkeyFromFido2(entry) {
+	return buildPasskeyCredential({
 		credentialId: entry?.credentialId ?? '',
 		rpId: entry?.rpId ?? '',
 		rpName: entry?.rpName ?? '',
@@ -187,23 +268,6 @@ function buildPasskeyRow(item, entry, sourceRow) {
 		counter: Number.parseInt(entry?.counter, 10) || 0,
 		createdAt: entry?.creationDate ?? '',
 	})
-	const row = makeRow(
-		{
-			name: `${item.name ?? 'Passkey'} (passkey)`,
-			url: entry?.rpId ?? null,
-			password: json ?? '',
-			folder: '',
-			type: 'passkey',
-		},
-		sourceRow,
-	)
-	if (json === null) {
-		return rejectRow(
-			row,
-			'Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)',
-		)
-	}
-	return validateRow(row)
 }
 
 /**

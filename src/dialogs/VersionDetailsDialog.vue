@@ -49,12 +49,30 @@
 				<dt>{{ t('keepiq', 'Login') }}</dt>
 				<dd>{{ version.login }}</dd>
 			</div>
+			<!-- Only that a seed was set, never the seed; passkeys by their
+			     metadata, never a private key. -->
+			<div v-if="version.totp">
+				<dt>{{ t('keepiq', 'Authenticator key') }}</dt>
+				<dd data-testid="version-totp">
+					{{ t('keepiq', 'Authenticator key set') }}
+				</dd>
+			</div>
+			<div v-if="hasPasskeys">
+				<dt>{{ t('keepiq', 'Passkeys') }}</dt>
+				<dd>
+					<PasskeyList
+						:passkeysJson="version.passkeys"
+						data-testid="version-passkeys" />
+				</dd>
+			</div>
 		</dl>
 	</NcDialog>
 </template>
 
 <script>
 import { NcButton, NcDialog } from '@nextcloud/vue'
+import PasskeyList from '../components/PasskeyList.vue'
+import { passkeyEntries } from '../passkey/loginPasskeys.js'
 
 export default {
 	name: 'VersionDetailsDialog',
@@ -62,6 +80,7 @@ export default {
 	components: {
 		NcButton,
 		NcDialog,
+		PasskeyList,
 	},
 
 	props: {
@@ -83,6 +102,18 @@ export default {
 			/** Masked until the viewer asks; reset every time the dialog opens. */
 			revealed: false,
 		}
+	},
+
+	computed: {
+		/**
+		 * Whether this version carries passkeys to list.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		hasPasskeys() {
+			return passkeyEntries(this.version?.passkeys).length > 0
+		},
 	},
 
 	watch: {

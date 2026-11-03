@@ -111,7 +111,8 @@ export default {
 		try {
 			const status = await this.store.fetchStatus()
 			if (status?.key) {
-				this.fingerprint = await this.store.verifyKey(status.key)
+				const { fingerprint } = await this.store.verifyKey(status.key)
+				this.fingerprint = fingerprint
 			}
 		} catch (e) {
 			this.error = e?.message ?? null

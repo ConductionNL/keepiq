@@ -6,9 +6,8 @@
  *
  * Versions are ciphertext server-side; viewing decrypts a version's
  * blobs with the in-session CryptoKey exactly like a head read. Restore
- * calls the server (which snapshots the current head first), then drives
- * the existing sync-on-update fan-out so shared recipients receive the
- * restored value re-encrypted for them (ADR-003).
+ * decrypts the version and saves it as a share save, so the row and every
+ * shared recipient receive it in one transaction (ADR-003).
  *
  * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
  */
@@ -17,9 +16,138 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
+import {
+	encryptSparse,
+	notifyOwnerOnly,
+	plainOf,
+	saveShared,
+	shareSaveErrorText,
+} from '../../services/shareSave.js'
+import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useSecretStore } from './secret.js'
 import { useSessionStore } from './session.js'
-import { useShareStore } from './share.js'
+
+/**
+ * One version as the server returns it.
+ *
+ * @param {string} versionId The version id.
+ * @return {Promise<object>}
+ */
+async function fetchVersion(versionId) {
+	const response = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
+	)
+	return response.data
+}
+
+/**
+ * The plain value a restore saves. A blob field the version holds is
+ * restored; one it saved empty (`''`) is cleared, since the login had none
+ * then; one it does not record is left out, so the head keeps its own.
+ *
+ * @param {object} version The version as the server returns it.
+ * @return {Promise<object>} The plain diff.
+ */
+async function restoreDiff(version) {
+	const plain = await plainOf(version)
+	const plainDiff = { ...plain, key: plain.key ?? '' }
+	for (const field of BLOB_FIELDS) {
+		if (plain[field]) {
+			continue
+		}
+		if (version[field] === '') {
+			plainDiff[field] = ''
+		} else {
+			delete plainDiff[field]
+		}
+	}
+	return plainDiff
+}
+
+/**
+ * The row patch of a restore: the version's name and url, and the diff
+ * encrypted for the owner.
+ *
+ * @param {object} version The version as the server returns it.
+ * @param {object} plainDiff The plain value the restore saves.
+ * @return {Promise<object>}
+ */
+async function restorePatch(version, plainDiff) {
+	return {
+		name: version.name,
+		url: version.url ?? null,
+		...(await encryptSparse(plainDiff, useSessionStore().certificate)),
+	}
+}
+
+/**
+ * Decrypt a JSON value; null when it does not decrypt or parse.
+ *
+ * @param {string} cipher The encrypted JSON.
+ * @param {CryptoKey} cryptoKey The session key.
+ * @return {Promise<object|null>}
+ */
+async function decryptJson(cipher, cryptoKey) {
+	try {
+		return JSON.parse(await rsaDecrypt(cipher, cryptoKey))
+	} catch {
+		return null
+	}
+}
+
+/**
+ * A version answer with its value fields decrypted. The blob fields come out
+ * as a head read gives them: plain strings, `''` when not set.
+ *
+ * @param {object} data The version as the server returns it.
+ * @param {CryptoKey} cryptoKey The session key.
+ * @return {Promise<object>} The version with plaintext fields.
+ */
+async function decryptVersion(data, cryptoKey) {
+	const version = { ...data }
+	if (version.key) {
+		version.key = await rsaDecrypt(version.key, cryptoKey)
+	}
+	if (version.login) {
+		version.login = await rsaDecrypt(version.login, cryptoKey)
+	}
+	if (version.additionalFields) {
+		version.additionalFields = await decryptJson(
+			version.additionalFields,
+			cryptoKey,
+		)
+	}
+	for (const field of BLOB_FIELDS) {
+		const cipher = version[field]
+		version[field] = ''
+		if (cipher) {
+			version[field] = await rsaDecrypt(cipher, cryptoKey)
+		}
+	}
+	return version
+}
+
+/**
+ * Some value fields of the head row in plain, `null` where not set.
+ *
+ * @param {string} secretId The secret.
+ * @param {Array<string>} fields The fields.
+ * @return {Promise<object>}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+ */
+async function headValue(secretId, fields) {
+	const session = useSessionStore()
+	const row = (
+		await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}`))
+	).data
+	const out = {}
+	for (const field of fields) {
+		out[field] = row?.[field]
+			? await rsaDecrypt(row[field], session.cryptoKey)
+			: null
+	}
+	return out
+}
 
 export const useSecretVersionStore = defineStore('secretVersion', {
 	state: () => ({
@@ -70,70 +198,60 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
 			}
-			const response = await axios.get(
-				generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
-			)
-			const version = { ...response.data }
-			if (version.key) {
-				version.key = await rsaDecrypt(version.key, session.cryptoKey)
-			}
-			if (version.login) {
-				version.login = await rsaDecrypt(version.login, session.cryptoKey)
-			}
-			if (version.additionalFields) {
-				try {
-					version.additionalFields = JSON.parse(
-						await rsaDecrypt(
-							version.additionalFields,
-							session.cryptoKey,
-						),
-					)
-				} catch {
-					version.additionalFields = null
-				}
-			}
-			return version
+			return decryptVersion(await fetchVersion(versionId), session.cryptoKey)
 		},
 
 		/**
-		 * Restore a version, then propagate the restored value to shared
-		 * recipients via the existing sync-on-update fan-out.
+		 * Restore a version: its whole value is saved for the row and every
+		 * holder in one share save, which records the restore. It is based on
+		 * the head after any merge write-back, so that one is not mistaken for
+		 * a concurrent change.
+		 *
+		 * A `totp` or `passkeys` the version holds is restored, and one it
+		 * records as empty (`''`) is cleared on the row and every copy. One it
+		 * does not record at all (`null`, a version saved before the field
+		 * existed) is left out, so the row and every copy keep theirs, and
+		 * partner shares get the head's.
 		 *
 		 * @param {string} versionId The version id.
 		 * @param {string} secretId The owning secret id.
 		 * @return {Promise<void>}
-		 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
-		 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
 		 */
 		async restore(versionId, secretId) {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/versions/${versionId}/restore`),
-				)
-				// Propagate to recipients: decrypt the restored head with the
-				// session key, then re-encrypt per recipient (share fan-out).
 				const secretStore = useSecretStore()
-				const plain = await secretStore.fetchSecret(secretId)
-				const shareStore = useShareStore()
-				await shareStore.syncUpdate(
-					secretId,
-					{
-						key: plain.key ?? '',
-						login: plain.login ?? '',
-						additionalFields:
-							typeof plain.additionalFields === 'object'
-							&& plain.additionalFields !== null
-								? JSON.stringify(plain.additionalFields)
-								: (plain.additionalFields ?? ''),
-					},
-					response.data.updatedAt,
-				)
+				await secretStore.writeBackSettled(secretId)
+				const baseUpdatedAt = secretStore.baseOf(secretId)
+				const version = await fetchVersion(versionId)
+				const plainDiff = await restoreDiff(version)
+				const result = await saveShared({
+					id: secretId,
+					plainDiff,
+					patch: await restorePatch(version, plainDiff),
+					baseUpdatedAt,
+					// The version is the whole value; `totp` and `passkeys` are
+					// the head's, which the share save keeps where the version
+					// leaves them out and checks a partner can store where the
+					// version gives the login one. The server checks the base.
+					loadFull: async () => ({
+						...plainDiff,
+						...(await headValue(secretId, BLOB_FIELDS)),
+						updatedAt: baseUpdatedAt,
+					}),
+					restoredFrom: versionId,
+				})
+				await notifyOwnerOnly(result)
+				await secretStore.fetchSecret(secretId)
 				await this.fetchVersions(secretId)
 			} catch (e) {
 				this.error =
-					e?.response?.data?.message || e?.message || 'Restore failed'
+					shareSaveErrorText(e)
+					|| e?.response?.data?.message
+					|| e?.message
+					|| 'Restore failed'
 				throw e
 			} finally {
 				this.loading = false

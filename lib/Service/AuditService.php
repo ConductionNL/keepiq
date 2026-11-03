@@ -256,8 +256,9 @@ class AuditService {
 	 * Anonymize a deleted user out of the log without deleting entries.
 	 *
 	 * Replaces the user as actor_id by the deleted-account marker and scrubs
-	 * whitelisted user-referencing metadata fields (recipientId, delegatedTo) by
-	 * the same marker. Entries are retained so other users' accountability
+	 * whitelisted user-referencing metadata fields (recipientId, delegatedTo, and
+	 * the user ids inside a list such as skippedUserIds) by the same marker.
+	 * Entries are retained so other users' accountability
 	 * records survive (design D6). No user id, display name, or other personal
 	 * data of the deleted user remains afterwards.
 	 *
@@ -277,10 +278,13 @@ class AuditService {
 			$changed = false;
 
 			foreach (AuditEventTypes::USER_REFERENCING_METADATA_KEYS as $key) {
-				if (array_key_exists($key, $metadata) === true
-					&& (string)$metadata[$key] === $userId
-				) {
-					$metadata[$key] = AuditEntryMapper::DELETED_ACCOUNT_MARKER;
+				if (array_key_exists($key, $metadata) === false) {
+					continue;
+				}
+
+				$scrubbed = $this->scrubbed(value: $metadata[$key], userId: $userId);
+				if ($scrubbed !== $metadata[$key]) {
+					$metadata[$key] = $scrubbed;
 					$changed = true;
 				}
 			}
@@ -295,4 +299,31 @@ class AuditService {
 			}
 		}//end foreach
 	}//end anonymizeUser()
+
+	/**
+	 * A metadata value with the user id replaced by the deleted-account
+	 * marker, both as the value itself and as an item of a list.
+	 *
+	 * @param mixed $value The metadata value
+	 * @param string $userId The deleted user id
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
+	 */
+	private function scrubbed(mixed $value, string $userId): mixed {
+		if (is_array($value) === true) {
+			foreach ($value as $index => $item) {
+				$value[$index] = $this->scrubbed(value: $item, userId: $userId);
+			}
+
+			return $value;
+		}
+
+		if (is_scalar($value) === true && (string)$value === $userId) {
+			return AuditEntryMapper::DELETED_ACCOUNT_MARKER;
+		}
+
+		return $value;
+	}//end scrubbed()
 }//end class

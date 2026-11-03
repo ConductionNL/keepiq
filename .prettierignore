@@ -12,6 +12,8 @@ test-results/
 # `docs/` is the Docusaurus documentation site. It has its own conventions (its
 # CSS is space-indented by Docusaurus' own scaffolding) and its own toolchain.
 docs/
+# The browser extension is its own WXT project with its own lint setup.
+browser-extension/
 # Written by the translation workflow — a formatter here would fight its own
 # generator on every run.
 l10n/

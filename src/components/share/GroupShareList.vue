@@ -42,7 +42,10 @@
 		</ul>
 
 		<p
-			v-if="result !== null"
+			v-if="
+				result !== null
+				&& (result.refused === 0 || result.received + result.skipped > 0)
+			"
 			class="keepiq-group-share-list__result"
 			role="status"
 			data-testid="group-share-result">
@@ -55,6 +58,19 @@
 						received: result.received,
 						skipped: result.skipped,
 					},
+				)
+			}}
+		</p>
+
+		<p
+			v-if="result !== null && result.refused > 0"
+			class="keepiq-group-share-list__result"
+			role="status"
+			data-testid="group-share-refused">
+			{{
+				t(
+					'keepiq',
+					'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
 				)
 			}}
 		</p>
@@ -144,7 +160,7 @@ export default {
 		/**
 		 * Close the form and report how the share went.
 		 *
-		 * @param {{group: {id: string, label: string}, received: number, skipped: number}} payload The share outcome.
+		 * @param {{group: {id: string, label: string}, received: number, skipped: number, refused: number}} payload The share outcome.
 		 * @return {void}
 		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
@@ -154,6 +170,7 @@ export default {
 				group: payload.group?.label ?? payload.group?.id ?? '',
 				received: payload.received,
 				skipped: payload.skipped,
+				refused: payload.refused ?? 0,
 			}
 		},
 

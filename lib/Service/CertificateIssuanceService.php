@@ -72,6 +72,28 @@ class CertificateIssuanceService {
 	private const RESIGN_BATCH_SIZE = 100;
 
 	/**
+	 * The openssl config whose sections give each certificate of the private
+	 * CA its extensions: `keepiq_root`, `keepiq_intermediate`, `keepiq_leaf`.
+	 * Without one, openssl_csr_sign() takes the host openssl.cnf default,
+	 * v3_ca on most systems, which marks a user certificate CA:TRUE.
+	 *
+	 * @var string
+	 */
+	public const OPENSSL_CONFIG = __DIR__ . '/certificate-extensions.cnf';
+
+	/**
+	 * The openssl_csr_sign() options for a user or application certificate,
+	 * which is no CA.
+	 *
+	 * @var array<string,string>
+	 */
+	private const LEAF_SIGN_OPTIONS = [
+		'digest_alg' => 'sha256',
+		'config' => self::OPENSSL_CONFIG,
+		'x509_extensions' => 'keepiq_leaf',
+	];
+
+	/**
 	 * Constructor for CertificateIssuanceService.
 	 *
 	 * @param CACertificateMapper $caCertificateMapper The CA certificate mapper
@@ -158,7 +180,7 @@ class CertificateIssuanceService {
 				ca_certificate: $intermediateCert,
 				private_key: $intermediateKey,
 				days: 365,
-				options: ['digest_alg' => 'sha256'],
+				options: self::LEAF_SIGN_OPTIONS,
 				serial: random_int(1, PHP_INT_MAX)
 			);
 			if ($cert !== false) {
@@ -220,7 +242,7 @@ class CertificateIssuanceService {
 			ca_certificate: $intermediateCert,
 			private_key: $intermediateKey,
 			days: 365,
-			options: ['digest_alg' => 'sha256'],
+			options: self::LEAF_SIGN_OPTIONS,
 			serial: random_int(1, PHP_INT_MAX)
 		);
 

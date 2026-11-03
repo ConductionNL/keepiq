@@ -109,6 +109,8 @@ class RecipientSecretCopyFactory {
 	 * @param string $encryptedKey Recipient-encrypted key blob
 	 * @param string|null $encryptedLogin Recipient-encrypted login blob
 	 * @param string|null $encryptedExtras Recipient-encrypted additionalFields blob
+	 * @param string|null $encryptedTotp Recipient-encrypted TOTP seed blob
+	 * @param string|null $encryptedPasskeys Recipient-encrypted passkeys blob
 	 *
 	 * @return Secret|null
 	 *
@@ -120,6 +122,8 @@ class RecipientSecretCopyFactory {
 		string $encryptedKey,
 		?string $encryptedLogin,
 		?string $encryptedExtras,
+		?string $encryptedTotp = null,
+		?string $encryptedPasskeys = null,
 	): ?Secret {
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
@@ -149,6 +153,8 @@ class RecipientSecretCopyFactory {
 		$copy->setKey($encryptedKey);
 		$copy->setLogin($encryptedLogin);
 		$copy->setAdditionalFields($encryptedExtras);
+		$copy->setTotp($encryptedTotp);
+		$copy->setPasskeys($encryptedPasskeys);
 		$copy->setEncryptionSuiteId($suite->getId());
 		$copy->setOwnerType('user');
 		$copy->setOwnerId($targetUserId);

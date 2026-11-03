@@ -44,7 +44,7 @@ A background job running every 15 minutes MUST revoke expired share targets thro
 
 ### Requirement: An expiring copy cannot be shared onward
 
-The system MUST refuse any share whose source is a copy with an end date, by every path that creates a share, and MUST leave such copies out of team-folder fan-out.
+The system MUST refuse any share whose source is a copy with an end date, by every path that creates a share, and MUST leave such copies out of team-folder fan-out. A delegate shares onward only on a grant that is itself unrestricted: a grant past its end date counts for nothing, even before the expiry job removes it, and an expiring grant cannot mint a full copy even when another grant on the same copy is permanent but use-only.
 
 #### Scenario: Carla cannot extend her own access
 

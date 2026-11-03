@@ -47,6 +47,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setFailedAttempts(int $failedAttempts)
  * @method string getCreatedBy()
  * @method void setCreatedBy(string $createdBy)
+ * @method string|null getOriginalCreatedBy()
+ * @method void setOriginalCreatedBy(?string $originalCreatedBy)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getExpiresAt()
@@ -113,11 +115,22 @@ class LinkShare extends Entity implements JsonSerializable {
 	protected int $failedAttempts = 0;
 
 	/**
-	 * The Nextcloud user ID of the secret owner.
+	 * The Nextcloud user ID of the user who lists and revokes the link: its
+	 * maker, until an ownership transfer hands it to the secret's new owner.
 	 *
 	 * @var string
 	 */
 	protected string $createdBy = '';
+
+	/**
+	 * The user who made the link, set once it is handed to another user;
+	 * their compromise revoke cuts it. Null means the holder made it, and
+	 * LinkShareMapper::DELETED_ACCOUNT_MARKER that the maker's account is
+	 * deleted.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $originalCreatedBy = null;
 
 	/**
 	 * When the link share was created.
@@ -176,6 +189,7 @@ class LinkShare extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'usageCount', type: 'integer');
 		$this->addType(fieldName: 'failedAttempts', type: 'integer');
 		$this->addType(fieldName: 'createdBy', type: 'string');
+		$this->addType(fieldName: 'originalCreatedBy', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 	}//end __construct()

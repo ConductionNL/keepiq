@@ -26,7 +26,7 @@ use InvalidArgumentException;
  *
  * An allow-list fails closed: a column added to Secret later does not reach
  * an agent until it is named here, in a change to the mcp-metadata-surface
- * capability. Secret values, ciphertext (key, login, additionalFields) and
+ * capability. Secret values, ciphertext (key, login, additionalFields, totp, passkeys) and
  * encryptionSuiteId are on no list.
  *
  * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-no-tool-ever-returns-secret-material

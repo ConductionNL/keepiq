@@ -229,7 +229,10 @@ export default {
 		const policy = await fetchPolicy()
 		this.policy = policy ?? null
 		if (policy?.policy_enabled === true) {
-			const floor = Number.parseInt(policy.generator_min_length, 10) || 0
+			const floor = Math.min(
+				Number.parseInt(policy.generator_min_length, 10) || 0,
+				this.maxLength,
+			)
 			if (floor > this.minLength) {
 				this.minLength = floor
 				this.policyFloorActive = true

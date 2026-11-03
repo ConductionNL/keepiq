@@ -41,6 +41,8 @@ class SecretTest extends TestCase {
 		$secret->setKey('ENCRYPTED_KEY');
 		$secret->setLogin('ENCRYPTED_LOGIN');
 		$secret->setAdditionalFields('ENCRYPTED_EXTRA');
+		$secret->setTotp('ENCRYPTED_TOTP');
+		$secret->setPasskeys('ENCRYPTED_PASSKEYS');
 		$secret->setEncryptionSuiteId('suite-1');
 		$secret->setOwnerType('user');
 		$secret->setOwnerId('alice');
@@ -58,9 +60,73 @@ class SecretTest extends TestCase {
 		$this->assertSame('ENCRYPTED_KEY', $data['key']);
 		$this->assertSame('ENCRYPTED_LOGIN', $data['login']);
 		$this->assertSame('ENCRYPTED_EXTRA', $data['additionalFields']);
+		$this->assertSame('ENCRYPTED_TOTP', $data['totp']);
+		$this->assertSame('ENCRYPTED_PASSKEYS', $data['passkeys']);
 		$this->assertSame('GitHub', $data['name']);
 		$this->assertFalse($data['blocked']);
 	}//end testJsonSerializeIncludesEncryptedBlobs()
+
+	/**
+	 * A secret written by an older client has neither new field, and says so as null.
+	 *
+	 * @return void
+	 */
+	public function testNewValueFieldsSerializeAsNullWhenUnset(): void {
+		$data = (new Secret())->jsonSerialize();
+
+		$this->assertArrayHasKey('totp', $data);
+		$this->assertArrayHasKey('passkeys', $data);
+		$this->assertNull($data['totp']);
+		$this->assertNull($data['passkeys']);
+	}//end testNewValueFieldsSerializeAsNullWhenUnset()
+
+	/**
+	 * Every value field is serialized, and the legacy list is the value list without the new two.
+	 *
+	 * @return void
+	 */
+	public function testValueFieldListsMatchTheSerializedBlobs(): void {
+		$data = $this->makeSecret()->jsonSerialize();
+		foreach (Secret::VALUE_FIELDS as $field) {
+			$this->assertArrayHasKey($field, $data);
+		}
+
+		$this->assertSame(['totp', 'passkeys'], array_values(array_diff(Secret::VALUE_FIELDS, Secret::LEGACY_VALUE_FIELDS)));
+		$this->assertSame([], array_diff(Secret::LEGACY_VALUE_FIELDS, Secret::VALUE_FIELDS));
+	}//end testValueFieldListsMatchTheSerializedBlobs()
+
+	/**
+	 * The new fields hydrate from and map to columns of the same name.
+	 *
+	 * @return void
+	 */
+	public function testNewValueFieldsMapToTheirColumns(): void {
+		$secret = Secret::fromRow(['id' => 's-2', 'totp' => 'T', 'passkeys' => 'P']);
+
+		$this->assertSame('T', $secret->getTotp());
+		$this->assertSame('P', $secret->getPasskeys());
+		$this->assertSame('totp', $secret->propertyToColumn('totp'));
+		$this->assertSame('passkeys', $secret->propertyToColumn('passkeys'));
+		$this->assertSame('string', $secret->getFieldTypes()['totp']);
+		$this->assertSame('string', $secret->getFieldTypes()['passkeys']);
+	}//end testNewValueFieldsMapToTheirColumns()
+
+	/**
+	 * A secret holding only a TOTP seed or only passkeys still holds a value.
+	 *
+	 * @return void
+	 */
+	public function testHoldsNoValuesCountsTotpAndPasskeys(): void {
+		$this->assertTrue((new Secret())->holdsNoValues());
+
+		$withTotp = new Secret();
+		$withTotp->setTotp('ENCRYPTED_TOTP');
+		$this->assertFalse($withTotp->holdsNoValues());
+
+		$withPasskeys = new Secret();
+		$withPasskeys->setPasskeys('ENCRYPTED_PASSKEYS');
+		$this->assertFalse($withPasskeys->holdsNoValues());
+	}//end testHoldsNoValuesCountsTotpAndPasskeys()
 
 	/**
 	 * jsonSerializeBlocked omits the encrypted blobs and flags the secret.
@@ -73,6 +139,8 @@ class SecretTest extends TestCase {
 		$this->assertArrayNotHasKey('key', $data);
 		$this->assertArrayNotHasKey('login', $data);
 		$this->assertArrayNotHasKey('additionalFields', $data);
+		$this->assertArrayNotHasKey('totp', $data);
+		$this->assertArrayNotHasKey('passkeys', $data);
 		$this->assertTrue($data['blocked']);
 		$this->assertSame('Encryption suite is revoked', $data['blockedReason']);
 		$this->assertSame('GitHub', $data['name']);

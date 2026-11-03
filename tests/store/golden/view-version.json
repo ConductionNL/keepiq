@@ -1,0 +1,217 @@
+{
+	"every field": {
+		"version": {
+			"id": "v1",
+			"name": "GitHub",
+			"url": "https://github.com",
+			"key": "plain(k1|KEY)",
+			"login": "plain(l1|KEY)",
+			"additionalFields": null,
+			"totp": "plain(t1|KEY)",
+			"passkeys": "plain(p1|KEY)",
+			"createdAt": "2026-10-01T10:00:00Z"
+		},
+		"keys": [
+			"id",
+			"name",
+			"url",
+			"key",
+			"login",
+			"additionalFields",
+			"totp",
+			"passkeys",
+			"createdAt"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt k1",
+			"decrypt l1",
+			"decrypt a1",
+			"decrypt t1",
+			"decrypt p1"
+		]
+	},
+	"no value fields": {
+		"version": {
+			"id": "v2",
+			"name": "Bare",
+			"totp": "",
+			"passkeys": ""
+		},
+		"keys": [
+			"id",
+			"name",
+			"totp",
+			"passkeys"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id"
+		]
+	},
+	"empty strings": {
+		"version": {
+			"id": "v1",
+			"name": "GitHub",
+			"url": "https://github.com",
+			"key": "",
+			"login": "",
+			"additionalFields": "",
+			"totp": "",
+			"passkeys": "",
+			"createdAt": "2026-10-01T10:00:00Z"
+		},
+		"keys": [
+			"id",
+			"name",
+			"url",
+			"key",
+			"login",
+			"additionalFields",
+			"totp",
+			"passkeys",
+			"createdAt"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id"
+		]
+	},
+	"null fields": {
+		"version": {
+			"id": "v1",
+			"name": "GitHub",
+			"url": "https://github.com",
+			"key": null,
+			"login": null,
+			"additionalFields": null,
+			"totp": "",
+			"passkeys": "",
+			"createdAt": "2026-10-01T10:00:00Z"
+		},
+		"keys": [
+			"id",
+			"name",
+			"url",
+			"key",
+			"login",
+			"additionalFields",
+			"totp",
+			"passkeys",
+			"createdAt"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id"
+		]
+	},
+	"additional fields are JSON": {
+		"version": {
+			"id": "v1",
+			"name": "GitHub",
+			"url": "https://github.com",
+			"key": "plain(k1|KEY)",
+			"login": "plain(l1|KEY)",
+			"additionalFields": {
+				"notes": "n",
+				"n": 1
+			},
+			"totp": "plain(t1|KEY)",
+			"passkeys": "plain(p1|KEY)",
+			"createdAt": "2026-10-01T10:00:00Z"
+		},
+		"keys": [
+			"id",
+			"name",
+			"url",
+			"key",
+			"login",
+			"additionalFields",
+			"totp",
+			"passkeys",
+			"createdAt"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt k1",
+			"decrypt l1",
+			"decrypt json",
+			"decrypt t1",
+			"decrypt p1"
+		]
+	},
+	"additional fields do not decrypt": {
+		"version": {
+			"id": "v1",
+			"name": "GitHub",
+			"url": "https://github.com",
+			"key": "plain(k1|KEY)",
+			"login": "plain(l1|KEY)",
+			"additionalFields": null,
+			"totp": "plain(t1|KEY)",
+			"passkeys": "plain(p1|KEY)",
+			"createdAt": "2026-10-01T10:00:00Z"
+		},
+		"keys": [
+			"id",
+			"name",
+			"url",
+			"key",
+			"login",
+			"additionalFields",
+			"totp",
+			"passkeys",
+			"createdAt"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt k1",
+			"decrypt l1",
+			"decrypt bad-a",
+			"decrypt t1",
+			"decrypt p1"
+		]
+	},
+	"key does not decrypt": {
+		"threw": "Error: cannot decrypt bad-k",
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt bad-k"
+		]
+	},
+	"login does not decrypt": {
+		"threw": "Error: cannot decrypt bad-l",
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt k1",
+			"decrypt bad-l"
+		]
+	},
+	"totp does not decrypt": {
+		"threw": "Error: cannot decrypt bad-t",
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt k1",
+			"decrypt l1",
+			"decrypt a1",
+			"decrypt bad-t"
+		]
+	},
+	"passkeys only": {
+		"version": {
+			"id": "v3",
+			"passkeys": "plain(p3|KEY)",
+			"totp": ""
+		},
+		"keys": [
+			"id",
+			"passkeys",
+			"totp"
+		],
+		"calls": [
+			"GET /apps/keepiq/api/v1/versions/v-id",
+			"decrypt p3"
+		]
+	},
+	"vault locked": {
+		"threw": "Error: Vault is locked",
+		"calls": []
+	}
+}

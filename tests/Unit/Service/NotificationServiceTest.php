@@ -230,6 +230,32 @@ class NotificationServiceTest extends TestCase {
 	}//end testNotifyRequestFulfilledDeliversWhenOptedIn()
 
 	/**
+	 * notify(): a group member who can now change the owner's secret is a
+	 * security event, so it follows notify_security, not notify_group_shares.
+	 *
+	 * @return void
+	 */
+	public function testGroupMemberGainedWriteFollowsTheSecurityToggle(): void {
+		$this->config->expects($this->once())
+			->method('getUserValue')
+			->with('alice', 'keepiq', 'notify_security', '1')
+			->willReturn('1');
+
+		$notification = $this->createMock(originalClassName: INotification::class);
+		$notification->method('setApp')->willReturnSelf();
+		$notification->method('setUser')->willReturnSelf();
+		$notification->method('setDateTime')->willReturnSelf();
+		$notification->method('setObject')->willReturnSelf();
+		$notification->method('setSubject')->willReturnSelf();
+		$this->manager->method('createNotification')->willReturn($notification);
+		$this->manager->expects($this->once())->method('notify')->with($notification);
+
+		$this->assertTrue(
+			condition: $this->service->notify(subject: 'group_member_gained_write', recipientId: 'alice', objectType: 'secret', objectId: 'src')
+		);
+	}//end testGroupMemberGainedWriteFollowsTheSecurityToggle()
+
+	/**
 	 * SUBJECT_SETTING_MAP covers every spec'd subject.
 	 *
 	 * @return void

@@ -37,7 +37,11 @@ use Ramsey\Uuid\Uuid;
 use Throwable;
 
 /**
- * Partner allowlist: add, pin, permissions, and lookups by host.
+ * Partner allowlist: add, pin, permissions, and lookups by host or id.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ *   Each is one allowlist operation or lookup; find() lets a share write read its own partner
+ *   instead of loading every partner.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
@@ -271,6 +275,23 @@ class FederationPartnerService {
 	public function all(): array {
 		return $this->partnerMapper->findAllPartners();
 	}//end all()
+
+	/**
+	 * A partner by id, or null when it is gone.
+	 *
+	 * @param string $id The partner UUID
+	 *
+	 * @return FederationPartner|null
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	public function find(string $id): ?FederationPartner {
+		try {
+			return $this->partnerMapper->findById(id: $id);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end find()
 
 	/**
 	 * Whether any partner exists; with none, federation is off.

@@ -5,7 +5,7 @@
  *
  * Thrown by AuditService::record when a caller attempts to record an audit
  * entry whose metadata contains a forbidden key (key, login, password, value,
- * additionalFields, ciphertext, payload) in any position. This is the
+ * additionalFields, totp, passkeys, ciphertext, payload) in any position. This is the
  * structural enforcement of the no-secret-material guarantee
  * (add-secret-audit-trail design D3): a future dispatch site cannot
  * accidentally leak secret material into the trail.

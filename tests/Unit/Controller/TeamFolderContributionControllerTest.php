@@ -60,10 +60,11 @@ class TeamFolderContributionControllerTest extends TestCase {
 	 * The controller for a session user, or anonymous.
 	 *
 	 * @param string|null $userId The session user
+	 * @param IRequest|null $request The request, an empty one by default
 	 *
 	 * @return TeamFolderContributionController
 	 */
-	private function controller(?string $userId): TeamFolderContributionController {
+	private function controller(?string $userId, ?IRequest $request = null): TeamFolderContributionController {
 		$session = $this->createMock(IUserSession::class);
 		$user = null;
 		if ($userId !== null) {
@@ -73,7 +74,7 @@ class TeamFolderContributionControllerTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return new TeamFolderContributionController(
-			request: $this->createMock(IRequest::class),
+			request: ($request ?? $this->createMock(IRequest::class)),
 			userSession: $session,
 			contributions: $this->contributions,
 			ownership: $this->ownership,
@@ -187,7 +188,11 @@ class TeamFolderContributionControllerTest extends TestCase {
 				$secret = new Secret();
 				$secret->setId('s9');
 				$secret->setOwnerId('iris');
-				return ['secret' => $secret, 'copies' => 2];
+				return [
+					'secret' => $secret,
+					'copies' => 2,
+					'skipped' => [['sourceSecretId' => 's9', 'targetUserId' => 'jack', 'reason' => 'copy_fields_mismatch']],
+				];
 			}
 		);
 
@@ -195,9 +200,32 @@ class TeamFolderContributionControllerTest extends TestCase {
 		$this->assertSame(201, $ok->getStatus());
 		$this->assertSame('iris', $ok->getData()['secret']['ownerId']);
 		$this->assertSame(2, $ok->getData()['copies']);
+		$this->assertSame('copy_fields_mismatch', $ok->getData()['skipped'][0]['reason']);
 		$this->assertSame(403, $this->controller('jack')->contribute(id: 'tf-ops')->getStatus());
 		$this->assertSame(404, $this->controller('hank')->contribute(id: 'missing')->getStatus());
 		$this->assertSame(400, $this->controller('empty')->contribute(id: 'tf-ops')->getStatus());
 		$this->assertSame(401, $this->controller(null)->contribute(id: 'tf-ops')->getStatus());
 	}//end testContributeContract()
+
+	/**
+	 * The TOTP seed and passkeys reach the service with the other value fields.
+	 *
+	 * @return void
+	 */
+	public function testContributePassesTheTotpAndPasskeys(): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static fn (string $key): mixed => ['name' => 'db-root', 'key' => 'K', 'totp' => 'T', 'passkeys' => 'P'][$key] ?? null
+		);
+		$this->contributions->expects($this->once())->method('contribute')->willReturnCallback(
+			function (string $teamFolderId, array $data): array {
+				$this->assertSame(['T', 'P'], [$data['totp'], $data['passkeys']]);
+				$secret = new Secret();
+				$secret->setId('s9');
+				return ['secret' => $secret, 'copies' => 0];
+			}
+		);
+
+		$this->assertSame(201, $this->controller('hank', $request)->contribute(id: 'tf-ops')->getStatus());
+	}//end testContributePassesTheTotpAndPasskeys()
 }//end class

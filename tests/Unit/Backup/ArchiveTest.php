@@ -71,7 +71,8 @@ class ArchiveTest extends TestCase {
 
 	/**
 	 * §1.1: the registry holds exactly the tables of the consolidated schema,
-	 * so a new table can never be left out of a backup silently.
+	 * each either backed up or declared as left out, so a new table can never
+	 * be left out of a backup silently.
 	 *
 	 * @return void
 	 */
@@ -79,10 +80,11 @@ class ArchiveTest extends TestCase {
 		$schema = (new ReflectionClassConstant(Version001000Date20260908000000::class, 'SCHEMA'))->getValue();
 		$expected = array_keys($schema);
 		sort($expected);
-		$actual = BackupTableRegistry::TABLES;
+		$actual = [...BackupTableRegistry::TABLES, ...BackupTableRegistry::NOT_BACKED_UP];
 		sort($actual);
 
 		$this->assertSame($expected, $actual);
+		$this->assertSame([], array_intersect(BackupTableRegistry::TABLES, BackupTableRegistry::NOT_BACKED_UP));
 	}//end testRegistryMatchesTheConsolidatedSchema()
 
 	/**

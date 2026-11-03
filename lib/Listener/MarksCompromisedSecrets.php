@@ -28,14 +28,16 @@ namespace OCA\Keepiq\Listener;
 
 use DateTime;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Service\ShareRowVerdict;
 use OCP\AppFramework\Db\DoesNotExistException;
+use RuntimeException;
 use Throwable;
 
 /**
  * Stamp, flag and resolve Secrets in a suite-compromise blast radius.
  *
- * The using class provides $secretMapper, $shareTargetMapper, $logger and
- * $rotationService.
+ * The using class provides $secretMapper, $rowJudge (ShareRowJudge), $logger
+ * and $rotationService.
  */
 trait MarksCompromisedSecrets {
 	/**
@@ -75,7 +77,9 @@ trait MarksCompromisedSecrets {
 	/**
 	 * The Secret a warning about $secret should point at: for a shared copy,
 	 * the SOURCE Secret, which its owner can open and has to rotate; otherwise
-	 * $secret itself.
+	 * $secret itself. Only a trusted share row (ShareRowJudge) makes $secret a
+	 * copy: a secret a row the pending quarantine scan quarantines names is
+	 * its own target, and one it cannot judge is too, counted as a failure.
 	 *
 	 * Not being a shared copy, or a source that is gone, is expected and falls
 	 * back to $secret quietly. Any other lookup failure falls back too, but is
@@ -85,17 +89,27 @@ trait MarksCompromisedSecrets {
 	 * tally, so there it is only logged.
 	 *
 	 * @param Secret    $secret The Secret sealed under the affected suite
-	 * @param bool|null $failed Set to true when the lookup failed
+	 * @param bool|null $failed   Set to true when the lookup failed
+	 * @param bool|null $unjudged Set to true when the pending quarantine scan cannot judge its share row
 	 *
 	 * @return Secret
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function resolveTarget(Secret $secret, ?bool &$failed = null): Secret {
+	private function resolveTarget(Secret $secret, ?bool &$failed = null, ?bool &$unjudged = null): Secret {
 		try {
-			$row = $this->shareTargetMapper->findByRecipientSecret(
-				recipientSecretId: $secret->getId()
-			);
+			$verdict = $this->rowJudge->forCopy(copy: $secret);
+			$unjudged = ($verdict->state === ShareRowVerdict::UNJUDGED);
+			if ($verdict->state === ShareRowVerdict::AMBIGUOUS || $unjudged === true) {
+				throw new RuntimeException(message: 'its share row cannot be followed ('.$verdict->state.')');
+			}
+
+			$row = $verdict->trustedRow();
+			if ($row === null) {
+				return $secret;
+			}
+
 			return $this->secretMapper->findById($row->getSourceSecretId());
 		} catch (DoesNotExistException) {
 			return $secret;

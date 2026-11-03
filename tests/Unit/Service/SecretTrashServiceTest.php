@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\SecretRequestService;
@@ -35,6 +36,7 @@ use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretSharingRevoker;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -138,7 +140,7 @@ class SecretTrashServiceTest extends TestCase {
 		$secret = $this->secret(archivedAt: new DateTime());
 		$this->linkShares->expects($this->once())->method('deleteBySecretId')->with('s-1');
 		$this->requests->expects($this->once())->method('deleteAllForSecret')->with('s-1');
-		$this->shares->expects($this->once())->method('deleteAllForSecret')->with('s-1');
+		$this->shares->expects($this->once())->method('revokeAllForSecret')->with('s-1');
 		$this->groupShares->expects($this->once())->method('deleteBySecret')->with('s-1');
 		$this->delegations->expects($this->once())->method('deleteBySecret')->with('s-1');
 		$this->secretService->expects($this->never())->method('delete');
@@ -150,6 +152,30 @@ class SecretTrashServiceTest extends TestCase {
 		$this->assertNull($secret->getArchivedAt(), 'a trashed item is never also archived');
 		$this->assertSame(AuditEventTypes::SECRET_TRASHED, $this->recorded[0]->getEventType());
 	}//end testTrashRevokesSharingAndKeepsTheSecret()
+
+	/**
+	 * A trash refused because a share of the secret waits for the share
+	 * quarantine scan changes nothing: no link share, request, group share or
+	 * delegation goes, and the secret stays out of the trash.
+	 *
+	 * @return void
+	 */
+	public function testATrashTheShareScanRefusesChangesNothing(): void {
+		$secret = $this->secret();
+		$this->shares->method('revokeAllForSecret')->willThrowException(new ShareScanPendingException('waits for the share quarantine scan'));
+		$this->linkShares->expects($this->never())->method('deleteBySecretId');
+		$this->requests->expects($this->never())->method('deleteAllForSecret');
+		$this->groupShares->expects($this->never())->method('deleteBySecret');
+		$this->delegations->expects($this->never())->method('deleteBySecret');
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->trash('s-1', 'alice');
+			$this->fail('the trash went through');
+		} catch (ShareScanPendingException) {
+			$this->assertNull($secret->getTrashedAt());
+		}
+	}//end testATrashTheShareScanRefusesChangesNothing()
 
 	/**
 	 * Another user's secret is refused before anything is revoked.
@@ -269,6 +295,8 @@ class SecretTrashServiceTest extends TestCase {
 			migrationService: $this->createMock(\OCA\Keepiq\Service\MigrationService::class),
 			linkShareService: $this->linkShares,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		return new SecretTrashService(

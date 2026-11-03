@@ -4,8 +4,9 @@
  *
  * Pinia store for user-to-user share targets.
  *
- * The store wraps `/api/v1/secrets/{secretId}/shares` (list + create) and
- * `/api/v1/shares/{id}` (revoke). It exposes a small helper for browser-side
+ * The store wraps `/api/v1/secrets/{secretId}/shares` (list) and
+ * `/api/v1/shares/{id}` (revoke). Shares are created through the
+ * register-batch flow, not this store. It exposes a small helper for browser-side
  * RSA encryption so callers can pass a plaintext snapshot and a recipient
  * certificate without re-implementing the envelope; the helper imports the
  * recipient's public key and encrypts each field via `rsaEncrypt`.
@@ -321,7 +322,23 @@ export const useShareStore = defineStore('share', {
 			if (publicCertificate == null || publicCertificate === '') {
 				throw new Error('Recipient has no active encryption suite')
 			}
-			const publicKey = await importPublicKey(publicCertificate)
+			return this.encryptWithKey(
+				snapshot,
+				await importPublicKey(publicCertificate),
+			)
+		},
+
+		/**
+		 * Encrypt a plaintext snapshot with an imported public key, such as the
+		 * key of a federated recipient's verified certificate.
+		 *
+		 * @param {object}    snapshot  Plaintext field map.
+		 * @param {CryptoKey} publicKey The recipient's RSA-OAEP public key.
+		 * @return {Promise<Record<string,string>>}
+		 *
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+		 */
+		async encryptWithKey(snapshot, publicKey) {
 			const out = {}
 			for (const [field, value] of Object.entries(snapshot)) {
 				if (value == null || value === '') {
@@ -330,61 +347,6 @@ export const useShareStore = defineStore('share', {
 				out[field] = await rsaEncrypt(String(value), publicKey)
 			}
 			return out
-		},
-
-		/**
-		 * Record a share target.
-		 *
-		 * Expects the caller to have already PUT the recipient's encrypted
-		 * Secret copy through `useSecretStore`; this call only registers the
-		 * link.
-		 *
-		 * @param {string}      secretId          The source secret ID.
-		 * @param {string}      targetUserId      The recipient Nextcloud UID.
-		 * @param {string}      recipientSecretId The recipient's Secret copy ID.
-		 * @param {string|null} groupShareId      Optional group-share linkage.
-		 * @return {Promise<object>}
-		 */
-		async createShare(
-			secretId,
-			targetUserId,
-			recipientSecretId,
-			groupShareId = null,
-		) {
-			this.loading = true
-			this.error = null
-			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`)
-			const body = { targetUserId, recipientSecretId, groupShareId }
-			try {
-				let response
-				try {
-					response = await axios.post(url, body)
-				} catch (refusal) {
-					// A share to someone the user does not share with yet needs a
-					// vault-key proof (keepiq#818); a known recipient does not, so
-					// ask for the password only when the server says so.
-					if (refusal?.response?.data?.error !== 'key_proof_required') {
-						throw refusal
-					}
-					const { headers } = await sessionKeyProofHeaders({
-						purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
-						reason: t(
-							'keepiq',
-							'You are sharing with someone new. Enter your master password to confirm.',
-						),
-						boundValues: [secretId, targetUserId],
-					})
-					response = await axios.post(url, body, { headers })
-				}
-				this.shares.push(response.data)
-				return response.data
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message || e?.message || 'Failed to share'
-				throw e
-			} finally {
-				this.loading = false
-			}
 		},
 
 		/**
@@ -400,88 +362,6 @@ export const useShareStore = defineStore('share', {
 				generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/write-context`),
 			)
 			return response.data
-		},
-
-		/**
-		 * Write-grade member fan-out (folder-permission-grades §4.2):
-		 * when the edited row is a recipient copy and the caller holds a
-		 * `write` grade, re-encrypt the plaintext for the SOURCE row
-		 * (owner certificate) and every recipient, then PUT the sync.
-		 * No-op for owners/read grades.
-		 *
-		 * @param {string} editedSecretId The edited (copy) secret id.
-		 * @param {object} plaintext New plaintext field map.
-		 * @return {Promise<{updated: number}>}
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-		 */
-		async syncAsTeamWriter(editedSecretId, plaintext) {
-			const context = await this.fetchWriteContext(editedSecretId)
-			if (
-				!['write', 'manage'].includes(context.effectiveGrade)
-				|| context.sourceSecretId === editedSecretId
-			) {
-				return { updated: 0 }
-			}
-
-			// Recipient rows of the SOURCE (write grade grants the list).
-			const response = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/shares`,
-				),
-			)
-			const shares = response.data || []
-
-			const updates = []
-			// The owner's SOURCE row itself, re-encrypted under the
-			// owner's certificate.
-			if (context.ownerCertificate) {
-				const ownerBlob = await this.encryptForRecipient(
-					plaintext,
-					context.ownerCertificate,
-				)
-				updates.push({
-					secretId: context.sourceSecretId,
-					key: ownerBlob.key ?? null,
-					login: ownerBlob.login ?? null,
-					additionalFields: ownerBlob.additionalFields ?? null,
-				})
-			}
-			for (const share of shares) {
-				const certificate = share.recipientCertificate || share.certificate
-				if (
-					certificate == null
-					|| certificate === ''
-					|| share.secretId === editedSecretId
-				) {
-					// The writer's own copy was already updated by the
-					// regular edit; suite-less recipients are skipped.
-					continue
-				}
-
-				const blob = await this.encryptForRecipient(plaintext, certificate)
-				updates.push({
-					secretId: share.secretId,
-					key: blob.key ?? null,
-					login: blob.login ?? null,
-					additionalFields: blob.additionalFields ?? null,
-				})
-			}
-
-			if (updates.length === 0) {
-				return { updated: 0 }
-			}
-
-			const syncResponse = await axios.put(
-				generateUrl(
-					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/sync`,
-				),
-				{
-					expectedUpdatedAt: context.sourceUpdatedAt ?? '',
-					updates,
-				},
-			)
-			return syncResponse.data
 		},
 
 		/**
@@ -543,129 +423,6 @@ export const useShareStore = defineStore('share', {
 					? response.data.items
 					: [],
 				masterPassword: proof.masterPassword,
-			}
-		},
-
-		/**
-		 * Create a batch of recipient share targets (group-share expansion).
-		 *
-		 * The caller supplies the already-encrypted Secret copies (one per
-		 * member); this method records them and returns the server response
-		 * for each.
-		 *
-		 * @param {string} secretId          The source secret ID.
-		 * @param {Array<{targetUserId: string, recipientSecretId: string}>} recipients Recipient copies.
-		 * @param {string} groupShareId      The group-share linkage ID.
-		 * @return {Promise<Array<object>>}
-		 *
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-with-group-static-expansion
-		 */
-		async createBatchShares(secretId, recipients, groupShareId) {
-			const created = []
-			for (const r of recipients) {
-				// Sequential POST keeps the UI feedback predictable on slow
-				// networks; total recipient count for a group is bounded by
-				// the Nextcloud group size which is small in practice.
-
-				const row = await this.createShare(
-					secretId,
-					r.targetUserId,
-					r.recipientSecretId,
-					groupShareId,
-				)
-				created.push(row)
-			}
-			return created
-		},
-
-		/**
-		 * Sync an updated plaintext to every recipient. Implements
-		 * tasks §11.5 (browser-side encryption loop) + §11.6 (called by
-		 * useSecretStore.updateSecret after a successful owner update if
-		 * the secret has active shares).
-		 *
-		 * Flow:
-		 *  1. Hydrate the current share list for the secret (if not yet
-		 *     loaded).
-		 *  2. For each recipient, fetch their active EncryptionSuite
-		 *     certificate and RSA-encrypt the new plaintext for them.
-		 *  3. PUT the batch to `/api/v1/secrets/{id}/sync` along with the
-		 *     `expectedUpdatedAt` for optimistic-lock validation.
-		 *
-		 * The server side (ShareService::syncUpdate) does the atomic
-		 * write inside a transaction, clears the `possiblyCompromisedAt`
-		 * flag if previously set, and rejects stale locks with HTTP 409
-		 * so the caller can re-encrypt.
-		 *
-		 * @param {string}              secretId          The source secret ID.
-		 * @param {object}              plaintext         New plaintext field map
-		 *   ({ key, login, additionalFields } — only fields that should be
-		 *   re-encrypted for recipients).
-		 * @param {string}              expectedUpdatedAt The owner's last-seen updatedAt (ISO).
-		 * @return {Promise<{updated: number}>}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
-		 */
-		async syncUpdate(secretId, plaintext, expectedUpdatedAt) {
-			this.loading = true
-			this.error = null
-			try {
-				if (this.shares.length === 0) {
-					await this.fetchShares(secretId)
-				}
-
-				if (this.shares.length === 0) {
-					// No recipients — nothing to sync. The UI uses this
-					// as a fast-path skip in useSecretStore.updateSecret.
-					return { updated: 0 }
-				}
-
-				// Build the per-recipient encrypted blob batch. The
-				// recipient's PEM certificate is returned by the share
-				// row (the server hydrates it from the active
-				// EncryptionSuite of the recipient).
-				const updates = []
-				for (const share of this.shares) {
-					const certificate =
-						share.recipientCertificate || share.certificate
-					if (certificate == null || certificate === '') {
-						// Skip recipients whose suite was revoked while the
-						// owner edited; the server-side cascade has already
-						// cleaned them up but the UI list may be stale.
-						continue
-					}
-
-					const blob = await this.encryptForRecipient(
-						plaintext,
-						certificate,
-					)
-					updates.push({
-						secretId: share.secretId,
-						encryptedKey: blob.key ?? null,
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
-					})
-				}
-
-				if (updates.length === 0) {
-					return { updated: 0 }
-				}
-
-				const response = await axios.put(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/sync`),
-					{
-						expectedUpdatedAt,
-						updates,
-					},
-				)
-				return response.data ?? { updated: updates.length }
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message
-					|| e?.message
-					|| 'Failed to sync update'
-				throw e
-			} finally {
-				this.loading = false
 			}
 		},
 

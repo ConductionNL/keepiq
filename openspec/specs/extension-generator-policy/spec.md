@@ -6,7 +6,7 @@ The generator under the organisation's policy, and every chosen kind of characte
 ## Requirements
 
 ### Requirement: Every chosen kind of character appears
-A generated password MUST hold at least one character of every kind the user chose (upper case, lower case, numbers, special characters), even with a minimum of zero, and none of a kind not chosen. The shared generator does this for the web app and the extension alike.
+A generated password MUST hold at least one character of every kind the user chose (upper case, lower case, numbers, special characters), even with a minimum of zero, and none of a kind not chosen. When the minimums do not fit, the length MUST grow to their sum, counting one for every chosen kind without a minimum, as Bitwarden does; a kind whose characters are all excluded counts for nothing. Each position MUST be equally likely to hold any given character, also one put in for a minimum. The shared generator does this for the web app and the extension alike.
 
 #### Scenario: Short password, all kinds
 @e2e exclude Pure generator function. Covered by tests/extension/generatorPolicy.spec.js ("puts every chosen kind of character in, even with no minimum") and ("leaves out a kind that is not chosen").
