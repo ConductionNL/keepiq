@@ -68,6 +68,13 @@ function byteAt(bytes: Uint8Array, offset: number): number {
 	return byte
 }
 
+/** DER uses the long form only past 127, in as few bytes as it takes (X.690 10.1), so anything else is malformed. */
+function longFormLength(octets: Uint8Array): number {
+	const length = octets.reduce((sum, octet) => sum * 256 + octet, 0)
+	if (length < 0x80 || octets[0] === 0) throw malformed()
+	return length
+}
+
 /** One DER element whose length fits in `limit`, so a hostile certificate can't read out of bounds. */
 function tlv(bytes: Uint8Array, offset: number, limit = bytes.length): Element {
 	const tag = byteAt(bytes, offset)
@@ -76,8 +83,8 @@ function tlv(bytes: Uint8Array, offset: number, limit = bytes.length): Element {
 	if (length & 0x80) {
 		const count = length & 0x7f
 		if (count === 0 || count > 4) throw malformed()
-		length = 0
-		for (let i = 0; i < count; i++) length = length * 256 + byteAt(bytes, cursor++)
+		length = longFormLength(bytes.subarray(cursor, cursor + count))
+		cursor += count
 	}
 	if (cursor + length > limit) throw malformed()
 	return { tag, offset, start: cursor, end: cursor + length }

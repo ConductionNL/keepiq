@@ -521,6 +521,12 @@ describe('verifyFederatedCertificate on chains built here', () => {
 	describe('strict DER', () => {
 		const flagged = (id: number[], flag: number, value: number[]) => der(0x30, der(0x06, id), der(0x01, [flag]), der(0x04, value))
 		const cases: [string, Parts][] = [
+			['a critical flag that is an INTEGER', { intermediate: { extensions: [CA, der(0x30, der(0x06, OID.keyUsage), der(0x02, [0xff]), der(0x04, der(0x03, [0x01, 0x06])))] } }],
+			['a critical flag that is an OCTET STRING', { intermediate: { extensions: [der(0x30, der(0x06, OID.basicConstraints), der(0x04, [0xff]), der(0x04, der(0x30, der(0x01, [0xff]))))] } }],
+			['a cA flag with a long-form length', { intermediate: { extensions: [basicConstraints([0x01, 0x81, 0x01, 0xff])] } }],
+			['a pathLen with a long-form length', { root: { extensions: [basicConstraints(der(0x01, [0xff]), [0x02, 0x81, 0x01, 0x05])] } }],
+			['a length of 127 in long form', { leaf: { extensions: [der(0x30, der(0x06, OID.subjectKeyId), [0x04, 0x81, 0x7f, ...new Uint8Array(127)])] } }],
+			['a length with a leading zero byte', { leaf: { extensions: [der(0x30, der(0x06, OID.subjectKeyId), [0x04, 0x82, 0x00, 0x80, ...new Uint8Array(128)])] } }],
 			['a cA BOOLEAN of 0x01', { intermediate: { extensions: [basicConstraints(der(0x01, [0x01]))] } }],
 			['a cA BOOLEAN of two bytes', { intermediate: { extensions: [basicConstraints(der(0x01, [0xff, 0xff]))] } }],
 			['a critical flag of 0x01', { intermediate: { extensions: [CA, flagged(OID.keyUsage, 0x01, der(0x03, [0x01, 0x06]))] } }],
@@ -533,6 +539,10 @@ describe('verifyFederatedCertificate on chains built here', () => {
 
 		it.each(cases)('refuses %s as malformed', async (_, parts) => {
 			expect(await reasonOf(verifyBuilt(parts))).toBe('malformed')
+		})
+
+		it('accepts a length of 128, the shortest that needs the long form', async () => {
+			await expect(verifyBuilt({ leaf: { extensions: [der(0x30, der(0x06, OID.subjectKeyId), der(0x04, new Uint8Array(128)))] } })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
 		})
 
 		it('accepts a pathLen of 128, which needs its leading zero', async () => {

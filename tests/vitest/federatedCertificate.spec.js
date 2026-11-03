@@ -1101,6 +1101,114 @@ describe('verifyFederatedCertificate on chains built here', () => {
 
 		it.each([
 			[
+				'a critical flag that is an INTEGER',
+				{
+					intermediate: {
+						extensions: [
+							CA,
+							derElement(
+								0x30,
+								derElement(0x06, OID.keyUsage),
+								derElement(0x02, [0xff]),
+								derElement(0x04, derElement(0x03, [0x01, 0x06])),
+							),
+						],
+					},
+				},
+			],
+			[
+				'a critical flag that is an OCTET STRING',
+				{
+					intermediate: {
+						extensions: [
+							derElement(
+								0x30,
+								derElement(0x06, OID.basicConstraints),
+								derElement(0x04, [0xff]),
+								derElement(
+									0x04,
+									derElement(0x30, derElement(0x01, [0xff])),
+								),
+							),
+						],
+					},
+				},
+			],
+			[
+				'a cA flag with a long-form length',
+				{
+					intermediate: {
+						extensions: [basicConstraints([0x01, 0x81, 0x01, 0xff])],
+					},
+				},
+			],
+			[
+				'a pathLen with a long-form length',
+				{
+					root: {
+						extensions: [
+							basicConstraints(
+								derElement(0x01, [0xff]),
+								[0x02, 0x81, 0x01, 0x05],
+							),
+						],
+					},
+				},
+			],
+			[
+				'a length of 127 in long form',
+				{
+					leaf: {
+						extensions: [
+							derElement(0x30, derElement(0x06, OID.subjectKeyId), [
+								0x04,
+								0x81,
+								0x7f,
+								...new Uint8Array(127),
+							]),
+						],
+					},
+				},
+			],
+			[
+				'a length with a leading zero byte',
+				{
+					leaf: {
+						extensions: [
+							derElement(0x30, derElement(0x06, OID.subjectKeyId), [
+								0x04,
+								0x82,
+								0x00,
+								0x80,
+								...new Uint8Array(128),
+							]),
+						],
+					},
+				},
+			],
+		])('refuses %s as malformed', async (_, parts) => {
+			expect(await reasonOf(verifyBuilt(parts))).toBe('malformed')
+		})
+
+		it('accepts a length of 128, the shortest that needs the long form', async () => {
+			const value = derElement(0x04, new Uint8Array(128))
+			await expect(
+				verifyBuilt({
+					leaf: {
+						extensions: [
+							derElement(
+								0x30,
+								derElement(0x06, OID.subjectKeyId),
+								value,
+							),
+						],
+					},
+				}),
+			).resolves.toHaveProperty('fingerprint')
+		})
+
+		it.each([
+			[
 				'a cA BOOLEAN of 0x01',
 				{
 					intermediate: {
