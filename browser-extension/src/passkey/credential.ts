@@ -21,6 +21,8 @@ export interface PasskeyCredential {
 const REQUIRED = ['credentialId', 'rpId', 'privateKey'] as const
 
 const text = (value: unknown) => (value != null ? String(value) : '')
+const filled = (value: unknown): value is string => typeof value === 'string' && value !== ''
+const integer = (value: unknown, fallback: number) => (Number.isInteger(value) ? (value as number) : fallback)
 
 /** Defaults only the Keepiq extension fields, never credential material; null when a required field is missing. */
 export function buildPasskeyCredential(input: unknown): PasskeyCredential | null {
@@ -37,10 +39,10 @@ export function buildPasskeyCredential(input: unknown): PasskeyCredential | null
 		userDisplayName: text(raw.userDisplayName),
 		userHandle: text(raw.userHandle),
 		privateKey: String(raw.privateKey),
-		algorithm: Number.isInteger(raw.algorithm) ? (raw.algorithm as number) : -7,
-		counter: Number.isInteger(raw.counter) ? (raw.counter as number) : 0,
+		algorithm: integer(raw.algorithm, -7),
+		counter: integer(raw.counter, 0),
 		transports: Array.isArray(raw.transports) ? raw.transports.map(String) : [],
-		createdAt: typeof raw.createdAt === 'string' && raw.createdAt !== '' ? raw.createdAt : new Date().toISOString(),
+		createdAt: filled(raw.createdAt) ? raw.createdAt : new Date().toISOString(),
 	}
 }
 
