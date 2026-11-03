@@ -1726,7 +1726,8 @@ OC.L10N.register(
         "This image could not be read.": "Ova slika nije se mogla pročitati.",
         "This image is too large. Choose an image under 10 MB.": "Ova slika je prevelika. Odaberite sliku manju od 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ovo nije ključ autentifikatora. Zalijepite poveznicu otpauth://totp/ ili tajnu u formatu base32.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ovaj QR kod ne sadrži ključ autentifikatora. Upotrijebite QR kod koji stranica prikazuje kad postavljate prijavu u dva koraka."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ovaj QR kod ne sadrži ključ autentifikatora. Upotrijebite QR kod koji stranica prikazuje kad postavljate prijavu u dva koraka.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ova tajna čeka provjeru svojih dijeljenja koja još nije završena. Ništa nije spremljeno; pokušajte ponovno kasnije ili zamolite administratora da provjeri rade li pozadinski poslovi."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

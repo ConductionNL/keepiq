@@ -1726,7 +1726,8 @@ OC.L10N.register(
         "This image could not be read.": "Cette image n'a pas pu être lue.",
         "This image is too large. Choose an image under 10 MB.": "Cette image est trop volumineuse. Choisissez une image de moins de 10 Mo.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ce n'est pas une clé d'authentificateur. Collez un lien otpauth://totp/ ou le secret en base32.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ce code QR ne contient pas de clé d'authentificateur. Utilisez le code QR que le site affiche lorsque vous configurez la connexion à deux facteurs."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ce code QR ne contient pas de clé d'authentificateur. Utilisez le code QR que le site affiche lorsque vous configurez la connexion à deux facteurs.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ce secret attend une vérification de ses partages qui n'est pas encore terminée. Rien n'a été enregistré ; réessayez plus tard ou demandez à un administrateur de vérifier que les tâches de fond s'exécutent."
     },
     "nplurals=2; plural=(n > 1);"
 )

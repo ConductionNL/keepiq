@@ -1803,7 +1803,8 @@
         "This image could not be read.": "Dette bildet kunne ikke leses.",
         "This image is too large. Choose an image under 10 MB.": "Dette bildet er for stort. Velg et bilde under 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dette er ikke en autentikatornøkkel. Lim inn en otpauth://totp/-lenke eller base32-hemmeligheten.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-koden inneholder ikke en autentikatornøkkel. Bruk QR-koden nettstedet viser når du setter opp totrinnspålogging."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-koden inneholder ikke en autentikatornøkkel. Bruk QR-koden nettstedet viser når du setter opp totrinnspålogging.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Denne hemmeligheten venter på en kontroll av delingene sine som ikke er ferdig ennå. Ingenting ble lagret; prøv igjen senere, eller be en administrator kontrollere at bakgrunnsjobber kjører."
     },
     "plurals": null
 }

@@ -1726,7 +1726,8 @@ OC.L10N.register(
         "This image could not be read.": "Това изображение не можа да бъде прочетено.",
         "This image is too large. Choose an image under 10 MB.": "Това изображение е твърде голямо. Изберете изображение под 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Това не е ключ на удостоверител. Поставете връзка otpauth://totp/ или тайната във формат base32.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Този QR код не съдържа ключ на удостоверител. Използвайте QR кода, който сайтът показва при настройване на двуфакторното влизане."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Този QR код не съдържа ключ на удостоверител. Използвайте QR кода, който сайтът показва при настройване на двуфакторното влизане.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Тази тайна изчаква проверка на споделянията си, която още не е завършила. Нищо не беше запазено; опитайте отново по-късно или помолете администратор да провери дали фоновите задачи се изпълняват."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -45,6 +45,8 @@ use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareSave\ShareSaveHistory;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSave\IncompleteShareSaveException;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
@@ -58,6 +60,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
@@ -67,6 +70,8 @@ use Throwable;
  * Dave at a partner instance (`fs-1`).
  */
 class ShareSaveServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	private const BASE = '2026-10-01T10:00:00+00:00';
 	private const BOB_BASE = '2026-10-01T09:00:00+00:00';
 
@@ -305,21 +310,22 @@ class ShareSaveServiceTest extends TestCase {
 		});
 	}
 
-	private function service(?ShareAuthorizationService $auth = null): ShareSaveService {
+	private function service(?ShareAuthorizationService $auth = null, ?ShareQuarantineScanner $scanner = null): ShareSaveService {
+		$judge = new ShareRowJudge(targets: $this->targets, secrets: $this->secretMapper, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class)));
 		$guards = new ShareSyncGuards(
-			targets: $this->targets,
 			secrets: $this->secretMapper,
 			suites: $this->suites,
 			auth: ($auth ?? $this->auth),
+			rowJudge: $judge,
 		);
 		$sync = new ShareSyncService(
-			mapper: $this->targets,
 			secretMapper: $this->secretMapper,
 			db: $this->db,
 			auth: ($auth ?? $this->auth),
 			versionService: $this->versionHistory,
 			guards: $guards,
-			contexts: new ShareWriteContext(targets: $this->targets, suites: $this->suites, auth: ($auth ?? $this->auth)),
+			contexts: new ShareWriteContext(suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
+			rowJudge: $judge,
 		);
 
 		return new ShareSaveService(
@@ -330,11 +336,11 @@ class ShareSaveServiceTest extends TestCase {
 			delivery: $this->delivery,
 			history: new ShareSaveHistory(versions: $this->versionHistory, auditTrail: $this->audit),
 			scope: new ShareSaveScope(
-				targets: $this->targets,
 				secrets: $this->secretMapper,
 				federatedShares: $this->federatedMapper,
 				sync: $sync,
 				guards: $guards,
+				rowJudge: $judge,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
 			db: $this->db,
@@ -421,7 +427,7 @@ class ShareSaveServiceTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $delegations,
-			shareTargetMapper: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secretMapper),
 			groupShareMapper: $groupShares,
 			groupManager: $groups,
 		);
@@ -480,6 +486,64 @@ class ShareSaveServiceTest extends TestCase {
 			$result['federated']
 		);
 		$this->assertSame('src', $result['secret']['id']);
+	}
+
+	/**
+	 * A pending quarantine scan whose verdict on Carol's share row is given;
+	 * every other row is cleared.
+	 *
+	 * @param string|null $carol What heldBack() answers for Carol's row
+	 *
+	 * @return ShareQuarantineScanner
+	 */
+	private function scanJudgingCarol(?string $carol): ShareQuarantineScanner {
+		$verdict = static fn (ShareTarget $row): ?string => ($row->getSecretId() === 'c-carol' ? $carol : null);
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturnCallback($verdict);
+		$scanner->method('mayTouchCopy')->willReturnCallback(
+			static fn (ShareTarget $row, Secret $copy): bool => $row->isHeldByTarget(copy: $copy) === true && $verdict($row) === null
+		);
+
+		return $scanner;
+	}
+
+	public function testTheOwnersSaveLeavesOutACopyWhoseRowThePendingScanQuarantines(): void {
+		$this->delivery->method('deliver')->willReturn(true);
+		$request = $this->ownerRequest(['copies' => [['secretId' => 'c-bob', 'key' => 'K-BOB', 'login' => null]]]);
+
+		$result = $this->service(scanner: $this->scanJudgingCarol(carol: ShareQuarantineScanner::HELD_QUARANTINED))
+			->save(id: 'src', request: $request, userId: 'alice');
+
+		$this->assertSame(['begin', 'lock src', 'copy c-bob', 'partner fs-1', 'row src', 'commit'], $this->log);
+		$this->assertSame(['K-BOB'], array_column($this->copyWrites, 'key'));
+		$this->assertSame(['written' => 1, 'skipped' => 0], $result['copies']);
+	}
+
+	public function testTheOwnersSaveWaitsForTheScanWhenItCannotJudgeACopysRow(): void {
+		$refusal = $this->refusal(
+			fn () => $this->service(scanner: $this->scanJudgingCarol(carol: ShareQuarantineScanner::HELD_UNJUDGED))
+				->save(id: 'src', request: $this->ownerRequest(), userId: 'alice')
+		);
+
+		$this->assertInstanceOf(ShareSaveRefusal::class, $refusal);
+		$this->assertSame('share_scan_pending', $refusal->getBody()['error']);
+		$this->assertSame(409, $refusal->getStatus());
+		$this->assertSame([], $this->copyWrites);
+		$this->assertSame([], $this->rowSaves);
+		$this->assertNotContains('commit', $this->log);
+	}
+
+	public function testTheOwnersSaveWritesEveryCopyThePendingScanClears(): void {
+		$this->delivery->method('deliver')->willReturn(true);
+
+		$result = $this->service(scanner: $this->scanJudgingCarol(carol: null))
+			->save(id: 'src', request: $this->ownerRequest(), userId: 'alice');
+
+		$this->assertSame(
+			['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'partner fs-1', 'row src', 'commit'],
+			$this->log
+		);
+		$this->assertSame(['written' => 2, 'skipped' => 0], $result['copies']);
 	}
 
 	public function testPartnersAreToldOnlyAfterTheCommit(): void {

@@ -56,8 +56,8 @@ class AccountShareCleanupService {
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
 	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
 	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
+	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user tombstones)
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -70,8 +70,8 @@ class AccountShareCleanupService {
 		private SecretDelegationMapper $delegationMapper,
 		private ShareSaveStageMapper $stageMapper,
 		private SecretOwnerTransferService $ownerTransfer,
+		private ShareQuarantineScanner $quarantineScan,
 		private ?LoggerInterface $logger = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 	}//end __construct()
 
@@ -154,7 +154,7 @@ class AccountShareCleanupService {
 				}
 
 				if ($copy !== null
-					&& ($this->quarantineScan?->mayTouchCopy(row: $share, copy: $copy) ?? $share->isHeldByTarget(copy: $copy)) === false
+					&& ($share->isHeldByTarget(copy: $copy) === false || $this->quarantineScan->heldBack(row: $share) !== null)
 				) {
 					$this->logger?->warning(
 						'Kept a secret its detached share target does not hold, or the pending quarantine scan holds back',

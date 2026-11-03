@@ -32,6 +32,10 @@ import { onVaultLock, useSessionStore } from '../store/modules/session.js'
 import { useShareStore } from '../store/modules/share.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
+import {
+	SHARE_SCAN_PENDING,
+	shareScanPendingText,
+} from '../utils/shareScanPending.js'
 import { BLOB_FIELDS } from '../utils/valueFields.js'
 
 /** The encrypted value fields of a secret. */
@@ -759,6 +763,7 @@ const CODE_TEXTS = new Map([
 	['incomplete', incompleteText],
 	['partner_lookup_limit', lookupLimitText],
 	['view_only', viewOnlyText],
+	[SHARE_SCAN_PENDING, shareScanPendingText],
 ])
 
 /**
