@@ -44,6 +44,154 @@ function boundParam(value) {
 	return String(value)
 }
 
+/**
+ * The owner's emergency contacts, or null when they cannot be listed.
+ *
+ * @return {Promise<Array<object>|null>}
+ */
+async function listEmergencyContacts() {
+	try {
+		const response = await axios.get(
+			generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
+		)
+		return Array.isArray(response.data) ? response.data : []
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Whether a contact was put at stake by this rotation. An invalidated contact
+ * has no envelope to carry, and a contact stranded on a prior suite was not
+ * lost in this rotation, so neither is reported as a residual.
+ *
+ * @param {object} contact The emergency contact.
+ * @param {string} oldSuiteId The rotating old suite.
+ * @return {boolean}
+ */
+function belongsToRotation(contact, oldSuiteId) {
+	return contact.state !== 'invalidated' && contact.grantorSuiteId === oldSuiteId
+}
+
+/**
+ * Why a contact of this rotation is not carried, or null when it is.
+ *
+ * A break-glass in flight, or not confirmed by the owner: never escrow the new
+ * key to it. Each gets its own reason, because the form must not nudge the
+ * owner to re-add either the way it does for an unreachable grantee: that is
+ * what a planted contact is after (#804 review).
+ *
+ * @param {object} contact The emergency contact.
+ * @param {string[]} carryContactIds The contact ids the owner confirmed.
+ * @return {string|null}
+ */
+function residualReason(contact, carryContactIds) {
+	if (['requested', 'approved'].includes(contact.state)) {
+		return 'break_glass_in_flight'
+	}
+	if (contact.state !== 'granted' || !carryContactIds.includes(contact.id)) {
+		return 'not_confirmed'
+	}
+	return null
+}
+
+/**
+ * Build a fresh recovery envelope escrowing the new private key to the
+ * grantee's current certificate (a build, not a re-wrap).
+ *
+ * @param {object} contact The confirmed, granted contact.
+ * @param {object} rotation The rotation; see reEnvelopeContact.
+ * @return {Promise<{contactId: string, recoveryEnvelope: string, granteeSuiteId: string}>}
+ */
+async function freshRecoveryEnvelope(contact, rotation) {
+	const certResponse = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/emergency-access/grantee-certificate'),
+		{ params: { granteeUserId: contact.granteeUserId } },
+	)
+	const recoveryEnvelope = await buildRecoveryEnvelope(
+		rotation.newPrivateKeyPem,
+		certResponse.data.certificate,
+	)
+	return {
+		contactId: contact.id,
+		recoveryEnvelope,
+		granteeSuiteId: certResponse.data.suiteId,
+	}
+}
+
+/**
+ * Re-point a contact to its fresh envelope, with a vault-key proof made with
+ * the new key and password.
+ *
+ * @param {object} envelope The contactId, recoveryEnvelope and granteeSuiteId.
+ * @param {object} rotation The rotation; see reEnvelopeContact.
+ * @return {Promise<void>}
+ */
+async function rePointContact(envelope, rotation) {
+	// Bound in the order the server hashes them:
+	// id, contactId, recoveryEnvelope, granteeSuiteId.
+	const headers = await buildKeyProofHeaders({
+		suiteId: rotation.newSuiteId,
+		purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
+		encryptedPrivateKey: rotation.newEncryptedPrivateKey,
+		masterPassword: rotation.newPassword,
+		boundValues: [
+			rotation.migrationId,
+			envelope.contactId,
+			envelope.recoveryEnvelope,
+			envelope.granteeSuiteId,
+		],
+	})
+	await axios.post(
+		generateUrl(
+			`/apps/keepiq/api/v1/migrations/${rotation.migrationId}/emergency-contacts/${envelope.contactId}`,
+		),
+		{
+			recoveryEnvelope: envelope.recoveryEnvelope,
+			granteeSuiteId: envelope.granteeSuiteId,
+		},
+		{ headers },
+	)
+}
+
+/**
+ * Carry a contact onto the new suite.
+ *
+ * A grantee without an active certificate, a refused proof or a failed
+ * re-point leaves the contact on the old suite for the completion sweep to
+ * invalidate. That is never fatal: contacts are outside the gate.
+ *
+ * @param {object} contact The confirmed, granted contact.
+ * @param {object} rotation The migrationId, newPrivateKeyPem, newSuiteId,
+ *  newEncryptedPrivateKey and newPassword.
+ * @return {Promise<string|null>} `unreachable` on failure, else null.
+ */
+async function reEnvelopeContact(contact, rotation) {
+	try {
+		await rePointContact(
+			await freshRecoveryEnvelope(contact, rotation),
+			rotation,
+		)
+		return null
+	} catch {
+		return 'unreachable'
+	}
+}
+
+/**
+ * Why a contact of this rotation is left behind, or null once it is carried.
+ *
+ * @param {object} contact The emergency contact.
+ * @param {object} run The carryContactIds and the rotation.
+ * @return {Promise<string|null>}
+ */
+async function contactResidual(contact, run) {
+	return (
+		residualReason(contact, run.carryContactIds)
+		?? reEnvelopeContact(contact, run.rotation)
+	)
+}
+
 export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 	state: () => ({
 		/** @type {object|null} Current active suite */
@@ -107,7 +255,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Create a new EncryptionSuite (first-time setup).
 		 *
-		 * @param {string} masterPassword
+		 * @param {string} masterPassword The master password that protects the new private key.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async createSuite(masterPassword) {
@@ -152,8 +300,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Change master password (routine — re-wrap private key only).
 		 *
-		 * @param {string} oldPassword
-		 * @param {string} newPassword
+		 * @param {string} oldPassword The current master password.
+		 * @param {string} newPassword The new master password.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async changePassword(oldPassword, newPassword) {
@@ -436,112 +584,29 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   `not_confirmed` or `unreachable`.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
-		async migrateEmergencyContacts({
-			migrationId,
-			oldSuiteId,
-			newPrivateKeyPem,
-			newSuiteId,
-			newEncryptedPrivateKey,
-			newPassword,
-			carryContactIds = [],
-		}) {
+		async migrateEmergencyContacts(params) {
+			const { oldSuiteId, carryContactIds = [], ...rotation } = params
 			const residualContacts = []
 
-			let contacts
-			try {
-				const response = await axios.get(
-					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
-				)
-				contacts = Array.isArray(response.data) ? response.data : []
-			} catch {
-				// Could not enumerate the contacts — none are re-enveloped and the
+			const contacts = await listEmergencyContacts()
+			if (contacts === null) {
+				// Could not enumerate the contacts: none are re-enveloped and the
 				// completion sweep invalidates them all, the pre-change behaviour.
 				return residualContacts
 			}
 
 			for (const contact of contacts) {
-				// An already-invalidated contact has no envelope to carry.
-				if (contact.state === 'invalidated') {
+				if (!belongsToRotation(contact, oldSuiteId)) {
 					continue
 				}
-
-				// Only THIS rotation's contacts belong here. A contact stranded on
-				// a prior suite was not lost in this rotation, so skip it silently
-				// rather than mislabelling it as a residual this rotation dropped.
-				if (contact.grantorSuiteId !== oldSuiteId) {
-					continue
-				}
-
-				// A break-glass in flight, or not confirmed by the owner: never
-				// escrow the new key to it. The sweep invalidates it at completion.
-				// Each gets its own reason, because the form must not nudge the
-				// owner to re-add either the way it does for an unreachable
-				// grantee: that is what a planted contact is after (#804 review).
-				if (['requested', 'approved'].includes(contact.state)) {
+				const reason = await contactResidual(contact, {
+					carryContactIds,
+					rotation,
+				})
+				if (reason !== null) {
 					residualContacts.push({
 						granteeUserId: contact.granteeUserId,
-						reason: 'break_glass_in_flight',
-					})
-					continue
-				}
-				// Declined (nothing in flight) or unticked: the owner's choice.
-				if (
-					contact.state !== 'granted'
-					|| !carryContactIds.includes(contact.id)
-				) {
-					residualContacts.push({
-						granteeUserId: contact.granteeUserId,
-						reason: 'not_confirmed',
-					})
-					continue
-				}
-
-				try {
-					const certResponse = await axios.get(
-						generateUrl(
-							'/apps/keepiq/api/v1/emergency-access/grantee-certificate',
-						),
-						{ params: { granteeUserId: contact.granteeUserId } },
-					)
-
-					const recoveryEnvelope = await buildRecoveryEnvelope(
-						newPrivateKeyPem,
-						certResponse.data.certificate,
-					)
-
-					// Bound in the order the server hashes them:
-					// id, contactId, recoveryEnvelope, granteeSuiteId.
-					const headers = await buildKeyProofHeaders({
-						suiteId: newSuiteId,
-						purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
-						encryptedPrivateKey: newEncryptedPrivateKey,
-						masterPassword: newPassword,
-						boundValues: [
-							migrationId,
-							contact.id,
-							recoveryEnvelope,
-							certResponse.data.suiteId,
-						],
-					})
-
-					await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/migrations/${migrationId}/emergency-contacts/${contact.id}`,
-						),
-						{
-							recoveryEnvelope,
-							granteeSuiteId: certResponse.data.suiteId,
-						},
-						{ headers },
-					)
-				} catch {
-					// Grantee unreachable (no active certificate), a refused proof,
-					// or a transient re-point failure: leave the contact on the old
-					// suite for the completion sweep to invalidate, and prompt
-					// re-establishment. Never fatal — contacts are outside the gate.
-					residualContacts.push({
-						granteeUserId: contact.granteeUserId,
-						reason: 'unreachable',
+						reason,
 					})
 				}
 			}
