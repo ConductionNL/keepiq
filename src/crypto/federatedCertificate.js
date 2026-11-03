@@ -243,7 +243,9 @@ function derUint(bytes, element) {
 		|| length < 1
 		|| length > 4
 		|| bytes[element.start] & 0x80
-		|| (length > 1 && bytes[element.start] === 0 && !(bytes[element.start + 1] & 0x80))
+		|| (length > 1
+			&& bytes[element.start] === 0
+			&& !(bytes[element.start + 1] & 0x80))
 	) {
 		throw new FederatedCertificateError('malformed')
 	}
