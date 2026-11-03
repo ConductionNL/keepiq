@@ -73,7 +73,8 @@ struct GeneratorView: View {
                 layout {
                     if let value = outcome?.value {
                         // A password has no word breaks: it wraps at any character.
-                        Text(FieldRow.breakableAnywhere(value))
+                        // A passphrase keeps its breaks at the separators.
+                        Text(FieldRow.breakableLongRuns(value))
                             .font(.body.monospaced())
                             .textSelection(.disabled)
                             .lineLimit(nil)
