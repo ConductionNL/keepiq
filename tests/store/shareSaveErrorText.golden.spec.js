@@ -94,6 +94,18 @@ const CASES = {
 	'share save forbidden, fromShareSave "true"': () =>
 		httpError(403, { error: 'forbidden' }, { fromShareSave: 'true' }),
 }
+const UPGRADE = {
+	response: {
+		status: 409,
+		data: { error: 'partner_upgrade_required', requiredVersion: '9.9.9' },
+	},
+}
+for (const code of ['incomplete', 'partner_unreachable', 'other']) {
+	CASES[`ShareSaveError ${code} with partner upgrade data`] = () =>
+		Object.assign(new ShareSaveError(code, PARTNERS), UPGRADE)
+}
+CASES['ShareSaveError partner_upgrade_required, no response'] = () =>
+	new ShareSaveError('partner_upgrade_required', PARTNERS)
 for (const code of CODES) {
 	CASES[`ShareSaveError ${code}`] = () => new ShareSaveError(code, PARTNERS)
 	for (const status of [403, 409, 500]) {
