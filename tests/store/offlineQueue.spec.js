@@ -171,6 +171,19 @@ describe('editing offline', () => {
 })
 
 describe('replay', () => {
+	it('replays a delete with the version it was queued on', async () => {
+		await goOffline()
+		await secrets.deleteSecret('s1')
+		goOnline()
+		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
+
+		await offline.replayQueue()
+
+		expect(del).toHaveBeenCalledTimes(1)
+		expect(del.mock.calls[0][1]).toEqual({ params: { baseUpdatedAt: BASE } })
+		expect(stored.size).toBe(0)
+	})
+
 	it('saves a value edit with every copy in one share save, encrypted for the recipients of replay time', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { key: 'new-router-password' })

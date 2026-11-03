@@ -559,65 +559,91 @@ export const useOfflineStore = defineStore('offline', {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async replayOne(entry) {
-			const base = `/apps/keepiq/api/v1/secrets`
 			try {
 				if (entry.status === 'sync') {
 					return await this.replayPendingSync(entry)
 				}
-				if (entry.op === 'create') {
-					await axios.post(generateUrl(base), entry.body)
-				} else if (
-					entry.op === 'update'
-					&& SENSITIVE.some((f) => entry.body[f] !== undefined)
-				) {
-					// Every copy and partner share is encrypted for the holders
-					// of this moment (D2), in the same transaction as the row.
-					await this.shareSave(
-						entry,
-						entry.baseUpdatedAt,
-						entry.body,
-						entry.sourceBaseUpdatedAt ?? null,
-					)
-				} else if (entry.op === 'update') {
-					await axios.put(generateUrl(`${base}/${entry.secretId}`), {
-						...entry.body,
-						baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
-					})
-				} else {
-					await axios.delete(generateUrl(`${base}/${entry.secretId}`), {
-						params: entry.baseUpdatedAt
-							? { baseUpdatedAt: entry.baseUpdatedAt }
-							: {},
-					})
-				}
+				await this.sendEntry(entry)
 			} catch (e) {
-				const kind = replayKind(e)
-				if (kind === 'conflict') {
-					const answer = e.response?.data
-					this.conflicts = {
-						...this.conflicts,
-						[entry.entryId]: answer?.current ?? null,
-					}
-					// Stored with the entry, so keeping the change replays on
-					// this 409's versions, also after a reload.
-					await this.setStatus(
-						{
-							...entry,
-							conflictUpdatedAt: answer?.current?.updatedAt ?? null,
-							conflictSourceUpdatedAt: conflictSource(answer),
-						},
-						'conflict',
-					)
-					return 'conflict'
-				}
-				if (kind === 'failed') {
-					await this.setStatus(entry, 'failed', failureOf(e))
-					return 'failed'
-				}
-				return 'retry'
+				return this.replayFailure(entry, e)
 			}
 			await this.drop(entry)
 			return 'done'
+		},
+
+		/**
+		 * Send one queued change to the server: a create, a share save when
+		 * an update touches a sensitive field, a plain update, or a delete.
+		 *
+		 * @param {object} entry The queued entry.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 */
+		async sendEntry(entry) {
+			const base = `/apps/keepiq/api/v1/secrets`
+			if (entry.op === 'create') {
+				await axios.post(generateUrl(base), entry.body)
+			} else if (
+				entry.op === 'update'
+				&& SENSITIVE.some((f) => entry.body[f] !== undefined)
+			) {
+				// Every copy and partner share is encrypted for the holders
+				// of this moment (D2), in the same transaction as the row.
+				await this.shareSave(
+					entry,
+					entry.baseUpdatedAt,
+					entry.body,
+					entry.sourceBaseUpdatedAt ?? null,
+				)
+			} else if (entry.op === 'update') {
+				await axios.put(generateUrl(`${base}/${entry.secretId}`), {
+					...entry.body,
+					baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
+				})
+			} else {
+				await axios.delete(generateUrl(`${base}/${entry.secretId}`), {
+					params: entry.baseUpdatedAt
+						? { baseUpdatedAt: entry.baseUpdatedAt }
+						: {},
+				})
+			}
+		},
+
+		/**
+		 * Keep a change the server refused: a conflict keeps the server's
+		 * current version with it, a failure keeps why; anything else is
+		 * retried later.
+		 *
+		 * @param {object} entry The queued entry.
+		 * @param {Error|object} error The thrown error.
+		 * @return {Promise<string>} 'conflict', 'failed' or 'retry'.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
+		async replayFailure(entry, error) {
+			const kind = replayKind(error)
+			if (kind === 'conflict') {
+				const answer = error.response?.data
+				this.conflicts = {
+					...this.conflicts,
+					[entry.entryId]: answer?.current ?? null,
+				}
+				// Stored with the entry, so keeping the change replays on
+				// this 409's versions, also after a reload.
+				await this.setStatus(
+					{
+						...entry,
+						conflictUpdatedAt: answer?.current?.updatedAt ?? null,
+						conflictSourceUpdatedAt: conflictSource(answer),
+					},
+					'conflict',
+				)
+				return 'conflict'
+			}
+			if (kind === 'failed') {
+				await this.setStatus(entry, 'failed', failureOf(error))
+				return 'failed'
+			}
+			return 'retry'
 		},
 
 		/**
