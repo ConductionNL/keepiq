@@ -25,6 +25,17 @@ const isCode = (code: unknown): code is InlineCode => {
 		&& typeof c.period === 'number' && Number.isFinite(c.validUntil)
 }
 
+/** A code list has a code on every row, a login list on none. */
+function hasValidRows({ mode, rows }: Partial<State>): boolean {
+	return Array.isArray(rows) && rows.every((row) => typeof row?.id === 'string' && typeof row.name === 'string'
+		&& (row.username === null || typeof row.username === 'string') && (mode === 'code' ? isCode(row.code) : row.code === undefined))
+}
+
+/** Passkeys come only with an unlocked login list. */
+function hasValidPasskeys({ state, mode, passkeys }: Partial<State>): boolean {
+	return passkeys === undefined || (state === 'unlocked' && mode === 'login' && Array.isArray(passkeys) && passkeys.every(isPasskeyRow))
+}
+
 function isState(reply: unknown): reply is State {
 	const r = reply as Partial<State> | null
 	return typeof r === 'object' && r !== null
@@ -32,10 +43,8 @@ function isState(reply: unknown): reply is State {
 		&& (r.mode === 'login' || r.mode === 'code')
 		&& typeof r.host === 'string'
 		&& THEMES.includes(r.theme as never)
-		&& Array.isArray(r.rows)
-		&& r.rows.every((row) => typeof row?.id === 'string' && typeof row.name === 'string' && (row.username === null || typeof row.username === 'string')
-			&& (r.mode === 'code' ? isCode(row.code) : row.code === undefined))
-		&& (r.passkeys === undefined || (r.state === 'unlocked' && r.mode === 'login' && Array.isArray(r.passkeys) && r.passkeys.every(isPasskeyRow)))
+		&& hasValidRows(r)
+		&& hasValidPasskeys(r)
 }
 
 /** Passkeys above the logins (spec `inline-list`, Passkeys in the list during a conditional request). */
@@ -43,6 +52,14 @@ const shownRows = ({ rows, passkeys = [] }: State): Row[] => [
 	...passkeys.map((passkey) => ({ id: passkey.itemId, name: passkey.name, username: passkey.userName || null, credentialId: passkey.credentialId })),
 	...rows,
 ]
+
+/** A passkey names its credential; only a login can carry the confirmed insecure fill. */
+function pickMessage(key: string, row: Row, input: PickInput, confirmedInsecure: boolean): InlineListToBackground {
+	if (row.credentialId !== undefined) return { kind: 'inline.pick', key, itemId: row.id, credentialId: row.credentialId, input }
+	return { kind: 'inline.pick', key, itemId: row.id, input, ...(confirmedInsecure ? { confirmedInsecure } : {}) }
+}
+
+type PickAnswer = Partial<{ needsInsecureConfirm: true; refused: string }> | null | undefined
 
 /** The texts that differ between the login list and the code list. */
 function texts(mode: InlineMode) {
@@ -312,11 +329,13 @@ export function startInlineList(): () => void {
 		if (!key || pickLocked || !settled(input) || row.code?.digits === null) return
 		pickLocked = true
 		if (!visibility.allows(input.at)) return showNotVisible()
-		const reply = await send(row.credentialId === undefined
-			? { kind: 'inline.pick', key, itemId: row.id, input, ...(confirmedInsecure ? { confirmedInsecure } : {}) }
-			: { kind: 'inline.pick', key, itemId: row.id, credentialId: row.credentialId, input })
+		const reply = await send(pickMessage(key, row, input, confirmedInsecure))
 		if (stopped) return
-		const answer = reply as Partial<{ needsInsecureConfirm: true; refused: string }> | null | undefined
+		settlePick(row, reply as PickAnswer)
+	}
+
+	/** No answer unlocks the list for another pick; one that needs the insecure fill confirmed asks first. */
+	function settlePick(row: Row, answer: PickAnswer) {
 		if (answer === undefined) pickLocked = false
 		else if (answer?.needsInsecureConfirm === true) {
 			pickLocked = false

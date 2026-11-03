@@ -460,6 +460,16 @@ describe('pick guard', () => {
 		expect(picks()).toHaveLength(1)
 	})
 
+	it('takes another pick when the background did not answer the last one', async () => {
+		pickReply = undefined as never
+		await open()
+		click(row(0))
+		await flush()
+		click(row(1))
+		await flush()
+		expect(picks()).toMatchObject([{ itemId: 'p' }, { itemId: 'w' }])
+	})
+
 	it('sends nothing after a pick: the background closes the list', async () => {
 		await open()
 		click(row(0))
