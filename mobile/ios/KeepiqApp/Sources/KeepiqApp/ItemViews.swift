@@ -159,8 +159,12 @@ private struct TotpRow: View {
     let onCopy: (String) -> Void
     /// The countdown ring grows with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var gaugeSize: CGFloat = 44
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // At the accessibility text sizes the countdown and Copy go under the
+        // code, so the code keeps the full width instead of being squeezed.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         if let params = item.totp {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let millis = Int64(context.date.timeIntervalSince1970 * 1000)
@@ -168,7 +172,7 @@ private struct TotpRow: View {
                 let left = Totp.shared.secondsRemaining(period: params.period, epochMillis: millis)
                 VStack(alignment: .leading) {
                     Text(L("detail_code")).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
-                    HStack {
+                    layout {
                         Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
                         // A circular ProgressView spins on iOS whatever its value, so
                         // the seconds left are a gauge with the number in it.
@@ -184,7 +188,7 @@ private struct TotpRow: View {
                         .overlay { Text("\(Int(left))").font(.caption2).monospacedDigit().foregroundStyle(.primary) }
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(L("detail_code_seconds", Int(left)))
-                        Spacer()
+                        if !typeSize.isAccessibilitySize { Spacer() }
                         Button(L("action_copy")) { onCopy(code) }
                             .frame(minWidth: 44, minHeight: 44)
                             .accessibilityLabel(L("cd_copy_field", L("detail_code")))

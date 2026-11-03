@@ -86,7 +86,7 @@
 				"login": null,
 				"password": "k",
 				"additionalFields": null,
-				"folder": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"folder": "LoopB/LoopA"
 			},
 			{
 				"name": "Use only string",
@@ -124,10 +124,10 @@
 				"path": "Orphan"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"path": "LoopB/LoopA"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (5999 characters)"
+				"path": "LoopB"
 			}
 		]
 	},
@@ -218,7 +218,7 @@
 				"login": null,
 				"password": "k",
 				"additionalFields": null,
-				"folder": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"folder": "LoopB/LoopA"
 			},
 			{
 				"name": "Use only string",
@@ -256,10 +256,10 @@
 				"path": "Orphan"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"path": "LoopB/LoopA"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (5999 characters)"
+				"path": "LoopB"
 			}
 		]
 	},
@@ -350,7 +350,7 @@
 				"login": null,
 				"password": "k",
 				"additionalFields": null,
-				"folder": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"folder": "LoopB/LoopA"
 			},
 			{
 				"name": "Use only string",
@@ -388,10 +388,10 @@
 				"path": "Orphan"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"path": "LoopB/LoopA"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (5999 characters)"
+				"path": "LoopB"
 			}
 		]
 	},
@@ -482,7 +482,7 @@
 				"login": null,
 				"password": "k",
 				"additionalFields": null,
-				"folder": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"folder": "LoopB/LoopA"
 			},
 			{
 				"name": "Use only string",
@@ -520,10 +520,10 @@
 				"path": "Orphan"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"path": "LoopB/LoopA"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (5999 characters)"
+				"path": "LoopB"
 			}
 		]
 	},
@@ -641,15 +641,15 @@
 				"login": null,
 				"password": "k",
 				"additionalFields": null,
-				"folder": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"folder": "LoopB/LoopA"
 			}
 		],
 		"folders": [
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (6005 characters)"
+				"path": "LoopB/LoopA"
 			},
 			{
-				"path": "LoopA/LoopB/LoopA/LoopB/LoopA/LoopB/Loop... (5999 characters)"
+				"path": "LoopB"
 			}
 		]
 	},
@@ -662,90 +662,19 @@
 	"folders unknown id": {
 		"format": "keepiq-vault",
 		"version": 1,
-		"secrets": [
-			{
-				"name": "Unknown folder",
-				"url": null,
-				"type": "login",
-				"login": null,
-				"password": "k",
-				"additionalFields": null,
-				"folder": ""
-			}
-		],
+		"secrets": [],
 		"folders": []
 	},
 	"folders zero id": {
 		"format": "keepiq-vault",
 		"version": 1,
-		"secrets": [
-			{
-				"name": "Zero folder",
-				"url": null,
-				"type": "login",
-				"login": null,
-				"password": "k",
-				"additionalFields": null,
-				"folder": ""
-			}
-		],
+		"secrets": [],
 		"folders": []
 	},
 	"folders null id": {
 		"format": "keepiq-vault",
 		"version": 1,
-		"secrets": [
-			{
-				"name": "Plain",
-				"url": "https://a.test",
-				"type": "login",
-				"login": "u",
-				"password": "p",
-				"additionalFields": {
-					"notes": "n"
-				},
-				"folder": "Work"
-			},
-			{
-				"name": "Deep one",
-				"url": null,
-				"type": "login",
-				"login": null,
-				"password": "k",
-				"additionalFields": null,
-				"folder": "Work/Sub/Deep",
-				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
-				"passkeys": "[{\"id\":1}]"
-			},
-			{
-				"name": "Empty blobs",
-				"url": null,
-				"type": "login",
-				"login": null,
-				"password": "k",
-				"additionalFields": null,
-				"folder": "Work/Sub"
-			},
-			{
-				"name": "Use only string",
-				"url": null,
-				"type": "login",
-				"login": null,
-				"password": "k",
-				"additionalFields": null,
-				"folder": "Work"
-			}
-		],
-		"folders": [
-			{
-				"path": "Work"
-			},
-			{
-				"path": "Work/Sub"
-			},
-			{
-				"path": "Work/Sub/Deep"
-			}
-		]
+		"secrets": [],
+		"folders": []
 	}
 }

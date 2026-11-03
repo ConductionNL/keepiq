@@ -36,6 +36,7 @@ use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\MigrationWorkService;
 use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -190,15 +191,9 @@ class MigrationController extends OCSController {
 			// getWork and all three re-encryption endpoints return 404 for the
 			// same condition. A client could not tell "no such migration" from
 			// "malformed request" on the one endpoint where it matters most.
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end complete()
 

@@ -30,6 +30,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -176,10 +177,7 @@ class LinkShareController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		// The /public shell serves the SPA as #[PublicPage] — the
@@ -237,15 +235,9 @@ class LinkShareController extends OCSController {
 		try {
 			$this->linkShareService->delete(id: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted']);
