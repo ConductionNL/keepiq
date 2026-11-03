@@ -1340,6 +1340,14 @@ a {
 	overflow: visible;
 }
 
+/* Options that depend on the one above, lined up with its label text: the box's 15px and its 6px gap. */
+.form-card__nested {
+	display: flex;
+	flex-direction: column;
+	gap: var(--card-pad);
+	padding-inline-start: 21px;
+}
+
 .field__input--area {
 	height: auto;
 	min-height: 80px;

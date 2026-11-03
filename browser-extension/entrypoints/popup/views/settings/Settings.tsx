@@ -27,7 +27,7 @@ interface Props {
 export function Settings({ section, onOpen, account, snapshot, snapshotFailed, reload }: Props) {
 	switch (section) {
 		case 'accountSecurity': return <AccountSecurity account={account} />
-		case 'autofill': return <Autofill />
+		case 'autofill': return <Autofill reload={reload} />
 		case 'notifications': return <Notifications onOpen={onOpen} />
 		case 'excludedDomains': return <ExcludedDomains />
 		case 'vault': return <Vault onOpen={onOpen} snapshot={snapshot} snapshotFailed={snapshotFailed} reload={reload} />

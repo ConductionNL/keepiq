@@ -7,7 +7,9 @@ import { i18n } from '#i18n'
 import { readSettings } from '@/src/accounts/settings'
 import { accountStatus, getAccount, getActiveAccountId } from '@/src/accounts/store'
 import { activeTab, activeUnlockedId, fill, matchingLogins } from '@/src/autofill/fill'
+import { isWebUrl } from '@/src/autofill/frames'
 import { currentCode, matchingCodes, seedOf } from '@/src/autofill/login-codes'
+import { walletCandidates } from '@/src/autofill/wallet'
 import { onBroadcast } from '@/src/background/broadcast'
 import { openPopupOrPopout } from '@/src/browser-action'
 import { writeFromBackground } from '@/src/clipboard'
@@ -15,7 +17,10 @@ import { rsaDecrypt } from '@/src/crypto'
 import { generate } from '@/src/generator/generate'
 import { addHistory, openHistory } from '@/src/generator/history'
 import { readOptions, readPolicy } from '@/src/generator/store'
+import type { LastUsed } from '@/src/last-used'
+import type { FormKind } from '@/src/messages'
 import { getKey, sessionEpoch } from '@/src/vault/key-store'
+import { readSnapshot } from '@/src/vault/store'
 import { enforce, touch } from '@/src/vault/timeout'
 
 export const MENU_LIMIT = 10
@@ -32,6 +37,41 @@ export interface MenuEntry {
 
 // `&` marks an access key in menu titles on both browsers.
 const title = (name: string) => name.replaceAll('&', '&&')
+
+/** `prefix`: its items' ids are `<prefix>:<itemId>`; `open`: its "Open Keepiq" entry. */
+interface Submenu {
+	id: string
+	prefix: string
+	open: string
+	label: () => string
+}
+
+const LOGIN_MENU: Submenu = { id: 'autofill', prefix: 'autofill', open: 'open', label: () => i18n.t('contextMenu.autofill') }
+const FORM_MENUS: ReadonlyArray<Submenu & { kind: FormKind }> = [
+	{ kind: 'card', id: 'autofill-card', prefix: 'card', open: 'open-card', label: () => i18n.t('contextMenu.autofillCard') },
+	{ kind: 'identity', id: 'autofill-identity', prefix: 'identity', open: 'open-identity', label: () => i18n.t('contextMenu.autofillIdentity') },
+]
+const OPENS_POPUP = new Set(['unlock', ...[LOGIN_MENU, ...FORM_MENUS].map((menu) => menu.open)])
+const FILLS = new Set([LOGIN_MENU, ...FORM_MENUS].map((menu) => menu.prefix))
+
+function submenu(menu: Submenu, rows: ReadonlyArray<{ id: string; name: string }>): MenuEntry[] {
+	return [
+		{ id: menu.id, parentId: ROOT, title: menu.label() },
+		...rows.slice(0, MENU_LIMIT).map((row) => ({ id: `${menu.prefix}:${row.id}`, parentId: menu.id, title: title(row.name) })),
+		{ id: `${menu.id}-separator`, parentId: menu.id, type: 'separator' as const },
+		{ id: menu.open, parentId: menu.id, title: i18n.t('contextMenu.openKeepiq') },
+	]
+}
+
+/** Every card and identity, not matched by site, on any web page; a kind the vault has none of is left out (spec `card-identity-fill`). */
+async function formMenus(accountId: string, page: { url: string | undefined; lastUsed: LastUsed }): Promise<MenuEntry[]> {
+	const vault = await readSnapshot(accountId)
+	if (!vault || page.url === undefined || !isWebUrl(page.url)) return []
+	return FORM_MENUS.flatMap((menu) => {
+		const rows = walletCandidates(menu.kind, vault, page.lastUsed)
+		return rows.length ? submenu(menu, rows) : []
+	})
+}
 
 /** One entry for a single item, a submenu for several, a disabled entry for none. */
 function perItem(prefix: string, label: string, rows: ReadonlyArray<{ id: string; name: string }>): MenuEntry[] {
@@ -52,16 +92,11 @@ export async function menuEntries(): Promise<MenuEntry[]> {
 	const root: MenuEntry = { id: ROOT, title: i18n.t('contextMenu.root') }
 	if (status === 'locked') return [root, { id: 'unlock', parentId: ROOT, title: i18n.t('contextMenu.unlock') }]
 	const pageUrl = (await activeTab())?.url
-	const { rows } = await matchingLogins(account.id, pageUrl)
+	const { rows, lastUsed } = await matchingLogins(account.id, pageUrl)
 	const { rows: codes } = await matchingCodes(account.id, pageUrl)
 	const autofill: MenuEntry[] = rows.length
-		? [
-			{ id: 'autofill', parentId: ROOT, title: i18n.t('contextMenu.autofill') },
-			...rows.slice(0, MENU_LIMIT).map((row) => ({ id: `autofill:${row.id}`, parentId: 'autofill', title: title(row.name) })),
-			{ id: 'autofill-separator', parentId: 'autofill', type: 'separator' as const },
-			{ id: 'open', parentId: 'autofill', title: i18n.t('contextMenu.openKeepiq') },
-		]
-		: [{ id: 'autofill', parentId: ROOT, title: i18n.t('contextMenu.noMatches'), enabled: false }]
+		? submenu(LOGIN_MENU, rows)
+		: [{ id: LOGIN_MENU.id, parentId: ROOT, title: i18n.t('contextMenu.noMatches'), enabled: false }]
 	return [
 		root,
 		...autofill,
@@ -69,6 +104,7 @@ export async function menuEntries(): Promise<MenuEntry[]> {
 		// A use-only copy's password is never shown or copied (ADR-003).
 		...perItem('copy-pass', i18n.t('contextMenu.copyPassword'), rows.filter((row) => row.useOnly !== true)),
 		...perItem('copy-code', i18n.t('contextMenu.copyCode'), codes),
+		...await formMenus(account.id, { url: pageUrl, lastUsed }),
 		{ id: 'generate', parentId: ROOT, title: i18n.t('contextMenu.generatePassword') },
 	]
 }
@@ -132,7 +168,7 @@ async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<v
 	if (split < 0 || tab?.id === undefined) return
 	const action = menuId.slice(0, split)
 	const itemId = menuId.slice(split + 1)
-	if (action === 'autofill') {
+	if (FILLS.has(action)) {
 		await fill({ itemId, tabId: tab.id, ask: 'page', code: true })
 		await rebuildMenus()
 	}
@@ -144,7 +180,7 @@ async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<v
 export function onMenuClicked(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): void {
 	const menuId = String(info.menuItemId)
 	// Before any await: Firefox below 149 opens the popup only from the click itself.
-	if (menuId === 'open' || menuId === 'unlock') {
+	if (OPENS_POPUP.has(menuId)) {
 		void openPopupOrPopout(tab?.id).catch((error: unknown) => console.error('[keepiq] open popup', error))
 		return
 	}

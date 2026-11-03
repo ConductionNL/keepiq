@@ -2,7 +2,9 @@ import { readAccountPolicy } from '@/src/accounts/policy'
 import { AUTOFILL_FEATURES, clampTimeout, readSettings } from '@/src/accounts/settings'
 import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, updateSettings, type AccountRecord } from '@/src/accounts/store'
 import { disableDefaultManager, enableDefaultManager, readDefaultManager } from '@/src/autofill/default-manager'
+import { isWebUrl } from '@/src/autofill/frames'
 import { candidatesFor } from '@/src/autofill/matcher'
+import { walletCandidates } from '@/src/autofill/wallet'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
 import { addHistory, clearHistory, openHistory, sealHistory } from '@/src/generator/history'
@@ -10,7 +12,7 @@ import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
 	USE_ONLY_FIELDS, type AccountSettingsRequest, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
-	type FillRequest, type GeneratorRequest, type PasskeyDetail, type PasskeysReply, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type SyncStatus, type VaultSnapshotReply, type VaultWrite,
+	type FillRequest, type FormKind, type GeneratorRequest, type PasskeyDetail, type PasskeysReply, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type SyncStatus, type VaultSnapshotReply, type VaultWrite,
 } from '@/src/messages'
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readLastUsed } from '@/src/last-used'
@@ -53,6 +55,28 @@ async function defaultSecretType(accountId: string, cached: VaultSnapshot | unde
 	return defaultItemType !== 'passkey' && cached?.types.some((type) => type.name === defaultItemType) ? defaultItemType : null
 }
 
+interface SuggestionInput {
+	accountId: string
+	tabUrl: string | undefined
+	vault: VaultSnapshot | undefined
+}
+
+const VAULT_VIEW: ReadonlyArray<[FormKind, 'vaultCards' | 'vaultIdentities']> = [['card', 'vaultCards'], ['identity', 'vaultIdentities']]
+
+/** Cards and identities are not matched by site, so they are offered on every web page (spec `card-identity-fill`). */
+async function suggestions({ accountId, tabUrl, vault }: SuggestionInput): Promise<{ suggestionIds: string[]; formIds: string[] }> {
+	if (!vault) return { suggestionIds: [], formIds: [] }
+	const settings = await readSettings(accountId)
+	const lastUsed = await readLastUsed(accountId)
+	const logins = candidatesFor(tabUrl, vault, settings.uriMatch, lastUsed)
+	const web = tabUrl !== undefined && isWebUrl(tabUrl)
+	const forms = (web ? VAULT_VIEW : []).map(([kind, setting]) => ({ rows: walletCandidates(kind, vault, lastUsed), shown: settings[setting] }))
+	return {
+		suggestionIds: [...logins, ...forms.flatMap((form) => (form.shown ? form.rows : []))].map((row) => row.id),
+		formIds: forms.flatMap((form) => form.rows).map((row) => row.id),
+	}
+}
+
 async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<VaultSnapshotReply> {
 	const active = await activeAccount()
 	if (active?.status !== 'unlocked') return { state: active?.status === 'locked' ? 'locked' : 'logged_out' }
@@ -68,7 +92,7 @@ async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<Va
 		items,
 		folders: cached?.folders.map(({ id, name, parentId }) => ({ id, name, parentId })) ?? [],
 		types: cached?.types.map(({ id, name, label }) => ({ id, name, label: typeof label === 'string' && label ? label : name })) ?? [],
-		suggestionIds: cached ? candidatesFor(tabUrl, cached, (await readSettings(account.id)).uriMatch, await readLastUsed(account.id)).map((row) => row.id) : [],
+		...await suggestions({ accountId: account.id, tabUrl, vault: cached }),
 		sync: await syncStatus(account.id),
 		webAppUrl: webAppUrl(account),
 		defaultSecretType: await defaultSecretType(account.id, cached),

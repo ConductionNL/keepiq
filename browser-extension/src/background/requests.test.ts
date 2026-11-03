@@ -92,6 +92,43 @@ describe('vault.snapshot', () => {
 		expect(await ids()).toEqual(['work'])
 	})
 
+	describe('cards and identities', () => {
+		beforeEach(async () => {
+			await snapshot([
+				secretRow({ id: 'id-b', name: 'B identity', url: null, typeId: 't-identity' }),
+				secretRow({ id: 'card-z', name: 'Z card', url: 'https://bank.test', typeId: 't-card' }),
+				secretRow({ id: 'login', name: 'Shop', url: 'https://shop.test' }),
+				secretRow({ id: 'card-a', name: 'A card', url: null, typeId: 't-card', useOnly: true }),
+				secretRow({ id: 'id-a', name: 'A identity', url: null, typeId: 't-identity' }),
+				blockedRow({ id: 'card-blocked', typeId: 't-card' }),
+			])
+		})
+		async function reply(tabUrl?: string) {
+			const { suggestionIds, formIds } = await send({ kind: 'vault.snapshot', tabUrl }) as { suggestionIds: string[]; formIds: string[] }
+			return { suggestionIds, formIds }
+		}
+
+		it('lists the matching logins, then every card, then every identity, each last used first, on any web page', async () => {
+			await browser.storage.local.set({ [`lastUsed.${accountId}`]: { 'card-z': 5, 'id-b': 3 } })
+			expect(await reply('https://shop.test/checkout')).toEqual({
+				suggestionIds: ['login', 'card-z', 'card-a', 'id-b', 'id-a'],
+				formIds: ['card-z', 'card-a', 'id-b', 'id-a'],
+			})
+			expect((await reply('http://localhost:8100/')).suggestionIds).toEqual(['card-z', 'card-a', 'id-b', 'id-a'])
+		})
+
+		it('leaves out the kinds whose Vault view setting is off, but still lets their detail view fill', async () => {
+			await writeSettings(accountId, { vaultCards: false })
+			expect(await reply('https://shop.test/')).toEqual({ suggestionIds: ['login', 'id-a', 'id-b'], formIds: ['card-a', 'card-z', 'id-a', 'id-b'] })
+			await writeSettings(accountId, { vaultCards: true, vaultIdentities: false })
+			expect((await reply('https://shop.test/')).suggestionIds).toEqual(['login', 'card-a', 'card-z'])
+		})
+
+		it.each([undefined, 'about:blank', 'chrome://newtab/', 'moz-extension://abc/popup.html', 'file:///tmp/a.html'])('offers none on %s', async (tabUrl) => {
+			expect(await reply(tabUrl)).toEqual({ suggestionIds: [], formIds: [] })
+		})
+	})
+
 	it('starts a first sync and says so when there is no snapshot', async () => {
 		const reply = await send({ kind: 'vault.snapshot', opened: true })
 		expect(reply).toMatchObject({ state: 'unlocked', items: null, sync: { syncing: true } })
@@ -400,7 +437,7 @@ describe('account settings', () => {
 			maxIdleMinutes: null,
 			exportDisabled: false,
 			pin: false,
-			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys'],
+			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys', 'cards', 'identities'],
 			shortcut: null,
 			serverUrl: 'https://cloud.example.org',
 			webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',

@@ -31,7 +31,7 @@ interface Props {
 	webAppUrl: string
 	/** What the last save of this item left to others; held by Shell. */
 	shareSave?: Note
-	/** The active tab, set when the item is one of its Autofill suggestions; offers Fill. */
+	/** The active tab, set when the item is one of its Autofill suggestions or a card or identity on a web page; offers Fill. */
 	fillTab?: CurrentTab
 }
 

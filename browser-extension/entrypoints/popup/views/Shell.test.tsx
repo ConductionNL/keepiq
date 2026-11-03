@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generate } from '@/src/generator/generate'
 import App from '../App'
-import { editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
+import { accountSettingsSnapshot, editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
 
 vi.mock('@/src/generator/generate', async (original) => ({ ...await original<typeof import('@/src/generator/generate')>(), generate: vi.fn() }))
 
@@ -89,6 +89,95 @@ describe('Shell', () => {
 		await user.click(await screen.findByRole('button', { name: 'Fill' }))
 		expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'i1', tabId: 7 }])
 		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+	})
+
+	describe('Fill on a card\'s or identity\'s detail', () => {
+		const card = (overrides = {}) => itemMeta({ id: 'c1', name: 'Visa', typeId: 't-card', hasLogin: false, url: null, ...overrides })
+		async function openDetail(name: string) {
+			await userEvent.setup().click(within(await screen.findByRole('region', { name: 'Items' })).getByRole('button', { name: new RegExp(`^${name}`) }))
+			expect((await title()).textContent).toBe('View item')
+		}
+
+		it('fills a card the Vault view setting leaves out of the suggestions, and closes the popup', async () => {
+			const sent = fakeBackground({
+				snapshot: snapshotReply({ items: [card()], suggestionIds: [], formIds: ['c1'] }),
+				decrypted: { c1: { key: '{"number":"4111111111111111"}' } },
+				replies: { 'fill.request': { filled: 'form', code: false } },
+			})
+			const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+			render(<App />)
+			await openDetail('Visa')
+			await userEvent.setup().click(await screen.findByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'c1', tabId: 7 }])
+			await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		})
+
+		it('fills a use-only identity without showing any of its members', async () => {
+			const sent = fakeBackground({
+				snapshot: snapshotReply({ items: [card({ id: 'p1', name: 'Me', typeId: 't-identity', useOnly: true })], formIds: ['p1'] }),
+				replies: { 'fill.request': { filled: 'form', code: false } },
+			})
+			vi.spyOn(window, 'close').mockImplementation(() => {})
+			render(<App />)
+			await openDetail('Me')
+			await userEvent.setup().click(await screen.findByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'p1', tabId: 7 }])
+			expect(sentOf(sent, 'item.decrypt').every((message) => !(message.fields as string[]).includes('key'))).toBe(true)
+		})
+
+		it('offers no Fill for a blocked card', async () => {
+			fakeBackground({ snapshot: snapshotReply({ items: [card({ blocked: true, blockedReason: 'suite_revoked' })], formIds: ['c1'] }) })
+			render(<App />)
+			await openDetail('Visa')
+			expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		})
+
+		it('drops the cards from the suggestions once the Vault view setting is turned off, in the same popup', async () => {
+			const cardsOff = () => sentOf(sent, 'account.settings.set').some((message) => (message.patch as { vaultCards?: boolean }).vaultCards === false)
+			const sent = fakeBackground({ snapshot: () => snapshotReply({ items: [card()], suggestionIds: cardsOff() ? [] : ['c1'], formIds: ['c1'] }) })
+			render(<App />)
+			const user = userEvent.setup()
+			const suggested = async () => within(await screen.findByRole('region', { name: 'Autofill suggestions' })).queryAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)
+			expect(await suggested()).toEqual(['Visa'])
+			await user.click(screen.getByRole('button', { name: 'Settings' }))
+			await user.click(await screen.findByRole('button', { name: /^Autofill/ }))
+			const reads = sentOf(sent, 'vault.snapshot').length
+			await user.click(await screen.findByRole('checkbox', { name: 'Always show cards as Autofill suggestions on Vault view' }))
+			await waitFor(() => expect(sentOf(sent, 'vault.snapshot').length).toBeGreaterThan(reads))
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			await user.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Vault' }))
+			expect(await suggested()).toEqual([])
+		})
+
+		it('still drops the cards from the suggestions when Back is pressed before the setting is stored', async () => {
+			let store = () => {}
+			const held = new Promise<void>((resolve) => (store = resolve))
+			const cardsOff = () => sentOf(sent, 'account.settings.set').some((message) => (message.patch as { vaultCards?: boolean }).vaultCards === false)
+			const sent = fakeBackground({
+				snapshot: () => snapshotReply({ items: [card()], suggestionIds: cardsOff() ? [] : ['c1'], formIds: ['c1'] }),
+				replies: { 'account.settings.set': () => held.then(() => accountSettingsSnapshot({ values: { vaultCards: false } })) },
+			})
+			render(<App />)
+			const user = userEvent.setup()
+			const suggested = async () => within(await screen.findByRole('region', { name: 'Autofill suggestions' })).queryAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)
+			expect(await suggested()).toEqual(['Visa'])
+			await user.click(screen.getByRole('button', { name: 'Settings' }))
+			await user.click(await screen.findByRole('button', { name: /^Autofill/ }))
+			await user.click(await screen.findByRole('checkbox', { name: 'Always show cards as Autofill suggestions on Vault view' }))
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			const reads = sentOf(sent, 'vault.snapshot').length
+			await act(async () => store())
+			await waitFor(() => expect(sentOf(sent, 'vault.snapshot').length).toBeGreaterThan(reads))
+			await user.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Vault' }))
+			expect(await suggested()).toEqual([])
+		})
+
+		it.each(['about:blank', 'chrome://newtab/'])('offers no Fill on %s, where the background lists none', async (tabUrl) => {
+			fakeBackground({ tabUrl, snapshot: snapshotReply({ items: [card()], formIds: [] }), decrypted: { c1: { key: '{}' } } })
+			render(<App />)
+			await openDetail('Visa')
+			expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		})
 	})
 
 	it('shows the toast in its live region when a fill finds no login form', async () => {
