@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Kopīgots ar jums tikai skatīšanai. Lai to mainītu, lūdziet īpašniekam rediģēšanas tiesības.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Kopīgots ar jums tikai skatīšanai. Nekas netika saglabāts; lai to mainītu, lūdziet īpašniekam rediģēšanas tiesības.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partneru organizācija, ar kuru šis noslēpums ir koplietots, nav sasniedzama ({partners}). Veiciet izmaiņas vēlreiz tiešsaistē, kur varat saglabāt bez viņiem.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Šīs bezsaistes izmaiņas ir veida, ko Keepiq nepazīst, tāpēc tās netika saglabātas. Atmetiet tās un veiciet izmaiņas vēlreiz tiešsaistē.",
         "Save without them": "Saglabāt bez viņiem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Saglabāts. Saņēmēji partneru organizācijās saņems šīs izmaiņas, kad īpašnieks nākamreiz saglabās šo noslēpumu.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Šis noslēpums tika mainīts citur pēc tam, kad to atvērāt. Nekas netika saglabāts; atveriet to vēlreiz un atkārtojiet izmaiņas.",
