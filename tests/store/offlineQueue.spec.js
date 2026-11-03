@@ -171,6 +171,25 @@ describe('editing offline', () => {
 })
 
 describe('replay', () => {
+	it('keeps an entry with an unknown op as failed and sends nothing for it', async () => {
+		await goOffline()
+		await secrets.deleteSecret('s1')
+		goOnline()
+		for (const entry of [...stored.values(), ...offline.entries])
+			entry.op = 'rename'
+		const del = vi.spyOn(axios, 'delete')
+		const put = vi.spyOn(axios, 'put')
+		const post = vi.spyOn(axios, 'post')
+
+		await offline.replayQueue()
+
+		expect(del).not.toHaveBeenCalled()
+		expect(put).not.toHaveBeenCalled()
+		expect(post).not.toHaveBeenCalled()
+		expect(offline.failedEntries).toHaveLength(1)
+		expect(offline.failedEntries[0].failure.code).toBe('server')
+	})
+
 	it('replays a delete with the version it was queued on', async () => {
 		await goOffline()
 		await secrets.deleteSecret('s1')

@@ -50,6 +50,20 @@ import { onVaultLock, useSessionStore } from './session.js'
 const SENSITIVE = VALUE_FIELDS
 
 /**
+ * A queued entry whose op is none of create, update and delete: it is kept as
+ * failed and never sent.
+ */
+class UnknownQueueOpError extends Error {
+	/**
+	 * @param {string} op The entry's op.
+	 */
+	constructor(op) {
+		super(`Unknown offline change: ${String(op)}`)
+		this.name = 'UnknownQueueOpError'
+	}
+}
+
+/**
  * How a replay error settles its entry. A queued entry has no "save without
  * them", so an unreachable partner, a partner lookup limit that outlasted the
  * wait or a malformed share save fails the entry instead of holding up every
@@ -61,6 +75,9 @@ const SENSITIVE = VALUE_FIELDS
  * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 function replayKind(e) {
+	if (e instanceof UnknownQueueOpError) {
+		return 'failed'
+	}
 	if (e instanceof ShareSaveError) {
 		return (
 			{
@@ -600,12 +617,14 @@ export const useOfflineStore = defineStore('offline', {
 					...entry.body,
 					baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
 				})
-			} else {
+			} else if (entry.op === 'delete') {
 				await axios.delete(generateUrl(`${base}/${entry.secretId}`), {
 					params: entry.baseUpdatedAt
 						? { baseUpdatedAt: entry.baseUpdatedAt }
 						: {},
 				})
+			} else {
+				throw new UnknownQueueOpError(entry.op)
 			}
 		},
 
