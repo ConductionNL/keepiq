@@ -246,6 +246,136 @@ function derUint(bytes, element) {
 }
 
 /**
+ * The extensions in a TBS `[3]` block, or none without one.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {object|undefined} block The TBS `[3]` extensions element, if any.
+ * @return {Array<object>}
+ */
+function extensionsOf(bytes, block) {
+	return block ? exactChildren(bytes, onlyChild(bytes, block, 0x30)) : []
+}
+
+/**
+ * The children of an Extension SEQUENCE: extnID, the optional critical flag
+ * and extnValue last.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {{tag: number, start: number, end: number}} extension One extension.
+ * @return {{id: object|undefined, value: object|undefined, rest: Array<object>}}
+ */
+function extensionFields(bytes, extension) {
+	if (extension.tag !== 0x30) {
+		throw new FederatedCertificateError('malformed')
+	}
+	const [id, ...rest] = exactChildren(bytes, extension)
+	return { id, value: rest.pop(), rest }
+}
+
+/**
+ * One extension decoded. Extension: extnID, critical BOOLEAN DEFAULT FALSE,
+ * extnValue OCTET STRING.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {{tag: number, start: number, end: number}} extension One extension.
+ * @return {{critical: boolean, name: string, value: object}}
+ */
+function decodeExtension(bytes, extension) {
+	const { id, value, rest } = extensionFields(bytes, extension)
+	if (id?.tag !== 0x06 || value?.tag !== 0x04 || rest.length > 1) {
+		throw new FederatedCertificateError('malformed')
+	}
+	return {
+		critical: rest.length === 1 && derBoolean(bytes, rest[0]),
+		name: oid(bytes, id),
+		value,
+	}
+}
+
+/**
+ * The cA flag and pathLenConstraint of a basicConstraints value (RFC 5280
+ * 4.2.1.9), both optional and in that order.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {object} value The extnValue OCTET STRING.
+ * @return {{ca: boolean, pathLen: number|null}}
+ */
+function basicConstraintsOf(bytes, value) {
+	const fields = exactChildren(bytes, onlyChild(bytes, value, 0x30))
+	let next = 0
+	let ca = false
+	let pathLen = null
+	if (fields[next]?.tag === 0x01) {
+		ca = derBoolean(bytes, fields[next++])
+	}
+	if (fields[next]?.tag === 0x02) {
+		pathLen = derUint(bytes, fields[next++])
+	}
+	if (next !== fields.length) {
+		throw new FederatedCertificateError('malformed')
+	}
+	return { ca, pathLen }
+}
+
+/**
+ * The BIT STRING of a keyUsage value, checked: at least the unused-bits
+ * count, at most 7 unused bits, and none without a byte to pad.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {object} value The extnValue OCTET STRING.
+ * @return {{start: number, length: number, unused: number}}
+ */
+function keyUsageBits(bytes, value) {
+	const bits = onlyChild(bytes, value, 0x03)
+	const length = bits.end - bits.start
+	const unused = bytes[bits.start]
+	if (length === 0 || unused > 7 || (length === 1 && unused !== 0)) {
+		throw new FederatedCertificateError('malformed')
+	}
+	return { start: bits.start, length, unused }
+}
+
+/**
+ * Whether a keyUsage value sets keyCertSign (RFC 5280 4.2.1.3). After the
+ * unused-bits count, keyCertSign is bit 5 of the first byte; when that byte
+ * is also the last, its unused bits are padding.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {object} value The extnValue OCTET STRING.
+ * @return {boolean}
+ */
+function keyCertSignOf(bytes, value) {
+	const { start, length, unused } = keyUsageBits(bytes, value)
+	const first = length > 1 ? bytes[start + 1] : 0
+	const mask = length === 2 ? (0xff << unused) & 0xff : 0xff
+	return (first & mask & 0x04) !== 0
+}
+
+/**
+ * Read one extension into the run: each at most once, basicConstraints and
+ * keyUsage read, any other refused when critical.
+ *
+ * @param {{bytes: Uint8Array, seen: Set<string>, ca: boolean, keyCertSign: boolean, pathLen: number|null}} run
+ *   The extensions read so far.
+ * @param {{tag: number, start: number, end: number}} extension One extension.
+ * @return {void}
+ */
+function readExtension(run, extension) {
+	const { critical, name, value } = decodeExtension(run.bytes, extension)
+	if (run.seen.has(name)) {
+		throw new FederatedCertificateError('malformed')
+	}
+	run.seen.add(name)
+	if (name === OID_BASIC_CONSTRAINTS) {
+		Object.assign(run, basicConstraintsOf(run.bytes, value))
+	} else if (name === OID_KEY_USAGE) {
+		run.keyCertSign = keyCertSignOf(run.bytes, value)
+	} else if (critical) {
+		throw new FederatedCertificateError('malformed')
+	}
+}
+
+/**
  * Whether a certificate may sign certificates, from its extensions (RFC 5280
  * 4.2): each at most once and none critical that is not read here; a
  * basicConstraints with cA set (4.2.1.9) and, when there is a keyUsage,
@@ -257,58 +387,21 @@ function derUint(bytes, element) {
  * @return {{ca: boolean, markedCa: boolean, pathLen: number|null}}
  */
 function caConstraints(bytes, block) {
-	let ca = false
-	let keyCertSign = true
-	let pathLen = null
-	const seen = new Set()
-	const extensions = block
-		? exactChildren(bytes, onlyChild(bytes, block, 0x30))
-		: []
-	for (const extension of extensions) {
-		if (extension.tag !== 0x30) {
-			throw new FederatedCertificateError('malformed')
-		}
-		// Extension: extnID, critical BOOLEAN DEFAULT FALSE, extnValue OCTET STRING.
-		const [id, ...rest] = exactChildren(bytes, extension)
-		const value = rest.pop()
-		if (id?.tag !== 0x06 || value?.tag !== 0x04 || rest.length > 1) {
-			throw new FederatedCertificateError('malformed')
-		}
-		const critical = rest.length === 1 && derBoolean(bytes, rest[0])
-		const name = oid(bytes, id)
-		if (seen.has(name)) {
-			throw new FederatedCertificateError('malformed')
-		}
-		seen.add(name)
-		if (name === OID_BASIC_CONSTRAINTS) {
-			const fields = exactChildren(bytes, onlyChild(bytes, value, 0x30))
-			let next = 0
-			if (fields[next]?.tag === 0x01) {
-				ca = derBoolean(bytes, fields[next++])
-			}
-			if (fields[next]?.tag === 0x02) {
-				pathLen = derUint(bytes, fields[next++])
-			}
-			if (next !== fields.length) {
-				throw new FederatedCertificateError('malformed')
-			}
-		} else if (name === OID_KEY_USAGE) {
-			const bits = onlyChild(bytes, value, 0x03)
-			const length = bits.end - bits.start
-			const unused = bytes[bits.start]
-			if (length === 0 || unused > 7 || (length === 1 && unused !== 0)) {
-				throw new FederatedCertificateError('malformed')
-			}
-			// After the unused-bits count, keyCertSign is bit 5 of the first
-			// byte; when that byte is also the last, its unused bits are padding.
-			const first = length > 1 ? bytes[bits.start + 1] : 0
-			const mask = length === 2 ? (0xff << unused) & 0xff : 0xff
-			keyCertSign = (first & mask & 0x04) !== 0
-		} else if (critical) {
-			throw new FederatedCertificateError('malformed')
-		}
+	const run = {
+		bytes,
+		seen: new Set(),
+		ca: false,
+		keyCertSign: true,
+		pathLen: null,
 	}
-	return { ca: ca && keyCertSign, markedCa: ca, pathLen: ca ? pathLen : null }
+	for (const extension of extensionsOf(bytes, block)) {
+		readExtension(run, extension)
+	}
+	return {
+		ca: run.ca && run.keyCertSign,
+		markedCa: run.ca,
+		pathLen: run.ca ? run.pathLen : null,
+	}
 }
 
 /**
