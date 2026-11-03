@@ -33,6 +33,9 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<HoneyAlert>
  */
 class HoneyAlertMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for HoneyAlertMapper.
 	 *
@@ -54,12 +57,7 @@ class HoneyAlertMapper extends QBMapper {
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException When missing
 	 */
 	public function findById(string $id): HoneyAlert {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

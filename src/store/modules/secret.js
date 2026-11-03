@@ -62,6 +62,16 @@ const WHOLE_VAULT = {
  */
 const writeBacks = new Map()
 
+/** How setListQuery stores each list filter it is given. */
+const LIST_FILTERS = {
+	folderId: (value) => value ?? null,
+	search: (value) => value ?? '',
+	typeId: (value) => value ?? null,
+	state: (value) => value || 'live',
+	favourite: (value) => !!value,
+	tag: (value) => value || null,
+}
+
 /**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
@@ -155,17 +165,14 @@ export const useSecretStore = defineStore('secret', {
 		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		setListQuery(query = {}) {
-			if ('folderId' in query) this.filters.folderId = query.folderId ?? null
-			if ('search' in query) this.filters.search = query.search ?? ''
-			if ('typeId' in query) this.filters.typeId = query.typeId ?? null
+			for (const [field, normalise] of Object.entries(LIST_FILTERS)) {
+				if (field in query) this.filters[field] = normalise(query[field])
+			}
 			if ('sort' in query && query.sort) {
 				this.sort.field = query.sort
 				// Last used reads newest first; every other sort keeps ascending.
 				this.sort.direction = query.sort === 'last_used_at' ? 'desc' : 'asc'
 			}
-			if ('state' in query) this.filters.state = query.state || 'live'
-			if ('favourite' in query) this.filters.favourite = !!query.favourite
-			if ('tag' in query) this.filters.tag = query.tag || null
 		},
 
 		/**

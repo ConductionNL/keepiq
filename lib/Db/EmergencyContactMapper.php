@@ -37,6 +37,9 @@ use OCP\IDBConnection;
  * @extends QBMapper<EmergencyContact>
  */
 class EmergencyContactMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for EmergencyContactMapper.
 	 *
@@ -59,12 +62,7 @@ class EmergencyContactMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): EmergencyContact {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**
