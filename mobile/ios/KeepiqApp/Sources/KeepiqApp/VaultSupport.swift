@@ -215,6 +215,14 @@ struct FieldRow: View {
         }
         return out
     }
+
+    /// A password or a code has no word breaks at all. A zero-width space
+    /// after every character lets it wrap anywhere, so at the largest text
+    /// sizes it takes more lines instead of being clipped. Only the drawn
+    /// text: VoiceOver (an explicit label) and Copy keep the value as it is.
+    static func breakableAnywhere(_ value: String) -> String {
+        value.map { String($0) + "\u{200B}" }.joined()
+    }
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -227,7 +235,7 @@ struct FieldRow: View {
                 if masked && !shown {
                     Text("••••••••").accessibilityLabel(label)
                 } else {
-                    Text(value.isEmpty ? "-" : masked ? value : Self.breakable(value))
+                    Text(value.isEmpty ? "-" : masked ? Self.breakableAnywhere(value) : Self.breakable(value))
                         .font(masked ? .body.monospaced() : .body)
                         .textSelection(.disabled)
                         .lineLimit(nil)
