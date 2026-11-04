@@ -211,6 +211,12 @@ The extension SHALL, on "Update", save through `updateItem`: re-fetch the item w
 - **WHEN** the user clicks Update
 - **THEN** the bar shows "This login no longer exists. Save it as a new login?" (nl "Deze login bestaat niet meer. Opslaan als nieuwe login?") and offers Save, which saves the capture as a new login
 
+#### Scenario: Item still there after a 404
+- **GIVEN** the write context names no source for the item, and share-save returns 404
+- **AND** reading the item again succeeds
+- **WHEN** the user clicks Update
+- **THEN** nothing is saved, the bar shows "Keepiq does not allow this change. The Keepiq web app shows why." (nl "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.") and it offers no new login
+
 ### Requirement: Bar messages are trusted only from the extension page
 The background MUST accept `capture.state`, `capture.save`, `capture.update` and `capture.dismiss` only from a sender whose `sender.url` is the extension's notification page and whose `sender.tab.id` has a pending capture. Messages from the page or from a content script with these kinds are ignored.
 
