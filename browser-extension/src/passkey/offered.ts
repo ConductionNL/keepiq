@@ -3,13 +3,16 @@
  * so every login's passkeys are decrypted once per account, key and vault version, never per request (design.md § Risks).
  */
 import type { PasskeyRow } from '@/src/messages'
-import { listPasskeys, offeredFrom, type PasskeyListing, type PasskeyQuery } from './match'
+import { listPasskeys, offeredFrom, type PasskeyListing } from './match'
 
 let version = 0
 let cached: { accountId: string; key: CryptoKey; version: number; listing: Promise<PasskeyListing[]> } | null = null
 
-/** The caller holds the account's unlocked key and checked the request may still be offered passkeys. */
-export async function offeredPasskeys(accountId: string, key: CryptoKey, query: Omit<PasskeyQuery, 'itemId'>): Promise<PasskeyRow[]> {
+/**
+ * Every passkey for `rpId`, with no allow list to filter by. The caller holds the account's unlocked key and checked
+ * the request may still be offered passkeys.
+ */
+export async function offeredPasskeys(accountId: string, key: CryptoKey, rpId: string): Promise<PasskeyRow[]> {
 	let entry = cached
 	if (entry?.accountId !== accountId || entry.key !== key || entry.version !== version) {
 		const fresh = { accountId, key, version, listing: listPasskeys(accountId, key) }
@@ -18,7 +21,7 @@ export async function offeredPasskeys(accountId: string, key: CryptoKey, query: 
 		})
 		cached = entry = fresh
 	}
-	return offeredFrom(await entry.listing, query)
+	return offeredFrom(await entry.listing, { rpId, allowCredentials: [] })
 }
 
 /** On a vault change, lock, logout, account switch and turning passkeys off. */

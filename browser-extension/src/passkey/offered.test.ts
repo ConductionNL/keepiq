@@ -26,7 +26,7 @@ async function vault(accountId: string, name: string, credentials = [passkey('QQ
 	})
 }
 
-const query = (rpId = 'example.test', allowCredentials: string[] = []) => ({ rpId, allowCredentials })
+const query = (rpId = 'example.test') => rpId
 
 beforeAll(async () => {
 	key = await importPrivateKey(pemToPkcs8(envelope.privateKeyPem))
@@ -42,11 +42,10 @@ beforeEach(async () => {
 })
 
 describe('offeredPasskeys', () => {
-	it('decrypts once for any number of requests, RP IDs and allow lists on an unchanged vault', async () => {
+	it('decrypts once for any number of requests and RP IDs on an unchanged vault', async () => {
 		expect(await offeredPasskeys('a1', key, query())).toEqual([{ itemId: 'work', credentialId: 'QQ', name: 'Work', userName: 'alice' }])
 		for (let i = 0; i < 5; i++) await offeredPasskeys('a1', key, query())
 		expect(await offeredPasskeys('a1', key, query('other.test'))).toEqual([{ itemId: 'work', credentialId: 'Qg', name: 'Work', userName: 'alice' }])
-		expect(await offeredPasskeys('a1', key, query('example.test', ['Zm9v']))).toEqual([])
 		expect(rsaDecrypt).toHaveBeenCalledTimes(1)
 	})
 
