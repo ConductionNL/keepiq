@@ -39,20 +39,20 @@ function focusRetry({ area, focusAt, focusRow }: PendingFocus) {
 	focusAt.current = null
 }
 
-/** Whether a row index is waiting for focus, after turning a row waited for into its index once it is listed. */
-function rowListed({ focusAt, focusRow }: PendingFocus, sends: Row[]): boolean {
+/** Turns a row waited for into its index once it is listed, and returns the row index waiting for focus, if any. */
+function resolvePendingRow({ focusAt, focusRow }: PendingFocus, sends: Row[]): number | null {
 	if (focusRow.current !== null) {
 		const index = sends.findIndex((row) => row.id === focusRow.current)
-		if (index === -1) return false
+		if (index === -1) return null
 		focusAt.current = index
 		focusRow.current = null
 	}
-	return focusAt.current !== null
+	return focusAt.current
 }
 
-function focusRowAt({ area, focusAt }: PendingFocus) {
+function focusRowAt({ area, focusAt }: PendingFocus, index: number) {
 	const rows = area.current?.querySelectorAll('li') ?? []
-	const target = rows.length > 0 ? rows[Math.min(focusAt.current ?? 0, rows.length - 1)] : area.current
+	const target = rows.length > 0 ? rows[Math.min(index, rows.length - 1)] : area.current
 	target?.querySelector<HTMLElement>('button')?.focus()
 	focusAt.current = null
 }
@@ -73,8 +73,12 @@ export function SendList({ onNew, focusId = null }: { onNew: () => void; focusId
 	useEffect(() => {
 		if (removing) return
 		const focus = { area, focusAt, focusRow }
-		if (failed) focusRetry(focus)
-		else if (sends && rowListed(focus, sends)) focusRowAt(focus)
+		if (failed) {
+			focusRetry(focus)
+			return
+		}
+		const index = sends ? resolvePendingRow(focus, sends) : null
+		if (index !== null) focusRowAt(focus, index)
 	}, [sends, removing, failed])
 
 	async function confirmRemove(row: Row, index: number) {
