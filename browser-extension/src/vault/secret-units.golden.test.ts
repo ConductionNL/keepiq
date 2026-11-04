@@ -2,10 +2,12 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { generatePassphrase } from '../generator/passphrase'
+import { seededRandom } from '../testing/vectors'
 import { parseTotpSeed } from '../totp/totp'
-import { shownInFull } from './fields'
+import type { FormField } from '../messages'
+import { CARD_FIELDS, IDENTITY_FIELDS, shownInFull } from './fields'
 
-// Synthetic values only. From the package root, as vitest runs; `RECORD_GOLDEN=1` rewrites the record.
+// Synthetic values only. From the package root, as vitest runs; `KEEPIQ_RECORD_GOLDEN=1` rewrites the record.
 const GOLDEN = resolve(process.cwd(), 'src/vault/secret-units.golden.json')
 
 const attempt = (run: () => unknown) => {
@@ -28,25 +30,30 @@ const SEEDS = [
 	`otpauth://totp/x?secret=!!!!&algorithm=MD5`, `otpauth://user@totp/x?secret=${SEED}`,
 ]
 
-const FIELDS = ['login', 'key', 'additionalFields'] as const
-const TYPES = [undefined, 'login', 'api_key', 'note', 'totp', 'card', 'identity', 'passkey', 'other']
+const complete = (members: readonly string[]) => JSON.stringify(Object.fromEntries(members.map((member) => [member, `${member} value`])))
 const PLAINTEXTS = [
 	null, '', 'plain', '{', '[]', '{}', '"x"', '{"a":"b"}', '{"a":"b","a":"c"}', '{"a":{"b":1,"b":2}}', '{"a":[{"b":1},{"b":1}]}', '{"a":1.50}', '{"a":12345678901234567890}', '{"a":1,"b":[2,3]}',
-	'{"cardholderName":"N","number":"4111","expMonth":"01","expYear":"2030","code":"1"}', '{"cardholderName":"N","cardholderName":"M"}', '{"expMonth":1}', '{"expMonth":1.0}', '{"unknown":"x"}', '{"number":null}',
+	complete(CARD_FIELDS), complete(IDENTITY_FIELDS), '{"cardholder":"N","cardholder":"M"}', '{"expiry":1}', '{"expiry":1.0}', '{"unknown":"x"}', '{"number":null}',
+	'{"cardholderName":"N","number":"4111","expMonth":"01","expYear":"2030","code":"1"}',
 	'{"title":"T","firstName":"F"}', '{"firstName":"F","toString":"x"}', '{"notes":"n"}', '{"notes":"n","custom":"c"}', '{"custom":"c"}', '{"a\\"b":"c","a\\"b":"d"}', '{"a":"1,2:3"}', '{"":"e"}', '[{"a":1,"a":2}]', '{"a":-1e3}', '{"a":true}',
 	'{"number":"4111","expiry":"12/30"}', '{"number":4111}', '{"toString":"x"}', '{"cvv":"1","cvv":"2"}', '{"firstName":"F","bsn":"1"}', '{"firstName":5}', '{"number":"1","firstName":"F"}',
 	'{"a":["b","b"]}', '{"a":["b","c","c"]}', '{"a":{"b":1},"a":2}', '{"a":{"x":1},"x":2}', '{"a":"a"}',
+]
+// A type left out reads as one listed: apart from passkey, only card and identity differ, and only in `key`.
+const GRID: Array<[FormField, string[], Array<string | null>]> = [
+	['login', ['login', 'passkey'], [null, '', 'plain', '{"a":"b"}']],
+	['key', ['login', 'card', 'identity', 'passkey'], PLAINTEXTS],
+	['additionalFields', ['note', 'passkey'], PLAINTEXTS],
 ]
 
 const WORDS = Array.from({ length: 40 }, (_, n) => `word${String.fromCharCode(97 + n % 26)}${n}`)
 /** The same draws on every run, and every draw is recorded. */
 function drawn() {
-	let state = 12345
+	const next = seededRandom(12345)
 	const calls: number[][] = []
 	const rand = (min: number, max: number) => {
 		calls.push([min, max])
-		state = (state * 1103515245 + 12345) % 2147483648
-		return min + state % (max - min + 1)
+		return next(min, max)
 	}
 	return { rand, calls }
 }
@@ -61,17 +68,28 @@ const PHRASES: Array<[Record<string, unknown>, Record<string, unknown> | null]> 
 
 const record = () => ({
 	parseTotpSeed: SEEDS.map((seed) => [seed, attempt(() => parseTotpSeed(seed))]),
-	shownInFull: PLAINTEXTS.flatMap((plaintext) => TYPES.flatMap((type) => FIELDS.map((field) => [field, plaintext, type ?? '(none)', attempt(() => shownInFull(field, plaintext, type))]))),
+	shownInFull: GRID.flatMap(([field, types, plaintexts]) => types.flatMap((type) => plaintexts.map((plaintext) => [field, plaintext, type, attempt(() => shownInFull(field, plaintext, type))]))),
 	generatePassphrase: PHRASES.map(([options, policy]) => {
 		const { rand, calls } = drawn()
 		return [options, policy, attempt(() => generatePassphrase(options as never, policy as never, WORDS, rand)), calls]
 	}),
 })
 
+/** One row per line, so a diff shows a row's input and result together. */
+function format(sections: Record<string, unknown[]>): string {
+	const rows = (list: unknown[]) => list.map((row) => `\t\t${JSON.stringify(row)}`).join(',\n')
+	return `{\n${Object.entries(sections).map(([name, list]) => `\t${JSON.stringify(name)}: [\n${rows(list)}\n\t]`).join(',\n')}\n}\n`
+}
+
 describe('secret units golden', () => {
 	const got = record()
-	if (process.env.RECORD_GOLDEN === '1') writeFileSync(GOLDEN, JSON.stringify(got, null, '\t') + '\n')
+	if (process.env.KEEPIQ_RECORD_GOLDEN === '1') writeFileSync(GOLDEN, format(got))
 	const want = JSON.parse(readFileSync(GOLDEN, 'utf8')) as typeof got
+
+	it('records every section', () => {
+		expect(Object.keys(got)).toEqual(Object.keys(want))
+	})
+
 	for (const name of Object.keys(want) as Array<keyof typeof got>) {
 		it(`${name} matches the record`, () => {
 			const rows = JSON.parse(JSON.stringify(got[name])) as unknown[]
