@@ -5,7 +5,7 @@
 import { i18n } from '#i18n'
 import {
 	INLINE_MIN_HEIGHT_PX, INLINE_MIN_WIDTH_PX, INLINE_RADIUS_PX, inlineClampHeight,
-	type BackgroundToContent, type ContentToBackground, type ContentToInlineList, type PickInput,
+	type BackgroundToContent, type ContentToBackground, type ContentToInlineList, type InlineMode, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement, type OpenList } from './execute'
 import { isQualifying } from './fields'
@@ -259,8 +259,8 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		list.intersection.observe(list.host.element)
 	}
 
-	function show(field: HTMLInputElement, key: string, wanted: number, box: Box): void {
-		const host = createFrameHost('/inline-list.html', i18n.t('inlineList.frameTitle'))
+	function show(field: HTMLInputElement, mode: InlineMode, key: string, wanted: number, box: Box): void {
+		const host = createFrameHost('/inline-list.html', i18n.t(mode === 'code' ? 'inlineList.code.frameTitle' : 'inlineList.frameTitle'))
 		const popover = typeof host.element.showPopover === 'function'
 		const list: Open = {
 			key, field, host, parent: modalOf(field, popover) ?? document.documentElement, popover,
@@ -303,22 +303,26 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	function maybeOpen(field: HTMLInputElement, how: 'focus' | 'click'): void {
 		if (!allowed || open?.field === field || pending?.field === field) return
 		if (how === 'focus' && field.value !== '') return
-		if (!isQualifying(field)) return
+		const mode = isQualifying(field)
+		if (!mode) return
 		close()
 		// Whatever the list will show, it needs room for one row.
 		if (!placement(field, INLINE_MIN_HEIGHT_PX)) return
 		const token = {}
 		pending = { field, token }
-		void request({ kind: 'inline.open' }).then((reply) => {
+		void request({ kind: 'inline.open', mode }).then((reply) => {
 			const { key, height } = (reply ?? {}) as { key?: unknown; height?: unknown }
 			if (typeof key !== 'string') {
 				if (pending?.token === token) pending = null
 				return
 			}
 			const wanted = inlineClampHeight(height)
-			const box = wanted !== null && pending?.token === token && deepActiveElement() === field && fieldShown(field) ? placement(field, wanted, true) : null
+			// A split code's fill moves focus box by box, and fills each box before this reply arrives.
+			const stillEmpty = how === 'click' || field.value === ''
+			const box = wanted !== null && pending?.token === token && deepActiveElement() === field && fieldShown(field) && stillEmpty
+				? placement(field, wanted, true) : null
 			if (pending?.token === token) pending = null
-			if (box && wanted !== null) show(field, key, wanted, box)
+			if (box && wanted !== null) show(field, mode, key, wanted, box)
 			else send({ kind: 'inline.closed', key })
 		})
 	}

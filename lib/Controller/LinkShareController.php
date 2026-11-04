@@ -27,8 +27,10 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -143,16 +145,13 @@ class LinkShareController extends OCSController {
 			);
 		}
 
-		$expiry = null;
-		if ($expiresAt !== null && $expiresAt !== '') {
-			try {
-				$expiry = new DateTime($expiresAt);
-			} catch (Exception) {
-				return new JSONResponse(
-					data: ['message' => 'Invalid expiry timestamp'],
-					statusCode: Http::STATUS_BAD_REQUEST
-				);
-			}
+		try {
+			$expiry = $this->expiryOf(expiresAt: $expiresAt);
+		} catch (Exception) {
+			return new JSONResponse(
+				data: ['message' => 'Invalid expiry timestamp'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
 		}
 
 		try {
@@ -172,11 +171,13 @@ class LinkShareController extends OCSController {
 		} catch (ForbiddenException $e) {
 			// A copy from another organisation (sharing-federated-recipients task 3.4).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (InvalidArgumentException $e) {
+		} catch (ShareScanPendingException $e) {
 			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
+				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
 			);
+		} catch (InvalidArgumentException $e) {
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		// The /public shell serves the SPA as #[PublicPage] — the
@@ -195,6 +196,23 @@ class LinkShareController extends OCSController {
 
 		return new JSONResponse(data: $payload, statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * The expiry a create request names, or null for none.
+	 *
+	 * @param string|null $expiresAt The requested expiry timestamp
+	 *
+	 * @return DateTime|null
+	 *
+	 * @throws Exception When the timestamp cannot be parsed
+	 */
+	private function expiryOf(?string $expiresAt): ?DateTime {
+		if ($expiresAt === null || $expiresAt === '') {
+			return null;
+		}
+
+		return new DateTime($expiresAt);
+	}//end expiryOf()
 
 	/**
 	 * Revoke (delete) a link share owned by the current user.
@@ -217,15 +235,9 @@ class LinkShareController extends OCSController {
 		try {
 			$this->linkShareService->delete(id: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted']);

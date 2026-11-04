@@ -1,0 +1,359 @@
+{
+	"null": {
+		"error": "Error: Empty TOTP seed"
+	},
+	"undefined": {
+		"error": "Error: Empty TOTP seed"
+	},
+	"number": {
+		"error": "Error: Invalid base32 character"
+	},
+	"empty": {
+		"error": "Error: Empty TOTP seed"
+	},
+	"blank": {
+		"error": "Error: Empty TOTP seed"
+	},
+	"bare key": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": null
+		}
+	},
+	"bare key, lower case with spaces": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": null
+		}
+	},
+	"bare key, padded": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP====",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": null
+		}
+	},
+	"bare key, invalid character": {
+		"error": "Error: Invalid base32 character"
+	},
+	"bare key, one character": {
+		"error": "Error: Base32 secret too short"
+	},
+	"scheme only": {
+		"error": "Error: Not an otpauth://totp URI"
+	},
+	"upper-case scheme": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme",
+			"account": "alice"
+		}
+	},
+	"hotp uri": {
+		"error": "Error: Not an otpauth://totp URI"
+	},
+	"no secret": {
+		"error": "Error: otpauth URI has no secret"
+	},
+	"empty secret": {
+		"error": "Error: otpauth URI has no secret"
+	},
+	"invalid secret": {
+		"error": "Error: Invalid base32 character"
+	},
+	"secret with spaces, lower case": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme",
+			"account": "alice"
+		}
+	},
+	"label issuer and account": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme",
+			"account": "alice@example.org"
+		}
+	},
+	"issuer parameter wins": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Param",
+			"account": "alice"
+		}
+	},
+	"blank issuer parameter": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Label",
+			"account": "alice"
+		}
+	},
+	"issuer parameter, no colon": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme",
+			"account": "alice"
+		}
+	},
+	"account only": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": "alice"
+		}
+	},
+	"no label": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": null
+		}
+	},
+	"no label, no slash": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": null
+		}
+	},
+	"colon only": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": null
+		}
+	},
+	"blank issuer in label": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": "alice"
+		}
+	},
+	"blank account in label": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme",
+			"account": null
+		}
+	},
+	"several colons": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme",
+			"account": "team:alice"
+		}
+	},
+	"encoded label": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "Acme Corp",
+			"account": "alice doe"
+		}
+	},
+	"bad percent encoding": {
+		"error": "URIError: URI malformed"
+	},
+	"sha256 eight digits sixty seconds": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA256",
+			"digits": 8,
+			"period": 60,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"sha512 lower case": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA512",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"sha1 explicit": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"unknown algorithm": {
+		"error": "Error: Unsupported TOTP algorithm: MD5"
+	},
+	"seven digits": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"digits not a number": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"ten digits": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"zero period": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"negative period": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"period not a number": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"fractional period": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"empty parameters": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"surrounding whitespace": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": "A",
+			"account": "b"
+		}
+	},
+	"not a url": {
+		"error": "Error: otpauth URI has no secret"
+	},
+	"host with port": {
+		"error": "Error: Not an otpauth://totp URI"
+	},
+	"blank issuer parameter, no colon": {
+		"parsed": {
+			"secret": "JBSWY3DPEHPK3PXP",
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"issuer": null,
+			"account": "alice"
+		}
+	},
+	"broken host": {
+		"error": "Error: Malformed otpauth URI"
+	},
+	"bad percent label and unsupported algorithm": {
+		"error": "Error: Unsupported TOTP algorithm: MD5"
+	},
+	"bad percent label and invalid secret": {
+		"error": "Error: Invalid base32 character"
+	}
+}

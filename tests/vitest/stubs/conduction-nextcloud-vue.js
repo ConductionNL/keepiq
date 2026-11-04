@@ -29,6 +29,9 @@
  */
 
 import { h } from 'vue'
+// Dialog footers under test render the real component: its disabled and
+// loading states are the behaviour the dialogs rely on.
+import CnDialogActions from '@conduction/nextcloud-vue/src/components/CnDialogActions/CnDialogActions.vue'
 
 /**
  * CnIndexPage stub — renders a primary add button (emits `add`), a per-object
@@ -270,6 +273,7 @@ function currentTheme() {
 
 export {
 	CnBreadcrumbs,
+	CnDialogActions,
 	CnIconColorPicker,
 	CnIndexPage,
 	CnStatusBadge,

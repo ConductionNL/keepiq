@@ -81,10 +81,10 @@ class ShareRevocationService {
 	 * @param IDBConnection $db The DB connection (revoke transaction)
 	 * @param LoggerInterface $logger The logger interface
 	 * @param ShareAuthorizationService $auth The share authorization service
+	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param AttachmentService|null $attachmentService The attachment service (revoke cascade)
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param QuarantinedShareTargetMapper|null $quarantined Tells an owner their revoke hit a quarantined row
-	 * @param ShareQuarantineScanner|null $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 *
 	 * @return void
 	 *
@@ -96,10 +96,10 @@ class ShareRevocationService {
 		private IDBConnection $db,
 		private LoggerInterface $logger,
 		private ShareAuthorizationService $auth,
+		private ShareQuarantineScanner $quarantineScan,
 		private ?AttachmentService $attachmentService = null,
 		?ShareAuditTrail $auditTrail = null,
 		private ?QuarantinedShareTargetMapper $quarantined = null,
-		private ?ShareQuarantineScanner $quarantineScan = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -116,6 +116,7 @@ class ShareRevocationService {
 	 * @throws InvalidArgumentException When the row does not exist or
 	 *                                  the caller is not authorized.
 	 * @throws ConflictException When the owner or a delegate revokes a quarantined row, or one the pending scan holds back
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
@@ -131,7 +132,7 @@ class ShareRevocationService {
 		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
 		// Before the transaction, so a quarantine this makes is not rolled
 		// back with the refused revoke.
-		$this->quarantineScan?->assertNotHeldBack(row: $entity, verb: 'revoked');
+		$this->quarantineScan->assertNotHeldBack(row: $entity, verb: 'revoked');
 
 		$this->db->beginTransaction();
 		try {
@@ -234,7 +235,7 @@ class ShareRevocationService {
 		// Before the transaction, so a quarantine this makes is not rolled
 		// back with a refused delete.
 		foreach ($this->mapper->findBySourceSecret($sourceSecretId) as $share) {
-			$this->quarantineScan?->refuseUnjudged(row: $share, refusal: $refusal);
+			$this->quarantineScan->refuseUnjudged(row: $share, refusal: $refusal);
 		}
 
 		$this->deleteAll(sourceSecretId: $sourceSecretId, refusal: $refusal);
@@ -322,9 +323,9 @@ class ShareRevocationService {
 		}
 
 		if ($refusal !== null) {
-			return $this->quarantineScan?->refuseUnjudged(row: $share, refusal: $refusal) === true;
+			return $this->quarantineScan->refuseUnjudged(row: $share, refusal: $refusal) === true;
 		}
 
-		return $this->quarantineScan?->heldBack(row: $share) !== null;
+		return $this->quarantineScan->heldBack(row: $share) !== null;
 	}//end keepsCopy()
 }//end class

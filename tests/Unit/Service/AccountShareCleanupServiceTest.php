@@ -31,12 +31,15 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\DeletionReport;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for AccountShareCleanupService.
  */
 class AccountShareCleanupServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 
 	/**
 	 * @var SecretMapper&\PHPUnit\Framework\MockObject\MockObject
@@ -78,6 +81,7 @@ class AccountShareCleanupServiceTest extends TestCase {
 			delegationMapper: $this->createMock(SecretDelegationMapper::class),
 			stageMapper: $this->createMock(ShareSaveStageMapper::class),
 			ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}//end setUp()
 

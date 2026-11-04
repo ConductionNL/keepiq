@@ -53,6 +53,9 @@ use OCP\AppFramework\Db\Entity;
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  */
 class ShareSaveStage extends Entity {
+
+	use StringPrimaryKey;
+
 	/**
 	 * The stage this chunk belongs to.
 	 *
@@ -129,26 +132,6 @@ class ShareSaveStage extends Entity {
 	 * @var string
 	 */
 	public $id = '';
-
-	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
 
 	/**
 	 * Constructor for ShareSaveStage.

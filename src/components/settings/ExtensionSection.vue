@@ -43,18 +43,17 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
+import { adminSettingsForm } from '../../mixins/adminSettingsForm.js'
 
 export default {
 	name: 'ExtensionSection',
 	components: { CnSettingsSection, NcNoteCard },
+	mixins: [adminSettingsForm('/apps/keepiq/api/settings/admin/policies')],
 
 	data() {
 		return {
 			maxIdleMinutes: 240,
-			error: null,
 		}
 	},
 
@@ -74,41 +73,26 @@ export default {
 		},
 	},
 
-	/**
-	 * Load the current maximum.
-	 *
-	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
-	 */
-	async created() {
-		try {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/policies'),
-			)
-			this.maxIdleMinutes = response.data.extension_max_idle_minutes ?? 240
-		} catch (e) {
-			this.error = e?.response?.data?.message || e?.message
-		}
-	},
-
 	methods: {
 		/**
-		 * Store the maximum (the server accepts only the offered delays).
+		 * Take the stored settings into the form.
 		 *
-		 * @return {Promise<void>}
+		 * @param {object} data The stored settings.
+		 * @return {void}
 		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
 		 */
-		async save() {
-			this.error = null
-			try {
-				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin/policies'),
-					{
-						extension_max_idle_minutes: this.maxIdleMinutes,
-					},
-				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			}
+		readSettings(data) {
+			this.maxIdleMinutes = data.extension_max_idle_minutes ?? 240
+		},
+
+		/**
+		 * The maximum to store (the server accepts only the offered delays).
+		 *
+		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+		 */
+		settingsPayload() {
+			return { extension_max_idle_minutes: this.maxIdleMinutes }
 		},
 	},
 }

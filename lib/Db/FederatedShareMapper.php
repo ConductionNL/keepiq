@@ -36,6 +36,9 @@ use OCP\IDBConnection;
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedShareMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for FederatedShareMapper.
 	 *
@@ -59,12 +62,7 @@ class FederatedShareMapper extends QBMapper {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function findById(string $id): FederatedShare {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

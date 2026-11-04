@@ -20,8 +20,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
@@ -40,7 +40,7 @@ class UseOnlyUseRecorder {
 	 * Constructor for UseOnlyUseRecorder.
 	 *
 	 * @param SecretMapper      $secretMapper      The secret mapper
-	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (copy to source)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param IEventDispatcher  $eventDispatcher   The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents       The audit-event factory
 	 *
@@ -50,7 +50,7 @@ class UseOnlyUseRecorder {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private IEventDispatcher $eventDispatcher,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
@@ -74,8 +74,7 @@ class UseOnlyUseRecorder {
 	 */
 	public function recordUse(string $copyId, string $userId): void {
 		try {
-			$copy   = $this->secretMapper->findById($copyId);
-			$target = $this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $copyId);
+			$copy = $this->secretMapper->findById($copyId);
 		} catch (DoesNotExistException) {
 			throw new NotFoundException(message: 'Secret not found');
 		}
@@ -89,11 +88,13 @@ class UseOnlyUseRecorder {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
+		// Only now, for the caller's own live use-only row, is its share row judged.
+		$sourceId = $this->usedSecretOf(copy: $copy);
 		$this->secretMapper->markUsed($copyId, $userId, new DateTime());
 
 		$sourceName = $copy->getName();
 		try {
-			$sourceName = $this->secretMapper->findById($target->getSourceSecretId())->getName();
+			$sourceName = $this->secretMapper->findById($sourceId)->getName();
 		} catch (DoesNotExistException) {
 			// Source gone; the copy's own name is the same plaintext metadata.
 		}
@@ -103,10 +104,32 @@ class UseOnlyUseRecorder {
 				actorId: $userId,
 				eventType: AuditEventTypes::SECRET_USED,
 				objectType: 'secret',
-				objectId: $target->getSourceSecretId(),
+				objectId: $sourceId,
 				objectName: $sourceName,
 				metadata: ['copyId' => $copyId],
 			)
 		);
 	}//end recordUse()
+
+	/**
+	 * The secret a use of a copy is recorded on: its source, through a share
+	 * row the judge trusts. A use of a secret a held-back row names is
+	 * recorded on that secret itself.
+	 *
+	 * @param Secret $copy The copy
+	 *
+	 * @return string
+	 *
+	 * @throws NotFoundException When no share row, or more than one, names the copy
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	private function usedSecretOf(Secret $copy): string {
+		$verdict = $this->rowJudge->forCopy(copy: $copy);
+		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::AMBIGUOUS) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		return ($verdict->trustedRow()?->getSourceSecretId() ?? $copy->getId());
+	}//end usedSecretOf()
 }//end class

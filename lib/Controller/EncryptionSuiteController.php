@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -154,10 +155,7 @@ class EncryptionSuiteController extends OCSController {
 			$blocked = $this->twoFactor->blocks(userId: (string)$this->userSession->getUser()?->getUID());
 			return new JSONResponse(data: self::withholdKey(suite: $suite->jsonSerialize(), blocked: $blocked));
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 	}//end show()
 
@@ -368,15 +366,9 @@ class EncryptionSuiteController extends OCSController {
 		} catch (InvalidArgumentException $e) {
 			// Malformed key material (e.g. a non-PEM publicKey) is a client error,
 			// not a server fault — surface it as a 400 instead of a 500.
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}//end try
 	}//end enrol()
 
@@ -441,10 +433,7 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}//end try
 	}//end updatePrivateKey()
 
@@ -541,15 +530,9 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end revoke()
 
@@ -584,10 +567,7 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 	}//end reinstate()
 
@@ -686,16 +666,10 @@ class EncryptionSuiteController extends OCSController {
 			);
 		} catch (RuntimeException $e) {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'forbidden', markCompromised: $markCompromised);
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'invalid_argument', markCompromised: $markCompromised);
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end forceRevoke()
 
@@ -826,15 +800,9 @@ class EncryptionSuiteController extends OCSController {
 				);
 			}
 
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 	}//end compromiseRecovery()
 
@@ -873,10 +841,7 @@ class EncryptionSuiteController extends OCSController {
 			$suite = $this->suiteService->getSuite($id);
 			$this->validateOwnership(suite: $suite);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse(

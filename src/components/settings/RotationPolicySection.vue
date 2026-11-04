@@ -52,52 +52,58 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
+import { adminSettingsForm } from '../../mixins/adminSettingsForm.js'
 
 export default {
 	name: 'RotationPolicySection',
 	components: { CnSettingsSection, NcNoteCard },
+	mixins: [adminSettingsForm('/apps/keepiq/api/settings/admin/policies')],
 
 	data() {
 		return {
 			maxAgeDays: 0,
 			reminderCsv: '30, 7, 1',
-			error: null,
-		}
-	},
-
-	/**
-	 * Load the current instance defaults.
-	 *
-	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
-	 */
-	async created() {
-		try {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/policies'),
-			)
-			this.maxAgeDays = response.data.expiry_default_max_age_days ?? 0
-			const days = response.data.expiry_reminder_days
-			if (Array.isArray(days) && days.length) {
-				this.reminderCsv = days.join(', ')
-			}
-		} catch (e) {
-			this.error = e?.response?.data?.message || e?.message
 		}
 	},
 
 	methods: {
 		/**
-		 * Persist the defaults (server validates positivity).
+		 * Show the stored thresholds in their cleaned-up form.
 		 *
-		 * @return {Promise<void>}
+		 * @param {object} payload The settings just stored.
+		 * @return {void}
 		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
 		 */
-		async save() {
-			this.error = null
+		afterSave(payload) {
+			this.reminderCsv = payload.expiry_reminder_days.join(', ')
+		},
+
+		/**
+		 * Take the stored settings into the form.
+		 *
+		 * @param {object} data The stored settings.
+		 * @return {void}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
+		readSettings(data) {
+			this.maxAgeDays = data.expiry_default_max_age_days ?? 0
+			const days = data.expiry_reminder_days
+			if (Array.isArray(days) && days.length) {
+				this.reminderCsv = days.join(', ')
+			}
+		},
+
+		/**
+		 * The defaults to store (the server validates positivity).
+		 *
+		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
+		settingsPayload() {
 			const thresholds = this.reminderCsv
 				.split(',')
 				.map((part) => parseInt(part.trim(), 10))
@@ -107,22 +113,11 @@ export default {
 					'keepiq',
 					'At least one positive reminder threshold is required.',
 				)
-				return
+				return null
 			}
-			try {
-				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin/policies'),
-					{
-						expiry_default_max_age_days: Math.max(
-							0,
-							this.maxAgeDays || 0,
-						),
-						expiry_reminder_days: thresholds,
-					},
-				)
-				this.reminderCsv = thresholds.join(', ')
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+			return {
+				expiry_default_max_age_days: Math.max(0, this.maxAgeDays || 0),
+				expiry_reminder_days: thresholds,
 			}
 		},
 	},

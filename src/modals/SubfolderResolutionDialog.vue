@@ -50,29 +50,21 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton variant="error" :disabled="loading" @click="submit">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<Delete v-else :size="20" />
-				</template>
-				{{ t('keepiq', 'Delete folder') }}
-			</NcButton>
+			<CnDialogActions
+				:saving="loading"
+				variant="error"
+				confirmIcon="Delete"
+				:confirmLabel="t('keepiq', 'Delete folder')"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="submit" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcSelect,
-} from '@nextcloud/vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
+import { CnDialogActions } from '@conduction/nextcloud-vue'
+import { NcDialog, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
 /**
@@ -84,12 +76,10 @@ export default {
 	name: 'SubfolderResolutionDialog',
 
 	components: {
-		NcButton,
+		CnDialogActions,
 		NcDialog,
-		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
-		Delete,
 	},
 
 	props: {

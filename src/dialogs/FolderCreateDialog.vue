@@ -54,37 +54,26 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
-				<template #icon>
-					<NcLoadingIcon v-if="saving" :size="20" />
-					<Safe v-else-if="isVaultLevel" :size="20" />
-					<FolderPlus v-else :size="20" />
-				</template>
-				{{
+			<CnDialogActions
+				:saving="saving"
+				:canSubmit="canSubmit"
+				:confirmIcon="isVaultLevel ? 'Safe' : 'FolderPlus'"
+				:confirmLabel="
 					isVaultLevel
 						? t('keepiq', 'Create vault')
 						: t('keepiq', 'Create folder')
-				}}
-			</NcButton>
+				"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="submit" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import { CnIconColorPicker } from '@conduction/nextcloud-vue'
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcSelect,
-	NcTextField,
-} from '@nextcloud/vue'
+import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
+import { NcDialog, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
 import { markRaw } from 'vue'
-import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Safe from 'vue-material-design-icons/Safe.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { folderPathLabel } from '../utils/vaultList.js'
@@ -97,15 +86,12 @@ export default {
 	name: 'FolderCreateDialog',
 
 	components: {
+		CnDialogActions,
 		CnIconColorPicker,
-		NcButton,
 		NcDialog,
-		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
 		NcTextField,
-		FolderPlus,
-		Safe,
 	},
 
 	props: {

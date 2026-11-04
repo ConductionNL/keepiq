@@ -40,6 +40,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -47,6 +48,7 @@ use PHPUnit\Framework\TestCase;
  * (keepiq#1287).
  */
 class ViewOnlyCopyGuardTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	private ShareTargetMapper&MockObject $targets;
 
@@ -313,14 +315,14 @@ class ViewOnlyCopyGuardTest extends TestCase {
 			secretMapper: $this->secrets,
 			delegationMapper: $this->delegations,
 			teamFolderService: $this->teamFolders,
-			shareTargetMapper: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			groupShareMapper: $groupShares,
 			groupManager: $groups,
 		);
 		$this->guard = new ViewOnlyCopyGuard(
-			targets: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
-			contexts: new ShareWriteContext(targets: $this->targets, suites: $suites, auth: $auth),
+			contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $this->targets), suites: $suites, auth: $auth),
 		);
 	}//end buildGuard()
 }//end class

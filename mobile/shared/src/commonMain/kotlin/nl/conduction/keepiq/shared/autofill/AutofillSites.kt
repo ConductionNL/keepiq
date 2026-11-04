@@ -36,7 +36,7 @@ object AutofillSites {
     fun matches(siteJson: String, serviceIdentifier: String): List<AutofillEntry> =
         AutofillIndex.fromJson(siteJson).candidates(AutofillTarget.Web(hostOf(serviceIdentifier)), totp = false)
 
-    /** The authenticator items of one site file for [serviceIdentifier]. */
+    /** The authenticator items and logins with a seed of one site file for [serviceIdentifier]. */
     fun codeItems(siteJson: String, serviceIdentifier: String): List<AutofillEntry> =
         AutofillIndex.fromJson(siteJson).candidates(AutofillTarget.Web(hostOf(serviceIdentifier)), totp = true)
 
@@ -74,8 +74,8 @@ object AutofillSites {
     @Throws(Exception::class)
     fun decrypt(keys: VaultKeys, ciphertext: String?): String = keys.decryptField(ciphertext)
 
-    /** The current code of an authenticator entry, or null. */
+    /** The current code of an authenticator entry or a login with a seed, or null. */
     fun code(keys: VaultKeys, entry: AutofillEntry, nowMillis: Long): String? = runCatching {
-        nl.conduction.keepiq.shared.crypto.Totp.generate(nl.conduction.keepiq.shared.crypto.Totp.parse(keys.decryptField(entry.key)), nowMillis)
+        nl.conduction.keepiq.shared.crypto.Totp.generate(nl.conduction.keepiq.shared.crypto.Totp.parse(keys.decryptField(entry.seed)), nowMillis)
     }.getOrNull()
 }

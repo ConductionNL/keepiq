@@ -32,6 +32,7 @@ use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCA\Keepiq\Settings\PolicyAdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -215,10 +216,7 @@ class AdminAreaSettingsController extends Controller {
 		try {
 			$result = $this->settingsService->updateAreaSettings(area: $area, data: $data);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $result);

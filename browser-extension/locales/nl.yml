@@ -200,6 +200,24 @@ form:
   discard: Weggooien
   keepEditing: Verder bewerken
 
+authKey:
+  label: Authenticatorsleutel
+  optionalLabel: Authenticatorsleutel (optioneel)
+  newLabel: Nieuwe authenticatorsleutel
+  help: Plak de otpauth://totp/-link of de geheime sleutel, of scan de QR-code op de pagina.
+  scan: QR-code op pagina scannen
+  read: Authenticatorsleutel gelezen uit de QR-code
+  noQr: Geen QR-code gevonden op de pagina. Scrol hem in beeld en probeer het opnieuw.
+  notTotp: Deze QR-code bevat geen authenticatorsleutel. Gebruik de QR-code die de site toont als je inloggen in twee stappen instelt.
+  noPicture: Keepiq kan geen afbeelding van deze pagina maken. Plak de sleutel in plaats daarvan.
+  popout: Open Keepiq via de werkbalk op de pagina met de QR-code om hem te scannen.
+  saved: Opgeslagen
+  remove: Authenticatorsleutel verwijderen
+  replaceHelp: Plak of scan een nieuwe sleutel, of laat dit leeg om de opgeslagen sleutel te verwijderen.
+  keep: Opgeslagen sleutel houden
+  removedOnSave: De authenticatorsleutel wordt verwijderd als je opslaat.
+  notCloned: De authenticatorsleutel wordt niet gekloond.
+
 fieldErrors:
   required: Naam is verplicht
   tooLong: Maximaal {max} tekens
@@ -233,6 +251,9 @@ writeErrors:
   badCertificate: Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.
   unverified: Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.
   partnerUnreachable: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar ({cloudIds}). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+  partnerUpgradeRequired: "Er is niets opgeslagen: de Keepiq van {cloudIds} is te oud om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken."
+  partnerUpgradeRequiredUnnamed: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, heeft een Keepiq die te oud is om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken."
+  partnerUpgradeVersion: Ze hebben Keepiq {version} of nieuwer nodig.
   partnerLookupLimit: Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.
   federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
   keepiqOutdated: Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie {version} of nieuwer.
@@ -421,6 +442,8 @@ settings:
   clipboardSeconds:
     1: 1 seconde
     n: $1 seconden
+  autoCopyTotp: TOTP automatisch kopiëren
+  autoCopyTotpHint: Als een login een verificatiecode heeft, wordt die naar je klembord gekopieerd wanneer je de login automatisch invult.
   askToAdd: Vragen om login toe te voegen
   askToUpdate: Vragen om bestaande login bij te werken
   excludedDomains: Uitgesloten domeinen
@@ -580,6 +603,7 @@ contextMenu:
   openKeepiq: Keepiq openen
   copyUsername: Gebruikersnaam kopiëren
   copyPassword: Wachtwoord kopiëren
+  copyCode: Verificatiecode kopiëren
   generatePassword: Wachtwoord genereren en kopiëren
   unlock: Kluis ontgrendelen
 
@@ -607,6 +631,17 @@ inlineList:
       n: $1 Keepiq-logins. Druk op pijl-omlaag om te kiezen.
     noMatch: Geen Keepiq-logins voor {host}
     locked: Keepiq is vergrendeld. Druk op pijl-omlaag om te ontgrendelen.
+  code:
+    frameTitle: Keepiq-verificatiecodes
+    label: Keepiq-verificatiecodes voor {host}
+    noMatch: Geen verificatiecodes voor {host}
+    locked: Ontgrendel Keepiq om je verificatiecodes te zien
+    invalid: Geen geldig authenticatorgeheim
+    status:
+      count:
+        1: 1 Keepiq-verificatiecode. Druk op pijl-omlaag om te kiezen.
+        n: $1 Keepiq-verificatiecodes. Druk op pijl-omlaag om te kiezen.
+      noMatch: Geen Keepiq-verificatiecodes voor {host}
 
 notificationBar:
   label: Keepiq-melding
