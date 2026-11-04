@@ -27,34 +27,28 @@
 		</p>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton
+			<CnDialogActions
+				:saving="busy"
 				variant="error"
-				:disabled="busy"
-				data-testid="type-delete-confirm"
-				@click="submit">
-				<template #icon>
-					<NcLoadingIcon v-if="busy" :size="20" />
-					<TrashCanOutline v-else :size="20" />
-				</template>
-				{{ t('keepiq', 'Delete item type') }}
-			</NcButton>
+				confirmIcon="TrashCanOutline"
+				:confirmLabel="t('keepiq', 'Delete item type')"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="submit" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
+import { CnDialogActions } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import { NcDialog, NcNoteCard } from '@nextcloud/vue'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 
 export default {
 	name: 'SecretTypeDeleteDialog',
 
-	components: { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, TrashCanOutline },
+	components: { CnDialogActions, NcDialog, NcNoteCard },
 
 	props: {
 		open: {

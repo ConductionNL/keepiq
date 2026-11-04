@@ -53,9 +53,9 @@ class Secret:
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     key_updated_at: Optional[str] = None
-    key: str = ""
-    login: str = ""
-    additional_fields: str = ""
+    key: str = field(default="", repr=False)
+    login: str = field(default="", repr=False)
+    additional_fields: str = field(default="", repr=False)
     etag: Optional[str] = None
     lease: Optional[Lease] = None
     _extra: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -77,14 +77,19 @@ class _Call:
 
     method: str
     addr: str
-    data: Optional[bytes] = None
+    data: Optional[bytes] = field(default=None, repr=False)
     headers: Dict[str, str] = field(default_factory=dict, repr=False)
 
 
 class _Response(NamedTuple):
+    """One HTTP answer; ``repr()`` leaves out the body, which can hold an access token."""
+
     status: int
     headers: Dict[str, str]
     body: bytes
+
+    def __repr__(self) -> str:
+        return f"_Response(status={self.status!r}, body=<{len(self.body)} bytes>)"
 
 
 def _split_base(url: str) -> Tuple[str, str]:
@@ -155,23 +160,55 @@ def _secret_from(meta: Mapping[str, Any], values: Mapping[str, str]) -> Secret:
     )
 
 
-class Client:
-    """A Keepiq instance seen by one application.
+@dataclass(frozen=True)
+class Credentials:
+    """Who the client acts as: the application id, its private key and, optionally, its certificate.
 
-    ``url`` is the Nextcloud address (include ``/index.php`` when the instance
-    has no pretty URLs). ``certificate_pem`` is optional: when given, it must
-    belong to the key, and every envelope encrypted to another certificate is
-    refused before decryption.
+    ``repr()`` shows only the application id. ``certificate_pem`` is optional: when given, it must belong to the key, and
+    every envelope encrypted to another certificate is refused before decryption.
     """
 
-    def __init__(self, url: str, application_id: str, private_key_pem: str, *, certificate_pem: Optional[str] = None,
-                 timeout: float = 30.0, clock: Callable[[], float] = time.time) -> None:
-        self._base, self._origin = _split_base(url)
-        self._app = _required(application_id, "application id")
-        self._key = crypto.load_private_key(private_key_pem)
-        self._fingerprint = _fingerprint_for(certificate_pem, self._key)
-        self._timeout, self._clock = timeout, clock
+    application_id: str
+    private_key_pem: str = field(repr=False)
+    certificate_pem: Optional[str] = field(default=None, repr=False)
+
+
+@dataclass(frozen=True)
+class ClientConfig:
+    """Everything a ``Client`` needs.
+
+    ``url`` is the Nextcloud address (include ``/index.php`` when the instance
+    has no pretty URLs). ``timeout`` is in seconds per request; ``clock``
+    returns the current time in seconds.
+    """
+
+    url: str
+    credentials: Credentials
+    timeout: float = 30.0
+    clock: Callable[[], float] = time.time
+
+
+_OLD_FORM = (
+    "Client() takes one ClientConfig since keepiq-sdk 1.0: "
+    "Client(ClientConfig(url, Credentials(application_id, private_key_pem, certificate_pem)))"
+)
+
+
+class Client:
+    """A Keepiq instance seen by one application, built from one ``ClientConfig``."""
+
+    def __init__(self, config: Optional[ClientConfig] = None, *legacy: object, **legacy_options: object) -> None:
+        if legacy or legacy_options or not isinstance(config, ClientConfig):
+            raise TypeError(_OLD_FORM)
+        self._base, self._origin = _split_base(config.url)
+        self._app = _required(config.credentials.application_id, "application id")
+        self._key = crypto.load_private_key(config.credentials.private_key_pem)
+        self._fingerprint = _fingerprint_for(config.credentials.certificate_pem, self._key)
+        self._timeout, self._clock = config.timeout, config.clock
         self._init_session()
+
+    def __repr__(self) -> str:
+        return f"Client(url={self._base!r}, application_id={self._app!r})"
 
     def _init_session(self) -> None:
         self._lock = threading.Lock()

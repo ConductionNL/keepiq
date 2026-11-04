@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestPolicy;
@@ -284,6 +285,7 @@ class SecretRequestFillControllerTest extends TestCase {
 			'a copy shared to view only' => [new ViewOnlyCopyException()],
 			'a copy from another organisation' => [new ForbiddenException(message: Secret::READ_ONLY_REFUSAL)],
 			'a copy whose source cannot be resolved' => [new NotFoundException(message: 'Secret not found')],
+			'a secret whose share row waits for the quarantine scan' => [new ShareScanPendingException('This secret waits for the share quarantine scan')],
 		];
 	}//end holderRefusals()
 

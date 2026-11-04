@@ -342,6 +342,20 @@ a {
 	color: var(--danger);
 }
 
+.auth-key__saved {
+	flex: 1;
+	min-width: 0;
+	font-size: 14px;
+	color: var(--fg-muted);
+}
+
+.auth-key__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
 /* Buttons */
 
 .btn {

@@ -542,6 +542,9 @@ function vaultAnswer(f, vault, sends, method, path, url, body) {
 			key: b.key,
 			login: b.login ?? null,
 			additionalFields: b.additionalFields ?? null,
+			// A login's own seed and passkeys, as the server keeps them; "" is none.
+			totp: b.totp || null,
+			passkeys: b.passkeys || null,
 			createdAt: at,
 			updatedAt: at,
 			keyUpdatedAt: at,
@@ -558,6 +561,7 @@ function vaultAnswer(f, vault, sends, method, path, url, body) {
 		if (method === 'PUT') {
 			const b = json()
 			for (const field of ['name', 'url', 'folderId', 'key', 'login', 'additionalFields']) if (field in b) row[field] = b[field]
+			for (const field of ['totp', 'passkeys']) if (field in b) row[field] = b[field] || null
 			row.updatedAt = now()
 			if ('key' in b) row.keyUpdatedAt = row.updatedAt
 			return [200, row]

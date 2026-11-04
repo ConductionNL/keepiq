@@ -7,6 +7,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 export const TEST_SITE_PORT = Number(process.env.TEST_SITE_PORT ?? 8100)
 
 const ROOT = fileURLToPath(new URL('../test-site/', import.meta.url))
+/** The code steps `totp-login.html` can lead to. */
+const CODE_STEPS = new Set(['otp', 'otp-halves', 'otp-split'])
 const TYPES: Record<string, string> = {
 	'.html': 'text/html; charset=utf-8',
 	'.css': 'text/css; charset=utf-8',
@@ -27,6 +29,12 @@ async function serve(req: IncomingMessage, res: ServerResponse): Promise<void> {
 	if (req.method === 'POST') {
 		req.resume()
 		req.on('end', () => {
+			if (url.pathname === '/totp-login') {
+				const next = url.searchParams.get('next') ?? ''
+				res.writeHead(303, { Location: `/${CODE_STEPS.has(next) ? next : 'otp'}.html` })
+				res.end()
+				return
+			}
 			if (url.pathname === '/api/login') {
 				res.writeHead(200, { 'Content-Type': 'application/json' })
 				res.end('{"ok":true}')

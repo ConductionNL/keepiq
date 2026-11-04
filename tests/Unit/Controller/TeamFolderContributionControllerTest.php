@@ -222,7 +222,7 @@ class TeamFolderContributionControllerTest extends TestCase {
 				$this->assertSame(['T', 'P'], [$data['totp'], $data['passkeys']]);
 				$secret = new Secret();
 				$secret->setId('s9');
-				return ['secret' => $secret, 'copies' => 0];
+				return ['secret' => $secret, 'copies' => 0, 'skipped' => []];
 			}
 		);
 
