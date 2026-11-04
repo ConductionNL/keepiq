@@ -147,7 +147,7 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 Decided by Thijn on 2026-11-04, all as built:
 
 - **A counter save re-encrypts a shared login's passkeys for every listed copy** on sign-in, like an edit.
-- **A passkey save to a partner-shared login fails `unverified`** when the login has a password, username or additional fields, since the extension never opened them in a form. Follow-up: keepiq#1470.
+- **A passkey save to a partner-shared login fails `unverified`** when the login has a password, username or additional fields, since the extension never opened them in a form; so does its counter save, so an imported passkey on such a login cannot sign in. Follow-up: keepiq#1470.
 - **Use-only, read-only and view-only copies with a non-zero counter refuse to sign,** as Bitwarden does.
 - **Firefox injects the page script inline,** so pages whose CSP forbids inline scripts get no Keepiq passkeys. Follow-up: keepiq#1471.
 - **The AAGUID stays all zeros.**
