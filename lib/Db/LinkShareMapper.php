@@ -37,6 +37,9 @@ use OCP\IDBConnection;
  *   each is a single query on the link shares table.
  */
 class LinkShareMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * The `original_created_by` of a handed-over link whose maker's account
 	 * was deleted. Nextcloud's uid validation rejects the `:`, and the
@@ -68,12 +71,7 @@ class LinkShareMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): LinkShare {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

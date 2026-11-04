@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Repair\SeedDevelopmentShares;
+use OCA\Keepiq\Repair\SeedVersionGate;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -106,8 +107,7 @@ class SeedDevelopmentSharesTest extends TestCase {
 			shareTargetMapper: $shareTargetMapper,
 			groupShareMapper: $groupShareMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -138,8 +138,7 @@ class SeedDevelopmentSharesTest extends TestCase {
 			shareTargetMapper: $shareTargetMapper,
 			groupShareMapper: $groupShareMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -184,8 +183,7 @@ class SeedDevelopmentSharesTest extends TestCase {
 			shareTargetMapper: $shareTargetMapper,
 			groupShareMapper: $groupShareMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $appConfig,
+			seedGate: new SeedVersionGate(config: $config, appConfig: $appConfig),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -221,8 +219,7 @@ class SeedDevelopmentSharesTest extends TestCase {
 			shareTargetMapper: $shareTargetMapper,
 			groupShareMapper: $groupShareMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -283,8 +280,7 @@ class SeedDevelopmentSharesTest extends TestCase {
 			shareTargetMapper: $shareTargetMapper,
 			groupShareMapper: $groupShareMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));

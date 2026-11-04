@@ -25,6 +25,7 @@ use Exception;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\CertificateAuthorityService;
 use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -94,10 +95,7 @@ class CACertificateController extends OCSController {
 			$this->caService->retryBootstrap();
 			return new JSONResponse(data: $this->caService->getStatus());
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}//end retryBootstrap()
 
@@ -122,10 +120,7 @@ class CACertificateController extends OCSController {
 				]
 			);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}//end renewIntermediate()
 
@@ -150,10 +145,7 @@ class CACertificateController extends OCSController {
 				]
 			);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}//end renewRoot()
 }//end class

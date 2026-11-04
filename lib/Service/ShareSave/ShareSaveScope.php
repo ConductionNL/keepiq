@@ -24,9 +24,10 @@ use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\ShareRowVerdict;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -44,10 +45,11 @@ use OCP\AppFramework\Http;
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSaveScope {
+
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets (copy to source)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
 	 * @param ShareSyncService $sync Who may write for every copy
@@ -58,7 +60,7 @@ class ShareSaveScope {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
 		private FederatedShareMapper $federatedShares,
 		private ShareSyncService $sync,
@@ -70,7 +72,9 @@ class ShareSaveScope {
 	 * The path of a save of the caller's own row: the owner path, or the
 	 * copy-editor path when it is a recipient copy, which takes the owner,
 	 * a delegate, a write grade on the source or a member of a group it is
-	 * shared with.
+	 * shared with. A share row whose target does not hold the row, or that the
+	 * pending quarantine scan quarantines, leads to no source: the row saves
+	 * as the caller's own.
 	 *
 	 * @param Secret $row The caller's row, already checked to be theirs
 	 * @param string $userId The caller
@@ -79,17 +83,25 @@ class ShareSaveScope {
 	 *
 	 * @throws NotFoundException When the copy's source is gone
 	 * @throws ForbiddenException When the source is a read-only or use-only copy
-	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy
+	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy,
+	 *   `share_scan_pending` for a share row the pending quarantine scan cannot judge
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function resolve(Secret $row, string $userId): ShareSavePath {
-		try {
-			$target = $this->targets->findByRecipientSecret(recipientSecretId: $row->getId());
-		} catch (DoesNotExistException) {
-			return new ShareSavePath(row: $row, source: $row);
-		} catch (MultipleObjectsReturnedException) {
+		$verdict = $this->rowJudge->forCopy(copy: $row);
+		if ($verdict->state === ShareRowVerdict::AMBIGUOUS) {
 			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->scanPending();
+		}
+
+		$target = $verdict->trustedRow();
+		if ($target === null) {
+			return new ShareSavePath(row: $row, source: $row);
 		}
 
 		try {
@@ -107,6 +119,20 @@ class ShareSaveScope {
 
 		return new ShareSavePath(row: $row, source: $source, writesOn: $writesOn);
 	}//end resolve()
+
+	/**
+	 * The refusal of a save that reaches a share row the pending quarantine
+	 * scan cannot judge: nothing is written until the scan has judged it.
+	 *
+	 * @return ShareSaveRefusal
+	 */
+	private function scanPending(): ShareSaveRefusal {
+		return new ShareSaveRefusal(
+			error: 'share_scan_pending',
+			message: 'This secret waits for the share quarantine scan and cannot be saved yet; ask an administrator to check that background jobs run',
+			status: Http::STATUS_CONFLICT
+		);
+	}//end scanPending()
 
 	/**
 	 * Check the copy-editor's right to write every copy again, inside the
@@ -204,6 +230,7 @@ class ShareSaveScope {
 	 * @psalm-return Requirement
 	 *
 	 * @throws IncompleteShareSaveException With the current lists
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
@@ -257,7 +284,7 @@ class ShareSaveScope {
 	 *
 	 * @return void
 	 *
-	 * @throws ShareSaveRefusal `too_many_entries` or `too_many_chunks`
+	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, or `share_scan_pending`
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
@@ -284,10 +311,16 @@ class ShareSaveScope {
 	 * @return array
 	 *
 	 * @psalm-return Requirement
+	 *
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
-		['copies' => $copies, 'ignored' => $ignored] = $this->guards->liveCopies(source: $source, leaveOut: $path->row->getId());
+		['copies' => $copies, 'ignored' => $ignored, 'unjudged' => $unjudged] = $this->guards->liveCopies(source: $source, leaveOut: $path->row->getId());
+		if ($unjudged !== []) {
+			throw $this->scanPending();
+		}
+
 		if ($path->isCopyEditor() === true) {
 			$copies = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $copies;
 		}

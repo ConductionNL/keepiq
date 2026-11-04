@@ -64,6 +64,7 @@ use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
@@ -79,6 +80,7 @@ use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -93,6 +95,8 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One scenario per copy-touching path.
  */
 class PendingScanHoldsBackSuspectsTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use ShareTargetDatabase;
 
 	/**
@@ -423,6 +427,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			restrictions: $this->restrictions(scanner: $scanner),
 			quarantineScan: $scanner,
 			db: $this->db,
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db), scanner: $scanner),
 		);
 	}//end groupShares()
 
@@ -477,7 +482,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: new SecretMapper(db: $this->db),
 			delegationMapper: $delegations,
-			shareTargetMapper: new ShareTargetMapper(db: $this->db),
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db)),
 		);
 	}//end authorization()
 
@@ -628,14 +633,17 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 	public function testASyncDoesNotWriteVWhileTheScanIsPending(bool $pending): void {
 		$row  = $this->plant();
 		$sync = new ShareSyncService(
-			mapper: new ShareTargetMapper(db: $this->db),
 			secretMapper: new SecretMapper(db: $this->db),
 			db: $this->db,
 			auth: $this->authorization(),
 			versionService: $this->createMock(SecretVersionService::class),
 			guards: $this->createMock(ShareSyncGuards::class),
 			contexts: $this->createMock(ShareWriteContext::class),
-			quarantineScan: $this->scanner(pending: $pending),
+			rowJudge: new ShareRowJudge(
+				targets: new ShareTargetMapper(db: $this->db),
+				secrets: new SecretMapper(db: $this->db),
+				scanner: $this->scanner(pending: $pending)
+			),
 		);
 
 		$sync->writeCopyBlobs(
@@ -801,14 +809,17 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 	public function testASyncNamingVTwiceDoesNotWriteVWhileTheScanIsPending(): void {
 		$row  = $this->plant();
 		$sync = new ShareSyncService(
-			mapper: new ShareTargetMapper(db: $this->db),
 			secretMapper: new SecretMapper(db: $this->db),
 			db: $this->db,
 			auth: $this->authorization(),
 			versionService: $this->createMock(SecretVersionService::class),
 			guards: $this->createMock(ShareSyncGuards::class),
 			contexts: $this->createMock(ShareWriteContext::class),
-			quarantineScan: $this->scanner(pending: true),
+			rowJudge: new ShareRowJudge(
+				targets: new ShareTargetMapper(db: $this->db),
+				secrets: new SecretMapper(db: $this->db),
+				scanner: $this->scanner(pending: true)
+			),
 		);
 
 		$updated = $sync->writeCopyBlobs(
@@ -1243,6 +1254,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			notificationService: $this->createMock(NotificationService::class),
 			restrictions: $this->restrictions(scanner: $this->brokenScanner()),
 			connection: $this->db,
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db), secrets: new SecretMapper(db: $this->db)),
 		);
 
 		$report = $registrar->registerDirectShares(
@@ -1282,6 +1294,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			),
 			notificationService: $this->createMock(NotificationService::class),
 			db: $this->db,
+			logger: $this->createMock(\Psr\Log\LoggerInterface::class),
 			restrictions: new ShareRestrictionResolver(
 				secretMapper: new SecretMapper(db: $this->db),
 				shareTargetMapper: new ShareTargetMapper(db: $this->db),
@@ -1290,7 +1303,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 				groupManager: $this->createMock(IGroupManager::class),
 				quarantineScan: $this->brokenScanner(),
 			),
-		);
+			rowJudge: $this->shareRowJudge(targets: new ShareTargetMapper(db: $this->db)));
 
 		$result = $service->registerFanOutShares(
 			teamFolder: $folder,

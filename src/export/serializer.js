@@ -36,7 +36,9 @@ function buildPathMap(folders) {
 		byId.set(folder.id, folder)
 	}
 	const cache = new Map()
-	const resolve = (id, guard = 0) => {
+	// `ancestors` holds the folders on the path being resolved, so a parent
+	// cycle ends the path at the folder it loops back to.
+	const resolve = (id, ancestors = new Set()) => {
 		if (id == null) {
 			return ''
 		}
@@ -44,10 +46,11 @@ function buildPathMap(folders) {
 			return cache.get(id)
 		}
 		const folder = byId.get(id)
-		if (!folder || guard > 1000) {
+		if (!folder || ancestors.has(id) || ancestors.size > 1000) {
 			return ''
 		}
-		const parentPath = resolve(folder.parentId, guard + 1)
+		ancestors.add(id)
+		const parentPath = resolve(folder.parentId, ancestors)
 		const path = parentPath ? `${parentPath}/${folder.name}` : folder.name
 		cache.set(id, path)
 		return path
@@ -64,7 +67,7 @@ function buildPathMap(folders) {
  *
  * @param {Array<object>} folders Folder rows ({ id, parentId }).
  * @param {Array<string>} rootIds The selected folder IDs.
- * @return {Set<string>} The selected IDs plus every descendant ID.
+ * @return {Set<string>} The selected IDs that exist plus every descendant ID.
  */
 function collectSubtree(folders, rootIds) {
 	const childrenOf = new Map()
@@ -73,8 +76,10 @@ function collectSubtree(folders, rootIds) {
 		list.push(folder.id)
 		childrenOf.set(folder.parentId, list)
 	}
+	const known = new Set(folders.map((folder) => folder.id))
 	const selected = new Set()
-	const stack = [...rootIds]
+	// Only folders that exist start a subtree: an unknown id selects nothing.
+	const stack = rootIds.filter((id) => known.has(id))
 	let guard = 0
 	while (stack.length > 0 && guard < 100000) {
 		guard++

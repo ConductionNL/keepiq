@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\Application;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\ApplicationService;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -113,10 +114,7 @@ class ApplicationController extends OCSController {
 		try {
 			$pending = $this->service->listPending($isAdmin);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(
@@ -148,10 +146,7 @@ class ApplicationController extends OCSController {
 		try {
 			$entity = $this->service->get($id, $uid, $isAdmin);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -245,10 +240,7 @@ class ApplicationController extends OCSController {
 				isAdmin: $isAdmin
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
@@ -391,10 +383,7 @@ class ApplicationController extends OCSController {
 		try {
 			$certificate = $this->service->getCertificate(applicationId: $id);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		if ($certificate === null) {

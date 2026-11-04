@@ -51,6 +51,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -61,6 +62,7 @@ use Psr\Log\LoggerInterface;
  * compromise-flag clearance, owner-view scoping for listShares).
  */
 class ShareServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * Service under test.
@@ -161,6 +163,7 @@ class ShareServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			delegationMapper: $this->delegationMapper,
 			teamFolderService: $teamFolderService,
+			rowJudge: $this->shareRowJudge(secrets: $this->secretMapper),
 		);
 
 		$copyFactory = new RecipientSecretCopyFactory(
@@ -177,16 +180,17 @@ class ShareServiceTest extends TestCase {
 				copyFactory: $copyFactory,
 				notificationService: $this->notificationService,
 				groupShareMapper: $this->groupShareMapper,
+				rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			),
 			syncService: new ShareSyncService(
-				mapper: $this->mapper,
+				rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 				secretMapper: $this->secretMapper,
 				db: $this->db,
 				auth: $auth,
 				auditTrail: $auditTrail,
 				versionService: ($versionService ?? $this->createMock(SecretVersionService::class)),
-				guards: new ShareSyncGuards(targets: $this->mapper, secrets: $this->secretMapper, suites: $this->suiteMapper, auth: $auth),
-				contexts: new ShareWriteContext(targets: $this->mapper, suites: $this->suiteMapper, auth: $auth),
+				guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper), secrets: $this->secretMapper, suites: $this->suiteMapper, auth: $auth),
+				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $this->mapper), suites: $this->suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->mapper,
@@ -194,7 +198,9 @@ class ShareServiceTest extends TestCase {
 				db: $this->db,
 				logger: $logger,
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}//end wireService()
 
@@ -528,7 +534,7 @@ class ShareServiceTest extends TestCase {
 		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
 		$this->db->expects($this->never())->method('beginTransaction');
 		$sync = new ShareSyncService(
-			mapper: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			secretMapper: $this->secretMapper,
 			db: $this->db,
 			auth: $this->createMock(ShareAuthorizationService::class),
@@ -1181,12 +1187,13 @@ class ShareServiceTest extends TestCase {
 			auth: new ShareAuthorizationService(
 				secretMapper: $this->secretMapper,
 				delegationMapper: $this->delegationMapper,
-				shareTargetMapper: $this->mapper,
+				rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 				grants: $grants,
 			),
 			directRegistrar: $this->createMock(DirectShareRegistrar::class),
 			syncService: $this->createMock(ShareSyncService::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}//end delegateScenario()
 

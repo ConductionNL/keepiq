@@ -215,6 +215,31 @@ struct FieldRow: View {
         }
         return out
     }
+
+    /// A random password has no word breaks at all, so at the largest text
+    /// sizes it could only be clipped. Inside a run of more than 10
+    /// characters without a space or a hyphen, a zero-width space after every
+    /// character lets it wrap anywhere. Shorter runs, such as the words of a
+    /// passphrase, keep their natural breaks. Only the drawn text: VoiceOver
+    /// (an explicit label) and Copy keep the value as it is.
+    static func breakableLongRuns(_ value: String) -> String {
+        var out = ""
+        var run: [Character] = []
+        func flush() {
+            out += run.count > 10 ? run.map { String($0) + "\u{200B}" }.joined() : String(run)
+            run.removeAll()
+        }
+        for character in value {
+            if character.isWhitespace || character == "-" {
+                flush()
+                out.append(character)
+            } else {
+                run.append(character)
+            }
+        }
+        flush()
+        return out
+    }
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -227,7 +252,7 @@ struct FieldRow: View {
                 if masked && !shown {
                     Text("••••••••").accessibilityLabel(label)
                 } else {
-                    Text(value.isEmpty ? "-" : masked ? value : Self.breakable(value))
+                    Text(value.isEmpty ? "-" : masked ? Self.breakableLongRuns(value) : Self.breakable(value))
                         .font(masked ? .body.monospaced() : .body)
                         .textSelection(.disabled)
                         .lineLimit(nil)

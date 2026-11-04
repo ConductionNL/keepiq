@@ -46,12 +46,15 @@ use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests per cascade step + idempotency + event emission.
  */
 class AccountDeletionServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 
 	/**
 	 * Collaborator mocks, keyed for per-test wiring.
@@ -103,6 +106,7 @@ class AccountDeletionServiceTest extends TestCase {
 					federatedShares: $this->m['federated'],
 					linkShares: $this->m['link'],
 				),
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->m['suite'],

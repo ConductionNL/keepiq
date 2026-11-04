@@ -764,6 +764,8 @@ class ShareQuarantineScannerTest extends TestCase {
 			secretMapper: new SecretMapper(db: $this->db),
 			groupShareMapper: new GroupShareMapper(db: $this->db),
 			eventDispatcher: $this->createMock(IEventDispatcher::class),
+			teamFolders: new \OCA\Keepiq\Db\TeamFolderMapper(db: $this->db),
+			memberships: $this->createMock(\OCA\Keepiq\Service\TeamFolderMembershipResolver::class),
 		))->release(id: $planted->getId(), force: true);
 
 		$this->scanner()->run();

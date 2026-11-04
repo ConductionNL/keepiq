@@ -180,6 +180,111 @@ function totpToCredential(key) {
 }
 
 /**
+ * Row fields of a login, password or basic-auth credential.
+ *
+ * @param {object} credential The CXF credential entity.
+ * @param {string} title The parent item's title ('' when absent).
+ * @return {object} The row fields, without folder.
+ */
+function loginFields(credential, title) {
+	const urls = Array.isArray(credential.urls)
+		? credential.urls.map(fieldValue)
+		: []
+	const notes = fieldValue(credential.notes)
+	return {
+		name: title,
+		url: urls[0] ?? null,
+		login: fieldValue(credential.username) || null,
+		password: fieldValue(credential.password),
+		type: 'login',
+		additionalFields: notes ? { notes } : null,
+	}
+}
+
+/**
+ * Row fields of a note credential.
+ *
+ * @param {object} credential The CXF credential entity.
+ * @param {string} title The parent item's title ('' when absent).
+ * @return {object} The row fields, without folder.
+ */
+function noteFields(credential, title) {
+	return {
+		name: title !== '' ? title : 'Note',
+		password: fieldValue(credential.content),
+		type: 'note',
+	}
+}
+
+/**
+ * Row fields of an API key credential.
+ *
+ * @param {object} credential The CXF credential entity.
+ * @param {string} title The parent item's title ('' when absent).
+ * @return {object} The row fields, without folder.
+ */
+function apiKeyFields(credential, title) {
+	return {
+		name: title !== '' ? title : 'API key',
+		login: fieldValue(credential.username) || null,
+		password: fieldValue(credential.key),
+		type: 'api_key',
+	}
+}
+
+/**
+ * Row fields of an SSH key credential.
+ *
+ * @param {object} credential The CXF credential entity.
+ * @param {string} title The parent item's title ('' when absent).
+ * @return {object} The row fields, without folder.
+ */
+function sshKeyFields(credential, title) {
+	const publicKey = fieldValue(credential.publicKey)
+	return {
+		name: title !== '' ? title : 'SSH key',
+		password: fieldValue(credential.privateKey),
+		type: 'ssh_key',
+		additionalFields: publicKey ? { publicKey } : null,
+	}
+}
+
+/**
+ * Row fields of a Wi-Fi credential. There is no dedicated Keepiq type, so it
+ * maps to `note` with the SSID and security type as additional fields
+ * (design decision).
+ *
+ * @param {object} credential The CXF credential entity.
+ * @param {string} title The parent item's title ('' when absent).
+ * @return {object} The row fields, without folder.
+ */
+function wifiFields(credential, title) {
+	const ssid = fieldValue(credential.ssid)
+	const security = fieldValue(credential.security)
+	const fallback = ssid !== '' ? `Wi-Fi ${ssid}` : 'Wi-Fi'
+	return {
+		name: title !== '' ? title : fallback,
+		password: fieldValue(credential.passphrase),
+		type: 'note',
+		additionalFields: {
+			...(ssid !== '' ? { ssid } : {}),
+			...(security !== '' ? { security } : {}),
+		},
+	}
+}
+
+/** The row fields of each supported CXF credential type. */
+const CREDENTIAL_FIELDS = new Map([
+	['basic-auth', loginFields],
+	['password', loginFields],
+	['login', loginFields],
+	['note', noteFields],
+	['api-key', apiKeyFields],
+	['ssh-key', sshKeyFields],
+	['wifi', wifiFields],
+])
+
+/**
  * Map one CXF credential that is not a TOTP or a passkey to a normalized
  * import row (or a rejected row).
  *
@@ -192,109 +297,18 @@ function totpToCredential(key) {
 function credentialToRow(credential, item, folder, sourceRow) {
 	const title = item.title != null ? String(item.title) : ''
 	const type = String(credential?.type ?? '')
-
-	switch (type) {
-		case 'basic-auth':
-		case 'password':
-		case 'login': {
-			const urls = Array.isArray(credential.urls)
-				? credential.urls.map(fieldValue)
-				: []
-			return validateRow(
-				makeRow(
-					{
-						name: title,
-						url: urls[0] ?? null,
-						login: fieldValue(credential.username) || null,
-						password: fieldValue(credential.password),
-						folder,
-						type: 'login',
-						additionalFields: fieldValue(credential.notes)
-							? { notes: fieldValue(credential.notes) }
-							: null,
-					},
-					sourceRow,
-				),
-			)
-		}
-		case 'note':
-			return validateRow(
-				makeRow(
-					{
-						name: title !== '' ? title : 'Note',
-						password: fieldValue(credential.content),
-						folder,
-						type: 'note',
-					},
-					sourceRow,
-				),
-			)
-		case 'api-key':
-			return validateRow(
-				makeRow(
-					{
-						name: title !== '' ? title : 'API key',
-						login: fieldValue(credential.username) || null,
-						password: fieldValue(credential.key),
-						folder,
-						type: 'api_key',
-					},
-					sourceRow,
-				),
-			)
-		case 'ssh-key':
-			return validateRow(
-				makeRow(
-					{
-						name: title !== '' ? title : 'SSH key',
-						password: fieldValue(credential.privateKey),
-						folder,
-						type: 'ssh_key',
-						additionalFields: fieldValue(credential.publicKey)
-							? { publicKey: fieldValue(credential.publicKey) }
-							: null,
-					},
-					sourceRow,
-				),
-			)
-		case 'wifi': {
-			// No dedicated Keepiq type — map to `note` with the SSID and
-			// security type as additional fields (design decision).
-			const ssid = fieldValue(credential.ssid)
-			return validateRow(
-				makeRow(
-					{
-						name:
-							title !== ''
-								? title
-								: ssid !== ''
-									? `Wi-Fi ${ssid}`
-									: 'Wi-Fi',
-						password: fieldValue(credential.passphrase),
-						folder,
-						type: 'note',
-						additionalFields: {
-							...(ssid !== '' ? { ssid } : {}),
-							...(fieldValue(credential.security) !== ''
-								? { security: fieldValue(credential.security) }
-								: {}),
-						},
-					},
-					sourceRow,
-				),
-			)
-		}
-		default: {
-			const row = makeRow(
-				{ name: title !== '' ? title : 'Unknown credential', folder },
-				sourceRow,
-			)
-			return rejectRow(
-				row,
-				`Unsupported CXF credential type "${type || 'unknown'}"`,
-			)
-		}
+	const fields = CREDENTIAL_FIELDS.get(type)
+	if (fields === undefined) {
+		const row = makeRow(
+			{ name: title !== '' ? title : 'Unknown credential', folder },
+			sourceRow,
+		)
+		return rejectRow(
+			row,
+			`Unsupported CXF credential type "${type || 'unknown'}"`,
+		)
 	}
+	return validateRow(makeRow({ ...fields(credential, title), folder }, sourceRow))
 }
 
 /**
@@ -313,85 +327,161 @@ function credentialToRow(credential, item, folder, sourceRow) {
  * @return {Array<object>} The item's rows, in source order.
  */
 function itemToRows(item, folder, firstRow) {
-	const title = String(item.title ?? '')
-	const rows = []
-	const seeds = []
-	const passkeys = []
-	const reject = (sourceRow, reason) =>
-		rows.push(rejectRow(makeRow({ name: title, folder }, sourceRow), reason))
-
+	const ctx = {
+		item,
+		folder,
+		title: String(item.title ?? ''),
+		rows: [],
+		seeds: [],
+		passkeys: [],
+	}
 	for (const [index, credential] of item.credentials.entries()) {
-		const sourceRow = firstRow + index
-		const type = String(credential?.type ?? '')
-		if (type === 'totp') {
-			let seed
-			try {
-				seed = cxfTotpKey(credential)
-			} catch (e) {
-				reject(sourceRow, e.message)
-				continue
-			}
-			const error =
-				seed === ''
-					? 'CXF TOTP entry without a seed'
-					: authenticatorKeyError(seed)
-			if (error === '') {
-				seeds.push({ seed, sourceRow })
-			} else {
-				reject(sourceRow, error)
-			}
-		} else if (type === 'passkey') {
-			const passkey = cxfPasskey(credential)
-			if (passkey === null) {
-				reject(
-					sourceRow,
-					'Incomplete CXF passkey (needs credentialId, rpId, and key material)',
-				)
-			} else {
-				passkeys.push({ passkey, sourceRow })
-			}
-		} else {
-			rows.push(credentialToRow(credential, item, folder, sourceRow))
-		}
+		readCredential(ctx, { credential, sourceRow: firstRow + index })
 	}
+	if (ctx.seeds.length === 0 && ctx.passkeys.length === 0) {
+		return ctx.rows
+	}
+	attachExtras(ctx)
+	return ctx.rows.sort((a, b) => a.sourceRow - b.sourceRow)
+}
 
-	if (seeds.length === 0 && passkeys.length === 0) {
-		return rows
-	}
-	const accepted = rows.filter((row) => row.errors.length === 0)
-	let target = accepted.find((row) => row.type === 'login') ?? accepted[0]
-	if (target === undefined) {
-		const rpId = passkeys[0]?.passkey.rpId ?? null
-		target = validateRow(
-			makeRow(
-				{
-					name: title !== '' ? title : (rpId ?? 'TOTP'),
-					url: rpId,
-					password: '',
-					folder,
-					type: 'login',
-				},
-				Math.min(...[...seeds, ...passkeys].map((entry) => entry.sourceRow)),
-			),
+/**
+ * Add a rejected row for one of the item's credentials.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @param {{sourceRow: number, reason: string}} entry The credential's row and the reason.
+ * @return {void}
+ */
+function rejectEntry(ctx, entry) {
+	ctx.rows.push(
+		rejectRow(
+			makeRow({ name: ctx.title, folder: ctx.folder }, entry.sourceRow),
+			entry.reason,
+		),
+	)
+}
+
+/**
+ * Read one credential of the item: a TOTP seed and a passkey wait for the
+ * row they go on, anything else becomes a row of its own.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @param {{credential: object, sourceRow: number}} entry The credential and its source row.
+ * @return {void}
+ */
+function readCredential(ctx, entry) {
+	const type = String(entry.credential?.type ?? '')
+	if (type === 'totp') {
+		readTotp(ctx, entry)
+	} else if (type === 'passkey') {
+		readPasskey(ctx, entry)
+	} else {
+		ctx.rows.push(
+			credentialToRow(entry.credential, ctx.item, ctx.folder, entry.sourceRow),
 		)
-		rows.push(target)
 	}
-	for (const { seed, sourceRow } of seeds) {
+}
+
+/**
+ * Keep a usable TOTP seed for the item's login, or reject the entity.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @param {{credential: object, sourceRow: number}} entry The TOTP entity and its source row.
+ * @return {void}
+ */
+function readTotp(ctx, entry) {
+	const sourceRow = entry.sourceRow
+	let seed
+	try {
+		seed = cxfTotpKey(entry.credential)
+	} catch (e) {
+		rejectEntry(ctx, { sourceRow, reason: e.message })
+		return
+	}
+	const error =
+		seed === '' ? 'CXF TOTP entry without a seed' : authenticatorKeyError(seed)
+	if (error === '') {
+		ctx.seeds.push({ seed, sourceRow })
+	} else {
+		rejectEntry(ctx, { sourceRow, reason: error })
+	}
+}
+
+/**
+ * Keep a complete passkey for the item's login, or reject the entity.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @param {{credential: object, sourceRow: number}} entry The passkey entity and its source row.
+ * @return {void}
+ */
+function readPasskey(ctx, entry) {
+	const passkey = cxfPasskey(entry.credential)
+	if (passkey === null) {
+		rejectEntry(ctx, {
+			sourceRow: entry.sourceRow,
+			reason: 'Incomplete CXF passkey (needs credentialId, rpId, and key material)',
+		})
+	} else {
+		ctx.passkeys.push({ passkey, sourceRow: entry.sourceRow })
+	}
+}
+
+/**
+ * The row the item's TOTP and passkeys go on: its first accepted login,
+ * else its first other accepted row, else a new login with an empty password.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @return {object} The row.
+ */
+function extrasTarget(ctx) {
+	const accepted = ctx.rows.filter((row) => row.errors.length === 0)
+	const found = accepted.find((row) => row.type === 'login') ?? accepted[0]
+	if (found !== undefined) {
+		return found
+	}
+	const rpId = ctx.passkeys[0]?.passkey.rpId ?? null
+	const target = validateRow(
+		makeRow(
+			{
+				name: ctx.title !== '' ? ctx.title : (rpId ?? 'TOTP'),
+				url: rpId,
+				password: '',
+				folder: ctx.folder,
+				type: 'login',
+			},
+			Math.min(
+				...[...ctx.seeds, ...ctx.passkeys].map((entry) => entry.sourceRow),
+			),
+		),
+	)
+	ctx.rows.push(target)
+	return target
+}
+
+/**
+ * Put the item's TOTP seeds and passkeys on its target row, rejecting a
+ * seed or passkey that row cannot take.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @return {void}
+ */
+function attachExtras(ctx) {
+	const target = extrasTarget(ctx)
+	for (const { seed, sourceRow } of ctx.seeds) {
 		const reason = attachTotp(target, seed)
 		if (reason !== null) {
-			reject(sourceRow, reason)
+			rejectEntry(ctx, { sourceRow, reason })
 		}
 	}
 	const clashes = attachPasskeys(
 		target,
-		passkeys.map(({ passkey }) => passkey),
+		ctx.passkeys.map(({ passkey }) => passkey),
 	)
-	for (const { sourceRow } of passkeys.filter(({ passkey }) =>
+	for (const { sourceRow } of ctx.passkeys.filter(({ passkey }) =>
 		clashes.includes(passkey),
 	)) {
-		reject(sourceRow, SECOND_PASSKEY_REASON)
+		rejectEntry(ctx, { sourceRow, reason: SECOND_PASSKEY_REASON })
 	}
-	return rows.sort((a, b) => a.sourceRow - b.sourceRow)
 }
 
 /**
@@ -477,19 +567,44 @@ function passkeyToCredential(credential) {
  * @return {Array<object>} The CXF credentials ([] when the row has neither).
  */
 function valueFieldCredentials(row, unmapped) {
-	const credentials = []
-	if (typeof row.totp === 'string' && row.totp !== '') {
-		const totp = totpToCredential(row.totp)
-		if (totp === null) {
-			unmapped.push(
-				`${row.name}: stored one-time code is not an authenticator key — not exported`,
-			)
-		} else {
-			credentials.push(totp)
-		}
+	return [
+		...ownTotpCredentials(row, unmapped),
+		...ownPasskeyCredentials(row, unmapped),
+	]
+}
+
+/**
+ * The CXF TOTP entity for a row's own `totp`, when it has a usable one.
+ *
+ * @param {object} row The serialized secret.
+ * @param {Array<string>} unmapped The unmapped-item report (appended to).
+ * @return {Array<object>} [] or the one entity.
+ */
+function ownTotpCredentials(row, unmapped) {
+	if (typeof row.totp !== 'string' || row.totp === '') {
+		return []
 	}
+	const totp = totpToCredential(row.totp)
+	if (totp === null) {
+		unmapped.push(
+			`${row.name}: stored one-time code is not an authenticator key — not exported`,
+		)
+		return []
+	}
+	return [totp]
+}
+
+/**
+ * The CXF passkey entities for a row's own `passkeys`, leaving out those
+ * that are not complete credentials.
+ *
+ * @param {object} row The serialized secret.
+ * @param {Array<string>} unmapped The unmapped-item report (appended to).
+ * @return {Array<object>}
+ */
+function ownPasskeyCredentials(row, unmapped) {
 	if (typeof row.passkeys !== 'string' || row.passkeys === '') {
-		return credentials
+		return []
 	}
 	const entries = passkeyEntries(row.passkeys)
 	if (entries.length === 0) {
@@ -509,8 +624,133 @@ function valueFieldCredentials(row, unmapped) {
 		}
 	}
 	reportPasskeyExtensions(passkeys, row.name, unmapped)
-	return [...credentials, ...passkeys.map(passkeyToCredential)]
+	return passkeys.map(passkeyToCredential)
 }
+
+/**
+ * The CXF basic-auth entity of a login or database row.
+ *
+ * @param {object} row The serialized secret.
+ * @return {object}
+ */
+function basicAuthCredential(row) {
+	return {
+		type: 'basic-auth',
+		urls: row.url ? [row.url] : [],
+		username: { fieldType: 'string', value: row.login ?? '' },
+		password: {
+			fieldType: 'concealed-string',
+			value: row.password ?? '',
+		},
+	}
+}
+
+/**
+ * The CXF passkey entity of a passkey row, or null when its stored
+ * credential is not valid.
+ *
+ * @param {object} row The serialized secret.
+ * @param {Array<string>} unmapped The unmapped-item report (appended to).
+ * @return {object|null}
+ */
+function passkeyRowCredential(row, unmapped) {
+	const credential = parsePasskey(row.password ?? '')
+	if (credential === null) {
+		unmapped.push(
+			`${row.name}: stored passkey credential is not valid canonical JSON`,
+		)
+		return null
+	}
+	reportPasskeyExtensions([credential], row.name, unmapped)
+	return passkeyToCredential(credential)
+}
+
+/**
+ * The CXF TOTP entity of a TOTP row, or null when it holds no usable key.
+ *
+ * @param {object} row The serialized secret.
+ * @param {Array<string>} unmapped The unmapped-item report (appended to).
+ * @return {object|null}
+ */
+function totpRowCredential(row, unmapped) {
+	const credential = totpToCredential(row.password ?? '')
+	if (credential === null) {
+		unmapped.push(
+			`${row.name}: stored one-time code is not an authenticator key — not exported`,
+		)
+	}
+	return credential
+}
+
+/**
+ * The CXF note entity of a note row.
+ *
+ * @param {object} row The serialized secret.
+ * @return {object}
+ */
+function noteCredential(row) {
+	return { type: 'note', content: row.password ?? '' }
+}
+
+/**
+ * The CXF API key entity of an API key row.
+ *
+ * @param {object} row The serialized secret.
+ * @return {object}
+ */
+function apiKeyCredential(row) {
+	return {
+		type: 'api-key',
+		username: { fieldType: 'string', value: row.login ?? '' },
+		key: { fieldType: 'concealed-string', value: row.password ?? '' },
+	}
+}
+
+/**
+ * The CXF SSH key entity of an SSH key row.
+ *
+ * @param {object} row The serialized secret.
+ * @return {object}
+ */
+function sshKeyCredential(row) {
+	const fields = row.additionalFields
+	const publicKey =
+		fields && typeof fields === 'object' ? (fields.publicKey ?? '') : ''
+	return {
+		type: 'ssh-key',
+		privateKey: {
+			fieldType: 'concealed-string',
+			value: row.password ?? '',
+		},
+		publicKey: { fieldType: 'string', value: publicKey },
+	}
+}
+
+/**
+ * A certificate row: it has no CXF entity.
+ *
+ * @param {object} row The serialized secret.
+ * @param {Array<string>} unmapped The unmapped-item report (appended to).
+ * @return {null}
+ */
+function certificateCredential(row, unmapped) {
+	unmapped.push(
+		`${row.name}: certificate secrets have no CXF entity — not exported`,
+	)
+	return null
+}
+
+/** The CXF entity builder of each Keepiq type name. */
+const ROW_CREDENTIALS = new Map([
+	['login', basicAuthCredential],
+	['database', basicAuthCredential],
+	['passkey', passkeyRowCredential],
+	['totp', totpRowCredential],
+	['note', noteCredential],
+	['api_key', apiKeyCredential],
+	['ssh_key', sshKeyCredential],
+	['certificate', certificateCredential],
+])
 
 /**
  * Map one serialized vault row to a CXF credential entity.
@@ -522,74 +762,27 @@ function valueFieldCredentials(row, unmapped) {
  * @return {object|null} The CXF credential, or null when unrepresentable.
  */
 function rowToCredential(row, typeName, unmapped) {
-	switch (typeName) {
-		case 'login':
-		case 'database':
-			return {
-				type: 'basic-auth',
-				urls: row.url ? [row.url] : [],
-				username: { fieldType: 'string', value: row.login ?? '' },
-				password: {
-					fieldType: 'concealed-string',
-					value: row.password ?? '',
-				},
-			}
-		case 'passkey': {
-			const credential = parsePasskey(row.password ?? '')
-			if (credential === null) {
-				unmapped.push(
-					`${row.name}: stored passkey credential is not valid canonical JSON`,
-				)
-				return null
-			}
-			reportPasskeyExtensions([credential], row.name, unmapped)
-			return passkeyToCredential(credential)
-		}
-		case 'totp': {
-			const credential = totpToCredential(row.password ?? '')
-			if (credential === null) {
-				unmapped.push(
-					`${row.name}: stored one-time code is not an authenticator key — not exported`,
-				)
-			}
-			return credential
-		}
-		case 'note':
-			return { type: 'note', content: row.password ?? '' }
-		case 'api_key':
-			return {
-				type: 'api-key',
-				username: { fieldType: 'string', value: row.login ?? '' },
-				key: { fieldType: 'concealed-string', value: row.password ?? '' },
-			}
-		case 'ssh_key':
-			return {
-				type: 'ssh-key',
-				privateKey: {
-					fieldType: 'concealed-string',
-					value: row.password ?? '',
-				},
-				publicKey: {
-					fieldType: 'string',
-					value:
-						row.additionalFields
-						&& typeof row.additionalFields === 'object'
-							? (row.additionalFields.publicKey ?? '')
-							: '',
-				},
-			}
-		case 'certificate':
-			unmapped.push(
-				`${row.name}: certificate secrets have no CXF entity — not exported`,
-			)
-			return null
-		default:
-			unmapped.push(
-				`${row.name}: type "${typeName}" has no CXF entity — not exported`,
-			)
-			return null
+	const build = ROW_CREDENTIALS.get(typeName)
+	if (build === undefined) {
+		unmapped.push(
+			`${row.name}: type "${typeName}" has no CXF entity — not exported`,
+		)
+		return null
 	}
+	return build(row, unmapped)
 }
+
+/** The Keepiq type names a row's `type` can carry as they are. */
+const TYPE_NAMES = new Set([
+	'login',
+	'api_key',
+	'ssh_key',
+	'certificate',
+	'note',
+	'database',
+	'totp',
+	'passkey',
+])
 
 /**
  * Build a CXF document from the client-decrypted serialized vault.
@@ -605,28 +798,9 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 	const unmapped = []
 	const items = []
 	const collections = new Map()
-	const typeNames = new Set([
-		'login',
-		'api_key',
-		'ssh_key',
-		'certificate',
-		'note',
-		'database',
-		'totp',
-		'passkey',
-	])
 
 	for (const [index, row] of serializedSecrets.entries()) {
-		let typeName = String(row.type ?? 'login')
-		if (!typeNames.has(typeName)) {
-			const mapped =
-				options.typeNamesById instanceof Map
-					? options.typeNamesById.get(typeName)
-					: (options.typeNamesById || {})[typeName]
-			typeName = mapped ?? typeName
-		}
-
-		const credential = rowToCredential(row, typeName, unmapped)
+		const credential = rowToCredential(row, typeNameOf(row, options), unmapped)
 		if (credential === null) {
 			continue
 		}
@@ -637,36 +811,78 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 			title: row.name ?? '',
 			credentials: [credential, ...valueFieldCredentials(row, unmapped)],
 		})
-
-		const folder = row.folder != null ? String(row.folder) : ''
-		if (folder !== '') {
-			if (!collections.has(folder)) {
-				collections.set(folder, {
-					id: `collection-${collections.size + 1}`,
-					title: folder,
-					items: [],
-				})
-			}
-			collections.get(folder).items.push(itemId)
-		}
+		addToCollection(collections, { folder: row.folder, itemId })
 	}
 
 	return {
-		document: {
-			version: CXF_VERSION,
-			exporter: 'keepiq',
-			timestamp: Math.floor(Date.now() / 1000),
-			accounts: [
-				{
-					id: 'account-1',
-					userName: options.accountUserName ?? '',
-					email: '',
-					items,
-					collections: [...collections.values()],
-				},
-			],
-		},
+		document: cxfDocument({ items, collections, options }),
 		unmapped,
 		itemCount: items.length,
+	}
+}
+
+/**
+ * The Keepiq type name of a row: its `type` when that is a type name, else
+ * the name `options.typeNamesById` gives that id, else the id itself.
+ *
+ * @param {object} row The serialized secret.
+ * @param {object} options The buildCxfDocument options.
+ * @return {string}
+ */
+function typeNameOf(row, options) {
+	const type = String(row.type ?? 'login')
+	if (TYPE_NAMES.has(type)) {
+		return type
+	}
+	const mapped =
+		options.typeNamesById instanceof Map
+			? options.typeNamesById.get(type)
+			: (options.typeNamesById || {})[type]
+	return mapped ?? type
+}
+
+/**
+ * Add an exported item to the collection of its folder, opening the
+ * collection on its first item.
+ *
+ * @param {Map<string, object>} collections Folder path to collection.
+ * @param {{folder: (string|null|undefined), itemId: string}} entry The item's folder and id.
+ * @return {void}
+ */
+function addToCollection(collections, entry) {
+	const folder = entry.folder != null ? String(entry.folder) : ''
+	if (folder === '') {
+		return
+	}
+	if (!collections.has(folder)) {
+		collections.set(folder, {
+			id: `collection-${collections.size + 1}`,
+			title: folder,
+			items: [],
+		})
+	}
+	collections.get(folder).items.push(entry.itemId)
+}
+
+/**
+ * The CXF document of one account holding the exported items.
+ *
+ * @param {{items: Array<object>, collections: Map<string, object>, options: object}} parts The items, their collections and the options.
+ * @return {object}
+ */
+function cxfDocument(parts) {
+	return {
+		version: CXF_VERSION,
+		exporter: 'keepiq',
+		timestamp: Math.floor(Date.now() / 1000),
+		accounts: [
+			{
+				id: 'account-1',
+				userName: parts.options.accountUserName ?? '',
+				email: '',
+				items: parts.items,
+				collections: [...parts.collections.values()],
+			},
+		],
 	}
 }

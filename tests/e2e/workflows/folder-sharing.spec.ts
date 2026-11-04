@@ -564,8 +564,9 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		// on its own when it mounts or the secret changes; that read can land in
 		// the listening window on a slow runner and is not a user-share request.
 		const userShareRequests: string[] = []
-		const listener = (r: { url: () => string, method: () => string }) => {
-			const isShareListRead = r.method() === 'GET'
+		const listener = (r: { url: () => string; method: () => string }) => {
+			const isShareListRead =
+				r.method() === 'GET'
 				&& /\/api\/v1\/secrets\/[^/]+\/shares(\?|$)/.test(r.url())
 			if (
 				/\/api\/v1\/(secrets\/[^/]+\/)?(user-)?shares?(\b|\/|\?)/.test(
