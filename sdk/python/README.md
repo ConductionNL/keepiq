@@ -26,7 +26,8 @@ Nextcloud address, the request timeout in seconds and the clock.
 who the client acts as; its `repr()` leaves out the private key and the certificate.
 
 Pass `certificate_pem` in `Credentials` to refuse any envelope encrypted to
-another certificate before decryption. The application can read its own certificate at
+another certificate, or one that names no certificate fingerprint, before
+decryption. The application can read its own certificate at
 `GET /api/v1/app/certificate` (with its access token) and pass that PEM here.
 
 ## Upgrading from 0.x

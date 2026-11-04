@@ -1,0 +1,278 @@
+{
+	"en": {
+		"no answer": {
+			"add": "Keepiq is not responding. Try again.",
+			"update": "Keepiq is not responding. Try again."
+		},
+		"code missing": {
+			"add": "Keepiq is not responding. Try again.",
+			"update": "Keepiq is not responding. Try again."
+		},
+		"locked": {
+			"add": "Keepiq is locked. Unlock it from the Keepiq button in the toolbar, then try again.",
+			"update": "Keepiq is locked. Unlock it from the Keepiq button in the toolbar, then try again."
+		},
+		"session_revoked": {
+			"add": "Session revoked, please log in again",
+			"update": "Session revoked, please log in again"
+		},
+		"write_locked": {
+			"add": "The vault is temporarily locked for changes. Try again later.",
+			"update": "The vault is temporarily locked for changes. Try again later."
+		},
+		"forbidden": {
+			"add": "Keepiq does not allow this change. The Keepiq web app shows why.",
+			"update": "Keepiq does not allow this change. The Keepiq web app shows why."
+		},
+		"policy": {
+			"add": "Your organisation's policy does not allow this change",
+			"update": "Your organisation's policy does not allow this change"
+		},
+		"invalid": {
+			"add": "Keepiq refused this change",
+			"update": "Keepiq refused this change"
+		},
+		"conflict": {
+			"add": "Keepiq refused this change",
+			"update": "Keepiq refused this change"
+		},
+		"not_found": {
+			"add": "This folder no longer exists",
+			"update": "This login no longer exists. Save it as a new login?"
+		},
+		"blocked": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"unreadable": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"offline": {
+			"add": "Could not reach the server",
+			"update": "Could not reach the server"
+		},
+		"server_error": {
+			"add": "Keepiq is unavailable right now, try again later",
+			"update": "Keepiq is unavailable right now, try again later"
+		},
+		"unknown": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"restricted": {
+			"add": "This item was shared with you with limits, so it cannot be changed or copied here",
+			"update": "This item was shared with you with limits, so it cannot be changed or copied here"
+		},
+		"view_only": {
+			"add": "This login is shared with you to view only, so its password can't be updated here.",
+			"update": "This login is shared with you to view only, so its password can't be updated here."
+		},
+		"key_mismatch": {
+			"add": "Keepiq's key does not match your vault. Nothing was saved; tell your administrator.",
+			"update": "Keepiq's key does not match your vault. Nothing was saved; tell your administrator."
+		},
+		"account_changed": {
+			"add": "You switched accounts, so nothing was saved.",
+			"update": "You switched accounts, so nothing was saved."
+		},
+		"stale_source": {
+			"add": "The original of this shared login changed. Nothing was saved; try again.",
+			"update": "The original of this shared login changed. Nothing was saved; try again."
+		},
+		"incomplete": {
+			"add": "The people this login is shared with kept changing. Nothing was saved; try again.",
+			"update": "The people this login is shared with kept changing. Nothing was saved; try again."
+		},
+		"bad_certificate": {
+			"add": "A recipient's encryption key could not be read. Nothing was saved.",
+			"update": "A recipient's encryption key could not be read. Nothing was saved."
+		},
+		"unverified": {
+			"add": "Edit this login in the Keepiq popup or web app to change its password.",
+			"update": "Edit this login in the Keepiq popup or web app to change its password."
+		},
+		"partner_unreachable": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"partner_lookup_limit": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"federation_unavailable": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"keepiq_outdated": {
+			"add": "Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq 0.3.12 or later.",
+			"update": "Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq 0.3.12 or later."
+		},
+		"partner_clock": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"passkey_clone": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"argon2_unavailable": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"a_code_from_a_newer_background": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"toString": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"__proto__": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"constructor": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		}
+	},
+	"nl": {
+		"no answer": {
+			"add": "Keepiq reageert niet. Probeer het opnieuw.",
+			"update": "Keepiq reageert niet. Probeer het opnieuw."
+		},
+		"code missing": {
+			"add": "Keepiq reageert niet. Probeer het opnieuw.",
+			"update": "Keepiq reageert niet. Probeer het opnieuw."
+		},
+		"locked": {
+			"add": "Keepiq is vergrendeld. Ontgrendel het met de Keepiq-knop in de werkbalk en probeer het daarna opnieuw.",
+			"update": "Keepiq is vergrendeld. Ontgrendel het met de Keepiq-knop in de werkbalk en probeer het daarna opnieuw."
+		},
+		"session_revoked": {
+			"add": "Sessie ingetrokken, log opnieuw in",
+			"update": "Sessie ingetrokken, log opnieuw in"
+		},
+		"write_locked": {
+			"add": "De kluis is tijdelijk vergrendeld voor wijzigingen. Probeer het later opnieuw.",
+			"update": "De kluis is tijdelijk vergrendeld voor wijzigingen. Probeer het later opnieuw."
+		},
+		"forbidden": {
+			"add": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.",
+			"update": "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom."
+		},
+		"policy": {
+			"add": "Het beleid van je organisatie staat deze wijziging niet toe",
+			"update": "Het beleid van je organisatie staat deze wijziging niet toe"
+		},
+		"invalid": {
+			"add": "Keepiq heeft deze wijziging geweigerd",
+			"update": "Keepiq heeft deze wijziging geweigerd"
+		},
+		"conflict": {
+			"add": "Keepiq heeft deze wijziging geweigerd",
+			"update": "Keepiq heeft deze wijziging geweigerd"
+		},
+		"not_found": {
+			"add": "Deze map bestaat niet meer",
+			"update": "Deze login bestaat niet meer. Opslaan als nieuwe login?"
+		},
+		"blocked": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"unreadable": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"offline": {
+			"add": "Kan de server niet bereiken",
+			"update": "Kan de server niet bereiken"
+		},
+		"server_error": {
+			"add": "Keepiq is nu niet beschikbaar, probeer het later opnieuw",
+			"update": "Keepiq is nu niet beschikbaar, probeer het later opnieuw"
+		},
+		"unknown": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"restricted": {
+			"add": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren",
+			"update": "Dit item is met beperkingen met je gedeeld, dus je kunt het hier niet wijzigen of kopiëren"
+		},
+		"view_only": {
+			"add": "Deze login is met je gedeeld om alleen te bekijken, dus het wachtwoord kan hier niet worden bijgewerkt.",
+			"update": "Deze login is met je gedeeld om alleen te bekijken, dus het wachtwoord kan hier niet worden bijgewerkt."
+		},
+		"key_mismatch": {
+			"add": "De sleutel van Keepiq past niet bij je kluis. Er is niets opgeslagen; meld dit bij je beheerder.",
+			"update": "De sleutel van Keepiq past niet bij je kluis. Er is niets opgeslagen; meld dit bij je beheerder."
+		},
+		"account_changed": {
+			"add": "Je bent van account gewisseld, dus er is niets opgeslagen.",
+			"update": "Je bent van account gewisseld, dus er is niets opgeslagen."
+		},
+		"stale_source": {
+			"add": "Het origineel van deze gedeelde login is gewijzigd. Er is niets opgeslagen; probeer het opnieuw.",
+			"update": "Het origineel van deze gedeelde login is gewijzigd. Er is niets opgeslagen; probeer het opnieuw."
+		},
+		"incomplete": {
+			"add": "Met wie deze login gedeeld is, veranderde steeds. Er is niets opgeslagen; probeer het opnieuw.",
+			"update": "Met wie deze login gedeeld is, veranderde steeds. Er is niets opgeslagen; probeer het opnieuw."
+		},
+		"bad_certificate": {
+			"add": "De versleutelingssleutel van een ontvanger kon niet worden gelezen. Er is niets opgeslagen.",
+			"update": "De versleutelingssleutel van een ontvanger kon niet worden gelezen. Er is niets opgeslagen."
+		},
+		"unverified": {
+			"add": "Bewerk deze login in de Keepiq-pop-up of de Keepiq-webapp om het wachtwoord te wijzigen.",
+			"update": "Bewerk deze login in de Keepiq-pop-up of de Keepiq-webapp om het wachtwoord te wijzigen."
+		},
+		"partner_unreachable": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"partner_lookup_limit": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"federation_unavailable": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"keepiq_outdated": {
+			"add": "Je Keepiq-server is te oud. Er is niets opgeslagen; vraag je beheerder om Keepiq 0.3.12 of nieuwer.",
+			"update": "Je Keepiq-server is te oud. Er is niets opgeslagen; vraag je beheerder om Keepiq 0.3.12 of nieuwer."
+		},
+		"partner_clock": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"passkey_clone": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"argon2_unavailable": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"a_code_from_a_newer_background": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"toString": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"__proto__": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"constructor": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		}
+	}
+}

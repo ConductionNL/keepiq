@@ -23,7 +23,7 @@ class NotModifiedError(KeepiqError):
 
 
 class KeyMismatchError(KeepiqError):
-    """The envelope is encrypted to a certificate other than the configured one."""
+    """The envelope is encrypted to a certificate other than the configured one, or names none."""
 
 
 @dataclass

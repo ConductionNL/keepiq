@@ -78,76 +78,7 @@
 				</span>
 			</div>
 
-			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
-			<template v-if="isCard">
-				<NcPasswordField
-					v-model="card.number"
-					:label="t('keepiq', 'Card number')"
-					data-testid="card-number" />
-				<NcTextField
-					v-model="card.expiry"
-					:label="t('keepiq', 'Expiry (MM/YY)')"
-					data-testid="card-expiry" />
-				<NcPasswordField
-					v-model="card.cvv"
-					:label="t('keepiq', 'CVV')"
-					data-testid="card-cvv" />
-				<NcPasswordField
-					v-model="card.pin"
-					:label="t('keepiq', 'PIN (optional)')"
-					data-testid="card-pin" />
-				<NcTextField
-					v-model="card.cardholder"
-					:label="t('keepiq', 'Cardholder name')"
-					data-testid="card-cardholder" />
-			</template>
-			<template v-else-if="isIdentity">
-				<NcTextField
-					v-model="identity.firstName"
-					:label="t('keepiq', 'First name')"
-					data-testid="identity-first-name" />
-				<NcTextField
-					v-model="identity.lastName"
-					:label="t('keepiq', 'Last name')"
-					data-testid="identity-last-name" />
-				<NcTextField
-					v-model="identity.address"
-					:label="t('keepiq', 'Address')"
-					data-testid="identity-address" />
-				<NcTextField
-					v-model="identity.phone"
-					:label="t('keepiq', 'Phone')"
-					data-testid="identity-phone" />
-				<NcTextField
-					v-model="identity.email"
-					:label="t('keepiq', 'Email')"
-					data-testid="identity-email" />
-				<NcPasswordField
-					v-model="identity.bsn"
-					:label="t('keepiq', 'BSN')"
-					data-testid="identity-bsn" />
-			</template>
-			<div v-else class="secret-form__value-row">
-				<NcPasswordField
-					v-model="value"
-					class="secret-form__value-field"
-					:label="valueLabel" />
-				<NcButton
-					variant="tertiary-no-background"
-					:title="t('keepiq', 'Generate a strong key')"
-					:aria-label="t('keepiq', 'Generate a strong key')"
-					@click="openGenerator">
-					<template #icon>
-						<Dice5 :size="20" />
-					</template>
-				</NcButton>
-			</div>
-
-			<KeyGeneratorModal
-				v-if="generatorOpen"
-				:open="generatorOpen"
-				@update:open="generatorOpen = $event"
-				@generated="onGenerated" />
+			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
 			<!-- The saved seed is never loaded into the form: the field only
 			     says one is saved and offers Replace and Remove. -->
@@ -215,25 +146,20 @@ import {
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
-	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
-import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
+import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
-import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_FIELDS,
-	CARD_TYPE_NAME,
 	IDENTITY_FIELDS,
-	IDENTITY_TYPE_NAME,
 	parsePayload,
-	serializeCard,
-	serializeIdentity,
 } from '../cardIdentity/cardIdentity.js'
+import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
 import { useOfflineStore } from '../store/modules/offline.js'
@@ -252,7 +178,6 @@ import {
 	mergeTypedValues,
 	missingRequired,
 	splitTypedValues,
-	typedFieldsOf,
 } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 
@@ -267,18 +192,18 @@ export default {
 	components: {
 		AdditionalFieldsEditor,
 		AuthenticatorKeyField,
+		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
 		ContentSave,
-		Dice5,
-		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
 		NcNoteCard,
-		NcPasswordField,
 		NcTextField,
 	},
+
+	mixins: [secretPayloadForm],
 
 	props: {
 		/** The ID of the secret to edit. */
@@ -311,7 +236,6 @@ export default {
 			viewOnly: false,
 			name: '',
 			typeId: null,
-			value: '',
 			url: '',
 			login: '',
 			/** What happens to a saved authenticator key: keep, replace or remove. */
@@ -320,19 +244,6 @@ export default {
 			totpInput: '',
 			additionalFields: [],
 			tags: [],
-			typedValues: {},
-			typedMissing: [],
-			generatorOpen: false,
-			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
-			identity: {
-				firstName: '',
-				lastName: '',
-				address: '',
-				phone: '',
-				email: '',
-				bsn: '',
-			},
-
 			policy: null,
 		}
 	},
@@ -348,64 +259,6 @@ export default {
 		 */
 		typeLabel() {
 			return secretTypeLabel(useSecretTypeStore().typesById[this.typeId])
-		},
-
-		/**
-		 * The label for the secret-value field, which reads "Note" for the
-		 * `note` system type and "Secret value" otherwise.
-		 *
-		 * @return {string}
-		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
-		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
-		 */
-		valueLabel() {
-			const type = useSecretTypeStore().typesById[this.typeId]
-			return type && type.name === 'note'
-				? t('keepiq', 'Note')
-				: t('keepiq', 'Secret value')
-		},
-
-		/**
-		 * The fields an administrator defined on the chosen type; empty for
-		 * the built-in types, which keep their own forms.
-		 *
-		 * @return {Array<object>} The fields.
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 */
-		typedFields() {
-			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
-		},
-
-		/**
-		 * The selected type's system name (card-identity-items §3.1).
-		 *
-		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
-		 */
-		selectedTypeName() {
-			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
-		},
-
-		isCard() {
-			return this.selectedTypeName === CARD_TYPE_NAME
-		},
-
-		isIdentity() {
-			return this.selectedTypeName === IDENTITY_TYPE_NAME
-		},
-
-		/**
-		 * The value serialized for the encrypted key field.
-		 *
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
-		 */
-		effectiveValue() {
-			if (this.isCard) {
-				return serializeCard(this.card)
-			}
-			if (this.isIdentity) {
-				return serializeIdentity(this.identity)
-			}
-			return this.value
 		},
 
 		/**
@@ -534,20 +387,6 @@ export default {
 		t,
 
 		/**
-		 * Take the typed values and clear the marks of fields now filled.
-		 *
-		 * @param {object} values The values by field key.
-		 * @return {void}
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 */
-		onTypedValues(values) {
-			this.typedValues = values
-			this.typedMissing = this.typedMissing.filter((key) =>
-				missingRequired(this.typedFields, values).includes(key),
-			)
-		},
-
-		/**
 		 * Load + decrypt the secret and seed the form fields.
 		 *
 		 * Seeding the additional fields from the CURRENT decrypted copy is what bounds
@@ -653,46 +492,6 @@ export default {
 				return null
 			}
 			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
-		},
-
-		/**
-		 * Forward the open-state change; emit `close` when dismissed.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 *
-		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
-		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
-			}
-		},
-
-		/**
-		 * Open the key generator dialog.
-		 *
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-		 */
-		openGenerator() {
-			this.generatorOpen = true
-		},
-
-		/**
-		 * Receive the generated key from the modal and copy it into the value field.
-		 *
-		 * @param {string} key The generated key.
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-		 */
-		onGenerated(key) {
-			if (typeof key === 'string' && key.length > 0) {
-				this.value = key
-			}
 		},
 
 		/**
@@ -832,7 +631,7 @@ export default {
 			} catch (e) {
 				this.unreachablePartners =
 					e?.code === 'partner_unreachable'
-						? e.partners.map((share) => share.shareId)
+						? (e.partners ?? []).map((share) => share.shareId)
 						: []
 				this.error =
 					shareSaveErrorText(e)
@@ -877,15 +676,5 @@ export default {
 	display: flex;
 	justify-content: center;
 	margin: 24px 0;
-}
-
-.secret-form__value-row {
-	display: flex;
-	align-items: flex-end;
-	gap: 8px;
-}
-
-.secret-form__value-field {
-	flex: 1 1 auto;
 }
 </style>

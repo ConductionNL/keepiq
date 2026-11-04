@@ -127,7 +127,7 @@ function failureOf(e) {
 	if (e instanceof ShareSaveError && e.code === 'partner_unreachable') {
 		return {
 			code: 'partner_unreachable',
-			partners: e.partners.map((p) => p.recipientCloudId),
+			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
 		}
 	}
 	if (
@@ -175,16 +175,24 @@ function unknownOpText() {
 }
 
 /**
- * The text for a stored unreachable-partner failure.
+ * The text for a stored unreachable-partner failure, naming the partners
+ * it recorded.
  *
  * @param {object} failure The stored failure.
  * @return {string}
  */
 function unreachableText(failure) {
+	const partners = (failure.partners ?? []).filter(Boolean).join(', ')
+	if (partners === '') {
+		return t(
+			'keepiq',
+			'A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.',
+		)
+	}
 	return t(
 		'keepiq',
 		'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
-		{ partners: failure.partners.join(', ') },
+		{ partners },
 	)
 }
 
