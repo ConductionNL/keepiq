@@ -512,14 +512,14 @@ describe('the own-row write context', () => {
 		})
 
 		it.each([
-			['a network failure', () => Promise.reject(new TypeError('Failed to fetch'))],
-			['a server error', () => json({ message: 'Internal error' }, 500)],
-			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 })],
-			['a refusal', () => json({ message: 'Forbidden' }, 403)],
-			['an answer without a row', () => json(null)],
-		])('is never not_found after %s', async (_, respond) => {
+			['a network failure', () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
+			['a server error', () => json({ message: 'Internal error' }, 500), 'server_error'],
+			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 }), 'server_error'],
+			['a refusal', () => json({ message: 'Forbidden' }, 403), 'forbidden'],
+			['an answer without a row', () => json(null), 'server_error'],
+		])('is never not_found after %s', async (_, respond, code) => {
 			reread(respond)
-			expect((await failure(save())).code).not.toBe('not_found')
+			expect(await failure(save())).toEqual({ code })
 		})
 
 		it('is not_found at once on a row that names a source, reading nothing more', async () => {
@@ -555,12 +555,12 @@ describe('the own-row write context', () => {
 		})
 
 		it.each([
-			['a network failure', () => Promise.reject(new TypeError('Failed to fetch'))],
-			['a server error', () => json({ message: 'Internal error' }, 500)],
-			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 })],
-		])('is never not_found after %s', async (_, row) => {
+			['a network failure', () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
+			['a server error', () => json({ message: 'Internal error' }, 500), 'server_error'],
+			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 }), 'server_error'],
+		])('is never not_found after %s', async (_, row, code) => {
 			answers(row)
-			expect((await failure(readWriteContext(client, 's1'))).code).not.toBe('not_found')
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code })
 		})
 
 		it('never reads Nextcloud\'s page on the write-context as the row gone', async () => {

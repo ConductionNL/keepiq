@@ -89,7 +89,7 @@ async function goneOrRefused(client: Client, id: string): Promise<unknown> {
 		row = await client.keepiq('GET', secretPath(id))
 	} catch (error) {
 		// Nextcloud's page, not Keepiq's verdict on the row.
-		if (error instanceof KeepiqNotInstalled) return new WriteFailure({ code: 'unknown' })
+		if (error instanceof KeepiqNotInstalled) return new WriteFailure({ code: 'server_error' })
 		return error
 	}
 	return new WriteFailure({ code: typeof row?.updatedAt === 'string' ? 'forbidden' : 'server_error' })
