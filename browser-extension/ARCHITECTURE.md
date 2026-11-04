@@ -13,7 +13,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 | `entrypoints/passkey-page-main.content.ts` (Chrome), `entrypoints/passkey-page.ts` (Firefox) | The page's own world of every `http(s)` frame: a `world: 'MAIN'` content script on Chrome, a web-accessible script the relay injects on Firefox | The page script (`src/passkey/page.ts`): replaces `navigator.credentials.create` and `.get`. Trusted for nothing, since the page can change it. |
 | `entrypoints/inline-list/` | Extension page in an iframe under a login, code, card or identity field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
 | `entrypoints/notification/` | Extension page in an iframe, a card in the top-right corner of the page | The save and update card, vanilla DOM. Never gets the password. |
-| `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created and closed per use. |
+| `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created on first use and kept open so no close drops a write. |
 
 ## Modules
 
