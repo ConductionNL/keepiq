@@ -244,9 +244,9 @@ export function diffDraft(before: ItemDraft, after: ItemDraft): ItemPatch {
 const unopened: EditableItem = { id: '', typeId: '', name: '', url: null, folderId: null, key: '', login: null, additionalFields: {}, updatedAt: '', totpSaved: false }
 
 /**
- * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse
- * hides behind the last, and no number that reads back otherwise, as one past double precision. Only for text
- * that parsed.
+ * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse hides behind the last,
+ * and no number that reads back otherwise, as one past double precision.
+ * Only for text that parsed.
  */
 function readsAsWritten(raw: string): boolean {
 	// The open containers, innermost last: an object's member names so far, or null for an array.
