@@ -53,7 +53,8 @@ const { failureText, useOfflineStore } =
 	await import('../../src/store/modules/offline.js')
 const { useSecretStore } = await import('../../src/store/modules/secret.js')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
-const { forgetVerifiedPartners } = await import('../../src/services/shareSave.js')
+const { forgetVerifiedPartners, ShareSaveError } =
+	await import('../../src/services/shareSave.js')
 const { encryptSnapshot } = await import('../../src/offline/snapshot.js')
 const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
 const { useShareStore } = await import('../../src/store/modules/share.js')
@@ -770,6 +771,27 @@ describe('replay', () => {
 		])
 		expect(offline.failedEntries).toEqual([])
 		expect(stored.size).toBe(0)
+	})
+
+	it('keeps an unreachable failure that names no partners', async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		goOnline()
+		vi.spyOn(offline, 'shareSave').mockRejectedValue(
+			Object.assign(new ShareSaveError('partner_unreachable'), {
+				partners: undefined,
+			}),
+		)
+
+		await offline.replayQueue()
+
+		expect(offline.failedEntries[0].failure).toEqual({
+			code: 'partner_unreachable',
+			partners: [],
+		})
+		expect(failureText(offline.failedEntries[0].failure)).toContain(
+			'cannot be reached. Make the change again online',
+		)
 	})
 
 	it('keeps the reason sealed with the entry, so it is still shown after a reload', async () => {

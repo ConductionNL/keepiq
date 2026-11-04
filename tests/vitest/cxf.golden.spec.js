@@ -236,6 +236,16 @@ const ITEMS = [
 		credentials: [{ type: 'totp', secret: KEY }, passkey('c30')],
 	},
 	{
+		id: 'i31',
+		title: 'Only a bad code',
+		credentials: [{ type: 'totp', secret: 'NOT BASE32!' }],
+	},
+	{
+		id: 'i32',
+		title: 'Only a bad code URL',
+		credentials: [{ type: 'totp', url: 'otpauth://totp/X?secret=NOT-BASE32' }],
+	},
+	{
 		id: 'i28',
 		title: 'Unknown type then login',
 		credentials: [

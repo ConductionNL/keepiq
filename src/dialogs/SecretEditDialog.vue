@@ -631,7 +631,7 @@ export default {
 			} catch (e) {
 				this.unreachablePartners =
 					e?.code === 'partner_unreachable'
-						? e.partners.map((share) => share.shareId)
+						? (e.partners ?? []).map((share) => share.shareId)
 						: []
 				this.error =
 					shareSaveErrorText(e)

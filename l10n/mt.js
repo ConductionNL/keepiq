@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Maqsum miegħek biex tarah biss. Itlob lis-sid drittijiet ta' editjar biex tibdlu.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Maqsum miegħek biex tarah biss. Ma ġie ssejvjat xejn; itlob lis-sid drittijiet ta' editjar biex tibdlu.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Organizzazzjoni sieħba li magħha huwa kondiviż dan is-sigriet ma tistax tintlaħaq ({partners}). Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Organizzazzjoni sieħba li magħha huwa kondiviż dan is-sigriet ma tistax tintlaħaq. Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
         "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Din il-bidla offline hija ta' tip li Keepiq ma jafx, għalhekk ma ġietx issejvjata. Armiha u erġa' agħmel il-bidla online.",
         "Save without them": "Issejvja mingħajrhom",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Issejvjat. Ir-riċevituri f'organizzazzjonijiet sħab jirċievu din il-bidla meta s-sid jerġa' jissejvja dan is-sigriet.",
