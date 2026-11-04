@@ -212,7 +212,7 @@ The extension SHALL, on "Update", save through `updateItem`: re-fetch the item w
 - **THEN** the bar shows "This login no longer exists. Save it as a new login?" (nl "Deze login bestaat niet meer. Opslaan als nieuwe login?") and offers Save, which saves the capture as a new login
 
 #### Scenario: Item still there after a 404
-- **GIVEN** the write context names no source for the item, and share-save returns 404
+- **GIVEN** the write context returns 404 for the item, or names no source for it and share-save returns 404
 - **AND** reading the item again succeeds
 - **WHEN** the user clicks Update
 - **THEN** nothing is saved, the bar shows "Keepiq does not allow this change. The Keepiq web app shows why." (nl "Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.") and it offers no new login
