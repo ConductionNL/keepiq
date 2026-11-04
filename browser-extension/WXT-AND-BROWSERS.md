@@ -71,6 +71,7 @@ that differ:
 - **`storage.session`** — available Firefox 115+ / Chrome 102+, independent of
   manifest version, but absent below Firefox 115 (the template's
   `strict_min_version` is 109). Guard it: `if (!browser.storage.session) return`.
+- **`browserslist`** in `package.json` (Firefox and Chrome 109) gives the React Compiler lint its targets; nothing else reads it. Move it together with `strict_min_version` in `wxt.config.ts`.
 - Any MV3-only API (`declarativeNetRequest`, service-worker specifics, etc.) needs
   a guard or an MV2 fallback before it can be used.
 

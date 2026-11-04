@@ -480,6 +480,25 @@ describe('editing', () => {
 		expect(onSaved).not.toHaveBeenCalled()
 	})
 
+	it('says a save waits for the share scan, keeping the values and offering no Try again', async () => {
+		const { onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem() }, replies: { 'item.update': { ok: false, error: { code: 'share_scan_pending' } } } })
+		await user.type(await screen.findByLabelText('Username'), '2')
+		await user.click(save())
+		const alert = await screen.findByRole('alert')
+		expect(alert.textContent).toBe('This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later, or ask your administrator to check that background jobs run.')
+		expect(within(alert).queryByRole('button')).toBeNull()
+		expect(field('Username').value).toBe('alice2')
+		expect(onSaved).not.toHaveBeenCalled()
+	})
+
+	it('says an item waiting for the share scan does not open for editing yet, offering no Try again', async () => {
+		renderForm({ mode: 'edit', id: 'i1', replies: { 'item.fetch': { ok: false, error: { code: 'share_scan_pending' } } } })
+		const alert = await screen.findByRole('alert')
+		expect(alert.textContent).toBe('This item is waiting for a check of its shares and can\'t be edited yet. Try again later.')
+		expect(within(alert).queryByRole('button')).toBeNull()
+		expect(screen.queryByLabelText('Name')).toBeNull()
+	})
+
 	it('says why a view-only copy does not open for editing', async () => {
 		renderForm({ mode: 'edit', id: 'i1', replies: { 'item.fetch': { ok: false, error: { code: 'view_only' } } } })
 		expect((await screen.findByRole('alert')).textContent).toBe('Shared with you to view only. Ask its owner for edit rights to change it.')

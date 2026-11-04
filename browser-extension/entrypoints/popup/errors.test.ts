@@ -7,7 +7,7 @@ import { writeErrorText, type WriteContext } from './errors'
 
 const t = i18n.t as (key: string, substitutions?: Record<string, string>) => string
 
-const CONTEXTS = Object.keys({ item: 0, edit: 0, open: 0, folderName: 0, folderDelete: 0, send: 0, passkey: 0 } satisfies Record<WriteContext, 0>) as WriteContext[]
+const CONTEXTS = Object.keys({ item: 0, edit: 0, open: 0, folderName: 0, folderDelete: 0, send: 0, passkey: 0, delete: 0 } satisfies Record<WriteContext, 0>) as WriteContext[]
 
 /** The catalog key a code reads as, or one per context where they differ with `other` for the rest. */
 type Expected = string | (Partial<Record<WriteContext, string>> & { other: string })
@@ -20,7 +20,7 @@ const EXPECTED = {
 	write_locked: 'writeErrors.writeLocked',
 	forbidden: 'writeErrors.forbidden',
 	policy: 'writeErrors.policy',
-	account_changed: 'writeErrors.accountChanged',
+	account_changed: { delete: 'writeErrors.accountChangedDelete', other: 'writeErrors.accountChanged' },
 	invalid: { send: 'writeErrors.sendInvalid', folderDelete: 'writeErrors.folderChanged', other: 'writeErrors.invalid' },
 	conflict: {
 		passkey: 'passkey.errors.conflict', edit: 'writeErrors.stale', open: 'writeErrors.unmatched', folderName: 'writeErrors.duplicateFolder',
@@ -46,6 +46,7 @@ const EXPECTED = {
 	partner_clock: 'writeErrors.partnerClock',
 	passkey_clone: 'item.passkeyNoClone',
 	argon2_unavailable: 'writeErrors.argon2Unavailable',
+	share_scan_pending: { open: 'writeErrors.shareScanPendingOpen', delete: 'writeErrors.shareScanPendingDelete', other: 'writeErrors.shareScanPending' },
 } satisfies Record<WriteErrorCode, Expected>
 
 const CODES = Object.keys(EXPECTED) as WriteErrorCode[]

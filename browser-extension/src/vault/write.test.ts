@@ -313,6 +313,30 @@ describe('fetchItem', () => {
 		expect(await fetchItem('s1', 'clone')).toMatchObject({ ok: true, value: { key: 'pw' } })
 	})
 
+	it('refuses to edit a copy whose share row waits for the share scan, keeping nothing', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		server({
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409),
+		}, [row])
+		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'share_scan_pending' } })
+		expect(vi.mocked(rsaDecrypt)).not.toHaveBeenCalled()
+		expect(await recordIds()).toEqual([])
+	})
+
+	it('opens a row the server has its holder save alone for editing, from no source version', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		server({
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }),
+		}, [row])
+		const reply = await fetchItem('s1')
+		expect(reply).toMatchObject({ ok: true, value: { key: 'pw' } })
+		expect(await records()).toMatchObject([{ sourceUpdatedAt: null }])
+	})
+
 	it.each(['write', 'manage', 'owner'])('opens a copy on the %s grade for editing', async (effectiveGrade) => {
 		const row = secretRow({ key: await encrypt('pw') })
 		await snapshot([row])
@@ -640,6 +664,14 @@ describe('updateItem through share-save', () => {
 		expect(sent()).toContain('PUT /api/v1/secrets/s1')
 	})
 
+	it('saves a row the server has its holder save alone through its own share-save, naming no source', async () => {
+		server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }) })
+		expect(await updateItem('s1', { key: 'new' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
+		expect(sent().filter(isShareSaveLine)).toEqual(['GET /api/v1/secrets/s1/write-context', SHARE_SAVE])
+		expect(bodyOf(SHARE_SAVE)).not.toHaveProperty('sourceBaseUpdatedAt')
+		expect(bodyOf(SHARE_SAVE)).toHaveProperty('federated')
+	})
+
 	it('saves a move with a plain PUT alone, reading no grade', async () => {
 		server({ ...shared({ copies: [BOB_COPY] }), 'PUT /api/v1/secrets/s1': () => json(secretRow()) })
 		expect(await updateItem('s1', { folderId: 'f1' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
@@ -723,6 +755,22 @@ describe('updateItem through share-save', () => {
 		source = '2026-03-03T00:00:00+00:00'
 		await updateItem('s1', { key: 'new' }, row.updatedAt, undefined, form)
 		expect(bodiesOf(SHARE_SAVE).map((body) => body.sourceBaseUpdatedAt)).toEqual(['2026-02-01T00:00:00+00:00', '2026-02-01T00:00:00+00:00'])
+	})
+
+	it('refuses a save through a copy as stale_source when its form opened while the row was saved alone, keeping the record', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		let source: string | null = null
+		server({
+			...shared({ copies: [{ secretId: 'src', holder: 'owner', targetUserId: null }] }),
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: source && 'src', effectiveGrade: source ? 'write' : 'none', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: source }),
+		}, [row])
+		const form = recordOf(await fetchItem('s1'))
+		source = '2026-03-03T00:00:00+00:00'
+		expect(await updateItem('s1', { key: 'new' }, row.updatedAt, undefined, form)).toEqual({ ok: false, error: { code: 'stale_source' } })
+		expect(sent()).not.toContain(SHARE_SAVE)
+		expect(await recordIds()).toEqual(['s1'])
 	})
 
 	it('replies to a save that reached Bob and suspended a partner with the partner\'s cloud id only, no ciphertext, plaintext or certificate', async () => {
@@ -986,7 +1034,7 @@ describe('updateItem through share-save', () => {
 })
 
 describe('itemEditable', () => {
-	const grade = (sourceSecretId: string, effectiveGrade: string | null) => server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }) })
+	const grade = (sourceSecretId: string | null, effectiveGrade: string | null) => server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }) })
 
 	it.each([
 		['a copy on a team-folder read grade', 'src', 'read', false],
@@ -995,6 +1043,7 @@ describe('itemEditable', () => {
 		['a copy on the manage grade', 'src', 'manage', true],
 		['a delegate\'s copy on the owner grade', 'src', 'owner', true],
 		['the source', 's1', 'owner', true],
+		['a row the server has its holder save alone', null, 'none', true],
 	])('answers %s from write-context alone, without a sync', async (_, sourceSecretId, effectiveGrade, editable) => {
 		grade(sourceSecretId, effectiveGrade)
 		expect(await itemEditable('s1')).toEqual({ ok: true, value: { editable } })
@@ -1012,6 +1061,40 @@ describe('itemEditable', () => {
 		await lock(accountId)
 		expect(await itemEditable('s1', accountId)).toEqual({ ok: false, error: { code: 'locked' } })
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('a write-context 404, which a row two share rows name gets too when it has copies of its own', () => {
+	let row: ReturnType<typeof secretRow>
+	/** The row's reads, the last answer repeating. */
+	const serve = (...reads: Array<() => Response>) => server({
+		'GET /api/v1/secrets/s1': () => (reads.length > 1 ? reads.shift()! : reads[0]!)(),
+		'GET /api/v1/secrets/s1/write-context': () => json({ message: 'Secret not found' }, 404),
+	}, [row])
+
+	beforeEach(async () => {
+		row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+	})
+
+	it.each([
+		['an edit fetch', () => fetchItem('s1')],
+		['a save', () => updateItem('s1', { key: 'new' }, row.updatedAt)],
+		['the Edit check', () => itemEditable('s1')],
+	])('refuses %s while the row is still there, saving nothing', async (_, call) => {
+		serve(() => json(row))
+		expect(await call()).toEqual({ ok: false, error: { code: 'forbidden' } })
+		expect(sent()).not.toContain('PUT /api/v1/secrets/s1/share-save')
+	})
+
+	it('is not_found for a save once Keepiq answers the row itself with 404', async () => {
+		serve(() => json({ message: 'Secret not found' }, 404))
+		expect(await updateItem('s1', { key: 'new' }, row.updatedAt)).toEqual({ ok: false, error: { code: 'not_found' } })
+	})
+
+	it('is not_found for an edit fetch whose second read of the row finds it gone', async () => {
+		serve(() => json(row), () => json({ message: 'Secret not found' }, 404))
+		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'not_found' } })
 	})
 })
 
@@ -1173,6 +1256,22 @@ describe('passkey writes', () => {
 		it('refuses a copy whose grade is view-only, writing nothing', async () => {
 			serve({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'read', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }) })
 			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'view_only' } })
+			expect(sent()).not.toContain(SHARE_SAVE)
+		})
+
+		it('saves through a copy on the write grade for the source, naming the source version write-context read', async () => {
+			serve({
+				...sharing({ copies: [{ secretId: 'src', holder: 'owner', targetUserId: null }] }),
+				'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'write', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }),
+			})
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: true, value: { id: 's1', credentialId: 'cred-new', counter: 0 } })
+			expect(bodiesOf(SHARE_SAVE).map((body) => body.sourceBaseUpdatedAt)).toEqual([SOURCE_AT, SOURCE_AT])
+			expect((lastBodyOf(SHARE_SAVE).copies as Array<{ secretId: string }>).map((copy) => copy.secretId)).toEqual(['src'])
+		})
+
+		it('refuses a row whose write-context answers 404 while the row is still there, writing nothing', async () => {
+			serve({ 'GET /api/v1/secrets/s1/write-context': () => json({ message: 'Secret not found' }, 404) })
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'forbidden' } })
 			expect(sent()).not.toContain(SHARE_SAVE)
 		})
 

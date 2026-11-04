@@ -443,6 +443,11 @@ describe('the copy-editor path', () => {
 		expect(await failure(save())).toEqual({ code: 'stale_source' })
 	})
 
+	it('refuses a form opened while its row was saved alone as stale_source, sending nothing, rather than name the source\'s current version', async () => {
+		expect(await failure(save({ opened: await openedX({ sourceUpdatedAt: null }) }))).toEqual({ code: 'stale_source' })
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+
 	it.each(['read', 'none'])('refuses a view-only copy on a %s grade with view_only, sending nothing', async (grade) => {
 		world.effectiveGrade = grade
 		expect(await failure(save())).toEqual({ code: 'view_only' })
@@ -450,8 +455,139 @@ describe('the copy-editor path', () => {
 	})
 })
 
+describe('the own-row write context', () => {
+	const OWN_ROW = { sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }
+	const answer = (body: unknown) => {
+		const route = fetchMock.getMockImplementation()!
+		fetchMock.mockImplementation(async (input, init) => (new URL(String(input)).pathname.endsWith('/write-context') ? json(body) : route(input, init)))
+	}
+
+	it('reads a null source as the caller\'s own row, whatever else the answer names', async () => {
+		answer({ ...OWN_ROW, effectiveGrade: 'owner', ownerCertificate: CERT, sourceUpdatedAt: SOURCE_AT })
+		expect(await readWriteContext(client, 's1')).toEqual({ ownRow: true })
+	})
+
+	it('reads a named source as no own row, even when it is the row itself', async () => {
+		expect(await readWriteContext(client, 's1')).toEqual({ ownRow: false, sourceSecretId: 's1', effectiveGrade: 'owner', ownerCertificate: CERT, sourceUpdatedAt: SOURCE_AT })
+	})
+
+	it('saves the row alone on the owner path, naming no source version', async () => {
+		answer(OWN_ROW)
+		expect(await save()).toBeUndefined()
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'PUT /api/v1/secrets/s1/share-save'])
+		expect(saves).toEqual([{ baseUpdatedAt: BASE, patch: { key: 'own:key' }, copies: [], skipped: [], federated: [], suspend: [] }])
+	})
+
+	it.each([
+		['a row waiting for the share scan', json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409), { code: 'share_scan_pending' }],
+		['a copy whose source the caller may not write', json({ error: 'not_allowed', message: 'Only the owner…' }, 403), { code: 'forbidden' }],
+	])('words the share-save\'s refusal of %s', async (_, refusal, error) => {
+		answer(OWN_ROW)
+		world.onFinal = () => refusal
+		expect(await failure(save())).toEqual(error)
+	})
+
+	describe('a share-save 404, which a row two share rows name gets too', () => {
+		const ROW = '/api/v1/secrets/s1'
+		/** The read of the row after the share-save's 404. */
+		const reread = (respond: () => Response | Promise<Response>) => {
+			const route = fetchMock.getMockImplementation()!
+			fetchMock.mockImplementation(async (input, init) => (new URL(String(input)).pathname.endsWith(ROW) && (init?.method ?? 'GET') === 'GET' ? respond() : route(input, init)))
+		}
+
+		beforeEach(() => {
+			answer(OWN_ROW)
+			world.onFinal = () => json({ message: 'Secret not found' }, 404)
+		})
+
+		it('is not_found once Keepiq answers the row itself with 404', async () => {
+			reread(() => json({ message: 'Secret not found' }, 404))
+			expect(await failure(save())).toEqual({ code: 'not_found' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'PUT /api/v1/secrets/s1/share-save', `GET ${ROW}`])
+		})
+
+		it('is a refusal while the row is still there', async () => {
+			reread(() => json(secretRow()))
+			expect(await failure(save())).toEqual({ code: 'forbidden' })
+		})
+
+		it.each([
+			['a network failure', () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
+			['a server error', () => json({ message: 'Internal error' }, 500), 'server_error'],
+			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 }), 'server_error'],
+			['a refusal', () => json({ message: 'Forbidden' }, 403), 'forbidden'],
+			['an answer without a row', () => json(null), 'server_error'],
+		])('is never not_found after %s', async (_, respond, code) => {
+			reread(respond)
+			expect(await failure(save())).toEqual({ code })
+		})
+
+		it('is not_found at once on a row that names a source, reading nothing more', async () => {
+			fetchMock.mockImplementation(async (input, init) => {
+				const url = new URL(String(input))
+				return route(init?.method ?? 'GET', url.pathname.replace('/index.php/apps/keepiq', ''), init?.body ? JSON.parse(String(init.body)) : undefined)
+			})
+			expect(await failure(save())).toEqual({ code: 'not_found' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'PUT /api/v1/secrets/s1/share-save'])
+		})
+	})
+
+	describe('a write-context 404, which a row two share rows name gets too when it has copies of its own', () => {
+		/** The write-context's 404 and the read of the row after it. */
+		const answers = (row: () => Response | Promise<Response>) => {
+			fetchMock.mockImplementation(async (input) => {
+				const path = new URL(String(input)).pathname
+				if (path.endsWith('/write-context')) return json({ message: 'Secret not found' }, 404)
+				return path.endsWith('/api/v1/secrets/s1') ? row() : json({ message: 'Not found' }, 404)
+			})
+		}
+
+		it('is not_found once Keepiq answers the row itself with 404', async () => {
+			answers(() => json({ message: 'Secret not found' }, 404))
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code: 'not_found' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'GET /api/v1/secrets/s1'])
+		})
+
+		it('is a refusal while the row is still there, saving nothing', async () => {
+			answers(() => json(secretRow()))
+			expect(await failure(save())).toEqual({ code: 'forbidden' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'GET /api/v1/secrets/s1'])
+		})
+
+		it.each([
+			['a network failure', () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
+			['a server error', () => json({ message: 'Internal error' }, 500), 'server_error'],
+			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 }), 'server_error'],
+		])('is never not_found after %s', async (_, row, code) => {
+			answers(row)
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code })
+		})
+
+		it('never reads Nextcloud\'s page on the write-context as the row gone', async () => {
+			fetchMock.mockImplementation(async (input) => (new URL(String(input)).pathname.endsWith('/api/v1/secrets/s1') ? json(secretRow()) : new Response('<html>Not found</html>', { status: 404 })))
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code: 'forbidden' })
+		})
+	})
+
+	it.each([
+		['no answer', null],
+		['an answer without a source', { effectiveGrade: 'none' }],
+		['an empty source', { ...OWN_ROW, sourceSecretId: '' }],
+		['a source that is no id', { ...OWN_ROW, sourceSecretId: 7 }],
+		['a list', [OWN_ROW]],
+	])('refuses %s as unknown, saving nothing', async (_, body) => {
+		answer(body)
+		expect(await failure(save())).toEqual({ code: 'unknown' })
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+})
+
 describe('isViewOnly', () => {
-	const context = (sourceSecretId: string, effectiveGrade: string) => ({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: null })
+	const context = (sourceSecretId: string, effectiveGrade: string) => ({ ownRow: false as const, sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: null })
+
+	it('never calls an own row view-only', () => {
+		expect(isViewOnly('s1', { ownRow: true })).toBe(false)
+	})
 
 	it.each([
 		['a copy on a read grade', true, 'src', 'read'],
@@ -823,6 +959,7 @@ describe('failures', () => {
 		['a 400', json({ error: 'copy_fields_mismatch' }, 400), { code: 'invalid' }],
 		['Nextcloud\'s page for a route this Keepiq lacks', new Response('<html/>', { status: 404 }), { code: 'keepiq_outdated' }],
 		['Keepiq\'s own 404', json({ message: 'Secret not found' }, 404), { code: 'not_found' }],
+		['a share row waiting for the share scan', json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409), { code: 'share_scan_pending' }],
 	])('maps %s through writeError', async (_, answer, error) => {
 		world.onFinal = () => answer
 		expect(await failure(save())).toEqual(error)

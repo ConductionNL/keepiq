@@ -39,18 +39,33 @@ export interface Opened {
 	sourceUpdatedAt: string | null
 }
 
-export interface WriteContext {
+interface SourceContext {
+	ownRow: false
 	sourceSecretId: string
 	effectiveGrade: string
 	ownerCertificate: string | null
 	sourceUpdatedAt: string | null
 }
 
+/** `ShareWriteContext::ownRowContext`: the caller's row leads to no source they stand on, so it is saved alone and share-save judges it again. */
+interface OwnRowContext {
+	ownRow: true
+}
+
+export type WriteContext = SourceContext | OwnRowContext
+
 export async function readWriteContext(client: Client, id: string): Promise<WriteContext> {
-	const context = await client.keepiq<Partial<Record<keyof WriteContext, unknown>> | null>('GET', `${secretPath(id)}/write-context`)
-	if (typeof context?.sourceSecretId !== 'string') throw new WriteFailure({ code: 'unknown' })
+	let context: Partial<Record<keyof SourceContext, unknown>> | null
+	try {
+		context = await client.keepiq('GET', `${secretPath(id)}/write-context`)
+	} catch (error) {
+		throw error instanceof ApiError && error.status === 404 ? await goneOrRefused(client, id) : error
+	}
+	if (context?.sourceSecretId === null) return { ownRow: true }
+	if (!isString(context?.sourceSecretId)) throw new WriteFailure({ code: 'unknown' })
 	const text = (value: unknown) => (typeof value === 'string' && value ? value : null)
 	return {
+		ownRow: false,
 		sourceSecretId: context.sourceSecretId,
 		effectiveGrade: text(context.effectiveGrade) ?? 'none',
 		ownerCertificate: text(context.ownerCertificate),
@@ -58,8 +73,27 @@ export async function readWriteContext(client: Client, id: string): Promise<Writ
 	}
 }
 
+/** The source version a save through a copy names; an own row has none. */
+export const sourceVersion = (context: WriteContext) => (context.ownRow ? null : context.sourceUpdatedAt)
+
 /** A copy without a write grade, which the server would let its holder change alone, out of step with everyone else's (share-sync). */
-export const isViewOnly = (id: string, context: WriteContext) => context.sourceSecretId !== id && !COPY_EDITOR_GRADES.has(context.effectiveGrade)
+export const isViewOnly = (id: string, context: WriteContext) => !context.ownRow && context.sourceSecretId !== id && !COPY_EDITOR_GRADES.has(context.effectiveGrade)
+
+/**
+ * Write-context and an own row's share-save also answer 404 for a row two share rows name, so only Keepiq's 404 on the row itself proves it gone;
+ * a row still there was refused.
+ */
+async function goneOrRefused(client: Client, id: string): Promise<unknown> {
+	let row: { updatedAt?: unknown } | null
+	try {
+		row = await client.keepiq('GET', secretPath(id))
+	} catch (error) {
+		// Nextcloud's page, not Keepiq's verdict on the row.
+		if (error instanceof KeepiqNotInstalled) return new WriteFailure({ code: 'server_error' })
+		return error
+	}
+	return new WriteFailure({ code: typeof row?.updatedAt === 'string' ? 'forbidden' : 'server_error' })
+}
 
 export interface ShareSaveInput {
 	accountId: string
@@ -189,9 +223,11 @@ export async function shareSave(client: Client, privateKey: CryptoKey, input: Sh
 
 async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, baseUpdatedAt, context, opened, withoutUnreachable }: ShareSaveInput, partners: ReturnType<typeof verifiedPartners>): Promise<ShareSaveNote | undefined> {
 	if (isViewOnly(id, context)) throw new WriteFailure({ code: 'view_only' })
-	const copyPath = context.sourceSecretId !== id
-	const sourceBaseUpdatedAt = opened?.sourceUpdatedAt ?? context.sourceUpdatedAt
-	let ownerCertificate = context.ownerCertificate
+	const copyPath = !context.ownRow && context.sourceSecretId !== id
+	// A form opened while its row was saved alone made its edit from no source version, so the source's current one would hide a change since.
+	if (copyPath && opened && opened.sourceUpdatedAt === null) throw new WriteFailure({ code: 'stale_source' })
+	const sourceBaseUpdatedAt = opened ? opened.sourceUpdatedAt : sourceVersion(context)
+	let ownerCertificate = context.ownRow ? null : context.ownerCertificate
 
 	const copies = new Map<string, Values & { secretId: string }>()
 	const skipped = new Map<string, { secretId: string; reason: 'no_vault_key' }>()
@@ -316,8 +352,10 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 		drop(skipped, 's:', (key) => copyIds.has(key) && !required.skipRefused.has(key))
 		for (const holder of required.copies.filter((copy) => required.skipRefused.has(copy.secretId) && !reread.has(copy.secretId))) {
 			reread.add(holder.secretId)
-			if (holder.holder === 'owner') ownerCertificate = (await readWriteContext(client, id)).ownerCertificate
-			else if (holder.targetUserId) certificates.delete(holder.targetUserId)
+			if (holder.holder === 'owner') {
+				const again = await readWriteContext(client, id)
+				ownerCertificate = again.ownRow ? null : again.ownerCertificate
+			} else if (holder.targetUserId) certificates.delete(holder.targetUserId)
 		}
 		const todo = required.copies.filter((copy) => !copies.has(copy.secretId) && !skipped.has(copy.secretId))
 		const lookups = [...new Set(todo.flatMap((copy) => (copy.holder !== 'owner' && copy.targetUserId && !certificates.has(copy.targetUserId) ? [copy.targetUserId] : [])))]
@@ -347,7 +385,10 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 			break
 		} catch (error) {
 			const restart = error instanceof ApiError && error.status === 404 && error.code === 'stage_unknown' && stage.id !== null
-			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) throw refusalOf(error, cloudIds)
+			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) {
+				const refusal = refusalOf(error, cloudIds)
+				throw context.ownRow && refusal instanceof ApiError && refusal.status === 404 ? await goneOrRefused(client, id) : refusal
+			}
 			if (++rounds >= MAX_ROUNDS) throw new WriteFailure({ code: 'incomplete' })
 			if (restart) stage = { id: null, sent: new Set() }
 			else await fill(error.body)

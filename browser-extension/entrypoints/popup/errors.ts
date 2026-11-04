@@ -44,9 +44,9 @@ export function noticeText(notice: NoticeCode): string {
 
 /**
  * What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one;
- * `passkey` is the passkey window's save or counter save.
+ * `passkey` is the passkey window's save or counter save; `delete` is an item's move to the trash.
  */
-export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey'
+export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey' | 'delete'
 
 /** `undefined`, or an error without a code, is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
@@ -55,7 +55,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'write_locked': return i18n.t('writeErrors.writeLocked')
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
 		case 'policy': return i18n.t('writeErrors.policy')
-		case 'account_changed': return i18n.t('writeErrors.accountChanged')
+		case 'account_changed': return context === 'delete' ? i18n.t('writeErrors.accountChangedDelete') : i18n.t('writeErrors.accountChanged')
 		case 'invalid': return invalidText(context)
 		case 'conflict': return conflictText(context)
 		case 'not_found': return context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
@@ -116,6 +116,10 @@ const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, co
 	['partner_upgrade_required', partnerUpgradeText],
 	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
 	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
+	['share_scan_pending', (_, context) => {
+		if (context === 'open') return i18n.t('writeErrors.shareScanPendingOpen')
+		return context === 'delete' ? i18n.t('writeErrors.shareScanPendingDelete') : i18n.t('writeErrors.shareScanPending')
+	}],
 ])
 
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {

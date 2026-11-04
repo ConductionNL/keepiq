@@ -9,7 +9,7 @@ import { fieldTexts, shownInFull } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
 import { buildPasskeyCredential, passkeyEntries, storedArray, withCounter, withPasskey, type PasskeyCredential } from '@/src/passkey/credential'
-import { isViewOnly, readWriteContext, sealValue, shareSave, VALUE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
+import { isViewOnly, readWriteContext, sealValue, shareSave, sourceVersion, VALUE_FIELDS, type Opened, type Values, type WriteContext } from './share-save'
 import { readSnapshot } from './store'
 import { isAuthenticatorKey, normaliseAuthenticatorKey } from '@/src/totp/authenticator-key'
 import { recordOutcome, syncAfterWrite } from './sync'
@@ -215,7 +215,7 @@ export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accoun
 			const writeContext = await readWriteContext(client, id)
 			if (isViewOnly(id, writeContext)) throw new WriteFailure({ code: 'view_only' })
 			// The source version this edit is made from, which a save through a copy must name.
-			sourceUpdatedAt = writeContext.sourceUpdatedAt
+			sourceUpdatedAt = sourceVersion(writeContext)
 		}
 		const typeNames = await typeNamesOf(account.id, [row.typeId, cached.typeId])
 		// Either side naming a passkey withholds it, so a swapped type id does not open the credential.
@@ -460,7 +460,7 @@ async function savePasskeys(ctx: Context, id: string, change: PasskeysChange): P
 	const next = changed(stored, change)
 	const note = await shareSave(client, privateKey, {
 		accountId: account.id, id, patch: { passkeys: await sealValue('passkeys', next.value, await publicKey(ctx)) }, plain: { passkeys: next.value },
-		baseUpdatedAt: row.updatedAt, context, opened: await passkeySaveOpened(row, privateKey, context.sourceUpdatedAt), withoutUnreachable: new Set(),
+		baseUpdatedAt: row.updatedAt, context, opened: await passkeySaveOpened(row, privateKey, sourceVersion(context)), withoutUnreachable: new Set(),
 	})
 	return { id, credentialId: next.credentialId, counter: next.counter, ...(note && { shareSave: note }) }
 }
