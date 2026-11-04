@@ -2,27 +2,18 @@ package keepiq
 
 import (
 	"fmt"
-	"io"
+	"log/slog"
 	"strings"
+
+	"github.com/ConductionNL/keepiq/sdk/go/internal/redact"
 )
-
-// redactedValue stands in for a credential value in printed output.
-const redactedValue = "[redacted]"
-
-// redact is redactedValue for a non-empty value and "" for an empty one.
-func redact(v string) string {
-	if v == "" {
-		return ""
-	}
-	return redactedValue
-}
 
 // secretView is Secret without its methods, so fmt prints its fields.
 type secretView Secret
 
 func (s Secret) redacted() secretView {
 	v := secretView(s)
-	v.Key, v.Login, v.AdditionalFields = redact(v.Key), redact(v.Login), redact(v.AdditionalFields)
+	v.Key, v.Login, v.AdditionalFields = redact.Value(v.Key), redact.Value(v.Login), redact.Value(v.AdditionalFields)
 	return v
 }
 
@@ -36,7 +27,11 @@ func (s Secret) GoString() string {
 }
 
 // Format prints the redacted form for every verb, so no verb prints a value.
-func (s Secret) Format(f fmt.State, verb rune) { writeFormatted(f, verb, s) }
+func (s Secret) Format(f fmt.State, verb rune) { redact.Format(f, verb, s) }
+
+// LogValue gives log/slog the redacted form, so a JSON handler does not
+// marshal the values. json.Marshal itself still returns them.
+func (s Secret) LogValue() slog.Value { return slog.AnyValue(s.redacted()) }
 
 // String shows the instance address and the application id only.
 func (c *Client) String() string {
@@ -49,17 +44,4 @@ func (c *Client) GoString() string {
 }
 
 // Format prints the String form for every verb, and GoString for %#v.
-func (c *Client) Format(f fmt.State, verb rune) { writeFormatted(f, verb, c) }
-
-type goStringer interface {
-	fmt.Stringer
-	fmt.GoStringer
-}
-
-func writeFormatted(f fmt.State, verb rune, v goStringer) {
-	if verb == 'v' && f.Flag('#') {
-		_, _ = io.WriteString(f, v.GoString())
-		return
-	}
-	_, _ = io.WriteString(f, v.String())
-}
+func (c *Client) Format(f fmt.State, verb rune) { redact.Format(f, verb, c) }

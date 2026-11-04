@@ -1,8 +1,10 @@
 package keepiq
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 )
@@ -35,6 +37,23 @@ func TestSecretPrintsWithoutValues(t *testing.T) {
 		for _, arg := range []any{s, &s, []Secret{s}, holder} {
 			assertHidden(t, fmt.Sprintf(verb, arg), "value-k3y", "login-n4me", "pin-9137")
 			assertHidden(t, fmt.Sprintf(verb, arg), "76616c75652d6b3379")
+		}
+	}
+}
+
+// Neither slog handler logs a secret's values, as a value or a pointer.
+func TestSecretLogsWithoutValues(t *testing.T) {
+	s := sampleSecret()
+	for _, arg := range []any{s, &s} {
+		var buf bytes.Buffer
+		slog.New(slog.NewJSONHandler(&buf, nil)).Info("read", "secret", arg)
+		slog.New(slog.NewTextHandler(&buf, nil)).Info("read", "secret", arg)
+		out := buf.String()
+		assertHidden(t, out, "value-k3y", "login-n4me", "pin-9137")
+		for _, part := range []string{`"ID":"sec-1"`, `"Key":"[redacted]"`, "ID:sec-1"} {
+			if !strings.Contains(out, part) {
+				t.Fatalf("log %q lacks %q", out, part)
+			}
 		}
 	}
 }
@@ -89,6 +108,10 @@ func TestClientPrintsWithoutKeyOrToken(t *testing.T) {
 			assertHidden(t, text, c.token, d, c.key.Primes[0].String(), "PRIVATE KEY")
 		}
 	}
+	var buf bytes.Buffer
+	slog.New(slog.NewJSONHandler(&buf, nil)).Info("read", "client", c)
+	slog.New(slog.NewTextHandler(&buf, nil)).Info("read", "client", c)
+	assertHidden(t, buf.String(), c.token, d, "PRIVATE KEY")
 	want := fmt.Sprintf("{BaseURL:%s ApplicationID:billing}", c.baseURL)
 	if got := fmt.Sprintf("%+v", c); got != want {
 		t.Fatalf("got %q, want %q", got, want)
