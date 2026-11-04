@@ -518,6 +518,18 @@ describe('the passkey window', () => {
 		expect(fromBase64Url(credentialOf(results[0]!.message.result).authenticatorData)[32]! & FLAGS.UV).toBe(FLAGS.UV)
 	})
 
+	it('forgets the verification on a lock, so a pick after an unlock outside the window asks again', async () => {
+		vi.mocked(unlock).mockResolvedValue()
+		const { ceremonyId } = await start(getRequest({ userVerification: 'required' }))
+		expect(await window({ kind: 'passkey.verify', ceremonyId, method: { type: 'pin', pin: '123456' } }, windowOf(ceremonyId!))).toMatchObject({ ok: true, view: { verify: false } })
+		await lock(accountId)
+		await settle()
+		await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		expect(await window({ kind: 'passkey.state', ceremonyId }, windowOf(ceremonyId!))).toMatchObject({ view: { locked: false, verify: true } })
+		expect(await window({ kind: 'passkey.pick', ceremonyId, itemId: 'work', credentialId: 'QQ' }, windowOf(ceremonyId!))).toEqual({ ok: false, code: 'verify_required' })
+		expect(results).toEqual([])
+	})
+
 	it('passes on a wrong PIN with the tries left and does not count it as verified', async () => {
 		vi.mocked(unlock).mockRejectedValue(new Failure('invalid_pin', 'Wrong PIN', 4))
 		const { ceremonyId } = await start(getRequest({ userVerification: 'required' }))

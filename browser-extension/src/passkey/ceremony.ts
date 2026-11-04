@@ -33,7 +33,7 @@ export interface Ceremony extends CeremonyRequest {
 	accountId: string
 	/** The passkey window and its one tab, the only sender that may answer the ceremony. */
 	window: { id: number; tabId: number } | null
-	/** The user entered the master password or PIN within this ceremony. */
+	/** The user entered the master password or PIN in the window that is open now; a list pick, its close and a lock clear it. */
 	verified: boolean
 	/** The window showed "already saved", so closing it answers `InvalidStateError`. */
 	alreadySaved?: true
@@ -458,7 +458,7 @@ function release(ceremony: Ceremony): Promise<boolean> {
 	return inTab(ceremony.tabId, async () => {
 		const current = await store.get(ceremony.tabId)
 		if (current?.id !== ceremony.id) return false
-		const kept: Ceremony = { ...current, window: null }
+		const kept: Ceremony = { ...current, window: null, verified: false }
 		delete kept.failed
 		delete kept.pending
 		await store.set(kept)
@@ -532,11 +532,11 @@ export async function endForAccountChange(): Promise<void> {
 }
 
 /**
- * A lock forgets every held pick: after unlocking, the user picks again from what the window then shows. Each ceremony is
- * read again in its tab's queue, behind a `hold` that checked the key just before the lock.
+ * A lock forgets every held pick and verification: after unlocking, the user picks again from what the window then shows.
+ * Each ceremony is read again in its tab's queue, behind a `hold` that checked the key just before the lock.
  */
-async function forgetHeldPicks(): Promise<void> {
-	for (const ceremony of await store.all()) await update(ceremony, { pending: undefined })
+async function forgetOnLock(): Promise<void> {
+	for (const ceremony of await store.all()) await update(ceremony, { pending: undefined, verified: false })
 }
 
 async function windowClosed(windowId: number): Promise<void> {
@@ -586,7 +586,9 @@ async function askedConditional(tabId: number, ceremonyId: string): Promise<Cere
  */
 export async function pickFromList(tabId: number, ceremonyId: string, itemId: string, credentialId: string): Promise<ListPick> {
 	await enforce()
-	const ceremony = await askedConditional(tabId, ceremonyId)
+	const asked = await askedConditional(tabId, ceremonyId)
+	// A click on the page is a new round: a verification in the window counts for neither it nor what follows.
+	const ceremony = asked && await update(asked, { verified: false })
 	if (!ceremony) return 'stale'
 	const reply = await once(ceremony, () => pick(ceremony, itemId, credentialId))
 	if (reply.ok) return 'signed'
@@ -610,6 +612,6 @@ export function registerPasskeyCeremonies(): void {
 	browser.windows.onRemoved.addListener((windowId) => void windowClosed(windowId).catch(log('window closed')))
 	onBroadcast((message) => {
 		if (message.kind === 'vault.locked' || message.kind === 'vault.changed') forgetOfferedPasskeys()
-		if (message.kind === 'vault.locked') void forgetHeldPicks().then(endForAccountChange).catch(log('lock'))
+		if (message.kind === 'vault.locked') void forgetOnLock().then(endForAccountChange).catch(log('lock'))
 	})
 }
