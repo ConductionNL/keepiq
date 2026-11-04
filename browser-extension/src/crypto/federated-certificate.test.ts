@@ -1,6 +1,6 @@
 import { createPublicKey, X509Certificate } from 'node:crypto'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { caConstraintsChain, FEDERATION_NAMES, federationChain } from '@/src/testing/vectors'
+import { caConstraintsChain, FEDERATION_NAMES, federationChain, phpseclibChain } from '@/src/testing/vectors'
 import { fromBase64, toBase64 } from './base64'
 import { canonicalCloudId, FederatedCertificateError, verifyFederatedCertificate, type FederatedCertificateInput } from './federated-certificate'
 import { extractSpki, importPrivateKey, importSpki, pemToPkcs8, rsaDecrypt, rsaEncrypt } from './rsa'
@@ -337,6 +337,27 @@ describe('verifyFederatedCertificate chain constraints', () => {
 
 	it('reads the fixture without its note', () => {
 		expect(C).not.toHaveProperty('_note')
+	})
+})
+
+// The leaves Keepiq makes through phpseclib, for a public key alone and as re-signs, under the CAs it makes through openssl.
+describe('verifyFederatedCertificate on a chain Keepiq minted through phpseclib', () => {
+	const P = phpseclibChain()
+	/** Its leaves are valid for a year from minting, so the chain is checked an hour after its newest certificate starts. */
+	const minted = (...pems: string[]) => Math.max(...pems.map((pem) => Date.parse(new X509Certificate(pem).validFrom))) + 3_600_000
+
+	it.each(['leaf', 'leafResigned', 'opensslLeafResigned'] as const)('accepts the %s and returns its fingerprint and key', async (name) => {
+		const verified = await verifyFederatedCertificate({
+			certificate: P[name], chain: [P.intermediate, P.root], partnerRootFingerprint: P.rootFingerprint, cloudId: BOB, now: minted(P[name], P.intermediate, P.root),
+		})
+		expect(verified.fingerprint).toBe(await sha256Hex(P[name]))
+		expect(verified.spki).toEqual(new Uint8Array(createPublicKey(P[name]).export({ type: 'spki', format: 'der' })))
+		// OpenSSL agrees, so the parser and the fixture don't share a wrong reading.
+		expect(new X509Certificate(P[name]).verify(new X509Certificate(P.intermediate).publicKey)).toBe(true)
+	})
+
+	it('reads the fixture without its note', () => {
+		expect(P).not.toHaveProperty('_note')
 	})
 })
 

@@ -68,6 +68,11 @@ export function caConstraintsChain(): Record<CaConstraintsName, string> {
 	return JSON.parse(readFileSync(new URL('./ca-constraints-chain.json', import.meta.url), 'utf8'), (key, value) => key === '_note' ? undefined : value)
 }
 
+/** From `generate-phpseclib-chain.sh` next to it, without its `_note`. */
+export function phpseclibChain(): Record<'root' | 'rootFingerprint' | 'intermediate' | 'leaf' | 'leafResigned' | 'opensslLeafResigned', string> {
+	return JSON.parse(readFileSync(new URL('./phpseclib-chain.json', import.meta.url), 'utf8'), (key, value) => key === '_note' ? undefined : value)
+}
+
 export const suiteRow = {
 	id: 'suite-1',
 	status: 'active',
