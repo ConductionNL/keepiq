@@ -80,8 +80,8 @@ export const sourceVersion = (context: WriteContext) => (context.ownRow ? null :
 export const isViewOnly = (id: string, context: WriteContext) => !context.ownRow && context.sourceSecretId !== id && !COPY_EDITOR_GRADES.has(context.effectiveGrade)
 
 /**
- * Write-context and an own row's share-save also answer 404 for a row two share rows name, so only Keepiq's 404 on the row itself proves it gone;
- * a row still there was refused.
+ * Write-context and an own row's share-save also answer 404 for a row two share rows name, a share row that is someone else's, or a caller with no grade,
+ * so only Keepiq's 404 on the row itself proves it gone; a row still there was refused.
  */
 async function goneOrRefused(client: Client, id: string): Promise<unknown> {
 	let row: { updatedAt?: unknown } | null

@@ -94,7 +94,7 @@ test.describe('in Dutch, with a long folder path', () => {
 		await expect(frame.locator('.bar__title')).toBeHidden()
 		// Every error the bar can show, in the place the real error took.
 		const messages = barErrorsNl()
-		expect(messages).toHaveLength(21)
+		expect(messages).toHaveLength(22)
 		for (const message of messages) {
 			await frame.locator('.bar__error').evaluate((error, text) => {
 				error.textContent = text
