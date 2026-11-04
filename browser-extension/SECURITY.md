@@ -122,7 +122,7 @@ The reasoning is in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vau
 - **Only its own frame gets the result,** and the relay drops it when the frame left the ceremony's origin.
 - **The window** gets the site, the page's `rp.name` and `user.name` as text, the lock state, and login ids, names and user names; never ciphertext, a key, the challenge or the credential. Only that ceremony's window may answer it.
 - **Unintended clicks:** a sign, save, replace, retry or unlock counts only 500 ms after the window, its step or a failure appeared or it got focus; a held Enter or Space counts only its first press, and the Replace question starts on Cancel; Cancel counts at once.
-- **User verification** is set only when you entered the master password or PIN during the ceremony; a `required` request asks for it ("Confirm it's you"), the PIN under its five-try limit.
+- **User verification** is set only when you entered the master password or PIN in the current passkey window, or for the inline-list pick that opened it; a `required` request asks for it ("Confirm it's you"), the PIN under its five-try limit.
 
 ## In-page UI
 
@@ -131,7 +131,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - **Isolated:** each is an extension page in an iframe inside a closed shadow root; the page can neither read it nor restyle it, and any change the content script didn't make closes it.
 - **Key handshake:** the content script posts a random key to its own iframe at the extension origin; the background answers only the first frame of that page, tab and frame to present it, so a copy the page frames itself gets nothing.
 - **What the page learns:** the content script never gets names, usernames, a card's brand or last four, or an identity's name or email; the login list's height is one row when the vault is locked, when no login matches and when one does, so one row doesn't tell them apart; two to five rows show that many matches (five for more) and so that the vault is unlocked, which is accepted as useless to a site; the not-visible notice and the insecure-site question size to their text, but only after the user picked a row; and the save card's size depends on the window only.
-- **Passkey rows** show in the list only while the frame's conditional passkey request is pending and the vault is unlocked, and count toward its height as logins do.
+- **Passkey rows** show in the list only while the frame's conditional passkey request is pending and the vault is unlocked, and count toward its height as logins do. A request that names credentials gets none, so the page can't use the list to test which of its credential ids your vault holds.
 - **Visibility guard:** a pick, Save, Update or Never counts only when the list or bar stayed untouched and on top for the 500 ms before the press, and is what the press point hits. Otherwise it is refused, and the list or bar says so.
 - **Frames:** no inline list in a frame with a cross-origin ancestor, on either browser, since the extension couldn't check that ancestor's styling.
 - **Chrome** adds IntersectionObserver v2, which also sees overlays that let clicks through.
