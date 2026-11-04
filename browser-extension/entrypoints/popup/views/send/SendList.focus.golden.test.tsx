@@ -47,7 +47,6 @@ async function removeRow(user: ReturnType<typeof userEvent.setup>, index: number
 	const dialog = screen.getByRole('dialog')
 	await user.click(within(dialog).getByRole('button', { name: /Remove|Delete/ }))
 	await settle()
-	await settle()
 	trace.push(`removed: ${focused()}`)
 }
 
