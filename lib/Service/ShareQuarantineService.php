@@ -32,6 +32,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -55,6 +56,8 @@ class ShareQuarantineService {
 	 * @param SecretMapper $secretMapper The rows' copies
 	 * @param GroupShareMapper $groupShareMapper The group shares a row may be linked to
 	 * @param IEventDispatcher $eventDispatcher The audit dispatcher
+	 * @param TeamFolderMapper $teamFolders Whether a team-folder row's folder still exists
+	 * @param TeamFolderMembershipResolver $memberships Whether a team-folder row's target is still a member
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 *
 	 * @return void
@@ -67,6 +70,8 @@ class ShareQuarantineService {
 		private SecretMapper $secretMapper,
 		private GroupShareMapper $groupShareMapper,
 		private IEventDispatcher $eventDispatcher,
+		private TeamFolderMapper $teamFolders,
+		private TeamFolderMembershipResolver $memberships,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
@@ -101,19 +106,24 @@ class ShareQuarantineService {
 	 * else or is the source of a live share, as releasing it makes that
 	 * holder's own secret look like a received copy again; and a row whose
 	 * share or copy carries an access end date, as the expiry job revokes an
-	 * ended share and deletes its copy.
+	 * ended share and deletes its copy. Never released, even when forced: a
+	 * team-folder row whose folder is gone or whose recipient the folder no
+	 * longer covers, as releasing it would give someone the owner removed
+	 * the source's updates again; drop the row then.
 	 *
 	 * @param string $id    The share-target row id
 	 * @param bool   $force Whether the administrator releases a row that needs force
 	 *
 	 * @return ShareTarget The released row
 	 *
-	 * @throws InvalidArgumentException When no quarantined row has this id, it needs force, or a live share replaces it
+	 * @throws InvalidArgumentException When no quarantined row has this id, it needs force, a live share replaces it, or
+	 *   its team folder no longer grants it
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function release(string $id, bool $force): ShareTarget {
 		$row = $this->loadQuarantined(id: $id);
+		$this->assertTeamFolderStillGrants(row: $row);
 		if ($force === false) {
 			$this->assertReleasableWithoutForce(row: $row);
 		}
@@ -146,6 +156,45 @@ class ShareQuarantineService {
 
 		return $released;
 	}//end release()
+
+	/**
+	 * Refuse, whatever the force, to release a team-folder row whose folder
+	 * no longer exists or no longer covers the row's recipient, or whose
+	 * recipient's account is disabled.
+	 *
+	 * @param ShareTarget $row The quarantined row
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the folder is gone, the recipient is no longer covered or is disabled
+	 */
+	private function assertTeamFolderStillGrants(ShareTarget $row): void {
+		$teamFolderId = (string)$row->getTeamFolderId();
+		if ($teamFolderId === '') {
+			return;
+		}
+
+		try {
+			$this->teamFolders->findById(id: $teamFolderId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(
+				message: 'The team folder this row came from no longer exists, so it cannot be released, even with --force; drop it instead'
+			);
+		}
+
+		if (in_array($row->getTargetUserId(), $this->memberships->effectiveUsers(teamFolderId: $teamFolderId), true) === false) {
+			throw new InvalidArgumentException(
+				message: 'The recipient is no longer a member of the team folder this row came from, so it cannot be released, even with --force; drop it instead'
+			);
+		}
+
+		// The fan-out never shares to a disabled account, so a release does not either.
+		if ($this->memberships->isDisabledAccount(userId: $row->getTargetUserId()) === true) {
+			throw new InvalidArgumentException(
+				message: 'The recipient\'s account is disabled, so this team-folder row cannot be released, even with --force; drop it instead'
+			);
+		}
+	}//end assertTeamFolderStillGrants()
 
 	/**
 	 * Drop a quarantined row for good. Its copy is kept: it may be the

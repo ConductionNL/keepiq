@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -112,6 +113,7 @@ class SecretTrashService {
 	 * @return Secret
 	 *
 	 * @throws \OCA\Keepiq\Exception\StaleWriteException When the secret changed since that version
+	 * @throws ShareScanPendingException When the pending share quarantine scan cannot judge a share row of the secret
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-deleting-a-secret-moves-it-to-the-trash
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently

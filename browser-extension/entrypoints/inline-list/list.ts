@@ -135,6 +135,28 @@ function optionLabel(row: Row): string {
 
 const SIZES = { '--row': INLINE_ROW_PX, '--gap': INLINE_GAP_PX, '--inset': INLINE_INSET_PX, '--radius': INLINE_RADIUS_PX }
 
+/** A key pressed on a row or the entry, with the rows in order and the focused one's index. */
+interface RowKey {
+	event: KeyboardEvent
+	rows: HTMLElement[]
+	index: number
+	target: HTMLElement
+}
+
+/** Focus the first or last row; off a row, the keys do nothing. */
+function focusEdge({ event, rows, index }: RowKey) {
+	if (0 > index) return
+	event.preventDefault()
+	rows[event.key === 'Home' ? 0 : rows.length - 1]!.focus()
+}
+
+/** Focus the next row; off a row, Down scrolls a clipped message. */
+function focusNext({ event, rows, index }: RowKey) {
+	if (0 > index) return
+	event.preventDefault()
+	rows[Math.min(index + 1, rows.length - 1)]!.focus()
+}
+
 /**
  * The inline list page (design.md § Inline list). It learns its key only from its parent's `postMessage`,
  * never from its URL, and hears from the background only in replies. Returns a teardown.
@@ -394,6 +416,42 @@ export function startInlineList(): () => void {
 		}
 	}
 
+	/** Pick the focused row; held keys pick once. */
+	function pickFocused({ event, index, target }: RowKey) {
+		if (0 > index) return
+		event.preventDefault()
+		if (!event.repeat) void pick(rowsByElement.get(target)!, keyInput(target))
+	}
+
+	/** Close the list and give the focus back to the page's field. */
+	function closeList({ event }: RowKey) {
+		event.preventDefault()
+		if (key) notify({ kind: 'inline.close', key, refocus: true })
+	}
+
+	/** Focus the previous row, or from the first one give the focus back to the page's field. */
+	function focusPrevious({ event, rows, index }: RowKey) {
+		event.preventDefault()
+		if (index > 0) rows[index - 1]!.focus()
+		else if (key) notify({ kind: 'inline.refocus', key })
+	}
+
+	/** What each key does on a row or the entry. */
+	function rowKeyActionMap(): Map<string, (at: RowKey) => void> {
+		return new Map([
+			['ArrowDown', focusNext],
+			['ArrowUp', focusPrevious],
+			['Home', focusEdge],
+			['End', focusEdge],
+			['Enter', pickFocused],
+			[' ', pickFocused],
+			['Escape', closeList],
+			['Tab', closeList],
+		])
+	}
+
+	const rowKeyActions = rowKeyActionMap()
+
 	function onKeydown(event: KeyboardEvent) {
 		if (question) return questionKey(event, question)
 		const target = event.target as HTMLElement
@@ -406,36 +464,7 @@ export function startInlineList(): () => void {
 			return
 		}
 		const rows = [...rowsByElement.keys()] as HTMLElement[]
-		const index = rows.indexOf(target)
-		switch (event.key) {
-			case 'ArrowDown':
-				// Off a row, Down scrolls a clipped message.
-				if (index < 0) return
-				event.preventDefault()
-				rows[Math.min(index + 1, rows.length - 1)]!.focus()
-				break
-			case 'ArrowUp':
-				event.preventDefault()
-				if (index > 0) rows[index - 1]!.focus()
-				else if (key) notify({ kind: 'inline.refocus', key })
-				break
-			case 'Home':
-			case 'End':
-				if (index < 0) return
-				event.preventDefault()
-				rows[event.key === 'Home' ? 0 : rows.length - 1]!.focus()
-				break
-			case 'Enter':
-			case ' ':
-				if (index < 0) return
-				event.preventDefault()
-				if (!event.repeat) void pick(rowsByElement.get(target)!, keyInput(target))
-				break
-			case 'Escape':
-			case 'Tab':
-				event.preventDefault()
-				if (key) notify({ kind: 'inline.close', key, refocus: true })
-		}
+		rowKeyActions.get(event.key)?.({ event, rows, index: rows.indexOf(target), target })
 	}
 
 	const pickTarget = (event: Event): Element | null => {

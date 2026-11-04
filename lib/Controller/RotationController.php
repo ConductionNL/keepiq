@@ -34,6 +34,7 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -211,10 +212,7 @@ class RotationController extends OCSController {
 				reminderDays: $reminderDays,
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $policy->jsonSerialize());

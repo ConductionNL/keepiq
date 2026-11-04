@@ -67,6 +67,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -76,6 +77,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
  */
 class ReadOnlyFederatedCopyTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var SecretMapper&MockObject */
 	private SecretMapper $secrets;
@@ -134,7 +136,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $delegations,
-			shareTargetMapper: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 		);
 	}
 
@@ -150,6 +152,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			groupShareMapper: $groupShares,
 			teamFolders: $teamFolders,
 			groupManager: $this->createMock(IGroupManager::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 		$notifications = $this->createMock(NotificationService::class);
 		$db = $this->createMock(IDBConnection::class);
@@ -164,15 +167,16 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 				notificationService: $notifications,
 				groupShareMapper: $groupShares,
 				restrictions: $resolver,
+				rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			),
 			syncService: new ShareSyncService(
-				mapper: $this->targets,
+				rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 				secretMapper: $this->secrets,
 				db: $db,
 				auth: $auth,
 				versionService: $this->createMock(SecretVersionService::class),
-				guards: new ShareSyncGuards(targets: $this->targets, secrets: $this->secrets, suites: $this->suites, auth: $auth),
-				contexts: new ShareWriteContext(targets: $this->targets, suites: $this->suites, auth: $auth),
+				guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets), secrets: $this->secrets, suites: $this->suites, auth: $auth),
+				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $this->targets), suites: $this->suites, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->targets,
@@ -180,8 +184,10 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 				db: $db,
 				logger: $this->createMock(LoggerInterface::class),
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
 			restrictions: $resolver,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return new ShareController($this->createMock(IRequest::class), $service, $this->session());
@@ -260,6 +266,8 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$response = (new GroupShareController($this->createMock(IRequest::class), $service, $this->session()))
@@ -278,7 +286,7 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 		$delegations->expects($this->never())->method('insert');
 		$service = new DelegationService(
 			mapper: $delegations,
-			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets),
+			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		$response = (new DelegationController($this->createMock(IRequest::class), $service, $this->session()))

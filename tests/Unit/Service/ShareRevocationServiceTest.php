@@ -15,6 +15,7 @@ use OCA\Keepiq\Service\ShareRevocationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -26,6 +27,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
  */
 class ShareRevocationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 
 	/** @var ShareTargetMapper&MockObject */
 	private ShareTargetMapper $mapper;
@@ -55,6 +58,7 @@ class ShareRevocationServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->auth,
 			quarantined: $this->quarantined,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}
 
@@ -249,6 +253,7 @@ class ShareRevocationServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $auth,
 			quarantined: $this->quarantined,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectException(\InvalidArgumentException::class);
@@ -269,6 +274,7 @@ class ShareRevocationServiceTest extends TestCase {
 			db: $this->createMock(IDBConnection::class),
 			logger: $this->createMock(LoggerInterface::class),
 			auth: $this->auth,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectException(\InvalidArgumentException::class);

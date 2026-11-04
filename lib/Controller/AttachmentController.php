@@ -29,6 +29,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\AttachmentService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -109,10 +110,7 @@ class AttachmentController extends OCSController {
 				wrappedFileKey: $wrappedFileKey,
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		$row = $result['attachment']->jsonSerialize();
@@ -165,10 +163,7 @@ class AttachmentController extends OCSController {
 		try {
 			$bytes = $this->attachmentService->downloadBlob(attachmentId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['blob' => base64_encode($bytes)]);
@@ -212,10 +207,7 @@ class AttachmentController extends OCSController {
 				recipientType: $recipientType,
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $grant->jsonSerialize(), statusCode: Http::STATUS_CREATED);
@@ -242,10 +234,7 @@ class AttachmentController extends OCSController {
 		try {
 			$this->attachmentService->delete(attachmentId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: ['deleted' => true]);
