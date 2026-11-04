@@ -2,7 +2,7 @@ import { i18n } from '#i18n'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
 import {
 	BAR_COMPACT_HEIGHT_PX, THEMES,
-	type CaptureRefused, type CaptureStateReply, type ContentToNotification, type NotificationToBackground, type PickInput, type VaultWriteError, type WriteResult,
+	type CaptureRefused, type CaptureStateReply, type ContentToNotification, type NotificationToBackground, type PickInput, type VaultWriteError, type WriteErrorCode, type WriteResult,
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import { trackVisibility } from '@/src/autofill/visibility-tracker'
@@ -45,32 +45,35 @@ async function send(message: NotificationToBackground): Promise<unknown> {
 	}
 }
 
+/** The bar's wording per write error code; a code not listed reads as unknown. */
+const WRITE_ERROR_TEXTS: Partial<Record<WriteErrorCode, (mode: Mode) => string>> = {
+	write_locked: () => i18n.t('notificationBar.errors.writeLocked'),
+	unverified: () => i18n.t('notificationBar.errors.unverified'),
+	view_only: () => i18n.t('notificationBar.errors.viewOnly'),
+	// A save names only a folder that could have gone.
+	not_found: (mode) => (mode === 'update' ? i18n.t('notificationBar.errors.loginGone') : i18n.t('writeErrors.folderGone')),
+	locked: () => i18n.t('notificationBar.errors.locked'),
+	session_revoked: () => i18n.t('errors.sessionRevoked'),
+	account_changed: () => i18n.t('notificationBar.errors.accountChanged'),
+	offline: () => i18n.t('writeErrors.offline'),
+	server_error: () => i18n.t('writeErrors.serverError'),
+	forbidden: () => i18n.t('writeErrors.forbidden'),
+	policy: () => i18n.t('writeErrors.policy'),
+	invalid: () => i18n.t('writeErrors.invalid'),
+	conflict: () => i18n.t('writeErrors.invalid'),
+	restricted: () => i18n.t('writeErrors.restricted'),
+	key_mismatch: () => i18n.t('notificationBar.errors.keyMismatch'),
+	stale_source: () => i18n.t('notificationBar.errors.staleSource'),
+	incomplete: () => i18n.t('notificationBar.errors.incomplete'),
+	bad_certificate: () => i18n.t('notificationBar.errors.badCertificate'),
+	keepiq_outdated: () => i18n.t('notificationBar.errors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION }),
+}
+
 /** What the bar says for a failed save or update; `undefined` is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, mode: Mode): string {
-	switch (error?.code) {
-		case undefined: return i18n.t('notificationBar.errors.notResponding')
-		case 'write_locked': return i18n.t('notificationBar.errors.writeLocked')
-		case 'unverified': return i18n.t('notificationBar.errors.unverified')
-		case 'view_only': return i18n.t('notificationBar.errors.viewOnly')
-		// A save names only a folder that could have gone.
-		case 'not_found': return mode === 'update' ? i18n.t('notificationBar.errors.loginGone') : i18n.t('writeErrors.folderGone')
-		case 'locked': return i18n.t('notificationBar.errors.locked')
-		case 'session_revoked': return i18n.t('errors.sessionRevoked')
-		case 'account_changed': return i18n.t('notificationBar.errors.accountChanged')
-		case 'offline': return i18n.t('writeErrors.offline')
-		case 'server_error': return i18n.t('writeErrors.serverError')
-		case 'forbidden': return i18n.t('writeErrors.forbidden')
-		case 'policy': return i18n.t('writeErrors.policy')
-		case 'invalid':
-		case 'conflict': return i18n.t('writeErrors.invalid')
-		case 'restricted': return i18n.t('writeErrors.restricted')
-		case 'key_mismatch': return i18n.t('notificationBar.errors.keyMismatch')
-		case 'stale_source': return i18n.t('notificationBar.errors.staleSource')
-		case 'incomplete': return i18n.t('notificationBar.errors.incomplete')
-		case 'bad_certificate': return i18n.t('notificationBar.errors.badCertificate')
-		case 'keepiq_outdated': return i18n.t('notificationBar.errors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
-		default: return i18n.t('errors.unknown')
-	}
+	if (error?.code === undefined) return i18n.t('notificationBar.errors.notResponding')
+	const text = Object.hasOwn(WRITE_ERROR_TEXTS, error.code) ? WRITE_ERROR_TEXTS[error.code] : undefined
+	return text ? text(mode) : i18n.t('errors.unknown')
 }
 
 /** The question, naming the login's own host where the tab shows another site. */
