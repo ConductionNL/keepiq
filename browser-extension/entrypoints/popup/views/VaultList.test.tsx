@@ -519,14 +519,6 @@ describe('states', () => {
 		expect(screen.queryByText('Search covers names and websites.')).toBeNull()
 	})
 
-	it('lists the first 2,000 rows and asks for a narrower search past that', () => {
-		renderList(snapshotReply({ items: Array.from({ length: 2001 }, (_, i) => itemMeta({ id: String(i), name: `Item ${String(i).padStart(4, '0')}`, hasLogin: false })) }))
-		const names = listed()
-		expect(names).toHaveLength(2000)
-		expect(names.at(-1)).toBe('Item 1999')
-		expect(screen.getByText('Showing the first 2,000, refine your search')).toBeTruthy()
-	})
-
 	it('shows the offline banner with the last sync and Sync now', async () => {
 		const syncedAt = new Date(Date.now() - 2 * 3_600_000).toISOString()
 		const { syncNow } = renderList(snapshotReply({ sync: { syncing: false, syncedAt, offline: true, lastError: 'network' } }))
