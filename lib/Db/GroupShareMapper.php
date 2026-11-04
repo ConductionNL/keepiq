@@ -32,6 +32,9 @@ use OCP\IDBConnection;
  * @extends QBMapper<GroupShare>
  */
 class GroupShareMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	use ExpiringGrantQueries;
 
 	/**
@@ -56,12 +59,7 @@ class GroupShareMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): GroupShare {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

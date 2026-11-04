@@ -4,6 +4,10 @@
 	"private": true,
 	"description": "Keepiq for your browser. Fill in logins, passkeys and one-time codes from your Nextcloud vault, end-to-end encrypted.",
 	"type": "module",
+	"browserslist": [
+		"Firefox >= 109",
+		"Chrome >= 109"
+	],
 	"scripts": {
 		"build": "wxt build",
 		"build:firefox": "wxt build -b firefox",

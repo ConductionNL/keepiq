@@ -39,6 +39,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCA\Keepiq\Exception\OwnerOnlyException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\TeamFolderService;
@@ -51,6 +52,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for TeamFolder membership.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Each refusal the membership service can answer (manager-only,
+ *   owner-only, a share row waiting for the quarantine scan) maps to its own status here.
  */
 class TeamFolderMemberController extends OCSController {
 	/**
@@ -194,6 +198,11 @@ class TeamFolderMemberController extends OCSController {
 				teamFolderId: $id,
 				membershipId: $memberId,
 				userId: $userId
+			);
+		} catch (ShareScanPendingException $exception) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $exception) {
 			return $this->refusal(exception: $exception);

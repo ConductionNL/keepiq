@@ -25,15 +25,12 @@ namespace OCA\Keepiq\Repair;
 
 use DateInterval;
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -73,8 +70,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 	 * @param SecretRequestMapper $requestMapper The request mapper
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper
-	 * @param IConfig $config The config
-	 * @param IAppConfig $appConfig The app config
+	 * @param SeedVersionGate $seedGate The debug and once-per-version gate
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -83,8 +79,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 		private SecretRequestMapper $requestMapper,
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
-		private IConfig $config,
-		private IAppConfig $appConfig,
+		private SeedVersionGate $seedGate,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -108,16 +103,8 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 	 * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
 	 */
 	public function run(IOutput $output): void {
-		if ($this->config->getSystemValueBool('debug', false) === false) {
-			return;
-		}
-
-		// Version gate: <post-migration> repair steps re-run on every
-		// upgrade/repair; only seed once per installed app version.
-		$appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
-		if ($appVersion !== ''
-			&& $this->appConfig->getValueString(Application::APP_ID, self::SEED_VERSION_KEY, '') === $appVersion
-		) {
+		$appVersion = $this->seedGate->dueVersion(key: self::SEED_VERSION_KEY);
+		if ($appVersion === null) {
 			return;
 		}
 
@@ -173,7 +160,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 			);
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
+		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
 		$output->info('Keepiq: seeded ' . $seeded . ' development secret requests');
 		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' secret requests');
 	}//end run()

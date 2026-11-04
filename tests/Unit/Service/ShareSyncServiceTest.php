@@ -9,7 +9,9 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\JudgedShareRows;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
@@ -17,6 +19,7 @@ use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -26,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
  */
 class ShareSyncServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var ShareTargetMapper&MockObject */
 	private ShareTargetMapper $mapper;
@@ -39,7 +43,7 @@ class ShareSyncServiceTest extends TestCase {
 		$this->mapper       = $this->createMock(ShareTargetMapper::class);
 		$this->secretMapper = $this->createMock(SecretMapper::class);
 		$this->sync         = new ShareSyncService(
-			mapper: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			secretMapper: $this->secretMapper,
 			db: $this->createMock(IDBConnection::class),
 			auth: $this->createMock(ShareAuthorizationService::class),
@@ -80,6 +84,183 @@ class ShareSyncServiceTest extends TestCase {
 		$row->setTargetUserId($target);
 		return $row;
 	}
+
+	/**
+	 * A sync by the owner of src-1 whose share rows grow on every read: the
+	 * first read returns as many as were there before the sync, each later one
+	 * a row more. A foreign row names bob but its copy is carol's, the planted
+	 * shape of GHSA-m5p9-6pw7-pf3g. With $foreign the sync checks its copies
+	 * with the real ShareSyncGuards::assertCopiesJudged(), which skips such a
+	 * row without judging it; otherwise a stub checks them that judges every
+	 * row. Returns the sync, how deep in a transaction each row
+	 * was judged, how often the source was locked, and how often it had been
+	 * locked when each row was judged.
+	 *
+	 * @param bool $foreign           Whether every row is foreign
+	 * @param int  $rowsBeforeTheSync How many rows the first read returns
+	 *
+	 * @return array{0:ShareSyncService,1:\ArrayObject<string,int>,2:\ArrayObject<int,int>,3:\ArrayObject<string,int>}
+	 */
+	private function syncWhoseRowsAppearUnderTheLock(bool $foreign=false, int $rowsBeforeTheSync=0): array {
+		$source = $this->secret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('2026-11-01T00:00:00+00:00'));
+		$depth   = new \ArrayObject([0]);
+		$judgedAt = new \ArrayObject();
+		$locks   = new \ArrayObject([0]);
+		$lockedBefore = new \ArrayObject();
+
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('beginTransaction')->willReturnCallback(static function () use ($depth): void {
+			$depth[0]++;
+		});
+		$db->method('commit')->willReturnCallback(static function () use ($depth): void {
+			$depth[0]--;
+		});
+		$db->method('rollBack')->willReturnCallback(static function () use ($depth): void {
+			$depth[0]--;
+		});
+
+		$reads = 0;
+		$this->mapper->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->method('findBySourceSecret')->willReturnCallback(function () use (&$reads, $rowsBeforeTheSync): array {
+			$rows = [];
+			$reads++;
+			for ($i = 1; $i < ($reads + $rowsBeforeTheSync); $i++) {
+				$row = $this->row('copy-'.$i, 'bob');
+				$row->setId('row-'.$i);
+				$rows[] = $row;
+			}
+
+			return $rows;
+		});
+		$this->secretMapper->method('advanceVersion')->willReturnCallback(static function () use ($locks): int {
+			$locks[0]++;
+			return 1;
+		});
+		$this->secretMapper->method('findByIds')->willReturnCallback(function (array $ids) use ($foreign): array {
+			$copies = [];
+			foreach ($ids as $id) {
+				$holder = 'bob';
+				if ($foreign === true) {
+					$holder = 'carol';
+				}
+
+				$copies[$id] = $this->secret(id: $id, ownerId: $holder);
+			}
+
+			return $copies;
+		});
+
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturnCallback(static function (ShareTarget $row) use ($depth, $judgedAt, $locks, $lockedBefore): ?string {
+			$judgedAt[(string)$row->getId()] = $depth[0];
+			$lockedBefore[(string)$row->getId()] = $locks[0];
+			return null;
+		});
+		$judge = $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper, scanner: $scanner);
+
+		$auth = $this->createMock(ShareAuthorizationService::class);
+		$auth->method('loadSecret')->willReturn($source);
+		$realGuards = new ShareSyncGuards(
+			rowJudge: $judge,
+			secrets: $this->secretMapper,
+			suites: $this->createMock(originalClassName: \OCA\Keepiq\Db\EncryptionSuiteMapper::class),
+			auth: $auth,
+		);
+		$guards = $this->createMock(ShareSyncGuards::class);
+		$guards->method('judgedRowsOf')->willReturnCallback(
+			static fn (Secret $source, ?JudgedShareRows $before = null): JudgedShareRows => $judge->rowsOfSource(sourceId: $source->getId(), before: $before)
+		);
+		$guards->method('assertCopiesJudged')->willReturnCallback(
+			static function (Secret $source, array $updates, ?string $writesOn, JudgedShareRows $judged) use ($foreign, $realGuards): void {
+				if ($foreign === true) {
+					$realGuards->assertCopiesJudged(source: $source, updates: $updates, writesOn: $writesOn, judged: $judged);
+					return;
+				}
+
+				$judged->heldBack();
+			}
+		);
+		$contexts = $this->createMock(ShareWriteContext::class);
+		$contexts->method('standingOn')->willReturn(['grade' => 'owner', 'writesOn' => null]);
+		$contexts->method('writesForEveryone')->willReturn(true);
+
+		$sync = new ShareSyncService(
+			rowJudge: $judge,
+			secretMapper: $this->secretMapper,
+			db: $db,
+			auth: $auth,
+			versionService: $this->createMock(SecretVersionService::class),
+			guards: $guards,
+			contexts: $contexts,
+		);
+
+		return [$sync, $judgedAt, $locks, $lockedBefore];
+	}//end syncWhoseRowsAppearUnderTheLock()
+
+	/**
+	 * A row that appears under the source's lock is judged outside the
+	 * transaction, so a quarantine the judging makes is never rolled back
+	 * with it; the sync then locks the source again and goes on.
+	 *
+	 * @return void
+	 */
+	public function testARowThatAppearsUnderTheLockIsJudgedOutsideTheTransaction(): void {
+		[$sync, $judgedAt, $locks] = $this->syncWhoseRowsAppearUnderTheLock();
+
+		$sync->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'alice');
+
+		$this->assertSame(0, $judgedAt['row-1']);
+		$this->assertSame(0, $judgedAt['row-2']);
+		$this->assertSame(3, $locks[0]);
+	}//end testARowThatAppearsUnderTheLockIsJudgedOutsideTheTransaction()
+
+	/**
+	 * Rows that keep appearing do not hold a sync off for ever: on its last
+	 * attempt it judges the row that appeared inside the transaction.
+	 *
+	 * @return void
+	 */
+	public function testTheLastAttemptJudgesARowThatAppearedInsideTheTransaction(): void {
+		[$sync, $judgedAt] = $this->syncWhoseRowsAppearUnderTheLock();
+
+		$sync->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'alice');
+
+		$this->assertSame(1, $judgedAt['row-3']);
+		$this->assertArrayNotHasKey('row-4', $judgedAt->getArrayCopy());
+	}//end testTheLastAttemptJudgesARowThatAppearedInsideTheTransaction()
+
+	/**
+	 * A foreign row that appears under the lock is judged outside the
+	 * transaction too, although checking the copies skips it unjudged: the
+	 * retry judges every row that appeared, not only those a copy check reads.
+	 *
+	 * @return void
+	 */
+	public function testAForeignRowThatAppearsUnderTheLockIsJudgedOutsideTheTransaction(): void {
+		[$sync, $judgedAt] = $this->syncWhoseRowsAppearUnderTheLock(foreign: true);
+
+		$sync->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'alice');
+
+		$this->assertSame(expected: 0, actual: ($judgedAt['row-1'] ?? null));
+		$this->assertSame(expected: 0, actual: ($judgedAt['row-2'] ?? null));
+	}//end testAForeignRowThatAppearsUnderTheLockIsJudgedOutsideTheTransaction()
+
+	/**
+	 * A foreign row there before the sync is judged before the source is
+	 * first locked, although checking the copies skips it unjudged: the sync
+	 * judges every row once before its transaction, not only on a retry.
+	 *
+	 * @return void
+	 */
+	public function testAForeignRowThereBeforeTheSyncIsJudgedBeforeTheFirstLock(): void {
+		[$sync, $judgedAt, , $lockedBefore] = $this->syncWhoseRowsAppearUnderTheLock(foreign: true, rowsBeforeTheSync: 1);
+
+		$sync->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'alice');
+
+		$this->assertSame(expected: 0, actual: ($judgedAt['row-1'] ?? null));
+		$this->assertSame(expected: 0, actual: ($lockedBefore['row-1'] ?? null));
+	}//end testAForeignRowThereBeforeTheSyncIsJudgedBeforeTheFirstLock()
 
 	/**
 	 * A copy whose share row names a DIFFERENT owner than the copy actually has
@@ -228,7 +409,7 @@ class ShareSyncServiceTest extends TestCase {
 	 */
 	public function testASyncRowFollowsTheSourcesTotp(): void {
 		$guards = new ShareSyncGuards(
-			targets: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper),
 			secrets: $this->secretMapper,
 			suites: $this->createMock(\OCA\Keepiq\Db\EncryptionSuiteMapper::class),
 			auth: $this->createMock(ShareAuthorizationService::class),

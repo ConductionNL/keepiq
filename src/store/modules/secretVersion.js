@@ -28,6 +28,106 @@ import { useSecretStore } from './secret.js'
 import { useSessionStore } from './session.js'
 
 /**
+ * One version as the server returns it.
+ *
+ * @param {string} versionId The version id.
+ * @return {Promise<object>}
+ */
+async function fetchVersion(versionId) {
+	const response = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
+	)
+	return response.data
+}
+
+/**
+ * The plain value a restore saves. A blob field the version holds is
+ * restored; one it saved empty (`''`) is cleared, since the login had none
+ * then; one it does not record is left out, so the head keeps its own.
+ *
+ * @param {object} version The version as the server returns it.
+ * @return {Promise<object>} The plain diff.
+ */
+async function restoreDiff(version) {
+	const plain = await plainOf(version)
+	const plainDiff = { ...plain, key: plain.key ?? '' }
+	for (const field of BLOB_FIELDS) {
+		if (plain[field]) {
+			continue
+		}
+		if (version[field] === '') {
+			plainDiff[field] = ''
+		} else {
+			delete plainDiff[field]
+		}
+	}
+	return plainDiff
+}
+
+/**
+ * The row patch of a restore: the version's name and url, and the diff
+ * encrypted for the owner.
+ *
+ * @param {object} version The version as the server returns it.
+ * @param {object} plainDiff The plain value the restore saves.
+ * @return {Promise<object>}
+ */
+async function restorePatch(version, plainDiff) {
+	return {
+		name: version.name,
+		url: version.url ?? null,
+		...(await encryptSparse(plainDiff, useSessionStore().certificate)),
+	}
+}
+
+/**
+ * Decrypt a JSON value; null when it does not decrypt or parse.
+ *
+ * @param {string} cipher The encrypted JSON.
+ * @param {CryptoKey} cryptoKey The session key.
+ * @return {Promise<object|null>}
+ */
+async function decryptJson(cipher, cryptoKey) {
+	try {
+		return JSON.parse(await rsaDecrypt(cipher, cryptoKey))
+	} catch {
+		return null
+	}
+}
+
+/**
+ * A version answer with its value fields decrypted. The blob fields come out
+ * as a head read gives them: plain strings, `''` when not set.
+ *
+ * @param {object} data The version as the server returns it.
+ * @param {CryptoKey} cryptoKey The session key.
+ * @return {Promise<object>} The version with plaintext fields.
+ */
+async function decryptVersion(data, cryptoKey) {
+	const version = { ...data }
+	if (version.key) {
+		version.key = await rsaDecrypt(version.key, cryptoKey)
+	}
+	if (version.login) {
+		version.login = await rsaDecrypt(version.login, cryptoKey)
+	}
+	if (version.additionalFields) {
+		version.additionalFields = await decryptJson(
+			version.additionalFields,
+			cryptoKey,
+		)
+	}
+	for (const field of BLOB_FIELDS) {
+		const cipher = version[field]
+		version[field] = ''
+		if (cipher) {
+			version[field] = await rsaDecrypt(cipher, cryptoKey)
+		}
+	}
+	return version
+}
+
+/**
  * Some value fields of the head row in plain, `null` where not set.
  *
  * @param {string} secretId The secret.
@@ -98,35 +198,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
 			}
-			const response = await axios.get(
-				generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
-			)
-			const version = { ...response.data }
-			if (version.key) {
-				version.key = await rsaDecrypt(version.key, session.cryptoKey)
-			}
-			if (version.login) {
-				version.login = await rsaDecrypt(version.login, session.cryptoKey)
-			}
-			if (version.additionalFields) {
-				try {
-					version.additionalFields = JSON.parse(
-						await rsaDecrypt(
-							version.additionalFields,
-							session.cryptoKey,
-						),
-					)
-				} catch {
-					version.additionalFields = null
-				}
-			}
-			// As a head read gives them: plain strings, `''` when not set.
-			for (const field of BLOB_FIELDS) {
-				version[field] = version[field]
-					? await rsaDecrypt(version[field], session.cryptoKey)
-					: ''
-			}
-			return version
+			return decryptVersion(await fetchVersion(versionId), session.cryptoKey)
 		},
 
 		/**
@@ -153,36 +225,12 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				const secretStore = useSecretStore()
 				await secretStore.writeBackSettled(secretId)
 				const baseUpdatedAt = secretStore.baseOf(secretId)
-				const version = (
-					await axios.get(
-						generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
-					)
-				).data
-				const plain = await plainOf(version)
-				const plainDiff = { ...plain, key: plain.key ?? '' }
-				for (const field of BLOB_FIELDS) {
-					if (plain[field]) {
-						continue
-					}
-					if (version[field] === '') {
-						// Saved empty: the login had none then, so the restore
-						// takes it away.
-						plainDiff[field] = ''
-					} else {
-						delete plainDiff[field]
-					}
-				}
+				const version = await fetchVersion(versionId)
+				const plainDiff = await restoreDiff(version)
 				const result = await saveShared({
 					id: secretId,
 					plainDiff,
-					patch: {
-						name: version.name,
-						url: version.url ?? null,
-						...(await encryptSparse(
-							plainDiff,
-							useSessionStore().certificate,
-						)),
-					},
+					patch: await restorePatch(version, plainDiff),
 					baseUpdatedAt,
 					// The version is the whole value; `totp` and `passkeys` are
 					// the head's, which the share save keeps where the version

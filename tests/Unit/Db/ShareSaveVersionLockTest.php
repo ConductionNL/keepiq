@@ -42,6 +42,7 @@ use OCP\Security\ISecureRandom;
 use OCP\Security\Signature\IIncomingSignedRequest;
 use OCP\Share\Exceptions\ShareNotFound;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
@@ -50,6 +51,8 @@ use Ramsey\Uuid\Uuid;
  * rolled back after each test.
  */
 class ShareSaveVersionLockTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	private const BASE = '2026-10-01T10:00:00+00:00';
 
 	private ?IDBConnection $db = null;
@@ -134,13 +137,13 @@ class ShareSaveVersionLockTest extends TestCase {
 		);
 		$suites = new \OCA\Keepiq\Db\EncryptionSuiteMapper(db: $this->db);
 		$sync = new \OCA\Keepiq\Service\ShareSyncService(
-			mapper: $targets,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $mapper),
 			secretMapper: $mapper,
 			db: $this->db,
 			auth: $auth,
 			versionService: $this->createMock(\OCA\Keepiq\Service\SecretVersionService::class),
-			guards: new \OCA\Keepiq\Service\ShareSync\ShareSyncGuards(targets: $targets, secrets: $mapper, suites: $suites, auth: $auth),
-			contexts: new \OCA\Keepiq\Service\ShareSync\ShareWriteContext(targets: $targets, suites: $suites, auth: $auth),
+			guards: new \OCA\Keepiq\Service\ShareSync\ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $targets, secrets: $mapper), secrets: $mapper, suites: $suites, auth: $auth),
+			contexts: new \OCA\Keepiq\Service\ShareSync\ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $targets), suites: $suites, auth: $auth),
 		);
 		$expected = $mapper->findById($source->getId())->getUpdatedAt()?->format(DateTime::ATOM);
 

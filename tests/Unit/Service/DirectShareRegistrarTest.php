@@ -38,6 +38,7 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -46,12 +47,14 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for DirectShareRegistrar.
  */
 class DirectShareRegistrarTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * @var ShareTargetMapper&\PHPUnit\Framework\MockObject\MockObject
@@ -148,7 +151,7 @@ class DirectShareRegistrarTest extends TestCase {
 	 *
 	 * @return ShareAuthorizationService
 	 */
-	private function realAuthorization(array $delegates, ?ShareGrantReader $grants = null): ShareAuthorizationService {
+	private function realAuthorization(array $delegates, ?ShareGrantReader $grants = null, ?ShareQuarantineScanner $scanner = null): ShareAuthorizationService {
 		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
 		$delegationMapper->method('findActiveBySecretAndUser')->willReturnCallback(
 			static function (string $secretId, string $userId) use ($delegates): SecretDelegation {
@@ -163,7 +166,7 @@ class DirectShareRegistrarTest extends TestCase {
 		return new ShareAuthorizationService(
 			secretMapper: $this->secretMapper,
 			delegationMapper: $delegationMapper,
-			shareTargetMapper: $this->mapper,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper, scanner: $scanner),
 			grants: $grants,
 		);
 	}//end realAuthorization()
@@ -226,6 +229,7 @@ class DirectShareRegistrarTest extends TestCase {
 	 * @param ShareAuthorizationService|null $authorization    The owner-or-delegate check
 	 * @param GroupShareMapper|null          $groupShareMapper The group shares a row may name
 	 * @param ShareAuditTrail|null           $auditTrail       The share audit trail
+	 * @param ShareQuarantineScanner|null    $scanner          The pending scan the judge asks
 	 *
 	 * @return DirectShareRegistrar
 	 */
@@ -233,6 +237,7 @@ class DirectShareRegistrarTest extends TestCase {
 		?ShareAuthorizationService $authorization = null,
 		?GroupShareMapper $groupShareMapper = null,
 		?ShareAuditTrail $auditTrail = null,
+		?ShareQuarantineScanner $scanner = null,
 	): DirectShareRegistrar {
 		return new DirectShareRegistrar(
 			mapper: $this->mapper,
@@ -243,6 +248,7 @@ class DirectShareRegistrarTest extends TestCase {
 			groupShareMapper: $groupShareMapper,
 			authorization: $authorization,
 			connection: $this->connection,
+			rowJudge: $this->shareRowJudge(targets: $this->mapper, secrets: $this->secretMapper, scanner: $scanner),
 		);
 	}//end registrar()
 
@@ -640,6 +646,39 @@ class DirectShareRegistrarTest extends TestCase {
 
 		$this->assertSame('restricted', $report[0]['status']);
 	}//end testADelegateWithNoCopyIsRestricted()
+
+	/**
+	 * A delegate whose own copy's row the pending scan cannot judge gets one
+	 * status, `share_scan_pending`, whether they name that copy or its
+	 * source; nothing is minted.
+	 *
+	 * @return void
+	 */
+	public function testADelegatesUnjudgedCopyHasOneStatusWhicheverIdTheyName(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
+		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
+				? $this->copyRow('src-1', 'dave', 'dave-copy')
+				: throw new DoesNotExistException('none'))
+		);
+		$this->mapper->expects($this->never())->method('insert');
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+
+		$report = $this->registrar(
+			authorization: $this->realAuthorization(['src-1/dave'], scanner: $scanner),
+			scanner: $scanner
+		)->registerDirectShares(
+			userId: 'dave',
+			shares: [
+				['sourceSecretId' => 'dave-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'blob'],
+			]
+		);
+
+		$this->assertSame(['share_scan_pending', 'share_scan_pending'], array_column($report, 'status'));
+	}//end testADelegatesUnjudgedCopyHasOneStatusWhicheverIdTheyName()
 
 	/**
 	 * An active delegate with two rows for (source, delegate) has no single

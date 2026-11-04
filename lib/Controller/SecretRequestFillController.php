@@ -34,6 +34,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
@@ -192,8 +193,9 @@ class SecretRequestFillController extends OCSController {
 				data: ['message' => $e->getMessage()],
 				statusCode: $status
 			);
-		} catch (ForbiddenException|NotFoundException) {
-			// The refusal speaks to the secret's holder; the filler gets its
+		} catch (ForbiddenException|NotFoundException|ShareScanPendingException) {
+			// The refusal speaks to the secret's holder (also a secret whose
+			// share row waits for the share quarantine scan); the filler gets its
 			// outcome only. The request stays pending.
 			return new JSONResponse(
 				data: ['message' => 'The secret this request writes to cannot be changed'],

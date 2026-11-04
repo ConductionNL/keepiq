@@ -36,6 +36,7 @@ use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -48,6 +49,8 @@ use Throwable;
  * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
  */
 class GroupMemberWritesForEveryoneTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	/** The version of `src` a sync is made from */
 	private const BASE = '2026-10-01T10:00:00+00:00';
 
@@ -242,20 +245,20 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			secretMapper: $secrets,
 			delegationMapper: $delegations,
 			teamFolderService: $teamFolders,
-			shareTargetMapper: $targets,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
 			groupShareMapper: $groupShares,
 			groupManager: $groups,
 		);
 
-		$contexts = new ShareWriteContext(targets: $targets, suites: $suites, auth: $auth);
+		$contexts = new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $targets), suites: $suites, auth: $auth);
 		$sync = new ShareSyncService(
-			mapper: $targets,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
 			secretMapper: $secrets,
 			db: $this->createMock(IDBConnection::class),
 			auth: $auth,
 			auditTrail: $this->audit,
 			versionService: $this->versions,
-			guards: new ShareSyncGuards(targets: $targets, secrets: $secrets, suites: $suites, auth: $auth),
+			guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets), secrets: $secrets, suites: $suites, auth: $auth),
 			contexts: $contexts,
 		);
 
@@ -856,6 +859,8 @@ class GroupMemberWritesForEveryoneTest extends TestCase {
 			revocationService: $this->createMock(ShareRevocationService::class),
 			auth: $auth,
 			contexts: $contexts,
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}
 
