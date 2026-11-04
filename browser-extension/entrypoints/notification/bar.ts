@@ -45,8 +45,10 @@ async function send(message: NotificationToBackground): Promise<unknown> {
 	}
 }
 
-/** The bar's wording per write error code; a code not listed reads as unknown. */
-const WRITE_ERROR_TEXTS: Partial<Record<WriteErrorCode, (mode: Mode) => string>> = {
+const unknownText = () => i18n.t('errors.unknown')
+
+/** The bar's wording per write error code; a code from a newer background reads as unknown too. */
+const WRITE_ERROR_TEXTS: Record<WriteErrorCode, (mode: Mode) => string> = {
 	write_locked: () => i18n.t('notificationBar.errors.writeLocked'),
 	unverified: () => i18n.t('notificationBar.errors.unverified'),
 	view_only: () => i18n.t('notificationBar.errors.viewOnly'),
@@ -68,13 +70,24 @@ const WRITE_ERROR_TEXTS: Partial<Record<WriteErrorCode, (mode: Mode) => string>>
 	incomplete: () => i18n.t('notificationBar.errors.incomplete'),
 	bad_certificate: () => i18n.t('notificationBar.errors.badCertificate'),
 	keepiq_outdated: () => i18n.t('notificationBar.errors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION }),
+	// No wording of the bar's own; listed so a new code needs a decision here.
+	blocked: unknownText,
+	unreadable: unknownText,
+	unknown: unknownText,
+	partner_unreachable: unknownText,
+	partner_upgrade_required: unknownText,
+	partner_lookup_limit: unknownText,
+	federation_unavailable: unknownText,
+	partner_clock: unknownText,
+	passkey_clone: unknownText,
+	argon2_unavailable: unknownText,
 }
 
 /** What the bar says for a failed save or update; `undefined` is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, mode: Mode): string {
 	if (error?.code === undefined) return i18n.t('notificationBar.errors.notResponding')
-	const text = Object.hasOwn(WRITE_ERROR_TEXTS, error.code) ? WRITE_ERROR_TEXTS[error.code] : undefined
-	return text ? text(mode) : i18n.t('errors.unknown')
+	const text = Object.hasOwn(WRITE_ERROR_TEXTS, error.code) ? WRITE_ERROR_TEXTS[error.code] : unknownText
+	return text(mode)
 }
 
 /** The question, naming the login's own host where the tab shows another site. */
