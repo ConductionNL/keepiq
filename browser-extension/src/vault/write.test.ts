@@ -1259,6 +1259,16 @@ describe('passkey writes', () => {
 			expect(sent()).not.toContain(SHARE_SAVE)
 		})
 
+		it('saves through a copy on the write grade for the source, naming the source version write-context read', async () => {
+			serve({
+				...sharing({ copies: [{ secretId: 'src', holder: 'owner', targetUserId: null }] }),
+				'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'write', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }),
+			})
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: true, value: { id: 's1', credentialId: 'cred-new', counter: 0 } })
+			expect(bodiesOf(SHARE_SAVE).map((body) => body.sourceBaseUpdatedAt)).toEqual([SOURCE_AT, SOURCE_AT])
+			expect((lastBodyOf(SHARE_SAVE).copies as Array<{ secretId: string }>).map((copy) => copy.secretId)).toEqual(['src'])
+		})
+
 		it('refuses a row whose write-context answers 404 while the row is still there, writing nothing', async () => {
 			serve({ 'GET /api/v1/secrets/s1/write-context': () => json({ message: 'Secret not found' }, 404) })
 			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'forbidden' } })
