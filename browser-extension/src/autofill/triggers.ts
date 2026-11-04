@@ -14,7 +14,7 @@ export async function fillOnPageLoad(tabId: number, pageUrl: string): Promise<vo
 	if (!autofillOnPageLoad || defaultAutofill !== 'onPageLoad') return
 	const { rows, lastUsed } = await matchingLogins(accountId, pageUrl)
 	const pick = preferred(rows, lastUsed)
-	if (pick) await fill({ itemId: pick.id, tabId, ask: 'page' })
+	if (pick) await fill({ itemId: pick.id, tabId, ask: 'page', code: false })
 }
 
 /** Without an unambiguous match, or locked, the popup opens instead. */
@@ -26,5 +26,5 @@ export async function fillFromShortcut(commandTab: Browser.tabs.Tab | undefined)
 	const pick = matches && preferred(matches.rows, matches.lastUsed)
 	if (!pick || tab?.id === undefined) return openPopupOrPopout(tab?.id)
 	await touch()
-	await fill({ itemId: pick.id, tabId: tab.id, ask: 'page' })
+	await fill({ itemId: pick.id, tabId: tab.id, ask: 'page', code: true })
 }

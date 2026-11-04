@@ -23,12 +23,13 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\ShareRowVerdict;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
  * What a client needs to prepare a sync: the source, the caller's grade on
@@ -39,10 +40,11 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
  * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
  */
 class ShareWriteContext {
+
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets (copy to source)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param EncryptionSuiteMapper $suites The suites (owner certificate)
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 *
@@ -51,7 +53,7 @@ class ShareWriteContext {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private EncryptionSuiteMapper $suites,
 		private ShareAuthorizationService $auth,
 	) {
@@ -137,7 +139,10 @@ class ShareWriteContext {
 	 * `write` grade through their copy. Only a caller who reaches the
 	 * source gets an answer: its owner, a delegate, a team-folder member
 	 * with a grade on it, or the holder of a live copy of it. A caller who
-	 * reaches no source through a live row of their own gets ownRowContext().
+	 * reaches no source through a live row of their own gets ownRowContext(),
+	 * and so does one whose share row's target does not hold the row, or that
+	 * the pending quarantine scan cannot judge. A row that scan quarantines is
+	 * no copy, as any quarantined row.
 	 *
 	 * @param string $secretId The secret (source or recipient copy) UUID
 	 * @param string $userId The requesting user
@@ -145,27 +150,29 @@ class ShareWriteContext {
 	 * @return array{sourceSecretId:string|null, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret does not exist or the caller does not reach it
+	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function writeContext(string $secretId, string $userId): array {
 		$secret = $this->auth->loadSecret(secretId: $secretId);
 
 		// Pivot a recipient copy back to its source.
-		$source = $secret;
-		try {
-			$shareRow = $this->targets->findByRecipientSecret(recipientSecretId: $secretId);
-			$source = $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
-		} catch (DoesNotExistException) {
-			// Not a copy — the secret is its own source.
-		} catch (MultipleObjectsReturnedException) {
-			return $this->ownRowContext(row: $secret, userId: $userId);
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		$source = $this->sourceOf(secret: $secret, verdict: $verdict);
+		if ($source === null) {
+			return $this->ownRowContext(
+				row: $secret,
+				userId: $userId,
+				unjudged: ($verdict->state === ShareRowVerdict::UNJUDGED)
+			);
 		}
 
 		$grade = $this->standingOn(source: $source, userId: $userId)['grade'];
 		if ($grade === null) {
-			return $this->ownRowContext(row: $secret, userId: $userId);
+			return $this->ownRowContext(row: $secret, userId: $userId, unjudged: false);
 		}
 
 		$ownerCertificate = null;
@@ -188,29 +195,73 @@ class ShareWriteContext {
 	}//end writeContext()
 
 	/**
+	 * The source a save of a secret goes to: the secret itself when no live
+	 * share row names it as a copy, or when the pending quarantine scan
+	 * quarantines that row now, as any quarantined row; the row's source when
+	 * the row is trusted (ShareRowJudge). Null when the row leads to no
+	 * source: two rows name the secret, the row's target does not hold it, or
+	 * the pending scan cannot judge it.
+	 *
+	 * @param Secret          $secret  The secret the caller asked about
+	 * @param ShareRowVerdict $verdict The judge's verdict on the row naming it
+	 *
+	 * @return Secret|null
+	 *
+	 * @throws InvalidArgumentException When the row's source does not exist
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	private function sourceOf(Secret $secret, ShareRowVerdict $verdict): ?Secret {
+		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {
+			// Not a copy — the secret is its own source.
+			return $secret;
+		}
+
+		$shareRow = $verdict->trustedRow();
+		if ($shareRow === null) {
+			return null;
+		}
+
+		return $this->auth->loadSecret(secretId: $shareRow->getSourceSecretId());
+	}//end sourceOf()
+
+	/**
 	 * The write context of a row whose share rows lead to no source the
-	 * caller stands on: two share rows for one copy or source, or a share row
-	 * keyed to someone else. The holder of a live row still gets `none`, so
-	 * their client saves that row alone. The answer names no source, as the
+	 * caller stands on: two share rows for one copy or source, a share row
+	 * keyed to someone else, or one the pending quarantine scan cannot judge.
+	 * The holder of a live row still gets `none`, so their client saves that
+	 * row alone. The answer names no source, as the
 	 * share row may point at someone else's secret. Anyone else gets the
 	 * answer of an unknown id, and so does the owner of a row that is itself
-	 * shared, as saving it alone would leave its copies behind.
+	 * shared, as saving it alone would leave its copies behind; when the row
+	 * naming it is one the pending scan cannot judge, its holder is told the
+	 * row waits for the scan instead, as share-save tells them.
 	 *
 	 * @param Secret $row The secret the caller asked about
 	 * @param string $userId The requesting user
+	 * @param bool $unjudged Whether the row naming it is one the pending scan cannot judge
 	 *
 	 * @return array{sourceSecretId:null, effectiveGrade:string, ownerCertificate:null, sourceUpdatedAt:null}
 	 *
 	 * @throws InvalidArgumentException When the row is not the caller's, its access ended, or it has copies
+	 * @throws ShareScanPendingException When the caller's row has copies and the row naming it waits for the scan
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function ownRowContext(Secret $row, string $userId): array {
+	private function ownRowContext(Secret $row, string $userId, bool $unjudged): array {
 		$ends = $row->getAccessExpiresAt();
 		if ($row->getOwnerType() !== 'user' || $row->getOwnerId() !== $userId
 			|| ($ends !== null && $ends->getTimestamp() <= time())
-			|| $this->targets->findBySourceSecret($row->getId()) !== []
 		) {
+			throw new InvalidArgumentException(message: 'Secret not found');
+		}
+
+		if ($this->rowJudge->rowsOfSource(sourceId: $row->getId())->all() !== []) {
+			if ($unjudged === true) {
+				throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be saved yet');
+			}
+
 			throw new InvalidArgumentException(message: 'Secret not found');
 		}
 

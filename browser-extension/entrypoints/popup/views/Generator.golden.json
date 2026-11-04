@@ -1,0 +1,337 @@
+{
+	"pick=none tab=password passphrase=true": {
+		"tabs": [
+			"Password*",
+			"Passphrase",
+			"Username"
+		],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": true,
+		"footer": []
+	},
+	"pick=none tab=password passphrase=false": {
+		"tabs": [
+			"Password*",
+			"Passphrase (off)",
+			"Username"
+		],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": true,
+		"footer": []
+	},
+	"pick=none tab=passphrase passphrase=true": {
+		"tabs": [
+			"Password",
+			"Passphrase*",
+			"Username"
+		],
+		"value": "passphrase-1",
+		"controls": [
+			"number:Number of words",
+			"text:Word separator",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": true,
+		"footer": []
+	},
+	"pick=none tab=passphrase passphrase=false": {
+		"tabs": [
+			"Password*",
+			"Passphrase (off)",
+			"Username"
+		],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": true,
+		"footer": []
+	},
+	"pick=none tab=username passphrase=true": {
+		"tabs": [
+			"Password",
+			"Passphrase",
+			"Username*"
+		],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": true,
+		"footer": []
+	},
+	"pick=none tab=username passphrase=false": {
+		"tabs": [
+			"Password",
+			"Passphrase (off)",
+			"Username*"
+		],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": true,
+		"footer": []
+	},
+	"pick=password tab=password passphrase=true": {
+		"tabs": [
+			"Password*",
+			"Passphrase"
+		],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": false,
+		"footer": [
+			"Use this password"
+		]
+	},
+	"pick=password tab=password passphrase=false": {
+		"tabs": [],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": false,
+		"footer": [
+			"Use this password"
+		]
+	},
+	"pick=password tab=passphrase passphrase=true": {
+		"tabs": [
+			"Password",
+			"Passphrase*"
+		],
+		"value": "passphrase-1",
+		"controls": [
+			"number:Number of words",
+			"text:Word separator",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this password"
+		]
+	},
+	"pick=password tab=passphrase passphrase=false": {
+		"tabs": [],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": false,
+		"footer": [
+			"Use this password"
+		]
+	},
+	"pick=password tab=username passphrase=true": {
+		"tabs": [
+			"Password*",
+			"Passphrase"
+		],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": false,
+		"footer": [
+			"Use this password"
+		]
+	},
+	"pick=password tab=username passphrase=false": {
+		"tabs": [],
+		"value": "password-1",
+		"controls": [
+			"range:Length",
+			"number:Length in characters",
+			"checkbox:Uppercase (A-Z)",
+			"checkbox:Lowercase (a-z)",
+			"checkbox:Numbers (0-9)",
+			"checkbox:Special characters, such as !@#$%^&*",
+			"number:Minimum numbers",
+			"number:Minimum special",
+			"checkbox:Avoid ambiguous characters"
+		],
+		"history": false,
+		"footer": [
+			"Use this password"
+		]
+	},
+	"pick=username tab=password passphrase=true": {
+		"tabs": [],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username"
+		]
+	},
+	"pick=username tab=password passphrase=false": {
+		"tabs": [],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username"
+		]
+	},
+	"pick=username tab=passphrase passphrase=true": {
+		"tabs": [],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username"
+		]
+	},
+	"pick=username tab=passphrase passphrase=false": {
+		"tabs": [],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username"
+		]
+	},
+	"pick=username tab=username passphrase=true": {
+		"tabs": [],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username"
+		]
+	},
+	"pick=username tab=username passphrase=false": {
+		"tabs": [],
+		"value": "username-1",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username"
+		]
+	},
+	"pick=password tab=passphrase failing": {
+		"tabs": [
+			"Password",
+			"Passphrase*"
+		],
+		"value": "Wordlist unavailable",
+		"controls": [
+			"number:Number of words",
+			"text:Word separator",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this password (off)"
+		]
+	},
+	"pick=username tab=username failing": {
+		"tabs": [],
+		"value": "Wordlist unavailable",
+		"controls": [
+			"select:Type",
+			"checkbox:Capitalize",
+			"checkbox:Include number"
+		],
+		"history": false,
+		"footer": [
+			"Use this username (off)"
+		]
+	}
+}

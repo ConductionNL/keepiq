@@ -44,35 +44,22 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton
-				variant="primary"
-				:disabled="!canSubmit"
-				data-testid="folder-edit-save"
-				@click="submit">
-				<template #icon>
-					<NcLoadingIcon v-if="saving" :size="20" />
-					<ContentSaveOutline v-else :size="20" />
-				</template>
-				{{ t('keepiq', 'Save') }}
-			</NcButton>
+			<CnDialogActions
+				:saving="saving"
+				:canSubmit="canSubmit"
+				confirmIcon="ContentSaveOutline"
+				:confirmLabel="t('keepiq', 'Save')"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="submit" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import { CnIconColorPicker } from '@conduction/nextcloud-vue'
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcTextField,
-} from '@nextcloud/vue'
+import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
+import { NcDialog, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { markRaw } from 'vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Safe from 'vue-material-design-icons/Safe.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
@@ -85,11 +72,9 @@ export default {
 	name: 'FolderEditDialog',
 
 	components: {
+		CnDialogActions,
 		CnIconColorPicker,
-		ContentSaveOutline,
-		NcButton,
 		NcDialog,
-		NcLoadingIcon,
 		NcNoteCard,
 		NcTextField,
 	},

@@ -22,14 +22,19 @@ namespace OCA\Keepiq\Tests\Unit\Listener;
 
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Listener\HoneyTripwireListener;
 use OCA\Keepiq\Service\HoneyTripwireService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -46,6 +51,8 @@ class HoneyTripwireListenerTest extends TestCase {
 
 	private ShareTargetMapper&MockObject $shareTargetMapper;
 
+	private ShareQuarantineScanner&MockObject $scanner;
+
 	/**
 	 * Build the listener over mocked collaborators.
 	 *
@@ -56,6 +63,15 @@ class HoneyTripwireListenerTest extends TestCase {
 		$this->honeyService = $this->createMock(originalClassName: HoneyTripwireService::class);
 		$this->linkShareMapper = $this->createMock(originalClassName: LinkShareMapper::class);
 		$this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+		$this->scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('bob');
+		$secrets = $this->createMock(originalClassName: SecretMapper::class);
+		$secrets->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'copy-1' ? $copy : throw new DoesNotExistException('none'))
+		);
 
 		$request = $this->createMock(originalClassName: IRequest::class);
 		$request->method('getRemoteAddress')->willReturn('192.0.2.7');
@@ -64,9 +80,9 @@ class HoneyTripwireListenerTest extends TestCase {
 		$this->listener = new HoneyTripwireListener(
 			honeyService: $this->honeyService,
 			linkShareMapper: $this->linkShareMapper,
-			shareTargetMapper: $this->shareTargetMapper,
 			request: $request,
 			logger: new NullLogger(),
+			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $secrets, scanner: $this->scanner),
 		);
 	}//end setUp()
 
@@ -101,9 +117,7 @@ class HoneyTripwireListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testCopyReadPivotsToSourceAsShareChannel(): void {
-		$shareTarget = new ShareTarget();
-		$shareTarget->setSourceSecretId('source-1');
-		$this->shareTargetMapper->method('findByRecipientSecret')->with('copy-1')->willReturn($shareTarget);
+		$this->copyOneIsBobsCopyOfSourceOne();
 
 		$calls = [];
 		$this->honeyService->method('raiseAlert')
@@ -119,6 +133,62 @@ class HoneyTripwireListenerTest extends TestCase {
 
 		$this->assertSame([['copy-1', 'ui'], ['source-1', 'share']], $calls);
 	}//end testCopyReadPivotsToSourceAsShareChannel()
+
+	/**
+	 * While the quarantine scan is pending, a read of a secret whose share
+	 * row the scan quarantines on the spot, or cannot judge, trips nothing on
+	 * that row's source: the reader's id, address and agent are not handed
+	 * to its owner.
+	 *
+	 * @param string $verdict The scan's verdict on the row
+	 *
+	 * @return void
+	 */
+	#[DataProvider('heldBackVerdicts')]
+	public function testAReadThroughAHeldBackRowTripsNothingOnItsSource(string $verdict): void {
+		$this->copyOneIsBobsCopyOfSourceOne();
+		$this->scanner->method('heldBack')->willReturn($verdict);
+
+		$calls = [];
+		$this->honeyService->method('raiseAlert')
+			->willReturnCallback(static function (string $secretId, string $accessorType, ?string $accessorId, string $channel) use (&$calls): bool {
+				$calls[] = [$secretId, $channel];
+
+				// The copy itself is not flagged, so the read reaches its share row.
+				return ($secretId === 'source-1');
+			});
+
+		$this->listener->handle(
+			AuditEvent::forUser(actorId: 'bob', eventType: AuditEventTypes::SECRET_READ, objectType: 'secret', objectId: 'copy-1')
+		);
+
+		$this->assertSame([['copy-1', 'ui']], $calls);
+	}//end testAReadThroughAHeldBackRowTripsNothingOnItsSource()
+
+	/**
+	 * The pending scan's verdicts that hold a row back.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function heldBackVerdicts(): array {
+		return [
+			'quarantined on the spot' => [ShareQuarantineScanner::HELD_QUARANTINED],
+			'cannot be judged' => [ShareQuarantineScanner::HELD_UNJUDGED],
+		];
+	}//end heldBackVerdicts()
+
+	/**
+	 * Bob holds copy-1 through a share row of source-1.
+	 *
+	 * @return void
+	 */
+	private function copyOneIsBobsCopyOfSourceOne(): void {
+		$shareTarget = new ShareTarget();
+		$shareTarget->setSourceSecretId('source-1');
+		$shareTarget->setTargetUserId('bob');
+		$shareTarget->setSecretId('copy-1');
+		$this->shareTargetMapper->method('findByRecipientSecret')->with('copy-1')->willReturn($shareTarget);
+	}//end copyOneIsBobsCopyOfSourceOne()
 
 	/**
 	 * A machine retrieval trips with channel machine_api (§6.1).

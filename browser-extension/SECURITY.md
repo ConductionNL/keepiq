@@ -36,9 +36,13 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | Link of a password send | Popup memory with the list; holds no secret, the background rebuilds it from the token the server lists | Closing the popup, lock, timeout, account switch |
 | The list of sends | Popup memory, fetched per popup session | Closing the popup, lock, timeout, account switch |
 | The credential of a fill | Background memory for the fill; the page's fields once filled | The fill's end; the content script drops it after writing the fields |
+| A login's TOTP seed and its code | Background memory for one fill, list refresh or menu click; popup memory while the detail view shows the code, never the seed; the code also in the page's code field once filled | That handler's end or the view closing; the content script drops a code it has no code field for |
+| A new authenticator key, typed or scanned | Popup memory in the form; background memory while it is saved; never sent back to the form once saved | Save, closing the form or the popup; the save's end |
+| The picture Scan QR code on page takes of the tab | Popup memory while it is read | The read's end; it is never stored, logged or sent |
 | When each item was last filled (`lastUsed.<id>`), no other history | `storage.local` | Logout, account removal |
 | Inline list session: a random key, the tab, frame and frame URL, the offered item ids; no plaintext | `storage.session`, like the private key | The list closing, the next list in the tab, tab close or navigation, lock, timeout, logout, account switch, browser restart, extension reload |
-| Names and usernames in the inline list | The list page's memory while shown | The list closing |
+| Names, usernames and verification codes in the inline list | The list page's memory while shown | The list closing |
+| Which account's code is on the clipboard (`clipboardCode`), never the code | `storage.session`, like the private key | The clear, any other copy, that account's lock or logout, browser restart, extension reload |
 | How many logins match each tab, shown on the toolbar badge while unlocked | Never stored; the browser holds the painted badge per tab | Lock, timeout, logout, switching to an account that isn't unlocked, turning the counter off, the tab navigating, browser restart, extension reload |
 | A submitted login waiting for Save or Update, password included | Background memory only, never storage | The answer, 5 minutes, tab close, leaving the site, lock, timeout, logout, account switch, an MV3 worker restart |
 
@@ -53,6 +57,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - A timeout can fire up to a minute late, or later while the worker sleeps and the popup stays closed. Nothing can use the vault in that time without going through the check.
 - A browser restart always locks, whatever the setting, except under "Never".
 - A lock or logout empties the toolbar badge on every tab. A locked vault never shows a count, though the snapshot's plaintext URLs could produce one.
+- A lock or logout clears a verification code the extension copied for that account at once, whatever the clear delay.
 
 ## Server and network
 
@@ -61,6 +66,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - Requests go from the background only, with Basic auth on an app password and `credentials: 'omit'`, so browser cookies are never sent.
 - Server URLs must be `https`. Plain `http` is allowed only for `localhost`, `127.0.0.1` and `.test` hosts, for development.
 - Host access is requested per server, when you add an account. The extension holds no other host permissions.
+- `activeTab` lets Scan QR code on page take a picture of the tab under the toolbar popup, on your click only. It shows no install prompt and gives no access to other tabs or to pages you never opened Keepiq on.
 - On Chrome, `privacy` is requested only when you turn on "Make Keepiq your default password manager", and given back when you turn it off.
 
 ## Revocation
@@ -116,7 +122,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 
 ## Clipboard
 
-- Copy happens in the popup, under your click, or from the context menu, where the background writes it.
+- Copy happens in the popup, under your click, or from the context menu and after a fill of a login with a verification code, where the background writes it.
 - The background writes and clears the clipboard through an offscreen document on Chrome, and from the background page on Firefox.
 - On Chrome the background reaches the offscreen document with a runtime message, so `offscreen.writeClipboard` and the copied value reach every open extension view; only the offscreen document acts on it.
 - The delay is 30 seconds by default, and every copy replaces the pending clear. Settings changes it per account, or sets it to Never.

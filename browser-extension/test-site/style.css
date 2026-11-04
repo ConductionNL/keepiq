@@ -254,3 +254,58 @@ dialog.centred,
 footer.bar {
 	margin: 24px auto 0;
 }
+
+fieldset {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 14px;
+}
+
+fieldset.code-group {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+/* The inputs' usual side padding would leave a box no room for its digits. */
+.code-group input {
+	width: calc(3ch + 24px);
+	padding-inline: 0;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.code-group input[maxlength='1'] {
+	width: calc(1ch + 24px);
+}
+
+.card h2 {
+	margin: 0;
+	font-size: 17px;
+}
+
+.card p {
+	margin: 0;
+}
+
+img.qr {
+	background: #fff;
+	border-radius: 6px;
+}
+
+.status[data-result='accepted'] {
+	color: light-dark(#1e7a3c, #74d396);
+}
+
+.status[data-result='wrong'] {
+	color: light-dark(#b3261e, #f2a29b);
+}
+
+form + form,
+.card + form {
+	margin-top: 16px;
+}

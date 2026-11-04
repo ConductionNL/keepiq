@@ -1,0 +1,104 @@
+{
+	"walk": {
+		"01 vault": {
+			"title": "Vault",
+			"scroll": 0,
+			"focus": null
+		},
+		"02 detail": {
+			"title": "View item",
+			"scroll": 0,
+			"focus": "GitHubalice"
+		},
+		"03 back from detail": {
+			"title": "Vault",
+			"scroll": 120,
+			"focus": null
+		},
+		"04 new item": {
+			"title": "New item",
+			"scroll": 0,
+			"focus": null
+		},
+		"05 pick mode": {
+			"title": "Generator",
+			"scroll": 0,
+			"focus": "password-1"
+		},
+		"06 back from pick": {
+			"title": "New item",
+			"scroll": 40,
+			"focus": "Generate password"
+		},
+		"07 back from form": {
+			"title": "Vault",
+			"scroll": 30,
+			"focus": null
+		},
+		"08 detail again": {
+			"title": "View item",
+			"scroll": 0,
+			"focus": "GitHubalice"
+		},
+		"09 clone": {
+			"title": "New item",
+			"scroll": 0,
+			"focus": null,
+			"name": "GitHub - Clone",
+			"username": "alice"
+		},
+		"10 back from clone": {
+			"title": "View item",
+			"scroll": 0,
+			"focus": "Back"
+		},
+		"11 send from item": {
+			"title": "New send",
+			"scroll": 0,
+			"focus": "",
+			"username": "alice",
+			"password": "pw"
+		},
+		"12 back from new send": {
+			"title": "Send",
+			"scroll": 0,
+			"focus": null,
+			"current": "Send"
+		},
+		"13 vault tab": {
+			"title": "Vault",
+			"scroll": 0,
+			"focus": "Vault"
+		}
+	},
+	"undecrypted": {
+		"title": "View item",
+		"toast": "Could not read this loginEdit",
+		"statusReread": false
+	},
+	"locked": {
+		"title": "View item",
+		"toast": "Edit",
+		"statusReread": true
+	},
+	"editGone": {
+		"title": "Vault",
+		"toast": "This item no longer existsVaultGeneratorSendSettings"
+	},
+	"backWhileCreating": {
+		"title": "New send",
+		"dialog": false
+	},
+	"sendTabAgain": {
+		"afterDone": {
+			"title": "Send",
+			"scroll": 0,
+			"focus": "Copy link, Text send"
+		},
+		"again": {
+			"title": "Send",
+			"scroll": 0,
+			"focus": "Send"
+		}
+	}
+}

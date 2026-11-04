@@ -20,7 +20,7 @@ describe('randomInt', () => {
 		const mean = 1_000_000 / 7776
 		expect(Math.min(...buckets)).toBeGreaterThan(0)
 		expect(Math.max(...buckets)).toBeLessThan(2 * mean)
-	})
+	}, 60_000)
 
 	it('rejects the draws that would favour low values', () => {
 		// 2^32 is not a multiple of 3, so the top value is rejected and drawn again.

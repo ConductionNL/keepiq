@@ -34,8 +34,8 @@ use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IGroupManager;
@@ -49,13 +49,14 @@ use OCP\IGroupManager;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: one rule set for every share path.
  */
 class ShareAuthorizationService {
+
 	/**
 	 * Constructor for ShareAuthorizationService.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookups)
 	 * @param SecretDelegationMapper $delegationMapper The Delegation mapper (delegate authorization)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (write-grade resolution)
-	 * @param ShareTargetMapper|null $shareTargetMapper Resolves a received copy to its source (keepiq#214)
 	 * @param GroupShareMapper|null $groupShareMapper The group shares of a source
 	 * @param IGroupManager|null $groupManager Whether a copy holder is in one of their groups
 	 * @param ShareGrantReader|null $grants Lists the grants reaching a delegate's copy
@@ -67,8 +68,8 @@ class ShareAuthorizationService {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private SecretDelegationMapper $delegationMapper,
+		private ShareRowJudge $rowJudge,
 		private ?TeamFolderService $teamFolderService = null,
-		private ?ShareTargetMapper $shareTargetMapper = null,
 		private ?GroupShareMapper $groupShareMapper = null,
 		private ?IGroupManager $groupManager = null,
 		private ?ShareGrantReader $grants = null,
@@ -146,9 +147,8 @@ class ShareAuthorizationService {
 	 * A received copy is owned by its recipient, so a copy is judged by its
 	 * SOURCE secret: a plain recipient fails, a delegate passes, and a copy
 	 * someone else holds is not found. A missing secret and a foreign one get
-	 * the same DoesNotExistException. Fails closed when the share-target mapper
-	 * is not wired. A delegate is judged on their own copy whether they name it
-	 * or the source (assertMayShareOnward()).
+	 * the same DoesNotExistException. A delegate is judged on their own copy
+	 * whether they name it or the source (assertMayShareOnward()).
 	 *
 	 * @param string $secretId The secret (source or received copy) id
 	 * @param string $userId   The acting user
@@ -158,18 +158,24 @@ class ShareAuthorizationService {
 	 * @throws DoesNotExistException When the user may not re-share the secret
 	 * @throws InvalidArgumentException When the copy is use-only or expiring, or a delegate holds no single copy
 	 * @throws ForbiddenException When the copy is a read-only copy from another organisation
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming the caller's own
+	 *   secret, or the delegate's share row
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertMayReshare(string $secretId, string $userId): void {
-		if ($this->shareTargetMapper === null) {
+		try {
+			$copy = $this->loadSecret(secretId: $secretId);
+		} catch (InvalidArgumentException) {
 			throw new DoesNotExistException('Secret not found');
 		}
 
+		$verdict = $this->rowJudge->forCopy(copy: $copy);
+		$this->refuseOwnSecretAwaitingTheScan(copy: $copy, verdict: $verdict, userId: $userId);
+
 		try {
-			$copy   = $this->loadSecret(secretId: $secretId);
-			$source = $this->sourceOf(copy: $copy);
+			$source = $this->sourceOf(copy: $copy, verdict: $verdict);
 		} catch (InvalidArgumentException) {
 			throw new DoesNotExistException('Secret not found');
 		}
@@ -188,11 +194,35 @@ class ShareAuthorizationService {
 	}//end assertMayReshare()
 
 	/**
+	 * Tell the holder of a secret whose share row the pending quarantine scan
+	 * cannot judge that it waits for the scan. Anyone else is left to the
+	 * unknown-id answer, so the refusal reveals nothing about another user's
+	 * secret.
+	 *
+	 * @param Secret          $copy    The secret the caller named
+	 * @param ShareRowVerdict $verdict The judge's verdict on the row naming it
+	 * @param string          $userId  The caller
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the caller holds the secret and its row cannot be judged
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	private function refuseOwnSecretAwaitingTheScan(Secret $copy, ShareRowVerdict $verdict, string $userId): void {
+		if ($verdict->awaitsTheScanFor(secret: $copy, userId: $userId) === true) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
+		}
+	}//end refuseOwnSecretAwaitingTheScan()
+
+	/**
 	 * The source a share made by $userId hangs on. A delegate cannot decrypt
 	 * the source, so their client names their own received copy; when they
 	 * hold that copy and are an active delegate of its source, the source is
 	 * returned. Anything else comes back as is, so a plain recipient's copy
-	 * stays a received copy and is refused as a share source.
+	 * stays a received copy and is refused as a share source. Only a trusted
+	 * share row (ShareRowJudge) leads to a source: a secret a row the pending
+	 * quarantine scan holds back names is its own source.
 	 *
 	 * @param Secret $secret The secret the caller named
 	 * @param string $userId The acting user
@@ -202,18 +232,18 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	public function resolveShareSource(Secret $secret, string $userId): Secret {
-		if ($this->shareTargetMapper === null) {
+		$row = $this->rowJudge->forCopy(copy: $secret)->trustedRow();
+		if ($row === null) {
 			return $secret;
 		}
 
 		try {
-			$row = $this->shareTargetMapper->findByRecipientSecret(recipientSecretId: $secret->getId());
 			$source = $this->secretMapper->findById($row->getSourceSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return $secret;
 		}
 
-		if ($row->getTargetUserId() !== $userId || $row->isHeldByTarget(copy: $secret) === false
+		if ($row->getTargetUserId() !== $userId
 			|| ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId)
 			|| $this->isOwnerOrDelegate(secret: $source, userId: $userId) === false
 		) {
@@ -241,22 +271,27 @@ class ShareAuthorizationService {
 	 *
 	 * @throws InvalidArgumentException When the caller holds no single copy, or it is use-only or expiring
 	 * @throws ForbiddenException When the caller's copy is a read-only copy from another organisation
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the caller's share row
 	 *
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertMayShareOnward(Secret $source, string $userId): void {
 		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
 			return;
 		}
 
-		$target = null;
+		// Only a trusted share row (ShareRowJudge) is the caller's copy: a row the
+		// pending quarantine scan quarantines is none, and one it cannot judge waits.
+		$verdict = $this->rowJudge->forPair(sourceId: $source->getId(), targetUserId: $userId);
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->rowJudge->scanPending(refusal: 'Your copy of this secret waits for the share quarantine scan, so it cannot be shared onward yet');
+		}
+
+		$target = $verdict->trustedRow();
 		$copy   = null;
-		if ($this->shareTargetMapper !== null) {
+		if ($target !== null) {
 			try {
-				$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-					sourceSecretId: $source->getId(),
-					targetUserId: $userId
-				);
 				$copy = $this->secretMapper->findById($target->getSecretId());
 			} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 				$copy = null;
@@ -275,25 +310,27 @@ class ShareAuthorizationService {
 
 	/**
 	 * The source secret of a received copy, or the secret itself when it is
-	 * not a copy.
+	 * not a copy: no live share row names it, or the pending quarantine scan
+	 * quarantines the one that does. A row whose target does not hold the
+	 * copy, or that the scan cannot judge, leads nowhere.
 	 *
-	 * @param Secret $copy The secret that may be a received copy
+	 * @param Secret          $copy    The secret that may be a received copy
+	 * @param ShareRowVerdict $verdict The judge's verdict on the row naming it
 	 *
 	 * @return Secret
 	 *
-	 * @throws InvalidArgumentException When the copy's source cannot be loaded
+	 * @throws InvalidArgumentException When the copy's source cannot be loaded, or its share row cannot be followed
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function sourceOf(Secret $copy): Secret {
-		try {
-			$row = $this->shareTargetMapper?->findByRecipientSecret(recipientSecretId: $copy->getId());
-		} catch (DoesNotExistException) {
+	private function sourceOf(Secret $copy, ShareRowVerdict $verdict): Secret {
+		if ($verdict->state === ShareRowVerdict::NONE || $verdict->state === ShareRowVerdict::QUARANTINED) {
 			return $copy;
-		} catch (MultipleObjectsReturnedException) {
-			throw new InvalidArgumentException(message: 'Ambiguous copy');
 		}
 
+		$row = $verdict->trustedRow();
 		if ($row === null) {
-			throw new InvalidArgumentException(message: 'No share-target mapper');
+			throw new InvalidArgumentException(message: 'The share row of this copy cannot be followed');
 		}
 
 		return $this->loadSecret(secretId: $row->getSourceSecretId());
@@ -318,8 +355,9 @@ class ShareAuthorizationService {
 	 * The grade the caller's own copy of a source secret gives them: `write`
 	 * when they may change the copy and are a member of a group the source is
 	 * shared with, however the copy reached them; `none` for any other copy;
-	 * null when they hold no copy of it or its access ended. Fails closed when
-	 * the mappers are not wired.
+	 * null when they hold no copy of it, their share row of it is not trusted
+	 * (ShareRowJudge), or its access ended. Fails closed when the mappers are
+	 * not wired.
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The candidate user
@@ -329,15 +367,12 @@ class ShareAuthorizationService {
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 */
 	public function copyGrade(Secret $source, string $userId): ?string {
-		if ($this->shareTargetMapper === null) {
+		$target = $this->rowJudge->forPair(sourceId: $source->getId(), targetUserId: $userId)->trustedRow();
+		if ($target === null) {
 			return null;
 		}
 
 		try {
-			$target = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $source->getId(),
-				targetUserId: $userId
-			);
 			$copy = $this->secretMapper->findById($target->getSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return null;

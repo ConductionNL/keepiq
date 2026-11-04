@@ -40,6 +40,7 @@ use OCP\IGroupManager;
 use OCP\IUserManager;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -51,6 +52,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
  */
 class UseOnlyServerRefusalTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var SecretMapper&MockObject */
 	private SecretMapper $secrets;
@@ -153,7 +155,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->createMock(SecretDelegationMapper::class),
-				shareTargetMapper: $shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $shareTargets, secrets: $this->secrets),
 			),
 		);
 
@@ -186,6 +188,8 @@ class UseOnlyServerRefusalTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			shareManager: $this->createMock(IShareManager::class),
 			revocationService: $this->createMock(ShareRevocationService::class),
+			rowJudge: $this->shareRowJudge(targets: $shareTargets, secrets: $this->secrets),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
@@ -203,7 +207,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 		$delegations->expects($this->never())->method('insert');
 		$service = new DelegationService(
 			mapper: $delegations,
-			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets),
+			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);

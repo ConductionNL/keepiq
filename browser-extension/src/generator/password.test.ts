@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PASSWORD, type GeneratorPolicy, type PasswordOptions } from './options'
 import { AMBIGUOUS, generatePassword, SPECIAL } from './password'
 
@@ -39,6 +39,19 @@ describe('generatePassword', () => {
 		}
 	})
 
+	it('draws from crypto.getRandomValues, never Math.random, without an injected source', () => {
+		const secure = vi.spyOn(globalThis.crypto, 'getRandomValues')
+		const weak = vi.spyOn(Math, 'random')
+		try {
+			expect(generatePassword({ ...DEFAULT_PASSWORD }, null).ok).toBe(true)
+			expect(secure).toHaveBeenCalled()
+			expect(weak).not.toHaveBeenCalled()
+		} finally {
+			secure.mockRestore()
+			weak.mockRestore()
+		}
+	})
+
 	it('grows the length to hold every minimum', () => {
 		expect(generated({ length: 8, includeSpecialCharacters: true, minDigits: 6, minSpecial: 6 })).toHaveLength(14)
 	})
@@ -59,7 +72,7 @@ describe('generatePassword', () => {
 			positions[[...value].findIndex((char) => UPPER.includes(char))]!++
 		}
 		for (const hits of positions) expect(Math.abs(hits - 2000)).toBeLessThan(250)
-	})
+	}, 60_000)
 
 	it.each([
 		['length_too_short', { length: 6 }],

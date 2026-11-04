@@ -27,6 +27,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EphemeralSend;
 use OCA\Keepiq\Service\EphemeralSendService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -75,10 +76,7 @@ class EphemeralSendController extends OCSController {
 		try {
 			$send = $this->service->create(ownerId: $user->getUID(), params: $this->request->getParams());
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $send->jsonSerialize(), statusCode: Http::STATUS_CREATED);

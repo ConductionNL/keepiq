@@ -6,7 +6,7 @@
 
 import type { Browser } from 'wxt/browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
-import { markLoggedOut } from '@/src/accounts/store'
+import { accountStatus, getAccount, markLoggedOut } from '@/src/accounts/store'
 import { captureSubmitted, dropAllCaptures, focusBar, handleNotification, registerCaptureQueue, reshow, showPending } from '@/src/autofill/capture-queue'
 import { registerDefaultManager } from '@/src/autofill/default-manager'
 import { handleFillRequest } from '@/src/autofill/fill'
@@ -16,7 +16,8 @@ import { fillFromShortcut, fillOnPageLoad } from '@/src/autofill/triggers'
 import { handlePopupRequest, syncOnAlarm, type HandledRequest } from '@/src/background/requests'
 import { handlePopupMessage } from '@/src/background/router'
 import { acceptedFrom, senderPage } from '@/src/background/sender'
-import { CLIPBOARD_ALARM, clearClipboard } from '@/src/clipboard'
+import { onBroadcast } from '@/src/background/broadcast'
+import { CLIPBOARD_ALARM, clearClipboard, clearCodeAfterLock } from '@/src/clipboard'
 import { rebuildMenus, registerMenus } from '@/src/menus'
 import { POPUP_PORT, POPUP_REQUEST_KINDS, type ContentToBackground, type FillRequest, type InlineListToBackground, type NotificationToBackground, type PopupToBackground } from '@/src/messages'
 import { refreshToolbar, registerToolbarListeners } from '@/src/toolbar-icon'
@@ -55,7 +56,7 @@ export default defineBackground(() => {
 			else if (m.kind === 'capture.submitted') void captureSubmitted(m, sender).catch((error: unknown) => console.error('[keepiq] capture', error))
 			else if (m.kind === 'capture.reshow') void reshow(sender).catch(() => {})
 			else if (m.kind === 'inline.open') {
-				void openSession(sender).catch(() => null).then(sendResponse)
+				void openSession(m, sender).catch(() => null).then(sendResponse)
 				return true
 			}
 			return
@@ -108,6 +109,14 @@ export default defineBackground(() => {
 	registerCaptureQueue()
 	registerDefaultManager()
 	registerToolbarListeners()
+	onBroadcast((message) => {
+		if (message.kind !== 'vault.locked') return
+		const isUnlocked = async (accountId: string) => {
+			const account = await getAccount(accountId)
+			return account !== undefined && await accountStatus(account) === 'unlocked'
+		}
+		void clearCodeAfterLock(isUnlocked).catch((error: unknown) => console.error('[keepiq] clear copied code', error))
+	})
 
 	browser.commands.onCommand.addListener((command, tab) => {
 		if (command === 'focus_notification_bar' && tab?.id !== undefined) focusBar(tab.id)

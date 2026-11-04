@@ -40,6 +40,7 @@ class ShareExpiryService {
 	 *
 	 * @param SecretMapper             $secretMapper The secret mapper (copies)
 	 * @param ShareTargetMapper        $targetMapper The share-target mapper
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param ShareRestrictionResolver $restrictions The restriction resolver
 	 * @param ExpiredGrantRemover      $remover      Removes expired grants through their own paths
 	 * @param NotificationService      $notifications The notification dispatcher
@@ -51,6 +52,7 @@ class ShareExpiryService {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private ShareTargetMapper $targetMapper,
+		private ShareRowJudge $rowJudge,
 		private ShareRestrictionResolver $restrictions,
 		private ExpiredGrantRemover $remover,
 		private NotificationService $notifications,
@@ -97,12 +99,14 @@ class ShareExpiryService {
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function expire(DateTime $now): int {
-		// Remember who held what before the removals delete the copies.
+		// Remember who held what before the removals delete the copies. Only a
+		// trusted share row names a copy's source: the owner of a source a
+		// held-back row names is not told about its holder.
 		$ended = [];
 		foreach ($this->secretMapper->findAccessEndingBetween(null, $now) as $copy) {
 			$ended[$copy->getId()] = [
 				'copy' => $copy,
-				'target' => $this->targetOf(copyId: $copy->getId()),
+				'target' => $this->rowJudge->forCopy(copy: $copy)->trustedRow(),
 			];
 		}
 
@@ -204,19 +208,4 @@ class ShareExpiryService {
 			objectId: $source->getId(),
 		);
 	}//end notifyEnded()
-
-	/**
-	 * The share row of a copy, or null when it has none.
-	 *
-	 * @param string $copyId The copy
-	 *
-	 * @return ShareTarget|null
-	 */
-	private function targetOf(string $copyId): ?ShareTarget {
-		try {
-			return $this->targetMapper->findByRecipientSecret(recipientSecretId: $copyId);
-		} catch (DoesNotExistException) {
-			return null;
-		}
-	}//end targetOf()
 }//end class

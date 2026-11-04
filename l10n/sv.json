@@ -6,12 +6,14 @@
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Delad med dig endast för visning. Be ägaren om redigeringsrättigheter för att ändra den.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Delad med dig endast för visning. Inget sparades; be ägaren om redigeringsrättigheter för att ändra den.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "En partnerorganisation som den här hemligheten delas med kan inte nås ({partners}). Gör om ändringen online, där du kan spara utan dem.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Den här offlineändringen är av ett slag som Keepiq inte känner till, så den sparades inte. Släng den och gör om ändringen online.",
         "Save without them": "Spara utan dem",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Sparat. Mottagare i partnerorganisationer får ändringen nästa gång ägaren sparar den här hemligheten.",
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "Den här hemligheten ändrades på annat håll efter att du öppnade den. Inget sparades; öppna den igen och gör om din ändring.",
         "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "Originalet av den här delade hemligheten ändrades efter att du öppnade den. Inget sparades; öppna den igen och gör om din ändring.",
         "The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again.": "Personerna som den här hemligheten delas med ändrades medan den sparades. Inget sparades; försök igen.",
         "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Inget sparades: en partnerorganisation som den här hemligheten delas med kan inte nås ({partners}). Försök igen senare, eller spara utan dem, vilket slutar dela den här hemligheten med dem tills du delar den med dem igen.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Inget sparades: en partnerorganisation som den här hemligheten delas med kan inte nås. Försök igen senare, eller spara utan dem, vilket slutar dela den här hemligheten med dem tills du delar den med dem igen.",
         "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "Du får inte spara den här ändringen för alla som den här hemligheten delas med. Inget sparades.",
         "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
@@ -1802,7 +1804,8 @@
         "This image could not be read.": "Den här bilden kunde inte läsas.",
         "This image is too large. Choose an image under 10 MB.": "Den här bilden är för stor. Välj en bild under 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Det här är inte en autentiserarnyckel. Klistra in en otpauth://totp/-länk eller base32-hemligheten.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs."
     },
     "plurals": null
 }
