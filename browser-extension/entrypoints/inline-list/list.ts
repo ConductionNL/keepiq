@@ -221,6 +221,15 @@ function focusNext({ event, rows, index }: RowKey) {
 	rows[Math.min(index + 1, rows.length - 1)]!.focus()
 }
 
+/** Adds each listener to `target`; the returned teardown removes them again. */
+function listenAll<M>(target: EventTarget, listeners: { [K in keyof M]?: (event: M[K]) => void }): () => void {
+	const entries = Object.entries(listeners) as [string, EventListener][]
+	for (const [type, listener] of entries) target.addEventListener(type, listener)
+	return () => {
+		for (const [type, listener] of entries) target.removeEventListener(type, listener)
+	}
+}
+
 /**
  * The inline list page (design.md § Inline list). It learns its key only from its parent's `postMessage`,
  * never from its URL, and hears from the background only in replies. Returns a teardown.
@@ -619,15 +628,9 @@ export function startInlineList(): () => void {
 		if (active instanceof HTMLElement && active !== document.body) active.blur()
 	}
 
-	window.addEventListener('message', onMessage)
-	window.addEventListener('blur', onBlur)
-	// The host's width or height changed: text may wrap differently.
-	window.addEventListener('resize', fit)
-	window.addEventListener('storage', followMirror)
-	document.addEventListener('keydown', onKeydown)
-	document.addEventListener('pointerdown', onPointerdown)
-	document.addEventListener('click', onClick)
-	document.addEventListener('focusin', onFocusin)
+	// On resize the host's width or height changed: text may wrap differently.
+	const unlistenWindow = listenAll<WindowEventMap>(window, { message: onMessage, blur: onBlur, resize: fit, storage: followMirror })
+	const unlistenDocument = listenAll<DocumentEventMap>(document, { keydown: onKeydown, pointerdown: onPointerdown, click: onClick, focusin: onFocusin })
 
 	return () => {
 		if (stopped) return
@@ -635,13 +638,7 @@ export function startInlineList(): () => void {
 		clearTimeout(announceTimer)
 		clearInterval(codeTimer)
 		visibility.stop()
-		window.removeEventListener('message', onMessage)
-		window.removeEventListener('blur', onBlur)
-		window.removeEventListener('resize', fit)
-		window.removeEventListener('storage', followMirror)
-		document.removeEventListener('keydown', onKeydown)
-		document.removeEventListener('pointerdown', onPointerdown)
-		document.removeEventListener('click', onClick)
-		document.removeEventListener('focusin', onFocusin)
+		unlistenWindow()
+		unlistenDocument()
 	}
 }
