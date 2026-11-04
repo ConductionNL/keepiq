@@ -29,7 +29,11 @@ struct GeneratorView: View {
     @State private var separator = "-"
     @State private var capitalise = false
     @State private var number = false
-    @State private var round = 0
+    /// The value on display. Made once per change of the settings or a tap on
+    /// regenerate, not in `body`: any other redraw (the text size, a toast
+    /// after Copy) keeps the value the user sees and copies.
+    @State private var outcome: GeneratorOutcome?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var settings: GeneratorSettings {
         GeneratorSettings(
@@ -53,8 +57,10 @@ struct GeneratorView: View {
     var body: some View {
         let policy = model.policy
         let safe = settings
-        let outcome = safe.tryGenerate(policy: policy)
-        let _ = round
+        // At the accessibility text sizes the buttons go under the value, so
+        // the value keeps the full width of the row instead of being squeezed
+        // into a narrow column and clipped.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         Form {
             Section {
                 Picker(L("gen_password"), selection: $passphrase) {
@@ -64,25 +70,35 @@ struct GeneratorView: View {
                 .pickerStyle(.segmented)
                 .disabled(policy?.allowPassphrase == false)
                 if policy?.allowPassphrase == false { Text(L("gen_passphrase_off")).font(.footnote) }
-                HStack {
-                    if let value = outcome.value {
-                        Text(value).font(.body.monospaced()).textSelection(.disabled).lineLimit(nil).fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("generated")
-                    } else {
+                layout {
+                    if let value = outcome?.value {
+                        // A password has no word breaks: it wraps at any character.
+                        // A passphrase keeps its breaks at the separators.
+                        Text(FieldRow.breakableLongRuns(value))
+                            .font(.body.monospaced())
+                            .textSelection(.disabled)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityLabel(value)
+                            .accessibilityIdentifier("generated")
+                    } else if let outcome {
                         Text(generatorProblem(outcome.error)).foregroundStyle(.red)
                     }
-                    Spacer()
-                    // The frame inside the label: a borderless button only takes taps on its label.
-                    Button { round += 1 } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                        .accessibilityLabel(L("cd_regenerate"))
-                    if let value = outcome.value {
-                        if let onUse {
-                            Button(L("action_use")) { onUse(value) }.frame(minWidth: 44, minHeight: 44)
-                        } else {
-                            Button(L("action_copy")) { model.copy(value) }.frame(minWidth: 44, minHeight: 44)
+                    if !typeSize.isAccessibilitySize { Spacer() }
+                    HStack {
+                        // The frame inside the label: a borderless button only takes taps on its label.
+                        Button { regenerate() } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                            .accessibilityLabel(L("cd_regenerate"))
+                        if let value = outcome?.value {
+                            if let onUse {
+                                Button(L("action_use")) { onUse(value) }.frame(minWidth: 44, minHeight: 44)
+                            } else {
+                                Button(L("action_copy")) { model.copy(value) }.frame(minWidth: 44, minHeight: 44)
+                            }
                         }
                     }
                 }
@@ -117,9 +133,16 @@ struct GeneratorView: View {
                 }
             }
         }
+        .onAppear { if outcome == nil { regenerate() } }
+        .onChange(of: safe) { regenerate() }
         .onChange(of: policy) { _, newPolicy in
             if let newPolicy { length = max(length, Double(newPolicy.minLength)) }
+            regenerate()
         }
+    }
+
+    private func regenerate() {
+        outcome = settings.tryGenerate(policy: model.policy)
     }
 
     private func generatorProblem(_ code: GeneratorErrorCode?) -> String {

@@ -43,6 +43,9 @@ use OCP\IDBConnection;
  *   method; the favourite and last-used writes belong with the table.
  */
 class SecretMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Neither trashed nor archived: the everyday vault.
 	 *
@@ -113,12 +116,7 @@ class SecretMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): Secret {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

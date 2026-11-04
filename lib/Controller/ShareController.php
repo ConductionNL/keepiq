@@ -34,6 +34,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -203,10 +204,7 @@ class ShareController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted']);
@@ -246,11 +244,13 @@ class ShareController extends OCSController {
 		} catch (ForbiddenException $exception) {
 			// A copy from another organisation (sharing-federated-recipients task 3.4).
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (InvalidArgumentException $exception) {
+		} catch (ShareScanPendingException $exception) {
 			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
 				statusCode: Http::STATUS_CONFLICT
 			);
+		} catch (InvalidArgumentException $exception) {
+			return new MessageResponse(error: $exception, status: Http::STATUS_CONFLICT);
 		}
 
 		return new JSONResponse(data: ['updated' => $written]);
@@ -444,6 +444,11 @@ class ShareController extends OCSController {
 		try {
 			return new JSONResponse(
 				data: $this->shareService->writeContext(secretId: $id, userId: $user->getUID())
+			);
+		} catch (ShareScanPendingException $exception) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);

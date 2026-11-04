@@ -251,7 +251,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	return (
 		<ShellContext.Provider value={context}>
 			<SendProvider>
-				<ShellFrame hidden={hidden} header={header} body={body} toast={toast} bar={{ page: page !== null, current, onSelect: show, setFooter }} dialogs={dialogView()}>
+				<ShellFrame hidden={hidden} header={header} body={body} toast={toast} bar={{ page: page !== null, active: current, onSelect: show, setFooter }} dialogs={dialogView()}>
 					{pane()}
 				</ShellFrame>
 			</SendProvider>
@@ -272,21 +272,22 @@ interface FrameProps {
 	body: RefObject<HTMLDivElement | null>
 	toast: string | null
 	/** On a page its actions take the bar, else the tab bar shows. */
-	bar: { page: boolean; current: PopupTab; onSelect: (tab: PopupTab) => void; setFooter: (footer: HTMLElement | null) => void }
+	bar: { page: boolean; active: PopupTab; onSelect: (tab: PopupTab) => void; setFooter: (footer: HTMLElement | null) => void }
 	/** The current tab's pane. */
 	children: ReactNode
 	dialogs: ReactNode
 }
 
 /** The popup around a pane: header, scrolling body, toast, the bottom bar and the dialogs over it. */
-function ShellFrame({ hidden, header, body, toast, bar: { page, current, onSelect, setFooter }, children, dialogs }: FrameProps) {
+function ShellFrame({ hidden, header, body, toast, bar, children, dialogs }: FrameProps) {
+	const { page, active, onSelect, setFooter } = bar
 	return (
 		<main className={`popup${isPopout ? ' popup--popout' : ''}`} hidden={hidden}>
 			<Header {...header} />
 			<div className="popup__body" ref={body}>{children}</div>
 			<div className="popup__bottom">
 				<Toast message={toast} />
-				{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={current} onSelect={onSelect} />}
+				{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={active} onSelect={onSelect} />}
 			</div>
 			{dialogs}
 		</main>

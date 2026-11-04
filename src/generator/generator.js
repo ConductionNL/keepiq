@@ -439,23 +439,23 @@ export function extractLength(regex) {
 }
 
 /**
+ * The characters of the escaped classes `\d` and `\w`, and of `\s`:
+ * whitespace is not a useful generation set, so a space stands for it.
+ */
+const ESCAPE_CLASSES = new Map([
+	['d', [...DIGITS]],
+	['w', [...(UPPERCASE + LOWERCASE + DIGITS + '_')]],
+	['s', [' ']],
+])
+
+/**
  * Expand one escape inside a character class.
  *
  * @param {string} escape The character after the backslash.
  * @return {string[]}
  */
 function expandEscape(escape) {
-	switch (escape) {
-		case 'd':
-			return [...DIGITS]
-		case 'w':
-			return [...(UPPERCASE + LOWERCASE + DIGITS + '_')]
-		case 's':
-			// Whitespace is not a useful generation set; a space stands for it.
-			return [' ']
-		default:
-			return [escape]
-	}
+	return ESCAPE_CLASSES.get(escape) ?? [escape]
 }
 
 /**
@@ -651,41 +651,76 @@ export function generatePassphrase(
 	rand = randomInt,
 ) {
 	const policy = generatorPolicy(rawPolicy)
-	if (policy !== null && !policy.allowPassphrase) {
+	if (policy?.allowPassphrase === false) {
 		throw new GeneratorError('Your organisation has switched passphrases off')
 	}
 
+	const spec = passphraseSpec(options, policy)
+	if (policy?.requireSymbol && !intersects(spec.separator, SPECIAL)) {
+		spec.separator = SPECIAL[rand(0, SPECIAL.length - 1)]
+	}
+
+	const words = passphraseWords(spec, rand)
+	while (words.join(spec.separator).length < policy?.minLength) {
+		words.push(drawWord(spec, rand))
+	}
+	return words.join(spec.separator)
+}
+
+/**
+ * The passphrase request with its defaults, its word count checked and the
+ * policy's required kinds switched on.
+ *
+ * @param {object} options The request.
+ * @param {object|null} policy A normalised policy.
+ * @return {{count: number, separator: string, capitalise: boolean, includeNumber: boolean}}
+ * @throws {GeneratorError} When the word count is out of range.
+ */
+function passphraseSpec(options, policy) {
 	const count = Number(options.words ?? DEFAULT_WORDS)
 	if (!Number.isInteger(count) || count < MIN_WORDS || count > MAX_WORDS) {
 		throw new GeneratorError(
 			`A passphrase must have ${MIN_WORDS} to ${MAX_WORDS} words`,
 		)
 	}
-	let separator = options.separator ?? '-'
-	let capitalise = options.capitalise === true
-	let includeNumber = options.includeNumber === true
-
+	const spec = {
+		count,
+		separator: options.separator ?? '-',
+		capitalise: options.capitalise === true,
+		includeNumber: options.includeNumber === true,
+	}
 	if (policy !== null) {
-		capitalise = capitalise || policy.requireUpper
-		includeNumber = includeNumber || policy.requireDigit
-		if (policy.requireSymbol && !intersects(separator, SPECIAL)) {
-			separator = SPECIAL[rand(0, SPECIAL.length - 1)]
-		}
+		spec.capitalise = spec.capitalise || policy.requireUpper
+		spec.includeNumber = spec.includeNumber || policy.requireDigit
 	}
+	return spec
+}
 
-	const draw = () => {
-		const word = PASSPHRASE_WORDS[rand(0, PASSPHRASE_WORDS.length - 1)]
-		return capitalise ? word[0].toUpperCase() + word.slice(1) : word
-	}
-	const words = Array.from({ length: count }, draw)
-	if (includeNumber) {
+/**
+ * One word from the list, capitalised when the request asks for it.
+ *
+ * @param {object} spec The request as passphraseSpec returns it.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string}
+ */
+function drawWord(spec, rand) {
+	const word = PASSPHRASE_WORDS[rand(0, PASSPHRASE_WORDS.length - 1)]
+	return spec.capitalise ? word[0].toUpperCase() + word.slice(1) : word
+}
+
+/**
+ * The requested number of words, one of them with a digit appended when
+ * the request asks for a number.
+ *
+ * @param {object} spec The request as passphraseSpec returns it.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string[]}
+ */
+function passphraseWords(spec, rand) {
+	const words = Array.from({ length: spec.count }, () => drawWord(spec, rand))
+	if (spec.includeNumber) {
 		const index = rand(0, words.length - 1)
 		words[index] += String(rand(0, 9))
 	}
-	if (policy !== null) {
-		while (words.join(separator).length < policy.minLength) {
-			words.push(draw())
-		}
-	}
-	return words.join(separator)
+	return words
 }
