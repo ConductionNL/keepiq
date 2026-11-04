@@ -9,6 +9,7 @@ import { addHistory } from '@/src/generator/history'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
 import { writePolicy } from '@/src/generator/store'
 import type { PopupReplies } from '@/src/messages'
+import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { provenCertificateKey } from '@/src/vault/certificate'
@@ -19,6 +20,8 @@ import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
 import { blockUnlock, checkSuite, lock, lockAll } from '@/src/vault/unlock'
 import { handlePopupRequest, readLastTab, type HandledRequest } from './requests'
+
+vi.mock('@/src/passkey/offered', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/passkey/offered')>(), forgetOfferedPasskeys: vi.fn() }))
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -37,6 +40,7 @@ async function snapshot(secrets: VaultSnapshot['secrets'], syncedAt = new Date()
 
 beforeEach(async () => {
 	fakeBrowser.reset()
+	vi.mocked(forgetOfferedPasskeys).mockClear()
 	vi.stubGlobal('fetch', fetchMock)
 	fetchMock.mockReset()
 	fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: 'Down' }), { status: 503 }))
@@ -135,6 +139,20 @@ describe('vault.snapshot', () => {
 	})
 })
 
+describe('vault.sync', () => {
+	it('syncs the unlocked active account and answers its status', async () => {
+		// The server is down in every test here.
+		expect(await send({ kind: 'vault.sync' })).toMatchObject({ syncing: false, lastError: 'server' })
+		expect(fetchMock).toHaveBeenCalled()
+	})
+
+	it('answers a status that is not syncing while locked, reaching no server', async () => {
+		await lock(accountId)
+		expect(await send({ kind: 'vault.sync' })).toEqual({ syncing: false, syncedAt: null, offline: false, lastError: null })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
 describe('item.decrypt', () => {
 	it('decrypts the asked fields of a batch without writing storage', async () => {
 		await snapshot([
@@ -206,6 +224,105 @@ describe('item.decrypt', () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {})
 		await snapshot([secretRow({ id: 'a', key: 'AAAA' })])
 		expect(await send({ kind: 'item.decrypt', ids: ['a'], fields: ['key'] })).toEqual({ ok: false, error: 'decrypt_failed' })
+	})
+})
+
+describe('item.passkeys', () => {
+	const credential = (rpId: string, overrides: Record<string, unknown> = {}) => ({
+		credentialId: `CRED-${rpId}`, rpId, rpName: `${rpId} site`, userName: `alice@${rpId}`, userDisplayName: 'Alice', userHandle: `HANDLE-${rpId}`,
+		privateKey: `PRIVATE-${rpId}`, algorithm: -7, counter: 3, transports: ['internal'], createdAt: '2026-01-05T10:00:00.000Z', ...overrides,
+	})
+	const passkeysOf = async (entries: unknown) => encrypt(JSON.stringify(entries))
+	const secretsIn = /PRIVATE|CRED-|HANDLE-|"counter"|"algorithm"|"transports"|"userDisplayName"/
+
+	it('answers relying party, user name and date per entry, and nothing else', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com'), credential('example.org', { rpName: '' })]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toEqual({
+			ok: true,
+			passkeys: [
+				{ rpId: 'example.com', rpName: 'example.com site', userName: 'alice@example.com', createdAt: '2026-01-05T10:00:00.000Z' },
+				{ rpId: 'example.org', rpName: '', userName: 'alice@example.org', createdAt: '2026-01-05T10:00:00.000Z' },
+			],
+		})
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it('falls back to the display name, and answers no date it was not given', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com', { userName: '', createdAt: undefined }), credential('example.org', { createdAt: 'soon' })]) })])
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toMatchObject({
+			ok: true, passkeys: [{ userName: 'Alice', createdAt: null }, { userName: 'alice@example.org', createdAt: null }],
+		})
+	})
+
+	it('answers a use-only copy’s too, as metadata only', async () => {
+		await snapshot([secretRow({ id: 'u', useOnly: true, passkeys: await passkeysOf([credential('example.com')]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'u' })
+		expect(reply).toMatchObject({ ok: true, passkeys: [{ rpId: 'example.com' }] })
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it('marks an entry that does not parse and keeps the others', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf(['junk', { rpId: 'example.net', privateKey: 'PRIVATE-x' }, credential('example.com')]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toMatchObject({ ok: true, passkeys: [null, null, { rpId: 'example.com' }] })
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it.each([
+		['does not decrypt', async () => 'AAAA'],
+		['is not an array', async () => passkeysOf(credential('example.com'))],
+		['is not JSON', async () => encrypt('{')],
+	])('answers unreadable for a field that %s, and nothing of it', async (_, ciphertext) => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		await snapshot([secretRow({ id: 'a', passkeys: await ciphertext() })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toEqual({ ok: false, error: 'unreadable' })
+	})
+
+	it.each([
+		['null', async () => null],
+		['empty', async () => ''],
+		['absent', async () => undefined],
+		['the encryption of nothing', async () => encrypt('')],
+		['an empty array', async () => passkeysOf([])],
+	])('answers none for a field that is %s', async (_, ciphertext) => {
+		await snapshot([secretRow({ id: 'a', passkeys: await ciphertext() })])
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: true, passkeys: [] })
+	})
+
+	it('answers none for a row that is not a login', async () => {
+		await snapshot([secretRow({ id: 'n', typeId: 't-note', passkeys: await passkeysOf([credential('example.com')]) })])
+		expect(await send({ kind: 'item.passkeys', id: 'n' })).toEqual({ ok: true, passkeys: [] })
+	})
+
+	it('refuses a blocked row and one the cache does not hold', async () => {
+		await snapshot([blockedRow({ id: 'x' })])
+		expect(await send({ kind: 'item.passkeys', id: 'x' })).toEqual({ ok: false, error: 'blocked' })
+		expect(await send({ kind: 'item.passkeys', id: 'nope' })).toEqual({ ok: false, error: 'not_found' })
+	})
+
+	it('answers nothing about passkeys while locked or logged out', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com')]) })])
+		await lock(accountId)
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: false, error: 'locked' })
+		expect(await send({ kind: 'item.passkeys', id: 'nope' })).toEqual({ ok: false, error: 'locked' })
+		await markLoggedOut(accountId)
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: false, error: 'locked' })
+	})
+
+	it('writes nothing to storage and counts a passive re-read as no interaction', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com')]) })])
+		const set = vi.spyOn(browser.storage.local, 'set')
+		await send({ kind: 'item.passkeys', id: 'a' })
+		const before = await browser.storage.session.get('lastInteractionAt')
+		expect(before.lastInteractionAt).toBeDefined()
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		await send({ kind: 'item.passkeys', id: 'a', passive: true })
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+		expect(set).not.toHaveBeenCalled()
+		const stored = JSON.stringify({ ...await browser.storage.local.get(null), ...await browser.storage.session.get(null) })
+		expect(stored).not.toMatch(/PRIVATE-example|alice@example\.com/)
 	})
 })
 
@@ -283,7 +400,7 @@ describe('account settings', () => {
 			maxIdleMinutes: null,
 			exportDisabled: false,
 			pin: false,
-			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'],
+			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys'],
 			shortcut: null,
 			serverUrl: 'https://cloud.example.org',
 			webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',
@@ -326,6 +443,13 @@ describe('account settings', () => {
 			values: { vaultTimeout: 60, clearClipboardMs: 20_000, uriMatch: 'baseDomain' },
 			effectiveTimeout: 60,
 		})
+	})
+
+	it('forgets the passkeys the inline list offers when passkeys are turned off', async () => {
+		await send({ kind: 'account.settings.set', accountId, patch: { askPasskeys: true, askToAdd: false } })
+		expect(forgetOfferedPasskeys).not.toHaveBeenCalled()
+		await send({ kind: 'account.settings.set', accountId, patch: { askPasskeys: false } })
+		expect(forgetOfferedPasskeys).toHaveBeenCalledTimes(1)
 	})
 
 	it('moves the Never key onto disk with the timeout', async () => {

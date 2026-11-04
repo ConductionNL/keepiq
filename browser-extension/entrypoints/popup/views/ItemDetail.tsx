@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
-import { USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta, type ItemMeta, type ShareSaveNote as Note, type TypeMeta } from '@/src/messages'
+import {
+	USE_ONLY_FIELDS, type DecryptField, type DecryptedItem, type FolderMeta, type ItemMeta, type PasskeysReply, type ShareSaveNote as Note, type TypeMeta,
+} from '@/src/messages'
 import { typeIcon } from '@/src/vault/icons'
 import { folderPath, launchUrl } from '@/src/vault/list'
 import { cardBrand, cardLast4, parseObject, parsePayload, text } from '@/src/vault/payloads'
@@ -90,19 +92,63 @@ function Identity({ payload }: { payload: Record<string, unknown> }) {
 	)
 }
 
+const relyingParty = (rpId: string, rpName: string) => (rpName ? `${rpName} (${rpId})` : rpId)
+
 /** Shows who and where; the private key is never rendered. */
 function Passkey({ payload }: { payload: Record<string, unknown> }) {
-	const rpId = text(payload, 'rpId')
-	const rpName = text(payload, 'rpName')
 	const user = text(payload, 'userName') || text(payload, 'userDisplayName')
 	const created = text(payload, 'createdAt')
 	return (
 		<Section title={i18n.t('detail.passkey')}>
-			<MaskedField label={i18n.t('detail.relyingParty')} value={rpName ? `${rpName} (${rpId})` : rpId} copyable={false} />
+			<MaskedField label={i18n.t('detail.relyingParty')} value={relyingParty(text(payload, 'rpId'), text(payload, 'rpName'))} copyable={false} />
 			{user && <MaskedField label={i18n.t('detail.passkeyUser')} value={user} copyable={false} />}
 			{created && <MaskedField label={i18n.t('detail.created')} value={dateTime(created)} copyable={false} />}
-			<p className="field-row field-row__note">{i18n.t('detail.passkeyUnsupported')}</p>
+			<p className="field-row field-row__note">{i18n.t('detail.passkeyOnLogin')}</p>
 		</Section>
+	)
+}
+
+/** `undefined` until the background answers, and when it does not. */
+function useLoginPasskeys(id: string, enabled: boolean, passive: boolean): PasskeysReply | undefined {
+	const { refreshState } = useShell()
+	const [reply, setReply] = useState<PasskeysReply>()
+	useEffect(() => {
+		if (!enabled) return
+		let live = true
+		void request({ kind: 'item.passkeys', id, passive }).then((answer) => {
+			if (!live) return
+			if (answer && !answer.ok && answer.error === 'locked') refreshState()
+			setReply(answer)
+		})
+		return () => {
+			live = false
+		}
+	}, [id, enabled, passive, refreshState])
+	return reply
+}
+
+function LoginPasskeys({ reply }: { reply: PasskeysReply | undefined }) {
+	if (!reply) return null
+	if (!reply.ok) return reply.error === 'unreadable' ? <Unreadable title={i18n.t('detail.passkeys')} message={i18n.t('detail.unreadablePasskey')} /> : null
+	if (reply.passkeys.length === 0) return null
+	return (
+		<section className="section">
+			<h2 className="section__title">{i18n.t('detail.passkeys')}</h2>
+			<ul className="card fields">
+				{reply.passkeys.map((passkey, i) => (passkey
+					? (
+						<li key={i} className="field-row">
+							<div className="field-row__text">
+								<span className="field-row__value">{relyingParty(passkey.rpId, passkey.rpName)}</span>
+								<span className="field-row__label">
+									{[passkey.userName, passkey.createdAt && i18n.t('detail.passkeyCreated', { date: new Date(passkey.createdAt).toLocaleDateString(language()) })].filter(Boolean).join(' · ')}
+								</span>
+							</div>
+						</li>
+					)
+					: <li key={i} className="field-row field-row__error">{i18n.t('detail.unreadablePasskey')}</li>))}
+			</ul>
+		</section>
 	)
 }
 
@@ -124,8 +170,8 @@ function Website({ item, username }: { item: ItemMeta; username?: string | null 
 	)
 }
 
-/** Whatever its type, a use-only copy shows its login name and site only. */
-function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
+/** Whatever its type, a use-only copy shows its login name, passkeys and site only. */
+function UseOnly({ item, values, passkeys }: { item: ItemMeta; values: DecryptedItem; passkeys: ReactNode }) {
 	return (
 		<>
 			<Section title={i18n.t('detail.loginCredentials')}>
@@ -133,6 +179,7 @@ function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
 				{values.totp && <TotpCode seed={values.totp} />}
 				<p className="field-row field-row__note">{i18n.t('detail.useOnly')}</p>
 			</Section>
+			{passkeys}
 			<Website item={item} />
 		</>
 	)
@@ -140,7 +187,7 @@ function UseOnly({ item, values }: { item: ItemMeta; values: DecryptedItem }) {
 
 const ALL_FIELDS: readonly DecryptField[] = ['login', 'key', 'additionalFields', 'totp']
 
-function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undefined; values: DecryptedItem }) {
+function Values({ item, type, values, passkeys }: { item: ItemMeta; type: TypeMeta | undefined; values: DecryptedItem; passkeys: ReactNode }) {
 	const name = type?.name ?? ''
 	const key = values.key ?? ''
 	let extra: Array<[string, string]> | null = []
@@ -166,6 +213,7 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 					{values.totp && <TotpCode seed={values.totp} />}
 				</Section>
 			)}
+			{passkeys}
 			{name === 'totp' && <Section title={i18n.t('detail.authenticatorKey')}><TotpCode seed={key} /></Section>}
 			{name === 'card' && (members ? <Card payload={members} /> : plainKey(i18n.t('detail.cardDetails')))}
 			{name === 'identity' && (members ? <Identity payload={members} /> : plainKey(i18n.t('detail.identity')))}
@@ -189,10 +237,13 @@ function Values({ item, type, values }: { item: ItemMeta; type: TypeMeta | undef
 
 function Decrypted({ item, type, passive }: { item: ItemMeta; type: TypeMeta | undefined; passive: boolean }) {
 	const decrypted = useDecryptedFields(item.id, item.useOnly ? USE_ONLY_FIELDS : ALL_FIELDS, true, passive)
+	// Asked beside the decrypt, not after it.
+	const passkeysReply = useLoginPasskeys(item.id, type?.name === 'login', passive)
+	const passkeys = <LoginPasskeys reply={passkeysReply} />
 	if (decrypted.status === 'loading') return <Loading>{i18n.t('detail.decrypting')}</Loading>
 	// `use_only` only when a sync made the copy use-only after this view asked.
 	if (decrypted.status === 'error') return <ErrorBanner>{i18n.t(decrypted.error === 'use_only' ? 'detail.useOnly' : 'detail.decryptFailed')}</ErrorBanner>
-	return item.useOnly ? <UseOnly item={item} values={decrypted.item} /> : <Values item={item} type={type} values={decrypted.item} />
+	return item.useOnly ? <UseOnly item={item} values={decrypted.item} passkeys={passkeys} /> : <Values item={item} type={type} values={decrypted.item} passkeys={passkeys} />
 }
 
 /**

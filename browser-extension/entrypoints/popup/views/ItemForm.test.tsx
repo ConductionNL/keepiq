@@ -31,10 +31,11 @@ interface Options {
 	offline?: boolean
 	items?: Record<string, EditableItem>
 	replies?: Record<string, unknown>
+	unanswered?: string[]
 }
 
-function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies }: Options = {}) {
-	const sent = fakeBackground({ snapshot, items, replies })
+function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies, unanswered }: Options = {}) {
+	const sent = fakeBackground({ snapshot, items, replies, unanswered })
 	const shell = { ...DEFAULT_SHELL, footer, offline, toast: vi.fn(), refreshState: vi.fn(), syncNow: vi.fn(), setLeaveGuard: vi.fn(), generate: vi.fn() }
 	const onSaved = vi.fn()
 	const onCancel = vi.fn()
@@ -141,6 +142,34 @@ describe('adding', () => {
 		await user.click(save())
 		await waitFor(() => expect(onSaved).toHaveBeenCalled())
 		expect(sentOf(sent, 'item.update')[0]).toMatchObject({ patch: { key: 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=8&period=30' } })
+	})
+
+	it('offers the TOTP options and writes a picked algorithm and period into the seed, labelled with the new name', async () => {
+		const { sent, onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', name: '', key: '', login: null }) } })
+		await user.type(await screen.findByLabelText('Name'), 'Authenticator')
+		await user.type(field('Authenticator key'), 'JBSWY3DPEHPK3PXP')
+		await user.click(screen.getByText('Advanced'))
+		const options = (label: string) => [...(screen.getByLabelText(label) as HTMLSelectElement).options].map((option) => option.value)
+		expect([options('Algorithm'), options('Digits'), options('Period in seconds')]).toEqual([['SHA1', 'SHA256', 'SHA512'], ['6', '8'], ['30', '60']])
+		await user.selectOptions(screen.getByLabelText('Algorithm'), 'SHA256')
+		await user.selectOptions(screen.getByLabelText('Period in seconds'), '60')
+		await user.click(save())
+		await waitFor(() => expect(onSaved).toHaveBeenCalled())
+		expect(sentOf(sent, 'item.update').map((message) => message.patch)).toEqual([
+			{ name: 'Authenticator', key: 'otpauth://totp/Authenticator?secret=JBSWY3DPEHPK3PXP&algorithm=SHA256&digits=6&period=60' },
+		])
+	})
+
+	it('shows an existing Authenticator item\'s algorithm and odd period as stored, and keeps them when the digits change', async () => {
+		const key = 'otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP&algorithm=SHA512&digits=8&period=45'
+		const { sent, onSaved, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: editableItem({ typeId: 't-totp', typeName: 'totp', key, login: null }) } })
+		const select = (label: string) => screen.getByLabelText(label) as HTMLSelectElement
+		await screen.findByLabelText('Algorithm')
+		expect([select('Algorithm').value, select('Digits').value, select('Period in seconds').value]).toEqual(['SHA512', '8', '45'])
+		await user.selectOptions(select('Digits'), '6')
+		await user.click(save())
+		await waitFor(() => expect(onSaved).toHaveBeenCalled())
+		expect(sentOf(sent, 'item.update')[0]).toMatchObject({ patch: { key: key.replace('digits=8', 'digits=6') } })
 	})
 
 	it('writes a card with all five members', async () => {
@@ -501,6 +530,25 @@ describe('editing', () => {
 		await waitFor(() => expect(onSaved).toHaveBeenCalledWith('new', undefined))
 	})
 
+	it('says the background is not responding when a save gets no answer, and offers to try again', async () => {
+		const { onSaved, user } = renderForm({ unanswered: ['item.create'] })
+		await user.type(field('Name'), 'GitHub')
+		await user.click(save())
+		const alert = await screen.findByRole('alert')
+		expect(alert.textContent).toContain('Keepiq is not responding. Reload the extension and reopen this popup.')
+		expect(within(alert).getByRole('button', { name: 'Try again' })).toBeTruthy()
+		expect(onSaved).not.toHaveBeenCalled()
+	})
+
+	// Only an edit has a version the server can find stale; a new item or a clone has none.
+	it.each(['add', 'clone'] as const)('reads a conflict on %s as refused, not as an item changed elsewhere', async (mode) => {
+		const { user } = renderForm({ mode, id: mode === 'clone' ? 'i1' : undefined, items: { i1: editableItem() }, replies: { 'item.create': { ok: false, error: { code: 'conflict' } } } })
+		await user.type(await screen.findByLabelText('Name'), '!')
+		await user.click(save())
+		expect(await screen.findByText('Keepiq refused this change')).toBeTruthy()
+		expect(screen.queryByText(/changed elsewhere/)).toBeNull()
+	})
+
 	it.each([
 		['a passkey', 't-passkey'],
 		['a passkey the server sends as a login', 't-login'],
@@ -858,5 +906,50 @@ describe('offline', () => {
 		expect((save() as HTMLButtonElement).disabled).toBe(true)
 		await user.click(screen.getByRole('button', { name: 'Sync now' }))
 		expect(shell.syncNow).toHaveBeenCalled()
+	})
+})
+
+describe('errors of a group of fields', () => {
+	const wide = (count: number) => '\u{1F511}'.repeat(count)
+	const tooBig = 'Too long (max 65536 bytes)'
+	const section = (title: string) => screen.getByRole('heading', { name: title }).closest('section')!
+	const bigFields = Object.fromEntries(['a', 'b', 'c', 'd', 'e'].map((name) => [name, wide(4096)]))
+
+	async function saveEdit(item: EditableItem) {
+		const { sent, user } = renderForm({ mode: 'edit', id: 'i1', items: { i1: item } })
+		fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Renamed' } })
+		await user.click(save())
+		return sent
+	}
+
+	it('shows card members that are too big only together under the card, on none of them, without a request', async () => {
+		const key = JSON.stringify(Object.fromEntries(CARD_FIELDS.map((member) => [member, wide(4096)])))
+		const sent = await saveEdit(editableItem({ typeId: 't-card', key, login: null }))
+		const card = section('Card details')
+		expect((await within(card).findByText(tooBig)).tagName).toBe('P')
+		expect(card.querySelectorAll('[aria-invalid]')).toHaveLength(0)
+		expect(screen.getAllByText(tooBig)).toHaveLength(1)
+		expect(screen.queryByRole('alert')).toBeNull()
+		expect(sentOf(sent, 'item.update')).toEqual([])
+	})
+
+	it('shows fields that are too big together under the additional fields', async () => {
+		const sent = await saveEdit(editableItem({ additionalFields: bigFields }))
+		const fields = section('Additional fields')
+		expect((await within(fields).findByText(tooBig)).tagName).toBe('P')
+		expect(fields.querySelectorAll('[aria-invalid]')).toHaveLength(0)
+		expect(screen.getAllByText(tooBig)).toHaveLength(1)
+		expect(sentOf(sent, 'item.update')).toEqual([])
+	})
+
+	it('puts that error on the notes instead when there are notes, which share the fields\' limit', async () => {
+		await saveEdit(editableItem({ additionalFields: { ...bigFields, notes: 'Recovery codes in the safe' } }))
+		const notes = await waitFor(() => {
+			const notes = field('Notes')
+			expect(notes.getAttribute('aria-invalid')).toBe('true')
+			return notes
+		})
+		expect(document.getElementById(notes.getAttribute('aria-describedby')!)?.textContent).toBe(tooBig)
+		expect(screen.getAllByText(tooBig)).toHaveLength(1)
 	})
 })

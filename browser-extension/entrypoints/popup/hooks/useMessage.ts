@@ -1,4 +1,4 @@
-import type { PopupReplies, PopupRequest, PopupToBackground, Result } from '@/src/messages'
+import type { PasskeyPopupRequest, PasskeyWindowReply, PopupReplies, PopupRequest, PopupToBackground, Result } from '@/src/messages'
 
 /** A reply from the background we can trust; a stale or missing listener answers `undefined`. */
 function isResult(reply: unknown): reply is Result {
@@ -18,6 +18,25 @@ export async function sendMessage(message: PopupToBackground): Promise<Result> {
 		console.error('[keepiq] no reply to', message.kind, error)
 	}
 	return { ok: false, code: 'not_responding' }
+}
+
+function isPasskeyReply(reply: unknown): reply is PasskeyWindowReply {
+	if (typeof reply !== 'object' || reply === null) return false
+	const r = reply as Record<string, unknown>
+	if (r.ok === true) return r.view === undefined || (typeof r.view === 'object' && r.view !== null)
+	return r.ok === false && typeof r.code === 'string'
+}
+
+/** The passkey window's requests; `undefined` means the background did not answer. */
+export async function passkeyRequest(message: PasskeyPopupRequest): Promise<PasskeyWindowReply | undefined> {
+	try {
+		const reply: unknown = await browser.runtime.sendMessage(message)
+		if (isPasskeyReply(reply)) return reply
+		console.error('[keepiq] unexpected reply to', message.kind, reply)
+	} catch (error) {
+		console.error('[keepiq] no reply to', message.kind, error)
+	}
+	return undefined
 }
 
 /** For requests with their own reply shape; `undefined` means the background did not answer. */

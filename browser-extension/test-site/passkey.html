@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Passkey</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Passkey</h1>
+		<p class="tests">Register a passkey, then sign in with it. The page checks both as a site's server would, with WebCrypto: the challenge, origin, RP ID hash, flags, signature and counter. Keepiq's window offers to save or use a passkey for <code class="host">localhost</code>, or hands the request to the browser.</p>
+		<form id="passkey">
+			<label>User name <input name="userName" type="text" value="alice" autocomplete="off" aria-describedby="user-name-hint"></label>
+			<p class="hint" id="user-name-hint">Represents the username of your account on the site.</p>
+			<label>User verification
+				<select name="userVerification" aria-describedby="user-verification-hint">
+					<option>preferred</option>
+					<option>required</option>
+					<option>discouraged</option>
+				</select>
+			</label>
+			<p class="hint" id="user-verification-hint">How sure the site wants to be that it is really you. Pick one to test what Keepiq does:<br>
+				<b>preferred:</b> Keepiq signs straight away, without asking for your password.<br>
+				<b>required:</b> Keepiq first asks you to confirm with your master password or PIN, then signs.<br>
+				<b>discouraged:</b> Keepiq signs straight away and never asks.<br>
+				If Keepiq is locked and you unlock it in its window, that already counts as confirming, so it does not ask twice.</p>
+			<button type="button" id="register">Register a passkey</button>
+			<button type="button" id="sign-in">Sign in with a passkey</button>
+			<button type="button" id="abort">Abort the request</button>
+			<p class="status" id="result" role="status"></p>
+		</form>
+		<div class="card">
+			<h2>Passkeys this site registered</h2>
+			<ul id="saved"></ul>
+			<button type="button" id="forget">Forget them</button>
+		</div>
+	</main>
+	<script type="module">
+		import { forgetPasskeys, register, report, savedPasskeys, signIn } from '/passkey.js'
+
+		const form = document.getElementById('passkey')
+		const status = document.getElementById('result')
+		let controller = null
+
+		function showSaved() {
+			document.getElementById('saved').replaceChildren(...savedPasskeys().map((saved) => Object.assign(document.createElement('li'), {
+				textContent: `${saved.userName}, counter ${saved.counter}, id ${saved.id.slice(0, 12)}…`,
+			})))
+		}
+
+		async function run(result, request) {
+			controller?.abort()
+			controller = new AbortController()
+			status.textContent = 'Waiting for the passkey…'
+			delete status.dataset.result
+			try {
+				report(status, { result, passkey: await request(controller.signal) })
+			} catch (error) {
+				report(status, { error })
+			}
+			showSaved()
+		}
+
+		const userVerification = () => form.elements.userVerification.value
+		document.getElementById('register').addEventListener('click', () => run('registered', (signal) => register(form.elements.userName.value.trim() || 'alice', userVerification(), signal)))
+		document.getElementById('sign-in').addEventListener('click', () => run('signed-in', (signal) => signIn({ publicKey: { userVerification: userVerification(), timeout: 120_000 } }, signal)))
+		document.getElementById('abort').addEventListener('click', () => controller?.abort(new DOMException('The page aborted the request', 'AbortError')))
+		document.getElementById('forget').addEventListener('click', () => {
+			forgetPasskeys()
+			showSaved()
+		})
+		for (const host of document.querySelectorAll('.host')) host.textContent = location.hostname
+		showSaved()
+	</script>
+</body>
+</html>

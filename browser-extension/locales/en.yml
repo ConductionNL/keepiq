@@ -357,7 +357,9 @@ detail:
   passkey: Passkey
   relyingParty: Relying party
   passkeyUser: User name
-  passkeyUnsupported: Signing in with this passkey is not yet supported in the extension
+  passkeyOnLogin: Keepiq signs in with passkeys saved on a login, not with this item
+  passkeys: Passkeys
+  passkeyCreated: Created {date}
   useOnly: Its owner doesn't let you view or copy this.
 
 totp:
@@ -447,6 +449,7 @@ settings:
   autoCopyTotpHint: If a login has a verification code, copy it to your clipboard when you autofill the login.
   askToAdd: Ask to add login
   askToUpdate: Ask to update existing login
+  askPasskeys: Ask to save and use passkeys
   excludedDomains: Excluded domains
   addCurrentSite: Add current site
   domain: Domain
@@ -624,6 +627,10 @@ inlineList:
   label: Keepiq logins for {host}
   row: "{name}, {username}"
   noMatch: No logins for {host}
+  # While the site waits for a passkey sign-in, the list offers passkeys above the logins.
+  passkeyRow: "{name}, {username}, passkey"
+  passkeyRowNoUser: "{name}, passkey"
+  noMatchPasskeys: No logins or passkeys for {host}
   locked: Keepiq is locked
   unlock: Unlock
   insecureQuestion: Fill on this insecure site?
@@ -635,6 +642,10 @@ inlineList:
       1: 1 Keepiq login. Press Down Arrow to choose.
       n: $1 Keepiq logins. Press Down Arrow to choose.
     noMatch: No Keepiq logins for {host}
+    countPasskeys:
+      1: 1 Keepiq login or passkey. Press Down Arrow to choose.
+      n: $1 Keepiq logins and passkeys. Press Down Arrow to choose.
+    noMatchPasskeys: No Keepiq logins or passkeys for {host}
     locked: Keepiq is locked. Press Down Arrow to unlock.
   # The list on a one-time code field, which offers logins with a code.
   code:
@@ -684,3 +695,37 @@ notificationBar:
     incomplete: The people this login is shared with kept changing. Nothing was saved; try again.
     badCertificate: A recipient's encryption key could not be read. Nothing was saved.
     keepiqOutdated: Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq {version} or later.
+
+# The window a site's passkey request opens. {rpId} is the site the passkey is for.
+passkey:
+  unlockGet: Unlock Keepiq to use a passkey for {rpId}
+  unlockCreate: Unlock Keepiq to save a passkey for {rpId}
+  verifyTitle: Confirm it's you
+  verifyPassword: Enter your master password to continue.
+  verifyPin: Enter your PIN to continue.
+  confirm: Confirm
+  signInTitle: Sign in with a passkey
+  signInText: Use a passkey saved in Keepiq for {rpId}
+  row: "{name}, {userName}"
+  noPasskey: No Keepiq passkey for {rpId}
+  saveTitle: Save passkey
+  saveTo: Save to a login
+  replaces: Replaces the passkey for {userName}
+  newLogin: New login
+  name: Name
+  folder: Folder
+  noFolder: No folder
+  saveNew: Save as new login
+  replaceQuestion: Replace the passkey for {userName} on {name}?
+  replace: Replace
+  alreadySavedTitle: Passkey already saved
+  alreadySaved: A passkey for this account is already saved in Keepiq
+  close: Close
+  retry: Retry
+  fallback: Use your device or hardware key
+  stalePick: This passkey is no longer in your vault. Choose another one.
+  staleSave: This login can no longer take the passkey. Choose another, or save it as a new login.
+  errors:
+    conflict: This login changed while saving. Nothing was saved; try again.
+    partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
+    partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this login is shared with runs a Keepiq too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."

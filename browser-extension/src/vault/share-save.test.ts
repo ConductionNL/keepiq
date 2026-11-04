@@ -255,6 +255,18 @@ describe('local copies', () => {
 		expect(lastFinal().copies).toEqual([{ secretId: 'c-bob', totp: '' }])
 	})
 
+	it('saves an own login\'s passkeys alone in the patch, with no copies', async () => {
+		expect(await save({ plain: { passkeys: '[{"rpId":"example.com"}]' } })).toBeUndefined()
+		expect(saves).toEqual([{ baseUpdatedAt: BASE, patch: { passkeys: 'own:passkeys' }, copies: [], skipped: [], federated: [], suspend: [] }])
+	})
+
+	it('gives each copy the passkeys encrypted to its holder, and nothing else', async () => {
+		world.copies = [recipient('c-bob', 'bob')]
+		await save({ plain: { passkeys: '[{"rpId":"example.com"}]' } })
+		expect(Object.keys(lastFinal().copies[0]!).sort()).toEqual(['passkeys', 'secretId'])
+		expect(await decrypt(lastFinal().copies[0]!.passkeys)).toBe('[{"rpId":"example.com"}]')
+	})
+
 	it('skips a holder without a vault key, and saves for everyone else', async () => {
 		world.copies = [recipient('c-bob', 'bob'), recipient('c-carol', 'carol')]
 		world.certificates.bob = null
@@ -486,7 +498,8 @@ describe('partner shares', () => {
 		const SEED = 'JBSWY3DPEHPK3PXP'
 		const decryptable = () => vi.mocked(verifyFederatedCertificate).mockResolvedValueOnce({ fingerprint: 'ab'.repeat(32), spki: extractSpki(decodePem(CERT).der) })
 		const withKey = async () => openedX({ shown: { ...(await openedX()).shown, totp: await encrypt(SEED), passkeys: await encrypt('[{"rpId":"example.com"}]') } })
-		const upgrade = { code: 'partner_upgrade_required', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId }] }
+		// Our own refusal names the release as the server's does.
+		const upgrade = { code: 'partner_upgrade_required', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId }], requiredVersion: '0.3.12' }
 
 		it('keeps a partner\'s key and passkeys on a password change, for a partner that stores them', async () => {
 			world.valueFields = ['totp', 'passkeys']
@@ -527,7 +540,41 @@ describe('partner shares', () => {
 		it('names the partner and the version when the server refuses it', async () => {
 			world.valueFields = ['totp']
 			world.onFinal = (attempt) => (attempt === 2 ? json({ error: 'partner_upgrade_required', message: 'too old', shareId: BOB.shareId, requiredVersion: '0.3.12' }, 409) : undefined)
-			expect(await failure(save({ plain: { totp: SEED }, opened: await openedX() }))).toEqual({ ...upgrade, requiredVersion: '0.3.12' })
+			expect(await failure(save({ plain: { totp: SEED }, opened: await openedX() }))).toEqual(upgrade)
+		})
+
+		describe('a passkey save', () => {
+			const PASSKEYS = '[{"rpId":"example.com","counter":1}]'
+			const savePasskeys = async (opened: Opened) => save({ plain: { passkeys: PASSKEYS }, patch: { passkeys: 'own:passkeys' }, opened })
+
+			it('sends the passkeys to a partner that stores them, with the rest as opened', async () => {
+				world.valueFields = ['passkeys']
+				decryptable()
+				await savePasskeys(await openedX())
+				const [entry] = lastFinal().federated!
+				expect([await decrypt(entry!.passkeys), await decrypt(entry!.key), entry!.totp]).toEqual([PASSKEYS, 'x-password', null])
+			})
+
+			it('stops before any write when it gives passkeys to a partner that cannot store them', async () => {
+				expect(await failure(savePasskeys(await openedX()))).toEqual(upgrade)
+				expect(saves).toHaveLength(1)
+			})
+
+			it('stops a partner that stores only the key too', async () => {
+				world.valueFields = ['totp']
+				expect(await failure(savePasskeys(await openedX()))).toEqual(upgrade)
+			})
+
+			it('sends changed passkeys to such a partner as null, since it never held them', async () => {
+				expect(await savePasskeys(await withKey())).toBeUndefined()
+				expect(lastFinal().federated![0]).toMatchObject({ passkeys: null })
+			})
+
+			it('names the version when the server refuses it', async () => {
+				world.valueFields = ['passkeys']
+				world.onFinal = (attempt) => (attempt === 2 ? json({ error: 'partner_upgrade_required', message: 'too old', shareId: BOB.shareId, requiredVersion: '0.3.12' }, 409) : undefined)
+				expect(await failure(savePasskeys(await openedX()))).toEqual(upgrade)
+			})
 		})
 
 		it('fails with unverified on a record from before it held them', async () => {

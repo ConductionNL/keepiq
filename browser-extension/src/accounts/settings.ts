@@ -22,6 +22,8 @@ export interface AccountSettings {
 	contextMenu: boolean
 	askToAdd: boolean
 	askToUpdate: boolean
+	/** "Ask to save and use passkeys": off sends every passkey request to the browser (ext-passkey-provider). */
+	askPasskeys: boolean
 	/** Base domains (`baseDomain` in `src/vault/match.ts`). */
 	excludedDomains: string[]
 	/** A secret type name; one the account's cached types lack reads as `login` where it is used. */
@@ -40,12 +42,13 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 	contextMenu: true,
 	askToAdd: true,
 	askToUpdate: true,
+	askPasskeys: true,
 	excludedDomains: [],
 	defaultItemType: 'login',
 }
 
 /** The delivered `AutofillFeature`s, sent to Settings in the snapshot. */
-export const AUTOFILL_FEATURES: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts']
+export const AUTOFILL_FEATURES: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys']
 
 export const settingsKey = (accountId: string) => `settings.${accountId}`
 
@@ -74,6 +77,7 @@ const VALIDATORS: Validators<AccountSettings> = {
 	contextMenu: isBoolean,
 	askToAdd: isBoolean,
 	askToUpdate: isBoolean,
+	askPasskeys: isBoolean,
 	excludedDomains: isDomainList,
 	defaultItemType: (value): value is string => typeof value === 'string' && value !== '',
 }

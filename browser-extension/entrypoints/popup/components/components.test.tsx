@@ -56,6 +56,29 @@ describe('Button', () => {
 		expect(button).toHaveProperty('disabled', true)
 		expect(button.getAttribute('aria-busy')).toBe('true')
 		expect(button.getAttribute('type')).toBe('button')
+		expect(button.hasAttribute('aria-disabled')).toBe(false)
+	})
+
+	it('stays focusable while busy or disabled when asked, ignoring clicks and the form submit', async () => {
+		const onClick = vi.fn()
+		const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault())
+		const { rerender } = render(<form onSubmit={onSubmit}><Button type="submit" focusable onClick={onClick}>Save</Button></form>)
+		const button = screen.getByRole('button', { name: 'Save' })
+		button.focus()
+		rerender(<form onSubmit={onSubmit}><Button type="submit" focusable busy onClick={onClick}>Save</Button></form>)
+		expect(button).toHaveProperty('disabled', false)
+		expect(button.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(button)
+		await userEvent.click(button)
+		rerender(<form onSubmit={onSubmit}><Button type="submit" focusable disabled onClick={onClick}>Save</Button></form>)
+		await userEvent.click(button)
+		expect(onClick).not.toHaveBeenCalled()
+		expect(onSubmit).not.toHaveBeenCalled()
+		rerender(<form onSubmit={onSubmit}><Button type="submit" focusable onClick={onClick}>Save</Button></form>)
+		expect(button.getAttribute('aria-disabled')).toBe('false')
+		await userEvent.click(button)
+		expect(onClick).toHaveBeenCalledTimes(1)
+		expect(onSubmit).toHaveBeenCalledTimes(1)
 	})
 })
 
@@ -111,6 +134,13 @@ describe('Header', () => {
 		expect(buttons.indexOf(add)).toBe(buttons.indexOf(screen.getByRole('button', { name: 'Pop out' })) - 1)
 		await userEvent.setup().click(add)
 		expect(onAdd).toHaveBeenCalled()
+	})
+
+	it('puts its children right of the title', () => {
+		render(<Header title="Vault" active={null}><button type="button">Extra</button></Header>)
+		const header = screen.getByRole('banner')
+		expect(header.lastElementChild).toBe(screen.getByRole('button', { name: 'Extra' }))
+		expect(screen.getByRole('heading', { name: 'Vault' }).nextElementSibling).toBe(header.lastElementChild)
 	})
 })
 

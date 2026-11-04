@@ -10,10 +10,12 @@ import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
 	USE_ONLY_FIELDS, type AccountSettingsRequest, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
-	type FillRequest, type GeneratorRequest, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type VaultSnapshotReply, type VaultWrite,
+	type FillRequest, type GeneratorRequest, type PasskeyDetail, type PasskeysReply, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type SyncStatus, type VaultSnapshotReply, type VaultWrite,
 } from '@/src/messages'
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readLastUsed } from '@/src/last-used'
+import { buildPasskeyCredential, storedArray } from '@/src/passkey/credential'
+import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
@@ -122,6 +124,48 @@ async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promi
 	return ids.length === 1 && failure ? { ok: false, error: failure } : { ok: true, items }
 }
 
+/** Built field by field, so nothing else of the credential can reach the popup. */
+function passkeyDetail(entry: unknown): PasskeyDetail | null {
+	const credential = buildPasskeyCredential(entry)
+	if (!credential) return null
+	// Not the credential's: `buildPasskeyCredential` makes up a date for an entry without one.
+	const created = (entry as Record<string, unknown>).createdAt
+	return {
+		rpId: credential.rpId,
+		rpName: credential.rpName,
+		userName: credential.userName || credential.userDisplayName,
+		createdAt: typeof created === 'string' && Number.isFinite(Date.parse(created)) ? created : null,
+	}
+}
+
+/** A login's `passkeys` for the detail, a use-only copy's too, since it shows no key. */
+async function loginPasskeys(id: string): Promise<PasskeysReply> {
+	const account = await activeUnlocked()
+	const key = account ? await getKey(account.id) : null
+	if (!account || !key) return { ok: false, error: 'locked' }
+	const cached = await readSnapshot(account.id)
+	const row = rowsById(cached).get(id)
+	if (!row) return { ok: false, error: 'not_found' }
+	if (row.blocked) return { ok: false, error: 'blocked' }
+	const login = cached?.types.some((type) => type.id === row.typeId && type.name === 'login') === true
+	if (!login || typeof row.passkeys !== 'string' || row.passkeys === '') return { ok: true, passkeys: [] }
+	return decryptPasskeys(id, row.passkeys, key)
+}
+
+/** An empty `passkeys` holds none; one that does not decrypt or parse is unreadable. */
+async function decryptPasskeys(id: string, ciphertext: string, key: CryptoKey): Promise<PasskeysReply> {
+	let json: string
+	try {
+		json = await rsaDecrypt(ciphertext, key)
+	} catch (error) {
+		console.error('[keepiq] passkeys did not decrypt for', id, error)
+		return { ok: false, error: 'unreadable' }
+	}
+	if (json.trim() === '') return { ok: true, passkeys: [] }
+	const entries = storedArray(json)
+	return entries ? { ok: true, passkeys: entries.map(passkeyDetail) } : { ok: false, error: 'unreadable' }
+}
+
 /** Bitwarden's popout: the popup in its own window, for the tab it came from. */
 export async function popout(tabId: number | undefined): Promise<null> {
 	const query = new URLSearchParams({ popout: '1' })
@@ -140,36 +184,52 @@ export async function popout(tabId: number | undefined): Promise<null> {
 /** `fill.request` goes to the fill orchestrator instead. */
 export type HandledRequest = Exclude<PopupRequest, FillRequest>
 
+async function syncActiveAccount(): Promise<SyncStatus> {
+	const account = await activeUnlocked()
+	return account ? sync(account.id, 'full') : { syncing: false, syncedAt: null, offline: false, lastError: null }
+}
+
+async function scheduleActiveClipboardClear(): Promise<null> {
+	const accountId = await getActiveAccountId()
+	if (accountId) await scheduleClipboardClear((await readSettings(accountId)).clearClipboardMs)
+	return null
+}
+
+async function rememberLastTab(tab: PopupTab): Promise<null> {
+	if (TABS.includes(tab)) await sessionValues.set({ [LAST_TAB_KEY]: tab })
+	return null
+}
+
+/** The requests that name no account: they act on the active one, the popup itself or the whole browser. */
+type UnscopedRequest = Exclude<HandledRequest, GeneratorRequest | VaultWrite | AccountSettingsRequest | SendRequest>
+type UnscopedKind = UnscopedRequest['kind']
+
+const UNSCOPED_REQUESTS: { [K in UnscopedKind]: (message: Extract<UnscopedRequest, { kind: K }>) => Promise<PopupReplies[K]> } = {
+	'vault.sync': () => syncActiveAccount(),
+	'vault.snapshot': (message) => snapshot(message.tabUrl, message.opened === true),
+	'item.decrypt': (message) => decrypt(message.ids, message.fields),
+	'item.passkeys': (message) => loginPasskeys(message.id),
+	'clipboard.copied': () => scheduleActiveClipboardClear(),
+	'popup.popout': (message) => popout(message.tabId),
+	'popup.lastTab.set': (message) => rememberLastTab(message.tab),
+	'settings.get': () => readGlobalSettings(),
+	'settings.set': (message) => updateGlobalSettings(message.patch),
+	'defaultManager.get': () => readDefaultManager(),
+	'defaultManager.enable': () => enableDefaultManager(),
+	'defaultManager.disable': () => disableDefaultManager(),
+}
+
+function isUnscoped(message: Exclude<HandledRequest, GeneratorRequest>): message is UnscopedRequest {
+	return Object.hasOwn(UNSCOPED_REQUESTS, message.kind)
+}
+
+function performUnscoped<K extends UnscopedKind>(message: Extract<UnscopedRequest, { kind: K }>): Promise<PopupReplies[K]> {
+	return UNSCOPED_REQUESTS[message.kind](message)
+}
+
 async function perform(message: Exclude<HandledRequest, GeneratorRequest>): Promise<PopupReplies[PopupRequest['kind']]> {
+	if (isUnscoped(message)) return performUnscoped(message)
 	switch (message.kind) {
-		case 'vault.sync': {
-			const account = await activeUnlocked()
-			return account ? sync(account.id, 'full') : { syncing: false, syncedAt: null, offline: false, lastError: null }
-		}
-		case 'vault.snapshot':
-			return snapshot(message.tabUrl, message.opened === true)
-		case 'item.decrypt':
-			return decrypt(message.ids, message.fields)
-		case 'clipboard.copied': {
-			const accountId = await getActiveAccountId()
-			if (accountId) await scheduleClipboardClear((await readSettings(accountId)).clearClipboardMs)
-			return null
-		}
-		case 'popup.popout':
-			return popout(message.tabId)
-		case 'popup.lastTab.set':
-			if (TABS.includes(message.tab)) await sessionValues.set({ [LAST_TAB_KEY]: message.tab })
-			return null
-		case 'settings.get':
-			return readGlobalSettings()
-		case 'settings.set':
-			return updateGlobalSettings(message.patch)
-		case 'defaultManager.get':
-			return readDefaultManager()
-		case 'defaultManager.enable':
-			return enableDefaultManager()
-		case 'defaultManager.disable':
-			return disableDefaultManager()
 		case 'account.settings.get':
 		case 'account.settings.set':
 		case 'pin.set':
@@ -313,6 +373,7 @@ async function performAccountSettings(message: AccountSettingsRequest): Promise<
 			if (await accountStatus(account) !== 'unlocked') return 'locked'
 			// `writeSettings` drops what fails validation.
 			await updateSettings(accountId, message.patch)
+			if (message.patch?.askPasskeys === false) forgetOfferedPasskeys()
 			return accountSettings(accountId)
 		}
 		case 'pin.set':
@@ -328,7 +389,7 @@ function isInteraction(message: Exclude<HandledRequest, GeneratorRequest>): bool
 	// Every popup reads it on open, which `vault.status` already counts.
 	if (message.kind === 'settings.get' || message.kind === 'account.settings.get' || message.kind === 'defaultManager.get') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
-	if (message.kind === 'item.decrypt') return message.passive !== true
+	if (message.kind === 'item.decrypt' || message.kind === 'item.passkeys') return message.passive !== true
 	return true
 }
 

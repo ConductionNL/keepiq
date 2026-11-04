@@ -84,8 +84,12 @@ export default defineConfig({
 					description: '__MSG_commandFocusNotificationBar__',
 				},
 			},
-			// The save bar and the inline list, framed into pages. WXT writes MV2's string form for Firefox.
-			web_accessible_resources: [{ resources: ['notification.html', 'inline-list.html'], matches: ['*://*/*'] }],
+			// The save bar and the inline list, framed into pages, and on Firefox the passkey page script the relay
+			// injects; Chrome runs that one as a MAIN world content script. WXT writes MV2's string form for Firefox.
+			web_accessible_resources: [{
+				resources: ['notification.html', 'inline-list.html', ...(browser === 'firefox' ? ['passkey-page.js'] : [])],
+				matches: ['*://*/*'],
+			}],
 			...(manifestVersion === 3
 				? { optional_host_permissions: serverOrigins, ...(optionalApis.length > 0 && { optional_permissions: optionalApis }) }
 				: { optional_permissions: [...serverOrigins, ...optionalApis] }),

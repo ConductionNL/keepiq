@@ -2,7 +2,7 @@
 
 The Keepiq browser extension opens your Keepiq vault from your browser's toolbar. You can find your logins, fill them in on websites, save new ones as you sign up or sign in, copy a user name, password or one-time code, and open the site. The extension opens your vault with your master password, in the browser. Your Nextcloud only ever sees encrypted values.
 
-The extension is in development. You can browse, fill in, save, copy, add, edit, delete, generate passwords and send secrets today; passkeys come in a later update (see [Coming next](#coming-next)).
+The extension is in development. You can browse, fill in, save, copy, add, edit, delete, generate passwords, send secrets and sign in with passkeys today.
 
 ## Getting the extension
 
@@ -99,6 +99,8 @@ Click an item to see its details. Passwords and other secret fields are hidden; 
 
 An authenticator item shows its current code and counts down to the next one.
 
+A login with passkeys lists them under **Passkeys**, each with its site, user name and creation date. A passkey item notes that Keepiq signs in with passkeys saved on a login, not with that item. To delete a passkey, use the Keepiq web app.
+
 A **blocked** item cannot be opened. Its key was revoked or compromised. The item says why and links to the web app, where you can see what to do.
 
 ### Adding an item
@@ -190,6 +192,24 @@ When the page hides, covers or alters the card, it refuses with **Keepiq can't d
 
 Turn the questions off with **Ask to add login** and **Ask to update existing login** in [Settings](#settings).
 
+## Passkeys
+
+A passkey signs you in to a website without a password. Keepiq keeps your passkeys on your logins, encrypted like the rest of your vault, and offers them on every site that uses passkeys.
+
+- **Saving a passkey:** when a site creates a passkey, a Keepiq window opens with **Save passkey**. Pick one of your logins for the site, or click **New login** (the **+** in the corner) to save it as a new login with a name and a folder; without a login for the site, Keepiq asks for that name and folder at once. When that login already has a passkey for the same account, Keepiq asks before it replaces it. The site gets the passkey only after your server saved it.
+- **Signing in:** when a site asks for a passkey, the window lists your passkeys for that site. Pick one to sign in. With none, it says **No Keepiq passkey for *site***.
+- **Under the login field:** some sites offer passkeys as soon as you click the user name field. Keepiq then lists your passkeys above your logins there, and the browser's own suggestions keep working.
+- **Locked:** the window asks you to unlock first, then goes on. Before you unlock, it shows nothing about which passkeys you have.
+- **Confirm it's you:** when a site asks for extra proof, Keepiq asks for your master password, or your PIN if you set one. Unlocking in the same window counts as that proof.
+- **Your own device instead:** **Use your device or hardware key** hands the request to the browser, for a passkey on your computer, phone or security key. **Cancel** stops the request.
+
+The window closes when you sign in, save, cancel or leave the page. Keepiq makes the signed answer in your browser, and the site gets only that answer, never the passkey itself.
+
+Keepiq leaves the request to the browser when **Ask to save and use passkeys** is off in [Settings](#settings), on sites in **Excluded domains**, and when you are logged out. It does the same on a plain `http` site other than `localhost`, in a frame from another site, and when the site asks for a security key or a key type Keepiq doesn't make.
+
+- **Imported passkeys:** a passkey imported from another password manager keeps a sign-in count, which Keepiq saves to your server at every use. Offline, or on a login shared with you that you can't edit, that passkey can't sign in; use your device or hardware key there.
+- **Firefox:** on a site whose security policy forbids inline scripts, Keepiq can't take the request, so you get the browser's own passkeys there.
+
 ## Generator
 
 The **Generator** tab makes a new value as soon as it opens, and again whenever you change an option. **Regenerate** makes another one and **Copy** copies it. The value is made in your browser, the same way the Keepiq web app makes it, and is sent nowhere. Your options are remembered per account.
@@ -246,7 +266,7 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Make Keepiq your default password manager,** Chrome only, turns off Chrome's own password saving and address autofill, so its dropdown no longer covers Keepiq's list. Chrome asks for permission to change its settings; turning it off gives them back.
   - **Autofill keyboard shortcut** shows the keys, with **Change**.
   - **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default.
-- **Notifications:** **Ask to add login**, **Ask to update existing login**, and **Excluded domains**, the sites the save bar never asks on. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.
+- **Notifications:** **Ask to add login**, **Ask to update existing login**, **Ask to save and use passkeys** (see [Passkeys](#passkeys)), and **Excluded domains**, the sites where the save bar never asks and passkeys go to the browser. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.
 - **Vault:**
   - **Sync now**, with the time of the last sync.
   - **Folders**, see [Folders](#folders).
@@ -268,5 +288,4 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 ## Coming next
 
-- **Passkeys.** Sign in to websites with the passkeys in your vault.
 - **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.

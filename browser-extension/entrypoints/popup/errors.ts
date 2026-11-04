@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
-import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type VaultWriteError } from '@/src/messages'
+import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type VaultWriteError, type WriteErrorCode } from '@/src/messages'
 import type { FieldError } from '@/src/vault/fields'
 import { language } from './i18n'
 
@@ -42,12 +42,15 @@ export function noticeText(notice: NoticeCode): string {
 	}
 }
 
-/** What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one. */
-export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send'
+/**
+ * What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one;
+ * `passkey` is the passkey window's save or counter save.
+ */
+export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey'
 
-/** `undefined` is the background not answering. */
+/** `undefined`, or an error without a code, is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
-	if (error === undefined) return i18n.t('errors.notResponding')
+	if (error?.code === undefined) return i18n.t('errors.notResponding')
 	switch (error.code) {
 		case 'write_locked': return i18n.t('writeErrors.writeLocked')
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
@@ -58,11 +61,10 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'not_found': return context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
 		case 'blocked': return blockedText(error.reason)
 		case 'unreadable': return i18n.t('writeErrors.unreadable')
-		case 'restricted': return i18n.t('writeErrors.restricted')
-		case 'view_only': return i18n.t('item.viewOnly')
+		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'key_mismatch': return i18n.t('writeErrors.keyMismatch')
 		case 'offline': return context === 'send' ? i18n.t('writeErrors.sendOffline') : i18n.t('writeErrors.offline')
-		default: return serverWriteErrorText(error)
+		default: return serverWriteErrorText(error, context)
 	}
 }
 
@@ -73,46 +75,58 @@ function invalidText(context: WriteContext): string {
 
 /** A conflict is a stale edit, an unknown version when opening, or a name clash for a folder. */
 function conflictText(context: WriteContext): string {
+	// A fetch the cache does not hold, or a login that changed again after the save's one retry.
+	if (context === 'passkey') return i18n.t('passkey.errors.conflict')
 	if (context === 'edit') return i18n.t('writeErrors.stale')
 	if (context === 'open') return i18n.t('writeErrors.unmatched')
 	if (context === 'folderName') return i18n.t('writeErrors.duplicateFolder')
 	return context === 'folderDelete' ? i18n.t('writeErrors.folderChanged') : i18n.t('writeErrors.invalid')
 }
 
-/** The codes from the server itself, which read the same in every context. */
-function serverWriteErrorText(error: VaultWriteError): string {
+/** The codes about the user's own server. */
+function serverWriteErrorText(error: VaultWriteError, context: WriteContext): string {
 	switch (error.code) {
 		case 'server_error': return i18n.t('writeErrors.serverError')
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
-		case 'stale_source': return i18n.t('writeErrors.staleSource')
-		case 'incomplete': return i18n.t('writeErrors.incomplete')
-		default: return sharingWriteErrorText(error)
+		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
+		default: return sharingWriteErrorText(error, context)
 	}
 }
 
-/** The codes about partner organisations and their certificates. */
-function sharingWriteErrorText(error: VaultWriteError): string {
-	switch (error.code) {
-		case 'bad_certificate': return i18n.t('writeErrors.badCertificate')
-		case 'unverified': return i18n.t('writeErrors.unverified')
-		case 'partner_unreachable': return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList((error.partners ?? []).map((partner) => partner.cloudId)) })
-		case 'partner_upgrade_required': {
-			const cloudIds = (error.partners ?? []).map((partner) => partner.cloudId)
-			const text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
-			return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
-		}
-		case 'partner_lookup_limit': return i18n.t('writeErrors.partnerLookupLimit')
-		case 'federation_unavailable': return i18n.t('writeErrors.federationUnavailable')
-		case 'keepiq_outdated': return i18n.t('writeErrors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })
-		default: return localWriteErrorText(error)
-	}
+const partnerCloudIds = (error: VaultWriteError) => (error.partners ?? []).map((partner) => partner.cloudId)
+
+/** Names the partners when the server listed them, and the release they need when it named one. */
+function partnerUpgradeText(error: VaultWriteError, context: WriteContext): string {
+	const cloudIds = partnerCloudIds(error)
+	let text: string
+	if (context === 'passkey') text = cloudIds.length > 0 ? i18n.t('passkey.errors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('passkey.errors.partnerUpgradeRequiredUnnamed')
+	else text = cloudIds.length > 0 ? i18n.t('writeErrors.partnerUpgradeRequired', { cloudIds: cloudIdList(cloudIds) }) : i18n.t('writeErrors.partnerUpgradeRequiredUnnamed')
+	return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
+}
+
+/** The codes about sharing: shared copies, partner organisations and their certificates. A `Map`, so a code named like an object property misses. */
+const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, context: WriteContext) => string>([
+	['restricted', () => i18n.t('writeErrors.restricted')],
+	['view_only', () => i18n.t('item.viewOnly')],
+	['stale_source', () => i18n.t('writeErrors.staleSource')],
+	['incomplete', () => i18n.t('writeErrors.incomplete')],
+	['bad_certificate', () => i18n.t('writeErrors.badCertificate')],
+	['unverified', () => i18n.t('writeErrors.unverified')],
+	['partner_unreachable', (error) => i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList(partnerCloudIds(error)) })],
+	['partner_upgrade_required', partnerUpgradeText],
+	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
+	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
+])
+
+function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {
+	const text = SHARING_WRITE_ERRORS.get(error.code)
+	return text ? text(error, context) : localWriteErrorText(error)
 }
 
 /** The codes about this browser and its clock, and the fallback for codes this popup does not know. */
 function localWriteErrorText(error: VaultWriteError): string {
 	switch (error.code) {
 		case 'partner_clock': return i18n.t('writeErrors.partnerClock')
-		case 'passkey_clone': return i18n.t('item.passkeyNoClone')
 		case 'argon2_unavailable': return i18n.t('writeErrors.argon2Unavailable')
 		case 'locked':
 		case 'unknown':

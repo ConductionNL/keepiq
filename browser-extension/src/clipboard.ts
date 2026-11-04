@@ -10,7 +10,7 @@ export const CLIPBOARD_ALARM = 'clipboard-clear'
 /** The account whose one-time code the background put on the clipboard, never the code (spec `totp-autofill`). */
 export const CLIPBOARD_CODE_KEY = 'clipboardCode'
 const OFFSCREEN_PATH = '/offscreen.html'
-/** Chrome allows one offscreen document, so a clear firing during a write waits for it. */
+/** Chrome allows one offscreen document, so a clear firing during a write waits instead of creating a second. */
 const offscreenQueue = createQueue()
 
 /** Popup only. Rejects when the browser refuses the write. */
@@ -60,7 +60,10 @@ export function writeClipboard(text: string): boolean {
 	}
 }
 
-/** Resolves to whether the document wrote; rejects when the offscreen document could not be used. */
+/**
+ * Resolves to whether the document wrote; rejects when the offscreen document could not be used.
+ * The document stays open: Chrome commits its write after it answered, and closing it then can drop the write.
+ */
 async function inDocument(message: BackgroundToOffscreen): Promise<boolean> {
 	const text = message.kind === 'offscreen.writeClipboard' ? message.text : ''
 	const offscreen = browser.offscreen
@@ -69,11 +72,7 @@ async function inDocument(message: BackgroundToOffscreen): Promise<boolean> {
 		if (!(await offscreen.hasDocument())) {
 			await offscreen.createDocument({ url: browser.runtime.getURL(OFFSCREEN_PATH), reasons: ['CLIPBOARD'], justification: 'Copy secrets to the clipboard and clear them again' })
 		}
-		try {
-			return await browser.runtime.sendMessage(message) === true
-		} finally {
-			await offscreen.closeDocument()
-		}
+		return await browser.runtime.sendMessage(message) === true
 	})
 }
 
