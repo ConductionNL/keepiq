@@ -12,7 +12,7 @@ import { hasKey, putKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
 import { lock, unlock } from '@/src/vault/unlock'
-import { ceremonyKey, endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from './ceremony'
+import { ceremonyKey, endForAccountChange, HAND_BACK_MS, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from './ceremony'
 import { FLAGS } from './webauthn'
 
 vi.mock('@/src/crypto', async (importOriginal) => {
@@ -23,6 +23,7 @@ vi.mock('@/src/vault/unlock', async (importOriginal) => ({ ...await importOrigin
 vi.mock('@/src/vault/sync', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/vault/sync')>(), sync: vi.fn(async () => ({})) }))
 
 const TAB = 7
+const PAGE_WINDOW = 3
 const ORIGIN = 'https://example.test'
 const CHALLENGE = toBase64Url(new Uint8Array(32).fill(9))
 let accountId: string
@@ -104,8 +105,12 @@ beforeEach(async () => {
 		created.push({ id, tabId: 500 + id, url: data!.url as string, width: data!.width, height: data!.height })
 		return { id, tabs: [{ id: 500 + id }] } as never
 	})
-	vi.spyOn(browser.windows, 'remove').mockImplementation(async (id: number) => void removed.push(id))
+	vi.spyOn(browser.windows, 'remove').mockImplementation(async (id: number) => {
+		removed.push(id)
+		await fakeBrowser.windows.onRemoved.trigger(id)
+	})
 	vi.spyOn(browser.windows, 'update').mockImplementation(async () => ({}) as never)
+	vi.spyOn(browser.tabs, 'get').mockImplementation(async (tabId: number) => ({ id: tabId, windowId: PAGE_WINDOW }) as never)
 	vi.spyOn(browser.tabs, 'update').mockImplementation(async (tabId: unknown, info: unknown) => {
 		updated.push({ tabId: tabId as number, url: (info as { url?: string }).url })
 		return {} as never
@@ -249,6 +254,32 @@ describe('passkey.start', () => {
 		void onPopupClosed()
 		await settle()
 		expect(await hasKey(accountId)).toBe(false)
+	})
+
+	it('answers fallback only after a window without a tab is gone and the tab’s window was asked to take focus', async () => {
+		vi.mocked(browser.windows.create).mockImplementation(async () => {
+			created.push({ id: 50, tabId: 0, url: '' })
+			return { id: 50, tabs: [] } as never
+		})
+		vi.spyOn(browser.windows, 'get').mockResolvedValue({ id: 50, tabs: [] } as never)
+		const events: string[] = []
+		vi.mocked(browser.windows.remove).mockImplementation(async (id: number) => {
+			await new Promise((resolve) => setTimeout(resolve, 0))
+			events.push('removed')
+			await fakeBrowser.windows.onRemoved.trigger(id)
+		})
+		vi.mocked(browser.windows.update).mockImplementation(async (id: number) => {
+			events.push(`focus ${id}`)
+			return {} as never
+		})
+		vi.mocked(browser.tabs.sendMessage).mockImplementation(async (_tab: number, message: unknown) => {
+			events.push(`result ${(message as { result: PasskeyResult }).result.type}`)
+			return undefined as never
+		})
+		await start()
+		await settle()
+		expect(events).toEqual(['removed', `focus ${PAGE_WINDOW}`, 'result fallback'])
+		expect(await record()).toBeUndefined()
 	})
 
 	it('closes the window when a conditional request replaces a modal one', async () => {
@@ -509,6 +540,61 @@ describe('the passkey window', () => {
 		expect(delivered()).toEqual([[ceremonyId, result]])
 		expect(removed).toEqual([50])
 		expect(await record()).toBeUndefined()
+	})
+
+	describe('passkey.fallback hands the page back its focus first', () => {
+		const focused = () => vi.mocked(browser.windows.update).mock.calls.filter(([id]) => id === PAGE_WINDOW)
+
+		it('sends fallback only after the window is gone and the tab’s window was asked to take focus', async () => {
+			const { ceremonyId } = await start()
+			let close = () => {}
+			vi.mocked(browser.windows.remove).mockImplementation(async (id: number) => {
+				removed.push(id)
+				close = () => void fakeBrowser.windows.onRemoved.trigger(id)
+			})
+			let deliveredAtFocus: number | undefined
+			vi.mocked(browser.windows.update).mockImplementation(async () => {
+				deliveredAtFocus = results.length
+				return {} as never
+			})
+			expect(await window({ kind: 'passkey.fallback', ceremonyId }, windowOf(ceremonyId!))).toEqual({ ok: true })
+			await settle()
+			expect(removed).toEqual([50])
+			expect(focused()).toEqual([])
+			expect(delivered()).toEqual([])
+			close()
+			await settle()
+			expect(browser.tabs.get).toHaveBeenCalledWith(TAB)
+			expect(focused()).toEqual([[PAGE_WINDOW, { focused: true }]])
+			expect(deliveredAtFocus).toBe(0)
+			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
+		})
+
+		it('still sends fallback, after asking for focus, when the window never reports its removal', async () => {
+			const { ceremonyId } = await start()
+			vi.mocked(browser.windows.remove).mockImplementation(async (id: number) => void removed.push(id))
+			vi.useFakeTimers({ toFake: ['setTimeout'] })
+			const reply = window({ kind: 'passkey.fallback', ceremonyId }, windowOf(ceremonyId!))
+			await vi.advanceTimersByTimeAsync(HAND_BACK_MS - 1)
+			expect(delivered()).toEqual([])
+			await vi.advanceTimersByTimeAsync(1)
+			expect(await reply).toEqual({ ok: true })
+			expect(focused()).toEqual([[PAGE_WINDOW, { focused: true }]])
+			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
+		})
+
+		it.each([
+			['windows.update rejects', () => vi.mocked(browser.windows.update).mockRejectedValue(new Error('No window with id: 3'))],
+			['tabs.get rejects', () => vi.mocked(browser.tabs.get).mockRejectedValue(new Error('No tab with id: 7'))],
+			['windows.remove rejects', () => vi.mocked(browser.windows.remove).mockRejectedValue(new Error('No window with id: 50'))],
+		])('still sends fallback at once when %s', async (_, fail) => {
+			const { ceremonyId } = await start()
+			fail()
+			expect(await window({ kind: 'passkey.fallback', ceremonyId }, windowOf(ceremonyId!))).toEqual({ ok: true })
+			await settle()
+			expect(browser.tabs.get).toHaveBeenCalledWith(TAB)
+			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
+		})
 	})
 
 	it('leaves no decrypted value, key or challenge in storage.local or storage.session after a sign-in', async () => {

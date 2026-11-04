@@ -93,14 +93,50 @@ function closeWindow(ceremony: Ceremony): void {
 	if (ceremony.window) void browser.windows.remove(ceremony.window.id).catch(() => {})
 }
 
+/** The longest a `fallback` waits for the window to close and the page's window to take focus. */
+export const HAND_BACK_MS = 1_000
+
+/** Settles when `work` does or after `ms`, whichever comes first; never rejects. */
+function within(work: Promise<unknown>, ms: number): Promise<void> {
+	let timer: ReturnType<typeof setTimeout> | undefined
+	const cap = new Promise<void>((resolve) => (timer = setTimeout(resolve, Math.max(0, ms))))
+	return Promise.race([work.then(() => {}, () => {}), cap]).finally(() => clearTimeout(timer))
+}
+
+/** Closes the window and settles once `windows.onRemoved` reports it, its removal fails, or `ms` pass. */
+async function closeWithin(windowId: number, ms: number): Promise<void> {
+	let gone!: () => void
+	const removed = new Promise<void>((resolve) => (gone = resolve))
+	const onRemoved = (id: number) => {
+		if (id === windowId) gone()
+	}
+	browser.windows.onRemoved.addListener(onRemoved)
+	try {
+		await within(Promise.race([removed, browser.windows.remove(windowId).then(() => removed)]), ms)
+	} finally {
+		browser.windows.onRemoved.removeListener(onRemoved)
+	}
+}
+
+/** Chromium refuses WebAuthn from a page without focus, so the browser's own dialog waits until the window is gone and the tab's window was asked to take focus. */
+async function handBack(ceremony: Ceremony): Promise<void> {
+	const until = Math.min(Date.now() + HAND_BACK_MS, ceremony.deadline ?? Infinity)
+	const left = () => until - Date.now()
+	if (ceremony.window) await closeWithin(ceremony.window.id, left())
+	await within(browser.tabs.get(ceremony.tabId).then((tab) => browser.windows.update(tab.windowId, { focused: true })), left())
+}
+
 /** Ends the tab's ceremony while it is still `id`; `result` goes to its frame. False when it had ended already. */
 function end(tabId: number, id: string, result: PasskeyResult | null): Promise<boolean> {
 	return inTab(tabId, async () => {
 		const ceremony = await store.get(tabId)
 		if (ceremony?.id !== id) return false
 		await store.remove(tabId)
-		if (result) toFrame(ceremony, result)
-		closeWindow(ceremony)
+		if (result?.type === 'fallback') void handBack(ceremony).catch(log('hand back')).then(() => toFrame(ceremony, result))
+		else {
+			if (result) toFrame(ceremony, result)
+			closeWindow(ceremony)
+		}
 		return true
 	})
 }
@@ -168,7 +204,8 @@ async function showWindow(tabId: number, id: string): Promise<void> {
 	if (windowId === undefined) throw new Error('No window to show the ceremony in')
 	const windowTab = created!.tabs?.[0]?.id ?? (await browser.windows.get(windowId, { populate: true })).tabs?.[0]?.id
 	if (windowTab === undefined) {
-		void browser.windows.remove(windowId).catch(() => {})
+		// Awaited, so the fallback that follows reaches the page after this window is gone.
+		await closeWithin(windowId, HAND_BACK_MS)
 		throw new Error('No tab in the ceremony window')
 	}
 	await store.set({ ...ceremony, window: { id: windowId, tabId: windowTab } })
