@@ -93,8 +93,9 @@ function closeWindow(ceremony: Ceremony): void {
 	if (ceremony.window) void browser.windows.remove(ceremony.window.id).catch(() => {})
 }
 
-/** The longest a `fallback` waits for the window to close, and then for the page's window to take focus. */
+/** The longest a `fallback` waits for the window to close. */
 export const CLOSE_MS = 1_000
+/** The longest a `fallback` then waits for the page's window to take focus. */
 export const FOCUS_MS = 500
 
 /** Settles when `work` does or after `ms`, whichever comes first; never rejects. */
@@ -146,8 +147,8 @@ async function focusWithin(tabId: number, activate: boolean, ms: number): Promis
 }
 
 /**
- * Chromium refuses WebAuthn from a page without focus, so the browser's own dialog waits until the window is gone and the
- * tab's window has focus. A newer ceremony that has or is opening a window keeps the focus.
+ * Chromium refuses WebAuthn from a page without focus, so the browser's own dialog waits until the window is gone and the tab's window has focus.
+ * A newer ceremony that has or is opening a window keeps the focus.
  */
 async function handBack(ceremony: Ceremony, activate: boolean): Promise<void> {
 	const left = (ms: number) => Math.min(ms, (ceremony.deadline ?? Infinity) - Date.now())

@@ -600,12 +600,13 @@ describe('the passkey window', () => {
 			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
 		})
 
-		it('sends fallback at once, asking nothing, when the tab’s window already has focus', async () => {
+		it('sends fallback at once, still activating the tab, when the tab’s window already has focus', async () => {
 			const { ceremonyId } = await start()
 			focusNeverArrives()
 			vi.mocked(browser.windows.get).mockImplementation(async (id: number) => ({ id, focused: id === PAGE_WINDOW }) as never)
 			await fallback(ceremonyId!)
 			await settle()
+			expect(browser.tabs.update).toHaveBeenCalledWith(TAB, { active: true })
 			expect(focused()).toEqual([])
 			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
 		})
