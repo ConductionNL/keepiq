@@ -34,6 +34,9 @@ use OCP\IDBConnection;
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedInboundMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for FederatedInboundMapper.
 	 *
@@ -57,12 +60,7 @@ class FederatedInboundMapper extends QBMapper {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function findById(string $id): FederatedInbound {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

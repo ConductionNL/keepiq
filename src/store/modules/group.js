@@ -37,6 +37,44 @@ import { defineStore } from 'pinia'
  */
 export const GROUP_PAGE_SIZE = 100
 
+/**
+ * One page of the server's groups matching a search, as options sorted by id.
+ *
+ * @param {string} search Substring to match; '' returns the first page.
+ * @return {Promise<Array<{id: string, label: string}>>}
+ */
+async function searchGroups(search) {
+	const response = await axios.get(generateOcsUrl('cloud/groups'), {
+		// Both are required of an OCS call and neither is added for
+		// us: without the header the route answers 401 regardless of
+		// the session, and without `format` it answers XML.
+		headers: { 'OCS-APIRequest': 'true' },
+		params: {
+			format: 'json',
+			search,
+			limit: GROUP_PAGE_SIZE,
+		},
+	})
+	const groups = response.data?.ocs?.data?.groups
+	return (Array.isArray(groups) ? [...groups] : [])
+		.sort()
+		.map((gid) => ({ id: gid, label: gid }))
+}
+
+/**
+ * The message for a failed group search.
+ *
+ * @param {Error|object} error The thrown error.
+ * @return {string}
+ */
+function groupSearchError(error) {
+	return (
+		error?.response?.data?.ocs?.meta?.message
+		|| error?.message
+		|| 'Failed to search groups'
+	)
+}
+
 export const useGroupStore = defineStore('group', {
 	state: () => ({
 		/**
@@ -84,33 +122,14 @@ export const useGroupStore = defineStore('group', {
 			this.candidatesError = null
 			this.loading = true
 			try {
-				const response = await axios.get(generateOcsUrl('cloud/groups'), {
-					// Both are required of an OCS call and neither is added for
-					// us: without the header the route answers 401 regardless of
-					// the session, and without `format` it answers XML.
-					headers: { 'OCS-APIRequest': 'true' },
-					params: {
-						format: 'json',
-						search,
-						limit: GROUP_PAGE_SIZE,
-					},
-				})
-
-				const groups = response.data?.ocs?.data?.groups
-				const options = (Array.isArray(groups) ? [...groups] : [])
-					.sort()
-					.map((gid) => ({ id: gid, label: gid }))
-
+				const options = await searchGroups(search)
 				if (seq === this.searchSeq) {
 					this.groups = options
 				}
 				return options
 			} catch (e) {
 				if (seq === this.searchSeq) {
-					this.candidatesError =
-						e?.response?.data?.ocs?.meta?.message
-						|| e?.message
-						|| 'Failed to search groups'
+					this.candidatesError = groupSearchError(e)
 				}
 				throw e
 			} finally {

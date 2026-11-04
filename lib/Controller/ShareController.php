@@ -34,6 +34,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -203,10 +204,7 @@ class ShareController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted']);
@@ -252,10 +250,7 @@ class ShareController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_CONFLICT
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_CONFLICT);
 		}
 
 		return new JSONResponse(data: ['updated' => $written]);

@@ -33,6 +33,9 @@ use OCP\IDBConnection;
  */
 class RecoveryRequestMapper extends QBMapper {
 
+	use FindsByStringId;
+
+
 	/**
 	 * Constructor for RecoveryRequestMapper.
 	 *
@@ -55,12 +58,7 @@ class RecoveryRequestMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): RecoveryRequest {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

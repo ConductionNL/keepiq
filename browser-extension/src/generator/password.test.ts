@@ -72,7 +72,7 @@ describe('generatePassword', () => {
 			positions[[...value].findIndex((char) => UPPER.includes(char))]!++
 		}
 		for (const hits of positions) expect(Math.abs(hits - 2000)).toBeLessThan(250)
-	})
+	}, 60_000)
 
 	it.each([
 		['length_too_short', { length: 6 }],

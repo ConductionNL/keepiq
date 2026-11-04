@@ -28,6 +28,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -131,10 +132,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$requests = $this->service->listBySecret(secretId: $secretId, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(
@@ -344,10 +342,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->approve(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -374,10 +369,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->decline(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -409,10 +401,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->decline(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted', 'request' => $entity->jsonSerialize()]);
