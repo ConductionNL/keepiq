@@ -22,8 +22,7 @@ interface PassphraseStyle {
 }
 
 /** The options as asked, lifted to what a policy requires. A symbol separator is drawn here, before any word. */
-function styleUnder(options: Partial<PassphraseOptions>, limits: { policy: GeneratorPolicy | null; rand: RandomInt }): PassphraseStyle {
-	const { policy, rand } = limits
+function styleUnder(options: Partial<PassphraseOptions>, policy: GeneratorPolicy | null, rand: RandomInt): PassphraseStyle {
 	const style = { separator: options.separator ?? '-', capitalise: options.capitalise === true, includeNumber: options.includeNumber === true }
 	if (policy === null) return style
 	style.capitalise ||= policy.requireUpper
@@ -48,7 +47,7 @@ export function generatePassphrase(
 	if (policy !== null && !policy.allowPassphrase) return { ok: false, failure: 'passphrase_off' }
 	const count = Number(options.words ?? DEFAULT_WORDS)
 	if (!validWordCount(count)) return { ok: false, failure: 'words_out_of_range' }
-	const { separator, capitalise, includeNumber } = styleUnder(options, { policy, rand })
+	const { separator, capitalise, includeNumber } = styleUnder(options, policy, rand)
 
 	const words = passphraseWords(list)
 	const draw = () => {
