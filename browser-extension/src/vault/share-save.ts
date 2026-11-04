@@ -55,7 +55,12 @@ interface OwnRowContext {
 export type WriteContext = SourceContext | OwnRowContext
 
 export async function readWriteContext(client: Client, id: string): Promise<WriteContext> {
-	const context = await client.keepiq<Partial<Record<keyof SourceContext, unknown>> | null>('GET', `${secretPath(id)}/write-context`)
+	let context: Partial<Record<keyof SourceContext, unknown>> | null
+	try {
+		context = await client.keepiq('GET', `${secretPath(id)}/write-context`)
+	} catch (error) {
+		throw error instanceof ApiError && error.status === 404 ? await goneOrRefused(client, id) : error
+	}
 	if (context?.sourceSecretId === null) return { ownRow: true }
 	if (!isString(context?.sourceSecretId)) throw new WriteFailure({ code: 'unknown' })
 	const text = (value: unknown) => (typeof value === 'string' && value ? value : null)
@@ -74,7 +79,10 @@ export const sourceVersion = (context: WriteContext) => (context.ownRow ? null :
 /** A copy without a write grade, which the server would let its holder change alone, out of step with everyone else's (share-sync). */
 export const isViewOnly = (id: string, context: WriteContext) => !context.ownRow && context.sourceSecretId !== id && !COPY_EDITOR_GRADES.has(context.effectiveGrade)
 
-/** An own row's share-save also answers 404 for a row two share rows name, so only Keepiq's 404 on the row itself proves it gone; a row still there was refused. */
+/**
+ * Write-context and an own row's share-save also answer 404 for a row two share rows name, so only Keepiq's 404 on the row itself proves it gone;
+ * a row still there was refused.
+ */
 async function goneOrRefused(client: Client, id: string): Promise<unknown> {
 	let row: { updatedAt?: unknown } | null
 	try {

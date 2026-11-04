@@ -532,6 +532,43 @@ describe('the own-row write context', () => {
 		})
 	})
 
+	describe('a write-context 404, which a row two share rows name gets too when it has copies of its own', () => {
+		/** The write-context's 404 and the read of the row after it. */
+		const answers = (row: () => Response | Promise<Response>) => {
+			fetchMock.mockImplementation(async (input) => {
+				const path = new URL(String(input)).pathname
+				if (path.endsWith('/write-context')) return json({ message: 'Secret not found' }, 404)
+				return path.endsWith('/api/v1/secrets/s1') ? row() : json({ message: 'Not found' }, 404)
+			})
+		}
+
+		it('is not_found once Keepiq answers the row itself with 404', async () => {
+			answers(() => json({ message: 'Secret not found' }, 404))
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code: 'not_found' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'GET /api/v1/secrets/s1'])
+		})
+
+		it('is a refusal while the row is still there, saving nothing', async () => {
+			answers(() => json(secretRow()))
+			expect(await failure(save())).toEqual({ code: 'forbidden' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'GET /api/v1/secrets/s1'])
+		})
+
+		it.each([
+			['a network failure', () => Promise.reject(new TypeError('Failed to fetch'))],
+			['a server error', () => json({ message: 'Internal error' }, 500)],
+			['Nextcloud\'s page for a route it does not have', () => new Response('<html>Not found</html>', { status: 404 })],
+		])('is never not_found after %s', async (_, row) => {
+			answers(row)
+			expect((await failure(readWriteContext(client, 's1'))).code).not.toBe('not_found')
+		})
+
+		it('never reads Nextcloud\'s page on the write-context as the row gone', async () => {
+			fetchMock.mockImplementation(async (input) => (new URL(String(input)).pathname.endsWith('/api/v1/secrets/s1') ? json(secretRow()) : new Response('<html>Not found</html>', { status: 404 })))
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code: 'forbidden' })
+		})
+	})
+
 	it.each([
 		['no answer', null],
 		['an answer without a source', { effectiveGrade: 'none' }],

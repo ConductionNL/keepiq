@@ -1064,6 +1064,40 @@ describe('itemEditable', () => {
 	})
 })
 
+describe('a write-context 404, which a row two share rows name gets too when it has copies of its own', () => {
+	let row: ReturnType<typeof secretRow>
+	/** The row's reads, the last answer repeating. */
+	const serve = (...reads: Array<() => Response>) => server({
+		'GET /api/v1/secrets/s1': () => (reads.length > 1 ? reads.shift()! : reads[0]!)(),
+		'GET /api/v1/secrets/s1/write-context': () => json({ message: 'Secret not found' }, 404),
+	}, [row])
+
+	beforeEach(async () => {
+		row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+	})
+
+	it.each([
+		['an edit fetch', () => fetchItem('s1')],
+		['a save', () => updateItem('s1', { key: 'new' }, row.updatedAt)],
+		['the Edit check', () => itemEditable('s1')],
+	])('refuses %s while the row is still there, saving nothing', async (_, call) => {
+		serve(() => json(row))
+		expect(await call()).toEqual({ ok: false, error: { code: 'forbidden' } })
+		expect(sent()).not.toContain('PUT /api/v1/secrets/s1/share-save')
+	})
+
+	it('is not_found for a save once Keepiq answers the row itself with 404', async () => {
+		serve(() => json({ message: 'Secret not found' }, 404))
+		expect(await updateItem('s1', { key: 'new' }, row.updatedAt)).toEqual({ ok: false, error: { code: 'not_found' } })
+	})
+
+	it('is not_found for an edit fetch whose second read of the row finds it gone', async () => {
+		serve(() => json(row), () => json({ message: 'Secret not found' }, 404))
+		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'not_found' } })
+	})
+})
+
 describe('errors and the offline flag', () => {
 	it.each([
 		[423, 'write_locked'], [403, 'forbidden'], [428, 'forbidden'], [400, 'invalid'], [409, 'conflict'], [404, 'not_found'], [503, 'server_error'],
@@ -1222,6 +1256,12 @@ describe('passkey writes', () => {
 		it('refuses a copy whose grade is view-only, writing nothing', async () => {
 			serve({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'read', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: SOURCE_AT }) })
 			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'view_only' } })
+			expect(sent()).not.toContain(SHARE_SAVE)
+		})
+
+		it('refuses a row whose write-context answers 404 while the row is still there, writing nothing', async () => {
+			serve({ 'GET /api/v1/secrets/s1/write-context': () => json({ message: 'Secret not found' }, 404) })
+			expect(await writeLoginPasskeys('s1', { kind: 'add', credential: fresh() })).toEqual({ ok: false, error: { code: 'forbidden' } })
 			expect(sent()).not.toContain(SHARE_SAVE)
 		})
 

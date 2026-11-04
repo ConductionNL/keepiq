@@ -1179,6 +1179,26 @@ describe('capture.update', () => {
 		})
 	})
 
+	describe('on a row whose write-context answers 404, as one two share rows name with copies of its own', () => {
+		beforeEach(() => {
+			routes['GET /api/v1/secrets/a/write-context'] = () => json({ message: 'Secret not found' }, 404)
+		})
+
+		it('keeps the update and offers no add while the row is still there', async () => {
+			expect(await update()).toEqual({ ok: false, error: { code: 'forbidden' } })
+			expect(await state()).toMatchObject({ mode: 'update' })
+			expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(writes()).toEqual([])
+		})
+
+		it('turns into a new login once the row reads as gone', async () => {
+			let reads = 0
+			routes['GET /api/v1/secrets/a'] = () => (++reads === 1 ? json(row) : json({ message: 'Not found' }, 404))
+			expect(await update()).toEqual({ ok: false, error: { code: 'not_found' } })
+			expect(await state()).toMatchObject({ mode: 'add' })
+		})
+	})
+
 	it('turns into a new login when a sync dropped the item before the bar asked, always naming the item in update mode', async () => {
 		await vault([])
 		const reply = await state()
