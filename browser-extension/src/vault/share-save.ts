@@ -216,7 +216,9 @@ export async function shareSave(client: Client, privateKey: CryptoKey, input: Sh
 async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, baseUpdatedAt, context, opened, withoutUnreachable }: ShareSaveInput, partners: ReturnType<typeof verifiedPartners>): Promise<ShareSaveNote | undefined> {
 	if (isViewOnly(id, context)) throw new WriteFailure({ code: 'view_only' })
 	const copyPath = !context.ownRow && context.sourceSecretId !== id
-	const sourceBaseUpdatedAt = opened?.sourceUpdatedAt ?? sourceVersion(context)
+	// A form opened while its row was saved alone made its edit from no source version, so the source's current one would hide a change since.
+	if (copyPath && opened && opened.sourceUpdatedAt === null) throw new WriteFailure({ code: 'stale_source' })
+	const sourceBaseUpdatedAt = opened ? opened.sourceUpdatedAt : sourceVersion(context)
 	let ownerCertificate = context.ownRow ? null : context.ownerCertificate
 
 	const copies = new Map<string, Values & { secretId: string }>()

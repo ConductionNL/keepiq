@@ -443,6 +443,11 @@ describe('the copy-editor path', () => {
 		expect(await failure(save())).toEqual({ code: 'stale_source' })
 	})
 
+	it('refuses a form opened while its row was saved alone as stale_source, sending nothing, rather than name the source\'s current version', async () => {
+		expect(await failure(save({ opened: await openedX({ sourceUpdatedAt: null }) }))).toEqual({ code: 'stale_source' })
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+
 	it.each(['read', 'none'])('refuses a view-only copy on a %s grade with view_only, sending nothing', async (grade) => {
 		world.effectiveGrade = grade
 		expect(await failure(save())).toEqual({ code: 'view_only' })

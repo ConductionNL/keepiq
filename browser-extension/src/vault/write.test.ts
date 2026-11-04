@@ -757,6 +757,22 @@ describe('updateItem through share-save', () => {
 		expect(bodiesOf(SHARE_SAVE).map((body) => body.sourceBaseUpdatedAt)).toEqual(['2026-02-01T00:00:00+00:00', '2026-02-01T00:00:00+00:00'])
 	})
 
+	it('refuses a save through a copy as stale_source when its form opened while the row was saved alone, keeping the record', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		let source: string | null = null
+		server({
+			...shared({ copies: [{ secretId: 'src', holder: 'owner', targetUserId: null }] }),
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: source && 'src', effectiveGrade: source ? 'write' : 'none', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: source }),
+		}, [row])
+		const form = recordOf(await fetchItem('s1'))
+		source = '2026-03-03T00:00:00+00:00'
+		expect(await updateItem('s1', { key: 'new' }, row.updatedAt, undefined, form)).toEqual({ ok: false, error: { code: 'stale_source' } })
+		expect(sent()).not.toContain(SHARE_SAVE)
+		expect(await recordIds()).toEqual(['s1'])
+	})
+
 	it('replies to a save that reached Bob and suspended a partner with the partner\'s cloud id only, no ciphertext, plaintext or certificate', async () => {
 		const x = secretRow({ key: await encrypt('x-password') })
 		await snapshot([x])
