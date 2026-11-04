@@ -48,7 +48,9 @@ export interface WriteContext {
 
 export async function readWriteContext(client: Client, id: string): Promise<WriteContext> {
 	const context = await client.keepiq<Partial<Record<keyof WriteContext, unknown>> | null>('GET', `${secretPath(id)}/write-context`)
-	if (typeof context?.sourceSecretId !== 'string') throw new WriteFailure({ code: 'unknown' })
+	// `ShareWriteContext::ownRowContext`: a row whose share rows lead to no source the caller stands on is saved alone, and share-save judges it again.
+	if (context?.sourceSecretId === null) return { sourceSecretId: id, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }
+	if (!isString(context?.sourceSecretId)) throw new WriteFailure({ code: 'unknown' })
 	const text = (value: unknown) => (typeof value === 'string' && value ? value : null)
 	return {
 		sourceSecretId: context.sourceSecretId,

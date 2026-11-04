@@ -450,6 +450,48 @@ describe('the copy-editor path', () => {
 	})
 })
 
+describe('the own-row write context', () => {
+	const OWN_ROW = { sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }
+	const answer = (body: unknown) => {
+		const route = fetchMock.getMockImplementation()!
+		fetchMock.mockImplementation(async (input, init) => (new URL(String(input)).pathname.endsWith('/write-context') ? json(body) : route(input, init)))
+	}
+
+	it('reads a null source as the caller\'s own row, whatever else the answer names', async () => {
+		answer({ ...OWN_ROW, effectiveGrade: 'owner', ownerCertificate: CERT, sourceUpdatedAt: SOURCE_AT })
+		expect(await readWriteContext(client, 's1')).toEqual({ sourceSecretId: 's1', effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null })
+	})
+
+	it('saves the row alone on the owner path, naming no source version', async () => {
+		answer(OWN_ROW)
+		expect(await save()).toBeUndefined()
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context', 'PUT /api/v1/secrets/s1/share-save'])
+		expect(saves).toEqual([{ baseUpdatedAt: BASE, patch: { key: 'own:key' }, copies: [], skipped: [], federated: [], suspend: [] }])
+	})
+
+	it.each([
+		['a row waiting for the share scan', json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409), { code: 'share_scan_pending' }],
+		['a row two share rows name', json({ message: 'Secret not found' }, 404), { code: 'not_found' }],
+		['a copy whose source the caller may not write', json({ error: 'not_allowed', message: 'Only the owner…' }, 403), { code: 'forbidden' }],
+	])('words the share-save\'s refusal of %s', async (_, refusal, error) => {
+		answer(OWN_ROW)
+		world.onFinal = () => refusal
+		expect(await failure(save())).toEqual(error)
+	})
+
+	it.each([
+		['no answer', null],
+		['an answer without a source', { effectiveGrade: 'none' }],
+		['an empty source', { ...OWN_ROW, sourceSecretId: '' }],
+		['a source that is no id', { ...OWN_ROW, sourceSecretId: 7 }],
+		['a list', [OWN_ROW]],
+	])('refuses %s as unknown, saving nothing', async (_, body) => {
+		answer(body)
+		expect(await failure(save())).toEqual({ code: 'unknown' })
+		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+})
+
 describe('isViewOnly', () => {
 	const context = (sourceSecretId: string, effectiveGrade: string) => ({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: null })
 

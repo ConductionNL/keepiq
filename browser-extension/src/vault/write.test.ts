@@ -325,6 +325,18 @@ describe('fetchItem', () => {
 		expect(await recordIds()).toEqual([])
 	})
 
+	it('opens a row the server has its holder save alone for editing, from no source version', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		server({
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }),
+		}, [row])
+		const reply = await fetchItem('s1')
+		expect(reply).toMatchObject({ ok: true, value: { key: 'pw' } })
+		expect(await records()).toMatchObject([{ sourceUpdatedAt: null }])
+	})
+
 	it.each(['write', 'manage', 'owner'])('opens a copy on the %s grade for editing', async (effectiveGrade) => {
 		const row = secretRow({ key: await encrypt('pw') })
 		await snapshot([row])
@@ -650,6 +662,14 @@ describe('updateItem through share-save', () => {
 		expect(await updateItem('s1', patch, BASE)).toEqual({ ok: true, value: { id: 's1' } })
 		expect(sent().filter(isShareSaveLine)).toEqual(['GET /api/v1/secrets/s1/write-context'])
 		expect(sent()).toContain('PUT /api/v1/secrets/s1')
+	})
+
+	it('saves a row the server has its holder save alone through its own share-save, naming no source', async () => {
+		server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }) })
+		expect(await updateItem('s1', { key: 'new' }, BASE)).toEqual({ ok: true, value: { id: 's1' } })
+		expect(sent().filter(isShareSaveLine)).toEqual(['GET /api/v1/secrets/s1/write-context', SHARE_SAVE])
+		expect(bodyOf(SHARE_SAVE)).not.toHaveProperty('sourceBaseUpdatedAt')
+		expect(bodyOf(SHARE_SAVE)).toHaveProperty('federated')
 	})
 
 	it('saves a move with a plain PUT alone, reading no grade', async () => {
@@ -998,7 +1018,7 @@ describe('updateItem through share-save', () => {
 })
 
 describe('itemEditable', () => {
-	const grade = (sourceSecretId: string, effectiveGrade: string | null) => server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }) })
+	const grade = (sourceSecretId: string | null, effectiveGrade: string | null) => server({ 'GET /api/v1/secrets/s1/write-context': () => json({ sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: SOURCE_AT }) })
 
 	it.each([
 		['a copy on a team-folder read grade', 'src', 'read', false],
@@ -1007,6 +1027,7 @@ describe('itemEditable', () => {
 		['a copy on the manage grade', 'src', 'manage', true],
 		['a delegate\'s copy on the owner grade', 'src', 'owner', true],
 		['the source', 's1', 'owner', true],
+		['a row the server has its holder save alone', null, 'none', true],
 	])('answers %s from write-context alone, without a sync', async (_, sourceSecretId, effectiveGrade, editable) => {
 		grade(sourceSecretId, effectiveGrade)
 		expect(await itemEditable('s1')).toEqual({ ok: true, value: { editable } })
