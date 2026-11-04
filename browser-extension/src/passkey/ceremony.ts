@@ -587,7 +587,7 @@ async function askedConditional(tabId: number, ceremonyId: string): Promise<Cere
 export async function pickFromList(tabId: number, ceremonyId: string, itemId: string, credentialId: string): Promise<ListPick> {
 	await enforce()
 	const asked = await askedConditional(tabId, ceremonyId)
-	// A click on the page is a new round: a verification in the window counts for neither it nor what follows.
+	// A click in the inline list is a new round: a verification in the window counts for neither it nor what follows.
 	const ceremony = asked && await update(asked, { verified: false })
 	if (!ceremony) return 'stale'
 	const reply = await once(ceremony, () => pick(ceremony, itemId, credentialId))

@@ -31,7 +31,7 @@ Since keepiq#1324 a login keeps its passkeys in its own encrypted `passkeys` fie
 - **Fallback**: "Use your device or hardware key" hands the request, unchanged, to the browser's own authenticator. So do a turned-off setting, an excluded domain, a logged-out account and every request Keepiq does not handle.
 - **Locked**: the window opens on the unlock view, then continues. Nothing about which passkeys exist reaches the page or the window before unlock.
 - **Conditional mediation**: while a page waits on `get({ mediation: 'conditional' })`, the inline list shows the matching passkeys next to the logins, and the browser's own conditional UI runs alongside, as in Bitwarden.
-- **User verification**: a request with `userVerification: 'required'` asks the master password, or the PIN where one is set, unless the user unlocked within this ceremony.
+- **User verification**: a request with `userVerification: 'required'` asks the master password, or the PIN where one is set, unless the user unlocked in the current passkey window.
 - **Signature counter**: a passkey with a non-zero counter (imported) is saved with the counter plus one before the assertion is returned; new passkeys keep 0, as in Bitwarden. Every write saves the login's `passkeys` whole, the other entries unchanged.
 - **Settings**: "Ask to save and use passkeys" in Notifications, on by default; the existing Excluded domains turn the provider off for those sites too.
 - **Item detail** lists a login's passkeys by relying party, user name and date, never a private key; a standalone passkey item says Keepiq signs in only with passkeys on a login.
