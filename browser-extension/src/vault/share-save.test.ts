@@ -823,6 +823,7 @@ describe('failures', () => {
 		['a 400', json({ error: 'copy_fields_mismatch' }, 400), { code: 'invalid' }],
 		['Nextcloud\'s page for a route this Keepiq lacks', new Response('<html/>', { status: 404 }), { code: 'keepiq_outdated' }],
 		['Keepiq\'s own 404', json({ message: 'Secret not found' }, 404), { code: 'not_found' }],
+		['a share row waiting for the share scan', json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409), { code: 'share_scan_pending' }],
 	])('maps %s through writeError', async (_, answer, error) => {
 		world.onFinal = () => answer
 		expect(await failure(save())).toEqual(error)

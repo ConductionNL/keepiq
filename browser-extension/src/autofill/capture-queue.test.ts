@@ -1120,6 +1120,13 @@ describe('capture.update', () => {
 		expect(await state()).toMatchObject({ mode: 'update' })
 	})
 
+	it('fails an item waiting for the share scan as share_scan_pending, once per press, keeping the update', async () => {
+		routes['PUT /api/v1/secrets/a/share-save'] = () => json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409)
+		expect(await update()).toEqual({ ok: false, error: { code: 'share_scan_pending' } })
+		expect(writes()).toEqual(['PUT /api/v1/secrets/a/share-save'])
+		expect(await state()).toMatchObject({ mode: 'update' })
+	})
+
 	it('fails a view-only copy as view_only', async () => {
 		routes['GET /api/v1/secrets/a/write-context'] = () => json({ sourceSecretId: 'source', effectiveGrade: 'read', ownerCertificate: null, sourceUpdatedAt: null })
 		expect(await update()).toEqual({ ok: false, error: { code: 'view_only' } })

@@ -13,6 +13,9 @@ describe('writeError', () => {
 		['a 403 naming a policy', new ApiError(403, 'Policy', 'org_ownership_required'), 'policy'],
 		['a 404', new ApiError(404, 'Gone'), 'not_found'],
 		['a 409', new ApiError(409, 'Stale'), 'conflict'],
+		['a 409 waiting for the share scan', new ApiError(409, 'Waits for the scan', 'share_scan_pending'), 'share_scan_pending'],
+		['another 409 refusal', new ApiError(409, 'Stale', 'stale'), 'conflict'],
+		['the scan code on another status', new ApiError(400, 'Bad', 'share_scan_pending'), 'invalid'],
 		['a 502', new ApiError(502, 'Bad gateway'), 'server_error'],
 	])('maps %s', (_, error, code) => {
 		expect(writeError(error)).toEqual({ code })

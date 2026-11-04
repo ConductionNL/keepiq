@@ -116,6 +116,7 @@ const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, co
 	['partner_upgrade_required', partnerUpgradeText],
 	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
 	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
+	['share_scan_pending', (_, context) => (context === 'open' ? i18n.t('writeErrors.shareScanPendingOpen') : i18n.t('writeErrors.shareScanPending'))],
 ])
 
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {

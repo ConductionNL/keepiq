@@ -66,6 +66,7 @@ export function writeErrorText(error: VaultWriteError | undefined, mode: Mode): 
 		case 'restricted': return i18n.t('writeErrors.restricted')
 		case 'key_mismatch': return i18n.t('notificationBar.errors.keyMismatch')
 		case 'stale_source': return i18n.t('notificationBar.errors.staleSource')
+		case 'share_scan_pending': return i18n.t('notificationBar.errors.shareScanPending')
 		case 'incomplete': return i18n.t('notificationBar.errors.incomplete')
 		case 'bad_certificate': return i18n.t('notificationBar.errors.badCertificate')
 		case 'keepiq_outdated': return i18n.t('notificationBar.errors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION })

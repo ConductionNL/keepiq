@@ -313,6 +313,18 @@ describe('fetchItem', () => {
 		expect(await fetchItem('s1', 'clone')).toMatchObject({ ok: true, value: { key: 'pw' } })
 	})
 
+	it('refuses to edit a copy whose share row waits for the share scan, keeping nothing', async () => {
+		const row = secretRow({ key: await encrypt('pw') })
+		await snapshot([row])
+		server({
+			'GET /api/v1/secrets/s1': () => json(row),
+			'GET /api/v1/secrets/s1/write-context': () => json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409),
+		}, [row])
+		expect(await fetchItem('s1')).toEqual({ ok: false, error: { code: 'share_scan_pending' } })
+		expect(vi.mocked(rsaDecrypt)).not.toHaveBeenCalled()
+		expect(await recordIds()).toEqual([])
+	})
+
 	it.each(['write', 'manage', 'owner'])('opens a copy on the %s grade for editing', async (effectiveGrade) => {
 		const row = secretRow({ key: await encrypt('pw') })
 		await snapshot([row])

@@ -19,6 +19,7 @@ export function writeError(error: unknown): VaultWriteError {
 		// A blocked suite, a folder someone else owns and a read-only copy are all a bare refusal; only a policy names itself.
 		if (error.refused) return { code: error.code ? 'policy' : 'forbidden' }
 		if (error.status === 404) return { code: 'not_found' }
+		if (error.status === 409 && error.code === 'share_scan_pending') return { code: 'share_scan_pending' }
 		if (error.status === 409) return { code: 'conflict' }
 		if (error.status >= 500) return { code: 'server_error' }
 	}
