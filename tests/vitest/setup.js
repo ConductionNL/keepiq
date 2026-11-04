@@ -26,6 +26,9 @@
  */
 
 import { config } from '@vue/test-utils'
+import { monotonic } from './monotonicNow.js'
+
+Date.now = monotonic(Date.now.bind(Date))
 
 const tStub = (_app, key, _vars) => key
 const nStub = (_app, singular, plural, count) => (count === 1 ? singular : plural)

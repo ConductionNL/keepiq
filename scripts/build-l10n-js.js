@@ -76,6 +76,19 @@ function appId() {
 }
 
 /**
+ * @param {object} translations key -> translation
+ * @return {string} one line per key, comma-joined
+ */
+function renderEntries(translations) {
+	return Object.keys(translations)
+		.map(
+			(key) =>
+				`        ${JSON.stringify(key)}: ${JSON.stringify(translations[key])}`,
+		)
+		.join(',\n')
+}
+
+/**
  * Render one catalogue as the `OC.L10N.register` call the browser expects.
  *
  * @param {string} id - the app id to register under
@@ -83,18 +96,11 @@ function appId() {
  * @return {string} the .js file body
  */
 function renderJs(id, doc) {
-	const translations = doc.translations
-	const body = Object.keys(translations)
-		.map(
-			(key) =>
-				`        ${JSON.stringify(key)}: ${JSON.stringify(translations[key])}`,
-		)
-		.join(',\n')
 	return [
 		'OC.L10N.register(',
 		`    ${JSON.stringify(id)},`,
 		'    {',
-		body,
+		renderEntries(doc.translations),
 		'    },',
 		`    ${JSON.stringify(doc.pluralForm)}`,
 		')',

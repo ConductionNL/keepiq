@@ -65,22 +65,34 @@ export function fieldListError(fields, t) {
 	const seen = []
 	for (const field of fields) {
 		const label = (field.label || '').trim()
-		if (label === '') {
-			return t('keepiq', 'Give the field a name.')
-		}
-		if (RESERVED_MEMBER_NAMES.includes(label.toLowerCase())) {
-			return t(
-				'keepiq',
-				'“{name}” is a built-in field, not an additional one — choose a different name.',
-				{ name: label.toLowerCase() },
-			)
-		}
-		if (seen.includes(label.toLowerCase())) {
-			return t('keepiq', 'That field is already listed.')
+		const problem = labelError(label, { seen, t })
+		if (problem !== '') {
+			return problem
 		}
 		seen.push(label.toLowerCase())
 	}
 	return ''
+}
+
+/**
+ * @param {string} label The trimmed label.
+ * @param {{seen: string[], t: Function}} context The lowercased labels before it and the translate function.
+ * @return {string} What is wrong with the label, or ''.
+ */
+function labelError(label, { seen, t }) {
+	if (label === '') {
+		return t('keepiq', 'Give the field a name.')
+	}
+	if (RESERVED_MEMBER_NAMES.includes(label.toLowerCase())) {
+		return t(
+			'keepiq',
+			'“{name}” is a built-in field, not an additional one — choose a different name.',
+			{ name: label.toLowerCase() },
+		)
+	}
+	return seen.includes(label.toLowerCase())
+		? t('keepiq', 'That field is already listed.')
+		: ''
 }
 
 /**

@@ -53,6 +53,35 @@ function positiveInt(raw: string | null): number | null {
 	return Number.isFinite(n) && n > 0 ? n : null
 }
 
+function otpauthUrl(value: string): URL {
+	let url: URL
+	try {
+		url = new URL(value)
+	} catch {
+		throw new InvalidTotpSeed('Malformed otpauth URI')
+	}
+	if (url.host.toLowerCase() !== 'totp') throw new InvalidTotpSeed('Not an otpauth://totp URI')
+	return url
+}
+
+function labelOf(url: URL): string {
+	const raw = url.pathname.replace(/^\//, '')
+	try {
+		return decodeURIComponent(raw)
+	} catch {
+		return raw
+	}
+}
+
+/** `Issuer:Account` in the label; the `issuer` parameter wins over the label's. */
+function identityOf(url: URL): Pick<TotpParams, 'issuer' | 'account'> {
+	const label = labelOf(url)
+	const issuer = url.searchParams.get('issuer')
+	if (!label.includes(':')) return { issuer: issuer || null, account: label || null }
+	const [labelIssuer = '', ...rest] = label.split(':')
+	return { issuer: issuer || labelIssuer.trim() || null, account: rest.join(':').trim() || null }
+}
+
 /** An `otpauth://totp/...` URI or a bare base32 secret; HOTP and anything else throw `InvalidTotpSeed`. */
 export function parseTotpSeed(raw: string): TotpParams {
 	const value = raw.trim()
@@ -61,37 +90,16 @@ export function parseTotpSeed(raw: string): TotpParams {
 		base32Decode(value)
 		return { secret: value.replace(/\s+/g, '').toUpperCase(), algorithm: 'SHA1', digits: 6, period: 30, issuer: null, account: null }
 	}
-	let url: URL
-	try {
-		url = new URL(value)
-	} catch {
-		throw new InvalidTotpSeed('Malformed otpauth URI')
-	}
-	if (url.host.toLowerCase() !== 'totp') throw new InvalidTotpSeed('Not an otpauth://totp URI')
+	const url = otpauthUrl(value)
 	const secret = url.searchParams.get('secret')
 	if (!secret) throw new InvalidTotpSeed('otpauth URI has no secret')
 	base32Decode(secret)
-
-	let label: string
-	try {
-		label = decodeURIComponent(url.pathname.replace(/^\//, ''))
-	} catch {
-		label = url.pathname.replace(/^\//, '')
-	}
-	let account: string | null = label || null
-	let issuer = url.searchParams.get('issuer')
-	if (label.includes(':')) {
-		const [labelIssuer = '', ...rest] = label.split(':')
-		issuer ||= labelIssuer.trim() || null
-		account = rest.join(':').trim() || null
-	}
 	return {
 		secret: secret.replace(/\s+/g, '').toUpperCase(),
 		algorithm: algorithmOf(url.searchParams.get('algorithm')),
 		digits: positiveInt(url.searchParams.get('digits')) === 8 ? 8 : 6,
 		period: positiveInt(url.searchParams.get('period')) ?? 30,
-		issuer: issuer || null,
-		account,
+		...identityOf(url),
 	}
 }
 

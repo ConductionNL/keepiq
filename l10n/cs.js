@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Sdíleno s vámi pouze pro zobrazení. Chcete-li ho změnit, požádejte vlastníka o oprávnění k úpravám.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Sdíleno s vámi pouze pro zobrazení. Nic nebylo uloženo; chcete-li ho změnit, požádejte vlastníka o oprávnění k úpravám.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerská organizace, se kterou je toto tajemství sdíleno, není dostupná ({partners}). Proveďte změnu znovu online, kde ji můžete uložit bez ní.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Partnerská organizace, se kterou je toto tajemství sdíleno, není dostupná. Proveďte změnu znovu online, kde ji můžete uložit bez ní.",
         "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Tato offline změna je druhu, který Keepiq nezná, proto nebyla uložena. Zahoďte ji a proveďte změnu znovu online.",
         "Save without them": "Uložit bez nich",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Uloženo. Příjemci v partnerských organizacích dostanou tuto změnu, až vlastník příště uloží toto tajemství.",
