@@ -65,5 +65,6 @@
   - Every comment and doc line follows CLAUDE.md § Comments & docs
 - [ ] 6.3 Walk every scenario in `specs/` on Chrome (`npm run dev`) and Firefox (`npm run dev:firefox`) on the test site, with the vault locked and unlocked, a stopped MV3 worker and a Keepiq at 0.3.12
   - Every scenario holds on both browsers, or the difference is in design.md
+  - In a normal, non-headless window on both browsers, "Use your device or hardware key" opens the browser's own dialog for create and get, with no `NotAllowedError`
   - `npm test`, typecheck and lint are clean
   - Both targets build

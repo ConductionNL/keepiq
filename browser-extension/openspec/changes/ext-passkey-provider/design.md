@@ -65,6 +65,7 @@ What crosses each boundary, and nothing else:
 - **The window is the popup page** at `popup.html?passkey=<ceremonyId>`, opened with `browser.windows.create({ type: 'popup' })` as `popout()` does. It reuses the unlock view and the PIN, sends popup kinds the existing sender routing accepts, and holds the `popup` port, so "Immediately" locks when it closes, as for any popup. A second ceremony reloads it with `expectPopout()` first, as Pop out does, so the reconnect gap does not lock.
 - **The Save view lists the matching logins only,** since a passkey almost always goes to a login the user has; a "New login" icon button in the header corner opens the Name and Folder step, which shows at once when no login matches. A login that appears during the ceremony does not interrupt the new-login step, or Enter meant for Name would save to it.
 - **Ending a ceremony:** `windows.onRemoved` (Cancel), `tabs.onRemoved`, `tabs.onUpdated` with a `url` of another origin than the ceremony's, the relay's `pagehide` (`passkey.abort`) when the frame unloads, `vault.locked` with a logout, an account switch, a new ceremony in the tab, and the deadline. `status: 'loading'` alone is no navigation, since Chrome reports it for `pushState` and late frame loads. The page script rejects at the deadline and sends `passkey.abort`; the background also checks the deadline on every ceremony message, so a page that never aborts only leaves the window open until the user closes it.
+- **A fallback closes the window first:** since Chromium refuses a WebAuthn call from a page without focus, the background closes the Keepiq window, activates the tab (for "Use your device or hardware key" only), focuses its window and sends `fallback` once `windows.onFocusChanged` reports it, waiting at most a second for the close and half a second for the focus, within the deadline. A newer ceremony in the tab that has or is opening a window keeps the focus.
 - **`enforce()` runs first** on every ceremony message, so an overdue vault locks before anything is matched.
 
 ### Messages
@@ -95,7 +96,7 @@ All in `src/messages.ts`, dotted kinds:
 - **`partner_upgrade_required` extends from `totp` to `passkeys`** (ext-totp-capture), so it stops only a login's first passkey save.
 - **A partner that cannot store passkeys gets later changes as null,** counter saves included; were our record of it outdated, the server refuses with `copy_fields_mismatch`, so nothing is lost.
 - **Our own refusal names `TOTP_PASSKEYS_FIELDS_SINCE`** (`src/api/keepiq-version.ts`, the server's constant) as `requiredVersion`, as the server's does.
-- **Its `Opened` vouches for `key`, `login` and `additionalFields` only when the fresh row has them empty,** so a partner-shared login with any of them fails `unverified`, as an edit would; see Open Questions.
+- **Its `Opened` vouches for `key`, `login` and `additionalFields` only when the fresh row has them empty,** so a partner-shared login with any of them fails `unverified`, as an edit would; see Decided questions.
 - **Retry after a failed save syncs first:** a lost reply may hide a stored write, so a login holding a passkey a failed try wrote gets the new one in its place instead of a second login or entry. Without a sync it refuses with the sync's error.
 - **Keepiq API:** `secret#create`, `secret#show`, `share#writeContext`, `shareSave#save`, `share#recipientCertificates`, `federation#recipientCertificate`, `encryptionSuite#index`, `secretType#index` (`appinfo/routes.php`). All in 0.3.12 (ADR-003), the `passkeys` field too (keepiq#1325). No `KEEPIQ_FEATURES` entry.
 
@@ -129,11 +130,11 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 
 ## Risks / Trade-offs
 
-- [The counter save sends the login's passkeys to every copy the server lists] → The same trust ext-share-sync accepts for an edit (ADR-002 § Sharing), now on each sign-in with an imported non-zero counter. New passkeys keep 0 and never write. See Open Questions.
+- [The counter save sends the login's passkeys to every copy the server lists] → The same trust ext-share-sync accepts for an edit (ADR-002 § Sharing), now on each sign-in with an imported non-zero counter. New passkeys keep 0 and never write. See Decided questions.
 - [Saving to a login rewrites its whole `passkeys` field] → Entries round-trip as parsed and serialised in the web app's field order; the fresh fetch must match the cache, so a concurrent change from another client fails `stale` and is retried on the new value, never overwritten.
 - [Existing standalone passkey items stop being usable for sign-in in the extension] → Accepted: the app has no users beyond internal testers (keepiq#1328 dropped); the detail still shows them and says why.
 - [A non-zero counter can't sign offline or from a copy the user can't write] → As Bitwarden, which saves before replying. The window offers the browser's authenticator.
-- [Firefox injects the page script inline, which a page's CSP that forbids inline scripts blocks] → It runs whole or not at all: such a page keeps the browser's own passkeys and may log or report a CSP violation. A `<script src>` would pass that CSP but show the page the per-install `moz-extension://` UUID; see Open Questions.
+- [Firefox injects the page script inline, which a page's CSP that forbids inline scripts blocks] → It runs whole or not at all: such a page keeps the browser's own passkeys and may log or report a CSP violation. A `<script src>` would pass that CSP but show the page the per-install `moz-extension://` UUID; see Decided questions.
 - [The page script detects as Keepiq on every page] → Patched methods are visible to any page; Bitwarden's are too. It answers nothing about the vault.
 - [Sites see an unnamed authenticator (zero AAGUID)] → Cosmetic; a registered AAGUID can come later without changing stored passkeys.
 - [Chrome below 111 runs the page script isolated, where it does nothing] → The browser handles every request; no harm.
@@ -141,10 +142,12 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 - [A page can start conditional requests and focus fields at will, and a focus decrypts the logins holding passkeys] → They are decrypted once per account, key and vault version, and the rows (ids and names) kept in background memory, so a loop costs nothing more. Accepted: that first focus after an unlock or vault change still lets the page's timing tell an unlocked vault holding passkeys from a locked one, and roughly how many logins hold them.
 - [A fresh save to a different target after a lost reply leaves the lost try's passkey on its original login] → The site never registered it and no secret is exposed; Retry or a save to the same target puts the new one in its place.
 
-## Open Questions
+## Decided questions
 
-- Should a counter save re-encrypt a shared login's passkeys for every listed copy on sign-in (as specced, like an edit), or should a shared passkey sign without saving the counter?
-- Save to a partner-shared login fails `unverified` when it has a password, username or additional fields, since the extension never opened them in a form. Accept (as specced), or let the passkey save vouch for fields it never changes?
-- Should use-only, read-only and view-only copies with a non-zero counter refuse to sign (as specced, Bitwarden's behaviour), or sign with the unsaved counter plus one?
-- Firefox: accept the inline script and no Keepiq passkeys on strict-CSP pages (as built), raise `strict_min_version` to 128 if MV2 honours a manifest `world: 'MAIN'` there, or install the page functions from the isolated world with `exportFunction`?
-- Register a Keepiq AAGUID with the passkey provider list, or keep zeros?
+Decided by Thijn on 2026-11-04, all as built:
+
+- **A counter save re-encrypts a shared login's passkeys for every listed copy** on sign-in, like an edit.
+- **A passkey save to a partner-shared login fails `unverified`** when the login has a password, username or additional fields, since the extension never opened them in a form. Follow-up: keepiq#1470.
+- **Use-only, read-only and view-only copies with a non-zero counter refuse to sign,** as Bitwarden does.
+- **Firefox injects the page script inline,** so pages whose CSP forbids inline scripts get no Keepiq passkeys. Follow-up: keepiq#1471.
+- **The AAGUID stays all zeros.**
