@@ -545,12 +545,19 @@ async function windowClosed(windowId: number): Promise<void> {
 	}
 }
 
+/** A pending conditional `get` as the inline list sees it: whether it names credentials, never which. */
+export interface ConditionalRequest {
+	id: string
+	rpId: string
+	namesCredentials: boolean
+}
+
 /** The pending conditional `get` of this frame and account, for the inline list; never one of another frame or origin. */
-export async function conditionalCeremony(tabId: number, frameId: number, accountId: string, frameUrl: string): Promise<Pick<Ceremony, 'id' | 'rpId' | 'credentialIds'> | null> {
+export async function conditionalCeremony(tabId: number, frameId: number, accountId: string, frameUrl: string): Promise<ConditionalRequest | null> {
 	const ceremony = await store.get(tabId)
 	if (!ceremony?.conditional || ceremony.kind !== 'get' || ceremony.frameId !== frameId || ceremony.accountId !== accountId) return null
 	if (originOf(frameUrl) !== ceremony.origin || !(await stillAsked(ceremony))) return null
-	return { id: ceremony.id, rpId: ceremony.rpId, credentialIds: ceremony.credentialIds }
+	return { id: ceremony.id, rpId: ceremony.rpId, namesCredentials: ceremony.credentialIds.length !== 0 }
 }
 
 export type ListPick = 'signed' | 'window' | 'locked' | 'stale'

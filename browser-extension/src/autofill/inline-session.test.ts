@@ -758,6 +758,40 @@ describe('passkeys during a conditional request', () => {
 		expect(passkeyDecrypts()).toBe(1)
 	})
 
+	it.each([
+		['an empty allow list', { allowCredentials: [] }],
+		['no allow list', { allowCredentials: undefined }],
+	])('offers every passkey for the RP ID on %s', async (_, options) => {
+		await conditional(options)
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(2) })
+		expect((await openWithState()).state).toMatchObject({ rows: [{ id: 'work' }], passkeys: [offered] })
+	})
+
+	it('shows the same rows and height whatever credentials the allow list names, decrypting no passkey', async () => {
+		const id = (credentialId: string) => ({ type: 'public-key', id: credentialId })
+		const allowLists = [
+			[id('QQ')], [id('Zm9v')], [id('QQ'), id('Zm9v')], [id('Zm9v'), id('QQ')], [id('QQ'), id('QQ')], [id('Qg')], [id('QR')], [id('')],
+			[{ type: 'other', id: 'Zm9v' }, id('QQ')], [id('Q')], [id('QQ==')], [{ type: 'public-key' }], 'QQ',
+		]
+		vi.mocked(rsaDecrypt).mockClear()
+		const shown: object[] = []
+		for (const allowCredentials of allowLists) {
+			const ceremonyId = await conditional({ allowCredentials })
+			// A malformed request is refused at the start, so a webauthn field has no request to open on.
+			if (ceremonyId) expect(await openSession(WEBAUTHN, content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+			const height = (await openSession(OPEN, content()))?.height
+			const { key, state } = await openWithState()
+			const { rows, passkeys = [] } = state as { rows: unknown[]; passkeys?: unknown[] }
+			shown.push({ height, rows, passkeys })
+			expect(await pickPasskey(key)).toEqual({ refused: 'stale' })
+			if (ceremonyId) await handlePasskeyContent({ kind: 'passkey.abort', ceremonyId } as never, content())
+		}
+		expect(shown).toEqual(allowLists.map(() => shown[0]))
+		expect(shown[0]).toMatchObject({ height: inlineHeight(1), rows: [{ id: 'work' }], passkeys: [] })
+		expect(passkeyDecrypts()).toBe(0)
+		expect(results()).toEqual([])
+	})
+
 	it('answers an empty passkey list where none matches, for "No logins or passkeys"', async () => {
 		await conditional({ rpId: 'example.test', allowCredentials: [{ type: 'public-key', id: 'Zm9v' }] })
 		pageUrl = 'https://example.test/other'
