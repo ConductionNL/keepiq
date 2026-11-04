@@ -63,15 +63,13 @@ type CaConstraintsName = 'root' | 'rootFingerprint' | 'rootPathLen0' | 'rootPath
 	| 'mallory' | 'malloryKey' | 'malloryUnknownCritical' | 'malloryUnknownNonCritical' | 'malloryDuplicateExtension' | 'malloryByRoot' | 'malloryBySubIntermediate'
 	| 'forgedAlice'
 
-/** From `generate-ca-constraints-chain.sh` next to it, without its `_note`. */
-export function caConstraintsChain(): Record<CaConstraintsName, string> {
-	return JSON.parse(readFileSync(new URL('./ca-constraints-chain.json', import.meta.url), 'utf8'), (key, value) => key === '_note' ? undefined : value)
-}
+/** A chain fixture next to this file, from the `generate-*.sh` of its name, without its `_note`. */
+const chainFixture = <Name extends string>(file: string): Record<Name, string> =>
+	JSON.parse(readFileSync(new URL(`./${file}`, import.meta.url), 'utf8'), (key, value) => key === '_note' ? undefined : value)
 
-/** From `generate-phpseclib-chain.sh` next to it, without its `_note`. */
-export function phpseclibChain(): Record<'root' | 'rootFingerprint' | 'intermediate' | 'leaf' | 'leafResigned' | 'opensslLeafResigned', string> {
-	return JSON.parse(readFileSync(new URL('./phpseclib-chain.json', import.meta.url), 'utf8'), (key, value) => key === '_note' ? undefined : value)
-}
+export const caConstraintsChain = () => chainFixture<CaConstraintsName>('ca-constraints-chain.json')
+
+export const phpseclibChain = () => chainFixture<'root' | 'rootFingerprint' | 'intermediate' | 'leaf' | 'leafResigned' | 'opensslLeafResigned'>('phpseclib-chain.json')
 
 export const suiteRow = {
 	id: 'suite-1',
