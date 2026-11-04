@@ -7,7 +7,7 @@ import { buildPasskeyCredential, type PasskeyCredential } from './credential'
 
 export const ES256 = -7
 
-/** Keepiq has no registered AAGUID (design.md, Open Questions). */
+/** Keepiq has no registered AAGUID (design.md, Decided questions). */
 export const AAGUID = new Uint8Array(16)
 
 export const FLAGS = { UP: 0x01, UV: 0x04, BE: 0x08, BS: 0x10, AT: 0x40 } as const
