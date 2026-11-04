@@ -1142,6 +1142,43 @@ describe('capture.update', () => {
 		expect(await decrypt(bodyOf('POST /api/v1/secrets')!.key)).toBe('hunter2')
 	})
 
+	describe('on a row the server has its holder save alone, whose share-save answers 404', () => {
+		/** The answers to the item's reads, the first before the save and the second after its 404. */
+		const reads = (...answers: Array<() => Response>) => {
+			routes['GET /api/v1/secrets/a'] = () => (answers.shift() ?? (() => json(row)))()
+		}
+
+		beforeEach(() => {
+			routes['GET /api/v1/secrets/a/write-context'] = () => json({ sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null })
+			routes['PUT /api/v1/secrets/a/share-save'] = () => json({ message: 'Secret not found' }, 404)
+		})
+
+		it('keeps the update and offers no add while the row is still there, as for a row two share rows name', async () => {
+			reads(() => json(row), () => json(row))
+			expect(await update()).toEqual({ ok: false, error: { code: 'forbidden' } })
+			expect(await state()).toMatchObject({ mode: 'update' })
+			expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(writes()).toEqual(['PUT /api/v1/secrets/a/share-save'])
+		})
+
+		it('turns into a new login once the row reads as gone', async () => {
+			reads(() => json(row), () => json({ message: 'Not found' }, 404))
+			expect(await update()).toEqual({ ok: false, error: { code: 'not_found' } })
+			expect(await state()).toMatchObject({ mode: 'add' })
+		})
+
+		it.each([
+			['a network failure', (): Response => {
+				throw new TypeError('Failed to fetch')
+			}],
+			['a server error', () => json({ message: 'Internal error' }, 500)],
+		])('keeps the update after %s on the second read', async (_, failed) => {
+			reads(() => json(row), failed)
+			expect((await update() as { error: { code: string } }).error.code).not.toBe('not_found')
+			expect(await state()).toMatchObject({ mode: 'update' })
+		})
+	})
+
 	it('turns into a new login when a sync dropped the item before the bar asked, always naming the item in update mode', async () => {
 		await vault([])
 		const reply = await state()
