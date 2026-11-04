@@ -42,6 +42,7 @@ use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Service\ApplicationSecretRequestService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -97,10 +98,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 				applicationId: $application->getId()
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(
@@ -138,17 +136,11 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 				expiresAt: $this->optionalExpiry()
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (Exception $e) {
 			// Guard refusals (pending/rejected application, revoked or
 			// compromised suite, a rotation in progress) land here.
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}//end try
 
 		return new JSONResponse(

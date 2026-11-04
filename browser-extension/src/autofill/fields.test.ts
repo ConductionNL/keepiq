@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { classifyField, fillField, findGroups, findLoginFields, groupOf, isQualifying } from './fields'
+import { classifyField, codeGroup, fillField, findCodeGroups, findGroups, findLoginFields, groupOf, isQualifying } from './fields'
 
 const $ = (selector: string, root: Document | ShadowRoot = document) => root.querySelector(selector) as HTMLInputElement
 const mount = (html: string) => {
@@ -31,8 +31,8 @@ describe('login forms', () => {
 		expect(group?.username).toBe($('#u'))
 		expect(group?.currentPassword).toBe($('#p'))
 		expect(group?.submit?.textContent).toBe('Sign in')
-		expect(isQualifying($('#u'))).toBe(true)
-		expect(isQualifying($('#p'))).toBe(true)
+		expect(isQualifying($('#u'))).toBe('login')
+		expect(isQualifying($('#p'))).toBe('login')
 	})
 
 	it('ignores autocomplete="off" on the form and its fields', () => {
@@ -44,7 +44,7 @@ describe('login forms', () => {
 		expect(groupOf($('#u'))?.kind).toBe('login')
 		expect(classifyField($('#u'))).toBe('username')
 		expect(classifyField($('#p'))).toBe('currentPassword')
-		expect(isQualifying($('#u'))).toBe(true)
+		expect(isQualifying($('#u'))).toBe('login')
 	})
 
 	it.each(['false', 'nonsense-token'])('ignores autocomplete="%s"', (value) => {
@@ -54,7 +54,7 @@ describe('login forms', () => {
 			<button>Log in</button>
 		</form>`)
 		expect(groupOf($('#u'))?.kind).toBe('login')
-		expect(isQualifying($('#p'))).toBe(true)
+		expect(isQualifying($('#p'))).toBe('login')
 	})
 
 	it('treats a login password mislabelled new-password as the current password', () => {
@@ -65,7 +65,7 @@ describe('login forms', () => {
 		</form>`)
 		expect(classifyField($('#p'))).toBe('currentPassword')
 		expect(groupOf($('#p'))?.kind).toBe('login')
-		expect(isQualifying($('#p'))).toBe(true)
+		expect(isQualifying($('#p'))).toBe('login')
 	})
 
 	it('reads the email login of test-site/email-login.html and leaves the checkbox alone', () => {
@@ -89,7 +89,7 @@ describe('login forms', () => {
 		const group = groupOf($('#p'))
 		expect(group?.kind).toBe('login')
 		expect(group?.username).toBeNull()
-		expect(isQualifying($('#p'))).toBe(true)
+		expect(isQualifying($('#p'))).toBe('login')
 	})
 
 	it('supports a username-only step', () => {
@@ -101,7 +101,7 @@ describe('login forms', () => {
 		expect(group?.kind).toBe('login')
 		expect(group?.username).toBe($('#u'))
 		expect(group?.currentPassword).toBeNull()
-		expect(isQualifying($('#u'))).toBe(true)
+		expect(isQualifying($('#u'))).toBe('login')
 	})
 
 	it('prefers the default submit button over a keyword button before it', () => {
@@ -134,7 +134,7 @@ describe('login forms', () => {
 		const group = groupOf($('#p'))
 		expect(group?.kind).toBe('login')
 		expect(group?.username).toBe($('#t'))
-		expect(isQualifying($('#t'))).toBe(true)
+		expect(isQualifying($('#t'))).toBe('login')
 	})
 
 	it('takes a phone number as the username of a username-only step with "Volgende"', () => {
@@ -225,7 +225,7 @@ describe('submit texts', () => {
 			<button type="submit">${text}</button>
 		</form>`)
 		expect(groupOf($('#u'))?.kind).toBe(kind)
-		expect(isQualifying($('#u'))).toBe(kind === 'login')
+		expect(isQualifying($('#u'))).toBe(kind === 'login' ? 'login' : null)
 	})
 })
 
@@ -243,7 +243,7 @@ describe('sign-up and password change', () => {
 		expect(classifyField($('#u'))).toBe('username')
 		expect(classifyField($('#p'))).toBe('newPassword')
 		expect(classifyField($('#c'))).toBe('newPassword')
-		for (const id of ['#e', '#u', '#p', '#c']) expect(isQualifying($(id))).toBe(false)
+		for (const id of ['#e', '#u', '#p', '#c']) expect(isQualifying($(id))).toBeNull()
 	})
 
 	it('classifies a sign-up with one password and no tokens by its submit text', () => {
@@ -269,7 +269,7 @@ describe('sign-up and password change', () => {
 		expect(group?.username).toBe($('#u'))
 		expect(group?.currentPassword).toBe($('#cur'))
 		expect(group?.newPasswords).toEqual([$('#new'), $('#c')])
-		for (const id of ['#u', '#cur', '#new', '#c']) expect(isQualifying($(id))).toBe(false)
+		for (const id of ['#u', '#cur', '#new', '#c']) expect(isQualifying($(id))).toBeNull()
 	})
 
 	it('reads three unlabelled password fields as current, new and confirm by their shape', () => {
@@ -301,7 +301,7 @@ describe('sign-up and password change', () => {
 			<button>Save</button>
 		</form>`)
 		expect(groupOf($('#new'))?.kind).toBe('passwordChange')
-		expect(isQualifying($('#new'))).toBe(false)
+		expect(isQualifying($('#new'))).toBeNull()
 	})
 })
 
@@ -313,7 +313,41 @@ describe('one-time codes', () => {
 		</form>`)
 		expect(classifyField($('#code'))).toBe('oneTimeCode')
 		expect(groupOf($('#code'))?.kind).not.toBe('login')
-		expect(isQualifying($('#code'))).toBe(false)
+		expect(isQualifying($('#code'))).toBe('code')
+	})
+
+	it('qualifies every input of six one-character inputs in code mode, and finds them as one group', () => {
+		mount(`<form>${[0, 1, 2, 3, 4, 5].map((i) => `<input id="d${i}" type="text" inputmode="numeric" maxlength="1" aria-label="Digit ${i + 1}">`).join('')}<button>Verify</button></form>`)
+		expect(isQualifying($('#d0'))).toBe('code')
+		expect(isQualifying($('#d5'))).toBe('code')
+		expect(codeGroup($('#d3'))?.map((input) => input.id)).toEqual(['d0', 'd1', 'd2', 'd3', 'd4', 'd5'])
+		expect(findCodeGroups(document)).toHaveLength(1)
+	})
+
+	it('groups two halves of three with a dash between them', () => {
+		mount(`<form>
+			<input id="a" type="text" inputmode="numeric" maxlength="3" autocomplete="one-time-code" aria-label="Code, first half">
+			<span>-</span>
+			<input id="b" type="text" inputmode="numeric" maxlength="3" aria-label="Code, second half">
+			<button>Verify</button></form>`)
+		expect(codeGroup($('#b'))?.map((input) => input.id)).toEqual(['a', 'b'])
+		expect(isQualifying($('#b'))).toBe('code')
+	})
+
+	it('leaves a birth date in three inputs and three one-character inputs out', () => {
+		mount(`<form>
+			<input id="day" maxlength="2" inputmode="numeric" name="day"><input id="month" maxlength="2" inputmode="numeric" name="month"><input id="year" maxlength="4" inputmode="numeric" name="year">
+			<button>Next</button></form>
+			<form><input id="x" maxlength="1"><input maxlength="1"><input maxlength="1"><button>Go</button></form>`)
+		expect(codeGroup($('#month'))).toBeNull()
+		expect(codeGroup($('#x'))).toBeNull()
+		expect(isQualifying($('#month'))).toBeNull()
+	})
+
+	it.each(['Recovery code', 'Backup code', 'Herstelcode', 'Back-upcode'])('never treats a field labelled "%s" as a one-time code', (label) => {
+		mount(`<form><label>${label} <input id="r" type="text" autocomplete="one-time-code" inputmode="numeric" maxlength="8"></label><button>Verify</button></form>`)
+		expect(classifyField($('#r'))).not.toBe('oneTimeCode')
+		expect(isQualifying($('#r'))).toBeNull()
 	})
 
 	it('never takes a one-time code field as the username', () => {
@@ -372,7 +406,7 @@ describe('newsletters', () => {
 		</form>`)
 		expect(groupOf($('#e'))?.kind).toBe('other')
 		expect(findLoginFields(document)).toEqual([])
-		expect(isQualifying($('#e'))).toBe(false)
+		expect(isQualifying($('#e'))).toBeNull()
 	})
 
 	it('does not treat "Aanmelden voor nieuwsbrief" as a login', () => {
@@ -381,7 +415,7 @@ describe('newsletters', () => {
 			<button type="submit">Aanmelden voor nieuwsbrief</button>
 		</form>`)
 		expect(groupOf($('#e'))?.kind).toBe('other')
-		expect(isQualifying($('#e'))).toBe(false)
+		expect(isQualifying($('#e'))).toBeNull()
 	})
 
 	it('does not treat "Aanmelden" beside a nieuwsbrief label as a login', () => {
@@ -408,7 +442,7 @@ describe('formless groups', () => {
 		expect(group?.username).toBe($('#username'))
 		expect(group?.currentPassword).toBe($('#password'))
 		expect(group?.submit).toBe(document.getElementById('submit'))
-		expect(isQualifying($('#username'))).toBe(true)
+		expect(isQualifying($('#username'))).toBe('login')
 	})
 
 	it('anchors a password field without a keyword button on the document', () => {
@@ -424,7 +458,7 @@ describe('formless groups', () => {
 		const group = groupOf($('#p'))
 		expect(group?.kind).toBe('login')
 		expect(group?.username).toBeNull()
-		expect(isQualifying($('#e'))).toBe(false)
+		expect(isQualifying($('#e'))).toBeNull()
 	})
 
 	it('does not treat a lone formless email with a "Join" button as a login', () => {
@@ -447,7 +481,7 @@ describe('formless groups', () => {
 		expect(group?.kind).toBe('login')
 		expect(group?.anchor).toBe(document.getElementById('step'))
 		expect(group?.username).toBe($('#e'))
-		expect(isQualifying($('#e'))).toBe(true)
+		expect(isQualifying($('#e'))).toBe('login')
 	})
 
 	describe('three formless groups as on test-site/formless-mixed.html', () => {
@@ -537,7 +571,7 @@ describe('hard exclusions', () => {
 		</form>`)
 		expect(groupOf($('#p'))?.username).toBeNull()
 		expect(classifyField($('#u'))).toBe('other')
-		expect(isQualifying($('#u'))).toBe(false)
+		expect(isQualifying($('#u'))).toBeNull()
 	})
 
 	it('skips fields inside a disabled fieldset', () => {
@@ -545,7 +579,7 @@ describe('hard exclusions', () => {
 			<label>Username <input id="u" name="username"></label>
 			<label>Password <input id="p" type="password"></label>
 		</fieldset><button>Sign in</button></form>`)
-		expect(isQualifying($('#p'))).toBe(false)
+		expect(isQualifying($('#p'))).toBeNull()
 	})
 })
 
@@ -564,13 +598,13 @@ describe('shadow roots', () => {
 			<button type="submit">Sign in</button>
 		</form>`)
 		expect(findLoginFields(document).map((group) => group.username)).toEqual([$('#u', root)])
-		expect(isQualifying($('#p', root))).toBe(true)
+		expect(isQualifying($('#p', root))).toBe('login')
 	})
 
 	it('anchors a formless login on the shadow root holding its keyword button', () => {
 		const root = shadow(`<input id="u" name="username"><input id="p" type="password"><button>Sign in</button>`)
 		expect(groupOf($('#p', root))?.anchor).toBe(root)
-		expect(isQualifying($('#u', root))).toBe(true)
+		expect(isQualifying($('#u', root))).toBe('login')
 	})
 
 	it('anchors a formless shadow-root login without a keyword button on the document', () => {
@@ -606,8 +640,8 @@ describe('shadow roots', () => {
 		})
 
 		it('qualifies both fields', () => {
-			expect(isQualifying(user)).toBe(true)
-			expect(isQualifying(pass)).toBe(true)
+			expect(isQualifying(user)).toBe('login')
+			expect(isQualifying(pass)).toBe('login')
 		})
 	})
 
@@ -663,7 +697,7 @@ describe('pages without a login', () => {
 		</form>`)
 		expect(findGroups(document)).toEqual([])
 		expect(groupOf($('#q'))).toBeNull()
-		expect(isQualifying($('#q'))).toBe(false)
+		expect(isQualifying($('#q'))).toBeNull()
 	})
 })
 

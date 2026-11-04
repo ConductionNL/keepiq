@@ -195,7 +195,7 @@ describe('useCurrentTab in a popped-out window', () => {
 		// The fresh `useFill` reads the fresh module's context, so the provider must come from it too.
 		const { useFill } = await import('./useFill')
 		const { DEFAULT_SHELL: freshShell, ShellContext: FreshContext } = await import('../shell-context')
-		const sent = fakeBackground({ replies: { 'fill.request': { filled: 'both' } } })
+		const sent = fakeBackground({ replies: { 'fill.request': { filled: 'both', code: false } } })
 		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
 		const toast = vi.fn()
 		const wrapper = ({ children }: { children: ReactNode }) => <FreshContext.Provider value={{ ...freshShell, toast }}>{children}</FreshContext.Provider>

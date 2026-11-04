@@ -42,6 +42,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
@@ -924,6 +925,7 @@ class SecretService {
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
 	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
+	 * @throws ShareScanPendingException When the secret is a copy whose share row waits for the share quarantine scan
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.

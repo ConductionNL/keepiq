@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ComponentProps, type ReactNode, type RefObject } from 'react'
 import { i18n } from '#i18n'
-import type { AccountSummary, ItemMeta, PopupTab, SendRow, ShareSaveNote } from '@/src/messages'
+import type { AccountSummary, PopupTab, ShareSaveNote } from '@/src/messages'
 import { folderPath } from '@/src/vault/list'
 import { webUrl } from '@/src/vault/url'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -15,18 +15,19 @@ import { request } from '../hooks/useMessage'
 import { SendProvider } from '../hooks/useSends'
 import { useToast } from '../hooks/useToast'
 import { useVaultSnapshot } from '../hooks/useVaultSnapshot'
-import { ShellContext, type GenerateTarget, type ItemActions, type ShellContextValue } from '../shell-context'
+import { ShellContext, type GenerateTarget } from '../shell-context'
 import { Generator } from './Generator'
 import { GeneratorHistory } from './GeneratorHistory'
 import { DeleteItemDialog, MoveItemDialog } from './ItemDialogs'
 import { ItemDetail } from './ItemDetail'
-import { ItemForm, type FormMode } from './ItemForm'
-import { NewSend, type SendPrefill } from './send/NewSend'
+import { ItemForm } from './ItemForm'
+import { NewSend } from './send/NewSend'
 import { SendCreated } from './send/SendCreated'
 import { SendList } from './send/SendList'
 import { Settings } from './settings/Settings'
-import { SECTION_PARENT, type SettingsSection } from './settings/SettingsIndex'
-import { openPage, pageTitle, type ShellPage } from './shellPage'
+import { SECTION_PARENT } from './settings/SettingsIndex'
+import { useBodyScroll, useItemActions, useLeave, useSendItem, useSendPages, useShellContextValue, useTabPages } from './shellHooks'
+import { headerFor, type ShellPage } from './shellPage'
 import { VaultList } from './VaultList'
 
 interface Props {
@@ -38,43 +39,20 @@ interface Props {
 	refreshState: () => void
 }
 
-type FormPage = { mode: FormMode; id?: string }
-
 type Pick = { target: GenerateTarget; apply: (value: string) => void }
-
-/** `key` remounts the form when another item's Send opens it. */
-type SendPage = { kind: 'new'; key: number; prefill?: SendPrefill } | { kind: 'created'; row: SendRow; link: string }
-
-type ShellDialog =
-	| { kind: 'delete'; item: ItemMeta }
-	| { kind: 'move'; item: ItemMeta }
-	| { kind: 'discard'; then: () => void }
 
 /** The unlocked popup: tabs, and pages such as an item's detail, its form or a settings section opened over them. */
 export function Shell({ active, lastTab, hidden = false, onAccounts, refreshState }: Props) {
 	const tab = useCurrentTab()
-	// Read once: a later state refresh must not pull the user off the tab they picked.
-	const [current, setCurrent] = useState(lastTab)
-	const [detailId, setDetailId] = useState<string | null>(null)
-	const [form, setForm] = useState<FormPage | null>(null)
-	const [section, setSection] = useState<SettingsSection | null>(null)
-	const [history, setHistory] = useState(false)
+	const { sendPage, setSendPage, sendBusy, setSendBusy, sendFocus, setSendFocus, newSend, created, closeSend } = useSendPages()
+	const { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, gone } = useTabPages(lastTab, closeSend)
 	const [pick, setPick] = useState<Pick | null>(null)
-	const [sendPage, setSendPage] = useState<SendPage | null>(null)
-	const [sendBusy, setSendBusy] = useState(false)
-	/** Back from a created send, whose page held focus: its row takes it. */
-	const [sendFocus, setSendFocus] = useState<string | null>(null)
-	const [dialog, setDialog] = useState<ShellDialog | null>(null)
+	const { dialog, setDialog, leave, leaveGuard } = useLeave(sendBusy)
 	// In memory only, so it is gone once the popup closes (share-sync).
 	const [shareSave, setShareSave] = useState<{ id: string; note: ShareSaveNote } | null>(null)
 	const { message: toast, show: showToast } = useToast()
 	const [footer, setFooter] = useState<HTMLElement | null>(null)
 	const body = useRef<HTMLDivElement>(null)
-	const listScroll = useRef(0)
-	const onList = useRef(true)
-	const leaveGuard = useRef<(() => boolean) | null>(null)
-	/** Where the form was when pick mode opened, restored when it ends. */
-	const pickedFrom = useRef<{ button: HTMLElement | null; scroll: number } | null>(null)
 	const { reply, failed, syncNow, reload } = useVaultSnapshot(tab?.url, tab !== undefined)
 
 	// Pick mode belongs to the form under it.
@@ -84,124 +62,27 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		if (reply && reply.state !== 'unlocked') refreshState()
 	}, [reply, refreshState])
 
-	// Before the list's effect, which wins when the form closed too.
-	useLayoutEffect(() => {
-		if (!body.current) return
-		if (pick) {
-			body.current.scrollTop = 0
-			return
-		}
-		const from = pickedFrom.current
-		pickedFrom.current = null
-		if (!from) return
-		body.current.scrollTop = from.scroll
-		from.button?.focus()
-	}, [pick])
+	const { leaveList, keepFormPlace } = useBodyScroll(body, { pick, detailId, form, sendPage })
 
-	// Back restores where the list was scrolled.
-	useLayoutEffect(() => {
-		onList.current = detailId === null && form === null
-		if (body.current) body.current.scrollTop = onList.current ? listScroll.current : 0
-	}, [detailId, form])
-
-	useLayoutEffect(() => {
-		if (sendPage && body.current) body.current.scrollTop = 0
-	}, [sendPage])
-
-	/** Opening a page from the list remembers its scroll position. */
-	const leaveList = useCallback(() => {
-		if (onList.current) listScroll.current = body.current?.scrollTop ?? 0
-	}, [])
-
-	/** Shows a tab with none of its pages open, as the tab bar does. */
-	const show = useCallback((next: PopupTab) => {
-		setCurrent(next)
-		setDetailId(null)
-		setForm(null)
-		setSection(null)
-		setHistory(false)
-		setSendPage(null)
-		setSendFocus(null)
-		void request({ kind: 'popup.lastTab.set', tab: next })
-	}, [])
-
-	/** Decrypts the login here, so the form opens filled or not at all. */
-	const sendItem = useCallback(async (item: ItemMeta) => {
-		const reply = await request({ kind: 'item.decrypt', ids: [item.id], fields: ['login', 'key'] })
-		const fields = reply?.ok ? reply.items[item.id] : undefined
-		if (reply?.ok === false && reply.error === 'locked') return refreshState()
-		if (!fields) return showToast(i18n.t('send.prefillFailed'))
-		show('send')
-		setSendPage({ kind: 'new', key: Date.now(), prefill: { username: fields.login ?? '', password: fields.key ?? '' } })
-	}, [refreshState, showToast, show])
-
-	const items = useMemo<ItemActions>(() => ({
-		add: () => {
-			leaveList()
-			setForm({ mode: 'add' })
-		},
-		edit: (id) => {
-			leaveList()
-			setForm({ mode: 'edit', id })
-		},
-		clone: (id) => {
-			leaveList()
-			setForm({ mode: 'clone', id })
-		},
-		move: (item) => setDialog({ kind: 'move', item }),
-		remove: (item) => setDialog({ kind: 'delete', item }),
-		send: (item) => void sendItem(item),
-	}), [leaveList, sendItem])
+	const sendItem = useSendItem({ refreshState, toast: showToast, show, setSendPage })
+	const items = useItemActions({ leaveList, setForm, setDialog, sendItem })
 
 	const snapshot = reply?.state === 'unlocked' ? reply : undefined
 
 	// The opener, not `document.activeElement`: Firefox on macOS and Safari don't focus a clicked button.
 	const generate = useCallback((target: GenerateTarget, apply: (value: string) => void, opener: HTMLElement | null) => {
-		pickedFrom.current = { button: opener, scroll: body.current?.scrollTop ?? 0 }
+		keepFormPlace(opener)
 		setPick({ target, apply })
-	}, [])
+	}, [keepFormPlace])
 
-	const context = useMemo<ShellContextValue>(() => ({
-		accountId: active.id,
-		refreshState,
-		toast: showToast,
-		launch: (url: string) => void browser.tabs.create({ url, windowId: tab?.windowId }).catch(() => showToast(i18n.t('vault.openFailed'))),
-		footer,
-		offline: snapshot?.sync.offline ?? false,
-		syncNow,
-		items,
-		setLeaveGuard: (guard: (() => boolean) | null) => {
-			leaveGuard.current = guard
-		},
-		generate,
-	}), [active.id, refreshState, showToast, tab?.windowId, footer, snapshot?.sync.offline, syncNow, items, generate])
-	// The form under the generator keeps its Save and Cancel out of the bar.
-	const hiddenFormContext = useMemo(() => ({ ...context, footer: null }), [context])
-
-	function newSend() {
-		setSendFocus(null)
-		setSendPage({ kind: 'new', key: Date.now() })
-	}
-
-	/** Only onto the form it came from: one left meanwhile keeps the link in the list alone. */
-	function created(key: number, row: SendRow, link: string) {
-		setSendBusy(false)
-		setSendPage((page) => (page?.kind === 'new' && page.key === key ? { kind: 'created', row, link } : page))
-	}
-
-	/** Runs `then` now, or after the user agreed to drop a dirty form. */
-	function leave(then: () => void) {
-		// A create in flight would land on a page that is gone.
-		if (sendBusy) return
-		if (leaveGuard.current?.()) setDialog({ kind: 'discard', then })
-		else then()
-	}
+	const parts = { accountId: active.id, refreshState, toast: showToast, windowId: tab?.windowId, footer, offline: snapshot?.sync.offline ?? false, syncNow, items, generate }
+	const { context, hiddenFormContext } = useShellContextValue(parts, leaveGuard)
 
 	const open = useCallback((id: string) => {
 		leaveList()
 		setDetailId(id)
 		setShareSave((current) => (current?.id === id ? current : null))
-	}, [leaveList])
+	}, [leaveList, setDetailId])
 
 	/** A switch would drop the form unasked, and under the switcher its decrypted values would wait in the hidden page. */
 	function accounts() {
@@ -212,12 +93,6 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		})
 	}
 
-	async function popout() {
-		// `null` is the background's success reply; with no window opened, stay open.
-		if (await request({ kind: 'popup.popout', tabId: tab?.id }) === null) window.close()
-		else showToast(i18n.t('vault.popoutFailed'))
-	}
-
 	/** The write's reply came after its sync, so one re-read shows the result. A note opens the item's detail, which shows it. */
 	async function saved(id: string, note?: ShareSaveNote) {
 		await reload()
@@ -226,12 +101,6 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		setForm(null)
 		showToast(i18n.t('item.saved'))
 	}
-
-	const closeForm = useCallback(() => setForm(null), [])
-	const gone = useCallback(() => {
-		setForm(null)
-		setDetailId(null)
-	}, [])
 
 	const detail = snapshot && detailId !== null ? snapshot.items?.find((item) => item.id === detailId) : undefined
 	// Origin and path only: a query or fragment can hold a token, and the URL is stored unencrypted.
@@ -299,11 +168,15 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		return <SendList focusId={sendFocus} onNew={newSend} />
 	}
 
-	const panes: Record<PopupTab, () => ReactNode> = {
-		vault: vaultPane,
-		settings: () => <Settings section={section} onOpen={setSection} account={active} snapshot={snapshot} snapshotFailed={failed} reload={() => void reload()} />,
-		generator: () => (history ? <GeneratorHistory /> : <Generator onOpenHistory={() => setHistory(true)} />),
-		send: sendPane,
+	/** The current tab's pane. */
+	function pane(): ReactNode {
+		const panes: Record<PopupTab, () => ReactNode> = {
+			vault: vaultPane,
+			settings: () => <Settings section={section} onOpen={setSection} account={active} snapshot={snapshot} snapshotFailed={failed} reload={() => void reload()} />,
+			generator: () => (history ? <GeneratorHistory /> : <Generator onOpenHistory={() => setHistory(true)} />),
+			send: sendPane,
+		}
+		return panes[current]()
 	}
 
 	function dialogView(): ReactNode {
@@ -357,43 +230,66 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		)
 	}
 
-	const view = { current, form, picking: pick !== null, detail: detail !== undefined, section, history, sendPage }
-	// A page opened from a tab covers the tab bar, as in Bitwarden, and gets the bar for its own actions.
-	const page = openPage(view)
-	const title = pageTitle(page, view)
-	const backs: Record<ShellPage, () => void> = {
-		pick: () => setPick(null),
-		form: () => leave(closeForm),
-		detail: () => setDetailId(null),
-		section: () => setSection(SECTION_PARENT[section!] ?? null),
-		history: () => setHistory(false),
-		send: () => leave(() => setSendPage(null)),
+	/** The open page, if any, and the header over it: its title, Back on a page and New on a tab itself. */
+	function chrome() {
+		const view = { current, form, picking: pick !== null, detail: detail !== undefined, section, history, sendPage }
+		const backs: Record<ShellPage, () => void> = {
+			pick: () => setPick(null),
+			form: () => leave(closeForm),
+			detail: () => setDetailId(null),
+			section: () => setSection(SECTION_PARENT[section!] ?? null),
+			history: () => setHistory(false),
+			send: () => leave(() => setSendPage(null)),
+		}
+		// A page opened from a tab covers the tab bar, as in Bitwarden, and gets the bar for its own actions.
+		const { page, title, back, add } = headerFor(view, { backs, adds: { vault: snapshot?.items ? items.add : undefined, send: newSend } })
+		const onPopout = isPopout ? undefined : () => leave(() => void popOut(tab?.id, showToast))
+		return { page, header: { title, active, busy: sendBusy, onAvatarClick: accounts, onBack: back, onAdd: add, onPopout } }
 	}
-	const back = page ? backs[page] : undefined
-	const adds: Partial<Record<PopupTab, () => void>> = { vault: snapshot?.items ? items.add : undefined, send: newSend }
-	const add = page ? undefined : adds[current]
 
+	const { page, header } = chrome()
 	return (
 		<ShellContext.Provider value={context}>
 			<SendProvider>
-				<main className={`popup${isPopout ? ' popup--popout' : ''}`} hidden={hidden}>
-					<Header
-						title={title}
-						active={active}
-						busy={sendBusy}
-						onAvatarClick={accounts}
-						onBack={back}
-						onAdd={add}
-						onPopout={isPopout ? undefined : () => leave(() => void popout())}
-					/>
-					<div className="popup__body" ref={body}>{panes[current]()}</div>
-					<div className="popup__bottom">
-						<Toast message={toast} />
-						{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={current} onSelect={show} />}
-					</div>
-					{dialogView()}
-				</main>
+				<ShellFrame hidden={hidden} header={header} body={body} toast={toast} bar={{ page: page !== null, active: current, onSelect: show, setFooter }} dialogs={dialogView()}>
+					{pane()}
+				</ShellFrame>
 			</SendProvider>
 		</ShellContext.Provider>
+	)
+}
+
+/** Opens the popup in a window of its own and closes this one, or says why it stays. */
+async function popOut(tabId: number | undefined, toast: (message: string) => void) {
+	// `null` is the background's success reply; with no window opened, stay open.
+	if (await request({ kind: 'popup.popout', tabId }) === null) window.close()
+	else toast(i18n.t('vault.popoutFailed'))
+}
+
+interface FrameProps {
+	hidden: boolean
+	header: ComponentProps<typeof Header>
+	body: RefObject<HTMLDivElement | null>
+	toast: string | null
+	/** On a page its actions take the bar, else the tab bar shows. */
+	bar: { page: boolean; active: PopupTab; onSelect: (tab: PopupTab) => void; setFooter: (footer: HTMLElement | null) => void }
+	/** The current tab's pane. */
+	children: ReactNode
+	dialogs: ReactNode
+}
+
+/** The popup around a pane: header, scrolling body, toast, the bottom bar and the dialogs over it. */
+function ShellFrame({ hidden, header, body, toast, bar, children, dialogs }: FrameProps) {
+	const { page, active, onSelect, setFooter } = bar
+	return (
+		<main className={`popup${isPopout ? ' popup--popout' : ''}`} hidden={hidden}>
+			<Header {...header} />
+			<div className="popup__body" ref={body}>{children}</div>
+			<div className="popup__bottom">
+				<Toast message={toast} />
+				{page ? <div className="popup__footer" ref={setFooter} /> : <TabBar active={active} onSelect={onSelect} />}
+			</div>
+			{dialogs}
+		</main>
 	)
 }

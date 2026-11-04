@@ -32,6 +32,9 @@ use OCP\IDBConnection;
  * @extends QBMapper<SecretType>
  */
 class SecretTypeMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for SecretTypeMapper.
 	 *
@@ -54,12 +57,7 @@ class SecretTypeMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): SecretType {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

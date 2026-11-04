@@ -23,10 +23,13 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\FederatedValueFields;
+use OCA\Keepiq\Service\JudgedShareRows;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntryParser;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
@@ -39,13 +42,18 @@ use OCA\Keepiq\Service\ShareSyncService;
  * secret is shared with gets all of them on /sync, refused with an
  * InvalidArgumentException.
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads the copies, their
+ *   share rows, their holders' vault keys and the pending quarantine scan's
+ *   verdict on each row, each through its own collaborator.
+ *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSyncGuards {
+
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareTargetMapper $targets The share targets (source to copies)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets (the copies' rows)
 	 * @param EncryptionSuiteMapper $suites The suites (vault keys)
 	 * @param ShareAuthorizationService $auth The share authorization service (the source read again)
@@ -55,7 +63,7 @@ class ShareSyncGuards {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareTargetMapper $targets,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
 		private EncryptionSuiteMapper $suites,
 		private ShareAuthorizationService $auth,
@@ -118,15 +126,24 @@ class ShareSyncGuards {
 	 * @param Secret $source The source secret being synced
 	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
 	 * @param string $userId The requesting user
+	 * @param JudgedShareRows|null $judged The source's rows already judged for this sync, or null to read them
 	 *
 	 * @return array{0:string|null,1:array<string,bool>} How the audit names the write now, and the ids to write
 	 *
 	 * @throws InvalidArgumentException When the caller lost the right to write, or a row is missing, unexpected or valueless
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row of a copy
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	public function assertGroupWrite(ShareSyncService $sync, Secret $source, array $updates, string $userId): array {
+	public function assertGroupWrite(
+		ShareSyncService $sync,
+		Secret $source,
+		array $updates,
+		string $userId,
+		?JudgedShareRows $judged = null,
+	): array {
 		// Read again, as share-save's assertStillWriter() does: becoming a
 		// read-only or use-only copy does not move the version the lock checks.
 		$current = $this->auth->loadSecret(secretId: $source->getId());
@@ -135,7 +152,13 @@ class ShareSyncGuards {
 		$writesOn = $sync->resolveSyncWriter(source: $current, userId: $userId);
 		$this->assertBody(updates: $updates);
 
-		$live = $this->liveCopies(source: $source, leaveOut: null);
+		$live = $this->liveCopies(source: $source, leaveOut: null, judged: $judged);
+		// As share-save: a copy whose row the pending scan cannot judge is
+		// neither written nor left behind on the old value.
+		if ($live['unjudged'] !== []) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be saved yet');
+		}
+
 		$required = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $live['copies'];
 
 		$named = [];
@@ -169,21 +192,79 @@ class ShareSyncGuards {
 	}//end assertGroupWrite()
 
 	/**
+	 * The share rows of a source, judged once for a whole sync: the check
+	 * before the transaction and the writes inside it read the same verdicts.
+	 * Under the source's lock the rows are read again with those verdicts
+	 * carried over, so a share registered in between is still seen and judged.
+	 *
+	 * @param Secret               $source The source secret being synced
+	 * @param JudgedShareRows|null $before The rows this sync judged before its lock, if any
+	 *
+	 * @return JudgedShareRows
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function judgedRowsOf(Secret $source, ?JudgedShareRows $before=null): JudgedShareRows {
+		return $this->rowJudge->rowsOfSource(sourceId: $source->getId(), before: $before);
+	}//end judgedRowsOf()
+
+	/**
+	 * Refuse a sync that would reach a copy whose row the pending quarantine
+	 * scan cannot judge, as share-save refuses it: the copy is neither
+	 * written nor left behind on the old value. A group member writes every
+	 * live copy, so any such copy refuses; the owner, a delegate or a
+	 * team-folder writer writes the copies they name, so a named one does.
+	 * Run before the sync's transaction, so a quarantine the judging makes is
+	 * kept when the sync is refused. A copy whose row the scan quarantines is
+	 * skipped by the write, as any copy that is not the row's.
+	 *
+	 * @param Secret $source The source secret being synced
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 * @param string|null $writesOn How the caller writes (ShareSyncService::GROUP_WRITE for a group member)
+	 * @param JudgedShareRows $judged The source's rows, judged once for the sync
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When a copy the sync reaches has a row the scan cannot judge
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function assertCopiesJudged(Secret $source, array $updates, ?string $writesOn, JudgedShareRows $judged): void {
+		$unjudged = $this->liveCopies(source: $source, leaveOut: null, judged: $judged)['unjudged'];
+		if ($writesOn !== ShareSyncService::GROUP_WRITE) {
+			$named = array_map(static fn (array $update): string => (string)($update['secretId'] ?? ''), $updates);
+			$unjudged = array_intersect($named, $unjudged);
+		}
+
+		if ($unjudged !== []) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be saved yet');
+		}
+	}//end assertCopiesJudged()
+
+	/**
 	 * The copies of a source a save for every copy writes, keyed by id: every
 	 * copy whose access has not ended. The ignored ones may be named but are
-	 * not written: their access ended, or their row is gone.
+	 * not written: their access ended, their row is gone, their row's target
+	 * does not hold them, or the pending quarantine scan holds their row back.
+	 * The unjudged ones, also ignored, are those whose row the pending scan
+	 * cannot judge: a caller that may refuse waits for the scan rather than
+	 * leave them behind.
 	 *
 	 * @param Secret $source The source
 	 * @param string|null $leaveOut A copy left out of both lists, as share-save leaves out the caller's own row
+	 * @param JudgedShareRows|null $judged The source's rows already judged for this request, or null to read them
 	 *
-	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>}
+	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,unjudged:list<string>}
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	public function liveCopies(Secret $source, ?string $leaveOut): array {
+	public function liveCopies(Secret $source, ?string $leaveOut, ?JudgedShareRows $judged = null): array {
 		$copies = [];
 		$ignored = [];
-		$targets = $this->targets->findBySourceSecret($source->getId());
+		$unjudged = [];
+		$judged ??= $this->rowJudge->rowsOfSource(sourceId: $source->getId());
+		$targets = $judged->all();
 		$rows = $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
 		$now = time();
 		foreach ($targets as $target) {
@@ -208,10 +289,21 @@ class ShareSyncGuards {
 				continue;
 			}
 
+			// The pending quarantine scan judges the row first, as a sync does.
+			$held = $judged->verdict(row: $target);
+			if ($held !== null) {
+				$ignored[$copyId] = true;
+				if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+					$unjudged[] = $copyId;
+				}
+
+				continue;
+			}
+
 			$copies[$copyId] = ['secretId' => $copyId, 'holder' => 'recipient', 'targetUserId' => $target->getTargetUserId()];
 		}
 
-		return ['copies' => $copies, 'ignored' => $ignored];
+		return ['copies' => $copies, 'ignored' => $ignored, 'unjudged' => $unjudged];
 	}//end liveCopies()
 
 	/**

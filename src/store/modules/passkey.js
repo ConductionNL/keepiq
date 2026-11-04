@@ -25,6 +25,180 @@ import { useSessionStore } from './session.js'
 
 const RP_ID = window.location.hostname
 
+/**
+ * The session store, when the vault is unlocked.
+ *
+ * @return {object}
+ */
+function unlockedSession() {
+	const session = useSessionStore()
+	if (!session.cryptoKey || !session.encryptedPrivateKey) {
+		throw new Error('Unlock your vault before enrolling a passkey')
+	}
+	return session
+}
+
+/**
+ * Fetch the enrolment challenge and decode it to bytes.
+ *
+ * @return {Promise<ArrayBuffer>}
+ */
+async function enrolmentChallenge() {
+	const response = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/passkeys/challenge'),
+	)
+	return fromBase64Url(
+		response.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
+	)
+}
+
+/**
+ * The WebAuthn user handle: the Nextcloud uid, or a fixed fallback.
+ *
+ * @return {Uint8Array}
+ */
+function userHandle() {
+	return new TextEncoder().encode(
+		window.OC?.getCurrentUser?.()?.uid || 'keepiq-user',
+	)
+}
+
+/**
+ * The passkeys that unlock the vault now, as create() exclusions. Every
+ * enrolment uses the same user handle, so an authenticator that already holds
+ * one would replace it and leave its earlier row unusable. Stale passkeys are
+ * not listed, so re-enrolling after a master password change still works on
+ * the same device.
+ *
+ * @return {Promise<Array<object>>}
+ */
+async function activePasskeyExclusions() {
+	const response = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
+	)
+	return (response.data?.credentials ?? []).map((c) => ({
+		type: 'public-key',
+		id: fromBase64Url(c.credentialId),
+	}))
+}
+
+/**
+ * The create() options for a new PRF-capable passkey.
+ *
+ * @param {string} label The nickname the user gave.
+ * @param {object} ceremony The challenge, userId and excludeCredentials.
+ * @return {object}
+ */
+function creationOptions(label, ceremony) {
+	return {
+		publicKey: {
+			rp: { id: RP_ID, name: 'Keepiq' },
+			user: {
+				id: ceremony.userId,
+				name: label || 'Keepiq vault',
+				displayName: label || 'Keepiq vault',
+			},
+			challenge: ceremony.challenge,
+			pubKeyCredParams: [
+				{ type: 'public-key', alg: -7 },
+				{ type: 'public-key', alg: -257 },
+			],
+			authenticatorSelection: {
+				residentKey: 'preferred',
+				userVerification: 'preferred',
+			},
+			excludeCredentials: ceremony.excludeCredentials,
+			extensions: { prf: {} },
+		},
+	}
+}
+
+/**
+ * Create the passkey, and require that the authenticator enabled PRF.
+ *
+ * @param {object} options The create() options.
+ * @return {Promise<object>} The created credential.
+ */
+async function createPrfPasskey(options) {
+	let created
+	try {
+		created = await navigator.credentials.create(options)
+	} catch (e) {
+		if (e?.name === 'InvalidStateError') {
+			throw new Error(
+				'This authenticator already unlocks your vault. Revoke its passkey first to enroll it again.',
+				{ cause: e },
+			)
+		}
+		throw e
+	}
+	const ext = created.getClientExtensionResults()
+	if (!ext?.prf?.enabled) {
+		throw new Error('Your authenticator does not support passkey unlock (PRF).')
+	}
+	return created
+}
+
+/**
+ * Draw a fresh 32-byte PRF salt and ask the new passkey for its PRF output.
+ *
+ * @param {object} created The created credential.
+ * @param {ArrayBuffer} challenge The enrolment challenge.
+ * @return {Promise<{prfSaltBytes: Uint8Array, prfOutput: ArrayBuffer}>}
+ */
+async function prfOutputOf(created, challenge) {
+	const prfSaltBytes = crypto.getRandomValues(new Uint8Array(32))
+	const assertion = await navigator.credentials.get({
+		publicKey: {
+			challenge,
+			rpId: RP_ID,
+			allowCredentials: [{ type: 'public-key', id: created.rawId }],
+			userVerification: 'preferred',
+			extensions: { prf: { eval: { first: prfSaltBytes } } },
+		},
+	})
+	const prfOutput = assertion.getClientExtensionResults()?.prf?.results?.first
+	if (!prfOutput) {
+		throw new Error('Your authenticator did not return a PRF result.')
+	}
+	return { prfSaltBytes, prfOutput }
+}
+
+/**
+ * Derive the raw vault unlock key from the master password and the
+ * private-key envelope's own salt, then wrap it under the passkey's KEK.
+ *
+ * @param {string} masterPassword The master password (never sent).
+ * @param {object} passkey The envelope, prfOutput and credentialId.
+ * @return {Promise<string>} The wrapped unlock key.
+ */
+async function wrapUnlockKeyForPasskey(masterPassword, passkey) {
+	const { salt } = decodeEnvelope(passkey.envelope)
+	const rawUnlockKey = await deriveUnlockKeyRaw(masterPassword, salt)
+	const kek = await deriveKekFromPrf(passkey.prfOutput, passkey.credentialId)
+	return wrapUnlockKey(kek, rawUnlockKey)
+}
+
+/**
+ * The enrolment request body: the wrapped envelope, never the raw key or the
+ * PRF output.
+ *
+ * @param {object} enrolment The label, created credential, credentialId,
+ *  prfSaltBytes and wrappedUnlockKey.
+ * @return {object}
+ */
+function enrolmentBody(enrolment) {
+	return {
+		credentialId: enrolment.credentialId,
+		wrappedUnlockKey: enrolment.wrappedUnlockKey,
+		prfSalt: btoa(String.fromCharCode(...enrolment.prfSaltBytes)),
+		publicKey: '',
+		label: enrolment.label || 'Passkey',
+		transports: (enrolment.created.response?.getTransports?.() || []).join(','),
+		aaguid: '',
+	}
+}
+
 export const usePasskeyStore = defineStore('passkey', {
 	state: () => ({
 		/** @type {Array<object>} Enrolled passkeys (management view). */
@@ -93,113 +267,30 @@ export const usePasskeyStore = defineStore('passkey', {
 		 */
 		async enroll(masterPassword, label) {
 			this.error = null
-			const session = useSessionStore()
-			if (!session.cryptoKey || !session.encryptedPrivateKey) {
-				throw new Error('Unlock your vault before enrolling a passkey')
-			}
-
-			// 1. Creation options + challenge from the server.
-			const challengeResp = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/passkeys/challenge'),
+			const session = unlockedSession()
+			const challenge = await enrolmentChallenge()
+			const userId = userHandle()
+			const excludeCredentials = await activePasskeyExclusions()
+			const created = await createPrfPasskey(
+				creationOptions(label, { challenge, userId, excludeCredentials }),
 			)
-			const challenge = fromBase64Url(
-				challengeResp.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
-			)
-
-			const userId = new TextEncoder().encode(
-				window.OC?.getCurrentUser?.()?.uid || 'keepiq-user',
-			)
-			// Exclude the passkeys that unlock the vault now. Every enrolment
-			// uses the same user handle, so an authenticator that already holds
-			// one would replace it and leave its earlier row unusable. Stale
-			// passkeys are not listed, so re-enrolling after a master password
-			// change still works on the same device.
-			const activeResp = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
-			)
-			const excludeCredentials = (activeResp.data?.credentials ?? []).map(
-				(c) => ({ type: 'public-key', id: fromBase64Url(c.credentialId) }),
-			)
-			let created
-			try {
-				created = await navigator.credentials.create({
-					publicKey: {
-						rp: { id: RP_ID, name: 'Keepiq' },
-						user: {
-							id: userId,
-							name: label || 'Keepiq vault',
-							displayName: label || 'Keepiq vault',
-						},
-						challenge,
-						pubKeyCredParams: [
-							{ type: 'public-key', alg: -7 },
-							{ type: 'public-key', alg: -257 },
-						],
-						authenticatorSelection: {
-							residentKey: 'preferred',
-							userVerification: 'preferred',
-						},
-						excludeCredentials,
-						extensions: { prf: {} },
-					},
-				})
-			} catch (e) {
-				if (e?.name === 'InvalidStateError') {
-					throw new Error(
-						'This authenticator already unlocks your vault. Revoke its passkey first to enroll it again.',
-						{ cause: e },
-					)
-				}
-				throw e
-			}
-
-			// 2. PRF must be enabled by this authenticator.
-			const ext = created.getClientExtensionResults()
-			if (!ext?.prf?.enabled) {
-				throw new Error(
-					'Your authenticator does not support passkey unlock (PRF).',
-				)
-			}
-
 			const credentialId = toBase64Url(created.rawId)
-			// 3. Fresh 32-byte PRF salt; get() to obtain the PRF output.
-			const prfSaltBytes = crypto.getRandomValues(new Uint8Array(32))
-			const assertion = await navigator.credentials.get({
-				publicKey: {
-					challenge,
-					rpId: RP_ID,
-					allowCredentials: [{ type: 'public-key', id: created.rawId }],
-					userVerification: 'preferred',
-					extensions: { prf: { eval: { first: prfSaltBytes } } },
-				},
+			const { prfSaltBytes, prfOutput } = await prfOutputOf(created, challenge)
+			const wrappedUnlockKey = await wrapUnlockKeyForPasskey(masterPassword, {
+				envelope: session.encryptedPrivateKey,
+				prfOutput,
+				credentialId,
 			})
-			const prfOutput =
-				assertion.getClientExtensionResults()?.prf?.results?.first
-			if (!prfOutput) {
-				throw new Error('Your authenticator did not return a PRF result.')
-			}
 
-			// 4. Derive the raw vault unlock key from the master password + the
-			//    private-key envelope's own salt, then wrap it under the KEK.
-			const { salt } = decodeEnvelope(session.encryptedPrivateKey)
-			const rawUnlockKey = await deriveUnlockKeyRaw(masterPassword, salt)
-			const kek = await deriveKekFromPrf(prfOutput, credentialId)
-			const wrappedUnlockKey = await wrapUnlockKey(kek, rawUnlockKey)
-
-			// 5. Persist the envelope (never the raw key or PRF output).
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/passkeys'),
-				{
+				enrolmentBody({
+					label,
+					created,
 					credentialId,
+					prfSaltBytes,
 					wrappedUnlockKey,
-					prfSalt: btoa(String.fromCharCode(...prfSaltBytes)),
-					publicKey: '',
-					label: label || 'Passkey',
-					transports: (created.response?.getTransports?.() || []).join(
-						',',
-					),
-					aaguid: '',
-				},
+				}),
 			)
 			await this.fetchCredentials()
 			return response.data

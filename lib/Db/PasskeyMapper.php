@@ -32,6 +32,9 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<PasskeyCredential>
  */
 class PasskeyMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for PasskeyMapper.
 	 *
@@ -53,12 +56,7 @@ class PasskeyMapper extends QBMapper {
 	 * @throws DoesNotExistException When missing
 	 */
 	public function findById(string $id): PasskeyCredential {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

@@ -54,6 +54,8 @@ interface World {
 	certificates: Record<string, string | null>
 	/** Per cloud id; absent is Bob's own verified chain. */
 	lookups: Record<string, () => Response | Promise<Response>>
+	/** What the default lookup says a partner stores beyond `key`, `login` and `additionalFields`. */
+	valueFields: string[]
 	/** Runs before each final call is judged, by its number from 1; a response replaces the judgement. */
 	onFinal?: (attempt: number) => Response | void
 }
@@ -126,7 +128,7 @@ function route(method: string, path: string, body: Record<string, unknown> | und
 	}
 	if (method === 'POST' && path === '/api/v1/federation/recipient-certificate') {
 		const cloudId = body!.cloudId as string
-		return world.lookups[cloudId]?.() ?? json({ cloudId, certificate: F.bob, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint })
+		return world.lookups[cloudId]?.() ?? json({ cloudId, certificate: F.bob, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint, valueFields: world.valueFields })
 	}
 	if (method === 'PUT' && path.startsWith('/api/v1/secrets/')) return json(secretRow())
 	return json({ message: 'Not found' }, 404)
@@ -143,7 +145,7 @@ beforeEach(async () => {
 	privateKey ??= await importPrivateKey(pemToPkcs8(envelope.privateKeyPem))
 	world = {
 		copyPath: false, copies: [], shares: [], keyed: new Set(), ownerOnly: false, ownerCertificate: CERT, effectiveGrade: 'owner',
-		certificates: { bob: CERT, carol: CERT, dan: CERT, erin: CERT }, lookups: {},
+		certificates: { bob: CERT, carol: CERT, dan: CERT, erin: CERT }, lookups: {}, valueFields: [],
 	}
 	saves = []
 	stages = new Map()
@@ -151,10 +153,10 @@ beforeEach(async () => {
 	forgetVerifiedPartners()
 })
 
-/** What the form showed of X: its password, username and fields, as ciphertext. */
+/** What the form opened of X: its password, username and fields, as ciphertext, and no key or passkeys. */
 async function openedX(overrides: Partial<Opened> = {}): Promise<Opened> {
 	return {
-		shown: { key: await encrypt('x-password'), login: await encrypt('alice'), additionalFields: await encrypt('{"notes":"X notes"}') },
+		shown: { key: await encrypt('x-password'), login: await encrypt('alice'), additionalFields: await encrypt('{"notes":"X notes"}'), totp: null, passkeys: null },
 		updatedAt: BASE, sourceUpdatedAt: SOURCE_AT, ...overrides,
 	}
 }
@@ -238,6 +240,19 @@ describe('local copies', () => {
 		await save({ plain: { login: null } })
 		expect(lastFinal().patch).toEqual({ login: null })
 		expect(lastFinal().copies).toEqual([{ secretId: 'c-bob', login: null }])
+	})
+
+	it('gives each copy a new authenticator key encrypted to its holder', async () => {
+		world.copies = [recipient('c-bob', 'bob')]
+		await save({ plain: { totp: 'JBSWY3DPEHPK3PXP' } })
+		expect(Object.keys(lastFinal().copies[0]!).sort()).toEqual(['secretId', 'totp'])
+		expect(await decrypt(lastFinal().copies[0]!.totp)).toBe('JBSWY3DPEHPK3PXP')
+	})
+
+	it('removes the key from each copy with an empty string, not an encrypted one', async () => {
+		world.copies = [recipient('c-bob', 'bob')]
+		await save({ plain: { totp: '' } })
+		expect(lastFinal().copies).toEqual([{ secretId: 'c-bob', totp: '' }])
 	})
 
 	it('skips a holder without a vault key, and saves for everyone else', async () => {
@@ -449,7 +464,7 @@ describe('partner shares', () => {
 		expect(await save({ opened: await openedX() })).toBeUndefined()
 		expect(bodiesOf('POST /api/v1/federation/recipient-certificate')).toEqual([{ cloudId: BOB.recipientCloudId }])
 		const [entry] = lastFinal().federated!
-		expect(Object.keys(entry!).sort()).toEqual(['additionalFields', 'certFingerprint', 'key', 'login', 'shareId'])
+		expect(Object.keys(entry!).sort()).toEqual(['additionalFields', 'certFingerprint', 'key', 'login', 'passkeys', 'shareId', 'totp'])
 		expect(entry!.certFingerprint).toBe(await fingerprint(F.bob))
 		expect(lastFinal().suspend).toEqual([])
 	})
@@ -463,13 +478,68 @@ describe('partner shares', () => {
 	})
 
 	it('sends an empty username or fields as null', async () => {
-		await save({ opened: await openedX({ shown: { key: await encrypt('x-password'), login: null, additionalFields: null } }) })
+		await save({ opened: await openedX({ shown: { key: await encrypt('x-password'), login: null, additionalFields: null, totp: null, passkeys: null } }) })
 		expect(lastFinal().federated![0]).toMatchObject({ login: null, additionalFields: null })
 	})
 
-	it('needs no record when every field was typed', async () => {
-		expect(await save({ plain: { key: 'new', login: 'bob', additionalFields: '{}' } })).toBeUndefined()
-		expect(lastFinal().federated).toHaveLength(1)
+	describe('the authenticator key and passkeys', () => {
+		const SEED = 'JBSWY3DPEHPK3PXP'
+		const decryptable = () => vi.mocked(verifyFederatedCertificate).mockResolvedValueOnce({ fingerprint: 'ab'.repeat(32), spki: extractSpki(decodePem(CERT).der) })
+		const withKey = async () => openedX({ shown: { ...(await openedX()).shown, totp: await encrypt(SEED), passkeys: await encrypt('[{"rpId":"example.com"}]') } })
+		const upgrade = { code: 'partner_upgrade_required', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId }] }
+
+		it('keeps a partner\'s key and passkeys on a password change, for a partner that stores them', async () => {
+			world.valueFields = ['totp', 'passkeys']
+			decryptable()
+			await save({ opened: await withKey() })
+			const [entry] = lastFinal().federated!
+			expect([await decrypt(entry!.totp), await decrypt(entry!.passkeys)]).toEqual([SEED, '[{"rpId":"example.com"}]'])
+		})
+
+		it('sends a partner that stores neither both as null', async () => {
+			await save({ opened: await withKey() })
+			expect(lastFinal().federated![0]).toMatchObject({ totp: null, passkeys: null })
+		})
+
+		it('sends a partner a removed key as null', async () => {
+			world.valueFields = ['totp', 'passkeys']
+			await save({ plain: { totp: '' }, opened: await withKey() })
+			expect(lastFinal().federated![0]).toMatchObject({ totp: null })
+		})
+
+		it('stops before any write when a new key goes to a partner that cannot store one', async () => {
+			expect(await failure(save({ plain: { totp: SEED }, opened: await openedX() }))).toEqual(upgrade)
+			expect(saves).toHaveLength(1)
+		})
+
+		it('sends a replaced key to such a partner as null, since it never held one', async () => {
+			expect(await save({ plain: { totp: 'NBSWY3DPEHPK3PXP' }, opened: await withKey() })).toBeUndefined()
+			expect(lastFinal().federated![0]).toMatchObject({ totp: null })
+		})
+
+		it('sends a new key to a partner that stores one', async () => {
+			world.valueFields = ['totp']
+			decryptable()
+			await save({ plain: { totp: SEED }, opened: await openedX() })
+			expect(await decrypt(lastFinal().federated![0]!.totp)).toBe(SEED)
+		})
+
+		it('names the partner and the version when the server refuses it', async () => {
+			world.valueFields = ['totp']
+			world.onFinal = (attempt) => (attempt === 2 ? json({ error: 'partner_upgrade_required', message: 'too old', shareId: BOB.shareId, requiredVersion: '0.3.12' }, 409) : undefined)
+			expect(await failure(save({ plain: { totp: SEED }, opened: await openedX() }))).toEqual({ ...upgrade, requiredVersion: '0.3.12' })
+		})
+
+		it('fails with unverified on a record from before it held them', async () => {
+			const shown = { ...(await openedX()).shown }
+			delete shown.totp
+			delete shown.passkeys
+			expect(await failure(save({ opened: await openedX({ shown }) }))).toEqual({ code: 'unverified' })
+		})
+	})
+
+	it('needs the record even when every form field was typed, since the form never types passkeys', async () => {
+		expect(await failure(save({ plain: { key: 'new', login: 'bob', additionalFields: '{}', totp: '' } }))).toEqual({ code: 'unverified' })
 	})
 
 	it.each([
@@ -582,7 +652,7 @@ describe('partner shares', () => {
 	})
 
 	it('fails with unreadable when what the form opened does not decrypt, before any lookup', async () => {
-		expect(await failure(save({ opened: await openedX({ shown: { key: await encrypt('x-password'), login: 'not-ciphertext', additionalFields: null } }) }))).toEqual({ code: 'unreadable' })
+		expect(await failure(save({ opened: await openedX({ shown: { key: await encrypt('x-password'), login: 'not-ciphertext', additionalFields: null, totp: null, passkeys: null } }) }))).toEqual({ code: 'unreadable' })
 		expect(sent()).not.toContain('POST /api/v1/federation/recipient-certificate')
 	})
 

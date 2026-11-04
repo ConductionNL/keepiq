@@ -24,10 +24,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -47,7 +47,7 @@ class SuiteCompromiseListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (lookup recipient copies)
-	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (resolve owners)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
 	 * @param RotationPolicyService|null $rotationService The rotation service (auto-flag)
@@ -56,7 +56,7 @@ class SuiteCompromiseListener implements IEventListener {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private NotificationService $notificationService,
 		private LoggerInterface $logger,
 		private ?RotationPolicyService $rotationService = null,

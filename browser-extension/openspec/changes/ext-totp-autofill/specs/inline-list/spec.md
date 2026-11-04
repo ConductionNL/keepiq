@@ -3,7 +3,7 @@
 ### Requirement: Which fields open the list
 The content script SHALL decide whether a field qualifies, and in which mode, from the page's DOM only, by the field classification of the `autofill` capability:
 - **Login mode:** a field classified as the username or the current password of a group classified as a login qualifies, with or without a `<form>`, including a username-only or password-only step.
-- **Code mode:** a field of a code group (`totp-autofill`, Code fields) qualifies, any input of a split group included; the list then shows authenticator items as `totp-autofill` specifies.
+- **Code mode:** a field of a code group (`totp-autofill`, Code fields) qualifies, any input of a split group included; the list then shows the logins with a code as `totp-autofill` specifies.
 
 Fields of sign-up and password-change groups, fields classified as a new password (confirm fields included), recovery and backup code fields, and hidden, disabled and read-only fields MUST NOT qualify. `autocomplete="off"` is ignored, as that classification specifies. The list opens on any focus of an empty qualifying field, including focus set by page script or `autofocus` and a field already focused when the content script starts, and on a trusted click in a qualifying field, empty or not. Opening MUST NOT move focus out of the field. The content script tells the background the mode with `inline.open`; the mode only chooses what the list shows, and matching stays on `sender.url`.
 

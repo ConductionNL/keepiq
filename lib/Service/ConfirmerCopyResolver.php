@@ -26,7 +26,6 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -37,7 +36,7 @@ class ConfirmerCopyResolver {
 	 * Constructor.
 	 *
 	 * @param TeamFolderQueryService $queries Effective grades
-	 * @param ShareTargetMapper $shareTargetMapper The confirmer's own copies
+	 * @param ShareRowJudge $rowJudge The confirmer's own copies, through judged share rows only
 	 * @param SecretMapper $secretMapper Source and copy timestamps
 	 *
 	 * @return void
@@ -46,7 +45,7 @@ class ConfirmerCopyResolver {
 	 */
 	public function __construct(
 		private TeamFolderQueryService $queries,
-		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secretMapper,
 	) {
 	}//end __construct()
@@ -54,9 +53,12 @@ class ConfirmerCopyResolver {
 	/**
 	 * The id of the confirmer's own copy of a source, when they may hand it on.
 	 *
-	 * Null unless the confirmer's effective grade on the source is `write`
-	 * and their copy is not older than the source's last key change
-	 * (design D2 and D3).
+	 * Null unless the confirmer's effective grade on the source is `write`,
+	 * their share row of it is trusted (ShareRowJudge: its target holds the
+	 * copy and the pending quarantine scan does not hold it back), and their
+	 * copy is not older than the source's last key change (design D2 and D3).
+	 * A held-back row leaves the pair out, so no other member is handed a
+	 * copy made from a secret that is not one.
 	 *
 	 * @param string $sourceId The source secret
 	 * @param string $confirmerId The confirmer
@@ -64,6 +66,7 @@ class ConfirmerCopyResolver {
 	 * @return string|null
 	 *
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function currentWriteCopy(string $sourceId, string $confirmerId): ?string {
 		try {
@@ -76,11 +79,12 @@ class ConfirmerCopyResolver {
 			return null;
 		}
 
+		$shareRow = $this->rowJudge->forPair(sourceId: $sourceId, targetUserId: $confirmerId)->trustedRow();
+		if ($shareRow === null) {
+			return null;
+		}
+
 		try {
-			$shareRow = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceId,
-				targetUserId: $confirmerId
-			);
 			$copy = $this->secretMapper->findById(id: (string)$shareRow->getSecretId());
 		} catch (DoesNotExistException) {
 			return null;
