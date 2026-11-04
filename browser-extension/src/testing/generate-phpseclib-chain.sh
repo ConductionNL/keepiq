@@ -14,7 +14,7 @@ require_once "$app/lib/Service/X509CertificateAssembler.php";
 
 use OCA\Keepiq\Service\X509CertificateAssembler;
 
-// CertificateIssuanceService::DEFAULT_DN and CertificateAuthorityService's lifetimes.
+// CertificateIssuanceService::DEFAULT_DN; the CAs get 2048-bit keys and their own lifetimes, not CertificateAuthorityService's 4096 bits and days.
 $dn = ['countryName' => 'NL', 'stateOrProvinceName' => 'Noord-Holland', 'localityName' => 'Amsterdam', 'organizationName' => 'Conduction', 'organizationalUnitName' => 'Keepiq'];
 $cnf = "$app/lib/Service/certificate-extensions.cnf";
 $sign = fn (string $section) => ['digest_alg' => 'sha256', 'config' => $cnf, 'x509_extensions' => $section];
