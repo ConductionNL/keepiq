@@ -76,7 +76,7 @@ export function fieldListError(fields, t) {
 
 /**
  * @param {string} label The trimmed label.
- * @param {{seen: string[], t: Function}} context The lowercased labels before it and the translate function.
+ * @param {{seen: string[], t: (app: string, text: string, vars?: object) => string}} context The lowercased labels before it and the translate function.
  * @return {string} What is wrong with the label, or ''.
  */
 function labelError(label, { seen, t }) {
