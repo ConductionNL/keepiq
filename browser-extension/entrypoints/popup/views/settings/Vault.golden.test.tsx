@@ -15,12 +15,14 @@ const GOLDEN = resolve(process.cwd(), 'entrypoints/popup/views/settings/Vault.go
 afterEach(cleanup)
 beforeEach(everythingVisible)
 
-const sync = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({ syncing: false, syncedAt: '2026-10-20T08:15:00Z', offline: false, lastError: null, ...overrides })
+const SYNCED_AT = '2026-10-20T08:15:00Z'
+const sync = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({ syncing: false, syncedAt: SYNCED_AT, offline: false, lastError: null, ...overrides })
 
 /** The settings page with React's generated ids numbered in order of appearance. */
 function markup(): string {
 	const ids = new Map<string, string>()
-	return document.body.innerHTML.replace(/«[^»]*»|:r[0-9a-z]+:|_r_[0-9a-z]+_/g, (id) => {
+	const lastSync = new Date(SYNCED_AT).toLocaleString('en', { dateStyle: 'short', timeStyle: 'short' })
+	return document.body.innerHTML.replace(lastSync, '(last sync, local time)').replace(/«[^»]*»|:r[0-9a-z]+:|_r_[0-9a-z]+_/g, (id) => {
 		if (!ids.has(id)) ids.set(id, `id${ids.size}`)
 		return ids.get(id)!
 	})

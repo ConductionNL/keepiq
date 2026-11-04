@@ -71,6 +71,8 @@ describe('monotonic', () => {
 		const raw = [5, 3, 7, 7, 1, 8]
 		const clock = monotonic(() => raw.shift())
 
-		expect([clock(), clock(), clock(), clock(), clock(), clock()]).toEqual([5, 5, 7, 7, 7, 8])
+		expect([clock(), clock(), clock(), clock(), clock(), clock()]).toEqual([
+			5, 5, 7, 7, 7, 8,
+		])
 	})
 })
