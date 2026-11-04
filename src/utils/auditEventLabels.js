@@ -118,7 +118,7 @@ function sentFederatedShareEventLabels() {
 }
 
 /**
- * The labels of events on a send that stopped or failed.
+ * The labels of a share with another organisation that stopped, or a change it did not get.
  *
  * @return {object} Event type to localized label.
  */
@@ -154,7 +154,7 @@ function receivedFederatedShareEventLabels() {
 }
 
 /**
- * The labels of events on copies held by another organisation, and partner changes.
+ * The labels of events on the copies either side holds, and partner changes.
  *
  * @return {object} Event type to localized label.
  */
@@ -167,7 +167,7 @@ function federatedCopyEventLabels() {
 }
 
 /**
- * The labels of events on a received copy.
+ * The labels of a secret from another organisation declined here, or its copy here updated.
  *
  * @return {object} Event type to localized label.
  */
@@ -185,7 +185,7 @@ function heldFederatedCopyEventLabels() {
 }
 
 /**
- * The labels of a received copy removed, or declined by its recipient.
+ * The labels of a copy removed: ours of another organisation's secret, or theirs of ours.
  *
  * @return {object} Event type to localized label.
  */
