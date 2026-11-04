@@ -15,7 +15,7 @@ import {
 	type BackgroundToContent, type FormKind, type FormValues, type InlineClosed, type InlineListToBackground, type InlineMode, type InlineOpen, type InlineOpenReply, type InlinePickReply,
 	type InlineRow, type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
-import { conditionalCeremony, pickFromList, type Ceremony } from '@/src/passkey/ceremony'
+import { conditionalCeremony, pickFromList, type ConditionalRequest } from '@/src/passkey/ceremony'
 import { offeredPasskeys } from '@/src/passkey/offered'
 import { createKeyedQueue } from '@/src/queue'
 import { readGlobalSettings } from '@/src/settings/global'
@@ -102,9 +102,11 @@ type ListPlace = Pick<InlineSession, 'mode' | 'accountId' | 'frameId' | 'frameUr
 const conditionalFor = (tabId: number, place: ListPlace) =>
 	(place.mode === 'login' ? conditionalCeremony(tabId, place.frameId, place.accountId, place.frameUrl) : Promise.resolve(null))
 
-async function passkeysFor(accountId: string, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'>): Promise<PasskeyRow[]> {
+/** A request that names credentials offers none here, so the list's height cannot tell the page which of them the vault holds. */
+async function passkeysFor(accountId: string, ceremony: ConditionalRequest): Promise<PasskeyRow[]> {
+	if (ceremony.namesCredentials !== false) return []
 	const key = await getKey(accountId)
-	return key ? offeredPasskeys(accountId, key, { rpId: ceremony.rpId, allowCredentials: ceremony.credentialIds }) : []
+	return key ? offeredPasskeys(accountId, key, ceremony.rpId) : []
 }
 
 /** The active account and its status, while it is logged in with the list of `mode` on; null otherwise. */
@@ -118,12 +120,12 @@ async function listingAccount(mode: InlineMode): Promise<{ id: string; status: '
 }
 
 /** The rows an unlocked list shows: its matching logins, cards or identities, and the passkeys a pending conditional request offers. */
-async function rowCount(place: ListPlace, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'> | null): Promise<number> {
+async function rowCount(place: ListPlace, ceremony: ConditionalRequest | null): Promise<number> {
 	const logins = (await matchingFor(place.mode, place.accountId, place.frameUrl)).rows.length
 	return logins + (ceremony ? (await passkeysFor(place.accountId, ceremony)).length : 0)
 }
 
-async function openHeight(place: ListPlace, locked: boolean, ceremony: Pick<Ceremony, 'rpId' | 'credentialIds'> | null): Promise<number> {
+async function openHeight(place: ListPlace, locked: boolean, ceremony: ConditionalRequest | null): Promise<number> {
 	return inlineHeight(locked ? 1 : await rowCount(place, ceremony))
 }
 

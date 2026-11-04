@@ -991,6 +991,40 @@ describe('passkeys during a conditional request', () => {
 		expect(passkeyDecrypts()).toBe(1)
 	})
 
+	it.each([
+		['an empty allow list', { allowCredentials: [] }],
+		['no allow list', { allowCredentials: undefined }],
+	])('offers every passkey for the RP ID on %s', async (_, options) => {
+		await conditional(options)
+		expect(await openSession(OPEN, content())).toEqual({ key: expect.any(String), height: inlineHeight(2) })
+		expect((await openWithState()).state).toMatchObject({ rows: [{ id: 'work' }], passkeys: [offered] })
+	})
+
+	it('shows the same rows and height whatever credentials the allow list names, decrypting no passkey', async () => {
+		const id = (credentialId: string) => ({ type: 'public-key', id: credentialId })
+		const allowLists = [
+			[id('QQ')], [id('Zm9v')], [id('QQ'), id('Zm9v')], [id('Zm9v'), id('QQ')], [id('QQ'), id('QQ')], [id('Qg')], [id('QR')], [id('')],
+			[{ type: 'other', id: 'Zm9v' }, id('QQ')], [id('Q')], [id('QQ==')], [{ type: 'public-key' }], 'QQ',
+		]
+		vi.mocked(rsaDecrypt).mockClear()
+		const shown: object[] = []
+		for (const allowCredentials of allowLists) {
+			const ceremonyId = await conditional({ allowCredentials })
+			// A malformed request is refused at the start, so a webauthn field has no request to open on.
+			if (ceremonyId) expect(await openSession(WEBAUTHN, content())).toEqual({ key: expect.any(String), height: inlineHeight(1) })
+			const height = (await openSession(OPEN, content()))?.height
+			const { key, state } = await openWithState()
+			const { rows, passkeys = [] } = state as { rows: unknown[]; passkeys?: unknown[] }
+			shown.push({ height, rows, passkeys })
+			expect(await pickPasskey(key)).toEqual({ refused: 'stale' })
+			if (ceremonyId) await handlePasskeyContent({ kind: 'passkey.abort', ceremonyId } as never, content())
+		}
+		expect(shown).toEqual(allowLists.map(() => shown[0]))
+		expect(shown[0]).toMatchObject({ height: inlineHeight(1), rows: [{ id: 'work' }], passkeys: [] })
+		expect(passkeyDecrypts()).toBe(0)
+		expect(results()).toEqual([])
+	})
+
 	it('answers an empty passkey list where none matches, for "No logins or passkeys"', async () => {
 		await conditional({ rpId: 'example.test', allowCredentials: [{ type: 'public-key', id: 'Zm9v' }] })
 		pageUrl = 'https://example.test/other'
@@ -1212,6 +1246,41 @@ describe('passkeys during a conditional request', () => {
 			expect(results()).toEqual([])
 		})
 
+		it.each([
+			['Cancel in the window', false, () => passkeyWindow({ kind: 'passkey.cancel' })],
+			['closing the window', false, async () => {
+				await fakeBrowser.windows.onRemoved.trigger(50)
+				await flush()
+			}],
+			['a lock and an unlock outside the window', false, async () => {
+				await lock(accountId)
+				await flush()
+				await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+			}],
+			['a failed counter save', true, async () => {}],
+		])('asks again on a list pick after confirming, then %s', async (_, failSave, then) => {
+			if (failSave) vi.mocked(savePasskeyCounter).mockResolvedValueOnce({ ok: false, error: { code: 'offline' } })
+			else expect(await passkeyWindow({ kind: 'passkey.pick', itemId: 'example', credentialId: 'QQ' })).toEqual({ ok: false, code: 'verify_required' })
+			expect(await passkeyWindow({ kind: 'passkey.verify', method: PIN })).toMatchObject(failSave ? { ok: false, code: 'write_failed' } : { ok: true, view: { verify: false } })
+			expect(await ceremony()).toMatchObject({ verified: true })
+			await then()
+			// Only the failed save leaves the window it confirmed in open, for Retry.
+			expect(await ceremony()).toMatchObject({ verified: failSave })
+			expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
+			expect(await ceremony()).toMatchObject({ verified: false, pending: { itemId: 'example', credentialId: 'QQ' } })
+			expect(await passkeyWindow({ kind: 'passkey.state' })).toMatchObject({ ok: true, view: { verify: true, pending: offered } })
+			expect(await passkeyWindow({ kind: 'passkey.pick', itemId: 'example', credentialId: 'QQ' })).toEqual({ ok: false, code: 'verify_required' })
+			expect(results()).toEqual([])
+		})
+
+		it('signs with the user-verified flag on Retry in the window it confirmed in', async () => {
+			vi.mocked(savePasskeyCounter).mockResolvedValueOnce({ ok: false, error: { code: 'offline' } })
+			expect(await passkeyWindow({ kind: 'passkey.verify', method: PIN })).toMatchObject({ ok: false, code: 'write_failed' })
+			expect(await passkeyWindow({ kind: 'passkey.retry' })).toEqual({ ok: true })
+			const [result] = resultsOnly()
+			expect(fromBase64Url((result as Extract<typeof result, { type: 'credential' }>).credential.response.authenticatorData)[32]! & 0x04).toBe(0x04)
+		})
+
 		it('is forgotten on Cancel, and gone with the request', async () => {
 			expect(await passkeyWindow({ kind: 'passkey.cancel' })).toEqual({ ok: true })
 			expect(await ceremony()).toMatchObject({ id: ceremonyId, window: null })
@@ -1231,6 +1300,19 @@ describe('passkeys during a conditional request', () => {
 		expect(windows).toEqual([browser.runtime.getURL(`/popup.html?passkey=${ceremonyId}`)])
 		expect(await ceremony()).toMatchObject({ failed: { action: 'pick', itemId: 'example', credentialId: 'QQ', error: { code: 'offline' } } })
 		expect(results()).toEqual([])
+	})
+
+	it('signs a later list pick with the user-verified flag clear, though the user confirmed in a window since closed', async () => {
+		vi.mocked(unlock).mockReset()
+		vi.mocked(savePasskeyCounter).mockResolvedValueOnce({ ok: false, error: { code: 'offline' } })
+		const ceremonyId = await conditional()
+		expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'window' })
+		const fromWindow = { id: browser.runtime.id, url: browser.runtime.getURL(`/popup.html?passkey=${ceremonyId}`), tab: { id: 550 }, frameId: 0 } as never
+		expect(await handlePasskeyWindow({ kind: 'passkey.verify', ceremonyId, method: { type: 'pin', pin: '123456' } }, fromWindow)).toMatchObject({ ok: true })
+		expect(await handlePasskeyWindow({ kind: 'passkey.cancel', ceremonyId }, fromWindow)).toEqual({ ok: true })
+		expect(await pickPasskey((await openWithState()).key)).toEqual({ passkey: 'signed' })
+		const [result] = resultsOnly()
+		expect(fromBase64Url((result as Extract<typeof result, { type: 'credential' }>).credential.response.authenticatorData)[32]! & 0x04).toBe(0)
 	})
 
 	it('offers no passkey in a code list or in another frame’s list', async () => {
