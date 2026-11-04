@@ -144,6 +144,7 @@ function OfflineNotice({ offline, onSync }: { offline: boolean; onSync: () => vo
 	)
 }
 
+/** The last save's failure; an edit reads a conflict as a stale copy. */
 function SaveFailureNotice({ failure, editing, actionFor, webAppUrl }: { failure: SaveFailure | null; editing: boolean; actionFor: (failure: SaveFailure) => ReactNode; webAppUrl: string }) {
 	if (!failure) return null
 	return (

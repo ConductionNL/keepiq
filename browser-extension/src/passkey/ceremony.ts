@@ -93,14 +93,86 @@ function closeWindow(ceremony: Ceremony): void {
 	if (ceremony.window) void browser.windows.remove(ceremony.window.id).catch(() => {})
 }
 
-/** Ends the tab's ceremony while it is still `id`; `result` goes to its frame. False when it had ended already. */
-function end(tabId: number, id: string, result: PasskeyResult | null): Promise<boolean> {
+/** The longest a `fallback` waits for the window to close. */
+export const CLOSE_MS = 1_000
+/** The longest a `fallback` then waits for the page's window to take focus. */
+export const FOCUS_MS = 500
+
+/** Settles when `work` does or after `ms`, whichever comes first; never rejects. */
+function within(work: Promise<unknown>, ms: number): Promise<void> {
+	let timer: ReturnType<typeof setTimeout> | undefined
+	const cap = new Promise<void>((resolve) => (timer = setTimeout(resolve, Math.max(0, ms))))
+	return Promise.race([work.then(() => {}, () => {}), cap]).finally(() => clearTimeout(timer))
+}
+
+/** Closes the window and settles once `windows.onRemoved` reports it, its removal fails, or `ms` pass. */
+async function closeWithin(windowId: number, ms: number): Promise<void> {
+	let gone!: () => void
+	const removed = new Promise<void>((resolve) => (gone = resolve))
+	const onRemoved = (id: number) => {
+		if (id === windowId) gone()
+	}
+	browser.windows.onRemoved.addListener(onRemoved)
+	try {
+		await within(Promise.race([removed, browser.windows.remove(windowId).then(() => removed)]), ms)
+	} finally {
+		browser.windows.onRemoved.removeListener(onRemoved)
+	}
+}
+
+/** Activates the tab when asked and focuses its window; settles once `windows.onFocusChanged` reports that window, or `ms` pass. */
+async function focusWithin(tabId: number, activate: boolean, ms: number): Promise<void> {
+	let windowId: number | undefined
+	// Set once this settles, so a late step can't pull the page over a newer window after `fallback` went out.
+	let over = false
+	let arrived!: () => void
+	const focused = new Promise<void>((resolve) => (arrived = resolve))
+	const onFocusChanged = (id: number) => {
+		if (id === windowId) arrived()
+	}
+	browser.windows.onFocusChanged.addListener(onFocusChanged)
+	try {
+		await within((async () => {
+			windowId = (await browser.tabs.get(tabId)).windowId
+			if (over) return
+			if (activate) await browser.tabs.update(tabId, { active: true }).catch(() => {})
+			if ((await browser.windows.get(windowId).catch(() => null))?.focused || over) return
+			await browser.windows.update(windowId, { focused: true })
+			await focused
+		})(), ms)
+	} finally {
+		over = true
+		browser.windows.onFocusChanged.removeListener(onFocusChanged)
+	}
+}
+
+/**
+ * Chromium refuses WebAuthn from a page without focus, so the browser's own dialog waits until the window is gone and the tab's window has focus.
+ * A newer ceremony that has or is opening a window keeps the focus.
+ */
+async function handBack(ceremony: Ceremony, activate: boolean): Promise<void> {
+	const left = (ms: number) => Math.min(ms, (ceremony.deadline ?? Infinity) - Date.now())
+	if (ceremony.window) await closeWithin(ceremony.window.id, left(CLOSE_MS))
+	const newer = await store.get(ceremony.tabId)
+	if (newer && (newer.window || !newer.conditional)) return
+	const ms = left(FOCUS_MS)
+	if (ms > 0) await focusWithin(ceremony.tabId, activate, ms)
+}
+
+/**
+ * Ends the tab's ceremony while it is still `id`; `result` goes to its frame. False when it had ended already.
+ * `activateTab` is for the user's own fallback only, so no other path brings a hidden tab forward.
+ */
+function end(tabId: number, id: string, result: PasskeyResult | null, activateTab = false): Promise<boolean> {
 	return inTab(tabId, async () => {
 		const ceremony = await store.get(tabId)
 		if (ceremony?.id !== id) return false
 		await store.remove(tabId)
-		if (result) toFrame(ceremony, result)
-		closeWindow(ceremony)
+		if (result?.type === 'fallback') void handBack(ceremony, activateTab).catch(log('hand back')).then(() => toFrame(ceremony, result))
+		else {
+			if (result) toFrame(ceremony, result)
+			closeWindow(ceremony)
+		}
 		return true
 	})
 }
@@ -168,7 +240,8 @@ async function showWindow(tabId: number, id: string): Promise<void> {
 	if (windowId === undefined) throw new Error('No window to show the ceremony in')
 	const windowTab = created!.tabs?.[0]?.id ?? (await browser.windows.get(windowId, { populate: true })).tabs?.[0]?.id
 	if (windowTab === undefined) {
-		void browser.windows.remove(windowId).catch(() => {})
+		// Awaited, so the fallback that follows reaches the page after this window is gone.
+		await closeWithin(windowId, CLOSE_MS)
 		throw new Error('No tab in the ceremony window')
 	}
 	await store.set({ ...ceremony, window: { id: windowId, tabId: windowTab } })
@@ -410,7 +483,7 @@ async function fallbackOrCancel(ceremony: Ceremony, kind: 'passkey.fallback' | '
 	// A conditional request has no fallback (spec § Sign in with a passkey), so its window offers none and this acts as Cancel.
 	const closed = ceremony.conditional
 		? release(ceremony)
-		: end(ceremony.tabId, ceremony.id, kind === 'passkey.fallback' ? { type: 'fallback' } : cancelled(ceremony))
+		: kind === 'passkey.fallback' ? end(ceremony.tabId, ceremony.id, { type: 'fallback' }, true) : end(ceremony.tabId, ceremony.id, cancelled(ceremony))
 	return await closed ? { ok: true } : ENDED
 }
 
