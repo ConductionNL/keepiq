@@ -81,14 +81,28 @@ describe('writeFromBackground', () => {
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toMatchObject({ scheduledTime: 31_000 })
 	})
 
-	it('writes through an offscreen document on Chrome and closes it again', async () => {
+	it('writes through an offscreen document on Chrome and keeps it open', async () => {
 		const offscreen = fakeOffscreen()
 		const send = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(true as never)
 		expect(await writeFromBackground('hunter2', 30_000)).toBe(true)
 		expect(offscreen.createDocument).toHaveBeenCalledWith(expect.objectContaining({ reasons: ['CLIPBOARD'], url: expect.stringContaining('/offscreen.html') }))
 		expect(send).toHaveBeenCalledWith({ kind: 'offscreen.writeClipboard', text: 'hunter2' })
-		expect(offscreen.closeDocument).toHaveBeenCalled()
+		expect(offscreen.closeDocument).not.toHaveBeenCalled()
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeDefined()
+	})
+
+	it('never closes the document it wrote through, and reuses it for the next write and the clear', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const offscreen = fakeOffscreen()
+		const send = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(true as never)
+		expect(await writeFromBackground('hunter2', 30_000)).toBe(true)
+		expect(await writeFromBackground('287082', 30_000)).toBe(true)
+		send.mockRejectedValueOnce(new Error('No receiver'))
+		expect(await writeFromBackground('lost', 30_000)).toBe(false)
+		await clearClipboard()
+		expect(offscreen.createDocument).toHaveBeenCalledTimes(1)
+		expect(offscreen.closeDocument).not.toHaveBeenCalled()
+		expect(send).toHaveBeenLastCalledWith({ kind: 'offscreen.clearClipboard' })
 	})
 
 	it('schedules no clear under Never, and cancels an earlier one', async () => {
@@ -100,11 +114,10 @@ describe('writeFromBackground', () => {
 
 	it('answers false and leaves the clear alone when the write fails', async () => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
-		const offscreen = fakeOffscreen()
+		fakeOffscreen()
 		vi.spyOn(browser.runtime, 'sendMessage').mockRejectedValue(new Error('No receiver'))
 		await scheduleClipboardClear(30_000, 1_000)
 		expect(await writeFromBackground('hunter2', 10_000, { now: 5_000 })).toBe(false)
-		expect(offscreen.closeDocument).toHaveBeenCalled()
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toMatchObject({ scheduledTime: 31_000 })
 	})
 
@@ -121,7 +134,7 @@ describe('writeFromBackground', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const [written] = await Promise.all([writeFromBackground('hunter2', 30_000), clearClipboard()])
 		expect(written).toBe(true)
-		expect(offscreen.createDocument).toHaveBeenCalledTimes(2)
+		expect(offscreen.createDocument).toHaveBeenCalledTimes(1)
 		expect(warn).not.toHaveBeenCalled()
 	})
 })
@@ -133,31 +146,21 @@ describe('clearClipboard', () => {
 		expect(execCommand).toHaveBeenCalledWith('copy')
 	})
 
-	it('clears through an offscreen document on Chrome and closes it again', async () => {
-		const offscreen = { hasDocument: vi.fn(async () => false), createDocument: vi.fn(async () => {}), closeDocument: vi.fn(async () => {}) }
-		Object.assign(browser, { offscreen })
+	it('clears through an offscreen document on Chrome and keeps it open', async () => {
+		const offscreen = fakeOffscreen()
 		const send = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(true as never)
 		await clearClipboard()
 		expect(offscreen.createDocument).toHaveBeenCalledWith(expect.objectContaining({ reasons: ['CLIPBOARD'], url: expect.stringContaining('/offscreen.html') }))
 		expect(send).toHaveBeenCalledWith({ kind: 'offscreen.clearClipboard' })
-		expect(offscreen.closeDocument).toHaveBeenCalled()
+		expect(offscreen.closeDocument).not.toHaveBeenCalled()
 	})
 
 	it('logs when the offscreen document could not clear', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-		Object.assign(browser, { offscreen: { hasDocument: vi.fn(async () => true), closeDocument: vi.fn(async () => {}) } })
+		fakeOffscreen(true)
 		vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(false as never)
 		await clearClipboard()
 		expect(warn).toHaveBeenCalledWith('[keepiq] could not clear the clipboard')
-	})
-
-	it('closes the offscreen document even when the message fails', async () => {
-		vi.spyOn(console, 'warn').mockImplementation(() => {})
-		const offscreen = { hasDocument: vi.fn(async () => true), closeDocument: vi.fn(async () => {}) }
-		Object.assign(browser, { offscreen })
-		vi.spyOn(browser.runtime, 'sendMessage').mockRejectedValue(new Error('No receiver'))
-		await clearClipboard()
-		expect(offscreen.closeDocument).toHaveBeenCalled()
 	})
 
 	it('only logs when clearing fails', async () => {
