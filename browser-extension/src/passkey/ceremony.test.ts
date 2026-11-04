@@ -680,7 +680,7 @@ describe('the passkey window', () => {
 			let open = () => {}
 			if (opening) {
 				const create = vi.mocked(browser.windows.create).getMockImplementation()!
-				vi.mocked(browser.windows.create).mockImplementation((data) => new Promise((resolve) => (open = () => resolve(create(data)))))
+				vi.mocked(browser.windows.create).mockImplementation((...args) => new Promise((resolve) => (open = () => resolve(create(...args)))))
 			}
 			try {
 				const newer = await start(createRequest())
