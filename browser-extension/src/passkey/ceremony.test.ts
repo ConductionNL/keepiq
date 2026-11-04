@@ -646,9 +646,24 @@ describe('the passkey window', () => {
 			void fallback(ceremonyId!)
 			await vi.advanceTimersByTimeAsync(199)
 			expect(delivered()).toEqual([])
-			// The focus step's timer starts at the deadline itself, with nothing left.
-			await vi.advanceTimersByTimeAsync(50)
+			await vi.advanceTimersByTimeAsync(1)
 			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
+			expect(browser.tabs.update).not.toHaveBeenCalledWith(TAB, { active: true })
+			expect(focused()).toEqual([])
+		})
+
+		it('neither activates the tab nor focuses its window when tabs.get answers after the focus cap', async () => {
+			const { ceremonyId } = await start()
+			let answer = () => {}
+			vi.mocked(browser.tabs.get).mockImplementation((tabId: number) => new Promise((resolve) => (answer = () => resolve({ id: tabId, windowId: PAGE_WINDOW } as never))))
+			vi.useFakeTimers({ toFake: ['setTimeout'] })
+			void fallback(ceremonyId!)
+			await vi.advanceTimersByTimeAsync(FOCUS_MS)
+			expect(delivered()).toEqual([[ceremonyId, { type: 'fallback' }]])
+			answer()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(browser.tabs.update).not.toHaveBeenCalledWith(TAB, { active: true })
+			expect(focused()).toEqual([])
 		})
 
 		it('removes every listener it adds, whether the window closes or the caps pass', async () => {

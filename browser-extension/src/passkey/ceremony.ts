@@ -122,6 +122,8 @@ async function closeWithin(windowId: number, ms: number): Promise<void> {
 /** Activates the tab when asked and focuses its window; settles once `windows.onFocusChanged` reports that window, or `ms` pass. */
 async function focusWithin(tabId: number, activate: boolean, ms: number): Promise<void> {
 	let windowId: number | undefined
+	// Set once this settles, so a late step can't pull the page over a newer window after `fallback` went out.
+	let over = false
 	let arrived!: () => void
 	const focused = new Promise<void>((resolve) => (arrived = resolve))
 	const onFocusChanged = (id: number) => {
@@ -131,12 +133,14 @@ async function focusWithin(tabId: number, activate: boolean, ms: number): Promis
 	try {
 		await within((async () => {
 			windowId = (await browser.tabs.get(tabId)).windowId
+			if (over) return
 			if (activate) await browser.tabs.update(tabId, { active: true }).catch(() => {})
-			if ((await browser.windows.get(windowId).catch(() => null))?.focused) return
+			if ((await browser.windows.get(windowId).catch(() => null))?.focused || over) return
 			await browser.windows.update(windowId, { focused: true })
 			await focused
 		})(), ms)
 	} finally {
+		over = true
 		browser.windows.onFocusChanged.removeListener(onFocusChanged)
 	}
 }
@@ -150,7 +154,8 @@ async function handBack(ceremony: Ceremony, activate: boolean): Promise<void> {
 	if (ceremony.window) await closeWithin(ceremony.window.id, left(CLOSE_MS))
 	const newer = await store.get(ceremony.tabId)
 	if (newer && (newer.window || !newer.conditional)) return
-	await focusWithin(ceremony.tabId, activate, left(FOCUS_MS))
+	const ms = left(FOCUS_MS)
+	if (ms > 0) await focusWithin(ceremony.tabId, activate, ms)
 }
 
 /**
