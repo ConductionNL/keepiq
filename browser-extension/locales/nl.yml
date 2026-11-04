@@ -260,6 +260,7 @@ writeErrors:
   partnerClock: Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.
   shareScanPending: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag je beheerder te controleren of achtergrondtaken draaien.
   shareScanPendingOpen: Dit item wacht op een controle van zijn delingen en kan nog niet worden bewerkt. Probeer het later opnieuw.
+  shareScanPendingDelete: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets verwijderd; probeer het later opnieuw, of vraag je beheerder te controleren of achtergrondtaken draaien.
   sendInvalid: Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw.
   sendOffline: De server is niet bereikbaar, er is niets verzonden
   argon2Unavailable: Wachtwoordbeveiliging is niet beschikbaar in deze browser

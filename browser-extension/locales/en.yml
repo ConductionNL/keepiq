@@ -261,6 +261,7 @@ writeErrors:
   partnerClock: The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.
   shareScanPending: This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later, or ask your administrator to check that background jobs run.
   shareScanPendingOpen: This item is waiting for a check of its shares and can't be edited yet. Try again later.
+  shareScanPendingDelete: This item is waiting for a check of its shares that has not finished. Nothing was deleted; try again later, or ask your administrator to check that background jobs run.
   sendInvalid: Keepiq did not accept this send. Nothing was sent; check the fields and try again.
   sendOffline: Could not reach the server, nothing was sent
   argon2Unavailable: Password protection is not available in this browser
