@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Db;
 
+use BackedEnum;
 use OCP\DB\IResult;
 use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -162,6 +163,27 @@ class FindsByStringIdGoldenTest extends TestCase {
 	}//end mappers()
 
 	/**
+	 * How a query builder argument is recorded in the golden.
+	 *
+	 * IQueryBuilder::PARAM_* is an int under Nextcloud's doctrine/dbal 3 and an enum under the bootstrap's dbal 4 stub, so an enum is recorded by its value.
+	 *
+	 * @param mixed $arg The argument.
+	 *
+	 * @return mixed The scalar, the enum's value or the type name.
+	 */
+	private static function recorded(mixed $arg): mixed {
+		if ($arg instanceof BackedEnum) {
+			return $arg->value;
+		}
+
+		if (is_scalar($arg) === true) {
+			return $arg;
+		}
+
+		return gettype($arg);
+	}//end recorded()
+
+	/**
 	 * findById matches the record.
 	 *
 	 * @param string $class The mapper class.
@@ -175,7 +197,8 @@ class FindsByStringIdGoldenTest extends TestCase {
 		$answers = array_slice([['id' => 'row-1'], ['id' => 'row-2']], 0, $rows);
 
 		$result = $this->createMock(IResult::class);
-		foreach (['fetch', 'fetchAssociative'] as $method) {
+		// QBMapper reads with fetch() or fetchAssociative(), whichever this Nextcloud's IResult has.
+		foreach (array_filter(['fetch', 'fetchAssociative'], static fn ($method) => method_exists(IResult::class, $method)) as $method) {
 			$result->method($method)->willReturnCallback(function () use (&$answers, &$calls) {
 				$calls[] = 'fetch';
 				return array_shift($answers) ?? false;
@@ -195,14 +218,14 @@ class FindsByStringIdGoldenTest extends TestCase {
 		$qb = $this->createMock(IQueryBuilder::class);
 		foreach (['select', 'from', 'where', 'andWhere', 'setMaxResults', 'orderBy'] as $method) {
 			$qb->method($method)->willReturnCallback(function (...$args) use ($method, &$calls, &$qb) {
-				$calls[] = [$method, array_map(static fn ($a) => is_scalar($a) ? $a : gettype($a), $args)];
+				$calls[] = [$method, array_map(self::recorded(...), $args)];
 				return $qb;
 			});
 		}
 
 		$qb->method('expr')->willReturn($expr);
 		$qb->method('createNamedParameter')->willReturnCallback(function (...$args) use (&$calls) {
-			$calls[] = ['createNamedParameter', array_map(static fn ($a) => is_scalar($a) ? $a : gettype($a), $args)];
+			$calls[] = ['createNamedParameter', array_map(self::recorded(...), $args)];
 			return ':param';
 		});
 		$qb->method('executeQuery')->willReturnCallback(function () use (&$calls, $result) {
