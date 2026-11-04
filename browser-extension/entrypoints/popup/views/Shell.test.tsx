@@ -125,7 +125,8 @@ describe('Shell', () => {
 		const sent = fakeBackground({ snapshot: { state: 'locked' } })
 		render(<App />)
 		await title()
-		await vi.waitFor(() => expect(sentKinds(sent).filter((kind) => kind === 'vault.status')).toHaveLength(2))
+		// One read per mount, then one more after the locked snapshot.
+		await vi.waitFor(() => expect(sentKinds(sent).filter((kind) => kind === 'vault.status')).toHaveLength(mounts() + 1))
 	})
 
 	it('re-reads the state when the background broadcasts a lock', async () => {
