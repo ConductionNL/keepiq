@@ -2,8 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Pins that the test clock from `tests/vitest/monotonicNow.js` keeps a row
- * click when the wall clock steps back between mount and trigger.
+ * Pins that the test clock from `tests/vitest/monotonicNow.js` keeps a row click when the wall clock steps back between mount and trigger.
  *
  * @spec exclude test harness regression, not product behaviour
  */
