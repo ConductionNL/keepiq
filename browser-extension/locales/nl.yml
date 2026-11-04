@@ -232,6 +232,7 @@ writeErrors:
   forbidden: Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.
   policy: Het beleid van je organisatie staat deze wijziging niet toe
   accountChanged: Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.
+  accountChangedDelete: Je bent intussen naar een ander account gewisseld, dus er is niets verwijderd. Wissel terug om het te verwijderen.
   keepClash: Er bestaat al een map {name} één niveau hoger. Kies daarvoor Items naar bovenliggende map of Verwijderen, of wijzig eerst een van de namen.
   keepClashAfter: Een map die je wilde behouden heeft dezelfde naam als een map één niveau hoger, dus er is niets verwijderd. Controleer de keuzes opnieuw.
   invalid: Keepiq heeft deze wijziging geweigerd

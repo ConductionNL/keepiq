@@ -20,7 +20,7 @@ const EXPECTED = {
 	write_locked: 'writeErrors.writeLocked',
 	forbidden: 'writeErrors.forbidden',
 	policy: 'writeErrors.policy',
-	account_changed: 'writeErrors.accountChanged',
+	account_changed: { delete: 'writeErrors.accountChangedDelete', other: 'writeErrors.accountChanged' },
 	invalid: { send: 'writeErrors.sendInvalid', folderDelete: 'writeErrors.folderChanged', other: 'writeErrors.invalid' },
 	conflict: {
 		passkey: 'passkey.errors.conflict', edit: 'writeErrors.stale', open: 'writeErrors.unmatched', folderName: 'writeErrors.duplicateFolder',

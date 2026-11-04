@@ -55,7 +55,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'write_locked': return i18n.t('writeErrors.writeLocked')
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
 		case 'policy': return i18n.t('writeErrors.policy')
-		case 'account_changed': return i18n.t('writeErrors.accountChanged')
+		case 'account_changed': return context === 'delete' ? i18n.t('writeErrors.accountChangedDelete') : i18n.t('writeErrors.accountChanged')
 		case 'invalid': return invalidText(context)
 		case 'conflict': return conflictText(context)
 		case 'not_found': return context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
