@@ -298,7 +298,7 @@ While the active account is locked, the extension SHALL offer on a payment or ad
 - **THEN** the list shows the cards
 
 ### Requirement: What the page can learn before a fill
-Before the user picks an item, the page SHALL be able to learn nothing about the user's cards and identities: their number, names, brands and members stay in the background and in the list page, and `fill.probe` carries only the kind. After a fill, a frame learns the members written into its own fields, and no other.
+Before the user picks an item, the page SHALL be able to learn nothing about the user's cards and identities but what the list's height shows: their names, brands, numbers and other members stay in the background and in the list page, and `fill.probe` carries only the kind. The list is sized to its rows as the login list is, so a page that measures it learns whether the vault is unlocked and how many cards or identities it holds, from two to five (five for more); one row is the locked vault, no item and one item alike. Cards and identities are not matched per site, so that count is the same on every site; this is accepted for a list that fits its rows. After a fill, a frame learns the members written into its own fields, and no other.
 
 #### Scenario: Card list height
 - **GIVEN** an unlocked vault with no card, one card, three cards and eight cards
