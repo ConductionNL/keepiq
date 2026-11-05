@@ -1678,6 +1678,7 @@ OC.L10N.register(
         "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.",
         "Recipient at another organisation restored their copy": "Recipient at another organisation restored their copy",
         "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.",
+        "Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again.",
         "Save without them": "Save without them",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Saved. Recipients at partner organisations get this change when the owner next saves this secret.",
         "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.": "The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change.",
@@ -1685,6 +1686,8 @@ OC.L10N.register(
         "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.": "This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change.",
         "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.": "You are not allowed to save this change for everyone this secret is shared with. Nothing was saved.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.",
+        "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.",
         "This version cannot be restored to this secret. Nothing was saved.": "This version cannot be restored to this secret. Nothing was saved.",
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Shared with you to view only. Ask its owner for edit rights to change it.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.",
@@ -1725,7 +1728,8 @@ OC.L10N.register(
         "This image could not be read.": "This image could not be read.",
         "This image is too large. Choose an image under 10 MB.": "This image is too large. Choose an image under 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.",
-        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in."
+        "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.",
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run."
     },
     "nplurals=2; plural=(n != 1);"
 )

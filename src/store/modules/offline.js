@@ -50,6 +50,20 @@ import { onVaultLock, useSessionStore } from './session.js'
 const SENSITIVE = VALUE_FIELDS
 
 /**
+ * A queued entry whose op is none of create, update and delete: it is kept as
+ * failed and never sent.
+ */
+class UnknownQueueOpError extends Error {
+	/**
+	 * @param {string} op The entry's op.
+	 */
+	constructor(op) {
+		super(`Unknown offline change: ${String(op)}`)
+		this.name = 'UnknownQueueOpError'
+	}
+}
+
+/**
  * How a replay error settles its entry. A queued entry has no "save without
  * them", so an unreachable partner, a partner lookup limit that outlasted the
  * wait or a malformed share save fails the entry instead of holding up every
@@ -61,6 +75,9 @@ const SENSITIVE = VALUE_FIELDS
  * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 function replayKind(e) {
+	if (e instanceof UnknownQueueOpError) {
+		return 'failed'
+	}
 	if (e instanceof ShareSaveError) {
 		return (
 			{
@@ -110,7 +127,7 @@ function failureOf(e) {
 	if (e instanceof ShareSaveError && e.code === 'partner_unreachable') {
 		return {
 			code: 'partner_unreachable',
-			partners: e.partners.map((p) => p.recipientCloudId),
+			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
 		}
 	}
 	if (
@@ -146,6 +163,105 @@ function failureOf(e) {
 }
 
 /**
+ * The text for an entry of a kind Keepiq does not know.
+ *
+ * @return {string}
+ */
+function unknownOpText() {
+	return t(
+		'keepiq',
+		'This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.',
+	)
+}
+
+/**
+ * The text for a stored unreachable-partner failure, naming the partners
+ * it recorded.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string}
+ */
+function unreachableText(failure) {
+	const partners = (failure.partners ?? []).filter(Boolean).join(', ')
+	if (partners === '') {
+		return t(
+			'keepiq',
+			'A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.',
+		)
+	}
+	return t(
+		'keepiq',
+		'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
+		{ partners },
+	)
+}
+
+/**
+ * The share save's own text for a failure that needs only its code.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string|null}
+ */
+function shareSaveCodeText(failure) {
+	return shareSaveErrorText(new ShareSaveError(failure.code))
+}
+
+/**
+ * The text for a partner that runs a Keepiq too old for a value field.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string|null}
+ */
+function upgradeText(failure) {
+	return shareSaveErrorText({
+		code: failure.code,
+		partners: (failure.partners ?? []).map((recipientCloudId) => ({
+			recipientCloudId,
+		})),
+		response: { data: { requiredVersion: failure.requiredVersion } },
+	})
+}
+
+/**
+ * The text for a share save the server refused. The server's code stays
+ * stored with the entry; the list shows words, never the code.
+ *
+ * @param {object} failure The stored failure.
+ * @return {string}
+ */
+function refusedText(failure) {
+	return (
+		shareSaveErrorText({
+			fromShareSave: true,
+			response: { status: 400, data: { error: failure.reason } },
+		}) ?? t('keepiq', 'Failed to save secret')
+	)
+}
+
+/**
+ * The text for a share save that was not allowed.
+ *
+ * @return {string|null}
+ */
+function notAllowedText() {
+	return shareSaveErrorText({
+		fromShareSave: true,
+		response: { status: REFUSAL_STATUS, data: { error: 'not_allowed' } },
+	})
+}
+
+/** The text of each stored failure code; any other shows its own message. */
+const FAILURE_TEXTS = new Map([
+	['unknown_op', unknownOpText],
+	['partner_unreachable', unreachableText],
+	['partner_lookup_limit', shareSaveCodeText],
+	['view_only', shareSaveCodeText],
+	['partner_upgrade_required', upgradeText],
+	['refused', refusedText],
+	['not_allowed', notAllowedText],
+])
+
+/**
  * The text the failed list shows for a stored failure.
  *
  * @param {object|undefined} failure The entry's `failure`.
@@ -153,40 +269,8 @@ function failureOf(e) {
  * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export function failureText(failure) {
-	switch (failure?.code) {
-		case 'partner_unreachable':
-			return t(
-				'keepiq',
-				'A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.',
-				{ partners: failure.partners.join(', ') },
-			)
-		case 'partner_lookup_limit':
-		case 'view_only':
-			return shareSaveErrorText(new ShareSaveError(failure.code))
-		case 'partner_upgrade_required':
-			return shareSaveErrorText({
-				code: failure.code,
-				partners: (failure.partners ?? []).map((recipientCloudId) => ({
-					recipientCloudId,
-				})),
-				response: { data: { requiredVersion: failure.requiredVersion } },
-			})
-		case 'refused':
-			// The server's code stays stored with the entry; the list shows
-			// words, never the code.
-			return (
-				shareSaveErrorText({
-					fromShareSave: true,
-					response: { status: 400, data: { error: failure.reason } },
-				}) ?? t('keepiq', 'Failed to save secret')
-			)
-		case 'not_allowed':
-			return shareSaveErrorText({
-				fromShareSave: true,
-				response: { status: REFUSAL_STATUS, data: { error: 'not_allowed' } },
-			})
-	}
-	return failure?.message ?? null
+	const text = FAILURE_TEXTS.get(failure?.code)
+	return text ? text(failure) : (failure?.message ?? null)
 }
 
 let lockHookRegistered = false
@@ -559,65 +643,99 @@ export const useOfflineStore = defineStore('offline', {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async replayOne(entry) {
-			const base = `/apps/keepiq/api/v1/secrets`
 			try {
 				if (entry.status === 'sync') {
 					return await this.replayPendingSync(entry)
 				}
-				if (entry.op === 'create') {
-					await axios.post(generateUrl(base), entry.body)
-				} else if (
-					entry.op === 'update'
-					&& SENSITIVE.some((f) => entry.body[f] !== undefined)
-				) {
-					// Every copy and partner share is encrypted for the holders
-					// of this moment (D2), in the same transaction as the row.
-					await this.shareSave(
-						entry,
-						entry.baseUpdatedAt,
-						entry.body,
-						entry.sourceBaseUpdatedAt ?? null,
-					)
-				} else if (entry.op === 'update') {
-					await axios.put(generateUrl(`${base}/${entry.secretId}`), {
-						...entry.body,
-						baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
-					})
-				} else {
-					await axios.delete(generateUrl(`${base}/${entry.secretId}`), {
-						params: entry.baseUpdatedAt
-							? { baseUpdatedAt: entry.baseUpdatedAt }
-							: {},
-					})
-				}
+				await this.sendEntry(entry)
 			} catch (e) {
-				const kind = replayKind(e)
-				if (kind === 'conflict') {
-					const answer = e.response?.data
-					this.conflicts = {
-						...this.conflicts,
-						[entry.entryId]: answer?.current ?? null,
-					}
-					// Stored with the entry, so keeping the change replays on
-					// this 409's versions, also after a reload.
-					await this.setStatus(
-						{
-							...entry,
-							conflictUpdatedAt: answer?.current?.updatedAt ?? null,
-							conflictSourceUpdatedAt: conflictSource(answer),
-						},
-						'conflict',
-					)
-					return 'conflict'
-				}
-				if (kind === 'failed') {
-					await this.setStatus(entry, 'failed', failureOf(e))
-					return 'failed'
-				}
-				return 'retry'
+				return this.replayFailure(entry, e)
 			}
 			await this.drop(entry)
 			return 'done'
+		},
+
+		/**
+		 * Send one queued change to the server: a create, a share save when
+		 * an update touches a sensitive field, a plain update, or a delete.
+		 *
+		 * @param {object} entry The queued entry.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 */
+		async sendEntry(entry) {
+			const base = `/apps/keepiq/api/v1/secrets`
+			if (entry.op === 'create') {
+				await axios.post(generateUrl(base), entry.body)
+			} else if (
+				entry.op === 'update'
+				&& SENSITIVE.some((f) => entry.body[f] !== undefined)
+			) {
+				// Every copy and partner share is encrypted for the holders
+				// of this moment (D2), in the same transaction as the row.
+				await this.shareSave(
+					entry,
+					entry.baseUpdatedAt,
+					entry.body,
+					entry.sourceBaseUpdatedAt ?? null,
+				)
+			} else if (entry.op === 'update') {
+				await axios.put(generateUrl(`${base}/${entry.secretId}`), {
+					...entry.body,
+					baseUpdatedAt: entry.baseUpdatedAt ?? undefined,
+				})
+			} else if (entry.op === 'delete') {
+				await axios.delete(generateUrl(`${base}/${entry.secretId}`), {
+					params: entry.baseUpdatedAt
+						? { baseUpdatedAt: entry.baseUpdatedAt }
+						: {},
+				})
+			} else {
+				throw new UnknownQueueOpError(entry.op)
+			}
+		},
+
+		/**
+		 * Keep a change the server refused: a conflict keeps the server's
+		 * current version with it, a failure keeps why; anything else is
+		 * retried later.
+		 *
+		 * @param {object} entry The queued entry.
+		 * @param {Error|object} error The thrown error.
+		 * @return {Promise<string>} 'conflict', 'failed' or 'retry'.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
+		async replayFailure(entry, error) {
+			const kind = replayKind(error)
+			if (kind === 'conflict') {
+				const answer = error.response?.data
+				this.conflicts = {
+					...this.conflicts,
+					[entry.entryId]: answer?.current ?? null,
+				}
+				// Stored with the entry, so keeping the change replays on
+				// this 409's versions, also after a reload.
+				await this.setStatus(
+					{
+						...entry,
+						conflictUpdatedAt: answer?.current?.updatedAt ?? null,
+						conflictSourceUpdatedAt: conflictSource(answer),
+					},
+					'conflict',
+				)
+				return 'conflict'
+			}
+			if (kind === 'failed') {
+				// An entry of an unknown kind keeps its own reason: no server
+				// answered it.
+				const failure =
+					error instanceof UnknownQueueOpError
+						? { code: 'unknown_op' }
+						: failureOf(error)
+				await this.setStatus(entry, 'failed', failure)
+				return 'failed'
+			}
+			return 'retry'
 		},
 
 		/**

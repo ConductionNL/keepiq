@@ -15,6 +15,7 @@ const defaults: AccountSettings = {
 	contextMenu: true,
 	askToAdd: true,
 	askToUpdate: true,
+	askPasskeys: true,
 	excludedDomains: [],
 	defaultItemType: 'login',
 }
@@ -50,6 +51,8 @@ describe('reading', () => {
 		['contextMenu', null],
 		['askToAdd', 'true'],
 		['askToUpdate', 0],
+		['askPasskeys', 'false'],
+		['askPasskeys', null],
 		['excludedDomains', 'example.test'],
 		['excludedDomains', ['example.test', 5]],
 		['excludedDomains', ['example.test', '']],
@@ -74,7 +77,7 @@ describe('reading', () => {
 	it('keeps valid values', async () => {
 		const chosen: AccountSettings = {
 			vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'logout', clearClipboardMs: 0, autoCopyTotp: false, autofillOnPageLoad: true, defaultAutofill: 'never',
-			uriMatch: 'regex', inlineSuggestions: false, contextMenu: false, askToAdd: false, askToUpdate: false,
+			uriMatch: 'regex', inlineSuggestions: false, contextMenu: false, askToAdd: false, askToUpdate: false, askPasskeys: false,
 			excludedDomains: ['example.test', 'example.co.uk', 'user.github.io', '192.168.1.10', 'localhost'], defaultItemType: 'note',
 		}
 		await browser.storage.local.set({ [settingsKey('a')]: chosen })
@@ -87,7 +90,7 @@ describe('reading', () => {
 	})
 
 	it('lists every autofill behaviour ext-autofill delivered', () => {
-		expect(AUTOFILL_FEATURES).toEqual(['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'])
+		expect(AUTOFILL_FEATURES).toEqual(['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys'])
 	})
 })
 
@@ -139,6 +142,14 @@ describe('writing', () => {
 		await writeSettings('a', { vaultTimeout: 5 })
 		await writeSettings('a', { vaultTimeout: 'tomorrow', askToAdd: false, bogus: 1 } as never)
 		expect(await stored()).toEqual({ vaultTimeout: 5, askToAdd: false })
+	})
+
+	it('stores Ask to save and use passkeys in the account\'s record', async () => {
+		await writeSettings('a', { askPasskeys: false })
+		expect(await stored()).toEqual({ askPasskeys: false })
+		expect((await readSettings('a')).askPasskeys).toBe(false)
+		await writeSettings('a', { askPasskeys: true })
+		expect((await readSettings('a')).askPasskeys).toBe(true)
 	})
 
 	it('loses neither of two writes made at once', async () => {

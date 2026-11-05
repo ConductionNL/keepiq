@@ -343,6 +343,10 @@ export function findCodeGroups(root: Root = document, within?: FieldGroup): HTML
 	return found
 }
 
+/** An `autocomplete` with the `webauthn` token: such a field may open the list while a conditional passkey request is pending. */
+export const isWebauthnField = (field: Element): boolean =>
+	(field.getAttribute('autocomplete') ?? '').toLowerCase().split(/\s+/).includes('webauthn')
+
 /** Whether the inline list may open on `field`, and in which mode (spec `inline-list`, Which fields open the list). */
 export function isQualifying(field: Element): InlineMode | null {
 	const group = groupOf(field)

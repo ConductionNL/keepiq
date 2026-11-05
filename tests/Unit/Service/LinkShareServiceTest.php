@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IGroupManager;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -47,6 +48,7 @@ use RuntimeException;
  * Tests for LinkShareService.
  */
 class LinkShareServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * The service under test.
@@ -94,8 +96,11 @@ class LinkShareServiceTest extends TestCase {
 					throw new DoesNotExistException('not a copy');
 				}
 
+				// A real row: its target holds the copy it names.
 				$row = new ShareTarget();
 				$row->setSourceSecretId($this->copies[$copyId]);
+				$row->setTargetUserId((string)($this->secretRows[$copyId] ?? null)?->getOwnerId());
+				$row->setSecretId($copyId);
 				return $row;
 			}
 		);
@@ -132,7 +137,7 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->delegations,
-				shareTargetMapper: $this->shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $this->secrets),
 			),
 		);
 	}//end setUp()
@@ -344,7 +349,7 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->delegations,
-				shareTargetMapper: $this->shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $this->secrets),
 				grants: new ShareGrantReader(
 					secretMapper: $this->secrets,
 					groupShareMapper: $groupShares,
@@ -450,7 +455,7 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $secrets,
 				delegationMapper: $this->delegations,
-				shareTargetMapper: $this->shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $secrets),
 			),
 		);
 		$this->mapper->expects($this->never())->method('insert');

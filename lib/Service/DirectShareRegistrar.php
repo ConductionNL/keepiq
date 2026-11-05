@@ -39,8 +39,8 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception as DbException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -68,6 +68,7 @@ class DirectShareRegistrar {
 	 * Constructor for DirectShareRegistrar.
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookups)
 	 * @param RecipientSecretCopyFactory $copyFactory The recipient-copy factory
 	 * @param NotificationService $notificationService The notification dispatcher
@@ -80,9 +81,13 @@ class DirectShareRegistrar {
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; the registration behaviour carries the spec anchors.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: the registrar reads and writes share rows
+	 *   (the mapper and the required judge), the copies and the restrictions, and audits and notifies each share.
 	 */
 	public function __construct(
 		private ShareTargetMapper $mapper,
+		private ShareRowJudge $rowJudge,
 		private SecretMapper $secretMapper,
 		private RecipientSecretCopyFactory $copyFactory,
 		private NotificationService $notificationService,
@@ -434,6 +439,7 @@ class DirectShareRegistrar {
 	 * @return string|null
 	 *
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function refusalFor(?Secret $source, ?ShareRestriction $restriction, string $userId, array $row): ?string {
 		if ($source === null) {
@@ -448,15 +454,22 @@ class DirectShareRegistrar {
 		// itself a share target's recipient secret) is never one, so a recipient
 		// can never re-share what was shared with them (user-sharing: Share a Secret).
 		// A delegate's own copy was already resolved to its source.
-		if ($this->isReceivedCopy(secret: $source) === true) {
+		$verdict = $this->rowJudge->forCopy(copy: $source);
+		if ($verdict->awaitsTheScan() === true) {
+			// The row naming the source waits for the scan, as on the other share paths.
+			return 'share_scan_pending';
+		}
+
+		if ($verdict->countsAsCopy() === true) {
 			return 'not_shareable';
 		}
 
 		// A delegate borrows the owner's authority but keeps their own copy's
 		// limits: a use-only, expiring or read-only copy may not mint a full one
 		// (GHSA-m5p9-6pw7-pf3g).
-		if ($this->callerCopyRestricted(source: $source, userId: $userId) === true) {
-			return 'restricted';
+		$callerRefusal = $this->callerCopyRefusal(source: $source, userId: $userId);
+		if ($callerRefusal !== null) {
+			return $callerRefusal;
 		}
 
 		if ($restriction === null || $this->groupShareMatches(sourceSecretId: $source->getId(), row: $row) === false) {
@@ -467,58 +480,41 @@ class DirectShareRegistrar {
 	}//end refusalFor()
 
 	/**
-	 * Whether the source is itself a received copy — a secret that is some share
-	 * target's recipient secret. Fails open to "original" only when the row is
-	 * genuinely absent; an ambiguous match counts as a copy.
-	 *
-	 * @param Secret $secret The source secret
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 */
-	private function isReceivedCopy(Secret $secret): bool {
-		try {
-			$this->mapper->findByRecipientSecret(recipientSecretId: $secret->getId());
-		} catch (DoesNotExistException) {
-			return false;
-		} catch (MultipleObjectsReturnedException) {
-			return true;
-		}
-
-		return true;
-	}//end isReceivedCopy()
-
-	/**
-	 * Whether the caller's own grant keeps them from minting a full copy. The
-	 * owner is judged by the source itself and never restricted this way; a
-	 * delegate is judged by the copy their delegation sits on, and one with no
-	 * copy or two is refused (ShareAuthorizationService::assertMayShareOnward()).
+	 * Why the caller's own grant keeps them from minting a full copy, or null
+	 * when it does not. The owner is judged by the source itself and never
+	 * refused this way; a delegate is judged by the copy their delegation sits
+	 * on, and one with no copy or two is `restricted`
+	 * (ShareAuthorizationService::assertMayShareOnward()). A delegate whose
+	 * copy's row the pending quarantine scan cannot judge gets
+	 * `share_scan_pending`, as when they name that copy itself.
 	 *
 	 * @param Secret $source The source secret
 	 * @param string $userId The sharing owner or delegate
 	 *
-	 * @return bool
+	 * @return string|null `restricted`, `share_scan_pending` or null
 	 *
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	private function callerCopyRestricted(Secret $source, string $userId): bool {
+	private function callerCopyRefusal(Secret $source, string $userId): ?string {
 		if ($source->getOwnerType() === 'user' && $source->getOwnerId() === $userId) {
-			return false;
+			return null;
 		}
 
 		if ($this->authorization === null) {
-			return true;
+			return 'restricted';
 		}
 
 		try {
 			$this->authorization->assertMayShareOnward(source: $source, userId: $userId);
+		} catch (ShareScanPendingException) {
+			return 'share_scan_pending';
 		} catch (InvalidArgumentException|ForbiddenException) {
-			return true;
+			return 'restricted';
 		}
 
-		return false;
-	}//end callerCopyRestricted()
+		return null;
+	}//end callerCopyRefusal()
 
 	/**
 	 * Whether a row's optional groupShareId names a group share of the SAME

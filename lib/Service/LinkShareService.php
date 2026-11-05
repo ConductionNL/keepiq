@@ -113,7 +113,9 @@ class LinkShareService {
 	 *
 	 * @throws InvalidArgumentException When validation fails
 	 * @throws DoesNotExistException When the user may not re-share the secret
-	 * @throws RuntimeException A ForbiddenException when the secret is a read-only copy from another organisation
+	 * @throws RuntimeException A ForbiddenException when the secret is a read-only copy from another organisation,
+	 *                          or a ShareScanPendingException (409) when the share row naming the secret, or the
+	 *                          caller's copy of it, waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share

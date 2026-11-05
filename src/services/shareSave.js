@@ -32,6 +32,10 @@ import { onVaultLock, useSessionStore } from '../store/modules/session.js'
 import { useShareStore } from '../store/modules/share.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
+import {
+	SHARE_SCAN_PENDING,
+	shareScanPendingText,
+} from '../utils/shareScanPending.js'
 import { BLOB_FIELDS } from '../utils/valueFields.js'
 
 /** The encrypted value fields of a secret. */
@@ -447,6 +451,68 @@ export async function saveShared({
 		return { ...value, ...plainDiff }
 	}
 
+	/**
+	 * Look up one partner share and add it to the federated list, or note
+	 * why it cannot be: suspended, unreachable or too old for a field.
+	 *
+	 * @param {{shareId: string, recipientCloudId: string}} share The partner share.
+	 * @param {{unreachable: Array, tooOld: Array}} found What this round could not fill.
+	 * @return {Promise<void>}
+	 */
+	const fillPartner = async (share, found) => {
+		let recipient
+		try {
+			recipient = await partnerCertificate(share)
+		} catch (e) {
+			const failure = partnerLookupFailure(e)
+			if (failure.suspend) {
+				suspend.set(share.shareId, {
+					shareId: share.shareId,
+					reason: failure.reason,
+				})
+			} else {
+				found.unreachable.push({ ...share, reason: failure.reason })
+			}
+			return
+		}
+		partnerValue ??= await wholeValue()
+		if (gainsUnstorableField(recipient, { plainDiff, storedValue })) {
+			found.tooOld.push(share)
+			return
+		}
+		federated.set(share.shareId, {
+			shareId: share.shareId,
+			certFingerprint: fingerprintHex(recipient.fingerprint),
+			...(await encryptWhole(partnerValue, recipient)),
+		})
+	}
+
+	/**
+	 * Stop the save for partners too old or newly unreachable, and suspend
+	 * the unreachable ones the user agreed to. Only the shares the user was
+	 * shown and agreed to are suspended; one that fails only now stops the
+	 * save again, naming each share this round could not reach (a round
+	 * after `incomplete` looks up only the shares the server newly named).
+	 *
+	 * @param {{unreachable: Array, tooOld: Array}} found What this round could not fill.
+	 * @return {void}
+	 */
+	const settlePartners = (found) => {
+		if (found.tooOld.length > 0) {
+			throw new ShareSaveError('partner_upgrade_required', found.tooOld)
+		}
+		const agreed = new Set(withoutUnreachable)
+		if (found.unreachable.some((share) => !agreed.has(share.shareId))) {
+			throw new ShareSaveError('partner_unreachable', found.unreachable)
+		}
+		for (const share of found.unreachable) {
+			suspend.set(share.shareId, {
+				shareId: share.shareId,
+				reason: 'partner_unreachable',
+			})
+		}
+	}
+
 	const fillPartners = async (required, drop) => {
 		const requiredIds = new Set(required.map((r) => r.shareId))
 		drop(federated, 'f:', (key) => requiredIds.has(key))
@@ -454,67 +520,83 @@ export async function saveShared({
 		const todo = required.filter(
 			(r) => !federated.has(r.shareId) && !suspend.has(r.shareId),
 		)
-		const unreachable = []
-		const tooOld = []
+		const found = { unreachable: [], tooOld: [] }
 		for (const share of todo) {
-			let recipient
-			try {
-				recipient = await partnerCertificate(share)
-			} catch (e) {
-				// An answer for another cloud id is not a certificate for this
-				// recipient, so like one that does not verify it suspends the share.
-				const unverified =
-					e instanceof FederatedCertificateError
-					|| e instanceof CloudIdMismatchError
-				const reason = unverified ? e.reason : e?.response?.data?.message
-				if (unverified || partnerGone(e)) {
-					suspend.set(share.shareId, { shareId: share.shareId, reason })
-				} else if (partnerUnreachable(e)) {
-					unreachable.push({ ...share, reason })
-				} else {
-					// This server failed, not the partner: suspending would be wrong.
-					throw e
-				}
-				continue
+			await fillPartner(share, found)
+		}
+		settlePartners(found)
+	}
+
+	/**
+	 * Look the holders of refused skips up again: they have a vault key after
+	 * all.
+	 *
+	 * @param {Array<object>} required The required copies.
+	 * @param {Set<string>} refused The secret ids whose skip was refused.
+	 * @return {Promise<void>}
+	 */
+	const refreshRefusedHolders = async (required, refused) => {
+		for (const holder of required.filter((r) => refused.has(r.secretId))) {
+			if (holder.holder === 'owner') {
+				context = await useShareStore().fetchWriteContext(id)
+			} else {
+				certificates.delete(holder.targetUserId)
 			}
-			partnerValue ??= await wholeValue()
-			// Giving the login a field it did not hold, which a partner cannot
-			// store, stops the save. Any other change, a replaced seed or a
-			// deleted passkey included, reaches that partner with the field
-			// null, as it never held one.
-			if (
-				BLOB_FIELDS.some(
-					(field) =>
-						plainDiff[field]
-						&& !storedValue[field]
-						&& !partnerStores(recipient, field),
-				)
-			) {
-				tooOld.push(share)
-				continue
+		}
+	}
+
+	/**
+	 * Fetch the certificates of the user holders not looked up yet.
+	 *
+	 * @param {Array<object>} todo The copies still to fill.
+	 * @return {Promise<void>}
+	 */
+	const lookUpCertificates = async (todo) => {
+		const lookups = todo
+			.filter((r) => r.holder !== 'owner' && r.targetUserId)
+			.map((r) => r.targetUserId)
+			.filter((userId) => !certificates.has(userId))
+		if (lookups.length > 0) {
+			for (const [userId, cert] of await fetchCertificates(lookups)) {
+				certificates.set(userId, cert)
 			}
-			federated.set(share.shareId, {
-				shareId: share.shareId,
-				certFingerprint: fingerprintHex(recipient.fingerprint),
-				...(await encryptWhole(partnerValue, recipient)),
-			})
 		}
-		if (tooOld.length > 0) {
-			throw new ShareSaveError('partner_upgrade_required', tooOld)
+	}
+
+	/**
+	 * The certificate a copy is encrypted to, if its holder has one.
+	 *
+	 * @param {object} holder A required copy.
+	 * @return {string|null|undefined}
+	 */
+	const holderCertificate = (holder) => {
+		if (holder.holder === 'owner') {
+			return context.ownerCertificate
 		}
-		// Only the shares the user was shown and agreed to are suspended; one
-		// that fails only now stops the save again, naming each share this
-		// round could not reach (a round after `incomplete` looks up only the
-		// shares the server newly named).
-		const agreed = new Set(withoutUnreachable)
-		if (unreachable.some((share) => !agreed.has(share.shareId))) {
-			throw new ShareSaveError('partner_unreachable', unreachable)
-		}
-		for (const share of unreachable) {
-			suspend.set(share.shareId, {
-				shareId: share.shareId,
-				reason: 'partner_unreachable',
-			})
+		return certificates.get(holder.targetUserId)
+	}
+
+	/**
+	 * Encrypt the change for every copy whose holder has a certificate, and
+	 * skip the others for having no vault key.
+	 *
+	 * @param {Array<object>} todo The copies still to fill.
+	 * @return {Promise<void>}
+	 */
+	const fillCopies = async (todo) => {
+		for (const holder of todo) {
+			const certificate = holderCertificate(holder)
+			if (certificate) {
+				copies.set(holder.secretId, {
+					secretId: holder.secretId,
+					...(await encryptSparse(plainDiff, certificate)),
+				})
+			} else {
+				skipped.set(holder.secretId, {
+					secretId: holder.secretId,
+					reason: 'no_vault_key',
+				})
+			}
 		}
 	}
 
@@ -536,44 +618,13 @@ export async function saveShared({
 		const refused = idsOf(answer.copies?.skipRefused, 'secretId')
 		drop(copies, 'c:', (key) => requiredIds.has(key))
 		drop(skipped, 's:', (key) => requiredIds.has(key) && !refused.has(key))
-		for (const holder of required.filter((r) => refused.has(r.secretId))) {
-			// The holder has a vault key after all: look it up again.
-			if (holder.holder === 'owner') {
-				context = await useShareStore().fetchWriteContext(id)
-			} else {
-				certificates.delete(holder.targetUserId)
-			}
-		}
+		await refreshRefusedHolders(required, refused)
 
 		const todo = required.filter(
 			(r) => !copies.has(r.secretId) && !skipped.has(r.secretId),
 		)
-		const lookups = todo
-			.filter((r) => r.holder !== 'owner' && r.targetUserId)
-			.map((r) => r.targetUserId)
-			.filter((userId) => !certificates.has(userId))
-		if (lookups.length > 0) {
-			for (const [userId, cert] of await fetchCertificates(lookups)) {
-				certificates.set(userId, cert)
-			}
-		}
-		for (const holder of todo) {
-			const certificate =
-				holder.holder === 'owner'
-					? context.ownerCertificate
-					: certificates.get(holder.targetUserId)
-			if (certificate) {
-				copies.set(holder.secretId, {
-					secretId: holder.secretId,
-					...(await encryptSparse(plainDiff, certificate)),
-				})
-			} else {
-				skipped.set(holder.secretId, {
-					secretId: holder.secretId,
-					reason: 'no_vault_key',
-				})
-			}
-		}
+		await lookUpCertificates(todo)
+		await fillCopies(todo)
 
 		if (!copyPath) {
 			await fillPartners(answer.federated?.required ?? [], drop)
@@ -632,6 +683,60 @@ export async function saveShared({
 		}
 		throw e
 	}
+}
+
+/**
+ * Whether a lookup failed because the answer is not a verified certificate
+ * for this recipient: one that does not verify, or one for another cloud id.
+ *
+ * @param {Error} error The lookup error.
+ * @return {boolean}
+ */
+function isUnverifiedPartner(error) {
+	return (
+		error instanceof FederatedCertificateError
+		|| error instanceof CloudIdMismatchError
+	)
+}
+
+/**
+ * What a failed partner lookup means for its share: suspended (unverified or
+ * gone for good) or unreachable, each with its reason. Any other failure is
+ * this server's, not the partner's, so suspending would be wrong: it is
+ * thrown on.
+ *
+ * @param {Error} error The lookup error.
+ * @return {{suspend: boolean, reason: string|undefined}}
+ */
+function partnerLookupFailure(error) {
+	const unverified = isUnverifiedPartner(error)
+	const reason = unverified ? error.reason : error?.response?.data?.message
+	if (unverified || partnerGone(error)) {
+		return { suspend: true, reason }
+	}
+	if (partnerUnreachable(error)) {
+		return { suspend: false, reason }
+	}
+	throw error
+}
+
+/**
+ * Whether the change gives the login a value field it did not hold, which
+ * this partner cannot store. Any other change, a replaced seed or a deleted
+ * passkey included, reaches that partner with the field null, as it never
+ * held one.
+ *
+ * @param {object} recipient The verified lookup answer.
+ * @param {{plainDiff: object, storedValue: object}} values The change and the stored value.
+ * @return {boolean}
+ */
+function gainsUnstorableField(recipient, values) {
+	return BLOB_FIELDS.some(
+		(field) =>
+			values.plainDiff[field]
+			&& !values.storedValue[field]
+			&& !partnerStores(recipient, field),
+	)
 }
 
 /**
@@ -759,6 +864,7 @@ const CODE_TEXTS = new Map([
 	['incomplete', incompleteText],
 	['partner_lookup_limit', lookupLimitText],
 	['view_only', viewOnlyText],
+	[SHARE_SCAN_PENDING, shareScanPendingText],
 ])
 
 /**
@@ -780,18 +886,24 @@ function shareSaveCode(error) {
 /**
  * The text for a save stopped by unreachable partner organisations.
  *
- * @param {Error|object} error The thrown error, with its `partners`.
+ * @param {Error|object} error The thrown error, with its `partners` when it names them.
  * @return {string}
  */
 function partnerUnreachableText(error) {
+	const partners = (error.partners ?? [])
+		.map((share) => share.recipientCloudId)
+		.filter(Boolean)
+		.join(', ')
+	if (partners === '') {
+		return t(
+			'keepiq',
+			'Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
+		)
+	}
 	return t(
 		'keepiq',
 		'Nothing was saved: a partner organisation this secret is shared with cannot be reached ({partners}). Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
-		{
-			partners: error.partners
-				.map((share) => share.recipientCloudId)
-				.join(', '),
-		},
+		{ partners },
 	)
 }
 

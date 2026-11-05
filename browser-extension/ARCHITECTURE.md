@@ -7,11 +7,13 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 | Entrypoint | Runs as | Job |
 | --- | --- | --- |
 | `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer, and the toolbar icon. Routes messages, alarms, idle and popup ports. |
-| `entrypoints/popup/` | Toolbar popup, or a pop-out window (`?popout=1&tabId=`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
+| `entrypoints/popup/` | Toolbar popup, a pop-out window (`?popout=1&tabId=`), or a passkey window (`?passkey=<ceremonyId>`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
 | `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one credential a fill sends, hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
+| `entrypoints/passkey.content.ts` | Every frame of every `http(s)` page, at `document_start` | The passkey relay (`src/passkey/relay.ts`) between the page script and the background; on Firefox it injects the page script. Holds no vault state. |
+| `entrypoints/passkey-page-main.content.ts` (Chrome), `entrypoints/passkey-page.ts` (Firefox) | The page's own world of every `http(s)` frame: a `world: 'MAIN'` content script on Chrome, a web-accessible script the relay injects on Firefox | The page script (`src/passkey/page.ts`): replaces `navigator.credentials.create` and `.get`. Trusted for nothing, since the page can change it. |
 | `entrypoints/inline-list/` | Extension page in an iframe under a login field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
 | `entrypoints/notification/` | Extension page in an iframe, a card in the top-right corner of the page | The save and update card, vanilla DOM. Never gets the password. |
-| `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created and closed per use. |
+| `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created on first use and kept open so no close drops a write. |
 
 ## Modules
 
@@ -37,7 +39,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `list.ts`: sorting, filtering and the folder tree.
   - `payloads.ts`: parses card, identity and passkey payloads.
   - `fields.ts`: the item form's model, limits and validation; pure, so the popup may use it.
-  - `write.ts`: item and folder writes, the only code that encrypts to the user's own key.
+  - `write.ts`: item and folder writes, the only code that encrypts to the user's own key; a login's `passkeys` with `writeLoginPasskeys()` and a passkey's new login with `createPasskeyLogin()`.
   - `share-save.ts`: saves a value change with every other copy of a shared item in one share-save.
   - `verified-partners.ts`: partner certificates a failed save verified, kept in memory for 5 minutes.
   - `write-error.ts`: maps a failed write to the code the popup words.
@@ -55,7 +57,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `code-fill.ts`: a pick from the inline list on a code field.
   - `frames.ts`: the frames of each tab, from `page_ready` senders.
   - `triggers.ts`: fill on page load and from the `autofill_login` shortcut.
-  - `inline-session.ts`: the inline list's session and its `inline.*` requests.
+  - `inline-session.ts`: the inline list's session and its `inline.*` requests, passkey rows during a conditional request included.
   - `capture-queue.ts`: the pending save or update per tab and the bar's `capture.*` requests.
   - `tab-items.ts`: the item each tab last filled or captured, for a password change form without a username.
   - `fields.ts` (content script): field and group detection, code groups, and `fillField()`.
@@ -66,6 +68,17 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `visibility.ts` (content script): the visibility guard's checks.
   - `visibility-tracker.ts` (list and bar pages): Chrome's IntersectionObserver v2 check.
   - `default-manager.ts`: takes and returns control of Chrome's password manager and address autofill (`openspec/changes/ext-default-password-manager/`).
+- `src/passkey/`, the specs in `openspec/changes/ext-passkey-provider/`:
+  - `page.ts` (page script): the replaced `navigator.credentials` methods and the two availability checks; the browser's own on any fallback.
+  - `relay.ts` (content script): acks each call, passes it on, and delivers a result only to its own ceremony's port while the frame is on its origin.
+  - `shape.ts`: the request a page may send, rebuilt from known members with size limits; the relay and the background both parse with it.
+  - `request.ts`: the gates that send a request to the browser untouched, the origin from `sender` and the RP ID rule; `deadline.ts` the timeout clamp.
+  - `ceremony.ts`: one ceremony per tab, its window, the `passkey.*` handlers and every way a ceremony ends.
+  - `match.ts`: the passkeys a request offers, by each decrypted entry's `rpId`, never the item URL.
+  - `sign.ts`: a sign-in: counter save, then the assertion.
+  - `create.ts`: the Save view's targets and a save, to a login or a new one.
+  - `credential.ts`: the canonical credential and the `passkeys` array, a port of the web app's, field order included.
+  - `webauthn.ts` and `cbor.ts`: client data, authenticator data, the `none` attestation and ES256 signatures in DER.
 - `src/menus.ts`: the "Keepiq" context menu, built and handled in the background.
 - `src/last-used.ts`: when each item was last filled.
 - `src/messages.ts`: every message type, in one place.
@@ -98,24 +111,28 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Direction | Kinds | Reply |
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
-| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `item.passkeys`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
 | Popup → background, fill | `fill.request` | `FillResult`, or `needsInsecureConfirm` to ask first |
 | Popup → background, default password manager | `defaultManager.get`, `defaultManager.enable`, `defaultManager.disable` | `DefaultManagerState`; `undefined` when the background failed |
+| Passkey window → background, each naming its ceremony id | `passkey.state`, `passkey.pick`, `passkey.save`, `passkey.verify`, `passkey.retry`, `passkey.fallback`, `passkey.cancel` | `PasskeyWindowReply`: `{ ok: true, view? }` or `{ ok: false, code }` |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
 | Background → offscreen | `offscreen.clearClipboard`, `offscreen.writeClipboard` | Whether it wrote |
 | Content → background | `page_ready` (`passwordField`: the top frame has a login form, for fill on page load), `inline.closed`, `capture.submitted`, `capture.reshow` | None |
 | Content → background, inline list | `inline.open` | `{ key, height }`, or `null` for no list |
+| Content → background, passkey relay | `passkey.start`, `passkey.available`; `passkey.abort` | `{ ceremonyId }` or `{ fallback: true }`, a boolean; none for `passkey.abort` |
+| Page script → relay, by `postMessage` to its own window with a `MessageChannel` port per call | `create`, `get`, `available`, then `abort` on the port | An ack, then a credential, a `DOMException` name, `available` or `fallback` |
 | Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `inline.verify`, `capture.verify`, `capture.show` | `boolean`; `FillExecuteReply` for `fill.execute`; the key the host's bar holds for `capture.show` |
-| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand` | None |
+| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand`, `passkey.result` | None |
 | Content → its list or bar iframe, by `postMessage` to the extension origin | `inline.init`, `inline.focus`, `inline.moved`, `capture.init`, `capture.focus`, `capture.moved` | None |
-| Inline list → background | `inline.state`, `inline.pick`; `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, `InlinePickReply`; none for the last four |
+| Inline list → background | `inline.state`, `inline.pick` (a passkey row adds its `credentialId`); `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, with `passkeys` during a conditional request; `InlinePickReply`; none for the last four |
 | Save bar → background | `capture.state`, `capture.save`, `capture.update`, `capture.dismiss`, `capture.expand` | `NotificationReplies` |
 
 - **Routing by sender page.** `src/background/sender.ts` tells the popup, the list and the bar apart by `sender.url` path, and a content script by its tab and frame; each gets only its own kind set in `src/messages.ts`.
 - **Popup port.** The popup holds a `popup` port open. Its disconnect drives the "Immediately" timeout, with a 5-second grace while a pop-out window takes over.
 - **Use-only copies.** `item.decrypt` returns only the `login` and the `totp` seed of a `useOnly` row; the popup turns the seed into a code and never shows it. Asking for more gets `use_only`; in a batch, the row is left out.
+- **Passkey results are pushed.** `passkey.start` answers at once; the result follows as `passkey.result` to the frame that started it, so an MV3 worker restart in between loses nothing.
 - **Passive requests.** A popup request made in reaction to a broadcast is sent with `passive` (or without `opened`), so it doesn't count as user activity for the timeout.
 
 ## Storage
@@ -138,7 +155,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `vaultCheckedAt.<id>` | local | When the server was last checked |
 | `neverLockKey.<id>` | local | The unwrapped key, under the "Never" timeout only |
 | `pinSeal.<id>` | local | The PIN, sealed under a key derived from the private key and bound to the account, suite and epoch; survives a restart, gone with `pin.<id>` otherwise |
-| `lastUsed.<id>` | local | When each item was last filled, by item id, for the suggestion order, the shortcut and fill on page load; written only while unlocked, dropping ids the vault no longer holds; gone on logout and account removal |
+| `lastUsed.<id>` | local | When each item was last filled or signed in with a passkey, by item id, for the suggestion order, the shortcut and fill on page load; written only while unlocked, dropping ids the vault no longer holds; gone on logout and account removal |
 | `privateKeyPkcs8.<id>` | session | The unwrapped key while unlocked |
 | `pin.<id>` | session | The key wrapped under the PIN, its suite and epoch, and the wrong PINs in a row; kept through a lock, gone on restart, logout, a changed suite or epoch and the fifth wrong PIN |
 | `unlockedAt.<id>`, `lastInteractionAt` | session | Timeout bookkeeping |
@@ -147,7 +164,8 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
 | `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
 | `generatorSealed.<id>` | session | Values generated while locked, RSA-OAEP-sealed to the certificate proven at the last unlock; merged into `generatorHistory.<id>` by the first history request after the unlock; dropped as in [design.md, History while locked](openspec/changes/ext-generator/design.md) |
-| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode and offered item ids, no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
+| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode and offered item ids, and during a conditional passkey request its ceremony id and offered login and credential ids; no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
+| `passkeyCeremony.<tabId>` | session | The tab's passkey ceremony, as the [passkey spec](openspec/changes/ext-passkey-provider/specs/passkey-provider/spec.md) lists it under "Where ceremony data lives": ids, origin, frame URL, RP ID, challenge, the page's `rp.name` and `user`, requirements, deadline, window, verified flag, and after a failed step what Retry needs; no ciphertext, key or decrypted value; gone when the ceremony ends (see [Passkeys](#passkeys)), kept through a lock |
 | `clipboardCode` | session | The account whose one-time code the background copied, never the code; gone when the clear runs, on any other copy, and at that account's lock or logout, which clears the clipboard at once |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
@@ -158,6 +176,9 @@ Background memory only, lost on an MV3 worker restart:
 - **Tab items** (`tab-items.ts`): the item each tab last filled or captured; forgotten on tab close, lock and account switch.
 - **Frame registry** (`frames.ts`): each tab's frame ids and URLs from `page_ready`; forgotten when the tab loads or closes.
 - **Badge counts** (`toolbar-icon.ts`): never stored, recomputed from the snapshot for each window's active tab; other tabs show none until activated.
+- **Passkey offers** (`passkey/offered.ts`): every login's passkeys as the inline list offers them (login id, credential id, login name, user name, RP ID), per account, key and vault version; dropped on a vault change, lock, logout, account switch and turning passkeys off.
+- **Save targets' `write-context` answers** (`passkey/create.ts`): whether each login the Save view lists may take the passkey, for the four newest ceremonies.
+- **A passkey's key material** (`sign.ts`, `create.ts`): the decrypted `passkeys`, the imported signing key or a generated key pair, for one handler only.
 
 ## Flows
 
@@ -190,7 +211,7 @@ After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the 
 - **Each write names its account,** and is refused when that is no longer the active one.
 - **Shared copies keep their limits** (use-only, read-only, expiring, view-only) in the popup and again in the background. A copy is view-only when `write-context` gives it no `owner`, `write` or `manage` grade; the detail asks with `item.editable` unless Edit is already unavailable, and the edit fetch and every save but a move refuse it.
 - **Edit and Clone fetch the item fresh** from the server and open it only when its ciphertext matches the vault cache, after one sync on a mismatch (ADR-002); Edit saves the changed fields with `baseUpdatedAt`, so a newer version is not overwritten, and with its fetch's `recordId`, so the save vouches only for what its own form showed.
-- **A changed `key`, `login`, `additionalFields` or `totp` saves through share-save**, the editor's row and every other copy in one transaction: `write-context` picks the owner path (local copies and partner shares), or the copy-editor path (the source and the other copies). The first call carries empty lists; a 409 `incomplete` names what to encrypt for, at most three rounds. Partners get the typed fields plus what the form's `editOpened` record showed, never a fresh row, with `totp` and `passkeys` only when their `valueFields` lists them. Any other edit is a plain `PUT`, after a `write-context` read unless it only moves the item.
+- **A changed `key`, `login`, `additionalFields` or `totp`, or a passkey ceremony's `passkeys`, saves through share-save**, the editor's row and every other copy in one transaction: `write-context` picks the owner path (local copies and partner shares), or the copy-editor path (the source and the other copies). The first call carries empty lists; a 409 `incomplete` names what to encrypt for, at most three rounds. Partners get the typed fields plus what the form's `editOpened` record showed, never a fresh row, with `totp` and `passkeys` only when their `valueFields` lists them. Any other edit is a plain `PUT`, after a `write-context` read unless it only moves the item.
 - **A login's authenticator key never reaches the form:** the edit fetch answers `totpSaved`, the form offers Replace and Remove, and the record keeps the `totp` and `passkeys` ciphertext for partners (`openspec/changes/ext-totp-capture/`).
 - **A refused save writes nothing** and keeps the form open; when the reply to the final call is lost, the server wrote everything or nothing. Nothing about a save outlives the request but verified partner certificates, kept in background memory for 5 minutes and forgotten on lock, logout and account switch, and the server's version check orders concurrent saves. The `item.update` reply carries `shareSave` when the item's detail has a note to show.
 - **Every write records** whether the server answered, which drives the same offline flag as sync.
@@ -215,9 +236,23 @@ The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-0
 - **Inline list:** the content script asks `inline.open` for a key and posts it to the list page, which loads its rows with `inline.state`; a pick goes to the background, which asks the host frame `inline.verify` before it fills.
 - **Save bar:** `capture.submitted` queues a capture; the background sends `capture.show` with a fresh key to the top frame, and the bar loads its state with `capture.state` and answers with `capture.save`, `capture.update` or `capture.dismiss`; the background asks the host `capture.verify` for all but Close.
 
+### Passkeys
+
+The behaviour is in `openspec/changes/ext-passkey-provider/`, the threat model in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts).
+
+- **Page script:** hands each `publicKey` call to the relay; any other call, any throw, no ack within 500 ms and every `fallback` go to the browser's own method with the page's arguments. It is on every page while "Ask to save and use passkeys" is off, and the background then answers every call with the fallback.
+- **Start:** `passkey.start` answers from the settings, the account's logged-in state and the request only (`request.ts`), never the vault or its lock: `{ fallback: true }`, or `{ ceremonyId }` with the ceremony in `passkeyCeremony.<tabId>`. A new one in the tab ends the previous with `NotAllowedError`.
+- **Window:** every handled `create` and modal `get` opens the popup page at `popup.html?passkey=<ceremonyId>`, locked or not; a new ceremony in the tab reloads it. Only that window's tab may answer the ceremony.
+- **Conditional `get`:** no window; the inline list offers the passkeys on a focus, none when the request names credentials, while the browser's own conditional request runs beside it. Verification or a failed counter save opens the window on that step.
+- **Sign in:** `match.ts` decrypts the `passkeys` of the active account's logins; on a pick `sign.ts` imports the entry's key non-extractable, saves the counter when it isn't 0, signs with the saved value and pushes `passkey.result`.
+- **Save:** `create.ts` makes an ES256 key pair and adds it to the chosen login with `writeLoginPasskeys()`, or creates a login holding it with `createPasskeyLogin()`; the page gets the attestation only after the server accepted it.
+- **Writes to `passkeys`:** a fresh fetch whose `passkeys` must equal the cache's, the array changed in memory with the other entries as stored, then share-save with `passkeys` as the only value field; one retry after `stale`.
+- **User verification:** `required` asks the master password or PIN unless the user unlocked or confirmed in the current window, or for the inline-list pick that opened it; the UV flag is set only then, and closing the window, a lock or a new inline-list pick drops it.
+- **Ends:** a result, Cancel, the window closing, the fallback, the page's abort or the frame's `pagehide`, the deadline, a new ceremony in the tab, the tab closing or navigating to another origin, logout and account switch. A same-origin URL change such as `pushState` and a lock keep it; a conditional request outlives Cancel and its window.
+
 ### Timeout
 
-- `enforce()` runs on the `vault-timeout` alarm and before every popup request, and locks or logs out each account past its timeout.
+- `enforce()` runs on the `vault-timeout` alarm and before every popup request and passkey message, and locks or logs out each account past its timeout.
 - The timeout is read through `effectiveSettings`, capped at the organisation's stored maximum; Immediately and On system lock also lock at that maximum.
 - `syncAlarm()` keeps both alarms only while something is unlocked.
 

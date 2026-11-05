@@ -334,6 +334,10 @@ import { useGroupStore } from '../store/modules/group.js'
 import { useShareStore } from '../store/modules/share.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 import { restrictionPayload } from '../utils/shareRestriction.js'
+import {
+	isShareScanPending,
+	shareScanPendingText,
+} from '../utils/shareScanPending.js'
 
 /**
  * How long a candidate search waits after the last keystroke.
@@ -810,7 +814,7 @@ export default {
 				await this.store.removeMember(this.teamFolder.id, member.id)
 				await this.refresh()
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error = this.failureText(e)
 			} finally {
 				this.busy = false
 			}
@@ -887,6 +891,22 @@ export default {
 		},
 
 		/**
+		 * The text for a failed removal or unshare: the translated
+		 * share-scan-pending text for a 409 that waits for the share
+		 * quarantine scan, else the server's message.
+		 *
+		 * @param {Error|object} e The thrown error.
+		 * @return {string|undefined}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+		 */
+		failureText(e) {
+			if (isShareScanPending(e)) {
+				return shareScanPendingText()
+			}
+			return e?.response?.data?.message || e?.message
+		},
+
+		/**
 		 * Stop sharing the folder, which revokes every derived copy with it.
 		 *
 		 * @return {Promise<void>}
@@ -901,7 +921,7 @@ export default {
 				await this.store.unshareFolder(this.teamFolder.id)
 				this.$emit('update:open', false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error = this.failureText(e)
 			} finally {
 				this.busy = false
 			}

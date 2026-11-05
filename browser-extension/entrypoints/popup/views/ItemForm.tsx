@@ -155,7 +155,7 @@ function SaveFailureNotice({ failure, editing, actionFor, webAppUrl }: { failure
 	)
 }
 
-/** A form-level error under a group of fields. */
+/** For a limit the fields reach only together, such as card members over the byte limit, which no single field can show. */
 function GroupError({ text }: { text: string | null }) {
 	return text ? <p className="field__error">{text}</p> : null
 }

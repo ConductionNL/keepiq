@@ -39,6 +39,22 @@ class SecrecyTest(unittest.TestCase):
             with self.assertRaises(KeyMismatchError):
                 run_one(script, lambda c: c.get_by_id("sec-cli-fixture"), certificate_pem=g.FIXTURE["certificatePem"])
 
+    def test_a_missing_fingerprint_is_refused_when_a_certificate_is_pinned(self) -> None:
+        for fingerprint in ("", None, "missing", 42):
+            with self.subTest(fingerprint=fingerprint):
+                env = g.envelope()
+                if fingerprint == "missing":
+                    del env["encryption"]["certificateFingerprint"]
+                else:
+                    env["encryption"]["certificateFingerprint"] = fingerprint
+                script = g.standard({self.by_id: [g.answer(200, env)]})
+                with mock.patch.object(crypto, "decrypt_field", side_effect=AssertionError("decrypted before the pin check")):
+                    with self.assertRaises(KeyMismatchError):
+                        run_one(script, lambda c: c.get_by_id("sec-cli-fixture"), certificate_pem=g.FIXTURE["certificatePem"])
+                script = g.standard({self.by_id: [g.answer(200, env)]})
+                secret, _ = run_one(script, lambda c: c.get_by_id("sec-cli-fixture"))
+                self.assertEqual(secret.key, g.FIXTURE["plaintext"]["key"])
+
     def test_tampered_ciphertext_is_refused_without_partial_plaintext(self) -> None:
         env = g.envelope()
         env["ciphertext"]["login"] = tampered(env["ciphertext"]["login"])

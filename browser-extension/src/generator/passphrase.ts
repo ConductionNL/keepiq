@@ -15,6 +15,25 @@ function passphraseWords(list: readonly string[]): readonly string[] {
 	return words
 }
 
+interface PassphraseStyle {
+	separator: string
+	capitalise: boolean
+	includeNumber: boolean
+}
+
+/** The options as asked, lifted to what a policy requires. A symbol separator is drawn here, before any word. */
+function styleUnder(options: Partial<PassphraseOptions>, limits: { policy: GeneratorPolicy | null; rand: RandomInt }): PassphraseStyle {
+	const { policy, rand } = limits
+	const style = { separator: options.separator ?? '-', capitalise: options.capitalise === true, includeNumber: options.includeNumber === true }
+	if (policy === null) return style
+	style.capitalise ||= policy.requireUpper
+	style.includeNumber ||= policy.requireDigit
+	if (policy.requireSymbol && !intersects(style.separator, SPECIAL)) style.separator = SPECIAL[rand(0, SPECIAL.length - 1)]!
+	return style
+}
+
+const validWordCount = (count: number) => Number.isInteger(count) && count >= PASSPHRASE_WORDS.min && count <= PASSPHRASE_WORDS.max
+
 /**
  * Words drawn uniformly from the list, joined by the separator. Under a policy the passphrase is made to
  * meet it: capitalised for upper case, a digit for a digit, a symbol separator for a symbol, and words
@@ -28,15 +47,8 @@ export function generatePassphrase(
 ): Generated<PassphraseFailure> {
 	if (policy !== null && !policy.allowPassphrase) return { ok: false, failure: 'passphrase_off' }
 	const count = Number(options.words ?? DEFAULT_WORDS)
-	if (!Number.isInteger(count) || count < PASSPHRASE_WORDS.min || count > PASSPHRASE_WORDS.max) return { ok: false, failure: 'words_out_of_range' }
-	let separator = options.separator ?? '-'
-	let capitalise = options.capitalise === true
-	let includeNumber = options.includeNumber === true
-	if (policy !== null) {
-		capitalise ||= policy.requireUpper
-		includeNumber ||= policy.requireDigit
-		if (policy.requireSymbol && !intersects(separator, SPECIAL)) separator = SPECIAL[rand(0, SPECIAL.length - 1)]!
-	}
+	if (!validWordCount(count)) return { ok: false, failure: 'words_out_of_range' }
+	const { separator, capitalise, includeNumber } = styleUnder(options, { policy, rand })
 
 	const words = passphraseWords(list)
 	const draw = () => {

@@ -14,6 +14,7 @@ import { AccountSwitcher } from './views/AccountSwitcher'
 import { AddAccount } from './views/AddAccount'
 import { Generator } from './views/Generator'
 import { LogInAgain } from './views/LogInAgain'
+import { PasskeyWindow } from './views/PasskeyWindow'
 import { Shell } from './views/Shell'
 import { Unlock } from './views/Unlock'
 
@@ -22,7 +23,9 @@ type Panel = 'switcher' | 'add_account' | 'generator' | null
 
 /** The stored theme and appearance apply to every screen, the ones before an account is chosen included. */
 export default function App() {
-	return <SettingsProvider><Popup /></SettingsProvider>
+	// The window the background opens for a site's passkey request names its ceremony.
+	const ceremonyId = new URLSearchParams(location.search).get('passkey')
+	return <SettingsProvider>{ceremonyId ? <PasskeyWindow ceremonyId={ceremonyId} /> : <Popup />}</SettingsProvider>
 }
 
 function Popup() {

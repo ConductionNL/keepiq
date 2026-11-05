@@ -8,7 +8,7 @@ import type { BrowserContext, Worker } from '@playwright/test'
 const workerOf = (context: BrowserContext): Worker => context.serviceWorkers().find((sw) => sw.url().startsWith('chrome-extension://'))!
 
 interface Chrome {
-	offscreen: { hasDocument(): Promise<boolean>; createDocument(options: object): Promise<void>; closeDocument(): Promise<void> }
+	offscreen: { hasDocument(): Promise<boolean>; createDocument(options: object): Promise<void> }
 	runtime: { getURL(path: string): string; sendMessage(message: object): Promise<unknown> }
 	alarms: { create(name: string, info: object): Promise<void> }
 }
@@ -19,11 +19,7 @@ const fromWorker = (worker: Worker, message: object) => worker.evaluate(async (m
 	if (!(await offscreen.hasDocument())) {
 		await offscreen.createDocument({ url: runtime.getURL('/offscreen.html'), reasons: ['CLIPBOARD'], justification: 'e2e' })
 	}
-	try {
-		return await runtime.sendMessage(message)
-	} finally {
-		await offscreen.closeDocument()
-	}
+	return await runtime.sendMessage(message)
 }, message)
 
 test('the worker writes and clears the clipboard through the offscreen document', async ({ context }) => {

@@ -1,24 +1,34 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { chromium, expect, test as base, type Frame, type Locator, type Page } from '@playwright/test'
+import { chromium, expect, test as base, type BrowserContext, type Frame, type Locator, type Page, type Worker } from '@playwright/test'
+import type { PasskeyCredential } from '@/src/passkey/credential'
 import { fakeStorage, LOGIN, type FakeStorage, type LoginItem } from './seed'
 
 const EXTENSION = fileURLToPath(new URL('../.output/chrome-mv3', import.meta.url))
+
+/** The extension's service worker, waiting for it when it is stopped or not yet up. */
+export async function extensionWorker(context: BrowserContext): Promise<Worker> {
+	return context.serviceWorkers().find((sw) => sw.url().startsWith('chrome-extension://'))
+		?? await context.waitForEvent('serviceworker', (sw) => sw.url().startsWith('chrome-extension://'))
+}
 
 /**
  * The built extension in headless Chromium, with a fresh profile and the fake account per test. `lang: 'nl'` picks
  * the Dutch catalog through `--lang`; `longFolder` adds the nested folders of `LONG_FOLDER`; `matches` is the
  * number of logins for the test site; `loginItem` renames the first, drops its username or puts it on `https:`; `totp`
- * gives the first login a code.
+ * gives the first login a code and `passkeys` its passkeys.
  */
-export const test = base.extend<{ vault: 'unlocked' | 'locked'; lang: 'en' | 'nl'; longFolder: boolean; matches: number; loginItem: LoginItem; totp: boolean }>({
+export const test = base.extend<{
+	vault: 'unlocked' | 'locked'; lang: 'en' | 'nl'; longFolder: boolean; matches: number; loginItem: LoginItem; totp: boolean; passkeys: PasskeyCredential[]
+}>({
 	vault: ['unlocked', { option: true }],
 	lang: ['en', { option: true }],
 	longFolder: [false, { option: true }],
 	matches: [1, { option: true }],
 	loginItem: [{}, { option: true }],
 	totp: [false, { option: true }],
-	context: async ({ vault, lang, longFolder, matches, loginItem, totp, baseURL }, use) => {
+	passkeys: [[], { option: true }],
+	context: async ({ vault, lang, longFolder, matches, loginItem, totp, passkeys, baseURL }, use) => {
 		const context = await chromium.launchPersistentContext('', {
 			channel: 'chromium',
 			headless: true,
@@ -32,14 +42,12 @@ export const test = base.extend<{ vault: 'unlocked' | 'locked'; lang: 'en' | 'nl
 				...(lang === 'nl' ? ['--lang=nl'] : []),
 			],
 		})
-		const worker = context.serviceWorkers().find((sw) => sw.url().startsWith('chrome-extension://'))
-			?? await context.waitForEvent('serviceworker', (sw) => sw.url().startsWith('chrome-extension://'))
 		// The built worker has `chrome`, not WXT's `browser`.
-		await worker.evaluate(async ({ local, session }: FakeStorage) => {
+		await (await extensionWorker(context)).evaluate(async ({ local, session }: FakeStorage) => {
 			const { storage } = (globalThis as unknown as { chrome: { storage: Record<'local' | 'session', { set(items: object): Promise<void> }> } }).chrome
 			await storage.local.set(local)
 			await storage.session.set(session)
-		}, await fakeStorage(new URL(baseURL!).origin, vault === 'unlocked', { longFolder, matches, loginItem, totp }))
+		}, await fakeStorage(new URL(baseURL!).origin, vault === 'unlocked', { longFolder, matches, loginItem, totp, passkeys }))
 		await use(context)
 		await context.close()
 	},

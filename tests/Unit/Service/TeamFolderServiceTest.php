@@ -19,12 +19,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
-use OCA\Keepiq\Event\Audit\AuditEvent;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShareMapper;
@@ -41,10 +38,15 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\TeamFolderAuditor;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\TeamFolderOffboardingService;
@@ -52,6 +54,8 @@ use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Service\TeamFolderShareService;
 use OCA\Keepiq\Service\TeamSecretTransferService;
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
@@ -59,6 +63,7 @@ use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -72,6 +77,7 @@ use Psr\Log\LoggerInterface;
  */
 class TeamFolderServiceTest extends TestCase {
 	use AdminAreaFixture;
+	use ShareRowJudgeFixture;
 
 
 	private TeamFolderService $service;
@@ -107,6 +113,27 @@ class TeamFolderServiceTest extends TestCase {
 	private NotificationService&MockObject $notificationService;
 
 	/**
+	 * The pending share quarantine scan.
+	 *
+	 * @var ShareQuarantineScanner&MockObject
+	 */
+	private ShareQuarantineScanner&MockObject $scanner;
+
+	/**
+	 * The database connection the service's transactions run on.
+	 *
+	 * @var IDBConnection&MockObject
+	 */
+	private IDBConnection&MockObject $db;
+
+	/**
+	 * The team-folder share service's logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $tfLogger;
+
+	/**
 	 * Audit events dispatched by the offboarding auditor.
 	 *
 	 * @var array<int,AuditEvent>
@@ -137,6 +164,9 @@ class TeamFolderServiceTest extends TestCase {
 		$this->subAdmin = $this->createMock(originalClassName: \OCP\Group\ISubAdmin::class);
 		$this->userManager = $this->createMock(originalClassName: IUserManager::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
+		$this->scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
+		$this->db = $this->createMock(originalClassName: IDBConnection::class);
+		$this->tfLogger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		$memberships = new TeamFolderMembershipResolver(
 			memberMapper: $this->memberMapper,
@@ -157,7 +187,8 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-		);
+			logger: $this->tfLogger,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, scanner: $this->scanner));
 
 		$this->service = new TeamFolderService(
 			mapper: $this->mapper,
@@ -178,7 +209,7 @@ class TeamFolderServiceTest extends TestCase {
 				transfers: new TeamSecretTransferService(
 					mapper: $this->mapper,
 					memberships: $memberships,
-					shareTargetMapper: $this->shareTargetMapper,
+					rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper),
 					delegationMapper: $this->delegationMapper,
 					ownerTransfer: new SecretOwnerTransferService(
 						db: $this->createMock(originalClassName: IDBConnection::class),
@@ -195,7 +226,8 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			audit: new TeamFolderAuditor(eventDispatcher: null),
 			notificationService: $this->notificationService,
-			db: $this->createMock(originalClassName: IDBConnection::class),
+			db: $this->db,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: $this->scanner),
 		);
 	}//end setUp()
 
@@ -572,6 +604,110 @@ class TeamFolderServiceTest extends TestCase {
 	}//end testRemoveMemberRevokesOnlyUncoveredUsers()
 
 	/**
+	 * While the share quarantine scan is pending, an owner removing a member
+	 * whose share row it cannot judge is refused before anything changes.
+	 *
+	 * @return void
+	 */
+	public function testRemovingAMemberWaitsForARowTheScanCannotJudge(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol'));
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$this->carolsRow()]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->memberMapper->expects($this->never())->method('delete');
+		$this->shareTargetMapper->expects($this->never())->method('delete');
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', userId: 'alice');
+	}//end testRemovingAMemberWaitsForARowTheScanCannotJudge()
+
+	/**
+	 * A membership whose end date passed cannot wait for the scan: the
+	 * membership goes, the row the scan cannot judge is removed, and its copy
+	 * is kept.
+	 *
+	 * @return void
+	 */
+	public function testAnEndedMembershipDropsARowTheScanCannotJudgeAndKeepsItsCopy(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol'));
+		$this->memberMapper->method('findByTeamFolder')->willReturn([]);
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$this->carolsRow()]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->memberMapper->expects($this->once())->method('delete');
+		$this->secretMapper->expects($this->never())->method('delete');
+		$deleted = [];
+		$this->shareTargetMapper->method('delete')->willReturnCallback(
+			static function (ShareTarget $row) use (&$deleted) {
+				$deleted[] = $row->getId();
+				return $row;
+			}
+		);
+
+		$this->assertSame(1, $this->service->expireMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', ownerId: 'alice'));
+		$this->assertSame(['st-carol'], $deleted);
+	}//end testAnEndedMembershipDropsARowTheScanCannotJudgeAndKeepsItsCopy()
+
+	/**
+	 * A row the scan clears in the check before the removal, but cannot
+	 * judge when it is revoked, refuses the removal as a whole: the membership
+	 * delete is rolled back and no row is revoked.
+	 *
+	 * @return void
+	 */
+	public function testARemovalRefusedAfterItsCheckChangesNothing(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol'));
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$this->carolsRow()]);
+		$this->scanner->method('heldBack')->willReturnOnConsecutiveCalls(null, ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+		$this->shareTargetMapper->expects($this->never())->method('delete');
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', userId: 'alice');
+	}//end testARemovalRefusedAfterItsCheckChangesNothing()
+
+	/**
+	 * Only the users who lose access are checked before a removal: a row of
+	 * a user another membership still covers cannot hold it back.
+	 *
+	 * @return void
+	 */
+	public function testAUserStillCoveredCannotHoldARemovalBack(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$groupMembership = $this->buildMember(type: 'group', id: 'devops');
+		$this->memberMapper->method('findById')->willReturn($groupMembership);
+		$this->memberMapper->method('findByTeamFolder')->willReturn([$groupMembership, $this->buildMember(type: 'user', id: 'bob')]);
+		$this->groupManager->method('get')->willReturn($this->buildGroup(userIds: ['bob', 'carol']));
+		$bobsRow = new ShareTarget();
+		$bobsRow->setId('st-bob');
+		$bobsRow->setTargetUserId('bob');
+		$bobsRow->setSecretId('copy-bob');
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturnCallback(
+			static fn (string $teamFolderId, string $targetUserId): array => ($targetUserId === 'bob' ? [$bobsRow] : [])
+		);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+
+		$this->assertSame(0, $this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-group-devops', userId: 'alice'));
+	}//end testAUserStillCoveredCannotHoldARemovalBack()
+
+	/**
+	 * Carol's row in tf-1, naming her copy.
+	 *
+	 * @return ShareTarget
+	 */
+	private function carolsRow(): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId('st-carol');
+		$row->setTargetUserId('carol');
+		$row->setSecretId('copy-carol');
+
+		return $row;
+	}//end carolsRow()
+
+	/**
 	 * handleGroupMemberJoin notifies the folder owner (approval required
 	 * before any share is created).
 	 *
@@ -618,6 +754,70 @@ class TeamFolderServiceTest extends TestCase {
 		$revoked = $this->service->handleGroupMemberLeave(userId: 'dave', groupId: 'devops');
 		$this->assertSame(1, $revoked);
 	}//end testGroupLeaveRevokesUnlessStillCovered()
+
+	/**
+	 * A group leave cannot wait for the share quarantine scan: a row it
+	 * cannot judge is removed, its copy kept, and the removal logged.
+	 *
+	 * @return void
+	 */
+	public function testAGroupLeaveDropsARowTheScanCannotJudgeAndKeepsItsCopy(): void {
+		$this->memberMapper->method('findGroupMemberships')->willReturn([$this->buildMember(type: 'group', id: 'devops')]);
+		$this->memberMapper->method('findByTeamFolder')->willReturn([$this->buildMember(type: 'user', id: 'bob')]);
+		$daveShare = new ShareTarget();
+		$daveShare->setId('st-dave');
+		$daveShare->setTargetUserId('dave');
+		$daveShare->setSecretId('copy-dave');
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$daveShare]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->shareTargetMapper->expects($this->once())->method('delete')->with($daveShare);
+		$this->secretMapper->expects($this->never())->method('delete');
+		$this->tfLogger->expects($this->once())->method('warning');
+
+		$this->assertSame(1, $this->service->handleGroupMemberLeave(userId: 'dave', groupId: 'devops'));
+	}//end testAGroupLeaveDropsARowTheScanCannotJudgeAndKeepsItsCopy()
+
+	/**
+	 * A manager leaving the folder themselves cannot be refused either: a
+	 * row the scan cannot judge is removed, its copy kept, and the removal
+	 * logged.
+	 *
+	 * @return void
+	 */
+	public function testLeavingTheFolderDropsARowTheScanCannotJudgeAndKeepsItsCopy(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->folderMapper->method('findById')->willReturn($this->buildFolder('folder-1'));
+		$olga = new TeamFolderMember();
+		$olga->setId('mem-olga');
+		$olga->setTeamFolderId('tf-1');
+		$olga->setMemberType('user');
+		$olga->setMemberId('olga');
+		$olga->setGrade('manage');
+		$left = false;
+		$this->memberMapper->method('findById')->willReturn($olga);
+		$this->memberMapper->method('findByTeamFolder')->willReturnCallback(
+			static function () use (&$left, $olga): array {
+				return ($left === true ? [] : [$olga]);
+			}
+		);
+		$this->memberMapper->method('delete')->willReturnCallback(
+			static function (TeamFolderMember $row) use (&$left): TeamFolderMember {
+				$left = true;
+				return $row;
+			}
+		);
+		$olgasRow = new ShareTarget();
+		$olgasRow->setId('st-olga');
+		$olgasRow->setTargetUserId('olga');
+		$olgasRow->setSecretId('copy-olga');
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$olgasRow]);
+		$this->scanner->method('heldBack')->willReturn(ShareQuarantineScanner::HELD_UNJUDGED);
+		$this->shareTargetMapper->expects($this->once())->method('delete')->with($olgasRow);
+		$this->secretMapper->expects($this->never())->method('delete');
+		$this->tfLogger->expects($this->once())->method('warning');
+
+		$this->assertSame(1, $this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'mem-olga', userId: 'olga'));
+	}//end testLeavingTheFolderDropsARowTheScanCannotJudgeAndKeepsItsCopy()
 
 	/**
 	 * handleGroupMemberLeave keeps shares when a direct membership still
@@ -691,10 +891,18 @@ class TeamFolderServiceTest extends TestCase {
 		$secretB->setId('sec-b');
 		$secretB->setName('B');
 		$this->secretMapper->method('findByOwner')->willReturn([$secretA, $secretB]);
+		$bobsCopy = new Secret();
+		$bobsCopy->setId('bob-copy-a');
+		$bobsCopy->setOwnerType('user');
+		$bobsCopy->setOwnerId('bob');
 		$this->secretMapper->method('findById')->willReturnCallback(
-			static function (string $id) use ($secretA): Secret {
+			static function (string $id) use ($secretA, $bobsCopy): Secret {
 				if ($id === 'sec-a') {
 					return $secretA;
+				}
+
+				if ($id === 'bob-copy-a') {
+					return $bobsCopy;
 				}
 
 				throw new DoesNotExistException('');
@@ -706,7 +914,10 @@ class TeamFolderServiceTest extends TestCase {
 			->willReturnCallback(
 				static function (string $sourceSecretId, string $targetUserId) {
 					if ($sourceSecretId === 'sec-a') {
-						return new ShareTarget();
+						$row = new ShareTarget();
+						$row->setTargetUserId($targetUserId);
+						$row->setSecretId('bob-copy-a');
+						return $row;
 					}
 
 					throw new DoesNotExistException('');
@@ -1291,6 +1502,54 @@ class TeamFolderServiceTest extends TestCase {
 	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-2.3
 	 */
 	public function testAManagerReconcilesFromItsOwnCopies(): void {
+		$this->managerHoldsACopyOfTheFirstSecret();
+
+		$secrets = $this->serviceWithShareTargets()->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
+		$this->assertSame('olga-copy-1', $secrets[0]['copyId']);
+		$this->assertNull($secrets[1]['copyId'], 'a secret the manager holds no copy of is reported, not faked');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->reconcile(teamFolderId: 'tf-1', userId: 'ed');
+	}//end testAManagerReconcilesFromItsOwnCopies()
+
+	/**
+	 * While the quarantine scan is pending, a manager's share row that the
+	 * scan quarantines on the spot, or cannot judge, names no copy: the
+	 * manager's browser never decrypts that secret for the other members.
+	 *
+	 * @param string $verdict The scan's verdict on the row
+	 *
+	 * @return void
+	 */
+	#[DataProvider('heldBackVerdicts')]
+	public function testAManagersHeldBackRowNamesNoCopy(string $verdict): void {
+		$this->managerHoldsACopyOfTheFirstSecret();
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($verdict);
+
+		$secrets = $this->serviceWithShareTargets(scanner: $scanner)->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
+		$this->assertNull($secrets[0]['copyId']);
+	}//end testAManagersHeldBackRowNamesNoCopy()
+
+	/**
+	 * The pending scan's verdicts that hold a row back.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function heldBackVerdicts(): array {
+		return [
+			'quarantined on the spot' => [ShareQuarantineScanner::HELD_QUARANTINED],
+			'cannot be judged' => [ShareQuarantineScanner::HELD_UNJUDGED],
+		];
+	}//end heldBackVerdicts()
+
+	/**
+	 * A managed folder of two secrets, of which the manager olga holds her
+	 * own copy of the first.
+	 *
+	 * @return void
+	 */
+	private function managerHoldsACopyOfTheFirstSecret(): void {
 		$this->managedFolder();
 		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
 		$one = new Secret();
@@ -1300,10 +1559,25 @@ class TeamFolderServiceTest extends TestCase {
 		$two->setId('sec-2');
 		$two->setName('Mail');
 		$this->secretMapper->method('findByOwner')->willReturn([$one, $two]);
+		$copy = new Secret();
+		$copy->setId('olga-copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('olga');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($copy): Secret {
+				if ($id === 'olga-copy-1') {
+					return $copy;
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
 		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
 			static function (string $sourceSecretId, string $targetUserId) {
 				if ($sourceSecretId === 'sec-1' && $targetUserId === 'olga') {
 					$row = new ShareTarget();
+					$row->setId('row-1');
+					$row->setTargetUserId('olga');
 					$row->setSecretId('olga-copy-1');
 					return $row;
 				}
@@ -1312,14 +1586,7 @@ class TeamFolderServiceTest extends TestCase {
 			}
 		);
 		$this->userManager->method('userExists')->willReturn(true);
-
-		$secrets = $this->serviceWithShareTargets()->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
-		$this->assertSame('olga-copy-1', $secrets[0]['copyId']);
-		$this->assertNull($secrets[1]['copyId'], 'a secret the manager holds no copy of is reported, not faked');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->service->reconcile(teamFolderId: 'tf-1', userId: 'ed');
-	}//end testAManagerReconcilesFromItsOwnCopies()
+	}//end managerHoldsACopyOfTheFirstSecret()
 
 	/**
 	 * managedFolder() with Olga's own membership ending tomorrow, Mia's in a
@@ -1746,11 +2013,12 @@ class TeamFolderServiceTest extends TestCase {
 	 * The service as setUp() builds it, with the share-target mapper and an
 	 * optional auditor wired in.
 	 *
-	 * @param TeamFolderAuditor|null $audit The auditor
+	 * @param TeamFolderAuditor|null      $audit   The auditor
+	 * @param ShareQuarantineScanner|null $scanner The pending quarantine scan
 	 *
 	 * @return TeamFolderService
 	 */
-	private function serviceWithShareTargets(?TeamFolderAuditor $audit = null): TeamFolderService {
+	private function serviceWithShareTargets(?TeamFolderAuditor $audit = null, ?ShareQuarantineScanner $scanner = null): TeamFolderService {
 		$memberships = new TeamFolderMembershipResolver(
 			memberMapper: $this->memberMapper,
 			folderMapper: $this->folderMapper,
@@ -1769,7 +2037,8 @@ class TeamFolderServiceTest extends TestCase {
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-		);
+			logger: $this->tfLogger,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargetMapper));
 
 		return new TeamFolderService(
 			mapper: $this->mapper,
@@ -1789,7 +2058,7 @@ class TeamFolderServiceTest extends TestCase {
 			audit: ($audit ?? new TeamFolderAuditor(eventDispatcher: null)),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
-			shareTargets: $this->shareTargetMapper,
+			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class))),
 		);
 	}//end serviceWithShareTargets()
 }//end class

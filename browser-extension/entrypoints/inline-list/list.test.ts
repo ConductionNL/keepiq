@@ -460,6 +460,16 @@ describe('pick guard', () => {
 		expect(picks()).toHaveLength(1)
 	})
 
+	it('takes another pick when the background did not answer the last one', async () => {
+		pickReply = undefined as never
+		await open()
+		click(row(0))
+		await flush()
+		click(row(1))
+		await flush()
+		expect(picks()).toMatchObject([{ itemId: 'p' }, { itemId: 'w' }])
+	})
+
 	it('sends nothing after a pick: the background closes the list', async () => {
 		await open()
 		click(row(0))
@@ -990,5 +1000,65 @@ describe('code mode', () => {
 	it('refuses a reply whose code rows are malformed', async () => {
 		await open(codes([{ id: 'p', name: 'Personal', username: null, code: { digits: '<b>1</b>', period: 30, validUntil: NOW } } as never]), { settle: false })
 		expect(options()).toHaveLength(0)
+	})
+})
+
+describe('passkeys during a conditional request', () => {
+	const PASSKEYS = [{ itemId: 'e', credentialId: 'QQ', name: 'Example', userName: 'alice' }, { itemId: 'n', credentialId: 'Qg', name: 'No user', userName: '' }]
+	const withPasskeys = (rows = ROWS, passkeys = PASSKEYS): InlineStateReply => ({ ...unlocked(rows)!, passkeys })
+
+	it('lists the passkeys above the logins in the same listbox, named as passkeys, behind a key icon hidden from assistive technology', async () => {
+		await open(withPasskeys())
+		expect(options().map((o) => o.getAttribute('aria-label'))).toEqual(['Example, alice, passkey', 'No user, passkey', 'Personal, alice', 'Work, alice@work.test', 'Bank'])
+		expect(options().slice(0, 2).map((o) => o.textContent)).toEqual(['Examplealice', 'No user'])
+		expect(document.querySelectorAll('[role="listbox"]')).toHaveLength(1)
+		const icon = row(0).querySelector('svg')!
+		expect(icon.getAttribute('aria-hidden')).toBe('true')
+		expect(icon.querySelector('path')!.getAttribute('d')).not.toBe(row(2).querySelector('path')!.getAttribute('d'))
+	})
+
+	it('counts passkey rows in the height and the announcement', async () => {
+		await open(withPasskeys(ROWS.slice(0, 1)), { settle: false })
+		expect(sent.filter((m) => m.kind === 'inline.resize')).toEqual([{ kind: 'inline.resize', key: KEY, height: inlineHeight(3) }])
+		await wait(250)
+		expect(status().textContent).toBe('3 Keepiq logins and passkeys. Press Down Arrow to choose.')
+	})
+
+	it('picks a passkey row by its login id and credential id', async () => {
+		await open(withPasskeys())
+		pickReply = { passkey: 'signed' }
+		click(row(0), 30, 20)
+		await flush()
+		expect(picks()).toEqual([{ kind: 'inline.pick', key: KEY, itemId: 'e', credentialId: 'QQ', input: { kind: 'pointer', at: 1_000_500, x: 30, y: 20 } }])
+		click(row(1))
+		await flush()
+		expect(picks()).toHaveLength(1)
+	})
+
+	it('picks a passkey row from the keyboard', async () => {
+		await open(withPasskeys())
+		key(row(1), 'Enter')
+		await flush()
+		expect(picks()).toMatchObject([{ itemId: 'n', credentialId: 'Qg', input: { kind: 'key' } }])
+	})
+
+	it('reads "No logins or passkeys" when the request offers none and no login matches', async () => {
+		await open(withPasskeys([], []), { settle: false })
+		expect(listbox()).toBeNull()
+		expect(document.querySelector('.message--muted')!.textContent).toBe('No logins or passkeys for example.test')
+		expect(sent.filter((m) => m.kind === 'inline.resize')).toEqual([{ kind: 'inline.resize', key: KEY, height: INLINE_MIN_HEIGHT_PX }])
+		await wait(250)
+		expect(status().textContent).toBe('No Keepiq logins or passkeys for example.test')
+	})
+
+	it.each([
+		['a locked state', { ...locked()!, passkeys: PASSKEYS }],
+		['a code list', { state: 'unlocked', mode: 'code', host: 'example.test', rows: [], theme: 'system', passkeys: PASSKEYS }],
+		['a row without a credential id', withPasskeys(ROWS, [{ itemId: 'e', name: 'Example', userName: 'alice' } as never])],
+		['passkeys that are no list', { ...unlocked()!, passkeys: 'QQ' }],
+	])('refuses passkeys in %s, rendering nothing', async (_, reply) => {
+		await open(reply as InlineStateReply, { settle: false })
+		expect(options()).toHaveLength(0)
+		expect(unlockButton()).toBeUndefined()
 	})
 })

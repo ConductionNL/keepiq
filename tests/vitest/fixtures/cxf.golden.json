@@ -1,0 +1,1613 @@
+{
+	"import: every item, one account": {
+		"rows": [
+			{
+				"sourceRow": 1,
+				"name": "Login",
+				"url": "https://a.test",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "Work",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 2,
+				"name": "Password type",
+				"url": null,
+				"login": null,
+				"password": "p2",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 3,
+				"name": "Login entity",
+				"url": null,
+				"login": "u3",
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 4,
+				"name": "Note",
+				"url": null,
+				"login": null,
+				"password": "c",
+				"additionalFields": null,
+				"folder": "",
+				"type": "note",
+				"errors": []
+			},
+			{
+				"sourceRow": 5,
+				"name": "Note",
+				"url": null,
+				"login": null,
+				"password": "c5",
+				"additionalFields": null,
+				"folder": "",
+				"type": "note",
+				"errors": []
+			},
+			{
+				"sourceRow": 6,
+				"name": "API key",
+				"url": null,
+				"login": "svc",
+				"password": "k6",
+				"additionalFields": null,
+				"folder": "",
+				"type": "api_key",
+				"errors": []
+			},
+			{
+				"sourceRow": 7,
+				"name": "SSH key",
+				"url": null,
+				"login": null,
+				"password": "priv",
+				"additionalFields": {
+					"publicKey": "pub"
+				},
+				"folder": "",
+				"type": "ssh_key",
+				"errors": []
+			},
+			{
+				"sourceRow": 8,
+				"name": "SSH",
+				"url": null,
+				"login": null,
+				"password": "priv",
+				"additionalFields": null,
+				"folder": "",
+				"type": "ssh_key",
+				"errors": []
+			},
+			{
+				"sourceRow": 9,
+				"name": "Wi-Fi Home",
+				"url": null,
+				"login": null,
+				"password": "w",
+				"additionalFields": {
+					"ssid": "Home",
+					"security": "wpa2"
+				},
+				"folder": "",
+				"type": "note",
+				"errors": []
+			},
+			{
+				"sourceRow": 10,
+				"name": "Wi-Fi",
+				"url": null,
+				"login": null,
+				"password": "w",
+				"additionalFields": {},
+				"folder": "",
+				"type": "note",
+				"errors": []
+			},
+			{
+				"sourceRow": 11,
+				"name": "Wifi",
+				"url": null,
+				"login": null,
+				"password": "",
+				"additionalFields": {
+					"security": "open"
+				},
+				"folder": "",
+				"type": "note",
+				"errors": []
+			},
+			{
+				"sourceRow": 12,
+				"name": "Unknown credential",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Unsupported CXF credential type \"drivers-license\""
+				]
+			},
+			{
+				"sourceRow": 13,
+				"name": "Null credential",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Unsupported CXF credential type \"unknown\""
+				]
+			},
+			{
+				"sourceRow": 14,
+				"name": "No credentials",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"CXF item carries no credentials"
+				]
+			},
+			{
+				"sourceRow": 15,
+				"name": "Not a list",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"CXF item carries no credentials"
+				]
+			},
+			{
+				"sourceRow": 17,
+				"name": "Login with code",
+				"url": null,
+				"login": "u",
+				"password": "p",
+				"additionalFields": null,
+				"folder": "Work",
+				"type": "login",
+				"errors": [],
+				"totp": "otpauth://totp/I%3Au?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&algorithm=SHA1&issuer=I"
+			},
+			{
+				"sourceRow": 18,
+				"name": "Code via url",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "otpauth://totp/X?secret=JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 20,
+				"name": "Two codes",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 22,
+				"name": "Two codes",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"A second, different one-time code; only the first is imported"
+				]
+			},
+			{
+				"sourceRow": 24,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 25,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Unsupported TOTP algorithm: MD5"
+				]
+			},
+			{
+				"sourceRow": 26,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"CXF TOTP entry without a seed"
+				]
+			},
+			{
+				"sourceRow": 27,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Invalid base32 character"
+				]
+			},
+			{
+				"sourceRow": 28,
+				"name": "TOTP",
+				"url": null,
+				"login": null,
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 29,
+				"name": "Only passkey",
+				"url": "example.com",
+				"login": null,
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c21\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c21\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 30,
+				"name": "rp22.test",
+				"url": "rp22.test",
+				"login": null,
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c22\",\"rpId\":\"rp22.test\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c22\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 31,
+				"name": "Passkeys on a note",
+				"url": null,
+				"login": null,
+				"password": "n",
+				"additionalFields": null,
+				"folder": "",
+				"type": "note",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c23\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c23\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"},{\"credentialId\":\"c23b\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c23b\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 34,
+				"name": "Incomplete passkey",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 35,
+				"name": "Incomplete passkey",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Incomplete CXF passkey (needs credentialId, rpId, and key material)"
+				]
+			},
+			{
+				"sourceRow": 36,
+				"name": "Clashing passkeys",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"dup\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_dup\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 38,
+				"name": "Clashing passkeys",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"A second, different passkey with the same credential id and RP id; only the first is imported"
+				]
+			},
+			{
+				"sourceRow": 39,
+				"name": "Rejected login with code",
+				"url": null,
+				"login": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 41,
+				"name": "Legacy userName passkey",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c27\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"legacy\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c27\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 43,
+				"name": "Note before login",
+				"url": null,
+				"login": null,
+				"password": "n",
+				"additionalFields": null,
+				"folder": "",
+				"type": "note",
+				"errors": []
+			},
+			{
+				"sourceRow": 44,
+				"name": "Note before login",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 46,
+				"name": "example.com",
+				"url": "example.com",
+				"login": null,
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"credentialId\":\"c30\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c30\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 48,
+				"name": "Only a bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Invalid base32 character"
+				]
+			},
+			{
+				"sourceRow": 49,
+				"name": "Only a bad code URL",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret."
+				]
+			},
+			{
+				"sourceRow": 50,
+				"name": "Unknown type then login",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Unsupported CXF credential type \"mystery\""
+				]
+			},
+			{
+				"sourceRow": 51,
+				"name": "Unknown type then login",
+				"url": null,
+				"login": null,
+				"password": "p28",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP"
+			}
+		]
+	},
+	"import: two accounts": {
+		"rows": [
+			{
+				"sourceRow": 1,
+				"name": "Login",
+				"url": "https://a.test",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 2,
+				"name": "Password type",
+				"url": null,
+				"login": null,
+				"password": "p2",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 3,
+				"name": "Login entity",
+				"url": null,
+				"login": "u3",
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 5,
+				"name": "Login with code",
+				"url": null,
+				"login": "u",
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "otpauth://totp/I%3Au?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&algorithm=SHA1&issuer=I"
+			},
+			{
+				"sourceRow": 6,
+				"name": "Code via url",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "Second",
+				"type": "login",
+				"errors": [],
+				"totp": "otpauth://totp/X?secret=JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 8,
+				"name": "Two codes",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"totp": "JBSWY3DPEHPK3PXP"
+			},
+			{
+				"sourceRow": 10,
+				"name": "Two codes",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"A second, different one-time code; only the first is imported"
+				]
+			},
+			{
+				"sourceRow": 12,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 13,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Unsupported TOTP algorithm: MD5"
+				]
+			},
+			{
+				"sourceRow": 14,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"CXF TOTP entry without a seed"
+				]
+			},
+			{
+				"sourceRow": 15,
+				"name": "Bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Invalid base32 character"
+				]
+			}
+		]
+	},
+	"import: as JSON text": {
+		"rows": [
+			{
+				"sourceRow": 1,
+				"name": "Only passkey",
+				"url": "example.com",
+				"login": null,
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c21\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c21\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 2,
+				"name": "rp22.test",
+				"url": "rp22.test",
+				"login": null,
+				"password": "",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c22\",\"rpId\":\"rp22.test\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c22\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 3,
+				"name": "Passkeys on a note",
+				"url": null,
+				"login": null,
+				"password": "n",
+				"additionalFields": null,
+				"folder": "",
+				"type": "note",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"c23\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c23\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"},{\"credentialId\":\"c23b\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_c23b\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 6,
+				"name": "Incomplete passkey",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": []
+			},
+			{
+				"sourceRow": 7,
+				"name": "Incomplete passkey",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Incomplete CXF passkey (needs credentialId, rpId, and key material)"
+				]
+			},
+			{
+				"sourceRow": 8,
+				"name": "Clashing passkeys",
+				"url": null,
+				"login": null,
+				"password": "p",
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [],
+				"passkeys": "[{\"credentialId\":\"dup\",\"rpId\":\"example.com\",\"rpName\":\"Example\",\"userName\":\"alice\",\"userDisplayName\":\"\",\"userHandle\":\"H\",\"privateKey\":\"PK_dup\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-23T10:00:00.000Z\"}]"
+			},
+			{
+				"sourceRow": 10,
+				"name": "Clashing passkeys",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"A second, different passkey with the same credential id and RP id; only the first is imported"
+				]
+			}
+		]
+	},
+	"import: not a document": {
+		"threw": "Error: Not a CXF document (missing accounts array)"
+	},
+	"import: unparsable text": {
+		"threw": "Error: Not a CXF document (invalid JSON)"
+	},
+	"export: every row, map of ids": {
+		"document": {
+			"version": {
+				"major": 1,
+				"minor": 0
+			},
+			"exporter": "keepiq",
+			"timestamp": 1792749600,
+			"accounts": [
+				{
+					"id": "account-1",
+					"userName": "alice",
+					"email": "",
+					"items": [
+						{
+							"id": "item-1",
+							"title": "Login",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [
+										"https://a.test"
+									],
+									"username": {
+										"fieldType": "string",
+										"value": "u"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-2",
+							"title": "Login, no url",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": ""
+									}
+								}
+							]
+						},
+						{
+							"id": "item-3",
+							"title": "Database",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": "db"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "dp"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-4",
+							"title": "Note",
+							"credentials": [
+								{
+									"type": "note",
+									"content": "text"
+								}
+							]
+						},
+						{
+							"id": "item-5",
+							"title": "Api",
+							"credentials": [
+								{
+									"type": "api-key",
+									"username": {
+										"fieldType": "string",
+										"value": "svc"
+									},
+									"key": {
+										"fieldType": "concealed-string",
+										"value": "k"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-6",
+							"title": "Ssh",
+							"credentials": [
+								{
+									"type": "ssh-key",
+									"privateKey": {
+										"fieldType": "concealed-string",
+										"value": "priv"
+									},
+									"publicKey": {
+										"fieldType": "string",
+										"value": "pub"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-7",
+							"title": "Ssh, string fields",
+							"credentials": [
+								{
+									"type": "ssh-key",
+									"privateKey": {
+										"fieldType": "concealed-string",
+										"value": "priv"
+									},
+									"publicKey": {
+										"fieldType": "string",
+										"value": ""
+									}
+								}
+							]
+						},
+						{
+							"id": "item-10",
+							"title": "Mapped id",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": "m"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "mp"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-11",
+							"title": "Totp row",
+							"credentials": [
+								{
+									"type": "totp",
+									"secret": "JBSWY3DPEHPK3PXP",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1",
+									"username": "A"
+								}
+							]
+						},
+						{
+							"id": "item-12",
+							"title": "Bad totp row",
+							"credentials": [
+								{
+									"type": "totp",
+									"secret": "NOTAKEY",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1"
+								}
+							]
+						},
+						{
+							"id": "item-13",
+							"title": "Passkey row",
+							"credentials": [
+								{
+									"type": "passkey",
+									"credentialId": "row-pk",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_row-pk"
+								}
+							]
+						},
+						{
+							"id": "item-14",
+							"title": "Passkey row with counter",
+							"credentials": [
+								{
+									"type": "passkey",
+									"credentialId": "row-pk2",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_row-pk2"
+								}
+							]
+						},
+						{
+							"id": "item-16",
+							"title": "Login with own code and passkeys",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								},
+								{
+									"type": "totp",
+									"secret": "JBSWY3DPEHPK3PXP",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1"
+								},
+								{
+									"type": "passkey",
+									"credentialId": "own1",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_own1"
+								},
+								{
+									"type": "passkey",
+									"credentialId": "own2",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_own2"
+								}
+							]
+						},
+						{
+							"id": "item-17",
+							"title": "Login with bad own code",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								},
+								{
+									"type": "totp",
+									"secret": "BAD",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1"
+								}
+							]
+						},
+						{
+							"id": "item-18",
+							"title": "Login with unreadable passkeys",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-19",
+							"title": "Login with an incomplete passkey",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-20",
+							"title": "Login with an empty own code",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-21",
+							"title": "No type",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						}
+					],
+					"collections": [
+						{
+							"id": "collection-1",
+							"title": "Work",
+							"items": [
+								"item-1",
+								"item-4",
+								"item-16"
+							]
+						},
+						{
+							"id": "collection-2",
+							"title": "Work/Sub",
+							"items": [
+								"item-3"
+							]
+						}
+					]
+				}
+			]
+		},
+		"unmapped": [
+			"Cert: certificate secrets have no CXF entity — not exported",
+			"Custom: type \"uuid-custom\" has no CXF entity — not exported",
+			"Passkey row with counter: passkey counter/transports are Keepiq extensions and do not survive CXF export",
+			"Bad passkey row: stored passkey credential is not valid canonical JSON",
+			"Login with own code and passkeys: passkey counter/transports are Keepiq extensions and do not survive CXF export",
+			"Login with bad own code: stored passkeys could not be read — not exported",
+			"Login with unreadable passkeys: stored passkeys could not be read — not exported",
+			"Login with an incomplete passkey: a stored passkey is not a complete credential — not exported"
+		],
+		"itemCount": 18
+	},
+	"export: every row, object of ids": {
+		"document": {
+			"version": {
+				"major": 1,
+				"minor": 0
+			},
+			"exporter": "keepiq",
+			"timestamp": 1792749600,
+			"accounts": [
+				{
+					"id": "account-1",
+					"userName": "",
+					"email": "",
+					"items": [
+						{
+							"id": "item-1",
+							"title": "Login",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [
+										"https://a.test"
+									],
+									"username": {
+										"fieldType": "string",
+										"value": "u"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-2",
+							"title": "Login, no url",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": ""
+									}
+								}
+							]
+						},
+						{
+							"id": "item-3",
+							"title": "Database",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": "db"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "dp"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-4",
+							"title": "Note",
+							"credentials": [
+								{
+									"type": "note",
+									"content": "text"
+								}
+							]
+						},
+						{
+							"id": "item-5",
+							"title": "Api",
+							"credentials": [
+								{
+									"type": "api-key",
+									"username": {
+										"fieldType": "string",
+										"value": "svc"
+									},
+									"key": {
+										"fieldType": "concealed-string",
+										"value": "k"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-6",
+							"title": "Ssh",
+							"credentials": [
+								{
+									"type": "ssh-key",
+									"privateKey": {
+										"fieldType": "concealed-string",
+										"value": "priv"
+									},
+									"publicKey": {
+										"fieldType": "string",
+										"value": "pub"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-7",
+							"title": "Ssh, string fields",
+							"credentials": [
+								{
+									"type": "ssh-key",
+									"privateKey": {
+										"fieldType": "concealed-string",
+										"value": "priv"
+									},
+									"publicKey": {
+										"fieldType": "string",
+										"value": ""
+									}
+								}
+							]
+						},
+						{
+							"id": "item-10",
+							"title": "Mapped id",
+							"credentials": [
+								{
+									"type": "note",
+									"content": "mp"
+								}
+							]
+						},
+						{
+							"id": "item-11",
+							"title": "Totp row",
+							"credentials": [
+								{
+									"type": "totp",
+									"secret": "JBSWY3DPEHPK3PXP",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1",
+									"username": "A"
+								}
+							]
+						},
+						{
+							"id": "item-12",
+							"title": "Bad totp row",
+							"credentials": [
+								{
+									"type": "totp",
+									"secret": "NOTAKEY",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1"
+								}
+							]
+						},
+						{
+							"id": "item-13",
+							"title": "Passkey row",
+							"credentials": [
+								{
+									"type": "passkey",
+									"credentialId": "row-pk",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_row-pk"
+								}
+							]
+						},
+						{
+							"id": "item-14",
+							"title": "Passkey row with counter",
+							"credentials": [
+								{
+									"type": "passkey",
+									"credentialId": "row-pk2",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_row-pk2"
+								}
+							]
+						},
+						{
+							"id": "item-16",
+							"title": "Login with own code and passkeys",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								},
+								{
+									"type": "totp",
+									"secret": "JBSWY3DPEHPK3PXP",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1"
+								},
+								{
+									"type": "passkey",
+									"credentialId": "own1",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_own1"
+								},
+								{
+									"type": "passkey",
+									"credentialId": "own2",
+									"rpId": "example.com",
+									"rpName": "Example",
+									"username": "alice",
+									"userDisplayName": "",
+									"userHandle": "H",
+									"key": "PK_own2"
+								}
+							]
+						},
+						{
+							"id": "item-17",
+							"title": "Login with bad own code",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								},
+								{
+									"type": "totp",
+									"secret": "BAD",
+									"period": 30,
+									"digits": 6,
+									"algorithm": "sha1"
+								}
+							]
+						},
+						{
+							"id": "item-18",
+							"title": "Login with unreadable passkeys",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-19",
+							"title": "Login with an incomplete passkey",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-20",
+							"title": "Login with an empty own code",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-21",
+							"title": "No type",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						}
+					],
+					"collections": [
+						{
+							"id": "collection-1",
+							"title": "Work",
+							"items": [
+								"item-1",
+								"item-4",
+								"item-16"
+							]
+						},
+						{
+							"id": "collection-2",
+							"title": "Work/Sub",
+							"items": [
+								"item-3"
+							]
+						}
+					]
+				}
+			]
+		},
+		"unmapped": [
+			"Cert: certificate secrets have no CXF entity — not exported",
+			"Custom: type \"uuid-custom\" has no CXF entity — not exported",
+			"Passkey row with counter: passkey counter/transports are Keepiq extensions and do not survive CXF export",
+			"Bad passkey row: stored passkey credential is not valid canonical JSON",
+			"Login with own code and passkeys: passkey counter/transports are Keepiq extensions and do not survive CXF export",
+			"Login with bad own code: stored passkeys could not be read — not exported",
+			"Login with unreadable passkeys: stored passkeys could not be read — not exported",
+			"Login with an incomplete passkey: a stored passkey is not a complete credential — not exported"
+		],
+		"itemCount": 18
+	},
+	"export: no options": {
+		"document": {
+			"version": {
+				"major": 1,
+				"minor": 0
+			},
+			"exporter": "keepiq",
+			"timestamp": 1792749600,
+			"accounts": [
+				{
+					"id": "account-1",
+					"userName": "",
+					"email": "",
+					"items": [
+						{
+							"id": "item-1",
+							"title": "Login",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [
+										"https://a.test"
+									],
+									"username": {
+										"fieldType": "string",
+										"value": "u"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "p"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-2",
+							"title": "Login, no url",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": ""
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": ""
+									}
+								}
+							]
+						},
+						{
+							"id": "item-3",
+							"title": "Database",
+							"credentials": [
+								{
+									"type": "basic-auth",
+									"urls": [],
+									"username": {
+										"fieldType": "string",
+										"value": "db"
+									},
+									"password": {
+										"fieldType": "concealed-string",
+										"value": "dp"
+									}
+								}
+							]
+						},
+						{
+							"id": "item-4",
+							"title": "Note",
+							"credentials": [
+								{
+									"type": "note",
+									"content": "text"
+								}
+							]
+						}
+					],
+					"collections": [
+						{
+							"id": "collection-1",
+							"title": "Work",
+							"items": [
+								"item-1",
+								"item-4"
+							]
+						},
+						{
+							"id": "collection-2",
+							"title": "Work/Sub",
+							"items": [
+								"item-3"
+							]
+						}
+					]
+				}
+			]
+		},
+		"unmapped": [],
+		"itemCount": 4
+	},
+	"export: nothing": {
+		"document": {
+			"version": {
+				"major": 1,
+				"minor": 0
+			},
+			"exporter": "keepiq",
+			"timestamp": 1792749600,
+			"accounts": [
+				{
+					"id": "account-1",
+					"userName": "",
+					"email": "",
+					"items": [],
+					"collections": []
+				}
+			]
+		},
+		"unmapped": [],
+		"itemCount": 0
+	}
+}

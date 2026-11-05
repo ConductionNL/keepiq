@@ -586,6 +586,23 @@ describe('SecretEditDialog — share save', () => {
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 
+	it('shows an error for an unreachable answer without a partner list, and offers nothing to save without', async () => {
+		const wrapper = await mountEdited()
+		vi.spyOn(useSecretStore(), 'updateSecret').mockRejectedValueOnce(
+			Object.assign(new Error('partner_unreachable'), {
+				code: 'partner_unreachable',
+			}),
+		)
+
+		await wrapper.vm.submit()
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.find('[data-testid="secret-edit-error"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="save-without-unreachable"]').exists(),
+		).toBe(false)
+	})
+
 	it('cannot be closed while it saves, and can again afterwards', async () => {
 		// Like NcModal, which ignores Escape, its close button and an outside click under `noClose`.
 		const NcDialog = {

@@ -37,7 +37,7 @@ What crosses each boundary, and nothing else:
 | Relay → page script | ack; credential as base64url, a `DOMException` name, or `fallback` | nothing: the page reads it anyway |
 | Relay → background (`passkey.start`, `passkey.abort`, `passkey.available`) | the options, `crossOriginAncestor` | the ancestor flag only; tab, frame and origin come from `sender` |
 | Background → relay (`passkey.result`, by `frameId`) | ceremony id, origin, result | — |
-| Background ↔ passkey window (popup kinds) | ceremony view: kind, RP ID, host, page's `rp.name` and `user.name`, lock state, sign-in rows (login id, credential id, login name, user name), save targets (login id, name, username), codes; back: pick, save to a login or a new one, replace, verify, fallback, cancel | — |
+| Background ↔ passkey window (popup kinds) | ceremony view: kind, RP ID, host, page's `rp.name` and `user.name`, lock state, sign-in rows (login id, credential id, login name, user name) and the one picked in the inline list, save targets (login id, name, username), codes; back: pick, save to a login or a new one, replace, verify, fallback, cancel | — |
 | Background ↔ inline list | passkey rows (login id, credential id, login name, user name) in `inline.state`; `inline.pick` with a login id and credential id | — |
 | Background ↔ popup detail | `item.passkeys`: per entry relying party, user name, created date | — |
 
@@ -50,20 +50,22 @@ What crosses each boundary, and nothing else:
 
 | | Chrome MV3 | Firefox MV2 |
 | --- | --- | --- |
-| Page script | `entrypoints/passkey-page.content.ts` (`include: ['chrome']`), `world: 'MAIN'`, `runAt: 'document_start'`, `allFrames`, `*://*/*`; Chrome 111+ | Unlisted `entrypoints/passkey-page.ts` (`include: ['firefox']`), injected with WXT's `injectScript()` by the relay, listed in `web_accessible_resources` for Firefox only. Both import `src/passkey/page.ts` |
+| Page script | `entrypoints/passkey-page-main.content.ts` (`include: ['chrome']`; WXT refuses two entrypoints named `passkey-page`), `world: 'MAIN'`, `runAt: 'document_start'`, `allFrames`, `*://*/*`; Chrome 111+ | Unlisted `entrypoints/passkey-page.ts` (`include: ['firefox']`), injected with WXT's `injectScript()` by the relay, listed in `web_accessible_resources` for Firefox only. Both import `src/passkey/page.ts` |
 | Relay | `entrypoints/passkey.content.ts`, isolated, `document_start`, `allFrames`, `*://*/*` | Same |
 
 - **Static, not `scripting.registerContentScripts`:** dynamic scripts need host permission for every site, which the extension does not hold (SECURITY.md). So the page script is present while the setting is off and answers with the fallback (proposal, deviations).
 - **A separate relay at `document_start`:** `content.ts` runs at `document_idle` for its DOM work, too late to inject on Firefox.
-- **Firefox's `<script src>` loads asynchronously,** so a page's earliest inline script can run before it; Bitwarden's MV2 build has the same gap. Such a call goes to the browser, unhandled.
+- **Firefox's injection waits on a `fetch` of the script,** which then runs inline, so a page's earliest inline script can run before it; Bitwarden's MV2 build has the same gap. Such a call goes to the browser, unhandled.
 - **No `scripting` permission** is needed on either browser.
 
 ### Background flow
 
 - **`passkey.start` answers at once** with `{ ceremonyId }` or `{ fallback: true }`, from the gates in the spec only; the result follows later as `passkey.result` through `tabs.sendMessage` with the frame's `frameId`. A held reply or a port dies with an MV3 worker; a pushed result survives it, since the ceremony is in `storage.session`.
 - **One ceremony per tab** in `passkeyCeremony.<tabId>`. The window and the inline list name it by ceremony id, so a stale window cannot answer a newer ceremony.
-- **The window is the popup page** at `popup.html?passkey=<ceremonyId>`, opened with `browser.windows.create({ type: 'popup' })` as `popout()` does. It reuses the unlock view and the PIN, sends popup kinds the existing sender routing accepts, and holds the `popup` port, so "Immediately" locks when it closes, as for any popup.
-- **Ending a ceremony:** `windows.onRemoved` (Cancel), `tabs.onRemoved`, `tabs.onUpdated` with `status: 'loading'`, the relay's `pagehide` (`passkey.abort` for a subframe), `vault.locked` with a logout, an account switch, and the deadline. The page script rejects at the deadline and sends `passkey.abort`; the background also checks the deadline on every ceremony message, so a page that never aborts only leaves the window open until the user closes it.
+- **The window is the popup page** at `popup.html?passkey=<ceremonyId>`, opened with `browser.windows.create({ type: 'popup' })` as `popout()` does. It reuses the unlock view and the PIN, sends popup kinds the existing sender routing accepts, and holds the `popup` port, so "Immediately" locks when it closes, as for any popup. A second ceremony reloads it with `expectPopout()` first, as Pop out does, so the reconnect gap does not lock.
+- **The Save view lists the matching logins only,** since a passkey almost always goes to a login the user has; a "New login" icon button in the header corner opens the Name and Folder step, which shows at once when no login matches. A login that appears during the ceremony does not interrupt the new-login step, or Enter meant for Name would save to it.
+- **Ending a ceremony:** `windows.onRemoved` (Cancel), `tabs.onRemoved`, `tabs.onUpdated` with a `url` of another origin than the ceremony's, the relay's `pagehide` (`passkey.abort`) when the frame unloads, `vault.locked` with a logout, an account switch, a new ceremony in the tab, and the deadline. `status: 'loading'` alone is no navigation, since Chrome reports it for `pushState` and late frame loads. The page script rejects at the deadline and sends `passkey.abort`; the background also checks the deadline on every ceremony message, so a page that never aborts only leaves the window open until the user closes it.
+- **A fallback closes the window first:** since Chromium refuses a WebAuthn call from a page without focus, the background closes the Keepiq window, activates the tab (for "Use your device or hardware key" only), focuses its window and sends `fallback` once the window has focus, waiting at most a second for the close and half a second for the focus, within the deadline. A newer ceremony in the tab that has or is opening a window keeps the focus.
 - **`enforce()` runs first** on every ceremony message, so an overdue vault locks before anything is matched.
 
 ### Messages
@@ -88,8 +90,14 @@ All in `src/messages.ts`, dotted kinds:
 ### Writes
 
 - **Save as new login** is a background-only `createPasskeyLogin()` in `src/vault/write.ts` on `run()`: body `{ name, url: origin, typeId: login, folderId, key: encrypt(''), passkeys }`, no `login` or `additionalFields`, as the web app's import creates one. The reply waits for the POST, not the sync that follows.
-- **Every write to an existing login's `passkeys`** (save to it, replace, counter) is one background-only `writeLoginPasskeys(id, change)` on `run()`: cached row, use-only and read-only refused (`restricted`), `write-context` (`view_only`), a fresh `GET /api/v1/secrets/{id}` whose `passkeys` must equal the cache's (`unmatched`), the array decrypted and `change` applied, then `shareSave()` with `plain: { passkeys }` and `baseUpdatedAt` from the fetch. One retry after `stale`. The other entries are kept as the parsed objects and serialised with the web app's field order, so they round-trip byte for byte.
-- **`shareSave()` gains `passkeys` as a value field,** next to `key`, `login`, `additionalFields` and `totp`: the patch and each copy carry it re-encrypted. Partner shares already carry it in the whole value when the partner's `valueFields` lists it, and `partner_upgrade_required` already stops a change that adds a field a partner cannot store (ext-totp-capture); this change extends that check from `totp` to `passkeys`. Its `Opened` vouches for `key`, `login` and `additionalFields` only when the fresh row has them empty, so a partner-shared login with any of them fails `unverified`, as an edit would. See Open Questions.
+- **Every write to an existing login's `passkeys`** (save to it, replace, counter) is one background-only `writeLoginPasskeys(id, change)` on `run()`: cached row, use-only and read-only refused (`restricted`), `write-context` (`view_only`), a fresh `GET /api/v1/secrets/{id}` whose `passkeys` must equal the cache's (`conflict`), the array decrypted and `change` applied, then `shareSave()` with `plain: { passkeys }` and `baseUpdatedAt` from the fetch. One retry after `stale`. The other entries are kept as the parsed objects and serialised with the web app's field order, so they round-trip byte for byte.
+- **`shareSave()` gains `passkeys` as a value field,** next to `key`, `login`, `additionalFields` and `totp`; the patch and each copy carry it re-encrypted.
+- **A partner share carries it in the whole value** when the partner's `valueFields` lists it.
+- **`partner_upgrade_required` extends from `totp` to `passkeys`** (ext-totp-capture), so it stops only a login's first passkey save.
+- **A partner that cannot store passkeys gets later changes as null,** counter saves included; were our record of it outdated, the server refuses with `copy_fields_mismatch`, so nothing is lost.
+- **Our own refusal names `TOTP_PASSKEYS_FIELDS_SINCE`** (`src/api/keepiq-version.ts`, the server's constant) as `requiredVersion`, as the server's does.
+- **Its `Opened` vouches for `key`, `login` and `additionalFields` only when the fresh row has them empty,** so a partner-shared login with any of them fails `unverified`, as an edit would; see Decided questions.
+- **Retry after a failed save syncs first:** a lost reply may hide a stored write, so a login holding a passkey a failed try wrote gets the new one in its place instead of a second login or entry. Without a sync it refuses with the sync's error.
 - **Keepiq API:** `secret#create`, `secret#show`, `share#writeContext`, `shareSave#save`, `share#recipientCertificates`, `federation#recipientCertificate`, `encryptionSuite#index`, `secretType#index` (`appinfo/routes.php`). All in 0.3.12 (ADR-003), the `passkeys` field too (keepiq#1325). No `KEEPIQ_FEATURES` entry.
 
 ### Browser APIs
@@ -110,8 +118,10 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 
 | Data | Lives in | Cleared by |
 | --- | --- | --- |
-| Ceremony: ids, origin, RP ID, challenge, page's `rp` and `user`, credential id lists, requirements, deadline, window id, verified flag | `storage.session` `passkeyCeremony.<tabId>`; memory below Firefox 115 | Ceremony end, next ceremony in the tab, tab close or navigation, logout, account switch, restart, reload |
+| Ceremony: ceremony, account, tab and frame ids, kind, conditional flag, origin, frame URL without fragment, RP ID, challenge, page's `rp.name` and `user`, `credProps` flag, one credential id list, user verification requirement, deadline, window and window tab ids, verified flag, `alreadySaved`; after a failed pick or save its login and credential ids, the target login or typed name and folder, the credential ids its tries wrote, and the error with any partner cloud ids and share ids; an inline-list pick waiting on "Confirm it's you" as login and credential id | `storage.session` `passkeyCeremony.<tabId>`; memory below Firefox 115 | Ceremony end (result, Cancel or window close but for a conditional request, fallback, abort or the frame's `pagehide`, deadline), next ceremony in the tab, tab close, the tab navigating to another origin (a same-origin URL change such as `pushState` keeps it), logout, account switch, restart, reload; a lock keeps it |
+| `write-context` answers of the Save view, by ceremony and login id | Background memory, the latest four ceremonies | Worker stop, four newer ceremonies |
 | Decrypted `passkeys` array, imported signing key, generated key pair | Background memory, one handler | Handler return |
+| Every login's passkeys as the inline list offers them (login id, credential id, login name, user name, RP ID, access end) | Background memory, one per account, key and vault version | Vault change, lock, logout, account switch, turning passkeys off, worker stop |
 | Rows (login id, credential id, login name, user name), save targets | Popup or list page memory | Window or list closing |
 | A login's passkey metadata (relying party, user name, date) | Popup memory while the detail shows it | The view closing |
 | Credential in flight | Relay and page script memory | The call settling |
@@ -120,20 +130,24 @@ Permissions: none new; `tabs`, `alarms` and `storage` are declared. `web_accessi
 
 ## Risks / Trade-offs
 
-- [The counter save sends the login's passkeys to every copy the server lists] → The same trust ext-share-sync accepts for an edit (ADR-002 § Sharing), now on each sign-in with an imported non-zero counter. New passkeys keep 0 and never write. See Open Questions.
+- [The counter save sends the login's passkeys to every copy the server lists] → The same trust ext-share-sync accepts for an edit (ADR-002 § Sharing), now on each sign-in with an imported non-zero counter. New passkeys keep 0 and never write. See Decided questions.
 - [Saving to a login rewrites its whole `passkeys` field] → Entries round-trip as parsed and serialised in the web app's field order; the fresh fetch must match the cache, so a concurrent change from another client fails `stale` and is retried on the new value, never overwritten.
 - [Existing standalone passkey items stop being usable for sign-in in the extension] → Accepted: the app has no users beyond internal testers (keepiq#1328 dropped); the detail still shows them and says why.
 - [A non-zero counter can't sign offline or from a copy the user can't write] → As Bitwarden, which saves before replying. The window offers the browser's authenticator.
-- [Firefox's injected `<script src>` shows the per-install `moz-extension://` UUID to the page while it loads] → Accepted for parity; see Open Questions.
+- [Firefox injects the page script inline, which a page's CSP that forbids inline scripts blocks] → It runs whole or not at all: such a page keeps the browser's own passkeys and may log or report a CSP violation. A `<script src>` would pass that CSP but show the page the per-install `moz-extension://` UUID; see Decided questions.
 - [The page script detects as Keepiq on every page] → Patched methods are visible to any page; Bitwarden's are too. It answers nothing about the vault.
 - [Sites see an unnamed authenticator (zero AAGUID)] → Cosmetic; a registered AAGUID can come later without changing stored passkeys.
 - [Chrome below 111 runs the page script isolated, where it does nothing] → The browser handles every request; no harm.
 - [The page counts passkeys from the inline list's height after a focus] → As accepted for logins in ext-autofill, and as in Bitwarden.
+- [A page can start conditional requests and focus fields at will, and a focus decrypts the logins holding passkeys] → They are decrypted once per account, key and vault version, and the rows (ids and names) kept in background memory, so a loop costs nothing more. Accepted: that first focus after an unlock or vault change still lets the page's timing tell an unlocked vault holding passkeys from a locked one, and roughly how many logins hold them.
+- [A fresh save to a different target after a lost reply leaves the lost try's passkey on its original login] → The site never registered it and no secret is exposed; Retry or a save to the same target puts the new one in its place.
 
-## Open Questions
+## Decided questions
 
-- Should a counter save re-encrypt a shared login's passkeys for every listed copy on sign-in (as specced, like an edit), or should a shared passkey sign without saving the counter?
-- Save to a partner-shared login fails `unverified` when it has a password, username or additional fields, since the extension never opened them in a form. Accept (as specced), or let the passkey save vouch for fields it never changes?
-- Should use-only, read-only and view-only copies with a non-zero counter refuse to sign (as specced, Bitwarden's behaviour), or sign with the unsaved counter plus one?
-- Firefox: accept the injected script and its UUID exposure (as specced), raise `strict_min_version` to 128 if MV2 honours a manifest `world: 'MAIN'` there, or install the page functions from the isolated world with `exportFunction`?
-- Register a Keepiq AAGUID with the passkey provider list, or keep zeros?
+Decided by Thijn on 2026-11-04, all as built:
+
+- **A counter save re-encrypts a shared login's passkeys for every listed copy** on sign-in, like an edit.
+- **A passkey save to a partner-shared login fails `unverified`** when the login has a password, username or additional fields, since the extension never opened them in a form; so does its counter save, so an imported passkey on such a login cannot sign in. Follow-up: keepiq#1470.
+- **Use-only, read-only and view-only copies with a non-zero counter refuse to sign,** as Bitwarden does.
+- **Firefox injects the page script inline,** so pages whose CSP forbids inline scripts get no Keepiq passkeys. Follow-up: keepiq#1471.
+- **The AAGUID stays all zeros.**

@@ -13,6 +13,7 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - Your master password never leaves the device. It derives an AES-256-GCM key with PBKDF2-SHA-256 at 600,000 iterations, which unwraps your RSA-4096 private key. The password is then dropped.
 - Every secret is encrypted with RSA-OAEP (SHA-256) to your key. The server only ever sees ciphertext.
 - All cryptography is WebCrypto, except Argon2id. The private key is imported as a non-extractable `CryptoKey` that can only decrypt.
+- A passkey is an ECDSA P-256 key pair made with WebCrypto. Its private key exists only in the login's encrypted `passkeys` field; to sign, the background imports it as a non-extractable `CryptoKey` for that one signature.
 - A send is encrypted with AES-256-GCM under a fresh content key. Without a password the key is only in the link's `#k=` fragment, which browsers never send to the server; with one, the key is wrapped under Argon2id (64 MiB, 3 iterations, parallelism 1) of the password, as in the web app.
 - Argon2id runs in WebAssembly from `hash-wasm`, bundled. The extension pages' CSP adds `'wasm-unsafe-eval'` for it, which allows compiling WebAssembly, not `eval` of scripts.
 
@@ -39,9 +40,15 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | A login's TOTP seed and its code | Background memory for one fill, list refresh or menu click; popup memory while the detail view shows the code, never the seed; the code also in the page's code field once filled | That handler's end or the view closing; the content script drops a code it has no code field for |
 | A new authenticator key, typed or scanned | Popup memory in the form; background memory while it is saved; never sent back to the form once saved | Save, closing the form or the popup; the save's end |
 | The picture Scan QR code on page takes of the tab | Popup memory while it is read | The read's end; it is never stored, logged or sent |
-| When each item was last filled (`lastUsed.<id>`), no other history | `storage.local` | Logout, account removal |
-| Inline list session: a random key, the tab, frame and frame URL, the offered item ids; no plaintext | `storage.session`, like the private key | The list closing, the next list in the tab, tab close or navigation, lock, timeout, logout, account switch, browser restart, extension reload |
-| Names, usernames and verification codes in the inline list | The list page's memory while shown | The list closing |
+| When each item was last filled or signed in with a passkey (`lastUsed.<id>`), no other history | `storage.local` | Logout, account removal |
+| Inline list session: a random key, the tab, frame and frame URL, the offered item ids, and during a conditional passkey request the offered login and credential ids; no plaintext | `storage.session`, like the private key | The list closing, the next list in the tab, tab close or navigation, lock, timeout, logout, account switch, browser restart, extension reload |
+| Names, usernames and verification codes in the inline list, and the login names and user names of its passkey rows | The list page's memory while shown | The list closing |
+| A passkey's private key, decrypted `passkeys`, or a new key pair being saved | Background memory for the one sign-in or save | That handler's end; never stored, and sent to the server only inside the encrypted `passkeys` |
+| Passkey ceremony (`passkeyCeremony.<tabId>`): ids, the site's origin and frame URL, the request's challenge, RP ID, `rp.name` and user, the deadline, the window, whether you confirmed it's you, and after a failed step the login, typed name and folder Retry needs; no ciphertext, key or decrypted value | `storage.session`, like the private key | The ceremony's end ([ARCHITECTURE.md](ARCHITECTURE.md#passkeys)), browser restart, extension reload. A lock keeps it, so the window can go on after the unlock. |
+| Every login's passkeys as the inline list offers them: login ids, credential ids, login names, user names, relying parties | Background memory, once per vault version | A vault change, lock, logout, account switch, turning passkeys off, an MV3 worker restart |
+| Login names, usernames and passkey user names in the passkey window | The window's memory while shown | The window closing |
+| A login's passkeys as the detail shows them: relying party, user name, date | Popup memory while shown | The view closing |
+| The credential a passkey ceremony returns | The relay's and the page script's memory, then the page's | The call settling |
 | Which account's code is on the clipboard (`clipboardCode`), never the code | `storage.session`, like the private key | The clear, any other copy, that account's lock or logout, browser restart, extension reload |
 | How many logins match each tab, shown on the toolbar badge while unlocked | Never stored; the browser holds the painted badge per tab | Lock, timeout, logout, switching to an account that isn't unlocked, turning the counter off, the tab navigating, browser restart, extension reload |
 | A submitted login waiting for Save or Update, password included | Background memory only, never storage | The answer, 5 minutes, tab close, leaving the site, lock, timeout, logout, account switch, an MV3 worker restart |
@@ -81,12 +88,25 @@ There is no remote wipe, so these checks stand in for it:
 
 ## Pages and messages
 
-- The background answers each sender only its own message kinds (`src/background/sender.ts`): popup kinds only from `/popup.html`, the save bar's only from `/notification.html`, the inline list's only from `/inline-list.html`, and from content scripts only the page-ready signal, opening and closing the list, a submitted login, and a request to show the bar again.
+- The background answers each sender only its own message kinds (`src/background/sender.ts`): popup kinds only from `/popup.html`, the save bar's only from `/notification.html`, the inline list's only from `/inline-list.html`, and from content scripts only the page-ready signal, opening and closing the list, a submitted login, a request to show the bar again, and starting, aborting or asking about a passkey ceremony.
 - Tab, frame and URL come from the browser's `sender`, never from the message.
 - Content scripts hold no vault state and never see the key. URL matching and decryption stay in the background. A fill hands the page exactly one credential, after you picked it, and only to frames whose address matches the item.
 - Content scripts run on every page, as in Bitwarden. That is safe only because of the rule above ([ADR-001](openspec/architecture/adr-001-bitwarden-parity.md), ADR-002).
-- The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never. Of a use-only copy it gets only the login; the background refuses its value and additional fields.
+- The popup gets item metadata and ids. It gets decrypted fields only on request, and ciphertext never. Of a use-only copy it gets only the login; the background refuses its value and additional fields. Of a login's passkeys it gets only the relying party, user name and date.
 - No remote code is loaded, and no extension page renders HTML from vault data.
+
+### Passkeys
+
+The reasoning is in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts), the details in `openspec/changes/ext-passkey-provider/`.
+
+- **The page script is the page's:** it runs in the page's own world, so nothing it sends is trusted. It passes the page's request on and gets back one credential, an error name or "use the browser's own".
+- **On every page:** registering it per site would need host access to every site, so it runs on every `http(s)` page; with "Ask to save and use passkeys" off, every request goes to the browser's own authenticator.
+- **The browser decides who asks:** origin, tab and frame come from `sender`; an RP ID the origin may not use, a plain `http` site other than `localhost`, a frame with a cross-origin ancestor, an excluded domain and a request Keepiq can't serve all go to the browser untouched, before the vault is read.
+- **No probing:** the first answer depends on the settings, whether the account is logged in and the request, never on the vault or the lock. A handled request gets nothing back until you act in the passkey window or the inline list.
+- **Only its own frame gets the result,** and the relay drops it when the frame left the ceremony's origin.
+- **The window** gets the site, the page's `rp.name` and `user.name` as text, the lock state, and login ids, names and user names; never ciphertext, a key, the challenge or the credential. Only that ceremony's window may answer it.
+- **Unintended clicks:** a sign, save, replace, retry or unlock counts only 500 ms after the window, its step or a failure appeared or it got focus; a held Enter or Space counts only its first press, and the Replace question starts on Cancel; Cancel counts at once.
+- **User verification** is set only when you entered the master password or PIN in the current passkey window, or for the inline-list pick that opened it; a `required` request asks for it ("Confirm it's you"), the PIN under its five-try limit.
 
 ## In-page UI
 
@@ -95,6 +115,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - **Isolated:** each is an extension page in an iframe inside a closed shadow root; the page can neither read it nor restyle it, and any change the content script didn't make closes it.
 - **Key handshake:** the content script posts a random key to its own iframe at the extension origin; the background answers only the first frame of that page, tab and frame to present it, so a copy the page frames itself gets nothing.
 - **What the page learns:** the content script never gets names or usernames; the list's height is one row when the vault is locked, when no login matches and when one does, so one row doesn't tell them apart; two to five rows show that many matches (five for more) and so that the vault is unlocked, which is accepted as useless to a site; the not-visible notice and the insecure-site question size to their text, but only after the user picked a row; and the save card's size depends on the window only.
+- **Passkey rows** show in the list only while the frame's conditional passkey request is pending and the vault is unlocked, and count toward its height as logins do. A request that names credentials gets none, so the page can't use the list to test which of its credential ids your vault holds.
 - **Visibility guard:** a pick, Save, Update or Never counts only when the list or bar stayed untouched and on top for the 500 ms before the press, and is what the press point hits. Otherwise it is refused, and the list or bar says so.
 - **Frames:** no inline list in a frame with a cross-origin ancestor, on either browser, since the extension couldn't check that ancestor's styling.
 - **Chrome** adds IntersectionObserver v2, which also sees overlays that let clicks through.
@@ -114,7 +135,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 
 ## Shared items
 
-- A changed password, username or field of a shared item is encrypted again, in the background, for every copy the server lists, and saved in one request: the server writes your row, every copy in your organisation and every partner share together, or nothing. It refuses a save over a newer version of the item, or, for a team editor, of the original.
+- A changed password, username or field of a shared item, and a login's passkeys after a passkey save, a Replace or a counter save, are encrypted again, in the background, for every copy the server lists, and saved in one request: the server writes your row, every copy in your organisation and every partner share together, or nothing. It refuses a save over a newer version of the item, or, for a team editor, of the original.
 - Recipients in your own organisation are trusted as the server lists them, with the certificate it serves, as in the Keepiq web app. A compromised server could list someone you never shared with, or make up a partner share, and get the password, username and fields of any item whose password, username or fields you edit, shared or not. When the form didn't show every part of an item, a partner share stops the save, so such a server gets only what you changed ([ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#sharing)).
 - A recipient at a partner organisation gets nothing until their certificate chains to the partner root your server pinned and names them. Otherwise their share is paused. When their server can't be reached, nothing is saved until you choose to save without them, which pauses their share too.
 - Both your server and the partner's are still trusted for partner recipients: the check catches a certificate for the wrong person, an expired one, or one from another partner, not a server that lies.
@@ -138,6 +159,10 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - **Revocation takes effect on the next contact with the server:** at most the 15-minute sync interval, or sooner when the popup opens.
 - **A share that becomes use-only** shows as use-only after the next full sync: within an hour and a quarter, or at once after unlock or Sync now. The server doesn't change the copy's `updatedAt`, so the quick probe misses it.
 - **A send link without a password** is the secret itself: anyone who gets it can open the send, up to its view count. The server burns a password send after five wrong passwords.
+- **Passkey saves trust the recipient list too:** saving a passkey to a shared login, or signing in with an imported passkey whose counter isn't 0, sends the login's passkeys, private keys included, encrypted to every copy the server lists. Passkeys Keepiq made keep counter 0 and never write on sign-in.
+- **Firefox, pages whose CSP forbids inline scripts:** the page script can't run there, so those pages keep the browser's own passkeys and may report a CSP violation. Firefox also injects it after a fetch, so a page's earliest script can call before it is in place; that call goes to the browser.
+- **The page script is visible:** a page can tell Keepiq is installed from the replaced methods, as with Bitwarden. It learns nothing about the vault from them.
+- **Timing during a conditional passkey request:** the first focus after an unlock or a vault change decrypts the logins holding passkeys, so a page can time it to tell an unlocked vault with passkeys from a locked one, and roughly how many logins hold them. Later requests and focuses decrypt nothing.
 - **Offline caching turned off by an admin:** the extension still caches the vault on disk. Whether it should keep it in session storage instead is still open.
 
 ## Supply chain

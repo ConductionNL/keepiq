@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Passkey in a cross-origin frame</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main class="wide">
+		<a class="back" href="/">All test pages</a>
+		<h1>Passkey in a cross-origin frame</h1>
+		<p class="tests">The <a href="/passkey.html">Passkey</a> page in a frame on another port, so another origin, allowed to use passkeys. Keepiq leaves requests from a frame with a cross-origin ancestor to the browser: no Keepiq window opens and the browser's own dialog does.</p>
+		<iframe id="frame" title="Passkey page on another origin" allow="publickey-credentials-create; publickey-credentials-get" style="height: 640px"></iframe>
+	</main>
+	<script>
+		document.getElementById('frame').src = `http://localhost:${Number(location.port) + 1}/passkey.html`
+	</script>
+</body>
+</html>
