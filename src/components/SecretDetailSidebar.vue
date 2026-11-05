@@ -401,7 +401,7 @@
 						</span>
 						<div class="secret-detail__row-main">
 							<span class="secret-detail__row-label">{{
-								t('keepiq', 'Number')
+								cardNumberLabel
 							}}</span>
 							<div
 								class="secret-detail__row-value secret-detail__row-value--mono"
@@ -1064,7 +1064,7 @@ import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
-import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
+import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -1435,18 +1435,27 @@ export default {
 		},
 
 		/**
-		 * The revealed card number in display form: digit groups of four,
-		 * space-separated, regardless of how the number was typed in.
+		 * The revealed card number grouped as its brand prints it, regardless
+		 * of how the number was typed in.
 		 *
 		 * @return {string}
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberFormatted() {
-			const digits = String(this.cardPayload?.number || '').replace(/\D/g, '')
-			if (!digits) {
-				return String(this.cardPayload?.number || '')
-			}
-			return digits.replace(/(.{4})/g, '$1 ').trim()
+			return formatCardNumber(this.cardPayload?.number || '')
+		},
+
+		/**
+		 * The number row's label, with the brand derived from the number.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 */
+		cardNumberLabel() {
+			const brand = cardBrandInfo(this.cardPayload?.number || '')
+			return brand
+				? this.t('keepiq', 'Number · {brand}', { brand: brand.label })
+				: this.t('keepiq', 'Number')
 		},
 
 		/**
@@ -1464,20 +1473,14 @@ export default {
 		},
 
 		/**
-		 * The masked card number, Proton-style: first and last four digits
-		 * visible, the middle groups dotted. Falls back to full dots when
-		 * the number is too short to expose anything meaningfully.
+		 * The masked card number, Proton-style: first group and last four
+		 * digits visible in the brand's grouping, fully dotted when too short.
 		 *
 		 * @return {string}
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberMasked() {
-			const digits = String(this.cardPayload?.number || '').replace(/\D/g, '')
-			const last4 = cardLast4(this.cardPayload?.number || '')
-			if (digits.length < 12 || !last4) {
-				return '•••• •••• •••• ••••'
-			}
-			return `${digits.slice(0, 4)} •••• •••• ${last4}`
+			return maskCardNumber(this.cardPayload?.number || '')
 		},
 
 		/**

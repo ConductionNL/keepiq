@@ -17,25 +17,16 @@
 				v-if="field.secret"
 				:modelValue="payload[field.key]"
 				:label="field.label"
+				:helperText="hints[field.key]"
 				:data-testid="field.testid"
 				@update:modelValue="setField(field.key, $event)" />
 			<NcTextField
 				v-else
 				:modelValue="payload[field.key]"
 				:label="field.label"
+				:helperText="hints[field.key]"
 				:data-testid="field.testid"
 				@update:modelValue="setField(field.key, $event)" />
-			<NcNoteCard
-				v-if="field.key === 'number' && luhnHint"
-				type="warning"
-				data-testid="card-luhn-hint">
-				{{
-					t(
-						'keepiq',
-						'This number does not pass the card checksum — double-check it (saving is not blocked).',
-					)
-				}}
-			</NcNoteCard>
 		</template>
 	</template>
 	<div v-else class="secret-form__value-row">
@@ -64,10 +55,10 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcNoteCard, NcPasswordField, NcTextField } from '@nextcloud/vue'
+import { NcButton, NcPasswordField, NcTextField } from '@nextcloud/vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from '../dialogs/KeyGeneratorModal.vue'
-import { luhnValid } from '../cardIdentity/cardIdentity.js'
+import { cardNumberHint, securityCodeHint } from '../cardIdentity/cardIdentity.js'
 
 export default {
 	name: 'SecretPayloadFields',
@@ -76,7 +67,6 @@ export default {
 		Dice5,
 		KeyGeneratorModal,
 		NcButton,
-		NcNoteCard,
 		NcPasswordField,
 		NcTextField,
 	},
@@ -120,12 +110,6 @@ export default {
 
 		/** Whether the key generator dialog is open. */
 		generatorOpen: {
-			type: Boolean,
-			default: false,
-		},
-
-		/** Whether to hint at a card number that fails the checksum. */
-		checkLuhn: {
 			type: Boolean,
 			default: false,
 		},
@@ -203,22 +187,46 @@ export default {
 		},
 
 		/**
-		 * Best-effort checksum hint on a card number; it never blocks saving (3.2).
+		 * The non-blocking hints under the card number and security code,
+		 * by field name; empty for every other field.
 		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
+		 * @return {{number?: string, cvv?: string}}
+		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
 		 */
-		luhnHint() {
-			return (
-				this.checkLuhn
-				&& this.card.number !== ''
-				&& !luhnValid(this.card.number)
-			)
+		hints() {
+			if (!this.isCard) {
+				return {}
+			}
+			const number = cardNumberHint(this.card.number)
+			const code = securityCodeHint(this.card.number, this.card.cvv)
+			return {
+				number: number ? this.numberHintText(number) : '',
+				cvv: code
+					? t('keepiq', '{brand} cards use a {size}-digit {name}. Saving is not blocked.', code)
+					: '',
+			}
 		},
 	},
 
 	methods: {
 		t,
+
+		/**
+		 * The text of a card number hint.
+		 *
+		 * @param {{code: string, brand?: string}} hint From `cardNumberHint`.
+		 * @return {string}
+		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+		 */
+		numberHintText(hint) {
+			if (hint.code === 'length') {
+				return t('keepiq', '{brand} does not issue card numbers of this length. Saving is not blocked.', { brand: hint.brand })
+			}
+			if (hint.code === 'lengthUnknown') {
+				return t('keepiq', 'Card numbers have 12 to 19 digits. Saving is not blocked.')
+			}
+			return t('keepiq', 'This number does not pass the card checksum — double-check it (saving is not blocked).')
+		},
 
 		/**
 		 * Emit the card or identity with one field changed.

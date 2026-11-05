@@ -11,16 +11,104 @@
  */
 
 import { describe, expect, it } from 'vitest'
+import cardBrands from '../../src/cardIdentity/card-brands.json'
 import {
 	cardBrand,
+	cardBrandInfo,
 	cardLast4,
+	cardNumberHint,
 	expiryFormatValid,
+	formatCardNumber,
 	luhnValid,
+	maskCardNumber,
 	parsePayload,
+	securityCodeHint,
 	serializeCard,
 	serializeIdentity,
 } from '../../src/cardIdentity/cardIdentity.js'
 import { parseBitwardenJson } from '../../src/import/parsers/bitwarden.js'
+import brandVectors from '../vectors/cards/brand-vectors.json'
+
+describe('card brand vectors', () => {
+	it.each(brandVectors.vectors)('labels $number as $label', ({ number, label, brand }) => {
+		expect(cardBrand(number)).toBe(label)
+		expect(cardBrandInfo(number)?.id ?? null).toBe(brand)
+	})
+})
+
+describe('card brand table', () => {
+	const ids = new Set(cardBrands.brands.map((brand) => brand.id))
+
+	it.each(cardBrands.brands)('$id is well formed', (brand) => {
+		for (const range of brand.ranges) {
+			const [start, end] = Array.isArray(range) ? range : [range, range]
+			expect(start).toMatch(/^\d{1,8}$/)
+			expect(end.length).toBe(start.length)
+			expect(start <= end).toBe(true)
+		}
+		expect(brand.lengths.every((length) => length >= 12 && length <= 19)).toBe(true)
+		for (const gaps of Object.values(brand.gaps)) {
+			expect(gaps.every((gap, at) => gap > (gaps[at - 1] ?? 0))).toBe(true)
+		}
+		expect(brand.code === null || brand.code.size === 3 || brand.code.size === 4).toBe(true)
+		expect((brand.networks ?? []).every((id) => ids.has(id))).toBe(true)
+	})
+
+	it('has unique ids and no two brands tie for the narrowest range on a vector', () => {
+		expect(ids.size).toBe(cardBrands.brands.length)
+		const ranges = cardBrands.brands.flatMap((brand) => brand.ranges.map((range) => {
+			const [start, end] = Array.isArray(range) ? range : [range, range]
+			return { id: brand.id, start, end, width: Number(end.padEnd(8, '9')) - Number(start.padEnd(8, '0')) }
+		}))
+		for (const { number } of brandVectors.vectors) {
+			const digits = number.replace(/\D/g, '')
+			const hits = ranges.filter(({ start, end }) => digits.length >= start.length && digits.slice(0, start.length) >= start && digits.slice(0, start.length) <= end)
+			const narrowest = Math.min(...hits.map((hit) => hit.width))
+			expect(new Set(hits.filter((hit) => hit.width === narrowest).map((hit) => hit.id)).size, number).toBeLessThanOrEqual(1)
+		}
+	})
+})
+
+describe('card number grouping and masking', () => {
+	it.each([
+		['378282246310005', '3782 822463 10005', '3782 •••••• •0005'],
+		['30569309025904', '3056 930902 5904', '3056 •••••• 5904'],
+		['100000000000009', '1000 00000 000009', '1000 ••••• ••0009'],
+		['4111-1111-1111-1111', '4111 1111 1111 1111', '4111 •••• •••• 1111'],
+		['6200000000000000005', '6200 0000 0000 0000 005', '6200 •••• •••• •••0 005'],
+		['9999888877776666', '9999 8888 7777 6666', '9999 •••• •••• 6666'],
+	])('%s', (number, formatted, masked) => {
+		expect(formatCardNumber(number)).toBe(formatted)
+		expect(maskCardNumber(number)).toBe(masked)
+	})
+
+	it('fully dots a number under 12 digits and keeps text without digits', () => {
+		expect(maskCardNumber('12345')).toBe('•••• •••• •••• ••••')
+		expect(formatCardNumber('n/a')).toBe('n/a')
+	})
+})
+
+describe('card format hints', () => {
+	it('hints at a length the brand does not issue', () => {
+		expect(cardNumberHint('37828224631000')).toEqual({ code: 'length', brand: 'American Express' })
+		expect(cardNumberHint('99998888777')).toEqual({ code: 'lengthUnknown' })
+		expect(cardNumberHint('378282246310005')).toBeNull()
+		expect(cardNumberHint('')).toBeNull()
+	})
+
+	it('hints at a failed Luhn check, except for UnionPay', () => {
+		expect(cardNumberHint('4111111111111112')).toEqual({ code: 'luhn' })
+		expect(cardNumberHint('6200000000000001')).toBeNull()
+	})
+
+	it('hints at a security code of the wrong length', () => {
+		expect(securityCodeHint('378282246310005', '123')).toEqual({ brand: 'American Express', name: 'CID', size: 4 })
+		expect(securityCodeHint('378282246310005', '1234')).toBeNull()
+		expect(securityCodeHint('4111111111111111', '1234')).toEqual({ brand: 'Visa', name: 'CVV', size: 3 })
+		expect(securityCodeHint('6703000000000000', '123')).toBeNull()
+		expect(securityCodeHint('9999888877776666', '12')).toBeNull()
+	})
+})
 
 describe('card payload', () => {
 	it('round-trips a card payload with number, CVV, and PIN intact', () => {

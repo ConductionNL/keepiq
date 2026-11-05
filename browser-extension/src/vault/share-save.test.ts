@@ -563,9 +563,10 @@ describe('the own-row write context', () => {
 			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code })
 		})
 
-		it('never reads Nextcloud\'s page on the write-context as the row gone', async () => {
+		it('reads Nextcloud\'s page on the write-context as a server error, neither gone nor refused', async () => {
 			fetchMock.mockImplementation(async (input) => (new URL(String(input)).pathname.endsWith('/api/v1/secrets/s1') ? json(secretRow()) : new Response('<html>Not found</html>', { status: 404 })))
-			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code: 'forbidden' })
+			expect(await failure(readWriteContext(client, 's1'))).toEqual({ code: 'server_error' })
+			expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
 		})
 	})
 

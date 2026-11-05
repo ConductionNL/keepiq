@@ -15,6 +15,8 @@
  * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
  */
 
+import CARD_BRANDS from './card-brands.json'
+
 /** The system type names. */
 export const CARD_TYPE_NAME = 'card'
 export const IDENTITY_TYPE_NAME = 'identity'
@@ -79,34 +81,150 @@ export function parsePayload(raw) {
 	}
 }
 
+const digitsOf = (number) => String(number ?? '').replace(/\D/g, '')
+
+// Ranges are compared at this many digits to find the narrowest (design D3).
+const RANGE_WIDTH = 8
+
+const BRAND_RANGES = CARD_BRANDS.brands.flatMap((brand) => brand.ranges.map((range) => {
+	const [start, end] = Array.isArray(range) ? range : [range, range]
+	const width = Number(end.padEnd(RANGE_WIDTH, '9')) - Number(start.padEnd(RANGE_WIDTH, '0')) + 1
+	return { brand, start, end, width }
+}))
+
 /**
- * Derive the card brand from the IIN/BIN prefix of a (decrypted) card
- * number. Unknown prefixes yield "Card" — never a fabricated brand.
+ * The brand table entry for a (decrypted) card number: the brand of the
+ * narrowest matching range, or null when none matches or two brands tie.
+ *
+ * @param {string} number The decrypted card number (spaces allowed).
+ * @return {object|null} The `card-brands.json` entry.
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ */
+export function cardBrandInfo(number) {
+	const digits = digitsOf(number)
+	let best = null
+	let tied = false
+	for (const range of BRAND_RANGES) {
+		const head = digits.slice(0, range.start.length)
+		// Equal-length digit strings compare as numbers do.
+		if (head.length < range.start.length || head < range.start || head > range.end) {
+			continue
+		}
+		if (best === null || range.width < best.width) {
+			best = range
+			tied = false
+		} else if (range.width === best.width && range.brand !== best.brand) {
+			tied = true
+		}
+	}
+	return best !== null && !tied ? best.brand : null
+}
+
+/**
+ * The brand label of a (decrypted) card number. Unknown prefixes yield
+ * "Card" — never a fabricated brand.
  *
  * @param {string} number The decrypted card number (spaces allowed).
  * @return {string} The brand label.
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
  */
 export function cardBrand(number) {
-	const digits = String(number ?? '').replace(/\D/g, '')
+	return cardBrandInfo(number)?.label ?? 'Card'
+}
+
+/**
+ * The digits split at the brand's gaps for their length, every four for
+ * an unknown brand.
+ *
+ * @param {string} digits Digits only.
+ * @return {string[]} The groups.
+ */
+function cardGroups(digits) {
+	const gaps = cardBrandInfo(digits)?.gaps
+	const at = gaps ? (gaps[digits.length] ?? gaps.default) : [4, 8, 12, 16]
+	const groups = []
+	let from = 0
+	for (const gap of at.filter((gap) => gap < digits.length)) {
+		groups.push(digits.slice(from, gap))
+		from = gap
+	}
+	groups.push(digits.slice(from))
+	return groups
+}
+
+/**
+ * A card number grouped as its brand prints it (Amex 4-6-5); a value
+ * without digits is returned as stored.
+ *
+ * @param {string} number The decrypted card number.
+ * @return {string}
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+ */
+export function formatCardNumber(number) {
+	const digits = digitsOf(number)
+	return digits === '' ? String(number ?? '') : cardGroups(digits).join(' ')
+}
+
+/**
+ * A card number masked in its brand's grouping: the first group and the
+ * last four digits shown, fully dotted under 12 digits.
+ *
+ * @param {string} number The decrypted card number.
+ * @return {string}
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+ */
+export function maskCardNumber(number) {
+	const digits = digitsOf(number)
+	if (digits.length < 12) {
+		return '•••• •••• •••• ••••'
+	}
+	const groups = cardGroups(digits)
+	const shown = groups[0].length
+	let index = 0
+	return groups.map((group) => [...group].map((digit) => {
+		const keep = index < shown || index >= digits.length - 4
+		index++
+		return keep ? digit : '•'
+	}).join('')).join(' ')
+}
+
+/**
+ * A non-blocking hint about a card number: a length its brand does not
+ * issue (or outside 12–19 without a brand), else a failed Luhn check,
+ * which UnionPay numbers need not pass.
+ *
+ * @param {string} number The card number as typed.
+ * @return {{code: string, brand?: string}|null}
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ */
+export function cardNumberHint(number) {
+	const digits = digitsOf(number)
 	if (digits === '') {
-		return 'Card'
+		return null
 	}
-	if (/^4/.test(digits)) {
-		return 'Visa'
+	const brand = cardBrandInfo(digits)
+	if (brand ? !brand.lengths.includes(digits.length) : digits.length < 12 || digits.length > 19) {
+		return brand ? { code: 'length', brand: brand.label } : { code: 'lengthUnknown' }
 	}
-	if (/^(5[1-5]|2[2-7])/.test(digits)) {
-		return 'Mastercard'
+	return brand?.luhn !== false && !luhnValid(digits) ? { code: 'luhn' } : null
+}
+
+/**
+ * A non-blocking hint when a security code's length is not the one the
+ * card's brand uses; nothing for an unknown brand or one without a code.
+ *
+ * @param {string} number The card number.
+ * @param {string} code The security code as typed.
+ * @return {{brand: string, name: string, size: number}|null}
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ */
+export function securityCodeHint(number, code) {
+	const typed = String(code ?? '').trim()
+	const expected = cardBrandInfo(number)?.code
+	if (typed === '' || !expected || typed.length === expected.size) {
+		return null
 	}
-	if (/^3[47]/.test(digits)) {
-		return 'American Express'
-	}
-	if (/^(6011|65|64[4-9])/.test(digits)) {
-		return 'Discover'
-	}
-	if (/^(50|56|57|58|63|67)/.test(digits)) {
-		return 'Maestro'
-	}
-	return 'Card'
+	return { brand: cardBrand(number), name: expected.name, size: expected.size }
 }
 
 /**
