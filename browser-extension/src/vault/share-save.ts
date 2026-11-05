@@ -50,6 +50,8 @@ interface SourceContext {
 /** `ShareWriteContext::ownRowContext`: the caller's row leads to no source they stand on, so it is saved alone and share-save judges it again. */
 interface OwnRowContext {
 	ownRow: true
+	ownerCertificate: null
+	sourceUpdatedAt: null
 }
 
 export type WriteContext = SourceContext | OwnRowContext
@@ -61,7 +63,7 @@ export async function readWriteContext(client: Client, id: string): Promise<Writ
 	} catch (error) {
 		throw error instanceof ApiError && error.status === 404 ? await goneOrRefused(client, id) : error
 	}
-	if (context?.sourceSecretId === null) return { ownRow: true }
+	if (context?.sourceSecretId === null) return { ownRow: true, ownerCertificate: null, sourceUpdatedAt: null }
 	if (!isString(context?.sourceSecretId)) throw new WriteFailure({ code: 'unknown' })
 	const text = (value: unknown) => (typeof value === 'string' && value ? value : null)
 	return {
@@ -72,9 +74,6 @@ export async function readWriteContext(client: Client, id: string): Promise<Writ
 		sourceUpdatedAt: text(context.sourceUpdatedAt),
 	}
 }
-
-/** The source version a save through a copy names; an own row has none. */
-export const sourceVersion = (context: WriteContext) => (context.ownRow ? null : context.sourceUpdatedAt)
 
 /** A copy without a write grade, which the server would let its holder change alone, out of step with everyone else's (share-sync). */
 export const isViewOnly = (id: string, context: WriteContext) => !context.ownRow && context.sourceSecretId !== id && !COPY_EDITOR_GRADES.has(context.effectiveGrade)
@@ -93,6 +92,19 @@ async function goneOrRefused(client: Client, id: string): Promise<unknown> {
 		return error
 	}
 	return new WriteFailure({ code: typeof row?.updatedAt === 'string' ? 'forbidden' : 'server_error' })
+}
+
+/** An own row's share-save 404 is checked against the row, as a write-context 404 is. */
+async function saveRefusal(client: Client, id: string, context: WriteContext, refusal: unknown): Promise<unknown> {
+	return context.ownRow && refusal instanceof ApiError && refusal.status === 404 ? goneOrRefused(client, id) : refusal
+}
+
+/** The source version a save through a copy names, from the form's record when it has one. */
+function sourceBaseOf(context: WriteContext, opened: Opened | undefined, copyPath: boolean): string | null {
+	if (!opened) return context.sourceUpdatedAt
+	// A form opened while its row was saved alone made its edit from no source version, so the source's current one would hide a change since.
+	if (copyPath && opened.sourceUpdatedAt === null) throw new WriteFailure({ code: 'stale_source' })
+	return opened.sourceUpdatedAt
 }
 
 export interface ShareSaveInput {
@@ -224,10 +236,8 @@ export async function shareSave(client: Client, privateKey: CryptoKey, input: Sh
 async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, baseUpdatedAt, context, opened, withoutUnreachable }: ShareSaveInput, partners: ReturnType<typeof verifiedPartners>): Promise<ShareSaveNote | undefined> {
 	if (isViewOnly(id, context)) throw new WriteFailure({ code: 'view_only' })
 	const copyPath = !context.ownRow && context.sourceSecretId !== id
-	// A form opened while its row was saved alone made its edit from no source version, so the source's current one would hide a change since.
-	if (copyPath && opened && opened.sourceUpdatedAt === null) throw new WriteFailure({ code: 'stale_source' })
-	const sourceBaseUpdatedAt = opened ? opened.sourceUpdatedAt : sourceVersion(context)
-	let ownerCertificate = context.ownRow ? null : context.ownerCertificate
+	const sourceBaseUpdatedAt = sourceBaseOf(context, opened, copyPath)
+	let ownerCertificate = context.ownerCertificate
 
 	const copies = new Map<string, Values & { secretId: string }>()
 	const skipped = new Map<string, { secretId: string; reason: 'no_vault_key' }>()
@@ -352,10 +362,8 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 		drop(skipped, 's:', (key) => copyIds.has(key) && !required.skipRefused.has(key))
 		for (const holder of required.copies.filter((copy) => required.skipRefused.has(copy.secretId) && !reread.has(copy.secretId))) {
 			reread.add(holder.secretId)
-			if (holder.holder === 'owner') {
-				const again = await readWriteContext(client, id)
-				ownerCertificate = again.ownRow ? null : again.ownerCertificate
-			} else if (holder.targetUserId) certificates.delete(holder.targetUserId)
+			if (holder.holder === 'owner') ownerCertificate = (await readWriteContext(client, id)).ownerCertificate
+			else if (holder.targetUserId) certificates.delete(holder.targetUserId)
 		}
 		const todo = required.copies.filter((copy) => !copies.has(copy.secretId) && !skipped.has(copy.secretId))
 		const lookups = [...new Set(todo.flatMap((copy) => (copy.holder !== 'owner' && copy.targetUserId && !certificates.has(copy.targetUserId) ? [copy.targetUserId] : [])))]
@@ -385,10 +393,7 @@ async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, b
 			break
 		} catch (error) {
 			const restart = error instanceof ApiError && error.status === 404 && error.code === 'stage_unknown' && stage.id !== null
-			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) {
-				const refusal = refusalOf(error, cloudIds)
-				throw context.ownRow && refusal instanceof ApiError && refusal.status === 404 ? await goneOrRefused(client, id) : refusal
-			}
+			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) throw await saveRefusal(client, id, context, refusalOf(error, cloudIds))
 			if (++rounds >= MAX_ROUNDS) throw new WriteFailure({ code: 'incomplete' })
 			if (restart) stage = { id: null, sent: new Set() }
 			else await fill(error.body)
