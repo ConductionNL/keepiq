@@ -36,10 +36,14 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCP\AppFramework\Db\DoesNotExistException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /**
  * Tests for the public fill gate.
@@ -449,6 +453,91 @@ class SecretRequestPolicyTest extends TestCase {
 
 		$this->assertSame('req-1', $policy->requireOpenByToken(token: 'tok-1')->getId());
 	}//end testARequestOnAnActiveSuiteIsOpen()
+
+	/**
+	 * Payment cards, identities and authenticator keys cannot be requested.
+	 *
+	 * @param string $typeName The system type name
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	#[DataProvider('notRequestableTypeProvider')]
+	public function testANotRequestableTypeIsRefused(string $typeName): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$this->policyWithType(typeName: $typeName)->requireRequestableType(typeId: 'type-1');
+	}//end testANotRequestableTypeIsRefused()
+
+	/**
+	 * The types the rule refuses.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function notRequestableTypeProvider(): array {
+		return [
+			'payment card' => ['card'],
+			'identity' => ['identity'],
+			'authenticator (TOTP)' => ['totp'],
+		];
+	}//end notRequestableTypeProvider()
+
+	/**
+	 * Every other type, and the default, can be requested.
+	 *
+	 * An SSH key in particular: a vendor's key for a system they run is a fair
+	 * request, and sending it through a fill link beats a plain email.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testOtherTypesAndTheDefaultCanBeRequested(): void {
+		$policy = $this->policyWithType(typeName: 'ssh_key');
+
+		$policy->requireRequestableType(typeId: 'type-1');
+		$policy->requireRequestableType(typeId: null);
+		// The default needs no lookup, so it passes even without a type mapper.
+		$this->policy->requireRequestableType(typeId: '');
+
+		$this->addToAssertionCount(3);
+	}//end testOtherTypesAndTheDefaultCanBeRequested()
+
+	/**
+	 * A named type with no type mapper wired is refused, not let through.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testANamedTypeWithoutATypeMapperIsRefused(): void {
+		$this->expectException(RuntimeException::class);
+
+		$this->policy->requireRequestableType(typeId: 'type-1');
+	}//end testANamedTypeWithoutATypeMapperIsRefused()
+
+	/**
+	 * A policy whose type mapper resolves every id to a type of this name.
+	 *
+	 * @param string $typeName The type name to resolve to
+	 *
+	 * @return SecretRequestPolicy
+	 */
+	private function policyWithType(string $typeName): SecretRequestPolicy {
+		$type = new SecretType();
+		$type->setId('type-1');
+		$type->setName($typeName);
+		$types = $this->createStub(SecretTypeMapper::class);
+		$types->method('findById')->willReturn($type);
+
+		return new SecretRequestPolicy(
+			mapper: $this->mapper,
+			suiteMapper: $this->activeSuites(),
+			typeMapper: $types
+		);
+	}//end policyWithType()
 
 	/**
 	 * A suite mapper whose every suite is active, so the policy's suite check

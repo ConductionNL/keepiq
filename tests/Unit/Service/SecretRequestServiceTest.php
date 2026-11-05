@@ -28,6 +28,8 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\StaleWriteException;
@@ -116,7 +118,11 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$this->service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -436,7 +442,11 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(notificationService: $notifier),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -509,7 +519,11 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -550,7 +564,11 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -755,7 +773,11 @@ class SecretRequestServiceTest extends TestCase {
 	private function makeFillService(?ViewOnlyCopyGuard $viewOnlyCopies = null): SecretRequestService {
 		return new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -854,7 +876,11 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -1693,6 +1719,57 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFreshRequestWithoutATypeLeavesTheDefault()
 
 	/**
+	 * A fresh request asked as an identity is refused before any placeholder exists.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder(): void {
+		$this->secretService->expects($this->never())->method('create');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$this->service->createForUserVault(
+			userId: 'alice',
+			requestedFields: ['key'],
+			name: 'Your passport',
+			typeId: 'type-identity',
+		);
+	}//end testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder()
+
+	/**
+	 * A fill-in or re-request on an existing payment card is refused.
+	 *
+	 * Both end in create(), which is where the rule sits.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testRequestOnACardSecretIsRefused(): void {
+		$card = new Secret();
+		$card->setId('sec-card');
+		$card->setTypeId('type-card');
+		$this->secretMapper->method('findById')->willReturn($card);
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$this->service->create(
+			secretId: 'sec-card',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: ['key'],
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+	}//end testRequestOnACardSecretIsRefused()
+
+	/**
 	 * A failed request creation leaves no orphan placeholder behind.
 	 *
 	 * @return void
@@ -2459,4 +2536,30 @@ class SecretRequestServiceTest extends TestCase {
 		$suites->method('findById')->willReturn($suite);
 		return $suites;
 	}//end activeSuites()
+
+	/**
+	 * A type mapper naming `type-card` and `type-identity` as such and every
+	 * other id a Login, so the not-requestable rule passes for tests that are
+	 * not about it.
+	 *
+	 * @return SecretTypeMapper
+	 */
+	private function namedTypes(): SecretTypeMapper {
+		$types = $this->createStub(SecretTypeMapper::class);
+		$types->method('findById')->willReturnCallback(
+			static function (string $id): SecretType {
+				$type = new SecretType();
+				$type->setId($id);
+				$type->setName(
+					match ($id) {
+						'type-card' => 'card',
+						'type-identity' => 'identity',
+						default => 'login',
+					}
+				);
+				return $type;
+			}
+		);
+		return $types;
+	}//end namedTypes()
 }//end class

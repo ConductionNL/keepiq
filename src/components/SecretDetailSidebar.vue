@@ -898,8 +898,12 @@
 						{{ t('keepiq', 'Requests') }}
 					</h3>
 
+					<!-- Not for a payment card, identity or authenticator key:
+					     asking someone for those through a fill link is what fraud
+					     looks like, and the server refuses it. Their request
+					     history still shows. -->
 					<div
-						v-if="!viewOnlyCopy"
+						v-if="!viewOnlyCopy && !isCard && !isIdentity && !isTotp"
 						class="secret-detail__requests-actions">
 						<!-- This action always targets THIS Secret, so the label
 					     says which of the two things it does. Asking for a

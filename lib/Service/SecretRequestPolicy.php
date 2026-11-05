@@ -34,12 +34,15 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use RuntimeException;
 
 /**
  * Preconditions and authorization for the SecretRequest lifecycle.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
  */
 class SecretRequestPolicy {
 	/**
@@ -62,6 +65,20 @@ class SecretRequestPolicy {
 	 * @var string
 	 */
 	public const ADDITIONAL_BLOB = 'additionalFields';
+
+	/**
+	 * Secret types no request may ask for.
+	 *
+	 * Payment cards and identities: asking someone for their card or identity
+	 * details through a fill link has no legitimate use the request flow needs to
+	 * serve; it is what fraud looks like. Authenticator (TOTP) keys: whoever holds
+	 * the seed can produce that person's codes, so asking for it is how an account
+	 * is taken over, and a one-time code itself would expire before it was used.
+	 * Holders still store these types themselves, only requesting them is refused.
+	 *
+	 * @var array<int,string>
+	 */
+	public const NOT_REQUESTABLE_TYPE_NAMES = ['card', 'identity', 'totp'];
 
 	/**
 	 * Machine-readable reasons a fill link can be refused.
@@ -174,6 +191,8 @@ class SecretRequestPolicy {
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper; required, because
 	 *                                           fill refuses a request whose suite is not active
 	 * @param SecretMapper|null $secretMapper Optional Secret mapper for owner lookups
+	 * @param SecretTypeMapper|null $typeMapper Optional type mapper for the
+	 *                                          not-requestable type rule
 	 *
 	 * @return void
 	 *
@@ -183,8 +202,51 @@ class SecretRequestPolicy {
 		private SecretRequestMapper $mapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private ?SecretMapper $secretMapper = null,
+		private ?SecretTypeMapper $typeMapper = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * Refuse a type that may not be requested.
+	 *
+	 * Called for the type a fresh request asks for BEFORE its placeholder is
+	 * created, so a refused type leaves nothing to roll back, and for the type of
+	 * the Secret every user request writes to (SecretRequestService::create()), so
+	 * a plain fill-in and a re-request are covered by the same rule. An empty type
+	 * is the server default (Login), and an unknown one is refused by
+	 * SecretTypeService when a Secret is created, so neither is refused here.
+	 *
+	 * @param string|null $typeId The type id, or null for the default type
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException With code 403 for a type in NOT_REQUESTABLE_TYPE_NAMES.
+	 * @throws RuntimeException When the type mapper dependency is not wired.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function requireRequestableType(?string $typeId): void {
+		if ($typeId === null || $typeId === '') {
+			return;
+		}
+
+		if ($this->typeMapper === null) {
+			throw new RuntimeException(message: 'Type mapper not wired for the requestable-type rule');
+		}
+
+		try {
+			$type = $this->typeMapper->findById($typeId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return;
+		}
+
+		if (in_array($type->getName(), self::NOT_REQUESTABLE_TYPE_NAMES, true) === true) {
+			throw new InvalidArgumentException(
+				message: 'Payment cards, identities and authenticator keys cannot be requested',
+				code: 403
+			);
+		}
+	}//end requireRequestableType()
 
 	/**
 	 * Look up a pending, non-expired request by its public access token.

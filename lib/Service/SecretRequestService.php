@@ -444,6 +444,8 @@ class SecretRequestService {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
 
+		$this->requireRequestableSecret(secretId: $secretId);
+
 		$entity = new SecretRequest();
 		$entity->setId(Uuid::uuid4()->toString());
 		$entity->setSecretId($secretId);
@@ -471,6 +473,31 @@ class SecretRequestService {
 
 		return $persisted;
 	}//end create()
+
+	/**
+	 * Refuse a request for a Secret whose type may not be requested.
+	 *
+	 * Every user path that creates a request ends in create(), so a fresh
+	 * request, a plain fill-in and a re-request all meet this one rule. A missing
+	 * Secret is not refused here: the path that names one reports that itself.
+	 *
+	 * @param string $secretId The Secret the request would write to
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException With code 403 for a type that cannot be requested.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	private function requireRequestableSecret(string $secretId): void {
+		try {
+			$secret = $this->secretMapper->findById($secretId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return;
+		}
+
+		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
+	}//end requireRequestableSecret()
 
 	/**
 	 * Create a FRESH request in the requester's own vault, creating the Secret.
@@ -518,6 +545,9 @@ class SecretRequestService {
 		if ($requestedFields === []) {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
+
+		// Before the placeholder exists, so a refused type leaves nothing behind.
+		$this->policy->requireRequestableType(typeId: $typeId);
 
 		$secretService = $this->container->get(SecretService::class);
 
