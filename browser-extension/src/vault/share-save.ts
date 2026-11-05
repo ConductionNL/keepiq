@@ -61,6 +61,8 @@ export async function readWriteContext(client: Client, id: string): Promise<Writ
 	try {
 		context = await client.keepiq('GET', `${secretPath(id)}/write-context`)
 	} catch (error) {
+		// Nextcloud's page, not Keepiq's verdict on the row, as in `goneOrRefused`.
+		if (error instanceof KeepiqNotInstalled) throw new WriteFailure({ code: 'server_error' })
 		throw error instanceof ApiError && error.status === 404 ? await goneOrRefused(client, id) : error
 	}
 	if (context?.sourceSecretId === null) return { ownRow: true, ownerCertificate: null, sourceUpdatedAt: null }
