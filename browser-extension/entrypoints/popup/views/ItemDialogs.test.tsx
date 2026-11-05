@@ -42,6 +42,7 @@ describe('DeleteItemDialog', () => {
 		const alert = (await screen.findByRole('alert')).textContent
 		expect(alert).toContain('Nothing was deleted')
 		expect(alert).not.toContain('Nothing was saved')
+		expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
 	})
 
 	it('says nothing was deleted after a switch to another account', async () => {
