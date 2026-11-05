@@ -1,10 +1,13 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import App from '../../App'
+import { SendProvider, useSends, type Sends } from '../../hooks/useSends'
+import { DEFAULT_SHELL, ShellContext } from '../../shell-context'
 import { fakeBackground, fakeClipboard, sendRow, sentOf } from '../../testing'
+import { SendList } from './SendList'
 
 afterEach(() => {
 	cleanup()
@@ -131,6 +134,52 @@ describe('the sends list', () => {
 		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }))
 		expect((await within(screen.getByRole('dialog')).findByRole('alert')).textContent).toContain('Could not reach the server')
 		expect(rows()).toHaveLength(1)
+	})
+
+	describe('with a refresh landing while the remove dialog is open', () => {
+		/** The list with a handle on its sends, to refresh them from outside as a create or another popup does. */
+		function openList(list: () => unknown, focusId: string | null = null) {
+			fakeBackground({ replies: { 'send.list': () => list(), 'send.delete': { ok: true, value: null } } })
+			const handle: { sends?: Sends } = {}
+			function Probe() {
+				handle.sends = useSends()
+				return null
+			}
+			render(
+				<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast: vi.fn() }}>
+					<SendProvider>
+						<Probe />
+						<SendList onNew={vi.fn()} focusId={focusId} />
+					</SendProvider>
+				</ShellContext.Provider>,
+			)
+			return { refresh: () => act(() => handle.sends!.refresh()), user: userEvent.setup() }
+		}
+		const listed = (...ids: string[]) => ({ ok: true, value: { sends: ids.map((id) => sendRow({ id })), passwordProtection: true } })
+
+		it('keeps focus in the dialog when the row waited for is listed meanwhile', async () => {
+			let ids = ['a', 'b']
+			const { refresh, user } = openList(() => listed(...ids), 'created')
+			await screen.findByRole('list')
+			await user.click(within(rows()[0]!).getByRole('button', { name: /^Remove/ }))
+			const dialog = screen.getByRole('dialog')
+			await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true))
+			ids = ['created', ...ids]
+			await refresh()
+			expect(rows()).toHaveLength(3)
+			expect(dialog.contains(document.activeElement)).toBe(true)
+		})
+
+		it('focuses Retry when the list failed under the dialog and the removal then went through', async () => {
+			let fail = false
+			const { refresh, user } = openList(() => (fail ? { ok: false, error: { code: 'server_error' } } : listed('a', 'b')))
+			await screen.findByRole('list')
+			await user.click(within(rows()[1]!).getByRole('button', { name: /^Remove/ }))
+			fail = true
+			await refresh()
+			await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }))
+			await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Retry' })))
+		})
 	})
 
 	it('reads in Dutch', async () => {

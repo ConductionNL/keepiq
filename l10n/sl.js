@@ -7,6 +7,7 @@ OC.L10N.register(
         "Shared with you to view only. Ask its owner for edit rights to change it.": "Deljeno z vami samo za ogled. Če jo želite spremeniti, prosite lastnika za pravice urejanja.",
         "Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.": "Deljeno z vami samo za ogled. Nič ni bilo shranjeno; če jo želite spremeniti, prosite lastnika za pravice urejanja.",
         "A partner organisation this secret is shared with cannot be reached ({partners}). Make the change again online, where you can save without them.": "Partnerska organizacija, s katero je deljena ta skrivnost, ni dosegljiva ({partners}). Spremembo ponovite na spletu, kjer lahko shranite brez njih.",
+        "A partner organisation this secret is shared with cannot be reached. Make the change again online, where you can save without them.": "Partnerska organizacija, s katero je deljena ta skrivnost, ni dosegljiva. Spremembo ponovite na spletu, kjer lahko shranite brez njih.",
         "This offline change is of a kind Keepiq does not know, so it was not saved. Discard it and make the change again online.": "Ta sprememba brez povezave je vrste, ki je Keepiq ne pozna, zato ni bila shranjena. Zavrzite jo in spremembo ponovite na spletu.",
         "Save without them": "Shrani brez njih",
         "Saved. Recipients at partner organisations get this change when the owner next saves this secret.": "Shranjeno. Prejemniki v partnerskih organizacijah bodo to spremembo prejeli, ko bo lastnik naslednjič shranil to skrivnost.",

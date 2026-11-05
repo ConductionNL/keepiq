@@ -73,7 +73,7 @@ Two secrets with the same name raise an "ambiguous name" error.
 It lists both ids and folder paths, so you can pick one with a folder path or rename one.
 
 Pass your application's certificate as well, and the library checks it against your key at start.
-After that it refuses any secret encrypted to another certificate, before it decrypts anything.
+After that it refuses any secret encrypted to another certificate, or one that names no certificate, before it decrypts anything.
 
 Don't have the certificate at hand? Your application can read its own at `GET /api/v1/app/certificate` with its access token.
 The answer holds the certificate in PEM and its `certificateFingerprint`, the same value every envelope carries.

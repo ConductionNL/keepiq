@@ -213,6 +213,8 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	const elsewhere = saving && savedFrom !== null && savedFrom !== (adding ? 'new' : 'list')
 	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved && !elsewhere ? failure : null
+	// Only the server's background jobs end the share scan, so a Retry would fail the same way.
+	const retryable = showFailure !== null && showFailure.code !== 'share_scan_pending'
 	// A failure banner from a reply moves focus to Retry, so it counts as a step too.
 	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId, showFailure, adding]))
 	const guarded = <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => {
@@ -259,14 +261,14 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		)
 	} else if (view.kind === 'get') {
 		title = i18n.t('passkey.signInTitle')
-		body = <SignIn view={view} busy={busy} focus={!showFailure} onPick={guarded(pick)} />
+		body = <SignIn view={view} busy={busy} focus={!retryable} onPick={guarded(pick)} />
 	} else {
 		title = i18n.t('passkey.saveTitle')
 		body = (
 			<SaveTo
 				view={view} busy={busy} adding={adding} name={name ?? (view.rpName || view.rpId)} folderId={folderId} onName={setName} onFolder={setFolderId}
 				// Opening New login focuses its Name even under a failure; coming back from it focuses its button instead.
-				focus={adding ? newLogin === 'opened' || !showFailure : !showFailure && newLogin !== 'left'}
+				focus={adding ? newLogin === 'opened' || !retryable : !retryable && newLogin !== 'left'}
 				onTarget={guarded((target: PasskeySaveTarget) => {
 					// A later return to the list, as from "Confirm it's you", focuses its first row again.
 					setNewLogin(null)
@@ -296,7 +298,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			</Header>
 			<div className="popup__body stack">
 				{showFailure && (
-					<Banner tone="error" role="alert" action={<Button variant="link" autoFocus={newLogin !== 'left'} focusable busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
+					<Banner tone="error" role="alert" action={retryable && <Button variant="link" autoFocus={newLogin !== 'left'} focusable busy={busy === 'retry'} onClick={guarded(() => void run({ kind: 'passkey.retry' }, 'retry'))}>{i18n.t('passkey.retry')}</Button>}>
 						{writeErrorText(showFailure, 'passkey')}
 					</Banner>
 				)}

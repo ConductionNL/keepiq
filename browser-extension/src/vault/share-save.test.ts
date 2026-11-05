@@ -464,7 +464,7 @@ describe('the own-row write context', () => {
 
 	it('reads a null source as the caller\'s own row, whatever else the answer names', async () => {
 		answer({ ...OWN_ROW, effectiveGrade: 'owner', ownerCertificate: CERT, sourceUpdatedAt: SOURCE_AT })
-		expect(await readWriteContext(client, 's1')).toEqual({ ownRow: true })
+		expect(await readWriteContext(client, 's1')).toEqual({ ownRow: true, ownerCertificate: null, sourceUpdatedAt: null })
 	})
 
 	it('reads a named source as no own row, even when it is the row itself', async () => {
@@ -586,7 +586,7 @@ describe('isViewOnly', () => {
 	const context = (sourceSecretId: string, effectiveGrade: string) => ({ ownRow: false as const, sourceSecretId, effectiveGrade, ownerCertificate: null, sourceUpdatedAt: null })
 
 	it('never calls an own row view-only', () => {
-		expect(isViewOnly('s1', { ownRow: true })).toBe(false)
+		expect(isViewOnly('s1', { ownRow: true, ownerCertificate: null, sourceUpdatedAt: null })).toBe(false)
 	})
 
 	it.each([

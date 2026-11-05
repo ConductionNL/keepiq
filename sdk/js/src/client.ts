@@ -201,8 +201,9 @@ export class Client {
 		}
 		const mine = await this.certFingerprint()
 		const theirs = env.encryption.certificateFingerprint
-		if (mine && theirs && mine.toLowerCase() !== theirs.toLowerCase()) {
-			throw new KeyMismatchError('the envelope is encrypted to a different certificate')
+		if (mine) {
+			if (typeof theirs !== 'string' || theirs === '') throw new KeyMismatchError('the envelope names no certificate fingerprint')
+			if (mine.toLowerCase() !== theirs.toLowerCase()) throw new KeyMismatchError('the envelope is encrypted to a different certificate')
 		}
 		const keys = await this.keySet()
 		const ct = env.ciphertext ?? {}

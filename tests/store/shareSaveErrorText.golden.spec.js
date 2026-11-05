@@ -93,6 +93,15 @@ const CASES = {
 		httpError(502, { error: 'partner_unreachable' }),
 	'ShareSaveError partner_unreachable with an empty partner list': () =>
 		new ShareSaveError('partner_unreachable', []),
+	'ShareSaveError partner_unreachable, a partner without a cloud id': () =>
+		new ShareSaveError('partner_unreachable', [{ shareId: 7 }]),
+	'ShareSaveError partner_unreachable, an empty cloud id': () =>
+		new ShareSaveError('partner_unreachable', [{ recipientCloudId: '' }]),
+	'ShareSaveError partner_unreachable, an empty and a named partner': () =>
+		new ShareSaveError('partner_unreachable', [
+			{ recipientCloudId: '' },
+			{ recipientCloudId: 'bob@cloud.example' },
+		]),
 	'share save forbidden, fromShareSave "true"': () =>
 		httpError(403, { error: 'forbidden' }, { fromShareSave: 'true' }),
 }

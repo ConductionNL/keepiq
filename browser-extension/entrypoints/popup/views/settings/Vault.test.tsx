@@ -1,10 +1,13 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { SyncStatus } from '@/src/messages'
+import type { SyncStatus, VaultSnapshotReply } from '@/src/messages'
 import App from '../../App'
-import { everythingVisible, fakeBackground, sentOf, snapshotReply } from '../../testing'
+import { LOADING_DELAY_MS } from '../../components/Loading'
+import { DEFAULT_SHELL, ShellContext } from '../../shell-context'
+import { everythingVisible, fakeBackground, sentOf, snapshotReply, type UnlockedSnapshot } from '../../testing'
+import { Vault } from './Vault'
 
 afterEach(cleanup)
 beforeEach(everythingVisible)
@@ -151,5 +154,101 @@ describe('Vault settings', () => {
 		expect(await syncButton()).toBeTruthy()
 		expect(screen.getByRole('link', { name: 'Import items' })).toBeTruthy()
 		expect(screen.queryByRole('combobox', { name: 'Default item type in this extension' })).toBeNull()
+	})
+})
+
+describe('Vault settings with a given snapshot', () => {
+	interface Page {
+		snapshot?: UnlockedSnapshot
+		snapshotFailed?: boolean
+		syncNow?: () => Promise<VaultSnapshotReply | undefined>
+	}
+
+	function openPage({ snapshot, snapshotFailed = false, syncNow = async () => undefined, ...options }: Page & Parameters<typeof fakeBackground>[0] = {}) {
+		fakeBackground(options)
+		render(
+			<ShellContext.Provider value={{ ...DEFAULT_SHELL, syncNow }}>
+				<Vault onOpen={vi.fn()} snapshot={snapshot} snapshotFailed={snapshotFailed} reload={vi.fn()} />
+			</ShellContext.Provider>,
+		)
+		return userEvent.setup()
+	}
+
+	const unlocked = (status: Partial<SyncStatus> = {}) => snapshotReply({ sync: sync(status) })
+	const pastLoadingDelay = () => act(() => new Promise<void>((done) => setTimeout(done, LOADING_DELAY_MS)))
+	const notResponding = 'Keepiq is not responding. Reload the extension and reopen this popup.'
+
+	it('shows the spinner while the snapshot loads, with no last sync yet', async () => {
+		openPage()
+		expect(await screen.findByText('Loading…')).toBeTruthy()
+		expect(described(await syncButton())).toEqual([])
+	})
+
+	it.each<[string, Page & { unanswered?: string[] }]>([
+		['the snapshot failed', { snapshotFailed: true }],
+		['the settings failed', { snapshot: unlocked(), unanswered: ['account.settings.get'] }],
+		['both failed', { snapshotFailed: true, unanswered: ['account.settings.get'] }],
+	])('shows no spinner once %s', async (_, page) => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		openPage(page)
+		expect(await screen.findByText(notResponding)).toBeTruthy()
+		await pastLoadingDelay()
+		expect(screen.queryByText('Loading…')).toBeNull()
+	})
+
+	it('keeps a cached snapshot quiet when its re-read failed', async () => {
+		openPage({ snapshot: unlocked(), snapshotFailed: true })
+		expect(await screen.findByRole('combobox', { name: 'Default item type in this extension' })).toBeTruthy()
+		expect(screen.queryByText(notResponding)).toBeNull()
+	})
+
+	it('offers Import and a focusable turned-off Export from the settings before the snapshot loads', async () => {
+		openPage({ accountSettings: { exportDisabled: true } })
+		expect((await screen.findByRole('link', { name: 'Import items' })).getAttribute('href')).toBe('https://cloud.example.org/index.php/apps/keepiq/')
+		const exportRow = screen.getByRole<HTMLButtonElement>('button', { name: 'Export vault' })
+		expect(exportRow.disabled).toBe(false)
+		exportRow.focus()
+		expect(document.activeElement).toBe(exportRow)
+		expect(described(exportRow)).toEqual(['Turned off by your organisation'])
+	})
+
+	it('ignores Sync now while a sync runs', async () => {
+		const syncNow = vi.fn(async () => unlocked())
+		const user = openPage({ snapshot: unlocked({ syncing: true }), syncNow })
+		await user.click(await syncButton())
+		expect(syncNow).not.toHaveBeenCalled()
+	})
+
+	it.each([
+		['got no answer', undefined],
+		['ended locked', { state: 'locked' } as VaultSnapshotReply],
+	])('says Keepiq is not responding when the sync %s', async (_, after) => {
+		const user = openPage({ snapshot: unlocked(), syncNow: async () => after })
+		await user.click(await syncButton())
+		expect((await screen.findByRole('alert')).textContent).toBe(notResponding)
+	})
+
+	it('reports a sync that ended offline without an error', async () => {
+		const user = openPage({ snapshot: unlocked(), syncNow: async () => unlocked({ offline: true }) })
+		await user.click(await syncButton())
+		expect((await screen.findByRole('alert')).textContent).toBe('Sync failed, you are offline')
+	})
+
+	it('says nothing after a sync that went well', async () => {
+		const syncNow = vi.fn(async () => unlocked())
+		const user = openPage({ snapshot: unlocked(), syncNow })
+		await user.click(await syncButton())
+		await waitFor(() => expect(syncNow).toHaveBeenCalled())
+		await act(async () => {})
+		expect(screen.queryByRole('alert')).toBeNull()
+	})
+
+	it('clears the last sync\'s error as soon as another starts', async () => {
+		const ends: Array<Promise<VaultSnapshotReply | undefined>> = [Promise.resolve(undefined), new Promise(() => {})]
+		const user = openPage({ snapshot: unlocked(), syncNow: () => ends.shift()! })
+		await user.click(await syncButton())
+		expect(await screen.findByRole('alert')).toBeTruthy()
+		await user.click(await syncButton())
+		expect(screen.queryByRole('alert')).toBeNull()
 	})
 })

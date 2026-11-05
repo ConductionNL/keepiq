@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { i18n } from '#i18n'
 import type { SendRow as Row, VaultWriteError } from '@/src/messages'
 import { Button } from '../../components/Button'
@@ -25,6 +25,38 @@ function rowNames(rows: Row[]): string[] {
 	})
 }
 
+interface PendingFocus {
+	area: RefObject<HTMLDivElement | null>
+	focusAt: RefObject<number | null>
+	focusRow: RefObject<string | null>
+}
+
+/** The row will not come; Retry is where the user goes next. */
+function focusRetry({ area, focusAt, focusRow }: PendingFocus) {
+	if (focusRow.current === null && focusAt.current === null) return
+	area.current?.querySelector<HTMLElement>('button')?.focus()
+	focusRow.current = null
+	focusAt.current = null
+}
+
+/** Turns a row waited for into its index once it is listed, and returns the row index waiting for focus, if any. */
+function resolvePendingRow({ focusAt, focusRow }: PendingFocus, sends: Row[]): number | null {
+	if (focusRow.current !== null) {
+		const index = sends.findIndex((row) => row.id === focusRow.current)
+		if (index === -1) return null
+		focusAt.current = index
+		focusRow.current = null
+	}
+	return focusAt.current
+}
+
+function focusRowAt({ area, focusAt }: PendingFocus, index: number) {
+	const rows = area.current?.querySelectorAll('li') ?? []
+	const target = rows.length > 0 ? rows[Math.min(index, rows.length - 1)] : area.current
+	target?.querySelector<HTMLElement>('button')?.focus()
+	focusAt.current = null
+}
+
 /** `focusId`: the row to focus once listed, e.g. back from a created send whose page held focus. */
 export function SendList({ onNew, focusId = null }: { onNew: () => void; focusId?: string | null }) {
 	const { sends, failed, load, retry, linkFor, remove } = useSends()
@@ -40,25 +72,13 @@ export function SendList({ onNew, focusId = null }: { onNew: () => void; focusId
 
 	useEffect(() => {
 		if (removing) return
-		if (failed && (focusRow.current !== null || focusAt.current !== null)) {
-			// The row will not come; Retry is where the user goes next.
-			area.current?.querySelector<HTMLElement>('button')?.focus()
-			focusRow.current = null
-			focusAt.current = null
+		const focus = { area, focusAt, focusRow }
+		if (failed) {
+			focusRetry(focus)
 			return
 		}
-		if (!sends) return
-		if (focusRow.current !== null) {
-			const index = sends.findIndex((row) => row.id === focusRow.current)
-			if (index === -1) return
-			focusAt.current = index
-			focusRow.current = null
-		}
-		if (focusAt.current === null) return
-		const rows = area.current?.querySelectorAll('li') ?? []
-		const target = rows.length > 0 ? rows[Math.min(focusAt.current, rows.length - 1)] : area.current
-		target?.querySelector<HTMLElement>('button')?.focus()
-		focusAt.current = null
+		const index = sends ? resolvePendingRow(focus, sends) : null
+		if (index !== null) focusRowAt(focus, index)
 	}, [sends, removing, failed])
 
 	async function confirmRemove(row: Row, index: number) {

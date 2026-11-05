@@ -264,9 +264,9 @@ writeErrors:
   federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
   keepiqOutdated: Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie {version} of nieuwer.
   partnerClock: Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.
-  shareScanPending: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag je beheerder te controleren of achtergrondtaken draaien.
+  shareScanPending: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw.
   shareScanPendingOpen: Dit item wacht op een controle van zijn delingen en kan nog niet worden bewerkt. Probeer het later opnieuw.
-  shareScanPendingDelete: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets verwijderd; probeer het later opnieuw, of vraag je beheerder te controleren of achtergrondtaken draaien.
+  shareScanPendingDelete: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets verwijderd; probeer het later opnieuw.
   sendInvalid: Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw.
   sendOffline: De server is niet bereikbaar, er is niets verzonden
   argon2Unavailable: Wachtwoordbeveiliging is niet beschikbaar in deze browser
@@ -758,3 +758,4 @@ passkey:
     conflict: Deze login is tijdens het opslaan gewijzigd. Er is niets opgeslagen; probeer het opnieuw.
     partnerUpgradeRequired: "Er is niets opgeslagen: de Keepiq van {cloudIds} is te oud om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
     partnerUpgradeRequiredUnnamed: "Er is niets opgeslagen: een partnerorganisatie waarmee deze login gedeeld is, heeft een Keepiq die te oud is om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
+    shareScanPending: Deze login wacht op een controle van de delingen ervan die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw.

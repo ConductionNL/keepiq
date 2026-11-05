@@ -1106,6 +1106,11 @@ describe('errors and the offline flag', () => {
 		expect(await deleteItem('s1')).toEqual({ ok: false, error: { code } })
 	})
 
+	it('maps a delete waiting for the share scan to share_scan_pending, not a conflict', async () => {
+		server({ 'DELETE /api/v1/secrets/s1': () => json({ error: 'share_scan_pending', message: 'English text' }, 409) })
+		expect(await deleteItem('s1')).toEqual({ ok: false, error: { code: 'share_scan_pending' } })
+	})
+
 	it.each([
 		['a 403 with a code', 403, { message: 'Blocked by policy', code: 'org_ownership_required' }, 'policy'],
 		['a 428 naming a policy', 428, { message: 'Blocked by policy', code: 'org_ownership_required', error: 'org_ownership_required' }, 'policy'],

@@ -38,6 +38,15 @@
 	"ShareSaveError partner_unreachable with an empty partner list": {
 		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
 	},
+	"ShareSaveError partner_unreachable, a partner without a cloud id": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_unreachable, an empty cloud id": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_unreachable, an empty and a named partner": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
 	"share save forbidden, fromShareSave \"true\"": {
 		"text": null
 	},

@@ -32,6 +32,22 @@ Every library MUST decrypt the `rsa-oaep-sha256-chunked-v1` ciphertext in the ca
 - **THEN** the request body MUST contain only ciphertext for `key`
 - **AND** a later `getById(id)` MUST return `YOUR_TOKEN_HERE`
 
+### Requirement: Libraries keep credential values out of printed output
+
+Every library MUST keep credential values out of the printed and debug form of its secret and client types. This covers secret values, private keys, app passwords and bearer tokens. The printed form MUST keep the metadata and show `[redacted]` for each value that is set. Reading a field or serialising a secret to JSON MUST still return the value, because the caller asked for it.
+
+The Go library has two limits. The `%p` verb prints raw values, because `fmt` handles it before a type's own formatting. A `log/slog` handler redacts a secret, suite or client only when it is the attribute value itself. Inside a slice, map or struct, the JSON handler marshals the values.
+
+#### Scenario: A Go service logs the secret it read
+
+@e2e exclude A library scenario with no browser surface; covered by Go tests sdk/go/format_test.go TestSecretPrintsWithoutValues, TestSecretLogsWithoutValues, TestClientPrintsWithoutKeyOrToken and sdk/go/client/format_test.go TestClientPrintsWithoutAppPassword, TestSuitePrintsWithoutPrivateKey.
+
+- **GIVEN** a Go service that read the secret `stripe-key` with `GetByName`
+- **WHEN** it prints the secret or its client with any `fmt` verb except `%p`, or passes either one as the attribute value of a `log/slog` call
+- **THEN** the output MUST show the secret's id and name, and `[redacted]` for its key, login and additional fields
+- **AND** the output MUST NOT contain the value, the private key or the bearer token
+- **AND** `json.Marshal` of the secret MUST still return the value
+
 ### Requirement: Libraries follow the machine API contract
 
 Every library MUST send `If-None-Match` with the last ETag and report "not modified" on 304, MUST expose the `Doriath-Lease-Id` and `Doriath-Lease-Expires` headers, and MUST raise a typed ambiguous-name error carrying the candidates' ids and folder paths on 409.

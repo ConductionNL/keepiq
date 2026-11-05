@@ -240,7 +240,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 			pick: () => setPick(null),
 			form: () => leave(closeForm),
 			detail: () => setDetailId(null),
-			section: () => setSection((section && SECTION_PARENT[section]) ?? null),
+			section: () => setSection(section ? SECTION_PARENT[section] ?? null : null),
 			history: () => setHistory(false),
 			send: () => leave(() => setSendPage(null)),
 		}

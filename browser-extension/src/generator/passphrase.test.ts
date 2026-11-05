@@ -50,6 +50,16 @@ describe('generatePassphrase', () => {
 		expect([...drawn].some((word) => word.includes('-'))).toBe(false)
 	})
 
+	it('can append any of the ten digits', () => {
+		const digits = new Set<string>()
+		for (let digit = 0; digit <= 9; digit++) {
+			// Every draw takes its lowest value but the digit's.
+			const pick = (min: number, max: number) => (max === 9 ? digit : min)
+			digits.add(value(generatePassphrase({ words: 4, separator: ' ', includeNumber: true }, null, words, pick)).replace(/\D/g, ''))
+		}
+		expect([...digits].sort()).toEqual(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+	})
+
 	it('meets the floor and every required class under a policy', () => {
 		const rule = policy({ minLength: 40, requireUpper: true, requireDigit: true, requireSymbol: true })
 		for (let i = 0; i < 1000; i++) {

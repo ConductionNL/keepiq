@@ -46,7 +46,9 @@ const EXPECTED = {
 	partner_clock: 'writeErrors.partnerClock',
 	passkey_clone: 'item.passkeyNoClone',
 	argon2_unavailable: 'writeErrors.argon2Unavailable',
-	share_scan_pending: { open: 'writeErrors.shareScanPendingOpen', delete: 'writeErrors.shareScanPendingDelete', other: 'writeErrors.shareScanPending' },
+	share_scan_pending: {
+		open: 'writeErrors.shareScanPendingOpen', delete: 'writeErrors.shareScanPendingDelete', passkey: 'passkey.errors.shareScanPending', other: 'writeErrors.shareScanPending',
+	},
 } satisfies Record<WriteErrorCode, Expected>
 
 const CODES = Object.keys(EXPECTED) as WriteErrorCode[]

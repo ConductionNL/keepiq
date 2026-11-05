@@ -244,31 +244,32 @@ export function diffDraft(before: ItemDraft, after: ItemDraft): ItemPatch {
 const unopened: EditableItem = { id: '', typeId: '', name: '', url: null, folderId: null, key: '', login: null, additionalFields: {}, updatedAt: '', totpSaved: false }
 
 /**
- * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse
- * hides behind the last, and no number that reads back otherwise, as one past double precision.
+ * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse hides behind the last,
+ * and no number that reads back otherwise, as one past double precision.
+ * Only for text that parsed.
  */
 function readsAsWritten(raw: string): boolean {
-	const objects: Array<Set<string> | null> = []
+	// The open containers, innermost last: an object's member names so far, or null for an array.
+	const open: Array<Set<string> | null> = []
 	let expectName = false
 	for (const [token] of raw.matchAll(/"(?:[^"\\]|\\.)*"|-?\d[\d.eE+-]*|[{}[\],:]/g)) {
-		const top = objects.at(-1)
-		if (token === '{' || token === '[') {
-			objects.push(token === '{' ? new Set() : null)
-			expectName = token === '{'
-		} else if (token === '}' || token === ']') {
-			objects.pop()
-			expectName = false
-		} else if (token === ',') expectName = top instanceof Set
-		else if (token === ':') expectName = false
-		else if (!token.startsWith('"')) {
-			if (String(Number(token)) !== token) return false
-		} else if (expectName && top) {
-			const name = JSON.parse(token) as string
-			if (top.has(name)) return false
-			top.add(name)
-			expectName = false
-		}
+		if (token === '{') open.push(new Set())
+		else if (token === '[') open.push(null)
+		else if (token === '}' || token === ']') open.pop()
+		else if (token !== ',' && token !== ':' && !valueAsWritten(token, open.at(-1), expectName)) return false
+		expectName = token === '{' || token === ','
 	}
+	return true
+}
+
+/** A number reads back as written; a string in a member name's place is a name its object hasn't had. */
+function valueAsWritten(token: string, names: Set<string> | null | undefined, expectName: boolean): boolean {
+	if (!token.startsWith('"')) return String(Number(token)) === token
+	// After a comma in an array, a string is a value.
+	if (!expectName || !names) return true
+	const name = JSON.parse(token) as string
+	if (names.has(name)) return false
+	names.add(name)
 	return true
 }
 
@@ -287,22 +288,25 @@ export function shownInFull(field: FormField, plaintext: string | null, typeName
 	const kind = formKind(typeName)
 	switch (field) {
 		case 'login': return formSections(kind, fromItem({ ...unopened, login: plaintext }, typeName)).login
-		case 'key': {
-			const values = fromItem({ ...unopened, key: plaintext }, typeName)
-			const shown = formSections(kind, values).key
-			if (shown !== 'members') return shown === 'secret'
-			const fields: Record<string, string> = kind === 'card' ? values.card : values.identity
-			const payload = faithfulObject(plaintext)
-			return !!payload && Object.entries(payload).every(([member, value]) => Object.hasOwn(fields, member) && fields[member] === (typeof value === 'number' ? String(value) : value))
-		}
-		case 'additionalFields': {
-			const payload = faithfulObject(plaintext)
-			if (!payload) return false
-			const values = fromItem({ ...unopened, additionalFields: fieldTexts(payload) }, typeName)
-			const sections = formSections(kind, values)
-			return sections.fields && (sections.notes || values.notesKey === null)
-		}
+		case 'key': return keyShownInFull(plaintext, typeName, kind)
+		case 'additionalFields': return additionalFieldsShownInFull(plaintext, typeName, kind)
 	}
+}
+
+function keyShownInFull(plaintext: string, typeName: string | undefined, kind: FormKind): boolean {
+	const values = fromItem({ ...unopened, key: plaintext }, typeName)
+	const shown = formSections(kind, values).key
+	if (shown !== 'members') return shown === 'secret'
+	const fields: Record<string, string> = kind === 'card' ? values.card : values.identity
+	const payload = faithfulObject(plaintext)
+	return !!payload && Object.entries(payload).every(([member, value]) => Object.hasOwn(fields, member) && fields[member] === (typeof value === 'number' ? String(value) : value))
+}
+
+// `formSections` shows Notes whenever the item came with notes, so the fields section covers them too.
+function additionalFieldsShownInFull(plaintext: string, typeName: string | undefined, kind: FormKind): boolean {
+	const payload = faithfulObject(plaintext)
+	if (!payload) return false
+	return formSections(kind, fromItem({ ...unopened, additionalFields: fieldTexts(payload) }, typeName)).fields
 }
 
 export type FieldError =

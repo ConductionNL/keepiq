@@ -50,6 +50,7 @@ describe('layout and sorting', () => {
 		const order = [screen.getByRole('searchbox'), screen.getByRole('combobox', { name: 'Folder' }), screen.getByRole('group', { name: 'Type' }), screen.getByRole('region', { name: 'Items' })]
 		for (let i = 1; i < order.length; i++) expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 		expect(listed()).toEqual(['Amazon', 'apple', 'bank'])
+		expect(screen.queryByText(/^Showing the first/)).toBeNull()
 	})
 
 	it('breaks name ties by id', async () => {
@@ -159,6 +160,12 @@ describe('autofill suggestions', () => {
 		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
 		expect(within(section).getAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)).toEqual(['Zebra', 'Amazon'])
 		expect(listed()).toEqual(['Amazon', 'Zebra'])
+	})
+
+	it('skips a suggested id the vault no longer has', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: 'a', name: 'Amazon' }), itemMeta({ id: 'z', name: 'Zebra' })], suggestionIds: ['z', 'gone', 'a'] }), { tab: githubTab })
+		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
+		expect(within(section).getAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)).toEqual(['Zebra', 'Amazon'])
 	})
 
 	it('says autofill is not available on a page that is not http(s), offering no item', () => {
@@ -615,6 +622,23 @@ describe('states', () => {
 		expect(screen.getByRole('status').textContent).toBe('Syncing your vault')
 		expect((screen.getByRole('searchbox') as HTMLInputElement).disabled).toBe(true)
 		expect((screen.getByRole('button', { name: 'All' }) as HTMLButtonElement).disabled).toBe(true)
+		expect((screen.getByRole('combobox', { name: 'Folder' }) as HTMLSelectElement).disabled).toBe(true)
+	})
+
+	it.each([
+		['before it reported anything', { syncing: false, lastError: null }],
+		['while a retry runs after a failure', { syncing: true, lastError: 'network' }],
+	] as const)('shows the first sync as running %s', (_, status) => {
+		renderList(snapshotReply({ items: null, sync: { syncedAt: null, offline: false, ...status } }))
+		expect(screen.getByRole('status').textContent).toBe('Syncing your vault')
+		expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+	})
+
+	it('shows no sync banner before the first sync brought rows', () => {
+		renderList(snapshotReply({ items: null, sync: { syncing: false, syncedAt: new Date().toISOString(), offline: true, lastError: 'busy' } }))
+		expect(screen.getByText('Could not load your vault')).toBeTruthy()
+		expect(screen.queryByText(/^Offline\./)).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Sync now' })).toBeNull()
 	})
 
 	it('offers a retry when the first sync failed', async () => {
@@ -636,6 +660,33 @@ describe('states', () => {
 		expect(listed()).toEqual(['GitHub'])
 	})
 
+	it('gives the reason of the row listed first when everything is blocked', () => {
+		renderList(snapshotReply({ items: [
+			itemMeta({ id: '1', name: 'Bank', blocked: true, hasLogin: false }),
+			itemMeta({ id: '2', name: 'Amazon', blocked: true, hasLogin: false, blockedReason: 'suite_missing' }),
+		] }))
+		expect(screen.getByText('All items are blocked.', { exact: false }).textContent).toBe('All items are blocked. Its encryption key no longer exists. Open the Keepiq web app')
+	})
+
+	it('says only that everything is blocked when the first row gives no reason', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false })] }))
+		expect(screen.getByText('All items are blocked.', { exact: false }).textContent).toBe('All items are blocked. Open the Keepiq web app')
+	})
+
+	it('says nothing about blocked items while one row is still readable', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false }), itemMeta({ id: '2', name: 'Bank', hasLogin: false })] }))
+		expect(screen.queryByText('All items are blocked.', { exact: false })).toBeNull()
+	})
+
+	it('drops the search hint when the filters match nothing without a search', async () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', name: 'Bank', hasLogin: false })] }))
+		const user = userEvent.setup()
+		await user.type(screen.getByRole('searchbox'), '   ')
+		await user.click(screen.getByRole('button', { name: 'Note' }))
+		expect(screen.getByText('No items match')).toBeTruthy()
+		expect(screen.queryByText('Search covers names and websites.')).toBeNull()
+	})
+
 	it('shows the offline banner with the last sync and Sync now', async () => {
 		const syncedAt = new Date(Date.now() - 2 * 3_600_000).toISOString()
 		const { syncNow } = renderList(snapshotReply({ sync: { syncing: false, syncedAt, offline: true, lastError: 'network' } }))
@@ -647,5 +698,28 @@ describe('states', () => {
 	it('says the server is busy on a write lock', () => {
 		renderList(snapshotReply({ sync: { syncing: false, syncedAt: new Date().toISOString(), offline: false, lastError: 'busy' } }))
 		expect(screen.getByText('Server busy, retrying later')).toBeTruthy()
+	})
+
+	it('shows the offline banner rather than busy when both apply', () => {
+		renderList(snapshotReply({ sync: { syncing: false, syncedAt: new Date().toISOString(), offline: true, lastError: 'busy' } }))
+		expect(screen.getByText(/^Offline\. Last synced/)).toBeTruthy()
+		expect(screen.queryByText('Server busy, retrying later')).toBeNull()
+	})
+
+	it('marks Sync now busy while that sync runs', () => {
+		renderList(snapshotReply({ sync: { syncing: true, syncedAt: new Date().toISOString(), offline: true, lastError: null } }))
+		expect(screen.getByRole('button', { name: 'Sync now' }).getAttribute('aria-busy')).toBe('true')
+	})
+
+	it.each([
+		['offline without a known last sync', { offline: true, syncedAt: null, lastError: null }],
+		['busy while offline without a known last sync', { offline: true, syncedAt: null, lastError: 'busy' }],
+		['after a sync error other than busy', { offline: false, syncedAt: new Date().toISOString(), lastError: 'network' }],
+	] as const)('shows no sync banner %s', (_, status) => {
+		renderList(snapshotReply({ sync: { syncing: false, ...status } }))
+		expect(listed()).toEqual(['GitHub'])
+		expect(screen.queryByText(/^Offline\./)).toBeNull()
+		expect(screen.queryByText('Server busy, retrying later')).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Sync now' })).toBeNull()
 	})
 })

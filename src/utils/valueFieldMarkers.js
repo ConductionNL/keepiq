@@ -29,6 +29,17 @@ export function rowHasPasskeys(row) {
 }
 
 /**
+ * @param {string} name The row's name.
+ * @param {boolean} passkeys Whether the row holds passkeys too.
+ * @return {string} The accessible name of a row with a one-time code.
+ */
+function codeRowLabel(name, passkeys) {
+	return passkeys
+		? t('keepiq', 'Open {name}, has a one-time code and passkeys', { name })
+		: t('keepiq', 'Open {name}, has a one-time code', { name })
+}
+
+/**
  * The accessible name of a row that opens a secret, naming what it holds
  * besides its value. The count of passkeys is not known from ciphertext, so
  * the wording does not depend on it.
@@ -39,17 +50,10 @@ export function rowHasPasskeys(row) {
  */
 export function rowOpenLabel(row) {
 	const name = row?.name ?? ''
-	const code = rowHasCode(row)
-	const passkeys = rowHasPasskeys(row)
-	if (code && passkeys) {
-		return t('keepiq', 'Open {name}, has a one-time code and passkeys', {
-			name,
-		})
+	if (rowHasCode(row)) {
+		return codeRowLabel(name, rowHasPasskeys(row))
 	}
-	if (code) {
-		return t('keepiq', 'Open {name}, has a one-time code', { name })
-	}
-	if (passkeys) {
+	if (rowHasPasskeys(row)) {
 		return t('keepiq', 'Open {name}, has passkeys', { name })
 	}
 	return t('keepiq', 'Open {name}', { name })
