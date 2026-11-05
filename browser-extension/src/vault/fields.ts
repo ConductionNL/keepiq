@@ -253,37 +253,23 @@ function readsAsWritten(raw: string): boolean {
 	const open: Array<Set<string> | null> = []
 	let expectName = false
 	for (const [token] of raw.matchAll(/"(?:[^"\\]|\\.)*"|-?\d[\d.eE+-]*|[{}[\],:]/g)) {
-		switch (token) {
-			case '{':
-			case '[':
-				open.push(token === '{' ? new Set() : null)
-				expectName = token === '{'
-				break
-			case '}':
-			case ']':
-				open.pop()
-				expectName = false
-				break
-			case ',':
-				expectName = true
-				break
-			case ':':
-				expectName = false
-				break
-			default: {
-				if (!token.startsWith('"')) {
-					if (String(Number(token)) !== token) return false
-					break
-				}
-				const names = open.at(-1)
-				// After a comma in an array, a string is a value.
-				if (!expectName || !names) break
-				const name = JSON.parse(token) as string
-				if (names.has(name)) return false
-				names.add(name)
-			}
-		}
+		if (token === '{') open.push(new Set())
+		else if (token === '[') open.push(null)
+		else if (token === '}' || token === ']') open.pop()
+		else if (token !== ',' && token !== ':' && !valueAsWritten(token, open.at(-1), expectName)) return false
+		expectName = token === '{' || token === ','
 	}
+	return true
+}
+
+/** A number reads back as written; a string in a member name's place is a name its object hasn't had. */
+function valueAsWritten(token: string, names: Set<string> | null | undefined, expectName: boolean): boolean {
+	if (!token.startsWith('"')) return String(Number(token)) === token
+	// After a comma in an array, a string is a value.
+	if (!expectName || !names) return true
+	const name = JSON.parse(token) as string
+	if (names.has(name)) return false
+	names.add(name)
 	return true
 }
 
