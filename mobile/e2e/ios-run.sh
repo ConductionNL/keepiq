@@ -47,7 +47,14 @@ xcrun simctl keychain "$UDID" add-root-cert "$CERTS/cert.pem"
 
 node "$HERE/server.mjs" replay --port 8443 --cert "$CERTS/cert.pem" --key "$CERTS/key.pem" > "$OUT/replay.log" 2>&1 &
 REPLAY=$!
-trap 'kill "$REPLAY" 2>/dev/null || true' EXIT
+
+# The app's own log (URLSession, Network.framework, TLS trust), which
+# xcodebuild does not print: when a request never reaches the replay, this
+# says whether it stalled on the connection, the handshake or in the app.
+xcrun simctl spawn "$UDID" log stream --style compact --level info \
+	--predicate 'process == "Keepiq" OR process == "KeepiqAutofill"' > "$OUT/simulator.log" 2>&1 &
+APPLOG=$!
+trap 'kill "$REPLAY" "$APPLOG" 2>/dev/null || true' EXIT
 
 xcodebuild build-for-testing -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
 	-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" -quiet
