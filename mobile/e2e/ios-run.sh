@@ -51,8 +51,12 @@ REPLAY=$!
 # The app's own log (URLSession, Network.framework, TLS trust), which
 # xcodebuild does not print: when a request never reaches the replay, this
 # says whether it stalled on the connection, the handshake or in the app.
+# Only the network and trust subsystems: the whole process logs about 1M
+# lines (112 MB) per run, nearly all XCTest and accessibility; these are
+# about 12k lines (2 MB).
 xcrun simctl spawn "$UDID" log stream --style compact --level info \
-	--predicate 'process == "Keepiq" OR process == "KeepiqAutofill"' > "$OUT/simulator.log" 2>&1 &
+	--predicate '(process == "Keepiq" OR process == "KeepiqAutofill") AND (subsystem BEGINSWITH "com.apple.network" OR subsystem BEGINSWITH "com.apple.CFNetwork" OR subsystem == "com.apple.securityd")' \
+	> "$OUT/simulator.log" 2>&1 &
 APPLOG=$!
 trap 'kill "$REPLAY" "$APPLOG" 2>/dev/null || true' EXIT
 
