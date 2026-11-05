@@ -1728,7 +1728,8 @@ OC.L10N.register(
         "This image is too large. Choose an image under 10 MB.": "Această imagine este prea mare. Alegeți o imagine sub 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Aceasta nu este o cheie de autentificator. Lipiți un link otpauth://totp/ sau secretul base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Acest cod QR nu conține o cheie de autentificator. Folosiți codul QR pe care îl afișează site-ul când configurați autentificarea cu doi factori.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a salvat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a salvat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
+        "You can close this window now.": "Acum puteți închide această fereastră."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

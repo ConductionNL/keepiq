@@ -1728,7 +1728,8 @@ OC.L10N.register(
         "This image is too large. Choose an image under 10 MB.": "Dieses Bild ist zu groß. Wählen Sie ein Bild unter 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Das ist kein Authenticator-Schlüssel. Fügen Sie einen otpauth://totp/-Link oder das base32-Geheimnis ein.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dieser QR-Code enthält keinen Authenticator-Schlüssel. Verwenden Sie den QR-Code, den die Website beim Einrichten der Zwei-Faktor-Anmeldung anzeigt.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts gespeichert; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts gespeichert; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
+        "You can close this window now.": "Sie können dieses Fenster jetzt schließen."
     },
     "nplurals=2; plural=(n != 1);"
 )

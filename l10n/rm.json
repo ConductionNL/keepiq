@@ -1703,7 +1703,8 @@
         "This image is too large. Choose an image under 10 MB.": "Quest maletg è memia grond. Tscherna in maletg sut 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Quai n'è nagina clav d'autentificatur. Plaza ina colliaziun otpauth://totp/ u il secret base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Quest code QR na cuntegna nagina clav d'autentificatur. Utilisescha il code QR che la website mussa cura che ti configuresch l'annunzia en dus pass.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Quest secret spetga sin ina controlla da ses parts che n'è anc betg terminada. Nagut n'è vegnì memorisà; empruvai pli tard anc ina giada, u dumandai in administratur da controllar sch'ils lavurs en il fund funcziunan."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Quest secret spetga sin ina controlla da ses parts che n'è anc betg terminada. Nagut n'è vegnì memorisà; empruvai pli tard anc ina giada, u dumandai in administratur da controllar sch'ils lavurs en il fund funcziunan.",
+        "You can close this window now.": "Ussa pos ti serrar questa fanestra."
     },
     "plurals": null
 }

@@ -1805,7 +1805,8 @@
         "This image is too large. Choose an image under 10 MB.": "Þessi mynd er of stór. Veldu mynd undir 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Þetta er ekki lykill auðkennara. Límdu inn otpauth://totp/-tengil eða base32-leyndarmálið.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Þessi QR-kóði inniheldur ekki lykil auðkennara. Notaðu QR-kóðann sem vefsvæðið sýnir þegar þú setur upp tveggja þátta innskráningu.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Ekkert var vistað; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Ekkert var vistað; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri.",
+        "You can close this window now.": "Þú getur lokað þessum glugga núna."
     },
     "plurals": null
 }

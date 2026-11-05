@@ -1805,7 +1805,8 @@
         "This image is too large. Choose an image under 10 MB.": "Αυτή η εικόνα είναι πολύ μεγάλη. Επιλέξτε εικόνα μικρότερη από 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Αυτό δεν είναι κλειδί επαληθευτή. Επικολλήστε έναν σύνδεσμο otpauth://totp/ ή το μυστικό base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Αυτός ο κωδικός QR δεν περιέχει κλειδί επαληθευτή. Χρησιμοποιήστε τον κωδικό QR που εμφανίζει ο ιστότοπος όταν ρυθμίζετε τη σύνδεση δύο παραγόντων.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου.",
+        "You can close this window now.": "Μπορείτε τώρα να κλείσετε αυτό το παράθυρο."
     },
     "plurals": null
 }

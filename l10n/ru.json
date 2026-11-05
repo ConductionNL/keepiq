@@ -1831,7 +1831,8 @@
         "This image is too large. Choose an image under 10 MB.": "Это изображение слишком большое. Выберите изображение размером меньше 10 МБ.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Это не ключ аутентификатора. Вставьте ссылку otpauth://totp/ или секрет в формате base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Этот QR-код не содержит ключ аутентификатора. Используйте QR-код, который сайт показывает при настройке двухфакторного входа.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не сохранено; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не сохранено; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
+        "You can close this window now.": "Теперь вы можете закрыть это окно."
     },
     "plurals": null
 }
