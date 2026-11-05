@@ -85,6 +85,32 @@ describe('charset generation', () => {
 		)
 	})
 
+	it('refuses a length that is not a whole number', () => {
+		expect(() => generateKey({ length: 12.5 })).toThrow(
+			'Length must be at least 8 characters',
+		)
+	})
+
+	it('checks the length before the character set', () => {
+		const every =
+			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?/'
+		expect(() => generateKey({ length: 0, excludedCharacters: every })).toThrow(
+			'Length must be at least 8 characters',
+		)
+	})
+
+	it('leaves out l, 0 and 1 when avoiding ambiguous characters with upper case off', () => {
+		repeat(() =>
+			expect(
+				generateKey({
+					length: 128,
+					includeUppercase: false,
+					avoidAmbiguous: true,
+				}),
+			).not.toMatch(/[l01]/),
+		)
+	})
+
 	it('refuses a set that exclusions shrink below two characters', () => {
 		const all = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 		expect(() =>
@@ -211,6 +237,20 @@ describe('org policy', () => {
 		expect(() => generateKey({ regex: '[a-z]{16,32}' }, policy)).toThrow('digit')
 	})
 
+	it.each([
+		['generator_require_upper', 'includeUppercase', /[A-Z]/],
+		['generator_require_lower', 'includeLowercase', /[a-z]/],
+		['generator_require_digit', 'includeDigits', /[0-9]/],
+		['generator_require_symbol', 'includeSpecialCharacters', SPECIAL],
+	])('%s puts that kind in when %s is off', (requirement, option, kind) => {
+		const policy = {
+			policy_enabled: true,
+			generator_min_length: 8,
+			[requirement]: true,
+		}
+		expect(generateKey({ [option]: false }, policy, (min) => min)).toMatch(kind)
+	})
+
 	it('changes nothing when the policy is off', () => {
 		expect(
 			generateKey(
@@ -299,6 +339,13 @@ describe('minimums', () => {
 			)
 		}
 	})
+
+	it.each([Number.NaN, -1, 'x'])(
+		'still puts in one digit for a minimum of %s',
+		(minDigits) => {
+			expect(generateKey({ minDigits }, null, (min) => min)).toMatch(/[0-9]/)
+		},
+	)
 
 	it('puts the forced characters at uniformly random positions', () => {
 		// Seven digits and one upper-case letter: the letter must land on

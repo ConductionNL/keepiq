@@ -84,7 +84,7 @@ export default {
 		/**
 		 * The limits to store (the server validates positivity).
 		 *
-		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @return {object} The settings to store.
 		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
 		 */
 		settingsPayload() {

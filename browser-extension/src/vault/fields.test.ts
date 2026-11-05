@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EditableItem } from '@/src/messages'
 import { parseTotpSeed } from '@/src/totp/totp'
-import { CARD_FIELDS, customField, diffDraft, emptyValues, formKind, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
+import { CARD_FIELDS, customField, diffDraft, emptyValues, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
 	return { ...emptyValues('t-login'), name: 'GitHub', ...overrides }
@@ -18,6 +18,21 @@ describe('formKind', () => {
 	it('gives composite types their own form and everything else a credential', () => {
 		expect(['note', 'totp', 'card', 'identity', 'passkey'].map(formKind)).toEqual(['note', 'totp', 'card', 'identity', 'passkey'])
 		expect(['login', 'database', 'api_key', 'server_access', undefined].map(formKind)).toEqual(Array(5).fill('credential'))
+	})
+})
+
+describe('formSections', () => {
+	const shape = { loginShown: false, plainKey: false }
+
+	// `shownInFull` counts additional fields as shown on this alone.
+	it('shows Notes for every kind but a passkey when the item came with notes', () => {
+		for (const kind of ['credential', 'note', 'totp', 'card', 'identity'] as const) expect(formSections(kind, { ...shape, notesKey: 'Notes' }).notes, kind).toBe(true)
+		expect(formSections('passkey', { ...shape, notesKey: 'Notes' })).toMatchObject({ fields: false, notes: false })
+	})
+
+	it('shows Notes on a note only for the notes it came with, and on a credential always', () => {
+		expect(formSections('note', { ...shape, notesKey: null }).notes).toBe(false)
+		expect(formSections('credential', { ...shape, notesKey: null }).notes).toBe(true)
 	})
 })
 

@@ -97,7 +97,7 @@ export default {
 		/**
 		 * The retention settings to store (the server validates the bounds).
 		 *
-		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @return {object} The settings to store.
 		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 		 */
 		settingsPayload() {

@@ -174,6 +174,16 @@ describe('sign in', () => {
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Retry' }))
 	})
 
+	it('shows a counter save that waits for the share scan without Retry, with the first row focused', async () => {
+		const { user } = renderWindow(passkeyView({ rows: [row()] }), {
+			replies: { 'passkey.pick': { ok: false, code: 'write_failed', error: { code: 'share_scan_pending' } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		expect(await alertText()).toBe('This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
+	})
+
 	it('goes back to the list from "Confirm it\'s you" with Escape or Back, and cancels with Escape from the list', async () => {
 		const { sent, user } = renderWindow(passkeyView({ rows: [row()], verify: true }))
 		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
@@ -471,6 +481,16 @@ describe('save', () => {
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'New login' }))
 		await user.click(screen.getByRole('button', { name: 'Retry' }))
 		expect(sentOf(sent, 'passkey.retry')).toHaveLength(1)
+	})
+
+	it('shows a save to a login that waits for the share scan without Retry, with that login focused', async () => {
+		const { user } = renderWindow(createView({ targets: [target()] }), {
+			replies: { 'passkey.save': { ok: false, code: 'write_failed', error: { code: 'share_scan_pending' } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		expect(await alertText()).toBe('This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice@example.test' }))
 	})
 
 	it('shows a failed save as a new login, and its Retry, on New login only', async () => {

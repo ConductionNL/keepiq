@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { i18n } from '#i18n'
-import type { VaultSnapshotReply } from '@/src/messages'
+import type { SyncStatus, VaultSnapshotReply } from '@/src/messages'
 import { isNewItemType } from '@/src/vault/fields'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Icon } from '../../components/Icon'
@@ -44,19 +44,11 @@ export function Vault({ onOpen, snapshot, snapshotFailed, reload }: Props) {
 			</ul>
 			{settings && snapshot
 				? <DefaultType settings={settings} types={snapshot.types} update={update} reload={reload} />
-				: <LoadingUnlessFailed failed={failed || snapshotFailed} />}
+				: !failed && !snapshotFailed && <Loading />}
 		</div>
 	)
 }
 
-/** The spinner while the settings or the snapshot load, gone once either read failed. */
-function LoadingUnlessFailed({ failed }: { failed: boolean }) {
-	return failed ? null : <Loading />
-}
-
-type SyncStatus = Extract<VaultSnapshotReply, { state: 'unlocked' }>['sync']
-
-/** What a sync started here reports when it ends: nothing when it went well. */
 function syncErrorOf(after: VaultSnapshotReply | undefined): string | null {
 	const ended = after?.state === 'unlocked' ? after.sync : undefined
 	if (!ended) return errorText('not_responding', '')
@@ -64,7 +56,7 @@ function syncErrorOf(after: VaultSnapshotReply | undefined): string | null {
 	return ended.lastError ? i18n.t('settings.syncFailed') : null
 }
 
-/** Sync now with the last sync's time; `id` is the page's, which the item's ids extend. */
+/** `id` is the page's, which the item's ids extend. */
 function SyncItem({ id, sync }: { id: string; sync: SyncStatus | undefined }) {
 	const { syncNow } = useShell()
 	// Only the sync started here reports its failure here, not one a later re-read shows.
@@ -97,7 +89,6 @@ function SyncItem({ id, sync }: { id: string; sync: SyncStatus | undefined }) {
 	)
 }
 
-/** Import and Export, which open the web app (ADR-003). */
 function WebAppItems({ id, webAppUrl, exportDisabled }: { id: string; webAppUrl: string; exportDisabled: boolean }) {
 	return (
 		<>
@@ -113,7 +104,6 @@ function WebAppItems({ id, webAppUrl, exportDisabled }: { id: string; webAppUrl:
 	)
 }
 
-/** Export opens the web app, unless the organisation turned it off; then it says so and stays focusable. */
 function ExportItem({ id, webAppUrl, disabled }: { id: string; webAppUrl: string; disabled: boolean }) {
 	return (
 		<li>

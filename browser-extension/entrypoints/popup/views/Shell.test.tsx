@@ -295,6 +295,22 @@ describe('item writes', () => {
 		expect(sentKinds(sent)).toContain('item.update')
 	})
 
+	it('clones from the More menu into a new item, leaving the original as it was', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } }, items: { i1: editableItem() } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(await within(footer()).findByRole('button', { name: 'More, GitHub' }))
+		await user.click(await screen.findByRole('menuitem', { name: 'Clone' }))
+		expect((await title()).textContent).toBe('New item')
+		await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('GitHub - Clone'))
+		expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('alice')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(sentOf(sent, 'item.create')).toHaveLength(1))
+		expect(sentOf(sent, 'item.create')[0]).toMatchObject({ draft: { name: 'GitHub - Clone' } })
+		expect(sentOf(sent, 'item.update')).toEqual([])
+	})
+
 	it('deletes after the confirm dialog and returns to the list', async () => {
 		let items = [itemMeta()]
 		const sent = fakeBackground({
@@ -533,6 +549,7 @@ describe('the generator', () => {
 		await user.type(input('Name'), 'Bank')
 		await user.click(screen.getByRole('button', { name: 'Generate password' }))
 		expect((await title()).textContent).toBe('Generator')
+		expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy()
 		expect(within(screen.getByRole('tablist')).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Password', 'Passphrase'])
 		// The form waits hidden, and its Save and Cancel leave the bar.
 		expect(input('Name').closest('[hidden]')).not.toBeNull()
@@ -621,5 +638,92 @@ describe('the generator', () => {
 		await user.click(await enabled('Use this username'))
 		expect((await title()).textContent).toBe('Edit item')
 		expect(input('Username').value).toBe('username-1')
+	})
+})
+
+describe('pages over the tabs', () => {
+	const body = () => document.querySelector<HTMLElement>('.popup__body')!
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+	const titled = (text: string) => waitFor(() => expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(text))
+
+	it('opens a page at the top and comes back to the list, and to the form after pick mode, where they were left', async () => {
+		fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await screen.findByRole('searchbox')
+		body().scrollTop = 120
+		await user.click(screen.getByRole('button', { name: /^GitHub/ }))
+		await titled('View item')
+		expect(body().scrollTop).toBe(0)
+		body().scrollTop = 15
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await titled('Vault')
+		expect(body().scrollTop).toBe(120)
+
+		await user.click(screen.getByRole('button', { name: 'New' }))
+		await titled('New item')
+		body().scrollTop = 40
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await titled('Generator')
+		expect(body().scrollTop).toBe(0)
+		body().scrollTop = 7
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await titled('New item')
+		expect(body().scrollTop).toBe(40)
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+	})
+
+	it('opens a send page at the top', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		const user = userEvent.setup()
+		const add = await screen.findByRole('button', { name: 'New' })
+		body().scrollTop = 50
+		await user.click(add)
+		await titled('New send')
+		expect(body().scrollTop).toBe(0)
+	})
+
+	it('re-reads the popup state, and opens no send, when Send from an item finds the vault locked', async () => {
+		let locked = false
+		const sent = fakeBackground({ replies: { 'item.decrypt': () => (locked ? { ok: false, error: 'locked' } : { ok: true, items: {} }) } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		const statusReads = sentOf(sent, 'vault.status').length
+		locked = true
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		await waitFor(() => expect(sentOf(sent, 'vault.status').length).toBeGreaterThan(statusReads))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByText('Could not read this login')).toBeNull()
+	})
+
+	it('closes both the form and the detail when Edit finds the item deleted elsewhere', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await titled('Vault')
+		expect(screen.getByRole('status').textContent).toBe('This item no longer exists')
+	})
+
+	it('gives a created send\'s row focus once, not again when the Send tab is picked later', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		const user = userEvent.setup()
+		const row = () => screen.findByRole('button', { name: /^Copy link, Text send/ })
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Text to share'), 'the secret')
+		await user.click(within(footer()).getByRole('button', { name: 'Create' }))
+		await user.click(await within(footer()).findByRole('button', { name: 'Done' }))
+		const first = await row()
+		await waitFor(() => expect(document.activeElement).toBe(first))
+		await user.click(screen.getByRole('button', { name: 'Vault' }))
+		await screen.findByRole('searchbox')
+		const sendTab = screen.getByRole('button', { name: 'Send' })
+		await user.click(sendTab)
+		await row()
+		expect(document.activeElement).toBe(sendTab)
 	})
 })

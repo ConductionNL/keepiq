@@ -32,7 +32,7 @@ export function DeleteItemDialog({ item, onDeleted, onCancel }: { item: ItemMeta
 			title={i18n.t('item.deleteTitle')}
 			actions={[{ label: i18n.t('item.delete'), variant: 'danger', busy, onClick: () => void remove() }]}
 			onCancel={onCancel}
-			error={failure && writeErrorText(failure.error)}
+			error={failure && writeErrorText(failure.error, 'delete')}
 			onRetry={retryable(failure) ? () => void remove() : undefined}
 		>
 			<p>{i18n.t('item.deleteConfirm', { name: item.name })}</p>

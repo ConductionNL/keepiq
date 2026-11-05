@@ -16,4 +16,12 @@ describe('fakeBackground', () => {
 			expect(answer, kind).not.toEqual(stateReply)
 		}
 	})
+
+	it.each([[undefined], [{}]])('answers a kind named after an Object.prototype key with the state reply (replies: %o)', async (replies) => {
+		const reply = fakeBackground({ replies }) as unknown as (message: Record<string, unknown>) => Promise<unknown>
+		const stateReply = await reply({ kind: 'state.get' })
+		for (const kind of ['toString', 'hasOwnProperty', 'constructor', '__proto__']) {
+			expect(await reply({ kind }), kind).toEqual(stateReply)
+		}
+	})
 })

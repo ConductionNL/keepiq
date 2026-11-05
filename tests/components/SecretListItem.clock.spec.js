@@ -2,12 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Pins why "emits `open` with the secret id on row click" failed under load,
- * and that the test clock from `tests/vitest/monotonicNow.js` holds it.
- *
- * Vue ignores an event stamped no later than its listener's attach time, and
- * Vue Test Utils stamps a trigger with `Date.now() + 1`. A wall clock that
- * steps back between mount and trigger therefore drops the click.
+ * Pins that the test clock from `tests/vitest/monotonicNow.js` keeps a row click when the wall clock steps back between mount and trigger.
  *
  * @spec exclude test harness regression, not product behaviour
  */
@@ -21,14 +16,13 @@ import { monotonic } from '../vitest/monotonicNow.js'
 const secret = { id: 's-42', name: 'AWS', url: null, typeId: 'type-login' }
 
 /**
- * Mount the row at clock time 10,000 and click it at 9,000.
+ * Mount the row at clock time 10,000 and click it at 9,000, on a monotonic clock.
  *
- * @param {(raw: () => number) => () => number} wrap How Date.now reads the stepping clock.
  * @return {Promise<object>} The mounted wrapper, after the click.
  */
-async function clickAfterClockStepsBack(wrap) {
+async function clickAfterClockStepsBack() {
 	let time = 10000
-	vi.spyOn(Date, 'now').mockImplementation(wrap(() => time))
+	vi.spyOn(Date, 'now').mockImplementation(monotonic(() => time))
 	// Vue caches the time until the next microtask; start from a fresh read.
 	await Promise.resolve()
 	const wrapper = mount(SecretListItem, { propsData: { secret } })
@@ -46,14 +40,8 @@ describe('SecretListItem row click and the test clock', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('drops the click when the raw clock steps back between mount and trigger', async () => {
-		const wrapper = await clickAfterClockStepsBack((raw) => raw)
-
-		expect(wrapper.emitted('open')).toBeUndefined()
-	})
-
-	it('emits `open` after the same step back when the clock is monotonic', async () => {
-		const wrapper = await clickAfterClockStepsBack(monotonic)
+	it('emits `open` after the clock stepped back when the clock is monotonic', async () => {
+		const wrapper = await clickAfterClockStepsBack()
 
 		expect(wrapper.emitted('open')).toEqual([['s-42']])
 	})

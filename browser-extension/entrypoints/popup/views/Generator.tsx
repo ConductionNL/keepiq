@@ -161,18 +161,30 @@ export function Generator({ pick, onOpenHistory, takeFocus = false }: GeneratorP
 					}}
 					onCopied={(copied) => record(copied, kind)}
 				/>
-				<OptionsCard
-					kind={kind}
-					options={options}
-					shownUsername={generated.username}
-					policy={policy}
-					website={website ?? null}
-					update={update}
-					onEmail={(typed) => {
-						setEmailEdited(true)
-						update((current) => ({ ...current, username: { ...current.username, email: typed } }))
-					}}
-				/>
+				<div className="card form-card">
+					{kind === 'password' && (
+						<PasswordPanel
+							stored={options.password}
+							policy={policy}
+							onChange={(password, debounce) => update((current) => ({ ...current, password }), { debounce })}
+						/>
+					)}
+					{kind === 'passphrase' && (
+						<PassphrasePanel options={options.passphrase} onChange={(passphrase) => update((current) => ({ ...current, passphrase }))} />
+					)}
+					{kind === 'username' && (
+						<UsernamePanel
+							stored={options.username}
+							shown={generated.username}
+							website={website ?? null}
+							onChange={(username) => update((current) => ({ ...current, username }))}
+							onEmail={(typed) => {
+								setEmailEdited(true)
+								update((current) => ({ ...current, username: { ...current.username, email: typed } }))
+							}}
+						/>
+					)}
+				</div>
 			</div>
 			{onOpenHistory && <HistoryLink onOpen={onOpenHistory} />}
 			{pick && <PickFooter target={pick.target} value={value} onUse={use} />}
@@ -186,42 +198,6 @@ function offeredKinds(target: GeneratorPick['target'] | undefined, allowed: bool
 	// Pick mode drops a turned-off Passphrase; the tab shows it disabled with the reason.
 	const kinds = target ? offered.filter((kind) => kind !== 'passphrase' || allowed) : offered
 	return { kinds, usable: kinds.filter((kind) => kind !== 'passphrase' || allowed) }
-}
-
-interface OptionsCardProps {
-	kind: GeneratorKind
-	options: GeneratorOptions
-	shownUsername: UsernameOptions
-	policy: GeneratorPolicy | null
-	website: string | null
-	update: ReturnType<typeof useGeneratorOptions>['update']
-	onEmail: (email: string) => void
-}
-
-function OptionsCard({ kind, options, shownUsername, policy, website, update, onEmail }: OptionsCardProps) {
-	return (
-		<div className="card form-card">
-			{kind === 'password' && (
-				<PasswordPanel
-					stored={options.password}
-					policy={policy}
-					onChange={(password, debounce) => update((current) => ({ ...current, password }), { debounce })}
-				/>
-			)}
-			{kind === 'passphrase' && (
-				<PassphrasePanel options={options.passphrase} onChange={(passphrase) => update((current) => ({ ...current, passphrase }))} />
-			)}
-			{kind === 'username' && (
-				<UsernamePanel
-					stored={options.username}
-					shown={shownUsername}
-					website={website}
-					onChange={(username) => update((current) => ({ ...current, username }))}
-					onEmail={onEmail}
-				/>
-			)}
-		</div>
-	)
 }
 
 function HistoryLink({ onOpen }: { onOpen: () => void }) {

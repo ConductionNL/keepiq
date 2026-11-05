@@ -719,6 +719,8 @@ export type WriteErrorCode =
 	| 'argon2_unavailable'
 	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key or passkeys the change adds. */
 	| 'partner_upgrade_required'
+	/** A share row of the item waits for the server's share quarantine scan, which only background jobs finish. */
+	| 'share_scan_pending'
 
 export interface VaultWriteError {
 	code: WriteErrorCode

@@ -88,7 +88,7 @@ export default {
 		/**
 		 * The maximum to store (the server accepts only the offered delays).
 		 *
-		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @return {object} The settings to store.
 		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
 		 */
 		settingsPayload() {

@@ -233,6 +233,7 @@ writeErrors:
   forbidden: Keepiq does not allow this change. The Keepiq web app shows why.
   policy: Your organisation's policy does not allow this change
   accountChanged: You switched to another account meanwhile, so nothing was saved. Switch back to save it.
+  accountChangedDelete: You switched to another account meanwhile, so nothing was deleted. Switch back to delete it.
   keepClash: A folder named {name} already exists one level up. Choose Move items to parent or Delete for it, or rename one of them first.
   keepClashAfter: A folder you chose to keep has the same name as one a level up, so nothing was deleted. Check the choices again.
   invalid: Keepiq refused this change
@@ -259,6 +260,9 @@ writeErrors:
   federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
   keepiqOutdated: Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version {version} or later.
   partnerClock: The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.
+  shareScanPending: This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later.
+  shareScanPendingOpen: This item is waiting for a check of its shares and can't be edited yet. Try again later.
+  shareScanPendingDelete: This item is waiting for a check of its shares that has not finished. Nothing was deleted; try again later.
   sendInvalid: Keepiq did not accept this send. Nothing was sent; check the fields and try again.
   sendOffline: Could not reach the server, nothing was sent
   argon2Unavailable: Password protection is not available in this browser
@@ -695,6 +699,7 @@ notificationBar:
     incomplete: The people this login is shared with kept changing. Nothing was saved; try again.
     badCertificate: A recipient's encryption key could not be read. Nothing was saved.
     keepiqOutdated: Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq {version} or later.
+    shareScanPending: This login is waiting for a check of its shares. Nothing was saved; try again later.
 
 # The window a site's passkey request opens. {rpId} is the site the passkey is for.
 passkey:
@@ -729,3 +734,4 @@ passkey:
     conflict: This login changed while saving. Nothing was saved; try again.
     partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
     partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this login is shared with runs a Keepiq too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
+    shareScanPending: This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.

@@ -44,9 +44,9 @@ export function noticeText(notice: NoticeCode): string {
 
 /**
  * What was being written, since a 400 or 409 means something different for each. `open` is the fetch an edit or clone starts from; `send` is creating one;
- * `passkey` is the passkey window's save or counter save.
+ * `passkey` is the passkey window's save or counter save; `delete` is an item's move to the trash.
  */
-export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey'
+export type WriteContext = 'item' | 'edit' | 'open' | 'folderName' | 'folderDelete' | 'send' | 'passkey' | 'delete'
 
 /** `undefined`, or an error without a code, is the background not answering. */
 export function writeErrorText(error: VaultWriteError | undefined, context: WriteContext = 'item'): string {
@@ -55,7 +55,7 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		case 'write_locked': return i18n.t('writeErrors.writeLocked')
 		case 'forbidden': return i18n.t('writeErrors.forbidden')
 		case 'policy': return i18n.t('writeErrors.policy')
-		case 'account_changed': return i18n.t('writeErrors.accountChanged')
+		case 'account_changed': return accountChangedText(context)
 		case 'invalid': return invalidText(context)
 		case 'conflict': return conflictText(context)
 		case 'not_found': return context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone')
@@ -67,6 +67,8 @@ export function writeErrorText(error: VaultWriteError | undefined, context: Writ
 		default: return serverWriteErrorText(error, context)
 	}
 }
+
+const accountChangedText = (context: WriteContext) => (context === 'delete' ? i18n.t('writeErrors.accountChangedDelete') : i18n.t('writeErrors.accountChanged'))
 
 function invalidText(context: WriteContext): string {
 	if (context === 'send') return i18n.t('writeErrors.sendInvalid')
@@ -104,6 +106,12 @@ function partnerUpgradeText(error: VaultWriteError, context: WriteContext): stri
 	return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
 }
 
+function shareScanPendingText(_: VaultWriteError, context: WriteContext): string {
+	if (context === 'open') return i18n.t('writeErrors.shareScanPendingOpen')
+	if (context === 'delete') return i18n.t('writeErrors.shareScanPendingDelete')
+	return context === 'passkey' ? i18n.t('passkey.errors.shareScanPending') : i18n.t('writeErrors.shareScanPending')
+}
+
 /** The codes about sharing: shared copies, partner organisations and their certificates. A `Map`, so a code named like an object property misses. */
 const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, context: WriteContext) => string>([
 	['restricted', () => i18n.t('writeErrors.restricted')],
@@ -116,6 +124,7 @@ const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, co
 	['partner_upgrade_required', partnerUpgradeText],
 	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
 	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
+	['share_scan_pending', shareScanPendingText],
 ])
 
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {

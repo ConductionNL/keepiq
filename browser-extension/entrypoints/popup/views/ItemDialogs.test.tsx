@@ -35,6 +35,25 @@ describe('DeleteItemDialog', () => {
 		await waitFor(() => expect(onDeleted).toHaveBeenCalled())
 	})
 
+	it('says nothing was deleted while the item waits for the share scan', async () => {
+		fakeBackground({ replies: { 'item.delete': { ok: false, error: { code: 'share_scan_pending' } } } })
+		render(withShell(<DeleteItemDialog item={itemMeta()} onDeleted={() => {}} onCancel={() => {}} />))
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Delete' }))
+		const alert = (await screen.findByRole('alert')).textContent
+		expect(alert).toContain('Nothing was deleted')
+		expect(alert).not.toContain('Nothing was saved')
+		expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+	})
+
+	it('says nothing was deleted after a switch to another account', async () => {
+		fakeBackground({ replies: { 'item.delete': { ok: false, error: { code: 'account_changed' } } } })
+		render(withShell(<DeleteItemDialog item={itemMeta()} onDeleted={() => {}} onCancel={() => {}} />))
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Delete' }))
+		const alert = (await screen.findByRole('alert')).textContent
+		expect(alert).toContain('nothing was deleted')
+		expect(alert).not.toContain('saved')
+	})
+
 	it('hands a locked vault back to the popup state', async () => {
 		fakeBackground({ replies: { 'item.delete': { ok: false, error: { code: 'locked' } } } })
 		const refreshState = vi.fn()

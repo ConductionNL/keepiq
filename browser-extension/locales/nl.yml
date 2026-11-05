@@ -232,6 +232,7 @@ writeErrors:
   forbidden: Keepiq staat deze wijziging niet toe. De Keepiq-webapp laat zien waarom.
   policy: Het beleid van je organisatie staat deze wijziging niet toe
   accountChanged: Je bent intussen naar een ander account gewisseld, dus er is niets opgeslagen. Wissel terug om het op te slaan.
+  accountChangedDelete: Je bent intussen naar een ander account gewisseld, dus er is niets verwijderd. Wissel terug om het te verwijderen.
   keepClash: Er bestaat al een map {name} één niveau hoger. Kies daarvoor Items naar bovenliggende map of Verwijderen, of wijzig eerst een van de namen.
   keepClashAfter: Een map die je wilde behouden heeft dezelfde naam als een map één niveau hoger, dus er is niets verwijderd. Controleer de keuzes opnieuw.
   invalid: Keepiq heeft deze wijziging geweigerd
@@ -258,6 +259,9 @@ writeErrors:
   federationUnavailable: Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.
   keepiqOutdated: Je Keepiq-server is te oud om deze wijziging op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken naar versie {version} of nieuwer.
   partnerClock: Het certificaat van een partnerorganisatie waarmee dit item gedeeld is, is niet geldig volgens de klok van deze computer. Er is niets opgeslagen; controleer de datum en tijd van deze computer, of voer deze wijziging uit in de Keepiq-webapp.
+  shareScanPending: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw.
+  shareScanPendingOpen: Dit item wacht op een controle van zijn delingen en kan nog niet worden bewerkt. Probeer het later opnieuw.
+  shareScanPendingDelete: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets verwijderd; probeer het later opnieuw.
   sendInvalid: Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw.
   sendOffline: De server is niet bereikbaar, er is niets verzonden
   argon2Unavailable: Wachtwoordbeveiliging is niet beschikbaar in deze browser
@@ -686,6 +690,7 @@ notificationBar:
     incomplete: Met wie deze login gedeeld is, veranderde steeds. Er is niets opgeslagen; probeer het opnieuw.
     badCertificate: De versleutelingssleutel van een ontvanger kon niet worden gelezen. Er is niets opgeslagen.
     keepiqOutdated: Je Keepiq-server is te oud. Er is niets opgeslagen; vraag je beheerder om Keepiq {version} of nieuwer.
+    shareScanPending: Deze login wacht op een controle van de delingen ervan. Er is niets opgeslagen; probeer het later opnieuw.
 
 passkey:
   unlockGet: Ontgrendel Keepiq om een passkey voor {rpId} te gebruiken
@@ -719,3 +724,4 @@ passkey:
     conflict: Deze login is tijdens het opslaan gewijzigd. Er is niets opgeslagen; probeer het opnieuw.
     partnerUpgradeRequired: "Er is niets opgeslagen: de Keepiq van {cloudIds} is te oud om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
     partnerUpgradeRequiredUnnamed: "Er is niets opgeslagen: een partnerorganisatie waarmee deze login gedeeld is, heeft een Keepiq die te oud is om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
+    shareScanPending: Deze login wacht op een controle van de delingen ervan die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw.

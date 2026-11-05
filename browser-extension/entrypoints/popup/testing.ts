@@ -213,7 +213,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 	const answers: FakeAnswers = { ...settingsAnswers(), ...vaultAnswers(), ...generatorAnswers(), ...sendAnswers(), ...popupAnswers() }
 	const reply = vi.fn(async (message: FakeMessage): Promise<unknown> => {
 		if (options.unanswered?.includes(message.kind)) return undefined
-		const canned = options.replies?.[message.kind]
+		const canned = options.replies && Object.hasOwn(options.replies, message.kind) ? options.replies[message.kind] : undefined
 		if (canned !== undefined) return typeof canned === 'function' ? canned(message) : canned
 		const answer = Object.hasOwn(answers, message.kind) ? answers[message.kind] : undefined
 		return answer ? answer(message) : { ok: true, state }

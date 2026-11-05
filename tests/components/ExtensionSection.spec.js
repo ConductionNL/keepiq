@@ -13,6 +13,8 @@ import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import ExtensionSection from '../../src/components/settings/ExtensionSection.vue'
 
+const ROUTE = '/apps/keepiq/api/settings/admin/policies'
+
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 function mountSection() {
@@ -20,7 +22,7 @@ function mountSection() {
 		global: {
 			stubs: {
 				CnSettingsSection: { template: '<section><slot /></section>' },
-				NcNoteCard: { template: '<div><slot /></div>' },
+				NcNoteCard: { template: '<div class="note"><slot /></div>' },
 			},
 		},
 	})
@@ -51,8 +53,40 @@ describe('ExtensionSection', () => {
 		await select.setValue('30')
 		await flush()
 
+		expect(axios.get).toHaveBeenCalledWith(ROUTE)
 		expect(put).toHaveBeenCalledTimes(1)
-		expect(put.mock.calls[0][1]).toEqual({ extension_max_idle_minutes: 30 })
+		expect(put).toHaveBeenCalledWith(ROUTE, { extension_max_idle_minutes: 30 })
+	})
+
+	it('shows the server message when loading is refused', async () => {
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Server says no' } },
+		})
+		const wrapper = mountSection()
+		await flush()
+
+		expect(wrapper.find('.note').text()).toBe('Server says no')
+	})
+
+	it('shows the server message when saving is refused, and clears it on the next save', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { extension_max_idle_minutes: 60 },
+		})
+		const put = vi.spyOn(axios, 'put').mockRejectedValueOnce({
+			response: { data: { message: 'Server says no' } },
+		})
+		const wrapper = mountSection()
+		await flush()
+
+		const select = wrapper.find('[data-testid="extension-max-idle"]')
+		await select.setValue('30')
+		await flush()
+		expect(wrapper.find('.note').text()).toBe('Server says no')
+
+		put.mockResolvedValue({ data: {} })
+		await select.setValue('15')
+		await flush()
+		expect(wrapper.find('.note').exists()).toBe(false)
 	})
 
 	it('defaults to four hours when nothing is stored', async () => {

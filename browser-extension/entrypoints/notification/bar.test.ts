@@ -651,6 +651,7 @@ describe('errors', () => {
 		['stale_source', 'The original of this shared login changed. Nothing was saved; try again.'],
 		['incomplete', 'The people this login is shared with kept changing. Nothing was saved; try again.'],
 		['bad_certificate', 'A recipient\'s encryption key could not be read. Nothing was saved.'],
+		['share_scan_pending', 'This login is waiting for a check of its shares. Nothing was saved; try again later.'],
 	])('words an update failing with %s', async (code, text) => {
 		await open(update())
 		writeReply = failure(code)

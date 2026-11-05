@@ -80,6 +80,10 @@
 			"add": "The original of this shared login changed. Nothing was saved; try again.",
 			"update": "The original of this shared login changed. Nothing was saved; try again."
 		},
+		"share_scan_pending": {
+			"add": "This login is waiting for a check of its shares. Nothing was saved; try again later.",
+			"update": "This login is waiting for a check of its shares. Nothing was saved; try again later."
+		},
 		"incomplete": {
 			"add": "The people this login is shared with kept changing. Nothing was saved; try again.",
 			"update": "The people this login is shared with kept changing. Nothing was saved; try again."
@@ -93,6 +97,10 @@
 			"update": "Edit this login in the Keepiq popup or web app to change its password."
 		},
 		"partner_unreachable": {
+			"add": "Something went wrong",
+			"update": "Something went wrong"
+		},
+		"partner_upgrade_required": {
 			"add": "Something went wrong",
 			"update": "Something went wrong"
 		},
@@ -218,6 +226,10 @@
 			"add": "Het origineel van deze gedeelde login is gewijzigd. Er is niets opgeslagen; probeer het opnieuw.",
 			"update": "Het origineel van deze gedeelde login is gewijzigd. Er is niets opgeslagen; probeer het opnieuw."
 		},
+		"share_scan_pending": {
+			"add": "Deze login wacht op een controle van de delingen ervan. Er is niets opgeslagen; probeer het later opnieuw.",
+			"update": "Deze login wacht op een controle van de delingen ervan. Er is niets opgeslagen; probeer het later opnieuw."
+		},
 		"incomplete": {
 			"add": "Met wie deze login gedeeld is, veranderde steeds. Er is niets opgeslagen; probeer het opnieuw.",
 			"update": "Met wie deze login gedeeld is, veranderde steeds. Er is niets opgeslagen; probeer het opnieuw."
@@ -231,6 +243,10 @@
 			"update": "Bewerk deze login in de Keepiq-pop-up of de Keepiq-webapp om het wachtwoord te wijzigen."
 		},
 		"partner_unreachable": {
+			"add": "Er ging iets mis",
+			"update": "Er ging iets mis"
+		},
+		"partner_upgrade_required": {
 			"add": "Er ging iets mis",
 			"update": "Er ging iets mis"
 		},

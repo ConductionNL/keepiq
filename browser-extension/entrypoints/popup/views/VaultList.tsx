@@ -87,7 +87,6 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 	)
 }
 
-/** The first sync's state, while the vault has no rows yet: failed, or still running. */
 function FirstSync({ failed, syncNow }: { failed: boolean; syncNow: () => void }) {
 	if (!failed) return <p className="loading" role="status"><span className="spinner" aria-hidden="true" />{i18n.t('vault.syncing')}</p>
 	return (
@@ -97,7 +96,6 @@ function FirstSync({ failed, syncNow }: { failed: boolean; syncNow: () => void }
 	)
 }
 
-/** No row passes the filters; the search hint only for a search that is not blank. */
 function NoMatch({ search, clearFilters }: { search: string; clearFilters: () => void }) {
 	return (
 		<EmptyState icon="search" title={i18n.t('vault.noMatch')}>
@@ -107,7 +105,6 @@ function NoMatch({ search, clearFilters }: { search: string; clearFilters: () =>
 	)
 }
 
-/** The rows that pass the filters, up to MAX_ROWS. */
 function ItemRows({ shown, card }: { shown: ItemMeta[]; card: (item: ItemMeta) => ReactNode }) {
 	return (
 		<section className="section" aria-labelledby="items-title">
@@ -120,7 +117,6 @@ function ItemRows({ shown, card }: { shown: ItemMeta[]; card: (item: ItemMeta) =
 	)
 }
 
-/** Every row is blocked: says why, by the first row's reason when it has one. */
 function AllBlocked({ reason, webApp }: { reason: BlockReason | undefined; webApp: ReactNode }) {
 	return (
 		<Banner tone="error" role="status">
@@ -129,7 +125,6 @@ function AllBlocked({ reason, webApp }: { reason: BlockReason | undefined; webAp
 	)
 }
 
-/** After the first sync: offline since a known sync, or the server too busy to answer. */
 function SyncBanner({ sync, syncNow }: { sync: Unlocked['sync']; syncNow: () => void }) {
 	if (sync.offline && sync.syncedAt) {
 		return (

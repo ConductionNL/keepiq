@@ -17,10 +17,11 @@ export function usePopupState(): { state: PopupState | null; error: string | nul
 	}, [])
 
 	useEffect(() => {
-		void dispatch({ kind: 'vault.status' }).then((result) => {
-			if (!result.ok) setError(errorText(result.code, ''))
+		void sendMessage({ kind: 'vault.status' }).then((result) => {
+			if (result.ok) setState(result.state)
+			else setError(errorText(result.code, ''))
 		})
-	}, [dispatch])
+	}, [])
 
 	return { state, error, dispatch }
 }

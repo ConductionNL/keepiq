@@ -1,19 +1,22 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { VaultWriteError } from '@/src/messages'
+import type { VaultWriteError, WriteErrorCode } from '@/src/messages'
 import { setLocale, type Locale } from '@/src/testing/i18n'
 import { writeErrorText } from './bar'
 
-// From the package root, as vitest runs; `RECORD_GOLDEN=1` rewrites the record.
+// From the package root, as vitest runs; `KEEPIQ_RECORD_GOLDEN=1` rewrites the record.
 const GOLDEN = resolve(process.cwd(), 'entrypoints/notification/bar.errors.golden.json')
 
-const CODES = [
-	'locked', 'session_revoked', 'write_locked', 'forbidden', 'policy', 'invalid', 'conflict', 'not_found', 'blocked', 'unreadable',
-	'offline', 'server_error', 'unknown', 'restricted', 'view_only', 'key_mismatch', 'account_changed', 'stale_source', 'incomplete',
-	'bad_certificate', 'unverified', 'partner_unreachable', 'partner_lookup_limit', 'federation_unavailable', 'keepiq_outdated',
-	'partner_clock', 'passkey_clone', 'argon2_unavailable', 'a_code_from_a_newer_background', 'toString', '__proto__', 'constructor',
-]
+// Typed per code, so a new WriteErrorCode does not compile until it is recorded here.
+const KNOWN = {
+	locked: 0, session_revoked: 0, write_locked: 0, forbidden: 0, policy: 0, invalid: 0, conflict: 0, not_found: 0, blocked: 0, unreadable: 0,
+	offline: 0, server_error: 0, unknown: 0, restricted: 0, view_only: 0, key_mismatch: 0, account_changed: 0, stale_source: 0,
+	share_scan_pending: 0, incomplete: 0, bad_certificate: 0, unverified: 0, partner_unreachable: 0, partner_upgrade_required: 0,
+	partner_lookup_limit: 0, federation_unavailable: 0, keepiq_outdated: 0, partner_clock: 0, passkey_clone: 0, argon2_unavailable: 0,
+} satisfies Record<WriteErrorCode, 0>
+
+const CODES = [...Object.keys(KNOWN), 'a_code_from_a_newer_background', 'toString', '__proto__', 'constructor']
 
 const ERRORS: Record<string, VaultWriteError | undefined> = {
 	'no answer': undefined,
@@ -30,7 +33,7 @@ function texts(locale: Locale): Record<string, Record<string, string>> {
 }
 
 describe('notification bar writeErrorText golden', () => {
-	if (process.env.RECORD_GOLDEN === '1') {
+	if (process.env.KEEPIQ_RECORD_GOLDEN === '1') {
 		it('records every code in both modes', () => {
 			writeFileSync(GOLDEN, JSON.stringify({ en: texts('en'), nl: texts('nl') }, null, '\t') + '\n')
 		})

@@ -41,7 +41,8 @@ export async function buildState(): Promise<PopupState> {
 		accounts,
 		active,
 		notice,
-		canAddAccount: MAX_ACCOUNTS > accounts.length,
+		// lizard 1.24.3 reads a bare `<` in a property value as generic parameters and merges the functions below into this one.
+		canAddAccount: (accounts.length < MAX_ACCOUNTS),
 		lastTab: await readLastTab(),
 	}
 }

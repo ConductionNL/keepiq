@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, getConfig, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -14,7 +14,8 @@ const GOLDEN = resolve(process.cwd(), 'entrypoints/popup/views/send/SendList.foc
 
 afterEach(cleanup)
 
-const settle = () => new Promise((done) => setTimeout(done, 150))
+// The fake background answers in microtasks, so one macrotask runs every reply and the renders after it.
+const settle = () => act(() => new Promise<void>((done) => setTimeout(done)))
 const sends = (...ids: string[]) => ids.map((id) => sendRow({ id }))
 
 /** Which control holds focus: its row's index and its name, or `body`. */
@@ -45,7 +46,6 @@ async function removeRow(user: ReturnType<typeof userEvent.setup>, index: number
 	trace.push(`dialog open: ${focused()}`)
 	const dialog = screen.getByRole('dialog')
 	await user.click(within(dialog).getByRole('button', { name: /Remove|Delete/ }))
-	await settle()
 	await settle()
 	trace.push(`removed: ${focused()}`)
 }
@@ -126,9 +126,10 @@ describe('SendList focus golden record', () => {
 			cleanup()
 			;(document.activeElement as HTMLElement | null)?.blur?.()
 		}
-		if (process.env.KEEPIQ_RECORD_GOLDEN === '1') writeFileSync(GOLDEN, JSON.stringify(got, null, '\t') + '\n')
+		// Both popup projects run this file; only the production one writes the record.
+		if (process.env.KEEPIQ_RECORD_GOLDEN === '1' && !getConfig().reactStrictMode) writeFileSync(GOLDEN, JSON.stringify(got, null, '\t') + '\n')
 		const want = JSON.parse(readFileSync(GOLDEN, 'utf8')) as Record<string, string[]>
-		for (const name of Object.keys(want)) await waitFor(() => expect(got[name], name).toEqual(want[name]))
+		for (const name of Object.keys(want)) expect(got[name], name).toEqual(want[name])
 		expect(Object.keys(got)).toEqual(Object.keys(want))
 	}, 60_000)
 })

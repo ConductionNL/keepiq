@@ -7,7 +7,7 @@ import { writeErrorText, type WriteContext } from './errors'
 
 const t = i18n.t as (key: string, substitutions?: Record<string, string>) => string
 
-const CONTEXTS = Object.keys({ item: 0, edit: 0, open: 0, folderName: 0, folderDelete: 0, send: 0, passkey: 0 } satisfies Record<WriteContext, 0>) as WriteContext[]
+const CONTEXTS = Object.keys({ item: 0, edit: 0, open: 0, folderName: 0, folderDelete: 0, send: 0, passkey: 0, delete: 0 } satisfies Record<WriteContext, 0>) as WriteContext[]
 
 /** The catalog key a code reads as, or one per context where they differ with `other` for the rest. */
 type Expected = string | (Partial<Record<WriteContext, string>> & { other: string })
@@ -20,7 +20,7 @@ const EXPECTED = {
 	write_locked: 'writeErrors.writeLocked',
 	forbidden: 'writeErrors.forbidden',
 	policy: 'writeErrors.policy',
-	account_changed: 'writeErrors.accountChanged',
+	account_changed: { delete: 'writeErrors.accountChangedDelete', other: 'writeErrors.accountChanged' },
 	invalid: { send: 'writeErrors.sendInvalid', folderDelete: 'writeErrors.folderChanged', other: 'writeErrors.invalid' },
 	conflict: {
 		passkey: 'passkey.errors.conflict', edit: 'writeErrors.stale', open: 'writeErrors.unmatched', folderName: 'writeErrors.duplicateFolder',
@@ -46,6 +46,9 @@ const EXPECTED = {
 	partner_clock: 'writeErrors.partnerClock',
 	passkey_clone: 'item.passkeyNoClone',
 	argon2_unavailable: 'writeErrors.argon2Unavailable',
+	share_scan_pending: {
+		open: 'writeErrors.shareScanPendingOpen', delete: 'writeErrors.shareScanPendingDelete', passkey: 'passkey.errors.shareScanPending', other: 'writeErrors.shareScanPending',
+	},
 } satisfies Record<WriteErrorCode, Expected>
 
 const CODES = Object.keys(EXPECTED) as WriteErrorCode[]
@@ -100,6 +103,14 @@ describe('writeErrorText', () => {
 
 	it('names the partners that could not be reached', () => {
 		expect(writeErrorText({ code: 'partner_unreachable', partners: partners('bob@other.example', 'carol@third.example') })).toContain('bob@other.example and carol@third.example')
+	})
+
+	it.each([
+		['en', 'bob@other.example, carol@third.example, and dave@fourth.example'],
+		['nl', 'bob@other.example, carol@third.example en dave@fourth.example'],
+	] as const)('joins the partners in the words of %s', (locale, list) => {
+		setLocale(locale)
+		expect(writeErrorText({ code: 'partner_unreachable', partners: partners('bob@other.example', 'carol@third.example', 'dave@fourth.example') })).toContain(`(${list})`)
 	})
 
 	it('uses the passkey wording for a conflict in the passkey window only', () => {

@@ -47,7 +47,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	const { sendPage, setSendPage, sendBusy, setSendBusy, sendFocus, setSendFocus, newSend, created, closeSend } = useSendPages()
 	const { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, gone } = useTabPages(lastTab, closeSend)
 	const [pick, setPick] = useState<Pick | null>(null)
-	const { dialog, setDialog, leave, leaveGuard } = useLeave(sendBusy)
+	const { dialog, setDialog, leave, leaveGuardRef } = useLeave(sendBusy)
 	// In memory only, so it is gone once the popup closes (share-sync).
 	const [shareSave, setShareSave] = useState<{ id: string; note: ShareSaveNote } | null>(null)
 	const { message: toast, show: showToast } = useToast()
@@ -76,7 +76,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	}, [keepFormPlace])
 
 	const parts = { accountId: active.id, refreshState, toast: showToast, windowId: tab?.windowId, footer, offline: snapshot?.sync.offline ?? false, syncNow, items, generate }
-	const { context, hiddenFormContext } = useShellContextValue(parts, leaveGuard)
+	const { context, hiddenFormContext } = useShellContextValue(parts, leaveGuardRef)
 
 	const open = useCallback((id: string) => {
 		leaveList()
@@ -189,7 +189,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 							label: i18n.t('form.discard'),
 							variant: 'danger',
 							onClick: () => {
-								leaveGuard.current = null
+								leaveGuardRef.current = null
 								setDialog(null)
 								dialog.then()
 							},
@@ -231,13 +231,13 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	}
 
 	/** The open page, if any, and the header over it: its title, Back on a page and New on a tab itself. */
-	function chrome() {
+	function pageAndHeader() {
 		const view = { current, form, picking: pick !== null, detail: detail !== undefined, section, history, sendPage }
 		const backs: Record<ShellPage, () => void> = {
 			pick: () => setPick(null),
 			form: () => leave(closeForm),
 			detail: () => setDetailId(null),
-			section: () => setSection(SECTION_PARENT[section!] ?? null),
+			section: () => setSection(section ? SECTION_PARENT[section] ?? null : null),
 			history: () => setHistory(false),
 			send: () => leave(() => setSendPage(null)),
 		}
@@ -247,7 +247,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		return { page, header: { title, active, busy: sendBusy, onAvatarClick: accounts, onBack: back, onAdd: add, onPopout } }
 	}
 
-	const { page, header } = chrome()
+	const { page, header } = pageAndHeader()
 	return (
 		<ShellContext.Provider value={context}>
 			<SendProvider>
