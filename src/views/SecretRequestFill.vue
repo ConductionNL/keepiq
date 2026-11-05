@@ -17,7 +17,7 @@
 -->
 <template>
 	<div class="keepiq-secret-request-fill" data-testid="secret-request-fill">
-		<header>
+		<header class="keepiq-secret-request-fill__header">
 			<h1>{{ t('keepiq', 'Fill in secret') }}</h1>
 		</header>
 
@@ -59,8 +59,11 @@
 
 		<div
 			v-else-if="loadError"
-			class="keepiq-secret-request-fill__error"
+			class="keepiq-secret-request-fill__unavailable"
 			data-testid="fill-load-error">
+			<div class="keepiq-secret-request-fill__unavailable-icon">
+				<LinkVariantOff :size="36" />
+			</div>
 			<p>{{ loadMessage }}</p>
 		</div>
 
@@ -68,6 +71,9 @@
 			v-else-if="store.publicRequest && unavailableMessage"
 			class="keepiq-secret-request-fill__unavailable"
 			data-testid="fill-unavailable">
+			<div class="keepiq-secret-request-fill__unavailable-icon">
+				<LinkVariantOff :size="36" />
+			</div>
 			<p>{{ unavailableMessage }}</p>
 		</div>
 
@@ -78,50 +84,95 @@
 			class="keepiq-secret-request-fill__form"
 			data-testid="fill-form"
 			@submit.prevent="onSubmit">
-			<label
-				v-for="field in store.publicRequest.requested_fields"
-				:key="field"
-				class="keepiq-secret-request-fill__field">
-				<span>{{ field }}</span>
-				<input
-					v-model="values[field]"
-					:type="inputType(field)"
-					autocomplete="off"
-					required
-					:data-testid="`fill-field-${field}`" />
-			</label>
+			<template v-if="!submitted">
+				<label
+					v-for="field in store.publicRequest.requested_fields"
+					:key="field"
+					class="keepiq-secret-request-fill__field">
+					<span>{{ inputLabel(field) }}</span>
+					<input
+						v-model="values[field]"
+						:type="inputType(field)"
+						autocomplete="off"
+						required
+						:data-testid="`fill-field-${field}`" />
+				</label>
 
-			<p
-				v-if="submitError"
-				class="keepiq-secret-request-fill__submit-error"
-				data-testid="fill-submit-error">
-				{{ submitError }}
-			</p>
+				<p
+					v-if="submitError"
+					class="keepiq-secret-request-fill__submit-error"
+					data-testid="fill-submit-error">
+					{{ submitError }}
+				</p>
 
-			<p
-				v-if="submitted"
-				class="keepiq-secret-request-fill__success"
-				data-testid="fill-success">
-				{{ t('keepiq', 'Thanks — the secret has been delivered.') }}
-			</p>
+				<NcButton
+					variant="primary"
+					wide
+					type="submit"
+					data-testid="fill-submit"
+					:disabled="busy">
+					{{ busy ? t('keepiq', 'Encrypting…') : t('keepiq', 'Submit') }}
+				</NcButton>
+			</template>
 
-			<button
-				v-if="!submitted"
-				type="submit"
-				class="primary"
-				data-testid="fill-submit"
-				:disabled="busy">
-				{{ busy ? t('keepiq', 'Encrypting…') : t('keepiq', 'Submit') }}
-			</button>
+			<!--
+			  The confirmation replaces the inputs, so the recipient sees what was
+			  sent instead of an editable form they can no longer submit. Masked
+			  fields stay masked, and with a fixed-length mask, so the summary
+			  never reveals a value or its length to whoever looks at the screen.
+			-->
+			<template v-else>
+				<p
+					class="keepiq-secret-request-fill__success"
+					data-testid="fill-success">
+					{{ t('keepiq', 'Thanks — the secret has been delivered.') }}
+				</p>
+
+				<table
+					class="keepiq-secret-request-fill__summary"
+					data-testid="fill-summary">
+					<tbody>
+						<tr
+							v-for="field in store.publicRequest.requested_fields"
+							:key="field">
+							<th scope="row">
+								{{ inputLabel(field) }}
+							</th>
+							<td :data-testid="`fill-summary-${field}`">
+								<template v-if="inputType(field) === 'password'">
+									<span aria-hidden="true">••••••••</span>
+									<span class="hidden-visually">{{
+										t('keepiq', 'Hidden')
+									}}</span>
+								</template>
+								<template v-else>
+									{{ values[field] }}
+								</template>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<p class="keepiq-secret-request-fill__close-hint">
+					{{ t('keepiq', 'You can close this window now.') }}
+				</p>
+			</template>
 		</form>
 	</div>
 </template>
 
 <script>
+import { NcButton } from '@nextcloud/vue'
+import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 
 export default {
 	name: 'SecretRequestFill',
+	components: {
+		NcButton,
+		LinkVariantOff,
+	},
+
 	props: {
 		token: {
 			type: String,
@@ -275,6 +326,32 @@ export default {
 		},
 
 		/**
+		 * The label a recipient reads above a requested field.
+		 *
+		 * The three column names get the wording the requester picked them by in
+		 * SecretRequestCreateDialog; an additional member is shown by the name the
+		 * requester typed, which is the only label it has.
+		 *
+		 * @param {string} field The requested field name.
+		 *
+		 * @return {string} The label to render.
+		 *
+		 * @spec exclude Presentation-only: labels the requested field names.
+		 */
+		inputLabel(field) {
+			switch (field) {
+				case 'key':
+					return t('keepiq', 'Key / password')
+				case 'login':
+					return t('keepiq', 'Login')
+				case 'url':
+					return t('keepiq', 'URL')
+				default:
+					return field
+			}
+		},
+
+		/**
 		 * @param {object} field The field descriptor.
 		 *
 		 * @spec exclude Presentation-only: masks inputs whose field name looks secret.
@@ -332,34 +409,146 @@ export default {
 	box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
-.keepiq-secret-request-fill__field {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	margin-bottom: 12px;
-}
-
-.keepiq-secret-request-fill__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
-}
-
-.keepiq-secret-request-fill__submit-error {
-	color: var(--color-error-text);
-	font-size: 13px;
-}
-
-.keepiq-secret-request-fill__success {
-	color: var(--color-success-text);
+.keepiq-secret-request-fill__header h1 {
+	margin: 0 0 16px 0;
+	font-size: 20px;
 	font-weight: 600;
 }
 
-.primary {
-	background-color: var(--color-primary-element, #0082c9);
-	color: var(--color-primary-element-text, #fff);
-	border: 0;
-	padding: 10px 20px;
-	border-radius: var(--border-radius, 4px);
+.keepiq-secret-request-fill__loading {
+	margin: 0;
+	color: var(--color-text-maxcontrast, #666);
+}
+
+.keepiq-secret-request-fill__error {
+	padding: 12px 16px;
+	border-inline-start: 4px solid var(--color-warning, #c28900);
+	border-radius: var(--border-radius-element, 8px);
+	background: var(--color-background-dark, #ededed);
+	background: color-mix(in srgb, var(--color-warning, #c28900) 12%, transparent);
+}
+
+.keepiq-secret-request-fill__error p {
+	margin: 0;
+}
+
+.keepiq-secret-request-fill__error p + p {
+	margin-top: 8px;
+}
+
+.keepiq-secret-request-fill__unavailable {
+	padding: 16px 0 8px;
+	text-align: center;
+}
+
+.keepiq-secret-request-fill__unavailable-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	margin: 0 auto 16px;
+	border-radius: 50%;
+	background: var(--color-background-dark, #ededed);
+	background: color-mix(in srgb, var(--color-error, #d91f2d) 12%, transparent);
+	color: var(--color-error, #d91f2d);
+}
+
+.keepiq-secret-request-fill__unavailable p {
+	margin: 0;
+	color: var(--color-text-maxcontrast, #666);
+}
+
+.keepiq-secret-request-fill__field {
+	display: block;
+	margin: 0 0 16px 0;
+}
+
+.keepiq-secret-request-fill__field span {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 13px;
+	color: var(--color-text-maxcontrast, #666);
+	overflow-wrap: anywhere;
+}
+
+.keepiq-secret-request-fill__field input {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	padding: 10px 12px;
+	border: 2px solid var(--color-border-maxcontrast, #949494);
+	border-radius: var(--border-radius-element, 8px);
+	background: var(--color-main-background, #fff);
+	color: var(--color-main-text, #222);
+}
+
+.keepiq-secret-request-fill__field input:focus-visible {
+	border-color: var(--color-main-elevated, var(--color-primary-element, #21468b));
+	outline: none;
+}
+
+.keepiq-secret-request-fill__submit-error {
+	margin: 0 0 12px 0;
+	color: var(--color-error-text);
+}
+
+.keepiq-secret-request-fill__success {
+	margin: 0 0 12px 0;
+	padding: 12px 16px;
+	border-inline-start: 4px solid var(--color-success, #2d7b41);
+	border-radius: var(--border-radius-element, 8px);
+	background: var(--color-background-dark, #ededed);
+	background: color-mix(in srgb, var(--color-success, #2d7b41) 12%, transparent);
+	color: var(--color-success-text, #2d7b41);
+	font-weight: 600;
+}
+
+.keepiq-secret-request-fill__form > .button-vue {
+	margin-top: 8px;
+}
+
+.keepiq-secret-request-fill__summary {
+	width: 100%;
+	margin: 0 0 16px 0;
+	border-collapse: collapse;
+}
+
+.keepiq-secret-request-fill__summary th,
+.keepiq-secret-request-fill__summary td {
+	padding: 8px 0;
+	border-bottom: 1px solid var(--color-border, #ededed);
+	text-align: start;
+	vertical-align: top;
+}
+
+.keepiq-secret-request-fill__summary tr:last-child th,
+.keepiq-secret-request-fill__summary tr:last-child td {
+	border-bottom: none;
+}
+
+.keepiq-secret-request-fill__summary th {
+	width: 40%;
+	padding-inline-end: 12px;
+	font-size: 13px;
+	font-weight: normal;
+	color: var(--color-text-maxcontrast, #666);
+	overflow-wrap: anywhere;
+}
+
+.keepiq-secret-request-fill__summary td {
+	color: var(--color-main-text, #222);
+	overflow-wrap: anywhere;
+}
+
+.keepiq-secret-request-fill__close-hint {
+	margin: 0;
+	color: var(--color-text-maxcontrast, #666);
+}
+
+@media (max-width: 480px) {
+	.keepiq-secret-request-fill {
+		padding: 24px 16px;
+	}
 }
 </style>

@@ -106,6 +106,35 @@ describe('SecretRequestFill', () => {
 		expect(wrapper.find('[data-testid="fill-success"]').exists()).toBe(true)
 	})
 
+	it('replaces the inputs with a summary that keeps secret values masked', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				token: 'tok-1',
+				status: 'pending',
+				requested_fields: ['key', 'login'],
+				public_certificate: 'PEM',
+			},
+		})
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { status: 'fulfilled' } })
+		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
+		await flush()
+		await wrapper.find('[data-testid="fill-field-key"]').setValue('p4ss')
+		await wrapper.find('[data-testid="fill-field-login"]').setValue('alice')
+		await wrapper.find('[data-testid="fill-form"]').trigger('submit.prevent')
+		await flush()
+		await vi.waitFor(() => expect(post).toHaveBeenCalled())
+		await flush()
+		expect(wrapper.findAll('input:not([type=hidden])').length).toBe(0)
+		expect(wrapper.find('[data-testid="fill-summary-login"]').text()).toBe(
+			'alice',
+		)
+		const key = wrapper.find('[data-testid="fill-summary-key"]').text()
+		expect(key).not.toContain('p4ss')
+		expect(key).toContain('Hidden')
+	})
+
 	it('renders the load-error block when the token resolution rejects', async () => {
 		vi.spyOn(axios, 'get').mockRejectedValue({
 			response: { data: { message: 'not found' } },
