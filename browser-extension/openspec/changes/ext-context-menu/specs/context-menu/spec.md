@@ -73,7 +73,7 @@ When a fill from the menu finds no field for the item in any frame of the tab, t
 - **GIVEN** an article page whose site has a matching login
 - **WHEN** the user picks the login under Autofill login
 - **THEN** the page shows "Keepiq found no login form to fill on this page."
-- **AND** nothing was decrypted for the page
+- **AND** the login reached only the content script of the frames its site matches, never the page; a card or identity is not decrypted
 
 #### Scenario: Declined question
 - **GIVEN** an `http:` login page and an item saved on `https:`
