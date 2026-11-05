@@ -265,6 +265,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			secretMapper: $secretMapper,
 			groupManager: $groupManager,
 			memberships: $memberships,
+			subAdmin: $this->createMock(\OCP\Group\ISubAdmin::class),
 		);
 		$this->service = new TeamFolderConfirmationService(
 			appConfig: $appConfig,

@@ -137,6 +137,47 @@ describe('team-folder roles', () => {
 		).toBe(true)
 	})
 
+	it('a manager cannot change a row that covers a manager, but may remove it', async () => {
+		currentUid = 'olga'
+		mockList({
+			owned: [],
+			memberOf: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					ownerId: 'alice',
+					grade: 'manage',
+					members: [
+						...members,
+						{
+							id: 'm-leads',
+							memberType: 'group',
+							memberId: 'leads',
+							grade: 'read',
+							addedBy: 'alice',
+						},
+					],
+					ownerOnlyMemberIds: ['m-olga', 'm-leads'],
+				},
+			],
+		})
+		const wrapper = await mountDialog()
+		expect(
+			wrapper
+				.find('[data-testid="team-folder-grade-leads"]')
+				.attributes('disabled'),
+		).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="team-folder-grade-vic"]')
+				.attributes('disabled'),
+		).toBeUndefined()
+		expect(
+			wrapper.find('[data-testid="team-folder-remove-leads"]').exists(),
+		).toBe(true)
+	})
+
 	it('a viewer gets no dialog content at all', async () => {
 		currentUid = 'vic'
 		mockList({

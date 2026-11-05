@@ -216,8 +216,9 @@ class TeamFolderService {
 	 * recipients (with their public certificates) and the secrets in the
 	 * folder subtree to encrypt for them.
 	 *
-	 * Idempotent: re-adding an existing membership returns a payload with
-	 * no new recipients.
+	 * Re-adding an existing membership adds no row and returns a payload
+	 * with no new recipients; a restriction sent with it replaces the
+	 * membership's use-only flag and end date, which is audited.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $memberType The member type (`user`|`group`)
@@ -228,8 +229,8 @@ class TeamFolderService {
 	 * @return array{member:TeamFolderMember,recipients:array<int,array{userId:string,certificate:string}>,secrets:array<int,array{id:string,name:string}>}
 	 *
 	 * @throws InvalidArgumentException On invalid input / not authorized
-	 * @throws OwnerOnlyException When a manager adds or changes a membership that covers them, or changes a manager's
-	 *   restriction
+	 * @throws OwnerOnlyException When a manager adds or changes a membership that covers a manager, or changes a
+	 *   manager's restriction
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
@@ -249,7 +250,12 @@ class TeamFolderService {
 			memberId: $memberId
 		);
 
-		$this->assertNotOwnCover(teamFolder: $teamFolder, memberType: $memberType, memberId: $memberId, userId: $userId);
+		$this->assertCoversNoManager(
+			teamFolder: $teamFolder,
+			memberType: $memberType,
+			memberId: $memberId,
+			userId: $userId
+		);
 
 		$coveredBefore = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
 		$membership = $this->existingMembership(teamFolderId: $teamFolderId, memberType: $memberType, memberId: $memberId);
@@ -257,6 +263,7 @@ class TeamFolderService {
 			$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $membership, userId: $userId, leaving: false);
 		}
 
+		$isNew = ($membership === null);
 		$membership ??= $this->createMembership(
 			teamFolderId: $teamFolderId,
 			memberType: $memberType,
@@ -265,6 +272,9 @@ class TeamFolderService {
 		);
 		if ($restriction !== null) {
 			$membership = $this->applyRestriction(membership: $membership, restriction: $restriction);
+			if ($isNew === false) {
+				$this->auditGradeChange(actorId: $userId, membership: $membership);
+			}
 		}
 
 		$newUsers = array_values(
@@ -642,7 +652,7 @@ class TeamFolderService {
 	 * @return TeamFolderMember
 	 *
 	 * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
-	 * @throws OwnerOnlyException When a manager changes a manager or a membership that covers them
+	 * @throws OwnerOnlyException When a manager changes a manager or a membership that covers a manager
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
@@ -672,7 +682,7 @@ class TeamFolderService {
 		}
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $member, userId: $ownerId, leaving: false);
-		$this->assertNotOwnCover(
+		$this->assertCoversNoManager(
 			teamFolder: $teamFolder,
 			memberType: $member->getMemberType(),
 			memberId: $member->getMemberId(),
@@ -697,16 +707,32 @@ class TeamFolderService {
 		$member = $this->memberMapper->update($member);
 		$this->resolveCopiesOf(membership: $member);
 
-		$this->audit->gradeChanged(
-			actorId: $ownerId,
-			teamFolderId: $teamFolderId,
-			memberType: $member->getMemberType(),
-			memberId: $member->getMemberId(),
-			grade: $grade,
-		);
+		$this->auditGradeChange(actorId: $ownerId, membership: $member);
 
 		return $member;
 	}//end setMemberGrade()
+
+	/**
+	 * Record a membership's grade, use-only flag and end date after a change.
+	 *
+	 * @param string           $actorId    The user who made the change
+	 * @param TeamFolderMember $membership The membership row as stored
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	private function auditGradeChange(string $actorId, TeamFolderMember $membership): void {
+		$this->audit->gradeChanged(
+			actorId: $actorId,
+			teamFolderId: $membership->getTeamFolderId(),
+			memberType: $membership->getMemberType(),
+			memberId: $membership->getMemberId(),
+			grade: $membership->effectiveGrade(),
+			useOnly: (bool)$membership->getUseOnly(),
+			expiresAt: $membership->getExpiresAt()?->format('c'),
+		);
+	}//end auditGradeChange()
 
 	/**
 	 * Tell a manager's browser which of its own recipient copies to decrypt
@@ -782,11 +808,12 @@ class TeamFolderService {
 	}//end assertManagerMayTouch()
 
 	/**
-	 * Keep a member's own access with the owner: a caller who is not the owner
-	 * may not add or change a membership that covers them, their own user row
-	 * or a group they are in. Otherwise a manager could lift the use-only flag
-	 * or end date the owner set on their own access, or add a membership
-	 * without one, and keep the folder past it.
+	 * Keep every manager's access with the owner: a caller who is not the
+	 * owner may not add or change a membership that covers a manager, the
+	 * caller included, or may come to cover one without the owner (a group a
+	 * manager is a subadmin of). Grants are unioned, so any such membership
+	 * without the owner's use-only flag or end date would let a manager keep
+	 * the folder past the end the owner set.
 	 *
 	 * @param TeamFolder $teamFolder The team folder
 	 * @param string     $memberType The membership's member type (`user`|`group`)
@@ -795,19 +822,24 @@ class TeamFolderService {
 	 *
 	 * @return void
 	 *
-	 * @throws OwnerOnlyException When the membership covers a caller who is not the owner
+	 * @throws OwnerOnlyException When the membership covers a manager and the caller is not the owner
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
-	private function assertNotOwnCover(TeamFolder $teamFolder, string $memberType, string $memberId, string $userId): void {
+	private function assertCoversNoManager(
+		TeamFolder $teamFolder,
+		string $memberType,
+		string $memberId,
+		string $userId,
+	): void {
 		if ($teamFolder->getOwnerId() === $userId) {
 			return;
 		}
 
-		if (in_array($userId, $this->memberships->expandMember(memberType: $memberType, memberId: $memberId), true) === true) {
-			throw new OwnerOnlyException(message: 'Only the owner can add or change a membership that covers you');
+		if ($this->queries->coversAManager(teamFolder: $teamFolder, memberType: $memberType, memberId: $memberId) === true) {
+			throw new OwnerOnlyException(message: 'Only the owner can add or change a membership that covers a manager');
 		}
-	}//end assertNotOwnCover()
+	}//end assertCoversNoManager()
 
 	/**
 	 * Set a membership's use-only flag and end date, refusing use-only on a

@@ -763,26 +763,33 @@ export default {
 
 		/**
 		 * Whether the current user may change this member's role: the owner
-		 * any member, a manager anyone below manager.
+		 * any member, a manager anyone below manager, except a row the server
+		 * lists as the owner's to set (one that covers a manager).
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canChangeMember(member) {
-			return this.isOwner || member.grade !== 'manage'
+			if (this.isOwner) {
+				return true
+			}
+			const ownerOnly = this.teamFolder?.ownerOnlyMemberIds ?? []
+			return member.grade !== 'manage' && !ownerOnly.includes(member.id)
 		},
 
 		/**
 		 * Whether the current user may remove this member: the owner any
-		 * member, a manager anyone below manager and themselves (leaving).
+		 * member, a manager anyone below manager (removing only narrows
+		 * access, so a row that covers a manager may go) and themselves
+		 * (leaving).
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canRemoveMember(member) {
-			if (this.canChangeMember(member)) {
+			if (this.isOwner || member.grade !== 'manage') {
 				return true
 			}
 			return (

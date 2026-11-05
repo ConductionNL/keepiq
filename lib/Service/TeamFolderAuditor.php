@@ -191,13 +191,16 @@ class TeamFolderAuditor {
 	}//end memberRemoved()
 
 	/**
-	 * Record a membership permission-grade change.
+	 * Record a membership change: its grade, and its use-only flag and end
+	 * date when the change set them (identifiers and dates only).
 	 *
-	 * @param string $actorId The acting user (the folder owner)
-	 * @param string $teamFolderId The TeamFolder UUID
-	 * @param string $memberType The member type (`user`|`group`)
-	 * @param string $memberId The Nextcloud user or group ID
-	 * @param string $grade The new grade (`read`|`write`)
+	 * @param string      $actorId      The acting user (the owner or a manager)
+	 * @param string      $teamFolderId The TeamFolder UUID
+	 * @param string      $memberType   The member type (`user`|`group`)
+	 * @param string      $memberId     The Nextcloud user or group ID
+	 * @param string      $grade        The grade (`read`|`write`|`manage`)
+	 * @param bool|null   $useOnly      The use-only flag after the change, null when not known
+	 * @param string|null $expiresAt    The end date after the change (ISO 8601), null for none
 	 *
 	 * @return void
 	 *
@@ -209,7 +212,19 @@ class TeamFolderAuditor {
 		string $memberType,
 		string $memberId,
 		string $grade,
+		?bool $useOnly = null,
+		?string $expiresAt = null,
 	): void {
+		$metadata = [
+			'memberType' => $memberType,
+			'memberId' => $memberId,
+			'grade' => $grade,
+		];
+		if ($useOnly !== null) {
+			$metadata['useOnly'] = $useOnly;
+			$metadata['expiresAt'] = $expiresAt;
+		}
+
 		$this->dispatch(
 			event: $this->auditEvents->forUser(
 				actorId: $actorId,
@@ -217,11 +232,7 @@ class TeamFolderAuditor {
 				objectType: self::OBJECT_TYPE,
 				objectId: $teamFolderId,
 				objectName: '',
-				metadata: [
-					'memberType' => $memberType,
-					'memberId' => $memberId,
-					'grade' => $grade,
-				],
+				metadata: $metadata,
 			)
 		);
 	}//end gradeChanged()
