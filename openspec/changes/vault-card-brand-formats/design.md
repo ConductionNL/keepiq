@@ -31,8 +31,9 @@
 - `lengths`: the number lengths the brand issues.
 - `code`: `{ "name": "CID", "size": 4 }`, or `null` for a card without one (Bancontact, UATP).
 - `gaps`: where a space goes, by length, with a `default` (Amex `{"default": [4, 10]}`, UATP `[4, 9]`, a 19-digit card `[4, 8, 12, 16]`).
-- `networks`: for a co-branded range, the other brands it runs on, in the order a checkout should prefer them.
+- `luhn`: `false` where the brand's numbers need not pass the Luhn check (UnionPay); absent means they must.
 - `selectCodes`: the option values and texts checkout pages use for it (`mc`, `amex`, `cup`, `bcmc`). Only codes seen on real checkouts go in.
+- `networks`: for a co-branded entry, the brand ids whose `selectCodes` a checkout falls back to, in order. A co-branded range is an entry of its own (`visa-dankort`, `unionpay-discover`, `rupay-jcb`) with the label of its specific brand.
 
 JSON rather than a JS module, so the extension can carry a byte-identical copy and the mobile apps could read the same file later.
 

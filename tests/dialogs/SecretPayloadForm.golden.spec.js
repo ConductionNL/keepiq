@@ -84,9 +84,9 @@ function mask(value) {
 
 function field(kind) {
 	return {
-		props: ['modelValue', 'label', 'required', 'disabled'],
+		props: ['modelValue', 'label', 'required', 'disabled', 'helperText'],
 		emits: ['update:modelValue'],
-		template: `<input data-kind="${kind}" :aria-label="label" @input="$emit('update:modelValue', $event.target.value)" />`,
+		template: `<input data-kind="${kind}" :aria-label="label" :data-helper="helperText || undefined" @input="$emit('update:modelValue', $event.target.value)" />`,
 	}
 }
 
@@ -310,6 +310,9 @@ describe('create dialog value part (golden)', () => {
 		const badNumber = { html: formHtml(wrapper), state: formState(wrapper) }
 		await type(wrapper, '[data-testid="card-number"]', '4111111111111111')
 		const goodNumber = { html: formHtml(wrapper), state: formState(wrapper) }
+		await type(wrapper, '[data-testid="card-number"]', '37828224631000')
+		await type(wrapper, '[data-testid="card-cvv"]', '123')
+		const amexHints = { html: formHtml(wrapper), state: formState(wrapper) }
 		for (const [selector, text] of Object.entries(CARD_INPUTS)) {
 			await type(wrapper, selector, text)
 		}
@@ -319,6 +322,7 @@ describe('create dialog value part (golden)', () => {
 			empty,
 			badNumber,
 			goodNumber,
+			amexHints,
 			filled,
 			created: mask(useSecretStore().createSecret.mock.calls),
 		})
