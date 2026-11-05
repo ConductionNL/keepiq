@@ -205,7 +205,7 @@ const CHECKOUT = `<form id="pay">
 	<label>PIN <input id="pin" maxlength="4"></label>
 	<button>Pay</button>
 </form>`
-const CARD_VALUES: FormValues = { cardholder: 'Anna de Vries', number: '5555555555554444', expMonth: '03', expYear: '2027', cvv: '123', brand: 'Mastercard' }
+const CARD_VALUES: FormValues = { cardholder: 'Anna de Vries', number: '5555555555554444', expMonth: '03', expYear: '2027', cvv: '123', brand: 'Mastercard', brandId: 'mastercard' }
 const form = (overrides: Partial<FillExecuteForm> = {}): FillExecuteForm =>
 	({ kind: 'fill.executeForm', form: 'card', values: { ...CARD_VALUES }, origin: location.origin, ...overrides })
 const selected = (id: string) => (document.getElementById(id) as HTMLSelectElement).value

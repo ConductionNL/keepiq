@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fillSelect } from './fields'
-import { brandOptions, expiryPattern, formatExpiry, FORMATTERS, monthOptions, numberParts, splitNumber, yearOptions } from './format'
+import { expiryPattern, formatExpiry, FORMATTERS, monthOptions, numberParts, splitNumber, yearOptions } from './format'
 
 const input = (html: string) => {
 	document.body.innerHTML = html
@@ -124,17 +124,17 @@ describe('number', () => {
 })
 
 describe('other members', () => {
-	it('names a brand by its common codes', () => {
-		expect(brandOptions('Mastercard')).toEqual(['Mastercard', 'master card', 'mc'])
-		expect(brandOptions('American Express')).toEqual(['American Express', 'amex', 'ax'])
-		expect(brandOptions('Maestro')).toEqual(['Maestro'])
+	it('selects the brand option by its id and types the brand name into an input', () => {
+		const select = input('<select><option>VISA</option><option>MC</option><option>AMEX</option></select>') as unknown as HTMLSelectElement
+		expect(fillSelect(select, FORMATTERS.brand(select, { brand: 'Mastercard', brandId: 'mastercard' }))).toBe(true)
+		expect(select.value).toBe('MC')
+		expect(FORMATTERS.brand(input('<input>'), { brand: 'Visa', brandId: 'visa' })).toEqual(['Visa'])
 	})
 
-	it('selects the brand option and types the brand name into an input', () => {
-		const select = input('<select><option>VISA</option><option>MC</option><option>AMEX</option></select>') as unknown as HTMLSelectElement
-		expect(fillSelect(select, FORMATTERS.brand(select, { brand: 'Mastercard' }))).toBe(true)
-		expect(select.value).toBe('MC')
-		expect(FORMATTERS.brand(input('<input>'), { brand: 'Visa' })).toEqual(['Visa'])
+	it('selects a co-branded card\'s other network when the page offers only that one', () => {
+		const select = input('<select><option>Visa</option><option>Mastercard</option></select>') as unknown as HTMLSelectElement
+		expect(fillSelect(select, FORMATTERS.brand(select, { brand: 'Dankort', brandId: 'visa-dankort' }))).toBe(true)
+		expect(select.value).toBe('Visa')
 	})
 
 	it('joins an address on one line in an input and keeps its lines in a textarea', () => {

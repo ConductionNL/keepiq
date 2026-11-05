@@ -1,0 +1,1475 @@
+{
+	"comment": "Card brand per number; the web app and the browser extension both test against these. Review every changed label (openspec/changes/vault-card-brand-formats).",
+	"vectors": [
+		{
+			"number": "4000000000000002",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "3000000000000004",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "5000000000000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5100000000000008",
+			"label": "Mastercard",
+			"brand": "mastercard"
+		},
+		{
+			"number": "5500000000000004",
+			"label": "Mastercard",
+			"brand": "mastercard"
+		},
+		{
+			"number": "5600000000000003",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "2221000000000009",
+			"label": "Mastercard",
+			"brand": "mastercard"
+		},
+		{
+			"number": "2720990000000007",
+			"label": "Mastercard",
+			"brand": "mastercard"
+		},
+		{
+			"number": "2220990000000002",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "2721000000000004",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "340000000000009",
+			"label": "American Express",
+			"brand": "american-express"
+		},
+		{
+			"number": "330000000000001",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "350000000000006",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "370000000000002",
+			"label": "American Express",
+			"brand": "american-express"
+		},
+		{
+			"number": "360000000000004",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "380000000000000",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "6011000000000004",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6010000000000005",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6012000000000003",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6440000000000005",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6490000000000004",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6430000000000007",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6500000000000002",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6580000000000005",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6590000000000003",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3050000000000003",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "2990000000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3060000000000001",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3095000000000000",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "3094000000000001",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3096000000000009",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3600000000000008",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "3500000000000009",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3700000000000007",
+			"label": "American Express",
+			"brand": "american-express"
+		},
+		{
+			"number": "3800000000000006",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "3900000000000005",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "3528000000000007",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3589000000000003",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3527000000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3590000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3088000000000009",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3087000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3102000000000001",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3103000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3112000000000009",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3120000000000009",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3111000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3121000000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3158000000000004",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3159000000000003",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3157000000000005",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3160000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3337000000000008",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3349000000000004",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3336000000000009",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3350000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6200000000000005",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "6100000000000006",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6300000000000004",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "8100000000000002",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "8171000000000006",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "8099000000000005",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8172000000000005",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6221260000000000",
+			"label": "UnionPay",
+			"brand": "unionpay-discover"
+		},
+		{
+			"number": "6229250000000003",
+			"label": "UnionPay",
+			"brand": "unionpay-discover"
+		},
+		{
+			"number": "6221250000000001",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "6229260000000002",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "4900000000000003",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "5900000000000000",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6000000000000007",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6400000000000003",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6700000000000000",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6600000000000001",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6800000000000009",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6759000000000000",
+			"label": "Maestro",
+			"brand": "maestro-uk"
+		},
+		{
+			"number": "6758000000000001",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6760000000000007",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6767700000000005",
+			"label": "Maestro",
+			"brand": "maestro-uk"
+		},
+		{
+			"number": "6767690000000008",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6767710000000004",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6767740000000001",
+			"label": "Maestro",
+			"brand": "maestro-uk"
+		},
+		{
+			"number": "6767730000000002",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6767750000000000",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "2200000000000004",
+			"label": "Mir",
+			"brand": "mir"
+		},
+		{
+			"number": "2204000000000000",
+			"label": "Mir",
+			"brand": "mir"
+		},
+		{
+			"number": "2199000000000007",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "2205000000000009",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "4011780000000006",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4011770000000007",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4011790000000005",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4011800000000002",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4312740000000006",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4312730000000007",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4312750000000005",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4389350000000002",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4389340000000003",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4389360000000001",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4514160000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4514150000000004",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4514170000000002",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4573930000000007",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4573920000000008",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4573940000000006",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4576310000000009",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4576300000000000",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4576320000000008",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "4576330000000007",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "5041750000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "5041740000000001",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5041760000000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5066990000000002",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "5067780000000006",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "5066980000000003",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5067790000000005",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5090000000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "5099990000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "5089990000000005",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6277800000000006",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6277790000000009",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "6277810000000005",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "6362970000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6362960000000004",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6362980000000002",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6363680000000007",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6363670000000008",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6363690000000006",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6500310000000005",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6500330000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6500300000000006",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6500340000000002",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6500350000000001",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6500510000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6500520000000009",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6500570000000004",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6500810000000004",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6500560000000005",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6500820000000003",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6504050000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6504390000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6504040000000004",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6504400000000000",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6504850000000006",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6505380000000003",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6504840000000007",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6505390000000002",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6505410000000008",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6505980000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6505400000000009",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6505990000000009",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6507000000000005",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6507180000000005",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6506990000000008",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6507190000000004",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6507200000000001",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6507270000000004",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6507280000000003",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6509010000000002",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6509780000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6509000000000003",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6509790000000009",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6516520000000001",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6516790000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6516510000000002",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6516800000000007",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6517040000000009",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6517050000000008",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6550000000000001",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6550190000000000",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6549990000000007",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6550200000000007",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6550210000000006",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6550580000000002",
+			"label": "Elo",
+			"brand": "elo"
+		},
+		{
+			"number": "6550590000000001",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6370950000000005",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6370940000000006",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6370960000000004",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6375680000000003",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6375670000000004",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6375690000000002",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6375990000000006",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6375980000000007",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6376000000000003",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6376090000000004",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6376080000000005",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6376100000000001",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6376120000000009",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6376110000000000",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6376130000000008",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6373742300000000",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6373742200000001",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6373742400000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6374335800000007",
+			"label": "Hiper",
+			"brand": "hiper"
+		},
+		{
+			"number": "6374335700000008",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6374335900000006",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6062820000000003",
+			"label": "Hipercard",
+			"brand": "hipercard"
+		},
+		{
+			"number": "6062810000000004",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6062830000000002",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "9792000000000003",
+			"label": "Troy",
+			"brand": "troy"
+		},
+		{
+			"number": "9791000000000004",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "9793000000000002",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "5060990000000008",
+			"label": "Verve",
+			"brand": "verve"
+		},
+		{
+			"number": "5061980000000008",
+			"label": "Verve",
+			"brand": "verve"
+		},
+		{
+			"number": "5060980000000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5061990000000007",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5078650000000008",
+			"label": "Verve",
+			"brand": "verve"
+		},
+		{
+			"number": "5079640000000008",
+			"label": "Verve",
+			"brand": "verve"
+		},
+		{
+			"number": "5078640000000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5079650000000007",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6500020000000000",
+			"label": "Verve",
+			"brand": "verve"
+		},
+		{
+			"number": "6500270000000001",
+			"label": "Verve",
+			"brand": "verve"
+		},
+		{
+			"number": "6500010000000001",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6500280000000000",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "5082000000000000",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "5081000000000001",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5083000000000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5085000000000007",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "5089000000000003",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "5084000000000008",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6069000000000005",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6068000000000006",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6070000000000002",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6060000000000004",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6080000000000000",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6090000000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "6521500000000006",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6521900000000008",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6521400000000009",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6522000000000006",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6525000000000003",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6521000000000007",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6526000000000002",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6528500000000009",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6528900000000001",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6528400000000002",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6529000000000009",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6530030000000003",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6530040000000002",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "6530020000000004",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "6530050000000001",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "8171900000000007",
+			"label": "UnionPay",
+			"brand": "unionpay"
+		},
+		{
+			"number": "8172100000000003",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8172200000000001",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8172300000000009",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8172500000000004",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8172600000000002",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8172700000000000",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8172800000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8172900000000006",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8173000000000004",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8173300000000008",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8173800000000007",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8173200000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8173900000000005",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8174060000000007",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8174100000000001",
+			"label": "RuPay",
+			"brand": "rupay"
+		},
+		{
+			"number": "8174050000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "8174110000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "3538000000000005",
+			"label": "RuPay",
+			"brand": "rupay-jcb"
+		},
+		{
+			"number": "3538020000000003",
+			"label": "RuPay",
+			"brand": "rupay-jcb"
+		},
+		{
+			"number": "3537990000000008",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3538030000000002",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3538050000000000",
+			"label": "RuPay",
+			"brand": "rupay-jcb"
+		},
+		{
+			"number": "3538060000000009",
+			"label": "RuPay",
+			"brand": "rupay-jcb"
+		},
+		{
+			"number": "3538040000000001",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3538070000000008",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3538090000000006",
+			"label": "RuPay",
+			"brand": "rupay-jcb"
+		},
+		{
+			"number": "3538080000000007",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "3538100000000003",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "5019000000000008",
+			"label": "Dankort",
+			"brand": "dankort"
+		},
+		{
+			"number": "5018000000000009",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "5020000000000005",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "4571000000000001",
+			"label": "Dankort",
+			"brand": "visa-dankort"
+		},
+		{
+			"number": "4570000000000002",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4572000000000000",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "6703000000000007",
+			"label": "Bancontact",
+			"brand": "bancontact"
+		},
+		{
+			"number": "6702000000000008",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "6704000000000006",
+			"label": "Maestro",
+			"brand": "maestro"
+		},
+		{
+			"number": "100000000000009",
+			"label": "UATP",
+			"brand": "uatp"
+		},
+		{
+			"number": "000000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "200000000000008",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "4111 1111 1111 1111",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "4222222222222",
+			"label": "Visa",
+			"brand": "visa"
+		},
+		{
+			"number": "5555-5555-5555-4444",
+			"label": "Mastercard",
+			"brand": "mastercard"
+		},
+		{
+			"number": "378282246310005",
+			"label": "American Express",
+			"brand": "american-express"
+		},
+		{
+			"number": "30569309025904",
+			"label": "Diners Club",
+			"brand": "diners-club"
+		},
+		{
+			"number": "6011111111111117",
+			"label": "Discover",
+			"brand": "discover"
+		},
+		{
+			"number": "3530111333300000",
+			"label": "JCB",
+			"brand": "jcb"
+		},
+		{
+			"number": "6999123412341234",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "9999888877776666",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "12345",
+			"label": "UATP",
+			"brand": "uatp"
+		},
+		{
+			"number": "2205000000000000",
+			"label": "Card",
+			"brand": null
+		},
+		{
+			"number": "2720999999999999",
+			"label": "Mastercard",
+			"brand": "mastercard"
+		},
+		{
+			"number": "2721000000000000",
+			"label": "Card",
+			"brand": null
+		}
+	]
+}

@@ -5,7 +5,8 @@
 import type { OpenSecretRow } from '@/src/api/types'
 import { isFormRole, type FormConfirmation, type FormKind, type FormQuestion, type FormRole, type FormValues } from '@/src/messages'
 import { baseDomain } from '@/src/vault/match'
-import { cardBrand, text } from '@/src/vault/payloads'
+import { cardBrandInfo } from '@/src/vault/cards'
+import { text } from '@/src/vault/payloads'
 import { isLocalhost } from '@/src/vault/url'
 import type { VaultSnapshot } from '@/src/vault/types'
 import { byLastUsed } from './matcher'
@@ -66,7 +67,10 @@ const MEMBERS: Record<FormRole, (payload: Payload) => FormValues> = {
 	expMonth: (payload) => ({ expMonth: expiry(payload)?.month }),
 	expYear: (payload) => ({ expYear: expiry(payload)?.year }),
 	securityCode: (payload) => ({ cvv: text(payload, 'cvv') }),
-	brand: (payload) => ({ brand: cardBrand(text(payload, 'number')) ?? undefined }),
+	brand: (payload) => {
+		const brand = cardBrandInfo(text(payload, 'number'))
+		return { brand: brand?.label, brandId: brand?.id }
+	},
 	fullName: (payload) => ({ fullName: `${text(payload, 'firstName')} ${text(payload, 'lastName')}`.trim() }),
 	firstName: (payload) => ({ firstName: text(payload, 'firstName') }),
 	lastName: (payload) => ({ lastName: text(payload, 'lastName') }),

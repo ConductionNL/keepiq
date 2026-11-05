@@ -49,7 +49,7 @@ describe('parseExpiry', () => {
 describe('membersFor', () => {
 	it('returns only the values the roles ask for', () => {
 		expect(membersFor('card', CARD, ['cardholder'])).toEqual({ cardholder: 'Anna de Vries' })
-		expect(membersFor('card', CARD, ['number', 'expMonth', 'securityCode', 'brand'])).toEqual({ number: '4111111111111111', expMonth: '03', cvv: '123', brand: 'Visa' })
+		expect(membersFor('card', CARD, ['number', 'expMonth', 'securityCode', 'brand'])).toEqual({ number: '4111111111111111', expMonth: '03', cvv: '123', brand: 'Visa', brandId: 'visa' })
 		expect(membersFor('card', CARD, ['expiry'])).toEqual({ expMonth: '03', expYear: '2027' })
 		expect(membersFor('card', CARD, ['firstName'])).toEqual({})
 	})

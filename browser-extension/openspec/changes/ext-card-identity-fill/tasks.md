@@ -49,4 +49,7 @@
 - [x] 5.1 Update ADR-002 (the inline list may show a card's brand and last four and an identity's full name or email), `ARCHITECTURE.md` (messages, modules, the `inlineSession` kind), `SECURITY.md` (per-frame members, the two questions, PIN and BSN never filled), `../docs/browser-extension/using.md` and `privacy.md`; run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npm run build:firefox`
   - `grep -rn "chrome\." src/ entrypoints/` matches only comments
   - No new permission in either built manifest
+- [x] 5.3 Card brands from Keepiq's table (keepiq `vault-card-brand-formats`): `src/vault/card-brands.json` and `card-brand-vectors.json` as byte-identical copies of the web app's, `src/vault/cards.ts` (narrowest range wins, grouping, mask, hints, `brandOptions()` with co-branded fallback), `brandId` on `FormValues`, the popup detail grouped by brand and the item form's non-blocking hints
+  - Tests: `src/vault/cards.test.ts` (every vector, byte-identity once the web files are on this branch), the co-branded select in `format.test.ts`, the Amex detail and the hints in the popup tests
+
 - [ ] 5.2 Manual: load both builds and walk every scenario of `specs/card-identity-fill` on the test site, the popup, the inline list (keyboard and NVDA or VoiceOver), and the context menu; on Firefox also the card list in the top frame and the cross-site question

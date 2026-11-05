@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { i18n } from '#i18n'
 import type { EditableItem, ShareSaveNote, VaultSnapshotReply, VaultWriteError, WriteResult } from '@/src/messages'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
+import { cardNumberHint, securityCodeHint } from '@/src/vault/cards'
 import { CARD_FIELDS, emptyValues, formKind, formSections, fromItem, hasLineBreak, IDENTITY_FIELDS, isMultiline, isNewItemType, keepLineBreaks, type CardField, type FormValues, type IdentityField } from '@/src/vault/fields'
 import { folderPath } from '@/src/vault/list'
 import { AdditionalFieldsEditor } from '../components/AdditionalFieldsEditor'
@@ -25,6 +26,21 @@ import { FolderPicker } from './FolderPicker'
 type Unlocked = Extract<VaultSnapshotReply, { state: 'unlocked' }>
 
 export type FormMode = 'add' | 'edit' | 'clone'
+
+const DIGITS: ReadonlySet<CardField> = new Set(['number', 'cvv', 'pin'])
+
+/** The card number's and security code's advice; it never blocks Save. */
+function cardHint(card: Record<CardField, string>, member: CardField): string | undefined {
+	if (member === 'cvv') {
+		const code = securityCodeHint(card.number, card.cvv)
+		return code ? i18n.t('form.cardCodeLength', { brand: code.brand, name: code.name, size: String(code.size) }) : undefined
+	}
+	if (member !== 'number') return undefined
+	const hint = cardNumberHint(card.number)
+	if (hint?.code === 'length') return i18n.t('form.cardNumberLength', { brand: hint.brand })
+	if (hint?.code === 'lengthUnknown') return i18n.t('form.cardNumberLengthUnknown')
+	return hint ? i18n.t('form.cardNumberChecksum') : undefined
+}
 
 interface Props {
 	mode: FormMode
@@ -313,7 +329,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 							? (
 								<>
 									{kind === 'card' && CARD_FIELDS.map((member) => (
-										<TextField key={member} label={cardLabels[member]} type={masked.has(member) ? 'password' : 'text'} value={values.card[member]} onChange={card(member)} error={error(`card.${member}`)} autoComplete="off" />
+										<TextField key={member} label={cardLabels[member]} type={masked.has(member) ? 'password' : 'text'} value={values.card[member]} onChange={card(member)} error={error(`card.${member}`)} hint={cardHint(values.card, member)} autoComplete="off" inputMode={DIGITS.has(member) ? 'numeric' : undefined} />
 									))}
 									{kind === 'identity' && IDENTITY_FIELDS.map((member) => (
 										<TextField key={member} label={identityLabels[member]} type={masked.has(member) ? 'password' : 'text'} value={values.identity[member]} onChange={identity(member)} error={error(`identity.${member}`)} autoComplete="off" inputMode={keyboards[member]} verbatim={member in keyboards} />

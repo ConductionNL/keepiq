@@ -5,7 +5,8 @@ import {
 } from '@/src/messages'
 import { typeIcon } from '@/src/vault/icons'
 import { folderPath, launchUrl } from '@/src/vault/list'
-import { cardBrand, cardLast4, parseObject, parsePayload, text } from '@/src/vault/payloads'
+import { cardBrand, formatCardNumber, maskCardNumber } from '@/src/vault/cards'
+import { parseObject, parsePayload, text } from '@/src/vault/payloads'
 import { Button, IconButton } from '../components/Button'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { Icon, type IconName } from '../components/Icon'
@@ -70,7 +71,7 @@ function Card({ payload }: { payload: Record<string, unknown> }) {
 	] as const
 	return (
 		<Section title={i18n.t('detail.cardDetails')}>
-			{number && <MaskedField label={brand ? i18n.t('detail.numberWithBrand', { brand }) : i18n.t('detail.number')} what={i18n.t('detail.cardNumber')} value={number} masked maskedText={`•••• •••• •••• ${cardLast4(number)}`} />}
+			{number && <MaskedField label={brand ? i18n.t('detail.numberWithBrand', { brand }) : i18n.t('detail.number')} what={i18n.t('detail.cardNumber')} value={number} masked maskedText={maskCardNumber(number)} shownText={formatCardNumber(number)} />}
 			{fields.map(([label, value, masked]) => value && <MaskedField key={label} label={label} value={value} masked={masked} />)}
 		</Section>
 	)

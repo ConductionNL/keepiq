@@ -183,6 +183,12 @@ form:
   itemDetails: Item details
   type: Type
   name: Name
+  # {brand} is a card brand such as Visa; these hints never block Save.
+  cardNumberLength: "{brand} doesn't issue card numbers of this length. You can still save."
+  cardNumberLengthUnknown: Card numbers have 12 to 19 digits. You can still save.
+  cardNumberChecksum: This number doesn't pass the card checksum. Check it; you can still save.
+  # {name} is a code name such as CVV or CID, {size} 3 or 4.
+  cardCodeLength: "{brand} cards use a {size}-digit {name}. You can still save."
   folder: Folder
   chooseFolder: Choose a folder, now {folder}
   website: Website URL

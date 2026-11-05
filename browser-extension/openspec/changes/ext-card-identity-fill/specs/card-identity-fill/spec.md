@@ -106,7 +106,7 @@ A field in a group classified as a login, and a field with a login role (usernam
 The extension SHALL fill each role from one member, and nothing else:
 - `cardholder` ← `cardholder`; `number` ← `number` with every non-digit removed; `securityCode` ← `cvv`.
 - `expiry`, `expMonth`, `expYear` ← `expiry`, parsed as month and year (Expiry formatting).
-- `brand` ← the brand `cardBrand()` in `src/vault/payloads.ts` derives from `number`; nothing when it derives none.
+- `brand` ← the name and `brandId` the id of the brand `cardBrandInfo()` in `src/vault/cards.ts` derives from `number`; nothing when it derives none.
 - `firstName`, `lastName`, `email`, `phone` ← the member of that name; `fullName` ← `firstName` and `lastName` joined by a space, trimmed.
 - `streetAddress` ← `address`, its line breaks joined with ", " in an `<input>` and kept in a `<textarea>`; `addressLine1` ← the first line of `address`.
 
@@ -150,7 +150,7 @@ The background SHALL parse `expiry` as a month from 1 to 12 and a year, acceptin
 - **THEN** the number is filled and the expiry fields stay empty
 
 ### Requirement: Split numbers and brand fields
-A split `number` SHALL be filled in order, each field taking as many digits as its `maxlength` allows, and fills nothing when the digits do not fit the fields exactly. Two number fields where one is longer than 8 characters (a number and its confirmation) are not a split number; the first takes the whole number. An expiry longer than its `maxlength` is written without the spaces around the separator, else in the pattern its length asks for, else not at all. A `brand` `<select>` takes the option whose value or text matches the derived brand or a common code (Visa: "visa", "vi"; Mastercard: "mastercard", "master card", "mc"; American Express: "amex", "american express", "ax"; Discover: "discover", "di"; Maestro: "maestro"); a `brand` `<input>` takes the brand's name.
+A split `number` SHALL be filled in order, each field taking as many digits as its `maxlength` allows, and fills nothing when the digits do not fit the fields exactly. Two number fields where one is longer than 8 characters (a number and its confirmation) are not a split number; the first takes the whole number. An expiry longer than its `maxlength` is written without the spaces around the separator, else in the pattern its length asks for, else not at all. A `brand` `<select>` takes the first option whose value or text matches the derived brand's name or one of its `selectCodes` in `src/vault/card-brands.json`, then, for a co-branded card, those of each brand in its `networks` in order (a Visa/Dankort card falls back to Visa); a `brand` `<input>` takes the brand's name.
 
 #### Scenario: Four-part number
 - **GIVEN** a card number "4111 1111 1111 1111" and a four-part split number
@@ -161,6 +161,11 @@ A split `number` SHALL be filled in order, each field taking as many digits as i
 - **GIVEN** a Mastercard number and a brand `<select>` with options "VISA", "MC" and "AMEX"
 - **WHEN** the user fills the card
 - **THEN** "MC" is selected
+
+#### Scenario: Co-branded brand select
+- **GIVEN** a card numbered 4571… (Visa/Dankort) and a brand `<select>` with options "Visa" and "Mastercard"
+- **WHEN** the user fills the card
+- **THEN** "Visa" is selected
 
 ### Requirement: Fill from the popup
 The extension SHALL list cards after the matching logins and identities after the cards in "Autofill suggestions" while their Vault view settings are on, and fill the active tab when the user clicks such a card or its Fill button, or the Fill button on a card's or identity's detail view on an `http:` or `https:` tab. A blocked item has no Fill button. Fill requires an unlocked vault. The popup closes after a fill that filled at least one field; a popped-out window stays open. When no frame has a field for the item's kind, nothing is decrypted or sent and the popup shows "Unable to autofill on this page. Copy and paste instead."

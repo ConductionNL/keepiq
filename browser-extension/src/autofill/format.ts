@@ -1,5 +1,6 @@
 // Content script: a card's or identity's members as each field wants them (spec `card-identity-fill`, Expiry formatting, Split numbers and brand fields).
 import type { FormRole, FormValues } from '@/src/messages'
+import { brandOptions } from '@/src/vault/cards'
 import { labelTexts, type FormControl } from './fields'
 import type { Expiry } from './wallet'
 
@@ -80,14 +81,6 @@ function expiryFor(control: FormControl, { expMonth, expYear }: FormValues): str
 	return fittingExpiry(control as HTMLInputElement, { month: expMonth, year: expYear })
 }
 
-const BRAND_CODES: Partial<Record<string, string[]>> = {
-	'Visa': ['vi'],
-	'Mastercard': ['master card', 'mc'],
-	'American Express': ['amex', 'ax'],
-	'Discover': ['di'],
-}
-
-export const brandOptions = (brand: string) => [brand, ...(BRAND_CODES[brand] ?? [])]
 
 const one = (value: unknown): string[] => (typeof value === 'string' && value !== '' ? [value] : [])
 
@@ -105,7 +98,7 @@ export const FORMATTERS: Record<Exclude<FormRole, 'number'>, Formatter> = {
 	expMonth: (control, values) => monthFor(control, values.expMonth),
 	expYear: (control, values) => yearFor(control, values.expYear),
 	securityCode: (_, values) => one(values.cvv),
-	brand: (control, values) => (isSelect(control) && typeof values.brand === 'string' ? brandOptions(values.brand) : one(values.brand)),
+	brand: (control, values) => (isSelect(control) ? brandOptions(values.brandId ?? '') : one(values.brand)),
 	fullName: (_, values) => one(values.fullName),
 	firstName: (_, values) => one(values.firstName),
 	lastName: (_, values) => one(values.lastName),

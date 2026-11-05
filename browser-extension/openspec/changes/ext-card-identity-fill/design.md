@@ -58,7 +58,7 @@ type FormRole =
 	| 'cardholder' | 'number' | 'expiry' | 'expMonth' | 'expYear' | 'securityCode' | 'brand'
 	| 'fullName' | 'firstName' | 'lastName' | 'email' | 'phone' | 'streetAddress' | 'addressLine1'
 /** Only the members the receiving frame's roles need. `expMonth` "01"–"12", `expYear` four digits, `number` digits only. */
-type FormValues = Partial<Record<'cardholder' | 'number' | 'expMonth' | 'expYear' | 'cvv' | 'brand'
+type FormValues = Partial<Record<'cardholder' | 'number' | 'expMonth' | 'expYear' | 'cvv' | 'brand' | 'brandId'
 	| 'fullName' | 'firstName' | 'lastName' | 'email' | 'phone' | 'streetAddress' | 'addressLine1', string>>
 
 /** Popup or list confirmation. `frames: 'sameSite'` is "Only {host}". `origin` is the question's, echoed back; an answer for another top origin counts as none. */
@@ -92,7 +92,7 @@ type InlineRow = { id: string; name: string; username: string | null; card?: { b
 ## Module layout
 
 - `src/autofill/fields.ts`: card and identity roles in `classifyField()`, the card guard, `isQualifying()` returning the kind, `fillSelect()`.
-- `src/autofill/format.ts` (content): expiry patterns, month and year forms, option candidates, split number, brand aliases.
+- `src/autofill/format.ts` (content): expiry patterns, month and year forms, option candidates, split number; brand options from `src/vault/cards.ts`.
 - `src/autofill/wallet.ts` (background): `walletKind()`, `walletCandidates()`, `parseExpiry()`, `membersFor()`, `isInsecureUrl()`, the frame plan.
 - `src/autofill/execute.ts`: answers `fill.probe`, `fill.executeForm` and `fill.confirmForm`; origin and anchor checks as for logins.
 - `src/autofill/fill.ts`: the wallet branch of `fill()` (probe, questions, decrypt, per-frame send, last used).

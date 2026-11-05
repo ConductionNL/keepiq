@@ -230,10 +230,11 @@ export type FormRole = CardRole | IdentityRole
 export const isFormRole = (kind: FormKind, role: unknown): role is FormRole => (FORM_ROLES[kind] as readonly unknown[]).includes(role)
 
 export type FormMember =
-	| 'cardholder' | 'number' | 'expMonth' | 'expYear' | 'cvv' | 'brand'
+	| 'cardholder' | 'number' | 'expMonth' | 'expYear' | 'cvv' | 'brand' | 'brandId'
 	| 'fullName' | 'firstName' | 'lastName' | 'email' | 'phone' | 'streetAddress' | 'addressLine1'
 /**
  * Only the members the receiving frame's roles need: `number` digits only, `expMonth` "01" to "12", `expYear` four digits, `streetAddress` with its line breaks.
+ * `brand` is the brand's name, `brandId` its `card-brands.json` id, which picks its codes in a `<select>`.
  * Never a card's PIN or an identity's BSN.
  */
 export type FormValues = Partial<Record<FormMember, string>>

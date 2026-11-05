@@ -180,6 +180,10 @@ form:
   itemDetails: Itemgegevens
   type: Type
   name: Naam
+  cardNumberLength: "{brand} geeft geen kaartnummers van deze lengte uit. Je kunt wel opslaan."
+  cardNumberLengthUnknown: Kaartnummers hebben 12 tot 19 cijfers. Je kunt wel opslaan.
+  cardNumberChecksum: Dit nummer voldoet niet aan de controlesom van de kaart. Controleer het; je kunt wel opslaan.
+  cardCodeLength: "{brand}-kaarten gebruiken een {name} van {size} cijfers. Je kunt wel opslaan."
   folder: Map
   chooseFolder: Kies een map, nu {folder}
   website: Website-URL
