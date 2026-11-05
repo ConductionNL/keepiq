@@ -188,6 +188,16 @@ describe('card and identity', () => {
 		expect(within(card).queryByText('0000')).toBeNull()
 	})
 
+	it('groups an American Express number 4-6-5, masked and revealed', async () => {
+		const user = userEvent.setup()
+		renderDetail(itemMeta({ typeId: 't-card', hasLogin: false, url: null }), { key: JSON.stringify({ number: '378282246310005' }) })
+		const card = await screen.findByRole('heading', { name: 'Card details' }).then((h) => h.closest('section')!)
+		expect(within(card).getByText('Number · American Express')).toBeTruthy()
+		expect(within(card).getByText('•••• •••••• •0005')).toBeTruthy()
+		await user.click(within(card).getByRole('button', { name: /^Show/ }))
+		expect(within(card).getByText('3782 822463 10005')).toBeTruthy()
+	})
+
 	it('shows identity fields plainly and masks the BSN', async () => {
 		renderDetail(itemMeta({ typeId: 't-identity', hasLogin: false, url: null }), { key: JSON.stringify({ firstName: 'Alice', lastName: 'Doe', address: 'Main 1', phone: '0612345678', email: 'a@x.nl', bsn: '123456782' }) })
 		const identity = await screen.findByRole('heading', { name: 'Identity' }).then((h) => h.closest('section')!)

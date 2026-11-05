@@ -2,6 +2,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { GUARD_MS } from '@/src/autofill/visibility'
 import type { DecryptedItem } from '@/src/messages'
 import type { CurrentTab } from '../hooks/useCurrentTab'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
@@ -314,6 +315,173 @@ describe('filling from the suggestions', () => {
 				{ kind: 'fill.request', itemId: '1', tabId: 7, confirmedInsecure: true },
 			])
 		})
+	})
+})
+
+describe('filling a card or identity', () => {
+	const shopTab: CurrentTab = { id: 7, windowId: 1, url: 'http://shop.test/checkout', host: 'shop.test' }
+	const ORIGIN = 'http://shop.test'
+	const snapshot = () => snapshotReply({
+		items: [itemMeta({ id: 'l', name: 'Shop' }), itemMeta({ id: 'c', name: 'Visa', typeId: 't-card', hasLogin: false, url: null }), itemMeta({ id: 'p', name: 'Me', typeId: 't-identity', hasLogin: false, url: null })],
+		suggestionIds: ['l', 'c', 'p'],
+		formIds: ['c', 'p'],
+	})
+	const suggestions = () => screen.getByRole('region', { name: 'Autofill suggestions' })
+	const closeSpy = () => vi.spyOn(window, 'close').mockImplementation(() => {})
+	const question = (insecure: boolean, frameHosts: string[]) => ({ insecure, host: 'shop.test', origin: ORIGIN, frameHosts })
+	// Asks until the request carries an answer for every question, as the background does.
+	const asking = (insecure: boolean, frameHosts: string[]) => (message: { confirmed?: { insecure?: true; frames: string; frameHosts: string[] } }) => {
+		const answer = message.confirmed
+		const open = (insecure && !answer?.insecure) || (frameHosts.length > 0 && !answer)
+		return open ? { filled: 'none', code: false, needsFormConfirm: question(insecure, frameHosts) } : { filled: 'form', code: false }
+	}
+	const requests = (sent: ReturnType<typeof renderList>['sent']) => sentOf(sent, 'fill.request')
+	// The cross-site question ignores Fill and "Only {host}" for `GUARD_MS` after it appears.
+	beforeEach(() => vi.useFakeTimers({ toFake: ['Date'] }))
+	afterEach(() => vi.useRealTimers())
+	const settle = () => vi.setSystemTime(Date.now() + GUARD_MS)
+	const crossSite = async (name: string) => {
+		const dialog = await screen.findByRole('dialog', { name })
+		settle()
+		return dialog
+	}
+
+	it('lists the logins, then the cards, then the identities, in the background\'s order', () => {
+		renderList(snapshot(), { tab: shopTab })
+		expect(within(suggestions()).getAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)).toEqual(['Shop', 'Visa', 'Me'])
+	})
+
+	it('fills without a question and closes the popup', async () => {
+		const close = closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': { filled: 'form', code: false } } })
+		await userEvent.setup().click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(requests(sent)).toEqual([{ kind: 'fill.request', itemId: 'c', tabId: 7 }])
+	})
+
+	it('says so when no frame has a field for it', async () => {
+		const close = closeSpy()
+		const { toast } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': { filled: 'none', code: false } } })
+		await userEvent.setup().click(within(suggestions()).getByRole('button', { name: 'Fill Me' }))
+		await vi.waitFor(() => expect(toast).toHaveBeenCalledWith('Unable to autofill on this page. Copy and paste instead.'))
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('asks the insecure question, then the cross-site one, and sends one merged answer echoing the origin', async () => {
+		const close = closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['js.stripe.test', 'pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		const insecure = await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })
+		expect(document.getElementById(insecure.getAttribute('aria-describedby')!)!.textContent).toBe('This site is not secure. Anyone on the network could read the card details that are filled in.')
+		expect(document.activeElement).toBe(within(insecure).getByRole('button', { name: 'Cancel' }))
+		await user.click(within(insecure).getByRole('button', { name: 'Fill' }))
+		const hosts = await crossSite('Also fill on js.stripe.test, pay.test?')
+		expect(document.getElementById(hosts.getAttribute('aria-describedby')!)!.textContent)
+			.toBe('Part of this form comes from js.stripe.test, pay.test, not from shop.test. Keepiq fills it there only if you agree.')
+		expect(within(hosts).getAllByRole('button').map((button) => button.textContent)).toEqual(['Fill', 'Only shop.test', 'Cancel'])
+		expect(document.activeElement).toBe(within(hosts).getByRole('button', { name: 'Cancel' }))
+		expect(requests(sent)).toHaveLength(1)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(requests(sent)).toEqual([
+			{ kind: 'fill.request', itemId: 'c', tabId: 7 },
+			{ kind: 'fill.request', itemId: 'c', tabId: 7, confirmed: { insecure: true, frames: 'all', frameHosts: ['js.stripe.test', 'pay.test'], origin: ORIGIN } },
+		])
+	})
+
+	it('fills only the page\'s own site on "Only {host}"', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(false, ['js.stripe.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await crossSite('Also fill on js.stripe.test?')).getByRole('button', { name: 'Only shop.test' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(2))
+		expect(requests(sent)[1]).toEqual({ kind: 'fill.request', itemId: 'c', tabId: 7, confirmed: { frames: 'sameSite', frameHosts: ['js.stripe.test'], origin: ORIGIN } })
+	})
+
+	it.each(['insecure', 'cross-site'])('sends nothing more after Cancel at the %s question', async (at) => {
+		const close = closeSpy()
+		const { sent, toast } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		if (at === 'cross-site') await user.click(within(await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })).getByRole('button', { name: 'Fill' }))
+		await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+		expect(requests(sent)).toHaveLength(1)
+		expect(toast).not.toHaveBeenCalled()
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('sends an insecure-only answer straight away', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, []) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(2))
+		expect(requests(sent)[1]!.confirmed).toEqual({ insecure: true, frames: 'all', frameHosts: [], origin: ORIGIN })
+	})
+
+	it('ignores Fill and "Only {host}" on the cross-site question for its first moments, so one double click does not answer both', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })).getByRole('button', { name: 'Fill' }))
+		const hosts = await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })
+		vi.setSystemTime(Date.now() + GUARD_MS - 1)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		await user.click(within(hosts).getByRole('button', { name: 'Only shop.test' }))
+		expect(requests(sent)).toHaveLength(1)
+		expect(screen.getByRole('dialog', { name: 'Also fill on pay.test?' })).toBe(hosts)
+		vi.setSystemTime(Date.now() + 1)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(2))
+		expect(requests(sent)[1]!.confirmed).toEqual({ insecure: true, frames: 'all', frameHosts: ['pay.test'], origin: ORIGIN })
+	})
+
+	it('counts the cross-site question\'s first moments from when it appears, not from the first question', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		const insecure = await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })
+		vi.setSystemTime(Date.now() + GUARD_MS * 4)
+		await user.click(within(insecure).getByRole('button', { name: 'Fill' }))
+		const hosts = await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })
+		vi.setSystemTime(Date.now() + GUARD_MS / 5)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		expect(requests(sent)).toHaveLength(1)
+	})
+
+	it('cancels the cross-site question at once, by Cancel or Escape', async () => {
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(false, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })).getByRole('button', { name: 'Cancel' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })
+		await user.keyboard('{Escape}')
+		expect(screen.queryByRole('dialog')).toBeNull()
+		expect(requests(sent)).toHaveLength(2)
+	})
+
+	it('asks again about a host added after the answer, carrying the earlier answers', async () => {
+		closeSpy()
+		const replies = [
+			{ filled: 'none', code: false, needsFormConfirm: question(false, ['js.stripe.test']) },
+			{ filled: 'none', code: false, needsFormConfirm: question(false, ['ads.test']) },
+			{ filled: 'form', code: false },
+		]
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': () => replies.shift() } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await crossSite('Also fill on js.stripe.test?')).getByRole('button', { name: 'Fill' }))
+		await user.click(within(await crossSite('Also fill on ads.test?')).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(3))
+		expect(requests(sent)[2]!.confirmed).toEqual({ frames: 'all', frameHosts: ['js.stripe.test', 'ads.test'], origin: ORIGIN })
 	})
 })
 

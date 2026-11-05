@@ -63,6 +63,7 @@ export function snapshotReply(overrides: Partial<UnlockedSnapshot> = {}): Unlock
 		folders: [],
 		types,
 		suggestionIds: [],
+		formIds: [],
 		sync: { syncing: false, syncedAt: new Date().toISOString(), offline: false, lastError: null },
 		webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',
 		defaultSecretType: null,

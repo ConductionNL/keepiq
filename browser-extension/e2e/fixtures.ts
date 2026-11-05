@@ -12,14 +12,18 @@ export async function extensionWorker(context: BrowserContext): Promise<Worker> 
 		?? await context.waitForEvent('serviceworker', (sw) => sw.url().startsWith('chrome-extension://'))
 }
 
+/** A host the browser resolves to the test site, served over `http:` without being loopback. */
+export const INSECURE_HOST = 'shop.test'
+
 /**
  * The built extension in headless Chromium, with a fresh profile and the fake account per test. `lang: 'nl'` picks
  * the Dutch catalog through `--lang`; `longFolder` adds the nested folders of `LONG_FOLDER`; `matches` is the
  * number of logins for the test site; `loginItem` renames the first, drops its username or puts it on `https:`; `totp`
- * gives the first login a code and `passkeys` its passkeys.
+ * gives the first login a code and `passkeys` its passkeys; `cards` and `identities` are how many of `CARD` and `IDENTITY` the vault holds.
  */
 export const test = base.extend<{
 	vault: 'unlocked' | 'locked'; lang: 'en' | 'nl'; longFolder: boolean; matches: number; loginItem: LoginItem; totp: boolean; passkeys: PasskeyCredential[]
+	cards: number; identities: number
 }>({
 	vault: ['unlocked', { option: true }],
 	lang: ['en', { option: true }],
@@ -28,7 +32,9 @@ export const test = base.extend<{
 	loginItem: [{}, { option: true }],
 	totp: [false, { option: true }],
 	passkeys: [[], { option: true }],
-	context: async ({ vault, lang, longFolder, matches, loginItem, totp, passkeys, baseURL }, use) => {
+	cards: [0, { option: true }],
+	identities: [0, { option: true }],
+	context: async ({ vault, lang, longFolder, matches, loginItem, totp, passkeys, cards, identities, baseURL }, use) => {
 		const context = await chromium.launchPersistentContext('', {
 			channel: 'chromium',
 			headless: true,
@@ -37,8 +43,8 @@ export const test = base.extend<{
 			args: [
 				`--disable-extensions-except=${EXTENSION}`,
 				`--load-extension=${EXTENSION}`,
-				// Nothing but the test site resolves, so no request can leave the machine.
-				'--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
+				// Nothing but the test site resolves, so no request can leave the machine; `shop.test` is the test site on a host that is not loopback.
+				`--host-resolver-rules=MAP ${INSECURE_HOST} 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE *.localhost, EXCLUDE 127.0.0.1`,
 				...(lang === 'nl' ? ['--lang=nl'] : []),
 			],
 		})
@@ -47,7 +53,7 @@ export const test = base.extend<{
 			const { storage } = (globalThis as unknown as { chrome: { storage: Record<'local' | 'session', { set(items: object): Promise<void> }> } }).chrome
 			await storage.local.set(local)
 			await storage.session.set(session)
-		}, await fakeStorage(new URL(baseURL!).origin, vault === 'unlocked', { longFolder, matches, loginItem, totp, passkeys }))
+		}, await fakeStorage(new URL(baseURL!).origin, vault === 'unlocked', { longFolder, matches, loginItem, totp, passkeys, cards, identities }))
 		await use(context)
 		await context.close()
 	},
@@ -73,6 +79,9 @@ export function listFrame(page: Page): Frame | undefined {
 }
 
 export const listOpen = (page: Page) => listFrame(page) !== undefined
+
+/** The height of the list's host in the top frame, `null` without one. */
+export const hostHeight = (page: Page) => page.evaluate(() => document.querySelector(':root > div[popover]')?.getBoundingClientRect().height ?? null)
 
 export async function listText(page: Page): Promise<string | null> {
 	const frame = listFrame(page)
@@ -133,20 +142,30 @@ export async function mouseClickCaught(page: Page, field: Locator): Promise<void
 	await holds(async () => (await values(field)).join('') === '', 1000)
 }
 
-/** Down, which within 500 ms of a script's focus is ignored too, then Enter on the row. */
-export async function keyboardPickFills(page: Page, field: Locator): Promise<void> {
+/** Down from the field into the list, which within 500 ms of a script's focus is ignored too. */
+export async function focusFirstRow(page: Page): Promise<void> {
 	await expect(async () => {
 		if (await listFocus(page) !== 'option') await page.keyboard.press('ArrowDown')
 		await expect.poll(() => listFocus(page), { timeout: 1000 }).toBe('option')
 	}).toPass()
+}
+
+/** Into the list, then Enter on the first row until `done` holds. */
+export async function keyboardPick(page: Page, done: () => Promise<boolean>): Promise<void> {
+	await focusFirstRow(page)
 	await expect(async () => {
-		if ((await values(field))[0] !== LOGIN.username) {
+		if (!(await done())) {
 			// Enter outside the list would submit the page's form.
 			expect(await listFocus(page)).toBe('option')
 			await page.keyboard.press('Enter')
 		}
-		await expect.poll(() => values(field), { timeout: 1000 }).toEqual(FILLED)
+		await expect.poll(done, { timeout: 1000 }).toBe(true)
 	}).toPass()
+}
+
+export async function keyboardPickFills(page: Page, field: Locator): Promise<void> {
+	await keyboardPick(page, async () => (await values(field))[0] === LOGIN.username)
+	expect(await values(field)).toEqual(FILLED)
 }
 
 /** Chrome drops input to a frame it reports invisible, so clicks past the guard reach neither the list nor the form. */

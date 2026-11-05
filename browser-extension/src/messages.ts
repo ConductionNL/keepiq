@@ -8,7 +8,7 @@ import type { AccountSettings, VaultTimeout } from '@/src/accounts/settings'
 import type { GeneratorHistoryEntry, GeneratorOptions, GeneratorPolicy } from '@/src/generator/options'
 
 /** A kind set that must name every kind of the union `K`, and nothing else. */
-const kindSet = <K extends string>(kinds: Record<K, true>): ReadonlySet<string> => new Set(Object.keys(kinds))
+export const kindSet = <K extends string>(kinds: Record<K, true>): ReadonlySet<string> => new Set(Object.keys(kinds))
 
 /** Content script → background. Tab, frame and URL come from `sender`, never from the message. */
 export type ContentToBackground =
@@ -203,10 +203,59 @@ export const PASSKEY_POPUP_KINDS = kindSet<PasskeyPopupRequest['kind']>({
 
 export type FillOutcome = 'both' | 'username' | 'password' | 'none'
 
-/** Popup → background, and the menu, command and page-load paths in the background. `tabId` omitted means the active tab. */
-export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean }
-/** `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`. */
-export type FillResult = { filled: FillOutcome; code: boolean; needsInsecureConfirm?: boolean }
+/**
+ * Popup → background, and the menu, command and page-load paths in the background. `tabId` omitted means the active tab.
+ * `confirmed`: the answers to a card's or identity's `needsFormConfirm`.
+ */
+export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean; confirmed?: FormConfirmation }
+/**
+ * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
+ * `form`: a card or identity filled at least one field.
+ */
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion }
+
+// Cards and identities, ext-card-identity-fill design.md § Message contract.
+
+export type FormKind = 'card' | 'identity'
+
+export const FORM_ROLES = {
+	card: ['cardholder', 'number', 'expiry', 'expMonth', 'expYear', 'securityCode', 'brand'],
+	identity: ['fullName', 'firstName', 'lastName', 'email', 'phone', 'streetAddress', 'addressLine1'],
+} as const satisfies Record<FormKind, readonly string[]>
+
+export type CardRole = typeof FORM_ROLES.card[number]
+export type IdentityRole = typeof FORM_ROLES.identity[number]
+export type FormRole = CardRole | IdentityRole
+
+export const isFormRole = (kind: FormKind, role: unknown): role is FormRole => (FORM_ROLES[kind] as readonly unknown[]).includes(role)
+
+export type FormMember =
+	| 'cardholder' | 'number' | 'expMonth' | 'expYear' | 'cvv' | 'brand' | 'brandId'
+	| 'fullName' | 'firstName' | 'lastName' | 'email' | 'phone' | 'streetAddress' | 'addressLine1'
+/**
+ * Only the members the receiving frame's roles need: `number` digits only, `expMonth` "01" to "12", `expYear` four digits, `streetAddress` with its line breaks.
+ * `brand` is the brand's name, `brandId` its `card-brands.json` id, which picks its codes in a `<select>`.
+ * Never a card's PIN or an identity's BSN.
+ */
+export type FormValues = Partial<Record<FormMember, string>>
+
+/**
+ * `frames: 'sameSite'` is "Only {host}". It carries every answer so far, since the background keeps none.
+ * `origin`: the question's, echoed back; the background ignores the answers on any other top origin.
+ */
+export type FormConfirmation = { insecure?: true; frames: 'all' | 'sameSite'; frameHosts: string[]; origin: string }
+/** What is still unanswered: `insecure` the card question, `frameHosts` the cross-site one when not empty. `host` to name, `origin` to echo: the top frame's. */
+export type FormQuestion = { insecure: boolean; host: string; origin: string; frameHosts: string[] }
+
+/** Background → one frame, before anything is decrypted; carries no vault data. Reply `FillProbeReply`. */
+export type FillProbe = { kind: 'fill.probe'; form: FormKind; anchorKey?: string }
+/** `origin`: the frame's own, so roles from a frame that left the recorded origin count for nothing. */
+export type FillProbeReply = { roles: FormRole[]; origin: string }
+/** Background → one frame; with `fill.execute` the only message carrying vault data. Reply `FillExecuteFormReply`. */
+export type FillExecuteForm = { kind: 'fill.executeForm'; form: FormKind; values: FormValues; origin: string; anchorKey?: string }
+export type FillExecuteFormReply = { filled: number }
+/** Background → the top frame, for a context menu fill. Reply: whether the user answered OK to every question. */
+export type FillConfirmForm = { kind: 'fill.confirmForm' } & FormQuestion
 
 /** Background → the top frame. Reply: whether the user accepted. */
 export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string }
@@ -219,16 +268,24 @@ export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: stri
 export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; code: string | null; origin: string; anchorKey?: string }
 export type FillExecuteReply = { filled: FillOutcome; code: boolean }
 
-/** What the list shows: logins, or logins with a code on a code field. */
-export type InlineMode = 'login' | 'code'
-export const INLINE_MODES: readonly InlineMode[] = ['login', 'code']
+/** What the list shows: logins, logins with a code on a code field, or the cards or identities of a card or identity field. */
+export type InlineMode = 'login' | 'code' | FormKind
+export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity']
+export const isFormKind = (mode: unknown): mode is FormKind => mode === 'card' || mode === 'identity'
+/** The list frame's title key per mode, for the host's frame and the list page's document alike. */
+export const INLINE_FRAME_TITLES = {
+	login: 'inlineList.frameTitle',
+	code: 'inlineList.code.frameTitle',
+	card: 'inlineList.card.frameTitle',
+	identity: 'inlineList.identity.frameTitle',
+} as const satisfies Record<InlineMode, string>
 /**
  * Request/response. Without a valid `mode` it reads as `login`. `webauthn`: a field that qualifies only by its
  * `autocomplete` `webauthn` token, which opens a list only while a conditional passkey request of the frame is pending.
  */
 export type InlineOpen = { kind: 'inline.open'; mode: InlineMode; webauthn?: boolean }
 /**
- * `null`: no list, for no logged-in account, `inlineSuggestions` off, a page that is not http(s) or a `webauthn`
+ * `null`: no list, for no logged-in account, `inlineSuggestions` or the kind's setting off, a page that is not http(s) or a `webauthn`
  * field without a pending conditional request. `height`: the list's, by `inlineHeight`, which the page can read from
  * the host anyway; passkey rows count as logins do.
  */
@@ -243,11 +300,11 @@ export type ContentToInlineList =
 	| { kind: 'inline.moved'; key: string }
 
 /**
- * The list's size, shared by the background, the host and the list page. It is as tall as its rows, up to
- * `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, with `INLINE_INSET_PX` of edge and padding above and below; the locked
- * and no-match messages are one row, as one match. The insecure-site question and the not-visible notice, shown only
- * after a pick, ask for what they need with `inline.resize`, up to `INLINE_MAX_HEIGHT_PX`. At least
- * `INLINE_MIN_WIDTH_PX` wide.
+ * The list's size, shared by the background, the host and the list page.
+ * It is as tall as its rows, up to `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, with `INLINE_INSET_PX` of edge and padding above and below;
+ * the locked and no-match messages are one row, as one match.
+ * The questions and the not-visible notice, shown only after a pick, ask for what they need with `inline.resize`, up to `INLINE_MAX_HEIGHT_PX`.
+ * At least `INLINE_MIN_WIDTH_PX` wide.
  */
 export const INLINE_ROW_PX = 48
 export const INLINE_GAP_PX = 2
@@ -283,6 +340,16 @@ export interface InlineRow {
 	username: string | null
 	/** Code mode only. */
 	code?: InlineCode
+	/** Identity mode: a full name or an email; `null` for a use-only copy or an item without members. */
+	detail?: string | null
+	/** Card mode: what the list page words as "Visa, *1111"; absent for a use-only copy or a number under four digits. */
+	card?: InlineCard
+}
+
+/** `brand`: null where the list says "Card". `last4`: four digits. */
+export interface InlineCard {
+	brand: string | null
+	last4: string
 }
 
 /** `at`: `Date.now()` of the pointerdown or keydown. `x`, `y`: that point, or the focused row's centre, in list coordinates. */
@@ -297,7 +364,7 @@ export interface PickInput {
 export type InlineListToBackground =
 	| { kind: 'inline.state'; key: string }
 	/** With `credentialId`, a passkey row: `itemId` is its login's. */
-	| { kind: 'inline.pick'; key: string; itemId: string; credentialId?: string; input: PickInput; confirmedInsecure?: boolean }
+	| { kind: 'inline.pick'; key: string; itemId: string; credentialId?: string; input: PickInput; confirmedInsecure?: boolean; confirmed?: FormConfirmation }
 	/** These four are fire-and-forget. */
 	| { kind: 'inline.refocus'; key: string }
 	| { kind: 'inline.close'; key: string; refocus: boolean }
@@ -316,7 +383,8 @@ export type InlineStateReply = { state: 'locked' | 'unlocked'; mode: InlineMode;
  * window opened on verification or a failed counter save. `null` for a wrong key, tab or frame.
  */
 export type InlinePickReply =
-	| { filled: FillOutcome; code: boolean } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | { passkey: 'signed' | 'window' } | null
+	| { filled: FillResult['filled']; code: boolean } | { needsInsecureConfirm: true } | { needsFormConfirm: FormQuestion }
+	| { refused: 'locked' | 'not_visible' | 'stale' } | { passkey: 'signed' | 'window' } | null
 
 export const INLINE_LIST_KINDS = kindSet<InlineListToBackground['kind']>({
 	'inline.state': true, 'inline.pick': true, 'inline.refocus': true, 'inline.close': true, 'inline.unlock': true, 'inline.resize': true,
@@ -415,6 +483,9 @@ export type BackgroundToContent =
 	| FillConfirmInsecure
 	/** Request/response, reply `FillExecuteReply`. */
 	| FillExecute
+	| FillProbe
+	| FillExecuteForm
+	| FillConfirmForm
 	/**
 	 * To the frame hosting the list; `inline.verify` replies `boolean`, the others are fire-and-forget.
 	 * `key`: the session's, so a message meant for a list that has since closed cannot reach the next one.
@@ -526,8 +597,8 @@ export const POPUP_MESSAGE_KINDS = kindSet<PopupToBackground['kind']>({
 
 export type PopupTab = 'vault' | 'generator' | 'send' | 'settings'
 
-/** Autofill behaviours ext-autofill delivers; an entry for one not yet delivered shows "Coming later". */
-export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts' | 'passkeys'
+/** Autofill behaviours ext-autofill and ext-card-identity-fill deliver; an entry for one not yet delivered shows "Coming later". */
+export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts' | 'passkeys' | 'cards' | 'identities'
 
 /** Here rather than in the settings module, so the popup can list them without its storage code. */
 export const URI_MATCHES = ['baseDomain', 'host', 'startsWith', 'exact', 'regex', 'never'] as const
@@ -601,7 +672,10 @@ export type VaultSnapshotReply =
 		items: ItemMeta[] | null
 		folders: FolderMeta[]
 		types: TypeMeta[]
+		/** The tab's matching logins, then the cards and the identities its Vault view settings show, each last used first. */
 		suggestionIds: string[]
+		/** Every unblocked card and identity on an `http(s)` tab, whatever those settings: the detail view offers each Fill. */
+		formIds: string[]
 		sync: SyncStatus
 		/** The account's Keepiq web app, for "open the web app" links. */
 		webAppUrl: string

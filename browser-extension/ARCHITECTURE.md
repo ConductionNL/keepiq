@@ -8,10 +8,10 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 | --- | --- | --- |
 | `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer, and the toolbar icon. Routes messages, alarms, idle and popup ports. |
 | `entrypoints/popup/` | Toolbar popup, a pop-out window (`?popout=1&tabId=`), or a passkey window (`?passkey=<ceremonyId>`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
-| `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one credential a fill sends, hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
+| `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one item a fill sends (a login's credential, or a card's or identity's members for its own fields), hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
 | `entrypoints/passkey.content.ts` | Every frame of every `http(s)` page, at `document_start` | The passkey relay (`src/passkey/relay.ts`) between the page script and the background; on Firefox it injects the page script. Holds no vault state. |
 | `entrypoints/passkey-page-main.content.ts` (Chrome), `entrypoints/passkey-page.ts` (Firefox) | The page's own world of every `http(s)` frame: a `world: 'MAIN'` content script on Chrome, a web-accessible script the relay injects on Firefox | The page script (`src/passkey/page.ts`): replaces `navigator.credentials.create` and `.get`. Trusted for nothing, since the page can change it. |
-| `entrypoints/inline-list/` | Extension page in an iframe under a login field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
+| `entrypoints/inline-list/` | Extension page in an iframe under a login, code, card or identity field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
 | `entrypoints/notification/` | Extension page in an iframe, a card in the top-right corner of the page | The save and update card, vanilla DOM. Never gets the password. |
 | `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created on first use and kept open so no close drops a write. |
 
@@ -52,16 +52,19 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `sender.ts`: names the sender page and the kinds it may send.
 - `src/autofill/`, the specs in `openspec/changes/ext-autofill/`:
   - `matcher.ts`: the six URI match rules and `candidatesFor()`, the logins (or another type's items) for a page in last-used order.
-  - `fill.ts`: the fill every surface goes through: frame choice, insecure check, decrypt, the login's code, `fill.execute`, last used, the code's copy.
+  - `fill.ts`: the fill every surface goes through: frame choice, insecure check, decrypt, the login's code, `fill.execute`, last used, the code's copy; for a card or identity the wallet branch (probe, frame plan, questions, one decrypt, `fill.executeForm` per frame).
+  - `wallet.ts`: card and identity items for any page (`walletKind()`, `walletCandidates()`, no site matching), `parseExpiry()`, `membersFor()` (never `pin` or `bsn`), `isInsecureUrl()`, the frame plan and `parseConfirmation()`, specs in `openspec/changes/ext-card-identity-fill/`.
+  - `form-answers.ts`: `answered()` and `answeredOnlyHost()` merge a question's answer into a `FormConfirmation`; apart from `wallet.ts` so the list page does not load the public suffix list.
   - `login-codes.ts`: the logins with a code for a page, and current codes from a login's `totp` field (`openspec/changes/ext-totp-autofill/`).
   - `code-fill.ts`: a pick from the inline list on a code field.
   - `frames.ts`: the frames of each tab, from `page_ready` senders.
   - `triggers.ts`: fill on page load and from the `autofill_login` shortcut.
-  - `inline-session.ts`: the inline list's session and its `inline.*` requests, passkey rows during a conditional request included.
+  - `inline-session.ts`: the inline list's session and its `inline.*` requests, per mode (login, code, card, identity), passkey rows during a conditional request included.
   - `capture-queue.ts`: the pending save or update per tab and the bar's `capture.*` requests.
   - `tab-items.ts`: the item each tab last filled or captured, for a password change form without a username.
-  - `fields.ts` (content script): field and group detection, code groups, and `fillField()`.
-  - `execute.ts` (content script): answers `fill.execute`, the code into one code group.
+  - `fields.ts` (content script): field and group detection, code groups, the card and identity roles, which a user can see (`isSeen()`, stricter than for logins), `fillField()` and `fillSelect()`.
+  - `format.ts` (content script): formats a card's or identity's member per field, from its placeholder, `maxlength` and options: expiry patterns, month and year forms, split numbers, brand options.
+  - `execute.ts` (content script): answers `fill.execute`, the code into one code group, and `fill.probe`, `fill.executeForm` and `fill.confirmForm`.
   - `capture-collector.ts` (content script): reports a login the user submitted.
   - `frame-host.ts` (content script): an extension page in an iframe inside a closed shadow root.
   - `inline-host.ts` and `notification-host.ts` (content script): place, guard and close the list and the bar.
@@ -114,7 +117,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `item.passkeys`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
-| Popup → background, fill | `fill.request` | `FillResult`, or `needsInsecureConfirm` to ask first |
+| Popup → background, fill | `fill.request` (a card or identity may carry `confirmed`) | `FillResult`, or `needsInsecureConfirm` or `needsFormConfirm` to ask first |
 | Popup → background, default password manager | `defaultManager.get`, `defaultManager.enable`, `defaultManager.disable` | `DefaultManagerState`; `undefined` when the background failed |
 | Passkey window → background, each naming its ceremony id | `passkey.state`, `passkey.pick`, `passkey.save`, `passkey.verify`, `passkey.retry`, `passkey.fallback`, `passkey.cancel` | `PasskeyWindowReply`: `{ ok: true, view? }` or `{ ok: false, code }` |
 | Background → popup | `vault.changed`, `vault.locked` | None; the popup re-reads |
@@ -123,10 +126,10 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Content → background, inline list | `inline.open` | `{ key, height }`, or `null` for no list |
 | Content → background, passkey relay | `passkey.start`, `passkey.available`; `passkey.abort` | `{ ceremonyId }` or `{ fallback: true }`, a boolean; none for `passkey.abort` |
 | Page script → relay, by `postMessage` to its own window with a `MessageChannel` port per call | `create`, `get`, `available`, then `abort` on the port | An ack, then a credential, a `DOMException` name, `available` or `fallback` |
-| Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `inline.verify`, `capture.verify`, `capture.show` | `boolean`; `FillExecuteReply` for `fill.execute`; the key the host's bar holds for `capture.show` |
+| Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `fill.probe`, `fill.executeForm`, `fill.confirmForm`, `inline.verify`, `capture.verify`, `capture.show` | `boolean`; `FillExecuteReply` for `fill.execute`; `FillProbeReply` (the roles of the chosen group and the frame's origin, no vault data) for `fill.probe`; the count filled for `fill.executeForm`; a boolean for `fill.confirmForm` (the top frame's `confirm()`, context-menu fills only); the key the host's bar holds for `capture.show` |
 | Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand`, `passkey.result` | None |
 | Content → its list or bar iframe, by `postMessage` to the extension origin | `inline.init`, `inline.focus`, `inline.moved`, `capture.init`, `capture.focus`, `capture.moved` | None |
-| Inline list → background | `inline.state`, `inline.pick` (a passkey row adds its `credentialId`); `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, with `passkeys` during a conditional request; `InlinePickReply`; none for the last four |
+| Inline list → background | `inline.state`, `inline.pick` (a passkey row adds its `credentialId`, a card or identity pick may carry `confirmed`); `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, with `passkeys` during a conditional request; `InlinePickReply`, or `needsFormConfirm` to ask first; none for the last four |
 | Save bar → background | `capture.state`, `capture.save`, `capture.update`, `capture.dismiss`, `capture.expand` | `NotificationReplies` |
 
 - **Routing by sender page.** `src/background/sender.ts` tells the popup, the list and the bar apart by `sender.url` path, and a content script by its tab and frame; each gets only its own kind set in `src/messages.ts`.
@@ -164,7 +167,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `editOpened.<id>` | session | Per edit form, for the 10 newest, keyed by the random `recordId` of the form's fetch: the ciphertext it showed in full, the row's `updatedAt` and the source's `sourceUpdatedAt`; a form's entry goes when its save is accepted, stays after a failed one, and all go when the key is cleared |
 | `generatorHistory.<id>` | session | The 50 newest generated values, in plaintext; gone when the key is cleared |
 | `generatorSealed.<id>` | session | Values generated while locked, RSA-OAEP-sealed to the certificate proven at the last unlock; merged into `generatorHistory.<id>` by the first history request after the unlock; dropped as in [design.md, History while locked](openspec/changes/ext-generator/design.md) |
-| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode and offered item ids, and during a conditional passkey request its ceremony id and offered login and credential ids; no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
+| `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode (login, code, card or identity) and offered item ids, and during a conditional passkey request its ceremony id and offered login and credential ids; no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
 | `passkeyCeremony.<tabId>` | session | The tab's passkey ceremony, as the [passkey spec](openspec/changes/ext-passkey-provider/specs/passkey-provider/spec.md) lists it under "Where ceremony data lives": ids, origin, frame URL, RP ID, challenge, the page's `rp.name` and `user`, requirements, deadline, window, verified flag, and after a failed step what Retry needs; no ciphertext, key or decrypted value; gone when the ceremony ends (see [Passkeys](#passkeys)), kept through a lock |
 | `clipboardCode` | session | The account whose one-time code the background copied, never the code; gone when the clear runs, on any other copy, and at that account's lock or logout, which clears the clipboard at once |
 
@@ -230,10 +233,11 @@ After a master-password unlock that finds `pinSeal.<id>` but no `pin.<id>`, the 
 
 The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts).
 
-- **Fill:** the popup, the context menu, the shortcut, page load and an inline pick all go through `fill()`: it matches the item against each recorded frame's URL, decrypts `login` and `key`, and sends one `fill.execute` per matching frame.
+- **Fill:** the popup, the context menu, the shortcut, page load and an inline pick all go through `fill()`: for a login it matches the item against each recorded frame's URL, decrypts `login` and `key`, and sends one `fill.execute` per matching frame.
+- **Cards and identities** (`openspec/changes/ext-card-identity-fill/`): chosen only by the user, never matched by site, never on page load or the shortcut. `fill()` sends `fill.probe` (the kind only) to the top frame and each recorded `http(s)` frame, which answer the roles of their chosen group; `planFrames()` decides which frames take part (same base domain silently, others after the cross-site question; a card on an insecure page asks first) and answers `needsFormConfirm` before anything is decrypted. After the questions it decrypts `key` once and sends each frame one `fill.executeForm` with only the members its roles ask for, never `pin` or `bsn`; the content script formats them per field. A `FormConfirmation` carries the top origin it answered and counts for no other.
 - **TOTP:** `fill()` puts the current code from the login's own `totp` field in `fill.execute`, and copies it after the fill; not on page load (`openspec/changes/ext-totp-autofill/`).
 - **Code list:** on a code field the inline list opens in code mode; its rows carry codes, its pick goes to `pickCode()`, and the list page asks `inline.state` again when a code ends.
-- **Inline list:** the content script asks `inline.open` for a key and posts it to the list page, which loads its rows with `inline.state`; a pick goes to the background, which asks the host frame `inline.verify` before it fills.
+- **Inline list:** the content script asks `inline.open` (with the mode `isQualifying()` gave the field) for a key and posts it to the list page, which loads its rows with `inline.state`; a pick goes to the background, which asks the host frame `inline.verify` before it fills. A card or identity list is sized like the login list, its rows carry a card's brand and last four (`InlineRow.card`, worded by the list page) or an identity's full name or email, and its questions are asked in the list.
 - **Save bar:** `capture.submitted` queues a capture; the background sends `capture.show` with a fresh key to the top frame, and the bar loads its state with `capture.state` and answers with `capture.save`, `capture.update` or `capture.dismiss`; the background asks the host `capture.verify` for all but Close.
 
 ### Passkeys
@@ -270,7 +274,7 @@ The specs are in `openspec/changes/ext-i18n/`.
 - **Catalogs:** `locales/<lang>.yml`, English the source, built into `_locales/` by `@wxt-dev/i18n`. Each names its own `language`.
 - **Language:** the browser's UI language picks the catalog, with English as the fallback. There is no picker.
 - **Use:** `i18n.t('group.key', { name })` from `#i18n`. Helpers for a link inside a sentence, field actions and formatting are in `entrypoints/popup/i18n.tsx`.
-- **Codes, not text:** the background sends error, notice and blocked-reason codes; `entrypoints/popup/errors.ts` words them. A blocked row stores its reason as a code too.
+- **Codes, not text:** the background sends error, notice and blocked-reason codes; `entrypoints/popup/errors.ts` words them. A blocked row stores its reason as a code too. The inline list page likewise words data the background sends, such as a card's brand and last four.
 - **Formatting:** dates, relative times, numbers and `<html lang>` use the catalog's `language`, not the browser's.
 - **Guards:** `locales/locales.test.ts` checks keys and placeholders across catalogs; lint fails on hard-coded text in popup components.
 - **Adding a language:** see the [README](README.md#adding-a-language).
@@ -282,5 +286,5 @@ The specs are in `openspec/changes/ext-i18n/`.
 - Popup tests (`*.test.tsx`) run twice: project `popup-prod` as built, `popup-dev` under StrictMode as `npm run dev` renders; count mount effects with `mounts()`.
 - Tests render in English from the real catalogs; `setLocale('nl')` from `src/testing/i18n.ts` switches one to Dutch.
 - `test-site/` holds mock pages for manual checks, one per fill and capture case.
-- `e2e/` drives the inline list and the save bar of the built Chrome extension on the test site with Playwright, for what only a real browser shows (Chrome's occlusion report, the top layer, modals); it seeds a fake unlocked account from the test vectors. Playwright cannot load extensions into Firefox.
+- `e2e/` drives the inline lists and the save bar of the built Chrome extension on the test site with Playwright, for what only a real browser shows (Chrome's occlusion report, the top layer, modals, hidden and covered fields, cross-site frames); it seeds a fake unlocked account with cards and identities from the test vectors, maps `shop.test` to `127.0.0.1` for the insecure-page question and resolves `*.localhost` itself. Playwright cannot load extensions into Firefox or open browser context menus.
 - The commands are in the [README](README.md#checks--builds). Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching `entrypoints/`.

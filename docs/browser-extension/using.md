@@ -168,6 +168,18 @@ What Keepiq counts as the same site is **Default URI match detection** in [Setti
 
 Logins are filled in frames of a page too, but only in frames from the login's own site.
 
+## Filling in cards and identities
+
+Keepiq fills in a card on a payment form and an identity on an address or personal-details form, from the same three places as a login. It never does this by itself: only after you chose the card or identity, and never on page load or with the keyboard shortcut.
+
+- **From the extension:** your cards and then your identities show under **Autofill suggestions**, on any website, whatever the item's address. Click one, or its **Fill** button, or **Fill** on an opened card or identity. A card or identity that is blocked has no **Fill**.
+- **Under the field:** click in an empty card number, name on card, expiry or security code field, or an empty name, email, phone or address field of an address form, and Keepiq lists your cards or identities beneath it. With a card the list shows its brand and the last four digits. Turn the lists off with **Display cards as suggestions** and **Display identities as suggestions** in [Settings](#settings).
+- **Right-click a field:** the **Keepiq** menu has **Autofill card** and **Autofill identity**, each with up to 10 items.
+- **What is filled:** the card's number, name, expiry and security code, in the format each field asks for (two or four digits, a month or year list, a number split over several fields), and the identity's name, email, phone and address. A card's PIN and an identity's BSN are never filled in.
+- **Insecure sites:** before it fills a card into a page that is not secure (a plain `http` page), Keepiq asks. An identity is filled in without asking.
+- **Payment frames from another site:** many shops show the card fields in a frame from their payment provider. Before it fills a frame from another site, Keepiq asks, for example, **Also fill on pay.example.net?**, and **Only shop.example.com** fills the rest of the page and leaves that frame empty. If the page adds another frame later, Keepiq asks again.
+- **Only what you can see:** Keepiq leaves out fields that are hidden, covered, or out of reach of scrolling.
+
 ### When the list does not show
 
 - **No list in frames from another site:** a login form embedded from another website gets no list, in Chrome or Firefox. Fill it from the extension, the right-click menu or the shortcut.
@@ -262,7 +274,8 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
 - **Autofill:**
   - **Autofill on page load,** off by default, and **Default autofill setting for login items**, see [Filling in logins](#filling-in-logins).
   - **Default URI match detection:** **Base domain** by default, or **Host**, **Starts with**, **Exact**, **Regular expression** or **Never**. Under **Regular expression**, a login whose URL is an ordinary address, such as `https://bank.com`, still matches by base domain, and one that is no web address, such as an `ftp://` or app address, matches no page; only a URL written as a pattern, one that starts with `^` or has characters such as `*` or `(` in its host, is read as one.
-  - **Show autofill suggestions on form fields** turns the list under login fields on or off; **Enable context menu options** the right-click menu.
+  - **Show autofill suggestions on form fields** turns the list under login fields on or off; **Display cards as suggestions** and **Display identities as suggestions** do the same for the card and identity lists, and only work while it is on; **Enable context menu options** the right-click menu.
+  - **Always show cards as Autofill suggestions on Vault view** and **Always show identities as Autofill suggestions on Vault view** list them under **Autofill suggestions** in the extension.
   - **Make Keepiq your default password manager,** Chrome only, turns off Chrome's own password saving and address autofill, so its dropdown no longer covers Keepiq's list. Chrome asks for permission to change its settings; turning it off gives them back.
   - **Autofill keyboard shortcut** shows the keys, with **Change**.
   - **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default.

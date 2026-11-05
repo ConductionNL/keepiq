@@ -1,3 +1,6 @@
+/** `localhost` and its subdomains, which browsers treat as a secure context over `http:`. */
+export const isLocalhost = (host: string) => host === 'localhost' || host.endsWith('.localhost')
+
 /**
  * The one reading of an item or tab url that matching, Launch and suggestions share:
  * a bare host (`github.com`, `localhost:8080`) means https, and anything but http(s) is no url.

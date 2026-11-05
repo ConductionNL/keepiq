@@ -6,16 +6,18 @@ import { broadcast } from '@/src/background/broadcast'
 import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { lastUsedKey } from '@/src/last-used'
-import { inlineHeight, type BackgroundToContent, type InlineListToBackground, type PickInput } from '@/src/messages'
+import { inlineHeight, type BackgroundToContent, type FormConfirmation, type InlineListToBackground, type InlineStateReply, type PickInput } from '@/src/messages'
 import { ceremonyKey, endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from '@/src/passkey/ceremony'
 import { forgetOfferedPasskeys } from '@/src/passkey/offered'
-import { encrypt, secretRow, typeRows } from '@/src/testing/vault'
+import { setLocale } from '@/src/testing/i18n'
+import { blockedRow, encrypt, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { getKey, hasKey, putKey, unlockedAtKey } from '@/src/vault/key-store'
-import { writeSnapshot } from '@/src/vault/store'
+import { readSnapshot, writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
 import { lock, unlock } from '@/src/vault/unlock'
 import { savePasskeyCounter } from '@/src/vault/write'
+import { forgetTab, recordFrame } from './frames'
 import { closeAllSessions, closedByHost, handleInlineList, inlineSessionKey, openSession, registerInlineSessions } from './inline-session'
 
 const OPEN = { kind: 'inline.open', mode: 'login' } as const
@@ -28,6 +30,10 @@ vi.mock('@/src/vault/unlock', async (importOriginal) => ({ ...await importOrigin
 vi.mock('@/src/vault/key-store', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/vault/key-store')>()
 	return { ...actual, getKey: vi.fn(actual.getKey) }
+})
+vi.mock('@/src/vault/store', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@/src/vault/store')>()
+	return { ...actual, readSnapshot: vi.fn(actual.readSnapshot) }
 })
 vi.mock('@/src/vault/write', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/vault/write')>()
@@ -456,6 +462,233 @@ describe('code mode', () => {
 		expect(kinds()).toEqual([['inline.verify', 0]])
 		await list({ kind: 'inline.pick', key, itemId: 'work', input, confirmedInsecure: true })
 		expect(kinds()).toEqual([['inline.verify', 0], ['inline.verify', 0], ['fill.execute', 0], ['inline.close', 0]])
+	})
+})
+
+describe('card and identity lists', () => {
+	const CARD = { kind: 'inline.open', mode: 'card' } as const
+	const IDENTITY = { kind: 'inline.open', mode: 'identity' } as const
+	const VISA = { cardholder: 'Anna de Vries', number: '4111 1111 1111 1111', expiry: '03/27', cvv: '123', pin: '9876' }
+	/** Each subframe's URL, and each frame's roles in its `fill.probe` reply. */
+	let frames: Record<number, string>
+	let probes: Record<number, string[]>
+
+	const card = async (id: string, name: string, payload: object = VISA, overrides: Partial<OpenSecretRow> = {}) =>
+		secretRow({ id, name, url: 'https://bank.test/', typeId: 't-card', key: await encrypt(JSON.stringify(payload)), ...overrides })
+	const identity = async (id: string, name: string, payload: object) =>
+		secretRow({ id, name, url: null, typeId: 't-identity', key: await encrypt(JSON.stringify(payload)) })
+	const cards = (count: number) => Promise.all(Array.from({ length: count }, (_, i) => card(`c${i}`, `Card ${i}`)))
+	const forms = () => sent.flatMap(({ frameId, message }) => (message.kind === 'fill.executeForm' ? [[frameId, message.values]] : []))
+	const frame = (frameId: number, url: string, roles: string[]) => {
+		recordFrame(TAB, frameId, url)
+		frames[frameId] = url
+		probes[frameId] = roles
+	}
+
+	async function openCard() {
+		const { key } = (await openSession(CARD, content()))!
+		await list({ kind: 'inline.state', key })
+		return key
+	}
+	const pickWork = (key: string, confirmed?: FormConfirmation) => list({ kind: 'inline.pick', key, itemId: 'work', input, ...(confirmed && { confirmed }) })
+
+	beforeEach(() => {
+		pageUrl = 'https://shop.test/checkout'
+		frames = {}
+		probes = { 0: ['number', 'expiry', 'securityCode'] }
+		vi.mocked(browser.tabs.sendMessage).mockImplementation(async (tabId: number, message: unknown, options?: { frameId?: number }) => {
+			const frameId = options?.frameId ?? 0
+			sent.push({ tabId, message: structuredClone(message) as BackgroundToContent, frameId })
+			const m = message as BackgroundToContent
+			if (m.kind === 'inline.verify') return visible as never
+			if (m.kind === 'fill.probe') return { roles: probes[frameId] ?? [], origin: new URL(frames[frameId] ?? pageUrl).origin } as never
+			if (m.kind === 'fill.executeForm') return { filled: Object.keys(m.values).length } as never
+			return undefined as never
+		})
+	})
+
+	afterEach(() => forgetTab(TAB))
+
+	it.each([[0, 1], [1, 1], [3, 3], [8, 5]])('opens the card list with %i cards %i rows tall, decrypting nothing', async (count, rows) => {
+		await vault(await cards(count))
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await openSession(CARD, content())).toEqual({ key: expect.any(String), height: inlineHeight(rows) })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+	})
+
+	it.each([[0, 1], [1, 1], [3, 3], [8, 5]])('opens the identity list with %i identities %i rows tall, decrypting nothing', async (count, rows) => {
+		await vault(await Promise.all(Array.from({ length: count }, (_, i) => identity(`i${i}`, `Identity ${i}`, { firstName: 'Anna' }))))
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await openSession(IDENTITY, content())).toEqual({ key: expect.any(String), height: inlineHeight(rows) })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+	})
+
+	it('counts a use-only copy as a row at open, and neither a blocked row nor another kind', async () => {
+		await vault([
+			await card('work', 'Work Visa'),
+			await card('shared', 'Shared', VISA, { useOnly: true }),
+			blockedRow({ id: 'gone', typeId: 't-card' }),
+			await login({ id: 'site', name: 'Shop', url: 'https://shop.test/' }),
+			await identity('me', 'Me', { firstName: 'Anna' }),
+		])
+		const { key, height } = (await openSession(CARD, content()))!
+		expect(height).toBe(inlineHeight(2))
+		expect((await list({ kind: 'inline.state', key }) as { rows: unknown[] }).rows).toHaveLength(2)
+		expect((await openSession(IDENTITY, content()))!.height).toBe(inlineHeight(1))
+	})
+
+	it.each([0, 3])('opens one row tall while locked with %i cards, and answers locked without listing, counting or decrypting', async (count) => {
+		await vault(await cards(count))
+		await lock(accountId)
+		vi.mocked(rsaDecrypt).mockClear()
+		vi.mocked(readSnapshot).mockClear()
+		const { key, height } = (await openSession(CARD, content()))!
+		expect(height).toBe(inlineHeight(1))
+		expect(await list({ kind: 'inline.state', key })).toEqual({ state: 'locked', mode: 'card', host: 'shop.test', rows: [], theme: 'system' })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(readSnapshot).not.toHaveBeenCalled()
+		expect(JSON.parse((await stored())!).itemIds).toEqual([])
+	})
+
+	it('keeps the kind in the session beside the offered ids, without plaintext', async () => {
+		await vault([await card('work', 'Work Visa')])
+		const key = await openCard()
+		// The whole shape, so no member, brand or last four can sit in an extra field.
+		expect(JSON.parse((await stored())!)).toEqual({
+			key, accountId, frameId: 0, frameUrl: pageUrl, listFrameId: expect.any(Number), mode: 'card', itemIds: ['work'], openedAt: expect.any(Number),
+		})
+	})
+
+	it('opens each kind only with inline suggestions and its own setting on, whether or not the vault holds any', async () => {
+		const opens = async () => [await openSession(CARD, content()) !== null, await openSession(IDENTITY, content()) !== null]
+		expect(await opens()).toEqual([true, true])
+		await browser.storage.local.set({ [`settings.${accountId}`]: { inlineCards: false } })
+		expect(await opens()).toEqual([false, true])
+		await browser.storage.local.set({ [`settings.${accountId}`]: { inlineIdentities: false } })
+		expect(await opens()).toEqual([true, false])
+		await browser.storage.local.set({ [`settings.${accountId}`]: { inlineSuggestions: false } })
+		expect(await opens()).toEqual([false, false])
+	})
+
+	it('opens nothing in a frame that is not http(s)', async () => {
+		pageUrl = 'file:///home/alice/checkout.html'
+		expect(await openSession(CARD, content())).toBeNull()
+	})
+
+	it('lists every card whatever the site, last used first, by brand and last four; a use-only copy by name, never decrypted', async () => {
+		await vault([
+			await card('work', 'Work Visa'),
+			await card('personal', 'Personal', { number: '5555 5555 5555 4444' }),
+			await card('store', 'Store card', { number: '9000 1234' }),
+			await card('shared', 'Shared', VISA, { useOnly: true }),
+			await card('empty', 'Empty', { cardholder: 'Anna de Vries' }),
+			blockedRow({ id: 'gone', typeId: 't-card' }),
+			await login({ id: 'site', name: 'Shop', url: 'https://shop.test/' }),
+			await identity('me', 'Me', { firstName: 'Anna' }),
+		])
+		await browser.storage.local.set({ [lastUsedKey(accountId)]: { personal: 5 } })
+		vi.mocked(rsaDecrypt).mockClear()
+		const { key } = (await openSession(CARD, content()))!
+		expect(await list({ kind: 'inline.state', key })).toEqual({
+			state: 'unlocked', mode: 'card', host: 'shop.test', theme: 'system', rows: [
+				{ id: 'personal', name: 'Personal', username: null, card: { brand: 'Mastercard', last4: '4444' } },
+				{ id: 'empty', name: 'Empty', username: null },
+				{ id: 'shared', name: 'Shared', username: null },
+				{ id: 'store', name: 'Store card', username: null, card: { brand: null, last4: '1234' } },
+				{ id: 'work', name: 'Work Visa', username: null, card: { brand: 'Visa', last4: '1111' } },
+			],
+		})
+		expect(rsaDecrypt).toHaveBeenCalledTimes(4)
+	})
+
+	it('sends a card no wording, only its brand and last four, and nothing for a number under four digits', async () => {
+		setLocale('nl')
+		await vault([await card('store', 'Store card', { number: '9000 1234' }), await card('short', 'Short', { number: '123' })])
+		const { key } = (await openSession(CARD, content()))!
+		const { rows } = (await list({ kind: 'inline.state', key })) as NonNullable<InlineStateReply>
+		expect(rows.find((row) => row.id === 'store')).toEqual({ id: 'store', name: 'Store card', username: null, card: { brand: null, last4: '1234' } })
+		expect(Object.keys(rows.find((row) => row.id === 'short')!)).toEqual(['id', 'name', 'username'])
+	})
+
+	it('lists identities by full name, or by email without a name', async () => {
+		await vault([
+			await identity('me', 'Me', { firstName: 'Anna', lastName: 'de Vries', email: 'anna@example.test', bsn: '123456782' }),
+			await identity('work', 'Work', { email: 'anna@work.test' }),
+			await identity('blank', 'Blank', {}),
+			await card('work-card', 'Work Visa'),
+		])
+		const { key } = (await openSession(IDENTITY, content()))!
+		expect(await list({ kind: 'inline.state', key })).toMatchObject({ mode: 'identity', rows: [
+			{ id: 'blank', name: 'Blank', username: null, detail: null },
+			{ id: 'me', name: 'Me', username: null, detail: 'Anna de Vries' },
+			{ id: 'work', name: 'Work', username: null, detail: 'anna@work.test' },
+		] })
+	})
+
+	it('fills a pick into the list’s group, records last used, counts as interaction and closes the list', async () => {
+		await vault([await card('work', 'Work Visa')])
+		const key = await openCard()
+		sent = []
+		expect(await pickWork(key)).toEqual({ filled: 'form', code: false })
+		expect(kinds()).toEqual([['inline.verify', 0], ['fill.probe', 0], ['fill.executeForm', 0], ['inline.close', 0]])
+		expect(sent[1]!.message).toEqual({ kind: 'fill.probe', form: 'card', anchorKey: key })
+		expect(sent[2]!.message).toMatchObject({ form: 'card', anchorKey: key, origin: 'https://shop.test' })
+		expect(forms()).toEqual([[0, { number: '4111111111111111', expMonth: '03', expYear: '2027', cvv: '123' }]])
+		expect(sent[3]!.message).toEqual({ kind: 'inline.close', key, refocus: true })
+		expect((await browser.storage.local.get(lastUsedKey(accountId)))[lastUsedKey(accountId)]).toHaveProperty('work')
+		expect((await browser.storage.session.get('lastInteractionAt')).lastInteractionAt).toBeDefined()
+	})
+
+	it('asks before a card reaches an http page, decrypting nothing and keeping the list open, and fills on the answer for that origin only', async () => {
+		pageUrl = 'http://shop.test/checkout'
+		await vault([await card('work', 'Work Visa')])
+		const key = await openCard()
+		vi.mocked(rsaDecrypt).mockClear()
+		sent = []
+		const asked = { needsFormConfirm: { insecure: true, host: 'shop.test', origin: 'http://shop.test', frameHosts: [] } }
+		expect(await pickWork(key)).toEqual(asked)
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(kinds()).toEqual([['inline.verify', 0], ['fill.probe', 0]])
+		expect(await pickWork(key, { insecure: true, frames: 'all', frameHosts: [], origin: 'https://shop.test' })).toEqual(asked)
+		expect(forms()).toEqual([])
+		expect(await pickWork(key, { insecure: true, frames: 'all', frameHosts: [], origin: 'http://shop.test' })).toEqual({ filled: 'form', code: false })
+	})
+
+	it('asks about a cross-site frame, asks again about one added after the answer, and fills only the page for "Only {host}"', async () => {
+		await vault([await card('work', 'Work Visa')])
+		probes[0] = ['cardholder']
+		frame(3, 'https://js.stripe.com/card', ['number'])
+		const key = await openCard()
+		const asked = (frameHosts: string[]) => ({ needsFormConfirm: { insecure: false, host: 'shop.test', origin: 'https://shop.test', frameHosts } })
+		expect(await pickWork(key)).toEqual(asked(['js.stripe.com']))
+		frame(5, 'https://ads.test/frame', ['number'])
+		const fillAll: FormConfirmation = { frames: 'all', frameHosts: ['js.stripe.com'], origin: 'https://shop.test' }
+		expect(await pickWork(key, fillAll)).toEqual(asked(['js.stripe.com', 'ads.test']))
+		expect(forms()).toEqual([])
+		expect(await pickWork(key, { ...fillAll, frames: 'sameSite' })).toEqual({ filled: 'form', code: false })
+		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }]])
+	})
+
+	it('closes the list when the vault locks, after which its pick decrypts nothing', async () => {
+		await vault([await card('work', 'Work Visa')])
+		const key = await openCard()
+		sent = []
+		await lock(accountId)
+		await vi.waitFor(async () => expect(await stored()).toBeUndefined())
+		expect(sent.map(({ message }) => message)).toEqual([{ kind: 'inline.close', key, refocus: false }])
+		vi.mocked(rsaDecrypt).mockClear()
+		expect(await pickWork(key)).toBeNull()
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+	})
+
+	it('refuses an item of another kind as stale, filling nothing', async () => {
+		await vault([await card('work', 'Work Visa'), await identity('me', 'Me', { firstName: 'Anna' }), await login({ id: 'site', name: 'Shop', url: 'https://shop.test/' })])
+		const { key: identities } = (await openSession(IDENTITY, content()))!
+		await list({ kind: 'inline.state', key: identities })
+		expect(await pickWork(identities)).toEqual({ refused: 'stale' })
+		const cardList = await openCard()
+		expect(await list({ kind: 'inline.pick', key: cardList, itemId: 'site', input })).toEqual({ refused: 'stale' })
+		expect(forms()).toEqual([])
 	})
 })
 

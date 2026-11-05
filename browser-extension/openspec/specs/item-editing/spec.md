@@ -80,6 +80,13 @@ The extension SHALL edit `totp` items as a Secret field holding an `otpauth://to
 - **WHEN** they save
 - **THEN** `key` MUST decrypt to a JSON object with exactly the five card members, `cvv` and `pin` as empty strings
 
+#### Scenario: Card format hints never block Save
+- **GIVEN** the user chose `card`, typed the 14-digit number 37828224631000 and the security code 123
+- **WHEN** the form shows them
+- **THEN** the number MUST carry the hint "American Express doesn't issue card numbers of this length. You can still save." and the security code "American Express cards use a 4-digit CID. You can still save.", each linked to its field
+- **AND** Save MUST stay enabled and save the number and code as typed
+- A failed Luhn check MUST hint "This number doesn't pass the card checksum. Check it; you can still save.", except for a UnionPay number; a number of no known brand outside 12 to 19 digits MUST hint "Card numbers have 12 to 19 digits. You can still save."
+
 #### Scenario: Passkey stays read-only
 - **GIVEN** the user opens Edit on a `passkey` item, by the fresh row's type or by the cached one
 - **WHEN** the form renders

@@ -292,9 +292,17 @@ p {
 	color: var(--fg-muted);
 }
 
+/* Wraps for "Only {host}" beside Cancel and Fill at the minimum width; a long host is still named in full in the text above. */
 .question__actions {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: flex-end;
 	gap: 8px;
 	margin-top: 8px;
+}
+
+.question__actions .btn {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

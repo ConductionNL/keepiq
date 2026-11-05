@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Card fields in frames</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main class="wide">
+		<a class="back" href="/">All test pages</a>
+		<h1>Card fields in frames</h1>
+		<p class="tests">"Name on card" is in this page, the card fields in frames, as with Stripe or Adyen. Fill a card from the list on "Name on card": Keepiq asks "Also fill on <span class="cross-host">127.0.0.1</span>?" first. "Fill" fills every frame, "Only <span class="own-host">localhost</span>" fills this page and the same-site frame, and "Cancel" fills nothing.</p>
+		<form method="post" action="/checkout">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<button type="submit">Pay</button>
+		</form>
+
+		<h2>Same-site frame</h2>
+		<p class="tests">On port <code id="same-site-port">8101</code> of this host: the same site, so it takes part without a question.</p>
+		<iframe id="same-site" title="Card fields on the same site"></iframe>
+
+		<h2>Cross-site frame</h2>
+		<p class="tests">On <code class="cross-host">127.0.0.1</code>, another site: it takes part only after the question.</p>
+		<iframe id="cross-site" title="Card fields on another site"></iframe>
+
+		<h2>Frame added later</h2>
+		<p class="tests">Press the button, then pick a card within 5 seconds and wait for the new frame before you answer: it is on <code class="added-host">ads.localhost</code>, which the question did not name, so "Fill" asks again, naming it, and fills nothing before that answer.</p>
+		<p><button type="button" id="add-frame">Add a frame on <span class="added-host">ads.localhost</span></button></p>
+		<div id="added-frames"></div>
+	</main>
+	<script>
+		const port = Number(location.port) || 80
+		const crossHost = location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1'
+		const frameUrl = (host, framePort = port) => `http://${host}:${framePort}/card-frame.html`
+		document.getElementById('same-site').src = frameUrl(location.hostname, port + 1)
+		document.getElementById('same-site-port').textContent = port + 1
+		document.getElementById('cross-site').src = frameUrl(crossHost)
+		for (const element of document.querySelectorAll('.cross-host')) element.textContent = crossHost
+		for (const element of document.querySelectorAll('.own-host')) element.textContent = location.host
+		const button = document.getElementById('add-frame')
+		// Later, so there is time to pick a card and see the question first.
+		button.addEventListener('click', () => setTimeout(addFrame, 5000))
+		function addFrame() {
+			const frame = document.createElement('iframe')
+			frame.className = 'added'
+			frame.title = 'Card fields added later'
+			frame.src = frameUrl('ads.localhost')
+			document.getElementById('added-frames').append(frame)
+		}
+	</script>
+</body>
+</html>

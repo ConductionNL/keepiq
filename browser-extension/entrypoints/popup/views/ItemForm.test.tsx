@@ -184,6 +184,19 @@ describe('adding', () => {
 		expect(JSON.parse((created(sent)[0] as { key: string }).key)).toEqual({ number: '4111111111111111', expiry: '12/29', cvv: '', pin: '', cardholder: 'Alice Doe' })
 	})
 
+	it('hints at an American Express number and code of the wrong length, and still saves', async () => {
+		const { onSaved, user } = renderForm()
+		await user.selectOptions(screen.getByLabelText('Type'), 't-card')
+		await user.type(field('Name'), 'Amex')
+		await user.type(field('Number'), '37828224631000')
+		await user.type(field('CVV'), '123')
+		expect(screen.getByText('American Express doesn\'t issue card numbers of this length. You can still save.')).toBeTruthy()
+		expect(field('CVV').getAttribute('aria-describedby')).toBeTruthy()
+		expect(screen.getByText('American Express cards use a 4-digit CID. You can still save.')).toBeTruthy()
+		await user.click(save())
+		await waitFor(() => expect(onSaved).toHaveBeenCalled())
+	})
+
 	it('keeps a note and the notes from the spell checker, which may send them to a third party', async () => {
 		const { user } = renderForm()
 		expect(field('Notes').getAttribute('spellcheck')).toBe('false')

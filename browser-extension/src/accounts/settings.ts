@@ -19,6 +19,12 @@ export interface AccountSettings {
 	defaultAutofill: DefaultAutofill
 	uriMatch: UriMatch
 	inlineSuggestions: boolean
+	/** The inline list on card and identity fields, under `inlineSuggestions` (ext-card-identity-fill). */
+	inlineCards: boolean
+	inlineIdentities: boolean
+	/** Cards and identities in the popup's Autofill suggestions. */
+	vaultCards: boolean
+	vaultIdentities: boolean
 	contextMenu: boolean
 	askToAdd: boolean
 	askToUpdate: boolean
@@ -39,6 +45,10 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 	defaultAutofill: 'onPageLoad',
 	uriMatch: 'baseDomain',
 	inlineSuggestions: true,
+	inlineCards: true,
+	inlineIdentities: true,
+	vaultCards: true,
+	vaultIdentities: true,
 	contextMenu: true,
 	askToAdd: true,
 	askToUpdate: true,
@@ -48,7 +58,7 @@ export const DEFAULT_SETTINGS: AccountSettings = {
 }
 
 /** The delivered `AutofillFeature`s, sent to Settings in the snapshot. */
-export const AUTOFILL_FEATURES: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys']
+export const AUTOFILL_FEATURES: AutofillFeature[] = ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys', 'cards', 'identities']
 
 export const settingsKey = (accountId: string) => `settings.${accountId}`
 
@@ -74,6 +84,10 @@ const VALIDATORS: Validators<AccountSettings> = {
 	defaultAutofill: oneOf(['onPageLoad', 'never'] as const),
 	uriMatch: oneOf(URI_MATCHES),
 	inlineSuggestions: isBoolean,
+	inlineCards: isBoolean,
+	inlineIdentities: isBoolean,
+	vaultCards: isBoolean,
+	vaultIdentities: isBoolean,
 	contextMenu: isBoolean,
 	askToAdd: isBoolean,
 	askToUpdate: isBoolean,

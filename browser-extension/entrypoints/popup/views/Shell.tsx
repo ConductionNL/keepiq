@@ -41,6 +41,9 @@ interface Props {
 
 type Pick = { target: GenerateTarget; apply: (value: string) => void }
 
+/** The detail's Fill: a suggestion, or a card or identity, which the Vault view settings only keep out of the suggestions. */
+const offersFill = (snapshot: { suggestionIds: string[]; formIds: string[] }, id: string) => snapshot.suggestionIds.includes(id) || snapshot.formIds.includes(id)
+
 /** The unlocked popup: tabs, and pages such as an item's detail, its form or a settings section opened over them. */
 export function Shell({ active, lastTab, hidden = false, onAccounts, refreshState }: Props) {
 	const tab = useCurrentTab()
@@ -144,7 +147,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 						folders={snapshot.folders}
 						webAppUrl={snapshot.webAppUrl}
 						shareSave={shareSave?.id === detail.id ? shareSave.note : undefined}
-						fillTab={snapshot.suggestionIds.includes(detail.id) ? tab : undefined}
+						fillTab={offersFill(snapshot, detail.id) ? tab : undefined}
 					/>
 				)}
 			</>

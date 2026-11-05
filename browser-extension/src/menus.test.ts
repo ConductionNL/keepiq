@@ -31,6 +31,12 @@ let toTab: unknown[]
 let openPopup: ReturnType<typeof vi.fn>
 
 const tab = () => ({ id: TAB, url: tabUrl, active: true }) as never
+/** The content script's replies; anything else answers `true`, as a confirm the user accepted. */
+const TAB_REPLIES: Record<string, () => unknown> = {
+	'fill.execute': () => ({ filled: 'both' }),
+	'fill.probe': () => ({ roles: ['cardholder', 'number', 'firstName'], origin: new URL(tabUrl).origin }),
+	'fill.executeForm': () => ({ filled: 2 }),
+}
 const ids = () => menus.entries.map((entry) => entry.id)
 const entry = (id: string) => menus.entries.find((e) => e.id === id)
 
@@ -44,6 +50,15 @@ async function vault(secrets: StoredSecretRow[]) {
 
 async function login(id: string, overrides: Partial<OpenSecretRow> = {}): Promise<OpenSecretRow> {
 	return secretRow({ id, name: id, url: 'https://example.test/', login: await encrypt(`user-${id}`), key: await encrypt(`pass-${id}`), ...overrides })
+}
+
+async function card(id: string, overrides: Partial<OpenSecretRow> = {}): Promise<OpenSecretRow> {
+	const key = await encrypt(JSON.stringify({ number: '4111 1111 1111 1111', expiry: '03/27', cvv: '123', pin: '9876', cardholder: `Holder ${id}` }))
+	return secretRow({ id, name: id, url: 'https://bank.test/', typeId: 't-card', key, ...overrides })
+}
+
+async function identity(id: string): Promise<OpenSecretRow> {
+	return secretRow({ id, name: id, url: null, typeId: 't-identity', key: await encrypt(JSON.stringify({ firstName: 'Anna', lastName: 'de Vries', bsn: '123456782' })) })
 }
 
 /** A login with a code: RFC 6238's SHA-1 key, whose code at 59 s is `287082`. */
@@ -66,7 +81,7 @@ beforeEach(async () => {
 	vi.spyOn(browser.tabs, 'get').mockImplementation(async () => tab())
 	vi.spyOn(browser.tabs, 'sendMessage').mockImplementation(async (_tabId: number, message: unknown) => {
 		toTab.push(structuredClone(message))
-		return ((message as { kind: string }).kind === 'fill.execute' ? { filled: 'both' } : true) as never
+		return (TAB_REPLIES[(message as { kind: string }).kind]?.() ?? true) as never
 	})
 	Object.assign(browser, { offscreen: { hasDocument: async () => false, createDocument: async () => {}, closeDocument: async () => {} } })
 	vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(async (message: unknown) => {
@@ -180,6 +195,52 @@ describe('the context menu', () => {
 		})
 	})
 
+	describe('Autofill card and Autofill identity', () => {
+		it('list every card and every identity whatever their url, after the copy entries, each then Open Keepiq', async () => {
+			await vault([await login('a'), await card('Visa'), await identity('Me'), await card('Amex')])
+			await rebuildMenus()
+			expect(ids().slice(ids().indexOf('copy-code'))).toEqual([
+				'copy-code',
+				'autofill-card', 'card:Amex', 'card:Visa', 'autofill-card-separator', 'open-card',
+				'autofill-identity', 'identity:Me', 'autofill-identity-separator', 'open-identity',
+				'generate',
+			])
+			expect(entry('autofill-card')).toMatchObject({ parentId: 'keepiq', title: 'Autofill card' })
+			expect(entry('autofill-identity')).toMatchObject({ parentId: 'keepiq', title: 'Autofill identity' })
+			expect(entry('card:Visa')).toMatchObject({ parentId: 'autofill-card', title: 'Visa' })
+			expect(entry('open-identity')).toMatchObject({ parentId: 'autofill-identity', title: 'Open Keepiq' })
+		})
+
+		it('list the first ten of twelve cards by last used then name', async () => {
+			const names = Array.from({ length: 12 }, (_, i) => `card${String(i).padStart(2, '0')}`)
+			await vault(await Promise.all(names.map((name) => card(name))))
+			await browser.storage.local.set({ [lastUsedKey(accountId)]: { card11: 2, card10: 1 } })
+			await rebuildMenus()
+			expect(menus.entries.filter((e) => e.parentId === 'autofill-card').map((e) => e.id))
+				.toEqual([...['card11', 'card10', ...names.slice(0, 8)].map((name) => `card:${name}`), 'autofill-card-separator', 'open-card'])
+		})
+
+		it('are left out when the vault has none of the kind, a blocked card counting as none', async () => {
+			await vault([await login('a'), blockedRow({ id: 'gone', typeId: 't-card' }), secretRow({ id: 'mine', typeId: 't-note', name: 'card' })])
+			await rebuildMenus()
+			expect(ids().filter((id) => /card|identity/.test(id ?? ''))).toEqual([])
+		})
+
+		it('are left out on a page that is not on the web', async () => {
+			tabUrl = 'about:blank'
+			await vault([await card('Visa'), await identity('Me')])
+			await rebuildMenus()
+			expect(ids()).toEqual(['keepiq', 'autofill', 'copy-user', 'copy-pass', 'copy-code', 'generate'])
+		})
+
+		it('give way to Unlock vault while locked', async () => {
+			await vault([await card('Visa'), await identity('Me')])
+			await lock(accountId)
+			await rebuildMenus()
+			expect(ids()).toEqual(['keepiq', 'unlock'])
+		})
+	})
+
 	it('keeps an & in an item name literal', async () => {
 		await vault([await login('a', { name: 'Tom & Jerry' })])
 		await rebuildMenus()
@@ -270,6 +331,46 @@ describe('the context menu', () => {
 			await vault([await login('a')])
 			menus.click('autofill:a', tab())
 			await vi.waitFor(() => expect(toTab.map((m) => (m as { kind: string }).kind)).toEqual(['fill.confirmInsecure', 'fill.execute']))
+		})
+
+		it('fill a picked card with only the members its fields ask for, and an identity likewise', async () => {
+			await vault([await card('Visa'), await identity('Me')])
+			menus.click('card:Visa', tab())
+			await vi.waitFor(() => expect(toTab).toHaveLength(2))
+			menus.click('identity:Me', tab())
+			await vi.waitFor(() => expect(toTab).toHaveLength(4))
+			const origin = 'https://example.test'
+			expect(toTab).toEqual([
+				{ kind: 'fill.probe', form: 'card' },
+				{ kind: 'fill.executeForm', form: 'card', values: { cardholder: 'Holder Visa', number: '4111111111111111' }, origin },
+				{ kind: 'fill.probe', form: 'identity' },
+				{ kind: 'fill.executeForm', form: 'identity', values: { firstName: 'Anna' }, origin },
+			])
+			expect(JSON.stringify(toTab)).not.toMatch(/9876|123456782/)
+			expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({ [lastUsedKey(accountId)]: { Visa: expect.any(Number), Me: expect.any(Number) } })
+		})
+
+		it('ask a card\'s insecure question in the page first, and fill nothing on Cancel', async () => {
+			tabUrl = 'http://shop.test/checkout'
+			await vault([await card('Visa')])
+			menus.click('card:Visa', tab())
+			await vi.waitFor(() => expect(toTab.map((m) => (m as { kind: string }).kind)).toEqual(['fill.probe', 'fill.confirmForm', 'fill.probe', 'fill.executeForm']))
+			expect(toTab[1]).toEqual({ kind: 'fill.confirmForm', insecure: true, host: 'shop.test', origin: 'http://shop.test', frameHosts: [] })
+			toTab = []
+			TAB_REPLIES['fill.confirmForm'] = () => false
+			try {
+				menus.click('card:Visa', tab())
+				await vi.waitFor(() => expect(toTab).toHaveLength(2))
+				await new Promise((resolve) => setTimeout(resolve, 20))
+				expect(toTab.map((m) => (m as { kind: string }).kind)).toEqual(['fill.probe', 'fill.confirmForm'])
+			} finally {
+				delete TAB_REPLIES['fill.confirmForm']
+			}
+		})
+
+		it.each(['open-card', 'open-identity'])('open the popup from %s', (id) => {
+			menus.click(id, tab())
+			expect(openPopup).toHaveBeenCalledOnce()
 		})
 
 		it('copy the password and clear it after the delay', async () => {

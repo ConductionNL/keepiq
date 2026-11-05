@@ -5,6 +5,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 // Here, not beside the entrypoint: WXT reads every top-level file in entrypoints/ as one.
 import content from '@/entrypoints/content'
 import { inlineHeight } from '@/src/messages'
+import { mockLayout } from '@/src/testing/layout'
 
 type Listener = (msg: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
 
@@ -128,6 +129,57 @@ describe('content script', () => {
 			expect(host.getAttribute('style')).toContain('height: 130px !important;')
 			ask({ kind: 'inline.close', key: KEY, refocus: false })
 			expect(sent).toContainEqual({ kind: 'inline.closed', key: KEY })
+		})
+	})
+
+	describe('card and identity list', () => {
+		const KEY = 'e'.repeat(32)
+		const OTHER_CHECKOUT = '<form><label>Card number <input id="other" autocomplete="cc-number"></label><button>Pay</button></form>'
+		const CHECKOUT = '<form><label>Card number <input id="n" autocomplete="cc-number"></label><label>CVV <input id="c" type="password" autocomplete="cc-csc"></label><button>Pay</button></form>'
+		const ADDRESS = '<form><label>First name <input id="f"></label><label>Email <input id="e" type="email"></label><button>Save</button></form>'
+		const value = (id: string) => (document.getElementById(id) as HTMLInputElement).value
+		const listHost = () => [...document.documentElement.children].find((element) => element.localName === 'div')
+		const HEIGHT = inlineHeight(3)
+
+		beforeEach(() => {
+			mockLayout()
+			vi.mocked(browser.runtime.sendMessage).mockImplementation(async (message: unknown) => {
+				sent.push(message)
+				return ((message as { kind: string }).kind === 'inline.open' ? { key: KEY, height: HEIGHT } : undefined) as never
+			})
+			vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue(null)
+		})
+
+		/** Focuses `selector` before the content script starts, as a field with `autofocus`. */
+		function focusThenStart(html: string, selector: string) {
+			document.body.innerHTML = html
+			;(document.querySelector(selector) as HTMLInputElement).focus()
+			start(null)
+		}
+
+		it.each([
+			['card', 'a card number', '#n'],
+			['card', 'a CVV typed as a password', '#c'],
+			['identity', 'a first name beside an email', '#f'],
+		])('opens the %s list on %s, at the height the background gave', async (mode, _, selector) => {
+			focusThenStart(`${CHECKOUT}${ADDRESS}`, selector)
+			await vi.waitFor(() => expect(listHost()).toBeDefined())
+			expect(sent).toContainEqual({ kind: 'inline.open', mode })
+			expect(listHost()!.getAttribute('style')).toContain(`height: ${HEIGHT}px !important;`)
+		})
+
+		it('probes and fills only the form the list is open on for its key', async () => {
+			focusThenStart(`${OTHER_CHECKOUT}${CHECKOUT}`, '#n')
+			await vi.waitFor(() => expect(ask({ kind: 'fill.probe', form: 'card', anchorKey: KEY })).toEqual({ roles: ['number', 'securityCode'], origin: location.origin }))
+			const values = { number: '4111111111111111', cvv: '123' }
+			expect(ask({ kind: 'fill.executeForm', form: 'card', values, origin: location.origin, anchorKey: KEY })).toEqual({ filled: 2 })
+			expect([value('other'), value('n'), value('c')]).toEqual(['', '4111111111111111', '123'])
+		})
+
+		it('opens no list on a newsletter’s lone email field', async () => {
+			focusThenStart('<form><label>Email <input id="e" type="email"></label><button>Subscribe</button></form>', '#e')
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			expect(sent.filter((message) => (message as { kind: string }).kind === 'inline.open')).toEqual([])
 		})
 	})
 

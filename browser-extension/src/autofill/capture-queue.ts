@@ -21,6 +21,7 @@ import { webUrl } from '@/src/vault/url'
 import { enforce, touch } from '@/src/vault/timeout'
 import { createItem, run, updateItem } from '@/src/vault/write'
 import { activeUnlockedId } from './fill'
+import { isWebUrl } from './frames'
 import { candidatesFor } from './matcher'
 import { forgetAllItems, forgetItem, rememberedItem, rememberItem } from './tab-items'
 
@@ -92,8 +93,6 @@ function live(tabId: number): Capture | undefined {
 	if (entry && entry.expiresAt <= Date.now()) drop(tabId)
 	return pending.get(tabId)
 }
-
-const isWeb = (url: string) => /^https?:\/\//i.test(url)
 
 const isPickInput = (input: unknown): input is PickInput => {
 	const value = input as Partial<PickInput> | null
@@ -200,7 +199,7 @@ async function tabUrlOf(sender: Browser.runtime.MessageSender, tabId: number): P
 export async function captureSubmitted(message: CaptureSubmitted, sender: Browser.runtime.MessageSender): Promise<void> {
 	const tabId = sender.tab?.id
 	const frameUrl = sender.url
-	if (tabId === undefined || sender.frameId === undefined || !frameUrl || !isWeb(frameUrl)) return
+	if (tabId === undefined || sender.frameId === undefined || !frameUrl || !isWebUrl(frameUrl)) return
 	const { username, password, changed } = message
 	if (typeof password !== 'string' || password === '' || (username !== null && typeof username !== 'string') || typeof changed !== 'boolean') return
 	const submit = ++submits

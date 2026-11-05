@@ -29,7 +29,7 @@ The dev profile lives in `.wxt/chrome-data`, so a paired account survives restar
 
 ```sh
 npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
-npm run test:e2e       # Playwright: builds, then drives the inline list and save bar in headless Chromium (port 8200; Chromium only)
+npm run test:e2e       # Playwright: builds, then drives the inline lists (login, code, card, identity) and save bar in headless Chromium (port 8200; Chromium only)
 npm run typecheck      # tsc --noEmit — does NOT build
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
@@ -59,7 +59,7 @@ src/             shared modules, imported as `@/src/…`
 locales/         one message catalog per language
 public/          copied verbatim into the build (icons live here)
 scripts/         dev tooling, never bundled
-test-site/       mock login pages for manual testing, never bundled
+test-site/       mock login, card and identity pages for manual testing, never bundled
 ```
 
 ## Adding a language

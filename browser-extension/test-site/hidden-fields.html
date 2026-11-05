@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Hidden card and address fields</title>
+	<link rel="stylesheet" href="/style.css">
+	<style>
+		form {
+			position: relative;
+		}
+
+		textarea {
+			font: inherit;
+		}
+
+		.hidden-part {
+			display: grid;
+			gap: 12px;
+		}
+
+		.t-opacity :is(input, textarea) {
+			opacity: 0;
+		}
+
+		.t-faded-ancestor {
+			opacity: 0.05;
+		}
+
+		.t-left-offscreen :is(input, textarea) {
+			position: absolute;
+			left: -9999px;
+		}
+
+		.t-top-offscreen :is(input, textarea) {
+			position: absolute;
+			top: -9999px;
+		}
+
+		.t-tiny :is(input, textarea) {
+			width: 1px;
+			height: 1px;
+			min-height: 0;
+			padding: 0;
+			border: 0;
+			resize: none;
+		}
+
+		.t-clip-path :is(input, textarea) {
+			clip-path: inset(50%);
+		}
+
+		.t-clip :is(input, textarea) {
+			position: absolute;
+			clip: rect(0 0 0 0);
+		}
+
+		.t-covered,
+		.t-covered-shadow {
+			position: relative;
+		}
+
+		.cover {
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			display: grid;
+			place-items: center;
+			color: var(--muted);
+			background: var(--card);
+			border: 1px dashed var(--border);
+		}
+
+		.t-zero-height {
+			height: 0;
+			overflow: hidden;
+		}
+
+		.t-fold-plain,
+		.t-fold-zero-height,
+		.t-fold-clip-path {
+			position: absolute;
+			top: 3000px;
+			left: 20px;
+		}
+
+		.t-fold-zero-height {
+			height: 0;
+			overflow: hidden;
+		}
+
+		.t-fold-clip-path {
+			clip-path: inset(50%);
+		}
+
+		.deep-scroller {
+			height: 120px;
+			overflow: auto;
+			border: 1px dashed var(--border);
+			border-radius: 6px;
+		}
+
+		.deep-scroller .filler {
+			height: 1500px;
+			margin: 8px;
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Hidden card and address fields</h1>
+		<p class="tests">Each form shows "Name on card", "Your name" and "Email", and hides its card number, CVC, phone and address in one way, named in its heading and in the hidden fields' ids. Fill a card from the list on "Name on card" and an identity from the list on "Your name": only the shown fields are filled, and the hidden ones stay empty.</p>
+
+		<h2>opacity: 0</h2>
+		<form method="post" action="/hidden" id="opacity">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-opacity">
+				<label>Card number <input id="opacity-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="opacity-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="opacity-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="opacity-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>An ancestor at opacity: 0.05</h2>
+		<form method="post" action="/hidden" id="faded-ancestor">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-faded-ancestor">
+				<label>Card number <input id="faded-ancestor-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="faded-ancestor-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="faded-ancestor-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="faded-ancestor-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>An aria-hidden="true" ancestor</h2>
+		<form method="post" action="/hidden" id="aria-hidden">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part" aria-hidden="true">
+				<label>Card number <input id="aria-hidden-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="aria-hidden-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="aria-hidden-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="aria-hidden-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>An inert ancestor</h2>
+		<form method="post" action="/hidden" id="inert">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part" inert>
+				<label>Card number <input id="inert-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="inert-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="inert-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="inert-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>position: absolute; left: -9999px</h2>
+		<form method="post" action="/hidden" id="left-offscreen">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-left-offscreen">
+				<label>Card number <input id="left-offscreen-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="left-offscreen-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="left-offscreen-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="left-offscreen-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>position: absolute; top: -9999px</h2>
+		<form method="post" action="/hidden" id="top-offscreen">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-top-offscreen">
+				<label>Card number <input id="top-offscreen-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="top-offscreen-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="top-offscreen-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="top-offscreen-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>1 × 1 px fields</h2>
+		<form method="post" action="/hidden" id="tiny">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-tiny">
+				<label>Card number <input id="tiny-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="tiny-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="tiny-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="tiny-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>clip-path: inset(50%)</h2>
+		<form method="post" action="/hidden" id="clip-path">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-clip-path">
+				<label>Card number <input id="clip-path-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="clip-path-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="clip-path-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="clip-path-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>clip: rect(0 0 0 0)</h2>
+		<form method="post" action="/hidden" id="clip">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-clip">
+				<label>Card number <input id="clip-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="clip-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="clip-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="clip-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Covered by another element</h2>
+		<form method="post" action="/hidden" id="covered">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-covered">
+				<label>Card number <input id="covered-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="covered-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="covered-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="covered-address" autocomplete="street-address"></textarea></label>
+				<div class="cover">Covered</div>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Shadow hosts covered by another element</h2>
+		<form method="post" action="/hidden" id="covered-shadow">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-covered-shadow">
+				<shadow-field data-id="covered-shadow-number" data-label="Card number" data-autocomplete="cc-number"></shadow-field>
+				<shadow-field data-id="covered-shadow-cvc" data-label="CVC" data-autocomplete="cc-csc"></shadow-field>
+				<shadow-field data-id="covered-shadow-phone" data-label="Phone" data-autocomplete="tel" data-type="tel"></shadow-field>
+				<shadow-field data-id="covered-shadow-address" data-label="Address" data-autocomplete="street-address" data-type="textarea"></shadow-field>
+				<div class="cover">Covered</div>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>A zero-height wrapper with overflow: hidden</h2>
+		<form method="post" action="/hidden" id="zero-height">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-zero-height">
+				<label>Card number <input id="zero-height-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="zero-height-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="zero-height-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="zero-height-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Below the fold: top: 3000px</h2>
+		<p class="tests">Not hidden, only far down the page, where scrolling reaches it.</p>
+		<form method="post" action="/hidden" id="fold-plain">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-fold-plain">
+				<label>Card number <input id="fold-plain-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="fold-plain-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="fold-plain-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="fold-plain-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Below the fold in a zero-height wrapper with overflow: hidden</h2>
+		<form method="post" action="/hidden" id="fold-zero-height">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-fold-zero-height">
+				<label>Card number <input id="fold-zero-height-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="fold-zero-height-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="fold-zero-height-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="fold-zero-height-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Below the fold under an ancestor's clip-path</h2>
+		<form method="post" action="/hidden" id="fold-clip-path">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-fold-clip-path">
+				<label>Card number <input id="fold-clip-path-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="fold-clip-path-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="fold-clip-path-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="fold-clip-path-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Shown: under the inline list</h2>
+		<p class="tests">The list opens over "Card number" and "CVC" below "Name on card", which are still filled.</p>
+		<form method="post" action="/hidden" id="under-list">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Card number <input id="under-list-number" autocomplete="cc-number"></label>
+			<label>CVC <input id="under-list-cvc" autocomplete="cc-csc" maxlength="4"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<label>Phone <input id="under-list-phone" type="tel" autocomplete="tel"></label>
+			<label>Address <textarea id="under-list-address" autocomplete="street-address"></textarea></label>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Shown: below the fold in a scrolling box</h2>
+		<p class="tests">Scroll the box to its end to see them; all four are filled.</p>
+		<form method="post" action="/hidden" id="scroller">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="deep-scroller">
+				<p class="filler">Scroll down to the card and address fields.</p>
+				<div class="hidden-part">
+					<label>Card number <input id="scroller-number" autocomplete="cc-number"></label>
+					<label>CVC <input id="scroller-cvc" autocomplete="cc-csc" maxlength="4"></label>
+					<label>Phone <input id="scroller-phone" type="tel" autocomplete="tel"></label>
+					<label>Address <textarea id="scroller-address" autocomplete="street-address"></textarea></label>
+				</div>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+	</main>
+	<script>
+		// A design-system field: the input sits in an open shadow root and carries the id, so the page's shadow host is what a cover hides.
+		customElements.define('shadow-field', class extends HTMLElement {
+			connectedCallback() {
+				if (this.shadowRoot) return
+				const { id, label, autocomplete, type } = this.dataset
+				const field = document.createElement(type === 'textarea' ? 'textarea' : 'input')
+				if (type === 'tel') field.type = 'tel'
+				Object.assign(field, { id, autocomplete })
+				field.setAttribute('aria-label', label)
+				field.style.font = 'inherit'
+				this.attachShadow({ mode: 'open' }).append(field)
+			}
+		})
+	</script>
+</body>
+</html>

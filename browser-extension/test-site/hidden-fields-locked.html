@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Card and address fields no scrolling reaches</title>
+	<link rel="stylesheet" href="/style.css">
+	<script>
+		const lock = new URLSearchParams(location.search).get('lock')
+		if (lock) document.documentElement.dataset.lock = lock
+	</script>
+	<style>
+		html[data-lock="html"] {
+			overflow: hidden;
+		}
+
+		html[data-lock="html-y"] {
+			overflow-y: hidden;
+		}
+
+		html[data-lock="body"] body {
+			overflow: hidden;
+		}
+
+		html[data-lock="body-y"] body {
+			overflow-y: hidden;
+		}
+
+		html[data-lock="body-x"] body {
+			overflow-x: hidden;
+		}
+
+		form {
+			position: relative;
+		}
+
+		textarea {
+			font: inherit;
+		}
+
+		.hidden-part {
+			display: grid;
+			gap: 12px;
+		}
+
+		.t-fold {
+			position: absolute;
+			top: 3000px;
+			left: 20px;
+		}
+
+		.t-fixed-below :is(input, textarea) {
+			position: fixed;
+			top: calc(100vh + 40px);
+			left: 20px;
+		}
+
+		.t-fixed-beside :is(input, textarea) {
+			position: fixed;
+			top: 40%;
+			left: calc(100vw + 40px);
+		}
+
+		.scroll-box {
+			overflow: auto;
+			border: 1px dashed var(--border);
+			border-radius: 6px;
+		}
+
+		/* Without scrollbars, whose arrows would make the box taller. */
+		.t-zero-scroller,
+		.t-tiny-scroller {
+			scrollbar-width: none;
+		}
+
+		.t-zero-scroller {
+			height: 0;
+		}
+
+		.t-tiny-scroller {
+			height: 6px;
+		}
+
+		.t-near-scroller {
+			height: 120px;
+		}
+
+		.t-near-scroller .filler {
+			height: 150px;
+			margin: 8px;
+		}
+
+		.covered {
+			position: relative;
+		}
+
+		.cover {
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			display: grid;
+			place-items: center;
+			color: var(--muted);
+			background: var(--card);
+			border: 1px dashed var(--border);
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Card and address fields no scrolling reaches</h1>
+		<p class="tests">Each form shows "Name on card", "Your name" and "Email", and puts its card number, CVC, phone and address where the user cannot scroll to them, named in its heading and in the hidden fields' ids. Fill a card from the list on "Name on card" and an identity from the list on "Your name": only the shown fields are filled.</p>
+
+		<h2>Far below the fold</h2>
+		<p class="tests">Filled while the page scrolls, and with <a href="?lock=body-x">the body hiding only its sideways overflow</a>. Stays empty once the page cannot scroll: <a href="?lock=html"><code>html</code> hides its overflow</a>, <a href="?lock=html-y">only its vertical one</a>, <a href="?lock=body"><code>body</code> hides its overflow</a> or <a href="?lock=body-y">only its vertical one</a>. <a href="?">Unlock</a>.</p>
+		<form method="post" action="/hidden" id="locked">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-fold">
+				<label>Card number <input id="locked-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="locked-cvc" autocomplete="cc-csc" maxlength="4"></label>
+				<label>Phone <input id="locked-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="locked-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>position: fixed below and beside the viewport</h2>
+		<form method="post" action="/hidden" id="fixed">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="hidden-part t-fixed-below">
+				<label>Card number <input id="fixed-number" autocomplete="cc-number"></label>
+				<label>CVC <input id="fixed-cvc" autocomplete="cc-csc" maxlength="4"></label>
+			</div>
+			<div class="hidden-part t-fixed-beside">
+				<label>Phone <input id="fixed-phone" type="tel" autocomplete="tel"></label>
+				<label>Address <textarea id="fixed-address" autocomplete="street-address"></textarea></label>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>A scrolling box of no height</h2>
+		<form method="post" action="/hidden" id="zero-scroller">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="scroll-box t-zero-scroller">
+				<div class="hidden-part">
+					<label>Card number <input id="zero-scroller-number" autocomplete="cc-number"></label>
+					<label>CVC <input id="zero-scroller-cvc" autocomplete="cc-csc" maxlength="4"></label>
+					<label>Phone <input id="zero-scroller-phone" type="tel" autocomplete="tel"></label>
+					<label>Address <textarea id="zero-scroller-address" autocomplete="street-address"></textarea></label>
+				</div>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>A scrolling box of no height, below the fold</h2>
+		<form method="post" action="/hidden" id="fold-zero-scroller">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="scroll-box t-zero-scroller t-fold">
+				<div class="hidden-part">
+					<label>Card number <input id="fold-zero-scroller-number" autocomplete="cc-number"></label>
+					<label>CVC <input id="fold-zero-scroller-cvc" autocomplete="cc-csc" maxlength="4"></label>
+					<label>Phone <input id="fold-zero-scroller-phone" type="tel" autocomplete="tel"></label>
+					<label>Address <textarea id="fold-zero-scroller-address" autocomplete="street-address"></textarea></label>
+				</div>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>A scrolling box 6 px high</h2>
+		<form method="post" action="/hidden" id="tiny-scroller">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<div class="scroll-box t-tiny-scroller">
+				<div class="hidden-part">
+					<label>Card number <input id="tiny-scroller-number" autocomplete="cc-number"></label>
+					<label>CVC <input id="tiny-scroller-cvc" autocomplete="cc-csc" maxlength="4"></label>
+					<label>Phone <input id="tiny-scroller-phone" type="tel" autocomplete="tel"></label>
+					<label>Address <textarea id="tiny-scroller-address" autocomplete="street-address"></textarea></label>
+				</div>
+			</div>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>A scrolling box covered by another element</h2>
+		<p class="tests">The fields sit just past the end of the box's visible part, which a cover hides: scrolling the box would show them under the cover.</p>
+		<form method="post" action="/hidden" id="covered-scroller">
+			<div class="covered">
+				<div class="scroll-box t-near-scroller">
+					<p class="filler">Scroll down to the card and address fields.</p>
+					<div class="hidden-part">
+						<label>Card number <input id="covered-scroller-number" autocomplete="cc-number"></label>
+						<label>CVC <input id="covered-scroller-cvc" autocomplete="cc-csc" maxlength="4"></label>
+						<label>Phone <input id="covered-scroller-phone" type="tel" autocomplete="tel"></label>
+						<label>Address <textarea id="covered-scroller-address" autocomplete="street-address"></textarea></label>
+					</div>
+				</div>
+				<div class="cover">Covered</div>
+			</div>
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<button type="submit">Save</button>
+		</form>
+
+		<h2>Shown: just past the end of a scrolling box</h2>
+		<p class="tests">Scroll the box a little to see them; all four are filled.</p>
+		<form method="post" action="/hidden" id="near-scroller">
+			<div class="scroll-box t-near-scroller">
+				<p class="filler">Scroll down to the card and address fields.</p>
+				<div class="hidden-part">
+					<label>Card number <input id="near-scroller-number" autocomplete="cc-number"></label>
+					<label>CVC <input id="near-scroller-cvc" autocomplete="cc-csc" maxlength="4"></label>
+					<label>Phone <input id="near-scroller-phone" type="tel" autocomplete="tel"></label>
+					<label>Address <textarea id="near-scroller-address" autocomplete="street-address"></textarea></label>
+				</div>
+			</div>
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Your name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<button type="submit">Save</button>
+		</form>
+	</main>
+</body>
+</html>
