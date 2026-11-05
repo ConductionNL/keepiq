@@ -238,4 +238,27 @@ class TeamFolderMemberControllerTest extends TestCase {
 		$this->assertSame(400, $response->getStatus());
 		$this->assertSame('Not authorized to manage this team folder', $response->getData()['message']);
 	}//end testApproveJoinRefusalIsABadRequestWithTheReason()
+
+	/**
+	 * A manager approving their own join is refused as owner-only, and the
+	 * browser receives 428 with error owner_only, not 400.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerApprovingTheirOwnJoinIsRefusedVisibly(): void {
+		$this->service->method('approveJoin')->willThrowException(
+			new OwnerOnlyException(message: 'Only the owner can approve your own join')
+		);
+
+		$delivered = $this->refusals->afterController(
+			$this->controller,
+			'approveJoin',
+			$this->controller->approveJoin(id: 'tf-1', newMemberId: 'olga')
+		);
+		$this->assertSame(428, $delivered->getStatus());
+		$this->assertSame('owner_only', $delivered->getData()['error']);
+		$this->assertSame('Only the owner can approve your own join', $delivered->getData()['message']);
+	}//end testAManagerApprovingTheirOwnJoinIsRefusedVisibly()
 }//end class

@@ -106,7 +106,7 @@ A member with an effective `manage` grade MUST be able to add users and groups a
 
 ### Requirement: Only the owner governs managers and the folder itself
 
-The system MUST refuse, for a member who is not the owner, setting or clearing the `manage` grade, removing or changing a member whose grade is `manage` (its grade, use-only flag or end date, whether through a grade change or by adding that member again), changing or removing the owner, stopping sharing of the folder, and deleting the team folder. It MUST also refuse, for a member who is not the owner, adding or changing a membership that covers a manager, the caller included: a manager's user membership, or a membership of a group a manager is in or is a subadmin of (a subadmin can add themselves to it later). Grants add up, so any such membership would let a manager keep the folder past the use-only flag or end date the owner set; a manager's access stays with the owner. A manager MAY still remove such a membership, since that only narrows access. Group changes made by a Nextcloud admin, or by a user backend outside Nextcloud such as LDAP, are out of scope: whoever controls group membership already controls who a group membership covers. Membership past its end date grants nothing, also before the background job removes it, so a manager whose end date has passed no longer manages the folder. A manager MUST be able to remove their own membership. A manager's request to set the `manage` grade, or to change or remove a manager, MUST be refused as forbidden with `error: owner_only` and the reason. Its HTTP status MUST be 428, because Nextcloud's OCS layer turns a 403 of an OCS controller into an HTTP 200 envelope that the browser would read as a success.
+The system MUST refuse, for a member who is not the owner, setting or clearing the `manage` grade, removing or changing a member whose grade is `manage` (its grade, use-only flag or end date, whether through a grade change or by adding that member again), changing or removing the owner, stopping sharing of the folder, and deleting the team folder. It MUST also refuse, for a member who is not the owner, adding or changing a membership that covers a manager, the caller included: a manager's user membership, or a membership of a group a manager is in or is a subadmin of (a subadmin can add themselves to it later). The managers that count are those of the team folder, of its ancestor team folders and of the team folders nested under it, because a membership of a folder also covers every folder below it. Grants add up, so any such membership would let a manager keep the folder past the use-only flag or end date the owner set; a manager's access stays with the owner. A manager MAY still remove such a membership, since that only narrows access. A manager MUST NOT approve their own group join; the owner does. Group changes made by a Nextcloud admin, or by a user backend outside Nextcloud such as LDAP, are out of scope: whoever controls group membership already controls who a group membership covers. So is a group membership the owner adds for a group whose subadmins include a manager: the owner decides that, and the manager's join still waits for the owner's approval. Membership past its end date grants nothing, also before the background job removes it, so a manager whose end date has passed no longer manages the folder. Their membership still counts as a manager's for the rule above, though: the owner set that end date, so a membership that would cover them again is the owner's to add. A manager MUST be able to remove their own membership. A manager's request to set the `manage` grade, or to change or remove a manager, MUST be refused as forbidden with `error: owner_only` and the reason. Its HTTP status MUST be 428, because Nextcloud's OCS layer turns a 403 of an OCS controller into an HTTP 200 envelope that the browser would read as a success.
 
 #### Scenario: A manager cannot create another manager
 
@@ -151,7 +151,26 @@ The system MUST refuse, for a member who is not the owner, setting or clearing t
 
 - **GIVEN** Olga with grade `manage` on a membership whose end date has passed, not yet removed by the background job
 - **WHEN** Olga changes a viewer's grade
-- **THEN** the system MUST refuse it as for a member who does not manage the folder
+- **THEN** the system MUST refuse it as for a member who does not manage the folder (HTTP 428, `error: manager_only`)
+
+#### Scenario: A manager cannot cover a manager whose end date has passed
+
+- **GIVEN** Olga and Mia, both with grade `manage`, Mia's membership past its end date
+- **WHEN** Olga adds Mia again, as a Viewer without an end date
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`)
+
+#### Scenario: A parent folder's manager cannot cover a nested folder's manager
+
+- **GIVEN** team folder P with Olga as `manage`, and team folder C nested under P with Mia as `manage`, ending tomorrow
+- **WHEN** Olga adds Mia to P without an end date
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`), because a membership of P also covers C
+
+#### Scenario: A manager does not approve their own join
+
+- **GIVEN** Olga with grade `manage`, who has just joined group `ops`, a member of the folder
+- **WHEN** Olga approves her own join
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`), and her browser MUST NOT offer it
+- **AND** the owner MUST still be able to approve it
 
 #### Scenario: A manager cannot unshare the folder
 

@@ -176,6 +176,69 @@ describe('team-folder roles', () => {
 		expect(
 			wrapper.find('[data-testid="team-folder-remove-leads"]').exists(),
 		).toBe(true)
+		// The greyed-out control says why, to sighted and screen-reader users.
+		const select = wrapper.find('[data-testid="team-folder-grade-leads"]')
+		const reason = wrapper.find('[data-testid="team-folder-owner-only-leads"]')
+		expect(reason.text()).toBe(
+			'Only the owner can change a manager, or a membership that covers a manager.',
+		)
+		expect(select.attributes('aria-describedby')).toBe(reason.attributes('id'))
+		expect(select.attributes('title')).toBe(reason.text())
+		expect(
+			wrapper.find('[data-testid="team-folder-owner-only-vic"]').exists(),
+		).toBe(false)
+	})
+
+	it('a manager is not offered to approve their own join', async () => {
+		currentUid = 'olga'
+		mockList({
+			owned: [],
+			memberOf: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					ownerId: 'alice',
+					grade: 'manage',
+					members,
+					ownerOnlyMemberIds: ['m-olga'],
+				},
+			],
+		})
+		axios.get.mockImplementation((url) =>
+			Promise.resolve({
+				data: url.includes('/reconcile')
+					? {
+							secrets: [],
+							recipients: [],
+							missing: [
+								{ userId: 'olga', secretId: 's-1' },
+								{ userId: 'bob', secretId: 's-1' },
+							],
+						}
+					: {
+							owned: [],
+							memberOf: [
+								{
+									id: 'tf-1',
+									folderId: 'folder-1',
+									folderName: 'DevOps',
+									ownerId: 'alice',
+									grade: 'manage',
+									members,
+									ownerOnlyMemberIds: ['m-olga'],
+								},
+							],
+						},
+			}),
+		)
+		const wrapper = await mountDialog()
+		expect(
+			wrapper.find('[data-testid="team-folder-approve-bob"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="team-folder-approve-olga"]').exists(),
+		).toBe(false)
 	})
 
 	it('a viewer gets no dialog content at all', async () => {

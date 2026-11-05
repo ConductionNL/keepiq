@@ -1729,7 +1729,8 @@ OC.L10N.register(
         "This image is too large. Choose an image under 10 MB.": "Den här bilden är för stor. Välj en bild under 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Det här är inte en autentiserarnyckel. Klistra in en otpauth://totp/-länk eller base32-hemligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig."
     },
     "nplurals=2; plural=(n != 1);"
 )

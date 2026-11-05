@@ -256,7 +256,7 @@ class TeamFolderService {
 			memberId: $memberId
 		);
 
-		$this->assertCoversNoManager(
+		$this->queries->assertCoversNoManager(
 			teamFolder: $teamFolder,
 			memberType: $memberType,
 			memberId: $memberId,
@@ -279,7 +279,7 @@ class TeamFolderService {
 		if ($restriction !== null) {
 			$membership = $this->applyRestriction(membership: $membership, restriction: $restriction);
 			if ($isNew === false) {
-				$this->auditGradeChange(actorId: $userId, membership: $membership);
+				$this->audit->membershipChanged(actorId: $userId, membership: $membership);
 			}
 		}
 
@@ -687,11 +687,19 @@ class TeamFolderService {
 	 * @return array{recipients:array<int,array{userId:string,certificate:string}>,secrets:array<int,array{id:string,name:string}>}
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized / not covered
+	 * @throws OwnerOnlyException When a manager approves their own join
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.1
 	 */
 	public function approveJoin(string $teamFolderId, string $newMemberId, string $userId): array {
 		$teamFolder = $this->queries->loadManageableTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+		if ($teamFolder->getOwnerId() !== $userId && mb_strtolower($newMemberId) === mb_strtolower($userId)) {
+			// A manager who joined a group, as its subadmin for example,
+			// leaves their own approval to the owner.
+			throw new OwnerOnlyException(message: 'Only the owner can approve your own join');
+		}
 
 		$covered = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
 		if (in_array($newMemberId, $covered, true) === false) {
@@ -802,7 +810,7 @@ class TeamFolderService {
 		}
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $member, userId: $ownerId, leaving: false);
-		$this->assertCoversNoManager(
+		$this->queries->assertCoversNoManager(
 			teamFolder: $teamFolder,
 			memberType: $member->getMemberType(),
 			memberId: $member->getMemberId(),
@@ -827,32 +835,10 @@ class TeamFolderService {
 		$member = $this->memberMapper->update($member);
 		$this->resolveCopiesOf(membership: $member);
 
-		$this->auditGradeChange(actorId: $ownerId, membership: $member);
+		$this->audit->membershipChanged(actorId: $ownerId, membership: $member);
 
 		return $member;
 	}//end setMemberGrade()
-
-	/**
-	 * Record a membership's grade, use-only flag and end date after a change.
-	 *
-	 * @param string           $actorId    The user who made the change
-	 * @param TeamFolderMember $membership The membership row as stored
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-	 */
-	private function auditGradeChange(string $actorId, TeamFolderMember $membership): void {
-		$this->audit->gradeChanged(
-			actorId: $actorId,
-			teamFolderId: $membership->getTeamFolderId(),
-			memberType: $membership->getMemberType(),
-			memberId: $membership->getMemberId(),
-			grade: $membership->effectiveGrade(),
-			useOnly: (bool)$membership->getUseOnly(),
-			expiresAt: $membership->getExpiresAt()?->format('c'),
-		);
-	}//end auditGradeChange()
 
 	/**
 	 * Tell a manager's browser which of its own recipient copies to decrypt
@@ -921,40 +907,6 @@ class TeamFolderService {
 			throw new OwnerOnlyException(message: 'Only the owner can change or remove a manager');
 		}
 	}//end assertManagerMayTouch()
-
-	/**
-	 * Keep every manager's access with the owner: a caller who is not the
-	 * owner may not add or change a membership that covers a manager, the
-	 * caller included, or may come to cover one without the owner (a group a
-	 * manager is a subadmin of). Grants are unioned, so any such membership
-	 * without the owner's use-only flag or end date would let a manager keep
-	 * the folder past the end the owner set.
-	 *
-	 * @param TeamFolder $teamFolder The team folder
-	 * @param string     $memberType The membership's member type (`user`|`group`)
-	 * @param string     $memberId   The membership's user or group ID
-	 * @param string     $userId     The caller
-	 *
-	 * @return void
-	 *
-	 * @throws OwnerOnlyException When the membership covers a manager and the caller is not the owner
-	 *
-	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
-	 */
-	private function assertCoversNoManager(
-		TeamFolder $teamFolder,
-		string $memberType,
-		string $memberId,
-		string $userId,
-	): void {
-		if ($teamFolder->getOwnerId() === $userId) {
-			return;
-		}
-
-		if ($this->queries->coversAManager(teamFolder: $teamFolder, memberType: $memberType, memberId: $memberId) === true) {
-			throw new OwnerOnlyException(message: 'Only the owner can add or change a membership that covers a manager');
-		}
-	}//end assertCoversNoManager()
 
 	/**
 	 * Set a membership's use-only flag and end date, refusing use-only on a

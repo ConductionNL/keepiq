@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -236,6 +237,28 @@ class TeamFolderAuditor {
 			)
 		);
 	}//end gradeChanged()
+
+	/**
+	 * Record a membership's grade, use-only flag and end date after a change.
+	 *
+	 * @param string           $actorId    The user who made the change
+	 * @param TeamFolderMember $membership The membership row as stored
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function membershipChanged(string $actorId, TeamFolderMember $membership): void {
+		$this->gradeChanged(
+			actorId: $actorId,
+			teamFolderId: $membership->getTeamFolderId(),
+			memberType: $membership->getMemberType(),
+			memberId: $membership->getMemberId(),
+			grade: $membership->effectiveGrade(),
+			useOnly: (bool)$membership->getUseOnly(),
+			expiresAt: $membership->getExpiresAt()?->format('c'),
+		);
+	}//end membershipChanged()
 
 	/**
 	 * Record a completed offboarding run.

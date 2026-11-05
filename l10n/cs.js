@@ -1729,7 +1729,8 @@ OC.L10N.register(
         "This image is too large. Choose an image under 10 MB.": "Tento obrázek je příliš velký. Vyberte obrázek menší než 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto není klíč autentikátoru. Vložte odkaz otpauth://totp/ nebo tajemství ve formátu base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje klíč autentikátoru. Použijte QR kód, který web zobrazí při nastavování dvoufázového přihlášení.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajemství čeká na kontrolu svých sdílení, která ještě neskončila. Nic nebylo uloženo; zkuste to později, nebo požádejte správce, aby ověřil, že běží úlohy na pozadí."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajemství čeká na kontrolu svých sdílení, která ještě neskončila. Nic nebylo uloženo; zkuste to později, nebo požádejte správce, aby ověřil, že běží úlohy na pozadí.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

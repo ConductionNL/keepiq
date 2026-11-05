@@ -1729,7 +1729,8 @@ OC.L10N.register(
         "This image is too large. Choose an image under 10 MB.": "Esta imagem é demasiado grande. Escolha uma imagem com menos de 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Isto não é uma chave de autenticador. Cole uma ligação otpauth://totp/ ou o segredo base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR não contém uma chave de autenticador. Utilize o código QR que o site mostra quando configura a autenticação de dois fatores.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este segredo aguarda uma verificação das suas partilhas que ainda não terminou. Nada foi guardado; tente novamente mais tarde ou peça a um administrador que verifique se as tarefas em segundo plano estão a ser executadas."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este segredo aguarda uma verificação das suas partilhas que ainda não terminou. Nada foi guardado; tente novamente mais tarde ou peça a um administrador que verifique se as tarefas em segundo plano estão a ser executadas.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor."
     },
     "nplurals=2; plural=(n != 1);"
 )
