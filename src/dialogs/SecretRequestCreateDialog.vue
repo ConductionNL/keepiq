@@ -51,6 +51,19 @@
 					data-testid="secret-request-name" />
 
 				<!--
+				  The same type list the new-secret dialog offers, so the
+				  placeholder is created as what is being asked for and the
+				  requested fields below follow from it.
+				-->
+				<NcSelect
+					v-model="typeId"
+					:options="typeOptions"
+					:inputLabel="t('keepiq', 'Type')"
+					:reduce="(opt) => opt.value"
+					:clearable="false"
+					data-testid="secret-request-type" />
+
+				<!--
 				  Deliberately NOT DestinationSelect: that picker exists for the
 				  move flows, where a destination is mandatory (it is
 				  unclearable and offers no "no folder" entry) and vaults are
@@ -215,10 +228,44 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import { CARD_TYPE_NAME, IDENTITY_TYPE_NAME } from '../cardIdentity/cardIdentity.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
+import {
+	resolveDefaultTypeId,
+	useUserPreferencesStore,
+} from '../store/modules/userPreferences.js'
 import { memberNameError } from '../utils/additionalFields.js'
 import { fillLinkFor } from '../utils/fillLink.js'
+import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
+import { typedFieldsOf } from '../utils/typedFields.js'
+
+/**
+ * Types a request is not offered as.
+ *
+ * Asking a stranger for their payment card or identity details through a fill
+ * link is what a scam looks like, and there is no legitimate use the request
+ * flow needs to serve (backend review, 2026-11-04). Their fields also live
+ * packed together in the one encrypted `key`, which a fill cannot address part
+ * of.
+ *
+ * @type {Array<string>}
+ */
+const NOT_REQUESTABLE_TYPE_NAMES = [CARD_TYPE_NAME, IDENTITY_TYPE_NAME]
+
+/**
+ * Whether a request may be asked for as this type.
+ *
+ * @param {object|null|undefined} type The type record ({ name }).
+ *
+ * @return {boolean} True when the type can be requested.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ */
+function isRequestableType(type) {
+	return isCreatableType(type) && !NOT_REQUESTABLE_TYPE_NAMES.includes(type.name)
+}
 
 /**
  * Days ahead the expiry field is pre-filled with.
@@ -300,6 +347,10 @@ export default {
 			customFieldInput: '',
 			customFieldError: '',
 			newName: '',
+			// The type a FRESH request's placeholder is created as, and the one
+			// the dialog starts on (the user's default type, else Login).
+			typeId: null,
+			defaultTypeId: null,
 			// Starts on the vault or folder the requester opened this from.
 			newFolderId: this.folderId || '',
 			expiresAt: suggestedExpiry(),
@@ -371,6 +422,33 @@ export default {
 		},
 
 		/**
+		 * The types a fresh request can be asked as, as select options.
+		 *
+		 * @return {Array<{value: string, label: string}>} Select options.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 */
+		typeOptions() {
+			return useSecretTypeStore()
+				.types.filter(isRequestableType)
+				.map((type) => ({
+					value: type.id,
+					label: secretTypeLabel(type),
+				}))
+		},
+
+		/**
+		 * The type record picked for a fresh request.
+		 *
+		 * @return {object|null} The type, or null while none is picked.
+		 *
+		 * @spec exclude Trivial lookup: resolves the selected type id to its record.
+		 */
+		selectedType() {
+			return useSecretTypeStore().typesById[this.typeId] || null
+		},
+
+		/**
 		 * Whether the form holds enough to create a request.
 		 *
 		 * Both of these were previously only enforced past the button. An empty
@@ -411,13 +489,23 @@ export default {
 		 * may offer to delete: the built-ins and the secret's own members exist
 		 * whether or not this request asks for them.
 		 *
+		 * A fresh request follows the picked type: a Secure Note names its value
+		 * "Note", and the fields an administrator defined on the type are listed by
+		 * their label, which is the member name the new-secret dialog stores them
+		 * under (mergeTypedValues), so a fill lands where the type's own form looks.
+		 *
 		 * @return {Array<{key: string, label: string, plaintext?: boolean, custom?: boolean}>} Field options.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		availableFields() {
+			const valueLabel =
+				this.isFreshRequest && this.selectedType?.name === 'note'
+					? t('keepiq', 'Note')
+					: t('keepiq', 'Key / password')
 			const fields = [
-				{ key: 'key', label: t('keepiq', 'Key / password') },
+				{ key: 'key', label: valueLabel },
 				{ key: 'login', label: t('keepiq', 'Login') },
 				// Flagged plaintext because it is genuinely different: `url` is
 				// stored searchable, not encrypted, and the recipient deserves to
@@ -430,11 +518,13 @@ export default {
 			]
 
 			const seen = new Set(fields.map((f) => f.key))
-			// Member names come from the explicit key list when the server sent
-			// one, otherwise from the decrypted blob's own keys.
-			const members =
-				this.secret?.additional_fields_keys
-				|| Object.keys(this.secret?.additionalFields || {})
+			// A fresh request has no Secret yet, so its members are the picked
+			// type's fields. Otherwise they come from the explicit key list when
+			// the server sent one, else from the decrypted blob's own keys.
+			const members = this.isFreshRequest
+				? typedFieldsOf(this.selectedType).map((f) => f.label)
+				: this.secret?.additional_fields_keys
+					|| Object.keys(this.secret?.additionalFields || {})
 			for (const key of members) {
 				if (seen.has(key) === false) {
 					seen.add(key)
@@ -458,8 +548,61 @@ export default {
 		},
 	},
 
+	watch: {
+		/**
+		 * Start the field list over when the type changes.
+		 *
+		 * The previous type's fields are gone from the list, so a tick on one of
+		 * them would ask for a field the dialog no longer shows. Names typed here
+		 * stay ticked: they belong to the request, not to a type.
+		 *
+		 * @return {void}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 */
+		typeId() {
+			this.requestedFields = this.requestedFields.filter((name) =>
+				this.customFields.includes(name),
+			)
+		},
+	},
+
 	created() {
 		this.requestedFields = this.defaultSelection()
+	},
+
+	/**
+	 * Load the types a fresh request can be asked as, and start on the default.
+	 *
+	 * Only a fresh request has a type to pick; an existing Secret already has
+	 * one. A failed load leaves the select empty and the request typeless, which
+	 * the server files under its default type, so it is not shown as an error.
+	 *
+	 * @return {Promise<void>}
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+	 */
+	async mounted() {
+		if (this.isFreshRequest === false) {
+			return
+		}
+
+		try {
+			const typeStore = useSecretTypeStore()
+			if (typeStore.types.length === 0) {
+				await typeStore.fetchTypes()
+			}
+			const prefs = useUserPreferencesStore()
+			await prefs.ensureLoaded()
+			this.defaultTypeId = resolveDefaultTypeId(
+				prefs.defaultSecretType,
+				typeStore.types.filter(isRequestableType),
+			)
+			this.typeId = this.defaultTypeId
+		} catch {
+			// Typeless is a working state: the server applies its default type.
+		}
 	},
 
 	methods: {
@@ -512,6 +655,7 @@ export default {
 					// the suite from it, so the client never supplies either.
 					payload.name = this.newName.trim()
 					payload.folderId = this.newFolderId || null
+					payload.typeId = this.typeId || null
 				} else {
 					payload.secretId = this.secret.id
 					payload.encryptionSuiteId = this.secret.encryption_suite_id
@@ -584,13 +728,21 @@ export default {
 		 * rather than merely inviting one. A re-request is exempt — replacing
 		 * existing values is that flow's entire purpose.
 		 *
+		 * A fresh request ticks nothing: the field list follows the picked type,
+		 * and which of its fields to ask for is the requester's choice.
+		 *
 		 * @return {Array<string>} Field names to tick initially.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		defaultSelection() {
 			if (this.isReRequest) {
 				return ['key']
+			}
+
+			if (this.isFreshRequest) {
+				return []
 			}
 
 			return this.isFieldFilled('key') ? [] : ['key']
@@ -709,6 +861,7 @@ export default {
 			this.customFieldInput = ''
 			this.customFieldError = ''
 			this.newName = ''
+			this.typeId = this.defaultTypeId
 			// Back to the browsed vault or folder, not to nothing: reopening
 			// from the same place must offer the same destination again.
 			this.newFolderId = this.folderId || ''

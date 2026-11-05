@@ -66,6 +66,21 @@ A RE-REQUEST is the only creation path that targets an existing Secret, per the 
 - WHEN both are created
 - THEN each MUST have its own unfilled Secret, and neither MUST write into a Secret created for the other
 
+#### Scenario: A fresh request files its Secret as the chosen type
+@e2e exclude Service-level routing with no visual surface of its own; driven by SecretRequestServiceTest::testFreshRequestFilesThePlaceholderAsTheChosenType and ::testFreshRequestWithoutATypeLeavesTheDefault, and SecretRequestControllerTest::testCreateForwardsTheChosenTypeToTheFreshPath.
+- GIVEN a user creates a fresh request and names a secret type
+- WHEN the system creates the unfilled Secret
+- THEN that Secret MUST have the named type, validated and subject to the team folder rule exactly as for a Secret the user creates directly
+- AND without a named type the Secret MUST get the default type
+
+#### Scenario: A fresh request is asked by type
+@e2e exclude Dialog state with no server round-trip of its own; driven by the SecretRequestCreateDialog spec (type select lists the creatable types, the field list follows the type, nothing is pre-ticked, creation needs one ticked field, the type travels with the request).
+- GIVEN a user opens the dialog to ask for a new credential
+- WHEN they pick a type
+- THEN the requested fields MUST list that type's fields, none of them ticked
+- AND the request MUST NOT be creatable until at least one field is ticked
+- AND the chosen type MUST be sent with the request
+
 #### Scenario: Create request for application secret
 - GIVEN a user has an active EncryptionSuite and an application exists with an active EncryptionSuite
 - WHEN the user creates a SecretRequest targeting the application's vault
@@ -120,6 +135,29 @@ The consequence MUST be stated rather than implied: the system CANNOT verify tha
 - **THEN** the system MUST NOT overwrite the stored blob, because the filler cannot read it to merge
 - **AND** MUST keep the filled blob as a pending blob on the secret
 - **AND** the owner's client MUST show A, B and C together, merge the pending blob into the stored one on the next open, and write the merged blob back (keepiq#750)
+
+### Requirement: Item Types That Cannot Be Requested
+The system MUST refuse any SecretRequest for a payment card, an identity or an authenticator (TOTP) key, whether it is a fresh request asked as one of those types or a fill-in or re-request on an existing Secret of one. Asking someone for their card or identity details through a fill link has no legitimate use this flow needs to serve; it is what fraud looks like. An authenticator key is the seed of that person's one-time codes, so whoever is handed it can sign in as them; and a one-time code itself expires within a minute, before a requester could use it. A holder MUST still be able to store, edit and share these types themselves: only requesting them is refused. The interface MUST NOT offer a request for them, and the server MUST refuse one regardless of the interface.
+
+#### Scenario: A fresh request asked as a type that cannot be requested
+@e2e exclude Server-side refusal with no visual surface beyond the type list; driven by SecretRequestPolicyTest (the three types refused, other types and the default allowed) and SecretRequestServiceTest::testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder.
+- GIVEN a user creates a fresh request naming the payment card, identity or authenticator type
+- WHEN the request is submitted
+- THEN the system MUST refuse it with an authorization error
+- AND MUST NOT create a placeholder Secret
+
+#### Scenario: A fill-in or re-request on an existing Secret of such a type
+@e2e exclude Server-side refusal; driven by SecretRequestServiceTest::testRequestOnACardSecretIsRefused, and the sidebar spec for the hidden request action.
+- GIVEN a user owns a Secret of the payment card, identity or authenticator type
+- WHEN they ask someone to fill it in, or ask for new values
+- THEN the system MUST refuse the request with an authorization error
+- AND the Secret's detail view MUST NOT offer either action
+
+#### Scenario: SSH keys stay requestable
+@e2e exclude Server-side rule; driven by SecretRequestPolicyTest::testOtherTypesAndTheDefaultCanBeRequested.
+- GIVEN a user needs a vendor's SSH key to reach a system the vendor runs
+- WHEN they create a request asked as the SSH Key type
+- THEN the system MUST accept it, so the key travels encrypted instead of in a plain email
 
 ### Requirement: Fill In via Link
 Anyone with the fill-in link MUST be able to submit values for the requested fields without authentication.
