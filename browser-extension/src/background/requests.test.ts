@@ -3,6 +3,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { patchAccountPolicy } from '@/src/accounts/policy'
 import { addAccount, folderNoticeKey, markLoggedOut, removeAccount, updateAccount } from '@/src/accounts/store'
 import { DEFAULT_SETTINGS, readSettings, settingsKey, writeSettings } from '@/src/accounts/settings'
+import { setIntent } from '@/src/add-intent'
 import { CLIPBOARD_ALARM } from '@/src/clipboard'
 import { importPublicKey, pemToPkcs8, rsaEncrypt, toBase64 } from '@/src/crypto'
 import { addHistory } from '@/src/generator/history'
@@ -375,6 +376,23 @@ describe('last tab', () => {
 	it('ignores a tab that does not exist', async () => {
 		await send({ kind: 'popup.lastTab.set', tab: 'nope' as never })
 		expect(await readLastTab()).toBe('vault')
+	})
+})
+
+describe('popup.intent', () => {
+	it('answers the context menu\'s Add once', async () => {
+		setIntent('card')
+		expect(await send({ kind: 'popup.intent' })).toEqual({ add: 'card' })
+		expect(await send({ kind: 'popup.intent' })).toBeNull()
+	})
+
+	it('answers null while locked, and uses the intent up', async () => {
+		setIntent('identity')
+		await lock(accountId)
+		setIntent('identity')
+		expect(await send({ kind: 'popup.intent' })).toBeNull()
+		await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		expect(await send({ kind: 'popup.intent' })).toBeNull()
 	})
 })
 

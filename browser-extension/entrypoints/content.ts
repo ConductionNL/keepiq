@@ -8,6 +8,7 @@ import { answerFill, isFillMessage } from '@/src/autofill/execute'
 import { findLoginFields } from '@/src/autofill/fields'
 import { createCaptureCollector } from '@/src/autofill/capture-collector'
 import { createInlineHost } from '@/src/autofill/inline-host'
+import { createNoticeHost } from '@/src/autofill/notice-host'
 import { createNotificationHost } from '@/src/autofill/notification-host'
 import type { BackgroundToContent, ContentToBackground } from '@/src/messages'
 
@@ -53,6 +54,7 @@ export default defineContentScript({
 		const inline = createInlineHost({ request, send, firefox })
 		const top = window === window.top
 		const bar = top ? createNotificationHost({ firefox, send }) : null
+		const notice = bar ? createNoticeHost(() => bar.place()) : null
 
 		browser.runtime.onMessage.addListener((msg: unknown, sender: Browser.runtime.MessageSender, sendResponse: (reply: unknown) => void) => {
 			if (sender.id !== browser.runtime.id) return
@@ -63,6 +65,8 @@ export default defineContentScript({
 			else if (m?.kind === 'capture.verify') sendResponse(bar?.handle(m) === true)
 			else if (m?.kind === 'capture.show') sendResponse(bar?.handle(m))
 			else if (m?.kind === 'capture.hide' || m?.kind === 'capture.focus' || m?.kind === 'capture.expand') bar?.handle(m)
+			else if (m?.kind === 'notice.show') notice?.show(m.notice)
+			else if (m?.kind === 'notice.hide') notice?.hide()
 		})
 
 		const announce = () => {

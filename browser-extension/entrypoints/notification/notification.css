@@ -124,6 +124,11 @@ p {
 	align-content: start;
 }
 
+/* The menu's notice, in a host sized for two lines: one line sits in the middle. */
+.bar.bar--page-notice {
+	align-content: center;
+}
+
 .bar.bar--saved {
 	grid-template-columns: auto minmax(0, max-content);
 	grid-template-rows: minmax(0, 1fr);

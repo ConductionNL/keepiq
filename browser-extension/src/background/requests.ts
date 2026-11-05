@@ -1,4 +1,5 @@
 import { readAccountPolicy } from '@/src/accounts/policy'
+import { takeIntent } from '@/src/add-intent'
 import { AUTOFILL_FEATURES, clampTimeout, readSettings } from '@/src/accounts/settings'
 import { accountStatus, folderNoticeKey, getAccount, getActiveAccountId, updateSettings, type AccountRecord } from '@/src/accounts/store'
 import { disableDefaultManager, enableDefaultManager, readDefaultManager } from '@/src/autofill/default-manager'
@@ -11,7 +12,7 @@ import { addHistory, clearHistory, openHistory, sealHistory } from '@/src/genera
 import { GENERATOR_KINDS } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
-	USE_ONLY_FIELDS, type AccountSettingsRequest, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
+	USE_ONLY_FIELDS, type AccountSettingsRequest, type AddIntent, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
 	type FillRequest, type FormKind, type GeneratorRequest, type PasskeyDetail, type PasskeysReply, type PopupReplies, type PopupRequest, type PopupTab, type SendRequest, type SyncStatus, type VaultSnapshotReply, type VaultWrite,
 } from '@/src/messages'
 import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
@@ -224,6 +225,12 @@ async function rememberLastTab(tab: PopupTab): Promise<null> {
 	return null
 }
 
+/** Taken before the await, so a popup that asks once while locked still uses it up. */
+async function addIntent(): Promise<AddIntent | null> {
+	const intent = takeIntent()
+	return intent && await activeUnlocked() ? intent : null
+}
+
 /** The requests that name no account: they act on the active one, the popup itself or the whole browser. */
 type UnscopedRequest = Exclude<HandledRequest, GeneratorRequest | VaultWrite | AccountSettingsRequest | SendRequest>
 type UnscopedKind = UnscopedRequest['kind']
@@ -236,6 +243,7 @@ const UNSCOPED_REQUESTS: { [K in UnscopedKind]: (message: Extract<UnscopedReques
 	'clipboard.copied': () => scheduleActiveClipboardClear(),
 	'popup.popout': (message) => popout(message.tabId),
 	'popup.lastTab.set': (message) => rememberLastTab(message.tab),
+	'popup.intent': () => addIntent(),
 	'settings.get': () => readGlobalSettings(),
 	'settings.set': (message) => updateGlobalSettings(message.patch),
 	'defaultManager.get': () => readDefaultManager(),
@@ -411,7 +419,7 @@ async function performAccountSettings(message: AccountSettingsRequest): Promise<
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
 function isInteraction(message: Exclude<HandledRequest, GeneratorRequest>): boolean {
 	// Every popup reads it on open, which `vault.status` already counts.
-	if (message.kind === 'settings.get' || message.kind === 'account.settings.get' || message.kind === 'defaultManager.get') return false
+	if (message.kind === 'settings.get' || message.kind === 'account.settings.get' || message.kind === 'defaultManager.get' || message.kind === 'popup.intent') return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
 	if (message.kind === 'item.decrypt' || message.kind === 'item.passkeys') return message.passive !== true
 	return true

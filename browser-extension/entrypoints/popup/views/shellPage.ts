@@ -1,7 +1,7 @@
 import { i18n } from '#i18n'
 import type { PopupTab } from '@/src/messages'
 import { tabLabel } from '../components/TabBar'
-import type { FormMode } from './ItemForm'
+import type { FixedType, FormMode } from './ItemForm'
 import { sectionLabel, type SettingsSection } from './settings/SettingsIndex'
 
 /** A page opened over the tabs, from the one that covers the others down. */
@@ -10,7 +10,7 @@ export type ShellPage = 'pick' | 'form' | 'detail' | 'section' | 'history' | 'se
 /** What decides which page the shell shows and what its header says. */
 export interface ShellView {
 	current: PopupTab
-	form: { mode: FormMode } | null
+	form: { mode: FormMode; fixedType?: FixedType } | null
 	picking: boolean
 	detail: boolean
 	section: SettingsSection | null
@@ -28,9 +28,20 @@ export function openPage(view: ShellView): ShellPage | null {
 	return null
 }
 
+const FIXED_TITLES: Record<FixedType, () => string> = {
+	login: () => i18n.t('titles.newLogin'),
+	card: () => i18n.t('titles.newCard'),
+	identity: () => i18n.t('titles.newIdentity'),
+}
+
+function formTitle(form: ShellView['form']): string {
+	if (form?.fixedType) return FIXED_TITLES[form.fixedType]()
+	return form?.mode === 'edit' ? i18n.t('titles.editItem') : i18n.t('titles.newItem')
+}
+
 const TITLES: Record<ShellPage, (view: ShellView) => string> = {
 	pick: () => tabLabel('generator'),
-	form: (view) => (view.form?.mode === 'edit' ? i18n.t('titles.editItem') : i18n.t('titles.newItem')),
+	form: (view) => formTitle(view.form),
 	detail: () => i18n.t('titles.viewItem'),
 	section: (view) => sectionLabel(view.section!),
 	history: () => i18n.t('generator.history'),

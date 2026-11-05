@@ -10,6 +10,7 @@ import {
 } from '@/src/messages'
 import { deepActiveElement } from './execute'
 import { createFrameHost, type FrameHost } from './frame-host'
+import type { BarPlace } from './notice-host'
 import { drawnUntouched, GUARD_MS, hits, modalOf } from './visibility'
 
 const TOLERANCE_PX = 0.5
@@ -53,6 +54,8 @@ type CaptureMessage = Extract<BackgroundToContent, { kind: `capture.${string}` }
 export interface NotificationHost {
 	/** `capture.verify` answers a boolean, `capture.show` the key its bar holds; the other kinds answer nothing. */
 	handle(message: CaptureMessage): boolean | string | undefined
+	/** Where the bar is, for the notice below it; `null` with none. */
+	place(): BarPlace | null
 }
 
 const isPickInput = (input: unknown): input is PickInput => {
@@ -354,6 +357,9 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 	})
 
 	return {
+		place() {
+			return bar ? { top: bar.box.top, height: bar.box.height, bottom: bar.bottom } : null
+		},
 		handle(message) {
 			switch (message.kind) {
 				case 'capture.show':

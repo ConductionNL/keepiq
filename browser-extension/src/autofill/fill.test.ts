@@ -87,7 +87,7 @@ describe('fill', () => {
 		await vault([await login()])
 		recordFrame(TAB, 5, 'https://ads.other.test/')
 		answers = { 0: { filled: 'none' }, 5: { filled: 'both' } }
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(sent.map(({ frameId }) => frameId)).toEqual([0])
 	})
 
@@ -95,7 +95,7 @@ describe('fill', () => {
 		await vault([await login()])
 		tabUrl = 'https://other.test/'
 		recordFrame(TAB, 0, 'https://example.test/')
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(sent).toEqual([])
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 	})
@@ -107,10 +107,10 @@ describe('fill', () => {
 		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'both', code: false })
 	})
 
-	it('answers none for a page without login fields and records nothing', async () => {
+	it('answers no fields for a page without login fields and records nothing', async () => {
 		await vault([await login()])
 		answers = { 0: { filled: 'none' } }
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({})
 	})
 
@@ -130,9 +130,19 @@ describe('fill', () => {
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 	})
 
+	it('answers plain none, not no fields, when the decrypt fails', async () => {
+		await vault([await login()])
+		vi.mocked(rsaDecrypt).mockRejectedValueOnce(new Error('bad padding'))
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'page', code: true })).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+	})
+
 	it('refuses blocked, unknown and non-login items', async () => {
 		await vault([blockedRow({ id: 'b', url: 'https://example.test/' }), await login({ id: 'note', typeId: 't-note' })])
-		for (const itemId of ['b', 'note', 'missing']) expect(await fill({ itemId, tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		for (const itemId of ['b', 'missing']) expect(await fill({ itemId, tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		// A note fits no frame, as a login would on another site.
+		expect(await fill({ itemId: 'note', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(sent).toEqual([])
 	})
 
@@ -164,7 +174,7 @@ describe('fill', () => {
 
 	it('sends nothing to the inline list’s frame when the item no longer matches it', async () => {
 		await vault([await login()])
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true, only: { frameId: 4, url: 'https://other.test/', anchorKey: 'k1' } })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true, only: { frameId: 4, url: 'https://other.test/', anchorKey: 'k1' } })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(executed()).toEqual([])
 	})
 
@@ -301,7 +311,7 @@ describe('fill with a code', () => {
 	it('copies nothing when nothing was filled', async () => {
 		await vault([await withCode()])
 		answers = { 0: { filled: 'none', code: false } }
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(writeFromBackground).not.toHaveBeenCalled()
 	})
 
@@ -319,7 +329,7 @@ describe('fill with a code', () => {
 		await vault([await login(), standalone])
 		await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })
 		expect(codes()).toEqual([[0, null]])
-		expect(await fill({ itemId: 't1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 't1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(writeFromBackground).not.toHaveBeenCalled()
 	})
 
@@ -463,7 +473,7 @@ describe('card and identity fill', () => {
 		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }]])
 		sent = []
 		probes = { 0: { roles: ['cardholder'], origin: undefined } }
-		expect(await fillCard()).toEqual({ filled: 'none', code: false })
+		expect(await fillCard()).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(kinds()).toEqual(['fill.probe@0', 'fill.probe@3'])
 	})
 
@@ -496,9 +506,9 @@ describe('card and identity fill', () => {
 		expect(forms()).toEqual([])
 	})
 
-	it('decrypts and sends nothing to a page without fields of the kind', async () => {
+	it('decrypts and sends nothing to a page without fields of the kind, which says so', async () => {
 		probes = { 0: { roles: [] } }
-		expect(await fillCard()).toEqual({ filled: 'none', code: false })
+		expect(await fillCard()).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 		expect(kinds()).toEqual(['fill.probe@0'])
 	})

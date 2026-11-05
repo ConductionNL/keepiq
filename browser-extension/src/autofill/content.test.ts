@@ -230,6 +230,21 @@ describe('content script', () => {
 			ask({ kind: 'capture.show', key: KEY, capture: CAPTURE }, { id: 'other-extension' })
 			expect(bars()).toHaveLength(0)
 		})
+
+		it('shows and hides the menu\'s notice in the top frame, answering nothing', () => {
+			start()
+			expect(ask({ kind: 'notice.show', notice: 'no_login_form' })).toBeUndefined()
+			expect(bars()).toHaveLength(1)
+			ask({ kind: 'notice.hide' })
+			expect(bars()).toHaveLength(0)
+		})
+
+		it('never hosts the notice in a subframe', () => {
+			vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
+			start()
+			ask({ kind: 'notice.show', notice: 'no_login_form' })
+			expect(bars()).toHaveLength(0)
+		})
 	})
 
 	it('ignores messages from anything but its own extension', () => {

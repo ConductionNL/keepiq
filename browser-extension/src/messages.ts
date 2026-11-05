@@ -210,9 +210,17 @@ export type FillOutcome = 'both' | 'username' | 'password' | 'none'
 export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean; confirmed?: FormConfirmation }
 /**
  * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
- * `form`: a card or identity filled at least one field.
+ * `form`: a card or identity filled at least one field. `noFields`: no frame of the tab had a field for the item.
  */
-export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion }
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
+
+/** What a menu fill without a form says in the page (ext-context-menu). */
+export type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
+
+export const PAGE_NOTICE_CODES: readonly PageNoticeCode[] = ['no_login_form', 'no_card_form', 'no_identity_form']
+
+/** The add form the context menu's Add asked for. */
+export type AddIntent = { add: 'login' | 'card' | 'identity' }
 
 // Cards and identities, ext-card-identity-fill design.md § Message contract.
 
@@ -414,6 +422,9 @@ export type NotificationToBackground =
 	/** The user focused or pressed the compact bar: the host grows it to its full height until focus leaves. */
 	| { kind: 'capture.expand'; key: string }
 
+/** The notice mode of the same page → background. Its Close, relayed to the top frame as `notice.hide`; no key or guard, as closing is all it can do. */
+export type NoticeToBackground = { kind: 'notice.close' }
+
 /**
  * `host`: of the submitting frame. `tabHost`: the top frame's at the submit, only where it differs ("on {tabHost}").
  * `itemName` and `username` (when the item has one): update mode only. `folders`: depth-first, each named by its path ("Work / Clients").
@@ -473,8 +484,8 @@ export const barHostHeight = (viewportWidth: number, viewportHeight: number, exp
 	return expanded ? Math.max(BAR_COMPACT_HEIGHT_PX, Math.min(full, viewportHeight - 2 * BAR_INSET_PX)) : BAR_COMPACT_HEIGHT_PX
 }
 
-export const NOTIFICATION_KINDS = kindSet<NotificationToBackground['kind']>({
-	'capture.state': true, 'capture.save': true, 'capture.update': true, 'capture.dismiss': true, 'capture.expand': true,
+export const NOTIFICATION_KINDS = kindSet<NotificationToBackground['kind'] | NoticeToBackground['kind']>({
+	'capture.state': true, 'capture.save': true, 'capture.update': true, 'capture.dismiss': true, 'capture.expand': true, 'notice.close': true,
 })
 
 /** Background → content script, through `tabs.sendMessage` with a `frameId`. */
@@ -512,6 +523,9 @@ export type BackgroundToContent =
 	| { kind: 'capture.expand'; key: string }
 	/** Fire-and-forget, to the frame that started the ceremony. `origin`: the ceremony's, which the relay checks. */
 	| { kind: 'passkey.result'; ceremonyId: string; origin: string; result: PasskeyResult }
+	/** Fire-and-forget, to the top frame only; a code, never vault data, so the page learns nothing it could not see. */
+	| { kind: 'notice.show'; notice: PageNoticeCode }
+	| { kind: 'notice.hide' }
 
 export type AccountStatus = 'unlocked' | 'locked' | 'logged_out'
 
@@ -828,6 +842,8 @@ export type PopupRequest =
 	| { kind: 'clipboard.copied' }
 	| { kind: 'popup.popout'; tabId?: number }
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
+	/** Once on mount: the context menu's Add, which the background then forgets. */
+	| { kind: 'popup.intent' }
 	| { kind: 'settings.get' }
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
 	| DefaultManagerRequest
@@ -967,6 +983,8 @@ export interface PopupReplies {
 	'clipboard.copied': null
 	'popup.popout': null
 	'popup.lastTab.set': null
+	/** `null` when none is pending, it is older than 10 seconds, or the active account is not unlocked. */
+	'popup.intent': AddIntent | null
 	'settings.get': GlobalSettings
 	'settings.set': GlobalSettings
 	'defaultManager.get': DefaultManagerState
@@ -1006,7 +1024,7 @@ export interface PopupReplies {
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
-	'vault.sync', 'vault.snapshot', 'item.decrypt', 'item.passkeys', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
+	'vault.sync', 'vault.snapshot', 'item.decrypt', 'item.passkeys', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set', 'popup.intent',
 	'settings.get', 'settings.set', 'defaultManager.get', 'defaultManager.enable', 'defaultManager.disable', 'fill.request', 'account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',

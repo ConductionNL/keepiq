@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generate } from '@/src/generator/generate'
 import App from '../App'
-import { accountSettingsSnapshot, editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
+import { accountSettingsSnapshot, editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply, types } from '../testing'
 
 vi.mock('@/src/generator/generate', async (original) => ({ ...await original<typeof import('@/src/generator/generate')>(), generate: vi.fn() }))
 
@@ -329,6 +329,85 @@ describe('item writes', () => {
 		expect(sentKinds(sent)).toContain('item.create')
 	})
 
+	describe('the context menu\'s Add', () => {
+		const intent = (add: string | null, extra: Parameters<typeof fakeBackground>[0] = {}) =>
+			fakeBackground({ ...extra, replies: { 'popup.intent': () => (add ? { add } : null), ...extra.replies } })
+
+		it.each([['identity', 'New identity', 'Email'], ['card', 'New card', 'Number'], ['login', 'New login', 'Username']])(
+			'opens on the %s form without the Type select, asking once', async (add, heading, label) => {
+				const sent = intent(add)
+				render(<App />)
+				await waitFor(async () => expect((await title()).textContent).toBe(heading))
+				expect(within(document.querySelector('form')!).queryByLabelText('Type')).toBeNull()
+				expect(screen.getByLabelText(label)).toBeTruthy()
+				expect(sentOf(sent, 'popup.intent')).toHaveLength(1)
+			})
+
+		it('opens on the form in the pop-out window too, with the page of the tab it came from', async () => {
+			window.history.replaceState({}, '', '/popup.html?popout=1&tabId=9')
+			vi.resetModules()
+			try {
+				const { default: FreshApp } = await import('../App')
+				const sent = intent('login')
+				vi.spyOn(browser.tabs, 'get').mockResolvedValue({ id: 9, windowId: 5, url: 'https://example.test/signin' } as never)
+				render(<FreshApp />)
+				await waitFor(async () => expect((await title()).textContent).toBe('New login'))
+				await waitFor(() => expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://example.test/signin'))
+				expect(sentOf(sent, 'popup.intent')).toHaveLength(1)
+			} finally {
+				window.history.replaceState({}, '', '/')
+				vi.resetModules()
+			}
+		})
+
+		it('takes the page for a new login', async () => {
+			intent('login', { tabUrl: 'https://example.test/login' })
+			render(<App />)
+			await waitFor(() => expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://example.test/login'))
+		})
+
+		it('opens over the Vault tab whatever tab was left open, and Cancel goes to the vault list', async () => {
+			const sent = intent('card', { lastTab: 'generator' })
+			render(<App />)
+			await waitFor(async () => expect((await title()).textContent).toBe('New card'))
+			await userEvent.setup().click(within(footer()).getByRole('button', { name: 'Cancel' }))
+			expect((await title()).textContent).toBe('Vault')
+			expect(sentOf(sent, 'popup.lastTab.set')).toEqual([])
+		})
+
+		it('saves as from New, and opens the new item', async () => {
+			let items = [itemMeta()]
+			const sent = intent('identity', {
+				snapshot: () => snapshotReply({ items }),
+				replies: {
+					'item.create': () => {
+						items = [...items, itemMeta({ id: 'new', name: 'Me', url: null, typeId: 't-identity' })]
+						return { ok: true, value: { id: 'new' } }
+					},
+				},
+			})
+			render(<App />)
+			const user = userEvent.setup()
+			await waitFor(async () => expect((await title()).textContent).toBe('New identity'))
+			await user.type(screen.getByLabelText('Name'), 'Me')
+			await user.type(screen.getByLabelText('Email'), 'me@example.test')
+			await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+			expect((await screen.findByRole('heading', { name: 'Me' })).textContent).toBe('Me')
+			expect(sentOf(sent, 'item.create')[0]!.draft).toMatchObject({ typeId: 't-identity', name: 'Me' })
+		})
+
+		it('opens the vault list when the cached types lack the type, and without an intent', async () => {
+			intent('card', { snapshot: snapshotReply({ types: types.filter((type) => type.name !== 'card') }) })
+			render(<App />)
+			await waitFor(async () => expect((await title()).textContent).toBe('Vault'))
+			cleanup()
+			intent(null)
+			render(<App />)
+			expect((await title()).textContent).toBe('Vault')
+			expect(await screen.findByRole('button', { name: 'New' })).toBeTruthy()
+		})
+	})
+
 	it('prefills only the origin and path of the tab, never its query or fragment', async () => {
 		fakeBackground({ tabUrl: 'https://user:pw@app.example.com/callback?token=abc#access_token=xyz' })
 		render(<App />)
@@ -576,7 +655,7 @@ describe('the share-save note after a save', () => {
 		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
 		expect((await title()).textContent).toBe('View item')
 		expect(notes()).toEqual([])
-		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.passkeys', 'item.editable', 'popup.lastTab.set'].includes(kind))).toEqual([])
+		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.passkeys', 'item.editable', 'popup.lastTab.set', 'popup.intent'].includes(kind))).toEqual([])
 	})
 
 	it('drops the note once a later save of the item reaches everyone', async () => {

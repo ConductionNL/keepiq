@@ -3,11 +3,12 @@ import { i18n } from '#i18n'
 import type { ItemMeta, PopupTab, SendRow } from '@/src/messages'
 import { request } from '../hooks/useMessage'
 import type { ItemActions, ShellContextValue } from '../shell-context'
-import type { FormMode } from './ItemForm'
+import type { FixedType, FormMode } from './ItemForm'
 import type { SendPrefill } from './send/NewSend'
 import type { SettingsSection } from './settings/SettingsIndex'
 
-export type FormPage = { mode: FormMode; id?: string }
+/** `fixedType`: the context menu's Add, a form for that one type. */
+export type FormPage = { mode: FormMode; id?: string; fixedType?: FixedType }
 
 /** `key` remounts the form when another item's Send opens it. */
 export type SendPage = { kind: 'new'; key: number; prefill?: SendPrefill } | { kind: 'created'; row: SendRow; link: string }
@@ -116,12 +117,21 @@ export function useTabPages(lastTab: PopupTab, closeSend: () => void) {
 	}, [closeSend])
 
 	const closeForm = useCallback(() => setForm(null), [])
+	/** Over the Vault tab, without remembering it as the last tab, as the user did not pick it. */
+	const openFixedAdd = useCallback((fixedType: FixedType) => {
+		setCurrent('vault')
+		setDetailId(null)
+		setSection(null)
+		setHistory(false)
+		closeSend()
+		setForm({ mode: 'add', fixedType })
+	}, [closeSend])
 	const gone = useCallback(() => {
 		setForm(null)
 		setDetailId(null)
 	}, [])
 
-	return { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, gone }
+	return { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, openFixedAdd, gone }
 }
 
 /** The dialog over the shell, and the check that asks before a dirty form is dropped. */

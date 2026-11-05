@@ -7,6 +7,7 @@
 import type { Browser } from 'wxt/browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
 import { accountStatus, getAccount, markLoggedOut } from '@/src/accounts/store'
+import { clearIntent } from '@/src/add-intent'
 import { captureSubmitted, dropAllCaptures, focusBar, handleNotification, registerCaptureQueue, reshow, showPending } from '@/src/autofill/capture-queue'
 import { registerDefaultManager } from '@/src/autofill/default-manager'
 import { handleFillRequest } from '@/src/autofill/fill'
@@ -21,7 +22,7 @@ import { CLIPBOARD_ALARM, clearClipboard, clearCodeAfterLock } from '@/src/clipb
 import { rebuildMenus, registerMenus } from '@/src/menus'
 import {
 	PASSKEY_POPUP_KINDS, POPUP_PORT, POPUP_REQUEST_KINDS,
-	type ContentToBackground, type FillRequest, type InlineListToBackground, type NotificationToBackground, type PasskeyPopupRequest, type PopupToBackground,
+	type BackgroundToContent, type ContentToBackground, type FillRequest, type InlineListToBackground, type NoticeToBackground, type NotificationToBackground, type PasskeyPopupRequest, type PopupToBackground,
 } from '@/src/messages'
 import { endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies } from '@/src/passkey/ceremony'
 import { refreshToolbar, registerToolbarListeners } from '@/src/toolbar-icon'
@@ -88,7 +89,13 @@ function onInlineListMessage(m: InlineListToBackground, sender: Sender, respond:
 	return true
 }
 
-function onNotificationMessage(m: NotificationToBackground, sender: Sender, respond: (reply: unknown) => void): true {
+function onNotificationMessage(m: NotificationToBackground | NoticeToBackground, sender: Sender, respond: (reply: unknown) => void): true | undefined {
+	if (m.kind === 'notice.close') {
+		const hide: BackgroundToContent = { kind: 'notice.hide' }
+		const tabId = sender.tab?.id
+		if (tabId !== undefined) void browser.tabs.sendMessage(tabId, hide, { frameId: 0 }).catch(() => {})
+		return undefined
+	}
 	void handleNotification(m, sender).catch((error: unknown) => {
 		console.error('[keepiq] save bar', m.kind, error)
 		return m.kind === 'capture.save' || m.kind === 'capture.update' ? { ok: false, error: { code: 'unknown' } } : null
@@ -100,6 +107,7 @@ function applyPopupChanges(kind: string): void {
 	if (MENU_CHANGES.has(kind)) void rebuildMenus()
 	if (TOOLBAR_CHANGES.has(kind)) refreshToolbar('state')
 	if (ACCOUNT_CHANGES.has(kind)) {
+		clearIntent()
 		void closeAllSessions()
 		dropAllCaptures()
 		void endForAccountChange().catch(() => {})
@@ -130,7 +138,7 @@ export default defineBackground(() => {
 		const page = senderPage(sender)
 		if (page === 'content') return onContentMessage(msg as ContentToBackground, sender, sendResponse)
 		if (page === 'inline-list') return onInlineListMessage(msg as InlineListToBackground, sender, sendResponse)
-		if (page === 'notification') return onNotificationMessage(msg as NotificationToBackground, sender, sendResponse)
+		if (page === 'notification') return onNotificationMessage(msg as NotificationToBackground | NoticeToBackground, sender, sendResponse)
 		if (page === 'popup') return onPopupMessage(msg as PopupMessage, sender, sendResponse)
 	})
 

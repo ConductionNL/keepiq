@@ -35,7 +35,7 @@ export function isOwnHost(element: Element): boolean {
 }
 
 /** Not appended yet, so the caller can place it and add listeners first. */
-export function createFrameHost(page: `/${string}.html`, title: string): FrameHost {
+export function createFrameHost(page: `/${string}.html` | `/${string}.html?${string}`, title: string): FrameHost {
 	// A `div`, not a custom element name the page could have defined first.
 	const element = document.createElement('div')
 	let written = ''

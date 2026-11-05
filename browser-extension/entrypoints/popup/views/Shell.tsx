@@ -20,7 +20,7 @@ import { Generator } from './Generator'
 import { GeneratorHistory } from './GeneratorHistory'
 import { DeleteItemDialog, MoveItemDialog } from './ItemDialogs'
 import { ItemDetail } from './ItemDetail'
-import { ItemForm } from './ItemForm'
+import { ItemForm, type FixedType } from './ItemForm'
 import { NewSend } from './send/NewSend'
 import { SendCreated } from './send/SendCreated'
 import { SendList } from './send/SendList'
@@ -48,7 +48,7 @@ const offersFill = (snapshot: { suggestionIds: string[]; formIds: string[] }, id
 export function Shell({ active, lastTab, hidden = false, onAccounts, refreshState }: Props) {
 	const tab = useCurrentTab()
 	const { sendPage, setSendPage, sendBusy, setSendBusy, sendFocus, setSendFocus, newSend, created, closeSend } = useSendPages()
-	const { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, gone } = useTabPages(lastTab, closeSend)
+	const { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, openFixedAdd, gone } = useTabPages(lastTab, closeSend)
 	const [pick, setPick] = useState<Pick | null>(null)
 	const { dialog, setDialog, leave, leaveGuardRef } = useLeave(sendBusy)
 	// In memory only, so it is gone once the popup closes (share-sync).
@@ -65,12 +65,16 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		if (reply && reply.state !== 'unlocked') refreshState()
 	}, [reply, refreshState])
 
+	useAddIntent(openFixedAdd)
+
 	const { leaveList, keepFormPlace } = useBodyScroll(body, { pick, detailId, form, sendPage })
 
 	const sendItem = useSendItem({ refreshState, toast: showToast, show, setSendPage })
 	const items = useItemActions({ leaveList, setForm, setDialog, sendItem })
 
 	const snapshot = reply?.state === 'unlocked' ? reply : undefined
+	// The account's cached types have no such system type: the vault list instead.
+	if (form?.fixedType && snapshot && !snapshot.types.some((type) => type.name === form.fixedType)) setForm(null)
 
 	// The opener, not `document.activeElement`: Firefox on macOS and Safari don't focus a clicked button.
 	const generate = useCallback((target: GenerateTarget, apply: (value: string) => void, opener: HTMLElement | null) => {
@@ -123,7 +127,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 					// Hidden under the generator, so pick mode keeps the draft.
 					<div hidden={pick !== null}>
 						<ShellContext.Provider value={pick ? hiddenFormContext : context}>
-							<ItemForm key={`${form.mode}:${form.id ?? ''}`} mode={form.mode} id={form.id} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />
+							<ItemForm key={`${form.mode}:${form.id ?? ''}:${form.fixedType ?? ''}`} mode={form.mode} id={form.id} fixedType={form.fixedType} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />
 						</ShellContext.Provider>
 					</div>
 				)}
@@ -260,6 +264,21 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 			</SendProvider>
 		</ShellContext.Provider>
 	)
+}
+
+/**
+ * The context menu's Add, asked once per popup. A ref, not an effect cleanup, keeps StrictMode's second mount from
+ * asking again, which the background answers `null` as it already forgot the intent.
+ */
+function useAddIntent(open: (type: FixedType) => void) {
+	const asked = useRef(false)
+	useEffect(() => {
+		if (asked.current) return
+		asked.current = true
+		void request({ kind: 'popup.intent' }).then((intent) => {
+			if (intent) open(intent.add)
+		})
+	}, [open])
 }
 
 /** Opens the popup in a window of its own and closes this one, or says why it stays. */

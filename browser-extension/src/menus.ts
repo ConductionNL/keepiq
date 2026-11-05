@@ -1,11 +1,12 @@
 /**
- * The "Keepiq" context menu on editable fields. Menus outlive an MV3 worker, so every build
- * starts from `removeAll`; item entries carry the item id, never a username or password.
+ * The "Keepiq" context menu, anywhere on the page. Menus outlive an MV3 worker, so every build starts from `removeAll`.
+ * Titles are item names only: Chrome writes them to its extension state on disk (ext-context-menu design.md § Names only).
  */
 import type { Browser } from 'wxt/browser'
 import { i18n } from '#i18n'
 import { readSettings } from '@/src/accounts/settings'
 import { accountStatus, getAccount, getActiveAccountId } from '@/src/accounts/store'
+import { registerAddIntent, setIntent } from '@/src/add-intent'
 import { activeTab, activeUnlockedId, fill, matchingLogins } from '@/src/autofill/fill'
 import { isWebUrl } from '@/src/autofill/frames'
 import { currentCode, matchingCodes, seedOf } from '@/src/autofill/login-codes'
@@ -18,13 +19,14 @@ import { generate } from '@/src/generator/generate'
 import { addHistory, openHistory } from '@/src/generator/history'
 import { readOptions, readPolicy } from '@/src/generator/store'
 import type { LastUsed } from '@/src/last-used'
-import type { FormKind } from '@/src/messages'
+import type { AddIntent, BackgroundToContent, FormKind, PageNoticeCode } from '@/src/messages'
 import { getKey, sessionEpoch } from '@/src/vault/key-store'
 import { readSnapshot } from '@/src/vault/store'
 import { enforce, touch } from '@/src/vault/timeout'
 
 export const MENU_LIMIT = 10
-const CONTEXTS: ['editable'] = ['editable']
+/** Not `all`, which on Chrome also covers the toolbar icon's own menu; Firefox's `password` is inside `editable`. */
+const CONTEXTS: NonNullable<Browser.contextMenus.CreateProperties['contexts']> = ['page', 'frame', 'selection', 'link', 'editable', 'image', 'video', 'audio']
 const ROOT = 'keepiq'
 
 export interface MenuEntry {
@@ -35,52 +37,74 @@ export interface MenuEntry {
 	enabled?: false
 }
 
+type Rows = ReadonlyArray<{ id: string; name: string }>
+
 // `&` marks an access key in menu titles on both browsers.
 const title = (name: string) => name.replaceAll('&', '&&')
 
-/** `prefix`: its items' ids are `<prefix>:<itemId>`; `open`: its "Open Keepiq" entry. */
+/** `prefix`: its items' ids are `<prefix>:<itemId>`. */
 interface Submenu {
 	id: string
 	prefix: string
-	open: string
 	label: () => string
+	empty: () => string
 }
 
-const LOGIN_MENU: Submenu = { id: 'autofill', prefix: 'autofill', open: 'open', label: () => i18n.t('contextMenu.autofill') }
-const FORM_MENUS: ReadonlyArray<Submenu & { kind: FormKind }> = [
-	{ kind: 'card', id: 'autofill-card', prefix: 'card', open: 'open-card', label: () => i18n.t('contextMenu.autofillCard') },
-	{ kind: 'identity', id: 'autofill-identity', prefix: 'identity', open: 'open-identity', label: () => i18n.t('contextMenu.autofillIdentity') },
-]
-const OPENS_POPUP = new Set(['unlock', ...[LOGIN_MENU, ...FORM_MENUS].map((menu) => menu.open)])
-const FILLS = new Set([LOGIN_MENU, ...FORM_MENUS].map((menu) => menu.prefix))
+/** A submenu that fills, and ends with Add and Open Keepiq. */
+interface FillMenu extends Submenu {
+	add: AddIntent['add']
+	separator: string
+	addLabel: () => string
+	notice: PageNoticeCode
+}
 
-function submenu(menu: Submenu, rows: ReadonlyArray<{ id: string; name: string }>): MenuEntry[] {
+const LOGIN_MENU: FillMenu = {
+	id: 'autofill', prefix: 'autofill', add: 'login', separator: 'autofill-separator', notice: 'no_login_form',
+	label: () => i18n.t('contextMenu.autofill'), empty: () => i18n.t('contextMenu.noMatches'), addLabel: () => i18n.t('contextMenu.addLogin'),
+}
+const FORM_MENUS: ReadonlyArray<FillMenu & { add: FormKind }> = [
+	{
+		id: 'autofill-identity', prefix: 'identity', add: 'identity', separator: 'identity-separator', notice: 'no_identity_form',
+		label: () => i18n.t('contextMenu.autofillIdentity'), empty: () => i18n.t('contextMenu.noIdentities'), addLabel: () => i18n.t('contextMenu.addIdentity'),
+	},
+	{
+		id: 'autofill-card', prefix: 'card', add: 'card', separator: 'card-separator', notice: 'no_card_form',
+		label: () => i18n.t('contextMenu.autofillCard'), empty: () => i18n.t('contextMenu.noCards'), addLabel: () => i18n.t('contextMenu.addCard'),
+	},
+]
+const COPY_MENUS = {
+	user: { id: 'copy-user', prefix: 'copy-user', label: () => i18n.t('contextMenu.copyUsername'), empty: () => i18n.t('contextMenu.noUsernames') },
+	pass: { id: 'copy-pass', prefix: 'copy-pass', label: () => i18n.t('contextMenu.copyPassword'), empty: () => i18n.t('contextMenu.noPasswords') },
+	code: { id: 'copy-code', prefix: 'copy-code', label: () => i18n.t('contextMenu.copyCode'), empty: () => i18n.t('contextMenu.noCodes') },
+} satisfies Record<string, Submenu>
+
+const FILL_MENUS = [LOGIN_MENU, ...FORM_MENUS]
+const OPENS_POPUP = new Set(['unlock', ...FILL_MENUS.map((menu) => `open:${menu.add}`)])
+const ADDS = new Map(FILL_MENUS.map((menu) => [`add:${menu.add}`, menu.add]))
+const FILLS = new Map(FILL_MENUS.map((menu) => [menu.prefix, menu]))
+
+/** Always a parent, never disabled itself; without rows it holds one disabled line. */
+function submenu(menu: Submenu, rows: Rows): MenuEntry[] {
+	const items: MenuEntry[] = rows.length
+		? rows.slice(0, MENU_LIMIT).map((row) => ({ id: `${menu.prefix}:${row.id}`, parentId: menu.id, title: title(row.name) }))
+		: [{ id: `${menu.prefix}-none`, parentId: menu.id, title: menu.empty(), enabled: false }]
+	return [{ id: menu.id, parentId: ROOT, title: menu.label() }, ...items]
+}
+
+function fillMenu(menu: FillMenu, rows: Rows): MenuEntry[] {
 	return [
-		{ id: menu.id, parentId: ROOT, title: menu.label() },
-		...rows.slice(0, MENU_LIMIT).map((row) => ({ id: `${menu.prefix}:${row.id}`, parentId: menu.id, title: title(row.name) })),
-		{ id: `${menu.id}-separator`, parentId: menu.id, type: 'separator' as const },
-		{ id: menu.open, parentId: menu.id, title: i18n.t('contextMenu.openKeepiq') },
+		...submenu(menu, rows),
+		{ id: menu.separator, parentId: menu.id, type: 'separator' },
+		{ id: `add:${menu.add}`, parentId: menu.id, title: menu.addLabel() },
+		{ id: `open:${menu.add}`, parentId: menu.id, title: i18n.t('contextMenu.openKeepiq') },
 	]
 }
 
-/** Every card and identity, not matched by site, on any web page; a kind the vault has none of is left out (spec `card-identity-fill`). */
+/** Every card and identity, not matched by site, on any web page (spec `card-identity-fill`); none elsewhere. */
 async function formMenus(accountId: string, page: { url: string | undefined; lastUsed: LastUsed }): Promise<MenuEntry[]> {
 	const vault = await readSnapshot(accountId)
-	if (!vault || page.url === undefined || !isWebUrl(page.url)) return []
-	return FORM_MENUS.flatMap((menu) => {
-		const rows = walletCandidates(menu.kind, vault, page.lastUsed)
-		return rows.length ? submenu(menu, rows) : []
-	})
-}
-
-/** One entry for a single item, a submenu for several, a disabled entry for none. */
-function perItem(prefix: string, label: string, rows: ReadonlyArray<{ id: string; name: string }>): MenuEntry[] {
-	if (rows.length === 1) return [{ id: `${prefix}:${rows[0]!.id}`, parentId: ROOT, title: label }]
-	if (!rows.length) return [{ id: prefix, parentId: ROOT, title: label, enabled: false }]
-	return [
-		{ id: prefix, parentId: ROOT, title: label },
-		...rows.slice(0, MENU_LIMIT).map((row) => ({ id: `${prefix}:${row.id}`, parentId: prefix, title: title(row.name) })),
-	]
+	const web = vault !== undefined && page.url !== undefined && isWebUrl(page.url)
+	return FORM_MENUS.flatMap((menu) => fillMenu(menu, web ? walletCandidates(menu.add, vault, page.lastUsed) : []))
 }
 
 /** What the menu shows now: nothing without an account, for a logged-out one or with the setting off. */
@@ -94,17 +118,16 @@ export async function menuEntries(): Promise<MenuEntry[]> {
 	const pageUrl = (await activeTab())?.url
 	const { rows, lastUsed } = await matchingLogins(account.id, pageUrl)
 	const { rows: codes } = await matchingCodes(account.id, pageUrl)
-	const autofill: MenuEntry[] = rows.length
-		? submenu(LOGIN_MENU, rows)
-		: [{ id: LOGIN_MENU.id, parentId: ROOT, title: i18n.t('contextMenu.noMatches'), enabled: false }]
 	return [
 		root,
-		...autofill,
-		...perItem('copy-user', i18n.t('contextMenu.copyUsername'), rows.filter((row) => row.login !== null)),
+		...fillMenu(LOGIN_MENU, rows),
+		...submenu(COPY_MENUS.user, rows.filter((row) => row.login !== null)),
 		// A use-only copy's password is never shown or copied (ADR-003).
-		...perItem('copy-pass', i18n.t('contextMenu.copyPassword'), rows.filter((row) => row.useOnly !== true)),
-		...perItem('copy-code', i18n.t('contextMenu.copyCode'), codes),
+		...submenu(COPY_MENUS.pass, rows.filter((row) => row.useOnly !== true)),
+		...submenu(COPY_MENUS.code, codes),
+		{ id: 'separator-1', parentId: ROOT, type: 'separator' },
 		...await formMenus(account.id, { url: pageUrl, lastUsed }),
+		{ id: 'separator-2', parentId: ROOT, type: 'separator' },
 		{ id: 'generate', parentId: ROOT, title: i18n.t('contextMenu.generatePassword') },
 	]
 }
@@ -168,8 +191,14 @@ async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<v
 	if (split < 0 || tab?.id === undefined) return
 	const action = menuId.slice(0, split)
 	const itemId = menuId.slice(split + 1)
-	if (FILLS.has(action)) {
-		await fill({ itemId, tabId: tab.id, ask: 'page', code: true })
+	const menu = FILLS.get(action)
+	if (menu) {
+		const result = await fill({ itemId, tabId: tab.id, ask: 'page', code: true })
+		if (result.noFields) {
+			const notice: BackgroundToContent = { kind: 'notice.show', notice: menu.notice }
+			// A tab without our content script (a PDF, a store page) gets no notice.
+			void browser.tabs.sendMessage(tab.id, notice, { frameId: 0 }).catch(() => {})
+		}
 		await rebuildMenus()
 	}
 	if (action === 'copy-user') await copy(accountId, itemId, 'login', tab.url)
@@ -180,7 +209,9 @@ async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<v
 export function onMenuClicked(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): void {
 	const menuId = String(info.menuItemId)
 	// Before any await: Firefox below 149 opens the popup only from the click itself.
-	if (OPENS_POPUP.has(menuId)) {
+	const add = ADDS.get(menuId)
+	if (add) setIntent(add)
+	if (add || OPENS_POPUP.has(menuId)) {
 		void openPopupOrPopout(tab?.id).catch((error: unknown) => console.error('[keepiq] open popup', error))
 		return
 	}
@@ -202,5 +233,6 @@ export function registerMenus(): void {
 		if (windowId !== browser.windows.WINDOW_ID_NONE) rebuild()
 	})
 	onBroadcast(rebuild)
+	registerAddIntent()
 	browser.contextMenus.onClicked.addListener(onMenuClicked)
 }
