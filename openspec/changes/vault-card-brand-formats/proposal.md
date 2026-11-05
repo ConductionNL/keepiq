@@ -19,7 +19,7 @@ The browser extension mirrors these rules ("Same rules as the web app's `cardBra
 
 - **A brand table.** `src/cardIdentity/card-brands.json` lists each brand with its IIN ranges, valid lengths, security code name and length, digit grouping and the option codes checkout pages use for it. It covers Visa, Mastercard, American Express, Discover, Diners Club, JCB, UnionPay, Maestro, Mir, Elo, Hiper, Hipercard, Troy, Verve, RuPay, Dankort, Bancontact and UATP.
 - **Detection by narrowest range.** The most specific matching range decides the brand, so Elo inside Visa, Dankort inside Maestro and RuPay inside Discover's `65` are labelled correctly. When two ranges are equally specific the brand stays "Card", never a guess. Maestro loses its catch-all for every number starting with 6.
-- **Co-branded cards** (Visa/Dankort, Bancontact/Maestro, UnionPay on Discover, Troy on Discover) get one label and list the other networks they run on, which only the extension's checkout fill uses.
+- **Co-branded cards** (Visa/Dankort, Bancontact/Maestro, UnionPay on Discover, RuPay/JCB) get one label and list the other networks they run on, which only the extension's checkout fill uses.
 - **Grouping by brand.** A revealed number is grouped as its brand writes it (4-6-5 for Amex), and the masked number shows as many groups as the card has digits.
 - **The brand next to the number** in the detail sidebar.
 - **More non-blocking hints** in the create and edit dialogs: a number whose length the brand does not issue, and a security code whose length the brand does not use. The Luhn hint stays, and for UnionPay it is not shown, as some UnionPay cards fail the check. None of the hints blocks saving.

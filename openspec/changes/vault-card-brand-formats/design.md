@@ -37,7 +37,7 @@
 
 JSON rather than a JS module, so the extension can carry a byte-identical copy and the mobile apps could read the same file later.
 
-**D2. Not `credit-card-type`, and not `addCard()` on top of it.** We considered depending on braintree's `credit-card-type` (MIT, zero dependencies, about 4 KB gzipped, 10.3.1 of 2026-10-13) and registering the brands it lacks with its `addCard()` API. An LLM council of five advisors and five peer reviews weighed this on 2026-11-05 against the package source and probes run in Node, and all of them came out against it:
+**D2. Not `credit-card-type`, and not `addCard()` on top of it.** We considered depending on braintree's `credit-card-type` (MIT, zero dependencies, about 4 KB gzipped, 10.3.1 of 2026-10-13) and registering the brands it lacks with its `addCard()` API. Checked against the 10.3.1 source and probes run in Node, it does not fit:
 
 - *Precedence is accidental.* The library ranks a match by how many digits its pattern is written with, and settles a tie by registration order, where an added brand comes last. A Dankort range written as `5019` still comes out as Maestro, because Maestro's `[500000, 504174]` is written with six digits. A RuPay `6521` loses to Discover's `65` unless it is rewritten as a range, and a RuPay `[508500, 508999]` ties Maestro and loses unless `changeOrder()` moves it first. What wins an overlap is decided by how each line is spelled, and nothing states it.
 - *Its defaults invent brands.* Maestro includes a bare `6`, so `6999 1234 1234 1234` comes out as Maestro, where this spec requires "Card". Using the library means removing or rewriting built-in entries as well as adding ours.
@@ -50,18 +50,18 @@ What we keep from it is its data: our table is seeded from its ranges where the 
 
 **D3. The narrowest range wins; a tie names no brand.** Strip every non-digit first. A range matches when the number has at least as many digits as the range is written with and its leading digits fall inside it. Each matching range is widened to eight digits (start padded with `0`, end with `9`), and the one covering the fewest numbers wins. If two brands tie for narrowest, `cardBrandInfo()` returns `null` and the card is shown as "Card". Array order never breaks a tie, and a test asserts that no two brands in the table tie on any vector.
 
-**D4. Co-branded cards get one label.** A range that is two brands at once (4571 Visa/Dankort, 6703 Bancontact/Maestro, 622126–622925 UnionPay/Discover, Troy's 65 ranges) is listed under its more specific brand with `networks` naming the others. The label is the specific brand. Only the extension's checkout fill reads `networks`, to fall back to a brand the page offers.
+**D4. Co-branded cards get one label.** A range that is two brands at once (4571 Visa/Dankort, 6703 Bancontact/Maestro, 622126–622925 UnionPay/Discover, 353800–353809 RuPay/JCB) is listed under its more specific brand with `networks` naming the others. The label is the specific brand. Only the extension's checkout fill reads `networks`, to fall back to a brand the page offers.
 
 **D5. Grouping and masking follow `gaps`.** `formatCardNumber()` puts a space at each of the brand's gaps for that length, and every four digits for an unknown brand. `maskCardNumber()` groups the same way, shows the first group and the last four digits and dots everything between, so an Amex masks as `3782 •••••• •0005` and a 14-digit Diners card as `3056 •••••• 5904`. A number under 12 digits stays fully dotted, as now.
 
 **D6. Hints never block.** In the create and edit dialogs, below the field:
 
-- *Number*: "This card number is too short or too long for {brand}" when the brand is known and its length is not in `lengths`, or "Card numbers have 12 to 19 digits" when no brand is derived. The existing Luhn hint stays, except for UnionPay, whose numbers do not all carry a Luhn check digit.
+- *Number*: "{brand} does not issue card numbers of this length" when the brand is known and its length is not in `lengths`, or "Card numbers have 12 to 19 digits" when no brand is derived. The existing Luhn hint stays, except for UnionPay, whose numbers do not all carry a Luhn check digit.
 - *Security code*: "{brand} cards use a {size}-digit {name}" when the length differs from `code.size`, and nothing for a brand without a code.
 
 Each hint names the field it belongs to through `aria-describedby`, and none disables Save. The Luhn hint moves from create-only to both dialogs.
 
-**D7. Provenance and licence.** The table is EUPL-1.2 work of Conduction that includes facts taken from credit-card-type (MIT, © Braintree). `REUSE.toml` gets an override annotation for `src/cardIdentity/card-brands.json` (and, in the extension change, its copy) declaring both copyright holders and `EUPL-1.2 AND MIT`, and `LICENSES/MIT.txt` is added. Ranges the research could not confirm are left out: Hipercard 3841, Bancontact 479658 and 606005, Dankort 3571, RuPay 82 and 100003, and 6590–6599 as Discover.
+**D7. Provenance and licence.** The table is EUPL-1.2 work of Conduction that includes facts taken from credit-card-type (MIT, © Braintree). `REUSE.toml` gets an override annotation for `src/cardIdentity/card-brands.json` (and, in the extension change, its copy) declaring both copyright holders and `EUPL-1.2 AND MIT`, and `LICENSES/MIT.txt` is added. Ranges the research could not confirm are left out: Hipercard 3841, Bancontact 479658 and 606005, Dankort 3571, RuPay 82 and 100003, Troy's 65 ranges (credit-card-type is their only source; they stay Discover, the network they run on), and 6590–6599 as Discover.
 
 ## Security and zero-knowledge
 
