@@ -53,9 +53,11 @@ REPLAY=$!
 # says whether it stalled on the connection, the handshake or in the app.
 # Only the network and trust subsystems: the whole process logs about 1M
 # lines (112 MB) per run, nearly all XCTest and accessibility; these are
-# about 12k lines (2 MB).
+# about 12k lines (2 MB). Plus trustd itself: on 2026-11-05 one certificate
+# evaluation in 61 never returned from it (the app logged "Completed async
+# eval kickoff" and nothing after), so its side shows what it waited on.
 xcrun simctl spawn "$UDID" log stream --style compact --level info \
-	--predicate '(process == "Keepiq" OR process == "KeepiqAutofill") AND (subsystem BEGINSWITH "com.apple.network" OR subsystem BEGINSWITH "com.apple.CFNetwork" OR subsystem == "com.apple.securityd")' \
+	--predicate '((process == "Keepiq" OR process == "KeepiqAutofill") AND (subsystem BEGINSWITH "com.apple.network" OR subsystem BEGINSWITH "com.apple.CFNetwork" OR subsystem == "com.apple.securityd")) OR process == "trustd"' \
 	> "$OUT/simulator.log" 2>&1 &
 APPLOG=$!
 trap 'kill "$REPLAY" "$APPLOG" 2>/dev/null || true' EXIT
@@ -64,16 +66,29 @@ xcodebuild build-for-testing -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
 	-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" -quiet
 
 # One test class at a time, each with its own video under 3 minutes.
+#
+# A failing test runs once more: the simulator's trustd now and then never
+# answers a certificate evaluation, so the request times out and the test
+# fails without anything being wrong in the app or the replay (see
+# simulator.log). A test that only passed on its second run is reported as
+# a warning, so a flake of our own still shows.
 status=0
 run_class() {
-	local class="$1" video="$2"
+	local class="$1" video="$2" rc=0
 	xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT/$video.mp4" &
 	local recorder=$!
 	TEST_RUNNER_KEEPIQ_SERVER=https://localhost:8443 TEST_RUNNER_KEEPIQ_SHOTS_DIR="$OUT/shots" \
 		xcodebuild test-without-building -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
 		-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" \
 		-only-testing:"KeepiqUITests/$class" \
-		-resultBundlePath "$OUT/$class.xcresult" || status=1
+		-retry-tests-on-failure -test-iterations 2 \
+		-resultBundlePath "$OUT/$class.xcresult" 2>&1 | tee "$OUT/$class.log" || rc=1
+	if [ "$rc" -ne 0 ]; then
+		status=1
+	elif grep -q "^Test Case .* failed (" "$OUT/$class.log"; then
+		grep "^Test Case .* failed (" "$OUT/$class.log" | sed -E "s/^Test Case '-\[[^ ]+ ([^]]+)\]'.*/\1/" | sort -u |
+			while read -r test; do echo "::warning title=iOS UI test retried::$class.$test failed once and passed on its retry; see simulator.log in mobile-media-ios"; done
+	fi
 	kill -INT "$recorder" 2>/dev/null || true
 	wait "$recorder" 2>/dev/null || true
 	fit_video "$OUT/$video.mp4"
