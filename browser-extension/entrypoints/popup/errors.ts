@@ -106,6 +106,12 @@ function partnerUpgradeText(error: VaultWriteError, context: WriteContext): stri
 	return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
 }
 
+function shareScanPendingText(_: VaultWriteError, context: WriteContext): string {
+	if (context === 'open') return i18n.t('writeErrors.shareScanPendingOpen')
+	if (context === 'delete') return i18n.t('writeErrors.shareScanPendingDelete')
+	return context === 'passkey' ? i18n.t('passkey.errors.shareScanPending') : i18n.t('writeErrors.shareScanPending')
+}
+
 /** The codes about sharing: shared copies, partner organisations and their certificates. A `Map`, so a code named like an object property misses. */
 const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, context: WriteContext) => string>([
 	['restricted', () => i18n.t('writeErrors.restricted')],
@@ -118,10 +124,7 @@ const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, (error: VaultWriteError, co
 	['partner_upgrade_required', partnerUpgradeText],
 	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
 	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
-	['share_scan_pending', (_, context) => {
-		if (context === 'open') return i18n.t('writeErrors.shareScanPendingOpen')
-		return context === 'delete' ? i18n.t('writeErrors.shareScanPendingDelete') : i18n.t('writeErrors.shareScanPending')
-	}],
+	['share_scan_pending', shareScanPendingText],
 ])
 
 function sharingWriteErrorText(error: VaultWriteError, context: WriteContext): string {

@@ -485,7 +485,7 @@ describe('editing', () => {
 		await user.type(await screen.findByLabelText('Username'), '2')
 		await user.click(save())
 		const alert = await screen.findByRole('alert')
-		expect(alert.textContent).toBe('This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later, or ask your administrator to check that background jobs run.')
+		expect(alert.textContent).toBe('This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
 		expect(within(alert).queryByRole('button')).toBeNull()
 		expect(field('Username').value).toBe('alice2')
 		expect(onSaved).not.toHaveBeenCalled()
