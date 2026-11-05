@@ -38,6 +38,8 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for SecretRequest CRUD.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
  */
 class SecretRequestController extends OCSController {
 	/**
@@ -151,12 +153,14 @@ class SecretRequestController extends OCSController {
 	 * @param string|null $applicationId Optional owning application ID
 	 * @param string|null $name Name for the Secret a FRESH request creates
 	 * @param string|null $folderId Optional folder for that created Secret
+	 * @param string|null $typeId Optional type for that created Secret
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isReRequest is a field of the POST
 	 *   body that the Nextcloud router binds by name, not an internal switch a caller
@@ -174,6 +178,7 @@ class SecretRequestController extends OCSController {
 		?string $applicationId = null,
 		?string $name = null,
 		?string $folderId = null,
+		?string $typeId = null,
 	): JSONResponse {
 		$user = $this->session->getUser();
 		if ($user === null) {
@@ -212,8 +217,11 @@ class SecretRequestController extends OCSController {
 				expiry: $this->parseExpiry(expiresAt: $expiresAt),
 				applicationId: (string)$applicationId,
 				userId: $user->getUID(),
-				name: $name,
-				folderId: $folderId
+				placeholder: [
+					'name' => $name,
+					'folderId' => $folderId,
+					'typeId' => $typeId,
+				]
 			);
 		} catch (InvalidArgumentException $e) {
 			$code = $e->getCode();
@@ -264,8 +272,8 @@ class SecretRequestController extends OCSController {
 	 * @param string $applicationId Owning application ID ('' unless
 	 *                              $mode is MODE_APPLICATION)
 	 * @param string $userId The requesting user
-	 * @param string|null $name Name for a FRESH request's created Secret
-	 * @param string|null $folderId Folder for that created Secret
+	 * @param array{name: ?string, folderId: ?string, typeId: ?string} $placeholder What a
+	 *        FRESH request's created Secret is made from; unused by the other modes
 	 *
 	 * @return \OCA\Keepiq\Db\SecretRequest
 	 *
@@ -279,8 +287,7 @@ class SecretRequestController extends OCSController {
 		?DateTime $expiry,
 		string $applicationId,
 		string $userId,
-		?string $name = null,
-		?string $folderId = null,
+		array $placeholder,
 	): \OCA\Keepiq\Db\SecretRequest {
 		if ($mode === self::MODE_APPLICATION) {
 			return $this->service->createForApplication(
@@ -296,9 +303,10 @@ class SecretRequestController extends OCSController {
 			return $this->service->createForUserVault(
 				userId: $userId,
 				requestedFields: $requestedFields,
-				name: $name,
-				folderId: $folderId,
+				name: $placeholder['name'],
+				folderId: $placeholder['folderId'],
 				expiresAt: $expiry,
+				typeId: $placeholder['typeId'],
 			);
 		}
 

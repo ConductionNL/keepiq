@@ -120,6 +120,9 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 						expiresAt: payload.expiresAt || null,
 						name: payload.name || null,
 						folderId: payload.folderId || null,
+						// The type a FRESH request's placeholder is created as; null
+						// leaves the server's default.
+						typeId: payload.typeId || null,
 					},
 				)
 				this.secretRequests.unshift(response.data)

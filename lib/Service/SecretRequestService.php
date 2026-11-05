@@ -61,6 +61,8 @@ use Throwable;
  * to create its own Secret before it can create the request; splitting the
  * creation paths across classes would scatter the rollback and the
  * fresh-vs-re-request distinction that the spec turns on.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
  */
 class SecretRequestService {
 	/*
@@ -492,6 +494,8 @@ class SecretRequestService {
 	 * @param string|null $name Name for the created Secret
 	 * @param string|null $folderId Optional folder to file it under
 	 * @param DateTime|null $expiresAt Optional expiry
+	 * @param string|null $typeId Optional type for the created Secret; null
+	 *                            leaves SecretService's default (Login)
 	 *
 	 * @return SecretRequest
 	 *
@@ -505,6 +509,7 @@ class SecretRequestService {
 		?string $name = null,
 		?string $folderId = null,
 		?DateTime $expiresAt = null,
+		?string $typeId = null,
 	): SecretRequest {
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
@@ -520,6 +525,11 @@ class SecretRequestService {
 			data: [
 				'name' => ($name ?? 'Unfilled request'),
 				'folderId' => $folderId,
+				// The type the requester picked, so the placeholder is filed as
+				// what is being asked for. SecretService validates it (unknown, or
+				// another user's private type, is refused) and applies the team
+				// folder rule to it, exactly as for a secret created directly.
+				'typeId' => $typeId,
 				// Keyless by design: the recipient supplies the value and the
 				// server never holds a plaintext one (ADR-003). Permitted only
 				// because a pending request will target this Secret.

@@ -1630,6 +1630,69 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFreshRequestCreatesItsOwnPlaceholder()
 
 	/**
+	 * A FRESH request files its placeholder as the type the requester picked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestFilesThePlaceholderAsTheChosenType(): void {
+		$shell = new Secret();
+		$shell->setId('sec-placeholder');
+		$shell->setEncryptionSuiteId('suite-9');
+
+		$this->secretService->expects($this->once())
+			->method('create')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => $data['typeId'] === 'type-certificate'
+				),
+				'alice',
+				true
+			)
+			->willReturn($shell);
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$this->service->createForUserVault(
+			userId: 'alice',
+			requestedFields: ['key'],
+			name: 'Supplier TLS certificate',
+			typeId: 'type-certificate',
+		);
+	}//end testFreshRequestFilesThePlaceholderAsTheChosenType()
+
+	/**
+	 * Without a type the placeholder keeps SecretService's default.
+	 *
+	 * Null is passed on rather than replaced here, so the default lives in one
+	 * place: SecretTypeService::resolveTypeForSecret().
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestWithoutATypeLeavesTheDefault(): void {
+		$shell = new Secret();
+		$shell->setId('sec-placeholder');
+		$shell->setEncryptionSuiteId('suite-9');
+
+		$this->secretService->expects($this->once())
+			->method('create')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => array_key_exists('typeId', $data) === true
+						&& $data['typeId'] === null
+				),
+				'alice',
+				true
+			)
+			->willReturn($shell);
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'Anything');
+	}//end testFreshRequestWithoutATypeLeavesTheDefault()
+
+	/**
 	 * A failed request creation leaves no orphan placeholder behind.
 	 *
 	 * @return void
