@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Payment cards are recognised by a brand table of 18 brands, including JCB, Diners Club, UnionPay, Mir, Elo, RuPay, Dankort and Bancontact, and the narrowest matching range decides. The detail view shows the brand next to the number and groups the number as the brand prints it, so an American Express card reads `3782 822463 10005`. The create and edit dialogs hint, without blocking Save, at a number length or security code length the brand does not use. Some saved cards show a different brand than before: 5019 and 4571 are Dankort (were Maestro and Visa), 6703 Bancontact (was Maestro), 2200–2204 Mir (was Mastercard), and Elo, Verve, RuPay, Hiper and Hipercard ranges are no longer called Maestro, Visa or Discover. A number no range covers shows "Card", including 2205–2220, 2721–2799 and 6590–6599. (vault-card-brand-formats)
 - The Python client library `keepiq-sdk` is now version 1.0.0, and its client is built from one configuration object: `Client(ClientConfig(url, Credentials(application_id, private_key_pem, certificate_pem), timeout, clock))`. The old form with six arguments raises a `TypeError` that names the new one. Reads, writes, errors and what goes over the network stay the same. `sdk/python/CHANGELOG.md` shows how to move over.
 
 ### Fixed

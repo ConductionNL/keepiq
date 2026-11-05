@@ -41,6 +41,14 @@ precedence = "override"
 SPDX-FileCopyrightText = "2016 Electronic Frontier Foundation"
 SPDX-License-Identifier = "CC-BY-3.0-US"
 
+# The payment card brand table: our own, seeded with IIN ranges from
+# braintree/credit-card-type 10.3.1 (vault-card-brand-formats design D2, D7).
+[[annotations]]
+path = ["src/cardIdentity/card-brands.json", "browser-extension/src/vault/card-brands.json"]
+precedence = "override"
+SPDX-FileCopyrightText = ["2026 Conduction B.V. <info@conduction.nl>", "2009-2018 Braintree, a division of PayPal, Inc."]
+SPDX-License-Identifier = "EUPL-1.2 AND MIT"
+
 # The reference Argon2 C code (P-H-C/phc-winner-argon2, tag 20190702), linked
 # into the iOS build of the mobile core through cinterop (clients-mobile-apps
 # design D1). Unchanged upstream files; the authors offer CC0 or Apache 2.0.
