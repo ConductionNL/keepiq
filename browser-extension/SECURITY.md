@@ -52,6 +52,8 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 | The credential a passkey ceremony returns | The relay's and the page script's memory, then the page's | The call settling |
 | Which account's code is on the clipboard (`clipboardCode`), never the code | `storage.session`, like the private key | The clear, any other copy, that account's lock or logout, browser restart, extension reload |
 | How many logins match each tab, shown on the toolbar badge while unlocked | Never stored; the browser holds the painted badge per tab | Lock, timeout, logout, switching to an account that isn't unlocked, turning the counter off, the tab navigating, browser restart, extension reload |
+| Context menu titles: item names, which are stored in plaintext anyway, and fixed texts; never a username or other decrypted value | On Chrome the browser's extension state on disk, as for every extension with a service worker; on Firefox memory | The next menu rebuild |
+| The type the context menu's Add asked for | Background memory | The next popup reading it, 10 seconds, lock, account switch, an MV3 worker restart |
 | A submitted login waiting for Save or Update, password included | Background memory only, never storage | The answer, 5 minutes, tab close, leaving the site, lock, timeout, logout, account switch, an MV3 worker restart |
 
 - Nothing derived from the master password is written to disk, with one exception: the **"Never"** timeout, which keeps the private key in `storage.local` so it survives a restart. Settings warns about it when you pick it.
@@ -139,6 +141,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - **Assistive styling:** a zoom extension's `zoom` on `<html>` refuses every pick on both browsers.
 - **Trusted submissions:** a login is offered for saving only after a trusted submit with user activation, at most once per activation, since whether a bar appears tells the page whether that login is saved.
 - **The bar never gets the password,** which stays in background memory until you answer.
+- **The no-form notice** after a context menu fill gets only a code, which it words itself; it offers no action, so it has no visibility guard, and never takes focus.
 
 ## Saving
 

@@ -47,7 +47,7 @@ The product promise is "Fill in logins on any site, and save new ones as you go"
 
 - Match rule is global only. Keepiq stores one plaintext `url` per item and has no per-URI match type, so the "Default URI match detection" setting applies to every item and there is no per-item override.
 - "Last used" is local. Keepiq has no last-used field on a secret, so the extension records the last fill time per item id in `storage.local` and uses it for the shortcut, the page-load fill and the suggestion order. It does not roam between devices.
-- The context menu appears only on editable fields (Bitwarden shows it on every context). Copy and fill only make sense next to a field, and it keeps the menu out of the way elsewhere. Not forced by the API.
+- The context menu appeared only on editable fields; ext-context-menu shows it anywhere on the page, as Bitwarden does, and lists its own deviations.
 - Saving from the bar names the item after the page host and files it under the system `login` type, because Keepiq requires `key` and a `typeId` on create (ADR-003) and Bitwarden's bar has no type choice either.
 - Saving and updating from the bar require an unlocked vault. Encryption only needs the cached certificate, so it would work while locked, but Bitwarden requires unlock and the extension follows that.
 - The inline list has no button inside the field and one setting, not two; it opens on focus of an empty qualifying field and on a click in one.
