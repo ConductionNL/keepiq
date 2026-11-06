@@ -5,7 +5,7 @@
 import { i18n } from '#i18n'
 import { BAR_INSET_PX, BAR_RADIUS_PX, BAR_WIDTH_PX, barWidth, PAGE_NOTICE_CODES, type PageNoticeCode } from '@/src/messages'
 import { deepActiveElement } from './execute'
-import { createFrameHost, type FrameHost } from './frame-host'
+import { createFrameHost, type FrameHost, viewport } from './frame-host'
 
 export const NOTICE_MS = 8000
 /** Two lines of text at the bar's width, four on a narrower one; a longer text scrolls. */
@@ -38,12 +38,6 @@ interface Shown {
 export interface NoticeHost {
 	show(notice: unknown): void
 	hide(): void
-}
-
-function viewport(): { width: number; height: number } {
-	const root = document.documentElement
-	const standards = document.compatMode === 'CSS1Compat'
-	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
 }
 
 const covers = (place: Place, rect: DOMRect) =>

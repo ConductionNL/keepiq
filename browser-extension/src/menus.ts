@@ -181,6 +181,16 @@ async function generateAndCopy(accountId: string): Promise<void> {
 	await addHistory(accountId, { value: result.value, kind: 'password' }, epoch)
 }
 
+async function fillFromMenu(itemId: string, tabId: number, notice: PageNoticeCode): Promise<void> {
+	const result = await fill({ itemId, tabId, ask: 'page', code: true })
+	if (result.noFields) {
+		const message: BackgroundToContent = { kind: 'notice.show', notice }
+		// A tab without our content script (a PDF, a store page) gets no notice.
+		void browser.tabs.sendMessage(tabId, message, { frameId: 0 }).catch(() => {})
+	}
+	await rebuildMenus()
+}
+
 async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<void> {
 	await enforce()
 	const accountId = await activeUnlockedId()
@@ -192,15 +202,7 @@ async function act(menuId: string, tab: Browser.tabs.Tab | undefined): Promise<v
 	const action = menuId.slice(0, split)
 	const itemId = menuId.slice(split + 1)
 	const menu = FILLS.get(action)
-	if (menu) {
-		const result = await fill({ itemId, tabId: tab.id, ask: 'page', code: true })
-		if (result.noFields) {
-			const notice: BackgroundToContent = { kind: 'notice.show', notice: menu.notice }
-			// A tab without our content script (a PDF, a store page) gets no notice.
-			void browser.tabs.sendMessage(tab.id, notice, { frameId: 0 }).catch(() => {})
-		}
-		await rebuildMenus()
-	}
+	if (menu) await fillFromMenu(itemId, tab.id, menu.notice)
 	if (action === 'copy-user') await copy(accountId, itemId, 'login', tab.url)
 	if (action === 'copy-pass') await copy(accountId, itemId, 'key', tab.url)
 	if (action === 'copy-code') await copyCode(accountId, itemId, tab.url)

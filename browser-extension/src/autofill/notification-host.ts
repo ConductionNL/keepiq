@@ -9,7 +9,7 @@ import {
 	type BackgroundToContent, type ContentToBackground, type ContentToNotification, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement } from './execute'
-import { createFrameHost, type FrameHost } from './frame-host'
+import { createFrameHost, type FrameHost, viewport } from './frame-host'
 import type { BarPlace } from './notice-host'
 import { drawnUntouched, GUARD_MS, hits, modalOf } from './visibility'
 
@@ -61,12 +61,6 @@ export interface NotificationHost {
 const isPickInput = (input: unknown): input is PickInput => {
 	const value = input as Partial<PickInput> | null
 	return (value?.kind === 'pointer' || value?.kind === 'key') && [value.at, value.x, value.y].every((n) => typeof n === 'number' && Number.isFinite(n))
-}
-
-function viewport(): { width: number; height: number } {
-	const root = document.documentElement
-	const standards = document.compatMode === 'CSS1Compat'
-	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
 }
 
 function isOpenModal(element: Element): boolean {

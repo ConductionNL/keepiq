@@ -267,6 +267,7 @@ function Form({ mode, fixedType, item, initial, snapshot, onSaved, onCancel }: P
 	// Labelled as the type the form renders by, which after a rename the snapshot may hold under another id.
 	const rendered = draft.typeName === undefined ? undefined : snapshot.types.find((type) => type.id === values.typeId && type.name === draft.typeName) ?? snapshot.types.find((type) => type.name === draft.typeName)
 	const typeOptions = draft.typeName === undefined ? snapshot.types : snapshot.types.map((type) => (type.id === values.typeId ? { ...type, label: rendered?.label ?? draft.typeName! } : type))
+	const typeSelect = !fixedType && <TypeSelect types={typeOptions} value={values.typeId} onChange={(typeId) => update({ typeId })} disabled={mode === 'edit'} />
 	const secretLabel = draft.typeName === 'login' || draft.typeName === 'database' || !draft.typeName
 		? i18n.t('detail.password')
 		: rendered?.label ?? i18n.t('form.secret')
@@ -298,7 +299,7 @@ function Form({ mode, fixedType, item, initial, snapshot, onSaved, onCancel }: P
 				<OfflineNotice offline={shell.offline} onSync={shell.syncNow} />
 				<SaveFailureNotice failure={failure} editing={mode === 'edit'} actionFor={failureAction} webAppUrl={snapshot.webAppUrl} />
 				<FormSection title={i18n.t('form.itemDetails')}>
-					{!fixedType && <TypeSelect types={typeOptions} value={values.typeId} onChange={(typeId) => update({ typeId })} disabled={mode === 'edit'} />}
+					{typeSelect}
 					<TextField label={i18n.t('form.name')} value={values.name} onChange={(name) => update({ name })} error={error('name')} autoComplete="off" />
 					<div className="field">
 						<span className="field__label" aria-hidden="true">{i18n.t('form.folder')}</span>

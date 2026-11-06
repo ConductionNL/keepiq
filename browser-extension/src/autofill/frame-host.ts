@@ -18,6 +18,13 @@ export interface FrameHost {
 	remove(): void
 }
 
+/** The layout viewport, without scrollbars; quirks-mode pages report it on `window`. */
+export function viewport(): { width: number; height: number } {
+	const root = document.documentElement
+	const standards = document.compatMode === 'CSS1Compat'
+	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
+}
+
 /** `all: initial` first, so no page rule reaches a property this does not set. */
 export function importantStyle(properties: Readonly<Record<string, string>>): string {
 	return ['all: initial !important;', ...Object.entries(properties).map(([name, value]) => `${name}: ${value} !important;`)].join(' ')

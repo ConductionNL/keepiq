@@ -9,7 +9,7 @@ import {
 } from '@/src/messages'
 import { deepActiveElement, type OpenList } from './execute'
 import { isQualifying, isWebauthnField } from './fields'
-import { createFrameHost, type FrameHost } from './frame-host'
+import { createFrameHost, type FrameHost, viewport } from './frame-host'
 import { composedAncestors, drawnUntouched, GUARD_MS, hits, modalOf, untouched } from './visibility'
 
 /** Also how long focus must have stayed before Down. */
@@ -77,12 +77,6 @@ export function sameOriginAncestors(win: Window = window): HTMLElement[] | null 
 		return null
 	}
 	return frames
-}
-
-function viewport(): { width: number; height: number } {
-	const root = document.documentElement
-	const standards = document.compatMode === 'CSS1Compat'
-	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
 }
 
 /**

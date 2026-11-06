@@ -4,7 +4,7 @@
  */
 import type { Browser } from 'wxt/browser'
 import type { OpenSecretRow } from '@/src/api/types'
-import { readSettings } from '@/src/accounts/settings'
+import { readSettings, type AccountSettings } from '@/src/accounts/settings'
 import { accountStatus, getAccount, getActiveAccountId } from '@/src/accounts/store'
 import { writeFromBackground } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
@@ -160,6 +160,40 @@ async function credentialOf(row: OpenSecretRow, key: CryptoKey): Promise<{ usern
 	}
 }
 
+const codeOf = async (seed: string | null) => seed === null ? null : (await currentCode(seed))?.digits ?? null
+
+interface LoginSend {
+	target: FillTarget
+	frames: FrameRecord[]
+	credential: { username: string | null; password: string }
+	code: string | null
+}
+
+/** One reply per frame, `null` for a frame that did not answer. */
+function sendLogin({ target, frames, credential, code }: LoginSend): Promise<unknown[]> {
+	return Promise.all(frames.map((frame) => {
+		const message: FillExecute = { kind: 'fill.execute', username: credential.username, password: credential.password, code, origin: new URL(frame.url).origin }
+		if (target.only) message.anchorKey = target.only.anchorKey
+		return browser.tabs.sendMessage(target.tabId, message, { frameId: frame.frameId }).catch(() => null)
+	}))
+}
+
+interface LoginFilled {
+	tabId: number
+	accountId: string
+	row: OpenSecretRow
+	seed: string | null
+	settings: AccountSettings
+}
+
+async function afterLoginFill({ tabId, accountId, row, seed, settings }: LoginFilled): Promise<void> {
+	rememberItem(tabId, row.id)
+	await recordLastUsed(accountId, row.id)
+	// Computed again, so a fill that crossed into the next period copies the code that works now.
+	const copied = settings.autoCopyTotp ? await codeOf(seed) : null
+	if (copied) await writeFromBackground(copied, settings.clearClipboardMs, { codeOf: accountId })
+}
+
 export async function fill(target: FillTarget): Promise<FillResult> {
 	const accountId = await activeUnlockedId()
 	const vault = accountId ? await readSnapshot(accountId) : undefined
@@ -174,23 +208,11 @@ export async function fill(target: FillTarget): Promise<FillResult> {
 	const key = await getKey(accountId)
 	const credential = key ? await credentialOf(row, key) : null
 	if (!key || !credential) return NONE
-	const { username, password } = credential
 	const seed = target.code ? await seedOf(row, key) : null
-	const code = seed === null ? null : (await currentCode(seed))?.digits ?? null
-	const replies = await Promise.all(frames.map((frame) => {
-		const message: FillExecute = { kind: 'fill.execute', username, password, code, origin: new URL(frame.url).origin }
-		if (target.only) message.anchorKey = target.only.anchorKey
-		return browser.tabs.sendMessage(target.tabId, message, { frameId: frame.frameId }).catch(() => null)
-	}))
-	const result = combine(replies)
+	const replies = await sendLogin({ target, frames, credential, code: await codeOf(seed) })
 	if (replies.every(answeredNone)) return NO_FIELDS
-	if (filledSomething(result)) {
-		rememberItem(target.tabId, row.id)
-		await recordLastUsed(accountId, row.id)
-		// Computed again, so a fill that crossed into the next period copies the code that works now.
-		const copied = seed !== null && settings.autoCopyTotp ? (await currentCode(seed))?.digits : undefined
-		if (copied) await writeFromBackground(copied, settings.clearClipboardMs, { codeOf: accountId })
-	}
+	const result = combine(replies)
+	if (filledSomething(result)) await afterLoginFill({ tabId: target.tabId, accountId, row, seed, settings })
 	return result
 }
 
