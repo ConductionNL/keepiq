@@ -7,10 +7,10 @@ Exploration found about 150–200 user-facing strings: most in 23 popup componen
 **Goals:**
 - One catalog per language, typed keys, no hard-coded UI text.
 - Adding a language is adding one file.
-- English and Dutch from day one, with the same keys.
+- The EU's official languages, except Maltese, with the same keys.
 
 **Non-Goals:**
-- A language picker, more languages, a translation platform.
+- A language picker, languages beyond the EU's, a translation platform.
 
 ## Decisions
 
@@ -23,9 +23,13 @@ Exploration found about 150–200 user-facing strings: most in 23 popup componen
 - **Field actions keep their capitals where the label starts the sentence.** "Show {field}" lower-cases "Password"; "{field} tonen" keeps "Wachtwoord". `fieldAction()` decides from the template.
 - **Codes, not text, from the background.** `Result` carries only a code, and the notice is a `NoticeCode`; the popup owns all wording. `Failure.message` stays for logs only. The server's own error messages are never shown, because they are not in the browser's language.
 - **Blocked reasons are stored as codes.** `blockedReason` holds `suite_missing`, `suite_revoked`, `suite_compromised` or `migration_failed`, also for rows the fallback list sends already blocked with English text. A row cached by an older version holds English text; the popup shows the generic blocked text for any unknown value until the next sync rewrites the row.
-- **Formatting follows the catalog, not the browser.** Each catalog names its own language (`language: nl`); dates, relative times, numbers and `<html lang>` use it, so a French browser gets English dates beside English text. Sorting keeps `Intl.Collator(undefined)`.
-- **Plurals use the module's `0` / `1` / `n` forms.** These are enough for English and Dutch. Languages with "few" or "many" forms (Polish, Russian, Czech) need a small `Intl.PluralRules` wrapper when they are added; until then, prefer wording that needs no plural.
+- **Formatting follows the catalog, not the browser.** Each catalog names its own language (`language: nl`); dates, relative times, numbers and `<html lang>` use it, so a Japanese browser gets English dates beside English text. Sorting keeps `Intl.Collator(undefined)`.
+- **`pt` is European Portuguese.** Chrome falls back to `pt` from both `pt_BR` and `pt_PT`, so one catalog serves both. Its `language` is `pt-PT`, because `Intl`'s bare `pt` formats as Brazilian.
+- **Plurals use the module's `0` / `1` / `n` forms, no `Intl.PluralRules` wrapper.** Languages with "few" or "many" forms (Polish, Czech, Lithuanian, Irish and others) word `n:` so it reads right for every count: "Elementy: $1", "$1 min".
 - **Dutch follows the mobile app.** It uses je, kluis, hoofdwachtwoord, app-wachtwoord and webapp, like `../mobile`'s `values-nl/strings.xml`. The web app's own Dutch mixes "masterwachtwoord" and "hoofdwachtwoord", and u and je.
+- **Other languages follow Nextcloud's own translation** for its terms (app password, settings), and each catalog's first line records its terms and register.
+- **"Send" is translated in every language**, with the web app's word where it has one (Sendung, forsendelse, försändelse).
+- **The manifest description stays within 132 characters**, Chrome's limit, in every catalog; a test checks it.
 - **Lint keeps it that way.** `no-restricted-syntax` fails on letters in JSX text and on literal `label`, `title`, `aria-label`, `placeholder` and similar props in popup components.
 - **Tests render in English.** The vitest setup serves `browser.i18n` from the YAML catalogs (`src/testing/i18n.ts`), so existing assertions on English text stay; `setLocale('nl')` switches a test to Dutch.
 
@@ -33,11 +37,8 @@ Exploration found about 150–200 user-facing strings: most in 23 popup componen
 
 - **No per-extension language.** Users who want Keepiq in another language than their browser can't have it. Bitwarden has the same limit.
 - **Old cached reasons.** Until the first sync after an update, a blocked row shows the generic text instead of its reason.
-- **Dutch quality.** Machine-like Dutch undermines trust in a security product. A native speaker reviews the catalog before release.
+- **Translation quality.** Apart from Dutch, the catalogs are machine translations without a native review, and a clumsy sentence can cost a security product trust. Users report mistakes as issues, and a fix is a change to one catalog.
 
 ## Adding a language
 
-1. Copy `locales/en.yml` to `locales/<lang>.yml`, translate every value, and set `language` to the language's tag.
-2. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
-3. Check the plural forms the language needs.
-4. Run `npm test`; the parity test lists missing or extra keys and placeholders.
+See the [README](../../../README.md#adding-a-language).

@@ -157,10 +157,7 @@ class TeamFolderMemberController extends OCSController {
 				)
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(
@@ -223,6 +220,7 @@ class TeamFolderMemberController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.1
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
 	#[NoAdminRequired]
 	public function approveJoin(string $id, string $newMemberId): JSONResponse {
@@ -238,10 +236,7 @@ class TeamFolderMemberController extends OCSController {
 				userId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(data: $payload);

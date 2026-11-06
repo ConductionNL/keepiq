@@ -1836,7 +1836,8 @@
         "This image is too large. Choose an image under 10 MB.": "Tento obrázok je príliš veľký. Vyberte obrázok menší ako 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto nie je kľúč autentifikátora. Vložte odkaz otpauth://totp/ alebo tajomstvo vo formáte base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje kľúč autentifikátora. Použite QR kód, ktorý web zobrazí pri nastavovaní dvojfázového prihlásenia.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajomstvo čaká na kontrolu svojich zdieľaní, ktorá ešte neskončila. Nič sa neuložilo; skúste to neskôr alebo požiadajte správcu, aby overil, že bežia úlohy na pozadí."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajomstvo čaká na kontrolu svojich zdieľaní, ktorá ešte neskončila. Nič sa neuložilo; skúste to neskôr alebo požiadajte správcu, aby overil, že bežia úlohy na pozadí.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník."
     },
     "plurals": null
 }

@@ -30,8 +30,8 @@ npm run test:safari-smoke # macOS only: scripts/safari-smoke.ts installs the bui
 Every module and popup component gets a `*.test.ts(x)` next to it. Tests run on WXT's
 in-memory `browser`; crypto tests use the web app's vectors in `../tests/vectors/crypto/`.
 
-All user-facing text goes through `i18n.t()` with its key in **both** `locales/en.yml`
-and `locales/nl.yml`; the background sends codes, never text. See
+All user-facing text goes through `i18n.t()` with its key in **every** catalog in
+`locales/`; the background sends codes, never text. See
 [ARCHITECTURE.md § Translations](ARCHITECTURE.md#translations).
 
 `test-site/` holds one mock page per fill and capture case in the `ext-autofill`

@@ -1810,7 +1810,8 @@
         "This image is too large. Choose an image under 10 MB.": "Ez a kép túl nagy. Válasszon 10 MB-nál kisebb képet.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ez nem hitelesítőkulcs. Illesszen be egy otpauth://totp/ hivatkozást vagy a base32 titkot.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ez a QR-kód nem tartalmaz hitelesítőkulcsot. Használja azt a QR-kódot, amelyet a webhely a kétlépcsős bejelentkezés beállításakor megjelenít.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ez a titok a megosztásainak ellenőrzésére vár, amely még nem fejeződött be. Semmi sem lett mentve; próbálja újra később, vagy kérje meg a rendszergazdát, hogy ellenőrizze, futnak-e a háttérfeladatok."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ez a titok a megosztásainak ellenőrzésére vár, amely még nem fejeződött be. Semmi sem lett mentve; próbálja újra később, vagy kérje meg a rendszergazdát, hogy ellenőrizze, futnak-e a háttérfeladatok.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Csak a tulajdonos módosíthat kezelőt, vagy olyan tagságot, amely kezelőre is kiterjed."
     },
     "plurals": null
 }

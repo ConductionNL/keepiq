@@ -1,0 +1,782 @@
+# Terms and tone follow Nextcloud's Estonian translation: informal sina, salasõna, hoidla, peasalasõna, rakenduse salasõna, pääsuvõti, kasutajakonto, kirje, peakasutaja, veebirakendus.
+language: et
+extensionDescription: Keepiq sinu brauserile. Täida kasutajakontod, pääsuvõtmed ja ühekordsed koodid oma Nextcloudi hoidlast, otspunktkrüpteeritult.
+commandAutofillLogin: Täida viimati kasutatud kasutajakonto
+commandFocusNotificationBar: Mine Keepiqi salvestusribale
+
+errors:
+  insecureUrl: Kasuta selle serveri jaoks https-i
+  invalidUrl: Sisesta kehtiv serveri URL
+  permissionDenied: Keepiq vajab luba serveriga {host} ühendumiseks
+  unreachable: Serveriga {host} ei õnnestunud ühendust saada
+  notNextcloud: "{host} ei paista olevat Nextcloudi server"
+  serverError: "{host} pole praegu saadaval, proovi hiljem uuesti"
+  unauthorized: Vale kasutajanimi või rakenduse salasõna
+  keepiqMissing: Serverisse {host} pole Keepiqi paigaldatud
+  keepiqOutdated: Keepiq serveris {host} on selle laienduse jaoks liiga vana, vaja on versiooni {version} või uuemat. Palu peakasutajal Keepiq uuendada.
+  noActiveSuite: Ava korra Keepiqi veebirakendus ja määra peasalasõna, seejärel proovi uuesti
+  unlockBlocked: Sinu organisatsioon nõuab kaheastmelist autentimist. Seadista teine samm Nextcloudi seadetes jaotises Turvalisus ja proovi siis uuesti
+  duplicate: See konto on juba lisatud
+  limitReached: Kontode piirarv ({count}) on täis
+  invalidMasterPassword: Vale peasalasõna
+  keyUnreadable: Sinu hoidla võtit Keepiqis ei õnnestunud lugeda, seega ei saa see brauser hoidlat lahti lukustada. Teavita Keepiqi peakasutajat.
+  offlineNoCache: Oled võrguühenduseta ja seda hoidlat pole veel sünkroonitud
+  sessionRevoked: Seanss on tühistatud, logi uuesti sisse
+  writeLocked: Sinu hoidlat ei saa praegu muuta, proovi hiljem uuesti
+  notResponding: Keepiq ei vasta. Laadi laiendus uuesti ja ava see hüpikaken uuesti.
+  invalidPin:
+    1: Vale PIN-kood, jäänud on 1 katse
+    n: Vale PIN-kood, jäänud on $1 katset
+  wrongPin: Vale PIN-kood
+  pinForgotten: PIN-kood unustati liiga paljude katsete järel
+  pinKeyChanged: Sinu hoidla võti muutus. Lukusta lahti peasalasõnaga.
+  pinTooShort: Kasuta vähemalt {count} märki
+  unknown: Midagi läks valesti
+
+notices:
+  keyChanged: Sinu hoidla võti muutus Keepiqis. Lukusta lahti oma praeguse peasalasõnaga.
+
+common:
+  accountOnHost: "{name} serveris {host}"
+  loading: Laadimine…
+  back: Tagasi
+  cancel: Loobu
+  logOut: Logi välja
+  appPassword: Rakenduse salasõna
+  addAccount: Lisa konto
+  openWebApp: Ava Keepiqi veebirakendus
+  justNow: just praegu
+
+titles:
+  accounts: Kontod
+  logInAgain: Logi uuesti sisse
+  unlock: Lukusta lahti
+  viewItem: Vaata kirjet
+  newItem: Uus kirje
+  newLogin: Uus kasutajakonto
+  newCard: Uus kaart
+  newIdentity: Uus identiteet
+  editItem: Muuda kirjet
+  newSend: Uus saadetis
+  sendCreated: Saadetis loodud
+
+tabs:
+  label: Peamenüü
+  vault: Hoidla
+  generator: Generaator
+  send: Saada
+  settings: Seaded
+
+header:
+  popout: Ava eraldi aknas
+  accounts: Kontod, sisse logitud kasutajana {name}
+  new: Uus
+
+unlock:
+  masterPassword: Peasalasõna
+  submit: Lukusta lahti
+  pin: PIN-kood
+  useMasterPassword: Kasuta peasalasõna
+
+logInAgain:
+  submit: Logi sisse
+
+addAccount:
+  serverUrl: Serveri URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Kasutajanimi
+  hint: Loo see Nextcloudi seadetes jaotises Turvalisus. Ära kunagi sisesta siia oma Nextcloudi sisselogimise salasõna.
+  hintWithLink: "Loo see Nextcloudi seadetes jaotises Turvalisus: {link}. Ära kunagi sisesta siia oma Nextcloudi sisselogimise salasõna."
+  securityLink: ava turvaseaded
+
+accounts:
+  active: (aktiivne)
+  unlocked: Lahti lukustatud
+  locked: Lukus
+  loggedOut: Välja logitud
+  lock: Lukusta {account}
+  logOut: Logi välja kontolt {account}
+  lockAll: Lukusta kõik
+  logOutAll: Logi kõigist välja
+  logOutAllQuestion: Kas logida välja kõigist kontodest?
+  logOutAllDetail: Kõik kontod eemaldatakse sellest brauserist. Vajad uuesti iga rakenduse salasõna.
+  logOutQuestion: Kas logida välja kontolt {account}?
+  logOutDetail: Konto eemaldatakse sellest brauserist. Selle uuesti lisamiseks vajad rakenduse salasõna.
+
+vault:
+  loadFailed: Hoidla laadimine ebaõnnestus
+  tryAgain: Proovi uuesti
+  syncing: Hoidla sünkroonimine
+  empty: Hoidlas pole kirjeid
+  noMatch: Sobivaid kirjeid pole
+  searchCovers: Otsing hõlmab nimesid ja veebisaite.
+  clearFilters: Tühjenda filtrid
+  items: Kirjed
+  tooMany: Näidatakse esimest {count}, täpsusta otsingut
+  offline: Võrguühenduseta. Viimati sünkroonitud {time}
+  syncNow: Sünkrooni kohe
+  busy: Server on hõivatud, proovitakse hiljem uuesti
+  allBlocked: Kõik kirjed on blokeeritud.
+  suggestions: Automaatse täitmise soovitused
+  noSuggestions: Saidi {host} jaoks pole kirjeid
+  autofillUnavailable: Automaatne täitmine pole sellel lehel saadaval
+  fillFailed: Sellel lehel ei õnnestu automaatselt täita. Kopeeri ja kleebi andmed ise.
+  openFailed: Veebisaidi avamine ebaõnnestus
+  popoutFailed: Uue akna avamine ebaõnnestus
+
+filters:
+  search: Otsi
+  searchLabel: Otsi hoidlast
+  clearSearch: Tühjenda otsing
+  folder: Kaust
+  allItems: Kõik kirjed
+  noFolder: Kaustata
+  type: Tüüp
+  all: Kõik
+  more: Rohkem
+  moreTypes: Rohkem tüüpe
+  login: Kasutajakonto
+  card: Kaart
+  identity: Identiteet
+  note: Märkus
+  totp: TOTP
+  passkey: Pääsuvõti
+
+item:
+  blocked: Blokeeritud
+  launch: Ava {name}
+  fill: Täida
+  fillName: Täida {name}
+  insecureTitle: Kas soovid selle kasutajakonto ikkagi täita?
+  insecureWarning: "Hoiatus: see on turvamata HTTP-leht ja kõiki sinu saadetud andmeid võivad teised näha ja muuta. See kasutajakonto salvestati algselt turvalisel (HTTPS) lehel."
+  cardInsecureTitle: Kas täita see kaart turvamata saidil?
+  cardInsecureWarning: See sait pole turvaline. Igaüks võrgus võib täidetud kaardiandmeid lugeda.
+  crossSiteTitle: Kas täita ka saitidel {hosts}?
+  crossSiteWarning: Osa sellest vormist pärineb saitidelt {hosts}, mitte saidilt {host}. Keepiq täidab selle seal ainult sinu nõusolekul.
+  onlyHost: Ainult {host}
+  copyMenu: Kopeeri, {name}
+  moreMenu: Rohkem, {name}
+  copyUsername: Kopeeri kasutajanimi
+  copyPassword: Kopeeri salasõna
+  copyCode: Kopeeri kinnituskood
+  view: Vaata
+  edit: Muuda
+  clone: Klooni
+  move: Teisalda kausta
+  delete: Kustuta
+  send: Saada
+  cloneName: "{name} - kloon"
+  passkeyNoClone: Pääsuvõtmeid ei saa kloonida
+  useOnly: Jagatud sinuga ainult sisselogimiseks
+  readOnly: Jagatud teisest organisatsioonist, seega saab seda ainult teisaldada
+  viewOnly: Jagatud sinuga ainult vaatamiseks. Muutmiseks küsi omanikult muutmisõigust.
+  expiringNoClone: Sinu juurdepääs lõpeb {date}, seega ei saa seda kloonida
+  expiringNoSend: Sinu juurdepääs lõpeb {date}, seega ei saa seda saata
+  saved: Kirje salvestatud
+  deleted: Kirje teisaldatud prügikasti
+  moved: Teisaldatud kausta {folder}
+  deleteTitle: Kustuta kirje
+  deleteConfirm: Kas teisaldada {name} prügikasti? Selle jagamine lõpeb, ka siis, kui see Keepiqi veebirakenduses prügikastist taastatakse.
+  gone: Seda kirjet pole enam olemas
+
+form:
+  itemDetails: Kirje andmed
+  type: Tüüp
+  name: Nimi
+  cardNumberLength: "{brand} ei väljasta sellise pikkusega kaardinumbreid. Saad siiski salvestada."
+  cardNumberLengthUnknown: Kaardinumbrites on 12 kuni 19 numbrit. Saad siiski salvestada.
+  cardNumberChecksum: See number ei läbi kaardi kontrollsumma kontrolli. Kontrolli seda; saad siiski salvestada.
+  cardCodeLength: "{brand}-kaartidel on {size}-kohaline {name}. Saad siiski salvestada."
+  folder: Kaust
+  chooseFolder: Vali kaust, praegu {folder}
+  website: Veebisaidi URL
+  autofillOptions: Automaatse täitmise valikud
+  additionalOptions: Lisavalikud
+  authenticator: Autentija
+  note: Märkus
+  secret: Saladus
+  advanced: Täpsemad
+  algorithm: Algoritm
+  digits: Numbrikohad
+  period: Periood sekundites
+  addField: Lisa väli
+  fieldName: Välja nimi
+  fieldValue: Väärtus
+  removeField: Eemalda {name}
+  removeUnnamed: Eemalda väli
+  save: Salvesta
+  passkeyReadOnly: Pääsuvõtme andmeid saab muuta ainult Keepiqi veebirakenduses
+  offline: Oled võrguühenduseta. Muudatused vajavad ühendust Keepiqiga.
+  unsavedTitle: Salvestamata muudatused
+  unsaved: Sul on salvestamata muudatusi. Kas loobuda neist?
+  discard: Hülga
+  keepEditing: Jätka muutmist
+
+authKey:
+  label: Autentimisvõti
+  optionalLabel: Autentimisvõti (valikuline)
+  newLabel: Uus autentimisvõti
+  help: Kleebi otpauth://totp/ link või salajane võti või skanni lehel olev QR-kood.
+  scan: Skanni lehel olev QR-kood
+  read: Autentimisvõti loeti QR-koodist
+  noQr: Lehelt ei leitud QR-koodi. Keri see nähtavale ja proovi uuesti.
+  notTotp: See QR-kood ei sisalda autentimisvõtit. Kasuta QR-koodi, mida sait näitab kaheastmelise autentimise seadistamisel.
+  noPicture: Keepiq ei saa sellest lehest pilti teha. Kleebi võti selle asemel.
+  popout: QR-koodi skannimiseks ava Keepiq tööriistaribalt QR-koodiga lehel.
+  saved: Salvestatud
+  remove: Eemalda autentimisvõti
+  replaceHelp: Kleebi või skanni uus võti või jäta see tühjaks, et salvestatud võti eemaldada.
+  keep: Säilita salvestatud võti
+  removedOnSave: Autentimisvõti eemaldatakse salvestamisel.
+  notCloned: Autentimisvõtit ei kloonita.
+
+fieldErrors:
+  required: Nimi on kohustuslik
+  tooLong: Kuni {max} märki
+  tooLongBytes: Liiga pikk (kuni {max} baiti)
+  reserved: See nimi on reserveeritud
+  duplicate: Selle nimega väli on juba olemas
+  invalidTotp: Vigane autentimissaladus
+  slash: Kausta nimi ei tohi sisaldada kaldkriipse
+
+writeErrors:
+  writeLocked: Hoidla on võtme migreerimise tõttu ajutiselt lukus, proovi hiljem uuesti
+  forbidden: Keepiq ei luba seda muudatust. Keepiqi veebirakendus näitab põhjust.
+  policy: Sinu organisatsiooni reeglid ei luba seda muudatust
+  accountChanged: Vahetasid vahepeal kontot, seega midagi ei salvestatud. Salvestamiseks vaheta tagasi.
+  accountChangedDelete: Vahetasid vahepeal kontot, seega midagi ei kustutatud. Kustutamiseks vaheta tagasi.
+  keepClash: Tase kõrgemal on juba kaust nimega {name}. Vali selle jaoks Teisalda kirjed ülemkausta või Kustuta või nimeta üks neist enne ümber.
+  keepClashAfter: Säilitamiseks valitud kaustal on sama nimi kui tase kõrgemal oleval kaustal, seega midagi ei kustutatud. Kontrolli valikuid uuesti.
+  invalid: Keepiq lükkas selle muudatuse tagasi
+  stale: Seda kirjet muudeti mujal. Mine tagasi ja muuda seda uuesti, et näha uusimat versiooni.
+  itemGone: Seda kirjet pole enam olemas
+  folderGone: Seda kausta pole enam olemas
+  duplicateFolder: Selle nimega kaust on siin juba olemas
+  folderChanged: See kaust muutus. Kontrolli valikuid uuesti.
+  offline: Serveriga ei õnnestunud ühendust saada
+  serverError: Keepiq pole praegu saadaval, proovi hiljem uuesti
+  unreadable: Seda kirjet ei õnnestunud lugeda, seega ei saa seda siin muuta
+  restricted: See kirje on sinuga jagatud piirangutega, seega ei saa seda siin muuta ega kopeerida
+  unmatched: Keepiq saatis sellest kirjest versiooni, mida sinu hoidlas pole, seega seda ei avatud.
+  keyMismatch: Keepiq saatis krüpteerimisvõtme, mis ei sobi sinu hoidlaga, seega midagi ei salvestatud. Teavita Keepiqi peakasutajat.
+  staleSource: Selle jagatud kirje originaali muudeti pärast seda, kui selle avasid. Midagi ei salvestatud; ava see uuesti ja tee muudatus uuesti.
+  incomplete: Isikud, kellega see kirje on jagatud, muutusid salvestamise ajal pidevalt. Midagi ei salvestatud; proovi uuesti.
+  badCertificate: Keepiq saatis krüpteerimisvõtme isiku jaoks, kellega see kirje on jagatud, kuid see brauser ei saanud seda lugeda. Midagi ei salvestatud.
+  unverified: See kirje on jagatud partnerorganisatsioonidega ja see brauser ei saa kinnitada, et nad saavad selle täpselt sellisena, nagu sina seda nägid. Midagi ei salvestatud; tee see muudatus Keepiqi veebirakenduses.
+  partnerUnreachable: "Midagi ei salvestatud: partnerorganisatsioon, kellega see kirje on jagatud, pole kättesaadav ({cloudIds}). Proovi hiljem uuesti või salvesta ilma nendeta, mis peatab selle kirje jagamise nendega, kuni jagad seda nendega uuesti."
+  partnerUpgradeRequired: "Midagi ei salvestatud: saajate {cloudIds} Keepiq on autentimisvõtme vastuvõtmiseks liiga vana. Eemalda võti või palu neil Keepiq uuendada."
+  partnerUpgradeRequiredUnnamed: "Midagi ei salvestatud: partnerorganisatsiooni, kellega see kirje on jagatud, Keepiq on autentimisvõtme vastuvõtmiseks liiga vana. Eemalda võti või palu neil Keepiq uuendada."
+  partnerUpgradeVersion: Nad vajavad Keepiqi versiooni {version} või uuemat.
+  partnerLookupLimit: Liiga palju partnerite päringuid. Midagi ei salvestatud; proovi minuti pärast uuesti.
+  federationUnavailable: Sinu Keepiqi server ei saa partnerorganisatsioonidega jagada, seega ei saa seda kirjet siin salvestada. Midagi ei salvestatud; pöördu peakasutaja poole.
+  keepiqOutdated: Sinu Keepiqi server on selle muudatuse salvestamiseks liiga vana. Midagi ei salvestatud; palu peakasutajal uuendada Keepiq versioonile {version} või uuemale.
+  partnerClock: Partnerorganisatsiooni, kellega see kirje on jagatud, sertifikaat pole selle arvuti kella järgi kehtiv. Midagi ei salvestatud; kontrolli selle arvuti kuupäeva ja kellaaega või tee see muudatus Keepiqi veebirakenduses.
+  shareScanPending: See kirje ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovi hiljem uuesti.
+  shareScanPendingOpen: See kirje ootab oma jagamiste kontrolli ja seda ei saa veel muuta. Proovi hiljem uuesti.
+  shareScanPendingDelete: See kirje ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei kustutatud; proovi hiljem uuesti.
+  sendInvalid: Keepiq ei aktsepteerinud seda saadetist. Midagi ei saadetud; kontrolli välju ja proovi uuesti.
+  sendOffline: Serveriga ei õnnestunud ühendust saada, midagi ei saadetud
+  argon2Unavailable: Salasõnaga kaitsmine pole selles brauseris saadaval
+
+shareSave:
+  saveWithout: Salvesta ilma nendeta
+  ownerOnly: Salvestatud. Partnerorganisatsioonide saajad saavad selle muudatuse, kui omanik kirje järgmine kord salvestab.
+  suspended: Jagamine saajatega {cloudIds} on peatatud, kuna nende sertifikaati ei õnnestunud kinnitada või nende organisatsioon ei aktsepteeri seda enam. Keepiqi veebirakendus näitab jagamist.
+  paused: Jagamine saajatega {cloudIds} on peatatud, kuni jagad seda kirjet nendega uuesti.
+
+folders:
+  add: Lisa kaust
+  newFolder: Uus kaust
+  rename: Nimeta ümber
+  renameTitle: Nimeta kaust ümber
+  delete: Kustuta
+  more: Rohkem, {name}
+  name: Kausta nimi
+  empty: Kaustu veel pole
+  notice: Kaustade nimed pole krüpteeritud
+  dismiss: Sulge
+  current: Praegune kaust
+  pickTitle: Vali kaust
+  moveTitle: Teisalda kausta
+  saved: Kaust salvestatud
+  deleted: Kaust kustutatud
+  deleteTitle: Kustuta kaust
+  deleteConfirm: Kas kustutada {name}? Seda ei saa tagasi võtta.
+  cascade:
+    1: Kas kustutada {name} ja selle 1 kirje või teisaldada kirje kausta {parent}?
+    n: Kas kustutada {name} ja selle $1 kirjet või teisaldada kirjed kausta {parent}?
+  countsAll: Arvesse lähevad ka arhiveeritud ja prügikastis olevad kirjed.
+  deleteItems: Kustuta ka kirjed
+  moveItems: Teisalda kirjed ülemkausta
+  items:
+    1: 1 kirje
+    n: $1 kirjet
+  subfolders:
+    1: 1 alamkaust
+    n: $1 alamkausta
+  directRow: Kirjed kaustas {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Kustuta
+  actionMove: Teisalda kirjed ülemkausta
+  actionKeep: Säilita
+  directMove: Teisalda ülemkausta
+
+clipboard:
+  copied: "{what} kopeeritud"
+  failed: Kopeerimine ebaõnnestus
+
+field:
+  show: Näita {field}
+  hide: Peida {field}
+  copy: Kopeeri {field}
+
+blocked:
+  generic: See kirje on blokeeritud.
+  suiteMissing: Selle krüpteerimisvõtit pole enam olemas.
+  suiteRevoked: Selle krüpteerimisvõti on tühistatud.
+  suiteCompromised: Krüpteeritud ohustatud võtmega, seega ei saa seda siin avada. Keepiqi veebirakendus näitab, kas seda saab taastada.
+  migrationFailed: Seda ei õnnestunud ohujärgse taastamise käigus sinu uuele võtmele üle viia. Salvestatud väärtus säilib, kuid seda ei saa avada.
+
+detail:
+  item: Kirje
+  decrypting: Dekrüpteerimine…
+  decryptFailed: Selle kirje dekrüpteerimine ebaõnnestus
+  unreadablePasskey: Seda pääsuvõtit ei õnnestunud lugeda
+  unreadableFields: Lisavälju ei õnnestunud lugeda
+  loginCredentials: Sisselogimisandmed
+  username: Kasutajanimi
+  password: Salasõna
+  authenticatorKey: Autentimisvõti
+  website: Veebisait
+  additionalFields: Lisaväljad
+  notes: Märkused
+  history: Kirje ajalugu
+  created: Loodud
+  updated: Uuendatud
+  expires: Aegub
+  cardDetails: Kaardi andmed
+  number: Number
+  numberWithBrand: Number · {brand}
+  cardNumber: Kaardi number
+  cardholder: Kaardi omanik
+  expiry: Kehtivus
+  cvv: CVV
+  pin: PIN-kood
+  identity: Identiteet
+  firstName: Eesnimi
+  lastName: Perekonnanimi
+  address: Aadress
+  phone: Telefon
+  email: E-post
+  bsn: BSN
+  passkey: Pääsuvõti
+  relyingParty: Sait või rakendus
+  passkeyUser: Kasutajanimi
+  passkeyOnLogin: Keepiq logib sisse kasutajakontodele salvestatud pääsuvõtmetega, mitte selle kirjega
+  passkeys: Pääsuvõtmed
+  passkeyCreated: Loodud {date}
+  useOnly: Omanik ei luba sul seda vaadata ega kopeerida.
+
+totp:
+  code: Kinnituskood
+  invalid: Vigane autentimisvõti
+  changesIn:
+    1: Muutub 1 sekundi pärast
+    n: Muutub $1 sekundi pärast
+
+settings:
+  accountSecurity: Konto turvalisus
+  autofill: Automaatne täitmine
+  notifications: Teavitused
+  vault: Hoidla
+  appearance: Välimus
+  about: Teave
+  folders: Kaustad
+  theme: Teema
+  themeSystem: Süsteemi vaikeväärtus
+  themeLight: Hele
+  themeDark: Tume
+  comingLater: Tuleb hiljem
+  setByOrganisation: Määrab sinu organisatsioon
+  turnedOffByOrganisation: Sinu organisatsioon on selle välja lülitanud
+  never: Mitte kunagi
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Lukusta lahti PIN-koodiga
+  pinTurnOn: Lülita sisse
+  masterPasswordRequired: Sisesta oma peasalasõna
+  pinAgain: Kinnita PIN-kood
+  pinMismatch: PIN-koodid ei kattu
+  pinAdvice: Ära kasuta uuesti oma telefoni või panga PIN-koodi.
+  pinAfterRestart: Pärast brauseri taaskäivitamist sisestad korra peasalasõna; seejärel töötab PIN-kood jälle.
+  biometrics: Lukusta lahti biomeetriaga
+  notAvailableYet: Pole veel saadaval
+  vaultTimeout: Hoidla ajalõpp
+  timeoutImmediately: Kohe
+  timeoutMinutes:
+    1: 1 minut
+    n: $1 minutit
+  timeoutHours:
+    1: 1 tund
+    n: $1 tundi
+  timeoutOnSystemLock: Süsteemi lukustamisel
+  timeoutOnSystemLockCapped: Süsteemi lukustamisel või pärast {duration} jõudeolekut (määrab sinu organisatsioon)
+  timeoutOnRestart: Brauseri taaskäivitamisel
+  timeoutCustom: Kohandatud
+  hours: Tunnid
+  minutes: Minutid
+  customAtLeastOne: Sisesta vähemalt üks minut
+  customWhole: Sisesta täistunnid ja -minutid
+  customAtMost: Sinu organisatsioon lubab kuni {duration}
+  neverTitle: Kas hoida hoidla lahti?
+  neverWarning: Sinu hoidla jääb lahti, kuni sa selle ise lukustad. Selle avamise võti kirjutatakse selle brauseriprofiili kettale, kust igaüks, kes saab profiili lugeda, saab ka võtit lugeda.
+  neverConfirm: Hoia lahti
+  timeoutAction: Ajalõpu toiming
+  actionLock: Lukusta
+  actionLogOutNote: Ajalõpul logitakse sind välja ja vajad uuesti rakenduse salasõna
+  lockNow: Lukusta kohe
+  changeMasterPassword: Muuda peasalasõna
+  autofillOnPageLoad: Automaatne täitmine lehe laadimisel
+  autofillOnPageLoadWarning: Ohustatud või ebausaldusväärsed veebisaidid võivad lehe laadimisel toimuvat automaatset täitmist ära kasutada
+  defaultAutofill: Kasutajakontode automaatse täitmise vaikeseade
+  defaultAutofillOnPageLoad: Täida lehe laadimisel, kui see on lubatud
+  uriMatch: URI vastavuse vaiketuvastus
+  uriBaseDomain: Põhidomeen
+  uriHost: Host
+  uriStartsWith: Algab
+  uriExact: Täpne
+  uriRegex: Regulaaravaldis
+  uriRegexNote: Regulaaravaldised on täpsem valik ja võivad vastavuse tuvastamise rikkuda
+  inlineSuggestions: Näita vormiväljadel täitmissoovitusi
+  inlineCards: Näita kaarte soovitustena
+  inlineIdentities: Näita identiteete soovitustena
+  inlineKindsOff: Lülita esmalt sisse Näita vormiväljadel täitmissoovitusi.
+  vaultCards: Näita hoidla vaates kaarte alati täitmissoovitustena
+  vaultIdentities: Näita hoidla vaates identiteete alati täitmissoovitustena
+  defaultPasswordManager: Tee Keepiqist oma vaikimisi salasõnahaldur
+  defaultPasswordManagerHint: Lülitab välja brauseri enda salasõnade salvestamise ja aadresside automaatse täitmise, et selle soovitused ei kataks Keepiqi omi.
+  defaultPasswordManagerManaged: Seda brauseri seadet haldab sinu organisatsioon või mõni teine laiendus.
+  contextMenu: Luba kontekstimenüü valikud
+  shortcut: Automaatse täitmise kiirklahv
+  shortcutNotSet: Määramata
+  shortcutChange: Muuda
+  shortcutFirefox: Ava about:addons, vali hammasrattamenüü ja seejärel Halda laienduste kiirklahve
+  clearClipboard: Tühjenda lõikelaud
+  clipboardSeconds:
+    1: 1 sekund
+    n: $1 sekundit
+  autoCopyTotp: Kopeeri TOTP automaatselt
+  autoCopyTotpHint: Kui kasutajakontol on kinnituskood, kopeeritakse see kasutajakonto automaatsel täitmisel lõikelauale.
+  askToAdd: Paku kasutajakonto lisamist
+  askToUpdate: Paku olemasoleva kasutajakonto uuendamist
+  askPasskeys: Paku pääsuvõtmete salvestamist ja kasutamist
+  excludedDomains: Välistatud domeenid
+  addCurrentSite: Lisa praegune sait
+  domain: Domeen
+  addDomain: Lisa
+  domainEmpty: Sisesta domeen
+  domainUnreadable: Sisesta domeen, näiteks example.org
+  domainDuplicate: Juba välistatud
+  removeDomain: Eemalda {domain}
+  webTitle: Keepiq veebis
+  webText: Keepiqi enda teavitusi, importi ja eksporti ning sinu peasalasõna hallatakse Nextcloudi Keepiqis jaotises Isiklikud seaded.
+  openKeepiq: Ava Keepiq
+  lastSync: "Viimane sünkroonimine: {time}"
+  lastSyncNever: "Viimane sünkroonimine: mitte kunagi"
+  syncOffline: Sünkroonimine ebaõnnestus, oled võrguühenduseta
+  syncFailed: Sünkroonimine ebaõnnestus, proovi hiljem uuesti
+  importItems: Impordi kirjed
+  exportVault: Ekspordi hoidla
+  defaultItemType: Vaikimisi kirjetüüp selles laienduses
+  compactMode: Kompaktne vaade
+  showAnimations: Näita animatsioone
+  quickCopy: Näita hoidlas kiirkopeerimise toiminguid
+  showBadgeCounter: Näita laienduse ikoonil kasutajakontode soovituste arvu
+  language: Keel
+  languageFollows: Järgib sinu brauserit
+  version: Versioon {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiqi versioon teadmata
+  help: Abi
+  reportBug: Teata veast
+  contactSupport: Võta ühendust toega
+  privacyPolicy: Privaatsuspoliitika
+  webApp: Keepiqi veebirakendus
+  rate: Hinda laiendust
+
+generator:
+  kinds: Mida genereerida
+  password: Salasõna
+  passphrase: Salafraas
+  username: Kasutajanimi
+  length: Pikkus
+  lengthValue: Pikkus märkides
+  uppercase: Suurtähed (A-Z)
+  lowercase: Väiketähed (a-z)
+  digits: Numbrid (0-9)
+  special: Erimärgid, näiteks !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Märgitüübid
+  lastClassOn: Vähemalt üks tüüp jääb sisse
+  minNumbers: Numbreid vähemalt
+  minSpecial: Erimärke vähemalt
+  avoidAmbiguous: Väldi sarnaseid märke
+  lockedByPolicy: Määrab sinu organisatsioon
+  passphraseOff: Sinu organisatsioon on selle välja lülitanud
+  words: Sõnade arv
+  separator: Sõnade eraldaja
+  capitalizeWords: Suured algustähed
+  capitalize: Suur algustäht
+  includeNumber: Lisa number
+  usernameType: Tüüp
+  typeWord: Juhuslik sõna
+  typePlus: Plussiga e-posti aadress
+  typeCatchall: Catch-all e-posti aadress
+  email: E-post
+  emailPlaceholder: nimi@example.com
+  domain: Domeen
+  domainPlaceholder: example.com
+  basedOn: Põhineb
+  random: Juhuslik
+  websiteName: Veebisaidi nimi
+  noWebsite: Veebisaiti ei tuvastatud
+  needsEmail: Sisesta e-posti aadress
+  needsDomain: Sisesta domeen
+  wordlistUnavailable: Sõnaloend pole saadaval
+  regenerate: Genereeri uuesti
+  usePassword: Kasuta seda salasõna
+  useUsername: Kasuta seda kasutajanime
+  history: Generaatori ajalugu
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Genereeritud väärtusi veel pole
+  clearHistory: Tühjenda
+  clearHistoryTitle: Kas tühjendada generaatori ajalugu?
+  clearHistoryText: See eemaldab kõik loendi väärtused sellest brauserist.
+  generatePasswordLink: Genereeri salasõna
+  generatePassword: Genereeri salasõna
+  generateUsername: Genereeri kasutajanimi
+
+send:
+  new: Uus saadetis
+  empty: Saadetisi veel pole
+  emptyText: Jaga teksti või sisselogimisandmeid lingiga, mis kustutab end ise.
+  loadFailed: Saadetiste laadimine ebaõnnestus
+  retry: Proovi uuesti
+  labelText: "Tekst, {time}"
+  labelCredential: "Sisselogimisandmed, {time}"
+  viewsLeft:
+    1: "Vaatamisi jäänud: {left}/1"
+    n: "Vaatamisi jäänud: {left}/$1"
+  expires: "Aegub {date}"
+  neverExpires: Ei aegu kunagi
+  expired: Aegunud
+  passwordBadge: Salasõna
+  link: Link
+  copyLink: Kopeeri link
+  copyLinkOf: "Kopeeri link, {name}"
+  linkGone: Link pole enam saadaval
+  remove: Eemalda
+  removeOf: "Eemalda, {name}"
+  removeTitle: Eemalda saadetis
+  removeConfirm: Kas eemaldada see saadetis? Kõik, kellel on link, kaotavad juurdepääsu.
+  removed: Saadetis eemaldatud
+  contentSection: Sisu
+  optionsSection: Valikud
+  type: Tüüp
+  text: Tekst
+  credential: Sisselogimisandmed
+  content: Jagatav tekst
+  maxViews: Vaatamisi kuni
+  maxViewsRange: "Vahemikus 1 kuni {max}"
+  expiry: Aegumine
+  expiry1h: 1 tund
+  expiry1d: 1 päev
+  expiry2d: 2 päeva
+  expiry3d: 3 päeva
+  expiry7d: 7 päeva
+  expiry30d: 30 päeva
+  expiryCustom: Kohandatud
+  customHours: Tunnid
+  customHoursMin: Vähemalt 1 tund
+  customHoursMax: Kuni 720 tundi (30 päeva)
+  accessPassword: Juurdepääsu salasõna
+  accessPasswordHint: Valikuline. Saaja vajab seda saadetise avamiseks.
+  create: Loo
+  protecting: Salasõnaga kaitsmine…
+  offline: Saadetised vajavad ühendust sinu Keepiqi serveriga
+  prefillFailed: Seda kasutajakontot ei õnnestunud lugeda
+  ready: Sinu saadetis on valmis
+  shownOnce:
+    1: Kopeeri see link kohe. Seda näidatakse ainult kuni selle akna sulgemiseni ja sisu hävib pärast 1 vaatamist.
+    n: Kopeeri see link kohe. Seda näidatakse ainult kuni selle akna sulgemiseni ja sisu hävib pärast $1 vaatamist.
+  passwordNote: Jaga juurdepääsu salasõna lingist eraldi. Pärast 5 valet katset saadetis kustutatakse.
+  done: Valmis
+
+pageFill:
+  insecure: "Hoiatus: see on turvamata HTTP-leht ja kõiki sinu saadetud andmeid võivad teised näha ja muuta. See kasutajakonto salvestati algselt turvalisel (HTTPS) lehel {host}.\n\nKas soovid selle kasutajakonto ikkagi täita?"
+  insecureNoHost: "Hoiatus: see on turvamata HTTP-leht ja kõiki sinu saadetud andmeid võivad teised näha ja muuta. See kasutajakonto salvestati algselt turvalisel (HTTPS) lehel.\n\nKas soovid selle kasutajakonto ikkagi täita?"
+  cardInsecure: "Kas täita see kaart turvamata saidil?\n\nSee sait pole turvaline. Igaüks võrgus võib täidetud kaardiandmeid lugeda."
+  crossSite: "Kas täita ka saitidel {hosts}?\n\nOsa sellest vormist pärineb saitidelt {hosts}, mitte saidilt {host}. Keepiq täidab selle seal ainult sinu nõusolekul."
+
+contextMenu:
+  root: Keepiq
+  autofill: Täida kasutajakonto
+  noMatches: Kasutajakontosid pole
+  noUsernames: Kasutajanimesid pole
+  noPasswords: Salasõnu pole
+  noCodes: Kinnituskoode pole
+  noIdentities: Identiteete pole
+  noCards: Kaarte pole
+  addLogin: Lisa kasutajakonto
+  addIdentity: Lisa identiteet
+  addCard: Lisa kaart
+  openKeepiq: Ava Keepiq
+  copyUsername: Kopeeri kasutajanimi
+  copyPassword: Kopeeri salasõna
+  copyCode: Kopeeri kinnituskood
+  autofillCard: Täida kaart
+  autofillIdentity: Täida identiteet
+  generatePassword: Genereeri ja kopeeri salasõna
+  unlock: Lukusta hoidla lahti
+
+pageNotice:
+  label: Keepiqi teade
+  noLoginForm: Keepiq ei leidnud sellelt lehelt täidetavat sisselogimisvormi.
+  noCardForm: Keepiq ei leidnud sellelt lehelt täidetavaid kaardivälju.
+  noIdentityForm: Keepiq ei leidnud sellelt lehelt täidetavaid aadressi- või isikuandmete välju.
+
+toolbar:
+  locked: "{name}: lukus"
+  loggedOut: "{name}: välja logitud"
+  count:
+    1: "{name}: 1 kasutajakonto selle saidi jaoks"
+    n: "{name}: $1 kasutajakontot selle saidi jaoks"
+
+inlineList:
+  frameTitle: Keepiqi kasutajakontod
+  label: Keepiqi kasutajakontod saidi {host} jaoks
+  row: "{name}, {username}"
+  noMatch: Saidi {host} jaoks pole kasutajakontosid
+  passkeyRow: "{name}, {username}, pääsuvõti"
+  passkeyRowNoUser: "{name}, pääsuvõti"
+  noMatchPasskeys: Saidi {host} jaoks pole kasutajakontosid ega pääsuvõtmeid
+  locked: Keepiq on lukus
+  unlock: Lukusta lahti
+  insecureQuestion: Kas täita sellel turvamata saidil?
+  insecureDetail: See sait pole turvaline. Igaüks võrgus võib täidetud andmeid lugeda.
+  fill: Täida
+  notVisible: Keepiq ei saa siin täita, sest see leht muudab oma kuvamise viisi. Kasuta tööriistaribal Keepiqi nuppu.
+  status:
+    count:
+      1: 1 Keepiqi kasutajakonto. Valimiseks vajuta allanoolt.
+      n: $1 Keepiqi kasutajakontot. Valimiseks vajuta allanoolt.
+    noMatch: Saidi {host} jaoks pole Keepiqi kasutajakontosid
+    countPasskeys:
+      1: 1 Keepiqi kasutajakonto või pääsuvõti. Valimiseks vajuta allanoolt.
+      n: $1 Keepiqi kasutajakontot ja pääsuvõtit. Valimiseks vajuta allanoolt.
+    noMatchPasskeys: Saidi {host} jaoks pole Keepiqi kasutajakontosid ega pääsuvõtmeid
+    locked: Keepiq on lukus. Lahti lukustamiseks vajuta allanoolt.
+  code:
+    frameTitle: Keepiqi kinnituskoodid
+    label: Keepiqi kinnituskoodid saidi {host} jaoks
+    noMatch: Saidi {host} jaoks pole kinnituskoode
+    locked: Kinnituskoodide nägemiseks lukusta Keepiq lahti
+    invalid: Vigane autentimissaladus
+    status:
+      count:
+        1: 1 Keepiqi kinnituskood. Valimiseks vajuta allanoolt.
+        n: $1 Keepiqi kinnituskoodi. Valimiseks vajuta allanoolt.
+      noMatch: Saidi {host} jaoks pole Keepiqi kinnituskoode
+  card:
+    frameTitle: Keepiqi kaardid
+    noMatch: Keepiqis pole kaarte
+    locked: Kaartide nägemiseks lukusta Keepiq lahti
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kaart, *{last4}"
+    row: "{name}, {brand}, lõpeb numbritega {last4}"
+    rowNoBrand: "{name}, kaart, lõpeb numbritega {last4}"
+    status:
+      count:
+        1: 1 Keepiqi kaart. Valimiseks vajuta allanoolt.
+        n: $1 Keepiqi kaarti. Valimiseks vajuta allanoolt.
+  identity:
+    frameTitle: Keepiqi identiteedid
+    noMatch: Keepiqis pole identiteete
+    locked: Identiteetide nägemiseks lukusta Keepiq lahti
+    status:
+      count:
+        1: 1 Keepiqi identiteet. Valimiseks vajuta allanoolt.
+        n: $1 Keepiqi identiteeti. Valimiseks vajuta allanoolt.
+
+notificationBar:
+  label: Keepiqi teavitus
+  saveQuestion: Kas salvestada saidi {host} kasutajakonto Keepiqisse?
+  updateQuestion: Kas uuendada kirje {name} salasõna?
+  updateQuestionUser: Kas uuendada kirje {name} ({username}) salasõna?
+  updateQuestionHost: Kas uuendada kirje {name} salasõna saidil {host}?
+  updateQuestionUserHost: Kas uuendada kirje {name} ({username}) salasõna saidil {host}?
+  folder: Kaust
+  noFolder: Kaustata
+  save: Salvesta
+  never: Sellel saidil mitte kunagi
+  update: Uuenda
+  close: Sulge
+  expand: Näita valikuid
+  shortcutHint: Vastamiseks vajuta {shortcut}.
+  saving: Salvestamine…
+  updating: Uuendamine…
+  saved: Kasutajakonto salvestatud
+  updated: Salasõna uuendatud
+  notVisible: Keepiq ei saa seda siin teha, sest see leht muudab oma kuvamise viisi. Sulge see ja lisa kasutajakonto tööriistariba Keepiqi nupust.
+  errors:
+    writeLocked: Hoidla on muudatuste jaoks ajutiselt lukus. Proovi hiljem uuesti.
+    unverified: Salasõna muutmiseks muuda seda kasutajakontot Keepiqi hüpikaknas või veebirakenduses.
+    viewOnly: See kasutajakonto on sinuga jagatud ainult vaatamiseks, seega ei saa selle salasõna siin uuendada.
+    loginGone: Seda kasutajakontot pole enam. Kas salvestada uuena?
+    locked: Keepiq on lukus. Lukusta see tööriistariba Keepiqi nupust lahti ja proovi uuesti.
+    notResponding: Keepiq ei vasta. Proovi uuesti.
+    accountChanged: Vahetasid kontot, seega midagi ei salvestatud.
+    keyMismatch: Keepiqi võti ei sobi sinu hoidlaga. Midagi ei salvestatud; teavita peakasutajat.
+    staleSource: Selle jagatud kasutajakonto originaal muutus. Midagi ei salvestatud; proovi uuesti.
+    incomplete: Isikud, kellega see kasutajakonto on jagatud, muutusid pidevalt. Midagi ei salvestatud; proovi uuesti.
+    badCertificate: Saaja krüpteerimisvõtit ei õnnestunud lugeda. Midagi ei salvestatud.
+    keepiqOutdated: Sinu Keepiqi server on liiga vana. Midagi ei salvestatud; küsi peakasutajalt Keepiq {version} või uuemat.
+    shareScanPending: See kasutajakonto ootab jagamiste kontrolli. Midagi ei salvestatud; proovi hiljem uuesti.
+
+passkey:
+  unlockGet: Lukusta Keepiq lahti, et kasutada saidi {rpId} pääsuvõtit
+  unlockCreate: Lukusta Keepiq lahti, et salvestada saidi {rpId} pääsuvõti
+  verifyTitle: Kinnita, et see oled sina
+  verifyPassword: Jätkamiseks sisesta oma peasalasõna.
+  verifyPin: Jätkamiseks sisesta oma PIN-kood.
+  confirm: Kinnita
+  signInTitle: Logi sisse pääsuvõtmega
+  signInText: Kasuta Keepiqi salvestatud pääsuvõtit saidi {rpId} jaoks
+  row: "{name}, {userName}"
+  noPasskey: Saidi {rpId} jaoks pole Keepiqi pääsuvõtit
+  saveTitle: Salvesta pääsuvõti
+  saveTo: Salvesta kasutajakontole
+  replaces: Asendab kasutaja {userName} pääsuvõtme
+  newLogin: Uus kasutajakonto
+  name: Nimi
+  folder: Kaust
+  noFolder: Kaustata
+  saveNew: Salvesta uue kasutajakontona
+  replaceQuestion: Kas asendada kasutaja {userName} pääsuvõti kirjes {name}?
+  replace: Asenda
+  alreadySavedTitle: Pääsuvõti on juba salvestatud
+  alreadySaved: Selle konto pääsuvõti on Keepiqis juba salvestatud
+  close: Sulge
+  retry: Proovi uuesti
+  fallback: Kasuta oma seadet või turvavõtit
+  stalePick: Seda pääsuvõtit pole enam sinu hoidlas. Vali mõni teine.
+  staleSave: Sellele kasutajakontole ei saa enam pääsuvõtit salvestada. Vali mõni teine või salvesta see uue kasutajakontona.
+  errors:
+    conflict: See kasutajakonto muutus salvestamise ajal. Midagi ei salvestatud; proovi uuesti.
+    partnerUpgradeRequired: "Midagi ei salvestatud: saajate {cloudIds} Keepiq on pääsuvõtmete salvestamiseks liiga vana. Palu neil Keepiq uuendada või salvesta pääsuvõti teisele kasutajakontole."
+    partnerUpgradeRequiredUnnamed: "Midagi ei salvestatud: partnerorganisatsiooni, kellega see kasutajakonto on jagatud, Keepiq on pääsuvõtmete salvestamiseks liiga vana. Palu neil Keepiq uuendada või salvesta pääsuvõti teisele kasutajakontole."
+    shareScanPending: See kasutajakonto ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovi hiljem uuesti.

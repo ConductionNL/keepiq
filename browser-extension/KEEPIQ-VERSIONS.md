@@ -58,7 +58,7 @@ Example: Keepiq 0.4.0 adds `PUT /api/v1/folders/{id}/share`, and the extension w
 
 4. **Tell the popup.** The popup never sees the version. Send it the answer:
    - for a button: a boolean in the reply the view already asks for (as `item.editable` answers `{ editable }`), or a new request in `PopupRequest` and `PopupReplies`;
-   - show the button as unavailable with the reason, as `itemActions` does, not hidden, with a text naming the version that adds it, in `en.yml` and `nl.yml`;
+   - show the button as unavailable with the reason, as `itemActions` does, not hidden, with a text naming the version that adds it, in every catalog in `locales/`;
    - a refusal arrives as `keepiq_outdated`, which `writeErrorText` already words.
 
 5. **Test both sides.** At least: the version that has it, the one before it, an `-unstable` build, `keepiqVersion` `undefined`, and the HTML 404. Fixture accounts carry `keepiqVersion: '0.3.12'`; set it per test where it matters.

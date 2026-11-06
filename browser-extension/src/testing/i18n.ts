@@ -4,7 +4,8 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 type Catalog = Record<string, { message: string }>
 
-export const LOCALES = ['en', 'nl'] as const
+// The EU's official languages, but Maltese, which neither Chrome nor Firefox offers as a UI language.
+export const LOCALES = ['en', 'bg', 'cs', 'da', 'de', 'el', 'es', 'et', 'fi', 'fr', 'ga', 'hr', 'hu', 'it', 'lt', 'lv', 'nl', 'pl', 'pt', 'ro', 'sk', 'sl', 'sv'] as const
 export type Locale = (typeof LOCALES)[number]
 
 export const catalogs = Object.fromEntries(await Promise.all(LOCALES.map(async (locale) => {

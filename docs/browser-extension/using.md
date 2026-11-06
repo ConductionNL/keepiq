@@ -306,7 +306,9 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
 
 ## Language
 
-The extension speaks your browser's language. It is available in English and Dutch; in any other language it uses English. To change it, change your browser's language. Safari follows the preferred languages of macOS, under **System Settings**, **General**, **Language & Region**. Item names, folder names and item types come from your vault and stay as they are.
+The extension speaks your browser's language. It is available in the official languages of the EU except Maltese; in any other language it uses English. Irish isn't available in Chrome, as Chrome doesn't offer it as a browser language. To change it, change your browser's language. Safari follows the preferred languages of macOS, under **System Settings**, **General**, **Language & Region**. Item names, folder names and item types come from your vault and stay as they are.
+
+Translations other than English and Dutch are machine translations. If you find a mistake, report it as an [issue](https://github.com/ConductionNL/keepiq/issues).
 
 ## Privacy
 

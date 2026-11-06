@@ -106,6 +106,8 @@ class TeamFolderServiceTest extends TestCase {
 
 	private IGroupManager&MockObject $groupManager;
 
+	private \OCP\Group\ISubAdmin&MockObject $subAdmin;
+
 	private IUserManager&MockObject $userManager;
 
 	private NotificationService&MockObject $notificationService;
@@ -159,6 +161,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->delegationMapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
 		$this->typeService = $this->createMock(originalClassName: SecretTypeService::class);
 		$this->groupManager = $this->createMock(originalClassName: IGroupManager::class);
+		$this->subAdmin = $this->createMock(originalClassName: \OCP\Group\ISubAdmin::class);
 		$this->userManager = $this->createMock(originalClassName: IUserManager::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 		$this->scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
@@ -197,6 +200,7 @@ class TeamFolderServiceTest extends TestCase {
 				secretMapper: $this->secretMapper,
 				groupManager: $this->groupManager,
 				memberships: $memberships,
+				subAdmin: $this->subAdmin,
 			),
 			memberships: $memberships,
 			shares: $shares,
@@ -299,10 +303,11 @@ class TeamFolderServiceTest extends TestCase {
 	 * Build an IGroup mock returning the given user ids.
 	 *
 	 * @param string[] $userIds The member user ids
+	 * @param string   $groupId The group's id (getGID)
 	 *
 	 * @return IGroup
 	 */
-	private function buildGroup(array $userIds): IGroup {
+	private function buildGroup(array $userIds, string $groupId = ''): IGroup {
 		$users = [];
 		foreach ($userIds as $userId) {
 			$user = $this->createMock(originalClassName: IUser::class);
@@ -312,6 +317,7 @@ class TeamFolderServiceTest extends TestCase {
 
 		$group = $this->createMock(originalClassName: IGroup::class);
 		$group->method('getUsers')->willReturn($users);
+		$group->method('getGID')->willReturn($groupId);
 		return $group;
 	}//end buildGroup()
 
@@ -1321,11 +1327,14 @@ class TeamFolderServiceTest extends TestCase {
 
 	/**
 	 * A team folder `tf-1` on `folder-1` owned by alice, with Olga as
-	 * manager, Ed as editor, Vic as viewer and Mia as a second manager.
+	 * manager, Ed as editor, Vic as viewer and Mia as a second manager, plus
+	 * any extra memberships given.
+	 *
+	 * @param array<string,TeamFolderMember> $extra Further memberships, keyed by member id
 	 *
 	 * @return array<string,TeamFolderMember>
 	 */
-	private function managedFolder(): array {
+	private function managedFolder(array $extra = []): array {
 		$teamFolder = $this->buildTeamFolder();
 		$this->mapper->method('findById')->willReturn($teamFolder);
 		$this->mapper->method('findByFolder')->willReturn($teamFolder);
@@ -1342,6 +1351,7 @@ class TeamFolderServiceTest extends TestCase {
 			$members[$uid] = $member;
 		}
 
+		$members += $extra;
 		$this->memberMapper->method('findByTeamFolder')->willReturn(array_values($members));
 		$this->memberMapper->method('findById')->willReturnCallback(
 			static fn (string $id) => $members[substr($id, 4)] ?? throw new DoesNotExistException('')
@@ -1579,6 +1589,630 @@ class TeamFolderServiceTest extends TestCase {
 	}//end managerHoldsACopyOfTheFirstSecret()
 
 	/**
+	 * managedFolder() with Olga's own membership ending tomorrow, Mia's in a
+	 * month, a use-only group membership `ops` (Olga and Vic) ending in a
+	 * week, and a read membership `crew` (Mia and Bob) ending in a week.
+	 * Memberships are found by type and id. Groups that are not members yet:
+	 * `night-shift` (Olga, Bob), `leads` (Mia, Bob), `rota` (Bob; Olga is
+	 * its subadmin), `audit` (Bob; Mia is its subadmin) and `support` (Bob,
+	 * Vic; no manager in it or over it).
+	 *
+	 * @return array<string,TeamFolderMember>
+	 */
+	private function managedFolderWithRestrictions(): array {
+		$ops = new TeamFolderMember();
+		$ops->setId('mem-ops');
+		$ops->setTeamFolderId('tf-1');
+		$ops->setMemberType('group');
+		$ops->setMemberId('ops');
+		$ops->setGrade('read');
+		$ops->setUseOnly(true);
+		$ops->setExpiresAt(new DateTime('+1 week'));
+
+		$crew = new TeamFolderMember();
+		$crew->setId('mem-crew');
+		$crew->setTeamFolderId('tf-1');
+		$crew->setMemberType('group');
+		$crew->setMemberId('crew');
+		$crew->setGrade('read');
+		$crew->setExpiresAt(new DateTime('+1 week'));
+
+		$members = $this->managedFolder(extra: ['ops' => $ops, 'crew' => $crew]);
+		$members['olga']->setExpiresAt(new DateTime('+1 day'));
+		$members['mia']->setExpiresAt(new DateTime('+1 month'));
+
+		$this->memberMapper->method('findMembership')->willReturnCallback(
+			static function (string $teamFolderId, string $memberType, string $memberId) use ($members): TeamFolderMember {
+				foreach ($members as $member) {
+					if ($member->getMemberType() === $memberType && $member->getMemberId() === $memberId) {
+						return $member;
+					}
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
+		$groups = [
+			'ops' => ['olga', 'vic'],
+			'night-shift' => ['olga', 'bob'],
+			'leads' => ['mia', 'bob'],
+			'crew' => ['mia', 'bob'],
+			'rota' => ['bob'],
+			'audit' => ['bob'],
+			'support' => ['bob', 'vic'],
+		];
+		$subAdmins = ['rota' => ['olga'], 'audit' => ['mia']];
+		$this->groupManager->method('get')->willReturnCallback(
+			fn (string $groupId) => isset($groups[$groupId]) === true
+				? $this->buildGroup(userIds: $groups[$groupId], groupId: $groupId)
+				: null
+		);
+		$this->groupManager->method('isInGroup')->willReturnCallback(
+			static fn (string $userId, string $groupId): bool => in_array($userId, $groups[$groupId] ?? [], true)
+		);
+		$this->subAdmin->method('getGroupsSubAdmins')->willReturnCallback(
+			fn (IGroup $group): array => array_map(
+				function (string $uid): IUser {
+					$user = $this->createMock(originalClassName: IUser::class);
+					$user->method('getUID')->willReturn($uid);
+					return $user;
+				},
+				$subAdmins[$group->getGID()] ?? []
+			)
+		);
+		$this->userManager->method('get')->willReturn($this->createMock(IUser::class));
+
+		return $members;
+	}//end managedFolderWithRestrictions()
+
+	/**
+	 * A manager whose membership ends tomorrow cannot re-add themselves
+	 * without an end date (GHSA-xmrr-247r-hh35): the owner governs a member's
+	 * own access, and the end date stays.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerCannotLiftTheirOwnEndDate(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$ends    = $members['olga']->getExpiresAt();
+		$this->memberMapper->expects($this->never())->method('update');
+
+		$this->expectException(\OCA\Keepiq\Exception\OwnerOnlyException::class);
+		try {
+			$this->service->addMember(
+				teamFolderId: 'tf-1',
+				memberType: 'user',
+				memberId: 'olga',
+				userId: 'olga',
+				restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: null),
+			);
+		} finally {
+			$this->assertEquals($ends, $members['olga']->getExpiresAt());
+		}
+	}//end testAManagerCannotLiftTheirOwnEndDate()
+
+	/**
+	 * A manager cannot add a membership that covers themselves either, so a
+	 * fresh row without an end date cannot outlive the one the owner set.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerCannotAddAMembershipThatCoversThemselves(): void {
+		$this->managedFolderWithRestrictions();
+		$this->memberMapper->expects($this->never())->method('insert');
+
+		foreach (['user' => 'olga', 'group' => 'night-shift'] as $type => $id) {
+			try {
+				$this->service->addMember(teamFolderId: 'tf-1', memberType: $type, memberId: $id, userId: 'olga');
+				$this->fail('olga must not add the '.$type.' '.$id.' that covers her');
+			} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+				$this->addToAssertionCount(1);
+			}
+		}
+	}//end testAManagerCannotAddAMembershipThatCoversThemselves()
+
+	/**
+	 * A manager cannot change another manager's restriction through
+	 * addMember, for example to end a co-manager's access.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerCannotRestrictAnotherManagerThroughAddMember(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$ends    = $members['mia']->getExpiresAt();
+		$this->memberMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->addMember(
+				teamFolderId: 'tf-1',
+				memberType: 'user',
+				memberId: 'mia',
+				userId: 'olga',
+				restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: new DateTime('+1 hour')),
+			);
+			$this->fail('olga must not restrict mia');
+		} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+			$this->assertEquals($ends, $members['mia']->getExpiresAt());
+		}
+	}//end testAManagerCannotRestrictAnotherManagerThroughAddMember()
+
+	/**
+	 * A manager cannot lift the use-only flag or end date of a group
+	 * membership that covers them, through either path; the owner can.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerCannotChangeAGroupMembershipThatCoversThem(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$ends    = $members['ops']->getExpiresAt();
+		$lifted  = new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: null);
+
+		foreach ([
+			'setMemberGrade' => fn () => $this->service->setMemberGrade(
+				teamFolderId: 'tf-1',
+				memberId: 'mem-ops',
+				grade: 'read',
+				ownerId: 'olga',
+				restriction: $lifted
+			),
+			'addMember' => fn () => $this->service->addMember(
+				teamFolderId: 'tf-1',
+				memberType: 'group',
+				memberId: 'ops',
+				userId: 'olga',
+				restriction: $lifted
+			),
+		] as $path => $change) {
+			try {
+				$change();
+				$this->fail('olga must not lift the ops restriction through '.$path);
+			} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+				$this->assertTrue($members['ops']->getUseOnly(), $path);
+				$this->assertEquals($ends, $members['ops']->getExpiresAt(), $path);
+			}
+		}
+
+		$owner = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-ops', grade: 'read', ownerId: 'alice', restriction: $lifted);
+		$this->assertFalse($owner->getUseOnly());
+		$this->assertNull($owner->getExpiresAt());
+	}//end testAManagerCannotChangeAGroupMembershipThatCoversThem()
+
+	/**
+	 * A manager still restricts a viewer, through addMember as through
+	 * setMemberGrade.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 */
+	public function testAManagerStillRestrictsAViewer(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$this->folderMapper->method('getSubtreeIds')->willReturn([]);
+		$end = new DateTime('+3 days');
+
+		$this->service->addMember(
+			teamFolderId: 'tf-1',
+			memberType: 'user',
+			memberId: 'vic',
+			userId: 'olga',
+			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: true, expiresAt: $end),
+		);
+
+		$this->assertTrue($members['vic']->getUseOnly());
+		$this->assertEquals($end, $members['vic']->getExpiresAt());
+	}//end testAManagerStillRestrictsAViewer()
+
+	/**
+	 * A manager cannot lift a co-manager's end date through a group the
+	 * co-manager is in and the caller is not (review of GHSA-xmrr-247r-hh35):
+	 * grants are unioned, so neither a new group nor a lifted existing one
+	 * may cover another manager. The owner still can.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerCannotLiftACoManagersEndDateThroughAGroup(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$ends    = $members['crew']->getExpiresAt();
+		$lifted  = new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: null);
+		$this->memberMapper->expects($this->never())->method('insert');
+
+		foreach ([
+			'setMemberGrade on crew' => fn () => $this->service->setMemberGrade(
+				teamFolderId: 'tf-1',
+				memberId: 'mem-crew',
+				grade: 'read',
+				ownerId: 'olga',
+				restriction: $lifted
+			),
+			'addMember of crew' => fn () => $this->service->addMember(
+				teamFolderId: 'tf-1',
+				memberType: 'group',
+				memberId: 'crew',
+				userId: 'olga',
+				restriction: $lifted
+			),
+			'addMember of leads' => fn () => $this->service->addMember(
+				teamFolderId: 'tf-1',
+				memberType: 'group',
+				memberId: 'leads',
+				userId: 'olga'
+			),
+		] as $path => $change) {
+			try {
+				$change();
+				$this->fail('olga must not cover mia through '.$path);
+			} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+				$this->assertEquals($ends, $members['crew']->getExpiresAt(), $path);
+			}
+		}
+
+		$owner = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-crew', grade: 'read', ownerId: 'alice', restriction: $lifted);
+		$this->assertNull($owner->getExpiresAt());
+	}//end testAManagerCannotLiftACoManagersEndDateThroughAGroup()
+
+	/**
+	 * A manager cannot add a group that they, or a co-manager, are a subadmin
+	 * of: a subadmin can join the group afterwards and be covered by a
+	 * membership the owner never set.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerCannotAddAGroupAManagerMayJoin(): void {
+		$this->managedFolderWithRestrictions();
+		$this->memberMapper->expects($this->never())->method('insert');
+
+		foreach (['rota' => 'olga is its subadmin', 'audit' => 'mia is its subadmin'] as $groupId => $why) {
+			try {
+				$this->service->addMember(teamFolderId: 'tf-1', memberType: 'group', memberId: $groupId, userId: 'olga');
+				$this->fail('olga must not add '.$groupId.': '.$why);
+			} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+				$this->addToAssertionCount(1);
+			}
+		}
+	}//end testAManagerCannotAddAGroupAManagerMayJoin()
+
+	/**
+	 * A manager still adds a group no manager is in or over.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 */
+	public function testAManagerStillAddsAGroupWithoutAManager(): void {
+		$this->managedFolderWithRestrictions();
+		$this->folderMapper->method('getSubtreeIds')->willReturn([]);
+		$this->memberMapper->expects($this->once())->method('insert')->willReturnCallback(static fn ($row) => $row);
+
+		$payload = $this->service->addMember(teamFolderId: 'tf-1', memberType: 'group', memberId: 'support', userId: 'olga');
+
+		$this->assertSame('support', $payload['member']->getMemberId());
+	}//end testAManagerStillAddsAGroupWithoutAManager()
+
+	/**
+	 * A manager whose end date has passed no longer manages, also before
+	 * ExpireSharesJob removes the row.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerPastTheirEndDateNoLongerManages(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$members['olga']->setExpiresAt(new DateTime('-1 minute'));
+		$this->memberMapper->expects($this->never())->method('update');
+
+		$this->expectException(\OCA\Keepiq\Exception\ManagerOnlyException::class);
+		$this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-vic', grade: 'write', ownerId: 'olga');
+	}//end testAManagerPastTheirEndDateNoLongerManages()
+
+	/**
+	 * A restriction changed by adding a member again is audited with the
+	 * grade, use-only flag and end date after the change.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 */
+	public function testARestrictionChangedByAReAddIsAudited(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$this->folderMapper->method('getSubtreeIds')->willReturn([]);
+		$events = [];
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function ($event) use (&$events): void {
+				$events[] = $event;
+			}
+		);
+		$end = new DateTime('+3 days');
+
+		$this->serviceWithShareTargets(audit: new TeamFolderAuditor(eventDispatcher: $dispatcher))->addMember(
+			teamFolderId: 'tf-1',
+			memberType: 'user',
+			memberId: 'vic',
+			userId: 'olga',
+			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: true, expiresAt: $end),
+		);
+
+		$this->assertCount(1, $events);
+		$this->assertSame('olga', $events[0]->getActorId());
+		$metadata = $events[0]->getMetadata();
+		$this->assertSame('vic', $metadata['memberId']);
+		$this->assertSame('read', $metadata['grade']);
+		$this->assertTrue($metadata['useOnly']);
+		$this->assertSame($end->format('c'), $metadata['expiresAt']);
+		$this->assertTrue($members['vic']->getUseOnly());
+	}//end testARestrictionChangedByAReAddIsAudited()
+
+	/**
+	 * A manager's folder listing names the rows only the owner may change:
+	 * the managers' own rows and the groups that cover a manager. The owner's
+	 * listing names none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagersListingNamesTheOwnerOnlyRows(): void {
+		$members = $this->managedFolderWithRestrictions();
+		$this->memberMapper->method('findUserMemberships')->willReturn([$members['olga']]);
+		$this->mapper->method('findByOwner')->willReturnCallback(
+			fn (string $ownerId) => $ownerId === 'alice' ? [$this->buildTeamFolder()] : []
+		);
+
+		$listing = $this->service->listForUser(userId: 'olga');
+		$this->assertSame(['mem-olga', 'mem-mia', 'mem-ops', 'mem-crew'], $listing['memberOf'][0]['ownerOnlyMemberIds']);
+
+		$owner = $this->service->listForUser(userId: 'alice');
+		$this->assertArrayNotHasKey('ownerOnlyMemberIds', $owner['owned'][0]);
+	}//end testAManagersListingNamesTheOwnerOnlyRows()
+
+	/**
+	 * Three nested team folders owned by alice: tf-0 on folder-0 with Pat as
+	 * manager; tf-1 on folder-1 (under folder-0) with Olga as manager, the
+	 * group `admins` (Gina and alice) as manager, Eve as a manager whose end
+	 * date passed yesterday and Vic as viewer; tf-2 on folder-2 (under
+	 * folder-1) with Mia as manager ending tomorrow. Groups that are not
+	 * members: `pats` (Pat, Bob), `ginas` (Gina, Bob), `evers` (Eve, Bob),
+	 * `mias` (Mia, Bob), `board` (alice, Bob) and `support` (Bob, Vic).
+	 *
+	 * @return array<string,TeamFolderMember> Every membership, keyed by member id
+	 */
+	private function nestedFolders(): array {
+		$parents = ['folder-0' => null, 'folder-1' => 'folder-0', 'folder-2' => 'folder-1'];
+		$subtrees = [
+			'folder-0' => ['folder-0', 'folder-1', 'folder-2'],
+			'folder-1' => ['folder-1', 'folder-2'],
+			'folder-2' => ['folder-2'],
+		];
+		$teamFolders = [];
+		foreach (['tf-0' => 'folder-0', 'tf-1' => 'folder-1', 'tf-2' => 'folder-2'] as $id => $folderId) {
+			$teamFolders[$id] = $this->buildTeamFolder(id: $id, folderId: $folderId);
+		}
+
+		$rows = [
+			'pat' => ['tf-0', 'user', 'manage', null],
+			'olga' => ['tf-1', 'user', 'manage', null],
+			'admins' => ['tf-1', 'group', 'manage', null],
+			'eve' => ['tf-1', 'user', 'manage', new DateTime('-1 day')],
+			'vic' => ['tf-1', 'user', 'read', null],
+			'mia' => ['tf-2', 'user', 'manage', new DateTime('+1 day')],
+		];
+		$members = [];
+		foreach ($rows as $memberId => [$teamFolderId, $type, $grade, $expiresAt]) {
+			$member = new TeamFolderMember();
+			$member->setId('mem-' . $memberId);
+			$member->setTeamFolderId($teamFolderId);
+			$member->setMemberType($type);
+			$member->setMemberId($memberId);
+			$member->setGrade($grade);
+			$member->setExpiresAt($expiresAt);
+			$members[$memberId] = $member;
+		}
+
+		$groups = [
+			'admins' => ['gina', 'alice'],
+			'pats' => ['pat', 'bob'],
+			'ginas' => ['gina', 'bob'],
+			'evers' => ['eve', 'bob'],
+			'mias' => ['mia', 'bob'],
+			'board' => ['alice', 'bob'],
+			'support' => ['bob', 'vic'],
+		];
+
+		$this->mapper->method('findById')->willReturnCallback(
+			static fn (string $id) => $teamFolders[$id] ?? throw new DoesNotExistException('')
+		);
+		$this->mapper->method('findByFolder')->willReturnCallback(
+			static function (string $folderId) use ($teamFolders): TeamFolder {
+				foreach ($teamFolders as $teamFolder) {
+					if ($teamFolder->getFolderId() === $folderId) {
+						return $teamFolder;
+					}
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
+		$this->folderMapper->method('findById')->willReturnCallback(
+			fn (string $id) => array_key_exists($id, $parents) === true
+				? $this->buildFolder(id: $id, parentId: $parents[$id])
+				: throw new DoesNotExistException('')
+		);
+		$this->folderMapper->method('getSubtreeIds')->willReturnCallback(
+			static fn (string $folderId): array => $subtrees[$folderId] ?? [$folderId]
+		);
+		$this->memberMapper->method('findByTeamFolder')->willReturnCallback(
+			static fn (string $teamFolderId): array => array_values(
+				array_filter($members, static fn (TeamFolderMember $m): bool => $m->getTeamFolderId() === $teamFolderId)
+			)
+		);
+		$this->memberMapper->method('findById')->willReturnCallback(
+			static fn (string $id) => $members[substr($id, 4)] ?? throw new DoesNotExistException('')
+		);
+		$this->memberMapper->method('findMembership')->willReturnCallback(
+			static function (string $teamFolderId, string $memberType, string $memberId) use ($members): TeamFolderMember {
+				foreach ($members as $member) {
+					if ($member->getTeamFolderId() === $teamFolderId
+						&& $member->getMemberType() === $memberType
+						&& $member->getMemberId() === $memberId
+					) {
+						return $member;
+					}
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
+		$this->memberMapper->method('insert')->willReturnCallback(static fn ($row) => $row);
+		$this->groupManager->method('get')->willReturnCallback(
+			fn (string $groupId) => isset($groups[$groupId]) === true
+				? $this->buildGroup(userIds: $groups[$groupId], groupId: $groupId)
+				: null
+		);
+		$this->groupManager->method('isInGroup')->willReturnCallback(
+			static fn (string $userId, string $groupId): bool => in_array($userId, $groups[$groupId] ?? [], true)
+		);
+		$this->userManager->method('get')->willReturn($this->createMock(IUser::class));
+
+		return $members;
+	}//end nestedFolders()
+
+	/**
+	 * Olga adds a member to tf-1 and is refused as owner-only.
+	 *
+	 * @param string $memberType The member type
+	 * @param string $memberId   The user or group id
+	 * @param string $why        What the case shows
+	 *
+	 * @return void
+	 */
+	private function assertOlgaMayNotAdd(string $memberType, string $memberId, string $why): void {
+		try {
+			$this->service->addMember(teamFolderId: 'tf-1', memberType: $memberType, memberId: $memberId, userId: 'olga');
+			$this->fail('olga must not add the ' . $memberType . ' ' . $memberId . ': ' . $why);
+		} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+			$this->addToAssertionCount(1);
+		}
+	}//end assertOlgaMayNotAdd()
+
+	/**
+	 * A manager of a parent team folder cannot cover a manager of a team
+	 * folder nested under it: a row on the parent covers the nested folder too
+	 * (review round 2 of GHSA-xmrr-247r-hh35).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerOfTheParentCannotCoverAManagerOfANestedTeamFolder(): void {
+		$this->nestedFolders();
+
+		$this->assertOlgaMayNotAdd(memberType: 'user', memberId: 'mia', why: 'she manages the nested tf-2');
+		$this->assertOlgaMayNotAdd(memberType: 'group', memberId: 'mias', why: 'it covers the nested manager');
+	}//end testAManagerOfTheParentCannotCoverAManagerOfANestedTeamFolder()
+
+	/**
+	 * A manager through an ancestor team folder counts as a manager.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerOfAnAncestorTeamFolderCounts(): void {
+		$this->nestedFolders();
+
+		$this->assertOlgaMayNotAdd(memberType: 'user', memberId: 'pat', why: 'he manages the ancestor tf-0');
+		$this->assertOlgaMayNotAdd(memberType: 'group', memberId: 'pats', why: 'it covers the ancestor manager');
+	}//end testAManagerOfAnAncestorTeamFolderCounts()
+
+	/**
+	 * A member of a `manage` group row counts as a manager, whether the new
+	 * row is that user's own or a group they are in. A different case of the
+	 * same user id is the same user.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAMemberOfAManageGroupCounts(): void {
+		$this->nestedFolders();
+
+		$this->assertOlgaMayNotAdd(memberType: 'user', memberId: 'gina', why: 'she manages through admins');
+		$this->assertOlgaMayNotAdd(memberType: 'group', memberId: 'ginas', why: 'it covers a manager through admins');
+		$this->assertOlgaMayNotAdd(memberType: 'user', memberId: 'MIA', why: 'user ids ignore case');
+	}//end testAMemberOfAManageGroupCounts()
+
+	/**
+	 * A manager whose end date has passed is still the owner's to cover again:
+	 * the owner set that end date.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerPastTheirEndDateIsStillTheOwnersToCover(): void {
+		$this->nestedFolders();
+
+		$this->assertOlgaMayNotAdd(memberType: 'user', memberId: 'eve', why: 'her end date is the owner\'s');
+		$this->assertOlgaMayNotAdd(memberType: 'group', memberId: 'evers', why: 'it covers an ended manager');
+	}//end testAManagerPastTheirEndDateIsStillTheOwnersToCover()
+
+	/**
+	 * The owner is not a manager: a manager still adds a group the owner is
+	 * in, also when the owner is in a `manage` group, and a group with no
+	 * manager in it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 */
+	public function testAManagerStillAddsAGroupTheOwnerIsIn(): void {
+		$this->nestedFolders();
+
+		foreach (['board', 'support'] as $groupId) {
+			$payload = $this->service->addMember(teamFolderId: 'tf-1', memberType: 'group', memberId: $groupId, userId: 'olga');
+			$this->assertSame($groupId, $payload['member']->getMemberId());
+		}
+	}//end testAManagerStillAddsAGroupTheOwnerIsIn()
+
+	/**
+	 * A manager does not approve their own join, in any case of their id; the
+	 * owner does.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerDoesNotApproveTheirOwnJoin(): void {
+		$this->managedFolderWithRestrictions();
+		$this->folderMapper->method('getSubtreeIds')->willReturn([]);
+
+		foreach (['olga', 'Olga'] as $newMemberId) {
+			try {
+				$this->service->approveJoin(teamFolderId: 'tf-1', newMemberId: $newMemberId, userId: 'olga');
+				$this->fail('olga must not approve her own join as ' . $newMemberId);
+			} catch (\OCA\Keepiq\Exception\OwnerOnlyException) {
+				$this->addToAssertionCount(1);
+			}
+		}
+
+		$payload = $this->service->approveJoin(teamFolderId: 'tf-1', newMemberId: 'olga', userId: 'alice');
+		$this->assertArrayHasKey('recipients', $payload);
+	}//end testAManagerDoesNotApproveTheirOwnJoin()
+
+	/**
 	 * Member added by a manager is audited with the manager as actor.
 	 *
 	 * @return void
@@ -1650,6 +2284,7 @@ class TeamFolderServiceTest extends TestCase {
 				secretMapper: $this->secretMapper,
 				groupManager: $this->groupManager,
 				memberships: $memberships,
+				subAdmin: $this->subAdmin,
 			),
 			memberships: $memberships,
 			shares: $shares,

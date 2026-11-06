@@ -166,6 +166,7 @@ class TeamFolderContributionServiceTest extends TestCase {
 				secretMapper: $secretMapper,
 				groupManager: $groupManager,
 				memberships: $memberships,
+				subAdmin: $this->createMock(\OCP\Group\ISubAdmin::class),
 			),
 			memberships: $memberships,
 			shares: new TeamFolderShareService(

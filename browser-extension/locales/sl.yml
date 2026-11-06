@@ -1,0 +1,782 @@
+# Terms and tone follow Nextcloud's Slovenian: formal vi, trezor, glavno geslo, geslo programa, ključ za dostop, element, mapa, pošiljka (Send), spletna aplikacija.
+language: sl
+extensionDescription: Keepiq za vaš brskalnik. Izpolnjujte prijave, ključe za dostop in enkratne kode iz svojega šifriranega trezorja v Nextcloudu.
+commandAutofillLogin: Samodejno izpolni zadnjo uporabljeno prijavo
+commandFocusNotificationBar: Pojdi na vrstico za shranjevanje Keepiq
+
+errors:
+  insecureUrl: Za ta strežnik uporabite https
+  invalidUrl: Vnesite veljaven URL strežnika
+  permissionDenied: Keepiq potrebuje dovoljenje za dostop do {host}
+  unreachable: Strežnika {host} ni mogoče doseči
+  notNextcloud: "{host} ni videti kot strežnik Nextcloud"
+  serverError: "{host} trenutno ni na voljo, poskusite znova pozneje"
+  unauthorized: Napačno uporabniško ime ali geslo programa
+  keepiqMissing: Keepiq ni nameščen na {host}
+  keepiqOutdated: Keepiq na {host} je prestar za to razširitev, ki potrebuje različico {version} ali novejšo. Prosite skrbnika, naj posodobi Keepiq.
+  noActiveSuite: Enkrat odprite spletno aplikacijo Keepiq in nastavite glavno geslo, nato poskusite znova
+  unlockBlocked: Vaša organizacija zahteva dvostopenjsko prijavo. Nastavite drugi dejavnik v Nextcloudu pod Nastavitve, Varnost, nato poskusite znova
+  duplicate: Ta račun je že dodan
+  limitReached: Doseženo je največje število računov ({count})
+  invalidMasterPassword: Neveljavno glavno geslo
+  keyUnreadable: Ključa vašega trezorja v Keepiqu ni mogoče prebrati, zato ga ta brskalnik ne more odkleniti. Obvestite skrbnika Keepiqa.
+  offlineNoCache: Niste povezani, ta trezor pa še ni bil usklajen
+  sessionRevoked: Seja je preklicana, prijavite se znova
+  writeLocked: Vašega trezorja trenutno ni mogoče spreminjati, poskusite znova pozneje
+  notResponding: Keepiq se ne odziva. Znova naložite razširitev in znova odprite to pojavno okno.
+  invalidPin:
+    1: Napačen PIN, na voljo je še 1 poskus
+    n: "Napačen PIN, preostali poskusi: $1"
+  wrongPin: Napačen PIN
+  pinForgotten: PIN je izbrisan po preveč poskusih
+  pinKeyChanged: Ključ vašega trezorja se je spremenil. Odklenite z glavnim geslom.
+  pinTooShort: "Najmanjše število znakov: {count}"
+  unknown: Prišlo je do napake
+
+notices:
+  keyChanged: Ključ vašega trezorja se je v Keepiqu spremenil. Odklenite s trenutnim glavnim geslom.
+
+common:
+  accountOnHost: "{name} na {host}"
+  loading: Nalaganje…
+  back: Nazaj
+  cancel: Prekliči
+  logOut: Odjava
+  appPassword: Geslo programa
+  addAccount: Dodaj račun
+  openWebApp: Odpri spletno aplikacijo Keepiq
+  justNow: pravkar
+
+titles:
+  accounts: Računi
+  logInAgain: Ponovna prijava
+  unlock: Odklepanje
+  viewItem: Ogled elementa
+  newItem: Nov element
+  newLogin: Nova prijava
+  newCard: Nova kartica
+  newIdentity: Nova identiteta
+  editItem: Urejanje elementa
+  newSend: Nova pošiljka
+  sendCreated: Pošiljka je ustvarjena
+
+tabs:
+  label: Glavno
+  vault: Trezor
+  generator: Generator
+  send: Pošlji
+  settings: Nastavitve
+
+header:
+  popout: Odpri v ločenem oknu
+  accounts: Računi, prijavljeni kot {name}
+  new: Novo
+
+unlock:
+  masterPassword: Glavno geslo
+  submit: Odkleni
+  pin: PIN
+  useMasterPassword: Uporabi glavno geslo
+
+logInAgain:
+  submit: Prijava
+
+addAccount:
+  serverUrl: URL strežnika
+  serverUrlPlaceholder: cloud.example.org
+  username: Uporabniško ime
+  hint: Ustvarite ga v Nextcloudu pod Nastavitve, Varnost. Tukaj nikoli ne vnašajte gesla za prijavo v Nextcloud.
+  hintWithLink: "Ustvarite ga v Nextcloudu pod Nastavitve, Varnost: {link}. Tukaj nikoli ne vnašajte gesla za prijavo v Nextcloud."
+  securityLink: odpri varnostne nastavitve
+
+accounts:
+  active: (aktiven)
+  unlocked: Odklenjen
+  locked: Zaklenjen
+  loggedOut: Odjavljen
+  lock: Zakleni {account}
+  logOut: Odjava iz {account}
+  lockAll: Zakleni vse
+  logOutAll: Odjavi vse
+  logOutAllQuestion: Se želite odjaviti iz vseh računov?
+  logOutAllDetail: Vsi računi bodo odstranjeni iz tega brskalnika. Za vsakega boste znova potrebovali geslo programa.
+  logOutQuestion: Se želite odjaviti iz {account}?
+  logOutDetail: Račun bo odstranjen iz tega brskalnika. Za ponovno dodajanje boste potrebovali geslo programa.
+
+vault:
+  loadFailed: Trezorja ni bilo mogoče naložiti
+  tryAgain: Poskusi znova
+  syncing: Usklajevanje trezorja
+  empty: V trezorju ni elementov
+  noMatch: Ni ujemajočih se elementov
+  searchCovers: Iskanje zajema imena in spletna mesta.
+  clearFilters: Počisti filtre
+  items: Elementi
+  tooMany: Prikazanih je prvih {count}, natančneje določite iskanje
+  offline: Brez povezave. Zadnje usklajevanje {time}
+  syncNow: Uskladi zdaj
+  busy: Strežnik je zaseden, poskus bo ponovljen pozneje
+  allBlocked: Vsi elementi so blokirani.
+  suggestions: Predlogi za samodejno izpolnjevanje
+  noSuggestions: Ni elementov za {host}
+  autofillUnavailable: Samodejno izpolnjevanje na tej strani ni na voljo
+  fillFailed: Samodejno izpolnjevanje na tej strani ni mogoče. Podatke kopirajte in prilepite.
+  openFailed: Spletnega mesta ni bilo mogoče odpreti
+  popoutFailed: Novega okna ni bilo mogoče odpreti
+
+filters:
+  search: Iskanje
+  searchLabel: Išči po trezorju
+  clearSearch: Počisti iskanje
+  folder: Mapa
+  allItems: Vsi elementi
+  noFolder: Brez mape
+  type: Vrsta
+  all: Vse
+  more: Več
+  moreTypes: Več vrst
+  login: Prijava
+  card: Kartica
+  identity: Identiteta
+  note: Zapisek
+  totp: TOTP
+  passkey: Ključ za dostop
+
+item:
+  blocked: Blokirano
+  launch: Odpri {name}
+  fill: Izpolni
+  fillName: Izpolni {name}
+  insecureTitle: Ali želite to prijavo vseeno izpolniti?
+  insecureWarning: "Opozorilo: to je nezavarovana stran HTTP, zato lahko drugi morda vidijo in spremenijo vse, kar pošljete. Ta prijava je bila prvotno shranjena na varni strani (HTTPS)."
+  cardInsecureTitle: Želite izpolniti to kartico na nevarnem spletnem mestu?
+  cardInsecureWarning: To spletno mesto ni varno. Kdorkoli v omrežju bi lahko prebral izpolnjene podatke kartice.
+  crossSiteTitle: Želite izpolniti tudi na {hosts}?
+  crossSiteWarning: Del tega obrazca prihaja iz {hosts}, ne iz {host}. Keepiq ga tam izpolni le, če se strinjate.
+  onlyHost: Samo {host}
+  copyMenu: Kopiraj, {name}
+  moreMenu: Več, {name}
+  copyUsername: Kopiraj uporabniško ime
+  copyPassword: Kopiraj geslo
+  copyCode: Kopiraj potrditveno kodo
+  view: Ogled
+  edit: Uredi
+  clone: Podvoji
+  move: Premakni v mapo
+  delete: Izbriši
+  send: Pošlji
+  cloneName: "{name} - kopija"
+  passkeyNoClone: Ključev za dostop ni mogoče podvojiti
+  useOnly: Deljeno z vami samo za prijavo
+  readOnly: Deljeno iz druge organizacije, zato ga je mogoče le premakniti
+  viewOnly: Deljeno z vami samo za ogled. Za spreminjanje prosite lastnika za pravice urejanja.
+  expiringNoClone: Vaš dostop poteče {date}, zato ga ni mogoče podvojiti
+  expiringNoSend: Vaš dostop poteče {date}, zato ga ni mogoče poslati
+  saved: Element je shranjen
+  deleted: Element je premaknjen v smeti
+  moved: Premaknjeno v {folder}
+  deleteTitle: Izbriši element
+  deleteConfirm: Želite premakniti {name} v smeti? Element ne bo več deljen, tudi po obnovitvi iz smeti v spletni aplikaciji Keepiq.
+  gone: Ta element ne obstaja več
+
+form:
+  itemDetails: Podrobnosti elementa
+  type: Vrsta
+  name: Ime
+  cardNumberLength: "{brand} ne izdaja številk kartic te dolžine. Vseeno lahko shranite."
+  cardNumberLengthUnknown: Številke kartic imajo od 12 do 19 števk. Vseeno lahko shranite.
+  cardNumberChecksum: Ta številka ne ustreza kontrolni vsoti kartice. Preverite jo; vseeno lahko shranite.
+  cardCodeLength: "{name} pri karticah {brand} ima {size} števke. Vseeno lahko shranite."
+  folder: Mapa
+  chooseFolder: Izberite mapo, trenutno {folder}
+  website: URL spletnega mesta
+  autofillOptions: Možnosti samodejnega izpolnjevanja
+  additionalOptions: Dodatne možnosti
+  authenticator: Avtentikator
+  note: Zapisek
+  secret: Skrivnost
+  advanced: Napredno
+  algorithm: Algoritem
+  digits: Števke
+  period: Obdobje v sekundah
+  addField: Dodaj polje
+  fieldName: Ime polja
+  fieldValue: Vrednost
+  removeField: Odstrani {name}
+  removeUnnamed: Odstrani polje
+  save: Shrani
+  passkeyReadOnly: Podatke ključa za dostop je mogoče spremeniti samo v spletni aplikaciji Keepiq
+  offline: Niste povezani. Za spremembe je potrebna povezava s Keepiqom.
+  unsavedTitle: Neshranjene spremembe
+  unsaved: Imate neshranjene spremembe. Jih želite zavreči?
+  discard: Zavrzi
+  keepEditing: Nadaljuj urejanje
+
+authKey:
+  label: Ključ avtentikatorja
+  optionalLabel: Ključ avtentikatorja (neobvezno)
+  newLabel: Nov ključ avtentikatorja
+  help: Prilepite povezavo otpauth://totp/ ali skrivni ključ ali pa skenirajte kodo QR na strani.
+  scan: Skeniraj kodo QR na strani
+  read: Ključ avtentikatorja je prebran iz kode QR
+  noQr: Na strani ni kode QR. Pomaknite jo v vidno polje in poskusite znova.
+  notTotp: Ta koda QR ne vsebuje ključa avtentikatorja. Uporabite kodo QR, ki jo spletno mesto prikaže ob nastavitvi dvostopenjske prijave.
+  noPicture: Keepiq ne more posneti te strani. Namesto tega prilepite ključ.
+  popout: Odprite Keepiq v orodni vrstici na strani s kodo QR, da jo skenirate.
+  saved: Shranjeno
+  remove: Odstrani ključ avtentikatorja
+  replaceHelp: Prilepite ali skenirajte nov ključ ali pustite prazno, da odstranite shranjenega.
+  keep: Obdrži shranjeni ključ
+  removedOnSave: Ključ avtentikatorja bo odstranjen ob shranjevanju.
+  notCloned: Ključ avtentikatorja se ne podvoji.
+
+fieldErrors:
+  required: Ime je obvezno
+  tooLong: "Največ znakov: {max}"
+  tooLongBytes: Predolgo (največ {max} B)
+  reserved: To ime je rezervirano
+  duplicate: Polje s tem imenom že obstaja
+  invalidTotp: Neveljavna skrivnost avtentikatorja
+  slash: Imena map ne smejo vsebovati poševnic
+
+writeErrors:
+  writeLocked: Trezor je začasno zaklenjen zaradi selitve ključa, poskusite znova pozneje
+  forbidden: Keepiq te spremembe ne dovoli. Razlog je prikazan v spletni aplikaciji Keepiq.
+  policy: Pravilnik vaše organizacije te spremembe ne dovoli
+  accountChanged: Medtem ste preklopili na drug račun, zato ni bilo nič shranjeno. Preklopite nazaj, da shranite.
+  accountChangedDelete: Medtem ste preklopili na drug račun, zato ni bilo nič izbrisano. Preklopite nazaj, da izbrišete.
+  keepClash: Mapa z imenom {name} že obstaja raven višje. Zanjo izberite Premakni elemente v nadrejeno mapo ali Izbriši ali pa najprej preimenujte eno od njiju.
+  keepClashAfter: Mapa, ki ste jo izbrali za ohranitev, ima enako ime kot mapa raven višje, zato ni bilo nič izbrisano. Znova preverite izbire.
+  invalid: Keepiq je zavrnil to spremembo
+  stale: Ta element je bil spremenjen drugje. Vrnite se in ga znova uredite, da vidite najnovejšo različico.
+  itemGone: Ta element ne obstaja več
+  folderGone: Ta mapa ne obstaja več
+  duplicateFolder: Mapa s tem imenom tukaj že obstaja
+  folderChanged: Ta mapa se je spremenila. Znova preverite izbire.
+  offline: Strežnika ni bilo mogoče doseči
+  serverError: Keepiq trenutno ni na voljo, poskusite znova pozneje
+  unreadable: Tega elementa ni bilo mogoče prebrati, zato ga tukaj ni mogoče urediti
+  restricted: Ta element je bil z vami deljen z omejitvami, zato ga tukaj ni mogoče spremeniti ali kopirati
+  unmatched: Keepiq je poslal različico tega elementa, ki je vaš trezor nima, zato ni bil odprt.
+  keyMismatch: Keepiq je poslal šifrirni ključ, ki se ne ujema z vašim trezorjem, zato ni bilo nič shranjeno. Obvestite skrbnika Keepiqa.
+  staleSource: Izvirnik tega deljenega elementa se je spremenil, potem ko ste ga odprli. Nič ni bilo shranjeno; znova ga odprite in ponovite spremembo.
+  incomplete: Seznam oseb, s katerimi je ta element deljen, se je med shranjevanjem spreminjal. Nič ni bilo shranjeno; poskusite znova.
+  badCertificate: Keepiq je za nekoga, s komer je ta element deljen, poslal šifrirni ključ, ki ga ta brskalnik ni mogel prebrati. Nič ni bilo shranjeno.
+  unverified: Ta element je deljen s partnerskimi organizacijami in ta brskalnik ne more potrditi, da bi ga prejele natanko takšnega, kot ste ga videli vi. Nič ni bilo shranjeno; to spremembo naredite v spletni aplikaciji Keepiq.
+  partnerUnreachable: "Nič ni bilo shranjeno: partnerska organizacija, s katero je ta element deljen, ni dosegljiva ({cloudIds}). Poskusite znova pozneje ali shranite brez njih, s čimer se deljenje tega elementa z njimi začasno ustavi, dokler ga z njimi znova ne delite."
+  partnerUpgradeRequired: "Nič ni bilo shranjeno: Keepiq pri {cloudIds} je prestar za prejem ključa avtentikatorja. Odstranite ključ ali jih prosite, naj posodobijo Keepiq."
+  partnerUpgradeRequiredUnnamed: "Nič ni bilo shranjeno: partnerska organizacija, s katero je ta element deljen, uporablja Keepiq, ki je prestar za prejem ključa avtentikatorja. Odstranite ključ ali jih prosite, naj posodobijo Keepiq."
+  partnerUpgradeVersion: Potrebujejo Keepiq {version} ali novejši.
+  partnerLookupLimit: Preveč poizvedb po partnerjih. Nič ni bilo shranjeno; poskusite znova čez minuto.
+  federationUnavailable: Vaš strežnik Keepiq ne more deliti s partnerskimi organizacijami, zato tega elementa tukaj ni mogoče shraniti. Nič ni bilo shranjeno; obrnite se na skrbnika.
+  keepiqOutdated: Vaš strežnik Keepiq je prestar za shranjevanje te spremembe. Nič ni bilo shranjeno; prosite skrbnika, naj posodobi Keepiq na različico {version} ali novejšo.
+  partnerClock: Potrdilo partnerske organizacije, s katero je ta element deljen, glede na uro tega računalnika ni veljavno. Nič ni bilo shranjeno; preverite datum in čas tega računalnika ali to spremembo naredite v spletni aplikaciji Keepiq.
+  shareScanPending: Ta element čaka na preverjanje deljenj, ki še ni končano. Nič ni bilo shranjeno; poskusite znova pozneje.
+  shareScanPendingOpen: Ta element čaka na preverjanje deljenj in ga še ni mogoče urejati. Poskusite znova pozneje.
+  shareScanPendingDelete: Ta element čaka na preverjanje deljenj, ki še ni končano. Nič ni bilo izbrisano; poskusite znova pozneje.
+  sendInvalid: Keepiq te pošiljke ni sprejel. Nič ni bilo poslano; preverite polja in poskusite znova.
+  sendOffline: Strežnika ni bilo mogoče doseči, nič ni bilo poslano
+  argon2Unavailable: Zaščita z geslom v tem brskalniku ni na voljo
+
+shareSave:
+  saveWithout: Shrani brez njih
+  ownerOnly: Shranjeno. Prejemniki v partnerskih organizacijah bodo to spremembo prejeli, ko lastnik naslednjič shrani element.
+  suspended: Deljenje z {cloudIds} je začasno ustavljeno, ker njihovega potrdila ni bilo mogoče preveriti ali ga njihova organizacija ne sprejema več. Deljenje je prikazano v spletni aplikaciji Keepiq.
+  paused: Deljenje z {cloudIds} je začasno ustavljeno, dokler tega elementa z njimi znova ne delite.
+
+folders:
+  add: Dodaj mapo
+  newFolder: Nova mapa
+  rename: Preimenuj
+  renameTitle: Preimenuj mapo
+  delete: Izbriši
+  more: Več, {name}
+  name: Ime mape
+  empty: Še ni map
+  notice: Imena map niso šifrirana
+  dismiss: Zapri
+  current: Trenutna mapa
+  pickTitle: Izberite mapo
+  moveTitle: Premakni v mapo
+  saved: Mapa je shranjena
+  deleted: Mapa je izbrisana
+  deleteTitle: Izbriši mapo
+  deleteConfirm: Želite izbrisati {name}? Tega ni mogoče razveljaviti.
+  cascade:
+    1: Želite izbrisati {name} in element v njej ali ga premakniti v {parent}?
+    n: Želite izbrisati {name} in elemente v njej ($1) ali jih premakniti v {parent}?
+  countsAll: Štejejo tudi arhivirani elementi in elementi v smeteh.
+  deleteItems: Izbriši tudi elemente
+  moveItems: Premakni elemente v nadrejeno mapo
+  items:
+    1: "elementi: 1"
+    n: "elementi: $1"
+  subfolders:
+    1: "podmape: 1"
+    n: "podmape: $1"
+  directRow: Neposredno v mapi {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Izbriši
+  actionMove: Premakni elemente v nadrejeno mapo
+  actionKeep: Obdrži
+  directMove: Premakni v nadrejeno mapo
+
+clipboard:
+  copied: "Kopirano: {what}"
+  failed: Kopiranje ni uspelo
+
+field:
+  show: "Pokaži: {field}"
+  hide: "Skrij: {field}"
+  copy: "Kopiraj: {field}"
+
+blocked:
+  generic: Ta element je blokiran.
+  suiteMissing: Njegov šifrirni ključ ne obstaja več.
+  suiteRevoked: Njegov šifrirni ključ je bil preklican.
+  suiteCompromised: Šifriran je z ogroženim ključem, zato ga tukaj ni mogoče odpreti. Spletna aplikacija Keepiq prikaže, ali ga je mogoče obnoviti.
+  migrationFailed: Med obnovitvijo po ogroženosti ga ni bilo mogoče prenesti na vaš novi ključ. Shranjena vrednost je ohranjena, vendar je ni mogoče odpreti.
+
+detail:
+  item: Element
+  decrypting: Dešifriranje…
+  decryptFailed: Tega elementa ni bilo mogoče dešifrirati
+  unreadablePasskey: Tega ključa za dostop ni bilo mogoče prebrati
+  unreadableFields: Dodatnih polj ni bilo mogoče prebrati
+  loginCredentials: Podatki za prijavo
+  username: Uporabniško ime
+  password: Geslo
+  authenticatorKey: Ključ avtentikatorja
+  website: Spletno mesto
+  additionalFields: Dodatna polja
+  notes: Zapiski
+  history: Zgodovina elementa
+  created: Ustvarjeno
+  updated: Posodobljeno
+  expires: Poteče
+  cardDetails: Podatki kartice
+  number: Številka
+  numberWithBrand: Številka · {brand}
+  cardNumber: Številka kartice
+  cardholder: Imetnik kartice
+  expiry: Datum poteka
+  cvv: CVV
+  pin: PIN
+  identity: Identiteta
+  firstName: Ime
+  lastName: Priimek
+  address: Naslov
+  phone: Telefon
+  email: E-pošta
+  bsn: BSN
+  passkey: Ključ za dostop
+  relyingParty: Spletno mesto ali aplikacija
+  passkeyUser: Uporabniško ime
+  passkeyOnLogin: Keepiq se prijavlja s ključi za dostop, shranjenimi v prijavi, ne s tem elementom
+  passkeys: Ključi za dostop
+  passkeyCreated: Ustvarjeno {date}
+  useOnly: Lastnik vam ne dovoli, da si to ogledate ali kopirate.
+
+totp:
+  code: Potrditvena koda
+  invalid: Neveljaven ključ avtentikatorja
+  changesIn:
+    1: Spremeni se čez 1 sekundo
+    n: Spremeni se čez $1 s
+
+settings:
+  accountSecurity: Varnost računa
+  autofill: Samodejno izpolnjevanje
+  notifications: Obvestila
+  vault: Trezor
+  appearance: Videz
+  about: O razširitvi
+  folders: Mape
+  theme: Tema
+  themeSystem: Kot v sistemu
+  themeLight: Svetla
+  themeDark: Temna
+  comingLater: Kmalu
+  setByOrganisation: Nastavila vaša organizacija
+  turnedOffByOrganisation: Izklopila vaša organizacija
+  never: Nikoli
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Odklepanje s PIN-om
+  pinTurnOn: Vklopi
+  masterPasswordRequired: Vnesite glavno geslo
+  pinAgain: Potrdite PIN
+  pinMismatch: PIN-a se ne ujemata
+  pinAdvice: Ne uporabite PIN-a, ki ga že uporabljate za telefon ali banko.
+  pinAfterRestart: Po ponovnem zagonu brskalnika enkrat vnesete glavno geslo; nato PIN znova deluje.
+  biometrics: Odklepanje z biometrijo
+  notAvailableYet: Še ni na voljo
+  vaultTimeout: Časovna omejitev trezorja
+  timeoutImmediately: Takoj
+  timeoutMinutes:
+    1: 1 minuta
+    n: $1 min
+  timeoutHours:
+    1: 1 ura
+    n: $1 h
+  timeoutOnSystemLock: Ob zaklepu sistema
+  timeoutOnSystemLockCapped: Ob zaklepu sistema ali po {duration} nedejavnosti (nastavila vaša organizacija)
+  timeoutOnRestart: Ob ponovnem zagonu brskalnika
+  timeoutCustom: Po meri
+  hours: Ure
+  minutes: Minute
+  customAtLeastOne: Vnesite vsaj eno minuto
+  customWhole: Vnesite cele ure in minute
+  customAtMost: Vaša organizacija dovoli največ {duration}
+  neverTitle: Želite pustiti trezor odklenjen?
+  neverWarning: Vaš trezor ostane odklenjen, dokler ga ne zaklenete ročno. Ključ, ki ga odpira, se zapiše na disk tega profila brskalnika, kjer ga lahko prebere vsak, ki lahko bere profil.
+  neverConfirm: Pusti odklenjeno
+  timeoutAction: Dejanje ob poteku
+  actionLock: Zakleni
+  actionLogOutNote: Ko časovna omejitev poteče, ste odjavljeni in znova potrebujete geslo programa
+  lockNow: Zakleni zdaj
+  changeMasterPassword: Spremeni glavno geslo
+  autofillOnPageLoad: Samodejno izpolni ob nalaganju strani
+  autofillOnPageLoadWarning: Ogrožena ali nezaupanja vredna spletna mesta lahko zlorabijo samodejno izpolnjevanje ob nalaganju strani
+  defaultAutofill: Privzeta nastavitev samodejnega izpolnjevanja za prijave
+  defaultAutofillOnPageLoad: Samodejno izpolni ob nalaganju strani, če je omogočeno
+  uriMatch: Privzeto zaznavanje ujemanja URI
+  uriBaseDomain: Osnovna domena
+  uriHost: Gostitelj
+  uriStartsWith: Se začne z
+  uriExact: Natančno
+  uriRegex: Regularni izraz
+  uriRegexNote: Regularni izrazi so napredna možnost in lahko pokvarijo ujemanje
+  inlineSuggestions: Prikaži predloge za samodejno izpolnjevanje v poljih obrazcev
+  inlineCards: Prikaži kartice kot predloge
+  inlineIdentities: Prikaži identitete kot predloge
+  inlineKindsOff: Najprej vklopite Prikaži predloge za samodejno izpolnjevanje v poljih obrazcev.
+  vaultCards: Vedno prikaži kartice kot predloge za samodejno izpolnjevanje v pogledu trezorja
+  vaultIdentities: Vedno prikaži identitete kot predloge za samodejno izpolnjevanje v pogledu trezorja
+  defaultPasswordManager: Nastavi Keepiq kot privzeti upravitelj gesel
+  defaultPasswordManagerHint: Izklopi shranjevanje gesel in samodejno izpolnjevanje naslovov v brskalniku, da njegovi predlogi ne prekrivajo predlogov Keepiqa.
+  defaultPasswordManagerManaged: To nastavitev brskalnika upravlja vaša organizacija ali druga razširitev.
+  contextMenu: Omogoči možnosti v priročnem meniju
+  shortcut: Bližnjica za samodejno izpolnjevanje
+  shortcutNotSet: Ni nastavljeno
+  shortcutChange: Spremeni
+  shortcutFirefox: Odprite about:addons, izberite meni z zobnikom in nato Upravljanje bližnjic razširitev
+  clearClipboard: Počisti odložišče
+  clipboardSeconds:
+    1: 1 sekunda
+    n: $1 s
+  autoCopyTotp: Samodejno kopiraj TOTP
+  autoCopyTotpHint: Če ima prijava potrditveno kodo, se ta ob samodejnem izpolnjevanju prijave kopira v odložišče.
+  askToAdd: Vprašaj za dodajanje prijave
+  askToUpdate: Vprašaj za posodobitev obstoječe prijave
+  askPasskeys: Vprašaj za shranjevanje in uporabo ključev za dostop
+  excludedDomains: Izključene domene
+  addCurrentSite: Dodaj trenutno spletno mesto
+  domain: Domena
+  addDomain: Dodaj
+  domainEmpty: Vnesite domeno
+  domainUnreadable: Vnesite domeno, na primer example.org
+  domainDuplicate: Že izključeno
+  removeDomain: Odstrani {domain}
+  webTitle: Keepiq na spletu
+  webText: Lastna obvestila Keepiqa, uvoz in izvoz ter glavno geslo upravljate v Keepiqu v Nextcloudu, pod Osebne nastavitve.
+  openKeepiq: Odpri Keepiq
+  lastSync: "Zadnje usklajevanje: {time}"
+  lastSyncNever: "Zadnje usklajevanje: nikoli"
+  syncOffline: Usklajevanje ni uspelo, niste povezani
+  syncFailed: Usklajevanje ni uspelo, poskusite znova pozneje
+  importItems: Uvozi elemente
+  exportVault: Izvozi trezor
+  defaultItemType: Privzeta vrsta elementa v tej razširitvi
+  compactMode: Strnjeni način
+  showAnimations: Prikaži animacije
+  quickCopy: Prikaži dejanja za hitro kopiranje v trezorju
+  showBadgeCounter: Prikaži število predlaganih prijav na ikoni razširitve
+  language: Jezik
+  languageFollows: Sledi brskalniku
+  version: Različica {version}
+  server: Strežnik {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Različica Keepiqa ni znana
+  help: Pomoč
+  reportBug: Prijavi napako
+  contactSupport: Stik s podporo
+  privacyPolicy: Pravilnik o zasebnosti
+  webApp: Spletna aplikacija Keepiq
+  rate: Oceni razširitev
+
+generator:
+  kinds: Kaj ustvariti
+  password: Geslo
+  passphrase: Geselna fraza
+  username: Uporabniško ime
+  length: Dolžina
+  lengthValue: Dolžina v znakih
+  uppercase: Velike črke (A-Z)
+  lowercase: Male črke (a-z)
+  digits: Števke (0-9)
+  special: Posebni znaki, kot so !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Vrste znakov
+  lastClassOn: Vsaj ena vrsta ostane vklopljena
+  minNumbers: Najmanj števk
+  minSpecial: Najmanj posebnih znakov
+  avoidAmbiguous: Izogibaj se dvoumnim znakom
+  lockedByPolicy: Nastavila vaša organizacija
+  passphraseOff: Izklopila vaša organizacija
+  words: Število besed
+  separator: Ločilo besed
+  capitalizeWords: Velike začetnice
+  capitalize: Velika začetnica
+  includeNumber: Vključi število
+  usernameType: Vrsta
+  typeWord: Naključna beseda
+  typePlus: E-poštni naslov s plusom
+  typeCatchall: Naslov catch-all
+  email: E-pošta
+  emailPlaceholder: ime@example.com
+  domain: Domena
+  domainPlaceholder: example.com
+  basedOn: Na podlagi
+  random: Naključno
+  websiteName: Ime spletnega mesta
+  noWebsite: Spletno mesto ni zaznano
+  needsEmail: Vnesite e-poštni naslov
+  needsDomain: Vnesite domeno
+  wordlistUnavailable: Seznam besed ni na voljo
+  regenerate: Ustvari znova
+  usePassword: Uporabi to geslo
+  useUsername: Uporabi to uporabniško ime
+  history: Zgodovina generatorja
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Še ni ustvarjenih vrednosti
+  clearHistory: Počisti
+  clearHistoryTitle: Želite počistiti zgodovino generatorja?
+  clearHistoryText: S tem iz tega brskalnika odstranite vse vrednosti na seznamu.
+  generatePasswordLink: Ustvari geslo
+  generatePassword: Ustvari geslo
+  generateUsername: Ustvari uporabniško ime
+
+send:
+  new: Nova pošiljka
+  empty: Še ni pošiljk
+  emptyText: Delite besedilo ali prijavo prek povezave, ki se sama izbriše.
+  loadFailed: Pošiljk ni bilo mogoče naložiti
+  retry: Poskusi znova
+  labelText: "Besedilo, {time}"
+  labelCredential: "Podatki za prijavo, {time}"
+  viewsLeft:
+    1: "Preostali ogledi: {left} od 1"
+    n: "Preostali ogledi: {left} od $1"
+  expires: "Poteče {date}"
+  neverExpires: Nikoli ne poteče
+  expired: Poteklo
+  passwordBadge: Geslo
+  link: Povezava
+  copyLink: Kopiraj povezavo
+  copyLinkOf: "Kopiraj povezavo, {name}"
+  linkGone: Povezava ni več na voljo
+  remove: Odstrani
+  removeOf: "Odstrani, {name}"
+  removeTitle: Odstrani pošiljko
+  removeConfirm: Želite odstraniti to pošiljko? Vsi s povezavo izgubijo dostop.
+  removed: Pošiljka je odstranjena
+  contentSection: Vsebina
+  optionsSection: Možnosti
+  type: Vrsta
+  text: Besedilo
+  credential: Podatki za prijavo
+  content: Besedilo za deljenje
+  maxViews: Največ ogledov
+  maxViewsRange: "Med 1 in {max}"
+  expiry: Poteče po
+  expiry1h: 1 ura
+  expiry1d: 1 dan
+  expiry2d: 2 dneva
+  expiry3d: 3 dni
+  expiry7d: 7 dni
+  expiry30d: 30 dni
+  expiryCustom: Po meri
+  customHours: Ure
+  customHoursMin: Najmanj 1 ura
+  customHoursMax: Največ 720 ur (30 dni)
+  accessPassword: Geslo za dostop
+  accessPasswordHint: Neobvezno. Prejemnik ga potrebuje, da odpre pošiljko.
+  create: Ustvari
+  protecting: Zaščita z geslom…
+  offline: Za pošiljke je potrebna povezava z vašim strežnikom Keepiq
+  prefillFailed: Te prijave ni bilo mogoče prebrati
+  ready: Vaša pošiljka je pripravljena
+  shownOnce:
+    1: Kopirajte povezavo zdaj. Prikazana je le, dokler ne zaprete tega okna, vsebina pa izgine po 1 ogledu.
+    n: Kopirajte povezavo zdaj. Prikazana je le, dokler ne zaprete tega okna, vsebina pa izgine po $1 ogledih.
+  passwordNote: Geslo za dostop delite ločeno od povezave. Po 5 napačnih poskusih se pošiljka izbriše.
+  done: Končano
+
+pageFill:
+  insecure: "Opozorilo: to je nezavarovana stran HTTP, zato lahko drugi morda vidijo in spremenijo vse, kar pošljete. Ta prijava je bila prvotno shranjena na varni strani (HTTPS), {host}.\n\nAli želite to prijavo vseeno izpolniti?"
+  insecureNoHost: "Opozorilo: to je nezavarovana stran HTTP, zato lahko drugi morda vidijo in spremenijo vse, kar pošljete. Ta prijava je bila prvotno shranjena na varni strani (HTTPS).\n\nAli želite to prijavo vseeno izpolniti?"
+  cardInsecure: "Želite izpolniti to kartico na nevarnem spletnem mestu?\n\nTo spletno mesto ni varno. Kdorkoli v omrežju bi lahko prebral izpolnjene podatke kartice."
+  crossSite: "Želite izpolniti tudi na {hosts}?\n\nDel tega obrazca prihaja iz {hosts}, ne iz {host}. Keepiq ga tam izpolni le, če se strinjate."
+
+contextMenu:
+  root: Keepiq
+  autofill: Samodejno izpolni prijavo
+  noMatches: Ni razpoložljivih prijav
+  noUsernames: Ni razpoložljivih uporabniških imen
+  noPasswords: Ni razpoložljivih gesel
+  noCodes: Ni razpoložljivih potrditvenih kod
+  noIdentities: Ni razpoložljivih identitet
+  noCards: Ni razpoložljivih kartic
+  addLogin: Dodaj prijavo
+  addIdentity: Dodaj identiteto
+  addCard: Dodaj kartico
+  openKeepiq: Odpri Keepiq
+  copyUsername: Kopiraj uporabniško ime
+  copyPassword: Kopiraj geslo
+  copyCode: Kopiraj potrditveno kodo
+  autofillCard: Samodejno izpolni kartico
+  autofillIdentity: Samodejno izpolni identiteto
+  generatePassword: Ustvari in kopiraj geslo
+  unlock: Odkleni trezor
+
+pageNotice:
+  label: Obvestilo Keepiq
+  noLoginForm: Keepiq na tej strani ni našel obrazca za prijavo, ki bi ga lahko izpolnil.
+  noCardForm: Keepiq na tej strani ni našel polj kartice, ki bi jih lahko izpolnil.
+  noIdentityForm: Keepiq na tej strani ni našel polj za naslov ali osebne podatke, ki bi jih lahko izpolnil.
+
+toolbar:
+  locked: "{name}: zaklenjeno"
+  loggedOut: "{name}: odjavljeno"
+  count:
+    1: "{name}: 1 prijava za to spletno mesto"
+    n: "{name}, prijave za to spletno mesto: $1"
+
+inlineList:
+  frameTitle: Prijave Keepiq
+  label: Prijave Keepiq za {host}
+  row: "{name}, {username}"
+  noMatch: Ni prijav za {host}
+  passkeyRow: "{name}, {username}, ključ za dostop"
+  passkeyRowNoUser: "{name}, ključ za dostop"
+  noMatchPasskeys: Ni prijav ali ključev za dostop za {host}
+  locked: Keepiq je zaklenjen
+  unlock: Odkleni
+  insecureQuestion: Želite izpolniti na tem nevarnem spletnem mestu?
+  insecureDetail: To spletno mesto ni varno. Kdorkoli v omrežju bi lahko prebral, kar se izpolni.
+  fill: Izpolni
+  notVisible: Keepiq tukaj ne more izpolnjevati, ker ta stran spreminja način prikaza. Uporabite gumb Keepiq v orodni vrstici.
+  status:
+    count:
+      1: 1 prijava Keepiq. Za izbiro pritisnite puščico dol.
+      n: "Prijave Keepiq: $1. Za izbiro pritisnite puščico dol."
+    noMatch: Ni prijav Keepiq za {host}
+    countPasskeys:
+      1: 1 prijava ali ključ za dostop Keepiq. Za izbiro pritisnite puščico dol.
+      n: "Prijave in ključi za dostop Keepiq: $1. Za izbiro pritisnite puščico dol."
+    noMatchPasskeys: Ni prijav ali ključev za dostop Keepiq za {host}
+    locked: Keepiq je zaklenjen. Za odklepanje pritisnite puščico dol.
+  code:
+    frameTitle: Potrditvene kode Keepiq
+    label: Potrditvene kode Keepiq za {host}
+    noMatch: Ni potrditvenih kod za {host}
+    locked: Odklenite Keepiq, da vidite potrditvene kode
+    invalid: Neveljavna skrivnost avtentikatorja
+    status:
+      count:
+        1: 1 potrditvena koda Keepiq. Za izbiro pritisnite puščico dol.
+        n: "Potrditvene kode Keepiq: $1. Za izbiro pritisnite puščico dol."
+      noMatch: Ni potrditvenih kod Keepiq za {host}
+  card:
+    frameTitle: Kartice Keepiq
+    noMatch: V Keepiqu ni kartic
+    locked: Odklenite Keepiq, da vidite kartice
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kartica, *{last4}"
+    row: "{name}, kartica {brand}, ki se konča s {last4}"
+    rowNoBrand: "{name}, kartica, ki se konča s {last4}"
+    status:
+      count:
+        1: 1 kartica Keepiq. Za izbiro pritisnite puščico dol.
+        n: "Kartice Keepiq: $1. Za izbiro pritisnite puščico dol."
+  identity:
+    frameTitle: Identitete Keepiq
+    noMatch: V Keepiqu ni identitet
+    locked: Odklenite Keepiq, da vidite identitete
+    status:
+      count:
+        1: 1 identiteta Keepiq. Za izbiro pritisnite puščico dol.
+        n: "Identitete Keepiq: $1. Za izbiro pritisnite puščico dol."
+
+notificationBar:
+  label: Obvestilo Keepiq
+  saveQuestion: Želite shraniti prijavo za {host} v Keepiq?
+  updateQuestion: Želite posodobiti geslo za {name}?
+  updateQuestionUser: Želite posodobiti geslo za {name} ({username})?
+  updateQuestionHost: Želite posodobiti geslo za {name} na {host}?
+  updateQuestionUserHost: Želite posodobiti geslo za {name} ({username}) na {host}?
+  folder: Mapa
+  noFolder: Brez mape
+  save: Shrani
+  never: Nikoli za to mesto
+  update: Posodobi
+  close: Zapri
+  expand: Prikaži možnosti
+  shortcutHint: Za odgovor pritisnite {shortcut}.
+  saving: Shranjevanje…
+  updating: Posodabljanje…
+  saved: Prijava je shranjena
+  updated: Geslo je posodobljeno
+  notVisible: Keepiq tega tukaj ne more narediti, ker ta stran spreminja način prikaza. Zaprite to in dodajte prijavo z gumbom Keepiq v orodni vrstici.
+  errors:
+    writeLocked: Trezor je začasno zaklenjen za spremembe. Poskusite znova pozneje.
+    unverified: Za spremembo gesla uredite to prijavo v pojavnem oknu ali spletni aplikaciji Keepiq.
+    viewOnly: Ta prijava je z vami deljena samo za ogled, zato njenega gesla tukaj ni mogoče posodobiti.
+    loginGone: Ta prijava ne obstaja več. Jo želite shraniti kot novo prijavo?
+    locked: Keepiq je zaklenjen. Odklenite ga z gumbom Keepiq v orodni vrstici in poskusite znova.
+    notResponding: Keepiq se ne odziva. Poskusite znova.
+    accountChanged: Preklopili ste račun, zato ni bilo nič shranjeno.
+    keyMismatch: Ključ Keepiqa se ne ujema z vašim trezorjem. Nič ni bilo shranjeno; obvestite skrbnika.
+    staleSource: Izvirnik te deljene prijave se je spremenil. Nič ni bilo shranjeno; poskusite znova.
+    incomplete: Seznam oseb, s katerimi je ta prijava deljena, se je ves čas spreminjal. Nič ni bilo shranjeno; poskusite znova.
+    badCertificate: Šifrirnega ključa enega od prejemnikov ni bilo mogoče prebrati. Nič ni bilo shranjeno.
+    keepiqOutdated: Vaš strežnik Keepiq je prestar. Nič ni bilo shranjeno; prosite skrbnika za Keepiq {version} ali novejši.
+    shareScanPending: Ta prijava čaka na preverjanje deljenj. Nič ni bilo shranjeno; poskusite znova pozneje.
+
+passkey:
+  unlockGet: Odklenite Keepiq, da uporabite ključ za dostop za {rpId}
+  unlockCreate: Odklenite Keepiq, da shranite ključ za dostop za {rpId}
+  verifyTitle: Potrdite, da ste to vi
+  verifyPassword: Za nadaljevanje vnesite glavno geslo.
+  verifyPin: Za nadaljevanje vnesite PIN.
+  confirm: Potrdi
+  signInTitle: Prijava s ključem za dostop
+  signInText: Uporabite ključ za dostop, shranjen v Keepiqu, za {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Ni ključa za dostop Keepiq za {rpId}
+  saveTitle: Shrani ključ za dostop
+  saveTo: Shrani v prijavo
+  replaces: Zamenja ključ za dostop za {userName}
+  newLogin: Nova prijava
+  name: Ime
+  folder: Mapa
+  noFolder: Brez mape
+  saveNew: Shrani kot novo prijavo
+  replaceQuestion: Želite zamenjati ključ za dostop za {userName} v prijavi {name}?
+  replace: Zamenjaj
+  alreadySavedTitle: Ključ za dostop je že shranjen
+  alreadySaved: Ključ za dostop za ta račun je že shranjen v Keepiqu
+  close: Zapri
+  retry: Poskusi znova
+  fallback: Uporabite svojo napravo ali strojni ključ
+  stalePick: Tega ključa za dostop ni več v vašem trezorju. Izberite drugega.
+  staleSave: Ta prijava ne more več sprejeti ključa za dostop. Izberite drugo ali ga shranite kot novo prijavo.
+  errors:
+    conflict: Ta prijava se je med shranjevanjem spremenila. Nič ni bilo shranjeno; poskusite znova.
+    partnerUpgradeRequired: "Nič ni bilo shranjeno: Keepiq pri {cloudIds} je prestar za shranjevanje ključev za dostop. Prosite jih, naj posodobijo Keepiq, ali shranite ključ za dostop v drugo prijavo."
+    partnerUpgradeRequiredUnnamed: "Nič ni bilo shranjeno: partnerska organizacija, s katero je ta prijava deljena, uporablja Keepiq, ki je prestar za shranjevanje ključev za dostop. Prosite jih, naj posodobijo Keepiq, ali shranite ključ za dostop v drugo prijavo."
+    shareScanPending: Ta prijava čaka na preverjanje deljenj, ki še ni končano. Nič ni bilo shranjeno; poskusite znova pozneje.

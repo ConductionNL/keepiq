@@ -17,17 +17,27 @@ The extension SHALL take every user-facing text from the message catalog of the 
 The extension SHALL use the catalog for the browser's UI language and MUST fall back to English when the browser's language has no catalog or a key is missing. It SHALL offer no language setting of its own.
 
 #### Scenario: Unsupported language
-- **GIVEN** the browser's UI language is French
+- **GIVEN** the browser's UI language is Japanese
 - **WHEN** the popup opens
 - **THEN** it is in English
 
-### Requirement: English and Dutch with the same keys
-The extension SHALL ship English and Dutch catalogs with exactly the same keys and, per key, the same placeholders. A test MUST fail when they differ.
+### Requirement: Every catalog with the same keys
+The extension SHALL ship a catalog for English and for each of the EU's other official languages that Chrome or Firefox offers as a UI language, which leaves out Maltese. Every catalog MUST have exactly the keys of the English one and, per key, the same placeholders, and its manifest description MUST fit Chrome's 132 characters. A test MUST fail when one does not.
 
 #### Scenario: Key missing in Dutch
 - **GIVEN** a key in `en.yml` that `nl.yml` lacks
 - **WHEN** the tests run
 - **THEN** the parity test fails and names the key
+
+#### Scenario: Description too long
+- **GIVEN** a catalog whose `extensionDescription` is 133 characters
+- **WHEN** the tests run
+- **THEN** the test fails for that catalog
+
+#### Scenario: Irish on Firefox
+- **GIVEN** Firefox's UI language is Irish
+- **WHEN** the popup opens
+- **THEN** it is in Irish
 
 ### Requirement: Codes, not text, from the background
 The background SHALL send codes to the popup, never display text: a failed action replies with its error code, the key-changed notice with a notice code, and a blocked row with a reason code. The popup MUST turn each code into text from the catalog and show a generic text for a code it does not know. Error messages from the server are not shown.
@@ -64,6 +74,6 @@ The extension SHALL format dates, times, relative times and numbers in the langu
 - **THEN** the banner shows the relative time in Dutch
 
 #### Scenario: Language without a catalog
-- **GIVEN** the browser's UI language is French
+- **GIVEN** the browser's UI language is Japanese
 - **WHEN** an item's dates render
 - **THEN** they are formatted for English, like the text around them
