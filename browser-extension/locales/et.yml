@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Määramata
   shortcutChange: Muuda
   shortcutFirefox: Ava about:addons, vali hammasrattamenüü ja seejärel Halda laienduste kiirklahve
+  shortcutSafari: Ava Safari seaded, vali Laiendid ja seejärel Keepiq, et selle kiirklahvi muuta
+  websiteAccess: Juurdepääs veebisaitidele
+  websiteAccessAll: Kõik veebisaidid
+  websiteAccessSome: Ainult sinu lubatud veebisaidid
+  websiteAccessServer: Sinu Keepiqi serverile pole juurdepääsu
   clearClipboard: Tühjenda lõikelaud
   clipboardSeconds:
     1: 1 sekund
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Privaatsuspoliitika
   webApp: Keepiqi veebirakendus
   rate: Hinda laiendust
+
+websiteAccess:
+  title: Lase Keepiqil veebisaitidel töötada
+  body: Safari käitab Keepiqi ainult veebisaitidel, mida sa lubad. Luba see kõigil veebisaitidel, et täita kasutajakontosid, salvestada uusi ja kasutada pääsuvõtmeid kõikjal, kus sisse logid.
+  allow: Luba kõigil veebisaitidel
+  dismiss: Mitte praegu
+  steps: Vali Safaris Safari > Seaded ja seejärel Veebisaidid. Vali loendist Keepiq ja määra „Teiste veebisaitide külastamisel“ väärtuseks Luba.
+  perSite: Kui soovid lubada saite ükshaaval, klõpsa sellel saidil Keepiqi nupul ja vali, et see oleks alati lubatud.
+  serverTitle: Keepiq ei saa ühendust aadressiga {host}
+  serverBody: Safari ei lase Keepiqil sinu serveriga ühendust võtta, seega ei saa sinu hoidlat sünkroonida.
+  serverAllow: Luba {host}
 
 generator:
   kinds: Mida genereerida

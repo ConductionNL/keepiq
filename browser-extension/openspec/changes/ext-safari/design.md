@@ -119,7 +119,7 @@ Safari applies content scripts only where the user granted access through the to
 - **Allow on every website** calls `permissions.request({ origins: SITE_ORIGINS })` in the click, then checks again. Still `'sites'`: the steps show, `role="status"`. **Allow `<host>`** requests `['<server origin>/*']` the same way.
 - **Re-checks** on mount, on `permissions.onAdded` and `onRemoved`, and after each button. Safari may close the popup for a prompt (**unverified**); the next open checks again.
 - **Not now** sets `websiteAccessDismissed: true` in `settings.global` through `settings.set`. It hides only the Vault tab's `'sites'` card.
-- **Text keys,** both catalogs (Safari's labels are **unverified**, see § Unverified):
+- **Text keys,** every catalog (Safari's labels are **unverified**, see § Unverified):
 
 | Key | en | nl |
 | --- | --- | --- |
@@ -127,7 +127,7 @@ Safari applies content scripts only where the user granted access through the to
 | `websiteAccess.body` | Safari runs Keepiq only on websites you allow. Allow it on every website to fill in logins, save new ones and use passkeys wherever you sign in. | Safari laat Keepiq alleen werken op websites die je toestaat. Sta het toe op alle websites om overal inloggegevens in te vullen, nieuwe op te slaan en passkeys te gebruiken. |
 | `websiteAccess.allow` | Allow on every website | Op alle websites toestaan |
 | `websiteAccess.dismiss` | Not now | Niet nu |
-| `websiteAccess.steps` | In Safari, choose Safari > Settings, then Websites. Select Keepiq in the list and set "When visiting other websites" to Allow. | Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoek aan andere websites" op Sta toe. |
+| `websiteAccess.steps` | In Safari, choose Safari > Settings, then Websites. Select Keepiq in the list and set "When visiting other websites" to Allow. | Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoeken van andere websites" op Sta toe. |
 | `websiteAccess.perSite` | To allow one site at a time, click the Keepiq button on that site and choose to always allow it. | Wil je per website toestaan? Klik op die website op de Keepiq-knop en kies om het altijd toe te staan. |
 | `websiteAccess.serverTitle` | Keepiq can't reach {host} | Keepiq kan {host} niet bereiken |
 | `websiteAccess.serverBody` | Safari doesn't let Keepiq reach your server, so your vault can't sync. | Safari geeft Keepiq geen toegang tot je server, dus je kluis kan niet synchroniseren. |
@@ -206,7 +206,7 @@ A `safari` job in `.github/workflows/browser-extension.yml`, beside `check-and-b
 
 Confirm on a real Mac (tasks.md 8.2), then drop each line:
 
-- Safari Settings labels: the Websites pane, "When visiting other websites", Allow, and their Dutch names; the toolbar popover's "always allow" wording; the shortcut path in `settings.shortcutSafari`.
+- Safari Settings labels: the Websites pane, "When visiting other websites", Allow, and their names in bg, et, lt, lv and ga, which Apple's Safari guide doesn't cover; the toolbar popover's "always allow" wording; the shortcut path in `settings.shortcutSafari`.
 - What `permissions.request({ origins: SITE_ORIGINS })` does on Safari 26: a prompt, an immediate `true` without access, or a grant; and whether `permissions.contains` reports `true` after "Allow on every website".
 - Whether the server origin granted at add time stays granted or can expire.
 - Whether Safari closes the popup for a permission prompt.
@@ -216,4 +216,4 @@ Confirm on a real Mac (tasks.md 8.2), then drop each line:
 - WebDriver: whether `type: 'base64'` loads; the runner only ever used `type: 'path'`.
 - WebKit refusing WebAuthn without focus (from Bitwarden's comment), whether the `MAIN` world script runs before the page's scripts at `document_start`, and `windows.update({ focused: true })` behaviour.
 - Whether a `filter` on `<html>` reaches Safari's top layer: open the test site's `root-filter.html` probe. Until then the inline list and save bar refuse a pick while `<html>` has one, as on Firefox (`rootFilterReachesTopLayer`, true for every target but Chromium in `entrypoints/content.ts`); if the popover shows, make it Firefox only.
-- Language: Safari follows macOS's preferred languages; with Irish first and no Irish catalog the extension should show English, and Dutch when Dutch is first.
+- Language: Safari follows macOS's preferred languages; whether it offers Irish there and picks the `ga` catalog with Irish first, and Dutch when Dutch is first.

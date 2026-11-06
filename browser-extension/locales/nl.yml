@@ -515,7 +515,7 @@ websiteAccess:
   body: Safari laat Keepiq alleen werken op websites die je toestaat. Sta het toe op alle websites om overal inloggegevens in te vullen, nieuwe op te slaan en passkeys te gebruiken.
   allow: Op alle websites toestaan
   dismiss: Niet nu
-  steps: 'Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoek aan andere websites" op Sta toe.'
+  steps: 'Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoeken van andere websites" op Sta toe.'
   perSite: Wil je per website toestaan? Klik op die website op de Keepiq-knop en kies om het altijd toe te staan.
   serverTitle: Keepiq kan {host} niet bereiken
   serverBody: Safari geeft Keepiq geen toegang tot je server, dus je kluis kan niet synchroniseren.

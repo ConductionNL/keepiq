@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nie ustawiono
   shortcutChange: Zmień
   shortcutFirefox: Otwórz about:addons, wybierz menu z ikoną koła zębatego, a następnie Zarządzaj skrótami rozszerzeń
+  shortcutSafari: Otwórz ustawienia Safari, wybierz Rozszerzenia, a następnie zaznacz Keepiq, aby zmienić jego skrót
+  websiteAccess: Dostęp do witryn
+  websiteAccessAll: Wszystkie witryny
+  websiteAccessSome: Tylko witryny, na które zezwolono
+  websiteAccessServer: Bez Twojego serwera Keepiq
   clearClipboard: Wyczyść schowek
   clipboardSeconds:
     1: 1 sekunda
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Polityka prywatności
   webApp: Aplikacja webowa Keepiq
   rate: Oceń rozszerzenie
+
+websiteAccess:
+  title: Pozwól Keepiq działać w witrynach
+  body: Safari uruchamia Keepiq tylko w witrynach, na które zezwolisz. Zezwól na wszystkie witryny, aby wypełniać dane logowania, zapisywać nowe i używać kluczy dostępu wszędzie, gdzie się logujesz.
+  allow: Zezwól we wszystkich witrynach
+  dismiss: Nie teraz
+  steps: W Safari wybierz Safari > Ustawienia, a następnie Witryny. Zaznacz Keepiq na liście i ustaw „Odwiedzając inne witryny” na Pozwól.
+  perSite: Aby zezwalać na witryny pojedynczo, kliknij przycisk Keepiq w danej witrynie i wybierz, by zawsze na nią zezwalać.
+  serverTitle: Keepiq nie może połączyć się z {host}
+  serverBody: Safari nie pozwala Keepiq łączyć się z Twoim serwerem, więc sejf nie może się synchronizować.
+  serverAllow: Zezwól na {host}
 
 generator:
   kinds: Co wygenerować

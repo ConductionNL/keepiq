@@ -33,7 +33,7 @@
 
 ## 5. Website access
 
-- [x] 5.1 Add `src/website-access.ts`, the `WebsiteAccess` component on the Vault tab and in Settings → Autofill, `websiteAccessDismissed` in `settings.global`, and the keys in design.md § Website access to `en.yml` and `nl.yml`
+- [x] 5.1 Add `src/website-access.ts`, the `WebsiteAccess` component on the Vault tab and in Settings → Autofill, `websiteAccessDismissed` in `settings.global`, and the keys in design.md § Website access to every catalog
   - Only on Safari; no component imports `src/api` or `src/crypto`
   - Popup tests in both projects: each state, Not now, a grant, a request that grants nothing showing the steps, `permissions.onAdded` re-rendering, keyboard use and screen reader names
   - Ends with building all three targets

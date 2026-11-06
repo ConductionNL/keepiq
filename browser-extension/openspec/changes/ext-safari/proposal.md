@@ -64,7 +64,7 @@ None. The server origin is still requested when an account is added (ADR-003, ex
 - `entrypoints/background.ts`, `src/clipboard.ts`, new `src/safari-native.ts`, `entrypoints/popup/hooks/useClipboard.ts`, `src/messages.ts` (`clipboard.copied` gains `changeCount`).
 - `entrypoints/passkey-page-main.content.ts`, `src/passkey/page.ts`.
 - `entrypoints/content.ts`, `src/autofill/inline-host.ts`, `notification-host.ts` and `visibility.ts`: the root filter refusal on every target but Chromium; `test-site/root-filter.html` and `passkey-frame.html`.
-- Popup: new `WebsiteAccess` component on the Vault tab and in the Autofill view; `settings.global` gains `websiteAccessDismissed`; keys in `locales/en.yml` and `locales/nl.yml`.
+- Popup: new `WebsiteAccess` component on the Vault tab and in the Autofill view; `settings.global` gains `websiteAccessDismissed`; keys in every catalog in `locales/`.
 - New `safari/` (Swift handler, its test, `package.sh`) and `scripts/safari-smoke.ts`; a `safari` job in `.github/workflows/browser-extension.yml`.
 - Docs: CLAUDE.md, README.md, WXT-AND-BROWSERS.md, ARCHITECTURE.md, SECURITY.md, `openspec/config.yaml`, ADR-002, `../docs/browser-extension/using.md` and `privacy.md`.
 - The containing app needs a reviewer who can read Swift.

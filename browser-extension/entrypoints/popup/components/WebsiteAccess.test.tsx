@@ -135,7 +135,7 @@ describe('WebsiteAccessCard', () => {
 		expect(screen.getByRole('button', { name: 'Niet nu' })).toBeTruthy()
 		await user.click(screen.getByRole('button', { name: 'Op alle websites toestaan' }))
 		expect((await screen.findByRole('status')).textContent).toBe(
-			'Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoek aan andere websites" op Sta toe.'
+			'Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoeken van andere websites" op Sta toe.'
 			+ 'Wil je per website toestaan? Klik op die website op de Keepiq-knop en kies om het altijd toe te staan.',
 		)
 	})
