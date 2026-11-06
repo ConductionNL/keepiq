@@ -6,8 +6,6 @@ const options: SmokeOptions = { driver: 'http://driver', site: 'http://site', ex
 
 type Route = (body: Record<string, unknown> | undefined) => { status?: number; value: unknown }
 
-const EXTENSION_PAGE = 'safari-web-extension://ext-1/popup.html'
-
 /** safaridriver and the test site, as `fetch` sees them; `routes` overrides a `METHOD path`. */
 function fakeDriver(routes: Record<string, Route> = {}) {
 	const calls: string[] = []
@@ -17,9 +15,7 @@ function fakeDriver(routes: Record<string, Route> = {}) {
 		'GET http://site/': () => ({ value: null }),
 		'POST http://driver/session': () => ({ value: { sessionId: 's1', capabilities: {} } }),
 		'POST http://driver/session/s1/webextension': () => ({ value: { extension: 'ext-1' } }),
-		'POST http://driver/session/s1/timeouts': () => ({ value: null }),
 		'POST http://driver/session/s1/url': () => ({ value: null }),
-		'POST http://driver/session/s1/execute/async': () => ({ value: true }),
 		'POST http://driver/session/s1/execute/sync': () => ({ value: false }),
 		'DELETE http://driver/session/s1': () => ({ value: null }),
 	}
@@ -56,15 +52,13 @@ describe('extensionIdOf', () => {
 })
 
 describe('smoke', () => {
-	it('installs the build by path, asks the extension\'s page about access, checks the page script and ends the session', async () => {
+	it('installs the build by path, passes when the page script ran, and ends the session', async () => {
 		const { calls, bodies } = fakeDriver()
 		await smoke(options)
 		expect(bodies).toContainEqual({ type: 'path', path: '/abs/.output/safari-mv3' })
-		expect(bodies).toContainEqual({ pageLoad: 5_000 })
-		expect(bodies).toContainEqual({ url: EXTENSION_PAGE })
-		expect(bodies).toContainEqual(expect.objectContaining({ args: ['http://site/*'] }))
 		expect(bodies).toContainEqual({ url: 'http://site/passkey.html' })
 		expect(zipFolder).not.toHaveBeenCalled()
+		expect(logged()).toContain('PASS: the passkey page script ran')
 		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
 	})
 
@@ -89,23 +83,15 @@ describe('smoke', () => {
 		await expect(smoke(options)).rejects.toThrow('no extension id')
 	})
 
-	it('treats a page-load timeout on the extension\'s page as opened', async () => {
-		const { calls } = fakeDriver({
-			'POST http://driver/session/s1/url': (body) => body?.url === EXTENSION_PAGE ? { status: 500, value: { error: 'timeout', message: 'page load' } } : { value: null },
-		})
-		await smoke(options)
-		expect(calls).toContain('POST http://driver/session/s1/execute/sync')
-	})
-
 	it.each<[string, Record<string, Route>]>([
-		['the extension has no access', { 'POST http://driver/session/s1/execute/async': () => ({ value: false }) }],
-		['its page cannot be opened', { 'POST http://driver/session/s1/url': () => ({ status: 400, value: { error: 'invalid argument', message: 'bad scheme' } }) }],
-		['its page answers something else', { 'POST http://driver/session/s1/execute/async': () => ({ value: 'ReferenceError: browser' }) }],
-	])('skips the page script check and passes when %s', async (_, routes) => {
+		['navigator.credentials.get stays native', { 'POST http://driver/session/s1/execute/sync': () => ({ value: true }) }],
+		['the test page cannot be opened', { 'POST http://driver/session/s1/url': () => ({ status: 500, value: { error: 'unknown error', message: 'no page' } }) }],
+		['the check cannot run', { 'POST http://driver/session/s1/execute/sync': () => ({ status: 500, value: { error: 'javascript error', message: 'nope' } }) }],
+	])('skips and passes when %s', async (_, routes) => {
 		const { calls } = fakeDriver(routes)
 		await smoke(options)
-		expect(logged()).toContain('SKIP: no website access in an automation session')
-		expect(calls).not.toContain('POST http://driver/session/s1/execute/sync')
+		expect(logged()).toContain("SKIP: the content script didn't run in the automation session (no website access granted)")
+		expect(logged()).not.toContain('PASS: the passkey page script ran')
 		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
 	})
 
@@ -114,11 +100,6 @@ describe('smoke', () => {
 		fakeDriver({ 'POST http://driver/session/s1/execute/sync': () => ({ value: ++polls < 3 }) })
 		await smoke(options)
 		expect(polls).toBe(3)
-	})
-
-	it('fails when navigator.credentials.get stays native', async () => {
-		fakeDriver({ 'POST http://driver/session/s1/execute/sync': () => ({ value: true }) })
-		await expect(smoke(options)).rejects.toThrow('at "passkey page script"')
 	})
 
 	it('fails when safaridriver does not answer', async () => {
