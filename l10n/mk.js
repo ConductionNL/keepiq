@@ -1733,7 +1733,8 @@ OC.L10N.register(
         "This image is too large. Choose an image under 10 MB.": "Оваа слика е преголема. Изберете слика помала од 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ова не е клуч на автентикатор. Залепете врска otpauth://totp/ или тајната во формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овој QR-код не содржи клуч на автентикатор. Користете го QR-кодот што го прикажува страницата кога ја поставувате најавата во два чекора.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е зачувано; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е зачувано; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

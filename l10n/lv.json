@@ -1836,7 +1836,8 @@
         "This image is too large. Choose an image under 10 MB.": "Šis attēls ir pārāk liels. Izvēlieties attēlu, kas mazāks par 10 MB.",
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Šī nav autentifikatora atslēga. Ielīmējiet saiti otpauth://totp/ vai noslēpumu base32 formātā.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šis QR kods nesatur autentifikatora atslēgu. Izmantojiet QR kodu, ko vietne rāda, iestatot divpakāpju pieteikšanos.",
-        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku."
     },
     "plurals": null
 }

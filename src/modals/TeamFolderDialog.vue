@@ -90,16 +90,25 @@
 						</span>
 						<!-- Permission grade (folder-permission-grades;
 						     sharing-team-folder-manager-role D5): Viewer, Editor,
-						     Manager. Only the owner makes or changes a manager;
-						     a manager sees a manager's row read-only. -->
+						     Manager. Only the owner makes or changes a manager, or
+						     a membership that covers a manager (ownerOnlyMemberIds);
+						     a manager sees those rows read-only, with the reason. -->
 						<select
 							class="team-folder-dialog__grade"
 							:value="member.grade || 'read'"
 							:disabled="busy || !canChangeMember(member)"
+							:title="
+								canChangeMember(member) ? undefined : ownerOnlyReason
+							"
 							:aria-label="
 								t('keepiq', 'Role of {member}', {
 									member: member.memberId,
 								})
+							"
+							:aria-describedby="
+								canChangeMember(member)
+									? undefined
+									: `team-folder-owner-only-${member.id}`
 							"
 							:data-testid="`team-folder-grade-${member.memberId}`"
 							@change="onGradeChange(member, $event.target.value)">
@@ -113,6 +122,13 @@
 								{{ t('keepiq', 'Manager') }}
 							</option>
 						</select>
+						<span
+							v-if="!canChangeMember(member)"
+							:id="`team-folder-owner-only-${member.id}`"
+							class="hidden-visually"
+							:data-testid="`team-folder-owner-only-${member.memberId}`">
+							{{ ownerOnlyReason }}
+						</span>
 						<NcButton
 							v-if="canRemoveMember(member)"
 							variant="tertiary"
@@ -265,6 +281,7 @@
 								memberId
 							}}</span>
 							<NcButton
+								v-if="canApprove(memberId)"
 								variant="secondary"
 								:aria-label="
 									t('keepiq', 'Approve {member}', {
@@ -452,6 +469,19 @@ export default {
 		 */
 		members() {
 			return this.teamFolder?.members ?? []
+		},
+
+		/**
+		 * Why a manager sees a membership's role read-only.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		ownerOnlyReason() {
+			return this.t(
+				'keepiq',
+				'Only the owner can change a manager, or a membership that covers a manager.',
+			)
 		},
 
 		/**
@@ -767,26 +797,50 @@ export default {
 
 		/**
 		 * Whether the current user may change this member's role: the owner
-		 * any member, a manager anyone below manager.
+		 * any member, a manager anyone below manager, except a row the server
+		 * lists as the owner's to set (one that covers a manager).
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canChangeMember(member) {
-			return this.isOwner || member.grade !== 'manage'
+			if (this.isOwner) {
+				return true
+			}
+			const ownerOnly = this.teamFolder?.ownerOnlyMemberIds ?? []
+			return member.grade !== 'manage' && !ownerOnly.includes(member.id)
+		},
+
+		/**
+		 * Whether the current user may approve a waiting member: anyone who
+		 * manages the folder, except a manager approving themselves, which
+		 * the owner does (the server refuses it too).
+		 *
+		 * @param {string} memberId The waiting member's user id.
+		 * @return {boolean}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		canApprove(memberId) {
+			if (this.isOwner) {
+				return true
+			}
+			const uid = getCurrentUser()?.uid ?? ''
+			return memberId.toLowerCase() !== uid.toLowerCase()
 		},
 
 		/**
 		 * Whether the current user may remove this member: the owner any
-		 * member, a manager anyone below manager and themselves (leaving).
+		 * member, a manager anyone below manager (removing only narrows
+		 * access, so a row that covers a manager may go) and themselves
+		 * (leaving).
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canRemoveMember(member) {
-			if (this.canChangeMember(member)) {
+			if (this.isOwner || member.grade !== 'manage') {
 				return true
 			}
 			return (
