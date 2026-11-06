@@ -114,33 +114,25 @@ function replaceMethod(target: object, name: string, wrap: (method: Method) => o
 	Object.defineProperty(target, name, { value, writable: true, configurable: true })
 }
 
-/**
- * `focusFirst`: WebKit starts no ceremony while the window lacks focus, which it may still lack right after the Keepiq
- * window closed, so a fallback waits for it there, as Bitwarden's page script does. Inline, not `isSafari()`, which would
- * pull the `browser` global into the page's world.
- */
-export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope, focusFirst = import.meta.env.BROWSER === 'safari'): void {
-	const container = scope.navigator?.credentials
-	const Credential = scope.PublicKeyCredential
-	if (!container || !Credential || installedBefore(container, Credential)) return
-	const { MessageChannel, AbortController, DOMException } = scope
-	// Read from the prototype, as the page may set a signal's own members; they throw for anything but a real AbortSignal.
-	// On Firefox a page script that ran before this one may have replaced them, which only harms that page's own calls.
-	const isAborted = Object.getOwnPropertyDescriptor(scope.AbortSignal.prototype, 'aborted')?.get
-	const reasonOf = Object.getOwnPropertyDescriptor(scope.AbortSignal.prototype, 'reason')?.get
-	const listen = scope.EventTarget.prototype.addEventListener as Listener
-	const unlisten = scope.EventTarget.prototype.removeEventListener as Listener
-	if (!isAborted || !reasonOf) return
-	const aborted = (signal: unknown) => isAborted.call(signal) as boolean
-	const reason = (signal: AbortSignal): unknown => reasonOf.call(signal)
-	const post = scope.postMessage.bind(scope)
-	const setTimer = scope.setTimeout.bind(scope)
-	const clearTimer = scope.clearTimeout.bind(scope)
-	const hasFocus = focusFirst ? scope.Document?.prototype.hasFocus : undefined
-	let nextId = 0
+/** What the focus wait reads, captured at install like the rest. */
+interface FocusWait {
+	/**
+	 * WebKit starts no ceremony while the window lacks focus, which it may still lack right after the Keepiq window closed,
+	 * so a fallback waits for it there, as Bitwarden's page script does. Inline, not `isSafari()`, which would pull the
+	 * `browser` global into the page's world.
+	 */
+	focusFirst?: boolean
+	scope: PageScope
+	listen: Listener
+	unlisten: Listener
+	setTimer: PageScope['setTimeout']
+	clearTimer: PageScope['clearTimeout']
+}
 
-	/** Calls `go` once the page gets focus back; returns what stops the wait, or null when it has focus. */
-	function awaitFocus(go: () => void): (() => void) | null {
+/** The wait before a fallback: calls `go` once the page gets focus back and returns what stops the wait, or null when it has focus. */
+function focusWait({ focusFirst = import.meta.env.BROWSER === 'safari', scope, listen, unlisten, setTimer, clearTimer }: FocusWait): (go: () => void) => (() => void) | null {
+	const hasFocus = focusFirst ? scope.Document?.prototype.hasFocus : undefined
+	return (go) => {
 		if (!hasFocus) return null
 		let top: FocusWindow
 		try {
@@ -170,6 +162,28 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 			return null
 		}
 	}
+}
+
+/** `focusFirst`: see {@link FocusWait}. */
+export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope, focusFirst?: boolean): void {
+	const container = scope.navigator?.credentials
+	const Credential = scope.PublicKeyCredential
+	if (!container || !Credential || installedBefore(container, Credential)) return
+	const { MessageChannel, AbortController, DOMException } = scope
+	// Read from the prototype, as the page may set a signal's own members; they throw for anything but a real AbortSignal.
+	// On Firefox a page script that ran before this one may have replaced them, which only harms that page's own calls.
+	const isAborted = Object.getOwnPropertyDescriptor(scope.AbortSignal.prototype, 'aborted')?.get
+	const reasonOf = Object.getOwnPropertyDescriptor(scope.AbortSignal.prototype, 'reason')?.get
+	const listen = scope.EventTarget.prototype.addEventListener as Listener
+	const unlisten = scope.EventTarget.prototype.removeEventListener as Listener
+	if (!isAborted || !reasonOf) return
+	const aborted = (signal: unknown) => isAborted.call(signal) as boolean
+	const reason = (signal: AbortSignal): unknown => reasonOf.call(signal)
+	const post = scope.postMessage.bind(scope)
+	const setTimer = scope.setTimeout.bind(scope)
+	const clearTimer = scope.clearTimeout.bind(scope)
+	const awaitFocus = focusWait({ focusFirst, scope, listen, unlisten, setTimer, clearTimer })
+	let nextId = 0
 
 	/** One call's own channel; `answer` is the relay's last word, or `fallback` when the relay is too late. */
 	function open(message: Outgoing, afterAck?: number): { answer: Promise<unknown>; abort: () => void } {
