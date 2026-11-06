@@ -66,11 +66,12 @@ test-site/       mock login, card and identity pages for manual testing, never b
 
 The extension follows the browser's language; [ARCHITECTURE.md](ARCHITECTURE.md#translations) has the rules.
 
-1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales).
-2. Translate every value and set `language` to the language's tag.
-3. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
-4. A language with "few" or "many" plural forms (Polish, Russian) needs a plural helper first.
-5. Run `npm test`; the parity test names missing keys and placeholders.
+1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) or a language Firefox ships in, such as `ga`. `pt` is the one exception: Chrome falls back to it from `pt_BR` and `pt_PT`, so one European Portuguese catalog serves both. The build warns `Unsupported locales: [ga, pt]` for these two; that is expected.
+2. Translate every value and set `language` to the language's tag, with a region when the text is regional (`pt-PT`). Dates and numbers are formatted in it.
+3. Keep `extensionDescription` within 132 characters, Chrome's limit for the manifest description.
+4. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
+5. Plurals have only `1:` and `n:`. In a language with "few" or "many" forms (Polish, Czech), word `n:` so it reads right for every count, such as "Elementy: $1".
+6. Run `npm test`; the parity test names missing keys and placeholders, and a description that is too long.
 
 ## Releasing
 

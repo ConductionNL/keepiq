@@ -11,7 +11,7 @@ chain:
 
 The extension is English only. Its text is hard-coded across the popup, and a few background modules send finished English sentences to it, one of which is stored with the cached vault. Keepiq's web app ships 37 languages and the mobile app English and Dutch; the company i18n ADR sets English and Dutch as the minimum for every client with a UI.
 
-Multiple languages are the goal. This change lays the groundwork and ships the first two: English and Dutch.
+Multiple languages are the goal. This change lays the groundwork and ships English, Dutch and the EU's other official languages, except Maltese, which neither Chrome nor Firefox offers as a UI language.
 
 ## What Changes
 
@@ -20,7 +20,7 @@ Multiple languages are the goal. This change lays the groundwork and ships the f
 - The manifest description is localised, so the extensions page and the stores show it in the user's language. The name "Keepiq" is a brand and stays.
 - The background sends codes, never display text: error messages, the key-changed notice and the blocked-item reason become codes the popup turns into text.
 - Dates, relative times and numbers are formatted in the catalog's language.
-- English and Dutch catalogs with exactly the same keys, guarded by a test, and a lint rule against hard-coded text in the popup.
+- 23 catalogs with exactly the same keys, guarded by a test, and a lint rule against hard-coded text in the popup.
 
 ## Capabilities
 
@@ -34,13 +34,14 @@ None. `openspec/specs/` is empty today. The Language line in ext-settings reads 
 ## Non-goals
 
 - A language picker in the extension.
-- Languages beyond English and Dutch.
+- Languages beyond the EU's official ones.
+- A native review of every catalog before release; users report translation errors as issues.
 - A translation platform such as Weblate or Transifex.
 - Reusing the web app's catalogs; shared terms are matched by hand.
 
 ## Impact
 
-- New: `locales/en.yml`, `locales/nl.yml`, `locales/locales.test.ts`, `entrypoints/popup/i18n.tsx`, `src/testing/i18n.ts`, `vitest.setup.ts`.
+- New: `locales/<lang>.yml` for 23 languages, `locales/locales.test.ts`, `entrypoints/popup/i18n.tsx`, `src/testing/i18n.ts`, `vitest.setup.ts`.
 - Edited: `wxt.config.ts` (module, `default_locale`, `__MSG_` description), `package.json`, `eslint.config.mjs`, `vitest.config.ts`, `src/vault/sync.ts`, `src/vault/store.ts`, `src/vault/types.ts`, `src/vault/payloads.ts`, `src/background/router.ts`, `src/vault/unlock.ts`, `src/api/client.ts`, `src/messages.ts`, `entrypoints/popup/errors.ts`, `relative-time.ts`, `main.tsx`, `hooks/usePopupState.ts`, `hooks/useMessage.ts` and every popup view and component with text.
 - New dependency: `@wxt-dev/i18n`.
 - No new permissions. `browser.i18n` needs none.
