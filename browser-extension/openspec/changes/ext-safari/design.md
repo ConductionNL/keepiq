@@ -90,11 +90,11 @@ The repo keeps only what the packager cannot make. Everything generated lives un
 | `safari/package.sh` | Packager, overlay, `xcodebuild`, checks; `npm run package:safari` |
 | `scripts/safari-smoke.ts` | The WebDriver smoke test; `npm run test:safari-smoke` |
 
-- **Names:** app name `Keepiq`, app bundle id `nl.conduction.keepiq.safari`. The extension's id is what the packager derives from it, expected `nl.conduction.keepiq.safari.Extension` (**unverified**); `package.sh` prints both and fails unless the extension's starts with `nl.conduction.keepiq.safari.`. Not `nl.conduction.keepiq`, which the iOS app in `mobile/ios/project.yml` holds.
+- **Names:** app name `Keepiq`, app bundle id `nl.conduction.keepiq.safari`. The packager (Xcode 26.6) names the extension `nl.conduction.keepiq.safari.Extension` but the app target `nl.conduction.keepiq.Keepiq` (the id's prefix plus the app name), which Xcode's embedded-binary check refuses; `package.sh` prints both and fails unless the extension's starts with `nl.conduction.keepiq.safari.`. Not `nl.conduction.keepiq`, which the iOS app in `mobile/ios/project.yml` holds.
 - **`package.sh`** (`set -euo pipefail`, run from `browser-extension/`):
   1. Fail unless `.output/safari-mv3/manifest.json` exists.
   2. `xcrun safari-web-extension-packager .output/safari-mv3 --project-location .output/safari-app --app-name Keepiq --bundle-identifier nl.conduction.keepiq.safari --swift --macos-only --copy-resources --no-open --no-prompt --force` (flags from Apple's "Packaging a web extension for Safari").
-  3. Find `SafariWebExtensionHandler.swift` under `.output/safari-app`; fail unless exactly one; copy ours over it. No plist or entitlement changes: the template's App Sandbox suffices for `NSPasteboard`.
+  3. Find `SafariWebExtensionHandler.swift` under `.output/safari-app`; fail unless exactly one; copy ours over it. In the `.xcodeproj`'s `project.pbxproj`, set every `PRODUCT_BUNDLE_IDENTIFIER` that is neither `nl.conduction.keepiq.safari` nor under it, the app target's, to `nl.conduction.keepiq.safari`; fail unless the app then has that id and an extension id under it remains. No plist or entitlement changes: the template's App Sandbox suffices for `NSPasteboard`.
   4. `xcodebuild -project <the one .xcodeproj> -scheme <scheme> -configuration Release -derivedDataPath .output/safari-build CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= MARKETING_VERSION=<package.json version> CURRENT_PROJECT_VERSION=${BUILD_NUMBER:-1} build`. Ad hoc ("Sign to Run Locally"), as `mobile/ios/project.yml` does, so the app also runs on a test Mac with "Allow unsigned extensions"; Apple Silicon runs no unsigned code. `<scheme>` is the one named `Keepiq` in `xcodebuild -list -json`; the script fails listing the schemes when there is none.
   5. Print `CFBundleIdentifier` of `Keepiq.app` and of its `.appex` with `PlistBuddy`, check them, and `ditto -c -k --keepParent` the app to `.output/keepiq-safari.zip`.
 
@@ -207,7 +207,7 @@ Confirm on a real Mac (tasks.md 8.2), then drop each line:
 - Whether Safari closes the popup for a permission prompt.
 - That `.currentHostOnly` keeps the value off Universal Clipboard.
 - `sendNativeMessage` from Safari's MV3 service worker (Proton Pass does it from its worker) and from the popup; `NSPasteboard` writes from the sandboxed extension without user interaction (Bitwarden does it).
-- The packager's project layout, scheme name `Keepiq` and derived extension id; that an ad-hoc signed build loads with "Allow unsigned extensions".
+- That an ad-hoc signed build loads with "Allow unsigned extensions".
 - WebDriver: whether `type: 'path'` loads an unpacked directory without its app, whether `type: 'base64'` does, the reply shape, whether the install id is the host of `safari-web-extension://` URLs, whether the session can open `popup.html` and run `browser.*` there, whether content scripts run on `localhost` in an automation session without a grant, and whether "Allow unsigned extensions" is needed there.
 - WebKit refusing WebAuthn without focus (from Bitwarden's comment), whether the `MAIN` world script runs before the page's scripts at `document_start`, and `windows.update({ focused: true })` behaviour.
 - Whether a `filter` on `<html>` reaches Safari's top layer: open the test site's `root-filter.html` probe. Until then the inline list and save bar refuse a pick while `<html>` has one, as on Firefox (`rootFilterReachesTopLayer`, true for every target but Chromium in `entrypoints/content.ts`); if the popover shows, make it Firefox only.

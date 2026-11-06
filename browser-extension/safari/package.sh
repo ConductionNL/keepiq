@@ -41,6 +41,33 @@ cp safari/SafariWebExtensionHandler.swift "${found[0]}"
 find_all "$PROJECT_DIR" -maxdepth 3 -type d -name '*.xcodeproj'
 [ "${#found[@]}" -eq 1 ] || fail "expected one .xcodeproj under $PROJECT_DIR, found ${#found[@]}"
 project=${found[0]}
+
+# The packager names the app <id prefix>.<app name> but the extension <id>.Extension, a pair xcodebuild refuses,
+# so every bundle id that is not ours or under it (the app target's) becomes ours.
+pbxproj="$project/project.pbxproj"
+[ -f "$pbxproj" ] || fail "no $pbxproj"
+node -e '
+	const fs = require("fs")
+	const [file, appId] = process.argv.slice(1)
+	const ours = (id) => id === appId || id.startsWith(appId + ".")
+	let apps = 0
+	let extensions = 0
+	const text = fs.readFileSync(file, "utf8").replace(/^(\s*PRODUCT_BUNDLE_IDENTIFIER = )(.*);$/gm, (line, key, value) => {
+		const id = value.replace(/^"(.*)"$/, (_, inner) => inner)
+		console.log("Generated PRODUCT_BUNDLE_IDENTIFIER: " + id)
+		if (id.startsWith(appId + ".")) extensions++
+		if (id === appId) apps++
+		if (ours(id)) return line
+		apps++
+		return key + appId + ";"
+	})
+	if (apps === 0 || extensions === 0) {
+		console.error("expected app bundle ids to set to " + appId + " and extension ones under it, found " + apps + " and " + extensions)
+		process.exit(1)
+	}
+	fs.writeFileSync(file, text)
+' "$pbxproj" "$APP_ID" || fail "could not set the app's bundle id to $APP_ID in $pbxproj"
+
 schemes=$(xcodebuild -list -json -project "$project")
 scheme=$(printf '%s' "$schemes" | node -e '
 	const schemes = JSON.parse(require("fs").readFileSync(0, "utf8")).project?.schemes ?? []
