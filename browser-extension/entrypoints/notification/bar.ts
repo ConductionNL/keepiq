@@ -100,7 +100,7 @@ export function questionText({ mode, host, tabHost, itemName, username }: Captur
 	return tabHost ? i18n.t('notificationBar.updateQuestionHost', { name, host }) : i18n.t('notificationBar.updateQuestion', { name })
 }
 
-function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Record<string, string>, ...children: Array<Node | string>) {
+export function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Record<string, string>, ...children: Array<Node | string>) {
 	const node = document.createElement(tag)
 	for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value)
 	node.append(...children)
@@ -109,7 +109,7 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Reco
 
 const SVG = 'http://www.w3.org/2000/svg'
 
-function svg(attributes: Record<string, string>, shapes: Array<[string, Record<string, string>]>): SVGSVGElement {
+export function svg(attributes: Record<string, string>, shapes: Array<[string, Record<string, string>]>): SVGSVGElement {
 	const root = document.createElementNS(SVG, 'svg')
 	for (const [name, value] of Object.entries({ 'aria-hidden': 'true', ...attributes })) root.setAttribute(name, value)
 	for (const [tag, shape] of shapes) {
@@ -120,10 +120,10 @@ function svg(attributes: Record<string, string>, shapes: Array<[string, Record<s
 	return root
 }
 
-const stroke = { 'fill': 'none', 'stroke': 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+export const stroke = { 'fill': 'none', 'stroke': 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
 
 /** The app icon, as the popup's `Logo`. */
-function logo(): SVGSVGElement {
+export function logo(): SVGSVGElement {
 	const icon = svg({ class: 'logo', width: '24', height: '24', viewBox: '0 0 512 512' }, [
 		['polygon', { points: '256,26 455.19,141 455.19,371 256,486 56.81,371 56.81,141', fill: 'currentColor' }],
 	])

@@ -80,6 +80,12 @@ afterEach(() => {
 })
 
 describe('showing', () => {
+	it('tells where the bar is, for the notice below it', () => {
+		expect(host.place()).toBeNull()
+		show()
+		expect(host.place()).toEqual({ top: BAR_INSET_PX, height: BAR_HEIGHT_PX, bottom: false })
+	})
+
 	it('shows notification.html in a closed shadow root, a card fixed in the top-right corner, focusing nothing', async () => {
 		const active = document.activeElement
 		show()

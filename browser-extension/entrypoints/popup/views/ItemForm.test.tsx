@@ -8,7 +8,7 @@ import { CARD_FIELDS, IDENTITY_FIELDS, shownInFull } from '@/src/vault/fields'
 import { setLocale } from '@/src/testing/i18n'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { editableItem, fakeBackground, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
-import { ItemForm, type FormMode } from './ItemForm'
+import { ItemForm, type FixedType, type FormMode } from './ItemForm'
 
 vi.mock('@/src/totp/qr-scan', () => ({ scanVisibleTab: vi.fn() }))
 
@@ -25,6 +25,7 @@ const folders: FolderMeta[] = [{ id: 'w', name: 'Work', parentId: null }, { id: 
 
 interface Options {
 	mode?: FormMode
+	fixedType?: FixedType
 	id?: string
 	snapshot?: UnlockedSnapshot
 	tabUrl?: string
@@ -34,7 +35,7 @@ interface Options {
 	unanswered?: string[]
 }
 
-function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies, unanswered }: Options = {}) {
+function renderForm({ mode = 'add', fixedType, id, snapshot = snapshotReply({ folders }), tabUrl, offline = false, items, replies, unanswered }: Options = {}) {
 	const sent = fakeBackground({ snapshot, items, replies, unanswered })
 	const shell = { ...DEFAULT_SHELL, footer, offline, toast: vi.fn(), refreshState: vi.fn(), syncNow: vi.fn(), setLeaveGuard: vi.fn(), generate: vi.fn() }
 	const onSaved = vi.fn()
@@ -42,7 +43,7 @@ function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), t
 	const onGone = vi.fn()
 	render(
 		<ShellContext.Provider value={shell}>
-			<ItemForm mode={mode} id={id} snapshot={snapshot} tabUrl={tabUrl} onSaved={onSaved} onCancel={onCancel} onGone={onGone} />
+			<ItemForm mode={mode} fixedType={fixedType} id={id} snapshot={snapshot} tabUrl={tabUrl} onSaved={onSaved} onCancel={onCancel} onGone={onGone} />
 		</ShellContext.Provider>,
 	)
 	return { sent, shell, onSaved, onCancel, onGone, user: userEvent.setup() }
@@ -51,6 +52,29 @@ function renderForm({ mode = 'add', id, snapshot = snapshotReply({ folders }), t
 const save = () => within(footer).getByRole('button', { name: 'Save' })
 const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement
 const created = (sent: ReturnType<typeof fakeBackground>) => sentOf(sent, 'item.create').map((message) => message.draft)
+
+describe('adding one fixed type', () => {
+	it.each([
+		['login', 't-login', ['Username', 'Password', 'Website URL']],
+		['card', 't-card', ['Number', 'Expiry', 'Cardholder']],
+		['identity', 't-identity', ['First name', 'Email', 'Address']],
+	] as const)('opens a %s form without the Type select, whatever the default type', async (fixedType, typeId, labels) => {
+		const { sent, onSaved, user } = renderForm({ fixedType, tabUrl: 'https://example.test/login', snapshot: snapshotReply({ folders, defaultSecretType: 'note' }) })
+		expect(screen.queryByLabelText('Type')).toBeNull()
+		for (const label of labels) expect(screen.getByLabelText(label)).toBeTruthy()
+		expect(field('Website URL').value).toBe('https://example.test/login')
+		await user.type(field('Name'), 'Mine')
+		await user.click(save())
+		await waitFor(() => expect(onSaved).toHaveBeenCalledWith('new', undefined))
+		expect(created(sent)[0]).toMatchObject({ typeId, name: 'Mine' })
+	})
+
+	it('goes back on Cancel', async () => {
+		const { onCancel, user } = renderForm({ fixedType: 'card' })
+		await user.click(within(footer).getByRole('button', { name: 'Cancel' }))
+		expect(onCancel).toHaveBeenCalledOnce()
+	})
+})
 
 describe('adding', () => {
 	it('opens on a tab with its URL, No folder and the login type', () => {

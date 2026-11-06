@@ -155,6 +155,22 @@ describe('useTabPages and useSendPages', () => {
 		expect(sentOf(sent, 'popup.lastTab.set')).toEqual([{ kind: 'popup.lastTab.set', tab: 'generator' }])
 	})
 
+	it('opens a fixed-type add form over the Vault tab with every other page closed, remembering no tab', () => {
+		const sent = fakeBackground()
+		const { result } = pages('send')
+		act(() => {
+			result.current.tab.setDetailId('i1')
+			result.current.tab.setHistory(true)
+			result.current.send.setSendPage({ kind: 'created', row: sendRow(), link: 'https://cloud.example.org/l' })
+		})
+		act(() => result.current.tab.openFixedAdd('identity'))
+		const { tab, send } = result.current
+		expect({ current: tab.current, detailId: tab.detailId, form: tab.form, history: tab.history, sendPage: send.sendPage }).toEqual({
+			current: 'vault', detailId: null, form: { mode: 'add', fixedType: 'identity' }, history: false, sendPage: null,
+		})
+		expect(sentOf(sent, 'popup.lastTab.set')).toEqual([])
+	})
+
 	it('closes the form and the detail under it when the item is gone', () => {
 		const { result } = pages()
 		act(() => {

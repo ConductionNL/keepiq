@@ -82,7 +82,8 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `create.ts`: the Save view's targets and a save, to a login or a new one.
   - `credential.ts`: the canonical credential and the `passkeys` array, a port of the web app's, field order included.
   - `webauthn.ts` and `cbor.ts`: client data, authenticator data, the `none` attestation and ES256 signatures in DER.
-- `src/menus.ts`: the "Keepiq" context menu, built and handled in the background.
+- `src/menus.ts`: the "Keepiq" context menu anywhere on the page, built and handled in the background (`openspec/changes/ext-context-menu/`).
+- `src/add-intent.ts`: the menu's Add, waiting in background memory for the popup it opens.
 - `src/last-used.ts`: when each item was last filled.
 - `src/messages.ts`: every message type, in one place.
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
@@ -114,7 +115,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Direction | Kinds | Reply |
 | --- | --- | --- |
 | Popup → background, account actions | `accounts.*`, `vault.unlock`, `vault.lock`, `vault.lockAll`, `vault.status` | `Result`: `{ ok: true, state }` or `{ ok: false, code }` |
-| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `item.passkeys`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
+| Popup → background, vault requests | `vault.snapshot`, `vault.sync`, `item.decrypt`, `item.passkeys`, `clipboard.copied`, `popup.popout`, `popup.lastTab.set`, `popup.intent`, `settings.*`, `account.settings.*`, `pin.*`, `generator.*` | The typed reply in `PopupReplies`; `undefined` when the background failed |
 | Popup → background, writes | `item.fetch`, `item.editable`, `item.create`, `item.update`, `item.delete`, `folder.create`, `folder.rename`, `folder.children`, `folder.delete`, `folder.dismissNotice` | `WriteResult`: `{ ok: true, value }` or `{ ok: false, error }`, after the sync that follows a write; `item.fetch`, `item.editable` and `folder.children` reply without one |
 | Popup → background, sends | `send.list`, `send.create`, `send.delete` | `WriteResult`, without a sync; a 404 on delete is `ok` |
 | Popup → background, fill | `fill.request` (a card or identity may carry `confirmed`) | `FillResult`, or `needsInsecureConfirm` or `needsFormConfirm` to ask first |
@@ -127,10 +128,11 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | Content → background, passkey relay | `passkey.start`, `passkey.available`; `passkey.abort` | `{ ceremonyId }` or `{ fallback: true }`, a boolean; none for `passkey.abort` |
 | Page script → relay, by `postMessage` to its own window with a `MessageChannel` port per call | `create`, `get`, `available`, then `abort` on the port | An ack, then a credential, a `DOMException` name, `available` or `fallback` |
 | Background → content, one frame by `frameId` | `fill.confirmInsecure`, `fill.execute`, `fill.probe`, `fill.executeForm`, `fill.confirmForm`, `inline.verify`, `capture.verify`, `capture.show` | `boolean`; `FillExecuteReply` for `fill.execute`; `FillProbeReply` (the roles of the chosen group and the frame's origin, no vault data) for `fill.probe`; the count filled for `fill.executeForm`; a boolean for `fill.confirmForm` (the top frame's `confirm()`, context-menu fills only); the key the host's bar holds for `capture.show` |
-| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand`, `passkey.result` | None |
+| Background → content, one frame by `frameId` | `inline.ready`, `inline.refocus`, `inline.close`, `inline.resize`, `capture.hide`, `capture.focus`, `capture.expand`, `passkey.result`, `notice.show` (a code only), `notice.hide` | None |
 | Content → its list or bar iframe, by `postMessage` to the extension origin | `inline.init`, `inline.focus`, `inline.moved`, `capture.init`, `capture.focus`, `capture.moved` | None |
 | Inline list → background | `inline.state`, `inline.pick` (a passkey row adds its `credentialId`, a card or identity pick may carry `confirmed`); `inline.refocus`, `inline.close`, `inline.unlock`, `inline.resize` | `InlineStateReply`, with `passkeys` during a conditional request; `InlinePickReply`, or `needsFormConfirm` to ask first; none for the last four |
 | Save bar → background | `capture.state`, `capture.save`, `capture.update`, `capture.dismiss`, `capture.expand` | `NotificationReplies` |
+| The bar page's notice mode → background | `notice.close`, relayed to the top frame as `notice.hide` | None |
 
 - **Routing by sender page.** `src/background/sender.ts` tells the popup, the list and the bar apart by `sender.url` path, and a content script by its tab and frame; each gets only its own kind set in `src/messages.ts`.
 - **Popup port.** The popup holds a `popup` port open. Its disconnect drives the "Immediately" timeout, with a 5-second grace while a pop-out window takes over.
@@ -176,6 +178,7 @@ Where `storage.session` is missing (Firefox below 115), session values live in b
 Background memory only, lost on an MV3 worker restart:
 
 - **Captures** (`capture-queue.ts`): one pending save or update per tab, password included, for 5 minutes; dropped on tab close, leaving the site, lock, logout and account switch.
+- **Add intent** (`add-intent.ts`): the type the menu's Add asked for; read once by the next popup, gone after 10 seconds, on lock and on account switch.
 - **Tab items** (`tab-items.ts`): the item each tab last filled or captured; forgotten on tab close, lock and account switch.
 - **Frame registry** (`frames.ts`): each tab's frame ids and URLs from `page_ready`; forgotten when the tab loads or closes.
 - **Badge counts** (`toolbar-icon.ts`): never stored, recomputed from the snapshot for each window's active tab; other tabs show none until activated.
@@ -238,6 +241,9 @@ The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-0
 - **TOTP:** `fill()` puts the current code from the login's own `totp` field in `fill.execute`, and copies it after the fill; not on page load (`openspec/changes/ext-totp-autofill/`).
 - **Code list:** on a code field the inline list opens in code mode; its rows carry codes, its pick goes to `pickCode()`, and the list page asks `inline.state` again when a code ends.
 - **Inline list:** the content script asks `inline.open` (with the mode `isQualifying()` gave the field) for a key and posts it to the list page, which loads its rows with `inline.state`; a pick goes to the background, which asks the host frame `inline.verify` before it fills. A card or identity list is sized like the login list, its rows carry a card's brand and last four (`InlineRow.card`, worded by the list page) or an identity's full name or email, and its questions are asked in the list.
+- **Context menu** (`openspec/changes/ext-context-menu/`): item names only, as Chrome writes the titles to disk.
+- **No-form notice:** a menu fill answering `noFields` sends `notice.show` to the top frame, which hosts `notification.html?notice=<code>` beside the save bar.
+- **Add:** sets the intent before any `await` and opens the popup; its Shell asks `popup.intent` once and opens `ItemForm` with `fixedType`.
 - **Save bar:** `capture.submitted` queues a capture; the background sends `capture.show` with a fresh key to the top frame, and the bar loads its state with `capture.state` and answers with `capture.save`, `capture.update` or `capture.dismiss`; the background asks the host `capture.verify` for all but Close.
 
 ### Passkeys

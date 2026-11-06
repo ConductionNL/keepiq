@@ -26,6 +26,8 @@ import { FolderPicker } from './FolderPicker'
 type Unlocked = Extract<VaultSnapshotReply, { state: 'unlocked' }>
 
 export type FormMode = 'add' | 'edit' | 'clone'
+/** An add form for one type, without the Type select, from the context menu's Add. */
+export type FixedType = 'login' | 'card' | 'identity'
 
 const DIGITS: ReadonlySet<CardField> = new Set(['number', 'cvv', 'pin'])
 
@@ -46,6 +48,8 @@ interface Props {
 	mode: FormMode
 	/** The item to edit or clone. */
 	id?: string
+	/** Add mode only; the Shell opens the vault list instead when the cached types lack it. */
+	fixedType?: FixedType
 	snapshot: Unlocked
 	/** The page the popup opened on, which a new item's Website URL starts as. */
 	tabUrl?: string
@@ -81,7 +85,10 @@ function defaultTypeId(snapshot: Unlocked): string {
 }
 
 export function ItemForm(props: Props) {
-	if (props.mode === 'add') return <Form {...props} initial={emptyValues(defaultTypeId(props.snapshot), props.tabUrl ?? '')} />
+	if (props.mode === 'add') {
+		const typeId = props.fixedType ? props.snapshot.types.find((type) => type.name === props.fixedType)?.id ?? '' : defaultTypeId(props.snapshot)
+		return <Form {...props} initial={emptyValues(typeId, props.tabUrl ?? '')} />
+	}
 	return <Fetched {...props} id={props.id!} />
 }
 
@@ -176,7 +183,7 @@ function GroupError({ text }: { text: string | null }) {
 	return text ? <p className="field__error">{text}</p> : null
 }
 
-function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { item?: EditableItem; initial: FormValues }) {
+function Form({ mode, fixedType, item, initial, snapshot, onSaved, onCancel }: Props & { item?: EditableItem; initial: FormValues }) {
 	const shell = useShell()
 	const draft = useItemDraft(initial, snapshot.types, item && { id: item.typeId, name: item.typeName })
 	useUnsavedChangesGuard(draft.dirty)
@@ -260,6 +267,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 	// Labelled as the type the form renders by, which after a rename the snapshot may hold under another id.
 	const rendered = draft.typeName === undefined ? undefined : snapshot.types.find((type) => type.id === values.typeId && type.name === draft.typeName) ?? snapshot.types.find((type) => type.name === draft.typeName)
 	const typeOptions = draft.typeName === undefined ? snapshot.types : snapshot.types.map((type) => (type.id === values.typeId ? { ...type, label: rendered?.label ?? draft.typeName! } : type))
+	const typeSelect = !fixedType && <TypeSelect types={typeOptions} value={values.typeId} onChange={(typeId) => update({ typeId })} disabled={mode === 'edit'} />
 	const secretLabel = draft.typeName === 'login' || draft.typeName === 'database' || !draft.typeName
 		? i18n.t('detail.password')
 		: rendered?.label ?? i18n.t('form.secret')
@@ -291,7 +299,7 @@ function Form({ mode, item, initial, snapshot, onSaved, onCancel }: Props & { it
 				<OfflineNotice offline={shell.offline} onSync={shell.syncNow} />
 				<SaveFailureNotice failure={failure} editing={mode === 'edit'} actionFor={failureAction} webAppUrl={snapshot.webAppUrl} />
 				<FormSection title={i18n.t('form.itemDetails')}>
-					<TypeSelect types={typeOptions} value={values.typeId} onChange={(typeId) => update({ typeId })} disabled={mode === 'edit'} />
+					{typeSelect}
 					<TextField label={i18n.t('form.name')} value={values.name} onChange={(name) => update({ name })} error={error('name')} autoComplete="off" />
 					<div className="field">
 						<span className="field__label" aria-hidden="true">{i18n.t('form.folder')}</span>

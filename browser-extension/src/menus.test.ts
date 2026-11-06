@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import type { OpenSecretRow } from '@/src/api/types'
 import { addAccount, markLoggedOut, removeAccount } from '@/src/accounts/store'
+import { takeIntent } from '@/src/add-intent'
 import { writeSettings } from '@/src/accounts/settings'
 import { forgetTab } from '@/src/autofill/frames'
 import { broadcast } from '@/src/background/broadcast'
@@ -11,6 +12,7 @@ import { listHistory, sealHistory } from '@/src/generator/history'
 import { saveOptions } from '@/src/generator/store'
 import { defaultOptions } from '@/src/generator/options'
 import { lastUsedKey } from '@/src/last-used'
+import { setLocale } from '@/src/testing/i18n'
 import { installMenuFakes } from '@/src/testing/menus'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
@@ -97,45 +99,88 @@ afterEach(() => {
 	Object.assign(browser, { offscreen: undefined })
 })
 
+/** The children of a parent, in order. */
+const childrenOf = (parentId: string) => menus.entries.filter((e) => e.parentId === parentId).map((e) => e.id)
+const EMPTY_FORMS = [
+	'separator-1',
+	'autofill-identity', 'identity-none', 'identity-separator', 'add:identity', 'open:identity',
+	'autofill-card', 'card-none', 'card-separator', 'add:card', 'open:card',
+	'separator-2', 'generate',
+]
+
 describe('the context menu', () => {
-	it('lists matching logins under Autofill, then Open Keepiq, and the copy and generate entries', async () => {
+	it('lists matching logins under Autofill login, then Add login and Open Keepiq, the copy submenus, the card and identity submenus and generate', async () => {
 		await vault([await login('a'), await login('b'), await login('other', { url: 'https://other.test/' })])
 		await rebuildMenus()
 		expect(ids()).toEqual([
-			'keepiq', 'autofill', 'autofill:a', 'autofill:b', 'autofill-separator', 'open',
-			'copy-user', 'copy-user:a', 'copy-user:b', 'copy-pass', 'copy-pass:a', 'copy-pass:b', 'copy-code', 'generate',
+			'keepiq', 'autofill', 'autofill:a', 'autofill:b', 'autofill-separator', 'add:login', 'open:login',
+			'copy-user', 'copy-user:a', 'copy-user:b', 'copy-pass', 'copy-pass:a', 'copy-pass:b', 'copy-code', 'copy-code-none',
+			...EMPTY_FORMS,
 		])
-		expect(menus.entries.every((e) => e.contexts?.join() === 'editable')).toBe(true)
 		expect(entry('keepiq')!.title).toBe('Keepiq')
+		expect(entry('autofill')).toEqual(expect.objectContaining({ parentId: 'keepiq', title: 'Autofill login' }))
 		expect(entry('autofill:a')).toMatchObject({ parentId: 'autofill', title: 'a' })
+		expect(entry('add:login')).toMatchObject({ parentId: 'autofill', title: 'Add login' })
+		expect(entry('open:login')).toMatchObject({ parentId: 'autofill', title: 'Open Keepiq' })
+		expect(entry('separator-1')).toMatchObject({ parentId: 'keepiq', type: 'separator' })
 	})
 
-	it('lists the first ten of twelve by last used then name, then Open Keepiq', async () => {
+	it('shows on the page, frames, selections, links, fields, images, video and audio, never as `all`', async () => {
+		await vault([await login('a')])
+		await rebuildMenus()
+		const contexts = ['page', 'frame', 'selection', 'link', 'editable', 'image', 'video', 'audio']
+		expect(menus.entries.every((e) => e.contexts?.join() === contexts.join())).toBe(true)
+	})
+
+	it('lists the first ten of twelve by last used then name, then Add login and Open Keepiq', async () => {
 		const names = Array.from({ length: 12 }, (_, i) => `item${String(i).padStart(2, '0')}`)
 		await vault(await Promise.all(names.map((name) => login(name))))
 		await browser.storage.local.set({ [lastUsedKey(accountId)]: { item11: 2, item10: 1 } })
 		await rebuildMenus()
-		const autofill = menus.entries.filter((e) => e.parentId === 'autofill').map((e) => e.id)
-		expect(autofill).toEqual([...['item11', 'item10', ...names.slice(0, 8)].map((name) => `autofill:${name}`), 'autofill-separator', 'open'])
+		const first = ['item11', 'item10', ...names.slice(0, 8)]
+		expect(childrenOf('autofill')).toEqual([...first.map((name) => `autofill:${name}`), 'autofill-separator', 'add:login', 'open:login'])
 		expect(MENU_LIMIT).toBe(10)
-		for (const copy of ['copy-user', 'copy-pass']) {
-			expect(menus.entries.filter((e) => e.parentId === copy).map((e) => e.id)).toEqual(['item11', 'item10', ...names.slice(0, 8)].map((name) => `${copy}:${name}`))
-		}
+		for (const copy of ['copy-user', 'copy-pass']) expect(childrenOf(copy)).toEqual(first.map((name) => `${copy}:${name}`))
 	})
 
-	it('names a single match’s copy entries directly', async () => {
+	it('makes Copy username a submenu for a single match too, listing it by name', async () => {
 		await vault([await login('a')])
 		await rebuildMenus()
-		expect(entry('copy-user:a')).toMatchObject({ parentId: 'keepiq', title: 'Copy username' })
-		expect(entry('copy-pass:a')).toMatchObject({ parentId: 'keepiq', title: 'Copy password' })
+		expect(entry('copy-user')).toEqual(expect.objectContaining({ parentId: 'keepiq', title: 'Copy username' }))
+		expect(entry('copy-user')!.enabled).toBeUndefined()
+		expect(entry('copy-user:a')).toMatchObject({ parentId: 'copy-user', title: 'a' })
+		expect(entry('copy-pass:a')).toMatchObject({ parentId: 'copy-pass', title: 'a' })
 	})
 
-	it('reads "No matching logins" and disables copying without a match', async () => {
+	it('holds one disabled line in each submenu without a match, its parent enabled', async () => {
 		await vault([await login('a', { url: 'https://other.test/' })])
 		await rebuildMenus()
-		expect(ids()).toEqual(['keepiq', 'autofill', 'copy-user', 'copy-pass', 'copy-code', 'generate'])
-		expect(entry('autofill')).toMatchObject({ title: 'No matching logins', enabled: false })
-		expect(entry('copy-pass')).toMatchObject({ enabled: false })
+		expect(ids()).toEqual([
+			'keepiq', 'autofill', 'autofill-none', 'autofill-separator', 'add:login', 'open:login',
+			'copy-user', 'copy-user-none', 'copy-pass', 'copy-pass-none', 'copy-code', 'copy-code-none',
+			...EMPTY_FORMS,
+		])
+		expect(menus.entries.filter((e) => e.enabled === false).map((e) => [e.id, e.title])).toEqual([
+			['autofill-none', 'No logins available'],
+			['copy-user-none', 'No usernames available'],
+			['copy-pass-none', 'No passwords available'],
+			['copy-code-none', 'No verification codes available'],
+			['identity-none', 'No identities available'],
+			['card-none', 'No cards available'],
+		])
+	})
+
+	it('words every entry in Dutch', async () => {
+		setLocale('nl')
+		try {
+			await vault([await login('a', { url: 'https://other.test/' })])
+			await rebuildMenus()
+			expect(['autofill', 'autofill-none', 'add:login', 'autofill-identity', 'add:identity', 'autofill-card', 'add:card'].map((id) => entry(id)!.title)).toEqual([
+				'Login invullen', 'Geen logins beschikbaar', 'Login toevoegen', 'Identiteit invullen', 'Identiteit toevoegen', 'Kaart invullen', 'Kaart toevoegen',
+			])
+		} finally {
+			setLocale('en')
+		}
 	})
 
 	it('offers no Copy password for a use-only copy and no Copy username without a login', async () => {
@@ -146,30 +191,34 @@ describe('the context menu', () => {
 		expect(ids()).not.toContain('copy-user:b')
 	})
 
+	it('puts no username or other decrypted value in any title', async () => {
+		await vault([await login('a', { name: 'GitHub', login: await encrypt('alice') }), await withCode('b'), await card('Visa'), await identity('Me')])
+		await rebuildMenus()
+		expect(JSON.stringify(menus.entries)).not.toMatch(/alice|user-b|pass-|287082|4111|Holder|Anna/)
+	})
+
 	describe('Copy verification code', () => {
-		it('names the one matching login with a code directly, after Copy password', async () => {
+		it('lists the one matching login with a code in its submenu', async () => {
 			await vault([await login('a'), await withCode('b')])
 			await rebuildMenus()
-			expect(ids().slice(-3)).toEqual(['copy-pass:b', 'copy-code:b', 'generate'])
-			expect(entry('copy-code:b')).toMatchObject({ parentId: 'keepiq', title: 'Copy verification code' })
+			expect(entry('copy-code')).toEqual(expect.objectContaining({ parentId: 'keepiq', title: 'Copy verification code' }))
+			expect(childrenOf('copy-code')).toEqual(['copy-code:b'])
 		})
 
-		it('lists several in a submenu of at most ten, use-only copies included', async () => {
+		it('lists at most ten, use-only copies included', async () => {
 			await vault(await Promise.all(Array.from({ length: 12 }, (_, i) => withCode(`t${String(i).padStart(2, '0')}`, { useOnly: i === 0 }))))
 			await rebuildMenus()
-			expect(entry('copy-code')).toMatchObject({ parentId: 'keepiq', title: 'Copy verification code' })
-			expect(menus.entries.filter((e) => e.parentId === 'copy-code').map((e) => e.id)).toHaveLength(MENU_LIMIT)
+			expect(childrenOf('copy-code')).toHaveLength(MENU_LIMIT)
 			expect(ids()).toContain('copy-code:t00')
 		})
 
-		it('is disabled without a match, and never lists a login without a code, a blocked row or a standalone authenticator item', async () => {
+		it('holds only its empty line without a match, and never lists a login without a code, a blocked row or a standalone authenticator item', async () => {
 			await vault([
 				await withCode('t1', { url: 'https://other.test/' }), await login('t2', { totp: '' }), blockedRow({ id: 't3', url: 'https://example.test/' }),
 				secretRow({ id: 't4', name: 't4', url: 'https://example.test/', typeId: 't-totp', key: await encrypt('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ') }),
 			])
 			await rebuildMenus()
-			expect(entry('copy-code')).toMatchObject({ enabled: false })
-			expect(ids().filter((id) => id?.startsWith('copy-code:'))).toEqual([])
+			expect(childrenOf('copy-code')).toEqual(['copy-code-none'])
 		})
 
 		it('copies the current code, which a lock clears at once', async () => {
@@ -195,20 +244,21 @@ describe('the context menu', () => {
 		})
 	})
 
-	describe('Autofill card and Autofill identity', () => {
-		it('list every card and every identity whatever their url, after the copy entries, each then Open Keepiq', async () => {
+	describe('Autofill identity and Autofill card', () => {
+		it('list every identity and every card whatever their url, after a separator, each then Add and Open Keepiq', async () => {
 			await vault([await login('a'), await card('Visa'), await identity('Me'), await card('Amex')])
 			await rebuildMenus()
-			expect(ids().slice(ids().indexOf('copy-code'))).toEqual([
-				'copy-code',
-				'autofill-card', 'card:Amex', 'card:Visa', 'autofill-card-separator', 'open-card',
-				'autofill-identity', 'identity:Me', 'autofill-identity-separator', 'open-identity',
-				'generate',
+			expect(ids().slice(ids().indexOf('separator-1'))).toEqual([
+				'separator-1',
+				'autofill-identity', 'identity:Me', 'identity-separator', 'add:identity', 'open:identity',
+				'autofill-card', 'card:Amex', 'card:Visa', 'card-separator', 'add:card', 'open:card',
+				'separator-2', 'generate',
 			])
-			expect(entry('autofill-card')).toMatchObject({ parentId: 'keepiq', title: 'Autofill card' })
-			expect(entry('autofill-identity')).toMatchObject({ parentId: 'keepiq', title: 'Autofill identity' })
+			expect(entry('autofill-card')).toEqual(expect.objectContaining({ parentId: 'keepiq', title: 'Autofill card' }))
+			expect(entry('autofill-identity')).toEqual(expect.objectContaining({ parentId: 'keepiq', title: 'Autofill identity' }))
 			expect(entry('card:Visa')).toMatchObject({ parentId: 'autofill-card', title: 'Visa' })
-			expect(entry('open-identity')).toMatchObject({ parentId: 'autofill-identity', title: 'Open Keepiq' })
+			expect(entry('add:card')).toMatchObject({ parentId: 'autofill-card', title: 'Add card' })
+			expect(entry('open:identity')).toMatchObject({ parentId: 'autofill-identity', title: 'Open Keepiq' })
 		})
 
 		it('list the first ten of twelve cards by last used then name', async () => {
@@ -216,21 +266,22 @@ describe('the context menu', () => {
 			await vault(await Promise.all(names.map((name) => card(name))))
 			await browser.storage.local.set({ [lastUsedKey(accountId)]: { card11: 2, card10: 1 } })
 			await rebuildMenus()
-			expect(menus.entries.filter((e) => e.parentId === 'autofill-card').map((e) => e.id))
-				.toEqual([...['card11', 'card10', ...names.slice(0, 8)].map((name) => `card:${name}`), 'autofill-card-separator', 'open-card'])
+			expect(childrenOf('autofill-card'))
+				.toEqual([...['card11', 'card10', ...names.slice(0, 8)].map((name) => `card:${name}`), 'card-separator', 'add:card', 'open:card'])
 		})
 
-		it('are left out when the vault has none of the kind, a blocked card counting as none', async () => {
+		it('show their empty lines and Add when the vault has none of the kind, a blocked card counting as none', async () => {
 			await vault([await login('a'), blockedRow({ id: 'gone', typeId: 't-card' }), secretRow({ id: 'mine', typeId: 't-note', name: 'card' })])
 			await rebuildMenus()
-			expect(ids().filter((id) => /card|identity/.test(id ?? ''))).toEqual([])
+			expect(ids().slice(ids().indexOf('separator-1'))).toEqual(EMPTY_FORMS)
 		})
 
-		it('are left out on a page that is not on the web', async () => {
+		it('list nothing on a page that is not on the web', async () => {
 			tabUrl = 'about:blank'
 			await vault([await card('Visa'), await identity('Me')])
 			await rebuildMenus()
-			expect(ids()).toEqual(['keepiq', 'autofill', 'copy-user', 'copy-pass', 'copy-code', 'generate'])
+			expect(childrenOf('autofill-card')).toEqual(['card-none', 'card-separator', 'add:card', 'open:card'])
+			expect(childrenOf('autofill-identity')).toEqual(['identity-none', 'identity-separator', 'add:identity', 'open:identity'])
 		})
 
 		it('give way to Unlock vault while locked', async () => {
@@ -295,7 +346,7 @@ describe('the context menu', () => {
 		it('on tab activation and a URL change of the active tab', async () => {
 			tabUrl = 'https://other.test/'
 			await fakeBrowser.tabs.onActivated.trigger({ tabId: TAB, windowId: 1 })
-			await vi.waitFor(() => expect(entry('autofill')!.enabled).toBe(false))
+			await vi.waitFor(() => expect(ids()).toContain('autofill-none'))
 			tabUrl = 'https://example.test/'
 			await fakeBrowser.tabs.onUpdated.trigger(TAB, { url: tabUrl }, tab())
 			await vi.waitFor(() => expect(ids()).toContain('autofill:a'))
@@ -368,7 +419,72 @@ describe('the context menu', () => {
 			}
 		})
 
-		it.each(['open-card', 'open-identity'])('open the popup from %s', (id) => {
+		it.each([['add:login', 'login'], ['add:card', 'card'], ['add:identity', 'identity']])('open the popup at once from %s, leaving its intent in memory', (id, add) => {
+			menus.click(id, tab())
+			expect(openPopup).toHaveBeenCalledOnce()
+			expect(takeIntent()).toEqual({ add })
+			expect(takeIntent()).toBeNull()
+		})
+
+		it('clear the intent on a lock', async () => {
+			await vault([await login('a')])
+			menus.click('add:card', tab())
+			await lock(accountId)
+			expect(takeIntent()).toBeNull()
+		})
+
+		describe('a fill without a form', () => {
+			const notices = () => toTab.filter((m) => (m as { kind: string }).kind === 'notice.show')
+
+			it('shows the login notice in the top frame', async () => {
+				const sendMessage = vi.mocked(browser.tabs.sendMessage)
+				TAB_REPLIES['fill.execute'] = () => ({ filled: 'none', code: false })
+				try {
+					await vault([await login('a')])
+					menus.click('autofill:a', tab())
+					await vi.waitFor(() => expect(notices()).toEqual([{ kind: 'notice.show', notice: 'no_login_form' }]))
+					expect(sendMessage).toHaveBeenLastCalledWith(TAB, { kind: 'notice.show', notice: 'no_login_form' }, { frameId: 0 })
+				} finally {
+					delete TAB_REPLIES['fill.execute']
+				}
+			})
+
+			it.each([['card', 'no_card_form'], ['identity', 'no_identity_form']])('shows the %s notice, decrypting nothing', async (kind, notice) => {
+				TAB_REPLIES['fill.probe'] = () => ({ roles: [], origin: new URL(tabUrl).origin })
+				try {
+					await vault([await card('Visa'), await identity('Me')])
+					menus.click(kind === 'card' ? 'card:Visa' : 'identity:Me', tab())
+					await vi.waitFor(() => expect(notices()).toEqual([{ kind: 'notice.show', notice }]))
+					expect(toTab.map((m) => (m as { kind: string }).kind)).toEqual(['fill.probe', 'notice.show'])
+				} finally {
+					TAB_REPLIES['fill.probe'] = () => ({ roles: ['cardholder', 'number', 'firstName'], origin: new URL(tabUrl).origin })
+				}
+			})
+
+			it('shows none after a declined insecure question', async () => {
+				tabUrl = 'http://example.test/login'
+				TAB_REPLIES['fill.confirmInsecure'] = () => false
+				try {
+					await vault([await login('a')])
+					menus.click('autofill:a', tab())
+					await vi.waitFor(() => expect(toTab).toHaveLength(1))
+					await new Promise((resolve) => setTimeout(resolve, 20))
+					expect(toTab.map((m) => (m as { kind: string }).kind)).toEqual(['fill.confirmInsecure'])
+				} finally {
+					delete TAB_REPLIES['fill.confirmInsecure']
+				}
+			})
+
+			it('shows none after a fill that filled something', async () => {
+				await vault([await login('a')])
+				menus.click('autofill:a', tab())
+				await vi.waitFor(() => expect(toTab).toHaveLength(1))
+				await new Promise((resolve) => setTimeout(resolve, 20))
+				expect(notices()).toEqual([])
+			})
+		})
+
+		it.each(['open:login', 'open:card', 'open:identity'])('open the popup from %s', (id) => {
 			menus.click(id, tab())
 			expect(openPopup).toHaveBeenCalledOnce()
 		})
@@ -429,7 +545,7 @@ describe('the context menu', () => {
 		it('open the popup from Open Keepiq, falling back to the popout', async () => {
 			openPopup.mockRejectedValueOnce(new Error('not from a user action'))
 			const create = vi.spyOn(browser.windows, 'create').mockResolvedValue({} as never)
-			menus.click('open', tab())
+			menus.click('open:login', tab())
 			await vi.waitFor(() => expect(create).toHaveBeenCalledWith(expect.objectContaining({ url: expect.stringContaining('tabId=7') })))
 		})
 	})

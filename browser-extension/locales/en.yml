@@ -54,6 +54,9 @@ titles:
   unlock: Unlock
   viewItem: View item
   newItem: New item
+  newLogin: New login
+  newCard: New card
+  newIdentity: New identity
   editItem: Edit item
   newSend: New send
   sendCreated: Send created
@@ -630,8 +633,16 @@ pageFill:
 # The "Keepiq" right-click menu on editable fields.
 contextMenu:
   root: Keepiq
-  autofill: Autofill
-  noMatches: No matching logins
+  autofill: Autofill login
+  noMatches: No logins available
+  noUsernames: No usernames available
+  noPasswords: No passwords available
+  noCodes: No verification codes available
+  noIdentities: No identities available
+  noCards: No cards available
+  addLogin: Add login
+  addIdentity: Add identity
+  addCard: Add card
   openKeepiq: Open Keepiq
   copyUsername: Copy username
   copyPassword: Copy password
@@ -640,6 +651,13 @@ contextMenu:
   autofillIdentity: Autofill identity
   generatePassword: Generate password and copy
   unlock: Unlock vault
+
+# What a context menu fill that found no form says in the page.
+pageNotice:
+  label: Keepiq notice
+  noLoginForm: Keepiq found no login form to fill on this page.
+  noCardForm: Keepiq found no card fields to fill on this page.
+  noIdentityForm: Keepiq found no address or personal details fields to fill on this page.
 
 # The toolbar icon's tooltip; {name} is the extension's name.
 toolbar:

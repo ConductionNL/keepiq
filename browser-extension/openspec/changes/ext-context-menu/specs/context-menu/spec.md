@@ -67,13 +67,13 @@ Picking an item under Autofill login, Autofill identity or Autofill card SHALL f
 - **THEN** the login form is filled
 
 ### Requirement: A fill without a form says so
-When a fill from the menu finds no field for the item in any frame of the tab, the extension SHALL show a notice in the page's top frame: "Keepiq found no login form to fill on this page." (nl "Keepiq vond geen inlogformulier om in te vullen op deze pagina."), for a card "Keepiq found no card fields to fill on this page." (nl "Keepiq vond geen kaartvelden om in te vullen op deze pagina."), for an identity "Keepiq found no address or personal details fields to fill on this page." (nl "Keepiq vond geen adres- of persoonsgegevensvelden om in te vullen op deze pagina."). The notice is an extension page in an iframe in the save bar's corner, below the save bar when one is open. It is announced as a status, has a Close button, never takes focus, and closes after 8 seconds counted only while neither pointer nor focus is in it. A later notice replaces it. A declined question, a lock or a failed decrypt shows no notice. The background sends the top frame only a code, never vault data.
+When a fill from the menu finds no field for the item in any frame of the tab, the extension SHALL show a notice in the page's top frame: "Keepiq found no login form to fill on this page." (nl "Keepiq vond geen inlogformulier om in te vullen op deze pagina."), for a card "Keepiq found no card fields to fill on this page." (nl "Keepiq vond geen kaartvelden om in te vullen op deze pagina."), for an identity "Keepiq found no address or personal details fields to fill on this page." (nl "Keepiq vond geen adres- of persoonsgegevensvelden om in te vullen op deze pagina."). The notice is an extension page in an iframe in the save bar's corner, below the save bar when one is open, and moves to the other corner while the focused element is under it. It is announced as a status, has a Close button, never takes focus, and closes after 8 seconds counted only while neither pointer nor focus is in it. A later notice replaces it. A declined question, a lock or a failed decrypt shows no notice. The background sends the top frame only a code, never vault data.
 
 #### Scenario: Page without a form
 - **GIVEN** an article page whose site has a matching login
 - **WHEN** the user picks the login under Autofill login
 - **THEN** the page shows "Keepiq found no login form to fill on this page."
-- **AND** nothing was decrypted for the page
+- **AND** the login reached only the content script of the frames its site matches, never the page; a card or identity is not decrypted
 
 #### Scenario: Declined question
 - **GIVEN** an `http:` login page and an item saved on `https:`

@@ -377,6 +377,16 @@ describe('background entrypoint', () => {
 				expect(await deliver({ kind: 'capture.reshow' }, barSender)).toBeUndefined()
 			})
 
+			it('relays the notice page\'s Close to the top frame as notice.hide, from the bar page only', async () => {
+				expect(await deliver({ kind: 'notice.close' }, top)).toBeUndefined()
+				expect(await deliver({ kind: 'notice.close' }, { ...barSender, url: `${barSender.url}?notice=no_login_form` })).toBeUndefined()
+				await vi.waitFor(() => expect(toTab.at(-1)).toEqual({ message: { kind: 'notice.hide' }, frameId: 0 }))
+				expect(toTab.filter(({ message }) => message.kind === 'notice.hide')).toHaveLength(1)
+				// The page opened outside a tab has nowhere to relay to.
+				expect(await deliver({ kind: 'notice.close' }, { ...barSender, tab: undefined })).toBeUndefined()
+				expect(toTab.filter(({ message }) => message.kind === 'notice.hide')).toHaveLength(1)
+			})
+
 			it('relays the focus_notification_bar command to the top frame', async () => {
 				menus.command('focus_notification_bar', tab as never)
 				await vi.waitFor(() => expect(toTab.at(-1)).toEqual({ message: { kind: 'capture.focus' }, frameId: 0 }))

@@ -18,6 +18,13 @@ export interface FrameHost {
 	remove(): void
 }
 
+/** The layout viewport, without scrollbars; quirks-mode pages report it on `window`. */
+export function viewport(): { width: number; height: number } {
+	const root = document.documentElement
+	const standards = document.compatMode === 'CSS1Compat'
+	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
+}
+
 /** `all: initial` first, so no page rule reaches a property this does not set. */
 export function importantStyle(properties: Readonly<Record<string, string>>): string {
 	return ['all: initial !important;', ...Object.entries(properties).map(([name, value]) => `${name}: ${value} !important;`)].join(' ')
@@ -35,7 +42,7 @@ export function isOwnHost(element: Element): boolean {
 }
 
 /** Not appended yet, so the caller can place it and add listeners first. */
-export function createFrameHost(page: `/${string}.html`, title: string): FrameHost {
+export function createFrameHost(page: `/${string}.html` | `/${string}.html?${string}`, title: string): FrameHost {
 	// A `div`, not a custom element name the page could have defined first.
 	const element = document.createElement('div')
 	let written = ''

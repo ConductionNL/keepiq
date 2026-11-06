@@ -53,6 +53,9 @@ titles:
   unlock: Ontgrendelen
   viewItem: Item bekijken
   newItem: Nieuw item
+  newLogin: Nieuwe login
+  newCard: Nieuwe kaart
+  newIdentity: Nieuwe identiteit
   editItem: Item bewerken
   newSend: Nieuwe verzending
   sendCreated: Verzending aangemaakt
@@ -621,8 +624,16 @@ pageFill:
 
 contextMenu:
   root: Keepiq
-  autofill: Automatisch invullen
-  noMatches: Geen passende logins
+  autofill: Login invullen
+  noMatches: Geen logins beschikbaar
+  noUsernames: Geen gebruikersnamen beschikbaar
+  noPasswords: Geen wachtwoorden beschikbaar
+  noCodes: Geen verificatiecodes beschikbaar
+  noIdentities: Geen identiteiten beschikbaar
+  noCards: Geen kaarten beschikbaar
+  addLogin: Login toevoegen
+  addIdentity: Identiteit toevoegen
+  addCard: Kaart toevoegen
   openKeepiq: Keepiq openen
   copyUsername: Gebruikersnaam kopiëren
   copyPassword: Wachtwoord kopiëren
@@ -631,6 +642,12 @@ contextMenu:
   autofillIdentity: Identiteit invullen
   generatePassword: Wachtwoord genereren en kopiëren
   unlock: Kluis ontgrendelen
+
+pageNotice:
+  label: Keepiq-melding
+  noLoginForm: Keepiq vond geen inlogformulier om in te vullen op deze pagina.
+  noCardForm: Keepiq vond geen kaartvelden om in te vullen op deze pagina.
+  noIdentityForm: Keepiq vond geen adres- of persoonsgegevensvelden om in te vullen op deze pagina.
 
 toolbar:
   locked: "{name}: vergrendeld"

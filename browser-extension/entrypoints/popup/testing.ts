@@ -209,6 +209,7 @@ export function fakeBackground(options: FakeBackground = {}) {
 	const popupAnswers = (): FakeAnswers => ({
 		'popup.lastTab.set': () => null,
 		'popup.popout': () => null,
+		'popup.intent': () => null,
 		'clipboard.copied': () => null,
 	})
 	const answers: FakeAnswers = { ...settingsAnswers(), ...vaultAnswers(), ...generatorAnswers(), ...sendAnswers(), ...popupAnswers() }
