@@ -44,8 +44,8 @@ interface Bar {
 }
 
 export interface NotificationHostOptions {
-	/** For the `<html>` filter that reaches Firefox's top layer. */
-	firefox: boolean
+	/** See `drawnUntouched`. */
+	rootFilterReachesTopLayer: boolean
 	send: (message: ContentToBackground) => void
 }
 
@@ -88,7 +88,7 @@ function modalParent(): Element | null {
 type Movable = Element & { moveBefore?: (node: Node, child: Node | null) => void }
 
 export function createNotificationHost(options: NotificationHostOptions): NotificationHost {
-	const { firefox, send } = options
+	const { rootFilterReachesTopLayer, send } = options
 	let bar: Bar | null = null
 	let ownToggle = false
 	/** The page's last focused element, given focus back when the bar goes while focus is in it. */
@@ -213,7 +213,7 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 		const { top, left, width, height } = current.box
 		if (Math.abs(rect.top - top) > TOLERANCE_PX || Math.abs(rect.left - left) > TOLERANCE_PX
 			|| Math.abs(rect.width - width) > TOLERANCE_PX || Math.abs(rect.height - height) > TOLERANCE_PX) return false
-		return drawnUntouched(element, current.popover, firefox)
+		return drawnUntouched(element, current.popover, rootFilterReachesTopLayer)
 	}
 
 	function sample(current: Bar): void {

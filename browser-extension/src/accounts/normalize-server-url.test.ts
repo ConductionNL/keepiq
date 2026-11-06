@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeServerUrl } from './normalize-server-url'
+import { normalizeServerUrl, serverOrigins } from './normalize-server-url'
+
+describe('serverOrigins', () => {
+	it('is the origin without the install path', () => {
+		expect(serverOrigins('https://cloud.example.org/nextcloud')).toEqual(['https://cloud.example.org/*'])
+		expect(serverOrigins('http://localhost:8080')).toEqual(['http://localhost:8080/*'])
+	})
+})
 
 describe('normalizeServerUrl', () => {
 	it.each([

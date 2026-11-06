@@ -6,17 +6,28 @@ The extension is in development. You can browse, fill in, save, copy, add, edit,
 
 ## Getting the extension
 
-The extension runs on Chrome and other Chromium browsers, such as Edge and Brave, and on Firefox 109 or later. Your server needs Keepiq 0.3.12 or later; [Supported Keepiq versions](supported-keepiq-versions.md) lists which versions are supported and until when.
+The extension runs on Chrome and other Chromium browsers, such as Edge and Brave, on Firefox 109 or later, and on Safari 26 or later on macOS 14 or later. Your server needs Keepiq 0.3.12 or later; [Supported Keepiq versions](supported-keepiq-versions.md) lists which versions are supported and until when.
 
-It is not in the Chrome Web Store or on Firefox Add-ons yet. Until it is, you build it from the Keepiq source:
+It is not in the Chrome Web Store, on Firefox Add-ons or in the Mac App Store yet. Until it is, you build it from the Keepiq source:
 
 1. Install [Node.js](https://nodejs.org). Keepiq is tested with version 24.
-2. In the `browser-extension` folder of the Keepiq repository, run `npm install`, then `npm run build` for Chrome or `npm run build:firefox` for Firefox.
+2. In the `browser-extension` folder of the Keepiq repository, run `npm install`, then `npm run build` for Chrome, `npm run build:firefox` for Firefox or `npm run build:safari` for Safari.
 3. Load the build:
    - **Chrome:** open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the `.output/chrome-mv3` folder.
    - **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on…** and pick `.output/firefox-mv2/manifest.json`. Firefox removes a temporary add-on when it restarts.
+   - **Safari:** on a Mac with Xcode, run `npm run package:safari`, unzip `.output/keepiq-safari.zip` and open **Keepiq.app** once. In Safari, choose **Safari** > **Settings**, then **Advanced**, and turn on **Show features for web developers**; then choose **Developer**, turn on **Allow unsigned extensions**, and turn Keepiq on under **Extensions**. Safari turns **Allow unsigned extensions** off when it quits, so repeat that step after a restart.
 
 Pin the Keepiq icon to the toolbar so it is one click away. The icon shows your active account at a glance: grey when it is logged out, with a lock when it is locked, and in colour when it is unlocked. While unlocked, a number on the icon says how many of your logins match the page you are on; hover the icon to read the state in words.
+
+### Website access in Safari
+
+Safari runs Keepiq only on the websites you allow. Elsewhere there is no list under login fields, no save card and no Keepiq passkeys.
+
+- **Let Keepiq work on websites:** until Keepiq may run on every website, the **Vault** tab shows this card above **Autofill suggestions**. **Allow on every website** asks Safari; **Not now** hides the card for good.
+- **When Safari doesn't allow it:** the card shows the steps. In Safari, choose **Safari** > **Settings**, then **Websites**, select Keepiq in the list and set **When visiting other websites** to **Allow**.
+- **One site at a time:** click the Keepiq button on that site and choose to always allow it.
+- **Keepiq can't reach *server*:** Safari doesn't let Keepiq reach your server, so your vault can't sync. **Allow *server*** asks Safari again. This card can't be hidden.
+- **Settings, Autofill, Website access** reads **Every website**, **Only websites you allowed** or **Not your Keepiq server**, with the same button, also after **Not now**.
 
 ## Adding an account
 
@@ -182,11 +193,12 @@ Keepiq fills in a card on a payment form and an identity on an address or person
 
 ### When the list does not show
 
-- **No list in frames from another site:** a login form embedded from another website gets no list, in Chrome or Firefox. Fill it from the extension, the right-click menu or the shortcut.
+- **No list in frames from another site:** a login form embedded from another website gets no list, in any browser. Fill it from the extension, the right-click menu or the shortcut.
 - **No list in small frames, or where the page blocks the extension's frame:** the same alternatives work there.
 - **Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar.** The list refuses a choice while the page hides, covers or alters it, so a site can't trick you into choosing a login you can't see. Fill from the toolbar button instead.
-- **Page filters refuse every pick:** a zoom extension does so in every browser; in Firefox, so does a filter on the whole page, such as "Invert the page" or Dark Reader's filter mode.
-- **In Firefox the check is best effort:** Chrome tells Keepiq whether the list is really visible, Firefox doesn't, so Firefox may miss a page that covers the list with a see-through layer.
+- **Page filters refuse every pick:** a zoom extension does so in every browser; in Firefox and Safari, so does a filter on the whole page, such as "Invert the page" or Dark Reader's filter mode.
+- **In Firefox and Safari the check is best effort:** Chrome tells Keepiq whether the list is really visible, Firefox and Safari don't, so they may miss a page that covers the list with a see-through layer.
+- **In Safari, on a site Keepiq may not run on:** allow it, see [Website access in Safari](#website-access-in-safari), or fill from the toolbar button or the right-click menu.
 
 ## Saving logins
 
@@ -264,7 +276,7 @@ The extension checks your server for changes every 15 minutes while the vault is
 The **Settings** tab has a section per topic. Your choices are kept per account, except Appearance, which applies to every account and stays when you log out.
 
 - **Account security:**
-  - **Vault timeout:** Immediately, 1 minute to 4 hours, On system lock, On browser restart, Never or Custom; 15 minutes by default. **Never** keeps the key that opens your vault on disk, and asks first.
+  - **Vault timeout:** Immediately, 1 minute to 4 hours, On system lock, On browser restart, Never or Custom; 15 minutes by default. **Never** keeps the key that opens your vault on disk, and asks first. On system lock is not offered in Safari.
   - **Your organisation's maximum:** the vault never stays unlocked longer without use than your organisation allows, 4 hours unless your administrator chose less. Longer options, On browser restart and Never are not offered, and On system lock and Immediately also lock after the maximum. A longer choice you made before shows the maximum with **Set by your organisation**, and comes back when the maximum rises.
   - **Timeout action:** **Lock**, or **Log out**, after which you need the app password again.
   - **Unlock with PIN:** enter your master password and a PIN of at least 6 characters, twice. Don't reuse the PIN of your phone or bank card.
@@ -277,8 +289,9 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Show autofill suggestions on form fields** turns the list under login fields on or off; **Display cards as suggestions** and **Display identities as suggestions** do the same for the card and identity lists, and only work while it is on; **Enable context menu options** the right-click menu.
   - **Always show cards as Autofill suggestions on Vault view** and **Always show identities as Autofill suggestions on Vault view** list them under **Autofill suggestions** in the extension.
   - **Make Keepiq your default password manager,** Chrome only, turns off Chrome's own password saving and address autofill, so its dropdown no longer covers Keepiq's list. Chrome asks for permission to change its settings; turning it off gives them back.
-  - **Autofill keyboard shortcut** shows the keys, with **Change**.
-  - **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default.
+  - **Autofill keyboard shortcut** shows the keys, with **Change**. In Safari, open **Safari** > **Settings**, choose **Extensions**, then select Keepiq to change them.
+  - **Website access,** Safari only, see [Website access in Safari](#website-access-in-safari).
+  - **Clear clipboard**, from 10 seconds to 5 minutes or Never, 30 seconds by default. In Safari it clears only what Keepiq copied, so text you copied since stays.
 - **Notifications:** **Ask to add login**, **Ask to update existing login**, **Ask to save and use passkeys** (see [Passkeys](#passkeys)), and **Excluded domains**, the sites where the save bar never asks and passkeys go to the browser. **Keepiq on the web** links to Keepiq on Nextcloud, where its own notifications, import and export and your master password are managed.
 - **Vault:**
   - **Sync now**, with the time of the last sync.
@@ -293,7 +306,7 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
 
 ## Language
 
-The extension speaks your browser's language. It is available in English and Dutch; in any other language it uses English. To change it, change your browser's language. Item names, folder names and item types come from your vault and stay as they are.
+The extension speaks your browser's language. It is available in English and Dutch; in any other language it uses English. To change it, change your browser's language. Safari follows the preferred languages of macOS, under **System Settings**, **General**, **Language & Region**. Item names, folder names and item types come from your vault and stay as they are.
 
 ## Privacy
 
@@ -301,4 +314,4 @@ The extension talks to your own Nextcloud and sends nothing to Conduction. It ha
 
 ## Coming next
 
-- **Chrome Web Store and Firefox Add-ons.** Install and update the extension from a store.
+- **Chrome Web Store, Firefox Add-ons and the Mac App Store.** Install and update the extension from a store.

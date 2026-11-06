@@ -13,6 +13,8 @@ import { defined, PASSKEY_CHANNEL } from './shape'
 export const ACK_TIMEOUT_MS = 500
 /** How long an availability check waits for the background after the ack. */
 export const AVAILABLE_TIMEOUT_MS = 2_000
+/** How long a frame that cannot read the top window's focus waits before the fallback, as Bitwarden's does. */
+export const FRAME_FOCUS_MS = 500
 
 /** On every method this script replaced, so a second copy (Firefox re-injects on update) leaves the first alone. */
 const INSTALLED = Symbol.for('keepiq.passkey')
@@ -23,6 +25,7 @@ type Outgoing = PageToRelay extends infer M ? M extends PageToRelay ? Omit<M, 'c
 /** A `create` or `get` as it goes to the relay. */
 type CeremonyMessage = Extract<Outgoing, { kind: Kind }>
 type Listener = (this: EventTarget, type: string, listener: () => void) => void
+type FocusWindow = EventTarget & { document: Document }
 
 /** What the page script uses of the page's globals, captured when it starts. */
 export interface PageScope {
@@ -35,6 +38,9 @@ export interface PageScope {
 	AbortSignal: typeof AbortSignal
 	EventTarget: typeof EventTarget
 	DOMException: typeof DOMException
+	/** Read only when the fallback waits for focus. */
+	Document?: { prototype: Pick<Document, 'hasFocus'> }
+	top?: FocusWindow | null
 	postMessage(message: unknown, targetOrigin: string, transfer: unknown[]): void
 	setTimeout(handler: () => void, ms: number): unknown
 	clearTimeout(id: unknown): void
@@ -108,7 +114,12 @@ function replaceMethod(target: object, name: string, wrap: (method: Method) => o
 	Object.defineProperty(target, name, { value, writable: true, configurable: true })
 }
 
-export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope): void {
+/**
+ * `focusFirst`: WebKit starts no ceremony while the window lacks focus, which it may still lack right after the Keepiq
+ * window closed, so a fallback waits for it there, as Bitwarden's page script does. Inline, not `isSafari()`, which would
+ * pull the `browser` global into the page's world.
+ */
+export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope, focusFirst = import.meta.env.BROWSER === 'safari'): void {
 	const container = scope.navigator?.credentials
 	const Credential = scope.PublicKeyCredential
 	if (!container || !Credential || installedBefore(container, Credential)) return
@@ -125,7 +136,40 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 	const post = scope.postMessage.bind(scope)
 	const setTimer = scope.setTimeout.bind(scope)
 	const clearTimer = scope.clearTimeout.bind(scope)
+	const hasFocus = focusFirst ? scope.Document?.prototype.hasFocus : undefined
 	let nextId = 0
+
+	/** Calls `go` once the page gets focus back; returns what stops the wait, or null when it has focus. */
+	function awaitFocus(go: () => void): (() => void) | null {
+		if (!hasFocus) return null
+		let top: FocusWindow
+		try {
+			top = scope.top!
+			if (hasFocus.call(top.document)) return null
+		} catch {
+			const timer = setTimer(go, FRAME_FOCUS_MS)
+			return () => clearTimer(timer)
+		}
+		// `focus` fires only on the focused frame's window, which is the calling one when a same-origin frame calls.
+		const listening: EventTarget[] = []
+		const stop = () => {
+			for (const target of listening) unlisten.call(target, 'focus', onFocus)
+		}
+		const onFocus = () => {
+			stop()
+			go()
+		}
+		try {
+			for (const target of [top, scope as unknown as EventTarget]) {
+				listen.call(target, 'focus', onFocus)
+				listening.push(target)
+			}
+			return stop
+		} catch {
+			stop()
+			return null
+		}
+	}
 
 	/** One call's own channel; `answer` is the relay's last word, or `fallback` when the relay is too late. */
 	function open(message: Outgoing, afterAck?: number): { answer: Promise<unknown>; abort: () => void } {
@@ -200,8 +244,8 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 		}) as unknown as Credential
 	}
 
-	/** The relay's answer as the page receives it; anything unexpected, or a throw, goes to the browser. */
-	function outcome(kind: Kind, reply: unknown, signal: AbortSignal | undefined, fallback: () => Promise<unknown>): Promise<unknown> {
+	/** The relay's answer as the page receives it; null for anything unexpected, or a throw, which goes to the browser. */
+	function outcome(kind: Kind, reply: unknown, signal: AbortSignal | undefined): Promise<unknown> | null {
 		try {
 			const r = reply as RelayToPage | null
 			if (r?.type === 'credential') return Promise.resolve(credential(kind, r.credential))
@@ -209,9 +253,9 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 				return Promise.reject(r.name === 'AbortError' && signal && aborted(signal) ? reason(signal) : new DOMException(MESSAGES[r.name], r.name))
 			}
 		} catch {
-			// Falls back below.
+			// Falls back.
 		}
-		return fallback()
+		return null
 	}
 
 	function modal(message: CeremonyMessage, signal: AbortSignal | undefined, fallback: () => Promise<unknown>) {
@@ -220,9 +264,11 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 		const call = open(message)
 		return new Promise<unknown>((resolve, reject) => {
 			let done = false
+			let stopFocusWait: (() => void) | null = null
 			const finish = () => {
 				done = true
 				clearTimer(deadline)
+				stopFocusWait?.()
 				if (signal) unlisten.call(signal, 'abort', onAbort)
 			}
 			const onAbort = () => {
@@ -238,14 +284,26 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 				reject(new DOMException(MESSAGES.NotAllowedError, 'NotAllowedError'))
 			}, timeout)
 			if (signal) listen.call(signal, 'abort', onAbort)
-			void call.answer.then((reply) => {
+			const toBrowser = () => {
 				if (done) return
 				finish()
 				try {
-					outcome(message.kind, reply, signal, fallback).then(resolve, reject)
+					fallback().then(resolve, reject)
 				} catch (error) {
 					reject(error)
 				}
+			}
+			void call.answer.then((reply) => {
+				if (done) return
+				const result = outcome(message.kind, reply, signal)
+				if (result) {
+					finish()
+					result.then(resolve, reject)
+					return
+				}
+				// The signal and the deadline still end the call while it waits.
+				stopFocusWait = awaitFocus(toBrowser)
+				if (!stopFocusWait) toBrowser()
 			})
 		})
 	}

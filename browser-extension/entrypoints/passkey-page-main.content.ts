@@ -1,4 +1,4 @@
-/** The page script on Chrome, before the page's own scripts; Firefox gets `passkey-page.ts` from the relay instead. */
+/** The page script on every browser but Firefox, before the page's own scripts; Firefox gets `passkey-page.ts` from the relay instead. */
 
 import { installPasskeyPage } from '@/src/passkey/page'
 
@@ -7,7 +7,7 @@ export default defineContentScript({
 	allFrames: true,
 	runAt: 'document_start',
 	world: 'MAIN',
-	include: ['chrome'],
+	exclude: ['firefox'],
 	main() {
 		installPasskeyPage()
 	},

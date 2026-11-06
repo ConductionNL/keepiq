@@ -86,12 +86,12 @@ export function noPseudoContent(element: Element): boolean {
 /**
  * Whether a host shown in the top layer (`popover`) or fixed on the page is drawn untouched now. A showing popover
  * paints, and takes clicks, whatever its ancestors' opacity, filter, transform, mask or visibility; what can still
- * hide it shows in the rect or the hit test. Firefox is the exception for a `filter` on the root, which reaches its
- * top layer. Without the popover API (Firefox below 125) every ancestor counts.
+ * hide it shows in the rect or the hit test, except a `filter` on the root where `rootFilterReachesTopLayer`. Without
+ * the popover API (Firefox below 125) every ancestor counts.
  */
-export function drawnUntouched(host: Element, popover: boolean, firefox: boolean): boolean {
+export function drawnUntouched(host: Element, popover: boolean, rootFilterReachesTopLayer: boolean): boolean {
 	if (!noPseudoContent(host) || !untouched(host)) return false
-	if (popover && firefox && !none(getComputedStyle(document.documentElement).filter)) return false
+	if (popover && rootFilterReachesTopLayer && !none(getComputedStyle(document.documentElement).filter)) return false
 	if (!popover) {
 		for (const element of composedAncestors(host)) {
 			if (!untouched(element)) return false

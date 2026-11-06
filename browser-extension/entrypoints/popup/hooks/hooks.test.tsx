@@ -76,6 +76,45 @@ describe('useClipboard', () => {
 		expect(value.toast).toHaveBeenCalledWith('Could not copy')
 		expect(sent).not.toHaveBeenCalled()
 	})
+
+	describe('on Safari', () => {
+		afterEach(() => {
+			vi.unstubAllEnvs()
+		})
+
+		async function copyOnSafari(app: () => Promise<unknown>, refuse = false) {
+			userEvent.setup()
+			vi.stubEnv('BROWSER', 'safari')
+			vi.spyOn(console, 'warn').mockImplementation(() => {})
+			vi.spyOn(browser.runtime, 'sendNativeMessage').mockImplementation(app)
+			const writeText = fakeClipboard(refuse)
+			const sent = fakeBackground()
+			const { value, wrapper } = shell()
+			const { result } = renderHook(() => useClipboard(), { wrapper })
+			await act(() => result.current('alice', 'Username'))
+			return { writeText, sent, toast: value.toast }
+		}
+
+		it('copies through the Keepiq app and passes its count to the background', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => ({ ok: true, changeCount: 8 }))
+			expect(writeText).not.toHaveBeenCalled()
+			expect(toast).toHaveBeenCalledWith('Username copied')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied', changeCount: 8 }])
+		})
+
+		it('copies itself when the app fails, and sends no count', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => { throw new Error('No native host') })
+			expect(writeText).toHaveBeenCalledWith('alice')
+			expect(toast).toHaveBeenCalledWith('Username copied')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied' }])
+		})
+
+		it('only toasts when both fail', async () => {
+			const { sent, toast } = await copyOnSafari(async () => ({ ok: false, error: 'write_failed' }), true)
+			expect(toast).toHaveBeenCalledWith('Could not copy')
+			expect(sent).not.toHaveBeenCalled()
+		})
+	})
 })
 
 describe('useCurrentTab', () => {

@@ -16,7 +16,7 @@ function renderList(snapshot: UnlockedSnapshot) {
 	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast: vi.fn(), launch: vi.fn(), items, refreshState: vi.fn() }}>
-			<VaultList snapshot={snapshot} tab={{ id: 1, windowId: 1, url: undefined, host: null }} syncNow={vi.fn()} onOpen={vi.fn()} />
+			<VaultList snapshot={snapshot} tab={{ id: 1, windowId: 1, url: undefined, host: null }} serverUrl="https://cloud.example.org" syncNow={vi.fn()} onOpen={vi.fn()} />
 		</ShellContext.Provider>,
 	)
 }

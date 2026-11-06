@@ -1,5 +1,6 @@
-import { getConfig } from '@testing-library/react'
+import { act, getConfig } from '@testing-library/react'
 import { vi } from 'vitest'
+import type { Browser } from 'wxt/browser'
 import { AUTOFILL_FEATURES, clampTimeout, DEFAULT_SETTINGS, type AccountSettings } from '@/src/accounts/settings'
 import { defaultOptions, HISTORY_LIMIT, type GeneratorHistoryEntry, type GeneratorOptions, type GeneratorPolicy } from '@/src/generator/options'
 import type {
@@ -129,7 +130,7 @@ type FakeAnswers = Record<string, (message: FakeMessage) => unknown>
 /** Answers each message kind the way the background would; returns the spy to inspect what was sent. */
 export function fakeBackground(options: FakeBackground = {}) {
 	const state = options.state ?? popupState({ screen: 'unlocked', active: account({ status: 'unlocked' }), lastTab: options.lastTab ?? 'vault' })
-	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, showBadgeCounter: true, ...options.settings }
+	let settings: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, showBadgeCounter: true, websiteAccessDismissed: false, ...options.settings }
 	let generatorOptions = options.generator?.options ?? defaultOptions()
 	let history = options.generator?.history ?? []
 	let sends = options.send?.sends ?? []
@@ -263,4 +264,33 @@ export function fakeClipboard(refuse = false) {
 	})
 	Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
 	return writeText
+}
+
+type PermissionListener = (permissions: Browser.permissions.Permissions) => void
+
+/** Host permissions as Safari holds them; `request` grants what `answer` returns, everything asked by default. */
+export function fakePermissions(initial: string[]) {
+	const granted = new Set(initial)
+	const listeners = { onAdded: new Set<PermissionListener>(), onRemoved: new Set<PermissionListener>() }
+	let answer = (origins: string[]) => origins
+	const contains = vi.spyOn(browser.permissions, 'contains').mockImplementation(async ({ origins = [] }) => origins.every((origin) => granted.has(origin)))
+	for (const event of ['onAdded', 'onRemoved'] as const) {
+		vi.spyOn(browser.permissions[event], 'addListener').mockImplementation((listener) => void listeners[event].add(listener))
+		vi.spyOn(browser.permissions[event], 'removeListener').mockImplementation((listener) => void listeners[event].delete(listener))
+	}
+	const request = vi.spyOn(browser.permissions, 'request').mockImplementation(async ({ origins = [] }) => {
+		const given = answer(origins)
+		given.forEach((origin) => granted.add(origin))
+		return given.length === origins.length
+	})
+	return {
+		contains,
+		request,
+		answer: (next: (origins: string[]) => string[]) => (answer = next),
+		/** A change made in the browser's settings while the popup is open. */
+		change: (event: 'onAdded' | 'onRemoved', origins: string[]) => act(() => {
+			origins.forEach((origin) => (event === 'onAdded' ? granted.add(origin) : granted.delete(origin)))
+			listeners[event].forEach((listener) => listener({ origins }))
+		}),
+	}
 }

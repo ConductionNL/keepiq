@@ -11,6 +11,7 @@ import { createInlineHost } from '@/src/autofill/inline-host'
 import { createNoticeHost } from '@/src/autofill/notice-host'
 import { createNotificationHost } from '@/src/autofill/notification-host'
 import type { BackgroundToContent, ContentToBackground } from '@/src/messages'
+import { isChromium } from '@/src/platform'
 
 export default defineContentScript({
 	matches: ['*://*/*'],
@@ -50,10 +51,11 @@ export default defineContentScript({
 				return null
 			}
 		}
-		const firefox = import.meta.env.BROWSER === 'firefox'
-		const inline = createInlineHost({ request, send, firefox })
+		// Unverified on Safari, so it refuses there as on Firefox (ext-safari design.md § Unverified).
+		const rootFilterReachesTopLayer = !isChromium()
+		const inline = createInlineHost({ request, send, rootFilterReachesTopLayer })
 		const top = window === window.top
-		const bar = top ? createNotificationHost({ firefox, send }) : null
+		const bar = top ? createNotificationHost({ rootFilterReachesTopLayer, send }) : null
 		const notice = bar ? createNoticeHost(() => bar.place()) : null
 
 		type Reply = (reply: unknown) => void

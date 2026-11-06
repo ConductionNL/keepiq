@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Niet ingesteld
   shortcutChange: Wijzigen
   shortcutFirefox: Open about:addons, kies het tandwielmenu en dan Extensiesneltoetsen beheren
+  shortcutSafari: Open de Safari-instellingen, kies Extensies en selecteer Keepiq om de sneltoets te wijzigen
+  websiteAccess: Toegang tot websites
+  websiteAccessAll: Alle websites
+  websiteAccessSome: Alleen websites die je toestond
+  websiteAccessServer: Niet je Keepiq-server
   clearClipboard: Klembord wissen
   clipboardSeconds:
     1: 1 seconde
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Privacybeleid
   webApp: Keepiq-webapp
   rate: Extensie beoordelen
+
+websiteAccess:
+  title: Laat Keepiq werken op websites
+  body: Safari laat Keepiq alleen werken op websites die je toestaat. Sta het toe op alle websites om overal inloggegevens in te vullen, nieuwe op te slaan en passkeys te gebruiken.
+  allow: Op alle websites toestaan
+  dismiss: Niet nu
+  steps: 'Kies in Safari Safari > Instellingen en dan Websites. Selecteer Keepiq in de lijst en zet "Bij bezoek aan andere websites" op Sta toe.'
+  perSite: Wil je per website toestaan? Klik op die website op de Keepiq-knop en kies om het altijd toe te staan.
+  serverTitle: Keepiq kan {host} niet bereiken
+  serverBody: Safari geeft Keepiq geen toegang tot je server, dus je kluis kan niet synchroniseren.
+  serverAllow: "{host} toestaan"
 
 generator:
   kinds: Wat wil je genereren?

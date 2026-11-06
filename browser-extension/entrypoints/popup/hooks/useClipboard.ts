@@ -8,13 +8,14 @@ import { request } from './useMessage'
 export function useClipboard() {
 	const { toast } = useShell()
 	return useCallback(async (text: string, what: string): Promise<void> => {
+		let changeCount: number | undefined
 		try {
-			await copyText(text)
+			changeCount = await copyText(text)
 		} catch {
 			toast(i18n.t('clipboard.failed'))
 			return
 		}
 		toast(i18n.t('clipboard.copied', { what }))
-		void request({ kind: 'clipboard.copied' })
+		void request(changeCount === undefined ? { kind: 'clipboard.copied' } : { kind: 'clipboard.copied', changeCount })
 	}, [toast])
 }

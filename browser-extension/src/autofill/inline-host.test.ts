@@ -76,7 +76,7 @@ function track(target: Document | Window) {
 
 function start(html = LOGIN, options: Partial<InlineHostOptions> = {}) {
 	document.body.innerHTML = html
-	inline = createInlineHost({ request, send: (message) => void sent.push(message), firefox: false, ...options })
+	inline = createInlineHost({ request, send: (message) => void sent.push(message), rootFilterReachesTopLayer: false, ...options })
 	inline.start()
 }
 
@@ -184,7 +184,7 @@ describe('opening', () => {
 	it('opens on the password field too, and on a field focused before the content script started', async () => {
 		document.body.innerHTML = LOGIN
 		$('#p').focus()
-		inline = createInlineHost({ request, send: (message) => void sent.push(message), firefox: false })
+		inline = createInlineHost({ request, send: (message) => void sent.push(message), rootFilterReachesTopLayer: false })
 		inline.start()
 		await settle()
 		expect(isOpen()).toBe(true)
@@ -984,16 +984,16 @@ describe('visibility guard', () => {
 			expect(verify()).toBe(true)
 		})
 
-		it.each(ROOT_STYLES.filter(([property]) => property !== 'filter'))('accepts a pick on Firefox while the page root has %s', async (property, value) => {
-			start(LOGIN, { firefox: true, ancestors: () => [] })
+		it.each(ROOT_STYLES.filter(([property]) => property !== 'filter'))('accepts a pick where a root filter reaches the top layer while the page root has %s', async (property, value) => {
+			start(LOGIN, { rootFilterReachesTopLayer: true, ancestors: () => [] })
 			await openOn('#u')
 			document.documentElement.style.setProperty(property!, value!)
 			shown()
 			expect(verify()).toBe(true)
 		})
 
-		it.each(['opacity(0)', 'invert(1)'])('refuses a pick on Firefox while the page root has filter: %s, which reaches its top layer', async (filter) => {
-			start(LOGIN, { firefox: true, ancestors: () => [] })
+		it.each(['opacity(0)', 'invert(1)'])('refuses a pick where a root filter reaches the top layer while the page root has filter: %s', async (filter) => {
+			start(LOGIN, { rootFilterReachesTopLayer: true, ancestors: () => [] })
 			await openOn('#u')
 			document.documentElement.style.filter = filter
 			shown()
@@ -1252,11 +1252,11 @@ describe('visibility guard', () => {
 
 	})
 
-	describe.each([['Chrome', false], ['Firefox', true]])('in a subframe on %s', (_, firefox) => {
+	describe.each([['Chrome', false], ['Firefox or Safari', true]])('in a subframe on %s', (_, rootFilterReachesTopLayer) => {
 		let frameElement: HTMLElement
 
 		function startInFrame(ancestors: () => HTMLElement[] | null = () => [$('#frame')]) {
-			start(`${LOGIN}<div id="outer"><div id="inner"><iframe id="frame"></iframe></div></div>`, { firefox, ancestors })
+			start(`${LOGIN}<div id="outer"><div id="inner"><iframe id="frame"></iframe></div></div>`, { rootFilterReachesTopLayer, ancestors })
 			frameElement = $('#frame')
 			rects.set('frame', { top: 10, left: 30, width: 600, height: 600 })
 		}
@@ -1326,7 +1326,7 @@ describe('visibility guard', () => {
 			frameElement = shadow.querySelector('iframe')!
 			rects.set('frame', { top: 10, left: 30, width: 600, height: 600 })
 			Object.defineProperty(shadow, 'elementFromPoint', { value: () => frameElement })
-			inline = createInlineHost({ request, send: (message) => void sent.push(message), firefox, ancestors: () => [frameElement] })
+			inline = createInlineHost({ request, send: (message) => void sent.push(message), rootFilterReachesTopLayer, ancestors: () => [frameElement] })
 			inline.start()
 			await openOn('#u')
 			vi.mocked(document.elementFromPoint).mockImplementation((x) => (x > 140 ? $('#outer') : host().element))
@@ -1361,11 +1361,11 @@ describe('visibility guard', () => {
 		expect(isOpen()).toBe(false)
 	})
 
-	it('misses a pointer-events: none overlay on Firefox, as documented', async () => {
-		start(LOGIN, { firefox: true, ancestors: () => [] })
+	it('misses a pointer-events: none overlay without an occlusion report (Firefox, Safari), as documented', async () => {
+		start(LOGIN, { rootFilterReachesTopLayer: true, ancestors: () => [] })
 		await openOn('#u')
 		shown()
-		// Hit testing skips such an overlay and Firefox has no occlusion report.
+		// Hit testing skips such an overlay.
 		expect(verify()).toBe(true)
 	})
 })
