@@ -444,6 +444,9 @@ async function record(o) {
  * (POST /__e2e/offline) every other request loses its connection.
  */
 function replay(o) {
+	// Every line carries the time, so a request the app sent can be matched
+	// with the UI test's own timeline (xcodebuild prints both).
+	const log = (line) => console.log(`${new Date().toISOString()} [replay] ${line}`)
 	const f = JSON.parse(readFileSync(FIXTURES, 'utf8'))
 	const valid = new Set(['admin:stub-app-password', 'admin:manual-app-password', 'blocked:manual-app-password'])
 	const polls = new Map()
@@ -456,6 +459,13 @@ function replay(o) {
 		// Nextcloud links its Login Flow routes with and without /index.php
 		// (the recording has /login/v2/poll), so the replay accepts both.
 		const path = req.url.split('?')[0].replace(/^\/index\.php(?=\/login\/)/, '')
+		// Logged on arrival and on the last byte out, so a request that
+		// stalls (headers in, no body; or no answer) shows as one line alone.
+		const peer = `${req.socket.remoteAddress}:${req.socket.remotePort}`
+		const started = Date.now()
+		log(`> ${req.method} ${path} from ${peer}`)
+		res.on('finish', () => log(`< ${res.statusCode} ${req.method} ${path} in ${Date.now() - started} ms`))
+		res.on('close', () => res.writableFinished || log(`< closed unanswered: ${req.method} ${path} after ${Date.now() - started} ms`))
 		const body = await new Promise((resolve) => {
 			const chunks = []
 			req.on('data', (c) => chunks.push(c))
@@ -467,11 +477,13 @@ function replay(o) {
 			} catch {
 				return send(res, 400, { error: 'expected {"offline": true|false}' })
 			}
-			console.log(`[replay] offline: ${offline}`)
+			log(`offline: ${offline}`)
 			return send(res, 200, { offline })
 		}
-		console.log(`[replay] ${req.method} ${path}${offline ? ' (offline: dropped)' : ''}`)
-		if (offline) return req.socket.destroy()
+		if (offline) {
+			log(`dropped while offline: ${req.method} ${path}`)
+			return req.socket.destroy()
+		}
 		if (req.method === 'POST' && path === '/login/v2') return send(res, 200, fill(f.loginInit, origin))
 		if (req.method === 'POST' && path === '/login/v2/poll') {
 			// Pending twice, as while the user signs in, then granted.
@@ -499,7 +511,18 @@ function replay(o) {
 		if (answer) return send(res, answer[0], answer[1])
 		return send(res, 404, { error: 'not recorded' })
 	})
-	server.listen(Number(o.port || 8443), '0.0.0.0', () => console.log(`[replay] on https://0.0.0.0:${o.port || 8443}`))
+	// The connection and handshake, logged apart from the requests: an app
+	// whose request never shows can then be told apart as no connection,
+	// a failed handshake, or a connection that never sent a request.
+	server.on('connection', (socket) => {
+		const peer = `${socket.remoteAddress}:${socket.remotePort}`
+		log(`tcp open ${peer}`)
+		socket.on('close', () => log(`tcp closed ${peer}`))
+	})
+	server.on('secureConnection', (socket) => log(`tls ok ${socket.remoteAddress}:${socket.remotePort} ${socket.getProtocol()}`))
+	// The socket is already gone here; the tcp line just before names it.
+	server.on('tlsClientError', (e) => log(`tls failed: ${e.code || e.message}`))
+	server.listen(Number(o.port || 8443), '0.0.0.0', () => log(`on https://0.0.0.0:${o.port || 8443}`))
 }
 
 const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00')
