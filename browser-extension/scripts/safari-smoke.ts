@@ -23,6 +23,10 @@ export interface SmokeOptions {
 	requestMs: number
 	/** The folder's contents as a base64 zip, `manifest.json` at its root. */
 	zipFolder: (path: string) => Promise<string>
+	/** How long to look for Safari's website access sheet after opening the test page. */
+	accessMs: number
+	/** One try at clicking Always Allow in that sheet: `clicked` when it did, else what it saw. */
+	allowWebsiteAccess: () => Promise<string>
 }
 
 const NATIVE_CHECK = "return Function.prototype.toString.call(navigator.credentials.get).includes('[native code]')"
@@ -96,13 +100,39 @@ async function install(options: SmokeOptions, sessionId: string): Promise<string
  * Whether the content script replaced the native function within `scriptMs`. An automation session may grant
  * the extension no website access (Safari runs content scripts only where allowed), so `false` is no failure.
  */
-async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<boolean> {
-	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
-	// The script below runs on whatever loaded; a page that never reports loaded is no reason to stop.
+/** The script below runs on whatever loaded; a page that never reports loaded is no reason to stop. */
+async function openTestPage(options: SmokeOptions, sessionId: string): Promise<void> {
 	await command(options, 'POST', `/session/${sessionId}/url`, { url: `${options.site}/passkey.html` }).catch((error: unknown) => {
 		if ((error as { code?: unknown }).code !== 'timeout') throw error
 		console.log('passkey.html did not report loaded in time; checking it anyway')
 	})
+}
+
+/**
+ * Safari asks for each site whether the extension may access it, in a native sheet that WebDriver cannot see and
+ * that blocks every later command. Resolves to whether Always Allow was clicked.
+ */
+async function allowWebsiteAccess(options: SmokeOptions): Promise<boolean> {
+	const deadline = Date.now() + options.accessMs
+	for (;;) {
+		const seen = await options.allowWebsiteAccess().catch((error: unknown) => `error: ${error instanceof Error ? error.message : String(error)}`)
+		if (seen === 'clicked') return true
+		if (Date.now() >= deadline) {
+			console.log(`No website access sheet to allow: ${seen}`)
+			return false
+		}
+		await sleep(options.pollMs)
+	}
+}
+
+async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<boolean> {
+	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
+	await openTestPage(options, sessionId)
+	if (await allowWebsiteAccess(options)) {
+		console.log('Allowed the extension on localhost in Safari\'s website access sheet')
+		// Content scripts run from the next load on.
+		await openTestPage(options, sessionId)
+	}
 	const deadline = Date.now() + options.scriptMs
 	for (let check = 1; ; check++) {
 		const native = await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script: NATIVE_CHECK, args: [] })
@@ -135,6 +165,28 @@ export async function smoke(options: SmokeOptions): Promise<void> {
 	}
 }
 
+/** Needs Accessibility access for osascript, which the macOS runner images grant. */
+const ALLOW_SCRIPT = `tell application "System Events" to tell process "Safari"
+	repeat with w in windows
+		repeat with s in sheets of w
+			if exists button "Always Allow" of s then
+				click button "Always Allow" of s
+				return "clicked"
+			end if
+		end repeat
+		if exists button "Always Allow" of w then
+			click button "Always Allow" of w
+			return "clicked"
+		end if
+	end repeat
+	return "windows: " & (name of every window as text)
+end tell`
+
+async function clickAlwaysAllow(): Promise<string> {
+	const { stdout } = await promisify(execFile)('osascript', ['-e', ALLOW_SCRIPT], { timeout: 10_000 })
+	return stdout.trim()
+}
+
 /** `ditto -c -k` without `--keepParent`, so `manifest.json` sits at the zip's root. */
 async function zipWithDitto(path: string): Promise<string> {
 	const dir = await mkdtemp(join(tmpdir(), 'keepiq-safari-'))
@@ -157,6 +209,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 			scriptMs: 10_000,
 			pollMs: 500,
 			requestMs: 60_000,
+			accessMs: 15_000,
+			allowWebsiteAccess: clickAlwaysAllow,
 			zipFolder: zipWithDitto,
 		})
 		console.log('Safari smoke test passed')

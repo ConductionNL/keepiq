@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { extensionIdOf, smoke, type SmokeOptions } from './safari-smoke'
 
 const zipFolder = vi.fn<(path: string) => Promise<string>>(async () => 'UEsDBA==')
-const options: SmokeOptions = { driver: 'http://driver', site: 'http://site', extensionPath: '/abs/.output/safari-mv3', upMs: 20, scriptMs: 20, pollMs: 1, requestMs: 1_000, zipFolder }
+const options: SmokeOptions = { driver: 'http://driver', site: 'http://site', extensionPath: '/abs/.output/safari-mv3', upMs: 20, scriptMs: 20, pollMs: 1, requestMs: 1_000, zipFolder, accessMs: 5, allowWebsiteAccess: async () => 'windows: passkey.html' }
 
 /** `hang`: never answers, as a stuck Safari did on the runner; only the request's own timeout ends it. */
 type Route = (body: Record<string, unknown> | undefined) => { status?: number; value: unknown } | 'hang'
@@ -114,6 +114,21 @@ describe('smoke', () => {
 		await smoke({ ...options, requestMs: 20 })
 		expect(logged()).toContain('Could not check the passkey page script: POST /session/s1/execute/sync: no answer within 20 ms')
 		expect(logged()).toContain("SKIP: the content script didn't run in the automation session (no website access granted)")
+	})
+
+	it('clicks Always Allow in Safari\'s website access sheet, then opens the page again', async () => {
+		const tries = ['windows: passkey.html', 'clicked']
+		const { calls } = fakeDriver()
+		await smoke({ ...options, accessMs: 1_000, allowWebsiteAccess: async () => tries.shift() ?? 'clicked' })
+		expect(calls.filter((call) => call === 'POST http://driver/session/s1/url')).toHaveLength(2)
+		expect(logged()).toContain("Allowed the extension on localhost in Safari's website access sheet")
+	})
+
+	it('logs what it saw when there is no sheet to allow, and checks once opened', async () => {
+		const { calls } = fakeDriver()
+		await smoke({ ...options, allowWebsiteAccess: async () => { throw new Error('not allowed assistive access') } })
+		expect(logged()).toContain('No website access sheet to allow: error: not allowed assistive access')
+		expect(calls.filter((call) => call === 'POST http://driver/session/s1/url')).toHaveLength(1)
 	})
 
 	it('waits until the content script replaced the native function', async () => {
