@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud and mainstream password managers: vous, coffre-fort, mot de passe principal, mot de passe d’application, clé d’accès, identifiant, application web; typographic apostrophes and French non-breaking spaces.
 language: fr
-extensionDescription: Keepiq pour votre navigateur. Remplissez identifiants, clés d’accès et codes à usage unique depuis votre coffre-fort Nextcloud, chiffré de bout en bout.
+extensionDescription: Keepiq pour votre navigateur. Remplissez identifiants, clés d’accès et codes à usage unique de votre coffre-fort Nextcloud chiffré.
 commandAutofillLogin: Remplir le dernier identifiant utilisé
 commandFocusNotificationBar: Aller à la barre d’enregistrement de Keepiq
 

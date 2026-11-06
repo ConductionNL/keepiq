@@ -1,6 +1,6 @@
 # Formal address (vy, lowercase váš) as in Nextcloud's Czech; trezor, hlavní heslo, heslo aplikace, přístupový klíč, přihlašovací údaje, položka, složka, zásilka, webová aplikace.
 language: cs
-extensionDescription: Keepiq pro váš prohlížeč. Vyplňujte přihlašovací údaje, přístupové klíče a jednorázové kódy z trezoru v Nextcloud, s koncovým šifrováním.
+extensionDescription: Keepiq pro váš prohlížeč. Vyplňujte přihlašovací údaje, přístupové klíče a jednorázové kódy ze šifrovaného trezoru v Nextcloud.
 commandAutofillLogin: Vyplnit naposledy použité přihlašovací údaje
 commandFocusNotificationBar: Přejít na lištu ukládání Keepiq
 

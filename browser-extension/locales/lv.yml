@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Latvian translation: formal jūs, glabātava, galvenā parole, lietotnes parole, piekļuves atslēga, pieteikšanās vienums, vienums, pārvaldītājs; counts use "Vienumi: $1" to avoid plural forms.
 language: lv
-extensionDescription: Keepiq jūsu pārlūkam. Aizpildiet pieteikšanās datus, piekļuves atslēgas un vienreizējos kodus no savas Nextcloud glabātavas ar pilnīgu šifrēšanu.
+extensionDescription: Keepiq jūsu pārlūkam. Aizpildiet pieteikšanās datus, piekļuves atslēgas un vienreizējos kodus no šifrētās Nextcloud glabātavas.
 commandAutofillLogin: Aizpildīt pēdējo izmantoto pieteikšanās vienumu
 commandFocusNotificationBar: Pāriet uz Keepiq saglabāšanas joslu
 

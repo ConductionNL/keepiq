@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Bulgarian: formal Вие, трезор, главна парола, парола за приложение, ключ за достъп, запис за вход, елемент, папка, пратка (Send), профил (account).
 language: bg
-extensionDescription: Keepiq за вашия браузър. Попълвайте данни за вход, ключове за достъп и еднократни кодове от своя трезор в Nextcloud, с шифроване от край до край.
+extensionDescription: Keepiq за вашия браузър. Попълвайте данни за вход, ключове за достъп и еднократни кодове от своя шифрован трезор в Nextcloud.
 commandAutofillLogin: Попълване на последно използвания запис за вход
 commandFocusNotificationBar: Към лентата за запазване на Keepiq
 

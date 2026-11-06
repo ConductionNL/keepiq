@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Croatian: formal vi, trezor, glavna lozinka, lozinka aplikacije, pristupni ključ, stavka, mapa, pošiljka (Send), web-aplikacija.
 language: hr
-extensionDescription: Keepiq za vaš preglednik. Ispunjavajte prijave, pristupne ključeve i jednokratne kodove iz svojeg Nextcloud trezora, uz šifriranje s kraja na kraj.
+extensionDescription: Keepiq za vaš preglednik. Ispunjavajte prijave, pristupne ključeve i jednokratne kodove iz svojeg šifriranog Nextcloud trezora.
 commandAutofillLogin: Automatski ispuni zadnju korištenu prijavu
 commandFocusNotificationBar: Idi na traku za spremanje Keepiqa
 

@@ -9,6 +9,10 @@ it('has no two keys the browser would read as one', () => {
 	expect(keys.filter((key, i) => keys.indexOf(key) !== i)).toEqual([])
 })
 
+it.each(LOCALES)('keeps the %s description within Chrome\'s 132 characters', (locale) => {
+	expect([...catalogs[locale].extensionDescription?.message ?? ''].length).toBeLessThanOrEqual(132)
+})
+
 describe.each(LOCALES.filter((locale) => locale !== 'en'))('the %s catalog', (locale) => {
 	const source = catalogs.en
 	const target = catalogs[locale]
@@ -24,6 +28,7 @@ describe.each(LOCALES.filter((locale) => locale !== 'en'))('the %s catalog', (lo
 	})
 
 	it('names its own language', () => {
-		expect(target.language?.message).toBe(locale)
+		// A region may follow: `pt` holds European Portuguese, so it formats as `pt-PT`.
+		expect(target.language?.message.split('-')[0]).toBe(locale)
 	})
 })

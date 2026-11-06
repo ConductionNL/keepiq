@@ -1,6 +1,6 @@
 # Formal address (vy, lowercase váš) as in Nextcloud's Slovak; trezor, hlavné heslo, heslo aplikácie, prístupový kľúč, prihlasovacie údaje, položka, priečinok, zásielka, webová aplikácia.
 language: sk
-extensionDescription: Keepiq pre váš prehliadač. Vypĺňajte prihlasovacie údaje, prístupové kľúče a jednorazové kódy z trezoru v Nextcloud, s koncovým šifrovaním.
+extensionDescription: Keepiq pre váš prehliadač. Vypĺňajte prihlasovacie údaje, prístupové kľúče a jednorazové kódy zo šifrovaného trezoru v Nextcloud.
 commandAutofillLogin: Vyplniť naposledy použité prihlasovacie údaje
 commandFocusNotificationBar: Prejsť na lištu ukladania Keepiq
 

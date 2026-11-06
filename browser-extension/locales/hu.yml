@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Hungarian: informal te, széf, mesterjelszó, alkalmazásjelszó, azonosítókulcs (passkey), webalkalmazás; placeholders never take suffixes.
 language: hu
-extensionDescription: A Keepiq a böngésződben. Töltsd ki a bejelentkezéseket, azonosítókulcsokat és egyszer használatos kódokat a Nextcloud-széfedből, végponttól végpontig titkosítva.
+extensionDescription: A Keepiq a böngésződben. Töltsd ki a bejelentkezéseket, azonosítókulcsokat és egyszeri kódokat a titkosított Nextcloud-széfedből.
 commandAutofillLogin: A legutóbb használt bejelentkezés kitöltése
 commandFocusNotificationBar: Ugrás a Keepiq mentési sávjára
 

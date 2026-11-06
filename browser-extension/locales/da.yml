@@ -1,4 +1,4 @@
-# Terms and tone follow Nextcloud's Danish and Bitwarden (du): boks, hovedadgangskode, app-adgangskode, element, login, adgangsnøgle for passkey; Send stays Send.
+# Terms and tone follow Nextcloud's Danish and Bitwarden (du): boks, hovedadgangskode, app-adgangskode, element, login, adgangsnøgle for passkey; forsendelse for Send, as in the Keepiq web app.
 language: da
 extensionDescription: Keepiq til din browser. Udfyld logins, adgangsnøgler og engangskoder fra din Nextcloud-boks, end-to-end-krypteret.
 commandAutofillLogin: Autoudfyld det senest brugte login
@@ -57,8 +57,8 @@ titles:
   newCard: Nyt kort
   newIdentity: Ny identitet
   editItem: Redigér element
-  newSend: Ny Send
-  sendCreated: Send oprettet
+  newSend: Ny forsendelse
+  sendCreated: Forsendelse oprettet
 
 tabs:
   label: Hovedmenu
@@ -274,7 +274,7 @@ writeErrors:
   shareScanPending: Dette element venter på et tjek af dets delinger, som ikke er færdigt. Intet blev gemt; prøv igen senere.
   shareScanPendingOpen: Dette element venter på et tjek af dets delinger og kan ikke redigeres endnu. Prøv igen senere.
   shareScanPendingDelete: Dette element venter på et tjek af dets delinger, som ikke er færdigt. Intet blev slettet; prøv igen senere.
-  sendInvalid: Keepiq accepterede ikke denne Send. Intet blev sendt; tjek felterne og prøv igen.
+  sendInvalid: Keepiq accepterede ikke denne forsendelse. Intet blev sendt; tjek felterne og prøv igen.
   sendOffline: Kunne ikke kontakte serveren, intet blev sendt
   argon2Unavailable: Adgangskodebeskyttelse er ikke tilgængelig i denne browser
 
@@ -561,13 +561,13 @@ generator:
   generateUsername: Generér brugernavn
 
 send:
-  new: Ny Send
-  empty: Ingen Sends endnu
+  new: Ny forsendelse
+  empty: Ingen forsendelser endnu
   emptyText: Del tekst eller et login via et link, der sletter sig selv.
-  loadFailed: Kunne ikke indlæse dine Sends
+  loadFailed: Kunne ikke indlæse dine forsendelser
   retry: Prøv igen
-  labelText: "Tekst-Send, {time}"
-  labelCredential: "Login-Send, {time}"
+  labelText: "Tekstforsendelse, {time}"
+  labelCredential: "Loginforsendelse, {time}"
   viewsLeft:
     1: "{left} af 1 visning tilbage"
     n: "{left} af $1 visninger tilbage"
@@ -581,9 +581,9 @@ send:
   linkGone: Linket er ikke længere tilgængeligt
   remove: Fjern
   removeOf: "Fjern, {name}"
-  removeTitle: Fjern Send
-  removeConfirm: Fjern denne Send? Alle med linket mister adgangen.
-  removed: Send fjernet
+  removeTitle: Fjern forsendelse
+  removeConfirm: Fjern denne forsendelse? Alle med linket mister adgangen.
+  removed: Forsendelse fjernet
   contentSection: Indhold
   optionsSection: Indstillinger
   type: Type
@@ -603,17 +603,17 @@ send:
   customHours: Timer
   customHoursMin: Mindst 1 time
   customHoursMax: Højst 720 timer (30 dage)
-  accessPassword: Adgangskode til Send
-  accessPasswordHint: Valgfri. Modtageren skal bruge den for at åbne denne Send.
+  accessPassword: Adgangskode til forsendelsen
+  accessPasswordHint: Valgfri. Modtageren skal bruge den for at åbne denne forsendelse.
   create: Opret
   protecting: Beskytter med adgangskode…
-  offline: Sends kræver forbindelse til din Keepiq-server
+  offline: Forsendelser kræver forbindelse til din Keepiq-server
   prefillFailed: Kunne ikke læse dette login
-  ready: Din Send er klar
+  ready: Din forsendelse er klar
   shownOnce:
     1: Kopiér dette link nu. Det vises kun, indtil du lukker dette vindue, og indholdet slettes efter 1 visning.
     n: Kopiér dette link nu. Det vises kun, indtil du lukker dette vindue, og indholdet slettes efter $1 visninger.
-  passwordNote: Del adgangskoden separat fra linket. Efter 5 forkerte forsøg slettes denne Send.
+  passwordNote: Del adgangskoden separat fra linket. Efter 5 forkerte forsøg slettes denne forsendelse.
   done: Færdig
 
 pageFill:

@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Irish: informal tú, taisceadán, máistirphasfhocal, pasfhocal aipe, eochair rochtana (passkey), aip ghréasáin; counts use "Label: $1" or unmutated nouns.
 language: ga
-extensionDescription: Keepiq do do bhrabhsálaí. Líon isteach logálacha isteach, eochracha rochtana agus cóid aonuaire ó do thaisceadán Nextcloud, criptithe ó cheann go ceann.
+extensionDescription: Keepiq do do bhrabhsálaí. Líon isteach logálacha isteach, eochracha rochtana agus cóid aonuaire ó thaisceadán criptithe Nextcloud.
 commandAutofillLogin: Uathlíon an logáil isteach is déanaí a úsáideadh
 commandFocusNotificationBar: Téigh chuig barra sábhála Keepiq
 

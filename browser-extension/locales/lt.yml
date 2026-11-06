@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Lithuanian translation: formal jūs, saugykla, pagrindinis slaptažodis, programėlės slaptažodis, prieigos raktas, prisijungimas, elementas, įrašyti; counts use "Elementų: $1" to avoid plural forms.
 language: lt
-extensionDescription: Keepiq jūsų naršyklei. Užpildykite prisijungimus, prieigos raktus ir vienkartinius kodus iš savo Nextcloud saugyklos, apsaugotos ištisiniu šifravimu.
+extensionDescription: Keepiq jūsų naršyklei. Užpildykite prisijungimus, prieigos raktus ir vienkartinius kodus iš savo šifruotos Nextcloud saugyklos.
 commandAutofillLogin: Užpildyti paskutinį naudotą prisijungimą
 commandFocusNotificationBar: Pereiti į Keepiq įrašymo juostą
 

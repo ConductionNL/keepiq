@@ -1,4 +1,4 @@
-# Terms and tone follow Nextcloud's German (du, Administration): Tresor, Master-Passwort, App-Passwort, Eintrag, das Login, Passkey; Send stays Send as in Bitwarden.
+# Terms and tone follow Nextcloud's German (du, Administration): Tresor, Master-Passwort, App-Passwort, Eintrag, das Login, Passkey; die Sendung for Send, as in the Keepiq web app.
 language: de
 extensionDescription: Keepiq für deinen Browser. Fülle Logins, Passkeys und Einmalcodes aus deinem Nextcloud-Tresor aus, Ende-zu-Ende-verschlüsselt.
 commandAutofillLogin: Zuletzt verwendetes Login ausfüllen
@@ -57,14 +57,14 @@ titles:
   newCard: Neue Karte
   newIdentity: Neue Identität
   editItem: Eintrag bearbeiten
-  newSend: Neues Send
-  sendCreated: Send erstellt
+  newSend: Neue Sendung
+  sendCreated: Sendung erstellt
 
 tabs:
   label: Hauptmenü
   vault: Tresor
   generator: Generator
-  send: Send
+  send: Senden
   settings: Einstellungen
 
 header:
@@ -274,7 +274,7 @@ writeErrors:
   shareScanPending: Dieser Eintrag wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gespeichert; versuche es später erneut.
   shareScanPendingOpen: Dieser Eintrag wartet auf eine Prüfung seiner Freigaben und kann noch nicht bearbeitet werden. Versuche es später erneut.
   shareScanPendingDelete: Dieser Eintrag wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gelöscht; versuche es später erneut.
-  sendInvalid: Keepiq hat dieses Send nicht akzeptiert. Es wurde nichts gesendet; prüfe die Felder und versuche es erneut.
+  sendInvalid: Keepiq hat diese Sendung nicht akzeptiert. Es wurde nichts gesendet; prüfe die Felder und versuche es erneut.
   sendOffline: Der Server ist nicht erreichbar, es wurde nichts gesendet
   argon2Unavailable: Passwortschutz ist in diesem Browser nicht verfügbar
 
@@ -561,13 +561,13 @@ generator:
   generateUsername: Benutzernamen generieren
 
 send:
-  new: Neues Send
-  empty: Noch keine Sends
+  new: Neue Sendung
+  empty: Noch keine Sendungen
   emptyText: Teile Text oder Zugangsdaten über einen Link, der sich selbst löscht.
-  loadFailed: Deine Sends konnten nicht geladen werden
+  loadFailed: Deine Sendungen konnten nicht geladen werden
   retry: Erneut versuchen
-  labelText: "Text-Send, {time}"
-  labelCredential: "Zugangsdaten-Send, {time}"
+  labelText: "Textsendung, {time}"
+  labelCredential: "Zugangsdaten-Sendung, {time}"
   viewsLeft:
     1: "Noch {left} von 1 Aufruf"
     n: "Noch {left} von $1 Aufrufen"
@@ -581,9 +581,9 @@ send:
   linkGone: Link nicht mehr verfügbar
   remove: Entfernen
   removeOf: "Entfernen, {name}"
-  removeTitle: Send entfernen
-  removeConfirm: Dieses Send entfernen? Alle mit dem Link verlieren den Zugriff.
-  removed: Send entfernt
+  removeTitle: Sendung entfernen
+  removeConfirm: Diese Sendung entfernen? Alle mit dem Link verlieren den Zugriff.
+  removed: Sendung entfernt
   contentSection: Inhalt
   optionsSection: Optionen
   type: Typ
@@ -604,16 +604,16 @@ send:
   customHoursMin: Mindestens 1 Stunde
   customHoursMax: Höchstens 720 Stunden (30 Tage)
   accessPassword: Zugriffspasswort
-  accessPasswordHint: Optional. Der Empfänger braucht es, um das Send zu öffnen.
+  accessPasswordHint: Optional. Der Empfänger braucht es, um die Sendung zu öffnen.
   create: Erstellen
   protecting: Wird mit Passwort geschützt…
-  offline: Sends brauchen eine Verbindung zu deinem Keepiq-Server
+  offline: Sendungen brauchen eine Verbindung zu deinem Keepiq-Server
   prefillFailed: Dieses Login konnte nicht gelesen werden
-  ready: Dein Send ist bereit
+  ready: Deine Sendung ist bereit
   shownOnce:
     1: Kopiere diesen Link jetzt. Er wird nur angezeigt, bis du dieses Fenster schließt, und der Inhalt verschwindet nach 1 Aufruf.
     n: Kopiere diesen Link jetzt. Er wird nur angezeigt, bis du dieses Fenster schließt, und der Inhalt verschwindet nach $1 Aufrufen.
-  passwordNote: Teile das Zugriffspasswort getrennt vom Link. Nach 5 Fehlversuchen wird das Send gelöscht.
+  passwordNote: Teile das Zugriffspasswort getrennt vom Link. Nach 5 Fehlversuchen wird die Sendung gelöscht.
   done: Fertig
 
 pageFill:

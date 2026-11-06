@@ -1,6 +1,6 @@
 # Informal address (ty, capitalised Twój) as in Nextcloud's Polish; sejf, hasło główne, hasło aplikacji, klucz dostępu, dane logowania, element, wysyłka, aplikacja webowa.
 language: pl
-extensionDescription: Keepiq dla Twojej przeglądarki. Wypełniaj dane logowania, klucze dostępu i kody jednorazowe z sejfu w Nextcloud, z szyfrowaniem end-to-end.
+extensionDescription: Keepiq dla Twojej przeglądarki. Wypełniaj dane logowania, klucze dostępu i kody jednorazowe z zaszyfrowanego sejfu w Nextcloud.
 commandAutofillLogin: Wypełnij ostatnio użyte dane logowania
 commandFocusNotificationBar: Przejdź do paska zapisu Keepiq
 

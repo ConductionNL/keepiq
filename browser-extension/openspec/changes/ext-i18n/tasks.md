@@ -28,8 +28,15 @@
 - [x] 4.2 Add a popup test that renders the unlock screen in Dutch, notice and error included
 - [ ] 4.3 Have a native speaker review the Dutch
 
-## 5. Docs and checks
+## 5. The EU's other languages
 
-- [x] 5.1 `ARCHITECTURE.md`: an i18n section; `README.md`: adding a language; `CLAUDE.md`: the catalog rule; `docs/browser-extension/using.md`: a Language line
-- [x] 5.2 `npm test`, typecheck, lint, both builds and `web-ext lint`, and check that `_locales/en` and `_locales/nl` are in both outputs
-- [ ] 5.3 Walk through Chrome with `--lang=nl` and Firefox with `intl.locale.requested=nl`
+- [x] 5.1 Translate `bg`, `cs`, `da`, `de`, `el`, `es`, `et`, `fi`, `fr`, `ga`, `hr`, `hu`, `it`, `lt`, `lv`, `pl`, `pt`, `ro`, `sk`, `sl` and `sv`, and add them to `LOCALES`
+- [x] 5.2 Word `n:` for every count in the languages with "few" or "many" forms
+- [x] 5.3 `pt` names `pt-PT` as its language; the test accepts a region after the file's tag
+- [x] 5.4 Test every description against Chrome's 132 characters
+
+## 6. Docs and checks
+
+- [x] 6.1 `ARCHITECTURE.md`: an i18n section; `README.md`: adding a language; `CLAUDE.md`: the catalog rule; `docs/browser-extension/using.md`: a Language line
+- [x] 6.2 `npm test`, typecheck, lint, both builds and `web-ext lint`, and check that `_locales/en` and `_locales/nl` are in both outputs
+- [ ] 6.3 Walk through Chrome with `--lang=nl` and Firefox with `intl.locale.requested=nl`

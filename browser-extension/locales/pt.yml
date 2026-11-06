@@ -1,6 +1,6 @@
 # European Portuguese (Portugal), not Brazilian. Terms and tone follow Nextcloud's pt_PT: formal (o seu, Introduza), cofre, palavra-passe mestra, palavra-passe da aplicação, chave de acesso, credencial, aplicação web.
-language: pt
-extensionDescription: Keepiq para o seu navegador. Preencha credenciais, chaves de acesso e códigos de utilização única a partir do seu cofre Nextcloud, com encriptação ponto a ponto.
+language: pt-PT
+extensionDescription: Keepiq para o seu navegador. Preencha credenciais, chaves de acesso e códigos de utilização única do seu cofre Nextcloud encriptado.
 commandAutofillLogin: Preencher a última credencial utilizada
 commandFocusNotificationBar: Ir para a barra do Keepiq para guardar
 

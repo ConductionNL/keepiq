@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud and mainstream password managers: formal dumneavoastră (dvs.), noun-style buttons (Salvare), seif, parolă principală, parolă de aplicație, cheie de acces, autentificare; counts above 1 are phrased as "Elemente: $1" to avoid "de".
 language: ro
-extensionDescription: Keepiq pentru browserul dvs. Completați date de autentificare, chei de acces și coduri unice din seiful Nextcloud, cu criptare end-to-end.
+extensionDescription: Keepiq pentru browserul dvs. Completați date de autentificare, chei de acces și coduri unice din seiful Nextcloud criptat.
 commandAutofillLogin: Completare cu ultima autentificare folosită
 commandFocusNotificationBar: Salt la bara de salvare Keepiq
 

@@ -1,6 +1,6 @@
 # Terms and tone follow Nextcloud's Slovenian: formal vi, trezor, glavno geslo, geslo programa, ključ za dostop, element, mapa, pošiljka (Send), spletna aplikacija.
 language: sl
-extensionDescription: Keepiq za vaš brskalnik. Izpolnjujte prijave, ključe za dostop in enkratne kode iz svojega trezorja v Nextcloudu, šifrirano od konca do konca.
+extensionDescription: Keepiq za vaš brskalnik. Izpolnjujte prijave, ključe za dostop in enkratne kode iz svojega šifriranega trezorja v Nextcloudu.
 commandAutofillLogin: Samodejno izpolni zadnjo uporabljeno prijavo
 commandFocusNotificationBar: Pojdi na vrstico za shranjevanje Keepiq
 

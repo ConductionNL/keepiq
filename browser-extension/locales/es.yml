@@ -1,6 +1,6 @@
 # Spanish (Spain). Terms and tone follow Nextcloud's Spanish: tú, caja fuerte, contraseña maestra, contraseña de aplicación, llave de acceso, inicio de sesión, aplicación web.
 language: es
-extensionDescription: Keepiq para tu navegador. Rellena inicios de sesión, llaves de acceso y códigos de un solo uso desde tu caja fuerte de Nextcloud, con cifrado de extremo a extremo.
+extensionDescription: Keepiq en tu navegador. Rellena inicios de sesión, llaves de acceso y códigos de un solo uso de tu caja fuerte cifrada de Nextcloud.
 commandAutofillLogin: Autocompletar el último inicio de sesión usado
 commandFocusNotificationBar: Ir a la barra de guardado de Keepiq
 

@@ -1,4 +1,4 @@
-# Terms and tone follow Nextcloud's Swedish and Bitwarden (du): valv, huvudlösenord, applösenord, objekt, inloggning, lösennyckel for passkey as Apple does; Send stays Send.
+# Terms and tone follow Nextcloud's Swedish and Bitwarden (du): valv, huvudlösenord, applösenord, objekt, inloggning, lösennyckel for passkey as Apple does; försändelse for Send, as in the Keepiq web app.
 language: sv
 extensionDescription: Keepiq för din webbläsare. Fyll i inloggningar, lösennycklar och engångskoder från ditt Nextcloud-valv, end-to-end-krypterat.
 commandAutofillLogin: Autofyll den senast använda inloggningen
@@ -57,14 +57,14 @@ titles:
   newCard: Nytt kort
   newIdentity: Ny identitet
   editItem: Redigera objekt
-  newSend: Ny Send
-  sendCreated: Send skapad
+  newSend: Ny försändelse
+  sendCreated: Försändelse skapad
 
 tabs:
   label: Huvudmeny
   vault: Valv
   generator: Generator
-  send: Send
+  send: Skicka
   settings: Inställningar
 
 header:
@@ -274,7 +274,7 @@ writeErrors:
   shareScanPending: Det här objektet väntar på en kontroll av sina delningar som inte är klar. Inget sparades; försök igen senare.
   shareScanPendingOpen: Det här objektet väntar på en kontroll av sina delningar och kan inte redigeras än. Försök igen senare.
   shareScanPendingDelete: Det här objektet väntar på en kontroll av sina delningar som inte är klar. Inget raderades; försök igen senare.
-  sendInvalid: Keepiq godtog inte den här Send. Inget skickades; kontrollera fälten och försök igen.
+  sendInvalid: Keepiq godtog inte den här försändelsen. Inget skickades; kontrollera fälten och försök igen.
   sendOffline: Kunde inte nå servern, inget skickades
   argon2Unavailable: Lösenordsskydd är inte tillgängligt i den här webbläsaren
 
@@ -561,13 +561,13 @@ generator:
   generateUsername: Generera användarnamn
 
 send:
-  new: Ny Send
-  empty: Inga Sends än
+  new: Ny försändelse
+  empty: Inga försändelser än
   emptyText: Dela text eller en inloggning via en länk som raderar sig själv.
-  loadFailed: Kunde inte läsa in dina Sends
+  loadFailed: Kunde inte läsa in dina försändelser
   retry: Försök igen
-  labelText: "Text-Send, {time}"
-  labelCredential: "Inloggnings-Send, {time}"
+  labelText: "Textförsändelse, {time}"
+  labelCredential: "Inloggningsförsändelse, {time}"
   viewsLeft:
     1: "{left} av 1 visning kvar"
     n: "{left} av $1 visningar kvar"
@@ -581,9 +581,9 @@ send:
   linkGone: Länken är inte längre tillgänglig
   remove: Ta bort
   removeOf: "Ta bort, {name}"
-  removeTitle: Ta bort Send
-  removeConfirm: Ta bort den här Send? Alla med länken förlorar åtkomsten.
-  removed: Send borttagen
+  removeTitle: Ta bort försändelse
+  removeConfirm: Ta bort den här försändelsen? Alla med länken förlorar åtkomsten.
+  removed: Försändelse borttagen
   contentSection: Innehåll
   optionsSection: Alternativ
   type: Typ
@@ -604,16 +604,16 @@ send:
   customHoursMin: Minst 1 timme
   customHoursMax: Högst 720 timmar (30 dagar)
   accessPassword: Åtkomstlösenord
-  accessPasswordHint: Valfritt. Mottagaren behöver det för att öppna denna Send.
+  accessPasswordHint: Valfritt. Mottagaren behöver det för att öppna denna försändelse.
   create: Skapa
   protecting: Skyddar med lösenord…
-  offline: Sends kräver en anslutning till din Keepiq-server
+  offline: Försändelser kräver en anslutning till din Keepiq-server
   prefillFailed: Kunde inte läsa den här inloggningen
-  ready: Din Send är klar
+  ready: Din försändelse är klar
   shownOnce:
     1: Kopiera länken nu. Den visas bara tills du stänger det här fönstret, och innehållet raderas efter 1 visning.
     n: Kopiera länken nu. Den visas bara tills du stänger det här fönstret, och innehållet raderas efter $1 visningar.
-  passwordNote: Dela åtkomstlösenordet separat från länken. Efter 5 felaktiga försök raderas denna Send.
+  passwordNote: Dela åtkomstlösenordet separat från länken. Efter 5 felaktiga försök raderas denna försändelse.
   done: Klar
 
 pageFill:
