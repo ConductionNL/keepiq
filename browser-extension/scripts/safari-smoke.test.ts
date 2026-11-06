@@ -2,23 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { extensionIdOf, smoke, type SmokeOptions } from './safari-smoke'
 
 const zipFolder = vi.fn<(path: string) => Promise<string>>(async () => 'UEsDBA==')
-const options: SmokeOptions = { driver: 'http://driver', site: 'http://site', extensionPath: '/abs/.output/safari-mv3', upMs: 20, scriptMs: 20, pollMs: 1, requestMs: 1_000, zipFolder }
+const options: SmokeOptions = { driver: 'http://driver', extensionPath: '/abs/.output/safari-mv3', upMs: 20, pollMs: 1, requestMs: 1_000, zipFolder }
 
-/** `hang`: never answers, as a stuck Safari did on the runner; only the request's own timeout ends it. */
+/** `hang`: never answers, as a frozen Safari did on the runner; only the request's own timeout ends it. */
 type Route = (body: Record<string, unknown> | undefined) => { status?: number; value: unknown } | 'hang'
 
-/** safaridriver and the test site, as `fetch` sees them; `routes` overrides a `METHOD path`. */
+/** safaridriver as `fetch` sees it; `routes` overrides a `METHOD path`. */
 function fakeDriver(routes: Record<string, Route> = {}) {
 	const calls: string[] = []
 	const bodies: Record<string, unknown>[] = []
 	const defaults: Record<string, Route> = {
 		'GET http://driver/status': () => ({ value: { ready: true } }),
-		'GET http://site/': () => ({ value: null }),
 		'POST http://driver/session': () => ({ value: { sessionId: 's1', capabilities: {} } }),
 		'POST http://driver/session/s1/webextension': () => ({ value: { extension: 'ext-1' } }),
-		'POST http://driver/session/s1/url': () => ({ value: null }),
-		'POST http://driver/session/s1/timeouts': () => ({ value: null }),
-		'POST http://driver/session/s1/execute/sync': () => ({ value: false }),
 		'DELETE http://driver/session/s1': () => ({ value: null }),
 	}
 	vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
@@ -58,13 +54,12 @@ describe('extensionIdOf', () => {
 })
 
 describe('smoke', () => {
-	it('installs the build by path, passes when the page script ran, and ends the session', async () => {
+	it('installs the build by path, logs its id and ends the session', async () => {
 		const { calls, bodies } = fakeDriver()
 		await smoke(options)
 		expect(bodies).toContainEqual({ type: 'path', path: '/abs/.output/safari-mv3' })
-		expect(bodies).toContainEqual({ url: 'http://site/passkey.html' })
 		expect(zipFolder).not.toHaveBeenCalled()
-		expect(logged()).toContain('PASS: the passkey page script ran')
+		expect(logged()).toContain('Installed /abs/.output/safari-mv3 as ext-1')
 		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
 	})
 
@@ -89,38 +84,10 @@ describe('smoke', () => {
 		await expect(smoke(options)).rejects.toThrow('no extension id')
 	})
 
-	it.each<[string, Record<string, Route>]>([
-		['navigator.credentials.get stays native', { 'POST http://driver/session/s1/execute/sync': () => ({ value: true }) }],
-		['the test page cannot be opened', { 'POST http://driver/session/s1/url': () => ({ status: 500, value: { error: 'unknown error', message: 'no page' } }) }],
-		['the check cannot run', { 'POST http://driver/session/s1/execute/sync': () => ({ status: 500, value: { error: 'javascript error', message: 'nope' } }) }],
-	])('skips and passes when %s', async (_, routes) => {
-		const { calls } = fakeDriver(routes)
-		await smoke(options)
-		expect(logged()).toContain("SKIP: the content script didn't run in the automation session (no website access granted)")
-		expect(logged()).not.toContain('PASS: the passkey page script ran')
-		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
-	})
-
-	it('sets page-load and script timeouts, and checks a page that did not report loaded in time', async () => {
-		const { bodies } = fakeDriver({ 'POST http://driver/session/s1/url': () => ({ status: 500, value: { error: 'timeout', message: 'page load' } }) })
-		await smoke(options)
-		expect(bodies).toContainEqual({ pageLoad: 10_000, script: 10_000 })
-		expect(logged()).toContain('PASS: the passkey page script ran')
-	})
-
-	it('cuts off a request Safari never answers, skips the check and still passes', async () => {
+	it('cuts off a request Safari never answers', async () => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
-		fakeDriver({ 'POST http://driver/session/s1/execute/sync': () => 'hang', 'DELETE http://driver/session/s1': () => 'hang' })
-		await smoke({ ...options, requestMs: 20 })
-		expect(logged()).toContain('Could not check the passkey page script: POST /session/s1/execute/sync: no answer within 20 ms')
-		expect(logged()).toContain("SKIP: the content script didn't run in the automation session (no website access granted)")
-	})
-
-	it('waits until the content script replaced the native function', async () => {
-		let polls = 0
-		fakeDriver({ 'POST http://driver/session/s1/execute/sync': () => ({ value: ++polls < 3 }) })
-		await smoke(options)
-		expect(polls).toBe(3)
+		fakeDriver({ 'POST http://driver/session/s1/webextension': () => 'hang', 'DELETE http://driver/session/s1': () => 'hang' })
+		await expect(smoke({ ...options, requestMs: 20 })).rejects.toThrow('POST /session/s1/webextension: no answer within 20 ms')
 	})
 
 	it('fails when safaridriver does not answer', async () => {

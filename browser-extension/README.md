@@ -37,7 +37,7 @@ npm run build:firefox  # Firefox production → .output/firefox-mv2/
 npm run build:safari   # Safari production → .output/safari-mv3/
 npm run zip            # store-submission zip (zip:firefox for MV2, zip:safari for Safari)
 npm run package:safari # macOS only: Keepiq.app around the Safari build → .output/keepiq-safari.zip
-npm run test:safari-smoke # macOS only: loads the Safari build in Safari through safaridriver
+npm run test:safari-smoke # macOS only: installs the Safari build in Safari through safaridriver
 ```
 
 Build **all three** targets before calling a browser-facing change done — manifest

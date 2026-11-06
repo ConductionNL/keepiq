@@ -35,23 +35,17 @@ The Safari extension SHALL ship inside a macOS app named Keepiq with bundle iden
 - **THEN** it fails with a message naming the missing handler, and builds nothing
 
 ### Requirement: Safari is checked in CI
-Every change to the extension SHALL run a macOS job that builds the Safari target, runs the handler's tests, packages and builds the app, and loads the extension in Safari over WebDriver. The smoke test MUST fail only when the extension does not install or Safari answers no id. It then opens a test-site page and reports whether the extension's `MAIN` world content script replaced `navigator.credentials.get`: a pass when it did, a logged skip when it did not, since Safari asks a person for the extension's website access and an automation session cannot answer. No WebDriver request may wait longer than 60 seconds. The build, its artifacts and safaridriver's logs are kept for 14 days.
+Every change to the extension SHALL run a macOS job that builds the Safari target, runs the handler's tests, packages and builds the app, and installs the extension in Safari over WebDriver. The install step MUST fail when the extension does not install or Safari answers no id, and no WebDriver request may wait longer than 60 seconds. CI does not check the content scripts, since Safari asks a person for website access first; they are checked by hand on a Mac. The build and its artifacts are kept for 14 days, and safaridriver's logs when the install fails.
 
-#### Scenario: Smoke test
-- **GIVEN** the job on a `macos-26` runner with `safaridriver` enabled and the test site on port 8100
-- **WHEN** the smoke test installs `.output/safari-mv3` with `POST /session/{id}/webextension`, as a path or else as a base64 zip
-- **THEN** Safari answers the extension's id
+#### Scenario: Install in Safari
+- **GIVEN** the job on a `macos-26` runner with `safaridriver` enabled
+- **WHEN** the install step installs `.output/safari-mv3` with `POST /session/{id}/webextension`, as a path or else as a base64 zip
+- **THEN** Safari answers the extension's id and the step passes
 
-#### Scenario: Passkey page script ran
-- **GIVEN** the installed extension
-- **WHEN** the smoke test opens `http://localhost:8100/passkey.html` and `navigator.credentials.get` is no longer the browser's native function within 10 seconds
-- **THEN** it logs `PASS: the passkey page script ran` and passes
-
-#### Scenario: Passkey page script did not run
-- **GIVEN** the installed extension
-- **WHEN** `navigator.credentials.get` on `http://localhost:8100/passkey.html` is still native after 10 seconds, or Safari stops answering WebDriver while it asks for website access
-- **THEN** it logs `SKIP: the content script didn't run in the automation session (no website access granted)` and passes
-- **AND** a WebDriver request that gets no answer is cut off after 60 seconds
+#### Scenario: Install fails
+- **GIVEN** a build Safari refuses to install, or an install that gets no answer within 60 seconds
+- **WHEN** the job runs
+- **THEN** the install step fails, naming the request, and the job fails
 
 #### Scenario: Handler test fails
 - **GIVEN** a change that makes `clipboard.clear` clear a pasteboard someone wrote since

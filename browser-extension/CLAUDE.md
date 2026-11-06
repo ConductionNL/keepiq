@@ -24,7 +24,7 @@ npm run build:firefox  # Firefox production → .output/firefox-mv2/
 npm run build:safari   # Safari 26+ production (MV3) → .output/safari-mv3/
 npm run zip            # Store-submission zip (zip:firefox for the MV2 one, zip:safari for Safari)
 npm run package:safari # macOS only: safari/package.sh wraps .output/safari-mv3/ in Keepiq.app → .output/keepiq-safari.zip
-npm run test:safari-smoke # macOS only: scripts/safari-smoke.ts loads the build in Safari over safaridriver
+npm run test:safari-smoke # macOS only: scripts/safari-smoke.ts installs the build in Safari over safaridriver
 ```
 
 Every module and popup component gets a `*.test.ts(x)` next to it. Tests run on WXT's

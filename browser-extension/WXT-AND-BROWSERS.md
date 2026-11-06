@@ -133,7 +133,7 @@ dev) and reload the extension in the browser.
 | `npm run build:safari` | Safari production build (MV3) → `.output/safari-mv3/` |
 | `npm run zip` / `zip:firefox` / `zip:safari` | Store-submission zips |
 | `npm run package:safari` | macOS: `safari/package.sh` packages, overlays the Swift handler and builds `Keepiq.app`, ad-hoc signed → `.output/keepiq-safari.zip` |
-| `npm run test:safari-smoke` | macOS: `scripts/safari-smoke.ts` loads `.output/safari-mv3/` in Safari through `safaridriver` (port 4444) and checks the page script ran on the test site |
+| `npm run test:safari-smoke` | macOS: `scripts/safari-smoke.ts` installs `.output/safari-mv3/` in Safari through `safaridriver` (port 4444); content scripts are checked by hand |
 | `npm run typecheck` | `tsc --noEmit` (no build) |
 | `npm run lint` / `lint:fix` | ESLint |
 

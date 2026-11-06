@@ -1,7 +1,7 @@
 /**
- * Loads `.output/safari-mv3` into Safari over safaridriver, then reports whether the `MAIN` world content script
- * replaced `navigator.credentials.get` on the test site (spec `safari-build`). Only a failed install fails it.
- * Expects `safaridriver --port 4444` and `npm run test-site` running; `npm run test:safari-smoke`.
+ * Installs `.output/safari-mv3` in Safari over safaridriver and requires an extension id back (spec `safari-build`).
+ * It does not check the content scripts: Safari asks a person for website access first (design.md § CI).
+ * Expects `safaridriver --port 4444` running; `npm run test:safari-smoke`.
  */
 import { execFile } from 'node:child_process'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
@@ -12,20 +12,15 @@ import { promisify } from 'node:util'
 
 export interface SmokeOptions {
 	driver: string
-	site: string
 	extensionPath: string
-	/** How long to wait for safaridriver and the test site to answer. */
+	/** How long to wait for safaridriver to answer. */
 	upMs: number
-	/** How long to wait for the content script before skipping its check. */
-	scriptMs: number
 	pollMs: number
 	/** Longest any one WebDriver request may take: a hung Safari otherwise stalls until undici's 5 minute headers timeout. */
 	requestMs: number
 	/** The folder's contents as a base64 zip, `manifest.json` at its root. */
 	zipFolder: (path: string) => Promise<string>
 }
-
-const NATIVE_CHECK = "return Function.prototype.toString.call(navigator.credentials.get).includes('[native code]')"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -47,7 +42,7 @@ async function waitUntilUp(url: string, options: SmokeOptions): Promise<void> {
 	}
 }
 
-/** WebDriver classic: the reply's `value`, or its error thrown with the WebDriver error as `code`. */
+/** WebDriver classic: the reply's `value`, or its error thrown. */
 async function command(options: SmokeOptions, method: string, path: string, body?: object): Promise<unknown> {
 	let response: Response
 	try {
@@ -64,20 +59,19 @@ async function command(options: SmokeOptions, method: string, path: string, body
 	const reply = (await response.json().catch(() => ({}))) as { value?: unknown }
 	if (!response.ok) {
 		const error = (reply.value ?? {}) as { error?: unknown; message?: unknown }
-		const code = String(error.error ?? '')
-		throw Object.assign(new Error(`${method} ${path}: HTTP ${response.status} ${code} ${String(error.message ?? '')}`.trim()), { code })
+		throw new Error(`${method} ${path}: HTTP ${response.status} ${String(error.error ?? '')} ${String(error.message ?? '')}`.trim())
 	}
 	return reply.value
 }
 
-/** The install reply is the id itself or `{ extension: id }`; which one Safari sends is unverified. */
+/** The install reply is the id itself or `{ extension: id }`; Safari 26 sends the latter. */
 export function extensionIdOf(value: unknown): string | undefined {
 	if (typeof value === 'string') return value
 	const extension = (value as { extension?: unknown } | null)?.extension
 	return typeof extension === 'string' ? extension : undefined
 }
 
-/** By path first; whether Safari loads an unpacked folder that way is unverified, so a base64 zip after. */
+/** By path, which Safari 26 accepts; a base64 zip in case a later Safari does not. */
 async function install(options: SmokeOptions, sessionId: string): Promise<string> {
 	const path = `/session/${sessionId}/webextension`
 	let value: unknown
@@ -92,30 +86,8 @@ async function install(options: SmokeOptions, sessionId: string): Promise<string
 	return id
 }
 
-/**
- * Whether the content script replaced the native function within `scriptMs`. An automation session may grant
- * the extension no website access (Safari runs content scripts only where allowed), so `false` is no failure.
- */
-async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<boolean> {
-	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
-	// The script below runs on whatever loaded; a page that never reports loaded is no reason to stop.
-	await command(options, 'POST', `/session/${sessionId}/url`, { url: `${options.site}/passkey.html` }).catch((error: unknown) => {
-		if ((error as { code?: unknown }).code !== 'timeout') throw error
-		console.log('passkey.html did not report loaded in time; checking it anyway')
-	})
-	const deadline = Date.now() + options.scriptMs
-	for (let check = 1; ; check++) {
-		const native = await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script: NATIVE_CHECK, args: [] })
-		console.log(`Check ${check}: navigator.credentials.get is ${native === false ? 'replaced' : native === true ? 'native' : JSON.stringify(native)}`)
-		if (native === false) return true
-		if (Date.now() >= deadline) return false
-		await sleep(options.pollMs)
-	}
-}
-
 export async function smoke(options: SmokeOptions): Promise<void> {
 	await step('safaridriver status', () => waitUntilUp(`${options.driver}/status`, options))
-	await step('test site', () => waitUntilUp(`${options.site}/`, options))
 	const sessionId = await step('new session', async () => {
 		const value = await command(options, 'POST', '/session', { capabilities: { alwaysMatch: { browserName: 'safari' } } })
 		const id = (value as { sessionId?: unknown } | null)?.sessionId
@@ -125,11 +97,6 @@ export async function smoke(options: SmokeOptions): Promise<void> {
 	try {
 		const extensionId = await step('install the extension', () => install(options, sessionId))
 		console.log(`Installed ${options.extensionPath} as ${extensionId}`)
-		const ran = await pageScriptRan(options, sessionId).catch((error: unknown) => {
-			console.log(`Could not check the passkey page script: ${error instanceof Error ? error.message : String(error)}`)
-			return false
-		})
-		console.log(ran ? 'PASS: the passkey page script ran' : "SKIP: the content script didn't run in the automation session (no website access granted)")
 	} finally {
 		await command(options, 'DELETE', `/session/${sessionId}`).catch((error: unknown) => console.warn('Could not end the WebDriver session', error))
 	}
@@ -151,10 +118,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 	try {
 		await smoke({
 			driver: process.env.SAFARIDRIVER_URL ?? 'http://localhost:4444',
-			site: `http://localhost:${process.env.TEST_SITE_PORT ?? 8100}`,
 			extensionPath: fileURLToPath(new URL('../.output/safari-mv3', import.meta.url)),
 			upMs: 30_000,
-			scriptMs: 10_000,
 			pollMs: 500,
 			requestMs: 60_000,
 			zipFolder: zipWithDitto,
