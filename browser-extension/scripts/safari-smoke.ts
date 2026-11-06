@@ -23,10 +23,6 @@ export interface SmokeOptions {
 	requestMs: number
 	/** The folder's contents as a base64 zip, `manifest.json` at its root. */
 	zipFolder: (path: string) => Promise<string>
-	/** How long to look for Safari's website access request after opening the test page. */
-	accessMs: number
-	/** One try at clicking Always Allow: `clicked: …` when it did, `opened: …` when it opened the request but found nothing to click. */
-	allowWebsiteAccess: () => Promise<string>
 }
 
 const NATIVE_CHECK = "return Function.prototype.toString.call(navigator.credentials.get).includes('[native code]')"
@@ -100,39 +96,13 @@ async function install(options: SmokeOptions, sessionId: string): Promise<string
  * Whether the content script replaced the native function within `scriptMs`. An automation session may grant
  * the extension no website access (Safari runs content scripts only where allowed), so `false` is no failure.
  */
-/** The script below runs on whatever loaded; a page that never reports loaded is no reason to stop. */
-async function openTestPage(options: SmokeOptions, sessionId: string): Promise<void> {
+async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<boolean> {
+	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
+	// The script below runs on whatever loaded; a page that never reports loaded is no reason to stop.
 	await command(options, 'POST', `/session/${sessionId}/url`, { url: `${options.site}/passkey.html` }).catch((error: unknown) => {
 		if ((error as { code?: unknown }).code !== 'timeout') throw error
 		console.log('passkey.html did not report loaded in time; checking it anyway')
 	})
-}
-
-/**
- * Safari asks for each site whether the extension may access it: in a native sheet that WebDriver cannot see and
- * that blocks every later command, or behind a badge on the extension's toolbar button. Resolves to whether Always
- * Allow was clicked.
- */
-async function allowWebsiteAccess(options: SmokeOptions): Promise<boolean> {
-	const deadline = Date.now() + options.accessMs
-	for (;;) {
-		const seen = await options.allowWebsiteAccess().catch((error: unknown) => `error: ${error instanceof Error ? error.message : String(error)}`)
-		console.log(`Website access: ${seen}`)
-		if (seen.startsWith('clicked')) return true
-		// Clicking the toolbar button again would close what it opened.
-		if (seen.startsWith('opened') || Date.now() >= deadline) return false
-		await sleep(options.pollMs)
-	}
-}
-
-async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<boolean> {
-	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
-	await openTestPage(options, sessionId)
-	if (await allowWebsiteAccess(options)) {
-		console.log('Allowed the extension on localhost in Safari\'s website access request')
-		// Content scripts run from the next load on.
-		await openTestPage(options, sessionId)
-	}
 	const deadline = Date.now() + options.scriptMs
 	for (let check = 1; ; check++) {
 		const native = await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script: NATIVE_CHECK, args: [] })
@@ -165,137 +135,6 @@ export async function smoke(options: SmokeOptions): Promise<void> {
 	}
 }
 
-/**
- * Clicks an Always Allow button in Safari's website access sheet or, when there is none, opens the request waiting
- * behind the extension's toolbar button and clicks it there. Answers `clicked: …`, `opened: …` (the toolbar button was
- * clicked, nothing to allow) or `none: …`, each with a dump of the window's UI elements as `depth:class|role|name/description/help`.
- * Needs Accessibility access for osascript, which the macOS runner images grant; `argv` 1 is a folder for screenshots
- * after each click, or empty. The page's own content (scroll and web areas) is skipped.
- */
-const ALLOW_SCRIPT = `on infoOf(e)
-	tell application "System Events"
-		set c to ""
-		set r to ""
-		set n to ""
-		set d to ""
-		set h to ""
-		try
-			set c to (class of e) as text
-		end try
-		try
-			set r to (role of e) as text
-		end try
-		try
-			set n to (name of e) as text
-		end try
-		try
-			set d to (description of e) as text
-		end try
-		try
-			set h to (help of e) as text
-		end try
-	end tell
-	return c & "|" & r & "|" & n & "/" & d & "/" & h
-end infoOf
-
-on isPage(itemInfo)
-	return itemInfo contains "|AXScrollArea|" or itemInfo contains "|AXWebArea|"
-end isPage
-
-on isButton(itemInfo)
-	return itemInfo contains "|AXButton|" or itemInfo contains "|AXMenuButton|" or itemInfo contains "|AXPopUpButton|"
-end isButton
-
-on kidsOf(e)
-	tell application "System Events"
-		try
-			return UI elements of e
-		end try
-	end tell
-	return {}
-end kidsOf
-
-on walk(e, depth)
-	set out to ""
-	repeat with kRef in my kidsOf(e)
-		set k to contents of kRef
-		set itemInfo to my infoOf(k)
-		set out to out & " " & depth & ":" & itemInfo
-		if not my isPage(itemInfo) and depth < 7 then set out to out & my walk(k, depth + 1)
-	end repeat
-	return out
-end walk
-
-on findButton(e, needle, depth)
-	repeat with kRef in my kidsOf(e)
-		set k to contents of kRef
-		set itemInfo to my infoOf(k)
-		if my isButton(itemInfo) and itemInfo contains needle then return k
-		if not my isPage(itemInfo) and depth < 7 then
-			set found to my findButton(k, needle, depth + 1)
-			if found is not missing value then return found
-		end if
-	end repeat
-	return missing value
-end findButton
-
-on pressIt(e)
-	tell application "System Events"
-		try
-			click e
-		on error
-			perform action "AXPress" of e
-		end try
-	end tell
-end pressIt
-
-on snap(shotDir, fileName)
-	if shotDir is not "" then do shell script "/usr/sbin/screencapture -x " & quoted form of (shotDir & "/" & fileName)
-end snap
-
-on allowIn(shotDir)
-	tell application "System Events" to set safariWindows to windows of process "Safari"
-	repeat with wRef in safariWindows
-		set found to my findButton(contents of wRef, "Always Allow", 0)
-		if found is not missing value then
-			set itemInfo to my infoOf(found)
-			my pressIt(found)
-			delay 1
-			my snap(shotDir, "after-always-allow.png")
-			return itemInfo
-		end if
-	end repeat
-	return ""
-end allowIn
-
-on run argv
-	set shotDir to item 1 of argv
-	set allowed to allowIn(shotDir)
-	if allowed is not "" then return "clicked: " & allowed
-	tell application "System Events" to set safariWindow to front window of process "Safari"
-	set treeBefore to walk(safariWindow, 0)
-	set toolbarButton to findButton(safariWindow, "Keepiq", 0)
-	if toolbarButton is missing value then return "none:" & treeBefore
-	set buttonInfo to infoOf(toolbarButton)
-	pressIt(toolbarButton)
-	delay 1.5
-	snap(shotDir, "after-toolbar-click.png")
-	set allowed to allowIn(shotDir)
-	if allowed is not "" then return "clicked: " & allowed & " after " & buttonInfo
-	set treeAfter to ""
-	tell application "System Events" to set safariWindows to windows of process "Safari"
-	repeat with wRef in safariWindows
-		set treeAfter to treeAfter & " | window" & my walk(contents of wRef, 0)
-	end repeat
-	return "opened: " & buttonInfo & "; then" & treeAfter
-end run`
-
-async function clickAlwaysAllow(): Promise<string> {
-	const screens = process.env.SAFARI_SMOKE_SCREENS ?? ''
-	const { stdout } = await promisify(execFile)('osascript', ['-e', ALLOW_SCRIPT, screens], { timeout: 60_000 })
-	return stdout.trim()
-}
-
 /** `ditto -c -k` without `--keepParent`, so `manifest.json` sits at the zip's root. */
 async function zipWithDitto(path: string): Promise<string> {
 	const dir = await mkdtemp(join(tmpdir(), 'keepiq-safari-'))
@@ -318,8 +157,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 			scriptMs: 10_000,
 			pollMs: 500,
 			requestMs: 60_000,
-			accessMs: 15_000,
-			allowWebsiteAccess: clickAlwaysAllow,
 			zipFolder: zipWithDitto,
 		})
 		console.log('Safari smoke test passed')

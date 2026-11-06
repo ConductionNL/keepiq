@@ -35,7 +35,7 @@ The Safari extension SHALL ship inside a macOS app named Keepiq with bundle iden
 - **THEN** it fails with a message naming the missing handler, and builds nothing
 
 ### Requirement: Safari is checked in CI
-Every change to the extension SHALL run a macOS job that builds the Safari target, runs the handler's tests, packages and builds the app, and loads the extension in Safari over WebDriver. The smoke test MUST fail only when the extension does not install or Safari answers no id. It then opens a test-site page and reports whether the extension's `MAIN` world content script replaced `navigator.credentials.get`: a pass when it did, a logged skip when it did not, since an automation session may grant the extension no website access. The build, its artifacts and safaridriver's logs are kept for 14 days.
+Every change to the extension SHALL run a macOS job that builds the Safari target, runs the handler's tests, packages and builds the app, and loads the extension in Safari over WebDriver. The smoke test MUST fail only when the extension does not install or Safari answers no id. It then opens a test-site page and reports whether the extension's `MAIN` world content script replaced `navigator.credentials.get`: a pass when it did, a logged skip when it did not, since Safari asks a person for the extension's website access and an automation session cannot answer. No WebDriver request may wait longer than 60 seconds. The build, its artifacts and safaridriver's logs are kept for 14 days.
 
 #### Scenario: Smoke test
 - **GIVEN** the job on a `macos-26` runner with `safaridriver` enabled and the test site on port 8100
@@ -49,8 +49,9 @@ Every change to the extension SHALL run a macOS job that builds the Safari targe
 
 #### Scenario: Passkey page script did not run
 - **GIVEN** the installed extension
-- **WHEN** `navigator.credentials.get` on `http://localhost:8100/passkey.html` is still native after 10 seconds
+- **WHEN** `navigator.credentials.get` on `http://localhost:8100/passkey.html` is still native after 10 seconds, or Safari stops answering WebDriver while it asks for website access
 - **THEN** it logs `SKIP: the content script didn't run in the automation session (no website access granted)` and passes
+- **AND** a WebDriver request that gets no answer is cut off after 60 seconds
 
 #### Scenario: Handler test fails
 - **GIVEN** a change that makes `clipboard.clear` clear a pasteboard someone wrote since

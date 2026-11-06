@@ -40,10 +40,10 @@
 
 ## 6. CI
 
-- [x] 6.1 Write `scripts/safari-smoke.ts` and `npm run test:safari-smoke` (design.md § CI): status waits, session, `webextension` install from `.output/safari-mv3` with a base64 zip fallback and an id required, the `navigator.credentials.get` check on the test site logged as PASS or SKIP, session deleted in `finally`, each failure naming its step
+- [x] 6.1 Write `scripts/safari-smoke.ts` and `npm run test:safari-smoke` (design.md § CI): status waits, session, `webextension` install from `.output/safari-mv3` with a base64 zip fallback and an id required, the `navigator.credentials.get` check on the test site logged as PASS or SKIP, every request cut off after 60 s, session deleted in `finally`, each failure naming its step
 - [x] 6.2 Add the `safari` job on `macos-26` to `.github/workflows/browser-extension.yml`: build, handler tests, package, smoke test with `continue-on-error: true` and `safaridriver --diagnose`, artifacts `browser-extension-safari` and, always, the WebDriver logs
   - The job is green on a pull request, apart from the smoke step
-- [ ] 6.3 Once the smoke step has logged `PASS: the passkey page script ran` on the runner, remove its `continue-on-error`; until then record in design.md § Unverified what the WebDriver run showed
+- [ ] 6.3 Once the smoke step has logged `PASS: the passkey page script ran` on the runner, remove its `continue-on-error`. On a hosted runner it cannot yet: Safari asks a person for website access and refuses scripted answers (design.md § CI); revisit when Safari or safaridriver can grant it
 
 ## 7. Docs
 

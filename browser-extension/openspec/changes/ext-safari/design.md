@@ -149,12 +149,19 @@ A `safari` job in `.github/workflows/browser-extension.yml`, beside `check-and-b
 6. Upload `browser-extension-safari`: `.output/safari-mv3/` and `.output/keepiq-safari.zip`, 14 days.
 7. Upload `browser-extension-safari-webdriver-logs`: `~/Library/Logs/com.apple.WebDriver/`, `if: always()`, 14 days.
 
-**`scripts/safari-smoke.ts`** (Node 24, `fetch`, no dependency), WebDriver classic against `http://localhost:4444`:
+**`scripts/safari-smoke.ts`** (Node 24, `fetch`, no dependency), WebDriver classic against `http://localhost:4444`, every request cut off after 60 s:
 1. Wait up to 30 s for `GET /status` and `http://localhost:8100/`.
 2. `POST /session` `{ capabilities: { alwaysMatch: { browserName: 'safari' } } }`.
 3. `POST /session/{id}/webextension` `{ type: 'path', path: <absolute .output/safari-mv3> }` (W3C WebExtensions "WebDriver Classic"; WebKit's `Automation.json` `loadWebExtension` takes `Path`, `ArchivePath` or `Base64` on macOS). When that fails, again as `{ type: 'base64', value }`: a zip of the folder's contents with `manifest.json` at its root (`ditto -c -k`, no `--keepParent`). The id is `value`, or `value.extension`. Required: an id comes back. On the runner the path install works and answers `com.apple.Safari.UnpackedExtensions.<UUID> (UNSIGNED)`, not the host of the extension's `safari-web-extension://` URLs, so the test cannot open the extension's own pages.
-4. Navigate to `http://localhost:8100/passkey.html`; poll `execute/sync` for 10 s on `return Function.prototype.toString.call(navigator.credentials.get).includes('[native code]')`. `false` logs `PASS: the passkey page script ran`; still `true` logs `SKIP: the content script didn't run in the automation session (no website access granted)`. Both pass.
+4. `POST /session/{id}/timeouts` `{ pageLoad: 10000, script: 10000 }`, navigate to `http://localhost:8100/passkey.html` (a page-load timeout counts as opened), then poll `execute/sync` for 10 s on `return Function.prototype.toString.call(navigator.credentials.get).includes('[native code]')`. `false` logs `PASS: the passkey page script ran`; still `true` logs `SKIP: the content script didn't run in the automation session (no website access granted)`. Both pass.
 5. `DELETE /session/{id}` in `finally`. Each failure names its step; past the install, nothing fails the test.
+
+**Why the passkey check skips on a hosted runner** (runs 42214300200 to 42220015972 on PR #1490, `macos-26`, Safari 26.6.2):
+- Once `passkey.html` loads, Safari asks whether Keepiq may access `localhost`: either as a sheet over the page ("The extension "Keepiq" would like to access localhost.", Deny / Always Allow / Allow for One Day) or as a badge on the toolbar button ("would like access to additional websites"). Until someone answers, the content scripts do not run, so every check reads native.
+- The sheet freezes the automation session: safaridriver's log shows the next `Automation.resolveBrowsingContext` unanswered, and `DELETE /session` with it. Every request is therefore cut off after 60 s.
+- Answering it from a script is refused: clicking Keepiq's toolbar button through System Events made Safari show "This Safari window is remotely controlled by an automated test" (Continue Session / Stop Session / Turn Off All Automation), and the session froze again.
+- Nothing grants access up front: WebKit's automation protocol knows only the `GetUserMedia` session permission, Safari's `loadWebExtension` handling is not public, and no documented preference sets an extension's website access.
+- The step keeps screenshots every 4 s, Safari's system log and safaridriver's log as `browser-extension-safari-webdriver-logs`, so a later Safari that behaves differently shows up there.
 
 ### Docs
 
@@ -207,7 +214,7 @@ Confirm on a real Mac (tasks.md 8.2), then drop each line:
 - That `.currentHostOnly` keeps the value off Universal Clipboard.
 - `sendNativeMessage` from Safari's MV3 service worker (Proton Pass does it from its worker) and from the popup; `NSPasteboard` writes from the sandboxed extension without user interaction (Bitwarden does it).
 - That an ad-hoc signed build loads with "Allow unsigned extensions".
-- WebDriver: whether `type: 'base64'` loads, and whether content scripts run on `localhost` in an automation session without a grant. The macOS 26 runner showed that `type: 'path'` loads the unpacked build without its app and without "Allow unsigned extensions", and answers an `UnpackedExtensions` id that is not the `safari-web-extension://` host.
+- WebDriver: whether `type: 'base64'` loads; how to give an extension loaded over WebDriver website access, which the runner showed Safari asks a person for and refuses to take from a script (§ CI). The macOS 26 runner showed that `type: 'path'` loads the unpacked build without its app and without "Allow unsigned extensions", and answers an `UnpackedExtensions` id that is not the `safari-web-extension://` host.
 - WebKit refusing WebAuthn without focus (from Bitwarden's comment), whether the `MAIN` world script runs before the page's scripts at `document_start`, and `windows.update({ focused: true })` behaviour.
 - Whether a `filter` on `<html>` reaches Safari's top layer: open the test site's `root-filter.html` probe. Until then the inline list and save bar refuse a pick while `<html>` has one, as on Firefox (`rootFilterReachesTopLayer`, true for every target but Chromium in `entrypoints/content.ts`); if the popover shows, make it Firefox only.
 - Language: Safari follows macOS's preferred languages; with Irish first and no Irish catalog the extension should show English, and Dutch when Dutch is first.
