@@ -168,88 +168,126 @@ export async function smoke(options: SmokeOptions): Promise<void> {
 /**
  * Clicks an Always Allow button in Safari's website access sheet or, when there is none, opens the request waiting
  * behind the extension's toolbar button and clicks it there. Answers `clicked: …`, `opened: …` (the toolbar button was
- * clicked, nothing to allow) or `none: …`, with the labels it saw. Needs Accessibility access for osascript, which the
- * macOS runner images grant; `argv` 1 is a folder for screenshots after each click, or empty.
+ * clicked, nothing to allow) or `none: …`, each with a dump of the window's UI elements as `depth:class|role|name/description/help`.
+ * Needs Accessibility access for osascript, which the macOS runner images grant; `argv` 1 is a folder for screenshots
+ * after each click, or empty. The page's own content (scroll and web areas) is skipped.
  */
-const ALLOW_SCRIPT = `on labelOf(e)
+const ALLOW_SCRIPT = `on infoOf(e)
 	tell application "System Events"
+		set c to ""
+		set r to ""
 		set n to ""
 		set d to ""
+		set h to ""
 		try
-			set n to name of e as text
+			set c to (class of e) as text
 		end try
 		try
-			set d to description of e as text
+			set r to (role of e) as text
+		end try
+		try
+			set n to (name of e) as text
+		end try
+		try
+			set d to (description of e) as text
+		end try
+		try
+			set h to (help of e) as text
 		end try
 	end tell
-	if n is "missing value" then set n to ""
-	if d is "missing value" then set d to ""
-	return n & "/" & d
-end label
+	return c & "|" & r & "|" & n & "/" & d & "/" & h
+end infoOf
+
+on isPage(itemInfo)
+	return itemInfo contains "|AXScrollArea|" or itemInfo contains "|AXWebArea|"
+end isPage
+
+on isButton(itemInfo)
+	return itemInfo contains "|AXButton|" or itemInfo contains "|AXMenuButton|" or itemInfo contains "|AXPopUpButton|"
+end isButton
+
+on kidsOf(e)
+	tell application "System Events"
+		try
+			return UI elements of e
+		end try
+	end tell
+	return {}
+end kidsOf
+
+on walk(e, depth)
+	set out to ""
+	repeat with kRef in my kidsOf(e)
+		set k to contents of kRef
+		set itemInfo to my infoOf(k)
+		set out to out & " " & depth & ":" & itemInfo
+		if not my isPage(itemInfo) and depth < 7 then set out to out & my walk(k, depth + 1)
+	end repeat
+	return out
+end walk
+
+on findButton(e, needle, depth)
+	repeat with kRef in my kidsOf(e)
+		set k to contents of kRef
+		set itemInfo to my infoOf(k)
+		if my isButton(itemInfo) and itemInfo contains needle then return k
+		if not my isPage(itemInfo) and depth < 7 then
+			set found to my findButton(k, needle, depth + 1)
+			if found is not missing value then return found
+		end if
+	end repeat
+	return missing value
+end findButton
+
+on pressIt(e)
+	tell application "System Events"
+		try
+			click e
+		on error
+			perform action "AXPress" of e
+		end try
+	end tell
+end pressIt
 
 on snap(shotDir, fileName)
 	if shotDir is not "" then do shell script "/usr/sbin/screencapture -x " & quoted form of (shotDir & "/" & fileName)
 end snap
 
 on allowIn(shotDir)
-	tell application "System Events" to tell process "Safari"
-		repeat with w in windows
-			repeat with e in (entire contents of w)
-				try
-					if class of e is button then
-						set l to my labelOf(e)
-						if l contains "Always Allow" then
-							click e
-							delay 1
-							my snap(shotDir, "after-always-allow.png")
-							return l
-						end if
-					end if
-				end try
-			end repeat
-		end repeat
-	end tell
+	tell application "System Events" to set safariWindows to windows of process "Safari"
+	repeat with wRef in safariWindows
+		set found to my findButton(contents of wRef, "Always Allow", 0)
+		if found is not missing value then
+			set itemInfo to my infoOf(found)
+			my pressIt(found)
+			delay 1
+			my snap(shotDir, "after-always-allow.png")
+			return itemInfo
+		end if
+	end repeat
 	return ""
 end allowIn
-
-on buttonsIn()
-	set seen to ""
-	tell application "System Events" to tell process "Safari"
-		repeat with w in windows
-			repeat with e in (entire contents of w)
-				try
-					if class of e is button then set seen to seen & " [" & my labelOf(e) & "]"
-				end try
-			end repeat
-		end repeat
-	end tell
-	return seen
-end buttonsIn
 
 on run argv
 	set shotDir to item 1 of argv
 	set allowed to allowIn(shotDir)
 	if allowed is not "" then return "clicked: " & allowed
-	set toolbarButtons to ""
-	tell application "System Events" to tell process "Safari"
-		repeat with e in (entire contents of toolbar 1 of front window)
-			try
-				if class of e is button then
-					set l to my labelOf(e)
-					set toolbarButtons to toolbarButtons & " [" & l & "]"
-					if l contains "Keepiq" then
-						click e
-						delay 1
-						my snap(shotDir, "after-toolbar-click.png")
-						set allowed to my allowIn(shotDir)
-						if allowed is not "" then return "clicked: " & allowed & " after the toolbar button " & l
-						return "opened: toolbar" & toolbarButtons & "; then buttons" & my buttonsIn()
-					end if
-				end if
-			end try
-		end repeat
-	end tell
-	return "none: toolbar" & toolbarButtons
+	tell application "System Events" to set safariWindow to front window of process "Safari"
+	set treeBefore to walk(safariWindow, 0)
+	set toolbarButton to findButton(safariWindow, "Keepiq", 0)
+	if toolbarButton is missing value then return "none:" & treeBefore
+	set buttonInfo to infoOf(toolbarButton)
+	pressIt(toolbarButton)
+	delay 1.5
+	snap(shotDir, "after-toolbar-click.png")
+	set allowed to allowIn(shotDir)
+	if allowed is not "" then return "clicked: " & allowed & " after " & buttonInfo
+	set treeAfter to ""
+	tell application "System Events" to set safariWindows to windows of process "Safari"
+	repeat with wRef in safariWindows
+		set treeAfter to treeAfter & " | window" & my walk(contents of wRef, 0)
+	end repeat
+	return "opened: " & buttonInfo & "; then" & treeAfter
 end run`
 
 async function clickAlwaysAllow(): Promise<string> {
