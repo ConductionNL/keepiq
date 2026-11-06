@@ -1,5 +1,6 @@
 import { i18n } from '#i18n'
 import type { VaultTimeout } from '@/src/accounts/settings'
+import { hasIdle } from '@/src/platform'
 import type { SelectOption } from '../../components/Select'
 
 /** `Select` takes strings, so each `VaultTimeout` has a key: minutes as digits, the rest by name, and `custom` for the form. */
@@ -31,10 +32,12 @@ export function timeoutOptions(maxIdleMinutes: number | null, current: VaultTime
 	return [
 		{ value: 'immediately', label: i18n.t('settings.timeoutImmediately') },
 		...minutes,
-		{
-			value: 'onSystemLock',
-			label: maxIdleMinutes === null ? i18n.t('settings.timeoutOnSystemLock') : i18n.t('settings.timeoutOnSystemLockCapped', { duration: formatDuration(maxIdleMinutes) }),
-		},
+		...(hasIdle()
+			? [{
+				value: 'onSystemLock',
+				label: maxIdleMinutes === null ? i18n.t('settings.timeoutOnSystemLock') : i18n.t('settings.timeoutOnSystemLockCapped', { duration: formatDuration(maxIdleMinutes) }),
+			}]
+			: []),
 		...(maxIdleMinutes === null
 			? [{ value: 'onRestart', label: i18n.t('settings.timeoutOnRestart') }, { value: 'never', label: i18n.t('settings.never') }]
 			: []),

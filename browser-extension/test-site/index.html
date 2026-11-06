@@ -23,6 +23,7 @@
 			<li><a href="/autocomplete-off.html">Autocomplete off</a><span>A login with <code>autocomplete="off"</code>, which is ignored: fill, list and save bar work.</span></li>
 			<li><a href="/mislabelled-login.html">Mislabelled login</a><span>A login password marked <code>new-password</code>, still treated as a login.</span></li>
 			<li><a href="/inline-list.html">Inline list</a><span>Where the list beneath a field opens and where not: scrolling, iframes, sign-up, disabled fields, the guard cases, masks and assistive styling.</span></li>
+			<li><a href="/root-filter.html">Root filter and the top layer</a><span>A probe: <code>filter: opacity(0)</code> on <code>&lt;html&gt;</code> and a popover. Shows whether the filter reaches this browser's top layer, which the inline list's guard assumes on Firefox and Safari.</span></li>
 			<li><a href="/dialog.html">Login in a modal dialog</a><span>A login in a <code>showModal()</code> dialog, a transformed one and an ARIA modal with a focus trap. The list shows inside each and a pick fills.</span></li>
 			<li><a href="/signup.html">Sign up</a><span>New password and confirmation. Save bar for a new login.</span></li>
 			<li><a href="/change-password.html">Change password</a><span>Current, new and confirm. Update bar for a changed password.</span></li>
@@ -36,6 +37,7 @@
 			<li><a href="/recovery-code.html">Recovery code</a><span>A recovery code field marked <code>one-time-code</code>. Not a code field: no list, no fill.</span></li>
 			<li><a href="/passkey.html">Passkey</a><span>Register a passkey and sign in with it. The page checks both with WebCrypto and shows the counter.</span></li>
 			<li><a href="/passkey-conditional.html">Passkey in the field's suggestions</a><span>A conditional passkey request on load and a <code>webauthn</code> username field. The list offers passkeys above the logins.</span></li>
+			<li><a href="/passkey-frame.html">Passkey in a same-origin frame</a><span>The passkey page in a frame on this origin. Keepiq handles it as the page itself; in Safari its fallback waits for the frame's focus.</span></li>
 			<li><a href="/passkey-iframe.html">Passkey in a cross-origin frame</a><span>The passkey page in a frame on another origin. Its requests go to the browser, never to Keepiq.</span></li>
 			<li><a href="/scripted-submit.html">Login submitted by script</a><span>The page fills and submits a login itself, as a probe of the vault would. No save or update bar.</span></li>
 			<li><a href="/card.html">Card checkout</a><span>A checkout with <code>cc-*</code> tokens and a <code>type=password</code> CVC. The card list on every field, never the login list, and no save bar.</span></li>

@@ -1,6 +1,7 @@
 import type { Server } from 'node:http'
 import { resolve } from 'node:path'
 import { defineConfig } from 'wxt'
+import { isChromium } from './src/platform'
 import { defaultBrowserBinaries } from './scripts/default-browser'
 import { prepareDevProfile } from './scripts/dev-profile'
 import { startTestSite, TEST_SITE_PORT } from './scripts/test-site'
@@ -48,8 +49,10 @@ export default defineConfig({
 		const nameSuffix = mode === 'production' ? '' : ' (DEV)'
 		// Each Keepiq server is granted at add time, from the popup (ADR-003).
 		const serverOrigins = ['https://*/*', 'http://*/*']
-		// Only to turn off Chrome's own password manager (ext-default-password-manager); Firefox's cannot hide its dropdowns.
-		const optionalApis = browser === 'firefox' ? [] : ['privacy']
+		const chromium = isChromium(browser)
+		const safari = browser === 'safari'
+		// Only to turn off Chrome's own password manager (ext-default-password-manager); Firefox's cannot hide its dropdowns, Safari has no `privacy`.
+		const optionalApis = chromium ? ['privacy'] : []
 		return {
 			name: `Keepiq${nameSuffix}`,
 			description: '__MSG_extensionDescription__',
@@ -62,14 +65,16 @@ export default defineConfig({
 				// Firefox caps storage.local at 5 MB, which a few thousand RSA blobs approach.
 				'unlimitedStorage',
 				'alarms',
-				'idle',
+				// On system lock; Safari has no `idle`.
+				...(safari ? [] : ['idle']),
 				'tabs',
 				// Scan QR code on page takes a picture of the tab under the toolbar popup; `tabs` alone doesn't allow that.
 				'activeTab',
-				// Clearing the clipboard writes it without a user gesture, from an offscreen
-				// document on Chrome and from the background page on Firefox.
+				// Clearing the clipboard writes it without a user gesture: from an offscreen document on Chromium,
+				// the background page on Firefox, and the containing app over native messaging on Safari.
 				'clipboardWrite',
-				...(browser === 'firefox' ? [] : ['offscreen']),
+				...(chromium ? ['offscreen'] : []),
+				...(safari ? ['nativeMessaging'] : []),
 				// Firefox reads it as an alias of `menus`.
 				'contextMenus',
 			],
@@ -85,7 +90,7 @@ export default defineConfig({
 				},
 			},
 			// The save bar and the inline list, framed into pages, and on Firefox the passkey page script the relay
-			// injects; Chrome runs that one as a MAIN world content script. WXT writes MV2's string form for Firefox.
+			// injects; every other browser runs that one as a MAIN world content script. WXT writes MV2's string form for Firefox.
 			web_accessible_resources: [{
 				resources: ['notification.html', 'inline-list.html', ...(browser === 'firefox' ? ['passkey-page.js'] : [])],
 				matches: ['*://*/*'],
@@ -104,7 +109,8 @@ export default defineConfig({
 			content_security_policy: {
 				extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
 			},
-			browser_specific_settings: {
+			// 26 is the first Safari to honour `wasm-unsafe-eval` and to let users change extension shortcuts.
+			browser_specific_settings: safari ? { safari: { strict_min_version: '26.0' } } : {
 				gecko: {
 					id: 'keepiq@conduction.nl',
 					// 109 is the first Firefox with the MV3 APIs backported to MV2;

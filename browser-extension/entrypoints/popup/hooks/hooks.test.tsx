@@ -76,6 +76,57 @@ describe('useClipboard', () => {
 		expect(value.toast).toHaveBeenCalledWith('Could not copy')
 		expect(sent).not.toHaveBeenCalled()
 	})
+
+	describe('on Safari', () => {
+		afterEach(() => {
+			vi.unstubAllEnvs()
+		})
+
+		async function copyOnSafari(app: () => Promise<unknown>, { refuse = false, mode = 'production' } = {}) {
+			userEvent.setup()
+			vi.stubEnv('BROWSER', 'safari')
+			vi.stubEnv('MODE', mode)
+			vi.spyOn(console, 'warn').mockImplementation(() => {})
+			vi.spyOn(browser.runtime, 'sendNativeMessage').mockImplementation(app)
+			const writeText = fakeClipboard(refuse)
+			const sent = fakeBackground()
+			const { value, wrapper } = shell()
+			const { result } = renderHook(() => useClipboard(), { wrapper })
+			await act(() => result.current('alice', 'Username'))
+			return { writeText, sent, toast: value.toast }
+		}
+
+		it('copies through the Keepiq app and passes its count to the background', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => ({ ok: true, changeCount: 8 }))
+			expect(writeText).not.toHaveBeenCalled()
+			expect(toast).toHaveBeenCalledWith('Username copied')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied', changeCount: 8 }])
+		})
+
+		it.each([
+			['refuses', async () => ({ ok: false, error: 'write_failed' })],
+			['cannot be reached', async () => { throw new Error('No native host') }],
+			['gives an unknown outcome', async () => ({ ok: true })],
+		])('in a production build, only toasts the failure when the app %s', async (_, app) => {
+			const { writeText, sent, toast } = await copyOnSafari(app)
+			expect(writeText).not.toHaveBeenCalled()
+			expect(toast).toHaveBeenCalledWith('Could not copy')
+			expect(sent).not.toHaveBeenCalled()
+		})
+
+		it('in a dev build, copies itself when the app fails, and sends no count', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => { throw new Error('No native host') }, { mode: 'development' })
+			expect(writeText).toHaveBeenCalledWith('alice')
+			expect(toast).toHaveBeenCalledWith('Username copied')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied' }])
+		})
+
+		it('in a dev build, only toasts when both fail', async () => {
+			const { sent, toast } = await copyOnSafari(async () => ({ ok: false, error: 'write_failed' }), { refuse: true, mode: 'development' })
+			expect(toast).toHaveBeenCalledWith('Could not copy')
+			expect(sent).not.toHaveBeenCalled()
+		})
+	})
 })
 
 describe('useCurrentTab', () => {

@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Ni nastavljeno
   shortcutChange: Spremeni
   shortcutFirefox: Odprite about:addons, izberite meni z zobnikom in nato Upravljanje bližnjic razširitev
+  shortcutSafari: Odprite nastavitve Safarija, izberite Razširitve in nato Keepiq, da spremenite njegovo bližnjico
+  websiteAccess: Dostop do spletnih mest
+  websiteAccessAll: Vsa spletna mesta
+  websiteAccessSome: Samo spletna mesta, ki ste jih dovolili
+  websiteAccessServer: Brez vašega strežnika Keepiq
   clearClipboard: Počisti odložišče
   clipboardSeconds:
     1: 1 sekunda
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Pravilnik o zasebnosti
   webApp: Spletna aplikacija Keepiq
   rate: Oceni razširitev
+
+websiteAccess:
+  title: Dovolite Keepiqu delovati na spletnih mestih
+  body: Safari izvaja Keepiq samo na spletnih mestih, ki jih dovolite. Dovolite ga na vseh spletnih mestih, da boste lahko povsod, kjer se prijavljate, izpolnjevali prijave, shranjevali nove in uporabljali ključe za dostop.
+  allow: Dovoli na vseh spletnih mestih
+  dismiss: Ne zdaj
+  steps: V Safariju izberite Safari > Nastavitve in nato Spletna mesta. Na seznamu izberite Keepiq in nastavite »Pri obisku drugih spletnih mest« na Dovoli.
+  perSite: Če želite dovoljevati posamezna mesta, kliknite gumb Keepiq na tem mestu in izberite, naj bo vedno dovoljen.
+  serverTitle: Keepiq ne more doseči {host}
+  serverBody: Safari Keepiqu ne dovoli dostopa do vašega strežnika, zato trezorja ni mogoče uskladiti.
+  serverAllow: Dovoli {host}
 
 generator:
   kinds: Kaj ustvariti

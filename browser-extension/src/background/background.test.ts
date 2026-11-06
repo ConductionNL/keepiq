@@ -523,4 +523,14 @@ describe('background entrypoint', () => {
 		await deliver({ kind: 'vault.lock', accountId: account.id }, popupSender)
 		expect(await browser.alarms.get(SYNC_ALARM)).toBeUndefined()
 	})
+
+	it('listens for the system lock where the browser has the idle API', () => {
+		const onStateChanged = browser.idle.onStateChanged as unknown as ReturnType<typeof fakeEvent<(state: string) => void>>
+		expect(onStateChanged.trigger('active')).toHaveLength(1)
+	})
+
+	it('starts without the idle API, as on Safari', () => {
+		Object.assign(browser, { idle: undefined })
+		expect(() => background.main()).not.toThrow()
+	})
 })

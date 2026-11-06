@@ -75,7 +75,8 @@ The extension uses the same end-to-end encryption as the Keepiq web app and is b
 - Every popup field turns off the browser's spell check, so cloud spelling services, such as Chrome's Enhanced spell check or Edge's Microsoft Editor, never receive vault text.
 - Requests go from the background only, with Basic auth on an app password and `credentials: 'omit'`, so browser cookies are never sent.
 - Server URLs must be `https`. Plain `http` is allowed only for `localhost`, `127.0.0.1` and `.test` hosts, for development.
-- Host access is requested per server, when you add an account. The extension holds no other host permissions.
+- Host access is requested per server, when you add an account. On Chrome and Firefox the extension holds no other host permissions.
+- On Safari the content scripts run only where you allowed Keepiq, so the popup asks for every website. That grant also lets the background reach any site; it still calls your server only.
 - `activeTab` lets Scan QR code on page take a picture of the tab under the toolbar popup, on your click only. It shows no install prompt and gives no access to other tabs or to pages you never opened Keepiq on.
 - On Chrome, `privacy` is requested only when you turn on "Make Keepiq your default password manager", and given back when you turn it off.
 
@@ -135,10 +136,10 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - **What the page learns:** the content script never gets names, usernames, a card's brand or last four, or an identity's name or email; the login list's height is one row when the vault is locked, when no login matches and when one does, so one row doesn't tell them apart; two to five rows show that many matches (five for more) and so that the vault is unlocked, which is accepted as useless to a site; the card and identity lists size the same way, but list every card or identity rather than a site's matches, so their height shows how many the vault holds (two to five, five for more) and is the same on every site, which is accepted for lists that fit their rows; the not-visible notice and the insecure-site question size to their text, but only after the user picked a row; and the save card's size depends on the window only.
 - **Passkey rows** show in the list only while the frame's conditional passkey request is pending and the vault is unlocked, and count toward its height as logins do. A request that names credentials gets none, so the page can't use the list to test which of its credential ids your vault holds.
 - **Visibility guard:** a pick, Save, Update or Never counts only when the list or bar stayed untouched and on top for the 500 ms before the press, and is what the press point hits. Otherwise it is refused, and the list or bar says so.
-- **Frames:** no inline list in a frame with a cross-origin ancestor, on either browser, since the extension couldn't check that ancestor's styling.
+- **Frames:** no inline list in a frame with a cross-origin ancestor, on any browser, since the extension couldn't check that ancestor's styling.
 - **Chrome** adds IntersectionObserver v2, which also sees overlays that let clicks through.
-- **Firefox** has no such report, so the guard samples every frame and is best effort: an overlay that lets clicks through, or a style changed only between samples, goes unnoticed. A `filter` on `<html>`, such as "Invert the page" or Dark Reader's filter mode, refuses every pick there.
-- **Assistive styling:** a zoom extension's `zoom` on `<html>` refuses every pick on both browsers.
+- **Firefox and Safari** have no such report, so the guard samples every frame and is best effort: an overlay that lets clicks through, or a style changed only between samples, goes unnoticed. A `filter` on `<html>`, such as "Invert the page" or Dark Reader's filter mode, refuses every pick on both: it reaches Firefox's top layer, and whether it reaches Safari's is unverified.
+- **Assistive styling:** a zoom extension's `zoom` on `<html>` refuses every pick on every browser.
 - **Trusted submissions:** a login is offered for saving only after a trusted submit with user activation, at most once per activation, since whether a bar appears tells the page whether that login is saved.
 - **The bar never gets the password,** which stays in background memory until you answer.
 - **The no-form notice** after a context menu fill gets only a code, which it words itself; it offers no action, so it has no visibility guard, and never takes focus.
@@ -163,10 +164,11 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 ## Clipboard
 
 - Copy happens in the popup, under your click, or from the context menu and after a fill of a login with a verification code, where the background writes it.
-- The background writes and clears the clipboard through an offscreen document on Chrome, and from the background page on Firefox.
+- The background writes and clears the clipboard through an offscreen document on Chrome, and from the background page on Firefox. On Safari the popup and the background write it, and the background clears it, through the Keepiq app that installs the extension, over native messaging; the app keeps nothing and logs no value.
 - On Chrome the background reaches the offscreen document with a runtime message, so `offscreen.writeClipboard` and the copied value reach every open extension view; only the offscreen document acts on it.
 - The delay is 30 seconds by default, and every copy replaces the pending clear. Settings changes it per account, or sets it to Never.
-- The clear is unconditional: anything you copy in those 30 seconds is cleared too. Checking first would need the `clipboardRead` permission and its install warning.
+- On Chrome and Firefox the clear is unconditional: anything you copy in those 30 seconds is cleared too. Checking first would need the `clipboardRead` permission and its install warning.
+- On Safari the clear only clears while the pasteboard's `changeCount` is still that of Keepiq's write, so nothing is read back. Copied values are marked `org.nspasteboard.ConcealedType`, which clipboard managers keep out of their history. The exception is a dev build without the app, whose popup falls back to `navigator.clipboard`, unmarked; a release build reports the copy as failed instead.
 
 ## Known limits
 

@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Ikke angivet
   shortcutChange: Skift
   shortcutFirefox: Åbn about:addons, vælg tandhjulsmenuen og derefter Håndter tastaturgenveje til udvidelser
+  shortcutSafari: Åbn Safari-indstillinger, vælg Udvidelser, og vælg derefter Keepiq for at ændre genvejen
+  websiteAccess: Adgang til websteder
+  websiteAccessAll: Alle websteder
+  websiteAccessSome: Kun websteder, du har tilladt
+  websiteAccessServer: Ikke din Keepiq-server
   clearClipboard: Ryd udklipsholder
   clipboardSeconds:
     1: 1 sekund
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Privatlivspolitik
   webApp: Keepiq-webapp
   rate: Bedøm udvidelsen
+
+websiteAccess:
+  title: Lad Keepiq virke på websteder
+  body: Safari kører kun Keepiq på websteder, du tillader. Tillad det på alle websteder for at udfylde logins, gemme nye og bruge adgangsnøgler overalt, hvor du logger ind.
+  allow: Tillad på alle websteder
+  dismiss: Ikke nu
+  steps: Vælg Safari > Indstillinger i Safari, og klik derefter på Websteder. Vælg Keepiq på listen, og indstil “Ved besøg på andre websteder” til Tillad.
+  perSite: Vil du tillade ét websted ad gangen? Klik på Keepiq-knappen på webstedet, og vælg altid at tillade det.
+  serverTitle: Keepiq kan ikke nå {host}
+  serverBody: Safari giver ikke Keepiq adgang til din server, så din boks kan ikke synkronisere.
+  serverAllow: Tillad {host}
 
 generator:
   kinds: Hvad skal genereres

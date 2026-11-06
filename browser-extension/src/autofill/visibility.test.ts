@@ -89,7 +89,7 @@ describe('drawnUntouched', () => {
 		expect([...composedAncestors(host)].map((element) => element.id || element.localName)).toEqual(['deep', 'inner', 'outer', 'body', 'html'])
 	})
 
-	it('in the top layer, ignores ancestors, except a filter on <html> on Firefox', () => {
+	it('in the top layer, ignores ancestors, except a filter on <html> where it reaches the top layer', () => {
 		set($('outer'), { opacity: '0', transform: 'scale(0.1)' })
 		expect(drawnUntouched($('host'), true, false)).toBe(true)
 		set(document.documentElement, { filter: 'invert(1)' })

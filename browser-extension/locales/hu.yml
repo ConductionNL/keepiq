@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nincs beállítva
   shortcutChange: Módosítás
   shortcutFirefox: Nyisd meg az about:addons oldalt, válaszd a fogaskerék menüt, majd a Kiegészítők gyorsbillentyűinek kezelése lehetőséget
+  shortcutSafari: Nyisd meg a Safari beállításait, válaszd a Bővítmények lehetőséget, majd jelöld ki a Keepiqet a billentyűparancs módosításához
+  websiteAccess: Webhely-hozzáférés
+  websiteAccessAll: Minden webhely
+  websiteAccessSome: Csak az általad engedélyezett webhelyek
+  websiteAccessServer: Nincs hozzáférés a Keepiq-kiszolgálódhoz
   clearClipboard: Vágólap törlése
   clipboardSeconds:
     1: 1 másodperc
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Adatvédelmi irányelvek
   webApp: Keepiq webalkalmazás
   rate: A bővítmény értékelése
+
+websiteAccess:
+  title: Hadd működjön a Keepiq a webhelyeken
+  body: A Safari csak az általad engedélyezett webhelyeken futtatja a Keepiqet. Engedélyezd minden webhelyen, hogy bárhol, ahol bejelentkezel, kitölthesd a bejelentkezéseket, újakat menthess és azonosítókulcsokat használhass.
+  allow: Engedélyezés minden webhelyen
+  dismiss: Most nem
+  steps: A Safariban válaszd a Safari > Beállítások, majd a Webhelyek lehetőséget. Jelöld ki a Keepiqet a listában, és állítsd a „Más webhelyek megnyitásakor” beállítást Engedélyezés értékre.
+  perSite: Ha egyenként szeretnéd engedélyezni a webhelyeket, kattints az adott webhelyen a Keepiq gombra, és válaszd a mindig engedélyezést.
+  serverTitle: "A Keepiq nem éri el a következőt: {host}"
+  serverBody: A Safari nem engedi, hogy a Keepiq elérje a kiszolgálódat, ezért a széfed nem tud szinkronizálni.
+  serverAllow: "{host} engedélyezése"
 
 generator:
   kinds: Mit generáljon

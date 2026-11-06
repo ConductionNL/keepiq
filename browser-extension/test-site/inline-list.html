@@ -104,7 +104,7 @@
 		</div>
 
 		<h2>Assistive styling</h2>
-		<p class="tests">Inverts the page with a filter on <code>&lt;html&gt;</code>, as Dark Reader's filter mode does: on Chrome the top-layer list keeps its own colours and a pick fills, while on Firefox, any version, the filter reaches the list too and a pick shows "Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar." instead.</p>
+		<p class="tests">Inverts the page with a filter on <code>&lt;html&gt;</code>, as Dark Reader's filter mode does: on Chrome the top-layer list keeps its own colours and a pick fills, while on Firefox, any version, the filter reaches the list too and a pick shows "Keepiq can't fill here because this page changes how it is shown. Use the Keepiq button in the toolbar." instead. Safari refuses the pick the same way until the <a href="/root-filter.html">root filter probe</a> shows its top layer is out of reach.</p>
 		<p><button type="button" id="invert" aria-pressed="false">Invert the page</button></p>
 		<form method="post" action="/inline-list">
 			<label>Username <input name="username" type="text"></label>

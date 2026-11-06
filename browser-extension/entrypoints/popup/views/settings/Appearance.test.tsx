@@ -70,7 +70,7 @@ describe('Appearance', () => {
 	it('reads the settings again once the background answers after a failed first read', async () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {})
 		let reads = 0
-		renderView({ replies: { 'settings.get': () => (++reads <= mounts() ? undefined : { theme: 'system', compactMode: true, showAnimations: true, quickCopy: true, showBadgeCounter: true }) } })
+		renderView({ replies: { 'settings.get': () => (++reads <= mounts() ? undefined : { theme: 'system', compactMode: true, showAnimations: true, quickCopy: true, showBadgeCounter: true, websiteAccessDismissed: false }) } })
 		expect((await checkbox('Compact mode')).checked).toBe(true)
 	})
 

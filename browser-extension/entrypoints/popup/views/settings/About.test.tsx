@@ -11,7 +11,14 @@ afterEach(() => {
 	vi.unstubAllEnvs()
 	ABOUT_LINKS.rate.chrome = null
 	ABOUT_LINKS.rate.firefox = null
+	ABOUT_LINKS.rate.safari = null
 })
+
+const STORES = {
+	chrome: 'https://chromewebstore.google.com/detail/keepiq',
+	firefox: 'https://addons.mozilla.org/firefox/addon/keepiq/',
+	safari: 'https://apps.apple.com/app/keepiq/id0',
+}
 
 function renderView(options: Parameters<typeof fakeBackground>[0] = {}) {
 	fakeBackground(options)
@@ -49,12 +56,19 @@ describe('About', () => {
 		expect(screen.queryByRole('link', { name: 'Rate the extension' })).toBeNull()
 	})
 
-	it('rates in the running browser\'s store', async () => {
-		ABOUT_LINKS.rate.chrome = 'https://chromewebstore.google.com/detail/keepiq'
-		ABOUT_LINKS.rate.firefox = 'https://addons.mozilla.org/firefox/addon/keepiq/'
-		vi.stubEnv('BROWSER', 'firefox')
+	it.each([['chrome', STORES.chrome], ['edge', STORES.chrome], ['firefox', STORES.firefox], ['safari', STORES.safari]])('rates on %s in its store', async (target, store) => {
+		Object.assign(ABOUT_LINKS.rate, STORES)
+		vi.stubEnv('BROWSER', target)
 		renderView()
 		await screen.findByText('Version 0.0.1')
-		expect(href('Rate the extension')).toBe('https://addons.mozilla.org/firefox/addon/keepiq/')
+		expect(href('Rate the extension')).toBe(store)
+	})
+
+	it('hides Rate the extension on Safari while its listing is unpublished', async () => {
+		Object.assign(ABOUT_LINKS.rate, { ...STORES, safari: null })
+		vi.stubEnv('BROWSER', 'safari')
+		renderView()
+		await screen.findByText('Version 0.0.1')
+		expect(screen.queryByRole('link', { name: 'Rate the extension' })).toBeNull()
 	})
 })

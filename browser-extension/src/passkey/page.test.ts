@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vite
 import { toBase64Url } from '@/src/crypto/base64'
 import type { PasskeyCredentialJSON, RelayToPage } from '@/src/messages'
 import { FakeMessageChannel, flush, type FakePort } from '@/src/testing/message-channel'
-import { ACK_TIMEOUT_MS, AVAILABLE_TIMEOUT_MS, installPasskeyPage, type PageScope } from './page'
+import { ACK_TIMEOUT_MS, AVAILABLE_TIMEOUT_MS, FRAME_FOCUS_MS, installPasskeyPage, type PageScope } from './page'
 
 const b64 = (...bytes: number[]) => toBase64Url(new Uint8Array(bytes))
 
@@ -487,5 +487,161 @@ describe('page script', () => {
 		const bare = { create: browserCreate, get: browserGet }
 		installPasskeyPage({ ...scope, navigator: { credentials: bare as unknown as CredentialsContainer }, PublicKeyCredential: undefined })
 		expect(bare.get).toBe(browserGet)
+	})
+})
+
+describe('fallback waiting for focus (Safari)', () => {
+	type FakeDocument = { focused: boolean }
+	type FakeWindow = EventTarget & { document: FakeDocument }
+	const Document = { prototype: { hasFocus(this: FakeDocument) { return this.focused } } } as unknown as PageScope['Document']
+	let top: FakeWindow
+	const frame = () => scope as unknown as EventTarget
+
+	/** Installs a fresh copy with `extra` in its scope, which is a window of its own: a same-origin frame unless `top` is it. */
+	function install(focusFirst?: boolean, extra: Partial<PageScope> = {}) {
+		credentials = { create: browserCreate, get: browserGet }
+		const own = { ...scope, navigator: { credentials: credentials as unknown as CredentialsContainer }, PublicKeyCredential: class {}, Document, top: top as unknown as PageScope['top'], ...extra }
+		scope = Object.assign(new EventTarget(), own)
+		installPasskeyPage(scope, focusFirst)
+	}
+
+	/** A modal create the relay answers with `fallback`; wrapped, as awaiting the call itself would wait for it. */
+	async function fellBack(options: object = createOptions()) {
+		const call = credentials.create(options)
+		await flush()
+		ack(posted[0]!)
+		answer(posted[0]!, { type: 'fallback' })
+		await flush()
+		return { call }
+	}
+
+	beforeEach(() => {
+		top = Object.assign(new EventTarget(), { document: { focused: false } })
+		install(true)
+	})
+
+	afterEach(() => {
+		vi.unstubAllEnvs()
+	})
+
+	it('calls the browser at once when the top window has focus', async () => {
+		top.document.focused = true
+		const options = createOptions()
+		expect(await state((await fellBack(options)).call)).toEqual({ value: 'browser credential' })
+		expect(browserCreate).toHaveBeenCalledExactlyOnceWith(options)
+	})
+
+	it('waits for the top window’s focus, then calls the browser with the page’s options', async () => {
+		const options = createOptions()
+		const { call } = await fellBack(options)
+		vi.advanceTimersByTime(10_000)
+		expect(await state(call)).toBe('pending')
+		expect(browserCreate).not.toHaveBeenCalled()
+		top.dispatchEvent(new Event('focus'))
+		expect(await state(call)).toEqual({ value: 'browser credential' })
+		expect(browserCreate).toHaveBeenCalledExactlyOnceWith(options)
+		top.dispatchEvent(new Event('focus'))
+		expect(browserCreate).toHaveBeenCalledOnce()
+	})
+
+	it('in a same-origin frame, calls the browser on the frame’s own focus, once', async () => {
+		const options = createOptions()
+		const { call } = await fellBack(options)
+		expect(await state(call)).toBe('pending')
+		frame().dispatchEvent(new Event('focus'))
+		expect(await state(call)).toEqual({ value: 'browser credential' })
+		expect(browserCreate).toHaveBeenCalledExactlyOnceWith(options)
+		top.dispatchEvent(new Event('focus'))
+		frame().dispatchEvent(new Event('focus'))
+		expect(browserCreate).toHaveBeenCalledOnce()
+	})
+
+	it('in the top window, calls the browser once on its focus', async () => {
+		install(true, { top: null })
+		const self = Object.assign(scope, { document: { focused: false } }) as unknown as FakeWindow
+		scope.top = self as unknown as PageScope['top']
+		const { call } = await fellBack()
+		self.dispatchEvent(new Event('focus'))
+		expect(await state(call)).toEqual({ value: 'browser credential' })
+		expect(browserCreate).toHaveBeenCalledOnce()
+	})
+
+	it('rejects with the signal’s reason on abort while waiting, and never calls the browser', async () => {
+		const controller = new AbortController()
+		const { call } = await fellBack({ ...createOptions(), signal: controller.signal })
+		controller.abort('gone')
+		expect(await state(call)).toEqual({ error: 'gone' })
+		top.dispatchEvent(new Event('focus'))
+		frame().dispatchEvent(new Event('focus'))
+		await flush()
+		expect(browserCreate).not.toHaveBeenCalled()
+	})
+
+	it('rejects with NotAllowedError at the deadline while waiting, and never calls the browser', async () => {
+		const { call } = await fellBack(createOptions({ timeout: 45_000 }))
+		vi.advanceTimersByTime(45_000)
+		expect(((await state(call)) as { error: DOMException }).error.name).toBe('NotAllowedError')
+		top.dispatchEvent(new Event('focus'))
+		frame().dispatchEvent(new Event('focus'))
+		await flush()
+		expect(browserCreate).not.toHaveBeenCalled()
+	})
+
+	const crossOrigin = () => Object.defineProperty(new EventTarget(), 'document', {
+		get() {
+			throw new DOMException('Blocked a frame', 'SecurityError')
+		},
+	}) as unknown as PageScope['top']
+	const throwing = { prototype: { hasFocus: () => { throw new TypeError('page') } } } as unknown as PageScope['Document']
+
+	it.each([
+		['the top window is cross-origin', () => install(true, { top: crossOrigin() })],
+		['there is no top window', () => install(true, { top: null })],
+		['reading the focus throws', () => install(true, { Document: throwing })],
+	])(`calls the browser after ${FRAME_FOCUS_MS} ms when %s`, async (_name, setUp) => {
+		setUp()
+		const { call } = await fellBack()
+		vi.advanceTimersByTime(FRAME_FOCUS_MS - 1)
+		expect(await state(call)).toBe('pending')
+		vi.advanceTimersByTime(1)
+		expect(await state(call)).toEqual({ value: 'browser credential' })
+		expect(browserCreate).toHaveBeenCalledOnce()
+	})
+
+	it(`drops the ${FRAME_FOCUS_MS} ms wait on abort`, async () => {
+		install(true, { top: crossOrigin() })
+		const controller = new AbortController()
+		const { call } = await fellBack({ ...createOptions(), signal: controller.signal })
+		controller.abort('gone')
+		vi.advanceTimersByTime(FRAME_FOCUS_MS)
+		expect(await state(call)).toEqual({ error: 'gone' })
+		expect(browserCreate).not.toHaveBeenCalled()
+	})
+
+	it('does not wait for a request it hands the browser before the relay', async () => {
+		const options = createOptions({ challenge: 'not a buffer' })
+		expect(await credentials.create(options)).toBe('browser credential')
+		expect(browserCreate).toHaveBeenCalledExactlyOnceWith(options)
+	})
+
+	it('does not wait in the conditional race', async () => {
+		const call = credentials.get(getOptions({ mediation: 'conditional' }))
+		await flush()
+		expect(browserGet).toHaveBeenCalledOnce()
+		ack(posted[0]!)
+		answer(posted[0]!, { type: 'fallback' })
+		expect(await state(call)).toEqual({ value: 'browser credential' })
+	})
+
+	it('does not wait without focusFirst', async () => {
+		install(false)
+		expect(await state((await fellBack()).call)).toEqual({ value: 'browser credential' })
+	})
+
+	it.each([['safari', 'pending'], ['chrome', 'settled'], ['edge', 'settled'], ['firefox', 'settled']])('on %s by default: %s', async (target, expected) => {
+		vi.stubEnv('BROWSER', target)
+		install()
+		const result = await state((await fellBack()).call)
+		expect(result === 'pending' ? 'pending' : 'settled').toBe(expected)
 	})
 })

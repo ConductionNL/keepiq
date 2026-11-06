@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Non défini
   shortcutChange: Modifier
   shortcutFirefox: Ouvrez about:addons, choisissez le menu en forme de roue dentée, puis Gérer les raccourcis d’extensions
+  shortcutSafari: Ouvrez les réglages de Safari, choisissez Extensions, puis sélectionnez Keepiq pour modifier son raccourci
+  websiteAccess: Accès aux sites web
+  websiteAccessAll: Tous les sites web
+  websiteAccessSome: Seulement les sites web que vous avez autorisés
+  websiteAccessServer: Sans votre serveur Keepiq
   clearClipboard: Effacer le presse-papiers
   clipboardSeconds:
     1: 1 seconde
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Politique de confidentialité
   webApp: Application web Keepiq
   rate: Évaluer l’extension
+
+websiteAccess:
+  title: Laissez Keepiq fonctionner sur les sites web
+  body: Safari n’exécute Keepiq que sur les sites web que vous autorisez. Autorisez-le sur tous les sites web pour remplir vos identifiants, en enregistrer de nouveaux et utiliser des clés d’accès partout où vous vous connectez.
+  allow: Autoriser sur tous les sites web
+  dismiss: Pas maintenant
+  steps: Dans Safari, choisissez Safari > Réglages, puis Sites web. Sélectionnez Keepiq dans la liste et réglez « Lors de l’accès à d’autres sites web » sur Autoriser.
+  perSite: Pour autoriser un site à la fois, cliquez sur le bouton Keepiq sur ce site et choisissez de toujours l’autoriser.
+  serverTitle: Keepiq ne peut pas joindre {host}
+  serverBody: Safari ne permet pas à Keepiq de joindre votre serveur, votre coffre-fort ne peut donc pas se synchroniser.
+  serverAllow: Autoriser {host}
 
 generator:
   kinds: Que générer ?

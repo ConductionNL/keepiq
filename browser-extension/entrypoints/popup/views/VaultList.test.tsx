@@ -5,8 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import type { DecryptedItem } from '@/src/messages'
 import type { CurrentTab } from '../hooks/useCurrentTab'
+import { SettingsProvider } from '../hooks/useSettings'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { everythingVisible, fakeBackground, fakeClipboard, itemMeta, sentKinds, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
+import { everythingVisible, fakeBackground, fakeClipboard, fakePermissions, itemMeta, sentKinds, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
 import { VaultList } from './VaultList'
 
 afterEach(cleanup)
@@ -31,7 +32,7 @@ function renderList(snapshot: UnlockedSnapshot, options: ListOptions = {}) {
 	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast, launch, items, refreshState }}>
-			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} syncNow={syncNow} onOpen={onOpen} />
+			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} serverUrl="https://cloud.example.org" syncNow={syncNow} onOpen={onOpen} />
 		</ShellContext.Provider>,
 	)
 	return { sent, toast, launch, onOpen, syncNow, items, refreshState }
@@ -174,6 +175,36 @@ describe('autofill suggestions', () => {
 		expect(within(section).getByText('Autofill is not available on this page')).toBeTruthy()
 		expect(within(section).queryAllByRole('listitem')).toHaveLength(0)
 		expect(screen.queryByRole('button', { name: 'Fill GitHub' })).toBeNull()
+	})
+})
+
+describe('website access', () => {
+	afterEach(() => vi.unstubAllEnvs())
+
+	/** The server granted, every website not. */
+	function renderWithAccess(target: string) {
+		vi.stubEnv('BROWSER', target)
+		const { contains } = fakePermissions(['https://cloud.example.org/*'])
+		fakeBackground()
+		render(
+			<SettingsProvider>
+				<VaultList snapshot={snapshotReply()} tab={githubTab} serverUrl="https://cloud.example.org" syncNow={vi.fn()} onOpen={vi.fn()} />
+			</SettingsProvider>,
+		)
+		return contains
+	}
+
+	it('shows the Safari card above Autofill suggestions', async () => {
+		renderWithAccess('safari')
+		const card = await screen.findByRole('region', { name: 'Let Keepiq work on websites' })
+		expect(card.compareDocumentPosition(screen.getByRole('region', { name: 'Autofill suggestions' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+
+	it.each(['chrome', 'firefox'])('shows nothing of it on %s', async (target) => {
+		const contains = renderWithAccess(target)
+		await screen.findByRole('region', { name: 'Autofill suggestions' })
+		expect(screen.queryByRole('region', { name: 'Let Keepiq work on websites' })).toBeNull()
+		expect(contains).not.toHaveBeenCalled()
 	})
 })
 
