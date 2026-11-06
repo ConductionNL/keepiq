@@ -1,0 +1,782 @@
+# Terms and tone follow Nextcloud and mainstream password managers: formal dumneavoastră (dvs.), noun-style buttons (Salvare), seif, parolă principală, parolă de aplicație, cheie de acces, autentificare; counts above 1 are phrased as "Elemente: $1" to avoid "de".
+language: ro
+extensionDescription: Keepiq pentru browserul dvs. Completați date de autentificare, chei de acces și coduri unice din seiful Nextcloud, cu criptare end-to-end.
+commandAutofillLogin: Completare cu ultima autentificare folosită
+commandFocusNotificationBar: Salt la bara de salvare Keepiq
+
+errors:
+  insecureUrl: Folosiți https pentru acest server
+  invalidUrl: Introduceți un URL de server valid
+  permissionDenied: Keepiq are nevoie de permisiune pentru a accesa {host}
+  unreachable: Nu se poate accesa {host}
+  notNextcloud: "{host} nu pare a fi un server Nextcloud"
+  serverError: "{host} nu este disponibil acum, încercați din nou mai târziu"
+  unauthorized: Nume de utilizator sau parolă de aplicație greșite
+  keepiqMissing: Keepiq nu este instalat pe {host}
+  keepiqOutdated: Keepiq de pe {host} este prea vechi pentru această extensie, care necesită versiunea {version} sau mai nouă. Cereți administratorului să actualizeze Keepiq.
+  noActiveSuite: Deschideți o dată aplicația web Keepiq și setați o parolă principală, apoi încercați din nou
+  unlockBlocked: Organizația dvs. impune autentificarea în doi pași. Configurați un al doilea factor în Setări Nextcloud, Securitate, apoi încercați din nou
+  duplicate: Acest cont a fost deja adăugat
+  limitReached: S-a atins numărul maxim de conturi ({count})
+  invalidMasterPassword: Parolă principală nevalidă
+  keyUnreadable: Cheia seifului dvs. din Keepiq nu poate fi citită, așa că acest browser nu îl poate debloca. Anunțați administratorul Keepiq.
+  offlineNoCache: Sunteți offline, iar acest seif nu a fost încă sincronizat
+  sessionRevoked: Sesiune revocată, autentificați-vă din nou
+  writeLocked: Seiful nu poate fi modificat acum, încercați din nou mai târziu
+  notResponding: Keepiq nu răspunde. Reîncărcați extensia și redeschideți această fereastră.
+  invalidPin:
+    1: PIN greșit, a mai rămas 1 încercare
+    n: "PIN greșit, încercări rămase: $1"
+  wrongPin: PIN greșit
+  pinForgotten: PIN-ul a fost șters după prea multe încercări
+  pinKeyChanged: Cheia seifului s-a schimbat. Deblocați cu parola principală.
+  pinTooShort: Folosiți cel puțin {count} caractere
+  unknown: A apărut o eroare
+
+notices:
+  keyChanged: Cheia seifului s-a schimbat în Keepiq. Deblocați cu parola principală actuală.
+
+common:
+  accountOnHost: "{name} pe {host}"
+  loading: Se încarcă…
+  back: Înapoi
+  cancel: Anulare
+  logOut: Deconectare
+  appPassword: Parolă de aplicație
+  addAccount: Adăugare cont
+  openWebApp: Deschidere aplicație web Keepiq
+  justNow: chiar acum
+
+titles:
+  accounts: Conturi
+  logInAgain: Reconectare
+  unlock: Deblocare
+  viewItem: Vizualizare element
+  newItem: Element nou
+  newLogin: Autentificare nouă
+  newCard: Card nou
+  newIdentity: Identitate nouă
+  editItem: Editare element
+  newSend: Trimitere nouă
+  sendCreated: Trimitere creată
+
+tabs:
+  label: Principal
+  vault: Seif
+  generator: Generator
+  send: Trimitere
+  settings: Setări
+
+header:
+  popout: Deschidere în fereastră
+  accounts: Conturi, conectat ca {name}
+  new: Nou
+
+unlock:
+  masterPassword: Parolă principală
+  submit: Deblocare
+  pin: PIN
+  useMasterPassword: Folosire parolă principală
+
+logInAgain:
+  submit: Autentificare
+
+addAccount:
+  serverUrl: URL server
+  serverUrlPlaceholder: cloud.example.org
+  username: Nume de utilizator
+  hint: Creați una în Setări Nextcloud, Securitate. Nu introduceți niciodată aici parola de autentificare Nextcloud.
+  hintWithLink: "Creați una în Setări Nextcloud, Securitate: {link}. Nu introduceți niciodată aici parola de autentificare Nextcloud."
+  securityLink: deschideți setările de securitate
+
+accounts:
+  active: (activ)
+  unlocked: Deblocat
+  locked: Blocat
+  loggedOut: Deconectat
+  lock: Blocare {account}
+  logOut: Deconectare de la {account}
+  lockAll: Blocare toate
+  logOutAll: Deconectare de la toate
+  logOutAllQuestion: Vă deconectați de la toate conturile?
+  logOutAllDetail: Toate conturile sunt eliminate din acest browser. Veți avea din nou nevoie de fiecare parolă de aplicație.
+  logOutQuestion: Vă deconectați de la {account}?
+  logOutDetail: Contul este eliminat din acest browser. Veți avea nevoie de o parolă de aplicație pentru a-l adăuga din nou.
+
+vault:
+  loadFailed: Seiful nu a putut fi încărcat
+  tryAgain: Reîncercare
+  syncing: Se sincronizează seiful
+  empty: Niciun element în seif
+  noMatch: Niciun element găsit
+  searchCovers: Căutarea include nume și site-uri web.
+  clearFilters: Ștergere filtre
+  items: Elemente
+  tooMany: Se afișează primele {count}, rafinați căutarea
+  offline: "Offline. Ultima sincronizare: {time}"
+  syncNow: Sincronizare acum
+  busy: Server ocupat, se reîncearcă mai târziu
+  allBlocked: Toate elementele sunt blocate.
+  suggestions: Sugestii de completare automată
+  noSuggestions: Niciun element pentru {host}
+  autofillUnavailable: Completarea automată nu este disponibilă pe această pagină
+  fillFailed: Completarea automată nu funcționează pe această pagină. Copiați și lipiți datele.
+  openFailed: Site-ul web nu a putut fi deschis
+  popoutFailed: Nu s-a putut deschide o fereastră nouă
+
+filters:
+  search: Căutare
+  searchLabel: Căutare în seif
+  clearSearch: Ștergere căutare
+  folder: Dosar
+  allItems: Toate elementele
+  noFolder: Fără dosar
+  type: Tip
+  all: Toate
+  more: Mai multe
+  moreTypes: Mai multe tipuri
+  login: Autentificare
+  card: Card
+  identity: Identitate
+  note: Notă
+  totp: TOTP
+  passkey: Cheie de acces
+
+item:
+  blocked: Blocat
+  launch: Deschidere {name}
+  fill: Completare
+  fillName: Completare {name}
+  insecureTitle: Doriți totuși să completați această autentificare?
+  insecureWarning: "Atenție: aceasta este o pagină HTTP nesecurizată, iar informațiile trimise pot fi văzute și modificate de alții. Această autentificare a fost salvată inițial pe o pagină securizată (HTTPS)."
+  cardInsecureTitle: Completați acest card pe un site nesecurizat?
+  cardInsecureWarning: Acest site nu este securizat. Oricine din rețea ar putea citi datele cardului completate.
+  crossSiteTitle: Completați și pe {hosts}?
+  crossSiteWarning: O parte din acest formular provine de la {hosts}, nu de la {host}. Keepiq o completează acolo doar cu acordul dvs.
+  onlyHost: Doar {host}
+  copyMenu: Copiere, {name}
+  moreMenu: Mai multe, {name}
+  copyUsername: Copiere nume de utilizator
+  copyPassword: Copiere parolă
+  copyCode: Copiere cod de verificare
+  view: Vizualizare
+  edit: Editare
+  clone: Clonare
+  move: Mutare în dosar
+  delete: Ștergere
+  send: Trimitere
+  cloneName: "{name} - Clonă"
+  passkeyNoClone: Cheile de acces nu pot fi clonate
+  useOnly: Partajat cu dvs. doar pentru autentificare
+  readOnly: Partajat de altă organizație, deci poate fi doar mutat
+  viewOnly: Partajat cu dvs. doar pentru vizualizare. Cereți proprietarului drepturi de editare pentru a-l modifica.
+  expiringNoClone: Accesul dvs. se încheie pe {date}, deci nu poate fi clonat
+  expiringNoSend: Accesul dvs. se încheie pe {date}, deci nu poate fi trimis
+  saved: Element salvat
+  deleted: Element mutat în coșul de gunoi
+  moved: Mutat în {folder}
+  deleteTitle: Ștergere element
+  deleteConfirm: Mutați {name} în coșul de gunoi? Nu va mai fi partajat, nici după o restaurare din coșul de gunoi în aplicația web Keepiq.
+  gone: Acest element nu mai există
+
+form:
+  itemDetails: Detalii element
+  type: Tip
+  name: Nume
+  cardNumberLength: "{brand} nu emite numere de card de această lungime. Puteți salva totuși."
+  cardNumberLengthUnknown: Numerele de card au între 12 și 19 cifre. Puteți salva totuși.
+  cardNumberChecksum: Acest număr nu trece verificarea sumei de control a cardului. Verificați-l; puteți salva totuși.
+  cardCodeLength: Cardurile {brand} folosesc un {name} din {size} cifre. Puteți salva totuși.
+  folder: Dosar
+  chooseFolder: Alegeți un dosar, acum {folder}
+  website: URL site web
+  autofillOptions: Opțiuni de completare automată
+  additionalOptions: Opțiuni suplimentare
+  authenticator: Autentificator
+  note: Notă
+  secret: Secret
+  advanced: Avansat
+  algorithm: Algoritm
+  digits: Cifre
+  period: Perioadă în secunde
+  addField: Adăugare câmp
+  fieldName: Nume câmp
+  fieldValue: Valoare
+  removeField: Eliminare {name}
+  removeUnnamed: Eliminare câmp
+  save: Salvare
+  passkeyReadOnly: Datele unei chei de acces pot fi modificate doar în aplicația web Keepiq
+  offline: Sunteți offline. Modificările necesită o conexiune la Keepiq.
+  unsavedTitle: Modificări nesalvate
+  unsaved: Aveți modificări nesalvate. Renunțați la ele?
+  discard: Renunțare
+  keepEditing: Continuare editare
+
+authKey:
+  label: Cheie de autentificare
+  optionalLabel: Cheie de autentificare (opțional)
+  newLabel: Cheie de autentificare nouă
+  help: Lipiți linkul otpauth://totp/ sau cheia secretă, ori scanați codul QR de pe pagină.
+  scan: Scanare cod QR de pe pagină
+  read: Cheie de autentificare citită din codul QR
+  noQr: Niciun cod QR găsit pe pagină. Derulați până când este vizibil și încercați din nou.
+  notTotp: Acest cod QR nu conține o cheie de autentificare. Folosiți codul QR afișat de site când configurați autentificarea în doi pași.
+  noPicture: Keepiq nu poate captura o imagine a acestei pagini. Lipiți cheia în schimb.
+  popout: Deschideți Keepiq din bara de instrumente pe pagina cu codul QR pentru a-l scana.
+  saved: Salvată
+  remove: Eliminare cheie de autentificare
+  replaceHelp: Lipiți sau scanați o cheie nouă ori lăsați câmpul gol pentru a o elimina pe cea salvată.
+  keep: Păstrare cheie salvată
+  removedOnSave: Cheia de autentificare va fi eliminată la salvare.
+  notCloned: Cheia de autentificare nu este clonată.
+
+fieldErrors:
+  required: Numele este obligatoriu
+  tooLong: "Număr maxim de caractere: {max}"
+  tooLongBytes: "Prea lung (limită în octeți: {max})"
+  reserved: Acest nume este rezervat
+  duplicate: Există deja un câmp cu acest nume
+  invalidTotp: Secret de autentificare nevalid
+  slash: Numele dosarelor nu pot conține bare oblice
+
+writeErrors:
+  writeLocked: Seiful este blocat temporar pentru o migrare a cheilor, încercați din nou mai târziu
+  forbidden: Keepiq nu permite această modificare. Aplicația web Keepiq arată motivul.
+  policy: Politica organizației dvs. nu permite această modificare
+  accountChanged: Între timp ați trecut la alt cont, așa că nu s-a salvat nimic. Reveniți la contul anterior pentru a salva.
+  accountChangedDelete: Între timp ați trecut la alt cont, așa că nu s-a șters nimic. Reveniți la contul anterior pentru a șterge.
+  keepClash: Un dosar numit {name} există deja cu un nivel mai sus. Alegeți „Mutare elemente în dosarul părinte” sau „Ștergere” pentru el ori redenumiți mai întâi unul dintre ele.
+  keepClashAfter: Un dosar pe care ați ales să-l păstrați are același nume ca unul de la nivelul superior, așa că nu s-a șters nimic. Verificați din nou opțiunile.
+  invalid: Keepiq a refuzat această modificare
+  stale: Acest element a fost modificat în altă parte. Reveniți și editați-l din nou pentru a vedea cea mai recentă versiune.
+  itemGone: Acest element nu mai există
+  folderGone: Acest dosar nu mai există
+  duplicateFolder: Aici există deja un dosar cu acest nume
+  folderChanged: Acest dosar s-a modificat. Verificați din nou opțiunile.
+  offline: Serverul nu a putut fi accesat
+  serverError: Keepiq nu este disponibil acum, încercați din nou mai târziu
+  unreadable: Acest element nu a putut fi citit, deci nu poate fi editat aici
+  restricted: Acest element a fost partajat cu dvs. cu restricții, deci nu poate fi modificat sau copiat aici
+  unmatched: Keepiq a trimis o versiune a acestui element pe care seiful dvs. nu o conține, așa că nu a fost deschis.
+  keyMismatch: Keepiq a trimis o cheie de criptare care nu corespunde seifului dvs., așa că nu s-a salvat nimic. Anunțați administratorul Keepiq.
+  staleSource: Originalul acestui element partajat a fost modificat după ce l-ați deschis. Nu s-a salvat nimic; deschideți-l din nou și refaceți modificarea.
+  incomplete: Persoanele cu care este partajat acest element s-au tot schimbat în timpul salvării. Nu s-a salvat nimic; încercați din nou.
+  badCertificate: Keepiq a trimis, pentru o persoană cu care este partajat acest element, o cheie de criptare pe care acest browser nu a putut-o citi. Nu s-a salvat nimic.
+  unverified: Acest element este partajat cu organizații partenere, iar acest browser nu poate confirma că l-ar primi exact așa cum l-ați văzut. Nu s-a salvat nimic; faceți această modificare în aplicația web Keepiq.
+  partnerUnreachable: "Nu s-a salvat nimic: una sau mai multe organizații partenere cu care este partajat acest element nu pot fi accesate ({cloudIds}). Încercați din nou mai târziu sau salvați fără ele, ceea ce suspendă partajarea acestui element cu ele până când îl partajați din nou."
+  partnerUpgradeRequired: "Nu s-a salvat nimic: Keepiq de la {cloudIds} este prea vechi pentru a primi o cheie de autentificare. Eliminați cheia sau cereți-le să actualizeze Keepiq."
+  partnerUpgradeRequiredUnnamed: "Nu s-a salvat nimic: o organizație parteneră cu care este partajat acest element folosește o versiune Keepiq prea veche pentru a primi o cheie de autentificare. Eliminați cheia sau cereți-i să actualizeze Keepiq."
+  partnerUpgradeVersion: Au nevoie de Keepiq {version} sau mai nou.
+  partnerLookupLimit: Prea multe căutări de parteneri. Nu s-a salvat nimic; încercați din nou peste un minut.
+  federationUnavailable: Serverul dvs. Keepiq nu poate partaja cu organizații partenere, așa că acest element nu poate fi salvat aici. Nu s-a salvat nimic; adresați-vă administratorului.
+  keepiqOutdated: Serverul dvs. Keepiq este prea vechi pentru a salva această modificare. Nu s-a salvat nimic; cereți administratorului să actualizeze Keepiq la versiunea {version} sau mai nouă.
+  partnerClock: Certificatul unei organizații partenere cu care este partajat acest element nu este valid conform ceasului acestui computer. Nu s-a salvat nimic; verificați data și ora acestui computer sau faceți modificarea în aplicația web Keepiq.
+  shareScanPending: Acest element așteaptă o verificare a partajărilor care nu s-a încheiat. Nu s-a salvat nimic; încercați din nou mai târziu.
+  shareScanPendingOpen: Acest element așteaptă o verificare a partajărilor și nu poate fi editat încă. Încercați din nou mai târziu.
+  shareScanPendingDelete: Acest element așteaptă o verificare a partajărilor care nu s-a încheiat. Nu s-a șters nimic; încercați din nou mai târziu.
+  sendInvalid: Keepiq nu a acceptat această trimitere. Nu s-a trimis nimic; verificați câmpurile și încercați din nou.
+  sendOffline: Serverul nu a putut fi accesat, nu s-a trimis nimic
+  argon2Unavailable: Protecția cu parolă nu este disponibilă în acest browser
+
+shareSave:
+  saveWithout: Salvare fără ele
+  ownerOnly: Salvat. Destinatarii din organizațiile partenere primesc această modificare când proprietarul salvează din nou elementul.
+  suspended: Partajarea cu {cloudIds} este suspendată, deoarece certificatul lor nu a putut fi verificat sau organizația lor nu îl mai acceptă. Aplicația web Keepiq afișează partajarea.
+  paused: Partajarea cu {cloudIds} este suspendată până când partajați din nou acest element cu ei.
+
+folders:
+  add: Adăugare dosar
+  newFolder: Dosar nou
+  rename: Redenumire
+  renameTitle: Redenumire dosar
+  delete: Ștergere
+  more: Mai multe, {name}
+  name: Nume dosar
+  empty: Niciun dosar încă
+  notice: Numele dosarelor nu sunt criptate
+  dismiss: Închidere
+  current: Dosarul curent
+  pickTitle: Alegere dosar
+  moveTitle: Mutare în dosar
+  saved: Dosar salvat
+  deleted: Dosar șters
+  deleteTitle: Ștergere dosar
+  deleteConfirm: Ștergeți {name}? Acțiunea nu poate fi anulată.
+  cascade:
+    1: Ștergeți {name} și elementul din el sau îl mutați în {parent}?
+    n: Ștergeți {name} și elementele din el ($1) sau le mutați în {parent}?
+  countsAll: Se numără și elementele arhivate și cele din coșul de gunoi.
+  deleteItems: Ștergere inclusiv elemente
+  moveItems: Mutare elemente în dosarul părinte
+  items:
+    1: 1 element
+    n: "elemente: $1"
+  subfolders:
+    1: 1 subdosar
+    n: "subdosare: $1"
+  directRow: Elemente în {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Ștergere
+  actionMove: Mutare elemente în dosarul părinte
+  actionKeep: Păstrare
+  directMove: Mutare în dosarul părinte
+
+clipboard:
+  copied: "Copiat: {what}"
+  failed: Copierea nu a reușit
+
+field:
+  show: Afișare {field}
+  hide: Ascundere {field}
+  copy: Copiere {field}
+
+blocked:
+  generic: Acest element este blocat.
+  suiteMissing: Cheia sa de criptare nu mai există.
+  suiteRevoked: Cheia sa de criptare a fost revocată.
+  suiteCompromised: Criptat cu o cheie compromisă, deci nu poate fi deschis aici. Aplicația web Keepiq arată dacă poate fi recuperat.
+  migrationFailed: Nu a putut fi mutat la cheia dvs. nouă în timpul recuperării după compromitere. Valoarea stocată este păstrată, dar nu poate fi deschisă.
+
+detail:
+  item: Element
+  decrypting: Se decriptează…
+  decryptFailed: Acest element nu a putut fi decriptat
+  unreadablePasskey: Această cheie de acces nu a putut fi citită
+  unreadableFields: Câmpurile suplimentare nu au putut fi citite
+  loginCredentials: Date de autentificare
+  username: Nume de utilizator
+  password: Parolă
+  authenticatorKey: Cheie de autentificare
+  website: Site web
+  additionalFields: Câmpuri suplimentare
+  notes: Note
+  history: Istoricul elementului
+  created: Creat
+  updated: Actualizat
+  expires: Expiră
+  cardDetails: Detalii card
+  number: Număr
+  numberWithBrand: Număr · {brand}
+  cardNumber: Număr card
+  cardholder: Titular card
+  expiry: Data expirării
+  cvv: CVV
+  pin: PIN
+  identity: Identitate
+  firstName: Prenume
+  lastName: Nume
+  address: Adresă
+  phone: Telefon
+  email: E-mail
+  bsn: BSN
+  passkey: Cheie de acces
+  relyingParty: Site sau aplicație
+  passkeyUser: Nume de utilizator
+  passkeyOnLogin: Keepiq se autentifică cu cheile de acces salvate într-o autentificare, nu cu acest element
+  passkeys: Chei de acces
+  passkeyCreated: Creată pe {date}
+  useOnly: Proprietarul nu vă permite să vizualizați sau să copiați acest conținut.
+
+totp:
+  code: Cod de verificare
+  invalid: Cheie de autentificare nevalidă
+  changesIn:
+    1: Se schimbă într-o secundă
+    n: Se schimbă în $1 s
+
+settings:
+  accountSecurity: Securitatea contului
+  autofill: Completare automată
+  notifications: Notificări
+  vault: Seif
+  appearance: Aspect
+  about: Despre
+  folders: Dosare
+  theme: Temă
+  themeSystem: Conform sistemului
+  themeLight: Luminoasă
+  themeDark: Întunecată
+  comingLater: În curând
+  setByOrganisation: Setat de organizația dvs.
+  turnedOffByOrganisation: Dezactivat de organizația dvs.
+  never: Niciodată
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Deblocare cu PIN
+  pinTurnOn: Activare
+  masterPasswordRequired: Introduceți parola principală
+  pinAgain: Confirmare PIN
+  pinMismatch: PIN-urile nu se potrivesc
+  pinAdvice: Nu refolosiți PIN-ul telefonului sau al băncii.
+  pinAfterRestart: După o repornire a browserului introduceți o dată parola principală; apoi PIN-ul funcționează din nou.
+  biometrics: Deblocare biometrică
+  notAvailableYet: Încă indisponibil
+  vaultTimeout: Expirarea seifului
+  timeoutImmediately: Imediat
+  timeoutMinutes:
+    1: 1 minut
+    n: $1 min
+  timeoutHours:
+    1: 1 oră
+    n: $1 h
+  timeoutOnSystemLock: La blocarea sistemului
+  timeoutOnSystemLockCapped: La blocarea sistemului sau după {duration} de inactivitate (setat de organizația dvs.)
+  timeoutOnRestart: La repornirea browserului
+  timeoutCustom: Personalizat
+  hours: Ore
+  minutes: Minute
+  customAtLeastOne: Introduceți cel puțin un minut
+  customWhole: Introduceți ore și minute întregi
+  customAtMost: Organizația dvs. permite cel mult {duration}
+  neverTitle: Păstrați seiful deblocat?
+  neverWarning: Seiful rămâne deblocat până îl blocați manual. Cheia care îl deschide este scrisă pe discul acestui profil de browser, unde oricine poate citi profilul o poate citi.
+  neverConfirm: Păstrare deblocat
+  timeoutAction: Acțiune la expirare
+  actionLock: Blocare
+  actionLogOutNote: La expirare sunteți deconectat și aveți din nou nevoie de parola de aplicație
+  lockNow: Blocare acum
+  changeMasterPassword: Schimbare parolă principală
+  autofillOnPageLoad: Completare automată la încărcarea paginii
+  autofillOnPageLoadWarning: Site-urile web compromise sau nesigure pot exploata completarea automată la încărcarea paginii
+  defaultAutofill: Setare implicită de completare automată pentru autentificări
+  defaultAutofillOnPageLoad: Completare la încărcarea paginii, dacă este activată
+  uriMatch: Detectare implicită a potrivirii URI
+  uriBaseDomain: Domeniu de bază
+  uriHost: Gazdă
+  uriStartsWith: Începe cu
+  uriExact: Exact
+  uriRegex: Expresie regulată
+  uriRegexNote: Expresiile regulate sunt o opțiune avansată și pot strica potrivirea
+  inlineSuggestions: Afișare sugestii de completare automată în câmpurile formularelor
+  inlineCards: Afișare carduri ca sugestii
+  inlineIdentities: Afișare identități ca sugestii
+  inlineKindsOff: Activați mai întâi „Afișare sugestii de completare automată în câmpurile formularelor”.
+  vaultCards: Afișare mereu a cardurilor ca sugestii de completare în vizualizarea Seif
+  vaultIdentities: Afișare mereu a identităților ca sugestii de completare în vizualizarea Seif
+  defaultPasswordManager: Setare Keepiq ca manager de parole implicit
+  defaultPasswordManagerHint: Dezactivează salvarea parolelor și completarea adreselor din browser, ca sugestiile acestuia să nu le acopere pe cele Keepiq.
+  defaultPasswordManagerManaged: Organizația dvs. sau altă extensie gestionează această setare a browserului.
+  contextMenu: Activare opțiuni în meniul contextual
+  shortcut: Comandă rapidă pentru completare automată
+  shortcutNotSet: Nesetată
+  shortcutChange: Modificare
+  shortcutFirefox: Deschideți about:addons, alegeți meniul cu rotiță, apoi Gestionează comenzile rapide ale extensiilor
+  clearClipboard: Golire clipboard
+  clipboardSeconds:
+    1: 1 secundă
+    n: $1 s
+  autoCopyTotp: Copiere automată TOTP
+  autoCopyTotpHint: Dacă o autentificare are un cod de verificare, acesta este copiat în clipboard când completați automat autentificarea.
+  askToAdd: Solicitare adăugare autentificare
+  askToUpdate: Solicitare actualizare autentificare existentă
+  askPasskeys: Solicitare salvare și folosire chei de acces
+  excludedDomains: Domenii excluse
+  addCurrentSite: Adăugare site curent
+  domain: Domeniu
+  addDomain: Adăugare
+  domainEmpty: Introduceți un domeniu
+  domainUnreadable: Introduceți un domeniu precum example.org
+  domainDuplicate: Deja exclus
+  removeDomain: Eliminare {domain}
+  webTitle: Keepiq pe web
+  webText: Notificările Keepiq, importul și exportul, precum și parola principală se gestionează în Keepiq pe Nextcloud, la Setări personale.
+  openKeepiq: Deschidere Keepiq
+  lastSync: "Ultima sincronizare: {time}"
+  lastSyncNever: "Ultima sincronizare: niciodată"
+  syncOffline: Sincronizare eșuată, sunteți offline
+  syncFailed: Sincronizare eșuată, încercați din nou mai târziu
+  importItems: Importare elemente
+  exportVault: Exportare seif
+  defaultItemType: Tipul implicit de element în această extensie
+  compactMode: Mod compact
+  showAnimations: Afișare animații
+  quickCopy: Afișare acțiuni de copiere rapidă în seif
+  showBadgeCounter: Afișare număr de sugestii de autentificare pe pictograma extensiei
+  language: Limbă
+  languageFollows: Conform browserului
+  version: Versiunea {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Versiune Keepiq necunoscută
+  help: Ajutor
+  reportBug: Raportare eroare
+  contactSupport: Contactare asistență
+  privacyPolicy: Politica de confidențialitate
+  webApp: Aplicația web Keepiq
+  rate: Evaluare extensie
+
+generator:
+  kinds: Ce se generează
+  password: Parolă
+  passphrase: Frază de acces
+  username: Nume de utilizator
+  length: Lungime
+  lengthValue: Lungime în caractere
+  uppercase: Majuscule (A-Z)
+  lowercase: Minuscule (a-z)
+  digits: Cifre (0-9)
+  special: Caractere speciale, precum !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Tipuri de caractere
+  lastClassOn: Cel puțin un tip rămâne activ
+  minNumbers: Minim cifre
+  minSpecial: Minim caractere speciale
+  avoidAmbiguous: Evitare caractere ambigue
+  lockedByPolicy: Setat de organizația dvs.
+  passphraseOff: Dezactivat de organizația dvs.
+  words: Număr de cuvinte
+  separator: Separator de cuvinte
+  capitalizeWords: Majuscule inițiale
+  capitalize: Majusculă inițială
+  includeNumber: Includere cifră
+  usernameType: Tip
+  typeWord: Cuvânt aleatoriu
+  typePlus: E-mail cu alias +
+  typeCatchall: E-mail catch-all
+  email: E-mail
+  emailPlaceholder: nume@example.com
+  domain: Domeniu
+  domainPlaceholder: example.com
+  basedOn: Pe baza
+  random: Aleatoriu
+  websiteName: Numele site-ului web
+  noWebsite: Niciun site web detectat
+  needsEmail: Introduceți o adresă de e-mail
+  needsDomain: Introduceți un domeniu
+  wordlistUnavailable: Lista de cuvinte nu este disponibilă
+  regenerate: Regenerare
+  usePassword: Folosire parolă
+  useUsername: Folosire nume de utilizator
+  history: Istoricul generatorului
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Nicio valoare generată încă
+  clearHistory: Golire
+  clearHistoryTitle: Goliți istoricul generatorului?
+  clearHistoryText: Toate valorile din listă vor fi eliminate din acest browser.
+  generatePasswordLink: Generați o parolă
+  generatePassword: Generare parolă
+  generateUsername: Generare nume de utilizator
+
+send:
+  new: Trimitere nouă
+  empty: Nicio trimitere încă
+  emptyText: Partajați text sau o autentificare printr-un link care se autodistruge.
+  loadFailed: Trimiterile nu au putut fi încărcate
+  retry: Reîncercare
+  labelText: "Text, {time}"
+  labelCredential: "Autentificare, {time}"
+  viewsLeft:
+    1: "Vizualizări rămase: {left}/1"
+    n: "Vizualizări rămase: {left}/$1"
+  expires: "Expirare: {date}"
+  neverExpires: Nu expiră niciodată
+  expired: Expirat
+  passwordBadge: Parolă
+  link: Link
+  copyLink: Copiere link
+  copyLinkOf: "Copiere link, {name}"
+  linkGone: Link indisponibil
+  remove: Eliminare
+  removeOf: "Eliminare, {name}"
+  removeTitle: Eliminare trimitere
+  removeConfirm: Eliminați această trimitere? Oricine are linkul pierde accesul.
+  removed: Trimitere eliminată
+  contentSection: Conținut
+  optionsSection: Opțiuni
+  type: Tip
+  text: Text
+  credential: Autentificare
+  content: Text de partajat
+  maxViews: Vizualizări max.
+  maxViewsRange: "Între 1 și {max}"
+  expiry: Expirare
+  expiry1h: 1 oră
+  expiry1d: 1 zi
+  expiry2d: 2 zile
+  expiry3d: 3 zile
+  expiry7d: 7 zile
+  expiry30d: 30 de zile
+  expiryCustom: Personalizat
+  customHours: Ore
+  customHoursMin: Cel puțin 1 oră
+  customHoursMax: Cel mult 720 de ore (30 de zile)
+  accessPassword: Parolă de acces
+  accessPasswordHint: Opțional. Destinatarul are nevoie de ea pentru a deschide trimiterea.
+  create: Creare
+  protecting: Se protejează cu parolă…
+  offline: Trimiterile necesită o conexiune la serverul Keepiq
+  prefillFailed: Această autentificare nu a putut fi citită
+  ready: Trimiterea este gata
+  shownOnce:
+    1: Copiați acum acest link. Este afișat doar până închideți această fereastră, iar conținutul se distruge după 1 vizualizare.
+    n: Copiați acum acest link. Este afișat doar până închideți această fereastră, iar conținutul se distruge după numărul maxim de vizualizări ($1).
+  passwordNote: Comunicați parola de acces separat de link. După 5 încercări greșite, trimiterea este ștearsă.
+  done: Gata
+
+pageFill:
+  insecure: "Atenție: aceasta este o pagină HTTP nesecurizată, iar informațiile trimise pot fi văzute și modificate de alții. Această autentificare a fost salvată inițial pe o pagină securizată (HTTPS), {host}.\n\nDoriți totuși să completați această autentificare?"
+  insecureNoHost: "Atenție: aceasta este o pagină HTTP nesecurizată, iar informațiile trimise pot fi văzute și modificate de alții. Această autentificare a fost salvată inițial pe o pagină securizată (HTTPS).\n\nDoriți totuși să completați această autentificare?"
+  cardInsecure: "Completați acest card pe un site nesecurizat?\n\nAcest site nu este securizat. Oricine din rețea ar putea citi datele cardului completate."
+  crossSite: "Completați și pe {hosts}?\n\nO parte din acest formular provine de la {hosts}, nu de la {host}. Keepiq o completează acolo doar cu acordul dvs."
+
+contextMenu:
+  root: Keepiq
+  autofill: Completare autentificare
+  noMatches: Nicio autentificare disponibilă
+  noUsernames: Niciun nume de utilizator disponibil
+  noPasswords: Nicio parolă disponibilă
+  noCodes: Niciun cod de verificare disponibil
+  noIdentities: Nicio identitate disponibilă
+  noCards: Niciun card disponibil
+  addLogin: Adăugare autentificare
+  addIdentity: Adăugare identitate
+  addCard: Adăugare card
+  openKeepiq: Deschidere Keepiq
+  copyUsername: Copiere nume de utilizator
+  copyPassword: Copiere parolă
+  copyCode: Copiere cod de verificare
+  autofillCard: Completare card
+  autofillIdentity: Completare identitate
+  generatePassword: Generare și copiere parolă
+  unlock: Deblocare seif
+
+pageNotice:
+  label: Notificare Keepiq
+  noLoginForm: Keepiq nu a găsit pe această pagină niciun formular de autentificare de completat.
+  noCardForm: Keepiq nu a găsit pe această pagină niciun câmp de card de completat.
+  noIdentityForm: Keepiq nu a găsit pe această pagină niciun câmp de adresă sau de date personale de completat.
+
+toolbar:
+  locked: "{name}: blocat"
+  loggedOut: "{name}: deconectat"
+  count:
+    1: "{name}: 1 autentificare pentru acest site"
+    n: "{name}: autentificări pentru acest site ($1)"
+
+inlineList:
+  frameTitle: Autentificări Keepiq
+  label: Autentificări Keepiq pentru {host}
+  row: "{name}, {username}"
+  noMatch: Nicio autentificare pentru {host}
+  passkeyRow: "{name}, {username}, cheie de acces"
+  passkeyRowNoUser: "{name}, cheie de acces"
+  noMatchPasskeys: Nicio autentificare sau cheie de acces pentru {host}
+  locked: Keepiq este blocat
+  unlock: Deblocare
+  insecureQuestion: Completați pe acest site nesecurizat?
+  insecureDetail: Acest site nu este securizat. Oricine din rețea ar putea citi ce se completează.
+  fill: Completare
+  notVisible: Keepiq nu poate completa aici, deoarece această pagină își modifică modul de afișare. Folosiți butonul Keepiq din bara de instrumente.
+  status:
+    count:
+      1: 1 autentificare Keepiq. Apăsați Săgeată în jos pentru a alege.
+      n: "Autentificări Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+    noMatch: Nicio autentificare Keepiq pentru {host}
+    countPasskeys:
+      1: 1 autentificare sau cheie de acces Keepiq. Apăsați Săgeată în jos pentru a alege.
+      n: "Autentificări și chei de acces Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+    noMatchPasskeys: Nicio autentificare sau cheie de acces Keepiq pentru {host}
+    locked: Keepiq este blocat. Apăsați Săgeată în jos pentru a debloca.
+  code:
+    frameTitle: Coduri de verificare Keepiq
+    label: Coduri de verificare Keepiq pentru {host}
+    noMatch: Niciun cod de verificare pentru {host}
+    locked: Deblocați Keepiq pentru a vedea codurile de verificare
+    invalid: Secret de autentificare nevalid
+    status:
+      count:
+        1: 1 cod de verificare Keepiq. Apăsați Săgeată în jos pentru a alege.
+        n: "Coduri de verificare Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+      noMatch: Niciun cod de verificare Keepiq pentru {host}
+  card:
+    frameTitle: Carduri Keepiq
+    noMatch: Niciun card în Keepiq
+    locked: Deblocați Keepiq pentru a vedea cardurile
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Card, *{last4}"
+    row: "{name}, {brand} care se termină în {last4}"
+    rowNoBrand: "{name}, card care se termină în {last4}"
+    status:
+      count:
+        1: 1 card Keepiq. Apăsați Săgeată în jos pentru a alege.
+        n: "Carduri Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+  identity:
+    frameTitle: Identități Keepiq
+    noMatch: Nicio identitate în Keepiq
+    locked: Deblocați Keepiq pentru a vedea identitățile
+    status:
+      count:
+        1: 1 identitate Keepiq. Apăsați Săgeată în jos pentru a alege.
+        n: "Identități Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+
+notificationBar:
+  label: Notificare Keepiq
+  saveQuestion: Salvați autentificarea pentru {host} în Keepiq?
+  updateQuestion: Actualizați parola pentru {name}?
+  updateQuestionUser: Actualizați parola pentru {name} ({username})?
+  updateQuestionHost: Actualizați parola pentru {name} pe {host}?
+  updateQuestionUserHost: Actualizați parola pentru {name} ({username}) pe {host}?
+  folder: Dosar
+  noFolder: Fără dosar
+  save: Salvare
+  never: Niciodată pe acest site
+  update: Actualizare
+  close: Închidere
+  expand: Afișare opțiuni
+  shortcutHint: Apăsați {shortcut} pentru a răspunde.
+  saving: Se salvează…
+  updating: Se actualizează…
+  saved: Autentificare salvată
+  updated: Parolă actualizată
+  notVisible: Keepiq nu poate face asta aici, deoarece această pagină își modifică modul de afișare. Închideți mesajul și adăugați autentificarea din butonul Keepiq din bara de instrumente.
+  errors:
+    writeLocked: Seiful este blocat temporar pentru modificări. Încercați din nou mai târziu.
+    unverified: Editați această autentificare în fereastra Keepiq sau în aplicația web pentru a-i schimba parola.
+    viewOnly: Această autentificare este partajată cu dvs. doar pentru vizualizare, deci parola nu poate fi actualizată aici.
+    loginGone: Această autentificare nu mai există. O salvați ca autentificare nouă?
+    locked: Keepiq este blocat. Deblocați-l din butonul Keepiq din bara de instrumente, apoi încercați din nou.
+    notResponding: Keepiq nu răspunde. Încercați din nou.
+    accountChanged: Ați schimbat contul, așa că nu s-a salvat nimic.
+    keyMismatch: Cheia Keepiq nu corespunde seifului dvs. Nu s-a salvat nimic; anunțați administratorul.
+    staleSource: Originalul acestei autentificări partajate s-a schimbat. Nu s-a salvat nimic; încercați din nou.
+    incomplete: Persoanele cu care este partajată această autentificare s-au tot schimbat. Nu s-a salvat nimic; încercați din nou.
+    badCertificate: Cheia de criptare a unui destinatar nu a putut fi citită. Nu s-a salvat nimic.
+    keepiqOutdated: Serverul Keepiq este prea vechi. Nu s-a salvat nimic; cereți administratorului Keepiq {version} sau mai nou.
+    shareScanPending: Această autentificare așteaptă o verificare a partajărilor. Nu s-a salvat nimic; încercați din nou mai târziu.
+
+passkey:
+  unlockGet: Deblocați Keepiq pentru a folosi o cheie de acces pentru {rpId}
+  unlockCreate: Deblocați Keepiq pentru a salva o cheie de acces pentru {rpId}
+  verifyTitle: Confirmați că sunteți dvs.
+  verifyPassword: Introduceți parola principală pentru a continua.
+  verifyPin: Introduceți PIN-ul pentru a continua.
+  confirm: Confirmare
+  signInTitle: Autentificare cu o cheie de acces
+  signInText: Folosiți o cheie de acces salvată în Keepiq pentru {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Nicio cheie de acces Keepiq pentru {rpId}
+  saveTitle: Salvare cheie de acces
+  saveTo: Salvare într-o autentificare
+  replaces: Înlocuiește cheia de acces pentru {userName}
+  newLogin: Autentificare nouă
+  name: Nume
+  folder: Dosar
+  noFolder: Fără dosar
+  saveNew: Salvare ca autentificare nouă
+  replaceQuestion: Înlocuiți cheia de acces pentru {userName} din {name}?
+  replace: Înlocuire
+  alreadySavedTitle: Cheie de acces deja salvată
+  alreadySaved: O cheie de acces pentru acest cont este deja salvată în Keepiq
+  close: Închidere
+  retry: Reîncercare
+  fallback: Folosiți dispozitivul sau o cheie hardware
+  stalePick: Această cheie de acces nu mai este în seif. Alegeți alta.
+  staleSave: Această autentificare nu mai poate primi cheia de acces. Alegeți alta sau salvați-o ca autentificare nouă.
+  errors:
+    conflict: Această autentificare s-a schimbat în timpul salvării. Nu s-a salvat nimic; încercați din nou.
+    partnerUpgradeRequired: "Nu s-a salvat nimic: Keepiq de la {cloudIds} este prea vechi pentru a stoca chei de acces. Cereți-le să actualizeze Keepiq sau salvați cheia de acces în altă autentificare."
+    partnerUpgradeRequiredUnnamed: "Nu s-a salvat nimic: o organizație parteneră cu care este partajată această autentificare folosește o versiune Keepiq prea veche pentru a stoca chei de acces. Cereți-i să actualizeze Keepiq sau salvați cheia de acces în altă autentificare."
+    shareScanPending: Această autentificare așteaptă o verificare a partajărilor care nu s-a încheiat. Nu s-a salvat nimic; încercați din nou mai târziu.

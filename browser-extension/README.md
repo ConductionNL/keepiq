@@ -66,10 +66,10 @@ test-site/       mock login, card and identity pages for manual testing, never b
 
 The extension follows the browser's language; [ARCHITECTURE.md](ARCHITECTURE.md#translations) has the rules.
 
-1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales).
+1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) or a language Firefox ships in, such as `ga`.
 2. Translate every value and set `language` to the language's tag.
 3. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
-4. A language with "few" or "many" plural forms (Polish, Russian) needs a plural helper first.
+4. Plurals have only `1:` and `n:`. In a language with "few" or "many" forms (Polish, Czech), word `n:` so it reads right for every count, such as "Elementy: $1".
 5. Run `npm test`; the parity test names missing keys and placeholders.
 
 ## Releasing
