@@ -19,6 +19,8 @@ export interface SmokeOptions {
 	/** How long to wait for the content script before skipping its check. */
 	scriptMs: number
 	pollMs: number
+	/** Longest any one WebDriver request may take: a hung Safari otherwise stalls until undici's 5 minute headers timeout. */
+	requestMs: number
 	/** The folder's contents as a base64 zip, `manifest.json` at its root. */
 	zipFolder: (path: string) => Promise<string>
 }
@@ -45,17 +47,25 @@ async function waitUntilUp(url: string, options: SmokeOptions): Promise<void> {
 	}
 }
 
-/** WebDriver classic: the reply's `value`, or its error thrown. */
+/** WebDriver classic: the reply's `value`, or its error thrown with the WebDriver error as `code`. */
 async function command(options: SmokeOptions, method: string, path: string, body?: object): Promise<unknown> {
-	const response = await fetch(`${options.driver}${path}`, {
-		method,
-		headers: body ? { 'Content-Type': 'application/json' } : undefined,
-		body: body ? JSON.stringify(body) : undefined,
-	})
+	let response: Response
+	try {
+		response = await fetch(`${options.driver}${path}`, {
+			method,
+			headers: body ? { 'Content-Type': 'application/json' } : undefined,
+			body: body ? JSON.stringify(body) : undefined,
+			signal: AbortSignal.timeout(options.requestMs),
+		})
+	} catch (error) {
+		const timedOut = error instanceof Error && error.name === 'TimeoutError'
+		throw new Error(`${method} ${path}: ${timedOut ? `no answer within ${options.requestMs} ms` : String(error)}`, { cause: error })
+	}
 	const reply = (await response.json().catch(() => ({}))) as { value?: unknown }
 	if (!response.ok) {
 		const error = (reply.value ?? {}) as { error?: unknown; message?: unknown }
-		throw new Error(`${method} ${path}: HTTP ${response.status} ${String(error.error ?? '')} ${String(error.message ?? '')}`.trim())
+		const code = String(error.error ?? '')
+		throw Object.assign(new Error(`${method} ${path}: HTTP ${response.status} ${code} ${String(error.message ?? '')}`.trim()), { code })
 	}
 	return reply.value
 }
@@ -87,10 +97,17 @@ async function install(options: SmokeOptions, sessionId: string): Promise<string
  * the extension no website access (Safari runs content scripts only where allowed), so `false` is no failure.
  */
 async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<boolean> {
-	await command(options, 'POST', `/session/${sessionId}/url`, { url: `${options.site}/passkey.html` })
+	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
+	// The script below runs on whatever loaded; a page that never reports loaded is no reason to stop.
+	await command(options, 'POST', `/session/${sessionId}/url`, { url: `${options.site}/passkey.html` }).catch((error: unknown) => {
+		if ((error as { code?: unknown }).code !== 'timeout') throw error
+		console.log('passkey.html did not report loaded in time; checking it anyway')
+	})
 	const deadline = Date.now() + options.scriptMs
-	for (;;) {
-		if (await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script: NATIVE_CHECK, args: [] }) === false) return true
+	for (let check = 1; ; check++) {
+		const native = await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script: NATIVE_CHECK, args: [] })
+		console.log(`Check ${check}: navigator.credentials.get is ${native === false ? 'replaced' : native === true ? 'native' : JSON.stringify(native)}`)
+		if (native === false) return true
 		if (Date.now() >= deadline) return false
 		await sleep(options.pollMs)
 	}
@@ -139,6 +156,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 			upMs: 30_000,
 			scriptMs: 10_000,
 			pollMs: 500,
+			requestMs: 60_000,
 			zipFolder: zipWithDitto,
 		})
 		console.log('Safari smoke test passed')

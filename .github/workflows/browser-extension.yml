@@ -112,7 +112,15 @@ jobs:
         run: |
           npm run test-site &
           safaridriver --port 4444 --diagnose &
+          # What the screen shows while it runs: a prompt or sheet would not reach the WebDriver log.
+          mkdir -p "$RUNNER_TEMP/safari-diagnostics"
+          ( for i in $(seq -w 1 30); do screencapture -x "$RUNNER_TEMP/safari-diagnostics/screen-$i.png" || true; sleep 4; done ) &
           npm run test:safari-smoke
+      - name: Collect Safari's system log
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/safari-diagnostics"
+          log show --last 15m --style compact --predicate 'process == "Safari" OR process BEGINSWITH "com.apple.WebKit" OR process == "safaridriver"' > "$RUNNER_TEMP/safari-diagnostics/system.log" || true
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: browser-extension-safari
@@ -125,5 +133,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: browser-extension-safari-webdriver-logs
-          path: ~/Library/Logs/com.apple.WebDriver/
+          path: |
+            ~/Library/Logs/com.apple.WebDriver/
+            ${{ runner.temp }}/safari-diagnostics/
           retention-days: 14
