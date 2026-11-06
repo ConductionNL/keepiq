@@ -177,7 +177,7 @@ Keepiq fills in a card on a payment form and an identity on an address or person
 - **Right-click anywhere on the page:** the **Keepiq** menu has **Autofill identity** and **Autofill card**, each with up to 10 items, then **Add identity** or **Add card**.
 - **What is filled:** the card's number, name, expiry and security code, in the format each field asks for (two or four digits, a month or year list, a number split over several fields), and the identity's name, email, phone and address. A card's PIN and an identity's BSN are never filled in.
 - **Insecure sites:** before it fills a card into a page that is not secure (a plain `http` page), Keepiq asks. An identity is filled in without asking.
-- **Payment frames from another site:** many shops show the card fields in a frame from their payment provider. Keepiq asks **Also fill on {site}?** before it fills a frame from another site, and **Only {this site}** fills the rest of the page and leaves that frame empty. If the page adds another frame later, Keepiq asks again.
+- **Payment frames from another site:** many shops show the card fields in a frame from their payment provider. Before it fills a frame from another site, Keepiq asks, for example, **Also fill on pay.example.net?**, and **Only shop.example.com** fills the rest of the page and leaves that frame empty. If the page adds another frame later, Keepiq asks again.
 - **Only what you can see:** Keepiq leaves out fields that are hidden, covered, or out of reach of scrolling.
 
 ### When the list does not show

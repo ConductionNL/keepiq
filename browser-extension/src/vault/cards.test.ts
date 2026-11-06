@@ -1,20 +1,20 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import CARD_BRANDS from './card-brands.json'
 import VECTORS from './card-brand-vectors.json'
 import { brandOptions, cardBrand, cardBrandInfo, cardLast4, cardNumberHint, formatCardNumber, maskCardNumber, securityCodeHint } from './cards'
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
-// The web app's originals (Keepiq `vault-card-brand-formats`); until that branch is merged here, they may not exist yet.
+// The web app's originals (Keepiq `vault-card-brand-formats`).
 const WEB_TABLE = new URL('../../../src/cardIdentity/card-brands.json', import.meta.url)
 const WEB_VECTORS = new URL('../../../tests/vectors/cards/brand-vectors.json', import.meta.url)
 
 describe('card brand table', () => {
-	it.skipIf(!existsSync(WEB_TABLE))('is a byte-identical copy of the web app\'s table', () => {
+	it('is a byte-identical copy of the web app\'s table', () => {
 		expect(read('./card-brands.json')).toBe(readFileSync(WEB_TABLE, 'utf8'))
 	})
 
-	it.skipIf(!existsSync(WEB_VECTORS))('tests against a byte-identical copy of the web app\'s vectors', () => {
+	it('tests against a byte-identical copy of the web app\'s vectors', () => {
 		expect(read('./card-brand-vectors.json')).toBe(readFileSync(WEB_VECTORS, 'utf8'))
 	})
 
