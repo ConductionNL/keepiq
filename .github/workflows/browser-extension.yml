@@ -109,6 +109,8 @@ jobs:
       - name: Smoke test in Safari
         # Not required until its first green run (ext-safari tasks.md 6.3).
         continue-on-error: true
+        env:
+          SAFARI_SMOKE_SCREENS: ${{ runner.temp }}/safari-diagnostics
         run: |
           npm run test-site &
           safaridriver --port 4444 --diagnose &

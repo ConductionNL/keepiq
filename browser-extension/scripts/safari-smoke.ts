@@ -23,9 +23,9 @@ export interface SmokeOptions {
 	requestMs: number
 	/** The folder's contents as a base64 zip, `manifest.json` at its root. */
 	zipFolder: (path: string) => Promise<string>
-	/** How long to look for Safari's website access sheet after opening the test page. */
+	/** How long to look for Safari's website access request after opening the test page. */
 	accessMs: number
-	/** One try at clicking Always Allow in that sheet: `clicked` when it did, else what it saw. */
+	/** One try at clicking Always Allow: `clicked: …` when it did, `opened: …` when it opened the request but found nothing to click. */
 	allowWebsiteAccess: () => Promise<string>
 }
 
@@ -109,18 +109,18 @@ async function openTestPage(options: SmokeOptions, sessionId: string): Promise<v
 }
 
 /**
- * Safari asks for each site whether the extension may access it, in a native sheet that WebDriver cannot see and
- * that blocks every later command. Resolves to whether Always Allow was clicked.
+ * Safari asks for each site whether the extension may access it: in a native sheet that WebDriver cannot see and
+ * that blocks every later command, or behind a badge on the extension's toolbar button. Resolves to whether Always
+ * Allow was clicked.
  */
 async function allowWebsiteAccess(options: SmokeOptions): Promise<boolean> {
 	const deadline = Date.now() + options.accessMs
 	for (;;) {
 		const seen = await options.allowWebsiteAccess().catch((error: unknown) => `error: ${error instanceof Error ? error.message : String(error)}`)
-		if (seen === 'clicked') return true
-		if (Date.now() >= deadline) {
-			console.log(`No website access sheet to allow: ${seen}`)
-			return false
-		}
+		console.log(`Website access: ${seen}`)
+		if (seen.startsWith('clicked')) return true
+		// Clicking the toolbar button again would close what it opened.
+		if (seen.startsWith('opened') || Date.now() >= deadline) return false
 		await sleep(options.pollMs)
 	}
 }
@@ -129,7 +129,7 @@ async function pageScriptRan(options: SmokeOptions, sessionId: string): Promise<
 	await command(options, 'POST', `/session/${sessionId}/timeouts`, { pageLoad: 10_000, script: 10_000 })
 	await openTestPage(options, sessionId)
 	if (await allowWebsiteAccess(options)) {
-		console.log('Allowed the extension on localhost in Safari\'s website access sheet')
+		console.log('Allowed the extension on localhost in Safari\'s website access request')
 		// Content scripts run from the next load on.
 		await openTestPage(options, sessionId)
 	}
@@ -165,25 +165,96 @@ export async function smoke(options: SmokeOptions): Promise<void> {
 	}
 }
 
-/** Needs Accessibility access for osascript, which the macOS runner images grant. */
-const ALLOW_SCRIPT = `tell application "System Events" to tell process "Safari"
-	repeat with w in windows
-		repeat with s in sheets of w
-			if exists button "Always Allow" of s then
-				click button "Always Allow" of s
-				return "clicked"
-			end if
+/**
+ * Clicks an Always Allow button in Safari's website access sheet or, when there is none, opens the request waiting
+ * behind the extension's toolbar button and clicks it there. Answers `clicked: …`, `opened: …` (the toolbar button was
+ * clicked, nothing to allow) or `none: …`, with the labels it saw. Needs Accessibility access for osascript, which the
+ * macOS runner images grant; `argv` 1 is a folder for screenshots after each click, or empty.
+ */
+const ALLOW_SCRIPT = `on labelOf(e)
+	tell application "System Events"
+		set n to ""
+		set d to ""
+		try
+			set n to name of e as text
+		end try
+		try
+			set d to description of e as text
+		end try
+	end tell
+	if n is "missing value" then set n to ""
+	if d is "missing value" then set d to ""
+	return n & "/" & d
+end label
+
+on snap(shotDir, fileName)
+	if shotDir is not "" then do shell script "/usr/sbin/screencapture -x " & quoted form of (shotDir & "/" & fileName)
+end snap
+
+on allowIn(shotDir)
+	tell application "System Events" to tell process "Safari"
+		repeat with w in windows
+			repeat with e in (entire contents of w)
+				try
+					if class of e is button then
+						set l to my labelOf(e)
+						if l contains "Always Allow" then
+							click e
+							delay 1
+							my snap(shotDir, "after-always-allow.png")
+							return l
+						end if
+					end if
+				end try
+			end repeat
 		end repeat
-		if exists button "Always Allow" of w then
-			click button "Always Allow" of w
-			return "clicked"
-		end if
-	end repeat
-	return "windows: " & (name of every window as text)
-end tell`
+	end tell
+	return ""
+end allowIn
+
+on buttonsIn()
+	set seen to ""
+	tell application "System Events" to tell process "Safari"
+		repeat with w in windows
+			repeat with e in (entire contents of w)
+				try
+					if class of e is button then set seen to seen & " [" & my labelOf(e) & "]"
+				end try
+			end repeat
+		end repeat
+	end tell
+	return seen
+end buttonsIn
+
+on run argv
+	set shotDir to item 1 of argv
+	set allowed to allowIn(shotDir)
+	if allowed is not "" then return "clicked: " & allowed
+	set toolbarButtons to ""
+	tell application "System Events" to tell process "Safari"
+		repeat with e in (entire contents of toolbar 1 of front window)
+			try
+				if class of e is button then
+					set l to my labelOf(e)
+					set toolbarButtons to toolbarButtons & " [" & l & "]"
+					if l contains "Keepiq" then
+						click e
+						delay 1
+						my snap(shotDir, "after-toolbar-click.png")
+						set allowed to my allowIn(shotDir)
+						if allowed is not "" then return "clicked: " & allowed & " after the toolbar button " & l
+						return "opened: toolbar" & toolbarButtons & "; then buttons" & my buttonsIn()
+					end if
+				end if
+			end try
+		end repeat
+	end tell
+	return "none: toolbar" & toolbarButtons
+end run`
 
 async function clickAlwaysAllow(): Promise<string> {
-	const { stdout } = await promisify(execFile)('osascript', ['-e', ALLOW_SCRIPT], { timeout: 10_000 })
+	const screens = process.env.SAFARI_SMOKE_SCREENS ?? ''
+	const { stdout } = await promisify(execFile)('osascript', ['-e', ALLOW_SCRIPT, screens], { timeout: 60_000 })
 	return stdout.trim()
 }
 
