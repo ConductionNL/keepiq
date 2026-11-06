@@ -114,7 +114,8 @@ class TeamFolderOffboardingService {
 
 		$this->logger->info(
 			'Offboarded ' . $leavingUserId . ': revoked ' . $revoked . ' team shares, transferred '
-			. $transferred . ' secrets to ' . $successorUserId . ', removed '
+			. $transferred . ' secrets and ' . $transfer['linksTransferred'] . ' link shares to '
+			. $successorUserId . ', removed '
 			. $membershipsRemoved . ' team-folder memberships, '
 			. count($stillCoveredByGroups) . ' group memberships still cover the user',
 			['app' => 'keepiq']
@@ -126,6 +127,7 @@ class TeamFolderOffboardingService {
 			successorUserId: $successorUserId,
 			revoked: $revoked,
 			transferred: $transferred,
+			linksTransferred: $transfer['linksTransferred'],
 			membershipsRemoved: $membershipsRemoved,
 			coveringGroupIds: array_values(
 				array_unique(array_column($stillCoveredByGroups, 'groupId'))

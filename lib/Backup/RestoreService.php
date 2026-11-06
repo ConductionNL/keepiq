@@ -9,7 +9,9 @@
  * key file when the archive is encrypted, verifies every checksum, refuses
  * an archive from a different schema, and refuses an archive older than the
  * newest audit entry unless forced or a dry run. It then replaces every Keepiq table in
- * one database transaction and only after that the attachment blobs.
+ * one database transaction and only after that the attachment blobs. A
+ * restore that brings back share rows sets the share quarantine scan pending
+ * before it writes them and runs it while maintenance mode is still on.
  *
  * A restore gives back ciphertext as it was: every user unlocks with the
  * master password valid at backup time. Nothing here asks for, derives or
@@ -36,6 +38,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\Security\ICrypto;
@@ -45,7 +48,7 @@ use Throwable;
  * Plans, checks and runs a restore.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A restore joins the archive,
- *   database, blob, crypto, user and audit sides by nature.
+ *   database, blob, crypto, user, audit and share-quarantine sides by nature.
  */
 class RestoreService {
 	/**
@@ -67,10 +70,13 @@ class RestoreService {
 	 * @param IUserManager $userManager Owners that no longer exist
 	 * @param ICrypto $crypto The instance secret probe
 	 * @param AuditService $audit The audit trail
+	 * @param ShareQuarantineScanner $quarantineScan Reopens and runs the share quarantine scan
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list, one per side the class note names.
 	 */
 	public function __construct(
 		private ArchiveReader $reader,
@@ -82,6 +88,7 @@ class RestoreService {
 		private IUserManager $userManager,
 		private ICrypto $crypto,
 		private AuditService $audit,
+		private ShareQuarantineScanner $quarantineScan,
 	) {
 	}//end __construct()
 
@@ -262,9 +269,26 @@ class RestoreService {
 	 * @return array{rows:int,blobs:int}
 	 */
 	private function replace(string $zip, array $manifest, string $archiveName): array {
+		// An archive written while the share quarantine scan was pending can
+		// hold planted rows without the marker, so the scan runs again. It is
+		// reopened before the write, so no restored row is live while the scan
+		// counts as done.
+		$restoresShareRows = ((int)($manifest['files']['tables/share_targets.jsonl']['rows'] ?? 0) > 0);
+		if ($restoresShareRows === true) {
+			$this->quarantineScan->reopen();
+		}
+
 		$written = $this->tables->replaceAll(
 			rowsFor: fn (string $table): iterable => $this->reader->rows(zipPath: $zip, table: $table)
 		);
+
+		// Scanned right after the write, before a blob failure can end the
+		// restore and while maintenance mode is on, so no restored planted row
+		// is live in between. The scanner never throws: a failed pass stays
+		// pending for its background job.
+		if ($restoresShareRows === true) {
+			$this->quarantineScan->run();
+		}
 
 		$folder = $this->store->blobs();
 		foreach ($folder->getDirectoryListing() as $file) {

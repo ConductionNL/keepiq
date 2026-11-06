@@ -61,7 +61,8 @@ class ShareRequestService {
 	/**
 	 * Submit a share request — fires a 'share_request' notification at
 	 * the secret's owner; the notification payload carries the data the
-	 * approval path will need to fan back into createShare.
+	 * approval path will need to register the share (register-batch, which
+	 * mints the recipient copy server-side).
 	 *
 	 * @param string $sourceSecretId The owner's source Secret ID
 	 * @param string $targetUserId The user the requester wants the secret shared with

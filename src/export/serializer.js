@@ -16,6 +16,7 @@
  */
 
 import { isUseOnly } from '../utils/shareRestriction.js'
+import { BLOB_FIELDS } from '../utils/valueFields.js'
 
 /** The serialized payload format identifier. */
 export const PAYLOAD_FORMAT = 'keepiq-vault'
@@ -35,7 +36,9 @@ function buildPathMap(folders) {
 		byId.set(folder.id, folder)
 	}
 	const cache = new Map()
-	const resolve = (id, guard = 0) => {
+	// `ancestors` holds the folders on the path being resolved, so a parent
+	// cycle ends the path at the folder it loops back to.
+	const resolve = (id, ancestors = new Set()) => {
 		if (id == null) {
 			return ''
 		}
@@ -43,10 +46,11 @@ function buildPathMap(folders) {
 			return cache.get(id)
 		}
 		const folder = byId.get(id)
-		if (!folder || guard > 1000) {
+		if (!folder || ancestors.has(id) || ancestors.size > 1000) {
 			return ''
 		}
-		const parentPath = resolve(folder.parentId, guard + 1)
+		ancestors.add(id)
+		const parentPath = resolve(folder.parentId, ancestors)
 		const path = parentPath ? `${parentPath}/${folder.name}` : folder.name
 		cache.set(id, path)
 		return path
@@ -63,7 +67,7 @@ function buildPathMap(folders) {
  *
  * @param {Array<object>} folders Folder rows ({ id, parentId }).
  * @param {Array<string>} rootIds The selected folder IDs.
- * @return {Set<string>} The selected IDs plus every descendant ID.
+ * @return {Set<string>} The selected IDs that exist plus every descendant ID.
  */
 function collectSubtree(folders, rootIds) {
 	const childrenOf = new Map()
@@ -72,8 +76,10 @@ function collectSubtree(folders, rootIds) {
 		list.push(folder.id)
 		childrenOf.set(folder.parentId, list)
 	}
+	const known = new Set(folders.map((folder) => folder.id))
 	const selected = new Set()
-	const stack = [...rootIds]
+	// Only folders that exist start a subtree: an unknown id selects nothing.
+	const stack = rootIds.filter((id) => known.has(id))
 	let guard = 0
 	while (stack.length > 0 && guard < 100000) {
 		guard++
@@ -90,10 +96,74 @@ function collectSubtree(folders, rootIds) {
 }
 
 /**
+ * Whether a secret goes into the export: never a use-only copy
+ * (sharing-use-only-and-expiring-shares D3), and with a folder scope only a
+ * secret whose folder is within a selected subtree.
+ *
+ * @param {object} secret A decrypted secret.
+ * @param {Set<string>|null} includedFolderIds The selected subtree, or null for the whole vault.
+ * @return {boolean}
+ */
+function isExported(secret, includedFolderIds) {
+	if (isUseOnly(secret)) {
+		return false
+	}
+	return (
+		includedFolderIds === null
+		|| (secret.folderId != null && includedFolderIds.has(secret.folderId))
+	)
+}
+
+/**
+ * The folder path of a secret, '' when it has no folder or an unknown one.
+ *
+ * @param {object} secret A decrypted secret.
+ * @param {Map<string, string>} pathMap Folder id to path.
+ * @return {string}
+ */
+function folderPath(secret, pathMap) {
+	return secret.folderId != null ? (pathMap.get(secret.folderId) ?? '') : ''
+}
+
+/**
+ * A login's own code and passkeys, only those it has.
+ *
+ * @param {object} secret A decrypted secret.
+ * @return {object} The non-empty blob fields.
+ */
+function blobFields(secret) {
+	return Object.fromEntries(
+		BLOB_FIELDS.filter(
+			(field) => typeof secret[field] === 'string' && secret[field] !== '',
+		).map((field) => [field, secret[field]]),
+	)
+}
+
+/**
+ * One secret as an export entry, with its folder as a path.
+ *
+ * @param {object} secret A decrypted secret.
+ * @param {Map<string, string>} pathMap Folder id to path.
+ * @return {object} The entry.
+ */
+function exportEntry(secret, pathMap) {
+	return {
+		name: secret.name ?? '',
+		url: secret.url ?? null,
+		type: secret.type ?? secret.typeId ?? 'login',
+		login: secret.login ?? null,
+		password: secret.key ?? null,
+		additionalFields: secret.additionalFields ?? null,
+		folder: folderPath(secret, pathMap),
+		...blobFields(secret),
+	}
+}
+
+/**
  * Serialize decrypted secrets + folders into the versioned export payload.
  *
  * @param {Array<object>} secrets Decrypted secrets (name, url, login, key,
- *   additionalFields, type, folderId).
+ *   additionalFields, totp, passkeys, type, folderId).
  * @param {Array<object>} folders Folder rows ({ id, name, parentId }).
  * @param {object} [scope] Scope selector.
  * @param {string} [scope.mode] 'vault' (default) or 'folders'.
@@ -102,49 +172,22 @@ function collectSubtree(folders, rootIds) {
  */
 export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 	const pathMap = buildPathMap(folders)
-
-	let includedFolderIds = null
-	if (scope && scope.mode === 'folders') {
-		includedFolderIds = collectSubtree(folders, scope.folderIds || [])
-	}
-
-	const includedSecrets = []
-	for (const secret of secrets) {
-		// A use-only copy never leaves Keepiq in any export
-		// (sharing-use-only-and-expiring-shares D3).
-		if (isUseOnly(secret)) {
-			continue
-		}
-		if (includedFolderIds !== null) {
-			// Only secrets whose folder is within a selected subtree.
-			if (secret.folderId == null || !includedFolderIds.has(secret.folderId)) {
-				continue
-			}
-		}
-		includedSecrets.push({
-			name: secret.name ?? '',
-			url: secret.url ?? null,
-			type: secret.type ?? secret.typeId ?? 'login',
-			login: secret.login ?? null,
-			password: secret.key ?? null,
-			additionalFields: secret.additionalFields ?? null,
-			folder:
-				secret.folderId != null ? (pathMap.get(secret.folderId) ?? '') : '',
-		})
-	}
-
-	const includedFolders = []
-	for (const folder of folders) {
-		if (includedFolderIds !== null && !includedFolderIds.has(folder.id)) {
-			continue
-		}
-		includedFolders.push({ path: pathMap.get(folder.id) ?? folder.name })
-	}
+	const includedFolderIds =
+		scope && scope.mode === 'folders'
+			? collectSubtree(folders, scope.folderIds || [])
+			: null
 
 	return {
 		format: PAYLOAD_FORMAT,
 		version: PAYLOAD_VERSION,
-		secrets: includedSecrets,
-		folders: includedFolders,
+		secrets: secrets
+			.filter((secret) => isExported(secret, includedFolderIds))
+			.map((secret) => exportEntry(secret, pathMap)),
+		folders: folders
+			.filter(
+				(folder) =>
+					includedFolderIds === null || includedFolderIds.has(folder.id),
+			)
+			.map((folder) => ({ path: pathMap.get(folder.id) ?? folder.name })),
 	}
 }

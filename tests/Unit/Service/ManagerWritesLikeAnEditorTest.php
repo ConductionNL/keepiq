@@ -12,10 +12,14 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,12 +29,21 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-1.2
  */
 class ManagerWritesLikeAnEditorTest extends TestCase {
+	use ShareRowJudgeFixture;
 
-	private function sync(string $grade): ShareSyncService {
+	private function sync(string $grade, ?SecretVersionService $versions = null): ShareSyncService {
+		return $this->wire(grade: $grade, versions: $versions)[0];
+	}
+
+	/**
+	 * @return array{0:ShareSyncService,1:ShareWriteContext}
+	 */
+	private function wire(string $grade, ?SecretVersionService $versions = null): array {
 		$source = new Secret();
 		$source->setId('src');
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
+		$source->setKey('OLD');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);
 		$delegations = $this->createMock(SecretDelegationMapper::class);
@@ -45,22 +58,41 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 		$suites = $this->createMock(EncryptionSuiteMapper::class);
 		$suites->method('findActiveByOwner')->willReturn($suite);
 
-		return new ShareSyncService(
-			mapper: $targets,
+		$auth = new ShareAuthorizationService(
 			secretMapper: $secrets,
-			suiteMapper: $suites,
-			db: $this->createMock(IDBConnection::class),
-			auth: new ShareAuthorizationService(
-				secretMapper: $secrets,
-				delegationMapper: $delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				teamFolderService: $teamFolders,
-			),
+			delegationMapper: $delegations,
+			teamFolderService: $teamFolders,
+			rowJudge: $this->shareRowJudge(secrets: $secrets),
 		);
+
+		$contexts = new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $targets), suites: $suites, auth: $auth);
+		$sync = new ShareSyncService(
+			rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets),
+			secretMapper: $secrets,
+			db: $this->createMock(IDBConnection::class),
+			auth: $auth,
+			versionService: ($versions ?? $this->createMock(SecretVersionService::class)),
+			guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secrets), secrets: $secrets, suites: $suites, auth: $auth),
+			contexts: $contexts,
+		);
+
+		return [$sync, $contexts];
 	}
 
 	public function testAManagerMaySync(): void {
 		$this->assertSame(1, $this->sync('manage')->syncUpdate('src', [['secretId' => 'src', 'key' => 'NEW']], '', 'olga'));
+	}
+
+	public function testATeamWritersSyncKeepsTheSourcesPreviousValueAsAVersion(): void {
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
+		$versions->expects($this->once())->method('snapshot')
+			->with(
+				$this->callback(static fn (Secret $preUpdate): bool => $preUpdate->getId() === 'src' && $preUpdate->getKey() === 'OLD'),
+				'user',
+				'wendy'
+			);
+
+		$this->sync('write', $versions)->syncUpdate('src', [['secretId' => 'src', 'key' => 'NEW']], '', 'wendy');
 	}
 
 	public function testAViewerMayNot(): void {
@@ -69,7 +101,7 @@ class ManagerWritesLikeAnEditorTest extends TestCase {
 	}
 
 	public function testAManagerGetsTheOwnerCertificateForTheFanOut(): void {
-		$context = $this->sync('manage')->writeContext('src', 'olga');
+		$context = $this->wire('manage')[1]->writeContext('src', 'olga');
 		$this->assertSame('manage', $context['effectiveGrade']);
 		$this->assertSame('OWNER-CERT', $context['ownerCertificate']);
 	}

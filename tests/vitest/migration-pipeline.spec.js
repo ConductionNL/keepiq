@@ -169,6 +169,26 @@ describe('reEncryptSecretFields', () => {
 		expect(await rsaDecrypt(out.key, keys.newPrivateKey)).toBe('only-a-key')
 		expect(out.login).toBeNull()
 		expect(out.additionalFields).toBeNull()
+		expect(out.totp).toBeNull()
+		expect(out.passkeys).toBeNull()
+	})
+
+	it('re-encrypts the one-time code and passkeys a record holds', async () => {
+		const record = {
+			key: await sealUnderOldSuite('s3cret'),
+			totp: await sealUnderOldSuite('JBSWY3DPEHPK3PXP'),
+			passkeys: await sealUnderOldSuite('[{"id":"credential-1"}]'),
+		}
+
+		const out = await reEncryptSecretFields(record, keys)
+
+		expect(await rsaDecrypt(out.totp, keys.newPrivateKey)).toBe(
+			'JBSWY3DPEHPK3PXP',
+		)
+		expect(await rsaDecrypt(out.passkeys, keys.newPrivateKey)).toBe(
+			'[{"id":"credential-1"}]',
+		)
+		expect(out.totp).not.toBe(record.totp)
 	})
 })
 

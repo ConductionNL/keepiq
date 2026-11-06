@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\SecretTrashController;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -118,6 +119,24 @@ class SecretTrashControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_CONFLICT, $this->controller->purge('s-1')->getStatus());
 	}//end testPurgeOfALiveSecretConflicts()
+
+	/**
+	 * A delete refused because a share of the secret waits for the share
+	 * quarantine scan answers 409 with the error code a share revoke gets.
+	 *
+	 * @return void
+	 */
+	public function testADeleteThatWaitsForTheQuarantineScanIs409(): void {
+		$this->trash->method('trash')->willThrowException(new ShareScanPendingException('A share of this secret waits for the share quarantine scan'));
+
+		$response = $this->controller->trash('s-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(
+			['error' => 'share_scan_pending', 'message' => 'A share of this secret waits for the share quarantine scan'],
+			$response->getData()
+		);
+	}//end testADeleteThatWaitsForTheQuarantineScanIs409()
 
 	/**
 	 * Archive and unarchive answer the secret.

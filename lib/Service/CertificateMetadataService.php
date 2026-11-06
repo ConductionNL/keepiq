@@ -93,6 +93,7 @@ class CertificateMetadataService {
 	 *
 	 * @throws DoesNotExistException When the secret does not exist
 	 * @throws InvalidArgumentException When not owned, wrong type, or unparseable dates
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When the secret moved twice while its expiry was set
 	 *
 	 * @spec openspec/specs/certificate-lifecycle/spec.md
 	 */

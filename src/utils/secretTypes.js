@@ -26,3 +26,21 @@ export function secretTypeLabel(type) {
 	const label = type ? type.label || type.name : ''
 	return label ? t('keepiq', label) : ''
 }
+
+/**
+ * System types new items are not created as: a login carries its own
+ * one-time code and passkeys. Items of these types still show, edit, share
+ * and filter as any other.
+ */
+export const NOT_CREATABLE_TYPE_NAMES = Object.freeze(['totp', 'passkey'])
+
+/**
+ * Whether new items may be created as this type.
+ *
+ * @param {object|null|undefined} type The type record ({ name }).
+ * @return {boolean}
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ */
+export function isCreatableType(type) {
+	return Boolean(type) && !NOT_CREATABLE_TYPE_NAMES.includes(type.name)
+}

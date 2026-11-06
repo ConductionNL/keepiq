@@ -30,6 +30,8 @@ use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\SecretPlaceholderCleaner;
@@ -38,8 +40,10 @@ use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCA\Keepiq\Service\SecretRequestSuiteLockService;
 use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -119,6 +123,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->suiteLockService = new SecretRequestSuiteLockService(
@@ -438,6 +443,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		// The linked Secret, user-owned.
@@ -510,6 +516,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
@@ -550,6 +557,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -740,9 +748,11 @@ class SecretRequestServiceTest extends TestCase {
 	/**
 	 * Build a service wired for the fill tests.
 	 *
+	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies The view-only guard; a stub that lets every fill through when null
+	 *
 	 * @return SecretRequestService
 	 */
-	private function makeFillService(): SecretRequestService {
+	private function makeFillService(?ViewOnlyCopyGuard $viewOnlyCopies = null): SecretRequestService {
 		return new SecretRequestService(
 			mapper: $this->mapper,
 			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
@@ -752,8 +762,66 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $viewOnlyCopies ?? $this->createStub(ViewOnlyCopyGuard::class),
 		);
 	}//end makeFillService()
+
+	/**
+	 * Fills of a view-only copy that carry an extra-field blob: with a key,
+	 * and the blob alone.
+	 *
+	 * @return array<string,array{string[],array<string,string>}>
+	 */
+	public static function viewOnlyFills(): array {
+		return [
+			'a key and extra fields' => [['key', 'api-interface-id'], ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB']],
+			'extra fields only' => [['api-interface-id'], ['additionalFields' => 'CIPHER_BLOB']],
+		];
+	}//end viewOnlyFills()
+
+	/**
+	 * A fill onto a copy its holder may only view is refused before the
+	 * filled extra-field blob is held back, so nothing is stored and the
+	 * request stays pending (keepiq#1287).
+	 *
+	 * @param string[] $requested The requested fields
+	 * @param array<string,string> $filled The filled ciphertext
+	 *
+	 * @return void
+	 */
+	#[DataProvider('viewOnlyFills')]
+	public function testAFillOntoAViewOnlyCopyIsRefusedWithNothingStored(array $requested, array $filled): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode($requested));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$secret->setAdditionalFields('OWNERS_OWN_BLOB');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('update');
+
+		$guard = $this->createMock(ViewOnlyCopyGuard::class);
+		$guard->expects($this->once())->method('assertMayChangeValue')
+			->with($secret, array_keys($filled), 'requester')
+			->willThrowException(new ViewOnlyCopyException());
+
+		try {
+			$this->makeFillService(viewOnlyCopies: $guard)->fill(token: 'tok-good', encryptedFields: $filled);
+			$this->fail('A fill onto a view-only copy must be refused');
+		} catch (ViewOnlyCopyException) {
+			// Expected.
+		}
+
+		$this->assertSame([], $secret->pendingAdditionalFieldList());
+		$this->assertSame('OWNERS_OWN_BLOB', $secret->getAdditionalFields());
+		$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+	}//end testAFillOntoAViewOnlyCopyIsRefusedWithNothingStored()
 
 	/**
 	 * A failed write leaves the request pending, not fulfilled and empty.
@@ -793,6 +861,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		try {
@@ -804,6 +873,156 @@ class SecretRequestServiceTest extends TestCase {
 			$this->assertNull($entity->getFulfilledAt());
 		}
 	}//end testFillLeavesTheRequestPendingWhenTheWriteFails()
+
+	/**
+	 * An owner's save that lands between the fill's read and its write
+	 * refuses the write, and the fill writes once more on the row as it is
+	 * now.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testFillWritesAgainOverASaveThatLandsDuringIt(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$calls = 0;
+		$this->secretService->expects($this->exactly(2))->method('update')
+			->with('sec-1', ['key' => 'CIPHER'], 'requester')
+			->willReturnCallback(
+				static function () use (&$calls, $secret): Secret {
+					$calls++;
+					if ($calls === 1) {
+						throw new StaleWriteException(current: $secret);
+					}
+
+					return $secret;
+				}
+			);
+
+		$result = $this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testFillWritesAgainOverASaveThatLandsDuringIt()
+
+	/**
+	 * Keepiq#750 on the second write: when the save that landed during the
+	 * fill gave the owner an extra-field blob, the filled blob is held back
+	 * on that row instead of overwriting it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key', 'api-interface-id']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$read = new Secret();
+		$read->setId('sec-1');
+		$read->setOwnerType('user');
+		$read->setOwnerId('requester');
+		$current = clone $read;
+		$current->setAdditionalFields('SAVED_MEANWHILE');
+		$this->secretMapper->method('findById')->willReturn($read);
+		$this->secretMapper->expects($this->once())->method('update')->with($this->identicalTo($current))->willReturnArgument(0);
+
+		$writes = [];
+		$this->secretService->expects($this->exactly(2))->method('update')->willReturnCallback(
+			static function (string $id, array $data) use (&$writes, $current): Secret {
+				$writes[] = $data;
+				if (count($writes) === 1) {
+					throw new StaleWriteException(current: $current);
+				}
+
+				return $current;
+			}
+		);
+
+		$this->makeFillService()->fill(
+			token: 'tok-good',
+			encryptedFields: ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'],
+		);
+
+		$this->assertSame([['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'], ['key' => 'CIPHER_KEY']], $writes);
+		$this->assertSame('SAVED_MEANWHILE', $current->getAdditionalFields());
+		$this->assertSame(['CIPHER_BLOB'], $current->pendingAdditionalFieldList());
+	}//end testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt()
+
+	/**
+	 * A fill of only an extra-field blob that is held back on the second
+	 * write leaves nothing to write, so no empty update makes a new version.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillSkipsTheSecondWriteWhenOnlyAHeldBackBlobIsLeft(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['api-interface-id']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$read = new Secret();
+		$read->setId('sec-1');
+		$read->setOwnerType('user');
+		$read->setOwnerId('requester');
+		$current = clone $read;
+		$current->setAdditionalFields('SAVED_MEANWHILE');
+		$this->secretMapper->method('findById')->willReturn($read);
+		$this->secretMapper->expects($this->once())->method('update')->with($this->identicalTo($current))->willReturnArgument(0);
+
+		$this->secretService->expects($this->once())->method('update')
+			->with('sec-1', ['additionalFields' => 'CIPHER_BLOB'], 'requester')
+			->willThrowException(new StaleWriteException(current: $current));
+
+		$result = $this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['additionalFields' => 'CIPHER_BLOB']);
+
+		$this->assertSame(['CIPHER_BLOB'], $current->pendingAdditionalFieldList());
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testFillSkipsTheSecondWriteWhenOnlyAHeldBackBlobIsLeft()
+
+	/**
+	 * A row that moves again during the second write refuses the fill with
+	 * 409 and leaves the request pending, so the filler can submit again.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testFillLeavesTheRequestPendingWhenTheSecretMovesTwice(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretService->expects($this->exactly(2))->method('update')
+			->willThrowException(new StaleWriteException(current: $secret));
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+			$this->fail('A secret that moved twice must refuse the fill');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(409, $e->getCode());
+			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+		}
+	}//end testFillLeavesTheRequestPendingWhenTheSecretMovesTwice()
 
 	/**
 	 * fill rejects payloads that omit a required field.
@@ -915,6 +1134,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
@@ -946,6 +1166,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -973,6 +1194,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1043,6 +1265,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1092,6 +1315,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1143,6 +1367,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->createForApplication(
@@ -1184,6 +1409,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1244,6 +1470,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->createReRequest(
@@ -1287,6 +1514,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1336,6 +1564,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -2122,6 +2351,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $service->refusalReason(token: 'tok-good'));

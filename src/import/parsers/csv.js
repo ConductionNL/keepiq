@@ -18,6 +18,7 @@
  */
 
 import { parseCsv } from '../../export/csv.js'
+import { attachTotp, keepAsAdditionalField } from '../loginValueFields.js'
 import { makeRow, validateRow } from '../model.js'
 
 /**
@@ -33,6 +34,7 @@ const HEADER_SYNONYMS = {
 	notes: ['notes', 'note', 'comment', 'comments'],
 	folder: ['folder', 'group', 'grouping', 'collection', 'category'],
 	type: ['type'],
+	totp: ['totp', 'otp', 'login_totp'],
 }
 
 /**
@@ -74,6 +76,8 @@ export function detectMapping(headers) {
  *
  * Columns mapped to `notes` or `additional:<label>` collect into
  * additionalFields. The `notes` mapping uses the `notes` key by convention.
+ * A column mapped to `totp` (Bitwarden's fixed mapping) fills the login's own
+ * `totp` field.
  *
  * @param {object} record The raw CSV record (keyed by header).
  * @param {Array<object>} mapping The column → target mapping.
@@ -83,6 +87,7 @@ export function detectMapping(headers) {
 export function applyMapping(record, mapping, sourceRow) {
 	const fields = { additionalFields: null }
 	const additional = {}
+	let totp = null
 	for (const { column, target } of mapping) {
 		const value = record[column]
 		if (value == null || value === '' || target === 'ignore') {
@@ -90,6 +95,8 @@ export function applyMapping(record, mapping, sourceRow) {
 		}
 		if (target === 'notes') {
 			additional.notes = value
+		} else if (target === 'totp') {
+			totp = value
 		} else if (typeof target === 'string' && target.startsWith('additional:')) {
 			additional[target.slice('additional:'.length)] = value
 		} else {
@@ -99,7 +106,11 @@ export function applyMapping(record, mapping, sourceRow) {
 	if (Object.keys(additional).length > 0) {
 		fields.additionalFields = additional
 	}
-	return validateRow(makeRow(fields, sourceRow))
+	const row = makeRow(fields, sourceRow)
+	if (attachTotp(row, totp) !== null) {
+		keepAsAdditionalField(row, 'totp', totp)
+	}
+	return validateRow(row)
 }
 
 /**

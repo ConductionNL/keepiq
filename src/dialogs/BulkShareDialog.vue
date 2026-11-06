@@ -68,6 +68,7 @@ import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
 import RecipientPicker from '../components/share/RecipientPicker.vue'
 import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
+import { copyCiphertext, recipientFields } from '../services/recipientCopy.js'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -170,15 +171,7 @@ export default {
 				// server refuses it too (sharing-use-only-and-expiring-shares D4).
 				return { status: 'skipped', reason: 'restricted' }
 			}
-			const snapshot = {
-				key: plain.key ?? '',
-				login: plain.login ?? '',
-				additionalFields:
-					typeof plain.additionalFields === 'object'
-					&& plain.additionalFields !== null
-						? JSON.stringify(plain.additionalFields)
-						: (plain.additionalFields ?? ''),
-			}
+			const snapshot = recipientFields(plain)
 			const blob = await shareStore.encryptForRecipient(
 				snapshot,
 				this.certificate,
@@ -191,9 +184,7 @@ export default {
 					{
 						sourceSecretId: secretId,
 						targetUserId: this.targetUserId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
+						...copyCiphertext(blob),
 						...restrictionPayload(this.restriction),
 					},
 				],
@@ -205,6 +196,15 @@ export default {
 				return {
 					status: 'ok',
 					reason: item.status === 'exists' ? 'already shared' : undefined,
+				}
+			}
+			if (item?.status === 'copy_fields_mismatch') {
+				return {
+					status: 'skipped',
+					reason: this.t(
+						'keepiq',
+						'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+					),
 				}
 			}
 			return { status: 'skipped', reason: item?.status || 'not registered' }

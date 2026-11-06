@@ -16,7 +16,7 @@
  */
 
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { EFF_LARGE_WORDLIST } from '../../src/generator/eff-large-wordlist.js'
 import {
 	generateKey,
@@ -26,6 +26,7 @@ import {
 	passphraseAllowed,
 	randomInt,
 } from '../../src/generator/generator.js'
+import { seededRandom } from '../vectors/seeded-random.mjs'
 
 const SPECIAL = /[!@#$%^&*()\-_=+[\]{}|;:,.<>?/]/
 const RUNS = 50
@@ -81,6 +82,32 @@ describe('charset generation', () => {
 		)
 		expect(() => generateKey({ length: 129 })).toThrow(
 			'Length must not exceed 128 characters',
+		)
+	})
+
+	it('refuses a length that is not a whole number', () => {
+		expect(() => generateKey({ length: 12.5 })).toThrow(
+			'Length must be at least 8 characters',
+		)
+	})
+
+	it('checks the length before the character set', () => {
+		const every =
+			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?/'
+		expect(() => generateKey({ length: 0, excludedCharacters: every })).toThrow(
+			'Length must be at least 8 characters',
+		)
+	})
+
+	it('leaves out l, 0 and 1 when avoiding ambiguous characters with upper case off', () => {
+		repeat(() =>
+			expect(
+				generateKey({
+					length: 128,
+					includeUppercase: false,
+					avoidAmbiguous: true,
+				}),
+			).not.toMatch(/[l01]/),
 		)
 	})
 
@@ -210,6 +237,20 @@ describe('org policy', () => {
 		expect(() => generateKey({ regex: '[a-z]{16,32}' }, policy)).toThrow('digit')
 	})
 
+	it.each([
+		['generator_require_upper', 'includeUppercase', /[A-Z]/],
+		['generator_require_lower', 'includeLowercase', /[a-z]/],
+		['generator_require_digit', 'includeDigits', /[0-9]/],
+		['generator_require_symbol', 'includeSpecialCharacters', SPECIAL],
+	])('%s puts that kind in when %s is off', (requirement, option, kind) => {
+		const policy = {
+			policy_enabled: true,
+			generator_min_length: 8,
+			[requirement]: true,
+		}
+		expect(generateKey({ [option]: false }, policy, (min) => min)).toMatch(kind)
+	})
+
 	it('changes nothing when the policy is off', () => {
 		expect(
 			generateKey(
@@ -225,6 +266,105 @@ describe('org policy', () => {
 			generatorPolicy({ policy_enabled: true, generator_min_length: '4' })
 				.minLength,
 		).toBe(8)
+	})
+
+	it('caps the floor at the maximum length of 128', () => {
+		const policy = { policy_enabled: true, generator_min_length: 200 }
+		expect(generatorPolicy(policy).minLength).toBe(128)
+		expect(
+			generatorPolicy({ policy_enabled: true, generator_min_length: '500' })
+				.minLength,
+		).toBe(128)
+		expect(generateKey({}, policy)).toHaveLength(128)
+		const phrase = generatePassphrase({}, policy)
+		expect(phrase.length).toBeGreaterThanOrEqual(128)
+		expect(phrase.length).toBeLessThan(150)
+	})
+
+	it('keeps every required class at the floor, also when a minimum fills the length', () => {
+		const policy = {
+			policy_enabled: true,
+			generator_min_length: 8,
+			generator_require_upper: true,
+			generator_require_lower: true,
+			generator_require_digit: true,
+			generator_require_symbol: true,
+		}
+		for (let i = 0; i < 500; i++) {
+			const key = generateKey({ length: 9, minDigits: 9 }, policy)
+			expect(key).toHaveLength(12)
+			expect(key).toMatch(/[A-Z]/)
+			expect(key).toMatch(/[a-z]/)
+			expect(key).toMatch(SPECIAL)
+			expect(key.replace(/[^0-9]/g, '')).toHaveLength(9)
+		}
+	})
+})
+
+describe('minimums', () => {
+	it('grows the length to the sum of the minimums, one for every other chosen kind', () => {
+		for (const [options, length] of [
+			[{ length: 8, minDigits: 6, minSpecial: 6 }, 14],
+			[{ length: 10, minDigits: 5, minSpecial: 5 }, 12],
+		]) {
+			for (let i = 0; i < 200; i++) {
+				const key = generateKey(options)
+				expect(key).toHaveLength(length)
+				expect(key).toMatch(/[A-Z]/)
+				expect(key).toMatch(/[a-z]/)
+				expect(key.replace(/[^0-9]/g, '').length).toBeGreaterThanOrEqual(
+					options.minDigits,
+				)
+				expect(
+					key.replace(/[A-Za-z0-9]/g, '').length,
+				).toBeGreaterThanOrEqual(options.minSpecial)
+			}
+		}
+	})
+
+	it('counts a fractional minimum as the whole number below it', () => {
+		for (const seed of [1, 42, 2026]) {
+			expect(
+				generateKey(
+					{ length: 8, minDigits: 7.5, minSpecial: 1.9 },
+					null,
+					seededRandom(seed),
+				),
+			).toBe(
+				generateKey(
+					{ length: 8, minDigits: 7, minSpecial: 1 },
+					null,
+					seededRandom(seed),
+				),
+			)
+		}
+	})
+
+	it.each([Number.NaN, -1, 'x'])(
+		'still puts in one digit for a minimum of %s',
+		(minDigits) => {
+			expect(generateKey({ minDigits }, null, (min) => min)).toMatch(/[0-9]/)
+		},
+	)
+
+	it('puts the forced characters at uniformly random positions', () => {
+		// Seven digits and one upper-case letter: the letter must land on
+		// each of the 8 positions about 1 in 8 times.
+		const runs = 4000
+		const hits = new Array(8).fill(0)
+		for (let i = 0; i < runs; i++) {
+			const key = generateKey({
+				length: 8,
+				includeLowercase: false,
+				includeSpecialCharacters: false,
+				minDigits: 7,
+			})
+			hits[key.search(/[A-Z]/)]++
+		}
+		for (const count of hits) {
+			expect(count / runs).toBeGreaterThan(0.09)
+			expect(count / runs).toBeLessThan(0.16)
+		}
 	})
 })
 
@@ -245,6 +385,26 @@ describe('randomness', () => {
 		expect(source).toContain('crypto.getRandomValues')
 		expect(source).not.toMatch(/Math\.random/)
 	})
+
+	it.each([
+		['a key', () => generateKey({})],
+		['a key from a pattern', () => generateKey({ regex: '[a-z0-9]{12}' })],
+		['a passphrase', () => generatePassphrase({})],
+	])(
+		'draws %s from crypto.getRandomValues without an injected source',
+		(_, make) => {
+			const secure = vi.spyOn(globalThis.crypto, 'getRandomValues')
+			const weak = vi.spyOn(Math, 'random')
+			try {
+				make()
+				expect(secure).toHaveBeenCalled()
+				expect(weak).not.toHaveBeenCalled()
+			} finally {
+				secure.mockRestore()
+				weak.mockRestore()
+			}
+		},
+	)
 })
 
 describe('passphrase generation', () => {
@@ -256,20 +416,29 @@ describe('passphrase generation', () => {
 	})
 
 	it('defaults to five list words joined by hyphens', () => {
-		// A fixed random source: four list words carry a hyphen themselves
-		// (drop-down, felt-tip, t-shirt, yo-yo), so splitting a random
-		// default passphrase on "-" cannot count its words.
-		const first = () => 0
-		expect(generatePassphrase({}, null, first)).toBe(
-			Array(5).fill(EFF_LARGE_WORDLIST[0]).join('-'),
-		)
 		repeat(() => {
-			const words = generatePassphrase({ separator: ' ' }).split(' ')
+			const words = generatePassphrase().split('-')
 			expect(words).toHaveLength(5)
 			for (const word of words) {
 				expect(WORDS.has(word)).toBe(true)
 			}
 		})
+	})
+
+	it('never draws the four hyphenated list words', () => {
+		const drawn = new Set()
+		for (let i = 0; i < EFF_LARGE_WORDLIST.length; i++) {
+			const pick = (min, max) => Math.min(min + i, max)
+			drawn.add(
+				generatePassphrase({ words: 4, separator: ' ' }, null, pick).split(
+					' ',
+				)[0],
+			)
+		}
+		expect(drawn.size).toBe(7772)
+		for (const word of ['drop-down', 'felt-tip', 't-shirt', 'yo-yo']) {
+			expect(drawn.has(word)).toBe(false)
+		}
 	})
 
 	it('six words with a space as separator', () => {

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Multi-step login</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Multi-step login</h1>
+		<p class="tests">Step 1 of 2: only a username. Fill should put the username here and leave the password for the next page.</p>
+		<form method="get" action="/multi-step-password.html">
+			<label>Username <input name="username" type="text" autocomplete="username"></label>
+			<button type="submit">Next</button>
+		</form>
+	</main>
+</body>
+</html>

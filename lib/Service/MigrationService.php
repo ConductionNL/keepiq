@@ -147,7 +147,7 @@ class MigrationService {
 		// Idempotent by status. Without this, replaying the endpoint with a
 		// retained migration id re-runs the whole destructive cascade:
 		// markCompromised overwrites the audit fields, and
-		// LinkShareService::deleteByUserId plus
+		// LinkShareService::deleteMadeBy plus
 		// PasskeyService::deleteAllOnRotation delete every link share and
 		// passkey created AFTER the rotation finished, with
 		// SuiteMigrationCompletedEvent re-dispatched to its listeners. An
@@ -486,11 +486,13 @@ class MigrationService {
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function revokeKeyMaterialOfOwner(string $ownerId): void {
-		// Cascade-revoke every link share created by this user: the public-key
-		// fingerprint baked into each share's encrypted snapshot belongs to the
-		// now-compromised key pair, so any outstanding link must be force-locked
-		// out and re-shared under the new suite (implement-link-sharing §5.2).
-		$this->linkShareService->deleteByUserId(userId: $ownerId);
+		// Cascade-revoke every link share this user made, also the ones an
+		// ownership transfer handed to someone else: each snapshot was taken
+		// from a secret the now-compromised key pair decrypted, so any
+		// outstanding link must be force-locked out and re-shared under the
+		// new suite (implement-link-sharing §5.2). A link handed to this user
+		// that someone else made is not theirs to cut.
+		$this->linkShareService->deleteMadeBy(userId: $ownerId);
 
 		// A new key pair invalidates every passkey unlock envelope — the wrapped
 		// unlock key can never open the new suite (passkey-vault-login §D4).

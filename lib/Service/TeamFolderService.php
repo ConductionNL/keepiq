@@ -38,15 +38,16 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use Closure;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Exception\OwnerOnlyException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -78,8 +79,8 @@ class TeamFolderService {
 	 * @param TeamFolderAuditor $audit The team-folder auditor
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param ShareRowJudge $rowJudge Judged share rows (the caller's copies, the copies to recompute)
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
-	 * @param ShareTargetMapper|null $shareTargets The share-target mapper (copies to recompute)
 	 *
 	 * @return void
 	 *
@@ -98,8 +99,8 @@ class TeamFolderService {
 		private TeamFolderAuditor $audit,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private ShareRowJudge $rowJudge,
 		private ?ShareRestrictionResolver $restrictions = null,
-		private ?ShareTargetMapper $shareTargets = null,
 	) {
 	}//end __construct()
 
@@ -154,11 +155,16 @@ class TeamFolderService {
 	 * @return int Number of derived shares revoked
 	 *
 	 * @throws InvalidArgumentException When not found / not authorized
+	 * @throws ShareScanPendingException When a share row of the folder waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function unshareFolder(string $teamFolderId, string $userId): int {
 		$teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+		// Judged before the transaction, so a quarantine this makes is kept
+		// when a row the scan cannot judge refuses the unshare.
+		$this->shares->assertRevocable(teamFolderId: $teamFolderId);
 
 		$this->db->beginTransaction();
 		try {
@@ -216,8 +222,9 @@ class TeamFolderService {
 	 * recipients (with their public certificates) and the secrets in the
 	 * folder subtree to encrypt for them.
 	 *
-	 * Idempotent: re-adding an existing membership returns a payload with
-	 * no new recipients.
+	 * Re-adding an existing membership adds no row and returns a payload
+	 * with no new recipients; a restriction sent with it replaces the
+	 * membership's use-only flag and end date, which is audited.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $memberType The member type (`user`|`group`)
@@ -228,9 +235,12 @@ class TeamFolderService {
 	 * @return array{member:TeamFolderMember,recipients:array<int,array{userId:string,certificate:string}>,secrets:array<int,array{id:string,name:string}>}
 	 *
 	 * @throws InvalidArgumentException On invalid input / not authorized
+	 * @throws OwnerOnlyException When a manager adds or changes a membership that covers a manager, or changes a
+	 *   manager's restriction
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
 	public function addMember(
 		string $teamFolderId,
@@ -246,8 +256,21 @@ class TeamFolderService {
 			memberId: $memberId
 		);
 
+		$this->queries->assertCoversNoManager(
+			teamFolder: $teamFolder,
+			memberType: $memberType,
+			memberId: $memberId,
+			userId: $userId
+		);
+
 		$coveredBefore = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
-		$membership = $this->findOrCreateMembership(
+		$membership = $this->existingMembership(teamFolderId: $teamFolderId, memberType: $memberType, memberId: $memberId);
+		if ($membership !== null && $restriction !== null) {
+			$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $membership, userId: $userId, leaving: false);
+		}
+
+		$isNew = ($membership === null);
+		$membership ??= $this->createMembership(
 			teamFolderId: $teamFolderId,
 			memberType: $memberType,
 			memberId: $memberId,
@@ -255,6 +278,9 @@ class TeamFolderService {
 		);
 		if ($restriction !== null) {
 			$membership = $this->applyRestriction(membership: $membership, restriction: $restriction);
+			if ($isNew === false) {
+				$this->audit->membershipChanged(actorId: $userId, membership: $membership);
+			}
 		}
 
 		$newUsers = array_values(
@@ -277,7 +303,30 @@ class TeamFolderService {
 	}//end addMember()
 
 	/**
-	 * Return the existing membership row, or create (and audit) a new one.
+	 * The membership row of a member, or null when there is none.
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $memberType The member type (`user`|`group`)
+	 * @param string $memberId The Nextcloud user or group ID
+	 *
+	 * @return TeamFolderMember|null
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 */
+	private function existingMembership(string $teamFolderId, string $memberType, string $memberId): ?TeamFolderMember {
+		try {
+			return $this->memberMapper->findMembership(
+				teamFolderId: $teamFolderId,
+				memberType: $memberType,
+				memberId: $memberId
+			);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end existingMembership()
+
+	/**
+	 * Create (and audit) a new membership row.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $memberType The member type (`user`|`group`)
@@ -288,22 +337,12 @@ class TeamFolderService {
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
 	 */
-	private function findOrCreateMembership(
+	private function createMembership(
 		string $teamFolderId,
 		string $memberType,
 		string $memberId,
 		string $userId,
 	): TeamFolderMember {
-		try {
-			return $this->memberMapper->findMembership(
-				teamFolderId: $teamFolderId,
-				memberType: $memberType,
-				memberId: $memberId
-			);
-		} catch (DoesNotExistException) {
-			// No membership yet — create it below.
-		}
-
 		$membership = new TeamFolderMember();
 		$membership->setId(Uuid::uuid4()->toString());
 		$membership->setTeamFolderId($teamFolderId);
@@ -321,11 +360,15 @@ class TeamFolderService {
 		);
 
 		return $membership;
-	}//end findOrCreateMembership()
+	}//end createMembership()
 
 	/**
 	 * Remove a membership row — revokes the derived shares of every user
-	 * that is no longer covered by any remaining membership.
+	 * that is no longer covered by any remaining membership. An owner or
+	 * manager removing someone else is refused, before anything changes,
+	 * when a share row it would revoke is one the pending share quarantine
+	 * scan cannot judge; a member leaving the folder themselves is never
+	 * refused (TeamFolderShareService::releaseForMember()).
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $membershipId The membership row UUID
@@ -334,10 +377,71 @@ class TeamFolderService {
 	 * @return int Number of derived shares revoked
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized
+	 * @throws ShareScanPendingException When a row it would revoke waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function removeMember(string $teamFolderId, string $membershipId, string $userId): int {
+		$membership = $this->membershipToRemove(teamFolderId: $teamFolderId, membershipId: $membershipId, userId: $userId);
+		if ($membership->getMemberType() === 'user' && $membership->getMemberId() === $userId) {
+			return $this->dropMembership(
+				membership: $membership,
+				userId: $userId,
+				revoke: fn (string $droppedUserId): int => $this->shares->releaseForMember(teamFolderId: $teamFolderId, targetUserId: $droppedUserId)
+			);
+		}
+
+		// Judged before the transaction, so a quarantine this makes is kept
+		// when a row the scan cannot judge refuses the removal.
+		foreach ($this->usersLosingAccess(membership: $membership) as $droppedUserId) {
+			$this->shares->assertRevocable(teamFolderId: $teamFolderId, targetUserId: $droppedUserId);
+		}
+
+		return $this->dropMembership(
+			membership: $membership,
+			userId: $userId,
+			revoke: fn (string $droppedUserId): int => $this->shares->revokeForMember(teamFolderId: $teamFolderId, targetUserId: $droppedUserId)
+		);
+	}//end removeMember()
+
+	/**
+	 * Remove a membership whose end date passed, as the folder's owner. The
+	 * expiry job cannot be refused, so a share row the pending share
+	 * quarantine scan holds back is handled as a member leaving
+	 * (TeamFolderShareService::releaseForMember()).
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $membershipId The membership row UUID
+	 * @param string $ownerId The folder's owner
+	 *
+	 * @return int Number of derived shares revoked
+	 *
+	 * @throws InvalidArgumentException On not found / not authorized
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function expireMember(string $teamFolderId, string $membershipId, string $ownerId): int {
+		return $this->dropMembership(
+			membership: $this->membershipToRemove(teamFolderId: $teamFolderId, membershipId: $membershipId, userId: $ownerId),
+			userId: $ownerId,
+			revoke: fn (string $droppedUserId): int => $this->shares->releaseForMember(teamFolderId: $teamFolderId, targetUserId: $droppedUserId)
+		);
+	}//end expireMember()
+
+	/**
+	 * The membership a caller may remove from a team folder.
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $membershipId The membership row UUID
+	 * @param string $userId The caller (the owner or a manager)
+	 *
+	 * @return TeamFolderMember
+	 *
+	 * @throws InvalidArgumentException On not found / not authorized
+	 */
+	private function membershipToRemove(string $teamFolderId, string $membershipId, string $userId): TeamFolderMember {
 		$teamFolder = $this->queries->loadManageableTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
 		try {
@@ -351,28 +455,77 @@ class TeamFolderService {
 		}
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $membership, userId: $userId, leaving: true);
-		$this->memberMapper->delete($membership);
 
-		$coveredAfter = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
-		$dropped = array_diff(
-			$this->memberships->expandMember(
-				memberType: $membership->getMemberType(),
-				memberId: $membership->getMemberId()
-			),
-			$coveredAfter
-		);
+		return $membership;
+	}//end membershipToRemove()
 
-		$revoked = 0;
-		foreach ($dropped as $droppedUserId) {
-			$revoked += $this->shares->revokeForMember(
-				teamFolderId: $teamFolderId,
-				targetUserId: $droppedUserId
-			);
+	/**
+	 * The users a membership alone covers in its team folder: the ones who
+	 * lose access when it is removed.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 *
+	 * @return list<string>
+	 */
+	private function usersLosingAccess(TeamFolderMember $membership): array {
+		$coveredByOthers = [];
+		foreach ($this->memberMapper->findByTeamFolder(teamFolderId: (string)$membership->getTeamFolderId()) as $other) {
+			if ($other->getId() === $membership->getId()) {
+				continue;
+			}
+
+			foreach ($this->memberships->expandMember(memberType: $other->getMemberType(), memberId: $other->getMemberId()) as $otherUserId) {
+				$coveredByOthers[$otherUserId] = true;
+			}
 		}
 
-		// Users still covered by another grant may have lost the one that
-		// lifted use-only or extended their access.
-		$this->resolveCopiesOf(membership: $membership);
+		return array_values(
+			array_filter(
+				$this->memberships->expandMember(memberType: $membership->getMemberType(), memberId: $membership->getMemberId()),
+				static fn (string $coveredUserId): bool => isset($coveredByOthers[$coveredUserId]) === false
+			)
+		);
+	}//end usersLosingAccess()
+
+	/**
+	 * Delete a membership and revoke the derived shares of every user it
+	 * alone covered, with the given revoke, in one transaction: a revoke that
+	 * is refused, or fails, leaves the membership and every row as they were.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 * @param string $userId The caller
+	 * @param Closure(string):int $revoke Revokes one dropped user's rows in the folder
+	 *
+	 * @return int Number of derived shares revoked
+	 */
+	private function dropMembership(TeamFolderMember $membership, string $userId, Closure $revoke): int {
+		$teamFolderId = (string)$membership->getTeamFolderId();
+		$this->db->beginTransaction();
+		try {
+			$this->memberMapper->delete($membership);
+
+			$coveredAfter = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
+			$dropped = array_diff(
+				$this->memberships->expandMember(
+					memberType: $membership->getMemberType(),
+					memberId: $membership->getMemberId()
+				),
+				$coveredAfter
+			);
+
+			$revoked = 0;
+			foreach ($dropped as $droppedUserId) {
+				$revoked += $revoke($droppedUserId);
+			}
+
+			// Users still covered by another grant may have lost the one that
+			// lifted use-only or extended their access.
+			$this->resolveCopiesOf(membership: $membership);
+			$this->db->commit();
+		} catch (Throwable $exception) {
+			$this->db->rollBack();
+			throw $exception;
+		}
 
 		$this->audit->memberRemoved(
 			actorId: $userId,
@@ -383,7 +536,7 @@ class TeamFolderService {
 		);
 
 		return $revoked;
-	}//end removeMember()
+	}//end dropMembership()
 
 	/**
 	 * Resolve the effective recipient set of a secret by walking its
@@ -450,10 +603,15 @@ class TeamFolderService {
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param array<int,array<string,mixed>> $shares Rows of sourceSecretId, targetUserId,
 	 *                                               encryptedKey, encryptedLogin,
-	 *                                               encryptedAdditionalFields
+	 *                                               encryptedAdditionalFields, encryptedTotp,
+	 *                                               encryptedPasskeys
 	 * @param string $userId The caller (the owner or a manager)
 	 *
-	 * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
+	 * @return array{
+	 *   created: int,
+	 *   rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>,
+	 *   skipped: list<array{sourceSecretId: string, targetUserId: string, reason: string}>
+	 * }
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized
 	 *
@@ -529,11 +687,19 @@ class TeamFolderService {
 	 * @return array{recipients:array<int,array{userId:string,certificate:string}>,secrets:array<int,array{id:string,name:string}>}
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized / not covered
+	 * @throws OwnerOnlyException When a manager approves their own join
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.1
 	 */
 	public function approveJoin(string $teamFolderId, string $newMemberId, string $userId): array {
 		$teamFolder = $this->queries->loadManageableTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+		if ($teamFolder->getOwnerId() !== $userId && mb_strtolower($newMemberId) === mb_strtolower($userId)) {
+			// A manager who joined a group, as its subadmin for example,
+			// leaves their own approval to the owner.
+			throw new OwnerOnlyException(message: 'Only the owner can approve your own join');
+		}
 
 		$covered = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
 		if (in_array($newMemberId, $covered, true) === false) {
@@ -572,7 +738,7 @@ class TeamFolderService {
 				continue;
 			}
 
-			$revoked += $this->shares->revokeForMember(teamFolderId: $teamFolderId, targetUserId: $userId);
+			$revoked += $this->shares->releaseForMember(teamFolderId: $teamFolderId, targetUserId: $userId);
 		}
 
 		return $revoked;
@@ -614,6 +780,7 @@ class TeamFolderService {
 	 * @return TeamFolderMember
 	 *
 	 * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
+	 * @throws OwnerOnlyException When a manager changes a manager or a membership that covers a manager
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
@@ -643,6 +810,12 @@ class TeamFolderService {
 		}
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $member, userId: $ownerId, leaving: false);
+		$this->queries->assertCoversNoManager(
+			teamFolder: $teamFolder,
+			memberType: $member->getMemberType(),
+			memberId: $member->getMemberId(),
+			userId: $ownerId
+		);
 		if ($grade === 'manage' && $teamFolder->getOwnerId() !== $ownerId) {
 			throw new OwnerOnlyException(message: 'Only the owner can make a member a manager');
 		}
@@ -662,13 +835,7 @@ class TeamFolderService {
 		$member = $this->memberMapper->update($member);
 		$this->resolveCopiesOf(membership: $member);
 
-		$this->audit->gradeChanged(
-			actorId: $ownerId,
-			teamFolderId: $teamFolderId,
-			memberType: $member->getMemberType(),
-			memberId: $member->getMemberId(),
-			grade: $grade,
-		);
+		$this->audit->membershipChanged(actorId: $ownerId, membership: $member);
 
 		return $member;
 	}//end setMemberGrade()
@@ -677,7 +844,9 @@ class TeamFolderService {
 	 * Tell a manager's browser which of its own recipient copies to decrypt
 	 * for each folder secret (sharing-team-folder-manager-role D3): each ref
 	 * gains `copyId`, the caller's copy, or null when the caller holds none
-	 * (that secret is then skipped and stays missing for the owner). The
+	 * or their share row of it is not trusted (ShareRowJudge), so a secret
+	 * a held-back row names is never decrypted for others (that secret is
+	 * then skipped and stays missing for the owner). The
 	 * owner's refs carry their own id, since the owner decrypts the source.
 	 *
 	 * @param array<int,array{id:string,name:string}> $refs The subtree secret refs
@@ -687,21 +856,14 @@ class TeamFolderService {
 	 * @return array<int,array{id:string,name:string,copyId:string|null}>
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	private function withCallerCopies(array $refs, TeamFolder $teamFolder, string $userId): array {
 		$isOwner = ($teamFolder->getOwnerId() === $userId);
 		foreach ($refs as $index => $ref) {
-			$copyId = null;
-			if ($isOwner === true) {
-				$copyId = $ref['id'];
-			} elseif ($this->shareTargets !== null) {
-				try {
-					$copyId = $this->shareTargets
-						->findBySourceSecretAndTargetUser(sourceSecretId: $ref['id'], targetUserId: $userId)
-						->getSecretId();
-				} catch (DoesNotExistException) {
-					$copyId = null;
-				}
+			$copyId = $ref['id'];
+			if ($isOwner === false) {
+				$copyId = $this->rowJudge->forPair(sourceId: $ref['id'], targetUserId: $userId)->trustedRow()?->getSecretId();
 			}
 
 			$refs[$index]['copyId'] = $copyId;
@@ -798,7 +960,7 @@ class TeamFolderService {
 	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	private function resolveCopiesOf(TeamFolderMember $membership): void {
-		if ($this->restrictions === null || $this->shareTargets === null) {
+		if ($this->restrictions === null) {
 			return;
 		}
 
@@ -807,7 +969,8 @@ class TeamFolderService {
 			memberId: $membership->getMemberId()
 		);
 		foreach ($users as $coveredUserId) {
-			$this->restrictions->resolveTargets(targets: $this->shareTargets->findByTargetUser($coveredUserId));
+			// The resolve leaves out every row the pending scan holds back.
+			$this->restrictions->resolveTargets(targets: $this->rowJudge->rowsOfTarget(targetUserId: $coveredUserId)->all());
 		}
 	}//end resolveCopiesOf()
 

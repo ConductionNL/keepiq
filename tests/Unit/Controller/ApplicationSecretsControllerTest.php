@@ -322,6 +322,30 @@ class ApplicationSecretsControllerTest extends TestCase {
 	}//end testCreateReturns201()
 
 	/**
+	 * A machine write that carries totp or passkeys hands them to the service,
+	 * whose refusal answers 400 instead of a 2xx that dropped them.
+	 *
+	 * @return void
+	 */
+	public function testAWriteWithTotpOrPasskeysReachesTheServiceAndIsRefused(): void {
+		$this->params = ['name' => 'new-token', 'key' => 'CIPHER', 'totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'];
+		$refuse = static function (...$args): never {
+			$data = $args['data'] ?? $args[0];
+			if (($data['totp'] ?? null) !== 'TOTP-CIPHER' || ($data['passkeys'] ?? null) !== 'PASSKEYS-CIPHER') {
+				throw new \LogicException('the value fields did not reach the service');
+			}
+
+			throw new \InvalidArgumentException('totp and passkeys are not supported on an application-owned secret');
+		};
+		$this->secretService->expects($this->once())->method('createByApplication')->willReturnCallback($refuse);
+		$this->secretService->expects($this->once())->method('updateByApplication')
+			->willReturnCallback(static fn (string $id, array $data) => $refuse($data));
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->controller->create()->getStatus());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->controller->update('s9')->getStatus());
+	}//end testAWriteWithTotpOrPasskeysReachesTheServiceAndIsRefused()
+
+	/**
 	 * Write-back update advances the secret and returns the new envelope;
 	 * a cross-vault id surfaces as 404.
 	 *

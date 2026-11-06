@@ -113,7 +113,7 @@ class AdminSuiteRevocationService {
 	 * The blast radius is collected from BOTH ends of an open migration before
 	 * either is revoked, because each revoke's cascade deletes the ShareTargets
 	 * the lookup reads (keepiq#864). Containment then stamps and warns, revokes
-	 * the user's link shares and passkeys (LinkShareService::deleteByUserId via
+	 * the user's link shares and passkeys (LinkShareService::deleteMadeBy via
 	 * MigrationService, keepiq#858) and ends their sessions (keepiq#860). Its
 	 * failures are counted and returned as `cascadeIncomplete`, so the
 	 * administrator is not told containment ran when part of it did not

@@ -132,3 +132,6 @@ screens/
 # The two-instance federation test (tests/integration/federation).
 /playwright-report-federation/
 /test-results-federation/
+
+# Claude Code agent worktrees.
+/.claude/worktrees/

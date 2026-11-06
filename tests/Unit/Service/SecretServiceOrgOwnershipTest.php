@@ -46,9 +46,11 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\VaultPolicyService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -57,6 +59,7 @@ use Psr\Log\LoggerInterface;
  * owns) with a child Team/Sub.
  */
 class SecretServiceOrgOwnershipTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	private bool $policyOn = true;
 
@@ -130,6 +133,7 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			secretMapper: $this->mapper,
 			groupManager: $groupManager,
 			memberships: $this->createMock(TeamFolderMembershipResolver::class),
+			subAdmin: $this->createMock(\OCP\Group\ISubAdmin::class),
 		);
 
 		$this->service = new SecretService(
@@ -139,21 +143,33 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			migrationService: $migrationService,
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			auditEvents: new AuditEventFactory(),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
-			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper),
+			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper, rowJudge: $this->shareRowJudge()),
 		);
 
 		$shareTargetMapper = $this->createMock(\OCA\Keepiq\Db\ShareTargetMapper::class);
 		$shareTargetMapper->method('findByRecipientSecret')->willReturnCallback(
-			static fn (string $id) => ($id === 'copy-from-iris' ? new \OCA\Keepiq\Db\ShareTarget() : throw new DoesNotExistException(''))
+			static function (string $id): \OCA\Keepiq\Db\ShareTarget {
+				if ($id !== 'copy-from-iris') {
+					throw new DoesNotExistException('');
+				}
+
+				// A real row: gina, its target, holds the copy it names.
+				$row = new \OCA\Keepiq\Db\ShareTarget();
+				$row->setTargetUserId('gina');
+				$row->setSecretId('copy-from-iris');
+				return $row;
+			}
 		);
 		$this->findingsGuard = new OrgOwnershipGuard(
 			policies: $policies,
 			teamFolders: $queries,
 			typeMapper: $typeMapper,
 			secretMapper: $this->mapper,
-			shareTargetMapper: $shareTargetMapper,
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $this->mapper),
 		);
 	}//end setUp()
 
@@ -292,6 +308,8 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 		foreach ([['old-login', 'type-login', 'private'], ['team-login', 'type-login', 'sub'], ['visa', 'type-card', 'private'], ['copy-from-iris', 'type-login', null]] as [$id, $type, $folder]) {
 			$secret = new Secret();
 			$secret->setId($id);
+			$secret->setOwnerType('user');
+			$secret->setOwnerId('gina');
 			$secret->setName($id);
 			$secret->setTypeId($type);
 			$secret->setFolderId($folder);

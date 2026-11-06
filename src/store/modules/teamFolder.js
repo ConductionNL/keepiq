@@ -16,15 +16,19 @@
  */
 
 import axios from '@nextcloud/axios'
-import { translatePlural as n } from '@nextcloud/l10n'
+import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
 import { useAttachmentStore } from './attachment.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
 
 /** Number of (secret × recipient) rows per registration POST. */
 const FAN_OUT_CHUNK_SIZE = 20
+
+/** The reason the server skips a pair whose copy would lack the source's one-time code or passkeys. */
+const COPY_FIELDS_MISMATCH = 'copy_fields_mismatch'
 
 /** How often an unlocked vault confirms waiting members (admin-auto-confirm-members D5). */
 export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
@@ -37,27 +41,9 @@ export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
  */
 let autoConfirmTimer = null
 
-/**
- * Turn decrypted secret fields into the shape encryptForRecipient takes.
- *
- * @param {object} plain The decrypted secret.
- * @return {{key: string, login: string, additionalFields: string}}
- */
-function recipientFields(plain) {
-	return {
-		key: plain.key ?? '',
-		login: plain.login ?? '',
-		additionalFields:
-			typeof plain.additionalFields === 'object'
-			&& plain.additionalFields !== null
-				? JSON.stringify(plain.additionalFields)
-				: (plain.additionalFields ?? ''),
-	}
-}
-
 export const useTeamFolderStore = defineStore('teamFolder', {
 	state: () => ({
-		/** @type {{created: number, members: number, at: number}|null} The last automatic confirmation run. */
+		/** @type {{created: number, members: number, refused: number, at: number}|null} The last automatic confirmation run. */
 		lastAutoConfirm: null,
 		/** @type {Array<object>} Team folders the user owns (with members). */
 		owned: [],
@@ -345,7 +331,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {object} [options] Options.
 		 * @param {string} [options.onlyUserId] Fan out to this member only
 		 *   (a per-member approval, keepiq#747); every member when omitted.
-		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>}>}
+		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>, refused: Array<string>}>}
+		 *   `skipped` holds the secrets this user holds no copy of, `refused` those
+		 *   the server would not copy because it would lack their one-time code or passkeys.
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
@@ -363,7 +351,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				)
 				this.fanOut.total = missing.length
 				if (missing.length === 0) {
-					return { created: 0, cancelled: false, skipped: [] }
+					return { created: 0, cancelled: false, skipped: [], refused: [] }
 				}
 
 				// The copy this browser decrypts for each source secret: the
@@ -372,6 +360,18 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					(state.secrets ?? []).map((ref) => [ref.id, ref]),
 				)
 				const skipped = new Set()
+				// Secrets the server refused a copy of, as `skipped` in its answer.
+				const refused = new Set()
+				const noteRefused = (data) => {
+					for (const entry of data?.skipped ?? []) {
+						if (entry.reason === COPY_FIELDS_MISMATCH) {
+							refused.add(
+								refs[entry.sourceSecretId]?.name
+									?? entry.sourceSecretId,
+							)
+						}
+					}
+				}
 
 				const certByUser = Object.fromEntries(
 					(state.recipients ?? []).map((r) => [r.userId, r.certificate]),
@@ -407,15 +407,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						// returns the PLAINTEXT secret — do not decrypt twice.
 
 						const plain = await secretStore.fetchSecret(readId)
-						plaintextCache[pair.secretId] = {
-							key: plain.key ?? '',
-							login: plain.login ?? '',
-							additionalFields:
-								typeof plain.additionalFields === 'object'
-								&& plain.additionalFields !== null
-									? JSON.stringify(plain.additionalFields)
-									: (plain.additionalFields ?? ''),
-						}
+						plaintextCache[pair.secretId] = recipientFields(plain)
 					}
 
 					const blob = await shareStore.encryptForRecipient(
@@ -425,9 +417,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					chunk.push({
 						sourceSecretId: pair.secretId,
 						targetUserId: pair.userId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
+						...copyCiphertext(blob),
 					})
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
@@ -438,6 +428,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 							{ shares: chunk },
 						)
 						created += response.data?.created ?? 0
+						noteRefused(response.data)
 
 						await this.regrantAttachments(
 							response.data?.rows ?? [],
@@ -456,6 +447,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						{ shares: chunk },
 					)
 					created += response.data?.created ?? 0
+					noteRefused(response.data)
 					await this.regrantAttachments(
 						response.data?.rows ?? [],
 						certByUser,
@@ -467,6 +459,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					created,
 					cancelled: this.fanOutCancelled,
 					skipped: [...skipped],
+					refused: [...refused],
 				}
 			} catch (e) {
 				this.error =
@@ -485,7 +478,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * each recipient and posts only ciphertext in chunks. A failure is
 		 * logged and retried on the next run; it never blocks the vault.
 		 *
-		 * @return {Promise<{enabled: boolean, created: number, members: number}>}
+		 * @return {Promise<{enabled: boolean, created: number, members: number, refused: number}>}
+		 *   `refused` counts the pairs the server would not copy because it would lack the
+		 *   secret's one-time code or passkeys.
 		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		async autoConfirm() {
@@ -498,6 +493,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 			)
 			const enabled = response.data?.enabled === true
 			let created = 0
+			let refused = 0
 			const members = new Set()
 
 			for (const folder of response.data?.folders ?? []) {
@@ -515,6 +511,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						{ shares: chunk },
 					)
 					created += result.data?.created ?? 0
+					refused += (result.data?.skipped ?? []).filter(
+						(entry) => entry.reason === COPY_FIELDS_MISMATCH,
+					).length
 					for (const row of result.data?.rows ?? []) {
 						members.add(row.targetUserId)
 					}
@@ -549,9 +548,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					chunk.push({
 						sourceSecretId: pair.secretId,
 						targetUserId: pair.userId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
+						...copyCiphertext(blob),
 					})
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
@@ -564,8 +561,13 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				}
 			}
 
-			this.lastAutoConfirm = { created, members: members.size, at: Date.now() }
-			return { enabled, created, members: members.size }
+			this.lastAutoConfirm = {
+				created,
+				members: members.size,
+				refused,
+				at: Date.now(),
+			}
+			return { enabled, created, members: members.size, refused }
 		},
 
 		/**
@@ -578,9 +580,21 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async startAutoConfirm() {
 			this.stopAutoConfirm()
+			// A refused pair is retried on every run: say so once per unlock, not every 15 minutes.
+			let refusedNoticed = false
 			const run = async () => {
 				try {
 					const result = await this.autoConfirm()
+					if (result.refused > 0 && refusedNoticed === false) {
+						refusedNoticed = true
+						const { showWarning } = await import('@nextcloud/dialogs')
+						showWarning(
+							t(
+								'keepiq',
+								'A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.',
+							),
+						)
+					}
 					if (result.members > 0) {
 						// One quiet notice per run, never per secret. Loaded on
 						// demand: @nextcloud/dialogs needs a window at import

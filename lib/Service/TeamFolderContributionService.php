@@ -90,15 +90,17 @@ class TeamFolderContributionService {
 	 *
 	 * @param string $teamFolderId The team folder
 	 * @param array<string,mixed> $data name, url, typeId, folderId, key, login,
-	 *                                  additionalFields (owner ciphertext) and
+	 *                                  additionalFields, totp, passkeys (owner ciphertext) and
 	 *                                  copies (rows per member)
 	 * @param string $userId The contributing member
 	 *
-	 * @return array{secret:Secret,copies:int}
+	 * @return array{secret:Secret,copies:int,skipped:list<array{sourceSecretId:string,targetUserId:string,reason:string}>}
+	 *   The member copies written, and those the fan-out skipped with the reason
 	 *
 	 * @throws NotFoundException When the team folder or target folder is unknown
 	 * @throws ForbiddenException When the caller holds no write grade there
-	 * @throws InvalidArgumentException On a missing name or owner ciphertext
+	 * @throws InvalidArgumentException On a missing name or owner ciphertext, or a member copy without
+	 *   the `totp` or `passkeys` the owner ciphertext carries; nothing is stored
 	 *
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
@@ -136,18 +138,21 @@ class TeamFolderContributionService {
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
+		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
 		$secret->setEncryptionSuiteId($suite->getId());
 		$secret->setOwnerType('user');
 		$secret->setOwnerId($ownerId);
 		$secret->setCreatedAt($now);
 		$secret->setUpdatedAt($now);
 		$secret->setKeyUpdatedAt($now);
+		$copies = $this->memberCopies(teamFolder: $teamFolder, owner: $secret, copies: (array)($data['copies'] ?? []));
 		$this->secretMapper->insert($secret);
 
 		try {
 			$result = $this->shares->registerFanOutShares(
 				teamFolder: $teamFolder,
-				shares: $this->memberCopies(teamFolder: $teamFolder, secretId: $secret->getId(), copies: (array)($data['copies'] ?? [])),
+				shares: $copies,
 				subtreeSecretIds: [$secret->getId() => true],
 				userId: $userId
 			);
@@ -168,7 +173,7 @@ class TeamFolderContributionService {
 			)
 		);
 
-		return ['secret' => $secret, 'copies' => $result['created']];
+		return ['secret' => $secret, 'copies' => $result['created'], 'skipped' => $result['skipped']];
 	}//end contribute()
 
 	/**
@@ -286,16 +291,20 @@ class TeamFolderContributionService {
 	/**
 	 * The copy rows the server accepts: one per covered, enabled member with
 	 * an active suite, never for the owner, for this new secret only.
+	 * A row must carry the `totp` and `passkeys` the owner row holds, and none it does not hold,
+	 * or that member's copy would show another value than the owner's.
 	 *
 	 * @param TeamFolder $teamFolder The team folder
-	 * @param string $secretId The new owner row
+	 * @param Secret $owner The new owner row, not yet stored
 	 * @param array<int,mixed> $copies The submitted rows
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
+	 * @throws InvalidArgumentException When a member's row lacks a field the owner row holds, or carries one it does not
+	 *
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
-	private function memberCopies(TeamFolder $teamFolder, string $secretId, array $copies): array {
+	private function memberCopies(TeamFolder $teamFolder, Secret $owner, array $copies): array {
 		$eligible = [];
 		$candidates = array_values(
 			array_diff(
@@ -313,12 +322,19 @@ class TeamFolderContributionService {
 				continue;
 			}
 
+			$carried = ['totp' => ($copy['encryptedTotp'] ?? null), 'passkeys' => ($copy['encryptedPasskeys'] ?? null)];
+			foreach ((new CredentialFields())->notMirrored(source: $owner, copy: $carried) as $field) {
+				throw new InvalidArgumentException('Every member copy must carry the '.$field.' the secret holds, and none it does not');
+			}
+
 			$rows[] = [
-				'sourceSecretId' => $secretId,
+				'sourceSecretId' => $owner->getId(),
 				'targetUserId' => (string)$copy['targetUserId'],
 				'encryptedKey' => (string)($copy['encryptedKey'] ?? ''),
 				'encryptedLogin' => ($copy['encryptedLogin'] ?? null),
 				'encryptedAdditionalFields' => ($copy['encryptedAdditionalFields'] ?? null),
+				'encryptedTotp' => ($copy['encryptedTotp'] ?? null),
+				'encryptedPasskeys' => ($copy['encryptedPasskeys'] ?? null),
 			];
 		}
 

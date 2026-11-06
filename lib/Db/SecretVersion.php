@@ -45,6 +45,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLogin(?string $login)
  * @method string|null getAdditionalFields()
  * @method void setAdditionalFields(?string $additionalFields)
+ * @method string|null getTotp()
+ * @method void setTotp(?string $totp)
+ * @method string|null getPasskeys()
+ * @method void setPasskeys(?string $passkeys)
  * @method string|null getEncryptionSuiteId()
  * @method void setEncryptionSuiteId(?string $encryptionSuiteId)
  * @method string getActorType()
@@ -55,6 +59,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  */
 class SecretVersion extends Entity implements JsonSerializable {
+
+	use StringPrimaryKey;
 
 	/**
 	 * The secret this version belongs to.
@@ -106,6 +112,20 @@ class SecretVersion extends Entity implements JsonSerializable {
 	protected ?string $additionalFields = null;
 
 	/**
+	 * The ciphertext TOTP seed blob at snapshot time.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $totp = null;
+
+	/**
+	 * The ciphertext passkeys blob at snapshot time.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $passkeys = null;
+
+	/**
 	 * The suite that wrapped this version's ciphertext.
 	 *
 	 * @var string|null
@@ -143,26 +163,6 @@ class SecretVersion extends Entity implements JsonSerializable {
 	public $id = '';
 
 	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
-
-	/**
 	 * Constructor for SecretVersion.
 	 *
 	 * @return void
@@ -176,6 +176,8 @@ class SecretVersion extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'key', type: 'string');
 		$this->addType(fieldName: 'login', type: 'string');
 		$this->addType(fieldName: 'additionalFields', type: 'string');
+		$this->addType(fieldName: 'totp', type: 'string');
+		$this->addType(fieldName: 'passkeys', type: 'string');
 		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
 		$this->addType(fieldName: 'actorType', type: 'string');
 		$this->addType(fieldName: 'actorId', type: 'string');
@@ -212,6 +214,8 @@ class SecretVersion extends Entity implements JsonSerializable {
 		$data['key'] = $this->key;
 		$data['login'] = $this->login;
 		$data['additionalFields'] = $this->additionalFields;
+		$data['totp'] = $this->totp;
+		$data['passkeys'] = $this->passkeys;
 
 		return $data;
 	}//end jsonSerializeWithBlobs()

@@ -84,21 +84,28 @@ describe('secret store: pending request-filled extra fields (keepiq#750)', () =>
 		expect(decrypted.mergedPending).toBe(0)
 	})
 
-	it('writes the merged blob back on open and says how many it merged', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({
-			data: served(['ENC({"C":"c"})']),
-		})
-		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { id: 's1' } })
+	it('writes the merged blob back after opening and says how many it merged', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
+			data: url.endsWith('/write-context')
+				? { sourceSecretId: 's1', effectiveGrade: 'owner' }
+				: { ...served(['ENC({"C":"c"})']), updatedAt: 'v1' },
+		}))
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { secret: { id: 's1', updatedAt: 'v2' } } })
 
 		const store = useSecretStore()
 		const opened = await store.fetchSecret('s1')
+		expect(opened.additionalFields).toEqual({ A: 'a', B: 'b', C: 'c' })
 
+		// The write-back runs after the open, as a share save.
+		await vi.waitFor(() => expect(opened.mergedPending).toBe(0))
 		expect(put).toHaveBeenCalledTimes(1)
 		const body = put.mock.calls[0][1]
-		expect(body.additionalFields).toBe('ENC({"A":"a","B":"b","C":"c"})')
-		expect(body.mergedPending).toBe(1)
-		expect(opened.additionalFields).toEqual({ A: 'a', B: 'b', C: 'c' })
-		expect(opened.mergedPending).toBe(0)
+		expect(body.baseUpdatedAt).toBe('v1')
+		expect(body.patch.additionalFields).toBe('ENC({"A":"a","B":"b","C":"c"})')
+		expect(body.patch.mergedPending).toBe(1)
+		expect(opened.updatedAt).toBe('v2')
 	})
 
 	it('writes nothing back when nothing is pending', async () => {

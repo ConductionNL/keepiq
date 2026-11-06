@@ -33,9 +33,11 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\QuarantinedShareTargetMapper;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 
 /**
@@ -74,6 +76,7 @@ class GdprService {
 	 * @param \OCA\Keepiq\Db\AttachmentMapper|null $attachmentMapper The attachment mapper (export metadata)
 	 * @param \OCA\Keepiq\Db\AttachmentGrantMapper|null $grantMapper The attachment-grant mapper (export metadata)
 	 * @param \OCA\Keepiq\Db\SecretTagMapper|null $tagMapper The tag mapper (export metadata)
+	 * @param QuarantinedShareTargetMapper|null $quarantinedMapper The quarantined share rows naming the subject
 	 *
 	 * @return void
 	 */
@@ -88,6 +91,7 @@ class GdprService {
 		private ?\OCA\Keepiq\Db\AttachmentMapper $attachmentMapper = null,
 		private ?\OCA\Keepiq\Db\AttachmentGrantMapper $grantMapper = null,
 		private ?\OCA\Keepiq\Db\SecretTagMapper $tagMapper = null,
+		private ?QuarantinedShareTargetMapper $quarantinedMapper = null,
 	) {
 	}//end __construct()
 
@@ -241,7 +245,8 @@ class GdprService {
 	}//end collectSuites()
 
 	/**
-	 * Collect the shares the user granted, across all secrets they own.
+	 * Collect the shares the user granted, across all secrets they own,
+	 * quarantined rows (GHSA-m5p9-6pw7-pf3g) included and flagged.
 	 *
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 *
@@ -250,12 +255,17 @@ class GdprService {
 	private function collectSharesGiven(array $ownedSecrets): array {
 		$rows = [];
 		foreach ($ownedSecrets as $secret) {
-			foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $share) {
+			$shares = $this->flagged(
+				live: $this->shareMapper->findBySourceSecret(sourceSecretId: $secret->getId()),
+				quarantined: ($this->quarantinedMapper?->findQuarantinedBySourceSecret(sourceSecretId: $secret->getId()) ?? []),
+			);
+			foreach ($shares as [$share, $quarantined]) {
 				$rows[] = [
 					'sourceSecretId' => $share->getSourceSecretId(),
 					'targetUserId' => $share->getTargetUserId(),
 					'groupShareId' => $share->getGroupShareId(),
 					'createdAt' => $share->getCreatedAt()?->format('c'),
+					'quarantined' => $quarantined,
 				];
 			}
 		}
@@ -264,24 +274,47 @@ class GdprService {
 	}//end collectSharesGiven()
 
 	/**
-	 * Collect the shares the user received.
+	 * Collect the shares the user received, quarantined rows included and
+	 * flagged.
 	 *
 	 * @param string $userId The user ID
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function collectSharesReceived(string $userId): array {
+		$shares = $this->flagged(
+			live: $this->shareMapper->findByTargetUser(targetUserId: $userId),
+			quarantined: ($this->quarantinedMapper?->findQuarantinedByTargetUser(targetUserId: $userId) ?? []),
+		);
+
 		$rows = [];
-		foreach ($this->shareMapper->findByTargetUser(targetUserId: $userId) as $share) {
+		foreach ($shares as [$share, $quarantined]) {
 			$rows[] = [
 				'sourceSecretId' => $share->getSourceSecretId(),
 				'recipientCopyId' => $share->getSecretId(),
 				'createdAt' => $share->getCreatedAt()?->format('c'),
+				'quarantined' => $quarantined,
 			];
 		}
 
 		return $rows;
 	}//end collectSharesReceived()
+
+	/**
+	 * Live and quarantined share rows together, each with whether it is
+	 * quarantined.
+	 *
+	 * @param ShareTarget[] $live        The live rows
+	 * @param ShareTarget[] $quarantined The quarantined rows
+	 *
+	 * @return list<array{0:ShareTarget,1:bool}>
+	 */
+	private function flagged(array $live, array $quarantined): array {
+		return array_merge(
+			array_map(static fn (ShareTarget $share): array => [$share, false], array_values($live)),
+			array_map(static fn (ShareTarget $share): array => [$share, true], array_values($quarantined)),
+		);
+	}//end flagged()
 
 	/**
 	 * Collect the delegations the user granted as original owner.
@@ -305,15 +338,19 @@ class GdprService {
 	}//end collectDelegations()
 
 	/**
-	 * Collect link-share metadata (no encrypted snapshots).
+	 * Collect link-share metadata (no encrypted snapshots) for the links the
+	 * user holds or made. `handedOver` marks a link they made that an
+	 * ownership transfer handed to someone else.
 	 *
 	 * @param string $userId The user ID
 	 *
 	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	private function collectLinkShares(string $userId): array {
 		$rows = [];
-		foreach ($this->linkShareMapper->findByCreatedBy(userId: $userId) as $link) {
+		foreach ($this->linkShareMapper->findHeldOrMadeBy(userId: $userId) as $link) {
 			$rows[] = [
 				'id' => $link->getId(),
 				'secretId' => $link->getSecretId(),
@@ -321,6 +358,7 @@ class GdprService {
 				'usageCount' => $link->getUsageCount(),
 				'createdAt' => $link->getCreatedAt()?->format('c'),
 				'expiresAt' => $link->getExpiresAt()?->format('c'),
+				'handedOver' => ($link->getCreatedBy() !== $userId),
 				// The token + encryptedSecretSnapshot are deliberately omitted.
 			];
 		}

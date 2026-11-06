@@ -62,10 +62,15 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -87,6 +92,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/implement-user-sharing/tasks.md#task-15.9
  */
 class UserSharingIntegrationTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use AdminAreaFixture;
 
 	/**
@@ -148,7 +155,7 @@ class UserSharingIntegrationTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $secretMapper,
 			delegationMapper: $delegationMapper,
-			suiteMapper: $suiteMapper,
+			rowJudge: $this->shareRowJudge(secrets: $secretMapper),
 		);
 
 		$copyFactory = new RecipientSecretCopyFactory(
@@ -158,21 +165,22 @@ class UserSharingIntegrationTest extends TestCase {
 
 		$service = new ShareService(
 			mapper: $shareTargetMapper,
-			db: $db,
-			notificationService: $notificationService,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $shareTargetMapper,
 				secretMapper: $secretMapper,
 				copyFactory: $copyFactory,
 				notificationService: $notificationService,
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 			),
 			syncService: new ShareSyncService(
-				mapper: $shareTargetMapper,
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 				secretMapper: $secretMapper,
-				suiteMapper: $suiteMapper,
 				db: $db,
 				auth: $auth,
+				versionService: $this->createMock(SecretVersionService::class),
+				guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper), secrets: $secretMapper, suites: $suiteMapper, auth: $auth),
+				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $shareTargetMapper), suites: $suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $shareTargetMapper,
@@ -180,7 +188,9 @@ class UserSharingIntegrationTest extends TestCase {
 				db: $db,
 				logger: $logger,
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return [$service, $shareTargetMapper, $secretMapper, $suiteMapper, $delegationMapper, $notificationService, $db];
@@ -265,6 +275,8 @@ class UserSharingIntegrationTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			secretRequestService: null,
 			shareService: $shareService,
 			groupShareMapper: $groupShareMapper,
@@ -298,7 +310,7 @@ class UserSharingIntegrationTest extends TestCase {
 
 		$service = new DelegationService(
 			mapper: $mapper,
-			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
+			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		$secret = $this->makeSecret('s-1', 'alice');
@@ -343,15 +355,21 @@ class UserSharingIntegrationTest extends TestCase {
 			mapper: $mapper,
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
-				shareTargetMapper: $shareTargetMapper,
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 				areas: $this->areaAuthorizer(groupManager: $groupManager, delegated: [PeopleAdminSettings::class]),
 			),
 		);
 
 		$secret = $this->makeSecret('s-1', 'alice');
-		$secretMapper->method('findById')->willReturn($secret);
+		$copy = $this->makeSecret('c-1', 'mallory');
+		$secretMapper->method('findById')->willReturnCallback(
+			static fn (string $id): Secret => ($id === 'c-1' ? $copy : $secret)
+		);
+		$shareRow = new ShareTarget();
+		$shareRow->setTargetUserId('mallory');
+		$shareRow->setSecretId('c-1');
 		$shareTargetMapper->method('findBySourceSecretAndTargetUser')
-			->willReturn(new ShareTarget());
+			->willReturn($shareRow);
 
 		$mapper->expects($this->once())->method('insert')->willReturnArgument(0);
 		$row = $service->createAdminHandover(

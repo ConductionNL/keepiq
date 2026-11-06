@@ -493,7 +493,7 @@ class MigrationServiceTest extends TestCase {
 		$this->stubUnattempted(secrets: 1, versions: 0, grants: 0);
 
 		$this->suiteService->expects($this->never())->method('markCompromised');
-		$this->linkShareService->expects($this->never())->method('deleteByUserId');
+		$this->linkShareService->expects($this->never())->method('deleteMadeBy');
 
 		$this->expectException(MigrationIncompleteException::class);
 
@@ -589,7 +589,7 @@ class MigrationServiceTest extends TestCase {
 					return new EncryptionSuite();
 				}
 			);
-		$this->linkShareService->method('deleteByUserId')
+		$this->linkShareService->method('deleteMadeBy')
 			->willReturnCallback(
 				function () use (&$order) {
 					$order[] = 'revokeLinkShares';

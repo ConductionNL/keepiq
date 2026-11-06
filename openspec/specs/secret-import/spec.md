@@ -4,14 +4,14 @@
 TBD - created by archiving change secret-import. Update Purpose after archive.
 ## Requirements
 ### Requirement: Client-Side Parsing and E2E Guarantee
-The system MUST parse import files entirely in the browser. The plaintext content of an import file MUST NEVER be transmitted to the server. Before any data is persisted, every sensitive field (key, login, additional_fields) MUST be encrypted in the browser with the owner's active EncryptionSuite public certificate, using the same WebCrypto encryption path as Create Secret. This preserves the encryption-suites spec guarantees: the server stores and receives only encrypted blobs, and no plaintext secret value ever exists server-side.
+The system MUST parse import files entirely in the browser. The plaintext content of an import file MUST NEVER be transmitted to the server. Before any data is persisted, every sensitive field (key, login, additional_fields, totp, passkeys) MUST be encrypted in the browser with the owner's active EncryptionSuite public certificate, using the same WebCrypto encryption path as Create Secret. This preserves the encryption-suites spec guarantees: the server stores and receives only encrypted blobs, and no plaintext secret value ever exists server-side.
 
 An import MUST only be possible while the vault is unlocked (the owner's CryptoKey is in the browser session per the encryption-suites Session Mechanism requirement). Parsed plaintext rows MUST be held only in JavaScript memory — never written to `localStorage`, `sessionStorage`, or IndexedDB — and MUST be discarded when the import wizard closes.
 
 #### Scenario: Plaintext never sent to server
 @e2e exclude Covered by the import-store vitest plaintext-never-in-request-body assertion + the ImportService envelope-validation PHPUnit; a Playwright DOM check cannot prove ciphertext-only payloads.
 - **WHEN** a user imports a file containing plaintext credentials
-- **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, and additional_fields
+- **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, additional_fields, totp, and passkeys
 - **AND** the plaintext-permitted fields in any request MUST be limited to name, url, type, and folder path — the same fields the secrets spec stores unencrypted
 
 #### Scenario: Import requires unlocked vault
@@ -116,6 +116,13 @@ The system MUST provide an authenticated batch endpoint that accepts arrays of a
 - **THEN** the other 49 items MUST be created
 - **AND** the response MUST identify the failed index and reason
 - **AND** the failed row MUST appear in the rejected list of the summary report
+
+#### Scenario: A login's TOTP seed and passkeys are imported with it
+@e2e exclude Per-item ciphertext validation of the batch endpoint; covered by PHPUnit (ImportServiceTest).
+- **WHEN** an item carries `totp` or `passkeys`
+- **THEN** each MUST be stored on the created secret, and `''` or an absent field MUST count as not set
+- **AND** each MUST be a ciphertext as `rsaEncrypt` produces it: base64 of a chunk count followed by that many whole RSA blocks of at least 256 bytes, so a plaintext base32 seed or passkey JSON fails the item
+- **NOTE** this is the server side only: the web import does not send these fields yet and still splits a seed off into a `totp`-typed secret, which keepiq#1327 changes
 
 #### Scenario: Large vault import shows progress
 @e2e exclude Chunking at 50 + progress counters covered by the import-store vitest (120 rows produce three chunks of 50/50/20, committedChunks tracked); a 2,000-row Playwright import is impractical.

@@ -183,8 +183,7 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       enable-newman: true
-      # Keepiq needs no other app (ADR-006); standalone.yml proves that on an
-      # instance with Keepiq alone. OpenRegister is installed HERE so this
+      # Keepiq needs no other app (ADR-006). OpenRegister is installed HERE so this
       # suite covers the integrations that need it: the Flows pages and the
       # MCP tools, which appear only when OpenRegister is enabled.
       #
@@ -304,6 +303,11 @@ jobs:
       # ONLY when `enable-axe: true` — un-skipping Playwright is not the fix;
       # with axe off the gate declares itself not applicable.
       enable-hydra-gates: true
+      # Gate 122 (SIG unit ratchet) blocks: a unit this change adds or makes
+      # worse must stay at NLOC 60, McCabe 10 and at most 4 parameters, and a
+      # new duplicated fragment of 6+ lines fails. Units the change does not
+      # touch, or touches without making worse, are inherited and do not count.
+      hydra-gates-sig-blocking: true
       # No `hydra-gates-ref` here on purpose. The shared workflow defaults it
       # to @main, and this workflow is itself consumed at @main, so the two
       # sides move together and a gate fix reaches this repo without a commit

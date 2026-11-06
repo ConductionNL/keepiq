@@ -520,6 +520,32 @@ class KeepiqNotifierTest extends TestCase {
 	}//end testGroupMemberAddedRendersTheRealServicePayloadWithActions()
 
 	/**
+	 * group_member_gained_write with the payload handleNewGroupMember() sends
+	 * for a member who already holds a copy: it says what the member can now
+	 * do and how to stop it, and has nothing to approve or deny.
+	 *
+	 * @return void
+	 */
+	public function testGroupMemberGainedWriteSaysWhatChangedAndHasNoActions(): void {
+		$params = [
+			'newMemberId' => 'dave',
+			'groupId' => 'ops',
+			'secretId' => 'sec-9',
+			'secretName' => 'Vault seal',
+			'groupShareId' => 'gs-1',
+		];
+		$recorded = $this->prepareSubject(subject: 'group_member_gained_write', params: $params);
+
+		$this->assertSame(expected: 'A group member can now change your secret', actual: $recorded['parsedSubject']);
+		$this->assertSame(
+			expected: 'dave joined the group "ops" and can now change "Vault seal" for everyone it is shared with. Revoke their share to stop this.',
+			actual: $recorded['parsedMessage']
+		);
+		$this->assertSame(self::BASE_URL . '/index.php/apps/keepiq/secrets/sec-9', $recorded['link']);
+		$this->assertSame([], $this->actionsFor(subject: 'group_member_gained_write', params: $params));
+	}//end testGroupMemberGainedWriteSaysWhatChangedAndHasNoActions()
+
+	/**
 	 * A share request without its three ids gets no actions: an action that
 	 * cannot name the request would approve nothing.
 	 *

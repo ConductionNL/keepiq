@@ -67,6 +67,9 @@ data class StoredSecret(
     /** The item's key cannot be used here; [blockedReason] says why. */
     val blocked: Boolean = false,
     val blockedReason: String? = null,
+    /** A login's own seed and passkeys, as the server's ciphertext. */
+    val totp: String? = null,
+    val passkeys: String? = null,
 )
 
 data class StoredFolder(val id: String, val name: String, val parentId: String?)
@@ -155,6 +158,8 @@ class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSeal
                         read_only = if (s.flag("readOnly")) 1L else 0L,
                         blocked = if (s.flag("blocked")) 1L else 0L,
                         blocked_reason = s.text("blockedReason"),
+                        totp_ciphertext = s.text("totp"),
+                        passkeys_ciphertext = s.text("passkeys"),
                     ),
                 )
             }
@@ -232,6 +237,8 @@ class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSeal
         readOnly = read_only != 0L,
         blocked = blocked != 0L,
         blockedReason = blocked_reason,
+        totp = totp_ciphertext,
+        passkeys = passkeys_ciphertext,
     )
 
     private fun JsonObject.text(name: String): String? = (this[name] as? JsonPrimitive)?.contentOrNull

@@ -12,12 +12,43 @@
 		:name="t('keepiq', 'Edit secret')"
 		:open="open"
 		size="normal"
+		:noClose="saving"
 		@update:open="onUpdateOpen">
 		<NcLoadingIcon v-if="loading" :size="32" class="secret-form__loading" />
 
 		<div v-else class="secret-form">
-			<NcNoteCard v-if="error" type="error">
+			<NcNoteCard v-if="error" type="error" data-testid="secret-edit-error">
 				{{ error }}
+				<NcButton
+					v-if="unreachablePartners.length > 0"
+					variant="secondary"
+					:disabled="saving"
+					data-testid="save-without-unreachable"
+					@click="saveWithoutUnreachable">
+					{{ t('keepiq', 'Save without them') }}
+				</NcButton>
+			</NcNoteCard>
+			<NcNoteCard
+				v-if="viewOnly"
+				type="info"
+				data-testid="secret-edit-view-only">
+				{{
+					t(
+						'keepiq',
+						'Shared with you to view only. Ask its owner for edit rights to change it.',
+					)
+				}}
+			</NcNoteCard>
+			<NcNoteCard
+				v-if="saving && waitingForPartners"
+				type="info"
+				data-testid="secret-edit-waiting">
+				{{
+					t(
+						'keepiq',
+						'This secret is shared with many partner organisations, so the save is waiting for the lookup limit and then continues. Keep this dialog open.',
+					)
+				}}
 			</NcNoteCard>
 
 			<NcTextField
@@ -47,76 +78,17 @@
 				</span>
 			</div>
 
-			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
-			<template v-if="isCard">
-				<NcPasswordField
-					v-model="card.number"
-					:label="t('keepiq', 'Card number')"
-					data-testid="card-number" />
-				<NcTextField
-					v-model="card.expiry"
-					:label="t('keepiq', 'Expiry (MM/YY)')"
-					data-testid="card-expiry" />
-				<NcPasswordField
-					v-model="card.cvv"
-					:label="t('keepiq', 'CVV')"
-					data-testid="card-cvv" />
-				<NcPasswordField
-					v-model="card.pin"
-					:label="t('keepiq', 'PIN (optional)')"
-					data-testid="card-pin" />
-				<NcTextField
-					v-model="card.cardholder"
-					:label="t('keepiq', 'Cardholder name')"
-					data-testid="card-cardholder" />
-			</template>
-			<template v-else-if="isIdentity">
-				<NcTextField
-					v-model="identity.firstName"
-					:label="t('keepiq', 'First name')"
-					data-testid="identity-first-name" />
-				<NcTextField
-					v-model="identity.lastName"
-					:label="t('keepiq', 'Last name')"
-					data-testid="identity-last-name" />
-				<NcTextField
-					v-model="identity.address"
-					:label="t('keepiq', 'Address')"
-					data-testid="identity-address" />
-				<NcTextField
-					v-model="identity.phone"
-					:label="t('keepiq', 'Phone')"
-					data-testid="identity-phone" />
-				<NcTextField
-					v-model="identity.email"
-					:label="t('keepiq', 'Email')"
-					data-testid="identity-email" />
-				<NcPasswordField
-					v-model="identity.bsn"
-					:label="t('keepiq', 'BSN')"
-					data-testid="identity-bsn" />
-			</template>
-			<div v-else class="secret-form__value-row">
-				<NcPasswordField
-					v-model="value"
-					class="secret-form__value-field"
-					:label="valueLabel" />
-				<NcButton
-					variant="tertiary-no-background"
-					:title="t('keepiq', 'Generate a strong key')"
-					:aria-label="t('keepiq', 'Generate a strong key')"
-					@click="openGenerator">
-					<template #icon>
-						<Dice5 :size="20" />
-					</template>
-				</NcButton>
-			</div>
+			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
-			<KeyGeneratorModal
-				v-if="generatorOpen"
-				:open="generatorOpen"
-				@update:open="generatorOpen = $event"
-				@generated="onGenerated" />
+			<!-- The saved seed is never loaded into the form: the field only
+			     says one is saved and offers Replace and Remove. -->
+			<AuthenticatorKeyField
+				v-if="showAuthenticator"
+				v-model:mode="totpMode"
+				v-model:value="totpInput"
+				:saved="totpSaved"
+				:removeOnly="!totpEditable"
+				:disabled="saving || loading || viewOnly" />
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
@@ -149,7 +121,12 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
+			<!-- A save closed mid-flight would still commit, or fail unseen. -->
+			<NcButton
+				variant="tertiary"
+				:disabled="saving"
+				data-testid="secret-edit-cancel"
+				@click="onUpdateOpen(false)">
 				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
@@ -169,36 +146,40 @@ import {
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
-	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
-import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
+import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
-import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_FIELDS,
-	CARD_TYPE_NAME,
 	IDENTITY_FIELDS,
-	IDENTITY_TYPE_NAME,
 	parsePayload,
-	serializeCard,
-	serializeIdentity,
 } from '../cardIdentity/cardIdentity.js'
+import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { shareSaveErrorText } from '../services/shareSave.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useShareStore } from '../store/modules/share.js'
+import {
+	authenticatorKeyError,
+	normaliseAuthenticatorKey,
+} from '../totp/authenticatorKey.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import {
 	mergeTypedValues,
 	missingRequired,
 	splitTypedValues,
-	typedFieldsOf,
 } from '../utils/typedFields.js'
+import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -210,18 +191,19 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		AuthenticatorKeyField,
+		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
 		ContentSave,
-		Dice5,
-		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
 		NcNoteCard,
-		NcPasswordField,
 		NcTextField,
 	},
+
+	mixins: [secretPayloadForm],
 
 	props: {
 		/** The ID of the secret to edit. */
@@ -244,28 +226,24 @@ export default {
 			open: true,
 			loading: true,
 			saving: false,
+			waitingForPartners: false,
 			error: '',
+			// The unreachable partner shares (ids) the last error named.
+			unreachablePartners: [],
 			original: null,
+			sourceBase: null,
+			// A copy without a write grade, known once the write-context answers.
+			viewOnly: false,
 			name: '',
 			typeId: null,
-			value: '',
 			url: '',
 			login: '',
+			/** What happens to a saved authenticator key: keep, replace or remove. */
+			totpMode: 'keep',
+			/** A new authenticator key being entered; the saved one is never loaded here. */
+			totpInput: '',
 			additionalFields: [],
 			tags: [],
-			typedValues: {},
-			typedMissing: [],
-			generatorOpen: false,
-			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
-			identity: {
-				firstName: '',
-				lastName: '',
-				address: '',
-				phone: '',
-				email: '',
-				bsn: '',
-			},
-
 			policy: null,
 		}
 	},
@@ -281,64 +259,6 @@ export default {
 		 */
 		typeLabel() {
 			return secretTypeLabel(useSecretTypeStore().typesById[this.typeId])
-		},
-
-		/**
-		 * The label for the secret-value field, which reads "Note" for the
-		 * `note` system type and "Secret value" otherwise.
-		 *
-		 * @return {string}
-		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
-		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
-		 */
-		valueLabel() {
-			const type = useSecretTypeStore().typesById[this.typeId]
-			return type && type.name === 'note'
-				? t('keepiq', 'Note')
-				: t('keepiq', 'Secret value')
-		},
-
-		/**
-		 * The fields an administrator defined on the chosen type; empty for
-		 * the built-in types, which keep their own forms.
-		 *
-		 * @return {Array<object>} The fields.
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 */
-		typedFields() {
-			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
-		},
-
-		/**
-		 * The selected type's system name (card-identity-items §3.1).
-		 *
-		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
-		 */
-		selectedTypeName() {
-			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
-		},
-
-		isCard() {
-			return this.selectedTypeName === CARD_TYPE_NAME
-		},
-
-		isIdentity() {
-			return this.selectedTypeName === IDENTITY_TYPE_NAME
-		},
-
-		/**
-		 * The value serialized for the encrypted key field.
-		 *
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
-		 */
-		effectiveValue() {
-			if (this.isCard) {
-				return serializeCard(this.card)
-			}
-			if (this.isIdentity) {
-				return serializeIdentity(this.identity)
-			}
-			return this.value
 		},
 
 		/**
@@ -361,14 +281,92 @@ export default {
 		},
 
 		/**
+		 * Whether a key can be entered: on a login only.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpEditable() {
+			return this.selectedTypeName === 'login'
+		},
+
+		/**
+		 * Whether the authenticator key field shows, when the server stores
+		 * the field: on a login, and on any other type that holds a key, so
+		 * that key can be removed.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		showAuthenticator() {
+			return (this.totpEditable || this.totpSaved) && valueFieldsSupported()
+		},
+
+		/**
+		 * Whether the login already holds an authenticator key. Only its
+		 * presence is read; the seed itself never reaches the form.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpSaved() {
+			return Boolean(this.original?.totp)
+		},
+
+		/**
+		 * Why the entered authenticator key blocks the save, '' when it does not.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpError() {
+			if (!this.showAuthenticator || !this.totpEditable) {
+				return ''
+			}
+			if (this.totpSaved && this.totpMode !== 'replace') {
+				return ''
+			}
+			return authenticatorKeyError(this.totpInput)
+		},
+
+		/**
+		 * The `totp` change to send: the new key, '' to remove the saved
+		 * one, or undefined to leave it as it is.
+		 *
+		 * @return {string|undefined}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		totpChange() {
+			if (!this.showAuthenticator) {
+				return undefined
+			}
+			if (this.totpSaved && this.totpMode === 'remove') {
+				return ''
+			}
+			if (
+				!this.totpEditable
+				|| (this.totpSaved && this.totpMode !== 'replace')
+			) {
+				return undefined
+			}
+			const entered = normaliseAuthenticatorKey(this.totpInput)
+			if (entered === '' || entered === (this.original?.totp || '')) {
+				return undefined
+			}
+			return entered
+		},
+
+		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		canSubmit() {
 			return (
 				!this.loading
 				&& !this.saving
+				&& !this.viewOnly
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
+				&& this.totpError === ''
 			)
 		},
 	},
@@ -389,20 +387,6 @@ export default {
 		t,
 
 		/**
-		 * Take the typed values and clear the marks of fields now filled.
-		 *
-		 * @param {object} values The values by field key.
-		 * @return {void}
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 */
-		onTypedValues(values) {
-			this.typedValues = values
-			this.typedMissing = this.typedMissing.filter((key) =>
-				missingRequired(this.typedFields, values).includes(key),
-			)
-		},
-
-		/**
 		 * Load + decrypt the secret and seed the form fields.
 		 *
 		 * Seeding the additional fields from the CURRENT decrypted copy is what bounds
@@ -416,9 +400,16 @@ export default {
 		async load() {
 			this.loading = true
 			this.error = ''
+			this.sourceBase = null
+			this.viewOnly = false
+			this.totpMode = 'keep'
+			this.totpInput = ''
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				this.original = secret
+				// Read after the secret, so it is never older than the copy the
+				// form shows; not awaited here, the save waits for it.
+				this.sourceBase = this.sourceVersion()
 				this.name = secret.name || ''
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
@@ -466,53 +457,66 @@ export default {
 		},
 
 		/**
-		 * Forward the open-state change; emit `close` when dismissed.
+		 * The source version this edit starts from when the secret is a copy,
+		 * so the share save refuses it as `stale_source` when the source moved
+		 * on while the dialog was open. Offline it is the one the cached vault
+		 * row carries. Null when it is not known: the save then takes the
+		 * source version of its own moment. A merge write-back of the secret
+		 * that saved moved the source, so its version is taken instead; one
+		 * that failed leaves the version read on open. Null for an own secret
+		 * whose write-context was read; when that read fails, an own secret's
+		 * write-back that saved gives its version, which the owner's save
+		 * does not send. A copy without a write grade marks the dialog view
+		 * only, so it cannot be saved.
 		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 *
-		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
+		 * @return {Promise<string|null>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
+		async sourceVersion() {
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find(
+					(secret) => secret.id === this.secretId,
+				)
+				return cached?.sourceUpdatedAt ?? null
 			}
+			const [context, writeBack] = await Promise.all([
+				useShareStore()
+					.fetchWriteContext(this.secretId)
+					.catch(() => null),
+				useSecretStore().writeBackSettled(this.secretId),
+			])
+			this.viewOnly = isViewOnlyCopy(context, this.secretId)
+			if (context?.sourceSecretId === this.secretId) {
+				return null
+			}
+			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
 		},
 
 		/**
-		 * Open the key generator dialog.
+		 * Save again after the user chose to stop sharing with the partners
+		 * the error named: only those shares are suspended.
 		 *
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
-		openGenerator() {
-			this.generatorOpen = true
-		},
-
-		/**
-		 * Receive the generated key from the modal and copy it into the value field.
-		 *
-		 * @param {string} key The generated key.
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-		 */
-		onGenerated(key) {
-			if (typeof key === 'string' && key.length > 0) {
-				this.value = key
-			}
+		async saveWithoutUnreachable() {
+			await this.submit({ withoutUnreachable: this.unreachablePartners })
 		},
 
 		/**
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
+		 * @param {object} [options] Options.
+		 * @param {Array<string>} [options.withoutUnreachable] The unreachable partner shares (ids) the user agreed to suspend.
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
-		async submit() {
+		async submit(options = {}) {
 			if (!this.canSubmit) {
 				return
 			}
@@ -522,7 +526,9 @@ export default {
 				return
 			}
 			this.saving = true
+			this.waitingForPartners = false
 			this.error = ''
+			this.unreachablePartners = []
 			try {
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
@@ -560,6 +566,11 @@ export default {
 				if ((this.login || '') !== (o.login || '')) {
 					diff.login = this.login
 				}
+				// Sent only when replaced or removed, so it counts as a change
+				// below and carries the base versions like any value change.
+				if (this.totpChange !== undefined) {
+					diff.totp = this.totpChange
+				}
 
 				// One blob is the storage unit, so ANY member change rewrites all of
 				// it. Sent only when something actually changed, and sent as `{}`
@@ -588,10 +599,24 @@ export default {
 
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
-					updated = await useSecretStore().updateSecret(
-						this.secretId,
-						diff,
-					)
+					const store = useSecretStore()
+					const onWait = () => {
+						this.waitingForPartners = true
+					}
+					// Waited for here so its partner wait shows. `o` is the copy
+					// the dialog opened, which only a write-back of it that saved
+					// moved, so its version and merged count are read only now.
+					await store.writeBackSettled(this.secretId, onWait)
+					const sourceBaseUpdatedAt = await this.sourceBase
+					if (diff.additionalFields !== undefined && o.mergedPending > 0) {
+						diff.mergedPending = o.mergedPending
+					}
+					updated = await store.updateSecret(this.secretId, diff, {
+						baseUpdatedAt: o.updatedAt,
+						sourceBaseUpdatedAt,
+						withoutUnreachable: options?.withoutUnreachable ?? [],
+						onWait,
+					})
 				}
 				// Tags are the holder's own, stored apart from the value
 				// (vault-favourites-tags-and-last-used).
@@ -604,8 +629,13 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
+				this.unreachablePartners =
+					e?.code === 'partner_unreachable'
+						? (e.partners ?? []).map((share) => share.shareId)
+						: []
 				this.error =
-					e?.response?.data?.message
+					shareSaveErrorText(e)
+					|| e?.response?.data?.message
 					|| e?.message
 					|| t('keepiq', 'Failed to save secret')
 			} finally {
@@ -646,15 +676,5 @@ export default {
 	display: flex;
 	justify-content: center;
 	margin: 24px 0;
-}
-
-.secret-form__value-row {
-	display: flex;
-	align-items: flex-end;
-	gap: 8px;
-}
-
-.secret-form__value-field {
-	flex: 1 1 auto;
 }
 </style>

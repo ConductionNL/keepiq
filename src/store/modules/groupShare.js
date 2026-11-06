@@ -6,6 +6,7 @@
 import axios from '@nextcloud/axios'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
 
@@ -106,8 +107,9 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 * @param {string} secretId The source secret id.
 		 * @param {string} groupId The Nextcloud group id.
 		 * @param {{useOnly: boolean, expiresAt: string|null}} [restriction] Use-only and end date.
-		 * @return {Promise<{received: number, skipped: number}>} How many members
-		 *   got a copy, and how many did not (no encryption suite, or refused).
+		 * @return {Promise<{received: number, skipped: number, refused: number}>} How many
+		 *   members got a copy, how many did not (no encryption suite, or refused), and how
+		 *   many were refused because the login holds a one-time code or passkeys.
 		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async shareWithGroup(secretId, groupId, restriction = {}) {
@@ -128,6 +130,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 
 				let received = 0
 				let refused = 0
+				let mismatched = 0
 				if (groupShare !== null && members.length > 0) {
 					const rows = await this.encryptForMembers(
 						secretId,
@@ -140,7 +143,13 @@ export const useGroupShareStore = defineStore('groupShare', {
 						(item) =>
 							item.status === 'created' || item.status === 'exists',
 					).length
-					refused = members.length - received
+					// A copy the server would leave without the login's one-time
+					// code or passkeys is refused for that reason, not for a
+					// missing encryption suite.
+					mismatched = items.filter(
+						(item) => item.status === 'copy_fields_mismatch',
+					).length
+					refused = members.length - received - mismatched
 				}
 
 				if (groupShare !== null) {
@@ -152,7 +161,11 @@ export const useGroupShareStore = defineStore('groupShare', {
 					]
 				}
 
-				return { received, skipped: skippedByServer + refused }
+				return {
+					received,
+					skipped: skippedByServer + refused,
+					refused: mismatched,
+				}
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message || e?.message || 'Failed to share'
@@ -174,15 +187,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		async encryptForMembers(secretId, groupShareId, members) {
 			const shareStore = useShareStore()
 			const plain = await useSecretStore().fetchSecret(secretId)
-			const snapshot = {
-				key: plain?.key ?? '',
-				login: plain?.login ?? '',
-				additionalFields:
-					typeof plain?.additionalFields === 'object'
-					&& plain.additionalFields !== null
-						? JSON.stringify(plain.additionalFields)
-						: (plain?.additionalFields ?? ''),
-			}
+			const snapshot = recipientFields(plain)
 
 			const rows = []
 			for (const member of members) {
@@ -193,9 +198,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 				rows.push({
 					sourceSecretId: secretId,
 					targetUserId: member.userId,
-					encryptedKey: blob.key ?? '',
-					encryptedLogin: blob.login ?? null,
-					encryptedAdditionalFields: blob.additionalFields ?? null,
+					...copyCiphertext(blob),
 					groupShareId,
 				})
 			}

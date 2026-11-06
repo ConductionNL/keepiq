@@ -170,9 +170,9 @@ $extra = [
 
     // User-to-user sharing — implement-user-sharing §9.
     ['name' => 'share#index',       'url' => '/api/v1/secrets/{secretId}/shares',       'verb' => 'GET'],
-    ['name' => 'share#create',      'url' => '/api/v1/secrets/{secretId}/shares',       'verb' => 'POST'],
-    ['name' => 'share#createBatch', 'url' => '/api/v1/secrets/{secretId}/shares/batch', 'verb' => 'POST'],
     // Bulk direct-share registration + recipient-cert lookup (bulk-actions §6.1).
+    // Shares are created only through register-batch, which mints each
+    // recipient copy server-side (GHSA-m5p9-6pw7-pf3g).
     ['name' => 'share#registerBatch',        'url' => '/api/v1/shares/register-batch',        'verb' => 'POST'],
     ['name' => 'share#recipientCertificate', 'url' => '/api/v1/shares/recipient-certificate', 'verb' => 'GET'],
     ['name' => 'recipientStatus#status',     'url' => '/api/v1/shares/recipient-status',      'verb' => 'POST'],
@@ -180,6 +180,8 @@ $extra = [
     // and the sharee-search pages these ids come from can be long.
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
+    // The row, every copy and every partner share in one transaction (#1254).
+    ['name' => 'shareSave#save',    'url' => '/api/v1/secrets/{id}/share-save',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
     // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
     ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],
@@ -188,7 +190,9 @@ $extra = [
     ['name' => 'groupShare#index',            'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'GET'],
     ['name' => 'groupShare#create',           'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'POST'],
     ['name' => 'groupShare#destroy',          'url' => '/api/v1/group-shares/{id}',                         'verb' => 'DELETE'],
-    ['name' => 'groupShare#approveNewMember', 'url' => '/api/v1/group-shares/{id}/approve-new-member',      'verb' => 'POST'],
+    // New group members' copies are registered through register-batch, which
+    // mints each copy server-side (GHSA-m5p9-6pw7-pf3g); approval only dismisses
+    // the notification.
     ['name' => 'groupShare#denyNewMember',    'url' => '/api/v1/group-shares/{id}/deny-new-member',         'verb' => 'POST'],
 
     // Share requests — implement-user-sharing §9.3.

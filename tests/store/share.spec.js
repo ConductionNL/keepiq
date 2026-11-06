@@ -78,52 +78,6 @@ describe('useShareStore', () => {
 		})
 	})
 
-	describe('createShare', () => {
-		it('POSTs the share target and appends it to the list', async () => {
-			const post = vi.spyOn(axios, 'post').mockResolvedValue({
-				data: {
-					id: 's-new',
-					target_user_id: 'carol',
-					recipientSecretId: 'r1',
-				},
-			})
-			const store = useShareStore()
-			const row = await store.createShare('sec-1', 'carol', 'r1', null)
-			expect(post).toHaveBeenCalled()
-			expect(row.id).toBe('s-new')
-			expect(store.shares[0].id).toBe('s-new')
-		})
-
-		it('retries with a proof when the server asks for one (keepiq#818)', async () => {
-			const post = vi
-				.spyOn(axios, 'post')
-				.mockRejectedValueOnce({
-					response: { status: 428, data: { error: 'key_proof_required' } },
-				})
-				.mockResolvedValueOnce({ data: { id: 's-new' } })
-			const store = useShareStore()
-			const row = await store.createShare('sec-1', 'mallory', 'r1', null)
-
-			expect(row.id).toBe('s-new')
-			expect(post).toHaveBeenCalledTimes(2)
-			expect(post.mock.calls[0][2]).toBeUndefined()
-			expect(post.mock.calls[1][2].headers).toEqual({
-				'X-Keepiq-Key-Proof': 'proof(share-new-recipient|sec-1,mallory)',
-			})
-		})
-
-		it('does not ask for a proof on any other refusal', async () => {
-			const post = vi.spyOn(axios, 'post').mockRejectedValue({
-				response: { status: 400, data: { message: 'nope' } },
-			})
-			const store = useShareStore()
-			await expect(
-				store.createShare('sec-1', 'mallory', 'r1', null),
-			).rejects.toBeTruthy()
-			expect(post).toHaveBeenCalledTimes(1)
-		})
-	})
-
 	describe('revokeShare', () => {
 		it('DELETEs and removes the share from the list', async () => {
 			vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
@@ -131,29 +85,6 @@ describe('useShareStore', () => {
 			store.shares = [{ id: 's1' }, { id: 's2' }]
 			await store.revokeShare('s1')
 			expect(store.shares).toEqual([{ id: 's2' }])
-		})
-	})
-
-	describe('createBatchShares', () => {
-		it('POSTs once per recipient and returns the response rows', async () => {
-			const post = vi
-				.spyOn(axios, 'post')
-				.mockResolvedValueOnce({
-					data: { id: 'r1', target_user_id: 'alice' },
-				})
-				.mockResolvedValueOnce({ data: { id: 'r2', target_user_id: 'bob' } })
-			const store = useShareStore()
-			const rows = await store.createBatchShares(
-				'sec-1',
-				[
-					{ targetUserId: 'alice', recipientSecretId: 'a1' },
-					{ targetUserId: 'bob', recipientSecretId: 'b1' },
-				],
-				'g1',
-			)
-			expect(post).toHaveBeenCalledTimes(2)
-			expect(rows).toHaveLength(2)
-			expect(rows[1].id).toBe('r2')
 		})
 	})
 
@@ -165,88 +96,6 @@ describe('useShareStore', () => {
 			store.reset()
 			expect(store.shares).toEqual([])
 			expect(store.error).toBeNull()
-		})
-	})
-
-	describe('syncUpdate (§11.5)', () => {
-		it('returns updated:0 when the secret has no recipients', async () => {
-			vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
-			const put = vi.spyOn(axios, 'put')
-			const store = useShareStore()
-
-			const result = await store.syncUpdate(
-				'sec-1',
-				{ key: 'newPW' },
-				'2026-06-12T00:00:00Z',
-			)
-
-			expect(result.updated).toBe(0)
-			expect(put).not.toHaveBeenCalled()
-		})
-
-		it('encrypts the plaintext for each recipient and PUTs the batch', async () => {
-			const store = useShareStore()
-			// Pre-seed the share list so fetchShares is short-circuited
-			// (the recipient certificates are attached to each row).
-			store.shares = [
-				{ id: 'sh1', secretId: 'copy-bob', recipientCertificate: 'PEM-bob' },
-				{
-					id: 'sh2',
-					secretId: 'copy-carol',
-					recipientCertificate: 'PEM-carol',
-				},
-			]
-
-			const put = vi
-				.spyOn(axios, 'put')
-				.mockResolvedValue({ data: { updated: 2 } })
-			const result = await store.syncUpdate(
-				'sec-1',
-				{ key: 'newPW', login: 'bob@example.com' },
-				'2026-06-12T00:00:00Z',
-			)
-
-			expect(put).toHaveBeenCalledTimes(1)
-			const [url, body] = put.mock.calls[0]
-			expect(url).toContain('/api/v1/secrets/sec-1/sync')
-			expect(body.expectedUpdatedAt).toBe('2026-06-12T00:00:00Z')
-			expect(body.updates).toHaveLength(2)
-			expect(body.updates[0].encryptedKey).toBe('ENC(newPW)')
-			expect(body.updates[0].encryptedLogin).toBe('ENC(bob@example.com)')
-			expect(body.updates[0].secretId).toBe('copy-bob')
-			expect(result.updated).toBe(2)
-		})
-
-		it('skips recipients whose certificate has been cleared', async () => {
-			const store = useShareStore()
-			store.shares = [
-				{ id: 'sh1', secretId: 'copy-bob', recipientCertificate: 'PEM-bob' },
-				{ id: 'sh2', secretId: 'copy-stale', recipientCertificate: '' },
-			]
-
-			const put = vi
-				.spyOn(axios, 'put')
-				.mockResolvedValue({ data: { updated: 1 } })
-			await store.syncUpdate('sec-1', { key: 'newPW' }, null)
-
-			const body = put.mock.calls[0][1]
-			expect(body.updates).toHaveLength(1)
-			expect(body.updates[0].secretId).toBe('copy-bob')
-		})
-
-		it('surfaces 409 conflicts via the error field and rethrows', async () => {
-			const store = useShareStore()
-			store.shares = [
-				{ id: 'sh1', secretId: 'copy-bob', recipientCertificate: 'PEM-bob' },
-			]
-			vi.spyOn(axios, 'put').mockRejectedValue({
-				response: { status: 409, data: { message: 'stale lock' } },
-			})
-
-			await expect(
-				store.syncUpdate('sec-1', { key: 'newPW' }, '2026-06-12T00:00:00Z'),
-			).rejects.toBeTruthy()
-			expect(store.error).toBe('stale lock')
 		})
 	})
 })

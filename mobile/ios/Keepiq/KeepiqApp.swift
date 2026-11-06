@@ -14,6 +14,8 @@ struct KeepiqApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(model)
+                // Keepiq's tint passes WCAG AA contrast; the system blue does not on white.
+                .tint(KeepiqPalette.accent)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.cameToForeground() }
@@ -164,12 +166,16 @@ struct AutofillPreviewButton: View {
         }
     }
 
-    /// The passkeys in the site file on disk, and in the identity store's last rebuild.
+    /// In the site file on disk, the logins with their own passkeys (where a
+    /// new passkey goes) and the standalone Passkey items, counted apart; and
+    /// the passkeys in the identity store's last rebuild.
     private func passkeyIndexLine(_ accountId: String, _ rp: String) -> String {
         let key = ApplePasskeys.shared.siteKey(rpId: rp)
-        let count = AutofillFiles.shared.read(accountId: accountId, site: key)
-            .map { AutofillIndex.companion.fromJson(text: $0).entries.filter { $0.isPasskey }.count } ?? 0
-        return "\(key): \(count) passkeys on disk, passkey identities \(index.lastPasskeyCount)"
+        let entries = AutofillFiles.shared.read(accountId: accountId, site: key)
+            .map { AutofillIndex.companion.fromJson(text: $0).entries } ?? []
+        let logins = entries.filter { $0.hasPasskeys }.count
+        let items = entries.filter { $0.isPasskey }.count
+        return "\(key): logins with passkeys \(logins), passkey items \(items), passkey identities \(index.lastPasskeyCount)"
     }
 
     /// What is on disk for the asked site, read back from its file, not counted on the way in.

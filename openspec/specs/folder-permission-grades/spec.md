@@ -39,7 +39,7 @@ The system MUST record a `read` (default), `write` or `manage` grade on every te
 - **THEN** Bob's grade MUST become `write`
 
 ### Requirement: A write-grade member may update a folder secret for all recipients
-The system MUST allow a `write`-grade member to update a folder secret such that the change propagates to every recipient. The value MUST be re-encrypted under each recipient's public certificate by the writer's client; the server MUST NOT decrypt, re-encrypt, or hold plaintext.
+The system MUST allow a `write`-grade member to update a folder secret such that the change propagates to every recipient. The value MUST be re-encrypted under each recipient's public certificate by the writer's client; the server MUST NOT decrypt, re-encrypt, or hold plaintext. A member whose effective grade is `read` holds a view-only copy (user-sharing, "View-Only Copies"): they MUST NOT change its value, neither for every holder nor for their own copy alone.
 
 #### Scenario: Write-grade member rotates a shared credential
 - GIVEN user W holds a `write` grade on a folder containing secret S shared to recipients R
@@ -47,9 +47,15 @@ The system MUST allow a `write`-grade member to update a folder secret such that
 - THEN the system MUST accept the fan-out and update every recipient's copy without decrypting any blob
 
 #### Scenario: Read-grade member cannot write
-- GIVEN user V holds a `read` grade on a folder containing secret S
+@e2e tests/e2e/workflows/share-save.spec.ts
+- GIVEN user V holds a `read` grade on a folder containing secret S, and is in no group S is shared with (a use-only group share does not count)
 - WHEN V attempts a value update that would propagate to recipients
 - THEN the system MUST reject the request and change no recipient's copy
+
+#### Scenario: Read-grade member cannot change their own copy
+- GIVEN user V holds a `read` grade on a folder containing secret S
+- WHEN V sends `PUT /api/v1/secrets/{id}` for their copy of S with a new value
+- THEN the system MUST answer 428 with `error` `view_only` and leave V's copy unchanged
 
 ### Requirement: Effective grade is the highest grade along the ancestor folder chain
 
@@ -68,7 +74,12 @@ The system MUST compute a member's effective grade for a secret or a team folder
 - **THEN** it MUST be `manage`
 
 ### Requirement: Grade changes and non-owner writes are audited
-The system MUST dispatch a typed event when a grade changes and MUST attribute every non-owner write to the writer. Events MUST carry only identifiers — never key material or plaintext.
+The system MUST dispatch a typed event when a grade changes, and when a membership's use-only flag or end date changes, through a grade change or by adding the member again; the event names the grade, the use-only flag and the end date after the change. The system MUST attribute every non-owner write to the writer. Events MUST carry only identifiers and dates — never key material or plaintext.
+
+#### Scenario: A changed end date is audited
+- GIVEN Olga, a manager, and Bob, a Viewer whose membership ends next month
+- WHEN Olga adds Bob again with an end date of next week
+- THEN a grade-changed audit event MUST be dispatched with the actor set to Olga and Bob's grade, use-only flag and new end date
 
 #### Scenario: Non-owner write attributed to the writer
 - GIVEN a `write`-grade member W (not the owner) updates a folder secret
@@ -77,7 +88,7 @@ The system MUST dispatch a typed event when a grade changes and MUST attribute e
 
 ### Requirement: Managers keep the membership current
 
-A member with an effective `manage` grade MUST be able to add users and groups as Viewers or Editors, remove Viewers and Editors, change a member between `read` and `write`, approve a group join, and run reconcile, on the team folder and its subtree. When a manager adds a member, the manager's browser MUST encrypt each folder secret for the new users from the manager's own recipient copies and post only ciphertext; the system MUST accept those rows under the existing subtree and not-the-owner checks. Secrets the manager holds no copy of MUST be skipped and reported, and MUST appear as missing in the owner's reconcile.
+A member with an effective `manage` grade MUST be able to add users and groups as Viewers or Editors (other than a membership that covers a manager, see Only the owner governs managers and the folder itself), remove Viewers and Editors, change a member between `read` and `write`, approve a group join, and run reconcile, on the team folder and its subtree. When a manager adds a member, the manager's browser MUST encrypt each folder secret for the new users from the manager's own recipient copies and post only ciphertext; the system MUST accept those rows under the existing subtree and not-the-owner checks. Secrets the manager holds no copy of MUST be skipped and reported, and MUST appear as missing in the owner's reconcile.
 
 #### Scenario: A manager adds a colleague while the owner is away
 
@@ -95,7 +106,7 @@ A member with an effective `manage` grade MUST be able to add users and groups a
 
 ### Requirement: Only the owner governs managers and the folder itself
 
-The system MUST refuse, for a member who is not the owner, setting or clearing the `manage` grade, removing or changing a member whose grade is `manage`, changing or removing the owner, stopping sharing of the folder, and deleting the team folder. A manager MUST be able to remove their own membership. A manager's request to set the `manage` grade, or to change or remove a manager, MUST be refused as forbidden with `error: owner_only` and the reason. Its HTTP status MUST be 428, because Nextcloud's OCS layer turns a 403 of an OCS controller into an HTTP 200 envelope that the browser would read as a success.
+The system MUST refuse, for a member who is not the owner, setting or clearing the `manage` grade, removing or changing a member whose grade is `manage` (its grade, use-only flag or end date, whether through a grade change or by adding that member again), changing or removing the owner, stopping sharing of the folder, and deleting the team folder. It MUST also refuse, for a member who is not the owner, adding or changing a membership that covers a manager, the caller included: a manager's user membership, or a membership of a group a manager is in or is a subadmin of (a subadmin can add themselves to it later). The managers that count are those of the team folder, of its ancestor team folders and of the team folders nested under it, because a membership of a folder also covers every folder below it. Grants add up, so any such membership would let a manager keep the folder past the use-only flag or end date the owner set; a manager's access stays with the owner. A manager MAY still remove such a membership, since that only narrows access. A manager MUST NOT approve their own group join; the owner does. Group changes made by a Nextcloud admin, or by a user backend outside Nextcloud such as LDAP, are out of scope: whoever controls group membership already controls who a group membership covers. So is a group membership the owner adds for a group whose subadmins include a manager: the owner decides that, and the manager's join still waits for the owner's approval. Membership past its end date grants nothing, also before the background job removes it, so a manager whose end date has passed no longer manages the folder. Their membership still counts as a manager's for the rule above, though: the owner set that end date, so a membership that would cover them again is the owner's to add. A manager MUST be able to remove their own membership. A manager's request to set the `manage` grade, or to change or remove a manager, MUST be refused as forbidden with `error: owner_only` and the reason. Its HTTP status MUST be 428, because Nextcloud's OCS layer turns a 403 of an OCS controller into an HTTP 200 envelope that the browser would read as a success.
 
 #### Scenario: A manager cannot create another manager
 
@@ -103,6 +114,63 @@ The system MUST refuse, for a member who is not the owner, setting or clearing t
 - **WHEN** Olga tries to set Bob's grade to `manage`
 - **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`) and Bob's grade MUST stay `read`
 - **AND** Olga's browser MUST show the refusal
+
+#### Scenario: A manager cannot lift their own end date
+
+- **GIVEN** Olga with grade `manage` on a membership that ends tomorrow
+- **WHEN** Olga adds herself again without an end date
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`) and her membership MUST still end tomorrow
+
+#### Scenario: A manager cannot end another manager's access
+
+- **GIVEN** Olga and Mia, both with grade `manage`
+- **WHEN** Olga adds Mia again with an end date of tomorrow, earlier than the one the owner set
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`) and Mia's membership MUST stay as it was
+
+#### Scenario: A manager cannot change a group membership that covers them
+
+- **GIVEN** Olga with grade `manage`, and a use-only group membership with an end date for a group Olga is in
+- **WHEN** Olga lifts its use-only flag or end date, through a grade change or by adding the group again, or adds a new membership of a group she is in
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`) and the membership MUST stay as it was
+- **AND** the owner MUST still be able to make that change
+
+#### Scenario: A manager cannot extend another manager's access through a group
+
+- **GIVEN** Olga and Mia, both with grade `manage`, Mia's membership ending tomorrow, and a group `leads` that Mia is in and Olga is not
+- **WHEN** Olga adds `leads` without an end date, or lifts the end date of an existing `leads` membership
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`) and nothing MUST change
+- **AND** Olga's browser MUST NOT offer to change the role of a membership that covers a manager
+
+#### Scenario: A manager cannot add a group she can join herself
+
+- **GIVEN** Olga with grade `manage`, who is a subadmin of group `ops` but not in it
+- **WHEN** Olga adds `ops`
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`), because she could add herself to `ops` afterwards
+
+#### Scenario: A manager whose end date has passed no longer manages
+
+- **GIVEN** Olga with grade `manage` on a membership whose end date has passed, not yet removed by the background job
+- **WHEN** Olga changes a viewer's grade
+- **THEN** the system MUST refuse it as for a member who does not manage the folder (HTTP 428, `error: manager_only`)
+
+#### Scenario: A manager cannot cover a manager whose end date has passed
+
+- **GIVEN** Olga and Mia, both with grade `manage`, Mia's membership past its end date
+- **WHEN** Olga adds Mia again, as a Viewer without an end date
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`)
+
+#### Scenario: A parent folder's manager cannot cover a nested folder's manager
+
+- **GIVEN** team folder P with Olga as `manage`, and team folder C nested under P with Mia as `manage`, ending tomorrow
+- **WHEN** Olga adds Mia to P without an end date
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`), because a membership of P also covers C
+
+#### Scenario: A manager does not approve their own join
+
+- **GIVEN** Olga with grade `manage`, who has just joined group `ops`, a member of the folder
+- **WHEN** Olga approves her own join
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`), and her browser MUST NOT offer it
+- **AND** the owner MUST still be able to approve it
 
 #### Scenario: A manager cannot unshare the folder
 

@@ -104,6 +104,16 @@ class GeneratorVectorsTest {
     }
 
     @Test
+    fun aPassphraseNeverDrawsAHyphenatedWord() {
+        val drawn = HashSet<String>()
+        for (i in EffWordlist.words.indices) {
+            drawn += Generator.generatePassphrase(PassphraseOptions(words = 4, separator = " "), null) { min, max -> minOf(min + i, max) }.split(' ')[0]
+        }
+        assertEquals(7772, drawn.size)
+        assertTrue(drawn.none { '-' in it })
+    }
+
+    @Test
     fun aPolicyOfTwentyWithADigitIsMetWithTheSecureSource() {
         val policy = GeneratorPolicy.from(Json.parseToJsonElement("""{"policy_enabled":true,"generator_min_length":20,"generator_require_digit":true}""").jsonObject)!!
         repeat(50) {
@@ -132,6 +142,8 @@ class GeneratorVectorsTest {
         assertEquals(8, p("""{"policy_enabled":true,"generator_min_length":"4"}""")!!.minLength)
         assertEquals(12, p("""{"policy_enabled":true}""")!!.minLength)
         assertEquals(12, p("""{"policy_enabled":true,"generator_min_length":"abc"}""")!!.minLength)
+        assertEquals(128, p("""{"policy_enabled":true,"generator_min_length":200}""")!!.minLength)
+        assertEquals(128, GeneratorSettings().minimumLength(p("""{"policy_enabled":true,"generator_min_length":"500"}""")))
         assertEquals(true, p("""{"policy_enabled":true}""")!!.allowPassphrase)
         assertEquals(false, p("""{"policy_enabled":true,"generator_allow_passphrase":false}""")!!.allowPassphrase)
         assertEquals(false, p("""{"policy_enabled":true,"generator_require_digit":"true"}""")!!.requireDigit)

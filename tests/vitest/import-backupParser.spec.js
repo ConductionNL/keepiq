@@ -64,6 +64,26 @@ describe('backup parser registry', () => {
 		expect(rows.map((row) => row.sourceRow)).toEqual([1, 2])
 	})
 
+	it("reads a login's code and passkeys back from the backup (keepiq#1327)", async () => {
+		const withExtras = {
+			...payload,
+			secrets: [
+				{
+					...payload.secrets[0],
+					totp: 'JBSWY3DPEHPK3PXP',
+					passkeys: '[{"rpId":"aws.test"}]',
+				},
+				{ ...payload.secrets[0], name: 'GCP' },
+			],
+		}
+		const envelope = await encryptBackup(withExtras, 'restore-pass-1')
+		const rows = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
+		expect(rows[0].totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(rows[0].passkeys).toBe('[{"rpId":"aws.test"}]')
+		expect('totp' in rows[1]).toBe(false)
+		expect('passkeys' in rows[1]).toBe(false)
+	})
+
 	it('throws on a wrong restore passphrase and yields no rows', async () => {
 		const envelope = await encryptBackup(payload, 'restore-pass-1')
 		await expect(parseBackup(envelope, { passphrase: 'nope' })).rejects.toThrow()

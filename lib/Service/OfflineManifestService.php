@@ -31,13 +31,14 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Builds the owner-scoped offline snapshot.
  *
  * This service reads through the mappers directly and NEVER decrypts: the
- * secret key/login/additionalFields are already ciphertext (ADR-003), and the
+ * secret key/login/additionalFields/totp/passkeys are already ciphertext (ADR-003), and the
  * plaintext name/url metadata is encrypted at rest client-side. It is a bulk
  * cache sync, not an individual reveal, so it emits no `secret.read` audit
  * event.
@@ -56,6 +57,7 @@ class OfflineManifestService {
 	 * @param FolderMapper $folderMapper The folder mapper
 	 * @param SecretTypeMapper $typeMapper The secret type mapper
 	 * @param TwoFactorGate $twoFactor The two-factor vault policy
+	 * @param ShareTargetMapper $shareTargets The user's copies and their sources
 	 *
 	 * @return void
 	 */
@@ -65,6 +67,7 @@ class OfflineManifestService {
 		private FolderMapper $folderMapper,
 		private SecretTypeMapper $typeMapper,
 		private TwoFactorGate $twoFactor,
+		private ShareTargetMapper $shareTargets,
 	) {
 	}//end __construct()
 
@@ -87,6 +90,7 @@ class OfflineManifestService {
 	 *
 	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	public function buildForUser(string $userId): array {
 		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
@@ -100,8 +104,12 @@ class OfflineManifestService {
 			$unlockBlocked = TwoFactorGate::CODE;
 		}
 
+		$sourceVersions = $this->sourceVersions(userId: $userId);
 		$secrets = array_map(
-			static fn (Secret $secret) => $secret->jsonSerialize(),
+			static fn (Secret $secret) => [
+				...$secret->jsonSerialize(),
+				'sourceUpdatedAt' => $sourceVersions[$secret->getId()] ?? null,
+			],
 			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
 		);
 
@@ -126,4 +134,32 @@ class OfflineManifestService {
 		];
 
 	}//end buildForUser()
+
+	/**
+	 * The version of each of the user's copies' sources, keyed by copy id and
+	 * written as a row's own `updatedAt`, so an offline edit of a copy can
+	 * name the source version it was made from. Only the timestamp leaves
+	 * this method; it is null only when the source row is gone or carries
+	 * no version.
+	 *
+	 * @param string $userId The user holding the copies
+	 *
+	 * @return array<string,string|null>
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 */
+	private function sourceVersions(string $userId): array {
+		$sourceOf = [];
+		foreach ($this->shareTargets->findByTargetUser($userId) as $target) {
+			$sourceOf[$target->getSecretId()] = $target->getSourceSecretId();
+		}
+
+		$sources = $this->secretMapper->findByIds(ids: array_values($sourceOf));
+		$versions = [];
+		foreach ($sourceOf as $copyId => $sourceId) {
+			$versions[$copyId] = ($sources[$sourceId] ?? null)?->getUpdatedAt()?->format('c');
+		}
+
+		return $versions;
+	}//end sourceVersions()
 }//end class

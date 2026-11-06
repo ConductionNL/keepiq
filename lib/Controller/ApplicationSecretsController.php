@@ -46,6 +46,7 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCA\Keepiq\Service\MachineSecretResponseService;
 use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -293,15 +294,9 @@ class ApplicationSecretsController extends ApplicationApiController {
 				applicationId: $application->getId()
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
 		return new JSONResponse(
@@ -347,10 +342,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 		} catch (NotFoundException) {
 			return $this->notFound();
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return $this->responseService->envelope(secret: $secret, applicationId: $application->getId());
@@ -454,13 +446,14 @@ class ApplicationSecretsController extends ApplicationApiController {
 
 	/**
 	 * Collect the plaintext-safe metadata + ciphertext fields a write
-	 * request may carry. The server treats every field opaquely.
+	 * request may carry. The server treats every field opaquely. `totp` and
+	 * `passkeys` are passed on only so SecretService refuses them with a 400.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private function writePayload(): array {
 		$payload = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'] as $field) {
+		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'] as $field) {
 			$value = $this->request->getParam($field);
 			if ($value !== null) {
 				$payload[$field] = $value;
