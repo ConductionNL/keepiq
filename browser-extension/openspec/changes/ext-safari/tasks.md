@@ -15,7 +15,7 @@
   - Tests: write (this Mac only, the count read after the writes), clear with a matching and a stale count, clear without a count, unknown kind, missing or non-string `text`, non-integer `changeCount`, a message that is not a dictionary
 - [x] 2.2 Write `src/safari-native.ts` (`nativeWrite`, `nativeClear`, 2 s timeout, reply shape checked as `unknown`) and the Safari branch of `src/clipboard.ts`: write and clear through it, `clipboardChangeCount` in `storage.session` next to the alarm, removed by the clear and by a copy without a count; an unknown outcome schedules a clear without a count; one queue for the write, the count and the clear
   - Tests: write ok, write rejected, malformed reply and timeout scheduling a clear without a count; clear with and without a stored count; a clear during a copy; a lock clearing a copied code; Chrome and Firefox paths unchanged
-- [x] 2.3 On Safari let `useClipboard` copy through `nativeWrite`, fall back to `navigator.clipboard.writeText`, and send `clipboard.copied` with `changeCount`; the background accepts only a non-negative integer
+- [x] 2.3 On Safari let `useClipboard` copy through `nativeWrite`, fall back to `navigator.clipboard.writeText` in a development build only, and send `clipboard.copied` with `changeCount`; the background accepts only a non-negative integer
   - Popup tests in both projects: native ok, native failing then fallback, both failing shows the copy-failed toast
   - Ends with building all three targets
 
@@ -55,7 +55,7 @@
 ## 8. Follow-ups owned by people
 
 - [ ] 8.1 Apple Developer Program membership for Conduction (D-U-N-S number, 99 USD a year)
-- [ ] 8.2 Manual check on a real Mac with Safari 26: copy and clear, passkeys and their fallback, also in `passkey-frame.html`, inline list, save bar, the test site's `root-filter.html` probe, the website access card, macOS set to Dutch and to Irish, and every line of design.md § Unverified
+- [ ] 8.2 Manual check on a real Mac with Safari 26: copy and clear, the console shows `Keepiq native message: ok` for a popup copy, passkeys and their fallback, also in `passkey-frame.html`, inline list, save bar, the test site's `root-filter.html` probe, the website access card, macOS set to Dutch and to Irish, and every line of design.md § Unverified
 - [ ] 8.3 Review of `safari/SafariWebExtensionHandler.swift` by someone who reads Swift
 - [ ] 8.4 Mac App Store listing with keepiq#1040: signing, App Privacy details, the guideline 4.4.2 reason for `*://*/*` (ADR-001), `rate.safari`, a Safari release job
 - [ ] 8.5 iOS: a separate target, without `windows.create` and `menus`

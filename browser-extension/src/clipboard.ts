@@ -22,7 +22,7 @@ const nativeQueue = createQueue()
 
 /**
  * Popup only. Rejects when the browser refuses the write. Resolves to Safari's pasteboard count when the
- * containing app wrote; without the app (as under WebDriver) the popup writes itself.
+ * containing app wrote; a dev build without the app (as under WebDriver) writes itself.
  */
 export async function copyText(text: string): Promise<number | undefined> {
 	if (import.meta.env.BROWSER === 'safari') {
@@ -30,6 +30,8 @@ export async function copyText(text: string): Promise<number | undefined> {
 			return await nativeWrite(text)
 		} catch (error) {
 			console.warn('[keepiq] the Keepiq app could not write the clipboard', error)
+			// That write would skip `.currentHostOnly` and the concealed type, so a release reports the failure instead.
+			if (import.meta.env.MODE === 'production') throw error
 		}
 	}
 	await navigator.clipboard.writeText(text)

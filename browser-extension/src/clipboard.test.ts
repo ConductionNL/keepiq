@@ -282,20 +282,35 @@ describe('copyText', () => {
 		expect(writeText).not.toHaveBeenCalled()
 	})
 
-	it('falls back to navigator.clipboard on Safari when the app fails', async () => {
+	const appFails = [
+		['refuses', () => Promise.resolve({ ok: false, error: 'write_failed' })],
+		['cannot be reached', () => Promise.reject(new Error('No native host'))],
+		['gives an unknown outcome', () => Promise.resolve({ ok: true })],
+	] as const
+
+	function failingApp(mode: string, app: () => Promise<unknown>) {
 		vi.stubEnv('BROWSER', 'safari')
+		vi.stubEnv('MODE', mode)
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
-		const writeText = fakeClipboard()
-		vi.spyOn(browser.runtime, 'sendNativeMessage').mockRejectedValue(new Error('No native host'))
+		vi.spyOn(browser.runtime, 'sendNativeMessage').mockImplementation(app as never)
+		return fakeClipboard()
+	}
+
+	it.each(appFails)('rejects in a Safari production build when the app %s, and never writes unmarked', async (_, app) => {
+		const writeText = failingApp('production', app)
+		await expect(copyText('hunter2')).rejects.toThrow()
+		expect(writeText).not.toHaveBeenCalled()
+	})
+
+	it.each(appFails)('falls back to navigator.clipboard in a Safari dev build when the app %s', async (_, app) => {
+		const writeText = failingApp('development', app)
 		expect(await copyText('hunter2')).toBeUndefined()
 		expect(writeText).toHaveBeenCalledWith('hunter2')
 	})
 
-	it('rejects on Safari when both fail', async () => {
-		vi.stubEnv('BROWSER', 'safari')
-		vi.spyOn(console, 'warn').mockImplementation(() => {})
+	it('rejects in a Safari dev build when both fail', async () => {
+		failingApp('development', appFails[0][1])
 		fakeClipboard(true)
-		vi.spyOn(browser.runtime, 'sendNativeMessage').mockResolvedValue({ ok: false, error: 'write_failed' } as never)
 		await expect(copyText('hunter2')).rejects.toThrow('Denied')
 	})
 })

@@ -5,20 +5,25 @@ Lets the Safari extension copy and clear the clipboard through its containing ap
 ## ADDED Requirements
 
 ### Requirement: Copy through the containing app
-On Safari, every copy the extension makes, from the popup, the passkey window, the context menu or after a fill, SHALL write the system pasteboard through a native message to the containing app. The pasteboard gets the text as a plain string for this Mac only, so Universal Clipboard does not send it to the user's other devices, and marked with `org.nspasteboard.ConcealedType` so clipboard managers leave it out of their history. When the native message fails and the copy is the popup's, the popup MUST write with `navigator.clipboard` instead; when that fails too, it shows the existing copy-failed toast. A background copy that the app refused or that could not reach the app copies nothing and leaves any pending clear in place, as on the other browsers. A background copy whose outcome is unknown, because the app did not answer in time or answered in another shape, also counts as failed, but MUST schedule a clear without a count after the account's delay, since the app may still write.
+On Safari, every copy the extension makes, from the popup, the passkey window, the context menu or after a fill, SHALL write the system pasteboard through a native message to the containing app. The pasteboard gets the text as a plain string for this Mac only, so Universal Clipboard does not send it to the user's other devices, and marked with `org.nspasteboard.ConcealedType` so clipboard managers leave it out of their history. When the native message fails and the copy is the popup's, a production build MUST NOT write the value another way, since a `navigator.clipboard` write is neither for this Mac only nor marked, and shows the existing copy-failed toast. Only a development build, as loaded without its app, writes with `navigator.clipboard` instead, and shows that toast when that fails too. A background copy that the app refused or that could not reach the app copies nothing and leaves any pending clear in place, as on the other browsers. A background copy whose outcome is unknown, because the app did not answer in time or answered in another shape, also counts as failed, but MUST schedule a clear without a count after the account's delay, since the app may still write.
 
 #### Scenario: Copy from the context menu
 - **GIVEN** the Safari build inside its app, an unlocked vault and a matching login
 - **WHEN** the user chooses Copy password from the Keepiq context menu
 - **THEN** the pasteboard holds the password and the clear is scheduled after the account's delay
 
-#### Scenario: Extension without its app
-- **GIVEN** the Safari extension loaded without its containing app
+#### Scenario: Popup copy the app fails
+- **GIVEN** the Safari production build, whose app refuses the write, cannot be reached or gives no known outcome
+- **WHEN** the user copies a password in the popup
+- **THEN** the popup writes nothing itself and toasts "Could not copy"
+
+#### Scenario: Development build without its app
+- **GIVEN** a Safari development build loaded without its containing app
 - **WHEN** the user copies a password in the popup
 - **THEN** the popup writes it with `navigator.clipboard` and toasts "Password copied"
 
 ### Requirement: The clear only clears what Keepiq wrote
-On Safari the scheduled clear and the clear at a lock SHALL clear the pasteboard only while it still holds Keepiq's last write, judged by `NSPasteboard.changeCount`, never by reading the value. A copy that produced no count, such as the popup's `navigator.clipboard` fallback, is cleared unconditionally, as on Chrome and Firefox. The count is kept in `storage.session` as `clipboardChangeCount`, never the value, and is removed by the clear, by a copy without a count and by a browser restart.
+On Safari the scheduled clear and the clear at a lock SHALL clear the pasteboard only while it still holds Keepiq's last write, judged by `NSPasteboard.changeCount`, never by reading the value. A copy that produced no count, such as the popup's `navigator.clipboard` fallback in a development build, is cleared unconditionally, as on Chrome and Firefox. The count is kept in `storage.session` as `clipboardChangeCount`, never the value, and is removed by the clear, by a copy without a count and by a browser restart.
 
 #### Scenario: Nothing copied since
 - **GIVEN** a password copied 30 seconds ago with a clear delay of 30 seconds
