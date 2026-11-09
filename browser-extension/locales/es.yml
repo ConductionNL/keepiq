@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Sin definir
   shortcutChange: Cambiar
   shortcutFirefox: Abre about:addons, elige el menú del engranaje y después Administrar atajos de teclado de extensiones
+  shortcutSafari: Abre los ajustes de Safari, elige Extensiones y selecciona Keepiq para cambiar su atajo
+  websiteAccess: Acceso a sitios web
+  websiteAccessAll: Todos los sitios web
+  websiteAccessSome: Solo los sitios web que has permitido
+  websiteAccessServer: Sin tu servidor Keepiq
   clearClipboard: Vaciar portapapeles
   clipboardSeconds:
     1: 1 segundo
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Política de privacidad
   webApp: Aplicación web de Keepiq
   rate: Valorar la extensión
+
+websiteAccess:
+  title: Deja que Keepiq funcione en los sitios web
+  body: Safari solo ejecuta Keepiq en los sitios web que permitas. Permítelo en todos los sitios web para rellenar inicios de sesión, guardar otros nuevos y usar llaves de acceso dondequiera que inicies sesión.
+  allow: Permitir en todos los sitios web
+  dismiss: Ahora no
+  steps: En Safari, selecciona Safari > Ajustes y después Sitios web. Selecciona Keepiq en la lista y ajusta «Al visitar otros sitios web» en Permitir.
+  perSite: Para permitir los sitios de uno en uno, haz clic en el botón de Keepiq en ese sitio y elige permitirlo siempre.
+  serverTitle: Keepiq no puede conectar con {host}
+  serverBody: Safari no deja que Keepiq conecte con tu servidor, así que tu caja fuerte no se puede sincronizar.
+  serverAllow: Permitir {host}
 
 generator:
   kinds: Qué generar

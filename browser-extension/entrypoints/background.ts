@@ -25,6 +25,7 @@ import {
 	type BackgroundToContent, type ContentToBackground, type FillRequest, type InlineListToBackground, type NoticeToBackground, type NotificationToBackground, type PasskeyPopupRequest, type PopupToBackground,
 } from '@/src/messages'
 import { endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies } from '@/src/passkey/ceremony'
+import { hasIdle } from '@/src/platform'
 import { refreshToolbar, registerToolbarListeners } from '@/src/toolbar-icon'
 import { SYNC_ALARM } from '@/src/vault/sync'
 import { enforce, onIdleStateChanged, onPopupClosed, onPopupOpened, syncAlarm, TIMEOUT_ALARM } from '@/src/vault/timeout'
@@ -175,7 +176,8 @@ export default defineBackground(() => {
 		if (alarm.name === CLIPBOARD_ALARM) void clearClipboard()
 	})
 
-	browser.idle.onStateChanged.addListener((state) => void onIdleStateChanged(state))
+	// Safari has no `idle`; the popup hides On system lock there.
+	if (hasIdle()) browser.idle.onStateChanged.addListener((state) => void onIdleStateChanged(state))
 
 	browser.runtime.onConnect.addListener((port) => {
 		if (port.name !== POPUP_PORT) return

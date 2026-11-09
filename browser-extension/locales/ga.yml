@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Gan socrú
   shortcutChange: Athraigh
   shortcutFirefox: Oscail about:addons, roghnaigh roghchlár an fhearas, ansin Bainistigh Aicearraí Síntí
+  shortcutSafari: Oscail Socruithe Safari, roghnaigh Síntí, ansin roghnaigh Keepiq chun a aicearra a athrú
+  websiteAccess: Rochtain ar shuímh Ghréasáin
+  websiteAccessAll: Gach suíomh Gréasáin
+  websiteAccessSome: Na suímh Ghréasáin a cheadaigh tú amháin
+  websiteAccessServer: Gan do fhreastalaí Keepiq
   clearClipboard: Glan an ghearrthaisce
   clipboardSeconds:
     1: 1 soicind
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Polasaí príobháideachais
   webApp: Aip ghréasáin Keepiq
   rate: Rátáil an síneadh
+
+websiteAccess:
+  title: Lig do Keepiq oibriú ar shuímh Ghréasáin
+  body: Ní ritheann Safari Keepiq ach ar na suímh Ghréasáin a cheadaíonn tú. Ceadaigh é ar gach suíomh Gréasáin chun logálacha isteach a líonadh, cinn nua a shábháil agus eochracha rochtana a úsáid cibé áit a logálann tú isteach.
+  allow: Ceadaigh ar gach suíomh Gréasáin
+  dismiss: Ní anois
+  steps: In Safari, roghnaigh Safari > Socruithe, ansin Suímh Ghréasáin. Roghnaigh Keepiq sa liosta agus socraigh “Agus suímh Ghréasáin eile á bhfeiceáil” go Ceadaigh.
+  perSite: Chun suíomh amháin a cheadú ag an am, cliceáil an cnaipe Keepiq ar an suíomh sin agus roghnaigh é a cheadú i gcónaí.
+  serverTitle: Ní féidir le Keepiq {host} a bhaint amach
+  serverBody: Ní ligeann Safari do Keepiq do fhreastalaí a bhaint amach, mar sin ní féidir do thaisceadán a shioncronú.
+  serverAllow: Ceadaigh {host}
 
 generator:
   kinds: Cad atá le giniúint

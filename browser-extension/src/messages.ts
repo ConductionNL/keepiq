@@ -632,6 +632,8 @@ export interface GlobalSettings {
 	quickCopy: boolean
 	/** The login count on the toolbar icon's badge. */
 	showBadgeCounter: boolean
+	/** Not now on the Vault tab's Safari website access card. */
+	websiteAccessDismissed: boolean
 }
 
 export interface SyncStatus {
@@ -839,7 +841,8 @@ export type PopupRequest =
 	| { kind: 'vault.snapshot'; tabUrl?: string; opened?: boolean }
 	| { kind: 'item.decrypt'; ids: string[]; fields: DecryptField[]; passive?: boolean }
 	| { kind: 'item.passkeys'; id: string; passive?: boolean }
-	| { kind: 'clipboard.copied' }
+	/** `changeCount`: Safari's pasteboard count after a write through the containing app. */
+	| { kind: 'clipboard.copied'; changeCount?: number }
 	| { kind: 'popup.popout'; tabId?: number }
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
 	/** Once on mount: the context menu's Add, which the background then forgets. */
@@ -1040,6 +1043,12 @@ export type BackgroundToPopup =
 export type BackgroundToOffscreen =
 	| { kind: 'offscreen.clearClipboard' }
 	| { kind: 'offscreen.writeClipboard'; text: string }
+
+/** Background or popup → Safari's containing app (`safari/SafariWebExtensionHandler.swift`). */
+export type ToNativeApp =
+	| { kind: 'clipboard.write'; text: string }
+	/** Without `changeCount` the app clears unconditionally. */
+	| { kind: 'clipboard.clear'; changeCount?: number }
 
 /** Name of the port the popup holds open; its disconnect means the popup closed. */
 export const POPUP_PORT = 'popup'

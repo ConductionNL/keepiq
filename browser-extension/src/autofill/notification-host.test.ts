@@ -70,7 +70,7 @@ beforeEach(() => {
 	rafs = []
 	vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => rafs.push(callback))
 	sent = []
-	host = createNotificationHost({ firefox: false, send: (message) => sent.push(message) })
+	host = createNotificationHost({ rootFilterReachesTopLayer: false, send: (message) => sent.push(message) })
 })
 
 afterEach(() => {
@@ -254,8 +254,8 @@ describe('the top layer', () => {
 		expect(hosts()).toHaveLength(0)
 	})
 
-	it('refuses on Firefox while <html> has a filter, which reaches its top layer', async () => {
-		host = createNotificationHost({ firefox: true, send: () => {} })
+	it('refuses while <html> has a filter where that reaches the top layer', async () => {
+		host = createNotificationHost({ rootFilterReachesTopLayer: true, send: () => {} })
 		show()
 		await flush()
 		vi.spyOn(document, 'elementFromPoint').mockImplementation(() => hosts()[0]!)

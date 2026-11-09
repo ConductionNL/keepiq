@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nesetată
   shortcutChange: Modificare
   shortcutFirefox: Deschideți about:addons, alegeți meniul cu rotiță, apoi Gestionează comenzile rapide ale extensiilor
+  shortcutSafari: Deschideți configurările Safari, alegeți Extensii, apoi selectați Keepiq pentru a-i schimba comanda rapidă
+  websiteAccess: Acces la site-uri web
+  websiteAccessAll: Toate site-urile web
+  websiteAccessSome: Doar site-urile web pe care le-ați permis
+  websiteAccessServer: Fără serverul dvs. Keepiq
   clearClipboard: Golire clipboard
   clipboardSeconds:
     1: 1 secundă
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Politica de confidențialitate
   webApp: Aplicația web Keepiq
   rate: Evaluare extensie
+
+websiteAccess:
+  title: Lăsați Keepiq să funcționeze pe site-uri web
+  body: Safari rulează Keepiq doar pe site-urile web pe care le permiteți. Permiteți-l pe toate site-urile web pentru a completa date de autentificare, a salva altele noi și a folosi chei de acces oriunde vă conectați.
+  allow: Permitere pe toate site-urile web
+  dismiss: Nu acum
+  steps: În Safari, alegeți Safari > Configurări, apoi Site-uri web. Selectați Keepiq în listă și setați „La vizitarea altor site-uri web” la Permiteți.
+  perSite: Pentru a permite site-urile pe rând, faceți clic pe butonul Keepiq pe acel site și alegeți să fie permis întotdeauna.
+  serverTitle: Keepiq nu poate accesa {host}
+  serverBody: Safari nu îi permite lui Keepiq să acceseze serverul dvs., așa că seiful nu se poate sincroniza.
+  serverAllow: Permitere {host}
 
 generator:
   kinds: Ce se generează

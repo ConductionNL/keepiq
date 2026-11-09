@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VaultSnapshotReply } from '@/src/messages'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
 import { emptyValues } from '@/src/vault/fields'
+import { NATIVE_TIMEOUT_MS, NativeOutcomeUnknown } from '@/src/safari-native'
 import { everythingVisible, fakeBackground, fakeClipboard, mounts, sentKinds, sentOf, snapshotReply, types } from '../testing'
 import { applyAppearance, applyTheme } from '../theme'
 import { useAccountSettings } from './useAccountSettings'
@@ -54,6 +55,10 @@ describe('useBackgroundMessage', () => {
 })
 
 describe('useClipboard', () => {
+	afterEach(() => {
+		vi.unstubAllEnvs()
+	})
+
 	it('copies, toasts and tells the background', async () => {
 		userEvent.setup()
 		const writeText = fakeClipboard()
@@ -75,6 +80,86 @@ describe('useClipboard', () => {
 		await act(() => result.current('alice', 'Username'))
 		expect(value.toast).toHaveBeenCalledWith('Could not copy')
 		expect(sent).not.toHaveBeenCalled()
+	})
+
+	it.each(['chrome', 'firefox'])('on %s, sends nothing after a failed copy, whatever the error', async (target) => {
+		userEvent.setup()
+		vi.stubEnv('BROWSER', target)
+		fakeClipboard().mockRejectedValue(new NativeOutcomeUnknown('unexpected'))
+		const sent = fakeBackground()
+		const { value, wrapper } = shell()
+		const { result } = renderHook(() => useClipboard(), { wrapper })
+		await act(() => result.current('alice', 'Username'))
+		expect(value.toast).toHaveBeenCalledWith('Could not copy')
+		expect(sent).not.toHaveBeenCalled()
+	})
+
+	describe('on Safari', () => {
+		async function copyOnSafari(app: () => Promise<unknown>, { refuse = false, mode = 'production', advance = 0 } = {}) {
+			userEvent.setup()
+			vi.stubEnv('BROWSER', 'safari')
+			vi.stubEnv('MODE', mode)
+			vi.spyOn(console, 'warn').mockImplementation(() => {})
+			vi.spyOn(browser.runtime, 'sendNativeMessage').mockImplementation(app)
+			const writeText = fakeClipboard(refuse)
+			const sent = fakeBackground()
+			const { value, wrapper } = shell()
+			const { result } = renderHook(() => useClipboard(), { wrapper })
+			await act(async () => {
+				const copied = result.current('alice', 'Username')
+				if (advance) await vi.advanceTimersByTimeAsync(advance)
+				await copied
+			})
+			return { writeText, sent, toast: value.toast }
+		}
+
+		it('copies through the Keepiq app and passes its count to the background', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => ({ ok: true, changeCount: 8 }))
+			expect(writeText).not.toHaveBeenCalled()
+			expect(toast).toHaveBeenCalledWith('Username copied')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied', changeCount: 8 }])
+		})
+
+		it.each([
+			['refuses', async () => ({ ok: false, error: 'write_failed' })],
+			['cannot be reached', async () => { throw new Error('No native host') }],
+		])('in a production build, only toasts the failure when the app %s', async (_, app) => {
+			const { writeText, sent, toast } = await copyOnSafari(app)
+			expect(writeText).not.toHaveBeenCalled()
+			expect(toast).toHaveBeenCalledWith('Could not copy')
+			expect(sent).not.toHaveBeenCalled()
+		})
+
+		it('in a production build, toasts the failure but has the clear scheduled without a count when the app gives an unknown outcome', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => ({ ok: true }))
+			expect(writeText).not.toHaveBeenCalled()
+			expect(toast).toHaveBeenCalledWith('Could not copy')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied' }])
+		})
+
+		it('in a production build, has the clear scheduled without a count when the app does not answer in time', async () => {
+			vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+			try {
+				const { sent, toast } = await copyOnSafari(() => new Promise(() => {}), { advance: NATIVE_TIMEOUT_MS })
+				expect(toast).toHaveBeenCalledWith('Could not copy')
+				expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied' }])
+			} finally {
+				vi.useRealTimers()
+			}
+		})
+
+		it('in a dev build, copies itself when the app fails, and sends no count', async () => {
+			const { writeText, sent, toast } = await copyOnSafari(async () => { throw new Error('No native host') }, { mode: 'development' })
+			expect(writeText).toHaveBeenCalledWith('alice')
+			expect(toast).toHaveBeenCalledWith('Username copied')
+			expect(sentOf(sent, 'clipboard.copied')).toEqual([{ kind: 'clipboard.copied' }])
+		})
+
+		it('in a dev build, only toasts when both fail', async () => {
+			const { sent, toast } = await copyOnSafari(async () => ({ ok: false, error: 'write_failed' }), { refuse: true, mode: 'development' })
+			expect(toast).toHaveBeenCalledWith('Could not copy')
+			expect(sent).not.toHaveBeenCalled()
+		})
 	})
 })
 

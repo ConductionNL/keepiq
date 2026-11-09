@@ -10,6 +10,7 @@ import { ItemCard } from '../components/ItemCard'
 import { SearchField } from '../components/SearchField'
 import { Suggestions } from '../components/Suggestions'
 import { TypeFilterChips } from '../components/TypeFilterChips'
+import { WebsiteAccessCard } from '../components/WebsiteAccess'
 import type { CurrentTab } from '../hooks/useCurrentTab'
 import { blockedText } from '../errors'
 import { loginKey, useLazyLogins } from '../hooks/useDecryptedFields'
@@ -25,11 +26,13 @@ type Unlocked = Extract<VaultSnapshotReply, { state: 'unlocked' }>
 interface Props {
 	snapshot: Unlocked
 	tab: CurrentTab
+	/** The active account's, for Safari's website access card. */
+	serverUrl: string
 	syncNow: () => void
 	onOpen: (id: string) => void
 }
 
-export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
+export function VaultList({ snapshot, tab, serverUrl, syncNow, onOpen }: Props) {
 	const [search, setSearch] = useState('')
 	const [folder, setFolder] = useState<FolderFilter>('all')
 	const [typeName, setTypeName] = useState<string | null>(null)
@@ -80,6 +83,8 @@ export function VaultList({ snapshot, tab, syncNow, onOpen }: Props) {
 				<TypeFilterChips types={types} value={typeName} onChange={setTypeName} disabled={firstSync} />
 			</div>
 			{allBlocked && <AllBlocked reason={sorted[0]?.blockedReason} webApp={webApp} />}
+			{/* Inline, not isSafari(), so other builds drop the card. */}
+			{import.meta.env.BROWSER === 'safari' && <WebsiteAccessCard serverUrl={serverUrl} />}
 			{!firstSync && <Suggestions host={tab.host} items={suggestions} types={typesById} logins={logins} onOpen={onOpen} onFill={fill} />}
 			{body}
 			{dialog}

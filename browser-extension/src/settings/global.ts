@@ -4,7 +4,7 @@ import { pickValid, type Validators } from './pick-valid'
 /** Account ids are UUIDs, so this never meets an account's `settings.<id>`. */
 export const GLOBAL_SETTINGS_KEY = 'settings.global'
 
-export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, showBadgeCounter: true }
+export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = { theme: 'system', compactMode: false, showAnimations: true, quickCopy: true, showBadgeCounter: true, websiteAccessDismissed: false }
 
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 
@@ -14,6 +14,7 @@ const VALIDATORS: Validators<GlobalSettings> = {
 	showAnimations: isBoolean,
 	quickCopy: isBoolean,
 	showBadgeCounter: isBoolean,
+	websiteAccessDismissed: isBoolean,
 }
 
 const merge = (base: GlobalSettings, source: unknown): GlobalSettings => ({ ...base, ...pickValid(VALIDATORS, source) })

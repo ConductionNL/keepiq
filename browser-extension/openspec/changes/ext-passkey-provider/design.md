@@ -50,7 +50,7 @@ What crosses each boundary, and nothing else:
 
 | | Chrome MV3 | Firefox MV2 |
 | --- | --- | --- |
-| Page script | `entrypoints/passkey-page-main.content.ts` (`include: ['chrome']`; WXT refuses two entrypoints named `passkey-page`), `world: 'MAIN'`, `runAt: 'document_start'`, `allFrames`, `*://*/*`; Chrome 111+ | Unlisted `entrypoints/passkey-page.ts` (`include: ['firefox']`), injected with WXT's `injectScript()` by the relay, listed in `web_accessible_resources` for Firefox only. Both import `src/passkey/page.ts` |
+| Page script | `entrypoints/passkey-page-main.content.ts` (`exclude: ['firefox']`, so Safari too, see ext-safari; WXT refuses two entrypoints named `passkey-page`), `world: 'MAIN'`, `runAt: 'document_start'`, `allFrames`, `*://*/*`; Chrome 111+ | Unlisted `entrypoints/passkey-page.ts` (`include: ['firefox']`), injected with WXT's `injectScript()` by the relay, listed in `web_accessible_resources` for Firefox only. Both import `src/passkey/page.ts` |
 | Relay | `entrypoints/passkey.content.ts`, isolated, `document_start`, `allFrames`, `*://*/*` | Same |
 
 - **Static, not `scripting.registerContentScripts`:** dynamic scripts need host permission for every site, which the extension does not hold (SECURITY.md). So the page script is present while the setting is off and answers with the fallback (proposal, deviations).

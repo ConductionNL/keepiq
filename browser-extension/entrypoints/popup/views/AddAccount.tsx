@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { i18n } from '#i18n'
-import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
+import { normalizeServerUrl, serverOrigins } from '@/src/accounts/normalize-server-url'
 import type { ErrorCode } from '@/src/messages'
 import { Button } from '../components/Button'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -79,7 +79,7 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 			return
 		}
 		// Must be the first await: the browser only prompts inside the click's user gesture.
-		const granted = await browser.permissions.request({ origins: [`${normalized.origin}/*`] }).catch(() => false)
+		const granted = await browser.permissions.request({ origins: serverOrigins(normalized.origin) }).catch(() => false)
 		if (!granted) {
 			fail('permission_denied', normalized.host)
 			return

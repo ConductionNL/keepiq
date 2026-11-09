@@ -1,5 +1,6 @@
 import type { Browser } from 'wxt/browser'
 import type { DefaultManagerState } from '@/src/messages'
+import { isChromium } from '@/src/platform'
 
 const PRIVACY: Browser.permissions.Permissions = { permissions: ['privacy'] }
 const MANAGED_ELSEWHERE = new Set(['not_controllable', 'controlled_by_other_extensions'])
@@ -43,7 +44,7 @@ export function enableDefaultManager(): Promise<DefaultManagerState> {
 
 /** Chrome closes the popup when it shows the permission prompt, so the grant itself turns it on. */
 export function registerDefaultManager(): void {
-	if (import.meta.env.BROWSER === 'firefox') return
+	if (!isChromium()) return
 	browser.permissions.onAdded.addListener(({ permissions }) => {
 		if (permissions?.includes('privacy')) void enableDefaultManager().catch((error: unknown) => console.error('[keepiq] default manager', error))
 	})

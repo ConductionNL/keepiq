@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
 // @vitest-environment-options {"settings":{"navigation":{"disableChildFrameNavigation":true}}}
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 // Here, not beside the entrypoint: WXT reads every top-level file in entrypoints/ as one.
 import content from '@/entrypoints/content'
 import { inlineHeight } from '@/src/messages'
 import { mockLayout } from '@/src/testing/layout'
+import { GUARD_MS } from './visibility'
 
 type Listener = (msg: unknown, sender: object, sendResponse: (reply: unknown) => void) => unknown
 
@@ -244,6 +245,51 @@ describe('content script', () => {
 			start()
 			ask({ kind: 'notice.show', notice: 'no_login_form' })
 			expect(bars()).toHaveLength(0)
+		})
+
+		// Whether a root filter reaches Safari's top layer is unverified, so it refuses there as on Firefox.
+		it.each([['safari', false], ['firefox', false], ['chrome', true], ['edge', true]])('on %s, a filter on <html> allows a press: %s', async (target, allowed) => {
+			vi.stubEnv('BROWSER', target)
+			let now = 1_000_000
+			vi.spyOn(Date, 'now').mockImplementation(() => now)
+			vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0)
+			vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue({ postMessage: () => {} } as never)
+			vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList)
+			// The host's rect as it styled itself, which happy-dom does not lay out.
+			vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+				const style = this.getAttribute('style') ?? ''
+				const px = (name: string) => Number(new RegExp(`(?:^|; )${name}: ([\\d.]+)px`).exec(style)?.[1] ?? 0)
+				const [top, left, width, height] = [px('top'), px('left'), px('width'), px('height')]
+				return { x: left, y: top, top, left, width, height, right: left + width, bottom: top + height, toJSON: () => ({}) } as DOMRect
+			})
+			// happy-dom has no top layer; the bar is a popover only where the browser has the API.
+			let open = false
+			HTMLElement.prototype.showPopover = function () {
+				this.dispatchEvent(new Event('beforetoggle'))
+				open = true
+				this.dispatchEvent(Object.assign(new Event('toggle'), { newState: 'open' }))
+			}
+			const matches = Element.prototype.matches
+			vi.spyOn(Element.prototype, 'matches').mockImplementation(function (this: Element, selector: string) {
+				return selector === ':popover-open' ? open && this.hasAttribute('popover') : matches.call(this, selector)
+			})
+			onTestFinished(() => {
+				vi.unstubAllEnvs()
+				document.documentElement.style.filter = ''
+				ask({ kind: 'capture.hide', key: KEY })
+				delete (HTMLElement.prototype as Partial<HTMLElement>).showPopover
+			})
+			start()
+			ask({ kind: 'capture.show', key: KEY, capture: CAPTURE })
+			// happy-dom loads the frame.
+			await new Promise((resolve) => setTimeout(resolve, 0))
+			vi.spyOn(document, 'elementFromPoint').mockImplementation(() => bars()[0]!)
+			const press = () => ({ kind: 'capture.verify', key: KEY, input: { kind: 'pointer', at: now, x: 10, y: 10 } })
+			now += GUARD_MS + 1
+			expect(ask(press())).toBe(true)
+			document.documentElement.style.filter = 'invert(1)'
+			now += GUARD_MS + 1
+			expect(ask(press())).toBe(allowed)
 		})
 	})
 

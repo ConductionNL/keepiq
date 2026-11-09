@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nenastavené
   shortcutChange: Zmeniť
   shortcutFirefox: Otvorte about:addons, zvoľte ponuku s ozubeným kolesom a potom Spravovať klávesové skratky rozšírení
+  shortcutSafari: Otvorte nastavenia Safari, zvoľte Rozšírenia a potom vyberte Keepiq, ak chcete zmeniť jeho klávesovú skratku
+  websiteAccess: Prístup k webom
+  websiteAccessAll: Všetky weby
+  websiteAccessSome: Len weby, ktoré ste povolili
+  websiteAccessServer: Bez vášho servera Keepiq
   clearClipboard: Vymazať schránku
   clipboardSeconds:
     1: 1 sekunda
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Zásady ochrany osobných údajov
   webApp: Webová aplikácia Keepiq
   rate: Ohodnotiť rozšírenie
+
+websiteAccess:
+  title: Nechajte Keepiq pracovať na weboch
+  body: Safari spúšťa Keepiq len na weboch, ktoré povolíte. Povoľte ho na všetkých weboch, aby ste mohli všade, kde sa prihlasujete, vypĺňať prihlasovacie údaje, ukladať nové a používať prístupové kľúče.
+  allow: Povoliť na všetkých weboch
+  dismiss: Teraz nie
+  steps: V Safari vyberte Safari > Nastavenia a potom Webové stránky. V zozname vyberte Keepiq a nastavte „Pri otváraní iných stránok“ na Povoliť.
+  perSite: Ak chcete povoľovať weby po jednom, kliknite na danom webe na tlačidlo Keepiq a zvoľte, že ho chcete povoliť vždy.
+  serverTitle: Keepiq sa nemôže pripojiť k {host}
+  serverBody: Safari nedovolí Keepiq pripojiť sa k vášmu serveru, preto sa trezor nemôže synchronizovať.
+  serverAllow: Povoliť {host}
 
 generator:
   kinds: Čo vygenerovať
