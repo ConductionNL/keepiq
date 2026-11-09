@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { i18n } from '#i18n'
 import { copyText } from '@/src/clipboard'
+import { NativeOutcomeUnknown } from '@/src/safari-native'
 import { useShell } from '../shell-context'
 import { request } from './useMessage'
 
@@ -11,8 +12,10 @@ export function useClipboard() {
 		let changeCount: number | undefined
 		try {
 			changeCount = await copyText(text)
-		} catch {
+		} catch (error) {
 			toast(i18n.t('clipboard.failed'))
+			// Safari's app may still write, so the background clears anyway.
+			if (import.meta.env.BROWSER === 'safari' && error instanceof NativeOutcomeUnknown) void request({ kind: 'clipboard.copied' })
 			return
 		}
 		toast(i18n.t('clipboard.copied', { what }))

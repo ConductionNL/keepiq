@@ -168,7 +168,7 @@ The inline list and the save bar show inside web pages. The reasoning is in [ADR
 - On Chrome the background reaches the offscreen document with a runtime message, so `offscreen.writeClipboard` and the copied value reach every open extension view; only the offscreen document acts on it.
 - The delay is 30 seconds by default, and every copy replaces the pending clear. Settings changes it per account, or sets it to Never.
 - On Chrome and Firefox the clear is unconditional: anything you copy in those 30 seconds is cleared too. Checking first would need the `clipboardRead` permission and its install warning.
-- On Safari the clear only clears while the pasteboard's `changeCount` is still that of Keepiq's write, so nothing is read back. Copied values are marked `org.nspasteboard.ConcealedType`, which clipboard managers keep out of their history. The exception is a dev build without the app, whose popup falls back to `navigator.clipboard`, unmarked; a release build reports the copy as failed instead.
+- On Safari the clear only clears while the pasteboard's `changeCount` is still that of Keepiq's write, so nothing is read back. Copied values are marked `org.nspasteboard.ConcealedType`, which clipboard managers keep out of their history. The exception is a dev build without the app, whose popup falls back to `navigator.clipboard`, unmarked; a release build reports the copy as failed instead, and when the app may still have written (no answer in time) it schedules the clear anyway.
 
 ## Known limits
 

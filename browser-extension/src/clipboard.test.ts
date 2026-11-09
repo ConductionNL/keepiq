@@ -378,11 +378,32 @@ describe('Safari', () => {
 		await scheduleClipboardClear(60_000, 1_000, 5)
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 		vi.spyOn(browser.runtime, 'sendNativeMessage').mockReturnValue(new Promise(() => {}) as never)
-		const written = writeFromBackground('hunter2', 30_000, { now: 2_000, codeOf: 'a' })
+		const written = writeFromBackground('hunter2', 30_000, { now: 2_000 })
 		await vi.advanceTimersByTimeAsync(NATIVE_TIMEOUT_MS)
 		expect(await written).toBe(false)
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toMatchObject({ scheduledTime: 32_000 })
 		expect(await storedCount()).toBeUndefined()
+	})
+
+	it.each([30_000, 0])('keeps the account of a code whose outcome is unknown, so its lock clears it (delay %i)', async (clearMs) => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const { board, send } = fakeApp()
+		send.mockResolvedValueOnce({ ok: true } as never)
+		expect(await writeFromBackground('287082', clearMs, { codeOf: 'a' })).toBe(false)
+		expect((await browser.storage.session.get(CLIPBOARD_CODE_KEY))[CLIPBOARD_CODE_KEY]).toBe('a')
+		board.text = '287082'
+		await clearCodeAfterLock(async () => false)
+		expect(send).toHaveBeenLastCalledWith('nl.conduction.keepiq.safari', { kind: 'clipboard.clear' })
+		expect(board.text).toBe('')
+	})
+
+	it.each([
+		['refuses', () => Promise.resolve({ ok: false, error: 'write_failed' })],
+		['cannot be reached', () => Promise.reject(new Error('No native host'))],
+	])('keeps no account when the app %s the code', async (_, app) => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		vi.spyOn(browser.runtime, 'sendNativeMessage').mockImplementation(app as never)
+		expect(await writeFromBackground('287082', 30_000, { codeOf: 'a' })).toBe(false)
 		expect((await browser.storage.session.get(CLIPBOARD_CODE_KEY))[CLIPBOARD_CODE_KEY]).toBeUndefined()
 	})
 

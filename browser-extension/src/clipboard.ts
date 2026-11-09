@@ -21,7 +21,7 @@ const offscreenQueue = createQueue()
 const nativeQueue = createQueue()
 
 /**
- * Popup only. Rejects when the browser refuses the write. Resolves to Safari's pasteboard count when the
+ * Popup only. Rejects when the browser refuses the write, with `NativeOutcomeUnknown` when Safari's app may still write. Resolves to Safari's pasteboard count when the
  * containing app wrote; a dev build without the app (as under WebDriver) writes itself.
  */
 export async function copyText(text: string): Promise<number | undefined> {
@@ -125,11 +125,9 @@ export async function writeFromBackground(text: string, clearMs: number, { codeO
 		unknown = error instanceof NativeOutcomeUnknown
 		console.warn('[keepiq] could not write the clipboard', error)
 	}
-	if (written) {
+	if (written || unknown) {
 		await scheduleClipboardClear(clearMs, now, changeCount)
 		if (codeOf !== undefined) await setCodeOf(codeOf)
-	} else if (unknown) {
-		await scheduleClipboardClear(clearMs, now)
 	}
 	return written
 }

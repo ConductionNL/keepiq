@@ -5,7 +5,7 @@ Lets the Safari extension copy and clear the clipboard through its containing ap
 ## ADDED Requirements
 
 ### Requirement: Copy through the containing app
-On Safari, every copy the extension makes, from the popup, the passkey window, the context menu or after a fill, SHALL write the system pasteboard through a native message to the containing app. The pasteboard gets the text as a plain string for this Mac only, so Universal Clipboard does not send it to the user's other devices, and marked with `org.nspasteboard.ConcealedType` so clipboard managers leave it out of their history. When the native message fails and the copy is the popup's, a production build MUST NOT write the value another way, since a `navigator.clipboard` write is neither for this Mac only nor marked, and shows the existing copy-failed toast. Only a development build, as loaded without its app, writes with `navigator.clipboard` instead, and shows that toast when that fails too. A background copy that the app refused or that could not reach the app copies nothing and leaves any pending clear in place, as on the other browsers. A background copy whose outcome is unknown, because the app did not answer in time or answered in another shape, also counts as failed, but MUST schedule a clear without a count after the account's delay, since the app may still write.
+On Safari, every copy the extension makes, from the popup, the passkey window, the context menu or after a fill, SHALL write the system pasteboard through a native message to the containing app. The pasteboard gets the text as a plain string for this Mac only, so Universal Clipboard does not send it to the user's other devices, and marked with `org.nspasteboard.ConcealedType` so clipboard managers leave it out of their history. When the native message fails and the copy is the popup's, a production build MUST NOT write the value another way, since a `navigator.clipboard` write is neither for this Mac only nor marked, and shows the existing copy-failed toast. A popup copy whose outcome is unknown, because the app did not answer in time or answered in another shape, shows that toast too, but MUST still have a clear without a count scheduled, since the app may have written. Only a development build, as loaded without its app, writes with `navigator.clipboard` instead, and shows that toast when that fails too. A background copy that the app refused or that could not reach the app copies nothing and leaves any pending clear in place, as on the other browsers. A background copy whose outcome is unknown, because the app did not answer in time or answered in another shape, also counts as failed, but MUST schedule a clear without a count after the account's delay, since the app may still write, and when the copy is a one-time code, MUST keep the code's account so its lock clears it, also when the delay is Never.
 
 #### Scenario: Copy from the context menu
 - **GIVEN** the Safari build inside its app, an unlocked vault and a matching login
@@ -16,6 +16,7 @@ On Safari, every copy the extension makes, from the popup, the passkey window, t
 - **GIVEN** the Safari production build, whose app refuses the write, cannot be reached or gives no known outcome
 - **WHEN** the user copies a password in the popup
 - **THEN** the popup writes nothing itself and toasts "Could not copy"
+- **AND** when the outcome is unknown, a clear without a count is scheduled after the account's delay
 
 #### Scenario: Development build without its app
 - **GIVEN** a Safari development build loaded without its containing app
@@ -52,6 +53,7 @@ The extension SHALL send the containing app only `{ kind: 'clipboard.write', tex
 - **WHEN** the background was copying for the context menu
 - **THEN** the copy counts as failed
 - **AND** a clear without a count is scheduled after the account's delay, replacing any earlier one
+- **AND** a one-time code's account is kept, so its lock clears the pasteboard, also when the delay is Never
 
 #### Scenario: App refuses the write
 - **GIVEN** a native call answered with `{ ok: false, error: 'write_failed' }`
