@@ -770,44 +770,16 @@ class SecretService {
 	 * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
 	 */
 	public function deleteByApplication(string $secretId, string $applicationId): void {
-		try {
-			$secret = $this->mapper->findById($secretId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-			// Idempotent: a nonexistent id is a silent no-op (design D2).
+		$secret = $this->ownApplicationRow(secretId: $secretId, applicationId: $applicationId);
+		if ($secret === null) {
 			return;
 		}
 
-		// Own-vault scoping: a row owned by another vault (another
-		// application or a user) is indistinguishable from a nonexistent
-		// one — same silent return, no existence oracle (design D2).
-		if ($secret->getOwnerType() !== 'application'
-			|| $secret->getOwnerId() !== $applicationId
-		) {
-			return;
-		}
-
-		// Cascade parity with the user-scoped delete(): link shares +
-		// secret requests + user shares + group shares + delegations.
-		// Structurally a no-op for application-vault secrets today (every
-		// sharing creation path is user-owner scoped) but kept so "a secret
-		// delete leaves no orphan sharing-graph rows" holds unconditionally
-		// (design D4).
-		$this->linkShareService->deleteBySecretId($secretId);
-		if ($this->secretRequestService !== null) {
-			$this->secretRequestService->deleteAllForSecret($secretId);
-		}
-
-		if ($this->shareService !== null) {
-			$this->shareService->deleteAllForSecret($secretId);
-		}
-
-		if ($this->groupShareMapper !== null) {
-			$this->groupShareMapper->deleteBySecret($secretId);
-		}
-
-		if ($this->secretDelegationMapper !== null) {
-			$this->secretDelegationMapper->deleteBySecret($secretId);
-		}
+		// Cascade parity with the user-scoped delete(). Structurally a no-op
+		// for application-vault secrets today (every sharing creation path is
+		// user-owner scoped) but kept so "a secret delete leaves no orphan
+		// sharing-graph rows" holds unconditionally (design D4).
+		$this->deleteSharingGraph(secretId: $secretId);
 
 		$this->mapper->delete($secret);
 		$this->logger->info(
@@ -824,6 +796,36 @@ class SecretService {
 			)
 		);
 	}//end deleteByApplication()
+
+	/**
+	 * The row with this id when it sits in the application's own vault, null
+	 * otherwise. Idempotent: a nonexistent id is a silent no-op (design D2),
+	 * and a row owned by another vault (another application or a user) is
+	 * indistinguishable from a nonexistent one — same silent answer, no
+	 * existence oracle (design D2).
+	 *
+	 * @param string $secretId      The secret ID
+	 * @param string $applicationId The owning application ID
+	 *
+	 * @return Secret|null
+	 *
+	 * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+	 */
+	private function ownApplicationRow(string $secretId, string $applicationId): ?Secret {
+		try {
+			$secret = $this->mapper->findById($secretId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return null;
+		}
+
+		if ($secret->getOwnerType() !== 'application'
+			|| $secret->getOwnerId() !== $applicationId
+		) {
+			return null;
+		}
+
+		return $secret;
+	}//end ownApplicationRow()
 
 	/**
 	 * Resolve a secret by exact name from an application's own vault
@@ -1218,77 +1220,104 @@ class SecretService {
 	public function delete(string $id, string $userId, ?string $purgeReason = null): void {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
 
-		// Cascade to derived link shares + secret requests + user shares
-		// (ShareTargets) + group shares + secret delegations. The mappers
-		// for group shares + delegations are optional dependencies so the
-		// existing constructors without them keep compiling; when wired,
-		// a secret delete leaves no orphan sharing-graph rows behind.
-		$this->linkShareService->deleteBySecretId($id);
-		if ($this->secretRequestService !== null) {
-			$this->secretRequestService->deleteAllForSecret($id);
-		}
-
-		if ($this->shareService !== null) {
-			$this->shareService->deleteAllForSecret($id);
-		}
-
-		if ($this->groupShareMapper !== null) {
-			$this->groupShareMapper->deleteBySecret($id);
-		}
-
-		if ($this->secretDelegationMapper !== null) {
-			$this->secretDelegationMapper->deleteBySecret($id);
-		}
-
-		// Attachments cascade (encrypted-attachments §3.1): remove the
-		// secret's attachments (grants + reference-counted blobs) and any
-		// grants held BY this row as a recipient copy.
-		if ($this->attachmentService !== null) {
-			$this->attachmentService->deleteForSecret($id);
-			$this->attachmentService->deleteGrantsForSecretCopy($id);
-		}
-
-		// Version-history cascade (secret-version-history §5.2).
-		$this->versionService?->deleteForSecret($id);
-
-		// Rotation-flag cascade (rotation-expiry-policies).
-		$this->rotationService?->deleteForSecret($id);
-
-		// The holder's tags (vault-favourites-tags-and-last-used).
-		$this->tagMapper?->deleteBySecret($id);
-
+		$this->deleteSharingGraph(secretId: $id);
+		$this->deleteSecretData(secretId: $id);
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
-		// A purge from the trash (vault-trash-and-archive) records its own
-		// event: by the owner, or by the system when the retention ran out.
-		$event = match ($purgeReason) {
-			null => $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SECRET_DELETED,
-				objectType: 'secret',
-				objectId: $id,
-				objectName: $secret->getName(),
-			),
-			'retention' => $this->auditEvents->forSystem(
-				eventType: AuditEventTypes::SECRET_PURGED,
-				objectType: 'secret',
-				objectId: $id,
-				objectName: $secret->getName(),
-				metadata: ['reason' => $purgeReason],
-			),
-			default => $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SECRET_PURGED,
-				objectType: 'secret',
-				objectId: $id,
-				objectName: $secret->getName(),
-				metadata: ['reason' => $purgeReason],
-			),
-		};
-
-		$this->dispatchAudit(event: $event);
+		$this->dispatchAudit(
+			event: $this->deletionEvent(
+				secret: $secret,
+				deletion: new SecretDeletion(userId: $userId, purgeReason: $purgeReason)
+			)
+		);
 	}//end delete()
+
+	/**
+	 * Remove the sharing graph of a secret: derived link shares, secret
+	 * requests, user shares (ShareTargets), group shares and secret
+	 * delegations. The mappers for group shares and delegations are optional
+	 * dependencies so the existing constructors without them keep compiling;
+	 * when wired, a secret delete leaves no orphan sharing-graph rows behind.
+	 *
+	 * @param string $secretId The secret ID
+	 *
+	 * @return void
+	 */
+	private function deleteSharingGraph(string $secretId): void {
+		$this->linkShareService->deleteBySecretId($secretId);
+		if ($this->secretRequestService !== null) {
+			$this->secretRequestService->deleteAllForSecret($secretId);
+		}
+
+		if ($this->shareService !== null) {
+			$this->shareService->deleteAllForSecret($secretId);
+		}
+
+		if ($this->groupShareMapper !== null) {
+			$this->groupShareMapper->deleteBySecret($secretId);
+		}
+
+		if ($this->secretDelegationMapper !== null) {
+			$this->secretDelegationMapper->deleteBySecret($secretId);
+		}
+	}//end deleteSharingGraph()
+
+	/**
+	 * Remove what hangs off a user's secret besides its sharing graph: its
+	 * attachments (grants and reference-counted blobs, encrypted-attachments
+	 * §3.1) and the grants it holds as a recipient copy, its version history
+	 * (secret-version-history §5.2), its rotation flags
+	 * (rotation-expiry-policies) and the holder's tags
+	 * (vault-favourites-tags-and-last-used).
+	 *
+	 * @param string $secretId The secret ID
+	 *
+	 * @return void
+	 */
+	private function deleteSecretData(string $secretId): void {
+		if ($this->attachmentService !== null) {
+			$this->attachmentService->deleteForSecret($secretId);
+			$this->attachmentService->deleteGrantsForSecretCopy($secretId);
+		}
+
+		$this->versionService?->deleteForSecret($secretId);
+		$this->rotationService?->deleteForSecret($secretId);
+		$this->tagMapper?->deleteBySecret($secretId);
+	}//end deleteSecretData()
+
+	/**
+	 * The audit event of a user's delete. A purge from the trash
+	 * (vault-trash-and-archive) records its own event: by the owner, or by
+	 * the system when the retention ran out.
+	 *
+	 * @param Secret         $secret   The deleted row
+	 * @param SecretDeletion $deletion Who deleted it, and why when it was a purge
+	 *
+	 * @return AuditEvent
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 */
+	private function deletionEvent(Secret $secret, SecretDeletion $deletion): AuditEvent {
+		if ($deletion->byRetention() === true) {
+			return $this->auditEvents->forSystem(
+				eventType: $deletion->eventType(),
+				objectType: 'secret',
+				objectId: $secret->getId(),
+				objectName: $secret->getName(),
+				metadata: $deletion->metadata(),
+			);
+		}
+
+		return $this->auditEvents->forUser(
+			actorId: $deletion->userId,
+			eventType: $deletion->eventType(),
+			objectType: 'secret',
+			objectId: $secret->getId(),
+			objectName: $secret->getName(),
+			metadata: $deletion->metadata(),
+		);
+	}//end deletionEvent()
 
 	/**
 	 * List a user's secrets, paginated, optionally filtered by folder, sorted.
