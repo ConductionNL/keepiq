@@ -133,25 +133,33 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		async shareOne(secretId) {
-			const secretStore = useSecretStore()
-			const shareStore = useShareStore()
-
 			// fetchSecret decrypts with the session CryptoKey and returns
 			// the PLAINTEXT secret — plaintext stays in this browser tab.
-			const plain = await secretStore.fetchSecret(secretId)
+			const plain = await useSecretStore().fetchSecret(secretId)
 			if (isUseOnly(plain) || plain?.accessExpiresAt) {
 				// A use-only or time-limited copy is never shared onward; the
 				// server refuses it too (sharing-use-only-and-expiring-shares D4).
 				return { status: 'skipped', reason: 'restricted' }
 			}
-			const snapshot = recipientFields(plain)
+			return this.shareOutcome(await this.registerCopy(secretId, plain))
+		},
+
+		/**
+		 * Encrypt the plaintext for the recipient and register the copy.
+		 * register-batch needs a vault-key proof per request (keepiq#818): the
+		 * password is asked once for the run and kept only for it.
+		 *
+		 * @param {string} secretId The secret id.
+		 * @param {object} plain The decrypted secret.
+		 * @return {Promise<object|undefined>} The registration's item.
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		async registerCopy(secretId, plain) {
+			const shareStore = useShareStore()
 			const blob = await shareStore.encryptForRecipient(
-				snapshot,
+				recipientFields(plain),
 				this.certificate,
 			)
-
-			// register-batch needs a vault-key proof per request (keepiq#818).
-			// The password is asked once for the run and kept only for it.
 			const { items, masterPassword } = await shareStore.registerBatch(
 				[
 					{
@@ -164,7 +172,19 @@ export default {
 				{ masterPassword: this.runPassword },
 			)
 			this.runPassword = masterPassword
-			const item = items[0]
+			return items[0]
+		},
+
+		/**
+		 * The report entry for a registration: created or existing is done,
+		 * a copy without the source's one-time code or passkeys is skipped
+		 * with the reason in words, anything else is skipped with its status.
+		 *
+		 * @param {object|undefined} item The registration's item.
+		 * @return {object} The per-item outcome.
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
+		 */
+		shareOutcome(item) {
 			if (item?.status === 'created' || item?.status === 'exists') {
 				return {
 					status: 'ok',
@@ -192,20 +212,7 @@ export default {
 		 */
 		async onRun() {
 			this.error = null
-			try {
-				const response = await axios.get(
-					generateUrl('/apps/keepiq/api/v1/shares/recipient-certificate'),
-					{ params: { userId: this.targetUserId } },
-				)
-				this.certificate = response.data?.certificate ?? ''
-			} catch (e) {
-				this.error =
-					e?.response?.status === 404
-						? this.t(
-								'keepiq',
-								'Recipient has no active encryption suite',
-							)
-						: e?.response?.data?.message || e?.message
+			if (!(await this.resolveCertificate())) {
 				return
 			}
 
@@ -227,6 +234,32 @@ export default {
 				this.runPassword = ''
 			}
 			this.$emit('done')
+		},
+
+		/**
+		 * Fetch the recipient's certificate; on failure show why.
+		 *
+		 * @return {Promise<boolean>} Whether the certificate resolved.
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
+		async resolveCertificate() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/shares/recipient-certificate'),
+					{ params: { userId: this.targetUserId } },
+				)
+				this.certificate = response.data?.certificate ?? ''
+				return true
+			} catch (e) {
+				this.error =
+					e?.response?.status === 404
+						? this.t(
+								'keepiq',
+								'Recipient has no active encryption suite',
+							)
+						: e?.response?.data?.message || e?.message
+				return false
+			}
 		},
 
 		/**
