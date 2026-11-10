@@ -183,29 +183,10 @@ class MigrationWorkService {
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function countOutstanding(SuiteMigration $migration, string $ownerId): array {
-		$oldSuiteId = $migration->getOldSuiteId();
-
-		$secrets = $this->secretMapper->countBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId
-		);
-
-		$versions = $this->versionMapper->countBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId
-		);
-
-		$grants = $this->grantMapper->countBySuiteForRecipient(
-			encryptionSuiteId: $oldSuiteId,
-			recipientType: 'user',
-			recipientId: $ownerId
-		);
-
+		$left = $this->countLeftOnOldSuite(migration: $migration, ownerId: $ownerId);
+		$failed = $this->countFailedByStore(migration: $migration);
 		// "Unaccounted" is what is left on the old suite MINUS what has been
-		// attempted and recorded as failed, computed per store from the
-		// failure table.
+		// attempted and recorded as failed, per store.
 		//
 		// It used to be computed by joining each store to its owning secret and
 		// treating `secrets.migration_error IS NOT NULL` as "accounted for".
@@ -215,48 +196,81 @@ class MigrationWorkService {
 		// (it now sat on the NEW suite), so the row was invisible to both
 		// gates and the migration terminated over it.
 		//
-		// Success clears a record's failure row, so every surviving failure row
-		// belongs to a record still bound to the old suite — which is what
-		// makes the subtraction sound. Clamped at zero so a record deleted
-		// after failing (a version dropped beyond the retention window) cannot
-		// drive the count negative.
-		$migrationId = $migration->getId();
-
-		$failedSecrets = $this->failureMapper->countByMigrationAndStore(
-			migrationId: $migrationId,
-			store: self::STORE_SECRETS
+		// Success clears a
+		// record's failure row, so every surviving failure row belongs to a
+		// record still bound to the old suite — which is what makes the
+		// subtraction sound. Clamped at zero so a record deleted after failing
+		// (a version dropped beyond the retention window) cannot drive the
+		// count negative.
+		$unaccounted = array_combine(
+			array_keys($left),
+			array_map(static fn (int $count, int $lost): int => max(0, ($count - $lost)), $left, $failed)
 		);
-		$failedVersions = $this->failureMapper->countByMigrationAndStore(
-			migrationId: $migrationId,
-			store: self::STORE_VERSIONS
-		);
-		$failedGrants = $this->failureMapper->countByMigrationAndStore(
-			migrationId: $migrationId,
-			store: self::STORE_ATTACHMENT_GRANTS
-		);
-
-		$unaccountedSecrets = max(0, ($secrets - $failedSecrets));
-		$unaccountedVersions = max(0, ($versions - $failedVersions));
-		$unaccountedGrants = max(0, ($grants - $failedGrants));
-
-		$unaccountedTotal = ($unaccountedSecrets + $unaccountedVersions + $unaccountedGrants);
-		$total = ($secrets + $versions + $grants);
 
 		return [
-			'secrets' => $secrets,
-			'versions' => $versions,
-			'attachmentGrants' => $grants,
-			'total' => $total,
-			'unaccountedSecrets' => $unaccountedSecrets,
-			'unaccountedVersions' => $unaccountedVersions,
-			'unaccountedGrants' => $unaccountedGrants,
-			'unaccountedTotal' => $unaccountedTotal,
+			'secrets' => $left[self::STORE_SECRETS],
+			'versions' => $left[self::STORE_VERSIONS],
+			'attachmentGrants' => $left[self::STORE_ATTACHMENT_GRANTS],
+			'total' => array_sum($left),
+			'unaccountedSecrets' => $unaccounted[self::STORE_SECRETS],
+			'unaccountedVersions' => $unaccounted[self::STORE_VERSIONS],
+			'unaccountedGrants' => $unaccounted[self::STORE_ATTACHMENT_GRANTS],
+			'unaccountedTotal' => array_sum($unaccounted),
 			// Attempted and reported unrecoverable. Taken from the failure
 			// table rather than derived as (total - unaccounted), so it stays
 			// correct even when a failed record has since been deleted.
-			'failedTotal' => ($failedSecrets + $failedVersions + $failedGrants),
+			'failedTotal' => array_sum($failed),
 		];
 	}//end countOutstanding()
+
+	/**
+	 * The owner's records of each store still bound to the old suite.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 * @param string         $ownerId   The migration owner's user ID
+	 *
+	 * @return array<string,int> Keyed by store
+	 */
+	private function countLeftOnOldSuite(SuiteMigration $migration, string $ownerId): array {
+		$oldSuiteId = $migration->getOldSuiteId();
+
+		return [
+			self::STORE_SECRETS => $this->secretMapper->countBySuiteForOwner(
+				encryptionSuiteId: $oldSuiteId,
+				ownerType: 'user',
+				ownerId: $ownerId
+			),
+			self::STORE_VERSIONS => $this->versionMapper->countBySuiteForOwner(
+				encryptionSuiteId: $oldSuiteId,
+				ownerType: 'user',
+				ownerId: $ownerId
+			),
+			self::STORE_ATTACHMENT_GRANTS => $this->grantMapper->countBySuiteForRecipient(
+				encryptionSuiteId: $oldSuiteId,
+				recipientType: 'user',
+				recipientId: $ownerId
+			),
+		];
+	}//end countLeftOnOldSuite()
+
+	/**
+	 * The records of each store attempted and recorded as failed in this migration.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 *
+	 * @return array<string,int> Keyed by store
+	 */
+	private function countFailedByStore(SuiteMigration $migration): array {
+		$failed = [];
+		foreach ([self::STORE_SECRETS, self::STORE_VERSIONS, self::STORE_ATTACHMENT_GRANTS] as $store) {
+			$failed[$store] = $this->failureMapper->countByMigrationAndStore(
+				migrationId: $migration->getId(),
+				store: $store
+			);
+		}
+
+		return $failed;
+	}//end countFailedByStore()
 
 	/**
 	 * The owner's secrets left on the old suite with a recorded failure.
@@ -431,41 +445,44 @@ class MigrationWorkService {
 		int $limit = 25,
 		int $offset = 0,
 	): array {
-		$oldSuiteId = $migration->getOldSuiteId();
-		// Capped low: every record in the page carries its RSA ciphertext, so a
-		// large page is a large response for no gain — the client's in-flight
-		// window is 4.
-		$limit = max(1, min(100, $limit));
-		$offset = max(0, $offset);
-
-		$secrets = $this->secretMapper->findBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId,
-			limit: $limit,
-			offset: $offset
-		);
-
-		$grants = $this->grantMapper->findBySuiteForRecipient(
-			encryptionSuiteId: $oldSuiteId,
-			recipientType: 'user',
-			recipientId: $ownerId,
-			limit: $limit,
-			offset: $offset
-		);
-
-		$versionWork = $this->collectVersionWork(
-			oldSuiteId: $oldSuiteId,
-			ownerId: $ownerId,
-			limit: $limit,
-			offset: $offset
-		);
-
+		$page = new MigrationWorkPage(migration: $migration, ownerId: $ownerId, limit: $limit, offset: $offset);
+		$secretRecords = $this->secretWorkRecords(page: $page);
+		$grantRecords = $this->grantWorkRecords(page: $page);
+		$versionWork = $this->collectVersionWork(page: $page);
 		$counts = $this->countOutstanding(migration: $migration, ownerId: $ownerId);
 
-		$secretRecords = [];
+		return [
+			...$page->header(versionWindow: $this->getVersionWindow()),
+			'secrets' => ['records' => $secretRecords, 'remaining' => $counts['secrets']],
+			'versions' => [
+				'records' => $versionWork['records'],
+				'remaining' => $counts['versions'],
+				'dropCandidates' => $versionWork['dropCount'],
+			],
+			'attachmentGrants' => ['records' => $grantRecords, 'remaining' => $counts['attachmentGrants']],
+			'totalRemaining' => $counts['total'],
+		];
+	}//end listWork()
+
+	/**
+	 * The page of the owner's secret heads still on the old suite, ciphertext only.
+	 *
+	 * @param MigrationWorkPage $page The page
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function secretWorkRecords(MigrationWorkPage $page): array {
+		$secrets = $this->secretMapper->findBySuiteForOwner(
+			encryptionSuiteId: $page->oldSuiteId(),
+			ownerType: 'user',
+			ownerId: $page->ownerId,
+			limit: $page->limit,
+			offset: $page->offset
+		);
+
+		$records = [];
 		foreach ($secrets as $secret) {
-			$secretRecords[] = [
+			$records[] = [
 				'id' => $secret->getId(),
 				'name' => $secret->getName(),
 				'key' => $secret->getKey(),
@@ -476,38 +493,36 @@ class MigrationWorkService {
 			];
 		}
 
-		$grantRecords = [];
+		return $records;
+	}//end secretWorkRecords()
+
+	/**
+	 * The page of the owner's attachment grants still on the old suite.
+	 *
+	 * @param MigrationWorkPage $page The page
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function grantWorkRecords(MigrationWorkPage $page): array {
+		$grants = $this->grantMapper->findBySuiteForRecipient(
+			encryptionSuiteId: $page->oldSuiteId(),
+			recipientType: 'user',
+			recipientId: $page->ownerId,
+			limit: $page->limit,
+			offset: $page->offset
+		);
+
+		$records = [];
 		foreach ($grants as $grant) {
-			$grantRecords[] = [
+			$records[] = [
 				'id' => $grant->getId(),
 				'secretId' => $grant->getSecretId(),
 				'wrappedFileKey' => $grant->getWrappedFileKey(),
 			];
 		}
 
-		return [
-			'migrationId' => $migration->getId(),
-			'oldSuiteId' => $oldSuiteId,
-			'newSuiteId' => $migration->getNewSuiteId(),
-			'limit' => $limit,
-			'offset' => $offset,
-			'versionWindow' => $this->getVersionWindow(),
-			'secrets' => [
-				'records' => $secretRecords,
-				'remaining' => $counts['secrets'],
-			],
-			'versions' => [
-				'records' => $versionWork['records'],
-				'remaining' => $counts['versions'],
-				'dropCandidates' => $versionWork['dropCount'],
-			],
-			'attachmentGrants' => [
-				'records' => $grantRecords,
-				'remaining' => $counts['attachmentGrants'],
-			],
-			'totalRemaining' => $counts['total'],
-		];
-	}//end listWork()
+		return $records;
+	}//end grantWorkRecords()
 
 	/**
 	 * Split one page of the owner's outstanding versions into the ids inside
@@ -517,62 +532,34 @@ class MigrationWorkService {
 	 * secret's complete outstanding history — see
 	 * SecretVersionMapper::findSecretIdsWithSuiteVersionsForOwner.
 	 *
-	 * @param string $oldSuiteId The old suite ID
-	 * @param string $ownerId The migration owner's user ID
-	 * @param int $limit Secrets per page
-	 * @param int $offset Secret offset
+	 * @param MigrationWorkPage $page The page
 	 *
 	 * @return array{records:array<int,array<string,mixed>>,dropCount:int}
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-compromise-recovery-migration-re-encrypts-a-bounded-window
 	 */
-	private function collectVersionWork(
-		string $oldSuiteId,
-		string $ownerId,
-		int $limit,
-		int $offset,
-	): array {
+	private function collectVersionWork(MigrationWorkPage $page): array {
 		$window = $this->getVersionWindow();
-
 		$secretIds = $this->versionMapper->findSecretIdsWithSuiteVersionsForOwner(
-			encryptionSuiteId: $oldSuiteId,
+			encryptionSuiteId: $page->oldSuiteId(),
 			ownerType: 'user',
-			ownerId: $ownerId,
-			limit: $limit,
-			offset: $offset
+			ownerId: $page->ownerId,
+			limit: $page->limit,
+			offset: $page->offset
 		);
 
 		$records = [];
 		$dropCount = 0;
 		$blobs = new FederatedValueFields();
-
 		foreach ($secretIds as $secretId) {
 			// Newest first, so the first $window rows are the ones that stay.
-			$versions = $this->versionMapper->findBySecretAndSuite(
-				secretId: $secretId,
-				encryptionSuiteId: $oldSuiteId
-			);
-
-			foreach ($versions as $index => $version) {
-				if ($index < $window) {
-					$records[] = [
-						'id' => $version->getId(),
-						'secretId' => $version->getSecretId(),
-						'versionNumber' => $version->getVersionNumber(),
-						'key' => $version->getKey(),
-						'login' => $version->getLogin(),
-						'additionalFields' => $version->getAdditionalFields(),
-						// A version stores `''` for a field that was empty; the
-						// list says null for it, as it does for a head.
-						'totp' => $blobs->blob(value: $version->getTotp()),
-						'passkeys' => $blobs->blob(value: $version->getPasskeys()),
-					];
-					continue;
-				}
-
-				++$dropCount;
+			$versions = $this->versionMapper->findBySecretAndSuite(secretId: $secretId, encryptionSuiteId: $page->oldSuiteId());
+			foreach (array_slice($versions, 0, $window) as $version) {
+				$records[] = $page->versionRecord(version: $version, blobs: $blobs);
 			}
-		}//end foreach
+
+			$dropCount += max(0, (count($versions) - $window));
+		}
 
 		return [
 			'records' => $records,
