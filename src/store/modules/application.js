@@ -13,6 +13,55 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
  *
  * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
  */
+/**
+ * The plaintext metadata of a secret written for an application.
+ *
+ * @param {object} data Plaintext fields.
+ * @return {object} name, url, typeId and folderId.
+ * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+ */
+function applicationSecretHeader(data) {
+	return {
+		name: data.name,
+		url: data.url ?? null,
+		typeId: data.typeId ?? null,
+		folderId: data.folderId ?? null,
+	}
+}
+
+/**
+ * The optional encrypted values of a secret written for an application: the
+ * login only when set, and the additional fields as given or as JSON.
+ *
+ * @param {object} data Plaintext fields.
+ * @param {CryptoKey} publicKey The application's public key.
+ * @return {Promise<object>}
+ * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+ */
+async function optionalApplicationValues(data, publicKey) {
+	const values = {}
+	if (data.login !== undefined && data.login !== null && data.login !== '') {
+		values.login = await rsaEncrypt(String(data.login), publicKey)
+	}
+	if (data.additionalFields) {
+		values.additionalFields = await rsaEncrypt(
+			additionalFieldsText(data.additionalFields),
+			publicKey,
+		)
+	}
+	return values
+}
+
+/**
+ * @param {string|object} additionalFields The additional fields.
+ * @return {string} Them as text: as given, or as JSON.
+ */
+function additionalFieldsText(additionalFields) {
+	return typeof additionalFields === 'string'
+		? additionalFields
+		: JSON.stringify(additionalFields)
+}
+
 export const useApplicationStore = defineStore('application', {
 	state: () => ({
 		/** @type {Array<object>} The current page of applications. */
@@ -240,31 +289,13 @@ export const useApplicationStore = defineStore('application', {
 				throw new Error('Application has no active EncryptionSuite')
 			}
 			const publicKey = await importPublicKey(pem)
-
 			const payload = {
-				name: data.name,
-				url: data.url ?? null,
-				typeId: data.typeId ?? null,
-				folderId: data.folderId ?? null,
+				...applicationSecretHeader(data),
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
 				ownerType: 'application',
 				ownerId: applicationId,
+				...(await optionalApplicationValues(data, publicKey)),
 			}
-			if (
-				data.login !== undefined
-				&& data.login !== null
-				&& data.login !== ''
-			) {
-				payload.login = await rsaEncrypt(String(data.login), publicKey)
-			}
-			if (data.additionalFields) {
-				const json =
-					typeof data.additionalFields === 'string'
-						? data.additionalFields
-						: JSON.stringify(data.additionalFields)
-				payload.additionalFields = await rsaEncrypt(json, publicKey)
-			}
-
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/secrets'),
 				payload,
