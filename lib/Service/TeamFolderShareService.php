@@ -29,7 +29,6 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -38,7 +37,6 @@ use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 use Throwable;
 
 /**
@@ -115,58 +113,73 @@ class TeamFolderShareService {
 		array $subtreeSecretIds,
 		string $userId,
 	): array {
-		$createdRows = [];
-		$skipped = [];
-		$newRecipients = [];
-
+		$run = new FanOutRun(teamFolder: $teamFolder, subtreeSecretIds: $subtreeSecretIds, userId: $userId);
 		$this->db->beginTransaction();
 		try {
-			foreach ($shares as $row) {
-				$createdRow = $this->createFanOutShare(
-					teamFolder: $teamFolder,
-					row: $row,
-					subtreeSecretIds: $subtreeSecretIds,
-					userId: $userId
-				);
-				if (is_string($createdRow) === true) {
-					$skipped[] = [
-						'sourceSecretId' => (string)($row['sourceSecretId'] ?? ''),
-						'targetUserId' => (string)($row['targetUserId'] ?? ''),
-						'reason' => $createdRow,
-					];
-					continue;
-				}
-
-				$createdRows[] = $createdRow;
-				$newRecipients[$createdRow['targetUserId']] = true;
-			}//end foreach
-
+			$outcome = $this->createFanOutShares(shares: $shares, run: $run);
 			$this->db->commit();
 		} catch (Throwable $exception) {
 			$this->db->rollBack();
 			throw $exception;
 		}//end try
 
-		// One notification per recipient per fan-out run — not per secret.
-		foreach (array_keys($newRecipients) as $recipientId) {
+		$this->notifyNewRecipients(run: $run, recipientIds: array_keys($outcome['recipients']));
+
+		return [
+			'created' => count($outcome['rows']),
+			'rows' => $outcome['rows'],
+			'skipped' => $outcome['skipped'],
+		];
+	}//end registerFanOutShares()
+
+	/**
+	 * Create the share of every submitted row, or note why not.
+	 *
+	 * @param array<int,array<string,mixed>> $shares The submitted rows
+	 * @param FanOutRun                      $run    The fan-out
+	 *
+	 * @return array{rows: list<array<string,string>>, skipped: list<array<string,string>>, recipients: array<string,bool>}
+	 */
+	private function createFanOutShares(array $shares, FanOutRun $run): array {
+		$outcome = ['rows' => [], 'skipped' => [], 'recipients' => []];
+		foreach ($shares as $row) {
+			$share = new FanOutShareRow(row: $row);
+			$created = $this->createFanOutShare(share: $share, run: $run);
+			if (is_string($created) === true) {
+				$outcome['skipped'][] = $share->skipped(reason: $created);
+				continue;
+			}
+
+			$outcome['rows'][] = $created;
+			$outcome['recipients'][$created['targetUserId']] = true;
+		}
+
+		return $outcome;
+	}//end createFanOutShares()
+
+	/**
+	 * Tell each new recipient once: one notification per recipient per
+	 * fan-out run — not per secret.
+	 *
+	 * @param FanOutRun    $run          The fan-out
+	 * @param list<string> $recipientIds The recipients who got a share
+	 *
+	 * @return void
+	 */
+	private function notifyNewRecipients(FanOutRun $run, array $recipientIds): void {
+		foreach ($recipientIds as $recipientId) {
 			$this->notificationService->notify(
 				subject: 'team_folder_shared',
 				recipientId: (string)$recipientId,
 				params: [
-					'teamFolderId' => $teamFolder->getId(),
-					'sharedBy' => $userId,
+					'teamFolderId' => $run->teamFolder->getId(),
+					'sharedBy' => $run->userId,
 				],
 				objectType: 'team_folder',
-				objectId: $teamFolder->getId(),
+				objectId: $run->teamFolder->getId(),
 			);
 		}
-
-		return [
-			'created' => count($createdRows),
-			'rows' => $createdRows,
-			'skipped' => $skipped,
-		];
-	}//end registerFanOutShares()
+	}//end notifyNewRecipients()
 
 	/**
 	 * The (secret × recipient) pairs that still have no ShareTarget, so
@@ -446,103 +459,76 @@ class TeamFolderShareService {
 	 * already exists (`exists`), or when no copy was minted (the reasons of
 	 * RecipientSecretCopyService::createCopy()).
 	 *
-	 * @param TeamFolder $teamFolder The team folder being fanned out
-	 * @param array<string,mixed> $row One {sourceSecretId, targetUserId, encryptedKey, ...} row
-	 * @param array<string,bool> $subtreeSecretIds The secret ids inside the folder subtree
-	 * @param string $userId The caller (the folder owner)
+	 * @param FanOutShareRow $share The submitted row
+	 * @param FanOutRun      $run   The fan-out
 	 *
 	 * @return array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}|string The created row, or the skip reason
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
-	private function createFanOutShare(
-		TeamFolder $teamFolder,
-		array $row,
-		array $subtreeSecretIds,
-		string $userId,
-	): array|string {
-		$sourceSecretId = (string)($row['sourceSecretId'] ?? '');
-		$targetUserId = (string)($row['targetUserId'] ?? '');
-		$encryptedKey = (string)($row['encryptedKey'] ?? '');
-
-		if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
-			return 'incomplete';
+	private function createFanOutShare(FanOutShareRow $share, FanOutRun $run): array|string {
+		$refusal = $this->fanOutRefusal(share: $share, run: $run);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		// Only secrets inside this team folder's subtree may carry
-		// its provenance, and never a copy for the owner.
-		if (isset($subtreeSecretIds[$sourceSecretId]) === false
-			|| $targetUserId === $teamFolder->getOwnerId()
-		) {
-			return 'not_in_folder';
-		}
-
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceSecretId,
-				targetUserId: $targetUserId
-			);
-			return 'exists';
-		} catch (DoesNotExistException) {
-			// No existing share — create below.
-		}
-
-		$copy = $this->copies->createCopy(
-			sourceSecretId: $sourceSecretId,
-			ciphertext: new RecipientCiphertext(
-				recipientId: $targetUserId,
-				key: $encryptedKey,
-				login: $this->nullableString(value: $row['encryptedLogin'] ?? null),
-				additionalFields: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
-				totp: $this->nullableString(value: $row['encryptedTotp'] ?? null),
-				passkeys: $this->nullableString(value: $row['encryptedPasskeys'] ?? null)
-			)
-		);
+		$copy = $this->copies->createCopy(sourceSecretId: $share->sourceSecretId, ciphertext: $share->ciphertext());
 		if (is_string($copy) === true) {
 			// Skipped, so missingPairs() still lists the pair.
 			return $copy;
 		}
 
-		$entity = new ShareTarget();
-		$entity->setId(Uuid::uuid4()->toString());
-		$entity->setSourceSecretId($sourceSecretId);
-		$entity->setTargetUserId($targetUserId);
-		$entity->setSecretId($copy->getId());
-		$entity->setTeamFolderId($teamFolder->getId());
-		$entity->setCreatedBy($userId);
-		$entity->setCreatedAt(new DateTime());
-		$persisted = $this->shareTargetMapper->insert($entity);
+		$persisted = $this->shareTargetMapper->insert($run->shareTarget(share: $share, copyId: $copy->getId()));
 		// Inside the fan-out's transaction, so a restricted membership never
 		// commits a full copy.
 		$this->restrictions?->resolveMinted(target: $persisted);
 
-		return [
-			'sourceSecretId' => $sourceSecretId,
-			'targetUserId' => $targetUserId,
-			'recipientSecretId' => $copy->getId(),
-		];
+		return $share->created(copyId: $copy->getId());
 	}//end createFanOutShare()
 
 	/**
-	 * Normalize an optional string value: empty becomes null.
+	 * Why a row gets no share before any copy is made: it is incomplete;
+	 * its secret is outside this team folder's subtree, or it is a copy for
+	 * the owner (only secrets inside the subtree may carry its provenance,
+	 * and never a copy for the owner); or the share already exists.
 	 *
-	 * @param mixed $value The candidate value
+	 * @param FanOutShareRow $share The submitted row
+	 * @param FanOutRun      $run   The fan-out
 	 *
-	 * @return string|null
-	 *
-	 * @spec exclude Value normalisation helper with no spec behaviour of its own.
+	 * @return string|null The skip reason, or null to create the share
 	 */
-	private function nullableString(mixed $value): ?string {
-		if ($value === null) {
-			return null;
+	private function fanOutRefusal(FanOutShareRow $share, FanOutRun $run): ?string {
+		if ($share->isComplete() === false) {
+			return 'incomplete';
 		}
 
-		$string = (string)$value;
-
-		if ($string === '') {
-			return null;
+		if ($run->covers(share: $share) === false) {
+			return 'not_in_folder';
 		}
 
-		return $string;
-	}//end nullableString()
+		if ($this->shareExists(share: $share) === true) {
+			return 'exists';
+		}
+
+		return null;
+	}//end fanOutRefusal()
+
+	/**
+	 * Whether the source secret is already shared with the recipient.
+	 *
+	 * @param FanOutShareRow $share The submitted row
+	 *
+	 * @return bool
+	 */
+	private function shareExists(FanOutShareRow $share): bool {
+		try {
+			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $share->sourceSecretId,
+				targetUserId: $share->targetUserId
+			);
+			return true;
+		} catch (DoesNotExistException) {
+			return false;
+		}
+	}//end shareExists()
 }//end class
