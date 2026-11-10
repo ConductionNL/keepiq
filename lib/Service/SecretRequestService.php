@@ -238,65 +238,37 @@ class SecretRequestService {
 		array $encryptedFields,
 		array $plainFields,
 	): void {
-		$data = [];
-
-		// Encrypted bucket: the Secret's two ciphertext value columns, plus the
-		// one blob that carries every additional member.
-		foreach ($encryptedFields as $field => $value) {
-			$allowed = array_merge(SecretRequestPolicy::ENCRYPTED_FIELDS, [SecretRequestPolicy::ADDITIONAL_BLOB]);
-
-			if (in_array($field, SecretRequestPolicy::PLAINTEXT_FIELDS, true) === true) {
-				// Refused rather than stored: this column is searchable
-				// plaintext, so a ciphertext here would break search and render
-				// the value unreadable to its owner.
-				throw new InvalidArgumentException(
-					message: sprintf('Field "%s" is plaintext metadata and must be sent in plainFields', $field),
-					code: 400
-				);
-			}
-
-			if (in_array($field, $allowed, true) === false) {
-				throw new InvalidArgumentException(
-					message: sprintf(
-						'Field "%s" cannot be stored on a secret. Additional members belong inside the '
-						. '"%s" blob, keyed by their own names.',
-						$field,
-						SecretRequestPolicy::ADDITIONAL_BLOB
-					),
-					code: 400
-				);
-			}
-
-			$data[$field] = $value;
-		}
-
-		// Plaintext bucket: metadata the owner searches on.
-		foreach ($plainFields as $field => $value) {
-			if (in_array($field, SecretRequestPolicy::PLAINTEXT_FIELDS, true) === false) {
-				throw new InvalidArgumentException(
-					message: sprintf('Field "%s" is not plaintext metadata and must be encrypted', $field),
-					code: 400
-				);
-			}
-
-			$data[$field] = $value;
-		}
-
+		$buckets = new FilledValueBuckets();
+		$data    = $buckets->encrypted(encryptedFields: $encryptedFields)
+			+ $buckets->plain(plainFields: $plainFields);
 		if ($data === []) {
 			return;
 		}
 
+		$this->writeFilledValues(secret: $this->fillTarget(request: $request), data: $data);
+	}//end persistFilledValues()
+
+	/**
+	 * The secret a request writes to.
+	 *
+	 * @param SecretRequest $request The request being fulfilled
+	 *
+	 * @return Secret
+	 *
+	 * @throws InvalidArgumentException With code 404 when the secret is gone
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	private function fillTarget(SecretRequest $request): Secret {
 		try {
-			$secret = $this->secretMapper->findById($request->getSecretId());
+			return $this->secretMapper->findById($request->getSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			throw new InvalidArgumentException(
 				message: 'The secret this request writes to no longer exists',
 				code: 404
 			);
 		}
-
-		$this->writeFilledValues(secret: $secret, data: $data);
-	}//end persistFilledValues()
+	}//end fillTarget()
 
 	/**
 	 * Write the filled values through the owner's update path: the
