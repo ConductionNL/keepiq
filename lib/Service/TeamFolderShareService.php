@@ -444,7 +444,7 @@ class TeamFolderShareService {
 	 * (`incomplete`), when the source secret is outside this folder's subtree
 	 * or the target is the folder owner (`not_in_folder`), when the share
 	 * already exists (`exists`), or when no copy was minted (the reasons of
-	 * RecipientSecretCopyService::create()).
+	 * RecipientSecretCopyService::createCopy()).
 	 *
 	 * @param TeamFolder $teamFolder The team folder being fanned out
 	 * @param array<string,mixed> $row One {sourceSecretId, targetUserId, encryptedKey, ...} row
@@ -487,14 +487,16 @@ class TeamFolderShareService {
 			// No existing share — create below.
 		}
 
-		$copy = $this->copies->create(
+		$copy = $this->copies->createCopy(
 			sourceSecretId: $sourceSecretId,
-			targetUserId: $targetUserId,
-			encryptedKey: $encryptedKey,
-			encryptedLogin: $this->nullableString(value: $row['encryptedLogin'] ?? null),
-			encryptedExtras: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
-			encryptedTotp: $this->nullableString(value: $row['encryptedTotp'] ?? null),
-			encryptedPasskeys: $this->nullableString(value: $row['encryptedPasskeys'] ?? null),
+			ciphertext: new RecipientCiphertext(
+				recipientId: $targetUserId,
+				key: $encryptedKey,
+				login: $this->nullableString(value: $row['encryptedLogin'] ?? null),
+				additionalFields: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
+				totp: $this->nullableString(value: $row['encryptedTotp'] ?? null),
+				passkeys: $this->nullableString(value: $row['encryptedPasskeys'] ?? null)
+			)
 		);
 		if (is_string($copy) === true) {
 			// Skipped, so missingPairs() still lists the pair.

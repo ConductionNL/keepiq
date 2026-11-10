@@ -4,7 +4,7 @@
  * Recipient copy creation tests.
  *
  * Pins the copy RecipientSecretCopyFactory::create() and
- * RecipientSecretCopyService::create() insert, column by column, the type
+ * RecipientSecretCopyService::createCopy() insert, column by column, the type
  * each resolves (and its fallback when the owner's type is not visible to
  * the recipient), and every case that mints no copy: no source, a totp or
  * passkeys that do not mirror the source, no active recipient suite.
@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\RecipientCiphertext;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretTypeService;
@@ -168,7 +169,7 @@ class RecipientSecretCopyCreateTest extends TestCase {
 	public function testServiceMintsTheCopy(): void {
 		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
 
-		$copy = $service->create(sourceSecretId: 'src-1', targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: 'LOGIN', encryptedExtras: null, encryptedTotp: 'TOTP');
+		$copy = $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: 'LOGIN', additionalFields: null, totp: 'TOTP', passkeys: null));
 
 		$this->assertCopy(copy: $copy, typeId: 'type-owner-type-bob');
 	}//end testServiceMintsTheCopy()
@@ -183,7 +184,7 @@ class RecipientSecretCopyCreateTest extends TestCase {
 		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
 		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
 
-		$this->assertSame('type-default-bob', $service->create(sourceSecretId: 'src-1', targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: 'LOGIN', encryptedExtras: null, encryptedTotp: 'TOTP')->getTypeId());
+		$this->assertSame('type-default-bob', $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: 'LOGIN', additionalFields: null, totp: 'TOTP', passkeys: null))->getTypeId());
 		$this->assertSame('type-default-bob', $factory->create(source: $this->source, targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: null, encryptedExtras: null)->getTypeId());
 	}//end testAnInvisibleTypeFallsBackToTheDefault()
 
@@ -195,10 +196,10 @@ class RecipientSecretCopyCreateTest extends TestCase {
 	public function testServiceRefusals(): void {
 		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
 
-		$this->assertSame('not_found', $service->create(sourceSecretId: 'gone', targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: null, encryptedExtras: null, encryptedTotp: 'TOTP'));
-		$this->assertSame('copy_fields_mismatch', $service->create(sourceSecretId: 'src-1', targetUserId: 'nobody', encryptedKey: 'KEY', encryptedLogin: null, encryptedExtras: null));
-		$this->assertSame('copy_fields_mismatch', $service->create(sourceSecretId: 'src-1', targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: null, encryptedExtras: null, encryptedTotp: 'TOTP', encryptedPasskeys: 'PK'));
-		$this->assertSame('no_suite', $service->create(sourceSecretId: 'src-1', targetUserId: 'nobody', encryptedKey: 'KEY', encryptedLogin: null, encryptedExtras: null, encryptedTotp: 'TOTP'));
+		$this->assertSame('not_found', $service->createCopy(sourceSecretId: 'gone', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: null, additionalFields: null, totp: 'TOTP', passkeys: null)));
+		$this->assertSame('copy_fields_mismatch', $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'nobody', key: 'KEY', login: null, additionalFields: null, totp: null, passkeys: null)));
+		$this->assertSame('copy_fields_mismatch', $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: null, additionalFields: null, totp: 'TOTP', passkeys: 'PK')));
+		$this->assertSame('no_suite', $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'nobody', key: 'KEY', login: null, additionalFields: null, totp: 'TOTP', passkeys: null)));
 		$this->assertSame([], $this->inserted);
 	}//end testServiceRefusals()
 
