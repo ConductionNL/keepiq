@@ -129,7 +129,7 @@
   },
   "src/import/model.js": {
     "eqeqeq": {
-      "count": 7
+      "count": 2
     }
   },
   "src/import/parsers/bitwarden.js": {
