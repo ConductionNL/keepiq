@@ -841,4 +841,80 @@ class DirectShareRegistrarTest extends TestCase {
 
 		$this->assertSame('not_shareable', $report[0]['status']);
 	}//end testAReceivedCopyMayNotBeSharedOnward()
+
+	/**
+	 * Every report row of a mixed batch, the stored share rows and the one
+	 * notification per new recipient.
+	 *
+	 * @return void
+	 */
+	public function testAMixedBatchReportsEveryRowAndStoresTheShareRows(): void {
+		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'src-2' => $this->ownerSecret('src-2', 'alice'), 'src-3' => $this->ownerSecret('src-3', 'alice')]);
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			static function (string $sourceSecretId, string $targetUserId): ShareTarget {
+				if ($targetUserId === 'erin') {
+					return new ShareTarget();
+				}
+
+				throw new DoesNotExistException('none');
+			}
+		);
+		$this->copyFactory->method('create')->willReturnCallback(
+			fn (Secret $source, string $targetUserId): ?Secret => $targetUserId === 'frank' ? null : $this->recipientCopy('copy-' . $source->getId() . '-' . $targetUserId, $targetUserId)
+		);
+		$stored = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			static function (ShareTarget $row) use (&$stored): ShareTarget {
+				$stored[] = [$row->getSourceSecretId(), $row->getTargetUserId(), $row->getSecretId(), $row->getGroupShareId(), $row->getCreatedBy(), $row->getUseOnly(), $row->getExpiresAt()?->format('Y-m-d'), strlen((string)$row->getId())];
+				return $row;
+			}
+		);
+		$notified = [];
+		$this->notificationService->method('notify')->willReturnCallback(
+			static function (string $subject, string $recipientId, array $params) use (&$notified): bool {
+				$notified[] = [$subject, $recipientId, $params];
+				return true;
+			}
+		);
+
+		$report = $this->registrar()->registerDirectShares(
+			userId: 'alice',
+			shares: [
+				['sourceSecretId' => '', 'targetUserId' => 'bob', 'encryptedKey' => 'K'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'alice', 'encryptedKey' => 'K'],
+				['sourceSecretId' => 'missing', 'targetUserId' => 'bob', 'encryptedKey' => 'K'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'erin', 'encryptedKey' => 'K'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'frank', 'encryptedKey' => 'K'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'useOnly' => true, 'expiresAt' => '2099-01-02T00:00:00+00:00'],
+				['sourceSecretId' => 'src-2', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'groupShareId' => 'gs-1'],
+				['sourceSecretId' => 'src-3', 'targetUserId' => 'carol', 'encryptedKey' => 'K', 'encryptedLogin' => 'L'],
+			]
+		);
+
+		$this->assertSame(
+			[
+				['sourceSecretId' => '', 'targetUserId' => 'bob', 'status' => 'invalid'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'alice', 'status' => 'self'],
+				['sourceSecretId' => 'missing', 'targetUserId' => 'bob', 'status' => $report[2]['status']],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'erin', 'status' => 'exists'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'frank', 'status' => 'no_suite'],
+				['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'status' => 'created', 'recipientSecretId' => 'copy-src-1-bob'],
+				['sourceSecretId' => 'src-2', 'targetUserId' => 'bob', 'status' => 'invalid'],
+				['sourceSecretId' => 'src-3', 'targetUserId' => 'carol', 'status' => 'created', 'recipientSecretId' => 'copy-src-3-carol'],
+			],
+			$report
+		);
+		$this->assertNotSame('created', $report[2]['status']);
+		$this->assertSame(
+			[
+				['src-1', 'bob', 'copy-src-1-bob', null, 'alice', true, '2099-01-02', 36],
+				['src-3', 'carol', 'copy-src-3-carol', null, 'alice', false, null, 36],
+			],
+			$stored
+		);
+		$this->assertSame(
+			[['secret_shared', 'bob', ['shared_by' => 'alice']], ['secret_shared', 'carol', ['shared_by' => 'alice']]],
+			$notified
+		);
+	}//end testAMixedBatchReportsEveryRowAndStoresTheShareRows()
 }//end class
