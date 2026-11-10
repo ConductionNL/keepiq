@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\HoneyAlertMapper;
 use OCA\Keepiq\Db\HoneyFlag;
 use OCA\Keepiq\Db\HoneyFlagMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Service\HoneyAccess;
 use OCA\Keepiq\Service\HoneyAlertRecorder;
 use OCA\Keepiq\Service\HoneyTripwireService;
 use OCA\Keepiq\Service\NotificationService;
@@ -107,7 +108,7 @@ class HoneyTripwireAlertTest extends TestCase {
 			logger: new NullLogger(),
 			eventDispatcher: $events,
 		);
-		$calls[] = ['returned', $service->raiseAlert('secret-1', 'link_visitor', $accessorId, 'link', '198.51.100.4', 'Agent/2')];
+		$calls[] = ['returned', $service->raiseAlert(new HoneyAccess('secret-1', 'link_visitor', $accessorId, 'link', '198.51.100.4', 'Agent/2'))];
 
 		return $calls;
 	}//end access()
