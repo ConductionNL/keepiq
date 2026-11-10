@@ -281,3 +281,90 @@ describe('CxpTransferDialog.doSend', () => {
 		expect(wrapper.vm.busy).toBe(false)
 	})
 })
+
+describe('CxpTransferDialog.pollForEnvelope', () => {
+	function polling() {
+		const wrapper = mount(CxpTransferDialog, {
+			props: { open: true, secrets: SECRETS, folders: FOLDERS },
+			...mountOpts,
+		})
+		wrapper.vm.waiting = true
+		wrapper.vm.pairingId = 'pair'
+		wrapper.vm.session = { ephemeral: true }
+		return wrapper
+	}
+
+	const notYet = () =>
+		Object.assign(new Error('nope'), { response: { status: 404 } })
+
+	it('keeps polling while the envelope is not there, then hands it to the import', async () => {
+		vi.useFakeTimers()
+		try {
+			const wrapper = polling()
+			const cxp = await import('../../src/crypto/cxp.js')
+			vi.spyOn(cxp, 'openEnvelope').mockResolvedValue(
+				new TextEncoder().encode('CXF'),
+			)
+			const { useImportStore } = await import('../../src/store/modules/import.js')
+			const importStore = useImportStore()
+			const parse = vi.spyOn(importStore, 'parseFile').mockResolvedValue()
+			const step = vi.spyOn(importStore, 'goToStep').mockImplementation(() => {})
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockRejectedValueOnce(notYet())
+				.mockResolvedValueOnce({ data: { payload: '{"env":1}' } })
+			wrapper.vm.pollForEnvelope()
+			await vi.advanceTimersByTimeAsync(2000)
+			expect(wrapper.vm.pollCount).toBe(1)
+			await vi.advanceTimersByTimeAsync(2000)
+			expect(get.mock.calls.map(([url]) => url)).toEqual([
+				'/apps/keepiq/api/v1/cxp/relay/pair/response',
+				'/apps/keepiq/api/v1/cxp/relay/pair/response',
+			])
+			expect(cxp.openEnvelope).toHaveBeenCalledWith({ ephemeral: true }, { env: 1 })
+			expect(parse).toHaveBeenCalledWith('CXF', 'cxf', {})
+			expect(step).toHaveBeenCalledWith('mapping')
+			expect(wrapper.vm.session).toBe(null)
+			expect(wrapper.vm.waiting).toBe(false)
+			expect(wrapper.emitted('open-import')).toHaveLength(1)
+			expect(wrapper.emitted('update:open')).toEqual([[false]])
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('stops at the cap with the time-out text', async () => {
+		vi.useFakeTimers()
+		try {
+			const wrapper = polling()
+			vi.spyOn(axios, 'get').mockRejectedValue(notYet())
+			wrapper.vm.pollForEnvelope()
+			await vi.advanceTimersByTimeAsync(2000 * 61)
+			expect(wrapper.vm.pollCount).toBe(60)
+			expect(wrapper.vm.waiting).toBe(false)
+			expect(wrapper.vm.error).toBe('Timed out waiting for the sealed transfer')
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('shows any other failure and stops polling, and does nothing once no longer waiting', async () => {
+		vi.useFakeTimers()
+		try {
+			const wrapper = polling()
+			const get = vi.spyOn(axios, 'get').mockRejectedValueOnce(new Error(''))
+			wrapper.vm.pollForEnvelope()
+			await vi.advanceTimersByTimeAsync(4000)
+			expect(get).toHaveBeenCalledTimes(1)
+			expect(wrapper.vm.error).toBe('Could not open the sealed transfer')
+			expect(wrapper.vm.waiting).toBe(true)
+			wrapper.vm.waiting = false
+			wrapper.vm.pollForEnvelope()
+			await vi.advanceTimersByTimeAsync(2000)
+			expect(get).toHaveBeenCalledTimes(1)
+			expect(wrapper.vm.pollCount).toBe(1)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+})
