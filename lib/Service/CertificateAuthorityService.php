@@ -107,99 +107,83 @@ class CertificateAuthorityService {
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.UndefinedVariable) PHP's openssl_x509_export / openssl_pkey_export
-	 *   populate $rootCertPem / $rootKeyPem via by-reference output params — PHPMD cannot trace
-	 *   by-ref semantics and incorrectly reports these as undefined.
-	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 */
 	public function bootstrap(): void {
-		try {
-			$root = $this->caCertificateMapper->findRoot();
-		} catch (DoesNotExistException) {
-			$root = null;
+		$root = $this->findRootOrNull();
+		if ($root !== null) {
+			$this->ensureIntermediate(root: $root);
+			return;
 		}
 
-		if ($root !== null) {
-			try {
-				$this->caCertificateMapper->findActiveIntermediate();
-				$this->logger->info('Keepiq: CA already bootstrapped, skipping');
-				// Healthy state — make sure ca_status reflects it in case a prior
-				// partial-state install left it unset or degraded.
-				$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
-				return;
-			} catch (DoesNotExistException) {
-				// Partial state: root exists but intermediate does not.
-				// Recover by issuing only the missing intermediate against the existing root.
-				$this->logger->warning(
-					'Keepiq: detected partial CA state (root present, no active intermediate) — recovering intermediate'
-				);
-				$recovered = $this->recoverIntermediate(root: $root);
-				$this->logger->info('Keepiq: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
-				$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
-				$this->logger->info('Keepiq: CA partial-state recovery complete');
-				return;
-			}
-		}//end if
+		$this->bootstrapFresh();
+	}//end bootstrap()
 
+	/**
+	 * The persisted root, or null when the CA was never bootstrapped.
+	 *
+	 * @return ?CACertificate
+	 */
+	private function findRootOrNull(): ?CACertificate {
+		try {
+			return $this->caCertificateMapper->findRoot();
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end findRootOrNull()
+
+	/**
+	 * With a root in place: skip when an active intermediate exists, else issue
+	 * only the missing intermediate against the existing root.
+	 *
+	 * @param CACertificate $root The persisted root
+	 *
+	 * @return void
+	 */
+	private function ensureIntermediate(CACertificate $root): void {
+		try {
+			$this->caCertificateMapper->findActiveIntermediate();
+			$this->logger->info('Keepiq: CA already bootstrapped, skipping');
+			// Healthy state — make sure ca_status reflects it in case a prior
+			// partial-state install left it unset or degraded.
+			$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+		} catch (DoesNotExistException) {
+			// Partial state: root exists but intermediate does not.
+			// Recover by issuing only the missing intermediate against the existing root.
+			$this->logger->warning(
+				'Keepiq: detected partial CA state (root present, no active intermediate) — recovering intermediate'
+			);
+			$recovered = $this->recoverIntermediate(root: $root);
+			$this->logger->info('Keepiq: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
+			$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+			$this->logger->info('Keepiq: CA partial-state recovery complete');
+		}//end try
+	}//end ensureIntermediate()
+
+	/**
+	 * The full bootstrap: a new self-signed root, stored with its encrypted
+	 * key, and an intermediate under it.
+	 *
+	 * @return void
+	 */
+	private function bootstrapFresh(): void {
 		$this->logger->info('Keepiq: Bootstrapping Certificate Authority');
 
-		// Generate root CA key pair.
-		$rootKey = openssl_pkey_new(
-			options: [
-				'private_key_bits' => 4096,
-				'private_key_type' => OPENSSL_KEYTYPE_RSA,
-			]
-		);
-		// @codeCoverageIgnoreStart
-		if ($rootKey === false) {
-			$this->setDegraded();
-			throw new RuntimeException('Failed to generate root CA key: ' . openssl_error_string());
-		}
+		$rootKey = $this->newRsaKey();
+		$this->failUnless(succeeded: $rootKey !== false, message: 'Failed to generate root CA key: ');
 
-		// @codeCoverageIgnoreEnd
-		// Self-sign the root certificate.
-		$rootCsr = openssl_csr_new(
-			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Keepiq Root CA']),
-			private_key: $rootKey,
-			options: ['digest_alg' => 'sha256']
-		);
-		$rootCert = openssl_csr_sign(
-			csr: $rootCsr,
-			ca_certificate: null,
-			private_key: $rootKey,
-			days: self::ROOT_LIFETIME_DAYS,
-			options: self::ROOT_SIGN_OPTIONS,
-			serial: random_int(1, PHP_INT_MAX)
-		);
-
-		// @codeCoverageIgnoreStart
-		if ($rootCert === false) {
-			$this->setDegraded();
-			throw new RuntimeException('Failed to sign root CA certificate: ' . openssl_error_string());
-		}
-
-		// @codeCoverageIgnoreEnd
-		openssl_x509_export(certificate: $rootCert, output: $rootCertPem);
-		openssl_pkey_export(key: $rootKey, output: $rootKeyPem);
+		$rootCert = $this->signRoot(rootKey: $rootKey);
+		$this->failUnless(succeeded: $rootCert !== false, message: 'Failed to sign root CA certificate: ');
 
 		// Store root certificate with encrypted private key.
-		$rootEntity = new CACertificate();
-		$rootEntity->setId(Uuid::uuid4()->toString());
-		$rootEntity->setType('root');
-		$rootEntity->setCertificate($rootCertPem);
-		$rootEntity->setPrivateKey($this->crypto->encrypt($rootKeyPem));
-		$rootEntity->setCreatedAt(new DateTime());
-		$rootEntity->setExpiresAt(new DateTime('+' . self::ROOT_LIFETIME_DAYS . ' days'));
-		$rootEntity->setIsActive(false);
-		$this->caCertificateMapper->insert($rootEntity);
+		$this->insertCa(type: 'root', pems: $this->exportPems(key: $rootKey, certificate: $rootCert));
 
 		// Generate and sign the intermediate certificate.
 		$this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
 		$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
 		$this->logger->info('Keepiq: CA bootstrap complete');
-	}//end bootstrap()
+	}//end bootstrapFresh()
 
 	/**
 	 * Retry bootstrap (called from admin panel when CA is degraded).
@@ -327,69 +311,27 @@ class CertificateAuthorityService {
 	 *
 	 * @return int Number of suites re-signed.
 	 *
-	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
-	 *   populate $rootCertPem / $rootKeyPem via by-reference output params — PHPMD cannot
-	 *   trace by-ref semantics.
-	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 */
 	public function renewRoot(): int {
 		$oldRoot = $this->caCertificateMapper->findRoot();
 
-		// Generate new root key pair.
-		$rootKey = openssl_pkey_new(
-			options: [
-				'private_key_bits' => 4096,
-				'private_key_type' => OPENSSL_KEYTYPE_RSA,
-			]
-		);
-
-		$rootCsr = openssl_csr_new(
-			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Keepiq Root CA']),
-			private_key: $rootKey,
-			options: ['digest_alg' => 'sha256']
-		);
-		$rootCert = openssl_csr_sign(
-			csr: $rootCsr,
-			ca_certificate: null,
-			private_key: $rootKey,
-			days: self::ROOT_LIFETIME_DAYS,
-			options: self::ROOT_SIGN_OPTIONS,
-			serial: random_int(1, PHP_INT_MAX)
-		);
-
-		openssl_x509_export(certificate: $rootCert, output: $rootCertPem);
-		openssl_pkey_export(key: $rootKey, output: $rootKeyPem);
+		$rootKey  = $this->newRsaKey();
+		$rootCert = $this->signRoot(rootKey: $rootKey);
 
 		// Store new root.
-		$newRoot = new CACertificate();
-		$newRoot->setId(Uuid::uuid4()->toString());
-		$newRoot->setType('root');
-		$newRoot->setCertificate($rootCertPem);
-		$newRoot->setPrivateKey($this->crypto->encrypt($rootKeyPem));
-		$newRoot->setCreatedAt(new DateTime());
-		$newRoot->setExpiresAt(new DateTime('+' . self::ROOT_LIFETIME_DAYS . ' days'));
-		$newRoot->setIsActive(false);
-		$this->caCertificateMapper->insert($newRoot);
+		$newRoot = $this->insertCa(type: 'root', pems: $this->exportPems(key: $rootKey, certificate: $rootCert));
 
 		// Link old root to successor.
 		$oldRoot->setSuccessorId($newRoot->getId());
 		$this->caCertificateMapper->update($oldRoot);
 
 		// Deactivate old intermediate and create new one.
-		try {
-			$oldIntermediate = $this->caCertificateMapper->findActiveIntermediate();
-			$oldIntermediate->setIsActive(false);
-			$oldIntermediate->setSuccessorId(null);
-			$this->caCertificateMapper->update($oldIntermediate);
-		} catch (DoesNotExistException) {
-			// No active intermediate — bootstrap was incomplete.
-		}
-
+		$oldIntermediate = $this->deactivateIntermediate();
 		$newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
 		// Link old intermediate to new one.
-		if (isset($oldIntermediate) === true) {
+		if ($oldIntermediate !== null) {
 			$oldIntermediate->setSuccessorId($newIntermediate->getId());
 			$this->caCertificateMapper->update($oldIntermediate);
 		}
@@ -400,6 +342,25 @@ class CertificateAuthorityService {
 
 		return $resignedCount;
 	}//end renewRoot()
+
+	/**
+	 * Deactivate the active intermediate, if there is one.
+	 *
+	 * @return ?CACertificate The deactivated intermediate, or null when there was none
+	 */
+	private function deactivateIntermediate(): ?CACertificate {
+		$oldIntermediate = null;
+		try {
+			$oldIntermediate = $this->caCertificateMapper->findActiveIntermediate();
+			$oldIntermediate->setIsActive(false);
+			$oldIntermediate->setSuccessorId(null);
+			$this->caCertificateMapper->update($oldIntermediate);
+		} catch (DoesNotExistException) {
+			// No active intermediate — bootstrap was incomplete.
+		}
+
+		return $oldIntermediate;
+	}//end deactivateIntermediate()
 
 	/**
 	 * Get the current CA status.
@@ -431,14 +392,8 @@ class CertificateAuthorityService {
 		$rootKey = openssl_pkey_get_private(
 			private_key: $this->crypto->decrypt($root->getPrivateKey())
 		);
+		$this->failUnless(succeeded: $rootKey !== false, message: 'Failed to load persisted root CA private key: ');
 
-		// @codeCoverageIgnoreStart
-		if ($rootKey === false) {
-			$this->setDegraded();
-			throw new RuntimeException('Failed to load persisted root CA private key: ' . openssl_error_string());
-		}
-
-		// @codeCoverageIgnoreEnd
 		return $this->generateIntermediate(rootKey: $rootKey, rootCert: $root->getCertificate());
 	}//end recoverIntermediate()
 
@@ -449,20 +404,70 @@ class CertificateAuthorityService {
 	 * @param \OpenSSLCertificate|string $rootCert Root certificate
 	 *
 	 * @return CACertificate
-	 *
-	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
-	 *   populate $intCertPem / $intKeyPem via by-reference output params — PHPMD cannot
-	 *   trace by-ref semantics.
 	 */
 	private function generateIntermediate($rootKey, $rootCert): CACertificate {
-		$intKey = openssl_pkey_new(
+		$intKey = $this->newRsaKey();
+
+		$intCert = openssl_csr_sign(
+			csr: $this->intermediateCsr(intKey: $intKey),
+			ca_certificate: $rootCert,
+			private_key: $rootKey,
+			days: self::INTERMEDIATE_LIFETIME_DAYS,
+			options: self::INTERMEDIATE_SIGN_OPTIONS,
+			serial: random_int(1, PHP_INT_MAX)
+		);
+		$this->failUnless(succeeded: $intCert !== false, message: 'Failed to sign intermediate CA: ');
+
+		return $this->insertCa(type: 'intermediate', pems: $this->exportPems(key: $intKey, certificate: $intCert));
+	}//end generateIntermediate()
+
+	/**
+	 * A new 4096-bit RSA key pair, for a root or an intermediate.
+	 *
+	 * @return mixed The key pair (an OpenSSLAsymmetricKey), or false when OpenSSL failed
+	 */
+	private function newRsaKey() {
+		return openssl_pkey_new(
 			options: [
 				'private_key_bits' => 4096,
 				'private_key_type' => OPENSSL_KEYTYPE_RSA,
 			]
 		);
+	}//end newRsaKey()
 
-		$intCsr = openssl_csr_new(
+	/**
+	 * The root certificate, self-signed with its own key.
+	 *
+	 * @param \OpenSSLAsymmetricKey|bool $rootKey Root private key
+	 *
+	 * @return mixed The certificate (an OpenSSLCertificate), or false when OpenSSL failed
+	 */
+	private function signRoot($rootKey) {
+		$rootCsr = openssl_csr_new(
+			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Keepiq Root CA']),
+			private_key: $rootKey,
+			options: ['digest_alg' => 'sha256']
+		);
+
+		return openssl_csr_sign(
+			csr: $rootCsr,
+			ca_certificate: null,
+			private_key: $rootKey,
+			days: self::ROOT_LIFETIME_DAYS,
+			options: self::ROOT_SIGN_OPTIONS,
+			serial: random_int(1, PHP_INT_MAX)
+		);
+	}//end signRoot()
+
+	/**
+	 * The signing request for an intermediate key.
+	 *
+	 * @param \OpenSSLAsymmetricKey|bool $intKey Intermediate private key
+	 *
+	 * @return mixed The signing request, or false when OpenSSL failed
+	 */
+	private function intermediateCsr($intKey) {
+		return openssl_csr_new(
 			distinguished_names: array_merge(
 				CertificateIssuanceService::DEFAULT_DN,
 				['commonName' => 'Keepiq Intermediate CA']
@@ -470,39 +475,73 @@ class CertificateAuthorityService {
 			private_key: $intKey,
 			options: ['digest_alg' => 'sha256']
 		);
+	}//end intermediateCsr()
 
-		$intCert = openssl_csr_sign(
-			csr: $intCsr,
-			ca_certificate: $rootCert,
-			private_key: $rootKey,
-			days: self::INTERMEDIATE_LIFETIME_DAYS,
-			options: self::INTERMEDIATE_SIGN_OPTIONS,
-			serial: random_int(1, PHP_INT_MAX)
-		);
+	/**
+	 * The certificate and its private key, PEM-encoded.
+	 *
+	 * @param \OpenSSLAsymmetricKey|bool $key The private key
+	 * @param \OpenSSLCertificate|bool $certificate The certificate
+	 *
+	 * @return array<string,string>
+	 *
+	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
+	 *   populate $certPem / $keyPem via by-reference output params — PHPMD cannot
+	 *   trace by-ref semantics.
+	 */
+	private function exportPems($key, $certificate): array {
+		openssl_x509_export(certificate: $certificate, output: $certPem);
+		openssl_pkey_export(key: $key, output: $keyPem);
 
-		// @codeCoverageIgnoreStart
-		if ($intCert === false) {
-			$this->setDegraded();
-			throw new RuntimeException('Failed to sign intermediate CA: ' . openssl_error_string());
+		return ['certificate' => $certPem, 'key' => $keyPem];
+	}//end exportPems()
+
+	/**
+	 * Store a CA certificate with its encrypted private key. A root is stored
+	 * inactive and lives ROOT_LIFETIME_DAYS; an intermediate is the active one
+	 * and lives INTERMEDIATE_LIFETIME_DAYS.
+	 *
+	 * @param string $type 'root' or 'intermediate'
+	 * @param array<string,string> $pems The PEM-encoded certificate and key
+	 *
+	 * @return CACertificate
+	 */
+	private function insertCa(string $type, array $pems): CACertificate {
+		$isRoot = $type === 'root';
+		$days   = self::INTERMEDIATE_LIFETIME_DAYS;
+		if ($isRoot === true) {
+			$days = self::ROOT_LIFETIME_DAYS;
 		}
-
-		// @codeCoverageIgnoreEnd
-		openssl_x509_export(certificate: $intCert, output: $intCertPem);
-		openssl_pkey_export(key: $intKey, output: $intKeyPem);
 
 		$entity = new CACertificate();
 		$entity->setId(Uuid::uuid4()->toString());
-		$entity->setType('intermediate');
-		$entity->setCertificate($intCertPem);
-		$entity->setPrivateKey($this->crypto->encrypt($intKeyPem));
+		$entity->setType($type);
+		$entity->setCertificate($pems['certificate']);
+		$entity->setPrivateKey($this->crypto->encrypt($pems['key']));
 		$entity->setCreatedAt(new DateTime());
-		$entity->setExpiresAt(new DateTime('+' . self::INTERMEDIATE_LIFETIME_DAYS . ' days'));
-		$entity->setIsActive(true);
-
+		$entity->setExpiresAt(new DateTime('+' . $days . ' days'));
+		$entity->setIsActive($isRoot === false);
 		$this->caCertificateMapper->insert($entity);
 
 		return $entity;
-	}//end generateIntermediate()
+	}//end insertCa()
+
+	/**
+	 * Enter the degraded state and throw when an OpenSSL step failed.
+	 *
+	 * @param bool $succeeded Whether the step succeeded
+	 * @param string $message The failure, to which OpenSSL's own error is appended
+	 *
+	 * @return void
+	 *
+	 * @codeCoverageIgnore
+	 */
+	private function failUnless(bool $succeeded, string $message): void {
+		if ($succeeded === false) {
+			$this->setDegraded();
+			throw new RuntimeException($message . openssl_error_string());
+		}
+	}//end failUnless()
 
 	/**
 	 * Set the CA status to degraded.
