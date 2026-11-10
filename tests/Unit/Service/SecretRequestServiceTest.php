@@ -566,6 +566,69 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFillRefusesAFieldThatCannotBeStored()
 
 	/**
+	 * Fills that put a value in the wrong bucket, with the refusal each gets.
+	 *
+	 * @return array<string,array{0:list<string>,1:array<string,string>,2:array<string,string>,3:string}>
+	 */
+	public static function misplacedFills(): array {
+		return [
+			'url as ciphertext'      => [['key'], ['key' => 'C', 'url' => 'C'], [], 'Field "url" is plaintext metadata and must be sent in plainFields'],
+			'a member on its own'    => [['key'], ['key' => 'C', 'api-key' => 'C'], [], 'Field "api-key" cannot be stored on a secret. Additional members belong inside the "additionalFields" blob, keyed by their own names.'],
+			'the key in plain'       => [['url'], [], ['url' => 'P', 'key' => 'P'], 'Field "key" is not plaintext metadata and must be encrypted'],
+		];
+	}//end misplacedFills()
+
+	/**
+	 * A value in the wrong bucket is refused with 400 and its reason, before
+	 * the secret is read or the request moves.
+	 *
+	 * @param list<string>          $requested The requested fields
+	 * @param array<string,string> $encrypted The encrypted bucket
+	 * @param array<string,string> $plain     The plaintext bucket
+	 * @param string               $message   The refusal
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('misplacedFills')]
+	public function testFillRefusesAMisplacedValueWithItsReason(array $requested, array $encrypted, array $plain, string $message): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode($requested));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretMapper->expects($this->never())->method('findById');
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: $encrypted, plainFields: $plain);
+			$this->fail('A misplaced value must be refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame([$message, 400], [$exception->getMessage(), $exception->getCode()]);
+		}
+	}//end testFillRefusesAMisplacedValueWithItsReason()
+
+	/**
+	 * A fill whose secret is gone is refused with 404 and leaves the request
+	 * pending.
+	 *
+	 * @return void
+	 */
+	public function testFillOfAVanishedSecretIsNotFound(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretMapper->method('findById')->willThrowException(new DoesNotExistException('gone'));
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'C']);
+			$this->fail('A fill of a vanished secret must be refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame(['The secret this request writes to no longer exists', 404], [$exception->getMessage(), $exception->getCode()]);
+		}
+	}//end testFillOfAVanishedSecretIsNotFound()
+
+	/**
 	 * Every field a Secret supports is requestable, each in its own bucket.
 	 *
 	 * `key` is ciphertext, `url` is plaintext metadata the owner searches on,
