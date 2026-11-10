@@ -12,6 +12,17 @@ import {
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
+import {
+	assertNoPendingOfflineChanges,
+	bindSessionToNewSuite,
+	bindSessionToSuite,
+	carriedContacts,
+	evictOfflineSnapshot,
+	postCompromiseRecovery,
+	rotationMigration,
+	showRotationStarting,
+	wrappedKeyPair,
+} from './keyRotation.js'
 import { usePasskeyStore } from './passkey.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
@@ -42,6 +53,35 @@ function boundParam(value) {
 		return ''
 	}
 	return String(value)
+}
+
+/**
+ * The completion proof of a rotation that finalises a clean run. Completion
+ * is guarded too, and its proof is over the OLD key — the suite being
+ * retired — not the new one. That is the key both the initiate path and the
+ * resume path already hold the password for (oldPassword), so completion
+ * needs no extra prompt on either. It binds every parameter
+ * finaliseMigration will send to complete — the id, hasErrors and the
+ * (here absent) acceptUnrecoverable — so a captured proof cannot be replayed
+ * to finalise with an acknowledged loss it never carried.
+ *
+ * @param {object} rotation The started rotation.
+ * @param {{failed: number}} outcome The migration outcome.
+ * @return {Promise<object>} The proof headers.
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+async function cleanCompletionProof(rotation, outcome) {
+	return buildKeyProofHeaders({
+		suiteId: rotation.started.migration.oldSuiteId,
+		purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
+		encryptedPrivateKey: rotation.started.oldEncryptedPrivateKey,
+		masterPassword: rotation.oldPassword,
+		boundValues: [
+			rotation.started.migration.id,
+			boundParam(outcome.failed > 0),
+			boundParam(null),
+		],
+	})
 }
 
 /**
@@ -261,37 +301,21 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		async createSuite(masterPassword) {
 			this.loading = true
 			try {
-				const { publicKeyPem, privateKey } = await generateKeyPair()
-
-				// Export private key as PEM for encryption.
-				const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-				const privateKeyPem =
-					'-----BEGIN PRIVATE KEY-----\n'
-					+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
-						.match(/.{1,64}/g)
-						.join('\n')
-					+ '\n-----END PRIVATE KEY-----'
-
-				const encryptedPk = await encryptPrivateKey(
-					privateKeyPem,
-					masterPassword,
-				)
-
+				const keys = await wrappedKeyPair(masterPassword)
 				const response = await this.postNewSuite({
-					publicKey: publicKeyPem,
-					encryptedPrivateKey: encryptedPk,
+					publicKey: keys.publicKeyPem,
+					encryptedPrivateKey: keys.encryptedPrivateKey,
 				})
 
 				this.currentSuite = response.data
 
 				// Immediately unlock the session.
-				const session = useSessionStore()
-				const cryptoKey = await importPrivateKey(privateKeyPem)
-				session.cryptoKey = cryptoKey
-				session.encryptedPrivateKey = encryptedPk
-				session.certificate = response.data.certificate
-				session.suiteId = response.data.id
-				session.lastActivity = Date.now()
+				await bindSessionToSuite(useSessionStore(), {
+					privateKeyPem: keys.privateKeyPem,
+					encryptedPrivateKey: keys.encryptedPrivateKey,
+					certificate: response.data.certificate,
+					suiteId: response.data.id,
+				})
 			} finally {
 				this.loading = false
 			}
@@ -379,92 +403,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			newPassword,
 			carryContactIds = [],
 		) {
-			// Offline changes are sealed to the current certificate: a rotation
-			// waits until they are synced or discarded (offline-edit-queue D6).
-			const { useOfflineStore: offlineStoreOf } = await import('./offline.js')
-			const offline = offlineStoreOf()
-			await offline.loadQueue()
-			offline.assertNoPendingChanges()
-
-			const { publicKeyPem, privateKey } = await generateKeyPair()
-
-			// Export new private key as PEM.
-			const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-			const newPrivateKeyPem =
-				'-----BEGIN PRIVATE KEY-----\n'
-				+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
-					.match(/.{1,64}/g)
-					.join('\n')
-				+ '\n-----END PRIVATE KEY-----'
-
-			const newEncryptedPk = await encryptPrivateKey(
-				newPrivateKeyPem,
+			await assertNoPendingOfflineChanges()
+			const rotation = {
+				oldPassword,
 				newPassword,
-			)
-
-			this.migrationProgress = { done: 0, total: 0, phase: 'starting' }
-			this.migrationFailures = []
-			this.migrationDroppedVersions = 0
-
-			// Starting a rotation is guarded: prove possession of the OLD suite
-			// key (i.e. the old master password) over the submitted new key
-			// material, so a stolen session cannot begin a hostile rotation.
-			const session = useSessionStore()
-			const startProof = await buildKeyProofHeaders({
-				suiteId: session.suiteId,
-				purpose: PROOF_PURPOSE.COMPROMISE_RECOVERY,
-				encryptedPrivateKey: session.encryptedPrivateKey,
-				masterPassword: oldPassword,
-				boundValues: [publicKeyPem, newEncryptedPk],
-			})
-
-			const response = await axios.post(
-				generateUrl('/apps/keepiq/api/v1/suites/compromise-recovery'),
-				{
-					publicKey: publicKeyPem,
-					encryptedPrivateKey: newEncryptedPk,
-				},
-				{ headers: startProof },
-			)
-
-			this.migrationStatus = response.data.migration
-			this.currentSuite = response.data.newSuite
-
-			// Rebind the session to the NEW suite, the way createSuite does.
-			// Without this the session still names the old suite, and
-			// resumeMigration's "is this session unlocked against the
-			// migration's new suite?" check refused — so "Try these again", the
-			// only in-dialog escape from a partly-failed run, raised an error
-			// every time and pushed the user at "Finish anyway" instead.
-			//
-			// The key material is the pair generated above, so this is the same
-			// binding createSuite performs on first-time setup, not a
-			// re-derivation from anything the server sent.
-			session.cryptoKey = await importPrivateKey(newPrivateKeyPem)
-			session.encryptedPrivateKey = newEncryptedPk
-			session.certificate = response.data.newSuite?.certificate ?? null
-			session.suiteId = response.data.newSuite?.id ?? session.suiteId
-			session.lastActivity = Date.now()
-
-			// Suite rotation invalidates every cached ciphertext (encrypted to
-			// the now-dead key) — evict the offline snapshot (offline-readonly-
-			// cache §D4). Lazy import avoids a static store cycle.
-			try {
-				const { useOfflineStore } = await import('./offline.js')
-				await useOfflineStore().evict()
-			} catch (e) {
-				// Offline cache absent — nothing to evict.
+				carryContactIds,
+				...(await wrappedKeyPair(newPassword)),
 			}
 
-			const outcome = await this.runMigration({
-				migrationId: response.data.migration.id,
-				oldEncryptedPrivateKey: response.data.oldEncryptedPrivateKey,
-				oldPassword,
-				newPublicKeyPem: publicKeyPem,
-				// Re-imported rather than reusing the generated CryptoKey, so the
-				// verification key is non-extractable like every other key here.
-				newPrivateKey: await importPrivateKey(newPrivateKeyPem),
-			})
+			showRotationStarting(this)
+			const session = useSessionStore()
+			rotation.started = await postCompromiseRecovery(rotation, session)
+			this.migrationStatus = rotation.started.migration
+			this.currentSuite = rotation.started.newSuite
+			await bindSessionToNewSuite(rotation, session)
+			await evictOfflineSnapshot()
+
+			const outcome = await this.runMigration(await rotationMigration(rotation))
 
 			// Migrate emergency-access recovery envelopes BEFORE completion. The
 			// completion sweep (SuiteMigrationCompletedEvent) invalidates every
@@ -475,44 +430,18 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// only for an unreachable one, and warns about a break-glass in flight.
 			// Emergency contacts are outside the completion gate, so this never
 			// blocks completion (design D2).
-			outcome.residualContacts = await this.migrateEmergencyContacts({
-				migrationId: response.data.migration.id,
-				oldSuiteId: response.data.migration.oldSuiteId,
-				newPrivateKeyPem,
-				newSuiteId: response.data.newSuite?.id,
-				newEncryptedPrivateKey: newEncryptedPk,
-				newPassword,
-				carryContactIds,
-			})
+			outcome.residualContacts = await this.migrateEmergencyContacts(
+				carriedContacts(rotation),
+			)
 
 			// Only now, with nothing left on the old suite, is the vault ready
 			// for the terminal step. The premature complete() that used to sit
 			// here reported success five lines after initiating, before a single
 			// record had been touched.
-			// Completion is guarded too, and its proof is over the OLD key —
-			// the suite being retired — not the new one. That is the key both
-			// this initiate path and the resume path already hold the password
-			// for (oldPassword), so completion needs no extra prompt on either.
-			// Bind every parameter finaliseMigration will send to complete — the
-			// id, hasErrors and the (here absent) acceptUnrecoverable — so a
-			// captured proof cannot be replayed to finalise with an acknowledged
-			// loss it never carried. This path finalises a clean run, so
-			// acceptUnrecoverable is null and hasErrors follows the outcome.
-			const completeProof = await buildKeyProofHeaders({
-				suiteId: response.data.migration.oldSuiteId,
-				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
-				encryptedPrivateKey: response.data.oldEncryptedPrivateKey,
-				masterPassword: oldPassword,
-				boundValues: [
-					response.data.migration.id,
-					boundParam(outcome.failed > 0),
-					boundParam(null),
-				],
-			})
 			await this.finaliseMigration(
-				response.data.migration.id,
+				rotation.started.migration.id,
 				outcome,
-				completeProof,
+				await cleanCompletionProof(rotation, outcome),
 			)
 
 			return outcome
