@@ -354,8 +354,8 @@ class LinkShareControllerTest extends TestCase {
 	private function describedCreateCalls(array $calls): array {
 		return array_map(
 			static function (array $args): array {
-				[$secretId, $snapshot, $salt, $suiteId, $limit, $expiresAt, $userId] = $args;
-				return [$secretId, $snapshot, $salt, $suiteId, $limit, $expiresAt?->format(DATE_ATOM), $userId];
+				$link = $args[0];
+				return [$link->secretId, $link->encryptedSnapshot, $link->salt, $link->encryptionSuiteId, $link->usageLimit, $link->expiresAt?->format(DATE_ATOM), $link->userId];
 			},
 			$calls
 		);

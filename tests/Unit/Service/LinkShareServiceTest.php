@@ -32,6 +32,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\NewLinkShare;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\TeamFolderQueryService;
@@ -217,13 +218,15 @@ class LinkShareServiceTest extends TestCase {
 	 */
 	private function createAs(string $secretId, string $userId): LinkShare {
 		return $this->service->create(
-			secretId: $secretId,
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: $userId
+			link: new NewLinkShare(
+				secretId: $secretId,
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: $userId
+			)
 		);
 	}//end createAs()
 
@@ -378,13 +381,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
 		$this->serviceJudgingGrants()->create(
-			secretId: 'copy-bob',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: 'bob'
+			link: new NewLinkShare(
+				secretId: 'copy-bob',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'bob'
+			)
 		);
 	}//end testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused()
 
@@ -401,13 +406,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
 
 		$link = $this->serviceJudgingGrants()->create(
-			secretId: 'copy-bob',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: 'bob'
+			link: new NewLinkShare(
+				secretId: 'copy-bob',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'bob'
+			)
 		);
 
 		$this->assertSame('bob', $link->getCreatedBy());
@@ -462,13 +469,15 @@ class LinkShareServiceTest extends TestCase {
 
 		$this->expectException(DoesNotExistException::class);
 		$service->create(
-			secretId: 'nope',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'nope',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testAMissingSecretIsRefusedTheSameWay()
 
@@ -516,13 +525,15 @@ class LinkShareServiceTest extends TestCase {
 			);
 
 		$result = $this->service->create(
-			secretId: 'secret-9',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-42',
-			usageLimit: 5,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-9',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-42',
+				usageLimit: 5,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 
 		$this->assertSame('secret-9', $result->getSecretId());
@@ -544,13 +555,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: 'blob',
-			salt: 'salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 0,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: 'blob',
+				salt: 'salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 0,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testCreateRejectsUsageLimitZero()
 
@@ -564,13 +577,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: 'blob',
-			salt: 'salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 11,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: 'blob',
+				salt: 'salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 11,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testCreateRejectsUsageLimitEleven()
 
@@ -584,13 +599,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: '',
-			salt: 'salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: '',
+				salt: 'salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testCreateRejectsEmptySnapshot()
 
@@ -871,13 +888,15 @@ class LinkShareServiceTest extends TestCase {
 		);
 
 		$service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-7',
-			usageLimit: 10,
-			expiresAt: new DateTime('2099-05-06T07:08:09+00:00'),
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-7',
+				usageLimit: 10,
+				expiresAt: new DateTime('2099-05-06T07:08:09+00:00'),
+				userId: 'alice'
+			)
 		);
 
 		$this->assertSame(['insert', 36, 'secret-1', 32, 'the-blob', 'the-salt', 'suite-7', 10, 0, 0, 'alice', true, '2099-05-06'], $calls[0]);

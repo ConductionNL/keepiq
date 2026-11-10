@@ -101,13 +101,7 @@ class LinkShareService {
 	 * is the sole authority used by delete()/listBySecret() — this keeps the
 	 * feature self-contained and IDOR-safe.
 	 *
-	 * @param string $secretId The secret ID the snapshot is taken from
-	 * @param string $encryptedSnapshot The AES-256-GCM encrypted snapshot blob (base64)
-	 * @param string $salt The base64-encoded Argon2id salt
-	 * @param string $encryptionSuiteId The active encryption suite ID at creation
-	 * @param int $usageLimit The usage limit (1-10)
-	 * @param DateTime|null $expiresAt Optional expiry timestamp
-	 * @param string $userId The owning Nextcloud user ID
+	 * @param NewLinkShare $link The secret, snapshot, salt, suite, limit, expiry and creator
 	 *
 	 * @return LinkShare
 	 *
@@ -120,67 +114,50 @@ class LinkShareService {
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 */
-	public function create(
-		string $secretId,
-		string $encryptedSnapshot,
-		string $salt,
-		string $encryptionSuiteId,
-		int $usageLimit,
-		?DateTime $expiresAt,
-		string $userId,
-	): LinkShare {
+	public function create(NewLinkShare $link): LinkShare {
 		// A link share bakes an encrypted snapshot against a specific suite, and
 		// completing a migration cascade-revokes every link share anyway. One
 		// created mid-migration would be destroyed moments later, so refuse it
 		// rather than take the user's time.
-		$this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+		$this->writeLockService->assertNotWriteLocked(ownerId: $link->userId);
 
-		if ($secretId === '' || $encryptedSnapshot === '' || $salt === '') {
-			throw new InvalidArgumentException('Missing required link share fields');
-		}
+		$link->assertValid();
 
-		if ($usageLimit < self::MIN_USAGE_LIMIT || $usageLimit > self::MAX_USAGE_LIMIT) {
-			throw new InvalidArgumentException(
-				'Usage limit must be between ' . self::MIN_USAGE_LIMIT . ' and ' . self::MAX_USAGE_LIMIT
-			);
-		}
+		$this->shareAuth->assertMayReshare(secretId: $link->secretId, userId: $link->userId);
 
-		$this->shareAuth->assertMayReshare(secretId: $secretId, userId: $userId);
-
-		$linkShare = new LinkShare();
-		$linkShare->setId(Uuid::uuid4()->toString());
-		$linkShare->setSecretId($secretId);
-		$linkShare->setToken($this->generateToken());
-		$linkShare->setEncryptedSecretSnapshot($encryptedSnapshot);
-		$linkShare->setArgon2idSalt($salt);
-		$linkShare->setEncryptionSuiteId($encryptionSuiteId);
-		$linkShare->setUsageLimit($usageLimit);
-		$linkShare->setUsageCount(0);
-		$linkShare->setFailedAttempts(0);
-		$linkShare->setCreatedBy($userId);
-		$linkShare->setCreatedAt(new DateTime());
-		$linkShare->setExpiresAt($expiresAt);
-
+		$linkShare = $link->toRow(token: $this->generateToken());
 		$this->mapper->insert($linkShare);
 
-		$this->logger->info("Keepiq: link share created for secret {$secretId} by {$userId}");
+		$this->logger->info("Keepiq: link share created for secret {$link->secretId} by {$link->userId}");
 
-		$expiresAtIso = null;
-		if ($expiresAt !== null) {
-			$expiresAtIso = $expiresAt->format(DateTime::ATOM);
-		}
-
-		$this->auditTrail->recordCreated(
-			userId: $userId,
-			linkShareId: $linkShare->getId(),
-			// Always true here: the guard above throws when $salt === '', so a
-			// link share cannot reach this point without one.
-			hasPassword: true,
-			expiresAtIso: $expiresAtIso,
-		);
+		$this->auditCreated(link: $link, linkShare: $linkShare);
 
 		return $linkShare;
 	}//end create()
+
+	/**
+	 * Audit a created link share with its expiry.
+	 *
+	 * @param NewLinkShare $link The request it was created from
+	 * @param LinkShare $linkShare The stored link share
+	 *
+	 * @return void
+	 */
+	private function auditCreated(NewLinkShare $link, LinkShare $linkShare): void {
+		$expiresAtIso = null;
+		if ($link->expiresAt !== null) {
+			$expiresAtIso = $link->expiresAt->format(DateTime::ATOM);
+		}
+
+		$this->auditTrail->recordCreated(
+			userId: $link->userId,
+			linkShareId: $linkShare->getId(),
+			// Always true here: the guard in NewLinkShare::assertValid throws when
+			// the salt is empty, so a link share cannot reach this point without one.
+			hasPassword: true,
+			expiresAtIso: $expiresAtIso,
+		);
+	}//end auditCreated()
 
 	/**
 	 * Fetch a valid link share by token for public access (Phase 1).
