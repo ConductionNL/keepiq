@@ -429,6 +429,84 @@ function caConstraints(bytes, block) {
 }
 
 /**
+ * Refuse a certificate as malformed unless a structural check holds.
+ *
+ * @param {boolean} holds The check.
+ * @return {void}
+ */
+function malformedUnless(holds) {
+	if (!holds) {
+		throw new FederatedCertificateError('malformed')
+	}
+}
+
+/**
+ * The three parts of a certificate: the TBS and the signature algorithm,
+ * both SEQUENCEs, and the signature.
+ *
+ * @param {Uint8Array} der The certificate (DER).
+ * @return {{tbs: object, algorithm: object, signature: object}}
+ */
+function certificateParts(der) {
+	const certificate = tlv(der, 0)
+	const [tbs, algorithm, signature, extra] = children(der, certificate)
+	malformedUnless(tbs?.tag === 0x30 && algorithm?.tag === 0x30)
+	// A BIT STRING value starts with its unused-bits count, which a
+	// signature never has.
+	malformedUnless(
+		signature?.tag === 0x03 && !extra && der[signature.start] === 0,
+	)
+	return { tbs, algorithm, signature }
+}
+
+/**
+ * The fields of a TBS certificate after the optional version: the signed
+ * algorithm, issuer, validity, subject and SPKI, all present, then the
+ * optional unique ids and extensions.
+ *
+ * @param {Uint8Array} der The certificate (DER).
+ * @param {object} tbs The TBS element.
+ * @return {object} signed, issuer, validity, subject, spki and optional.
+ */
+function tbsFields(der, tbs) {
+	const fields = exactChildren(der, tbs)
+	const shift = fields[0]?.tag === 0xa0 ? 1 : 0
+	const [, signed, issuer, validity, subject, spki, ...optional] =
+		fields.slice(shift)
+	malformedUnless(hasNamesAndKey({ signed, issuer, validity, subject, spki }))
+	return { signed, issuer, validity, subject, spki, optional }
+}
+
+/**
+ * @param {object} fields The required TBS fields.
+ * @return {boolean} Whether all are present and the SPKI is a SEQUENCE.
+ */
+function hasNamesAndKey(fields) {
+	return Boolean(
+		fields.signed
+		&& fields.issuer
+		&& fields.validity
+		&& fields.subject
+		&& fields.spki?.tag === 0x30,
+	)
+}
+
+/**
+ * Whether the unique ids and the extensions come each at most once and in
+ * order, so no second extensions block goes unread.
+ *
+ * @param {Array<object>} optional The TBS fields after the SPKI.
+ * @return {boolean}
+ */
+function inTagOrder(optional) {
+	return optional.every(
+		(field, i) =>
+			[0x81, 0x82, 0xa3].includes(field.tag)
+			&& (i === 0 || field.tag > optional[i - 1].tag),
+	)
+}
+
+/**
  * The parts of one certificate the checks need.
  *
  * @param {string} pem A PEM certificate.
@@ -437,55 +515,50 @@ function caConstraints(bytes, block) {
  */
 function parse(pem) {
 	const der = pemToDer(pem)
-	const certificate = tlv(der, 0)
-	const [tbs, algorithm, signature, extra] = children(der, certificate)
-	// A BIT STRING value starts with its unused-bits count, which a
-	// signature never has.
-	if (
-		tbs?.tag !== 0x30
-		|| algorithm?.tag !== 0x30
-		|| signature?.tag !== 0x03
-		|| extra
-		|| der[signature.start] !== 0
-	) {
-		throw new FederatedCertificateError('malformed')
-	}
-	const fields = exactChildren(der, tbs)
-	const shift = fields[0]?.tag === 0xa0 ? 1 : 0
-	const [, signed, issuer, validity, subject, spki, ...optional] =
-		fields.slice(shift)
-	if (!signed || !issuer || !validity || !subject || spki?.tag !== 0x30) {
-		throw new FederatedCertificateError('malformed')
-	}
+	const parts = certificateParts(der)
+	Object.assign(parts, tbsFields(der, parts.tbs))
 	// RFC 5280 4.1.1.2: the signature is checked with the algorithm it covers.
-	if (!equalBytes(whole(der, signed), whole(der, algorithm))) {
-		throw new FederatedCertificateError('malformed')
-	}
-	// The unique ids and the extensions, each at most once and in order, so
-	// no second extensions block goes unread.
-	const ordered = optional.every(
-		(field, i) =>
-			[0x81, 0x82, 0xa3].includes(field.tag)
-			&& (i === 0 || field.tag > optional[i - 1].tag),
+	malformedUnless(
+		equalBytes(whole(der, parts.signed), whole(der, parts.algorithm)),
 	)
-	if (!ordered) {
-		throw new FederatedCertificateError('malformed')
-	}
-	const [notBefore, notAfter] = children(der, validity)
+	malformedUnless(inTagOrder(parts.optional))
+	const [notBefore, notAfter] = children(der, parts.validity)
 	return {
-		der,
-		tbs: whole(der, tbs),
-		algorithm: algorithmOf(der, algorithm),
-		signature: der.subarray(signature.start + 1, signature.end),
-		issuer: whole(der, issuer),
-		subject: whole(der, subject),
-		notBefore: time(der, notBefore),
-		notAfter: time(der, notAfter),
-		spki: whole(der, spki),
+		...signedPartsOf(der, parts),
+		...namesAndKeyOf(der, { ...parts, notBefore, notAfter }),
 		...caConstraints(
 			der,
-			optional.find((field) => field.tag === 0xa3),
+			parts.optional.find((field) => field.tag === 0xa3),
 		),
+	}
+}
+
+/**
+ * @param {Uint8Array} der The certificate (DER).
+ * @param {object} parts Its parts.
+ * @return {object} der, tbs, the verify algorithm and the signature bytes.
+ */
+function signedPartsOf(der, parts) {
+	return {
+		der,
+		tbs: whole(der, parts.tbs),
+		algorithm: algorithmOf(der, parts.algorithm),
+		signature: der.subarray(parts.signature.start + 1, parts.signature.end),
+	}
+}
+
+/**
+ * @param {Uint8Array} der The certificate (DER).
+ * @param {object} parts Its parts, with the validity's two times.
+ * @return {object} issuer, subject, notBefore, notAfter and spki.
+ */
+function namesAndKeyOf(der, parts) {
+	return {
+		issuer: whole(der, parts.issuer),
+		subject: whole(der, parts.subject),
+		notBefore: time(der, parts.notBefore),
+		notAfter: time(der, parts.notAfter),
+		spki: whole(der, parts.spki),
 	}
 }
 
@@ -512,39 +585,112 @@ function algorithmOf(bytes, algorithm) {
 	if (name !== OID_RSA_PSS || !params) {
 		return null
 	}
-	const algorithmId = (element) =>
-		oid(bytes, exactChildren(bytes, sequence(element))[0])
-	let hash = null
-	let mask = null
-	let maskHash = null
-	let saltLength = 20
-	// RSASSA-PSS-params: [0] hash, [1] mask generation, [2] salt length,
-	// [3] trailer field, each at most once and in order.
+	return pssAlgorithm(pssParams(bytes, params))
+}
+
+/**
+ * @param {Uint8Array} bytes The buffer.
+ * @param {object} element An AlgorithmIdentifier, which must be a SEQUENCE.
+ * @return {string} Its OID.
+ */
+function algorithmIdOf(bytes, element) {
+	return oid(bytes, exactChildren(bytes, sequence(element))[0])
+}
+
+/**
+ * @param {object} run The RSASSA-PSS-params read so far.
+ * @param {object} inner The [0] field's value: the hash algorithm.
+ * @return {void}
+ */
+function readPssHash(run, inner) {
+	run.hash = algorithmIdOf(run.bytes, inner)
+}
+
+/**
+ * @param {object} run The RSASSA-PSS-params read so far.
+ * @param {object} inner The [1] field's value: the mask generation function.
+ * @return {void}
+ */
+function readPssMask(run, inner) {
+	const [maskId, maskParams] = exactChildren(run.bytes, sequence(inner))
+	run.mask = oid(run.bytes, maskId)
+	run.maskHash = maskParams ? algorithmIdOf(run.bytes, maskParams) : null
+}
+
+/**
+ * @param {object} run The RSASSA-PSS-params read so far.
+ * @param {object} inner The [2] field's value: the salt length.
+ * @return {void}
+ */
+function readPssSaltLength(run, inner) {
+	run.saltLength = derUint(run.bytes, inner)
+}
+
+/**
+ * @param {object} run The RSASSA-PSS-params read so far.
+ * @param {object} inner The [3] field's value: the trailer field, which must be 1.
+ * @return {void}
+ */
+function readPssTrailer(run, inner) {
+	malformedUnless(derUint(run.bytes, inner) === 1)
+}
+
+/** How each RSASSA-PSS-params field is read, by its context tag. */
+const PSS_FIELDS = new Map([
+	[0xa0, readPssHash],
+	[0xa1, readPssMask],
+	[0xa2, readPssSaltLength],
+	[0xa3, readPssTrailer],
+])
+
+/**
+ * RSASSA-PSS-params, each field at most once and in order.
+ *
+ * @param {Uint8Array} bytes The buffer.
+ * @param {object} params The parameters element.
+ * @return {{hash: ?string, mask: ?string, maskHash: ?string, saltLength: number}}
+ */
+function pssParams(bytes, params) {
+	const run = { bytes, hash: null, mask: null, maskHash: null, saltLength: 20 }
 	let previous = 0
 	for (const field of exactChildren(bytes, sequence(params))) {
-		if (field.tag <= previous) {
-			throw new FederatedCertificateError('malformed')
-		}
+		malformedUnless(field.tag > previous)
 		previous = field.tag
-		const inner = onlyChild(bytes, field)
-		if (field.tag === 0xa0) {
-			hash = algorithmId(inner)
-		} else if (field.tag === 0xa1) {
-			const [maskId, maskParams] = exactChildren(bytes, sequence(inner))
-			mask = oid(bytes, maskId)
-			maskHash = maskParams ? algorithmId(maskParams) : null
-		} else if (field.tag === 0xa2) {
-			saltLength = derUint(bytes, inner)
-		} else if (field.tag !== 0xa3 || derUint(bytes, inner) !== 1) {
-			throw new FederatedCertificateError('malformed')
-		}
+		readPssField(run, field)
 	}
-	if (hash !== OID_SHA256 || mask !== OID_MGF1 || maskHash !== OID_SHA256) {
+	return run
+}
+
+/**
+ * Read one RSASSA-PSS-params field into the run; an unknown one is malformed.
+ *
+ * @param {object} run The parameters read so far.
+ * @param {object} field The field.
+ * @return {void}
+ */
+function readPssField(run, field) {
+	const inner = onlyChild(run.bytes, field)
+	const read = PSS_FIELDS.get(field.tag)
+	malformedUnless(read !== undefined)
+	read(run, inner)
+}
+
+/**
+ * @param {object} params The RSASSA-PSS-params read.
+ * @return {{import: object, verify: object}|null} The verify parameters,
+ *   or null unless the hash and the mask's hash are both SHA-256.
+ */
+function pssAlgorithm(params) {
+	if (
+		params.hash !== OID_SHA256
+		|| params.mask !== OID_MGF1
+		|| params.maskHash !== OID_SHA256
+	) {
 		return null
 	}
 	return {
 		import: { name: 'RSA-PSS', hash: 'SHA-256' },
-		verify: { name: 'RSA-PSS', saltLength },
+		verify: { name: 'RSA-PSS', saltLength: params.saltLength },
 	}
 }
 
@@ -571,24 +717,54 @@ function sequence(element) {
  * @return {string|null}
  */
 function commonNameOf(subject) {
-	let commonName = null
+	const run = { subject, commonName: null }
 	for (const rdn of children(subject, tlv(subject, 0))) {
 		for (const attribute of children(subject, rdn)) {
-			const [type, value] = children(subject, attribute)
-			if (!type || !value || oid(subject, type) !== OID_COMMON_NAME) {
-				continue
-			}
-			const text = subject.subarray(value.start, value.end)
-			const ascii =
-				ASCII_STRINGS.has(value.tag)
-				&& text.every((byte) => byte >= 0x20 && byte <= 0x7e)
-			if (commonName !== null || (value.tag !== UTF8_STRING && !ascii)) {
-				throw new FederatedCertificateError('malformed')
-			}
-			commonName = utf8.decode(text)
+			readCommonName(run, attribute)
 		}
 	}
-	return commonName
+	return run.commonName
+}
+
+/**
+ * Take one name attribute's common name into the run, refusing a second one
+ * and one that is not text this decodes exactly; other attributes are
+ * passed over.
+ *
+ * @param {{subject: Uint8Array, commonName: ?string}} run The name read so far.
+ * @param {object} attribute An AttributeTypeAndValue.
+ * @return {void}
+ */
+function readCommonName(run, attribute) {
+	const [type, value] = children(run.subject, attribute)
+	if (!type || !value || oid(run.subject, type) !== OID_COMMON_NAME) {
+		return
+	}
+	const text = run.subject.subarray(value.start, value.end)
+	malformedUnless(run.commonName === null && isExactText(value, text))
+	run.commonName = utf8.decode(text)
+}
+
+/**
+ * @param {{tag: number}} value A string element.
+ * @param {Uint8Array} text Its bytes.
+ * @return {boolean} Whether it is UTF8String, or an ASCII string type
+ *   holding only printable ASCII.
+ */
+function isExactText(value, text) {
+	return value.tag === UTF8_STRING || isPrintableAscii(value, text)
+}
+
+/**
+ * @param {{tag: number}} value A string element.
+ * @param {Uint8Array} text Its bytes.
+ * @return {boolean}
+ */
+function isPrintableAscii(value, text) {
+	return (
+		ASCII_STRINGS.has(value.tag)
+		&& text.every((byte) => byte >= 0x20 && byte <= 0x7e)
+	)
 }
 
 /**
@@ -706,41 +882,99 @@ export async function verifyFederatedCertificate({
 	cloudId,
 	now = Date.now(),
 }) {
+	assertPartnerChain(chain)
+	const { certs, commonName } = parseChain(certificate, chain)
+	await assertPinnedRoot(certs[certs.length - 1], partnerRootFingerprint)
+	assertIntermediateFirst(certs)
+	await assertEachLinkSigned(certs)
+	assertNamesRecipient(commonName, cloudId)
+	assertValidAt(certs, now)
+	return recipientKeyOf(certs[0])
+}
+
+/**
+ * The chain must be the partner's intermediate, then its root:
+ * FederationRootService::localChain() serves exactly these two.
+ *
+ * @param {Array<string>} chain The chain (PEM).
+ * @return {void}
+ */
+function assertPartnerChain(chain) {
 	if (!Array.isArray(chain) || chain.length === 0) {
 		throw new FederatedCertificateError('untrusted_root')
 	}
-	// FederationRootService::localChain() serves exactly these two.
 	if (chain.length !== CHAIN_LENGTH) {
 		throw new FederatedCertificateError('bad_chain')
 	}
-	let certs
-	let commonName
+}
+
+/**
+ * Parse the recipient certificate and its chain, and read the recipient's
+ * common name; anything that does not decode is malformed.
+ *
+ * @param {string} certificate The recipient certificate (PEM).
+ * @param {Array<string>} chain The chain (PEM).
+ * @return {{certs: Array<object>, commonName: ?string}}
+ */
+function parseChain(certificate, chain) {
 	try {
-		certs = [certificate, ...chain].map(parse)
-		commonName = commonNameOf(certs[0].subject)
+		const certs = [certificate, ...chain].map(parse)
+		return { certs, commonName: commonNameOf(certs[0].subject) }
 	} catch (e) {
 		throw e instanceof FederatedCertificateError
 			? e
 			: new FederatedCertificateError('malformed')
 	}
-	const root = certs[certs.length - 1]
+}
+
+/**
+ * @param {object} root The chain's last certificate.
+ * @param {string} partnerRootFingerprint The pinned root, hex SHA-256.
+ * @return {Promise<void>} Rejects unless the root is the pinned one.
+ */
+async function assertPinnedRoot(root, partnerRootFingerprint) {
 	const pinned = String(partnerRootFingerprint || '').toLowerCase()
 	if (pinned === '' || (await sha256Hex(root.der)) !== pinned) {
 		throw new FederatedCertificateError('untrusted_root')
 	}
-	// The first link must be the partner's intermediate, not its root again,
-	// and the recipient's certificate no CA.
+}
+
+/**
+ * The first link must be the partner's intermediate, not its root again,
+ * and the recipient's certificate no CA.
+ *
+ * @param {Array<object>} certs The parsed chain, recipient first.
+ * @return {void}
+ */
+function assertIntermediateFirst(certs) {
 	if (equalBytes(certs[1].issuer, certs[1].subject) || certs[0].markedCa) {
 		throw new FederatedCertificateError('bad_chain')
 	}
+}
+
+/**
+ * @param {Array<object>} certs The parsed chain, recipient first.
+ * @return {Promise<void>} Rejects unless every certificate was signed by
+ *   the next one, which may issue it.
+ */
+async function assertEachLinkSigned(certs) {
 	for (let i = 0; i < certs.length - 1; i++) {
 		if (!mayIssue(certs, i + 1) || !(await signedBy(certs[i], certs[i + 1]))) {
 			throw new FederatedCertificateError('bad_chain')
 		}
 	}
-	const leaf = certs[0]
+}
+
+/**
+ * The recipient certificate's common name must be the cloud id the owner
+ * entered; two names without `user@remote` both canonicalise to ''.
+ *
+ * @param {?string} commonName The recipient certificate's common name.
+ * @param {string} cloudId The cloud id the owner entered.
+ * @return {void}
+ */
+function assertNamesRecipient(commonName, cloudId) {
 	const expected = canonicalCloudId(cloudId)
-	// Two names without `user@remote` both canonicalise to ''.
 	if (
 		expected === ''
 		|| commonName === null
@@ -748,11 +982,26 @@ export async function verifyFederatedCertificate({
 	) {
 		throw new FederatedCertificateError('name_mismatch')
 	}
+}
+
+/**
+ * @param {Array<object>} certs The parsed chain.
+ * @param {number} now The time to check validity at (ms).
+ * @return {void}
+ */
+function assertValidAt(certs, now) {
 	const valid = (cert) =>
 		now + CLOCK_SKEW_MS >= cert.notBefore && now <= cert.notAfter
 	if (!certs.every(valid)) {
 		throw new FederatedCertificateError('not_valid_now')
 	}
+}
+
+/**
+ * @param {object} leaf The verified recipient certificate.
+ * @return {Promise<{fingerprint: string, spki: Uint8Array}>}
+ */
+async function recipientKeyOf(leaf) {
 	const hex = await sha256Hex(leaf.der)
 	return {
 		fingerprint: hex.match(/.{2}/g).join(':').toUpperCase(),
