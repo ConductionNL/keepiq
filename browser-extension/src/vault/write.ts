@@ -179,82 +179,140 @@ function unrecorded(error: unknown): undefined {
 	return undefined
 }
 
+/** One fetch of an item for its edit or clone form. */
+interface ItemFetch {
+	ctx: Context
+	id: string
+	purpose: 'edit' | 'clone'
+}
+
+/** A fetched row on its way into the form, with the type names either side gave it. */
+interface ItemOpening {
+	fetch: ItemFetch
+	row: OpenSecretRow
+	typeNames: Array<string | undefined>
+	passkey: boolean
+}
+
+/** The decrypted form an edit opened, with the version of the source it was made from. */
+interface OpenedEdit {
+	item: EditableItem
+	fields: string | null
+	sourceUpdatedAt: string | null
+}
+
 /**
  * Only what the form shows in full under the type it opens with and the cached one; an empty field hides nothing.
  * A key and passkeys are never shown, by design, so they count as opened: `holds()` checked them against the cache.
  */
-async function recordOpened(accountId: string, id: string, recordId: string, row: OpenSecretRow, typeNames: Array<string | undefined>, plain: Values, sourceUpdatedAt: string | null): Promise<void> {
+async function recordOpened(opening: ItemOpening, edit: OpenedEdit): Promise<void> {
+	const { fetch: { ctx, id }, row, typeNames, passkey } = opening
+	const recordId = crypto.randomUUID()
+	edit.item.recordId = recordId
+	const plain: Values = { key: passkey ? undefined : edit.item.key, login: edit.item.login, additionalFields: edit.fields }
 	const shown = VALUE_FIELDS.filter((field) => field === 'totp' || field === 'passkeys' || !row[field] || (plain[field] !== undefined && typeNames.every((name) => shownInFull(field, plain[field]!, name))))
 	// Refused, the form opens without it, and a save of it that needs the record for partners fails with `unverified`.
-	await swapRecord(accountId, id, recordId, { shown: Object.fromEntries(shown.map((field) => [field, row[field] || null])), updatedAt: row.updatedAt, sourceUpdatedAt }).catch(unrecorded)
+	await swapRecord(ctx.account.id, id, recordId, { shown: Object.fromEntries(shown.map((field) => [field, row[field] || null])), updatedAt: row.updatedAt, sourceUpdatedAt: edit.sourceUpdatedAt }).catch(unrecorded)
 }
 
 /** Fresh from the server, not the cache: a stale `additionalFields` saved back would drop members (ADR-002). */
 export function fetchItem(id: string, purpose: 'edit' | 'clone' = 'edit', accountId?: string): Promise<WriteResult<EditableItem>> {
-	return run(async ({ account, client, privateKey }) => {
-		let row: OpenSecretRow
-		try {
-			row = await client.keepiq<OpenSecretRow>('GET', secretPath(id))
-		} catch (error) {
-			// The list still shows it until the next sync says otherwise.
-			if (error instanceof ApiError && error.status === 404) void syncAfterWrite(account.id)
-			// A row on a blocked suite is refused, not sent blocked; the sync marks it, with its reason as a code.
-			if (error instanceof ApiError && error.refused) {
-				await syncAfterWrite(account.id)
-				const cached = await cachedRow(account.id, id)
-				if (cached?.blocked) throw new WriteFailure({ code: 'blocked', reason: cached.blockedReason })
-			}
-			throw error
-		}
-		// A use-only value is never shown, a read-only copy never changed, and a clone of any
-		// restricted copy would be a permanent, unrestricted one (Keepiq `use-only-shares`, `expiring-shares`).
-		if (isRestricted(row, purpose)) throw new WriteFailure({ code: 'restricted' })
-		const cached = await cachedMatch(account.id, id, row)
-		let sourceUpdatedAt: string | null = null
-		if (purpose === 'edit') {
-			const writeContext = await readWriteContext(client, id)
-			if (isViewOnly(id, writeContext)) throw new WriteFailure({ code: 'view_only' })
-			// The source version this edit is made from, which a save through a copy must name.
-			sourceUpdatedAt = writeContext.sourceUpdatedAt
-		}
-		const typeNames = await typeNamesOf(account.id, [row.typeId, cached.typeId])
-		// Either side naming a passkey withholds it, so a swapped type id does not open the credential.
-		const passkey = typeNames.includes('passkey')
-		// A clone would save a passkey item without its credential, which only a passkey ceremony writes.
-		if (passkey && purpose === 'clone') throw new WriteFailure({ code: 'passkey_clone' })
-		let item: EditableItem
-		let fields: string | null
-		try {
-			fields = row.additionalFields ? await rsaDecrypt(row.additionalFields, privateKey) : null
-			const additional = fields === null ? {} : parseObject(fields)
-			if (!additional) throw new Error('additionalFields is not an object')
-			item = {
-				// The id checked against the cache, since the form saves to this one.
-				id,
-				typeId: row.typeId ?? '',
-				// So the form never offers the withheld key for editing.
-				typeName: passkey ? 'passkey' : typeNames[0],
-				name: row.name,
-				url: row.url,
-				folderId: row.folderId,
-				key: passkey ? '' : await rsaDecrypt(row.key, privateKey),
-				login: row.login ? await rsaDecrypt(row.login, privateKey) : null,
-				additionalFields: fieldTexts(additional),
-				updatedAt: row.updatedAt,
-				// Never decrypted for the form: a saved key is shown as saved, not as text (Keepiq `login-one-time-codes`).
-				totpSaved: purpose === 'edit' && !!row.totp,
-				...(purpose === 'clone' && !!row.totp && { totpLeftOut: true as const }),
-			}
-		} catch (error) {
-			console.error('[keepiq] could not open', id, 'for editing', error)
-			throw new WriteFailure({ code: 'unreadable' })
-		}
-		if (purpose === 'edit') {
-			item.recordId = crypto.randomUUID()
-			await recordOpened(account.id, id, item.recordId, row, typeNames, { key: passkey ? undefined : item.key, login: item.login, additionalFields: fields }, sourceUpdatedAt)
-		}
-		return item
-	}, 'reply', accountId)
+	return run((ctx) => openItem({ ctx, id, purpose }), 'reply', accountId)
+}
+
+async function openItem(fetch: ItemFetch): Promise<EditableItem> {
+	const { ctx, id, purpose } = fetch
+	const row = await fetchRow(fetch)
+	// A use-only value is never shown, a read-only copy never changed, and a clone of any
+	// restricted copy would be a permanent, unrestricted one (Keepiq `use-only-shares`, `expiring-shares`).
+	if (isRestricted(row, purpose)) throw new WriteFailure({ code: 'restricted' })
+	const cached = await cachedMatch(ctx.account.id, id, row)
+	const sourceUpdatedAt = await editSource(fetch)
+	const typeNames = await typeNamesOf(ctx.account.id, [row.typeId, cached.typeId])
+	// Either side naming a passkey withholds it, so a swapped type id does not open the credential.
+	const passkey = typeNames.includes('passkey')
+	// A clone would save a passkey item without its credential, which only a passkey ceremony writes.
+	if (passkey && purpose === 'clone') throw new WriteFailure({ code: 'passkey_clone' })
+	const opening: ItemOpening = { fetch, row, typeNames, passkey }
+	const { item, fields } = await decryptedItem(opening)
+	if (purpose === 'edit') await recordOpened(opening, { item, fields, sourceUpdatedAt })
+	return item
+}
+
+async function fetchRow(fetch: ItemFetch): Promise<OpenSecretRow> {
+	try {
+		return await fetch.ctx.client.keepiq<OpenSecretRow>('GET', secretPath(fetch.id))
+	} catch (error) {
+		await failedFetch(fetch, error)
+		throw error
+	}
+}
+
+async function failedFetch(fetch: ItemFetch, error: unknown): Promise<void> {
+	// The list still shows it until the next sync says otherwise.
+	if (error instanceof ApiError && error.status === 404) void syncAfterWrite(fetch.ctx.account.id)
+	// A row on a blocked suite is refused, not sent blocked; the sync marks it, with its reason as a code.
+	if (error instanceof ApiError && error.refused) await refuseBlocked(fetch)
+}
+
+async function refuseBlocked(fetch: ItemFetch): Promise<void> {
+	await syncAfterWrite(fetch.ctx.account.id)
+	const cached = await cachedRow(fetch.ctx.account.id, fetch.id)
+	if (cached?.blocked) throw new WriteFailure({ code: 'blocked', reason: cached.blockedReason })
+}
+
+/** The source version this edit is made from, which a save through a copy must name; a clone names none. */
+async function editSource(fetch: ItemFetch): Promise<string | null> {
+	if (fetch.purpose !== 'edit') return null
+	const writeContext = await readWriteContext(fetch.ctx.client, fetch.id)
+	if (isViewOnly(fetch.id, writeContext)) throw new WriteFailure({ code: 'view_only' })
+	return writeContext.sourceUpdatedAt
+}
+
+async function decryptedItem(opening: ItemOpening): Promise<{ item: EditableItem; fields: string | null }> {
+	const { fetch: { ctx, id }, row } = opening
+	try {
+		const fields = row.additionalFields ? await rsaDecrypt(row.additionalFields, ctx.privateKey) : null
+		const additional = fields === null ? {} : parseObject(fields)
+		if (!additional) throw new Error('additionalFields is not an object')
+		return { item: await editableItem(opening, additional), fields }
+	} catch (error) {
+		console.error('[keepiq] could not open', id, 'for editing', error)
+		throw new WriteFailure({ code: 'unreadable' })
+	}
+}
+
+async function editableItem(opening: ItemOpening, additional: Record<string, unknown>): Promise<EditableItem> {
+	const { fetch: { id }, row, typeNames, passkey } = opening
+	return {
+		// The id checked against the cache, since the form saves to this one.
+		id,
+		typeId: row.typeId ?? '',
+		// So the form never offers the withheld key for editing.
+		typeName: passkey ? 'passkey' : typeNames[0],
+		name: row.name,
+		url: row.url,
+		folderId: row.folderId,
+		...await secretValues(opening),
+		additionalFields: fieldTexts(additional),
+		updatedAt: row.updatedAt,
+		...totpFlags(opening),
+	}
+}
+
+async function secretValues({ fetch: { ctx }, row, passkey }: ItemOpening): Promise<Pick<EditableItem, 'key' | 'login'>> {
+	return {
+		key: passkey ? '' : await rsaDecrypt(row.key, ctx.privateKey),
+		login: row.login ? await rsaDecrypt(row.login, ctx.privateKey) : null,
+	}
+}
+
+/** Never decrypted for the form: a saved key is shown as saved, not as text (Keepiq `login-one-time-codes`). */
+function totpFlags({ fetch: { purpose }, row }: ItemOpening): Pick<EditableItem, 'totpSaved' | 'totpLeftOut'> {
+	return {
+		totpSaved: purpose === 'edit' && !!row.totp,
+		...(purpose === 'clone' && !!row.totp && { totpLeftOut: true as const }),
+	}
 }
 
 function isDraft(draft: unknown): draft is ItemDraft {
