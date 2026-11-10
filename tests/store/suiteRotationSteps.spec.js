@@ -156,3 +156,68 @@ describe('createSuite', () => {
 		expect(useSessionStore().suiteId).not.toBe('s1')
 	})
 })
+
+describe('resumeMigration', () => {
+	/**
+	 * A store whose migration status reads as given.
+	 *
+	 * @param {object|null} status The migration status.
+	 * @return {object} The store.
+	 */
+	function resuming(status) {
+		const store = useEncryptionSuiteStore()
+		vi.spyOn(store, 'fetchMigrationStatus').mockImplementation(async () => {
+			store.migrationStatus = status
+		})
+		return store
+	}
+
+	it('refuses without a migration, while locked, and on the previous suite', async () => {
+		await expect(resuming(null).resumeMigration('pw')).rejects.toThrow(
+			'There is no migration to resume',
+		)
+		const status = { id: 'm1', oldSuiteId: 'old', newSuiteId: 'new' }
+		const session = useSessionStore()
+		session.cryptoKey = null
+		await expect(resuming(status).resumeMigration('pw')).rejects.toThrow(
+			'Unlock the vault before resuming the migration',
+		)
+		session.cryptoKey = 'SESSION-KEY'
+		session.suiteId = 'old'
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
+			data: { id: url.split('/').pop(), privateKey: 'P', certificate: 'C' },
+		}))
+		await expect(resuming(status).resumeMigration('pw')).rejects.toThrow(
+			'Your session is unlocked against the previous encryption suite. Lock and unlock the vault, then resume the migration.',
+		)
+	})
+
+	it('migrates with the suites of the migration and finalises with a proof over the old key', async () => {
+		const store = resuming({ id: 'm1', oldSuiteId: 'old', newSuiteId: 'new' })
+		const session = useSessionStore()
+		session.cryptoKey = 'SESSION-KEY'
+		session.suiteId = 'new'
+		const get = vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
+			data: url.endsWith('/old')
+				? { id: 'old', privateKey: 'OLD-WRAPPED' }
+				: { id: 'new', publicKey: 'NEW-PUB' },
+		}))
+		store.migrationFailures = ['stale']
+		store.migrationDroppedVersions = 4
+		const run = vi.spyOn(store, 'runMigration').mockResolvedValue({ failed: 2 })
+		const finalise = vi.spyOn(store, 'finaliseMigration').mockResolvedValue({ finalised: false })
+		const removed = vi.spyOn(store, 'rotationRemovedContacts')
+
+		const outcome = await store.resumeMigration('old-pw')
+
+		expect({
+			get: get.mock.calls,
+			run: run.mock.calls,
+			finalise: finalise.mock.calls,
+			outcome,
+			failures: store.migrationFailures,
+			dropped: store.migrationDroppedVersions,
+		}).toMatchSnapshot()
+		expect(removed).not.toHaveBeenCalled()
+	})
+})

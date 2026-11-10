@@ -141,3 +141,45 @@ YGFiYw==
   },
 }
 `;
+
+exports[`resumeMigration > migrates with the suites of the migration and finalises with a proof over the old key 1`] = `
+{
+  "dropped": 0,
+  "failures": [],
+  "finalise": [
+    [
+      "m1",
+      {
+        "failed": 2,
+        "residualContacts": [],
+      },
+      {
+        "X-Proof": "{"suiteId":"old","purpose":"complete-migration","encryptedPrivateKey":"OLD-WRAPPED","masterPassword":"old-pw","boundValues":["m1","1",""]}",
+      },
+    ],
+  ],
+  "get": [
+    [
+      "/apps/keepiq/api/v1/suites/old",
+    ],
+    [
+      "/apps/keepiq/api/v1/suites/new",
+    ],
+  ],
+  "outcome": {
+    "failed": 2,
+    "residualContacts": [],
+  },
+  "run": [
+    [
+      {
+        "migrationId": "m1",
+        "newPrivateKey": "SESSION-KEY",
+        "newPublicKeyPem": "NEW-PUB",
+        "oldEncryptedPrivateKey": "OLD-WRAPPED",
+        "oldPassword": "old-pw",
+      },
+    ],
+  ],
+}
+`;
