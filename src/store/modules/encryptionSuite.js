@@ -7,13 +7,19 @@ import {
 	encryptPrivateKey,
 	generateKeyPair,
 	importPrivateKey,
-	importPublicKey,
 } from '../../crypto/index.js'
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
 import { usePasskeyStore } from './passkey.js'
 import { onVaultLock, useSessionStore } from './session.js'
+import {
+	finishRun,
+	migratePages,
+	postWindow,
+	unnamedJobs,
+	unwrapMigrationKeys,
+} from './suiteMigrationRun.js'
 
 /**
  * How many re-encryption POSTs are in flight at once. Small on purpose: the
@@ -190,6 +196,100 @@ async function contactResidual(contact, run) {
 		residualReason(contact, run.carryContactIds)
 		?? reEnvelopeContact(contact, run.rotation)
 	)
+}
+
+/**
+ * Refuse a force-revocation without a suite id or a reason, before any sudo
+ * prompt or request.
+ *
+ * @param {string} id The suite id to force-revoke.
+ * @param {string} reason The revocation reason.
+ * @return {void}
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function assertForceRevocable(id, reason) {
+	if (!id) {
+		throw new Error('No suite id to revoke')
+	}
+	if (!reason) {
+		throw new Error('A reason is required to force-revoke a suite')
+	}
+}
+
+/**
+ * Whether a force-revoke failed only at ending the suite's key migration:
+ * the suite was revoked all the same (keepiq#1189).
+ *
+ * @param {object} error The axios error.
+ * @return {boolean}
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function isMigrationEndFailure(error) {
+	return (
+		error?.response?.status === 500
+		&& error.response.data?.error === 'migration_end_failed'
+	)
+}
+
+/**
+ * POST the force-revoke; a failed migration end still answers with the
+ * revocation's body, any other failure rejects.
+ *
+ * @param {string} id The suite id.
+ * @param {{reason: string, markCompromised: boolean, confirmSuiteId: string}} body The request body.
+ * @return {Promise<object>} The response body.
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+async function postForceRevoke(id, body) {
+	try {
+		const response = await axios.post(
+			generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
+			body,
+		)
+		return response.data
+	} catch (error) {
+		if (!isMigrationEndFailure(error)) {
+			throw error
+		}
+		return error.response.data
+	}
+}
+
+/**
+ * @param {object} data The force-revoke's response body.
+ * @return {object} The revoked suite, the emergency contacts destroyed, the
+ *   rotation warning, and the unfinished message when the suite was revoked
+ *   but its key migration could not be ended; force-revoking again
+ *   finishes it (keepiq#1189).
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function revokedOutcome(data) {
+	return {
+		unfinished: data.error === 'migration_end_failed' ? data.message : null,
+		suite: data,
+		emergencyContactsDestroyed: data.emergencyContactsDestroyed ?? 0,
+		warning: data.warning ?? null,
+	}
+}
+
+/**
+ * A compromise force-revoke during a key migration also revokes the
+ * migration's other suite and ends the migration (keepiq#877), and reports
+ * the steps of the compromise response that failed (keepiq#863).
+ *
+ * @param {object} data The force-revoke's response body.
+ * @return {object}
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function compromiseCascadeOutcome(data) {
+	return {
+		alsoRevokedSuite: data.alsoRevokedSuite ?? null,
+		terminatedMigration: data.terminatedMigration ?? null,
+		alsoRevokedEmergencyContactsDestroyed:
+			data.alsoRevokedEmergencyContactsDestroyed ?? 0,
+		cascadeIncomplete: data.cascadeIncomplete === true,
+		cascadeFailed: data.cascade?.failed ?? 0,
+	}
 }
 
 export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
@@ -631,156 +731,26 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   failures: Array<object>, usedWorker: boolean}>} The migration outcome.
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
-		async runMigration({
-			migrationId,
-			oldEncryptedPrivateKey,
-			oldPassword,
-			newPublicKeyPem,
-			newPrivateKey,
-		}) {
-			// Unwrap the old private key with the old master password. Both stay
-			// in this scope; neither is ever sent anywhere (ADR-003).
-			const oldPrivateKeyPem = await decryptPrivateKey(
-				oldEncryptedPrivateKey,
-				oldPassword,
+		async runMigration(params) {
+			const runner = await createMigrationRunner(
+				await unwrapMigrationKeys(params),
 			)
-
-			const keys = {
-				oldPrivateKey: await importPrivateKey(oldPrivateKeyPem),
-				newPublicKey: await importPublicKey(newPublicKeyPem),
-				newPrivateKey,
-			}
-
-			const runner = await createMigrationRunner(keys)
 			this.migrationRunner = runner
-
-			let migrated = 0
-			let halted = null
-			const failures = []
-
+			const run = {
+				suiteStore: this,
+				migrationId: params.migrationId,
+				runner,
+				migrated: 0,
+				halted: null,
+				failures: [],
+			}
 			try {
-				// Each pass re-asks for outstanding work from offset 0: committed
-				// records leave the result set, so the next page is always at the
-				// front.
-				for (;;) {
-					const { data } = await axios.get(
-						generateUrl(
-							`/apps/keepiq/api/v1/migrations/${migrationId}/work`,
-						),
-					)
-
-					this.migrationDroppedVersions =
-						data.versions?.dropCandidates || 0
-
-					const jobs = this.buildJobs(data)
-					if (jobs.length === 0) {
-						break
-					}
-
-					// `totalRemaining` counts EVERY row still on the old suite,
-					// including the version rows outside the retention window.
-					// Those are reported as dropCandidates and never dispatched
-					// as jobs — the server deletes them at completion — so using
-					// the raw number as the denominator left the bar short of
-					// 100% and then jumping to the terminal panel, which reads as
-					// a hang during an already-anxious operation.
-					const denominator =
-						migrated
-						+ Math.max(
-							0,
-							data.totalRemaining
-								- (data.versions?.dropCandidates || 0),
-						)
-
-					this.migrationProgress = {
-						done: migrated,
-						total: denominator,
-						phase: 'migrating',
-					}
-
-					const results = await runner.run(jobs)
-					const outcome = await this.postResults(
-						migrationId,
-						results,
-						jobs,
-					)
-
-					migrated += outcome.committed
-					failures.push(...outcome.failures)
-					this.migrationFailures = [...failures]
-
-					this.migrationProgress = {
-						done: migrated,
-						total: denominator,
-						phase: 'migrating',
-					}
-
-					// A round-trip that does not verify is not this record's
-					// problem — it is the new key's. Stop immediately rather than
-					// grinding through the vault producing ciphertext nobody can
-					// read. Everything committed so far was individually verified,
-					// so it stays valid, and the migration stays resumable.
-					if (outcome.halt !== null) {
-						halted = outcome.halt
-						break
-					}
-
-					// A pass that commits nothing cannot make progress, and the
-					// work list is re-derived from the rows — so asking again
-					// returns exactly the same page. Stop either way; what
-					// differs is whether it counts as a halt.
-					if (outcome.committed === 0) {
-						if (outcome.failures.length === 0) {
-							// Nothing committed and nothing permanently failed:
-							// the whole page was transient (offline, server
-							// down). The rows stay unaccounted server-side, so
-							// the completion gate will refuse and the resume
-							// banner picks it up.
-							halted =
-								'Migration could not reach the server; no records were changed.'
-						}
-
-						// Otherwise every record in this page failed permanently
-						// and is now recorded against its owning secret. Letting
-						// the loop continue here was an infinite spin: the rows
-						// stay bound to the old suite, so each pass re-fetched
-						// and re-failed the same page and the dialog sat at
-						// "0 of N" forever. Fall through to completion, which
-						// asks the user what to do about them.
-						break
-					}
-				}
+				await migratePages(run)
 			} finally {
 				runner.dispose()
 				this.migrationRunner = null
 			}
-
-			if (halted !== null) {
-				this.migrationProgress = {
-					done: migrated,
-					total: migrated,
-					phase: 'halted',
-				}
-				const error = new Error(halted)
-				error.name = 'MigrationHaltedError'
-				error.migrated = migrated
-				error.failures = failures
-				throw error
-			}
-
-			this.migrationProgress = {
-				done: migrated,
-				total: migrated,
-				phase: 'done',
-			}
-
-			return {
-				migrated,
-				failed: failures.length,
-				droppedVersions: this.migrationDroppedVersions,
-				failures,
-				usedWorker: runner.usesWorker,
-			}
+			return finishRun(run)
 		},
 
 		/**
@@ -791,34 +761,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
 		buildJobs(work) {
-			const jobs = []
-
-			for (const record of work.secrets?.records || []) {
-				jobs.push({
-					store: MIGRATION_STORES.SECRETS,
-					id: record.id,
-					name: record.name,
-					record,
-				})
-			}
-			for (const record of work.versions?.records || []) {
-				jobs.push({
-					store: MIGRATION_STORES.VERSIONS,
-					id: record.id,
-					name: null,
-					record,
-				})
-			}
-			for (const record of work.attachmentGrants?.records || []) {
-				jobs.push({
-					store: MIGRATION_STORES.ATTACHMENT_GRANTS,
-					id: record.id,
-					name: null,
-					record,
-				})
-			}
-
-			return jobs
+			const secrets = (work.secrets?.records || []).map((record) => ({
+				store: MIGRATION_STORES.SECRETS,
+				id: record.id,
+				name: record.name,
+				record,
+			}))
+			return [
+				...secrets,
+				...unnamedJobs(work.versions, MIGRATION_STORES.VERSIONS),
+				...unnamedJobs(
+					work.attachmentGrants,
+					MIGRATION_STORES.ATTACHMENT_GRANTS,
+				),
+			]
 		},
 
 		/**
@@ -826,7 +782,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * A record that failed its round-trip is reported to the server as an
 		 * `error` so it lands in `migration_error` on the owning secret; its
-		 * original ciphertext is left untouched and the run continues.
+		 * original ciphertext is left untouched and the run continues. A
+		 * window that halts is the last one posted.
 		 *
 		 * @param {string} migrationId The migration ID.
 		 * @param {Array<object>} results The pipeline results.
@@ -835,133 +792,26 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-re-encrypted-ciphertext-is-verified-before-the-original-is-discarded
 		 */
 		async postResults(migrationId, results, jobs) {
-			const namesById = new Map(jobs.map((job) => [job.id, job.name]))
-			let committed = 0
-			const failures = []
-			const retryable = []
-			let halt = null
-
+			const run = {
+				suiteStore: this,
+				migrationId,
+				namesById: new Map(jobs.map((job) => [job.id, job.name])),
+				committed: 0,
+				failures: [],
+				retryable: [],
+				halt: null,
+			}
 			for (
 				let start = 0;
-				start < results.length;
+				start < results.length && run.halt === null;
 				start += MIGRATION_CONCURRENCY
 			) {
-				const window = results.slice(start, start + MIGRATION_CONCURRENCY)
-
-				const settled = await Promise.all(
-					window.map(async (result) => {
-						// A round-trip mismatch means the STORED value read back fine
-						// and the new key could not carry it. Reporting that as a
-						// failure would let the server finalise a readable secret as
-						// unrecoverable, so it is never sent — the run stops instead.
-						if (result.halt === true) {
-							return { outcome: 'halt', result, error: result.error }
-						}
-
-						// Only an old-key decrypt failure is reported. Anything else
-						// unproven stays unreported, which leaves the row unaccounted
-						// server-side so the completion gate keeps blocking and a
-						// resume retries it.
-						if (result.ok !== true && result.permanent !== true) {
-							return {
-								outcome: 'retryable',
-								result,
-								error: result.error,
-							}
-						}
-
-						const url = this.recordUrl(
-							migrationId,
-							result.store,
-							result.id,
-						)
-						if (url === null) {
-							return {
-								outcome: 'retryable',
-								result,
-								error: `Unknown migration store: ${result.store}`,
-							}
-						}
-
-						const body =
-							result.ok === true
-								? result.payload
-								: { error: result.error }
-
-						try {
-							await axios.post(url, body)
-							return {
-								outcome:
-									result.ok === true ? 'committed' : 'permanent',
-								result,
-								error: result.error,
-							}
-						} catch (e) {
-							// A commit that leaves a stored `totp` or `passkeys`
-							// behind is refused, and resending the same payload is
-							// refused again: stop with the server's reason instead of
-							// retrying it. Nothing was written, so it stays resumable.
-							if (
-								e?.response?.data?.error === 'fields_not_reencrypted'
-							) {
-								return {
-									outcome: 'halt',
-									result,
-									error: e.response.data.message,
-								}
-							}
-
-							// The commit itself never landed (network, guard
-							// rejection), so nothing was written and the row is
-							// simply still outstanding. Retryable by definition.
-							return {
-								outcome: 'retryable',
-								result,
-								error:
-									e?.response?.data?.message
-									|| String(e?.message || e),
-							}
-						}
-					}),
+				await postWindow(
+					run,
+					results.slice(start, start + MIGRATION_CONCURRENCY),
 				)
-
-				for (const entry of settled) {
-					if (entry.outcome === 'committed') {
-						committed += 1
-						continue
-					}
-
-					if (entry.outcome === 'halt') {
-						halt =
-							halt
-							?? (entry.error || 'Re-encryption could not be verified')
-						continue
-					}
-
-					if (entry.outcome === 'retryable') {
-						retryable.push({
-							store: entry.result.store,
-							id: entry.result.id,
-							name: namesById.get(entry.result.id) ?? null,
-							error: entry.error || 'Temporarily failed',
-						})
-						continue
-					}
-
-					failures.push({
-						store: entry.result.store,
-						id: entry.result.id,
-						name: namesById.get(entry.result.id) ?? null,
-						error: entry.error || 'Migration failed',
-						unrecoverable: true,
-					})
-				}
-
-				if (halt !== null) {
-					break
-				}
 			}
-
+			const { committed, failures, retryable, halt } = run
 			return { committed, failures, retryable, halt }
 		},
 
@@ -1536,12 +1386,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			markCompromised = false,
 			confirmSuiteId = '',
 		}) {
-			if (!id) {
-				throw new Error('No suite id to revoke')
-			}
-			if (!reason) {
-				throw new Error('A reason is required to force-revoke a suite')
-			}
+			assertForceRevocable(id, reason)
 
 			// Complete Nextcloud sudo BEFORE issuing the request — the endpoint's
 			// #[PasswordConfirmationRequired] middleware rejects it otherwise.
@@ -1549,43 +1394,12 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				await import('@nextcloud/password-confirmation')
 			await confirmPassword()
 
-			let response
-			try {
-				response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
-					{ reason, markCompromised, confirmSuiteId },
-				)
-			} catch (error) {
-				if (
-					error?.response?.status !== 500
-					|| error.response.data?.error !== 'migration_end_failed'
-				) {
-					throw error
-				}
-				response = error.response
-			}
-
-			return {
-				// Set when the suite was revoked but its key migration could
-				// not be ended; force-revoking again finishes it (keepiq#1189).
-				unfinished:
-					response.data.error === 'migration_end_failed'
-						? response.data.message
-						: null,
-				suite: response.data,
-				emergencyContactsDestroyed:
-					response.data.emergencyContactsDestroyed ?? 0,
-				warning: response.data.warning ?? null,
-				// A compromise force-revoke during a key migration also revokes
-				// the migration's other suite and ends the migration (keepiq#877).
-				alsoRevokedSuite: response.data.alsoRevokedSuite ?? null,
-				terminatedMigration: response.data.terminatedMigration ?? null,
-				alsoRevokedEmergencyContactsDestroyed:
-					response.data.alsoRevokedEmergencyContactsDestroyed ?? 0,
-				// Steps of the compromise response that failed (keepiq#863).
-				cascadeIncomplete: response.data.cascadeIncomplete === true,
-				cascadeFailed: response.data.cascade?.failed ?? 0,
-			}
+			const data = await postForceRevoke(id, {
+				reason,
+				markCompromised,
+				confirmSuiteId,
+			})
+			return { ...revokedOutcome(data), ...compromiseCascadeOutcome(data) }
 		},
 
 		/**
